@@ -1,542 +1,198 @@
-# Application-Layer Encryption Gateway — Engineering Source of Truth
+# Cryptalis
 
-> **Repository status as of 2026-08-12: documentation and planning baseline, pre-code.** Git, a
-> licence, and this documentation system exist. There is no application source, test suite, runtime
-> configuration, CI, migration, or container definition. Future commands, module paths, schemas,
-> and endpoints are planned contracts, not runnable interfaces. See [Current state](#current-state-verified)
-> and the [backend checklist](docs/backend-build-checklist.md) for the verified boundary.
+Cryptalis is a planned SQLAlchemy-native data-protection platform for Python applications. It
+compiles field-protection declarations into transparent application-layer encryption, protected
+PostgreSQL storage, capability-specific search indexes, reviewed Alembic migrations, subject-key
+lifecycle controls, and reproducible security evidence.
 
-**Naming:** the repository is named **Cryptalis**. The service is **`gateway`** and the proposed
-Python package is **`ale_gateway`** until bootstrap makes the package name real.
+> **Repository status — 2026-08-22:** architecture and research only. No package, runtime,
+> migration plugin, database schema, key provider, or verification harness has been implemented.
+> Every API and command below is a design target until executable evidence says otherwise.
 
----
+## Executive verdict
 
-## Table of contents
+**BUILD CRYPTALIS AS AN AMBITIOUS, LEARNING-FIRST DATA-SECURITY SYSTEM. The complete architecture is
+the active program from the beginning; evidence gates control claims, not which subsystem may be
+studied or built.**
 
-- [Vision](#vision)
-- [Scope](#scope)
-- [Core principles](#core-principles)
-- [Non-goals](#non-goals)
-- [Current state (verified)](#current-state-verified)
-- [Architecture decisions](#architecture-decisions)
-- [Module boundaries and ownership](#module-boundaries-and-ownership)
-- [Conventions](#conventions)
-- [Roadmap](#roadmap)
-- [Local setup and commands](#local-setup-and-commands)
-- [The documentation contract](#the-documentation-contract)
-- [Document map](#document-map)
+CipherStash and MongoDB are stronger reference systems for advanced encrypted search. Rails already
+proves that transparent application-layer encryption is useful, and `pydantic-encryption` already
+provides Python/SQLAlchemy encryption, blind indexes, AWS KMS integration, and deferred decryption.
+Their existence is prior art and a source of testable reference behavior—not a reason to avoid
+implementing similar capabilities for deep learning. Cryptalis's coherent center remains:
 
----
+- a versioned Protection Manifest that is the source of truth for crypto, schema, query, lifecycle,
+  and leakage decisions;
+- SQLAlchemy 2.x query semantics and fail-loud compatibility analysis;
+- automatic but reviewable PostgreSQL/Alembic migration planning for existing applications;
+- tenant- and subject-scoped rotation, revocation, cache fencing, and bounded shredding evidence;
+- minimum-leakage recommendations based on declared, statically observed, and runtime-observed
+  query behavior; and
+- verification that measures protected-data exposure after realistic attacks succeed.
 
-## Vision
+Competitor overlap alone is never a stop condition. A feature may be built, integrated, or both after
+considering learning value, system fit, correctness, testability, maintenance and production risk.
+Known searchable-encryption and security-analysis techniques may be independently implemented in
+research profiles with attribution and comparison. Novel or insufficiently reviewed cryptography
+does not enter a production profile merely because implementing it is educational.
 
-Build an open-source, self-hosted **application-layer encryption (ALE) gateway**: a service and SDK
-that encrypt sensitive fields *before they reach the database*, isolate key material per data
-subject so that "delete my data" becomes a single verifiable key destruction, gate every decryption
-behind a policy decision, and record every operation in a tamper-evident audit log.
+## Product thesis
 
-The one-sentence claim the project must be able to defend: **if the database is breached, the
-attacker gets ciphertext.**
+The trusted boundary is the application process. Registered values remain ordinary Python values
+inside that boundary and are encrypted locally before PostgreSQL persistence:
 
-This repository serves two linked workstreams:
+```text
+Python plaintext -> Cryptalis data plane -> PostgreSQL ciphertext
+PostgreSQL ciphertext -> Cryptalis data plane -> Python plaintext
+```
 
-1. **The capstone product** — the gateway, its SDK, its policy engine, its audit log, and a
-   benchmarked integration with a demo backend application (referred to in planning documents as
-   *Smolink*, maintained as a separate repository).
-2. **A possible educational workstream** — only if its source materials and constraints are added to
-   this repository. It remains deferred and, if introduced, must be strictly quarantined from the
-   production path (see [ADR-0006](docs/architecture/0006-educational-module-quarantine.md)).
+The target declaration is intentionally small:
 
-The two share cryptographic subject matter and nothing else. Lab code must never be importable from
-the production path.
+```python
+cryptalis.protect(
+    User,
+    tenant="organization_id",
+    subject="id",
+    fields={
+        "email": {"access": "transparent", "search": ["equality"]},
+        "ssn": {"access": "controlled", "search": []},
+    },
+)
+```
 
-## Scope
+Transparent access is the default. Controlled fields are an optional strict profile for values
+whose accidental disclosure through logs, tracing, serialization, or broad application flows is a
+larger risk. Controlled access is meaningful only when an independently authenticated key authority
+can refuse decryption; a local `reveal()` wrapper alone is not a security boundary.
 
-**In scope**
+## Security claim
 
-- A stateless HTTP service exposing authenticated encrypt / decrypt / key-lifecycle / audit-verify
-  operations.
-- Envelope key management: per-data-subject data-encryption keys (DEKs) wrapped by a key-encryption
-  key (KEK).
-- Crypto-shredding: irreversible destruction of a subject's key material, with a signed erasure
-  certificate.
-- A policy engine (role baseline + attribute conditions) that authorizes every decrypt and fails
-  closed.
-- A hash-chained, periodically signed audit log with an integrity-verification endpoint.
-- A Python SDK thin enough to drop into an existing application's data-access layer.
-- Reproducible benchmarks: baseline application vs. application + gateway, published p50/p95/p99.
-- A quarantined educational module covering the course syllabus.
+Cryptalis is designed to reduce plaintext exposure from:
 
-**Out of scope** — see [Non-goals](#non-goals).
+- stolen database dumps and leaked backups;
+- compromised database credentials and direct SQL extraction;
+- overprivileged database operators when keys are separated from PostgreSQL; and
+- accidental plaintext persistence through supported SQLAlchemy paths.
 
-## Core principles
+It does not prevent SQL injection, broken authorization, XSS, arbitrary code execution in the
+trusted process, full application-host compromise, deliberate plaintext export, or every logging
+mistake. A successful attack and a plaintext disclosure are reported as separate outcomes.
 
-1. **No custom cryptography in the production path.** Every primitive comes from a vetted library.
-   The project's contribution is *correct assembly and lifecycle*, not new algorithms.
-2. **Fail closed.** If the policy engine is unavailable, if a field is not registered in the schema
-   policy, if a key is revoked, if authentication is ambiguous — deny.
-3. **The gateway owns dangerous decisions.** Nonces, AAD construction, key selection, and key
-   versioning are generated by the gateway, never accepted from callers. This is what removes an
-   entire class of misuse bugs.
-4. **Ciphertext is self-describing.** Every ciphertext carries the envelope version, key id, and
-   KEK version needed to decrypt it years later.
-5. **Plaintext and key material never leave the gateway process except through an authorized
-   decrypt response.** Not into logs, not into error messages, not into metrics labels, not into
-   traces.
-6. **Simplest thing that meets the current constraint.** The MVP has one KEK from a sealed
-   environment variable, not a KMS. Complexity is added when a documented requirement demands it,
-   not in anticipation.
-7. **Honest measurement.** The project sits in the data path. Overhead is published as numbers, not
-   adjectives. "Minimal overhead" is a banned phrase.
-8. **Every security claim has a matching test.** A guarantee without an automated test that breaks
-   when the guarantee breaks is a marketing statement.
+## Complete architecture
 
-## Non-goals
+```text
+protect() declarations + observed queries
+                  |
+                  v
+        versioned Protection Manifest
+       /          |          |          \
+      v           v          v           v
+ ORM data plane  schema     lifecycle   explain/verify
+ local AEAD +    compiler   control     doctor/plan
+ query rewrite     |        plane
+      |             v          |
+      +--------> PostgreSQL <---+----> KMS / Vault
+```
 
-These are refusals, not deferrals. Each exists to keep the project's wedge sharp.
+- The **data plane** runs in the application and performs local encryption, decryption, and search
+  token generation. Remote KMS calls are forbidden from scalar ORM processors and normal hot paths.
+- The **schema compiler** derives physical columns, indexes, constraints, and Alembic operations
+  from the manifest. It generates plans; it never mutates production schema at application startup.
+- The **lifecycle control plane** coordinates wrapped keys, generations, cache epochs, tombstones,
+  audit checkpoints, and shredding receipts. It is not a per-field encryption gateway.
+- The **analysis plane** powers `doctor`, `plan`, `schema explain`, and `verify`. Its active
+  workstreams include manifest/model/schema linting, AST, symbols, CFG, call graphs, data flow,
+  taint analysis and a substantial internal pentesting engine. Static and runtime evidence never
+  becomes an unsupported guarantee.
 
-| Non-goal | Why |
-|---|---|
-| A general-purpose KMS or HSM replacement | The gateway *consumes* a KEK. Rebuilding Vault/AWS KMS is a well-known trap and adds no differentiation. |
-| A secrets manager | Application config secrets are a different problem with mature tools. |
-| A general authorization platform | Policy evaluation exists only to gate decryption. Not competing with Cerbos/OpenFGA. |
-| A TLS terminator or network proxy | Transport security is the deployment's job. |
-| Novel cryptographic constructions | See principle 1. |
-| Response-time / egress-only encryption | Explicitly rejected in [ADR-0001](docs/architecture/0001-write-time-encryption-boundary.md); the database must hold ciphertext. |
-| Defence against a fully compromised gateway host with keys in memory | Stated plainly in the threat model. An attacker with process memory access wins. Documented, not hidden. |
-| Searchable encryption / format-preserving encryption in v1 | Genuinely useful, genuinely sharp-edged. Deferred; see [Roadmap](#roadmap). |
+The complete decision, leakage, migration, and failure model is in the
+[architecture blueprint](docs/architecture/README.md).
 
-## Current state (verified)
+## Search capability policy
 
-Everything below is observed from the filesystem on 2026-08-12, not assumed.
+Searchability is opt-in because every representation leaks information.
 
-| Path | What it is | State |
+| Capability | Program status | Minimum consequence |
 |---|---|---|
-| `capstone-final-decision.md` | Planning input selecting write-time encryption and a 14–16 week plan. | Authoritative when it conflicts with other planning inputs. |
-| `prior-art-research.md` | Prior-art research on ORM-layer per-subject crypto-shredding. | Preserved research input; its caveats still apply. |
-| `LICENSE`, `.gitignore`, `docs/` | Repository and documentation baseline. | Present. |
-
-**Not present:** application source, tests, `pyproject.toml`, Dockerfile, Compose configuration,
-CI configuration, migrations, `.env` templates, or repository-local contributor instructions.
-
-**Local toolchain, verified on this machine (2026-08-12):**
-
-| Tool | Version | Note |
-|---|---|---|
-| Python | 3.12.9 | `python` and `py` both on PATH |
-| pip | bundled with 3.12.9 | |
-| Docker | 29.6.1 | `docker compose` v2 subcommand assumed available |
-| Git | initial commit present | repository baseline is under version control |
-| node / npm | **absent** | no frontend workstream; do not introduce JS tooling casually |
-| make | **absent** | **all commands in these docs are raw; no Makefile** |
-| poetry / uv | **absent** | dependency management is `pip` + `pyproject.toml` |
-| psql | **absent** | use `docker compose exec db psql` |
-
-Where a documented decision conflicts between the two planning files, `capstone-final-decision.md`
-wins — it is the later reconciliation and explicitly lists where the research document overstates
-its case (competitor claims, roadmap length, scoring precision).
-
-## Architecture decisions
-
-Each decision below is a **durable contract**. Code that violates one is a bug in the code *or* an
-undocumented revision of the decision — and the second is only acceptable if this section is edited
-in the same change. Detailed records live in [docs/architecture/](docs/architecture/).
-
-### AD-1 — Encryption happens at write time; the database stores ciphertext
-
-**Decision.** Fields are encrypted by an SDK call in the application's data-access layer, before the
-`INSERT`/`UPDATE`. Decryption happens on read, gated by policy. The database never sees plaintext
-for registered fields.
-
-**Why.** The alternative — encrypting on the way out of the API — leaves plaintext in Postgres and
-therefore has no answer to "what if your database is breached?" It also cannot support
-crypto-shredding, because the plaintext still exists. This is the single decision the whole project
-rests on.
-
-**Consequences.** The claim "zero code changes to the protected application" is surrendered; the
-application's data layer must call the SDK. Nested/JSON columns need an explicit field-path
-registration. Queries on encrypted columns lose `LIKE`/range semantics — equality search is deferred
-to a blind-index module, not solved in v1. Full record: [ADR-0001](docs/architecture/0001-write-time-encryption-boundary.md).
-
-### AD-2 — AES-256-GCM as the field AEAD, with gateway-owned nonces and mandatory AAD
-
-**Decision.** AES-256-GCM, 256-bit DEK, 96-bit CSPRNG nonce generated by the gateway on every
-encryption, tag length 128 bits. AAD binds the ciphertext to `(subject_id, table, column,
-record_id)`. Callers cannot supply nonces.
-
-**Why.** GCM is an AEAD: confidentiality and integrity in one primitive, no padding-oracle surface.
-96-bit nonces follow NIST SP 800-38D's default recommendation. Nonce reuse catastrophically breaks
-GCM, so nonce generation is never delegated. AAD prevents an attacker with database write access
-from relocating a ciphertext to another row, column, or subject.
-
-**Consequences.** Every ciphertext is larger than its plaintext by envelope header + nonce + tag;
-storage overhead must be measured, not estimated. AAD components must be stable for the lifetime of
-the row — a schema rename becomes a migration, not a rename. Deterministic equality search is
-impossible by construction (this is intentional). Full record:
-[ADR-0002](docs/architecture/0002-envelope-key-management.md).
-
-### AD-3 — Envelope encryption with per-data-subject DEKs
-
-**Decision.** One DEK per `(subject_id, field_class)`. Each DEK is wrapped by a KEK and stored
-wrapped. The KEK is loaded from a sealed environment variable in the MVP and never written to the
-database. Ciphertexts record `key_id` and `kek_version`.
-
-**Why.** Per-subject scoping is what makes crypto-shredding possible — destroy one subject's key
-material and that subject's ciphertext is unrecoverable, without rewriting immutable rows or audit
-history. Wrapping means a stolen database yields wrapped DEKs that are useless, and KEK rotation is
-a re-wrap of small key rows rather than a re-encryption of all data.
-
-**Consequences.** Key-row count grows with the number of subjects — key sprawl is a real cost and
-must be measured. Unwrapping on every read is a latency cost, mitigated by an in-process DEK cache
-with a TTL (never persisted, never logged). A lost KEK means total, permanent data loss; backup and
-sealing procedure is an operational requirement, not an afterthought. Full record:
-[ADR-0002](docs/architecture/0002-envelope-key-management.md).
-
-### AD-4 — Every decrypt is a policy decision, and the default is deny
-
-**Decision.** Decryption requires a policy allow. Roles are the baseline; attribute conditions
-(purpose, environment, field classification, time window) refine them. Deny overrides allow. A field
-not registered in the schema policy cannot be decrypted, and cannot be encrypted either — it fails
-closed at both ends. Policy-engine unavailability denies.
-
-**Why.** Encryption without authorization just moves the trust boundary to whoever holds an API
-token. Fail-closed on unregistered fields converts "we forgot to classify this column" from a silent
-plaintext leak into a loud startup or request error.
-
-**Consequences.** Onboarding a new encrypted field is a deliberate, reviewed act (a policy change),
-which is the intended friction. A policy misconfiguration causes an outage rather than a leak — that
-trade is chosen on purpose and must be visible in runbooks. Full record:
-[ADR-0003](docs/architecture/0003-policy-gated-decryption.md).
-
-### AD-5 — Append-only hash-chained audit log with signed checkpoints
-
-**Decision.** Every encrypt, decrypt, denial, key-lifecycle operation, and shred appends an entry
-whose hash covers the previous entry's hash. Periodic checkpoints sign a Merkle root over a sequence
-range with ECDSA P-256. `GET /v1/audit/verify` recomputes the chain and reports the first break.
-
-**Why.** SOC 2 / ISO 27001 style trails are repeatedly rebuilt badly. A chain makes silent history
-rewriting detectable by anyone; signed checkpoints anchor the chain so that an attacker who can
-rewrite *and* re-chain the whole table still cannot forge a checkpoint signature.
-
-**Consequences.** Audit writes are on the request path and must not silently fail; the failure
-policy differs by operation (see [ADR-0004](docs/architecture/0004-tamper-evident-audit-log.md)).
-The chain serializes appends — a known throughput ceiling that benchmarks must expose. ECDSA P-256
-is chosen over Ed25519 because `capstone-final-decision.md` specifies ECDSA checkpoints and because
-Lab 4 covers ECC/ECDSA directly; the trade-off is documented in the ADR.
-
-### AD-6 — Integration is a Python SDK, not a proxy
-
-**Decision.** The protected application depends on `ale_gateway_sdk` and calls it in its data-access
-layer. Sidecar and proxy deployment modes are explicitly deferred.
-
-**Why.** A proxy that rewrites SQL is a large, fragile surface and the highest-risk item in the
-original plan (nested JSON re-serialization). An SDK call at the point where the application already
-knows the subject, the table, and the column is simpler and more honest about where the boundary is.
-
-**Consequences.** Non-Python applications are unsupported in v1 — stated openly rather than promised.
-The SDK is in the application's failure domain: its timeout, retry, and circuit-breaker behaviour is
-part of the security contract. Full record: [ADR-0005](docs/architecture/0005-sdk-integration-and-deployment.md).
-
-### AD-7 — The educational module is quarantined from the production path
-
-**Decision.** If educational demonstrations are added, they live in `educational/`, are excluded
-from the installed package, and are enforced by an import-boundary test. No educational source or
-course material exists in this repository today.
-
-**Why.** The syllabus requires broken and obsolete primitives. A production encryption tool must not
-ship them. A test is the only durable enforcement; a comment is not.
-
-**Consequences.** Some duplication between `educational/` and `core/crypto/` is accepted rather than
-sharing code across the boundary. Full record:
-[ADR-0006](docs/architecture/0006-educational-module-quarantine.md).
-
-## Module boundaries and ownership
-
-Target layout. Nothing here exists yet; it is the contract Milestone 0 creates.
-
-```
-cryptalis/
-  src/ale_gateway/
-    app/            # composition root: settings, wiring, lifespan, unseal
-    api/            # HTTP handlers, authentication, rate limiting, error mapping
-    core/
-      crypto/       # AEAD, nonce, AAD, KDF, wrap/unwrap, signing
-      keys/         # DEK/KEK lifecycle: create, rotate, revoke, shred
-      policy/       # pure policy evaluator
-      audit/        # hash chain, checkpoints, verification
-    db/             # SQLAlchemy models, repositories, Alembic migrations
-  sdk/python/       # ale_gateway_sdk — client used by the protected application
-  cli/              # operator CLI: unseal, rotate, shred, verify
-  educational/      # DEFERRED, quarantined educational demonstrations. Not packaged.
-  bench/            # k6 / pytest-bench harness, result data, generated graphs
-  tests/            # unit, integration, e2e, vectors, property, fuzz, boundary
-  deploy/           # Dockerfile, docker-compose.yml, CI workflows
-  docs/             # this documentation system
-```
-
-**Dependency rule** — imports may only point downward in this list:
-
-```
-api  →  core/{keys,policy,audit}  →  core/crypto
- └────→ db (through repository interfaces only)
-```
-
-- `api/` is **thin**: parse, authenticate, delegate to one core call, map errors to status codes.
-  No cryptography, no SQL, no policy logic. A handler longer than ~30 lines is a review finding.
-- `core/crypto/` imports nothing from `db/`, `api/`, or `core/keys`. Pure functions over bytes.
-- `core/policy/` performs **no I/O**. It receives a request context and a policy document and
-  returns a decision with a reason. This is what makes exhaustive policy tests cheap.
-- `db/` is the only place SQL or ORM models appear. Core modules depend on repository *interfaces*
-  defined alongside them, not on SQLAlchemy.
-- `educational/` may import nothing from `src/`, and nothing may import it. Enforced by test.
-
-**Ownership rules**
-
-- The gateway owns `keys`, `audit_log`, `checkpoints`, and `policies` tables, in its own database or
-  schema. The protected application never reads or writes them.
-- The protected application owns its own tables and stores only opaque ciphertext plus `key_id`.
-  It never interprets ciphertext structure.
-- Nobody outside `core/keys/` handles an unwrapped DEK. Unwrapped keys exist only inside the DEK
-  cache and the encrypt/decrypt call frame.
-
-## Conventions
-
-### Data ownership and caching
-
-- Two logical stores: the application's database and the gateway's metadata database. They may run
-  in one Postgres instance in development, separate roles in production. No shared tables.
-- The only cache is the in-process DEK cache: keyed by `key_id`, bounded, TTL-limited, never
-  serialized, never logged, invalidated immediately on revoke or shred. A cached DEK must not
-  survive a shred — that is a correctness bug, and there is a test for it.
-- No plaintext is ever cached.
-
-### Security
-
-- Transport: TLS between application and gateway; mutual TLS is the target for production and is
-  deferred past the MVP, where a bearer token plus network isolation is accepted and *documented as
-  a limitation*.
-- Secrets reach the process through environment variables loaded from a file that is never
-  committed. `.env.example` lists names and shapes; values are placeholders.
-- Key material is never logged, never included in an error, never a metrics label, never in a trace
-  attribute. There is a test asserting that error payloads contain no key or plaintext bytes.
-- Dependencies are pinned with hashes. Every security-relevant claim in this README maps to a test
-  named in [docs/backend-build-checklist.md](docs/backend-build-checklist.md).
-
-### API
-
-- Versioned prefix `/v1`. Breaking a request or response shape means `/v2`, not a silent change.
-- JSON request/response. Endpoints are verbs on resources, all authenticated, all audited, all rate
-  limited.
-- Planned surface (contract for Milestones 1–6):
-  `POST /v1/encrypt`, `POST /v1/decrypt`, `POST /v1/keys/rotate`,
-  `POST /v1/subjects/{subject_id}/shred`, `GET /v1/audit/verify`,
-  `GET /healthz` (no auth, no dependencies), `GET /metrics`.
-- No endpoint returns key material. `/v1/decrypt` is the only endpoint that returns plaintext.
-
-### Error handling
-
-- One error envelope: `{"error": {"code": "policy_denied", "message": "...", "request_id": "..."}}`.
-  `code` is a stable machine string; `message` is human text that never contains secret material.
-- Status mapping: `400` malformed input, `401` unauthenticated, `403 policy_denied`,
-  `404` unknown subject/key, `410 key_shredded` (distinct from 404 — the data provably existed and
-  was erased), `422` unregistered field, `429` rate limited, `503` sealed or dependency unavailable.
-- Exceptions never cross a module boundary raw. Each layer maps to its own error type; `api/` is the
-  only layer that knows HTTP status codes.
-- Decrypt failures are indistinguishable to the caller in *timing-insensitive* respects, but the
-  project does not claim constant-time behaviour — that is out of scope and stated in the threat model.
-
-### Versioning
-
-- **API**: `/v1` path prefix.
-- **Ciphertext envelope**: a version field is the first component of every ciphertext. A new AEAD
-  algorithm or AAD layout increments it; the decrypt path must retain readers for all shipped
-  versions. Removing a reader is a breaking change requiring a documented migration.
-- **Keys**: `key_id` (per DEK) and `kek_version` (per KEK generation) are stored with every
-  ciphertext, so a rotation never orphans data.
-- **Schema**: forward-only Alembic migrations, one per change, reversible where possible.
-- **Releases**: semantic versioning; `v0.x` until the MVP demo runs end to end.
-
-### Data model (contract for Milestone 2 onward)
-
-```
-keys(key_id PK, subject_id, field_class, wrapped_dek, kek_version,
-     state ENUM[active|revoked|shredded], created_at, rotated_at, expires_at)
-audit_log(seq PK, ts, actor, action, resource, decision, reason,
-          prev_hash, entry_hash)
-checkpoints(id PK, seq_start, seq_end, merkle_root, signature, signed_at)
-policies(id PK, document JSONB, version, created_at)
-erasure_certificates(id PK, subject_id, key_ids, issued_at, signature)
-```
-
-Ciphertext itself lives in the application's tables, not here.
-
-## Roadmap
-
-Ordered to avoid premature complexity: the data path is proven before the differentiators, and the
-differentiators land before the polish. Weeks are relative to Week 1, not calendar-dated, because no
-start date is recorded in this repository. Total envelope: **14–16 weeks**, per
-`capstone-final-decision.md` — the research document's 8-month plan is explicitly rejected there.
-
-| Phase | Weeks | Outcome | Status |
-|---|---|---|---|
-| **0 — Bootstrap** | 1 | Git repository, package skeleton, pinned dependencies, CI running an empty-but-real test suite, Docker Compose with Postgres. | Planned |
-| **1 — Crypto core** | 2–3 | `core/crypto` AEAD wrapper, gateway-owned nonces, AAD construction, envelope format v1, known-answer tests against published vectors, round-trip property tests. | Planned |
-| **2 — Key management** | 4–5 | Postgres key store, KEK unseal at boot, DEK create/wrap/unwrap, DEK cache with TTL, `POST /v1/encrypt` and `/v1/decrypt` behind a static token. | Planned |
-| **3 — Policy engine** | 6–7 | Pure evaluator, deny-overrides, unregistered-field fail-closed, role + attribute conditions, exhaustive decision-table tests. | Planned |
-| **4 — Audit log** | 8–9 | Hash chain, `GET /v1/audit/verify`, tamper-detection tests, ECDSA checkpoints. | Planned |
-| **5 — Integration** | 10 | SDK, demo backend wired through it, `docker compose up` runs the full demo, ciphertext visible in the database. | Planned |
-| **6 — Crypto-shredding** | 11 | Per-subject key destruction, `410` on shredded reads, signed erasure certificates, cache-invalidation test. Highest-value differentiator. | Planned |
-| **7 — Rotation & hardening** | 12 | KEK rotation with lazy re-wrap, revocation, fuzzing the decrypt path, negative-path test sweep. | Planned |
-| **8 — Benchmarks** | 13 | Baseline vs. gateway, p50/p95/p99, 1 KB–10 MB payloads, storage overhead, published graphs and method. | Planned |
-| **9 — Educational module** | Deferred | Only after source materials and scope are added; quarantine test and demonstrations. | Deferred |
-| **10 — Release** | 15–16 | Threat model finalized, docs site, demo recording, `v1.0`, public launch. | Planned |
-
-**Deferred past v1.0, deliberately:** pluggable KMS backends, mutual TLS, sidecar/proxy modes,
-AES-GCM-SIV, tokenization/FPE, blind-index searchable encryption, multi-language SDKs,
-OpenTelemetry tracing. Each is a genuine feature; none is required to defend the core claim.
-
-## Local setup and commands
-
-**None of these run yet.** They are the interface Milestone 0 must produce, and they are written
-against the toolchain actually present on this machine (Python 3.12, pip, Docker, git; no make, no
-node, no poetry, no local `psql`).
-
-Shell examples use a POSIX-compatible shell, matching the repository environment.
-
-### First-time setup
-
-```bash
-git init
-```
-
-```bash
-python -m venv .venv
-```
-
-```bash
-source .venv/bin/activate
-```
-
-```bash
-pip install -e ".[dev]"
-```
-
-```bash
-cp .env.example .env
-```
-
-### Generate and seal a development KEK
-
-```bash
-python -m ale_gateway.cli keygen --kek --out .env.local
-```
-
-### Run dependencies
-
-```bash
-docker compose -f deploy/docker-compose.yml up -d db
-```
-
-### Apply migrations
-
-```bash
-alembic upgrade head
-```
-
-### Run the service
-
-```bash
-uvicorn ale_gateway.app.main:app --reload --port 8000
-```
-
-### Test
-
-```bash
-pytest -q
-```
-
-```bash
-pytest -m "not slow" -q
-```
-
-```bash
-pytest --cov=ale_gateway --cov-report=term-missing
-```
-
-### Lint, format, type-check
-
-```bash
-ruff check .
-```
-
-```bash
-ruff format --check .
-```
-
-```bash
-mypy src sdk
-```
-
-### Verify a running instance
-
-```bash
-curl http://localhost:8000/healthz
-```
-
-```bash
-curl -H "Authorization: Bearer $env:GATEWAY_TOKEN" http://localhost:8000/v1/audit/verify
-```
-
-### Full demo stack
-
-```bash
-docker compose -f deploy/docker-compose.yml up --build
-```
-
-### Database shell (no local psql — go through the container)
-
-```bash
-docker compose -f deploy/docker-compose.yml exec db psql -U gateway -d gateway
-```
-
-### Benchmarks
-
-```bash
-python -m bench.run --payloads 1KB,10KB,1MB,10MB --iterations 100000 --out bench/results
-```
-
-Command drift is a documentation bug. If a command here stops working, fix the command or fix this
-file in the same change.
-
-## The documentation contract
-
-This repository treats documentation as part of the build, not a report about it.
-
-1. **Architecture decisions in this README are durable contracts.** A change that contradicts AD-1
-   through AD-7 is not merged until this section is edited in the same change, with the new rationale
-   and the new consequences. Silent drift is the failure mode this rule exists to prevent.
-2. **Every decision states *why*.** A decision without a rationale cannot be revised safely later,
-   because nobody knows what it was protecting against.
-3. **[docs/codebase-walkthrough.md](docs/codebase-walkthrough.md) is updated in the same change** as
-   any modification to source, tests, configuration, migrations, Docker, CI, or dependency pins.
-   This is a merge requirement, not a courtesy.
-4. **[docs/backend-build-checklist.md](docs/backend-build-checklist.md) is the only place milestone
-   status lives.** Nothing is marked complete unless it is verifiable from the repository — code
-   present, tests passing, command runnable.
-5. **No information has two owners.** Setup commands live here. Workflow lives in the playbook.
-   File-by-file explanation lives in the walkthrough. Design rationale lives in an ADR. If something
-   must be referenced twice, link it instead of copying it.
-6. **Status claims carry evidence.** Dates appear only where a file modification time, a git commit,
-   or a verified command supports them.
-
-## Document map
+| No search | Core | Randomized authenticated ciphertext only |
+| Equality, `IN`, scoped uniqueness | Active workstream | Repetition/frequency and access-pattern leakage within an index domain |
+| Equijoin/grouping | Research gate | Cross-column equality leakage and difficult rotation domains |
+| Range/order/`MIN`/`MAX` | Active construction-research workstream; reviewed production path only | Order and query-pattern leakage; high attack and migration complexity |
+| Prefix/text/fuzzy | Active experimental workstream | Token/pattern leakage and substantial storage amplification |
+| JSON/path search | Active experimental workstream | Schema/path/query-pattern leakage and companion-index complexity |
+
+Unsupported operators fail loudly. Learning value can justify researching a capability; enabling it
+still requires an explicit leakage, lifecycle, migration and correctness decision.
+
+## Flat ambitious program
+
+- **All workstreams are active:** core protection, advanced searchable encryption, schema and
+  migrations, distributed key lifecycle, Doctor/SAST, Pentest/DAST, Verify, protection/evidence
+  graphs, networking/PCAP analysis, DevSecOps integration, and controlled-access research.
+- **Flat does not mean unverified:** each workstream may advance immediately and independently, but
+  nothing enters a production profile or public claim until its own threat, correctness, leakage,
+  safety, benchmark, compatibility, and review gates pass.
+- **Solo does not mean narrow:** one builder may move among workstreams according to learning value,
+  discovered dependencies, risk, and available experiments. Manual file-by-file implementation and
+  explicit evidence remain mandatory.
+
+The staged learning roadmap and build-versus-integrate decisions live in the
+[learning-first research philosophy](docs/learning-first-research-philosophy.md).
+
+## Solo build workflow
+
+Cryptalis is built by one person. Implementation proceeds one file at a time: understand the
+invariant, manually type a failing test, run it, manually type the corresponding implementation,
+inspect the evidence, and cross the file's evidence gate before receiving the next file. AI assistance may
+edit documentation directly, but does not write source, tests, migrations, configuration or CI into
+the repository. See the [complete solo build guide](docs/cryptalis-build-guide.md).
+
+## Active program scope
+
+The active program includes the complete platform:
+
+- Python 3.12+, SQLAlchemy 2.x, FastAPI-friendly sync and async examples, PostgreSQL, and Alembic;
+- versioned manifest and explainable physical schema for randomized ciphertext and equality indexes;
+- transparent insert/update/load through one declared ORM path with normal Python values;
+- active tenant key context so no remote provider call occurs during synchronous attribute access;
+- one local provider and one production KMS adapter behind a narrow wrapping interface;
+- tenant branch keys, subject key generations, rotation, revocation, cache fencing, and a bounded
+  shredding workflow;
+- resumable expand/backfill/verify/cutover/contract migration for one existing table;
+- `doctor`, `schema explain`, and `verify` with a versioned compatibility catalogue;
+- Web Application Pentesting via OWASP ZAP plus deterministic database-exposure scenarios; and
+- pinned benchmarks against baseline SQLAlchemy and `pydantic-encryption` where comparable.
+
+It also includes independently researched range/order, equijoin/grouping, text, fuzzy and structured
+search; Doctor syntax IR, CFG, data flow and interprocedural taint; an internal endpoint graph,
+crawler, authentication/state engine, mutators, payloads, oracles and replay; writer provenance;
+distributed lifecycle fault injection; PCAP/flow correlation; controlled-access authority; and
+signed rule/scenario ecosystems.
+
+Universal interception, autonomous production migration, public-target exploitation, custom root
+key custody, and unsupported production-readiness or compliance claims remain excluded because they
+violate the trust model or evidence discipline—not because they exceed a course schedule.
+
+## Documentation
 
 | Document | Owns |
 |---|---|
-| `README.md` (this file) | Vision, principles, non-goals, architecture decisions, boundaries, conventions, roadmap, commands. |
-| [ENGINEERING_PLAYBOOK.md](ENGINEERING_PLAYBOOK.md) | How work gets done: daily loop, branches, commits, PRs, review, releases, secrets, migrations, rollback, observability, decision-making. |
-| [docs/backend-build-checklist.md](docs/backend-build-checklist.md) | Executable milestones with tests-first ordering, commands, and status. |
-| [docs/codebase-walkthrough.md](docs/codebase-walkthrough.md) | Living file-by-file guide in execution order. |
-| [docs/architecture/](docs/architecture/) | Design records for complex or security-sensitive areas. |
-| `capstone-final-decision.md` | Historical planning input. Authoritative on project scope and timeline. |
-| `prior-art-research.md`, `docs/prior-art.md` | Research input and its maintained summary; external claims require primary-source verification. |
+| This README | Product promise, threat boundary, complete shape, and active program scope |
+| [Learning-first research philosophy](docs/learning-first-research-philosophy.md) | Governing evaluation criteria, full learning architecture, matrices, and flat workstream roadmap |
+| [Complete solo build guide](docs/cryptalis-build-guide.md) | Entire system in plain language, flat workstream map, dependencies, target files, learning goals, and evidence gates |
+| [Architecture blueprint](docs/architecture/README.md) | Accepted design, query/leakage contract, lifecycle, migration, and fatal gates |
+| [Prior art](docs/prior-art.md) | Competitive comparison and claim discipline |
+| [Security assurance research](docs/security-assurance-suite-research.md) | Adversarial Doctor, Pentesting, Verify, evidence, integration, and safety decision |
+| [Backend checklist](docs/backend-build-checklist.md) | Per-workstream implementation and evidence status |
+| [Engineering playbook](ENGINEERING_PLAYBOOK.md) | Contribution, testing, migration, and release process |
+
+The previous gateway-first ADR set was removed because it encoded a superseded Model B architecture
+and repeated decisions now owned by the blueprint.
+
+## Current next step
+
+Begin the high-risk prototypes in the [backend checklist](docs/backend-build-checklist.md) while
+advancing the other active workstreams through isolated research, fixtures and experiments. An
+affected production claim must stop or be redesigned if transparent sync/async behavior, fail-loud
+bypass handling, subject-key fencing, or migration safety cannot be demonstrated without
+framework-scale fragility.
