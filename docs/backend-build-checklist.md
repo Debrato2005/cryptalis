@@ -1,214 +1,90 @@
-# Backend Build Checklist
+# Backend build and evidence checklist
 
-This is the sole implementation tracker. Architecture rationale belongs in the
-[blueprint](architecture/README.md), and complete learning scope belongs in the
-[learning-first philosophy](learning-first-research-philosophy.md). Nothing marked below is
-implemented unless `[x]` includes executable evidence.
+Current state as of 2026-10-01: documentation only. This file is the authority for capability
+implementation state. [Manifest
+contracts](architecture/manifest-context-api.md#terms-and-maturity) define terms and maturity.
+[Architecture owners](architecture/README.md#documentation-ownership) define rationale. The
+[build guide](cryptalis-build-guide.md) defines learning order. Every workstream remains active
+program scope.
 
-The flat solo workstream map, dependencies and manual file-by-file workflow are in the
-[complete build guide](cryptalis-build-guide.md). This checklist records state; the guide explains
-how to advance any workstream.
+The markers mean:
 
-Markers: `[ ]` not started, `[~]` partial, `[x]` verified, `[-]` rejected/deferred.
+| Marker | Meaning |
+|---|---|
+| `[ ]` | No executable evidence |
+| `[~]` | Documented or partially specified |
+| `[x]` | Implemented, with required reproducible executable evidence linked and reviewed |
+| `[-]` | Rejected for a named profile, with a reason |
 
-## Current status — 2026-08-22
+No capability is marked complete. A successful documentation command does not establish runtime
+maturity. Human and AI review within the project is first-party. Independent review requires a
+named external reviewer and disclosed independence.
 
-The repository is pre-code. The documentation reset to transparent Model A, a Protection Manifest,
-and a local data plane is complete only after the consistency checks at the end of this file pass.
+## State and next artifacts
 
-| Workstream | State | Evidence decision |
-|---|---|---|
-| 0. Architecture and claims | `[~]` | Documents contain one coherent, non-gateway core |
-| 1. Fatal-risk prototypes | `[ ]` | Accept, redesign, or reclassify affected capabilities |
-| 2. Manifest and equality vertical slice | `[ ]` | One supported ORM path works end to end |
-| 3. Schema and migration compiler | `[ ]` | Existing plaintext table migrates safely |
-| 4. Subject lifecycle | `[ ]` | Rotation/revocation/shredding survive multi-worker tests |
-| 5. Analysis and verification | `[ ]` | Doctor/plan/verify and attack-impact evidence are reproducible |
-| 6. Hardening | `[ ]` | Compatibility and claims match measurements |
+Each row has an ID, maturity and status, dependencies, owner and gate, required artifact, and
+exit rule. Rows group related properties. They do not limit the number of features.
 
-Workstreams are active in parallel. Numbers provide stable references and expose dependencies; they
-do not prevent work in a higher-numbered area. Every workstream must meet its own gate before its
-results support an integrated or production-facing claim.
+All executable artifacts below are future targets. None exists today. Filenames name required
+evidence, not created files. SPECIFIED means a contract and gate exist. It does not mean the
+gate passed. For the rows marked RESEARCHED here, construction selection remains open. A failed
+gate demotes only dependent claims.
 
-## Workstream 0 — architecture and claims
+| ID / capability | Maturity / status | Dependency | Owner / required evidence / exit |
+|---|---|---|---|
+| C00 Documentation architecture | SPECIFIED `[~]` | Current tree + primary ledgers | [Claims audit](documentation-claims-audit.md): actual local checks and first-party review, independent review pending; no runtime promotion |
+| C01 Manifest schema/canonical compiler | SPECIFIED `[ ]` | Stable IDs/catalogue | [G-MANIFEST](architecture/manifest-context-api.md#version-compatibility-and-research-gates): two-language vectors, malformed corpus, deterministic diff results; 100% agreement/0 ambiguity |
+| C02 Tenant/subject provenance P0 | SPECIFIED `[ ]` | Host authn/authz adapter | [G-CONTEXT](architecture/manifest-context-api.md#version-compatibility-and-research-gates): all request/task/pool/job/restore substitutions; 0 unauthorized load/SQL/release |
+| C03 Suite/envelope freeze P10 | SPECIFIED `[ ]` | C01/C02 + exact crypto build | [Crypto gates](architecture/crypto-search-lifecycle.md#research-gates): vectors/tamper/RNG/fork/platform/size/independent review; chosen suite/framing accepted before DB checks |
+| C04 ORM logical/physical coherence P1 | SPECIFIED `[ ]` | C01..C03 + local keys | [ORM gates](architecture/orm-schema-migration.md#research-gates): sync/async history/flush/rollback/expire/loader cells; no stale physical state or plaintext SQL |
+| C05 Query IR / bypass classification P2 | SPECIFIED `[ ]` | C04 + context | [ORM gates](architecture/orm-schema-migration.md#research-gates): operator/alias/raw/bulk/Core/direct-driver matrix; T/R paths match declared behavior, D/U gaps visible |
+| C06 Warm/greenlet/deferred comparison P3 | SPECIFIED `[ ]` | C02..C04 + provider fixture | [ORM gates](architecture/orm-schema-migration.md#research-gates): real adapted remote alternative, latency/loop-lag/cancellation/N+1/outage; no strawman blocking-only comparison |
+| C07 Stable AAD / legitimate moves P4 | SPECIFIED `[ ]` | C03/C04 | [Crypto](architecture/crypto-search-lifecycle.md) + [ORM](architecture/orm-schema-migration.md): rename/table split/record/tenant transfer crash vectors; raw relocation fails, approved move resumes |
+| C08 Equality/IN/no-search | SPECIFIED `[ ]` | C01..C05 + leakage policy | [Crypto gates](architecture/crypto-search-lifecycle.md#research-gates): normalization/domain/null vectors, query correctness, attacks/cost; no undeclared capability |
+| C09 Scoped uniqueness / rotation P5 | SPECIFIED `[ ]` | C08 + DB protocol | [ORM](architecture/orm-schema-migration.md) + [crypto](architecture/crypto-search-lifecycle.md): concurrent normalized duplicates/nulls/old-new writer fence/dual terms; exactly one logical uniqueness domain |
+| C10 Physical schema/compiler | SPECIFIED `[ ]` | C03 frozen bytes/parser -> null model -> CHECK | [ORM gates](architecture/orm-schema-migration.md#research-gates): clean/drift/collision/constraints/live-schema fixtures; plans only, shape not authenticity |
+| C11 Alembic operation/render/comparator | SPECIFIED `[ ]` | C10 + exact API lane | [ORM gates](architecture/orm-schema-migration.md#research-gates): generated/replayed revisions and manifest bindings; immutable reviewable proposals, no auto-apply |
+| C12 Migration recovery P6 | SPECIFIED `[ ]` | C04/C09..C11 + writer grants | [ORM gates](architecture/orm-schema-migration.md#research-gates): phase/crash/two-worker/CAS/mixed-app/replica/invalid-index/restore corpus; complete row/index coverage, no unapproved contract |
+| C13 Provider hierarchy/adapters | SPECIFIED `[ ]` | C02/C03 + custody registry | [Crypto gates](architecture/crypto-search-lifecycle.md#research-gates): exact AWS/GCP/Vault states/outage/audit/restore/import vectors; no fictional common destroy guarantee |
+| C14 Cache/epochs/leases/fence P7 | SPECIFIED `[ ]` | C13 + external control state | [Crypto gates](architecture/crypto-search-lifecycle.md#research-gates): partition/suspend/resume/clock/commit/restart faults; enforced declared bound, pending on uncertainty |
+| C15 Rotation/revocation | SPECIFIED `[ ]` | C12..C14 | [Crypto gates](architecture/crypto-search-lifecycle.md#research-gates): duplicate/concurrent request state tests; old read generation declared, new denied access fenced |
+| C16 Bounded shred/restore receipts | SPECIFIED `[ ]` | C14/C15 + independent tombstones | [Crypto gates](architecture/crypto-search-lifecycle.md#research-gates): fresh/stale/DB/provider/VM restore; distinguish managed denial from recoverable offline keys, residue listed |
+| C17 Controlled access | SPECIFIED `[ ]` | C02/C13..C16 + separate release authority | [Crypto gates](architecture/crypto-search-lifecycle.md#research-gates): purpose/end-user/workload/cancellation/serialize denial; local wrapper never stronger boundary alone |
+| C18 Doctor AST/IR/symbol/CFG/taint P9 | SPECIFIED `[ ]` | C01 + labeled corpus | [Assurance gates](architecture/assurance-evidence.md#research-gates): safe/unsafe/ambiguous/mutant precision/recall and cost per rule; G-A10 compares restricted DSL and typed native authoring; unknown Python dynamism visible |
+| C19 Minimum-leakage planner | SPECIFIED `[ ]` | C05/C18 + scoped runtime facts | [Assurance](architecture/assurance-evidence.md): recommendation corpus/leakage/migration attribution; never alters policy or infers unobserved absence |
+| C20 Graph/writer provenance P8 | SPECIFIED `[ ]` | C01/C10/C13/C18 + evidence DTOs | [Assurance gates](architecture/assurance-evidence.md#research-gates): explicit IDs/contradictions/registered-observed-unknown writers + mature-tool baseline; material explanation/impact value |
+| C21 Verify / exposure oracle P8 | SPECIFIED `[ ]` | Canonical result DTO + collectors + selected invariant | [Assurance gates](architecture/assurance-evidence.md#research-gates): health/watermarks/positive-negative-mutant-restored controls; missing evidence INCONCLUSIVE |
+| C22 Pentest/DAST and replay | SPECIFIED `[ ]` | C21 + safety broker + synthetic lab | [Assurance gates](architecture/assurance-evidence.md#research-gates): baseline/protected/one-mutant attacks, containment escapes/cleanup budgets and G-A11 role/state/replay; exploitation and exposure separate |
+| C23 Network/PCAP | SPECIFIED `[ ]` | C22 scoped runs + capture permission | [Assurance gates](architecture/assurance-evidence.md#research-gates): TShark/Zeek/Nmap fixture correlation and G-A11 loss/decoder trials; TLS observation limits and session-secret hygiene |
+| C24 Evidence/bundles/integrity | SPECIFIED `[ ]` | C01 + result schema | [Assurance gates](architecture/assurance-evidence.md#research-gates): redaction/parser/signature/replay/compatibility mutants; signatures != independent truth |
+| C25 CLI/config/errors/observability | SPECIFIED `[ ]` | Canonical public contracts + implemented slice | [API/config](architecture/manifest-context-api.md): exit/result mapping and safe default fixtures; no concealed network/destructive action |
+| C26 Lab/CI/import quarantine | SPECIFIED `[ ]` | C21/C22/C24 + package build | [G-BOUNDARY](architecture/manifest-context-api.md#version-compatibility-and-research-gates), [assurance](architecture/assurance-evidence.md): seeded forbidden imports/credential/payload wheel checks; no CI configuration exists |
+| C27 Compatibility/support | SPECIFIED `[ ]` | C04..C17 + exact versions | [ORM](architecture/orm-schema-migration.md): every admitted matrix cell from clean checkout; no version supported before release evidence |
+| C28 Performance/storage hypotheses | SPECIFIED `[ ]` | Correct slice + equivalent baselines | [Assurance](architecture/assurance-evidence.md): pinned raw load/error/latency/cache/storage/migration samples; no cherry-picked/single-run claim |
+| C29 Independent production review | RESEARCHED `[ ]` | Required C rows + external reviewer | [Playbook](../ENGINEERING_PLAYBOOK.md): cryptography/provenance/migration/distributed-control/process/evidence review; reviewer identity/findings/resolution published |
+| C30 Adoption/usability | SPECIFIED `[ ]` | Prototype APIs/workflows | [G-API](architecture/manifest-context-api.md#version-compatibility-and-research-gates): five-maintainer task study, evidence of usability (not population demand) |
+| C31 Advanced search | RESEARCHED `[ ]` | Published constructions/independent oracles | [Crypto gates](architecture/crypto-search-lifecycle.md#research-gates): join/group/range/order/extrema/prefix/substring/text/fuzzy/JSON individually; no blanket search approval |
+| C32 Broader systems tracks | RESEARCHED `[ ]` | Core interfaces only for integration | [Research gates](learning-first-research-philosophy.md#broader-research-gates): Django/DB/languages/UI/policy/honeytokens/anomaly/attack graph/multiregion/packs; each threshold met before supported integration |
 
-- [x] Select transparent application values as the primary access model.
-- [x] Remove the per-field gateway and mandatory reveal from the primary data path.
-- [x] Retain controlled access as a separately justified active field-profile workstream.
-- [x] Define the Protection Manifest as the canonical crypto/schema/query/lifecycle IR.
-- [x] Establish equality, `IN`, and scoped uniqueness as the first production-candidate search
-  profile while keeping advanced search as active research workstreams.
-- [x] Document the conflict between tenant-wide search and strict subject shredding.
-- [x] Select Web Application Pentesting as the mandatory academic module; keep PCAP, TShark, Zeek
-  and Nmap as active networking and evidence workstreams.
-- [x] State competitor strengths and project stop conditions.
-- [x] Adopt learning value, rather than novelty, as a first-class scope criterion; competitor
-  overlap alone is not a rejection reason.
-- [ ] Freeze the initial AEAD/HKDF/index suite only after library, misuse-resistance, FIPS need,
-  envelope size, and independent-review analysis.
-- [ ] Validate product demand with at least five maintainers of real SQLAlchemy applications.
-- [ ] Record exact supported Python, SQLAlchemy, Alembic, driver, and PostgreSQL versions.
+## Evidence admission
 
-## Workstream 1 — fatal-risk prototypes
+A future evidence entry must include:
 
-These prototypes are disposable. Other workstreams may proceed, but they cannot use unproven ORM,
-query, or lifecycle assumptions as integrated evidence until these risks are answered.
+- Capability, invariant, and gate IDs
+- Exact source revision and digest of the dirty working snapshot
+- Manifest, schema, target, and tool versions
+- Command, raw machine results, and controls
+- Limitations and reviewer
+- Artifact hashes and stable repository location
 
-### ORM state semantics
+An absent path is not an artifact. Failed and inconclusive results remain visible. `[x]`
+requires a committed reproducible artifact and an independently replayable command under the
+applicable contract. Prose and signatures alone do not satisfy this requirement.
 
-- [ ] Demonstrate immutable application IDs, tenant/subject resolution, and mixed-subject flush.
-- [ ] Keep public plaintext separate from hidden ciphertext/search attributes.
-- [ ] Test insert, update, autoflush, rollback, retry, expire, refresh, merge, detach, and reload.
-- [ ] Test Pydantic/FastAPI serialization and generated log filtering.
-- [ ] Prove ciphertext relocation across tenant/subject/table/field/record fails authentication.
+Documentation check outputs in the claims audit record commands from the dated documentation
+pass. They are an uncommitted working record, not committed capability evidence or independent
+review.
 
-### Sync and async behavior
-
-- [ ] Prove no remote provider call occurs in scalar bind/result processors or attribute access.
-- [ ] Prototype explicit tenant key warm-up for sync and async protected-session contexts.
-- [ ] Measure cold start, cache hit/miss, pool reuse, cancellation, and provider outage.
-- [ ] Reject the architecture if transparent async behavior requires hidden event-loop blocking.
-
-### Query and bypass behavior
-
-- [ ] Rewrite `==` and `IN` through a comparator into typed equality-token binds.
-- [ ] Reject `LIKE`, `ILIKE`, range, sort, aggregation, and undeclared join semantics before SQL.
-- [ ] Catalogue ORM bulk DML, Core, `text()`, executemany, direct driver, migration, and ETL paths.
-- [ ] Add a database domain/check that rejects obvious plaintext and missing required index terms.
-- [ ] State which bypasses can only be detected operationally rather than blocked.
-
-### Lifecycle feasibility
-
-- [ ] Prototype tenant branch and wrapped subject-key generations without per-subject cloud KMS keys.
-- [ ] Fence two worker caches with epochs, leases, acknowledgements, and bounded TTL.
-- [ ] Simulate a partitioned/offline worker and verify shredding remains pending.
-- [ ] Restore an old database snapshot and prove the external tombstone prevents key resurrection.
-
-### Workstream 1 evidence gate
-
-- [ ] Write an evidence report choosing accept, redesign, isolate as research, integrate existing
-  work, or reject each affected capability.
-- [ ] Prevent a failed or unbounded capability from making integrated production claims; continue
-  independent workstreams whose assumptions remain valid.
-
-## Workstream 2 — manifest and searchable-protection data plane
-
-- [ ] Define canonical manifest schema, validation errors, hash, version, and deterministic names.
-- [ ] Compile `protect()` declarations without mutating SQLAlchemy metadata ambiguously.
-- [ ] Implement versioned authenticated envelopes and frozen cross-provider test vectors.
-- [ ] Implement randomized payload encryption and domain-separated equality tokens.
-- [ ] Declare normalization/null/index-domain versions and reject undeclared defaults.
-- [ ] Map logical attributes to ciphertext and equality physical columns.
-- [ ] Support one sync and one async ORM path with ordinary Python values.
-- [ ] Support equality, `IN`, and tenant-scoped uniqueness with fail-loud alternatives.
-- [ ] Generate `schema explain` output from the manifest.
-- [ ] Prove database-only extraction returns no seeded plaintext for protected columns.
-
-## Workstream 3 — schema and migration compiler
-
-- [ ] Generate reviewable physical schema diffs; never mutate production schema at startup.
-- [ ] Implement Alembic custom operations, renderers, and autogenerate comparator integration.
-- [ ] Compare manifest, SQLAlchemy metadata, live PostgreSQL schema, and Alembic history.
-- [ ] Plan `NOT NULL`, equality-backed `UNIQUE`, and rejection of unsafe `CHECK`/default/generated/FK
-  transformations.
-- [ ] Implement inspect/expand/backfill/verify/cutover/observe/contract states.
-- [ ] Make backfill chunked, resumable, idempotent, redacted, and locally encrypted.
-- [ ] Exercise failure and restart at every state transition.
-- [ ] Prove plaintext compatibility switches fail closed after cutover.
-- [ ] Document rollback before and after plaintext contraction.
-
-## Workstream 4 — subject lifecycle
-
-- [ ] Implement the narrow provider wrap/unwrap/version/status contract.
-- [ ] Add deterministic local-development provider and one production provider adapter.
-- [ ] Implement tenant and subject generation state machines with idempotency.
-- [ ] Bind cache entries to tenant, generation, operation, manifest, TTL, and capacity.
-- [ ] Implement rotation, decrypt-old/encrypt-new, and controlled re-encryption.
-- [ ] Implement revocation fencing before cache eviction and key-record changes.
-- [ ] Implement shredding pending/completed/failed states and multi-worker acknowledgements.
-- [ ] Delete subject-owned indexes and report shared index residue.
-- [ ] Persist restore-resistant tombstones outside application snapshot authority.
-- [ ] Generate signed receipts that state assumptions, gaps, and exact covered resources.
-- [ ] Test provider-specific delayed deletion and never report it as immediate destruction.
-
-## Workstream 5 — analysis and verification
-
-### `doctor` and `plan`
-
-- [ ] Detect manifest/model/schema/Alembic drift and unsafe plaintext-compatible storage.
-- [ ] Detect known raw/Core/bulk/direct-driver imports and runtime statement shapes.
-- [ ] Instrument SQLAlchemy expressions during tests with source locations and redacted operands.
-- [ ] Parse pinned Python versions with CPython `ast`; retain spans and generate a stable Cryptalis
-  syntax IR.
-- [ ] Build module/import indexes, CPython symbol tables, scopes, qualified-name resolution and
-  explicit unresolved/dynamic gaps.
-- [ ] Implement conservative structural lint rules for raw/Core/bulk/direct-driver bypasses,
-  protected-value sinks, unsafe decrypt/reveal, migrations and provider/configuration mistakes.
-- [ ] Build per-function CFGs and local definition/use data flow for a labeled fixture corpus.
-- [ ] Add typed taint sources, sinks, propagators, transformations and sanitizers for protected
-  plaintext, untrusted input, SQL fragments, secrets, ciphertext and search terms.
-- [ ] Emit path explanations and classify findings as syntactic, static-modeled, runtime-observed,
-  exposure-confirmed or inconclusive.
-- [ ] Export/import CodeQL and Semgrep models/results and differentially compare the same fixtures.
-- [ ] Recommend minimum observed capabilities without modifying the manifest.
-- [ ] Report leakage, storage, migration, rotation, and shredding consequences of each recommendation.
-
-### `verify` and pentesting
-
-- [ ] Quarantine scanners, vulnerable fixtures, payloads, and synthetic credentials from production
-  packages and wheels.
-- [ ] Pin baseline and protected reference deployments and seed positive/negative controls.
-- [ ] Integrate OWASP ZAP Automation Framework for local authorized targets.
-- [ ] Build a bounded internal learning prototype for endpoint import, request mutation, response
-  differential analysis, deterministic replay and common evidence output.
-- [ ] Add deterministic DB-credential, SQL-extraction, bypass, migration, provider-outage, cache,
-  shredding/restore, audit-mutation, and artifact-leakage scenarios.
-- [ ] Report execution, exploit, DB access, extraction, exposure, and control outcomes independently.
-- [ ] Treat missing evidence or controls as inconclusive.
-- [ ] Build PCAP/TShark/Zeek ingestion and correlation with explicit TLS observation limits; use
-  PyShark only as an evaluated wrapper where it adds measurable value.
-- [ ] Use Nmap for deployment exposure and a networking-learning comparison, never as proof of field
-  protection.
-
-## Workstream 6 — hardening and evidence
-
-- [ ] Build a versioned compatibility matrix from executable tests.
-- [ ] Add malformed-envelope/index fuzzing and property tests.
-- [ ] Scan logs, traces, errors, audits, receipts, migrations, reports, and build artifacts for seeded
-  plaintext, tokens, keys, and credentials.
-- [ ] Benchmark baseline SQLAlchemy, Cryptalis, and `pydantic-encryption` on pinned hardware/software.
-- [ ] Measure throughput, p50/p95/p99, CPU, memory, provider calls, cache behavior, migration speed,
-  database size, and index growth.
-- [ ] Reproduce a CipherStash comparison only where the workload and environment are genuinely
-  equivalent.
-- [ ] Obtain independent cryptographic and migration review before any production-safety claim.
-- [ ] Re-run prior-art, licensing, dependency, regulatory, and product-demand research.
-- [ ] Publish limitations and failed experiments alongside successful results.
-
-## Active advanced-research gates
-
-- [ ] Controlled-access fields: require a separate identity/key-authority design and usability study.
-- [ ] Equijoin/grouping: require explicit shared-domain leakage and shredding design.
-- [ ] Range/order/extrema research: independently study a published construction, vectors, attacks,
-  leakage and migration; production use additionally requires reviewed implementation or review.
-- [ ] Prefix/text/fuzzy research: require token-leakage, false-positive, storage, rotation and
-  comparative evidence.
-- [ ] JSON/path research: require path-schema, companion-table, drift and shredding evidence.
-- [ ] Doctor depth: stable semantic IR, CFG, call graph, function summaries, interprocedural taint,
-  async/FastAPI models, rule DSL and precision/recall benchmarks.
-- [ ] Pentest depth: crawler, endpoint/state graph, authentication workflows, payload/mutator engine,
-  access-control/IDOR checks, response oracles, minimization and signed scenario packs.
-- [ ] Network depth: capture orchestration, TShark/Zeek ingestion, flow/session reconstruction,
-  size/timing leakage and protocol/evidence correlation.
-- [ ] Acra-inspired experiments: SQL policy/firewall, anomaly reactions, honeytokens and signed audit
-  evidence, each bounded to a research question.
-- [ ] Explore Django, other databases, multi-language SDKs, admin UI and a general policy DSL as
-  active comparative workstreams; require demonstrated core abstractions and learning value before
-  committing to supported production integrations.
-
-## Documentation verification
-
-- [x] A terminology scan finds no active gateway-first or mandatory-opaque architecture claims.
-- [x] Every local Markdown link resolves.
-- [x] Planned, prototyped, measured, and implemented statements remain visibly distinct.
-- [x] The architecture, prior-art, checklist, and playbook have no conflicting owners.
+The documentation pass created no application source, tests, migrations, build configuration, or
+CI configuration. Runtime and empirical rows remain unchecked after design consolidation. Do not
+invent executable scripts to close a documentation checkbox.

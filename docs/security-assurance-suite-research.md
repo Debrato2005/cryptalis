@@ -1,49 +1,59 @@
 # Cryptalis Security Assurance Suite: Adversarial Architecture Research
 
-Status: Research decision; no implementation exists
+Status: Research decision. No implementation exists
 
-Last reviewed: 2026-08-22
+Last reviewed: 2026-10-01
 
-Scope: `doctor`, `plan`, `verify`, the quarantined pentesting harness, evidence/reporting, and the
-interfaces between them. This document does not authorize active scanning of any real target.
+Scope: `doctor`, `plan`, `verify`, the quarantined pentesting harness and evidence/reporting.
+This document owns research questions, comparison rationale, educational engine tracks and product
+falsifiers. Normative analysis, graph, scenario, safety, collector, evidence and gate contracts live
+in [Assurance/evidence architecture](architecture/assurance-evidence.md). Shared declarations and
+invariants live in the [architecture hub](architecture/README.md). The dated
+[tool evidence ledger](research/assurance-tool-evidence.md) owns current external capabilities.
+[Prior art](prior-art.md) owns protection-product comparisons. The
+[backend checklist](backend-build-checklist.md) owns implementation state.
+
+All proposed pipelines remain unimplemented. This research does not authorize active scanning of any real target.
 
 ## Executive decision
 
 **SECURITY ASSURANCE SHOULD BE A MAJOR SECONDARY CRYPTALIS SELLING POINT — conditionally.**
 
-The position survives only if Cryptalis owns the semantic correlation layer: it must connect a
-declared protected field to its model mapping, physical columns and indexes, migration history,
-write paths, key/cache lifecycle, exercised attack path, observed artifacts, and final exposure.
-That is a narrower and more defensible product than “security scanner for encrypted apps.”
+The position survives only if Cryptalis owns the semantic correlation layer. This layer must connect each declared protected field to its model mapping.
+It must also connect physical columns and indexes, migration history, write paths, and key and cache lifecycle.
+The remaining links connect the exercised attack path, observed artifacts and final exposure.
+This defines a narrower, more defensible product than “security scanner for encrypted apps.”
 
-This product-positioning conclusion is separate from the learning decision. Cryptalis may still
-build substantial SAST, DAST, template, SQL-policy and network-analysis subsystems when construction
-offers high educational value and a credible correctness benchmark. Generic breadth does not become
-the product moat, but competitor overlap no longer vetoes the work. The governing evaluation model
+This product-positioning conclusion is separate from the learning decision. Cryptalis may still build substantial SAST, DAST, template, SQL-policy and network-analysis subsystems.
+This work requires high educational value and a credible correctness benchmark. Generic breadth does not establish a competitive advantage.
+But competitor overlap no longer excludes the work. The governing evaluation model
 is in the [learning-first research philosophy](learning-first-research-philosophy.md).
 
 The broad claim does not survive scrutiny:
 
-- Acra already combines data protection with a SQL firewall, anomaly reactions, honeytokens,
-  security logging, signed audit logs, key inventory, and SIEM integration.
+- Acra documents data protection with a SQL firewall, anomaly reactions, honeytokens,
+  security logging, cryptographically protected exported audit logs, key inventory, and SIEM integration.
 - CipherStash now documents planning, implementation, validation, status, phased encryption, and
   drift-oriented workflows in addition to searchable encryption and a proxy.
-- Thales, Fortanix, and Imperva are much stronger at estate-wide discovery, posture, activity
+- Thales, Fortanix, and Imperva document estate-wide discovery, posture, activity
   monitoring, centralized key inventory, and compliance operations.
 - ZAP, Burp Suite, Nuclei, sqlmap, CodeQL, Semgrep, Trivy, Gitleaks, Grype, Nmap, TShark, and Zeek
-  already own mature generic detection engines and formats.
+  document established generic detection engines and formats.
 - A scanner operated by the same product that supplies the protection control is not independent
   assurance. Its evidence can be reproducible and tamper-evident, but it remains first-party.
 
-Therefore Cryptalis earns the secondary selling point only by answering a question those tools do
-not answer together:
+These qualitative comparisons describe documented capabilities under the dated ledgers. They are not measured rankings.
+They do not establish that competitors cannot supply equivalent correlation. Research must compare
+actual pinned products and editions under matching scope before claiming a gap.
 
-> When a specific attack or operational fault reaches this SQLAlchemy application's protected-data
-> boundary, which declared assets become plaintext, ciphertext, search metadata, key material, or
-> nothing at all—and what evidence supports that conclusion?
+Thus, Cryptalis earns the secondary selling point only if it shows added value for this application-specific question:
 
-If the suite becomes only a wrapper around ZAP plus generic lint rules, demote its product claim to
-developer tooling; an independently built learning engine must still demonstrate measurable depth.
+> A specific attack or operational fault reaches this SQLAlchemy application's protected-data boundary.
+> Which declared assets become plaintext, ciphertext, search metadata, key material, or nothing at all?
+> What evidence supports that conclusion?
+
+If the suite becomes only a wrapper around ZAP plus generic lint rules, demote its product claim to developer tooling.
+An independently built learning engine must still show measurable depth.
 If `doctor` cannot distinguish facts from heuristics, or `verify` treats missing collectors as a
 pass, remove assurance from positioning entirely.
 
@@ -51,15 +61,12 @@ pass, remove assurance from positioning entirely.
 
 The strongest credible product statement is:
 
-> Cryptalis helps teams design, exercise, and audit the application-specific boundary around
-> protected SQLAlchemy fields. It does not prevent application vulnerabilities; it tests whether
-> declared protection still limits data exposure when vulnerabilities, bypasses, lifecycle faults,
-> and deployment mistakes occur.
+> Cryptalis helps teams design, exercise and audit the application-specific boundary around protected SQLAlchemy fields.
+> It does not prevent application vulnerabilities. It tests whether declared protection still limits exposure during vulnerabilities, bypasses, lifecycle faults and deployment mistakes.
 
 This is deliberately not “continuous pentesting,” “DSPM,” “breach prevention,” or “proof of
-security.” SQL injection may succeed while Cryptalis protection holds. Conversely, a clean generic
-DAST scan does not show that raw SQL, bulk writes, migrations, logging, cache staleness, or restore
-paths preserve protection.
+security.” SQL injection may succeed while Cryptalis protection holds. A clean generic DAST scan does not establish protection for other paths.
+These include raw SQL, bulk writes, migrations, logging, cache staleness and restore paths.
 
 ### 1.1 Conditions that would disprove the product position
 
@@ -67,7 +74,7 @@ The major-secondary thesis fails if any of these remain true after a serious pro
 
 1. Most Doctor findings cannot identify an exact protected field and concrete violating path.
 2. Runtime observation covers only a curated demo while the UI implies application-wide coverage.
-3. The harness cannot demonstrate that its collectors detect deliberately seeded plaintext and
+3. The harness cannot show that its collectors detect deliberately seeded plaintext and
    deliberately disabled controls.
 4. Protected-versus-baseline trials are too nondeterministic to reproduce.
 5. SQLAlchemy version churn makes bypass coverage unaffordable.
@@ -85,56 +92,38 @@ The major-secondary thesis fails if any of these remain true after a serious pro
 
 ### 2.1 Direct and adjacent products
 
-| Product class | Existing strength that weakens Cryptalis's claim | Remaining opening | Decision |
-|---|---|---|---|
-| CipherStash | Searchable encryption, proxy/SDK, key service, metrics, and current `init`/`plan`/`impl`/`status`/validation workflows | SQLAlchemy model/query semantics, Alembic graph analysis, field-to-attack exposure correlation, subject-lifecycle evidence | Benchmark aggressively; do not claim planning, status, or migration as unique |
-| Acra | Encryption/search plus SQL firewall, IDS-style reactions, honeytokens, signed audit logs, SIEM, key inventory | ORM-aware declaration/schema/migration reasoning and controlled comparative attack experiments | Treat as the closest counterexample to the assurance narrative |
-| MongoDB Queryable Encryption | Deep driver/database integration, randomized searchable encryption, explicit supported-operation catalogue | Python/SQLAlchemy retrofit and cross-provider subject lifecycle | Copy fail-loud discipline; do not imitate protocols |
-| Rails Active Record Encryption / Python field libraries | Mature transparent field ergonomics, deterministic lookup or blind indexes, mixed-scheme migration patterns | Unified manifest, physical schema compiler, bypass analysis, distributed lifecycle and evidence | Compete only on systems integration |
-| Thales CipherTrust / Fortanix / Imperva | Discovery, classification, posture, key inventory, monitoring, policy, reports across estates | Developer-local, framework-specific causal evidence | Integrate/export where useful; reject enterprise-platform imitation |
-| Cloud KMS / Vault | Managed root custody, audit events, rotation/deletion APIs, IAM | Application semantics, cache fencing, migration and exposure tests | Use as sources of provider-attested facts, never flatten semantics |
-
-The current CipherStash workflow deserves special attention. Its CLI documentation now describes a
-progression from initialization through planning and implementation, while status/validation expose
-per-column encryption phases, progress, and drift. Those capabilities erase a substantial portion
-of an earlier Cryptalis differentiation claim. The remaining wedge must be source-aware analysis and
-empirical protection-boundary verification, not merely “a plan command for encryption.” See
-[CipherStash CLI](https://cipherstash.com/docs/stack/cipherstash/cli),
-[plan](https://cipherstash.com/docs/stack/cipherstash/cli/plan),
-[implementation](https://cipherstash.com/docs/stack/cipherstash/cli/impl), and
-[status](https://cipherstash.com/docs/stack/cipherstash/cli/status).
-
-Acra invalidates the claim that database-protection products only report “encrypted.” Its published
-controls include searchable encryption, an SQL firewall, anomaly responses, honeytokens, SIEM-ready
-security events, cryptographically signed audit logs, and key inventory. Cryptalis may still offer a
-better SQLAlchemy developer workflow, but it is not inventing protection-aware operations. See
-[Acra security controls](https://docs.cossacklabs.com/acra/security-controls/),
-[SQL firewall](https://docs.cossacklabs.com/acra/security-controls/sql-firewall/), and
-[security logging and events](https://docs.cossacklabs.com/acra/security-controls/security-logging-and-events/).
+The [prior-art owner](prior-art.md) holds current product capabilities, editions, dates and comparative claims.
+It covers CipherStash, Acra, MongoDB, Rails and Python libraries, enterprise data-security platforms, and cloud key managers. Assurance uses that research to test one hypothesis. Does correlation from field to path to exposure improve decisions over established protection products?
+Does it improve decisions over scanner and manual-inspection workflows? Competitor overlap is a comparison obligation, not evidence
+of novelty or a reason to prohibit an educational prototype.
 
 ### 2.2 Mature security tools
 
+Gitleaks maintenance and the Betterleaks research alternative are recorded in the tool ledger.
+Betterleaks development documentation includes provider credential validation and analysis. These features are outside passive imports and require separate synthetic authorization.
+
+This table summarizes research roles. The [dated tool ledger](research/assurance-tool-evidence.md) owns exact documented capabilities, editions, versions and current limitations. No integration is run.
+
 | Tool | What it already does well | Cryptalis use | Boundary and learning decision |
 |---|---|---|---|
-| OWASP ZAP | Scriptable DAST plans, authentication, OpenAPI import, ordered jobs, assertions, exit status, reports and SARIF | Default open DAST adapter and reference benchmark | Build selected crawler/mutator/oracle concepts independently; never translate alert absence into protection success |
-| Burp Suite DAST | Strong crawl/audit engine, authenticated and API scanning, enterprise CI/API control | Optional commercial adapter and evidence import | Require it for the open reference harness or repackage findings |
-| Nuclei | Signed templates, workflows, broad protocols, rate limits, JSONL/SARIF | Imported checks and template-engine reference | A narrower protection-aware DSL is educationally valid; never automatically trust unsigned/code templates |
-| sqlmap | Deep SQL injection exploitation and extraction, REST interface and reports | Explicit, destructive lab profile for synthetic marker extraction | Run by default, use against non-disposable data, or claim it is safe at high risk levels |
+| OWASP ZAP | Scriptable DAST plans, authentication, OpenAPI import, ordered jobs, assertions, exit status, reports and SARIF | Default open DAST adapter and reference benchmark | Build selected crawler/mutator/oracle concepts independently. Never translate alert absence into protection success |
+| Burp Suite DAST | Strong crawl/audit engine, authenticated and API scanning, enterprise CI/API control | Optional commercial adapter and evidence import | Do not require a commercial engine for the open reference harness or misattribute imported findings |
+| Nuclei | Signed templates, workflows, broad protocols, rate limits, JSONL/SARIF | Imported checks and template-engine reference | A narrower protection-aware DSL is educationally valid. Never automatically trust unsigned/code templates |
+| sqlmap | Deep SQL injection exploitation and extraction, REST interface and reports | Explicit, destructive lab profile for synthetic marker extraction | Never run by default, use non-disposable data, or treat low risk settings as a containment guarantee |
 | CodeQL | Cross-file Python data flow, path queries and custom models | Deep-analysis adapter and reference corpus | Build analogous CFG/data-flow/path concepts for learning without making CodeQL a runtime dependency |
-| Semgrep | Fast structural and taint rules, broad developer adoption | Rule export and differential benchmark | Build a compatible conceptual source/sink/propagator model; do not embed restricted rule content |
-| Ruff/Bandit | Fast generic Python security lint | Imported baseline and rule-design reference | Generic findings are not differentiation, but implementing selected analyzers can teach useful internals |
-| Trivy/Grype/Gitleaks | Dependencies, images, IaC, secrets, VEX and standard reports | Import evidence relevant to the protection boundary | Build another CVE, secret, SBOM, or IaC scanner |
-| Nmap | Stable XML exposure/service inventory | Optional deployment evidence | Treat an open port as proof of data exposure |
-| TShark/Zeek | Protocol/flow evidence and machine-readable logs | Optional network collector | Promise TLS plaintext visibility without controlled session secrets |
+| Semgrep | Fast structural and taint rules, broad developer adoption | Rule export and differential benchmark | Build a compatible conceptual source/sink/propagator model. Do not embed restricted rule content |
+| Ruff/Bandit | Selected security lint rules and AST-based Python checks | Imported baseline and rule-design reference | Generic findings are not differentiation, but implementing selected analyzers can teach useful internals |
+| Trivy/Grype/Gitleaks | Dependencies, images, IaC, secrets, VEX and standard reports | Import evidence relevant to the protection boundary | Do not duplicate vulnerability feeds or generic scanners without a bounded protection-specific research question |
+| Nmap | Stable XML exposure/service inventory | Optional deployment evidence | Never treat an open port as proof of data exposure |
+| TShark/Zeek | Protocol/flow evidence and machine-readable logs | Optional network collector | Never infer TLS plaintext visibility without an evidenced observation point or controlled session secrets |
 
 ZAP itself warns that automated active scanning will not reliably find logical flaws such as broken
-access control. Its strength is orchestration and repeatability, not semantic completeness. Use
+access control. It offers orchestration and repeatability. It does not establish semantic completeness. Use
 [ZAP Automation Framework](https://www.zaproxy.org/docs/desktop/addons/automation-framework/),
 [authentication](https://www.zaproxy.org/docs/desktop/addons/automation-framework/authentication/),
 [OpenAPI support](https://www.zaproxy.org/docs/desktop/addons/openapi-support/automation/), and
 [Automation tests](https://www.zaproxy.org/docs/desktop/addons/automation-framework/tests/) rather
-than starting without a reference. Cryptalis may progressively build selected internal crawler,
-state, mutation and oracle layers and benchmark them against ZAP.
+than starting without a reference. Cryptalis may progressively build selected internal crawler, state, mutation and oracle layers. It may benchmark these layers against ZAP.
 
 ## 3. Product boundary and learning build-versus-integrate decision
 
@@ -165,17 +154,17 @@ state, mutation and oracle layers and benchmark them against ZAP.
 
 - ZAP as the default generic DAST engine.
 - Burp Suite as an optional enterprise adapter.
-- sqlmap only for a conspicuously destructive, disposable-lab extraction profile.
+- sqlmap only for a explicitly destructive, disposable-lab extraction profile.
 - CodeQL and Semgrep as generated rule/model packs or imported results.
 - Trivy, Grype, and Gitleaks as optional supply-chain/configuration evidence.
 - Nmap for exposure inventory.
-- TShark directly for packet/field export; Zeek for flow/TLS metadata when useful.
+- TShark directly for packet/field export. Zeek for flow/TLS metadata when useful.
 - SARIF, JUnit XML, and CycloneDX/VEX inputs as interchange formats, not the canonical model.
 - in-toto Statement/DSSE or Sigstore bundles as optional evidence-integrity wrappers.
 
-These integrations are also reference implementations. The same labeled fixtures should compare
-Cryptalis analyzers with CodeQL/Semgrep and its crawler/mutators/oracles with ZAP/Burp/sqlmap. Build
-and integrate are complementary research methods.
+These integrations are also reference implementations. The same labeled fixtures should compare Cryptalis analyzers with CodeQL and Semgrep.
+They should also compare its crawler, mutators and oracles with ZAP, Burp and sqlmap.
+Building and integration are complementary research methods.
 
 ### 3.3 Active internal research workstreams
 
@@ -197,7 +186,7 @@ and integrate are complementary research methods.
   learning value.
 - A generic compliance dashboard or enterprise DSPM/SIEM clone without a bounded research question.
 - Public-internet scanning and autonomous exploitation.
-- A universal SQL proxy accidentally replacing the ORM-first product; isolated parser/rewriter
+- A universal SQL proxy accidentally replacing the ORM-first product. Isolated parser/rewriter
   experiments remain acceptable.
 - An arbitrary-code YAML attack language before a typed internal scenario API works.
 - A single security score, “percent secure,” or unsupported attack-coverage percentage.
@@ -205,592 +194,253 @@ and integrate are complementary research methods.
 - Novel or insufficiently reviewed range/text/fuzzy cryptography in a production profile. Known
   constructions may be independently implemented in isolated research profiles.
 
-## 4. Architecture
-
-```text
-protection declarations + manifest + model metadata + Alembic graph
-                 |                   |
-                 v                   v
-          Protection Graph <--- schema/provider/deployment snapshots
-             /      |       \
-            v       v        v
-        Doctor     Verify   Pentest adapters
-       static +   controlled  ZAP/Burp/sqlmap/
-       observed    scenarios  Nuclei imports
-            \       |        /
-             v      v       v
-             Common observation model
-                       |
-          correlation + exposure oracle
-                       |
-            versioned evidence bundle
-        JSON / SARIF / JUnit / HTML / attestation
-```
-
-The protection graph is the conceptual moat. A node is an asset or boundary: logical field,
-physical column, search index, key generation, cache lease, write path, migration phase, service,
-scenario, or collector. An edge states a typed relationship such as `persists_to`, `indexed_by`,
-`written_by`, `encrypted_under`, `observed_by`, or `exercised_by`. Every edge records provenance and
-confidence. An unknown writer is an explicit coverage gap, not an implicit safe path.
-
-The graph must remain a derived analysis artifact. The Protection Manifest remains the normative
-declaration; observed code, schema, and runtime facts may contradict it but must not silently rewrite
-it.
-
-## 5. Common result and evidence semantics
-
-### 5.1 Result states
-
-Every check or scenario ends in exactly one of:
-
-- `PASS`: the expected control held, required collectors ran, and relevant positive/negative
-  controls behaved correctly.
-- `FAIL`: observed evidence contradicts the declared control or exposure policy.
-- `WARNING`: a material risk exists, but available evidence does not establish a violation.
-- `INCONCLUSIVE`: execution or evidence was insufficient to decide.
-- `NOT_APPLICABLE`: the check does not apply and records why.
-- `NOT_RUN`: applicable work was not attempted.
-
-Missing, unhealthy, redacted, timed-out, or access-denied collectors can never produce `PASS`.
-
-### 5.2 Separate dimensions
-
-Do not overload one “confidence” or “severity” field. Record independently:
-
-| Dimension | Example values |
-|---|---|
-| Execution | not started, started, completed, aborted |
-| Applicability | applicable, not applicable, unknown |
-| Attack result | no foothold, vulnerability confirmed, boundary reached, extraction succeeded |
-| Exposure | none observed, ciphertext, index/search metadata, envelope metadata, plaintext, key material |
-| Control outcome | held, bypassed, degraded, not exercised, inconclusive |
-| Evidence basis | declared, static, schema snapshot, provider-attested, runtime-observed, actively exercised, exposure-confirmed |
-| Scope | exact field/path, table, service, deployment, unknown |
-| Reproducibility | deterministic, replayable with seed, flaky, unreproduced |
-
-Generic vulnerability severity remains the source tool's CVSS or rating. Cryptalis adds an impact
-classification based on protected asset class, reachability, exposure type, tenant/subject scope,
-recoverability, and lifecycle consequences. It should not convert these into a pseudo-precise score.
-
-### 5.3 Canonical finding fields
-
-Each finding needs: schema version; stable rule/scenario ID; run and correlation IDs; target and
-manifest digests; subject asset(s); stage; applicability; observation point; tool and rule versions;
-source location or artifact URI; exact evidence references; redaction status; execution, attack,
-exposure, control and result states; severity; limitations; remediation guidance; and baseline
-relationship.
-
-Cryptalis JSON is canonical because SARIF cannot naturally express the full scenario/control model.
-Export source/artifact findings to SARIF 2.1.0, scenarios to JUnit XML for CI, and a human narrative
-to Markdown/HTML. SARIF provides artifact locations, baseline state, correlation identifiers, and
-property bags; use them without pretending every dynamic observation is a static-analysis result.
-See the [SARIF 2.1.0 standard](https://docs.oasis-open.org/sarif/sarif/v2.1.0/sarif-v2.1.0.html).
-
-## 6. Doctor architecture
-
-Doctor begins as a compiler/reconciler and may evolve into a substantial Python SAST research
-engine. The immediate product value is Cryptalis-specific precision; the complete learning value
-includes parser/semantic IR, symbols, CFG, call graph, data flow, taint analysis and a rule engine.
-Its staged architecture is defined in the
-[learning-first philosophy](learning-first-research-philosophy.md#11-doctor-complete-architecture).
-
-### 6.1 Phases
-
-1. Load and schema-validate the manifest; compute its digest and compiler version.
-2. Resolve SQLAlchemy mappings, inheritance, composites, hybrids, synonyms, events, types, sessions,
-   engines, sync/async variants, and protected field paths.
-3. Compile the expected physical schema, constraints, index domains, envelope versions, and key
-   domains.
-4. Snapshot the actual database catalog and compare expected versus observed state.
-5. Inventory and analyze the Alembic revision graph and generated operations.
-6. Parse configured source roots into a pinned CPython AST plus a stable Cryptalis syntax IR.
-7. Build scopes/symbols/qualified names, then progressively CFG, call, data-flow and taint layers.
-8. Evaluate structural, semantic, query and source-to-sink rules with path explanations.
-9. Merge opt-in runtime traces from representative tests.
-10. Query provider and deployment adapters for point-in-time operational facts.
-11. Build the protection graph and enumerate unsupported, unobserved, or conflicting paths.
-12. Emit findings, a coverage statement, and a machine-readable evidence bundle.
-
-### 6.2 Truth taxonomy
-
-Doctor must label how each conclusion was obtained:
-
-| Source | What can be said exactly | What cannot be claimed |
-|---|---|---|
-| Manifest compiler | Declaration validity and deterministic expected output for a pinned compiler | That applications obey the declaration |
-| SQLAlchemy mapper inspection | Registered mapping structure at inspection time | Every dynamic mapping or future execution path |
-| PostgreSQL catalog snapshot | Observed physical schema and selected metadata at one time | Historical correctness or unobserved replicas/backups |
-| Alembic graph | Included revisions, ancestry, operations that can be parsed, manifest bindings | Safe deployability; Alembic itself says autogenerate requires manual review |
-| AST analysis | A syntactic or modeled flow in scanned source | Runtime reachability, reflective code, generated code, unknown libraries |
-| Runtime trace | Exact behavior observed for executed tests | Safety of unexecuted paths |
-| Provider API | Provider-reported state at a timestamp | Absence of exported copies, erased RAM, or stronger guarantees than provider semantics |
-| Deployment collector | Observed config/image/network state | The state of omitted clusters, hosts, or control planes |
-
-SQLAlchemy's `do_orm_execute` intercepts ORM statements through `Session.execute`, while flush
-validation belongs in `before_flush`; Core connections, direct drivers, bulk paths, nested execution,
-and external writers create different visibility. Doctor must maintain an explicit compatibility
-catalogue rather than say “all SQLAlchemy writes.” See
-[SQLAlchemy session events](https://docs.sqlalchemy.org/en/20/orm/session_events.html) and
-[ORM bulk DML](https://docs.sqlalchemy.org/en/20/orm/queryguide/dml.html).
-
-Alembic's plugin API supports custom operations, implementations, comparators, and autogenerate
-extensions, but its documentation explicitly says autogenerated migrations are not perfect and need
-manual review. Doctor can validate intent and graph consistency; it cannot certify a production
-migration as safe. See [Alembic plugins](https://alembic.sqlalchemy.org/en/latest/api/plugins.html)
-and [autogeneration](https://alembic.sqlalchemy.org/en/latest/autogenerate.html).
-
-### 6.3 Cryptalis-specific static rule families
-
-- Protected logical values reaching logging, tracing, metrics labels, exception, serialization,
-  file, clipboard, analytics, message, or subprocess sinks.
-- Raw SQL, `text()`, direct-driver calls, bulk mappings, Core DML, copy/import, ETL, and maintenance
-  jobs touching protected logical or physical columns.
-- Direct writes to ciphertext, blind-index, subject, generation, tombstone, or manifest-binding
-  columns.
-- Reads that expose physical protected columns or envelopes through APIs and admin tools.
-- Missing protected-session context, uncontrolled reveal/decrypt calls, disabled strict guards, or
-  broad exception fallback to plaintext.
-- Migration operations that copy protected columns to plaintext, omit companion indexes, change AAD
-  identity, drop evidence prematurely, or allow unsafe downgrade.
-- Key/provider configuration that enables export/plaintext backup, omits audit, expands IAM, uses
-  weak cache bounds, or conflates disable, schedule-destroy, destroy, and shred.
-- Deployment manifests that place production credentials or networks in the pentest profile.
-
-Cryptalis should first implement narrow syntax and local semantic rules it can explain, then use the
-same fixture corpus to learn CFG, function-summary, interprocedural and taint analysis. It should
-also emit CodeQL model/query packs and Semgrep rules and import their results for differential
-comparison.
-CodeQL supports Python path queries and custom library models; Semgrep Community Edition's ordinary
-taint analysis is not equivalent to its proprietary cross-file analysis, and its maintained-rule
-licensing/output history creates product risk. See
-[CodeQL Python data flow](https://codeql.github.com/docs/codeql-language-guides/analyzing-data-flow-in-python/),
-[custom models](https://codeql.github.com/docs/codeql-language-guides/customizing-library-models-for-python/),
-and [Semgrep rule glossary](https://semgrep.dev/docs/writing-rules/glossary).
-
-### 6.4 Doctor checks beyond source
-
-**Schema and migration:** nullability, constraints, plaintext remnants, shadow columns, index
-domains, old envelope versions, orphaned companions, revision binding, expand/backfill/cutover state,
-resume cursor, rollback feasibility, downgrade consequences, mixed-version readers/writers, and
-manifest drift.
-
-**Keys and providers:** provider identity and region, key purpose and algorithm, enabled/disabled
-state, version/rotation history, pending destruction and restoration window, grants/IAM, audit
-coverage, exportability, plaintext backup allowance, cache TTL/capacity/epoch, stale worker leases,
-wrapped-key inventory, tombstones, and dependency health.
-
-**Application behavior:** startup validation, strict-mode enforcement, sync/async parity, serializer
-and admin interfaces, exception redaction, audit completeness, raw/bulk registration, background
-workers, restore tooling, and controlled-access identity.
-
-**Deployment:** image digest and provenance, dependency/container findings imported from mature
-tools, secret mounts, database TLS, service accounts, network exposure, pentest-profile isolation,
-backups/replicas/exports, clock synchronization, audit sinks, and collector reachability.
-
-### 6.5 Writer provenance as an active differentiator
-
-Static inspection cannot enumerate every writer. A stronger design inventories writer identities
-from deployment declarations, migration jobs, SQLAlchemy runtime traces, PostgreSQL
-`application_name`, connection identities, and query fingerprints. The output is not “all writers
-are safe”; it is a ledger of registered, observed, unregistered, and unknown writers per protected
-physical asset. This may become more valuable than adding more syntax rules.
-
-### 6.6 Query/Search Doctor and minimum-leakage planner
-
-For every protected field, Doctor should compare declared capabilities with statically observed and
-runtime-observed operations: equality, `IN`, uniqueness, joins, grouping, ordering, range, prefix,
-substring, fuzzy search, aggregates, pattern matching, JSON paths, casts, functions, collation, and
-raw predicates. It then reports one of: supported as declared; declared but unobserved; observed but
-undeclared; unsupported and fail-loud; or unknown because the expression escaped modeling.
-
-The minimum-leakage planner proposes the smallest representation that satisfies evidenced query
-needs. It never edits the manifest. No observed query means randomized ciphertext only. Equality
-needs may justify a domain-separated blind index; scoped uniqueness needs an explicit tenant/domain
-decision. Range, text, fuzzy, JSON, joins, grouping, and cross-field indexes trigger research or
-external-primitive gates rather than automatic enablement. Recommendations include frequency,
-access-pattern, ordering, token, cross-column, subject-deletion, migration, storage, and inference
-consequences. Low-entropy domains receive a prominent dictionary-attack warning even when HMAC keys
-remain secret.
-
-Static observations are hypotheses; runtime observations are bounded samples. Conflicts are shown
-to the developer, not silently resolved by choosing the more permissive representation.
-
-### 6.7 Data classification and policy-as-code boundary
-
-Classification gives impact context: sensitivity, tenant/subject scope, retention, regulated-data
-tags, allowed exposure classes, required collectors, and lifecycle policy. It must not become an
-enterprise discovery engine. Cryptalis accepts explicit manifest classifications and may import
-classifications from external catalogs; it does not infer regulatory status from column names.
-
-Policy-as-code is likewise narrow. Versioned assurance policy may define required Doctor checks,
-allowed unknowns, supported tool/profile versions, collector requirements, result gates, evidence
-retention/redaction, and environment-specific exceptions with owner and expiry. It cannot define
-general application authorization, WAF behavior, or provider IAM. Policy evaluation never converts
-`INCONCLUSIVE` to `PASS`, and exceptions remain visible in reports.
-
-## 7. Pentesting harness
-
-The harness answers whether an attacker can reach and expose protected assets, not whether the app
-has no vulnerabilities. It uses a hybrid architecture: mature engines remain quarantined adapters,
-while an internal endpoint graph, crawler, authentication/state model, mutator, payload/oracle and
-replay engine may grow progressively inside the lab/research boundary.
-
-### 7.1 Profiles
-
-| Profile | Default | Engines/actions | Safety |
-|---|---|---|---|
-| `passive` | Yes | ZAP passive/baseline, manifest-aware response checks | No state-changing scanner actions |
-| `active-safe` | No | Authenticated ZAP active rules selected for the reference app | Disposable target, budgets, pinned scope |
-| `api` | No | ZAP/Burp OpenAPI-driven scanning and deterministic API misuse | Synthetic identities and data only |
-| `sqli-exposure` | No | Selected ZAP/Burp finding followed by constrained sqlmap marker extraction | Destructive token, disposable DB, exact columns, low risk/level |
-| `boundary` | No | Cryptalis scenarios for raw/bulk/direct DB/cross-tenant/relocation | Reference harness only |
-| `lifecycle-chaos` | No | Provider outage, stale cache, worker partition, revocation/shred/restore | Local/provider emulator unless explicitly authorized |
-
-sqlmap's risk levels can enable heavy time-based and OR-based payloads; the latter can update many
-rows in some contexts. It must never be a routine CI step. Use its API/reporting only after a
-specific confirmed injection, limit extraction to uniquely seeded marker columns, and destroy the
-environment afterward. See [sqlmap usage](https://github.com/sqlmapproject/sqlmap/wiki/usage) and
-[REST API schema](https://github.com/sqlmapproject/sqlmap/blob/master/sqlmapapi.yaml).
-
-### 7.2 Scenario catalogue
-
-The minimum serious catalogue is:
-
-- SQL injection reaches the application database and attempts protected and unprotected extraction.
-- Stolen database credentials query tables, companion indexes, key metadata, backups, and views.
-- Raw SQL, Core DML, bulk mappings, direct driver, COPY/ETL, maintenance script, and migration paths
-  attempt plaintext persistence.
-- Cross-tenant subject/key/index confusion and authorization-context substitution.
-- Ciphertext relocation across row, column, table, tenant, and subject AAD domains.
-- Envelope truncation, version confusion, tag corruption, unknown key, revoked generation, and
-  rollback to older ciphertext.
-- Equality-index tampering, ciphertext/index mismatch, normalization disagreement, low-entropy
-  dictionary inference, and stale-index migration.
-- Provider unavailable, throttled, permission-revoked, wrong-region, wrong-key, or audit-disabled.
-- Cache expiry, cache epoch fencing, stale worker, process partition, retry storm, and restart.
-- Expand/backfill/dual-read/dual-write/cutover/contract failures with retries and mixed app versions.
-- Shred initiated, key disabled, destruction pending, destruction restored, wrapped-key restore,
-  backup restore, stale cache use, and tombstone enforcement.
-- Plaintext canaries passed through response, error, log, trace, metrics, job queue, report, export,
-  crash dump, temporary file, and database collector paths.
-- Audit record mutation, truncation, reordering, checkpoint substitution, and missing sink.
-
-Do not turn every scenario into an exploit. Many are deterministic state-machine tests with stronger
-causal evidence than a generic scanner alert.
-
-### 7.3 Template-driven testing
-
-Use a typed, versioned internal scenario interface while actively researching a declarative format
-that expresses only bounded data actions, assertions, collector requirements, cleanup, and resource
-budgets. It
-must not embed arbitrary shell or Python. Third-party packs need schema/version compatibility,
-content digests, signatures, declared privileges, and an allowlist. Nuclei remains the comparison
-and import ecosystem; independently implementing a narrower protection-aware template compiler is
-a valid learning track. See
-[Nuclei templates](https://docs.projectdiscovery.io/templates/introduction) and
-[template signing](https://docs.projectdiscovery.io/templates/reference/template-signing).
-
-## 8. Verify and the exposure oracle
-
-`verify` is the Cryptalis-owned deterministic layer. It should run without a generic DAST engine and
-must be useful during ordinary development.
-
-### 8.1 What Verify checks
-
-- Manifest, model, schema, envelope, and migration bindings agree.
-- Protected writes produce valid envelopes and required companion indexes.
-- Reads, query rewrites, normalization, tenant/subject scoping, and fail-loud paths behave as
-  declared.
-- Known unsupported ORM/Core/raw/bulk operations are rejected or explicitly registered.
-- Tamper, relocation, cross-context and stale-generation attempts fail as designed.
-- Rotation and rewrap preserve decryptability for intended generations.
-- Revocation/cache fencing stops newly unauthorized work within the declared bound.
-- Shredding state, provider state, tombstone behavior, cache leases, restore behavior, and data-path
-  failures are reported independently.
-- Synthetic plaintext markers do not appear in required collectors after each scenario.
-- The harness can detect seeded leakage and intentionally weakened controls.
-
-### 8.2 Exposure is an observation, not a global fact
-
-The exposure oracle generates unique high-entropy synthetic values with field, tenant, subject, run,
-and scenario identity. It searches only registered evidence stores. “No plaintext observed” means
-the marker was absent from healthy covered collectors during a bounded interval. It never means the
-plaintext existed nowhere.
-
-Direct database and artifact inspection is stronger than packet inference. For encrypted traffic,
-passive PCAP reveals endpoints, timing, sizes, TLS metadata, and sometimes DNS—not HTTP or database
-plaintext. TShark can emit stable JSON/EK/field output; Zeek offers useful TLS/flow logs. TLS session
-secrets may be used only inside a controlled lab, kept outside the evidence bundle, and destroyed
-after derivation of redacted observations. Avoid PyShark as a core dependency because it is a thin
-wrapper around TShark with constrained maintenance capacity. See
-[TShark](https://www.wireshark.org/docs/man-pages/tshark),
-[Wireshark TLS](https://wiki.wireshark.org/TLS), and
-[Zeek SSL/TLS logs](https://docs.zeek.org/en/current/reference/logs/ssl.html).
-
-### 8.3 Positive, negative, and mutant controls
-
-A passing run requires:
-
-1. A positive collector control: a seeded marker in each collector is found.
-2. A negative control: an absent marker is not falsely reported.
-3. A protection mutant: a narrow intentionally weakened control causes the expected scenario to
-   fail, for example plaintext persistence, disabled relocation binding, stale-cache acceptance, or
-   index mismatch.
-4. A restored control: the normal protected configuration passes under the same workload.
-
-This “assurance of the assurance suite” is a high-value missed capability. General mutation tools
-such as mutmut can measure test quality, but Cryptalis should own only a small catalog of semantic
-control mutants. A detector that cannot kill its corresponding mutant is not ready to support a
-security claim.
-
-### 8.4 Security invariants
-
-The suite should name stable invariants independently of individual tools:
-
-- A registered protected value is never persisted as plaintext through a supported write path.
-- Unsupported write/query paths fail loudly or remain an explicit uncovered path.
-- Envelopes authenticate their declared tenant, subject, table, field, record and version context.
-- Search representations exist only for declared capabilities and use separate key/domain material.
-- Key/provider calls do not occur in synchronous scalar ORM processors or hidden attribute access.
-- Revoked or shredded generations cannot be newly loaded after the declared fencing deadline.
-- Tombstones prevent restored wrapped keys or ciphertext from silently resurrecting access.
-- Migration phases preserve a documented reader/writer compatibility window and never claim
-  completion while plaintext or inconsistent companion artifacts remain.
-- Required audit/evidence records are redacted, attributable, ordered and integrity-checkable.
-- A pass requires healthy collectors and a working positive, negative and mutant control.
-
-Each invariant has prevention checks, one or more adversarial scenarios, required collectors, and a
-defined inconclusive state. Scanner rule counts are not invariants.
-
-## 9. Key lifecycle and crypto-shredding verification
-
-Provider differences are facts, not adapter noise:
-
-- AWS KMS automatic rotation retains old key material for decryption; imported material can be
-  deleted and, if a copy still exists, reimported. Hierarchical keyrings add branch-key cache TTL
-  and capacity semantics. See [rotation](https://docs.aws.amazon.com/kms/latest/developerguide/rotate-keys.html),
-  [imported material deletion](https://docs.aws.amazon.com/kms/latest/developerguide/importing-keys-delete-key-material.html),
-  and [hierarchical keyrings](https://docs.aws.amazon.com/encryption-sdk/latest/developer-guide/use-hierarchical-keyring.html).
-- Google Cloud KMS schedules destruction with a restoration window by default and warns that
-  destruction cannot guarantee a version is unused. See
-  [destroy and restore](https://docs.cloud.google.com/kms/docs/destroy-restore).
-- Vault Transit supports derived/convergent keys, rotation, and deletion, but exportability and
-  plaintext backup are irreversible configuration choices once enabled; deletion requires an
-  explicit setting. Vault audit devices are disabled by default and need resilient configuration.
-  See [Transit](https://developer.hashicorp.com/vault/docs/secrets/transit) and
-  [audit best practices](https://developer.hashicorp.com/vault/docs/audit/best-practices).
-
-A shredding verification report must keep these observations separate:
-
-1. Cryptalis lifecycle state and tombstone.
-2. Wrapped-key inventory and deletion state.
-3. Provider-reported key/material state and timestamp.
-4. Active cache leases and worker acknowledgements.
-5. Decrypt attempts from fresh and deliberately stale processes.
-6. Restore/reimport/resurrection trial results.
-7. Search-index and derived-artifact treatment.
-8. Unmanaged backup/export/log caveats.
-
-Only the combination supports a bounded technical erasure claim. No provider API proves that no
-exported copy or process-memory copy exists.
-
-## 10. Migration, deployment, and configuration verification
-
-### 10.1 Migration stages
-
-For expand/backfill/verify/cutover/contract, evidence should include the manifest and revision
-digests, source/target schemas, row counts, cursors, retry identities, batch failures, plaintext
-residue, envelope/index consistency, app version compatibility, lock/time budgets, rollback plan,
-and downgrade consequences. Inject interruption at every stage. Resume must be idempotent and
-evidence must distinguish rows never attempted from rows verified.
-
-Comparing a migration file to the current manifest is insufficient. Doctor must compare the whole
-revision path, the manifest version expected by each app release, and the actual database phase.
-
-### 10.2 Deployment checks
-
-Cryptalis should define manifest-aware deployment assertions and import generic evidence from mature
-tools. Trivy covers vulnerabilities, secrets, licenses, and many IaC formats, but Docker Compose
-coverage is not complete; Grype provides vulnerability/VEX workflows; Gitleaks provides secret
-finding, baselines, redaction, and SARIF. Use these limits explicitly. See
-[Trivy misconfiguration scanning](https://www.trivy.dev/docs/latest/guide/scanner/misconfiguration/),
-[Trivy reporting](https://www.trivy.dev/docs/latest/configuration/reporting/),
-[Grype](https://oss.anchore.com/docs/guides/vulnerability/getting-started/), and
-[Gitleaks](https://github.com/gitleaks/gitleaks/blob/master/README.md).
-
-Deployment-specific Doctor findings should focus on causal threats to Cryptalis: KMS permissions,
-audit absence, provider egress, unencrypted DB transport, exposed DB/metrics/admin ports, shared
-pentest credentials, writable evidence stores, mutable scanner tags, backup locations, missing
-tombstone replication, and unsynchronized clocks. Generic image CVEs remain imported findings unless
-they create a concrete path to a protected boundary.
-
-## 11. Correlation and attack-impact proof
-
-Correlation is conservative. Join observations only with explicit identifiers: run, target,
-scenario, synthetic marker, manifest digest, asset ID, request/trace ID, database transaction, and
-artifact hash. Time proximity alone may suggest a relationship but cannot establish it.
-
-Example outcome:
-
-```text
-ZAP: SQL injection confirmed
-  -> request/trace ID and seeded subject
-  -> PostgreSQL audit/query observation: protected physical columns selected
-  -> extraction artifact: envelope bytes and equality terms present
-  -> exposure oracle: no plaintext marker in DB/response/log collectors
-  -> Cryptalis control: held for DB-compromise boundary
-  -> application control: failed; confidentiality still degraded by metadata/index disclosure
-```
-
-The inverse is equally important: a scanner may find nothing while a deterministic raw/bulk writer
-persists plaintext. The report must show “DAST found no issue” beside “Cryptalis invariant failed,”
-not average them into a score.
-
-## 12. Safety architecture
-
-Localhost or RFC1918 addressing is not sufficient; redirects, proxies, DNS rebinding, port forwards,
-and shared networks can escape intent. Active profiles require all of:
-
-- An authorization manifest naming owner, purpose, permitted target identities, time window,
-  engines, profiles, data class, request/time/resource budgets, and cleanup owner.
-- A target-issued ephemeral lab token and deployment/image digest.
-- DNS resolution and IP pinning at start, with redirect and secondary-host denial outside scope.
-- A disposable-environment sentinel for destructive profiles.
-- Synthetic marker namespaces; no copied production data.
-- Dedicated low-privilege credentials and egress-denied network isolation.
-- Rate, concurrency, request, response-size, database-row and total-time caps.
-- Pinned scanner images by digest and recorded tool/template/rule versions.
-- A kill switch, cleanup phase, and explicit incomplete-cleanup result.
-- Production package/import boundaries that exclude scanners, payloads, TLS secrets, and lab
-  credentials.
-
-The CLI must require an additional destructive authorization token for sqlmap extraction,
-shred/restore chaos, and write-capable scenarios. CI defaults to passive Doctor/Verify work only.
-
-## 13. Evidence integrity, reporting, and reproducibility
-
-An evidence bundle contains:
-
-- canonical result JSON and schema version;
-- manifest, model inventory, compiled schema and migration graph digests;
-- source revision and dirty-state declaration;
-- target identity, image digests, database/provider/deployment fingerprints;
-- authorization manifest and safety budgets;
-- tool images, versions, rules/templates, configs, seeds and command descriptors;
-- collector inventory, health checks, clocks, redactions and limitations;
-- immutable artifact hashes and relationships;
-- cleanup outcome; and
-- generated SARIF, JUnit, Markdown/HTML and comparison views.
-
-Wrap the bundle manifest in an in-toto Statement/DSSE envelope or a Sigstore blob-signing bundle
-when provenance matters. This proves the identified producer signed a particular bundle and may
-provide transparency-log evidence; it does not prove the collectors were truthful or the target was
-independent. See [in-toto Statement](https://github.com/in-toto/attestation/blob/main/spec/v1/statement.md),
-[DSSE envelope](https://github.com/in-toto/attestation/blob/main/spec/v1/envelope.md), and
-[Sigstore blob signing](https://docs.sigstore.dev/cosign/signing/signing_with_blobs/).
-
-Reports need three views:
-
-1. **Developer:** exact field/path, source/schema location, reproduction, and remediation.
-2. **Security reviewer:** attack chain, control outcome, exposure class, evidence provenance,
-   coverage gaps, and limitations.
-3. **Operator/auditor:** manifest/release/target identity, lifecycle/provider state, migration phase,
-   signed bundle, and comparison against an approved baseline.
-
-Never emit raw plaintext markers, credentials, key material, TLS session secrets, complete database
-dumps, or unrestricted scanner payloads into the evidence bundle. Redaction itself is recorded.
-
-## 14. CI, pytest, fuzzing, and stateful testing
-
-Recommended command surface:
-
-```text
-cryptalis doctor [--static | --schema | --provider | --deployment]
-cryptalis plan
-cryptalis verify [--profile PROFILE]
-cryptalis pentest --profile PROFILE --authorization FILE
-cryptalis evidence inspect|compare|attest
-cryptalis check --ci
-```
-
-Keep `pentest` conspicuously separate because it is dangerous. `check --ci` should run a fast
-manifest/model/schema Doctor subset and deterministic Verify scenarios; it must not silently launch
-active DAST. Avoid a large `security scan/report/policy/baseline` namespace that hides which engine
-and risk profile is operating.
-
-A pytest plugin can register markers/fixtures, collect runtime paths, associate requests and SQL,
-seed exposure markers, require collectors, and attach evidence. Pytest's plugin/hook model is mature,
-but coverage claims remain limited to executed tests. See
-[pytest plugin guidance](https://docs.pytest.org/en/latest/how-to/writing_plugins.html).
-
-Hypothesis state machines are well suited to envelope parsing, normalization, query rewriting,
-migration phases, key generations, cache epochs, and lifecycle fault sequences. Seeds and minimized
-counterexamples belong in the bundle. See
-[Hypothesis stateful testing](https://hypothesis.readthedocs.io/en/latest/stateful.html) and
-[failure replay](https://hypothesis.readthedocs.io/en/latest/tutorial/replaying-failures.html).
-
-### 14.1 Continuous security regression
-
-Pin manifest, compiler, app revision, database schema, tool images, rules/templates and scenario
-seeds. Compare results by stable identity and show new, resolved, unchanged, regressed, and
-reclassified findings. A baseline is an accepted observation set, not an allowlist that hides
-failures. Exceptions require owner, reason and expiry; changed evidence requirements invalidate the
-old baseline. Fast pull-request gates run Doctor and deterministic Verify subsets. Scheduled local
-or isolated jobs may run active DAST and lifecycle chaos. Release gates require the full supported
-compatibility corpus and evidence-schema migration checks.
+## 4. Architecture research hypothesis
+
+The proposed pipeline connects Protection Manifest, model, Alembic, schema and provider snapshots to a derived Protection Graph.
+It then combines Doctor observations, deterministic Verify trials and imported attack findings into a field-specific exposure explanation. The
+[canonical graph and interfaces](architecture/assurance-evidence.md#5-protectiongraph-and-writer-provenance)
+own the identity, edge and evidence rules. The graph is useful only if it improves decisions beyond source tools plus manual inspection.
+Copying scanner rows into a graph database is not a contribution.
+
+Compare three workflows on the same pinned fixtures:
+
+1. ZAP with human DB and log inspection
+2. Generic scanner and SIEM correlation
+3. Cryptalis scenario and graph correlation Study impact-classification
+accuracy, explanation time, false exact links, uncertainty, setup and maintenance. Preserve cases where an injection extracts ciphertext or search metadata while plaintext stays protected.
+Also preserve cases where DAST reports no alert but raw or bulk persistence leaks. The graph must distinguish those uncomfortable cases
+before it earns a marketing claim. Exact pending thresholds are at
+[research gates](architecture/assurance-evidence.md#research-gates).
+
+## 5. Result and evidence research
+
+Study whether developers and reviewers understand the separate dimensions of a result.
+These dimensions are execution, applicability, exploit, DB authority, column extraction, decoding, exact plaintext exposure and control outcome.
+A single confidence or severity number obscures too much. Generic CVSS remains tool evidence.
+Cryptalis impact depends on asset sensitivity, scope, recoverability and lifecycle effects.
+
+The [result contract](architecture/assurance-evidence.md#6-verify-scenarios-and-results) owns states,
+required fields and missing-evidence behavior. Research should deliberately include partial execution, unhealthy collectors and successful exploitation with protected storage.
+It should also include metadata exposure without plaintext and an observed violation with other missing evidence. Ask which narrative and
+machine-readable views preserve uncertainty rather than imply a clean application.
+
+SARIF is useful for source and artifact paths and baselines. JUnit is useful for CI.
+Neither format contains the full scenario and control model. Study renderer fidelity, external reviewer usability and replay cost against
+canonical JSON. Signing adds integrity. It does not establish independent assessment or truth. The first-party trust
+conflict is a central experiment design limitation, not a problem fixed by a logo or certificate.
+
+## 6. Doctor and minimum-leakage research
+
+The proposed Doctor starts with precise reconciliation of the Protection Manifest, model, schema and migration.
+At the same time, the educational track builds a substantial semantic analyzer. The [canonical Doctor pipeline](architecture/assurance-evidence.md#3-doctor-pipeline-and-semantic-workspace)
+owns AST/IR/symbol/CFG/taint interfaces. The [planner](architecture/assurance-evidence.md#4-minimum-leakage-planner)
+owns recommendation behavior. These tracks remain active even where competitors have mature engines.
+
+### 6.1 Compiler and reconciliation study
+
+Compare declarative mapping inspection, source discovery and runtime metadata across inheritance,
+composites, hybrids, synonyms, descriptors, events, sync/async sessions and dynamic query builders.
+Measure where static, mapper, catalog and migration facts disagree. Study what information makes an unknown useful.
+Mapper inspection executes initialization. Offline source analysis has a different trust mode.
+Schema snapshots do not establish historical or backup correctness. Provider responses do not prove that exports, copies in memory or restored copies are absent.
+
+SQLAlchemy has several execution planes. Study ordinary flush, `Session.execute`, bulk operations and upsert. Also study Core, text SQL, direct drivers, COPY, ETL, migrations and external writers.
+Use the T/R/D/U compatibility classifications in the [ORM contract](architecture/orm-schema-migration.md). Public events are not
+universal interception. Alembic autogeneration is reviewed intent, not deployability proof.
+The complete revision path and each release's manifest binding matter more than comparing one
+migration file to today's manifest.
+
+### 6.2 AST, semantic IR and CFG learning
+
+Use CPython parsing. Independently construct stable IR, scope and import models, definition and use relations, control flow and framework models. Compare local flow first. Then compare summaries, recursion and fixed-point computation, interprocedural dispatch, aliasing and typed taint. Relevant fixtures include exceptional `finally`, context managers, async cancellation and task context copying.
+They also include generators, decorator wrappers, FastAPI dependencies and declarative descriptors. Unknown paths are results. Do not hide them as parser failures.
+
+Differentially compare the same labeled paths against CodeQL, Semgrep, Pyright-informed types,
+Ruff/Bandit and human labels. Do not treat editions as equivalent when comparing CE single-function detection with a commercial cross-file configuration. Measure each family's precision, recall, unknown rate, path explanations, analysis time and RSS.
+This research does not claim sound analysis of a whole Python program. A short pattern rule may be more useful than an expensive model without precise asset binding.
+
+### 6.3 Sink-specific taint research
+
+Study independent labels for plaintext, input, secrets, keys, ciphertext and search metadata.
+Also study independent tenant, subject, grant, SQL-code and evidence labels. Parameterization can stop SQL injection without stopping password logging. Normalization retains plaintext. Encryption leaves the original local variable.
+A blind index is metadata. A tenant string is not authorization. These differences supply concrete lessons beyond a generic safe or unsafe bit.
+
+Labeled families should span logs, traces, metrics, exceptions, serializers, files, messages and subprocesses.
+They should also span reveal and decrypt operations, raw, Core and bulk writes, and companion columns.
+Other families cover migration, AAD and format changes, provider export, cache bounds and deployment mistakes. Fixtures include safe, unsafe, ambiguous and narrowly mutated variants across local, cross-function and cross-module calls. Evaluate sensitivity-preserving unknown
+models without accepting an unusable false-positive flood.
+
+### 6.4 Query requirements and leakage planning
+
+Study declared and observed equality, IN and uniqueness requirements. Also study joins, groups, range, order, aggregates, text, fuzzy and JSON paths.
+Include casts, functions, collations and raw predicates. A no-search default for a new field differs from removal of an existing capability.
+Samples with no queries cannot prove that removal is safe.
+Recommendations should explain frequency, dictionary inference, and access, order, token and cross-column leakage.
+They should also explain migration, storage and subject-deletion residue. Compare decision quality against manual manifest review and current CipherStash planning and status UX.
+A numerical leakage score is not the comparison target.
+
+Classification adds declared sensitivity, scope, retention and allowed exposures, but column names
+do not establish regulatory obligations. Narrow policy-as-code can select checks, collectors, versions, exceptions and evidence retention.
+These selections do not establish authorization or make the policy a WAF or enterprise DSPM.
+
+### 6.5 Writer provenance research
+
+Compare deployment registration, ORM traces, DB roles, `application_name`, query fingerprints,
+connection/transaction and workload credentials for attribution. Clients can spoof hints. A shared role or pool identity can merge several actors. Include external ETL/triggers and missing
+telemetry in the labeled corpus. The [writer ledger](architecture/assurance-evidence.md#52-writer-ledger)
+research asks whether explicit unknown writers are more operationally valuable than more lint rules.
+
+## 7. Pentest and internal DAST research
+
+The hybrid approach integrates generic engines and independently builds an endpoint and state graph.
+It also builds crawler, authentication, mutation, payload, oracle, minimization and replay concepts. Study authenticated
+crawl coverage, role transitions, tenant/subject substitution, IDOR, response/timing differentials,
+OpenAPI paths and state-reset determinism. Compare ZAP and Burp detection with equivalent editions and configurations. Compare Cryptalis field impact separately. Broad generic alerts can have educational value. They do not establish a competitive advantage for protection.
+
+The [scenario/profile and safety contracts](architecture/assurance-evidence.md#8-pentest-architecture-and-safety)
+own all privileges for execution, budgets and authorizations. `active-safe` is a profile name, not a
+harmlessness guarantee. sqlmap remains an explicitly destructive synthetic extraction track. Low risk and level flags do not isolate damage. Nuclei is a template/workflow reference. Research a smaller typed declarative compiler. Include pack, schema, signature, version and privilege validation, helper-file integrity, and constrained execution.
+Never silently extend YAML to execute arbitrary shell or Python.
+
+The complete scenario research spans injection/DB credentials, raw/Core/bulk/COPY/ETL,
+cross-context and ciphertext relocation, envelope malformed/version/key states, index tamper and
+low-entropy inference, provider outage/throttle/permission/wrong-region, cache expiry/partitions,
+migration coexistence/backfill/cutover/contract, shred/restore/reimport, artifact exposure and
+audit mutation. Many scenarios are state-machine trials. They supply stronger, more reproducible trials than a generic exploit.
+
+## 8. Verify, exposure and network research
+
+Verify is a deterministic layer that remains useful without DAST. The
+[canonical oracle protocol](architecture/assurance-evidence.md#7-exposure-oracle-and-collectors)
+owns synthetic markers, forms, watermarks, redaction, controls and absence semantics.
+
+Study whether collector start and end barriers and lateness bounds remain reliable under async logs.
+Include rotation, sampling, truncation, compression, DB snapshots and pagination, response caps, and worker failure.
+Seed positive markers at the actual observation point. A healthy test at the wrong layer gives no evidence about downstream loss. Distinguish stale/control/scenario hits. Early irreversible redaction can prevent matching. Safe redaction after a private synthetic decision can preserve bounded evidence.
+
+Detector mutation has high learning value. Study plaintext persistence, disabled relocation or context binding, stale-cache acceptance, index mismatch and new capability-specific mutants. Study whether mutants represent the intended fault and cause precisely the intended failure.
+A breakage that the detector trivially detects does not establish this property. Missing collectors, unsuccessful attacks and a real
+observed violation with other missing collectors are distinct cases.
+
+Research with PCAP, TShark and Zeek studies correlation among flows, endpoints, TLS, timing and size. It also studies overhead. Ordinary
+TLS cannot supply plaintext evidence. Lab session secrets or a named capture point inside the boundary change visibility and evidence sensitivity.
+pcapng can embed secrets. Nmap supports deployment
+exposure, not field confidentiality. Mature decoders supply references. Selected correlation and traffic-analysis concepts remain valid research without new packet parsers as the default.
+
+## 9. Lifecycle and resurrection research
+
+Use the [crypto/lifecycle owner](architecture/crypto-search-lifecycle.md) for provider/control state,
+and [Verify results](architecture/assurance-evidence.md#6-verify-scenarios-and-results) for evidence.
+Compare AWS retained historical and imported material with Google Cloud destruction and restoration windows.
+Also compare Vault rotation, export, deletion and storage backups. Treat these as different state machines. No portable API turns
+pending deletion into cryptographic destruction.
+
+Measure fresh and stale-process decryption, worker leases/acknowledgements, in-flight commits/output,
+wrapped-key inventory, tombstones outside snapshot authority, supported restore denial and offline
+recovery from surviving branch plus wrapped subject keys. Search-index residue and unmanaged copies
+are separate effects. Managed access denial and cryptographic destruction of recovery paths need different evidence.
+Even the stronger result does not prove erasure from memory, logs or exports, or legal erasure.
+
+## 10. Migration and deployment research
+
+The [ORM/migration owner](architecture/orm-schema-migration.md) owns state/checkpoint/concurrency
+contracts. Compare interrupted stages, retries, two workers, concurrent CAS writes, mixed releases,
+normalization/index/key changes, uniqueness races, invalid concurrent indexes, WAL/locks/replica lag
+and old-phase restore. Study recovery cost and the observations needed before irreversible contraction. Rows verified and rows never attempted must remain distinguishable.
+
+Import generic Trivy/Grype/Gitleaks findings while studying their causal relevance to key release,
+DB transport, shared credentials, mutable tools/evidence, backup/tombstone and isolated lab paths.
+Scanner filters/VEX/feeds and recognized IaC files are part of comparison, not universal posture.
+Current Gitleaks documentation describes maintenance for security patches only. Evaluate whether adapters can be replaced.
+Do not assume that a generic engine remains maintained indefinitely.
+
+## 11. Correlation and impact research
+
+A representative chain is injection confirmed -> request/subject -> DB protected-column selection ->
+extraction artifact -> marker absence in named healthy collectors -> bounded DB-confidentiality held,
+with envelope/search metadata still disclosed. The application vulnerability remains confirmed.
+The inverse chain is a clean DAST result beside deterministic plaintext persistence failure.
+
+The [graph owner](architecture/assurance-evidence.md#51-identity-and-relationships) owns exact joins.
+Research should include unrelated requests close in time, reused restore IDs, shared pools and forged traces.
+Also include unknown writers and conflicting source and runtime claims. Scoring explanations should penalize false
+exact attribution more heavily than a correct visible unknown. Do not average attacker success and
+control outcome into a product score.
+
+## 12. Safety research
+
+Study whether network enforcement plus request-time scope, deployment tokens and disposal sentinels
+can constrain every selected engine. Include IPv4/IPv6, DNS rebinding, redirect chains, proxy/spec
+URLs, browser resources, callbacks, metadata services, malicious pack helpers and stop-API delay.
+Authorization, a private IP or a small request rate alone does not establish containment. The
+[safety owner](architecture/assurance-evidence.md#8-pentest-architecture-and-safety) contains the
+normative interlocks. Failure blocks the active profile but permits passive learning.
+
+## 13. Integrity, provenance and reviewer workflow research
+
+The [bundle owner](architecture/assurance-evidence.md#10-evidence-bundle-and-integrity) specifies
+canonical bytes, complete inventory, parser limits, attestations and trust policy. Study alternative DSSE, in-toto and Sigstore wrappers.
+Use corrupted members, wrong targets, signers and issuers, truncation, checkpoint replacement, schema downgrade, and loss of the witness. Source integrity and
+collector truth remain separate even after signing.
+
+Developer views need exact field, source and DB paths, plus remediation.
+Reviewers need attack, control, exposure, provenance and unknowns. Operators need manifest, release, provider, migration and baseline information. Measure which results a reviewer can independently recompute from redacted public artifacts.
+Measure which results need new local synthetic reproduction. Evidence generation must not create a plaintext, token, TLS-secret or
+key repository. Report rendering is itself an exposure scenario.
+
+## 14. CI, pytest and stateful learning
+
+The [CI owner](architecture/assurance-evidence.md#11-ci-reference-lab-and-regression) specifies safe
+profiles. The [shared CLI](architecture/manifest-context-api.md#cli-and-configuration) owns exits.
+Study narrow pytest hooks for request/SQL identity and marker controls without invasive instrumentation.
+Coverage describes executed tests. It does not establish universal application behavior.
+
+Stateful Hypothesis research fits parser/normalization/query rewriting, generations/epochs,
+migration transitions and lifecycle faults. Record seeds and minimized synthetic counterexamples.
+Regression comparison studies new, resolved, unchanged, regressed and reclassified outcomes as manifest, tool, collector and model versions change.
+Baselines are observations. They cannot serve as hidden allowlists for failures.
+Fast offline CI, isolated DAST and authorized cloud chaos have different dependencies and failure modes.
 
 ## 15. Benchmarks and evaluation
 
-The suite needs a labeled corpus, not a demo narrative.
+The [research gates](architecture/assurance-evidence.md#research-gates) own exact pending minima and
+acceptance thresholds. Corpus work remains a major research task, not a demo checklist.
 
-### 15.1 Static/Doctor corpus
+Static research labels safe, unsafe and ambiguous paths for each rule and compatibility style.
+It measures precision, recall, unknowns, explanations and version stability. Dynamic research compares a plaintext baseline, normal protection, one relevant control mutant, and missing or unhealthy collectors. The
+scientific outcome is accurate classification of exposure under the same attack, not fewer alerts.
 
-Create safe and unsafe fixtures for every rule family across supported SQLAlchemy styles, sync/async,
-inheritance, Core/raw/bulk paths, migration operations, serializers, background jobs, and provider
-configuration. Measure precision and recall per rule family, unknown-rate, analysis time, and
-version-to-version stability. Publish unsupported constructs.
-
-### 15.2 Dynamic corpus
-
-For each scenario measure execution determinism, mutation kill rate, collector health, evidence
-completeness, false exposure/absence decisions, runtime overhead, and replay success. Compare:
-
-1. Baseline app with plaintext storage.
-2. Protected app with normal controls.
-3. Protected app with one known control mutant.
-4. Protected app with missing/unhealthy collector.
-
-The benchmark win is not “fewer vulnerabilities.” It is accurate classification of what the same
-successful attack exposed in each configuration.
-
-### 15.3 Tool comparisons
-
-- Compare Cryptalis local rules with CodeQL/Semgrep only on the same labeled semantic paths.
-- Compare ZAP and Burp on generic detection and authenticated crawl coverage, not on Cryptalis
-  protection semantics.
-- Compare Nmap/TShark/Zeek on observation fidelity and overhead, not a synthetic “security score.”
-- Compare Doctor status/migration UX against current CipherStash workflows.
-- Compare Acra operational controls honestly; document where Cryptalis has no equivalent.
-
+Separate crypto microbenchmarks from ORM, query and uniqueness costs. Also separate migration concurrency and recovery, provider and cache, analyzer, collector and graph costs. Pin versions, hardware, data, tenant cardinality, cache state and load.
+Use multiple runs, randomized order, raw distributions, failures, retries and uncertainty. Correctness
+and exposure controls must run beside performance. Short fields and variable-cardinality indexes
+can have high amplification even where CPU is small. Compare products only under equivalent security, query, access and deployment conditions. Otherwise, retain qualitative lessons.
 ## 16. Academic integration and complete assurance scope
 
-The IS-Lab requirement is satisfied by a quarantined reference environment that demonstrates web
-pentesting techniques and then measures data-protection impact. Course payloads and intentionally
-vulnerable code never enter the production package. ZAP is sufficient to satisfy the mandatory
-open-tool requirement. sqlmap, PCAP/TShark/Zeek, Nmap,
-internal DAST and other integrations remain active Cryptalis workstreams even when the course rubric
-does not require every one of them.
+The historical IS-Lab project context proposed a quarantined reference environment for web
+pentesting demonstrations and data-protection impact measurement. Course payloads and intentionally
+vulnerable code never enter the production package. Earlier notes assumed ZAP would satisfy an open-tool requirement. No current course rubric was supplied or verified in this pass. This is
+historical context, not a current compliance finding. sqlmap, PCAP, TShark, Zeek, Nmap, internal DAST and other integrations remain active Cryptalis workstreams.
+They do not depend on a future course rubric.
+
+The course-specific question is whether an actual dated rubric accepts the proposed demonstration.
+Wrong assumptions would produce a failed submission. The default is to withhold the course-sufficiency claim. Alternatives are a ZAP-led demonstration or another explicitly accepted open-tool demonstration.
+The minimum experiment has these steps:
+
+1. Get the authentic course and rubric version.
+2. Map every mandatory item to a pinned demonstration.
+3. Execute the required scenarios.
+4. Collect the artifacts required by the instructor.
+
+Evidence is that rubric plus
+the complete mapping/run artifacts and any instructor clarification. Pass requires satisfaction of every mandatory item. Missing or ambiguous items fail or remain open.
+Course-compliance wording is blocked until then. Isolated synthetic lab and engine work may proceed safely.
 
 ### 16.1 Reference Docker lab
 
-The reference lab should contain pinned, isolated services for the baseline and protected app, a
-synthetic PostgreSQL database, local key-provider emulator, ZAP, optional attack tools, collectors,
-and an evidence builder. Baseline and protected deployments use the same application revision,
-routes, fixtures, identities and attack seeds; only the protection configuration/schema differ.
-Networks separate attacker, application, database/provider and evidence roles, with egress denied.
-Volumes are disposable except the redacted result bundle. Health checks prove target and collector
-identity before a run, and cleanup is itself an evidenced phase.
-
+The [canonical lab and regression contract](architecture/assurance-evidence.md#11-ci-reference-lab-and-regression)
+owns services, networks, reset, identity, collectors and cleanup. Research compares baseline,
+protected, mutant and incomplete-evidence environments while retaining the same app/attack semantics.
+The course demonstration is a local learning artifact, not evidence of complete pentesting coverage.
 ### 16.2 Complete active assurance workstreams
 
 1. Protection-graph schema and canonical evidence/result model.
@@ -807,83 +457,84 @@ identity before a run, and cleanup is itself an evidenced phase.
 10. Labeled evaluation corpus and protected/baseline comparison.
 11. Burp, Nuclei, sqlmap, CodeQL, Semgrep, Trivy, Nmap, TShark and Zeek adapters or comparison
     harnesses with source-tool semantics preserved.
-12. Internal endpoint discovery, crawler/authentication/state modeling, mutation, payload, oracle,
+12. Internal endpoint discovery, crawler and authentication/state modeling, mutation, payload, oracle,
     minimization and replay engines.
 13. Provider-cloud chaos, signed attestations, writer provenance, managed-backup and cross-cluster
     restore drills, and attack/protection graph planning.
 
 ### 16.3 Solo flat assurance program
 
-One person owns every assurance workstream. Doctor, Pentest, Verify, the protection graph, exposure
-collectors, tool adapters, internal SAST/DAST, networking and lifecycle-chaos research may advance
-concurrently. Scenario IDs, evidence schema, test vectors, marker policy and safety contracts are
-versioned so partially mature workstreams can interoperate without pretending to share the same
-evidence level. Manual implementation remains one file and one explainable invariant at a time.
+One person owns every assurance workstream. Doctor, Pentest, Verify and the Protection Graph may advance concurrently with exposure collectors and tool adapters.
+Internal SAST and DAST, networking and lifecycle-chaos research may also advance concurrently. Scenario IDs, evidence schema, test vectors, marker policy and safety contracts are versioned.
+Thus, workstreams with different maturity can interoperate while preserving their separate evidence levels. Manual implementation remains one file and one explainable invariant at a time.
 
-## 17. Flat workstream map
+## 17. Assurance research themes
 
-Every workstream below is active. The labels group responsibilities; they are not sequential phases
-or permission gates. Each result records its own evidence maturity and dependencies.
+These themes organize assurance research questions, not implementation workstream IDs or state.
+The [build guide](cryptalis-build-guide.md) owns the dependency-aware file sequence and the
+[checklist](backend-build-checklist.md) owns progress. Every experiment records evidence maturity
+and dependencies. Research can start before integration is justified.
 
-### Workstream A — Falsify the premise
+### Theme A — Falsify the premise
 
-Define the graph/result schemas, label a fixture corpus, run baseline and protected scenarios, and
-verify that correlation adds information unavailable from source tools. Interview maintainers and
+Define the graph and result schemas. Label a fixture corpus. Run baseline and protected scenarios.
+Verify that correlation adds information unavailable from source tools. Interview maintainers and
 security reviewers about whether first-party evidence is useful while engine experiments proceed.
 
-### Workstream B — Core developer assurance
+### Theme B — Core developer assurance
 
-Manifest/model/schema/migration Doctor; exactness labels; precise AST rules plus advanced semantic
-analysis research; PostgreSQL/HTTP/log exposure collectors; deterministic Verify; controls/mutants;
-JSON/JUnit/Markdown; CI fast path.
+Manifest/model/schema/migration Doctor. Exactness labels. Precise AST rules plus advanced semantic
+analysis research. PostgreSQL/HTTP/log exposure collectors. Deterministic Verify. Controls/mutants.
+JSON/JUnit/Markdown. CI fast path.
 
-### Workstream C — Quarantined attack harness
+### Theme C — Quarantined attack harness
 
 ZAP authenticated/OpenAPI adapter, attack-to-asset correlation, reference vulnerable app, strict
 authorization, pinned images, resource budgets and cleanup evidence.
 
-### Workstream D — Lifecycle and operations depth
+### Theme D — Lifecycle and operations depth
 
 Provider-specific facts, cache fencing, stale workers, shred/restore, migration interruption,
 deployment findings, writer provenance and signed evidence bundles.
 
-### Workstream E — Internal SAST/DAST and network depth
+### Theme E — Internal SAST/DAST and network depth
 
 Stable syntax/semantic IR, symbols, CFG, local data flow, rule engine, endpoint/state graph, request
 mutators, response/exposure oracles, deterministic replay, PCAP/flow correlation and differential
 comparison with CodeQL/Semgrep/ZAP/Burp.
 
-### Workstream F — Advanced research ecosystem
+### Theme F — Advanced research ecosystem
 
-Interprocedural taint and framework summaries; signed rule/scenario packs; Acra-like SQL
-policy/honeytoken experiments; managed-backup drills; Nuclei/sqlmap/Trivy/Nmap/TShark/Zeek depth;
-and broader attack-graph planning.
+Interprocedural taint and framework summaries. Signed rule/scenario packs. Acra-like SQL
+policy/honeytoken experiments. Managed-backup drills. Nuclei/sqlmap/Trivy/Nmap/TShark/Zeek depth. And broader attack-graph planning.
 
-Every workstream requires precision/recall, determinism, mutation-kill, evidence-completeness and
-safety thresholds defined before its results support stronger claims. Feature count is not a
+Every workstream requires thresholds for precision, recall, determinism, mutation-kill, evidence completeness and safety.
+Define these thresholds before results support stronger claims. Feature count is not a
 maturity criterion.
 
-## 18. Open research questions
+## 18. Falsifiable research questions
 
-1. Can a protection graph remain stable across SQLAlchemy mapper and Alembic revisions?
-2. Which raw/Core/bulk paths can be rejected reliably, and which must remain declared gaps?
-3. Can source-to-runtime-to-database correlation work without invasive application instrumentation?
-4. How can background jobs and non-Python writers authenticate provenance?
-5. What exact collector set is sufficient for a bounded “no plaintext observed” result?
-6. How should search-index metadata exposure be ranked for low-entropy fields?
-7. Can restore/resurrection tests be portable without erasing provider-specific meaning?
-8. What independently verifiable part of first-party evidence is valuable to an assessor?
-9. Can control mutants remain safe, deterministic, and representative rather than theatrical?
-10. What false-positive rate will developers tolerate for protected-value sink analysis?
-11. Does the reference app exercise enough SQLAlchemy behavior to predict real adoption cost?
-12. Are teams willing to register external writers, evidence stores, backups, and collectors?
+All are pending first-party experiments. Gate definitions are in the [canonical assurance owner](architecture/assurance-evidence.md#research-gates).
+A hypothesis or budget change requires a new recorded experiment version before measurement.
 
+| Question / hypothesis | Comparison or failure injection | Acceptance / redesign |
+|---|---|---|
+| Graph identity survives mapper/migration/restore change | rename/revision/restore fixtures with reused names/OIDs | G-A03/G-A06: no false exact joins. Preserve epochs or redesign IDs |
+| Raw/Core/bulk paths can be meaningfully rejected | T/R/D/U cell trials with parameter/bypass variants | ORM P2: zero silent plaintext on admitted T/R. Otherwise narrow profile |
+| Correlation needs tolerable instrumentation | same labeled chains with trace adapter vs manual inspection | G-A03/G-A09 plus predeclared overhead/setup budget. Demote if no value |
+| Non-Python/background identity can be authenticated | shared-role, forged application_name, pool and ETL trials | G-A03: unknown attribution visible. Exact actor claims require proved identity |
+| A named collector set supports bounded absence | missing, truncated, sampled, late, redacted and rotated sources | G-A04: all controls/intervals valid, no false absence. Otherwise inconclusive |
+| Metadata leakage ranking changes useful decisions | low-entropy/search-domain fixtures and reviewer explanations | predeclare domain leakage acceptance. Reject search when inferred exposure exceeds it |
+| Provider restore tests preserve provider meaning | emulator then authorized AWS/GCP/Vault restore/reimport lanes | lifecycle gates plus G-A04: no state collapse. Stronger claim withheld if recovery survives |
+| First-party public artifacts are useful externally | reviewer recomputes hashes/relationships, reruns fresh synthetic fixtures | G-A08/G-A09 plus explicit external artifact before independence claim |
+| Mutants represent the intended control fault | one-fault mutants vs normal/missing-collector configurations | G-A04/G-A06: expected violation/replay, no unrelated failure counted as kill |
+| Protected-value sink rules are usable | held-out safe/unsafe/ambiguous cross-function/module corpus | G-A02 plus predeclared triage-time budget. Narrow rule when exceeded |
+| Reference app predicts compatibility work | vary loaders/mapping/raw/jobs/serializer patterns | per-cell ORM gates. Missing cells unsupported. No app-wide extrapolation |
+| Registration burden is acceptable | >=5 maintainers walk through writer/collector/backup setup | record completion/time/rejection. Predeclare <=1 hour local setup hypothesis. Failure demotes adoption thesis, not a market estimate |
 ## 19. Fatal risks and stop rules
 
-- **Trust conflict:** Cryptalis grades Cryptalis. Mitigation is transparent artifacts, controls,
-  replay, and optional signatures—not a claim of independence.
-- **Coverage illusion:** a polished dashboard may conceal unobserved writers or collectors. Unknowns
-  must be first-class and must block pass results where relevant.
+- **Trust conflict:** Cryptalis grades Cryptalis. Mitigation uses transparent artifacts, controls, replay and optional signatures. These controls do not establish independence.
+- **Coverage illusion:** a polished dashboard may conceal unobserved writers or collectors. Results must explicitly represent unknowns. Relevant unknowns must block pass results.
 - **Scanner maintenance:** generic engines and templates change rapidly. Adapters must be thin,
   version-pinned, and replaceable.
 - **Framework churn:** SQLAlchemy/Alembic internals may invalidate rules. Support matrices and fixture
@@ -895,23 +546,23 @@ maturity criterion.
 - **Scope starvation:** assurance work can consume the capacity needed to make the protected boundary
   correct. Core protection and migrations remain the primary product.
 
-Stop or demote the product claim if the correlation-premise experiment cannot show materially better protected-asset
-impact classification than ZAP/source-tool output plus a human database inspection.
+Compare protected-asset impact classification against ZAP and source-tool output plus human database inspection.
+If the correlation-premise experiment cannot show a material improvement, stop or demote the product claim.
 
 ### 19.1 Risk register by ownership
 
 | Class | Top risks |
 |---|---|
-| Technical | SQLAlchemy visibility gaps; source/runtime correlation ambiguity; provider/restore non-portability; flaky active scans; evidence-schema evolution |
-| Security | Destructive execution escapes scope; evidence stores plaintext/secrets; stale keys survive claimed shredding; malicious templates/tools; the suite's own control is trusted circularly |
-| Maintenance | Scanner/template churn; SQLAlchemy/Alembic compatibility matrix; provider API changes; duplicated generic-tool logic; long-lived scenario corpus and fixtures |
-| Adoption | False positives; setup/collector burden; fear of active testing; first-party evidence rejected by assessors; a field-encryption library is good enough |
+| Technical | SQLAlchemy visibility gaps. Source/runtime correlation ambiguity. Provider/restore non-portability. Flaky active scans. Evidence-schema evolution |
+| Security | Destructive execution escapes scope. Evidence stores plaintext/secrets. Stale keys survive claimed shredding. Malicious templates/tools. The suite's own control is trusted circularly |
+| Maintenance | Scanner/template churn. SQLAlchemy/Alembic compatibility matrix. Provider API changes. Duplicated generic-tool logic. Long-lived scenario corpus and fixtures |
+| Adoption | False positives. Setup/collector burden. Fear of active testing. First-party evidence rejected by assessors. A field-encryption library is good enough |
 
-Reasons not to build remain substantive: the suite may be less useful than investing the same effort
-in migration safety; ZAP plus a human database check may suffice for the target users; independent
-pentesters may be preferred; Acra/CipherStash may close the semantic gap; and one maintainer may not
-sustain protection, lifecycle, compatibility, static analysis, pentesting and assurance
-simultaneously.
+There are substantive reasons not to build. The same effort invested in migration safety may be more useful.
+ZAP plus a human database check may suffice for target users. They may prefer independent pentesters.
+Acra or CipherStash may close the semantic gap.
+
+One maintainer may not sustain protection, lifecycle, compatibility, static analysis, pentesting and assurance at the same time.
 
 ## 20. Positioning discipline
 
@@ -930,25 +581,20 @@ Not acceptable:
 - “Crypto-shredding verified” based only on a successful provider API call.
 - “All SQLAlchemy paths protected” without a pinned compatibility catalogue.
 
-The strongest demo is intentionally uncomfortable: show the same exploitable application in
-plaintext, protected, and mutated configurations; let the attack succeed; then show precisely what
-changed in the database and evidence stores, which controls held, which metadata still leaked, and
-what the suite could not observe.
+The strongest demo exposes difficult results. Show the same exploitable application in plaintext, protected and mutated configurations.
+Let the attack succeed. Then show precisely what changed in the database and evidence stores.
+Show which controls held, which metadata still leaked and what the suite could not observe.
 
 ### 20.1 Value outside the university and research contribution
 
-A developer would use the suite to catch concrete retrofit failures before deployment, decide
-whether a searchable representation is justified, reproduce a protection regression in pytest/CI,
-and hand a reviewer a bounded evidence bundle. An operator would use it to reconcile manifest,
-schema, migration, provider and cache state. A security reviewer would use it to distinguish a
+A developer would use the suite to detect concrete retrofit failures before deployment.
+The suite would help the developer decide whether a searchable representation is justified.
+It would also help reproduce a protection regression in pytest or CI and give a reviewer a bounded evidence bundle. An operator would use it to reconcile manifest, schema, migration, provider and cache state. A security reviewer would use it to distinguish a
 successful exploit from the protected-data impact of that exploit. Those workflows exist outside
 the course only if setup is materially cheaper than an ad hoc review.
 
-The plausible research contribution is not a new attack or cryptographic primitive. It is an
-evaluated model for correlating ORM/schema/key-lifecycle semantics with multi-source attack and
-exposure evidence, including explicit unknowns and detector mutants. The contribution must be
-supported by a labeled corpus, protected/baseline/mutant experiments, precision/recall,
-reproducibility, and published limitations.
+The plausible research contribution is not a new attack or cryptographic primitive. It is an evaluated model that correlates ORM, schema and key-lifecycle semantics with attack and exposure evidence from multiple sources.
+The model includes explicit unknowns and detector mutants. The contribution requires a labeled corpus, protected, baseline and mutant experiments, precision, recall, reproducibility, and published limitations.
 
 ## 21. Primary source index
 
@@ -967,15 +613,15 @@ Additional primary references used in this decision:
 - [Imperva unified data-security visibility](https://www.imperva.com/products/data-security/unified-visibility/)
 - [Fortanix platform](https://www.fortanix.com/platform)
 
-All vendor claims are documented capability, not independently reproduced performance. Re-run this
+All vendor claims describe documented capability. They do not establish independently reproduced performance. Re-run this
 review before public positioning because product and tool behavior changes quickly.
 
 ## Appendix A. Required deliverable coverage
 
-This map makes the original 62-part brief auditable. A row points to the section that owns the
-decision; it does not imply that a feature has been implemented.
+This map preserves the original 62-part research brief. Rows identify research discussions.
+The linked architecture documents own normative contracts. No row implies implementation.
 
-| # | Required topic | Owning section |
+| # | Required topic | Research discussion |
 |---:|---|---|
 | 1 | Executive verdict | Executive decision |
 | 2 | Competitor security-tooling landscape | 2 |
@@ -986,42 +632,42 @@ decision; it does not imply that a feature has been implemented.
 | 7 | Final Security Assurance thesis | 1, 20 |
 | 8 | Doctor architecture | 6 |
 | 9 | SQLAlchemy Doctor | 6.1–6.3 |
-| 10 | Query/Search Doctor | 6.6 |
-| 11 | Minimum-leakage analysis | 6.6 |
-| 12 | Schema/Alembic Doctor | 6.2, 6.4, 10 |
-| 13 | Key/KMS Doctor | 6.4, 9 |
-| 14 | Shredding Doctor | 6.4, 9 |
+| 10 | Query/Search Doctor | 6.4 |
+| 11 | Minimum-leakage analysis | 6.4 |
+| 12 | Schema/Alembic Doctor | 6.1, 10 |
+| 13 | Key/KMS Doctor | 6.1, 9 |
+| 14 | Shredding Doctor | 9 |
 | 15 | Application-security Doctor | 6.3–6.4 |
 | 16 | Secret/logging analysis | 6.3–6.4 |
-| 17 | Deployment Doctor | 6.4, 10.2 |
-| 18 | Dependency/security-tool integration | 2.2, 3.2, 10.2 |
+| 17 | Deployment Doctor | 10 |
+| 18 | Dependency/security-tool integration | 2.2, 3.2, 10 |
 | 19 | Pentesting architecture | 7 |
-| 20 | Web attack suite | 7.1–7.2 |
-| 21 | Database compromise tests | 7.2 |
-| 22 | ORM/raw SQL bypass tests | 6.3, 7.2 |
-| 23 | Ciphertext tampering tests | 7.2, 8.1 |
-| 24 | Searchable-encryption adversarial tests | 6.6, 7.2 |
-| 25 | Key lifecycle tests | 7.2, 9 |
-| 26 | Shredding adversarial tests | 7.2, 9 |
-| 27 | Migration security tests | 7.2, 10.1 |
-| 28 | Plaintext leakage tests | 7.2, 8.2 |
-| 29 | PyShark/traffic analysis | 8.2 |
-| 30 | PCAP analysis | 8.2 |
+| 20 | Web attack suite | 7 |
+| 21 | Database compromise tests | 7 |
+| 22 | ORM/raw SQL bypass tests | 6.1, 7 |
+| 23 | Ciphertext tampering tests | 7, 8 |
+| 24 | Searchable-encryption adversarial tests | 6.4, 7, 9 |
+| 25 | Key lifecycle tests | 9 |
+| 26 | Shredding adversarial tests | 9 |
+| 27 | Migration security tests | 10 |
+| 28 | Plaintext leakage tests | 8 |
+| 29 | PyShark/traffic analysis | 8 |
+| 30 | PCAP analysis | 8 |
 | 31 | Nmap integration | 2.2, 3.2 |
-| 32 | ZAP/Burp/sqlmap/Nuclei integration | 2.2, 3.2, 7.1–7.3 |
-| 33 | Template-driven testing | 7.3 |
+| 32 | ZAP/Burp/sqlmap/Nuclei integration | 2.2, 3.2, 7 |
+| 33 | Template-driven testing | 7 |
 | 34 | Doctor-to-Pentest correlation | 4, 11 |
 | 35 | Evidence/confidence model | 5 |
-| 36 | Security invariants | 8.4 |
+| 36 | Security invariants | [Hub invariants](architecture/README.md#23-canonical-security-invariants) |
 | 37 | Fuzzing/property tests | 14 |
 | 38 | Unified reporting | 5, 13 |
-| 39 | Severity model | 5.2 |
+| 39 | Severity model | 5 |
 | 40 | CI/CD integration | 14 |
 | 41 | Pytest integration | 14 |
-| 42 | Security regression workflow | 14.1 |
+| 42 | Security regression workflow | 14 |
 | 43 | Safe execution model | 12 |
 | 44 | Reference Docker lab | 16.1 |
-| 45 | IS-Lab compliance | 16 |
+| 45 | IS-Lab historical context. Rubric unverified | 16 |
 | 46 | Competitor comparison | 2 and prior-art document |
 | 47 | Usefulness outside university | 20.1 |
 | 48 | Developer value | 20.1 |
@@ -1036,6 +682,6 @@ decision; it does not imply that a feature has been implemented.
 | 57 | Top maintenance risks | 19.1 |
 | 58 | Top adoption risks | 19.1 |
 | 59 | Reasons not to build | 1.1, 19–19.1 |
-| 60 | Final CLI/API | 14 |
-| 61 | Final architecture diagram | 4 |
+| 60 | Final CLI/API | 14 and [shared CLI](architecture/manifest-context-api.md#cli-and-configuration) |
+| 61 | Final architecture diagram | [Architecture hub](architecture/README.md) |
 | 62 | Final positioning statement | 20 |

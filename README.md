@@ -1,198 +1,109 @@
 # Cryptalis
 
-Cryptalis is a planned SQLAlchemy-native data-protection platform for Python applications. It
-compiles field-protection declarations into transparent application-layer encryption, protected
-PostgreSQL storage, capability-specific search indexes, reviewed Alembic migrations, subject-key
-lifecycle controls, and reproducible security evidence.
+Cryptalis is a planned data-protection and security-assurance system for Python and SQLAlchemy.
+Its versioned Protection Manifest declares field policy. The proposed system connects this
+policy to authenticated payload encryption, search capabilities, PostgreSQL schema, and reviewed
+Alembic migrations. It also connects key lifecycle and application paths to controlled attacks
+and reproducible exposure evidence.
 
-> **Repository status — 2026-08-22:** architecture and research only. No package, runtime,
-> migration plugin, database schema, key provider, or verification harness has been implemented.
-> Every API and command below is a design target until executable evidence says otherwise.
+**Status as of 2026-10-01: documentation and research only.** The repository has no package,
+runtime, tests, migration plugin, provider adapter, scanner integration, or verification
+harness. Every Cryptalis API and command is a proposed contract. The [capability
+checklist](docs/backend-build-checklist.md) separates specified design from executable evidence.
+No runtime version is supported.
 
-## Executive verdict
+## Purpose and boundary
 
-**BUILD CRYPTALIS AS AN AMBITIOUS, LEARNING-FIRST DATA-SECURITY SYSTEM. The complete architecture is
-the active program from the beginning; evidence gates control claims, not which subsystem may be
-studied or built.**
+Application engineers would use Cryptalis to protect selected sensitive model fields. Operators
+would manage migrations and key access. Reviewers would interpret evidence within its stated
+scope. The first target is a tenant-aware Python service with registered SQLAlchemy sessions,
+PostgreSQL, stable record IDs, and host-issued identity and authorization grants. The
+application process handles plaintext and is trusted.
 
-CipherStash and MongoDB are stronger reference systems for advanced encrypted search. Rails already
-proves that transparent application-layer encryption is useful, and `pydantic-encryption` already
-provides Python/SQLAlchemy encryption, blind indexes, AWS KMS integration, and deferred decryption.
-Their existence is prior art and a source of testable reference behavior—not a reason to avoid
-implementing similar capabilities for deep learning. Cryptalis's coherent center remains:
+The design requires supported paths to encrypt protected values before PostgreSQL receives them.
+The intended protection covers database dumps, backup disclosure, direct SQL extraction, and
+accidental persistence through supported paths. It does not prevent SQL injection, cross-site
+scripting (XSS), business authorization bugs, application-host compromise, or deliberate export
+of decrypted values. Search terms, IDs, and lengths reveal declared information.
 
-- a versioned Protection Manifest that is the source of truth for crypto, schema, query, lifecycle,
-  and leakage decisions;
-- SQLAlchemy 2.x query semantics and fail-loud compatibility analysis;
-- automatic but reviewable PostgreSQL/Alembic migration planning for existing applications;
-- tenant- and subject-scoped rotation, revocation, cache fencing, and bounded shredding evidence;
-- minimum-leakage recommendations based on declared, statically observed, and runtime-observed
-  query behavior; and
-- verification that measures protected-data exposure after realistic attacks succeed.
+Raw drivers, COPY, extract-transform-load (ETL) processes, and separate writers are explicit
+coverage gaps. A successful exploit and exposure of protected plaintext are separate results.
 
-Competitor overlap alone is never a stop condition. A feature may be built, integrated, or both after
-considering learning value, system fit, correctness, testability, maintenance and production risk.
-Known searchable-encryption and security-analysis techniques may be independently implemented in
-research profiles with attribution and comparison. Novel or insufficiently reviewed cryptography
-does not enter a production profile merely because implementing it is educational.
+Transparent fields remain ordinary Python values. Application serializers and logs can receive
+these values. Controlled access is a separate profile that requires release bound to purpose and
+identity.
 
-## Product thesis
+A local reveal wrapper alone is not an independent security boundary. Key removal or restore
+denial does not prove erasure of backed-up key bytes or unmanaged copies.
 
-The trusted boundary is the application process. Registered values remain ordinary Python values
-inside that boundary and are encrypted locally before PostgreSQL persistence:
+## System shape
 
 ```text
-Python plaintext -> Cryptalis data plane -> PostgreSQL ciphertext
-PostgreSQL ciphertext -> Cryptalis data plane -> Python plaintext
+field declarations -> immutable Protection Manifest
+                       |        |         |         |
+                       v        v         v         v
+                  ORM/crypto  schema/   lifecycle  Doctor/plan
+                    queries   Alembic   key/fence   analysis
+                       |        |         |
+                       +---- PostgreSQL --+---- provider/denial ledger
+                                      |
+                      authorized synthetic Verify/Pentest/network lab
+                                      |
+                       derived Protection Graph + bounded evidence
 ```
 
-The target declaration is intentionally small:
+The first candidate query profile includes randomized protection without search, equality, IN,
+and scoped uniqueness. Join and grouping, range and ordering, extrema, prefix, substring and
+text search, fuzzy search, and structured or JSON queries remain research tracks. Each track
+requires a specific construction. The [search
+contracts](docs/architecture/crypto-search-lifecycle.md) define leakage, cost, lifecycle, and
+enablement gates.
 
-```python
-cryptalis.protect(
-    User,
-    tenant="organization_id",
-    subject="id",
-    fields={
-        "email": {"access": "transparent", "search": ["equality"]},
-        "ssn": {"access": "controlled", "search": []},
-    },
-)
-```
+The default design uses explicit key warm-up or prefetch, then local cryptography. This default
+still requires comparison with actual greenlet-backed remote I/O and deferred batch
+alternatives.
 
-Transparent access is the default. Controlled fields are an optional strict profile for values
-whose accidental disclosure through logs, tracing, serialization, or broad application flows is a
-larger risk. Controlled access is meaningful only when an independently authenticated key authority
-can refuse decryption; a local `reveal()` wrapper alone is not a security boundary.
+The multi-year program includes object-relational mapping (ORM), query compilation, migrations,
+and distributed key lifecycle. It also includes Doctor analysis of abstract syntax trees (ASTs),
+control-flow graphs (CFGs), and taint. Pentest covers state, mutation, and replay experiments.
+Verify, network analysis, packet capture (PCAP), DevSecOps evidence, and advanced search
+complete the program scope.
 
-## Security claim
+Dependencies govern integration and claims. They do not impose a course limit or a minimum
+viable product (MVP) ceiling. Attribution and differential comparison take priority over
+novelty.
 
-Cryptalis is designed to reduce plaintext exposure from:
+## Start here
 
-- stolen database dumps and leaked backups;
-- compromised database credentials and direct SQL extraction;
-- overprivileged database operators when keys are separated from PostgreSQL; and
-- accidental plaintext persistence through supported SQLAlchemy paths.
-
-It does not prevent SQL injection, broken authorization, XSS, arbitrary code execution in the
-trusted process, full application-host compromise, deliberate plaintext export, or every logging
-mistake. A successful attack and a plaintext disclosure are reported as separate outcomes.
-
-## Complete architecture
-
-```text
-protect() declarations + observed queries
-                  |
-                  v
-        versioned Protection Manifest
-       /          |          |          \
-      v           v          v           v
- ORM data plane  schema     lifecycle   explain/verify
- local AEAD +    compiler   control     doctor/plan
- query rewrite     |        plane
-      |             v          |
-      +--------> PostgreSQL <---+----> KMS / Vault
-```
-
-- The **data plane** runs in the application and performs local encryption, decryption, and search
-  token generation. Remote KMS calls are forbidden from scalar ORM processors and normal hot paths.
-- The **schema compiler** derives physical columns, indexes, constraints, and Alembic operations
-  from the manifest. It generates plans; it never mutates production schema at application startup.
-- The **lifecycle control plane** coordinates wrapped keys, generations, cache epochs, tombstones,
-  audit checkpoints, and shredding receipts. It is not a per-field encryption gateway.
-- The **analysis plane** powers `doctor`, `plan`, `schema explain`, and `verify`. Its active
-  workstreams include manifest/model/schema linting, AST, symbols, CFG, call graphs, data flow,
-  taint analysis and a substantial internal pentesting engine. Static and runtime evidence never
-  becomes an unsupported guarantee.
-
-The complete decision, leakage, migration, and failure model is in the
-[architecture blueprint](docs/architecture/README.md).
-
-## Search capability policy
-
-Searchability is opt-in because every representation leaks information.
-
-| Capability | Program status | Minimum consequence |
-|---|---|---|
-| No search | Core | Randomized authenticated ciphertext only |
-| Equality, `IN`, scoped uniqueness | Active workstream | Repetition/frequency and access-pattern leakage within an index domain |
-| Equijoin/grouping | Research gate | Cross-column equality leakage and difficult rotation domains |
-| Range/order/`MIN`/`MAX` | Active construction-research workstream; reviewed production path only | Order and query-pattern leakage; high attack and migration complexity |
-| Prefix/text/fuzzy | Active experimental workstream | Token/pattern leakage and substantial storage amplification |
-| JSON/path search | Active experimental workstream | Schema/path/query-pattern leakage and companion-index complexity |
-
-Unsupported operators fail loudly. Learning value can justify researching a capability; enabling it
-still requires an explicit leakage, lifecycle, migration and correctness decision.
-
-## Flat ambitious program
-
-- **All workstreams are active:** core protection, advanced searchable encryption, schema and
-  migrations, distributed key lifecycle, Doctor/SAST, Pentest/DAST, Verify, protection/evidence
-  graphs, networking/PCAP analysis, DevSecOps integration, and controlled-access research.
-- **Flat does not mean unverified:** each workstream may advance immediately and independently, but
-  nothing enters a production profile or public claim until its own threat, correctness, leakage,
-  safety, benchmark, compatibility, and review gates pass.
-- **Solo does not mean narrow:** one builder may move among workstreams according to learning value,
-  discovered dependencies, risk, and available experiments. Manual file-by-file implementation and
-  explicit evidence remain mandatory.
-
-The staged learning roadmap and build-versus-integrate decisions live in the
-[learning-first research philosophy](docs/learning-first-research-philosophy.md).
-
-## Solo build workflow
-
-Cryptalis is built by one person. Implementation proceeds one file at a time: understand the
-invariant, manually type a failing test, run it, manually type the corresponding implementation,
-inspect the evidence, and cross the file's evidence gate before receiving the next file. AI assistance may
-edit documentation directly, but does not write source, tests, migrations, configuration or CI into
-the repository. See the [complete solo build guide](docs/cryptalis-build-guide.md).
-
-## Active program scope
-
-The active program includes the complete platform:
-
-- Python 3.12+, SQLAlchemy 2.x, FastAPI-friendly sync and async examples, PostgreSQL, and Alembic;
-- versioned manifest and explainable physical schema for randomized ciphertext and equality indexes;
-- transparent insert/update/load through one declared ORM path with normal Python values;
-- active tenant key context so no remote provider call occurs during synchronous attribute access;
-- one local provider and one production KMS adapter behind a narrow wrapping interface;
-- tenant branch keys, subject key generations, rotation, revocation, cache fencing, and a bounded
-  shredding workflow;
-- resumable expand/backfill/verify/cutover/contract migration for one existing table;
-- `doctor`, `schema explain`, and `verify` with a versioned compatibility catalogue;
-- Web Application Pentesting via OWASP ZAP plus deterministic database-exposure scenarios; and
-- pinned benchmarks against baseline SQLAlchemy and `pydantic-encryption` where comparable.
-
-It also includes independently researched range/order, equijoin/grouping, text, fuzzy and structured
-search; Doctor syntax IR, CFG, data flow and interprocedural taint; an internal endpoint graph,
-crawler, authentication/state engine, mutators, payloads, oracles and replay; writer provenance;
-distributed lifecycle fault injection; PCAP/flow correlation; controlled-access authority; and
-signed rule/scenario ecosystems.
-
-Universal interception, autonomous production migration, public-target exploitation, custom root
-key custody, and unsupported production-readiness or compliance claims remain excluded because they
-violate the trust model or evidence discipline—not because they exceed a course schedule.
-
-## Documentation
-
-| Document | Owns |
+| Document | Responsibility |
 |---|---|
-| This README | Product promise, threat boundary, complete shape, and active program scope |
-| [Learning-first research philosophy](docs/learning-first-research-philosophy.md) | Governing evaluation criteria, full learning architecture, matrices, and flat workstream roadmap |
-| [Complete solo build guide](docs/cryptalis-build-guide.md) | Entire system in plain language, flat workstream map, dependencies, target files, learning goals, and evidence gates |
-| [Architecture blueprint](docs/architecture/README.md) | Accepted design, query/leakage contract, lifecycle, migration, and fatal gates |
-| [Prior art](docs/prior-art.md) | Competitive comparison and claim discipline |
-| [Security assurance research](docs/security-assurance-suite-research.md) | Adversarial Doctor, Pentesting, Verify, evidence, integration, and safety decision |
-| [Backend checklist](docs/backend-build-checklist.md) | Per-workstream implementation and evidence status |
-| [Engineering playbook](ENGINEERING_PLAYBOOK.md) | Contribution, testing, migration, and release process |
+| [Architecture blueprint](docs/architecture/README.md) | Authoritative ownership map, decisions, threats, invariants, and dependency graph |
+| [Manifest/context/API](docs/architecture/manifest-context-api.md) | Semantic schema, identity provenance, public interfaces, modules, errors, and versions |
+| [Crypto/search/lifecycle](docs/architecture/crypto-search-lifecycle.md) | Envelope, leakage, provider, cache, fence, restore, and receipt contracts |
+| [ORM/schema/migration](docs/architecture/orm-schema-migration.md) | Query paths, async alternatives, physical schema, Alembic, and migration recovery |
+| [Assurance/evidence](docs/architecture/assurance-evidence.md) | Doctor, Protection Graph, Verify, Pentest, collectors, network, bundles, and benchmarks |
+| [Solo build guide](docs/cryptalis-build-guide.md) | Learning order, first files, and evidence checkpoints |
+| [Research philosophy](docs/learning-first-research-philosophy.md) | Learning priorities, build-or-integrate choices, and broader research experiments |
+| [Checklist](docs/backend-build-checklist.md) | Current implementation and evidence state |
+| [Prior art](docs/prior-art.md) | Dated competitor comparisons and positioning limits |
+| [Assurance research](docs/security-assurance-suite-research.md) | Analyzer and adversarial research, including falsification |
+| [Engineering playbook](ENGINEERING_PLAYBOOK.md) | Manual implementation, contribution, verification, and release process |
+| [Claims audit](docs/documentation-claims-audit.md) | W-1..W-5 closure, adversarial review, and recorded documentation checks |
+| [Historical hardening dossier](docs/adversarial-architecture-hardening.md) | Original hostile-review hypotheses and superseded technical details |
 
-The previous gateway-first ADR set was removed because it encoded a superseded Model B architecture
-and repeated decisions now owned by the blueprint.
+The blueprint links ledgers of primary sources. Documented or source-inspected external
+capabilities are separate from reproduced Cryptalis capabilities. Existing encryption, ORM,
+search, and assurance systems are strong alternatives. The proposed differentiator is
+application-specific correlation. Cryptalis does not claim universal superiority or new
+cryptographic primitives.
 
-## Current next step
+## Next evidence
 
-Begin the high-risk prototypes in the [backend checklist](docs/backend-build-checklist.md) while
-advancing the other active workstreams through isolated research, fixtures and experiments. An
-affected production claim must stop or be redesigned if transparent sync/async behavior, fail-loud
-bypass handling, subject-key fencing, or migration safety cannot be demonstrated without
-framework-scale fragility.
+Start with the provenance, manifest and envelope, ORM state and bypass, and three-way async
+prototypes in the [checklist](docs/backend-build-checklist.md). Lifecycle and restore,
+interrupted migrations, equality uniqueness, and oracle controls each have falsifiable gates.
+Research can proceed independently.
+
+The solo builder manually types source, tests, migrations, and configuration, one explained file
+at a time. AI assistance edits documentation and discusses the next file. It does not scaffold
+or implement the repository. Documentation changes confer no production security claim.

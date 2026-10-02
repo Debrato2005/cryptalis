@@ -1,249 +1,136 @@
-# Prior Art, Learning, and Claim Discipline
+# Prior art, attribution, and product thesis
 
-Status: Working research summary; re-verify before public claims
+Reviewed 2026-09-30.
+The sources below supply documented or source-inspected evidence only.
+They do not supply independently reproduced, benchmarked, or reviewed Cryptalis evidence.
+The [ORM ledger](research/orm-platform-evidence.md),
+[crypto/provider ledger](research/crypto-provider-evidence.md), and
+[assurance-tool ledger](research/assurance-tool-evidence.md) own exact versions, editions, access dates, and source details.
+This document owns comparisons and positioning. It does not own runtime contracts or implementation status.
 
-Last reviewed: 2026-08-22
+## Defensible thesis
 
-This document owns competitive positioning and reference-system discipline. Documented capability
-is not independently reproduced capability, and vendor performance statements are not Cryptalis
-evidence. Competitor overlap is not a reason to reject a learning-rich feature; it is a reason to
-attribute prior art, study the threat model, compare behavior and avoid unsupported novelty claims.
+Field encryption, blind indexes, migration planning, and scanner aggregation already exist.
+Cryptalis cannot claim novel primitives or universal superiority.
+It cannot claim to be the first or only ORM-native encryption system, or the only system that integrates protection and assurance.
+Its strongest proposed distinction connects an explicit SQLAlchemy Protection Manifest to schema and Alembic history, query and leakage policy, and authenticated subject lifecycle.
+It also connects writer and route paths to exercised attack and exposure evidence, with unknowns preserved.
+That remains a hypothesis until the graph, oracle, and usefulness gates beat mature tools plus manual inspection.
 
-## Verdict
+Product differentiation, research contribution, and learning value are separate.
+A reproduced known construction can teach deeply without novel or commercially preferable behavior.
+Related-work search is bounded discovery. It cannot prove that an equivalent system does not exist.
+Before a paper or stronger public claim, refresh the search.
+Get independent review of related work and cryptographic use.
 
-Cryptalis cannot realistically become “better than every competitor.” The competitors optimize
-different trust boundaries, databases, languages, and operational models. Market claims stay
-specific and testable, while the complete research architecture remains active:
+## Current comparisons
 
-> Become the strongest open Python/SQLAlchemy workflow for compiling explicit protection and minimum
-> leakage into ORM behavior, reviewable schema/migrations, subject-key lifecycle, compatibility
-> diagnostics, and attack-impact evidence.
+The access date for these rows is 2026-09-30, except for the CipherStash CLI recheck on 2026-10-01.
+The ledgers hold product releases, editions, and exact sources.
+A rolling web page does not establish an installed binary version.
+'Not documented here' does not mean 'cannot do'.
+These are dated comparisons of documented capabilities, not current reproduced capability claims.
 
-Cryptalis should not claim better or novel cryptography merely because it independently implements
-prior art. It may reproduce valuable CipherStash, MongoDB, CipherSweet, Acra, SAST and DAST concepts
-for learning, provided the work is attributed, independently designed, isolated when experimental,
-tested against known vectors and compared with established implementations. See the
-[learning-first philosophy](learning-first-research-philosophy.md).
+The tables use object-relational mapping (ORM), application programming interface (API), and software development kit (SDK) terminology.
+A command-line interface (CLI) exposes commands. A key management service (KMS) manages custody.
 
-## Competitive matrix
-
-| System | Objectively stronger at | Limitation relevant to Cryptalis | Cryptalis response |
+| Reference | Stronger documented area | Relevant limitation / lesson / Cryptalis response | Primary source |
 |---|---|---|---|
-| CipherStash | Broad Postgres search, published leakage choices, wire proxy, SDK, per-value keys, identity-bound derivation, bulk operations, and current plan/implementation/status workflows | TypeScript/product ecosystem and managed control-plane assumptions; not documented as a SQLAlchemy source/attack/exposure correlator | Benchmark and study deeply; independently implement valuable concepts where learning/correctness gates justify it |
-| `pydantic-encryption` | Existing Python package with SQLAlchemy, blind indexes, AWS KMS, async/deferred batch decrypt | Does not establish the full manifest/schema compiler, distributed shredding, drift/compatibility planning, or attack-evidence thesis | Benchmark, reuse, contribute, or independently implement; existing coverage does not invalidate the learning project |
-| MongoDB Queryable Encryption | Cryptographic research, automatic driver integration, randomized searchable encryption, equality/range support, fail-loud operator catalogue | MongoDB-specific; limited operations; migration and uniqueness constraints remain material | Reproduce its compatibility discipline and study driver/query architecture without copying protocols blindly |
-| CipherSweet | Mature open blind-index discipline, key/domain separation, framework adapters, conservative threat-model guidance | Primarily PHP; no SQLAlchemy/Alembic lifecycle compiler | Copy leakage discipline and transformation/index separation; do not claim blind indexes as novel |
-| Rails Active Record Encryption | Mature transparent DX, deterministic equality, log-parameter filtering, coexistence with old schemes | Deterministic ciphertext leaks equality; Rails-specific; lifecycle/shredding is not its central abstraction | Match framework ergonomics and migration clarity; prefer randomized ciphertext plus separate blind indexes |
-| Django encrypted-field packages | Familiar declarative field APIs across a large Python ecosystem | Fragmented packages, varying maintenance/security, often limited querying/key lifecycle | Validate demand, but remain SQLAlchemy-first until the core contract is proven |
-| AWS Encryption SDK/KMS | Reviewed envelope encryption, hierarchical keyring, branch-key caching, IAM/audit, managed root custody | Provider-specific store/cache semantics; not an ORM, migration, or subject-lifecycle product | Use as production provider/reference; keep provider calls off field hot paths |
-| Google Cloud KMS | Managed KEKs, versioning, envelope guidance, scheduled destruction | Provider-specific delayed destruction and IAM semantics | Provider adapter reports actual state; never normalize delayed deletion into immediate proof |
-| Vault Transit | Self-hostable crypto service, derivation, datakeys, ACLs, rotation/deletion | Per-operation service calls can dominate; key deletion requires configuration; operational burden | Support narrow wrap/unwrap adapter; local data-plane crypto remains default |
-| PostgreSQL `pgcrypto` | Simple SQL-level crypto and established deployment | Database/server sees keys/plaintext and DBAs are trusted; weak fit for DB-compromise threat | Explicitly reject as primary boundary |
-| Acra | Encryption/search, SQL firewall, anomaly reactions, honeytokens, SIEM events, signed audit logs, and key inventory | Proxy/operational model; not documented as SQLAlchemy/Alembic protection-graph and attack-exposure analysis | Study and selectively reproduce SQL-policy, honeytoken, reaction and audit concepts; retain framework-semantic correlation |
-| Thales/Fortanix/Imperva | Estate-wide discovery, classification, posture, activity monitoring, centralized key inventory, and compliance operations | Enterprise breadth rather than developer-local SQLAlchemy causality | Integrate/export first; build only bounded subsystems with clear learning and test value |
+| CipherStash | Advanced PostgreSQL search, proxy/SDK, and identity-aware service. CLI v1.0.0 documented reviewable plans and encryption backfill, status, and drop operations | SDK and provider derivation and caching differ from the local branch-key model. Query planning and migration alone do not differentiate Cryptalis. Study leakage and operational semantics. Compare only equivalent deployments | [Cryptography](https://cipherstash.com/docs/security/cryptography), [CLI v1.0.0](https://cipherstash.com/docs/reference/cli) |
+| MongoDB Queryable Encryption | Driver/server-coordinated encrypted query catalogue | Exact version, operator, and threat restrictions differ from ORM blind indexes. Redirects do not establish general availability (GA) for string preview. Copy explicit rejection and catalogue discipline, not security guarantees | [Supported operations](https://www.mongodb.com/docs/manual/core/queryable-encryption/reference/supported-operations/), [limitations](https://www.mongodb.com/docs/manual/core/queryable-encryption/reference/limitations/) |
+| CipherSweet | Mature separate field and index constructions, with domain discipline | The PHP, API, and normalization model differs. It implies no SQLAlchemy recovery evidence. Use it as a construction oracle. Benchmark keyed equality alternatives | [Official repository](https://github.com/paragonie/ciphersweet) |
+| Rails Active Record Encryption | Transparent attributes, deterministic query option, migration and previous schemes, and logging ergonomics | Application plaintext remains accessible. Deterministic payload leaks repetition. Preserve ordinary ergonomics with randomized payload and separate declared terms | [Rails guide](https://guides.rubyonrails.org/active_record_encryption.html) |
+| pydantic-encryption | Python encrypted fields, blind indexes, SQLAlchemy/KMS, deferred and batch access, and a greenlet path | The actual await bridge has contextual and synchronous-fallback hazards. Do not assume equivalent lifecycle bound to rows. Compare the real implementation and artifact/source provenance | [PyPI](https://pypi.org/project/pydantic-encryption/), [source ledger](research/orm-platform-evidence.md) |
+| SQLAlchemy-Utils | Maintained API for custom encrypted SQLAlchemy types | The type abstraction does not itself attest row authorization. EncryptedType is deprecated in favor of StringEncryptedType. Compare state and type fidelity with the exact engine configuration | [0.42.0 docs](https://sqlalchemy-utils.readthedocs.io/en/latest/data_types.html) |
+| Acra | Protection plus SQL policy, honeytokens, security events, audit, and key controls | Proxy semantics and scope differ. Encryption plus assurance is not unique. Study the controls. Retain correlation specific to fields, paths, and lifecycle as a testable hypothesis | [Security controls](https://docs.cossacklabs.com/acra/security-controls/) |
+| AWS/GCP KMS, Vault Transit | Custody, identity and access management (IAM), auditing, and root lifecycle | Rotation, deletion, import, export, and restore differ. Adapters preserve actual observations. Wrapped backup plus a parent key defeats offline subject erasure | [Crypto ledger](research/crypto-provider-evidence.md) |
+| ZAP/Burp/CodeQL/Semgrep/Nuclei/sqlmap | Mature generic dynamic/static analysis and comparison engines | Alert absence does not prove field protection. Editions, licensing, and safety differ. Integrate broad detection. Benchmark internal learning engines | [Tool ledger](research/assurance-tool-evidence.md) |
+| Trivy/Grype/Gitleaks/Nmap/TShark/Zeek | Supply-chain, secret, service, packet, and flow evidence | Imported observations retain their own semantics. Transport layer security (TLS) payload remains opaque without authorized lab secrets. Do not rebuild generic feeds or decoders | [Tool ledger](research/assurance-tool-evidence.md) |
+| Thales/Fortanix/Imperva | Broad documented discovery, classification, key visibility, and data-security visibility | Estate posture targets a different problem from local ORM causal evidence. Import and export relevant facts instead of claiming broader coverage | [Thales](https://cpl.thalesgroup.com/encryption/data-security-platform), [Fortanix](https://www.fortanix.com/platform), [Imperva](https://www.imperva.com/products/data-security/unified-visibility/) |
 
-## CipherStash deep comparison
+The CLI recheck resolved the old URL through an official redirect.
+That page explicitly states that `db migrate` is not yet implemented.
+A documented command reference does not supply local execution evidence.
 
-CipherStash is the primary benchmark. Its current documentation describes:
+CipherStash and MongoDB remain stronger references for advanced search in this dated comparison.
+Do not copy algorithms from marketing summaries.
+The crypto ledger holds exact primary constructions and leakage assumptions.
+Provider caches and statements about immediate revocation describe vendor-documented scope. They are not our benchmark.
+No fair competitor latency result exists in Cryptalis.
 
-- application-process encryption with AES-256-GCM-SIV payload protection;
-- HMAC-SHA-256 equality terms;
-- CLLW order-preserving or block-ORE range/order terms;
-- encrypted Bloom-filter/trigram text representations;
-- query/configuration support for structured values;
-- a PostgreSQL wire-protocol Proxy that transparently rewrites parameters and decrypts results;
-- an SDK with single, model, and bulk operations;
-- ZeroKMS split authority/client material, keysets, cache-aware initialization, and identity-aware
-  lock contexts; and
-- explicit metrics and failure modes for proxy parsing, key initialization, and cache churn.
+Publication requires matching attacker, operator, dataset, platform, provider, and availability semantics, or an explicitly qualitative comparison.
 
-Its current CLI also documents `init`, `plan`, `impl`, database validation/status, and per-column
-encryption phase/progress. Consequently, “plan and track an encryption migration” is no longer a
-credible Cryptalis differentiator by itself. The remaining test is whether Cryptalis can connect
-SQLAlchemy source semantics and Alembic state to exercised bypasses and observed exposure. Sources:
-[CLI](https://cipherstash.com/docs/stack/cipherstash/cli),
-[plan](https://cipherstash.com/docs/stack/cipherstash/cli/plan),
-[implementation](https://cipherstash.com/docs/stack/cipherstash/cli/impl), and
-[status](https://cipherstash.com/docs/stack/cipherstash/cli/status).
+## New and broader discovery
 
-These are not superficial features. Equality terms disclose repetition/frequency and query access.
-Order-preserving/order-revealing representations disclose ordering and can enable inference attacks.
-Text/token structures disclose token or pattern relationships and consume substantial storage.
-Identity-aware decryption can provide a boundary that a broad workload credential alone does not.
+Bounded searches examined Python/SQLAlchemy field protection, ORM search, database proxies, migration, key deletion, security correlation, and encrypted-search research.
+Discoveries weaken generic product claims.
+They do not show that Cryptalis's complete proposed integration already exists.
+The current evidence comes from repository and page inspection. The review did not execute the listed projects.
 
-CipherStash is stronger than Cryptalis on advanced query capability, deployed cryptographic key
-derivation, and operational maturity. Cryptalis could be preferable only where teams require
-SQLAlchemy-specific mapping/query/schema understanding, an open provider abstraction, existing-data
-migration intelligence, per-subject lifecycle semantics, or a reproducible local evidence harness.
-Those are hypotheses until implemented and benchmarked.
+| Reference/version or snapshot | Exact finding / limitation | Lesson and response | Evidence source/date/basis |
+|---|---|---|---|
+| Fieldseal, main working draft | Portable cell envelope, suite/key-provider/blind-index specification, and shared vectors. Explicitly pre-alpha and unreviewed. Its README reports two Python/TypeScript cores. Adapters and backfill remain placeholders | Envelope and ORM portability are not novel. Consider independently reviewed vectors as differential inputs. Never inherit provisional crypto approval. Retain stable mandatory context binding and a real greenlet comparison | [Repository](https://github.com/fieldseal-dev/fieldseal-spec), [research memo](https://github.com/fieldseal-dev/fieldseal-spec/blob/main/docs/00-research-memo.md), accessed 2026-09-30, documented-only |
+| ankane blind_index, main README | Rails keyed index separation, explicit backfill and key rotation, and unsupported text predicates | Search migration and normalization ergonomics have prior art. Compare cost and low-entropy leakage. Do not copy identities bound to names | [Repository](https://github.com/ankane/blind_index), 2026-09-30, documented-only |
+| Arca, repository main | Python structured-encryption research library and referenced research | Useful candidate for an attributed educational construction or oracle. It does not establish reviewed production integration | [Repository](https://github.com/cloudsecuritygroup/arca), 2026-09-30, documented-only |
+| django-hashed-encrypted-fields, main | Django companion searchable hash fields and configurable encryption provider | Declaration/index pairing has prior art. Exact keyed-hash and security configuration require source and vector review before oracle use | [Repository](https://github.com/kolanos/django-hashed-encrypted-fields), 2026-09-30, documented-only |
+| Miguel Grinberg sqlalchemy-encryption tutorial repo, main | Code that accompanies an encrypted-column tutorial. It does not claim to be an integrated lifecycle product | Compare narrow type and state ergonomics. A tutorial does not establish maintenance or support | [Repository](https://github.com/miguelgrinberg/sqlalchemy-encryption), 2026-09-30, documented-only |
+| OpenBao Transit, rolling stable docs | Alternative service-based transit API | Additional candidate for a custody seam. Do not assume semantic equivalence with Vault. Release and deletion tests must reflect the provider | [Stable Transit docs](https://openbao.org/docs/secrets/transit/), 2026-09-30, documented-only |
+| OpenFGA Python SDK, repository main | External adapter for fine-grained authorization | It can supply host policy decisions. It cannot establish subject ownership automatically or prevent stale grants automatically | [Official SDK](https://github.com/openfga/python-sdk), 2026-09-30, documented-only |
 
-Sources:
-[cryptography](https://cipherstash.com/docs/security/cryptography),
-[searchable encryption](https://cipherstash.com/docs/concepts/searchable-encryption),
-[Proxy message flow](https://cipherstash.com/docs/stack/cipherstash/proxy/message-flow),
-[identity-aware encryption](https://cipherstash.com/docs/stack/encryption/identity), and
-[troubleshooting/metrics](https://cipherstash.com/docs/stack/cipherstash/proxy/troubleshooting).
+No source absence supports a 'first' claim.
+Fieldseal's source also contains its own technical assumptions.
+Its provisional specification is a useful challenge. It does not have authority over Cryptalis.
+The current architecture still requires mandatory stable row, tenant, and subject binding and evaluates actual asynchronous alternatives.
 
-## Security-assurance competitors
+Fieldseal's key-commitment concerns become a cryptographic review question.
+They do not justify inventing a primitive.
 
-Acra is a direct challenge to broad Cryptalis assurance positioning. Its documented security
-controls already combine data protection with a SQL firewall, anomaly responses, honeytokens,
-security/SIEM events, cryptographically signed audit logs, and key inventory. Cryptalis should not
-claim that data-protection products stop at encryption status. Its narrower opportunity is to
-correlate declared SQLAlchemy fields, physical schema, Alembic history, write paths, key/cache state,
-controlled attacks, and exposure artifacts. Sources: [Acra security controls](https://docs.cossacklabs.com/acra/security-controls/),
-[SQL firewall](https://docs.cossacklabs.com/acra/security-controls/sql-firewall/), and
-[security logging/events](https://docs.cossacklabs.com/acra/security-controls/security-logging-and-events/).
+## Adoption and maintenance evidence
 
-Enterprise platforms also defeat any estate-wide posture claim. Thales CipherTrust documents data
-discovery/classification, activity monitoring, risk analysis, protection, and centralized key
-management; Fortanix emphasizes cryptographic posture/key discovery; Imperva provides broad
-discovery and unified data-security visibility. Cryptalis should consume or export their evidence
-where useful. It may build bounded posture, policy or monitoring experiments when the learning value
-is concrete, but should not drift into an untestable enterprise-platform clone. Sources:
-[CipherTrust Data Security Platform](https://cpl.thalesgroup.com/encryption/data-security-platform),
-[Fortanix platform](https://www.fortanix.com/platform), and
-[Imperva unified visibility](https://www.imperva.com/products/data-security/unified-visibility/).
+Demand for the combined compiler, lifecycle, and assurance system is unvalidated.
+Package existence, stars, search volume, and encryption tutorials are demand proxies, not a market estimate.
+Five maintainer interviews are a learning checkpoint. They do not supply statistical population evidence.
 
-The complete tooling and integration decision is in the
-[security assurance research](security-assurance-suite-research.md).
+Ask for concrete incidents and rejected tradeoffs in each of these areas:
 
-## `pydantic-encryption` test
+- Sensitive fields and excluded adversaries
+- Current encryption and migration failures
+- Required equality, unique, range, text, join, and administrative queries
+- Raw, Core, ETL, and support writers
+- Tenant and subject authority, with job contexts
+- KMS, outage, rotation, and backups
+- Willingness to accept companion schema, explicit query failures, and warm/session setup
+- Deletion scope and shared index residue
+- Whether graph and exposure evidence changes a review decision
+- Reasons for immediate rejection
 
-As of the review date, `pydantic-encryption` documents field encryption, hashing, blind indexes,
-SQLAlchemy integration, Python 3.11–3.14 support, AWS KMS, and a `DeferredDecryptMixin` that batch
-decrypts sibling instances on first attribute access. It explicitly addresses the fact that
-synchronous SQLAlchemy type hooks and remote KMS can block async workloads.
+Record role, scale, current solution, incident basis, prototype willingness, and maintenance burden.
+The [G-API](architecture/manifest-context-api.md#version-compatibility-and-research-gates) gate owns thresholds for API task studies.
 
-Therefore this is not a valid Cryptalis pitch:
+Alternatives can remain preferable. A small encrypted type may suffice.
+Managed search can reduce the local cryptographic and operational burden.
+Migration and schema changes carry data-loss risk. Infrastructure for subject-level control is expensive.
+First-party evidence might not satisfy independent assessors.
 
-> “Transparent encrypted SQLAlchemy fields with AWS KMS and equality lookup.”
+Maintaining compatibility with ORM, driver, provider, and scanner versions requires substantial work.
 
-A developer may obtain most of that with the existing package and project-specific migrations. The
-remaining justification must be concrete: canonical manifest/IR, generated physical schema,
-constraint migration, query compatibility/fail-loud guards, multi-instance subject-key fencing,
-restore-resistant tombstones, leakage planning, drift checks, and exposure verification. If the
-integrated system currently demonstrates only the smaller pitch, that evidence may still be a valid
-checkpoint, but it is not a credible product-differentiation claim. The broader protection,
-analysis, pentesting, lifecycle, networking and searchable-encryption workstreams remain active.
-Contributing findings upstream remains a responsible option.
-Source: [`pydantic-encryption` on PyPI](https://pypi.org/project/pydantic-encryption/).
+Learning value can justify construction. Product claims require demonstrated comparative utility.
 
-## MongoDB lessons
+## Attribution and claim discipline
 
-MongoDB Queryable Encryption is a stronger cryptographic reference than a typical ORM library. Its
-current production capability supports equality and range; prefix/suffix/substring remain preview in
-MongoDB 8.2. Automatic drivers reject unsupported commands, operators, stages, types, and expression
-forms. Encrypted-field comparisons, uniqueness, arrays, cross-collection operations, and migration
-have explicit limitations.
+Record the exact product, version, edition, URL, access date, capability, and evidence basis.
+Primary papers, standards, official APIs, and source outrank marketing and secondary discussion.
+Source inspection does not equal reproduction. Vendor vectors and benchmarks are vendor evidence.
+Preserve original tool semantics.
 
-Cryptalis should copy the fail-loud catalogue and versioned compatibility mindset. It should not
-promise that SQLAlchemy offers the same control as a database-specific driver/server protocol. Range
-and string search require external expert review; MongoDB’s investment is evidence that these are
-research projects, not backlog checkboxes. Sources:
-[fundamentals](https://www.mongodb.com/docs/manual/core/queryable-encryption/fundamentals/) and
-[supported operations](https://www.mongodb.com/docs/v8.0/core/queryable-encryption/reference/supported-operations/).
+Without scoped evidence, do not claim zero leakage, complete shredding/SAST/DAST, production readiness, or breach prevention.
+That restriction also applies to universal SQL injection protection, legal erasure/compliance, novel cryptography, and superiority.
+That evidence must support independent review.
+NIST media-sanitization guidance does not certify legal application deletion.
+The [lifecycle owner](architecture/crypto-search-lifecycle.md) specifies what receipts actually mean.
 
-## CipherSweet and framework lessons
-
-CipherSweet separates randomized field encryption from domain-separated blind indexes and warns
-users to define the threat model before enabling searchable encryption. Its transformation and
-compound-index model is useful prior art for equality planning. Cryptalis should copy the discipline,
-not its PHP API or implementation. Source: [CipherSweet](https://github.com/paragonie/ciphersweet).
-
-Rails Active Record Encryption demonstrates that Model A can preserve ordinary application code,
-filter encrypted parameters from logs, migrate mixed plaintext/ciphertext periods, and support
-previous schemes. Its deterministic equality mode produces repeatable ciphertext and trades
-confidentiality for convenience. Cryptalis should prefer separate equality terms so payload
-ciphertext remains randomized, while copying Rails’ explicit migration and logging ergonomics.
-Source: [Rails Active Record Encryption](https://guides.rubyonrails.org/active_record_encryption.html).
-
-Django’s fragmented encrypted-field ecosystem is market evidence that Python developers want
-declarative protection, but it is not proof they will adopt the lifecycle and migration complexity
-Cryptalis proposes. Django comparison and adapter research is active in parallel; supported
-production integration still requires a proven framework-specific contract.
-
-## KMS, Vault, and database crypto
-
-AWS’s hierarchical keyring demonstrates the relevant scaling pattern: cache branch material and use
-unique per-message data keys rather than call KMS for every field. Its documentation also makes the
-cache security/availability trade-off explicit. Google Cloud recommends locally generated DEKs
-wrapped by centrally managed KEKs. Vault Transit supports derivation and datakey operations, but a
-network service remains an availability and latency boundary.
-
-Cryptalis is not a replacement for these systems. It uses them for root custody and adds application
-semantics they do not know. Provider adapters must preserve differences in deletion delay, restore,
-export, audit, authentication, outage, and version behavior.
-
-PostgreSQL `pgcrypto` is inappropriate as the primary design because operations run in the database
-server and its documentation requires trusting the database administrator. That contradicts the
-database-compromise threat model. Sources:
-[AWS hierarchical keyring](https://docs.aws.amazon.com/encryption-sdk/latest/developer-guide/use-hierarchical-keyring.html),
-[Google envelope encryption](https://docs.cloud.google.com/kms/docs/envelope-encryption),
-[Vault Transit](https://developer.hashicorp.com/vault/docs/secrets/transit), and
-[`pgcrypto`](https://www.postgresql.org/docs/current/pgcrypto.html).
-
-## What to copy conceptually
-
-- CipherStash: explicit leakage capabilities, bulk local crypto, operational metrics, identity-aware
-  key release, schema rejection of malformed protected payloads.
-- MongoDB: formal supported-operation lists and immediate errors for unsupported query shapes.
-- CipherSweet: independent index keys, versioned transforms, and conservative blind-index claims.
-- Rails: normal model ergonomics, parameter filtering, previous-scheme migration windows.
-- AWS/GCP: envelope hierarchy, branch/DEK separation, bounded cache reuse, provider-managed roots.
-- Vault: self-hostable custody option and narrow cryptographic service APIs.
-
-## What not to copy blindly
-
-- CipherStash’s entire query surface without construction-by-construction study, tests and
-  maintenance ownership.
-- Deterministic payload encryption merely to get equality queries.
-- Per-field remote KMS/Transit calls.
-- A SQL proxy parser as an accidental second product architecture; an isolated comparison experiment
-  is acceptable.
-- Runtime schema mutation disguised as convenience.
-- Silent pass-through for unsupported ORM/Core paths.
-- Search indexes whose leakage and shredding treatment are undocumented.
-- Gateway-signed “proof” presented as independent evidence.
-
-## Claims not available
-
-- “Better than CipherStash/MongoDB” without a capability-specific reproduced benchmark.
-- “More secure,” “production-ready,” “zero leakage,” “automatic protection of all SQL,” or “complete
-  crypto-shredding.”
-- “Prevents SQL injection” or “prevents a data breach.”
-- “Legally equivalent to erasure” or guaranteed regulatory compliance.
-- “First,” “only,” or “novel cryptography.”
-- Performance, storage, adoption, or compatibility claims without pinned evidence.
-
-Acceptable destruction wording is defined in the
-[architecture blueprint](architecture/README.md#14-rotation-revocation-and-shredding). NIST SP
-800-88 recognizes cryptographic erase as a media-sanitization technique, but that does not prove
-deletion from application memory, logs, exports, unmanaged backups, or shared search indexes.
-
-## Product and adoption risks
-
-1. Demand for a full lifecycle/compiler platform is unvalidated despite evidence for field
-   encryption generally.
-2. Existing packages may be “good enough.”
-3. The API can become framework magic that teams distrust.
-4. Migrations may be the most valuable feature and the largest source of data-loss risk.
-5. Search leakage explanations may discourage the same users the feature attracts.
-6. Self-hosted lifecycle coordination adds operational burden.
-7. A managed competitor can iterate faster on cryptographic primitives and compliance evidence.
-8. Version support across SQLAlchemy, drivers, Alembic, and PostgreSQL is expensive.
-9. Controlled and transparent access modes can confuse users.
-10. Academic breadth can produce a demo with no maintainable core.
-
-Before product positioning, interview maintainers of real FastAPI/SQLAlchemy systems, study relevant
-issue trackers, and validate willingness to adopt generated schema and protected-session context.
-Sparse community discussion is not evidence of a market.
-
-## Evidence rules
-
-- Prefer official documentation, papers, standards, source repositories, and reproducible code.
-- Record product/version/edition, URL, access date, and exact capability.
-- Separate documented, source-inspected, reproduced, benchmarked, and independently reviewed claims.
-- Treat vendor latency statements as hypotheses.
-- Treat absence of search results as absence of evidence, never non-existence.
-- Re-run this review before a paper, release, demo, résumé claim, or public comparison.
+The [philosophy](learning-first-research-philosophy.md) owns research scope and evaluation.
+The [blueprint owners](architecture/README.md) own technical behavior.
+The [checklist](backend-build-checklist.md) owns maturity.
+Refresh external claims before a release, paper, demo, or comparison.
+No current published Cryptalis performance, support, or cryptographic-review evidence exists.
