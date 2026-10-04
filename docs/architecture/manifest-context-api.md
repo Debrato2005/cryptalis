@@ -110,6 +110,10 @@ digest is SHA-256 over this sequence:
 
 Hash equality does not establish signature authenticity. RFC 8785 is informational.
 
+Initial `digest_manifest_json` support implements the exact domain prefix and lowercase
+hexadecimal result. It hashes every supplied member. The caller must keep a detached digest or
+signature outside the supplied object. The helper does not establish complete semantic validity.
+
 The parser enforces these limits:
 
 - Document size: <=16 MiB

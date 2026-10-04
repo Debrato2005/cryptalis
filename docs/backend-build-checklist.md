@@ -1,8 +1,8 @@
 # Backend build and evidence checklist
 
-Current state as of 2026-10-05: documentation plus initial manifest decoding, canonical output,
-and identity-header validation with local parent-link rules. This file is the authority for
-capability implementation state. [Manifest contracts](architecture/manifest-context-api.md#terms-and-maturity)
+Current state as of 2026-10-05: documentation plus bounded manifest JSON, domain-separated
+content digests, and identity-header validation with local parent-link rules. This file is the
+authority for capability implementation state. [Manifest contracts](architecture/manifest-context-api.md#terms-and-maturity)
 define terms and maturity.
 [Architecture owners](architecture/README.md#documentation-ownership) define rationale. The
 [build guide](cryptalis-build-guide.md) defines learning order. Every workstream remains active
@@ -27,11 +27,11 @@ Each row has an ID, maturity and status, dependencies, owner and gate, required 
 exit rule. Rows group related properties. They do not limit the number of features.
 
 Required gate artifacts below remain future targets. The [JSON decoder](../src/cryptalis/manifest/parser.py),
-[restricted canonicalizer](../src/cryptalis/manifest/canonical.py), and [typed header
-decoder](../src/cryptalis/manifest/header.py) have 58 passing tests under `uv run pytest` on
-2026-10-05. Normal Python imports work, and `uv build` produces a wheel and source archive. These
-local checks do not complete C01 or C26. Complete semantic validation, parent-digest matching,
-manifest hashing, and cross-language evidence remain pending.
+[restricted canonicalizer and digest helper](../src/cryptalis/manifest/canonical.py), and [typed
+header decoder](../src/cryptalis/manifest/header.py) have 62 passing tests under `uv run pytest`
+on 2026-10-05. Normal Python imports work, and `uv build` produces a wheel and source archive.
+These local checks do not complete C01 or C26. Complete semantic validation, parent-digest
+matching, signature authentication, and cross-language evidence remain pending.
 
 SPECIFIED means a contract and gate exist. It does not mean the
 gate passed. For the rows marked RESEARCHED here, construction selection remains open. A failed

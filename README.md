@@ -6,14 +6,14 @@ policy to authenticated payload encryption, search capabilities, PostgreSQL sche
 Alembic migrations. It also connects key lifecycle and application paths to controlled attacks
 and reproducible exposure evidence.
 
-**Status as of 2026-10-05: initial manifest decoding, canonical output, and identity-header
-validation with local parent-link rules.** The repository has an installable Python package with
-a [bounded JSON decoder](src/cryptalis/manifest/parser.py), [restricted RFC 8785
-canonicalizer](src/cryptalis/manifest/canonical.py), and [typed header
-decoder](src/cryptalis/manifest/header.py). Fifty-eight behavior tests cover these boundaries.
-Complete semantic schema validation, parent-digest matching, manifest hashing, cryptography, ORM
-integration, migrations, providers, and assurance tools remain pending. Other Cryptalis APIs and
-commands are proposed contracts. The [capability
+**Status as of 2026-10-05: bounded manifest JSON, domain-separated content digests, and
+identity-header validation with local parent-link rules.** The repository has an installable
+Python package with a [bounded JSON decoder](src/cryptalis/manifest/parser.py), [restricted RFC
+8785 canonicalizer and SHA-256 digest helper](src/cryptalis/manifest/canonical.py), and [typed
+header decoder](src/cryptalis/manifest/header.py). Sixty-two behavior tests cover these
+boundaries. Complete semantic schema validation, parent-digest matching, signature
+authentication, cryptography, ORM integration, migrations, providers, and assurance tools remain
+pending. Other Cryptalis APIs and commands are proposed contracts. The [capability
 checklist](docs/backend-build-checklist.md) separates specified design from executable evidence.
 No runtime version is supported.
 
@@ -25,6 +25,7 @@ Prerequisites: Python 3.12 or later, uv, and the repository root as the working 
 uv sync --locked
 uv run pytest
 uv run python - <<'PY'
+from cryptalis.manifest.canonical import digest_manifest_json
 from cryptalis.manifest.header import decode_manifest_header
 
 raw = (
@@ -33,12 +34,15 @@ raw = (
     b'"revision":0,"parent_digest":null}'
 )
 print(decode_manifest_header(raw).manifest_id)
+print(digest_manifest_json(raw))
 PY
 ```
 
-The header decoder returns the canonical UUID as a typed value. It validates the local
-genesis-link shape. It does not validate parent existence, digest agreement, or complete revision
-ancestry. To create a local wheel and source archive, run `uv build`.
+The digest helper hashes the fixed manifest label, one zero byte, and canonical document bytes.
+It hashes every supplied member. It does not establish semantic validity or signature
+authenticity. The header decoder returns the canonical UUID as a typed value. It validates the
+local genesis-link shape. It does not validate parent existence, digest agreement, or complete
+revision ancestry. To create a local wheel and source archive, run `uv build`.
 
 ## Purpose and boundary
 
