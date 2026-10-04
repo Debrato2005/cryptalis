@@ -2,6 +2,7 @@ import re
 from dataclasses import dataclass
 from uuid import UUID
 
+from cryptalis.manifest.canonical import digest_manifest_json
 from cryptalis.manifest.parser import ManifestInvalid, decode_manifest_json
 
 
@@ -101,3 +102,16 @@ def decode_manifest_header(raw: bytes) -> ManifestHeader:
         revision=revision,
         parent_digest=parent_digest,
     )
+
+
+def validate_manifest_parent_link(raw: bytes, parent_raw: bytes) -> ManifestHeader:
+    """Validate one parent link without authenticating policy or ancestry."""
+    header = decode_manifest_header(raw)
+    parent = decode_manifest_header(parent_raw)
+    if header.manifest_id != parent.manifest_id:
+        raise ManifestInvalid("Manifest and parent IDs must match")
+    if header.revision <= parent.revision:
+        raise ManifestInvalid("Manifest revision must exceed its parent revision")
+    if header.parent_digest != digest_manifest_json(parent_raw):
+        raise ManifestInvalid("Manifest parent digest does not match")
+    return header

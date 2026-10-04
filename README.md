@@ -7,13 +7,15 @@ Alembic migrations. It also connects key lifecycle and application paths to cont
 and reproducible exposure evidence.
 
 **Status as of 2026-10-05: bounded manifest JSON, domain-separated content digests,
-identity-header validation, and offline terminal inspection.** The repository has an installable
-Python package with a [bounded JSON decoder](src/cryptalis/manifest/parser.py), [restricted RFC
+identity-header validation, parent-link validation, and offline terminal inspection.**
+
+The repository has an installable Python package with a [bounded JSON decoder](src/cryptalis/manifest/parser.py), [restricted RFC
 8785 canonicalizer and SHA-256 digest helper](src/cryptalis/manifest/canonical.py), [typed header
 decoder](src/cryptalis/manifest/header.py), and read-only [manifest inspector](src/cryptalis/cli.py).
-Sixty-nine behavior tests cover these boundaries. Complete semantic schema validation,
-parent-digest matching, signature authentication, cryptography, ORM integration, migrations,
-providers, and assurance tools remain pending. Other Cryptalis APIs and commands are proposed
+Eighty-five behavior tests cover these boundaries. Complete semantic schema validation,
+trusted revision history, and signature authentication remain pending.
+Cryptography, ORM integration, migrations, providers, and assurance tools also remain pending.
+Other Cryptalis APIs and commands are proposed
 contracts. The [capability
 checklist](docs/backend-build-checklist.md) separates specified design from executable evidence.
 No runtime version is supported.
@@ -27,13 +29,17 @@ uv sync --locked
 uv run pytest
 uv run cryptalis manifest inspect examples/manifests/genesis.json
 uv run cryptalis manifest inspect examples/manifests/genesis.json --json
+uv run cryptalis manifest inspect examples/manifests/successor.json --parent examples/manifests/genesis.json --json
 ```
 
-The inspector reads one local regular file. It prints the validated identity header and content
-digest in text or JSON form. Invalid input returns exit code 2 and a redacted
-`Manifest.Invalid` error. The command performs no network or write action. It does not validate
-the complete manifest schema, parent existence, digest agreement, or revision ancestry. To
-create a local wheel and source archive, run `uv build`.
+The inspector prints the validated identity header and content digest in text or JSON form.
+Use `--parent PATH` to check the link to one supplied parent. Both files must have valid headers,
+the same manifest ID, increasing revisions, and a matching canonical parent digest.
+The command reads bounded local regular files. Invalid input returns exit code 2 and a redacted
+`Manifest.Invalid` error. The command performs no network or write action.
+It does not validate the complete schema, authenticate either document, or establish complete
+ancestry or the current authorized policy. The example files contain headers only.
+To create a local wheel and source archive, run `uv build`.
 
 ## Purpose and boundary
 

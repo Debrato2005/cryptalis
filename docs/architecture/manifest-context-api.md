@@ -132,6 +132,16 @@ revision and requires `parent_digest: null`. Each later revision requires a cano
 digest. This local rule does not prove parent existence, digest agreement, or complete ancestry.
 The decoder does not validate the remaining schema or catalogue references.
 
+Initial `validate_manifest_parent_link(raw, parent_raw)` support checks one supplied pair and
+returns the child header. Both documents must have valid identity headers and the same manifest
+ID. The child revision must exceed the parent revision. Revisions can skip counter values.
+The child's `parent_digest` must match the domain-separated digest of
+the canonical parent document. Failure raises `ManifestInvalid` without input values.
+
+The check proves consistency between two supplied documents. It does not authenticate either
+document, validate complete ancestry, or establish the current authorized policy. Both files
+can come from an attacker. Signatures and a trusted history authority remain pending.
+
 R means required after compilation. C means required when the capability is selected. O means an
 annotation. All referenced enums and policies resolve in the pinned catalogue. Compilation
 rejects missing required fields, ambiguity, unresolved references, and incompatible profiles.
@@ -432,12 +442,14 @@ Plans record kind=proposal. They never record security PASS. Combined results us
 | evidence inspect/validate/export | Bundle + trust policy -> findings/format | Offline; log/signature network explicit; no implicit upload |
 | check --ci | Pinned workspace/snapshots -> passive composition | No scan/key mutation/network default; Verify only preauthorized fixtures |
 | keys rotate/revoke/shred; status | Scope/grant/idempotency -> durable state/receipt | Mutations named explicitly; status read-only; nothing hidden under scan |
-| manifest inspect | One local file -> identity header and digest in text/JSON | Offline and read-only; bounded regular file; partial schema scope |
+| manifest inspect | Local child + optional `--parent PATH` -> identity header and digest in text/JSON | Offline, read-only, bounded regular files, header or single parent-link scope |
 
-The initial `manifest inspect` command reads one bounded local regular file. It emits the
-validated identity header and computed digest as text or JSON. Invalid input returns code 2 with
-a redacted `Manifest.Invalid` record. This command implements only the documented header scope.
-It does not complete C25 or establish full semantic validity.
+The initial `manifest inspect` command reads bounded local regular files. It emits the validated
+identity header and computed digest as text or JSON. With `--parent PATH`, it checks one parent
+link and reports `scope: manifest_parent_link` only after all checks pass. Without `--parent`,
+inspection retains `scope: manifest_header`. Invalid input returns code 2 with a redacted
+`Manifest.Invalid` record. Neither mode writes files or uses the network.
+The command does not complete C25 or establish full semantic validity.
 
 Declarations compile policy. Project configuration selects the digest, catalogue, provider IDs,
 and output paths. Deployment configuration supplies endpoints, credential references, and
@@ -496,8 +508,8 @@ Controlled access and lifecycle decisions obey their explicit durable audit poli
 ## Packages and dependency direction
 
 The responsibility names below define the proposed package structure. Initial manifest decoding,
-canonical output, content digests, identity-header validation, and offline terminal inspection
-exist. The
+canonical output, content digests, identity-header validation, parent-link validation, and offline
+terminal inspection exist. The
 [checklist](../backend-build-checklist.md) records implementation state. Shared immutable
 contracts, including evidence DTOs, sit below adapters. Evidence orchestration and rendering sit
 above adapters. The CLI composes use cases and defines no security semantics. No domain layer

@@ -9,7 +9,10 @@ from typing import NoReturn, cast
 from uuid import uuid4
 
 from cryptalis.manifest.canonical import digest_manifest_json
-from cryptalis.manifest.header import decode_manifest_header
+from cryptalis.manifest.header import (
+    decode_manifest_header,
+    validate_manifest_parent_link,
+)
 from cryptalis.manifest.parser import MAX_DOCUMENT_BYTES, ManifestInvalid
 
 
@@ -45,6 +48,11 @@ def _parser() -> argparse.ArgumentParser:
         "path", type=Path, help="Path to the manifest JSON file."
     )
     inspect.add_argument(
+        "--parent",
+        type=Path,
+        help="Check the link to one supplied local parent manifest.",
+    )
+    inspect.add_argument(
         "--json",
         action="store_true",
         dest="machine_json",
@@ -76,10 +84,16 @@ def _read_manifest(path: Path) -> bytes:
             os.close(descriptor)
 
 
-def _result(raw: bytes) -> dict[str, object]:
-    header = decode_manifest_header(raw)
+def _result(raw: bytes, parent_raw: bytes | None = None) -> dict[str, object]:
+    header = (
+        decode_manifest_header(raw)
+        if parent_raw is None
+        else validate_manifest_parent_link(raw, parent_raw)
+    )
     return {
-        "scope": "manifest_header",
+        "scope": (
+            "manifest_header" if parent_raw is None else "manifest_parent_link"
+        ),
         "schema_version": header.schema_version,
         "manifest_id": str(header.manifest_id),
         "revision": header.revision,
@@ -131,7 +145,10 @@ def _write_manifest_error(machine_json: bool) -> None:
 def _inspect_command(arguments: argparse.Namespace) -> int:
     try:
         raw = _read_manifest(arguments.path)
-        result = _result(raw)
+        parent_raw = (
+            None if arguments.parent is None else _read_manifest(arguments.parent)
+        )
+        result = _result(raw, parent_raw)
     except ManifestInvalid:
         _write_manifest_error(arguments.machine_json)
         return 2

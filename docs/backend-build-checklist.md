@@ -1,8 +1,9 @@
 # Backend build and evidence checklist
 
 Current state as of 2026-10-05: documentation plus bounded manifest JSON, content digests,
-identity-header validation, and offline terminal inspection. This file is the authority for
-capability implementation state. [Manifest contracts](architecture/manifest-context-api.md#terms-and-maturity)
+identity-header validation, parent-link validation, and offline terminal inspection.
+This file is the authority for capability implementation state.
+[Manifest contracts](architecture/manifest-context-api.md#terms-and-maturity)
 define terms and maturity.
 [Architecture owners](architecture/README.md#documentation-ownership) define rationale. The
 [build guide](cryptalis-build-guide.md) defines learning order. Every workstream remains active
@@ -26,11 +27,16 @@ named external reviewer and disclosed independence.
 Each row has an ID, maturity and status, dependencies, owner and gate, required artifact, and
 exit rule. Rows group related properties. They do not limit the number of features.
 
-The current manifest components and [terminal inspector](../src/cryptalis/cli.py) have 69 passing
+The current manifest components and [terminal inspector](../src/cryptalis/cli.py) have 85 passing
 tests under `uv run pytest` on 2026-10-05. Normal Python imports work, and `uv build` produces a
 wheel and source archive. These local checks do not complete C01, C25, or C26. Complete semantic
-validation, parent-digest matching, signature authentication, the remaining CLI contract, and
+validation, trusted revision history, signature authentication, the remaining CLI contract, and
 cross-language evidence remain pending.
+
+Parent-link checks validate one supplied pair. Tests cover content tampering, identity
+substitution with a matching digest, equal or decreasing revisions, unusable parent files,
+and redacted CLI failures. Revisions can skip counter values. Both files can come from an
+attacker. Pair consistency does not authenticate policy or establish complete ancestry.
 
 SPECIFIED means a contract and gate exist. It does not mean the
 gate passed. For the rows marked RESEARCHED here, construction selection remains open. A failed

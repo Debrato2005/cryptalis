@@ -1,6 +1,7 @@
 import json
 import subprocess
 import sys
+from hashlib import sha256
 from pathlib import Path
 from uuid import UUID
 
@@ -124,3 +125,148 @@ def test_cli_rejects_unknown_command_without_echo():
     assert result.stdout == ""
     assert "The command arguments are invalid." in result.stderr
     assert "sensitive-command-token" not in result.stderr
+
+
+@pytest.mark.parametrize("machine_json", [False, True])
+def test_manifest_inspect_checks_supplied_parent(tmp_path, machine_json):
+    parent = tmp_path / "parent.json"
+    child = tmp_path / "child.json"
+    parent_raw = (_EXAMPLES / "genesis.json").read_bytes()
+    parent.write_bytes(parent_raw)
+    document = json.loads(parent_raw)
+    document.update(revision=1, parent_digest=_EXPECTED_DIGEST)
+    child_raw = json.dumps(document).encode("utf-8")
+    child.write_bytes(child_raw)
+    options = ["--json"] if machine_json else []
+
+    result = _run_cli(
+        "manifest", "inspect", str(child), "--parent", str(parent), *options
+    )
+
+    assert result.returncode == 0
+    assert result.stderr == ""
+    if machine_json:
+        output = json.loads(result.stdout)
+        assert output["scope"] == "manifest_parent_link"
+        assert output["revision"] == 1
+        assert output["parent_digest"] == _EXPECTED_DIGEST
+    else:
+        assert "scope: manifest_parent_link\n" in result.stdout
+        assert "revision: 1\n" in result.stdout
+        assert f"parent_digest: {_EXPECTED_DIGEST}\n" in result.stdout
+    assert parent.read_bytes() == parent_raw
+    assert child.read_bytes() == child_raw
+
+
+@pytest.mark.parametrize(
+    "changes",
+    [
+        pytest.param({"description": "do-not-echo-policy"}, id="tampered-content"),
+        pytest.param(
+            {"manifest_id": "018f4f87-6f95-7e2a-9d95-38f9b7646f25"},
+            id="wrong-manifest",
+        ),
+        pytest.param(
+            {"revision": 1, "parent_digest": "a" * 64}, id="same-revision"
+        ),
+    ],
+)
+def test_manifest_inspect_rejects_wrong_parent_without_echo(tmp_path, changes):
+    parent = tmp_path / "do-not-echo-parent.json"
+    child = tmp_path / "child.json"
+    genesis = json.loads((_EXAMPLES / "genesis.json").read_bytes())
+    parent.write_text(json.dumps({**genesis, **changes}), encoding="utf-8")
+    child.write_text(
+        json.dumps({**genesis, "revision": 1, "parent_digest": _EXPECTED_DIGEST}),
+        encoding="utf-8",
+    )
+
+    result = _run_cli(
+        "manifest", "inspect", str(child), "--parent", str(parent), "--json"
+    )
+
+    assert result.returncode == 2
+    assert result.stdout == ""
+    error = json.loads(result.stderr)["error"]
+    assert error["family"] == "Manifest"
+    assert error["code"] == "Invalid"
+    assert error["retryable"] is False
+    UUID(error["correlation_id"])
+    assert "do-not-echo" not in result.stderr
+
+
+@pytest.mark.parametrize("kind", ["missing", "directory", "oversized", "invalid"])
+def test_manifest_inspect_rejects_unusable_parent(tmp_path, kind):
+    parent = tmp_path / "do-not-echo-parent"
+    child = tmp_path / "child.json"
+    child.write_text(
+        json.dumps({
+            "schema_version": 1,
+            "manifest_id": "018f4f87-6f95-7e2a-9d95-38f9b7646f24",
+            "revision": 1,
+            "parent_digest": _EXPECTED_DIGEST,
+        }),
+        encoding="utf-8",
+    )
+    if kind == "directory":
+        parent.mkdir()
+    elif kind == "oversized":
+        parent.write_bytes(b" " * (16 * 1024 * 1024 + 1))
+    elif kind == "invalid":
+        parent.write_bytes(b'{"description":"do-not-echo-content"')
+
+    result = _run_cli(
+        "manifest", "inspect", str(child), "--parent", str(parent), "--json"
+    )
+
+    assert result.returncode == 2
+    assert result.stdout == ""
+    assert json.loads(result.stderr)["error"]["code"] == "Invalid"
+    assert "do-not-echo" not in result.stderr
+
+
+@pytest.mark.parametrize(
+    ("parent_revision", "child_revision", "same_id", "accepted"),
+    [
+        pytest.param(1, 2, True, True, id="non-genesis-parent"),
+        pytest.param(1, 4, True, True, id="monotonic-gap"),
+        pytest.param(1, 2**53 - 1, True, True, id="maximum-revision"),
+        pytest.param(1, 1, True, False, id="equal-revision"),
+        pytest.param(2, 1, True, False, id="revision-rollback"),
+        pytest.param(0, 1, False, False, id="different-id-matching-digest"),
+        pytest.param(0, 0, True, False, id="genesis-cannot-have-parent"),
+    ],
+)
+def test_manifest_parent_identity_and_revision_rules(
+    tmp_path, parent_revision, child_revision, same_id, accepted
+):
+    parent = tmp_path / "parent.json"
+    child = tmp_path / "child.json"
+    document = json.loads((_EXAMPLES / "genesis.json").read_bytes())
+    document.update(
+        revision=parent_revision,
+        parent_digest=None if parent_revision == 0 else "a" * 64,
+    )
+    canonical = json.dumps(document, sort_keys=True, separators=(",", ":"))
+    parent_digest = sha256(
+        b"cryptalis-manifest-v1\x00" + canonical.encode("utf-8")
+    ).hexdigest()
+    # Different whitespace and member order must preserve the parent link.
+    parent.write_text(json.dumps(document, indent=2), encoding="utf-8")
+    document.update(revision=child_revision, parent_digest=parent_digest)
+    if not same_id:
+        document["manifest_id"] = "018f4f87-6f95-7e2a-9d95-38f9b7646f25"
+    child.write_text(json.dumps(document), encoding="utf-8")
+
+    result = _run_cli(
+        "manifest", "inspect", str(child), "--parent", str(parent), "--json"
+    )
+
+    if accepted:
+        assert result.returncode == 0
+        assert result.stderr == ""
+        assert json.loads(result.stdout)["scope"] == "manifest_parent_link"
+    else:
+        assert result.returncode == 2
+        assert result.stdout == ""
+        assert json.loads(result.stderr)["error"]["code"] == "Invalid"
