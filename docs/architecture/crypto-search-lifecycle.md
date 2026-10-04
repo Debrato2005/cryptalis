@@ -1,10 +1,10 @@
 # Cryptography, Search, and Key Lifecycle Contract
 
-Status: detailed architecture proposal with private candidate F1/W1 structural parsing.
+Status: detailed architecture proposal with private candidate framing and scalar syntax decoding.
 No encryption implementation, frozen wire format, approved suite, or measured gates.
 
 Reviewed: 2026-09-30. First-party reconciliation: 2026-10-01. F1 parser review: 2026-10-05.
-W1 parser review: 2026-10-04.
+W1 parser review: 2026-10-04. Scalar decoder review: 2026-10-04.
 
 This document owns detailed envelopes, derivation, search leakage, providers, caches, fences,
 rotation and bounded shredding. The [architecture hub](README.md) owns cross-system invariants.
@@ -192,6 +192,34 @@ IDs are provisional until vectors freeze. The codec does not coerce bool to inte
 
 Structured codecs need rules for depth, counts, duplicate keys and numbers. Default JSON encoding is
 insufficient.
+
+#### Implemented scalar syntax boundary
+
+The [private scalar decoder](../../src/cryptalis/crypto/_candidate_scalar.py) implements candidate entries 1–4 above.
+An explicit integer selector chooses the syntax. Unknown selectors reject even for null.
+It accepts immutable `bytes` and checks state, exact declared length, truncation, and trailing bytes before typed conversion.
+The encoded record has a 1,048,576-byte cap, including its five-byte outer header.
+Text and raw bytes can therefore contain at most 1,048,571 bytes.
+
+Integer magnitude and decimal coefficient have at most 1,024 ASCII digits. Decimal scale is -1,024..1,024.
+Bounded digit arithmetic avoids Python's ambient integer string-conversion limit.
+Decimal tuple construction preserves sign, exponent, and trailing zeros without ambient precision rounding.
+Text decoding preserves a leading U+FEFF and Unicode content without normalization.
+
+Null differs from empty text or bytes. Invalid states never substitute null.
+
+Failures use the shared `EnvelopeInvalid` hierarchy. Unknown selectors raise `EnvelopeUnsupportedFormat`.
+Resource bounds raise `EnvelopeOversize`. Invalid syntax, framing, or input types raise `EnvelopeMalformed`.
+
+Safe diagnostics identify the scalar stage or field without input bytes. UTF-8 errors retain their original cause.
+Host diagnostics must not serialize exception attributes or local values because retained causes can contain input bytes.
+
+The [boundary tests](../../tests/test_candidate_scalar.py) and
+[synthetic vectors](../../examples/scalars/candidate-vectors.json) protect syntax only.
+Successful decoding does not authenticate bytes, approve catalogue entries, match a creation descriptor, or grant release authority.
+Field-specific nullability, precision, scale, and negative-zero constraints remain pending.
+The caller must authenticate bytes and approve these constraints before release.
+Encoding, public APIs, and CLI commands remain pending. No production consumer uses this decoder.
 
 ### 3.3 AAD and policy compatibility
 

@@ -2,7 +2,7 @@
 
 Current state as of 2026-10-04: documentation plus bounded manifest JSON, content digests,
 identity-header validation, parent-link validation, structural field-format digests,
-offline terminal inspection, and private candidate F1/W1 structural parsing.
+offline terminal inspection, private candidate F1/W1 framing, and private scalar syntax decoding.
 This file is the authority for capability implementation state.
 [Manifest contracts](architecture/manifest-context-api.md#terms-and-maturity)
 define terms and maturity.
@@ -28,8 +28,8 @@ named external reviewer and disclosed independence.
 Each row has an ID, maturity and status, dependencies, owner and gate, required artifact, and
 exit rule. Rows group related properties. They do not limit the number of features.
 
-The current manifest components, [terminal inspector](../src/cryptalis/cli.py), and private F1/W1
-parsers have 290 passing tests under `uv run --locked pytest -q` on 2026-10-04.
+The current manifest components, [terminal inspector](../src/cryptalis/cli.py), private framing parsers,
+and scalar decoder have 365 passing tests under `uv run --locked pytest -q` on 2026-10-04.
 Normal Python imports work, and `uv build` produces a wheel and source archive.
 These local checks do not complete C01, C25, or C26. Complete semantic
 validation, trusted revision history, signature authentication, the remaining CLI contract, and
@@ -45,7 +45,7 @@ invalid arguments in JSON mode, duplicate parent options, option termination, an
 Injected open, metadata, read, and cleanup failures check exit mapping, redaction, and preservation of primary diagnostics.
 Permission denial remains exit 2 after file open. Operational I/O and cleanup failures return exit 4.
 The [failure audit](documentation-claims-audit.md#cli-failure-corrections) records F01–F03 corrections.
-A clean temporary environment installs the current wheel and passes six console-command smoke cases outside the checkout.
+During the CLI slice, a clean temporary environment installed the wheel and passed six console smoke cases outside the checkout.
 This evidence does not complete the broader C25 or release gates.
 
 The [field-format helpers](../src/cryptalis/manifest/descriptor.py) check descriptor structure
@@ -77,10 +77,22 @@ Python and an independent Node offset parser agree on 13,541 inputs with seed `2
 The check includes 1,672 accepted structures and compares every returned field.
 This bounded first-party trial does not complete G-CRYPTO, G-CROSSKEY, or G-PROVIDER and does not admit C03.
 
-The current wheel and source archive build with a temporary writable uv cache.
-A clean temporary environment installs the wheel outside the checkout. It passes two W1 frame checks,
+The W1 slice built a wheel and source archive with a temporary writable uv cache.
+A clean temporary environment installed that wheel outside the checkout. It passed two W1 frame checks,
 four typed rejection cases, and the existing parent-link command.
 Earlier slices checked the installed F1 parser and descriptor helpers.
+
+The [private scalar decoder](../src/cryptalis/crypto/_candidate_scalar.py) implements only the
+[candidate syntax boundary](architecture/crypto-search-lifecycle.md#implemented-scalar-syntax-boundary).
+Its [75 boundary tests](../tests/test_candidate_scalar.py) cover fixed typed vectors, exact framing, null/empty distinctions,
+malformed UTF-8, canonical numeric syntax, digit/scale/size limits, and dependency context changes.
+It preserves decimal representation and Unicode content. No encoding, field-policy approval, or authentication claim follows.
+Python and an independent Node decoder agree on 38,483 unique inputs with seed `20261004`.
+The trial includes 3,426 accepted values and compares their types and complete representations.
+This bounded first-party trial does not complete G-CRYPTO or admit C03.
+
+The current wheel and source archive build offline. A clean temporary environment installs the wheel outside the checkout.
+It passes 15 scalar vectors, six typed rejection cases, and the existing parent-link console command.
 Ruff and mypy remain unavailable on PATH and in the project environment. These checks did not run.
 Earlier offline resolution found no cached tools, and sandbox DNS blocked their downloads.
 

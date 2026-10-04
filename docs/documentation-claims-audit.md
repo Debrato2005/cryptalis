@@ -516,3 +516,58 @@ Source and vector SHA-256 for this slice:
 
 Checked Markdown snapshot, audit self excluded: `c708aeb51b835fe59663860625e46aa416312782de15e6f878a0aaa68993b7b7`.
 These hashes identify local working files. They are not signatures or independent security evidence.
+
+## Candidate scalar syntax decoding
+
+Slice date: 2026-10-04 UTC. Starting committed baseline: `f9ac025092205bb7cd164759866a5e6d83fb7c7a`.
+
+W1 commit `9afeb0dde1878ac23d67db78f1fef3021b81cbc2` became visible during this slice.
+The starting tree contained the uncommitted W1 slice. Its parser, tests, and vector remain byte-identical to that starting tree.
+The user authorized one new slice with `next`. This slice adds the [private scalar decoder](../src/cryptalis/crypto/_candidate_scalar.py),
+[boundary tests](../tests/test_candidate_scalar.py), and [synthetic vectors](../examples/scalars/candidate-vectors.json).
+The [crypto owner](architecture/crypto-search-lifecycle.md#implemented-scalar-syntax-boundary) retains the syntax contract.
+
+The decoder admits exactly four implemented selectors, including for null. It checks exact framing and size limits before typed conversion.
+Integer digit arithmetic avoids ambient string-conversion limits. Decimal tuple construction preserves sign, exponent, and trailing zeros without context rounding.
+
+Malformed input returns typed, redacted failures. UTF-8 wrapping retains the original cause.
+Host diagnostics must not serialize exception attributes or local values because the cause retains input bytes.
+
+The first boundary run produced 75 expected failures because scalar decoding did not exist.
+Read-only first-party review found no important issue and passed 75 focused tests plus 12,003 additional adversarial checks.
+Two maintenance observations led to explicit decimal dispatch and a decoder-local selector allowlist.
+Those changes prevent future registry growth from admitting unimplemented value or null syntax.
+AI review does not satisfy independent security review or admission gates.
+
+| Verification actually run | Result |
+|---|---|
+| `PYTHONDONTWRITEBYTECODE=1 .venv/bin/python -m pytest tests/test_candidate_scalar.py -q --tb=short` | 75 passed |
+| `UV_CACHE_DIR=/tmp/cryptalis-uv-cache PYTHONDONTWRITEBYTECODE=1 uv run --locked pytest -q` | 365 passed after final source changes |
+| `PYTHONDONTWRITEBYTECODE=1 .venv/bin/python /tmp/cryptalis-scalar-differential.py` | Python and an independent Node decoder agreed on 38,483 unique inputs, including 3,426 accepted values. Seed `20261004`. Types and complete representations matched |
+| `UV_CACHE_DIR=/tmp/cryptalis-uv-cache uv build --offline --out-dir /tmp/cryptalis-scalar-dist` | Wheel and source archive built |
+| `UV_CACHE_DIR=/tmp/cryptalis-uv-cache PYTHONDONTWRITEBYTECODE=1 .venv/bin/python /tmp/cryptalis-scalar-wheel-smoke.py` | Clean installed wheel passed 15 fixed vectors, six typed rejection cases, and the existing parent-link console command outside the checkout |
+
+The initial Node comparison failed because JavaScript negation produced exponent `-0` from integer scale zero.
+The scratch oracle now represents that integer exponent as `0`. Decimal value sign remains a separate preserved field.
+No repository decoder change addressed that comparison failure. The complete comparison then passed.
+The corpus and package smoke scripts are temporary local checks, not admitted conformance artifacts.
+
+Corpus SHA-256: `16111335bf4f5171ce42f9143faca032b354b3aecd5f92acd97f4063bb705ba2`.
+
+All 28 pre-existing non-Markdown files match the starting snapshot, including the three W1 files.
+Only three new files extend the non-Markdown tree. Existing dependencies, build configuration, CI, and implementation files remain unchanged.
+This assistant did not commit or push. Ruff and mypy remain absent from PATH and the project environment, so these checks did not run.
+
+Encoding, catalogue admission, descriptor matching, field-specific constraints, authentication, and release authority remain pending.
+No public API, CLI command, format freeze, or production claim follows. C03 and G-CRYPTO remain incomplete.
+Documentation checks covered 20 Markdown files and 403 local links, with zero faults. `git diff --check` passed.
+The documentation draft scored 0.99 findings per 100 words. The strict error-text draft scored 0.00.
+
+Source and vector SHA-256 for this slice:
+
+- `examples/scalars/candidate-vectors.json`: `8028c66f120118c3bf0de9f93aeeca23da5c5893624b44c5a16a52e74ca33be9`
+- `src/cryptalis/crypto/_candidate_scalar.py`: `e45a720969fab7abcd4df70ac005eeb8336e23fcd05e94b45330eb85b7f6e831`
+- `tests/test_candidate_scalar.py`: `7abb934f9ce8241a1f273d4ee742c74a00002ccfc82ad78b177794791f0f4bb7`
+
+Checked Markdown snapshot, audit self excluded: `a007735aa6a43ff99313a3cee8a71a298c475e9fa2b045a9a42ca8e510171bf0`.
+These hashes identify local working files. They are not signatures or independent security evidence.

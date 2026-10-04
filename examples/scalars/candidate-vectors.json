@@ -1,0 +1,17 @@
+[
+  {"codec": 1, "hex": "0000000000", "value": null},
+  {"codec": 2, "hex": "0000000000", "value": null},
+  {"codec": 3, "hex": "0000000000", "value": null},
+  {"codec": 4, "hex": "0000000000", "value": null},
+  {"codec": 1, "hex": "0100000000", "value": ""},
+  {"codec": 1, "hex": "010000000568656c6c6f", "value": "hello"},
+  {"codec": 1, "hex": "0100000006efbbbf65cc81", "value": "\ufeffe\u0301"},
+  {"codec": 1, "hex": "0100000004f09f9880", "value": "\ud83d\ude00"},
+  {"codec": 2, "hex": "0100000000", "bytes_hex": ""},
+  {"codec": 2, "hex": "010000000300ff41", "bytes_hex": "00ff41"},
+  {"codec": 3, "hex": "010000000130", "value": 0},
+  {"codec": 3, "hex": "01000000052d31323334", "value": -1234},
+  {"codec": 4, "hex": "010000000e0100000002000000053132333030", "decimal_tuple": [1, [1, 2, 3, 0, 0], -2]},
+  {"codec": 4, "hex": "010000000a01000000020000000130", "decimal_tuple": [1, [0], -2]},
+  {"codec": 4, "hex": "010000000d00fffffffc0000000431323030", "decimal_tuple": [0, [1, 2, 0, 0], 4]}
+]
