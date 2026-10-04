@@ -1,12 +1,23 @@
 # Repository instructions
 
-Cryptalis contains documentation and research specifications only. Treat APIs, commands,
-packages, and security properties as proposed until the [capability
+Cryptalis contains documentation, research specifications, and an initial manifest JSON decoder.
+Treat other APIs, commands, packages, and security properties as proposed until the [capability
 checklist](docs/backend-build-checklist.md) links the required executable evidence.
 
-Preserve the manual learning workflow in the [engineering playbook](ENGINEERING_PLAYBOOK.md). AI
-assistance may edit documentation directly. The human builder types source, tests, migrations,
+Preserve the default manual learning workflow in the [engineering playbook](ENGINEERING_PLAYBOOK.md). AI
+assistance may edit documentation directly. The human builder normally types source, tests, migrations,
 build configuration, containers, and CI files, one explained file at a time.
+
+Follow the [testing policy](ENGINEERING_PLAYBOOK.md#test-layers). Prefer end-to-end and integration
+checks of observable behavior. Do not generate unit tests for each function or to increase coverage.
+Use focused unit tests when they uniquely protect cryptographic or security logic, deterministic algorithms,
+parsers, state machines, protocols, or difficult edge cases. Each test must protect a meaningful property
+or regression and remain valid across reasonable internal refactors.
+
+Use the installed `security-best-practices` skill for secure defaults and relevant Python host-adapter reviews.
+Use `security-threat-model` when threat modeling is requested. Extend the canonical threat model rather than creating a competing specification.
+Require the [release gate](ENGINEERING_PLAYBOOK.md#release-gate) before making production-readiness claims.
+Skills and AI review do not replace executable capability evidence or independent security review.
 
 Use the [architecture ownership map](docs/architecture/README.md#documentation-ownership) to
 find canonical contracts. Preserve existing local work. Do not create competing specifications.

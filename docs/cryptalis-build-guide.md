@@ -1,6 +1,7 @@
 # Cryptalis: dependency-aware solo build guide
 
-Status: construction narrative, unimplemented. Reviewed 2026-09-30.
+Status: construction guide. Initial manifest JSON decoding exists; see the
+[checklist](backend-build-checklist.md) for current evidence. Reviewed 2026-10-04.
 
 Prerequisites:
 
@@ -13,11 +14,12 @@ The [checklist](backend-build-checklist.md) owns evidence state.
 
 ## Manual learning contract
 
-One human builder types implementation, normally one failing test file and then one implementation file.
-Artificial intelligence (AI) can edit documentation directly.
-It does not write source, tests, migrations, build configuration, containers, or continuous integration (CI) files.
+In the default learning workflow, one human builder types source and tests, one explained file at a time.
+A failing behavior test starts each new behavior slice. Existing tests can protect multiple implementation files.
+The [playbook testing policy](../ENGINEERING_PLAYBOOK.md#test-layers) owns boundary selection and selective unit-test criteria.
+Artificial intelligence (AI) can edit documentation directly. Explicit user instructions can
+authorize direct implementation for a named scope under the [playbook](../ENGINEERING_PLAYBOOK.md#solo-manual-typing-workflow).
 The assistant and builder can discuss small related files together. The assistant supplies them separately.
-This pass creates no executable files.
 
 Prerequisite: The builder understands the previous result before the assistant supplies the next file.
 
@@ -73,10 +75,12 @@ The Protection Manifest defines policy. The derived Protection Graph contains ev
 
 ## Workstream catalogue
 
-The paths below suggest future files in proposed packages. These files do not exist.
+The paths below suggest files in proposed packages. Check existing implementation before adding a file.
 The [module owner](architecture/manifest-context-api.md#packages-and-dependency-direction) freezes responsibilities.
 A documented decision can change filenames if it preserves those responsibilities.
-For every row, type a test file before its corresponding source file.
+For each behavior slice, choose the highest executable boundary and its observable failure before implementation.
+Reuse or extend useful scenarios. Do not create a corresponding test file for every source file.
+Record pending E2E workflows when dependencies are not executable.
 
 Learn the model before copying a framework example. The linked owners define exact gate thresholds.
 
@@ -87,7 +91,7 @@ Authenticated encryption with associated data (AEAD), nonces, and additional aut
 
 | Thread / purpose | First files and construction sequence | Concepts / dependencies / learning exit |
 |---|---|---|
-| 0 Evidence baseline | Future packaging/import skeleton, contracts/errors, tests/conftest | Packaging and test runner. No security claim. C00/C26 baseline |
+| 0 Evidence baseline | Minimal packaging and runner/fixture setup for the first manifest or context behavior gate | Setup enables behavior checks. Import-only smoke tests are not a quality gate. C00/C26 require their own evidence |
 | 1 Trusted context + manifest | contracts/ids, provenance grant DTO, manifest/model, naming, compiler, diff | Host identity versus authorization. Canonical bytes and versioned policy. C01/C02 vectors and substitution gate |
 | 2 Envelope/local keys | crypto/kdf, aead adapter, envelope. Then keys/provider, local | AEAD, nonces, AAD, and domain separation. C03 vectors, parser, failure, and size checks before suite freeze |
 | 3 ORM write/read | sqlalchemy/context, mapping, descriptor, events | Logical versus hidden physical history, rollback, loaders, and identity map. C04/P1 useful enumerated sync/async cells |

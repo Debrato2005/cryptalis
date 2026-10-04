@@ -393,7 +393,9 @@ key repository. Report rendering is itself an exposure scenario.
 The [CI owner](architecture/assurance-evidence.md#11-ci-reference-lab-and-regression) specifies safe
 profiles. The [shared CLI](architecture/manifest-context-api.md#cli-and-configuration) owns exits.
 Study narrow pytest hooks for request/SQL identity and marker controls without invasive instrumentation.
-Coverage describes executed tests. It does not establish universal application behavior.
+Apply the [playbook testing policy](../ENGINEERING_PLAYBOOK.md#test-layers) to these experiments.
+Prioritize realistic workflows and boundary failures. Add focused tests only for distinct fault-detection value.
+Executed-path observations do not establish universal application behavior. Line coverage is diagnostic data, not a quality target.
 
 Stateful Hypothesis research fits parser/normalization/query rewriting, generations/epochs,
 migration transitions and lifecycle faults. Record seeds and minimized synthetic counterexamples.

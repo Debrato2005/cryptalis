@@ -1,6 +1,6 @@
 # Cryptalis architecture blueprint
 
-Status: accepted architecture specification with empirical gates. No implementation exists.
+Status: accepted architecture specification with empirical gates.
 Reviewed: 2026-09-30. Integration corrections: 2026-10-01. The
 [checklist](../backend-build-checklist.md) is the authority for current capability state.
 
@@ -47,7 +47,7 @@ owners. Record the change. No document silently overrides another.
 | [Checklist](../backend-build-checklist.md) | Maintainer: evidence state/dependency/exit links | Architecture rationale |
 | [Prior art](../prior-art.md) | Researcher/reviewer: attribution, competitor/product thesis | Cryptalis runtime specification |
 | [Assurance research](../security-assurance-suite-research.md) | Researcher: analyzer/scenario learning depth and comparisons | Second normative assurance owner |
-| [Engineering playbook](../../ENGINEERING_PLAYBOOK.md) | Contributor: manual implementation, testing/review/release process | New architectural guarantees |
+| [Engineering playbook](../../ENGINEERING_PLAYBOOK.md#test-layers) | Contributor: behavior-first testing policy, manual implementation, review, and release process | New architectural guarantees |
 | [Claims audit](../documentation-claims-audit.md) | Reviewer: dated findings/closure/validation provenance | Architecture/status authority |
 | [Historical pause handoff](../SESSION_HANDOFF.md) | Maintainer: interrupted-session chronology, superseded by audit | Live goal state or remaining design decisions |
 | [Hardening dossier](../adversarial-architecture-hardening.md) | Researcher: historical hostile analysis and alternatives | Current versions or contracts |

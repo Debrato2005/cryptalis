@@ -1,6 +1,6 @@
 # Backend build and evidence checklist
 
-Current state as of 2026-10-01: documentation only. This file is the authority for capability
+Current state as of 2026-10-04: documentation plus initial manifest JSON decoding. This file is the authority for capability
 implementation state. [Manifest
 contracts](architecture/manifest-context-api.md#terms-and-maturity) define terms and maturity.
 [Architecture owners](architecture/README.md#documentation-ownership) define rationale. The
@@ -11,7 +11,7 @@ The markers mean:
 
 | Marker | Meaning |
 |---|---|
-| `[ ]` | No executable evidence |
+| `[ ]` | No required gate evidence admitted |
 | `[~]` | Documented or partially specified |
 | `[x]` | Implemented, with required reproducible executable evidence linked and reviewed |
 | `[-]` | Rejected for a named profile, with a reason |
@@ -25,8 +25,12 @@ named external reviewer and disclosed independence.
 Each row has an ID, maturity and status, dependencies, owner and gate, required artifact, and
 exit rule. Rows group related properties. They do not limit the number of features.
 
-All executable artifacts below are future targets. None exists today. Filenames name required
-evidence, not created files. SPECIFIED means a contract and gate exist. It does not mean the
+Required gate artifacts below remain future targets. The [JSON decoder](../src/cryptalis/manifest/parser.py)
+has [36 passing tests](../tests/test_manifest_parser.py) under `uv run pytest` on 2026-10-04.
+Normal Python imports work, and `uv build` produces a wheel and source archive.
+These local checks do not complete C01 or C26.
+Semantic validation, canonical bytes, and cross-language evidence remain pending.
+SPECIFIED means a contract and gate exist. It does not mean the
 gate passed. For the rows marked RESEARCHED here, construction selection remains open. A failed
 gate demotes only dependent claims.
 
@@ -68,12 +72,17 @@ gate demotes only dependent claims.
 
 ## Evidence admission
 
+Select tests under the [playbook policy](../ENGINEERING_PLAYBOOK.md#test-layers).
+Use the highest realistic behavior boundary. Record pending E2E evidence for incomplete workflows.
+Corpus sizes and zero-failure thresholds in subsystem gates remain property-specific admission criteria, not line-coverage targets.
+
 A future evidence entry must include:
 
 - Capability, invariant, and gate IDs
 - Exact source revision and digest of the dirty working snapshot
 - Manifest, schema, target, and tool versions
 - Command, raw machine results, and controls
+- Protected behavior or regression, test boundary, substitute dependencies, and missing workflow evidence
 - Limitations and reviewer
 - Artifact hashes and stable repository location
 

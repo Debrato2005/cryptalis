@@ -882,6 +882,9 @@ These G-* identifiers own new detailed acceptance contracts. Historical P0–P10
 dossier](../adversarial-architecture-hardening.md) retain original meanings. All gates are **not
 run**. Source review/documentation checks cannot pass them.
 
+The [playbook testing policy](../../ENGINEERING_PLAYBOOK.md#test-layers) prioritizes complete protection workflows.
+Focused crypto vectors, parser fuzzing, and lifecycle state checks retain their distinct fault-detection value.
+Passing unit or E2E tests alone does not prove cryptographic security or key-byte destruction.
 The assurance owner supplies result vocabulary, redacted bundles and positive/negative/mutant
 controls. Each report disposes the affected capability as accept, redesign, research-only, integrate
 or reject.

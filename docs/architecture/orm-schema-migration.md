@@ -703,6 +703,8 @@ dossier](../adversarial-architecture-hardening.md). G-ORM gates are detailed exe
 renamed P risks. Runs bind versions, seed, offered/completed load, schema/manifest/plan hashes,
 controls and raw artifacts.
 
+Use the [playbook testing policy](../../ENGINEERING_PLAYBOOK.md#test-layers) to select test boundaries.
+Prefer real session/crypto/PostgreSQL workflows. Focused compatibility and recovery checks retain the exact gates below.
 Failure narrows the affected profile. Missing collectors or unexecuted fault branches yield
 inconclusive.
 

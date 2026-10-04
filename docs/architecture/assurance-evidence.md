@@ -599,6 +599,9 @@ to offline manifest/source. Schema, provider and deployment access require expli
 fast Doctor/Verify fixtures. It never discovers live targets, launches DAST or grants destructive
 authorization.
 
+The [playbook testing policy](../../ENGINEERING_PLAYBOOK.md#test-layers) owns the confidence hierarchy and test selection.
+Future CI schedules fast deterministic checks, focused integration/security checks, critical E2E workflows, then extended isolated suites.
+The selected fast `check --ci` profile is one subset. Required workflow and security gates still apply to release.
 CI evaluates canonical JSON after control and integrity checks. Exit codes and precedence follow the
 [shared CLI contract](manifest-context-api.md#cli-and-configuration). A proven `FAIL` survives an
 operational error in canonical results even when the error takes exit-code precedence. Warnings and
@@ -611,7 +614,8 @@ Reset between normal, mutant and baseline configurations. Evidence records healt
 
 Cloud, managed backup, multi-cluster and network chaos are separate lanes with dependency, cost and authorization limits.
 
-Pytest associates executed request, SQL and synthetic-collector paths. Coverage describes executed tests only.
+Pytest associates executed request, SQL and synthetic-collector paths.
+Executed-path observations do not prove unobserved application behavior. Line coverage is diagnostic data, not a quality or release target.
 Stateful/property/fuzz tests cover envelope, query, context, migration, lifecycle and cache and evidence
 parsers. Record seeds and minimized counterexamples without secrets. Baselines show new, resolved, unchanged, regressed and reclassified results without suppressing failures. Dependency, manifest, model, rule or collector changes invalidate incompatible baselines.
 Rerun affected compatibility, mutant and serialization fixtures.

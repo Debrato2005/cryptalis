@@ -479,7 +479,8 @@ Controlled access and lifecycle decisions obey their explicit durable audit poli
 
 ## Packages and dependency direction
 
-The responsibility names below are proposed packages. No source exists. Shared immutable
+The responsibility names below define the proposed package structure. Initial manifest JSON
+decoding exists; the [checklist](../backend-build-checklist.md) records implementation state. Shared immutable
 contracts, including evidence DTOs, sit below adapters. Evidence orchestration and rendering sit
 above adapters. The CLI composes use cases and defines no security semantics. No domain layer
 imports a scanner or SDK.
@@ -549,6 +550,8 @@ supported runtime cells. Research ledgers record external versions.
 | G-API | Explicit warm/session API vs repository/controlled batches | Five maintainers perform field/retrofit/query/incident/delete tasks; >=4/5 finish without guessing security choices, 0 silent policy widening, actionable errors; otherwise revise ergonomic surface | Examples safe; adoption/usability claims blocked |
 | G-BOUNDARY | Layered runtime/lab quarantine vs split distributions | Import/build graph/wheel inspection with seeded reverse/lab imports; 100% violations detected, no payload/test credential/scanner deps in runtime wheel; any escape blocks release | Package design safe; quarantine/support blocked |
 
+The [playbook testing policy](../../ENGINEERING_PLAYBOOK.md#test-layers) owns test-boundary selection.
+Module checks and these gates supplement E2E workflows. They do not require a test for each function.
 These gates are specified acceptance criteria. None is measured. P0 maps to the historical risk
 queue. Subsystem owners define detailed P1-P10 experiments. A failed gate demotes only affected
 claims.
