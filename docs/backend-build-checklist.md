@@ -1,7 +1,7 @@
 # Backend build and evidence checklist
 
-Current state as of 2026-10-04: documentation plus initial manifest JSON decoding and canonical
-output. This file is the authority for capability implementation state. [Manifest
+Current state as of 2026-10-04: documentation plus initial manifest decoding, canonical output,
+and identity-header validation. This file is the authority for capability implementation state. [Manifest
 contracts](architecture/manifest-context-api.md#terms-and-maturity) define terms and maturity.
 [Architecture owners](architecture/README.md#documentation-ownership) define rationale. The
 [build guide](cryptalis-build-guide.md) defines learning order. Every workstream remains active
@@ -25,11 +25,12 @@ named external reviewer and disclosed independence.
 Each row has an ID, maturity and status, dependencies, owner and gate, required artifact, and
 exit rule. Rows group related properties. They do not limit the number of features.
 
-Required gate artifacts below remain future targets. The [JSON decoder](../src/cryptalis/manifest/parser.py)
-and [restricted canonicalizer](../src/cryptalis/manifest/canonical.py) have 40 passing tests under
-`uv run pytest` on 2026-10-04. Normal Python imports work, and `uv build` produces a wheel and
-source archive. These local checks do not complete C01 or C26. Semantic validation, manifest
-hashing, and cross-language evidence remain pending.
+Required gate artifacts below remain future targets. The [JSON decoder](../src/cryptalis/manifest/parser.py),
+[restricted canonicalizer](../src/cryptalis/manifest/canonical.py), and [typed header
+decoder](../src/cryptalis/manifest/header.py) have 56 passing tests under `uv run pytest` on
+2026-10-04. Normal Python imports work, and `uv build` produces a wheel and source archive. These
+local checks do not complete C01 or C26. Complete semantic validation, manifest hashing, and
+cross-language evidence remain pending.
 SPECIFIED means a contract and gate exist. It does not mean the
 gate passed. For the rows marked RESEARCHED here, construction selection remains open. A failed
 gate demotes only dependent claims.

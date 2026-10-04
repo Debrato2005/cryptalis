@@ -1,1 +1,1 @@
-"""Manifest input decoding and canonical bytes."""
+"""Manifest decoding, canonical bytes, and identity headers."""

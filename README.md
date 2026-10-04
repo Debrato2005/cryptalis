@@ -6,12 +6,14 @@ policy to authenticated payload encryption, search capabilities, PostgreSQL sche
 Alembic migrations. It also connects key lifecycle and application paths to controlled attacks
 and reproducible exposure evidence.
 
-**Status as of 2026-10-04: initial manifest JSON decoding and canonical output.** The repository
-has an installable Python package with a [bounded JSON decoder](src/cryptalis/manifest/parser.py)
-and [restricted RFC 8785 canonicalizer](src/cryptalis/manifest/canonical.py). Forty behavior tests
-cover these two boundaries. Semantic schema validation, manifest hashing, cryptography, ORM
-integration, migrations, providers, and assurance tools remain pending. Other Cryptalis APIs
-and commands are proposed contracts. The [capability
+**Status as of 2026-10-04: initial manifest decoding, canonical output, and identity-header
+validation.** The repository has an installable Python package with a [bounded JSON
+decoder](src/cryptalis/manifest/parser.py), [restricted RFC 8785
+canonicalizer](src/cryptalis/manifest/canonical.py), and [typed header
+decoder](src/cryptalis/manifest/header.py). Fifty-six behavior tests cover these boundaries.
+Complete semantic schema validation, manifest hashing, cryptography, ORM integration, migrations,
+providers, and assurance tools remain pending. Other Cryptalis APIs and commands are proposed
+contracts. The [capability
 checklist](docs/backend-build-checklist.md) separates specified design from executable evidence.
 No runtime version is supported.
 
@@ -23,14 +25,20 @@ Prerequisites: Python 3.12 or later, uv, and the repository root as the working 
 uv sync --locked
 uv run pytest
 uv run python - <<'PY'
-from cryptalis.manifest.canonical import canonicalize_manifest_json
+from cryptalis.manifest.header import decode_manifest_header
 
-print(canonicalize_manifest_json(b'{"revision":0}'))
+raw = (
+    b'{"schema_version":1,'
+    b'"manifest_id":"018f4f87-6f95-7e2a-9d95-38f9b7646f24",'
+    b'"revision":0,"parent_digest":null}'
+)
+print(decode_manifest_header(raw).manifest_id)
 PY
 ```
 
-The canonicalizer returns `b'{"revision":0}'`. It checks JSON input rules, but it does not
-validate a complete manifest schema. To create a local wheel and source archive, run `uv build`.
+The header decoder returns the canonical UUID as a typed value. It validates identity-header
+representations, but it does not validate a complete manifest schema or revision history. To
+create a local wheel and source archive, run `uv build`.
 
 ## Purpose and boundary
 

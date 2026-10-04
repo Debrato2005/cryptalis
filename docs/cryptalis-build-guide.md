@@ -1,7 +1,8 @@
 # Cryptalis: dependency-aware solo build guide
 
-Status: construction guide. Initial manifest JSON decoding and canonical output exist. See the
-[checklist](backend-build-checklist.md) for current evidence. Reviewed 2026-10-04.
+Status: construction guide. Initial manifest decoding, canonical output, and identity-header
+validation exist. See the [checklist](backend-build-checklist.md) for current evidence. Reviewed
+2026-10-04.
 
 Prerequisites:
 

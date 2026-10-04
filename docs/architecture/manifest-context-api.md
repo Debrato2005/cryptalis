@@ -122,6 +122,10 @@ Exceeding a limit raises ManifestInvalid. The parser rejects unknown critical ex
 v1 has no executable extensions. Changes require schema and catalogue compatibility review.
 G-MANIFEST still requires canonical vectors across languages and fuzz evidence.
 
+Initial `decode_manifest_header` support validates the four required identity-header
+representations for schema version 1. It does not validate the remaining schema, catalogue
+references, revision ancestry, or parent existence.
+
 R means required after compilation. C means required when the capability is selected. O means an
 annotation. All referenced enums and policies resolve in the pinned catalogue. Compilation
 rejects missing required fields, ambiguity, unresolved references, and incompatible profiles.
@@ -479,11 +483,12 @@ Controlled access and lifecycle decisions obey their explicit durable audit poli
 
 ## Packages and dependency direction
 
-The responsibility names below define the proposed package structure. Initial manifest JSON
-decoding and canonical output exist. The [checklist](../backend-build-checklist.md) records
-implementation state. Shared immutable contracts, including evidence DTOs, sit below adapters.
-Evidence orchestration and rendering sit above adapters. The CLI composes use cases and defines
-no security semantics. No domain layer imports a scanner or SDK.
+The responsibility names below define the proposed package structure. Initial manifest decoding,
+canonical output, and identity-header validation exist. The
+[checklist](../backend-build-checklist.md) records implementation state. Shared immutable
+contracts, including evidence DTOs, sit below adapters. Evidence orchestration and rendering sit
+above adapters. The CLI composes use cases and defines no security semantics. No domain layer
+imports a scanner or SDK.
 
 | Module | Public seam and allowed dependencies | Invariant/errors/test layer |
 |---|---|---|
