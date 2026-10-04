@@ -4,6 +4,9 @@ Status: first-party documentation audit. This record is advisory. It does not de
 architecture or implementation status. Audit/reconciliation date: 2026-10-01 (Asia/Calcutta).
 External source access dates remain per ledger.
 
+The 2026-10-01 sections below are historical. The [later failure-policy audit](#fail-explicit-policy-and-implementation-audit) records current source findings.
+Use the [checklist](backend-build-checklist.md) for current capability evidence.
+
 ## Verdict and scope
 
 The canonical contracts specify the proposed system and the experiments required to admit each
@@ -357,3 +360,107 @@ and gates remain pending.
 
 This working record cannot satisfy a committed-evidence `[x]` or external review checkpoint. The
 pass deleted no documentation and reset no unrelated initial edits. It made no commit or push.
+
+## Fail-explicit policy and implementation audit
+
+Audit date: 2026-10-04 UTC. Source baseline: `1b7eb66edeb413c9a35507954e6e224233165cdb`.
+The working tree was clean before this documentation change.
+The [playbook](../ENGINEERING_PLAYBOOK.md#fail-loudly-and-explicitly) now owns the strict policy.
+Repository instructions, the build guide, architecture decisions, error contracts, review rules, and testing guidance refer to that owner.
+
+The audit inspected all maintained Python source, exception handlers, entry points, subprocess calls, and relevant failure tests.
+Eight read-only probes confirmed the findings below, including in-memory injection of an `EIO` filesystem failure.
+No implementation, tests, configuration, dependency files, or fixtures were edited.
+Medium means a material reliability, diagnostic, or automation contract gap. These findings do not establish a cryptographic compromise.
+All three findings were open at this audit snapshot. The [follow-up](#cli-failure-corrections) records their subsequent correction.
+No high or critical violation was confirmed in this bounded audit.
+
+| ID / severity | File / location | Current behavior | Why it is dangerous | Recommended correction |
+|---|---|---|---|---|
+| F01 / Medium | [cli.py](../src/cryptalis/cli.py), `_read_manifest` lines 65–84, `_write_manifest_error` lines 120–142, `_inspect_command` lines 145–154 | Missing child/parent files, malformed JSON, invalid parent links, and operational I/O failures become the same `Manifest.Invalid`, exit 2, non-retryable record. The caught error supplies no safe stage, input role, or cause category | Users cannot locate the failed boundary. Automation cannot distinguish invalid data from operational unavailability. A fresh correlation ID has no associated diagnostic channel here | Retain typed cause categories internally. Emit safe operation, stage, and input role. Map operational unavailability to exit 4 and validation to exit 2. Preserve redaction of raw paths, values, and exception payloads |
+| F02 / Medium | [cli.py](../src/cryptalis/cli.py), `_ArgumentParser.error` lines 22–29, JSON option lines 55–60, `main` line 162 | Argument errors print usage and a generic text error even with `--json`. A missing value after `--parent` exits 2 with non-JSON stderr | Machine consumers lose the stable error protocol at the argument boundary and need an undocumented text fallback | Route argument failures through the stable machine error envelope when JSON mode is requested. Supply a safe argument-stage category without echoing user values. Test malformed command arguments through the real CLI |
+| F03 / Medium | [cli.py](../src/cryptalis/cli.py), parent option lines 50–54, `main` line 162 | Repeated `--parent` uses argparse's last value silently. A missing first parent followed by a valid second parent returns exit 0 and `manifest_parent_link`. Reversing their order returns exit 2 | The earlier requested input is ignored. Success hides an ambiguous validation request, and scripts can check a different parent than intended | Reject duplicate parent selectors before opening files. Keep the single-parent contract explicit. Add CLI regression cases for both orders and confirm no success output on rejection |
+
+### Reproduction evidence
+
+The probes used `.venv/bin/python -m cryptalis manifest inspect` against synthetic repository examples and a nonexistent temporary path.
+The imported CLI resolved to `src/cryptalis/cli.py` in this checkout.
+Every subprocess had a ten-second timeout and an explicitly checked return code.
+Correlation IDs were excluded only from comparison. Actual error records still contain them.
+
+| Probe | Observed result |
+|---|---|
+| Missing child, duplicate-key JSON, missing parent, invalid parent link | Four cases: exit 2, empty stdout, identical error fields apart from correlation ID |
+| Injected `OSError(errno.EIO, "synthetic I/O failure")` at `cryptalis.cli.os.open` | Exit 2, empty stdout, the same invalid-input record |
+| Genesis example with `--json --parent` and no parent value | Exit 2, empty stdout, usage and generic text on stderr |
+| Successor example with missing then valid `--parent` values | Exit 0, `scope: manifest_parent_link`, empty stderr |
+| Successor example with valid then missing `--parent` values | Exit 2, empty stdout, generic invalid-input record |
+
+Manifest and candidate-envelope parsers already reject many malformed inputs with explicit exceptions.
+The audit found no swallowed exception handler or ignored subprocess status in maintained source and tests.
+The CLI tests use `subprocess.run(check=False)` and assert return codes. That pattern does not ignore failure.
+Likewise, `raise ... from None` suppresses traceback display but does not delete Python's exception context.
+Raw decoder exceptions can contain input bytes. Public redaction is valid, but safe cause and stage diagnostics remain necessary.
+Database, provider, encryption/decryption, and background adapters are not implemented. Their new policy requirements remain future evidence gates.
+This audit does not prove repository-wide production or security readiness.
+
+### Documentation validation
+
+The checks below ran on the documentation change. The runtime suite was not rerun.
+Read-only failure probes establish these findings, not corrected behavior.
+
+| Check | Observed result |
+|---|---|
+| `PYTHONDONTWRITEBYTECODE=1 .venv/bin/python /tmp/cryptalis-fail-explicit-reproduce.py` | Eight asserted reproduction cases passed. The script was temporary and changed no repository implementation |
+| Existing `DOC_CHECKER_BEGIN` block extracted and executed with `.venv/bin/python` | 20 Markdown files, 370 local links, zero link, anchor, case, fence, inline-code, control-byte, or whitespace faults |
+| `git diff --check` | Exit 0, no output |
+| SHA-256 comparison with the pre-edit snapshot | All 25 tracked non-Markdown files unchanged. Six changed paths, all Markdown |
+| ASD-STE100 lint on the policy and audit draft | 1.25 findings per 100 words, below the 2.5 gate |
+
+Checked Markdown snapshot, audit self excluded: `30a6437ecdcb9a7ca55875f1d5700a9f3307ff19af4592ef04bf740dbb1a29e1`.
+This digest records file contents. It is not runtime or independent security evidence.
+
+## CLI failure corrections
+
+Follow-up date: 2026-10-04 UTC. The user explicitly authorized source and test edits for F01–F03.
+The changes preserve the earlier documentation work and use source baseline `1b7eb66edeb413c9a35507954e6e224233165cdb`.
+The old findings and probe results above describe the pre-fix snapshot.
+Only [cli.py](../src/cryptalis/cli.py) and [test_cli.py](../tests/test_cli.py) changed outside Markdown.
+
+| Finding | Current outcome | Regression evidence |
+|---|---|---|
+| F01 corrected | Safe operation, stage, input role, and cause fields distinguish argument, input, validation, link, and operational failures. Wrappers retain internal exception causes. Cleanup diagnostics retain a primary failure in both output modes | Missing child, invalid child/parent, rejected links, injected open/stat/read/close failures, and combined read/close failures. Permission denial after open returns 2. Operational failure returns 4. No failure result exposes seeded secrets |
+| F02 corrected | Argument failures use the stable JSON error envelope when `--json` occurs before `--`. The terminator prevents path values from selecting JSON mode | Missing parent value before/after `--json`, unknown arguments/commands, and a literal option-shaped path after `--` |
+| F03 corrected | Duplicate parent options reject before reading either input, including identical values and equals forms. Full option names are required | Both missing/valid parent orders, both option forms, and repeated identical parents |
+
+The CLI suite first produced 21 expected failures and 17 passes against the old implementation.
+A first-party review then identified two edge cases in the initial fix.
+Stream cleanup could hide a read failure, and permission denial after open used the operational exit category.
+New regressions reproduced both cases before their corrections. The final read-only review found no remaining important issue within this scope.
+AI review is first-party. It does not satisfy independent security review.
+
+| Verification actually run | Result |
+|---|---|
+| `PYTHONDONTWRITEBYTECODE=1 .venv/bin/python -m pytest tests/test_cli.py -q --tb=short` | 46 passed |
+| `UV_CACHE_DIR=/tmp/cryptalis-uv-cache PYTHONDONTWRITEBYTECODE=1 uv run --locked pytest -q` | 246 passed |
+| `UV_CACHE_DIR=/tmp/cryptalis-uv-cache uv build --offline --out-dir /tmp/cryptalis-cli-fix-dist` | Wheel and source archive built |
+| `UV_CACHE_DIR=/tmp/cryptalis-uv-cache PYTHONDONTWRITEBYTECODE=1 .venv/bin/python /tmp/cryptalis-cli-fix-wheel-smoke.py` | Six console smoke cases passed in a clean temporary environment. Imports resolved to the installed wheel outside the checkout |
+
+These corrections do not establish full semantic manifest validity, ancestry authentication, C25 completion, or production readiness.
+Fault injection does not establish every real filesystem's outage or permission behavior.
+No dependency, fixture, build configuration, CI, commit, or push changed.
+The previous Ruff and mypy availability limits remain. This slice did not rerun those unavailable tools.
+
+Final documentation checks covered 20 Markdown files and 375 local links, with zero faults.
+`git diff --check` passed. Only `src/cryptalis/cli.py` and `tests/test_cli.py` changed outside Markdown.
+The other 23 protected non-Markdown files match the pre-edit snapshot.
+Neither Ruff nor mypy is present on PATH or in the project environment.
+The documentation draft scored 1.39 findings per 100 words. The strict error-text draft scored 1.37.
+
+Current source SHA-256:
+
+- `src/cryptalis/cli.py`: `81025b8319426b2382db4a57812050b77305396c8b7660479cdd8827de8d8b00`
+- `tests/test_cli.py`: `d120e9de85ecc0a268d6b842c68b40b1c29a15ebb4e5ad888fe936f0cc271d6a`
+
+Current checked Markdown snapshot, audit self excluded: `909cdbb88cd214ea59a4842c6a6ccb8205753bdabab7abe514ac30d44e366413`.
+These hashes identify the working files. They are not signatures or independent security evidence.

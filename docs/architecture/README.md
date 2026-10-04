@@ -47,7 +47,7 @@ owners. Record the change. No document silently overrides another.
 | [Checklist](../backend-build-checklist.md) | Maintainer: evidence state/dependency/exit links | Architecture rationale |
 | [Prior art](../prior-art.md) | Researcher/reviewer: attribution, competitor/product thesis | Cryptalis runtime specification |
 | [Assurance research](../security-assurance-suite-research.md) | Researcher: analyzer/scenario learning depth and comparisons | Second normative assurance owner |
-| [Engineering playbook](../../ENGINEERING_PLAYBOOK.md#test-layers) | Contributor: behavior-first testing policy, manual implementation, review, and release process | New architectural guarantees |
+| [Engineering playbook](../../ENGINEERING_PLAYBOOK.md) | Contributor: explicit failure and behavior-first testing policies, manual implementation, review, and release process | New architectural guarantees |
 | [Claims audit](../documentation-claims-audit.md) | Reviewer: dated findings/closure/validation provenance | Architecture/status authority |
 | [Historical pause handoff](../SESSION_HANDOFF.md) | Maintainer: interrupted-session chronology, superseded by audit | Live goal state or remaining design decisions |
 | [Hardening dossier](../adversarial-architecture-hardening.md) | Researcher: historical hostile analysis and alternatives | Current versions or contracts |
@@ -71,6 +71,7 @@ architecture decision record (ADR) specifications.
 | D08 DECIDED | Treat controlled evidence as first-party. An external signed witness establishes integrity and provenance, not measurement truth or independent proof | Assurance. P8 controls and value |
 | D09 DECIDED | Isolate attributed known constructions in research packages. Primitive library selection requires vectors and review | Crypto and modules. P10/G-BOUNDARY |
 | D10 DECIDED | Require authenticated grants from principals to tenants and subjects, plus immutable row identity. Raw IDs and ambient context cannot establish authority | Manifest G-CONTEXT/P0 |
+| D11 DECIDED | Use explicit state, narrow contracts, deterministic behavior, and observable failures. Silent recovery or undefined best effort can hide invalid state. Apply the playbook policy across subsystem boundaries | [Failure policy](../../ENGINEERING_PLAYBOOK.md#fail-loudly-and-explicitly) and [error contract](manifest-context-api.md#errors-and-observability). Failure-path evidence |
 
 For a decision change, record the predecessor ID and the primary-source or experimental basis.
 Name the affected owners, consequences for manifests, formats and compatibility, and blocked

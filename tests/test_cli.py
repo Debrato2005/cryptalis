@@ -1,3 +1,4 @@
+import errno
 import json
 import subprocess
 import sys
@@ -83,10 +84,14 @@ def test_manifest_inspect_rejects_invalid_input_without_echo(
     error = json.loads(result.stderr)["error"]
     assert error == {
         "code": "Invalid",
+        "cause": "ManifestInvalid",
         "correlation_id": error["correlation_id"],
         "family": "Manifest",
-        "reason": "The manifest input is invalid.",
+        "input_role": "child",
+        "operation": "manifest.inspect",
+        "reason": "The child manifest JSON or identity header is invalid.",
         "retryable": False,
+        "stage": "header",
     }
     UUID(error["correlation_id"])
     assert marker not in result.stderr
@@ -102,6 +107,9 @@ def test_manifest_inspect_rejects_unreadable_path_without_echo(tmp_path):
     error = json.loads(result.stderr)["error"]
     assert error["family"] == "Manifest"
     assert error["code"] == "Invalid"
+    assert error["stage"] == "open"
+    assert error["input_role"] == "child"
+    assert error["cause"] == "ENOENT"
     assert str(missing) not in result.stderr
 
 
@@ -191,8 +199,292 @@ def test_manifest_inspect_rejects_wrong_parent_without_echo(tmp_path, changes):
     assert error["family"] == "Manifest"
     assert error["code"] == "Invalid"
     assert error["retryable"] is False
+    assert error["stage"] == "parent_link"
+    assert error["input_role"] == "pair"
     UUID(error["correlation_id"])
     assert "do-not-echo" not in result.stderr
+
+
+@pytest.mark.parametrize(
+    "arguments",
+    [
+        ["manifest", "inspect", str(_EXAMPLES / "genesis.json"), "--json", "--parent"],
+        ["manifest", "inspect", str(_EXAMPLES / "genesis.json"), "--parent", "--json"],
+        [
+            "manifest", "inspect", str(_EXAMPLES / "genesis.json"),
+            "--json", "--unknown", "do-not-echo",
+        ],
+        ["do-not-echo-command", "--json"],
+    ],
+)
+def test_argument_failures_use_redacted_machine_error(arguments):
+    result = _run_cli(*arguments)
+
+    assert result.returncode == 2
+    assert result.stdout == ""
+    error = json.loads(result.stderr)["error"]
+    assert error["family"] == "CLI"
+    assert error["code"] == "InvalidArguments"
+    assert error["operation"] == "cli"
+    assert error["stage"] == "arguments"
+    assert error["input_role"] is None
+    assert error["cause"] == "ArgumentError"
+    UUID(error["correlation_id"])
+    assert "do-not-echo" not in result.stderr
+    assert "usage:" not in result.stderr
+
+
+@pytest.mark.parametrize("missing_first", [False, True])
+@pytest.mark.parametrize("option_form", ["separate", "equals"])
+def test_duplicate_parent_options_reject_both_orders(
+    tmp_path, missing_first, option_form
+):
+    missing = str(tmp_path / "do-not-echo-missing-parent")
+    valid = str(_EXAMPLES / "genesis.json")
+    parents = [missing, valid] if missing_first else [valid, missing]
+    options = []
+    for parent in parents:
+        options.extend(
+            ["--parent", parent]
+            if option_form == "separate"
+            else [f"--parent={parent}"]
+        )
+
+    result = _run_cli(
+        "manifest", "inspect", str(_EXAMPLES / "successor.json"), *options, "--json"
+    )
+
+    assert result.returncode == 2
+    assert result.stdout == ""
+    error = json.loads(result.stderr)["error"]
+    assert error["family"] == "CLI"
+    assert error["code"] == "InvalidArguments"
+    assert error["stage"] == "arguments"
+    assert error["cause"] == "DuplicateParent"
+    assert "do-not-echo" not in result.stderr
+
+
+def test_duplicate_identical_parent_is_ambiguous():
+    parent = str(_EXAMPLES / "genesis.json")
+    result = _run_cli("manifest", "inspect", str(_EXAMPLES / "successor.json"),
+                      "--parent", parent, "--parent", parent, "--json")
+
+    assert result.returncode == 2
+    assert result.stdout == ""
+    assert json.loads(result.stderr)["error"]["cause"] == "DuplicateParent"
+
+
+def test_option_terminator_does_not_enable_json_for_a_path():
+    result = _run_cli("manifest", "inspect", "--", "--json")
+
+    assert result.returncode == 2
+    assert result.stdout == ""
+    assert result.stderr.startswith("cryptalis: Manifest.Invalid:")
+    assert "stage=open" in result.stderr
+
+
+@pytest.mark.parametrize("role", ["child", "parent"])
+@pytest.mark.parametrize("failure_errno, expected_exit, expected_code", [
+    (errno.EIO, 4, "Unavailable"),
+    (errno.EACCES, 2, "Invalid"),
+])
+def test_filesystem_failures_have_safe_context(
+    monkeypatch, capsys, role, failure_errno, expected_exit, expected_code
+):
+    from cryptalis import cli
+
+    original_open = cli.os.open
+    target = _EXAMPLES / ("successor.json" if role == "child" else "genesis.json")
+
+    def fail_target(path, flags):
+        if path == target:
+            raise OSError(failure_errno, "do-not-echo-filesystem-secret", str(target))
+        return original_open(path, flags)
+
+    monkeypatch.setattr(cli.os, "open", fail_target)
+    result = cli.main(["manifest", "inspect", str(_EXAMPLES / "successor.json"),
+                       "--parent", str(_EXAMPLES / "genesis.json"), "--json"])
+    output = capsys.readouterr()
+
+    assert result == expected_exit
+    assert output.out == ""
+    error = json.loads(output.err)["error"]
+    assert error["family"] == "Manifest"
+    assert error["code"] == expected_code
+    assert error["operation"] == "manifest.inspect"
+    assert error["stage"] == "open"
+    assert error["input_role"] == role
+    assert error["cause"] == errno.errorcode[failure_errno]
+    assert "do-not-echo" not in output.err
+    assert str(target) not in output.err
+
+
+def test_invalid_parent_header_identifies_parent(tmp_path):
+    parent = tmp_path / "do-not-echo-parent.json"
+    parent.write_bytes(b'{"private":"do-not-echo-payload"}')
+    result = _run_cli("manifest", "inspect", str(_EXAMPLES / "successor.json"),
+                      "--parent", str(parent), "--json")
+
+    assert result.returncode == 2
+    assert result.stdout == ""
+    error = json.loads(result.stderr)["error"]
+    assert error["stage"] == "header"
+    assert error["input_role"] == "parent"
+    assert error["cause"] == "ManifestInvalid"
+    assert "do-not-echo" not in result.stderr
+
+
+@pytest.mark.parametrize("failure_errno, expected_exit, expected_code", [
+    (errno.EIO, 4, "Unavailable"),
+    (errno.EACCES, 2, "Invalid"),
+    (errno.EPERM, 2, "Invalid"),
+])
+def test_read_failure_has_explicit_category(
+    monkeypatch, capsys, failure_errno, expected_exit, expected_code
+):
+    from cryptalis import cli
+
+    original_fdopen = cli.os.fdopen
+
+    class UnreadableStream:
+        def __init__(self, wrapped):
+            self.wrapped = wrapped
+
+        def read(self, size):
+            raise OSError(failure_errno, "do-not-echo-read-secret")
+
+        def close(self):
+            self.wrapped.close()
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *exception):
+            self.close()
+
+    def unreadable_stream(descriptor, mode):
+        return UnreadableStream(original_fdopen(descriptor, mode))
+
+    monkeypatch.setattr(cli.os, "fdopen", unreadable_stream)
+    result = cli.main([
+        "manifest", "inspect", str(_EXAMPLES / "genesis.json"), "--json"
+    ])
+    output = capsys.readouterr()
+
+    assert result == expected_exit
+    assert output.out == ""
+    error = json.loads(output.err)["error"]
+    assert error["code"] == expected_code
+    assert error["stage"] == "read"
+    assert error["input_role"] == "child"
+    assert error["cause"] == errno.errorcode[failure_errno]
+    assert "do-not-echo" not in output.err
+
+
+def test_metadata_permission_failure_is_authorization_error(monkeypatch, capsys):
+    from cryptalis import cli
+
+    def denied_metadata(descriptor):
+        raise PermissionError(errno.EACCES, "do-not-echo-metadata-secret")
+
+    monkeypatch.setattr(cli.os, "fstat", denied_metadata)
+    result = cli.main([
+        "manifest", "inspect", str(_EXAMPLES / "genesis.json"), "--json"
+    ])
+    output = capsys.readouterr()
+
+    assert result == 2
+    assert output.out == ""
+    error = json.loads(output.err)["error"]
+    assert error["code"] == "Invalid"
+    assert error["stage"] == "stat"
+    assert error["cause"] == "EACCES"
+    assert "do-not-echo" not in output.err
+
+
+@pytest.mark.parametrize("read_fails", [False, True])
+def test_stream_close_failure_retains_read_outcome(monkeypatch, capsys, read_fails):
+    from cryptalis import cli
+
+    original_fdopen = cli.os.fdopen
+
+    class ClosingFailureStream:
+        def __init__(self, wrapped):
+            self.wrapped = wrapped
+
+        def read(self, size):
+            if read_fails:
+                raise OSError(errno.EINTR, "do-not-echo-read-secret")
+            return self.wrapped.read(size)
+
+        def close(self):
+            self.wrapped.close()
+            raise OSError(errno.EIO, "do-not-echo-close-secret")
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *exception):
+            self.close()
+
+    def closing_failure_stream(descriptor, mode):
+        return ClosingFailureStream(original_fdopen(descriptor, mode))
+
+    monkeypatch.setattr(cli.os, "fdopen", closing_failure_stream)
+    result = cli.main([
+        "manifest", "inspect", str(_EXAMPLES / "genesis.json"), "--json"
+    ])
+    output = capsys.readouterr()
+
+    assert result == 4
+    assert output.out == ""
+    error = json.loads(output.err)["error"]
+    assert error["stage"] == "close"
+    assert error["cause"] == "EIO"
+    if read_fails:
+        assert error["related_error"]["stage"] == "read"
+        assert error["related_error"]["cause"] == "EINTR"
+    else:
+        assert "related_error" not in error
+    assert "do-not-echo" not in output.err
+
+
+@pytest.mark.parametrize("machine_json", [False, True])
+def test_cleanup_failure_preserves_primary_diagnostic(
+    monkeypatch, capsys, machine_json
+):
+    from cryptalis import cli
+
+    original_close = cli.os.close
+
+    def stat_failure(descriptor):
+        raise OSError(errno.EIO, "do-not-echo-stat-secret")
+
+    def close_failure(descriptor):
+        original_close(descriptor)
+        raise OSError(errno.EIO, "do-not-echo-close-secret")
+
+    monkeypatch.setattr(cli.os, "fstat", stat_failure)
+    monkeypatch.setattr(cli.os, "close", close_failure)
+    options = ["--json"] if machine_json else []
+    result = cli.main([
+        "manifest", "inspect", str(_EXAMPLES / "genesis.json"), *options
+    ])
+    output = capsys.readouterr()
+
+    assert result == 4
+    assert output.out == ""
+    if machine_json:
+        error = json.loads(output.err)["error"]
+        assert error["stage"] == "close"
+        assert error["cause"] == "EIO"
+        assert error["related_error"]["stage"] == "stat"
+        assert error["related_error"]["cause"] == "EIO"
+    else:
+        assert "stage=close" in output.err
+        assert "related_stage=stat" in output.err
+        assert "related_cause=EIO" in output.err
+    assert "do-not-echo" not in output.err
 
 
 @pytest.mark.parametrize("kind", ["missing", "directory", "oversized", "invalid"])

@@ -10,6 +10,9 @@ Preserve the default manual learning workflow in the [engineering playbook](ENGI
 assistance may edit documentation directly. The human builder normally types source, tests, migrations,
 build configuration, containers, and CI files, one explained file at a time.
 
+**Nothing important may fail silently.** Follow the [explicit failure policy](ENGINEERING_PLAYBOOK.md#fail-loudly-and-explicitly).
+Use explicit failure channels, safe actionable diagnostics, and failure-path evidence. Documentation alone does not close implementation gaps.
+
 Follow the [testing policy](ENGINEERING_PLAYBOOK.md#test-layers). Prefer end-to-end and integration
 checks of observable behavior. Do not generate unit tests for each function or to increase coverage.
 Use focused unit tests when they uniquely protect cryptographic or security logic, deterministic algorithms,

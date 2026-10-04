@@ -1,6 +1,6 @@
 # Engineering Playbook
 
-This file owns the contribution, verification, migration review, and release processes.
+This file owns contribution, explicit failure policy, verification, migration review, and release processes.
 [README.md](README.md) owns product scope. The [architecture blueprint](docs/architecture/README.md)
 owns design. The [backend checklist](docs/backend-build-checklist.md) owns implementation state.
 [Prior art](docs/prior-art.md) owns competitive claims. The
@@ -12,7 +12,7 @@ decisions to build or integrate components.
 - Do not describe planned behavior as implemented or implemented behavior as verified.
   Do not describe a vendor statement as a Cryptalis measurement.
 - For every security change, state the protected threat, plaintext boundary, leakage from each capability, and failure behavior.
-- Prefer a typed failure to plaintext fallback, guessed context, silent query reinterpretation, or an undocumented bypass.
+- Apply the [explicit failure policy](#fail-loudly-and-explicitly) at every runtime and tooling boundary.
 - Treat tenant and subject context as an authenticated authorization grant.
   An identifier from a request, model, `ContextVar`, session, or pooled connection does not establish authority.
 - Never expand a search capability merely to make a test pass.
@@ -27,6 +27,43 @@ decisions to build or integrate components.
 - Treat every documented Cryptalis subsystem as active program scope.
   Dependencies and evidence gates limit integration and claims.
   They do not impose a semester ceiling or prohibit parallel research and isolated experiments.
+
+## Fail loudly and explicitly
+
+**Nothing important may fail silently.**
+
+This section owns the failure policy for application code, adapters, CLI commands, background work, tests, build tools, and automation.
+Prefer explicit state and contracts, deterministic behavior, strong validation, narrow interfaces, actionable errors, and observable failures.
+Do not rely on implicit assumptions, silent recovery, or undefined "best effort" behavior.
+
+- Propagate every failure through a typed error, exception, non-zero exit status, or explicit failure value that callers check.
+  Never swallow exceptions with `except: pass`, empty handlers, or equivalent patterns.
+  Never ignore subprocess exit codes or failed I/O, parsing, validation, database operations, cryptographic operations, or external calls.
+- Validate inputs and check invariants at trust boundaries and important state transitions.
+  Reject malformed, ambiguous, unsupported, or unsafe input early.
+  Fail fast when continuation could produce incorrect state. Security-sensitive behavior must fail closed.
+  Reject impossible states explicitly.
+- Identify what failed, where it failed, and relevant safe context in errors and diagnostic logs.
+  Preserve the original cause when wrapping errors.
+  Use specific failures internally. Generic public errors require a documented need at an API boundary and a safe diagnostic channel.
+  Never expose passwords, keys, tokens, plaintext secrets, sensitive cryptographic material, or unredacted exception payloads.
+- CLI failures must return meaningful non-zero exit codes. APIs must return explicit, stable error responses.
+  Use the [error and CLI contract](docs/architecture/manifest-context-api.md#errors-and-observability) for categories, safe fields, and exit mappings.
+- Make file and state mutations atomic where practical.
+  Otherwise, define interruption, rollback, and recovery behavior that prevents unexplained partial state.
+  Surface cleanup or rollback failures without hiding the primary failure.
+  Never report success until all required postconditions pass.
+- Never substitute defaults that hide corruption, incompatibility, missing configuration, security failure, or programmer error.
+  Intentional fallback must have an explicit, documented contract, an observable result, and failure-path tests.
+  Recovery must have a defined reason, trigger, and outcome. Defensive code must not hide bugs.
+  Bound retries by attempts and deadlines under the operation's idempotency contract.
+  Expose exhausted retries as a terminal failure. Retries must not hide persistent failures.
+- Await promises and asynchronous tasks, or assign an owner that observes their completion and failure.
+  Background work must surface failures through a defined, observable error channel.
+  Cancellation must reach callers and obey the cleanup contract.
+- Keep warnings separate from errors. Never downgrade correctness or security failures to warnings.
+
+The [failure-path test requirements](#failure-path-evidence) define the evidence required for this policy.
 
 ## Solo manual-typing workflow
 
@@ -87,6 +124,7 @@ Every pull request states:
 
 Reviewers block a change when:
 
+- The change violates the [explicit failure policy](#fail-loudly-and-explicitly), including its fallback, diagnostic, or postcondition requirements.
 - Plaintext can enter protected storage through a supported path.
 - A known unsupported query silently executes with changed semantics.
 - The system guesses a tenant, subject, record, field, normalization, or index domain.
@@ -102,7 +140,8 @@ Reviewers block a change when:
 ## Test layers
 
 This section owns repository testing policy. Subsystem contracts own exact properties and admission gates.
-Local pytest checks exist for manifest JSON decoding. CI and full workflow tests remain pending.
+Local pytest checks cover the implemented manifest, candidate-envelope, and terminal-inspection boundaries.
+CI and full protection workflow tests remain pending.
 The layers below guide test selection as implementation proceeds.
 
 Test important behavior at the highest realistic boundary.
@@ -138,6 +177,15 @@ Include malformed input, corrupted ciphertext or tags, wrong/missing/revoked key
 Exercise partial writes, database failures, network interruption, provider timeouts, and unexpected responses.
 Include restart during an operation, concurrency, resource exhaustion, and invalid state transitions.
 Assert the defined safe outcome, transaction state, and absence of unauthorized plaintext release.
+
+### Failure-path evidence
+
+Apply the [failure policy](#fail-loudly-and-explicitly) at the highest practical test boundary.
+Assert the error category, safe operation/stage context, propagation, and meaningful exit status or stable API response where applicable.
+Check that failed operations emit no success result and leave only the state permitted by their recovery contract.
+Exercise bounded retries, explicit fallback, asynchronous failures, cancellation, and failed cleanup where those behaviors exist.
+Check diagnostic redaction and cause preservation without exposing sensitive fixtures.
+Successful cases must establish the required postconditions.
 
 ### Real dependencies and selective substitutes
 

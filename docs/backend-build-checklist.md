@@ -1,6 +1,6 @@
 # Backend build and evidence checklist
 
-Current state as of 2026-10-05: documentation plus bounded manifest JSON, content digests,
+Current state as of 2026-10-04: documentation plus bounded manifest JSON, content digests,
 identity-header validation, parent-link validation, structural field-format digests,
 offline terminal inspection, and private candidate F1 envelope parsing.
 This file is the authority for capability implementation state.
@@ -29,9 +29,9 @@ Each row has an ID, maturity and status, dependencies, owner and gate, required 
 exit rule. Rows group related properties. They do not limit the number of features.
 
 The current manifest components, [terminal inspector](../src/cryptalis/cli.py), and private F1
-parser have 223 passing tests under `uv run --locked pytest -q` on 2026-10-05. Normal Python imports work,
-and `uv build` produces a wheel and source archive. These local checks do not complete C01, C25,
-or C26. Complete semantic
+parser have 246 passing tests under `uv run --locked pytest -q` on 2026-10-04.
+Normal Python imports work, and `uv build` produces a wheel and source archive.
+These local checks do not complete C01, C25, or C26. Complete semantic
 validation, trusted revision history, signature authentication, the remaining CLI contract, and
 cross-language evidence remain pending.
 
@@ -39,6 +39,14 @@ Parent-link checks validate one supplied pair. Tests cover content tampering, id
 substitution with a matching digest, equal or decreasing revisions, unusable parent files,
 and redacted CLI failures. Revisions can skip counter values. Both files can come from an
 attacker. Pair consistency does not authenticate policy or establish complete ancestry.
+
+The [CLI failure tests](../tests/test_cli.py) now cover safe diagnostic stages and input roles,
+invalid arguments in JSON mode, duplicate parent options, option termination, and dependency failures.
+Injected open, metadata, read, and cleanup failures check exit mapping, redaction, and preservation of primary diagnostics.
+Permission denial remains exit 2 after file open. Operational I/O and cleanup failures return exit 4.
+The [failure audit](documentation-claims-audit.md#cli-failure-corrections) records F01–F03 corrections.
+A clean temporary environment installs the current wheel and passes six console-command smoke cases outside the checkout.
+This evidence does not complete the broader C25 or release gates.
 
 The [field-format helpers](../src/cryptalis/manifest/descriptor.py) check descriptor structure
 and compute canonical bytes and a separate content digest.

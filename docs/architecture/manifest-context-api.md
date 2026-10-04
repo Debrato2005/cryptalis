@@ -1,7 +1,7 @@
 # Manifest, identity, and public contracts
 
 Status: specified design with initial manifest JSON, field-format, and inspection support.
-Most interfaces remain proposed. Reviewed: 2026-10-05.
+Most interfaces remain proposed. Reviewed: 2026-10-04.
 
 This document defines manifest semantics, identity provenance, shared versions and errors,
 public APIs, CLI commands, configuration, and module contracts. The [blueprint](README.md)
@@ -463,9 +463,20 @@ Plans record kind=proposal. They never record security PASS. Combined results us
 The initial `manifest inspect` command reads bounded local regular files. It emits the validated
 identity header and computed digest as text or JSON. With `--parent PATH`, it checks one parent
 link and reports `scope: manifest_parent_link` only after all checks pass. Without `--parent`,
-inspection retains `scope: manifest_header`. Invalid input returns code 2 with a redacted
-`Manifest.Invalid` record. Neither mode writes files or uses the network.
-The command does not complete C25 or establish full semantic validity.
+inspection retains `scope: manifest_header`.
+Argument failures return code 2 with a redacted `CLI.InvalidArguments` record.
+File input or authorization failures return code 2 with `Manifest.Invalid`.
+Other file I/O and cleanup failures return code 4 with `Manifest.Unavailable`.
+Neither mode writes files or uses the network. The command does not complete C25 or establish full semantic validity.
+
+Under the [failure policy](../../ENGINEERING_PLAYBOOK.md#fail-loudly-and-explicitly), machine mode requires a stable error object on stderr for every failure.
+This includes argument validation. No failure may emit a success result on stdout.
+Reject repeated input-identity or security-policy selectors unless their explicit contract defines an observable, tested precedence rule.
+
+The inspector accepts full option names. Repeated `--parent` options reject before file reads, including identical values and `--parent=PATH` forms.
+An exact `--json` token before the `--` terminator selects JSON error output even when argument parsing fails.
+Tokens after `--` remain path values. They cannot select JSON mode.
+The [dated audit](../documentation-claims-audit.md#cli-failure-corrections) records corrections to the initial CLI findings.
 
 Declarations compile policy. Project configuration selects the digest, catalogue, provider IDs,
 and output paths. Deployment configuration supplies endpoints, credential references, and
@@ -485,9 +496,28 @@ includes a digest of the redacted effective configuration.
 Stable errors contain a family and code, redacted public reason, retryable flag, and correlation
 ID. Never interpolate values, tokens, keys, ciphertext, or request payloads into these errors.
 
+The [playbook](../../ENGINEERING_PLAYBOOK.md#fail-loudly-and-explicitly) owns general failure, recovery, and diagnostic requirements.
+Errors must also identify the operation and stage, with safe context such as the child/parent input role.
+Use allowlisted fields and stable categories. Distinguish invalid input from operational unavailability under the CLI exit mapping.
+Preserve causes internally when wrapping errors. Public redaction can suppress raw exception chains at the documented boundary.
+Retain safe cause categories or controlled diagnostics because raw exceptions can contain secrets.
+A correlation ID alone does not identify the failed stage or establish an observable diagnostic channel.
+
+Inspection errors include `operation`, `stage`, `input_role`, and `cause`.
+The `header` stage covers JSON decoding and identity-header validation. The `parent_link` stage covers one supplied pair.
+Input roles are `child`, `parent`, `pair`, or null for arguments.
+Causes are fixed validator categories or symbolic operating-system error names. `UnknownIoError` reports an absent or unrecognized OS error number.
+
+Missing or unusable paths and permission denial return code 2. Other open, metadata, read, and close failures return code 4.
+If cleanup also fails, `related_error` retains the primary safe diagnostic. Text output also shows its stage, role, and cause.
+
+Wrapped exception causes remain internal. Public diagnostics exclude raw exception text, paths, input values, and traceback payloads.
+All current inspection error records set `retryable: false`. The command performs no retries.
+
 | Family | Codes / retry behavior |
 |---|---|
-| Manifest | Invalid, UnsupportedVersion, DigestMismatch; recompile/review |
+| CLI | InvalidArguments. Correct the command arguments |
+| Manifest | Invalid, UnsupportedVersion, DigestMismatch, Unavailable. Reject invalid input or report operational unavailability |
 | Context | Missing, Unauthorized, Expired, Conflicting, Unavailable; independently get fresh authority |
 | Envelope | Malformed, UnsupportedFormat, AuthenticationFailed, Oversize; fail/quarantine, never NULL fallback |
 | Key/provider/cache | Unavailable, Denied, Revoked, Shredded, StaleLease, GenerationMismatch, ColdMaterial, QuotaExhausted; bounded availability retry after authorization |

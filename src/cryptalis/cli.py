@@ -1,48 +1,114 @@
 import argparse
+import errno
 import json
 import os
 import stat
 import sys
 from collections.abc import Callable, Sequence
 from pathlib import Path
-from typing import NoReturn, cast
+from typing import BinaryIO, Literal, NoReturn, cast
 from uuid import uuid4
 
 from cryptalis.manifest.canonical import digest_manifest_json
 from cryptalis.manifest.header import (
+    ManifestHeader,
     decode_manifest_header,
     validate_manifest_parent_link,
 )
 from cryptalis.manifest.parser import MAX_DOCUMENT_BYTES, ManifestInvalid
 
 
-_INVALID_REASON = "The manifest input is invalid."
+_INVALID_PATH_ERRNOS = frozenset(
+    (
+        errno.ENOENT,
+        errno.ENOTDIR,
+        errno.EACCES,
+        errno.EPERM,
+        errno.ELOOP,
+        errno.ENAMETOOLONG,
+        errno.EISDIR,
+    )
+)
+
+
+class _CommandFailure(Exception):
+    def __init__(
+        self,
+        reason: str,
+        *,
+        stage: str,
+        cause: str,
+        input_role: str | None = None,
+        code: str = "Invalid",
+        exit_code: int = 2,
+        family: str = "Manifest",
+        operation: str = "manifest.inspect",
+    ) -> None:
+        super().__init__(reason)
+        self.exit_code = exit_code
+        self.error: dict[str, object] = {
+            "family": family,
+            "code": code,
+            "reason": reason,
+            "retryable": False,
+            "operation": operation,
+            "stage": stage,
+            "input_role": input_role,
+            "cause": cause,
+        }
 
 
 class _ArgumentParser(argparse.ArgumentParser):
-    def error(self, _message: str) -> NoReturn:
-        self.print_usage(sys.stderr)
-        self.exit(
-            2,
-            f"{self.prog}: input error: "
-            "The command arguments are invalid.\n",
-        )
+    def error(self, message: str) -> NoReturn:
+        raise _CommandFailure(
+            "The command arguments are invalid.",
+            family="CLI",
+            code="InvalidArguments",
+            operation="cli",
+            stage="arguments",
+            cause="ArgumentError",
+        ) from argparse.ArgumentError(None, message)
+
+
+class _SingleParent(argparse.Action):
+    def __call__(
+        self,
+        parser: argparse.ArgumentParser,
+        namespace: argparse.Namespace,
+        values: object,
+        option_string: str | None = None,
+    ) -> None:
+        if getattr(namespace, self.dest) is not None:
+            raise _CommandFailure(
+                "The parent option must occur only once.",
+                family="CLI",
+                code="InvalidArguments",
+                operation="cli",
+                stage="arguments",
+                cause="DuplicateParent",
+            )
+        setattr(namespace, self.dest, values)
 
 
 def _parser() -> argparse.ArgumentParser:
     parser = _ArgumentParser(
         prog="cryptalis",
+        allow_abbrev=False,
         description="Inspect Cryptalis Protection Manifests.",
     )
     commands = parser.add_subparsers(dest="command", required=True)
     manifest = commands.add_parser(
-        "manifest", help="Work with Protection Manifests."
+        "manifest",
+        help="Work with Protection Manifests.",
+        allow_abbrev=False,
     )
     manifest_commands = manifest.add_subparsers(
         dest="manifest_command", required=True
     )
     inspect = manifest_commands.add_parser(
-        "inspect", help="Inspect one manifest without changing it."
+        "inspect",
+        help="Inspect one manifest without changing it.",
+        allow_abbrev=False,
     )
     inspect.add_argument(
         "path", type=Path, help="Path to the manifest JSON file."
@@ -50,6 +116,7 @@ def _parser() -> argparse.ArgumentParser:
     inspect.add_argument(
         "--parent",
         type=Path,
+        action=_SingleParent,
         help="Check the link to one supplied local parent manifest.",
     )
     inspect.add_argument(
@@ -62,34 +129,108 @@ def _parser() -> argparse.ArgumentParser:
     return parser
 
 
-def _read_manifest(path: Path) -> bytes:
+def _io_failure(
+    error: OSError,
+    stage: Literal["open", "stat", "read", "close"],
+    input_role: Literal["child", "parent"],
+) -> _CommandFailure:
+    invalid_path = (
+        stage == "open" and error.errno in _INVALID_PATH_ERRNOS
+    ) or (
+        stage != "close" and error.errno in (errno.EACCES, errno.EPERM)
+    )
+    reasons = {
+        "open": f"Cannot open the {input_role} manifest file.",
+        "stat": f"The {input_role} manifest file metadata is unavailable.",
+        "read": f"Cannot read the {input_role} manifest file.",
+        "close": f"Cannot close the {input_role} manifest file.",
+    }
+    return _CommandFailure(
+        reasons[stage],
+        stage=stage,
+        input_role=input_role,
+        cause=(
+            errno.errorcode.get(error.errno, "UnknownIoError")
+            if error.errno is not None
+            else "UnknownIoError"
+        ),
+        code="Invalid" if invalid_path else "Unavailable",
+        exit_code=2 if invalid_path else 4,
+    )
+
+
+def _read_manifest(path: Path, input_role: Literal["child", "parent"]) -> bytes:
     flags = os.O_RDONLY | getattr(os, "O_BINARY", 0)
     flags |= getattr(os, "O_NONBLOCK", 0)
 
     try:
         descriptor = os.open(path, flags)
-    except OSError:
-        raise ManifestInvalid(_INVALID_REASON) from None
+    except OSError as error:
+        raise _io_failure(error, "open", input_role) from error
+    except ValueError as error:
+        raise _CommandFailure(
+            f"The {input_role} manifest path is invalid.",
+            stage="open",
+            input_role=input_role,
+            cause="InvalidPath",
+        ) from error
 
+    stage: Literal["stat", "read"] = "stat"
+    stream: BinaryIO | None = None
     try:
         if not stat.S_ISREG(os.fstat(descriptor).st_mode):
-            raise ManifestInvalid(_INVALID_REASON)
-        with os.fdopen(descriptor, "rb") as stream:
-            descriptor = -1
-            return stream.read(MAX_DOCUMENT_BYTES + 1)
-    except OSError:
-        raise ManifestInvalid(_INVALID_REASON) from None
+            raise _CommandFailure(
+                f"The {input_role} manifest input must be a regular file.",
+                stage="stat",
+                input_role=input_role,
+                cause="NotRegularFile",
+            )
+        stage = "read"
+        stream = os.fdopen(descriptor, "rb")
+        return stream.read(MAX_DOCUMENT_BYTES + 1)
+    except OSError as error:
+        raise _io_failure(error, stage, input_role) from error
     finally:
-        if descriptor >= 0:
-            os.close(descriptor)
+        primary_error = sys.exception()
+        try:
+            if stream is None:
+                os.close(descriptor)
+            else:
+                stream.close()
+        except OSError as error:
+            failure = _io_failure(error, "close", input_role)
+            if isinstance(primary_error, _CommandFailure):
+                failure.error["related_error"] = primary_error.error
+            raise failure from error
+
+
+def _header(
+    raw: bytes, input_role: Literal["child", "parent"]
+) -> ManifestHeader:
+    try:
+        return decode_manifest_header(raw)
+    except ManifestInvalid as error:
+        raise _CommandFailure(
+            f"The {input_role} manifest JSON or identity header is invalid.",
+            stage="header",
+            input_role=input_role,
+            cause="ManifestInvalid",
+        ) from error
 
 
 def _result(raw: bytes, parent_raw: bytes | None = None) -> dict[str, object]:
-    header = (
-        decode_manifest_header(raw)
-        if parent_raw is None
-        else validate_manifest_parent_link(raw, parent_raw)
-    )
+    header = _header(raw, "child")
+    if parent_raw is not None:
+        _header(parent_raw, "parent")
+        try:
+            header = validate_manifest_parent_link(raw, parent_raw)
+        except ManifestInvalid as error:
+            raise _CommandFailure(
+                "The supplied manifest parent link is invalid.",
+                stage="parent_link",
+                input_role="pair",
+                cause="ManifestInvalid",
+            ) from error
     return {
         "scope": (
             "manifest_header" if parent_raw is None else "manifest_parent_link"
@@ -117,14 +258,8 @@ def _write_result(result: dict[str, object], machine_json: bool) -> None:
     print(f"digest: {result['digest']}")
 
 
-def _write_manifest_error(machine_json: bool) -> None:
-    error = {
-        "family": "Manifest",
-        "code": "Invalid",
-        "reason": _INVALID_REASON,
-        "retryable": False,
-        "correlation_id": str(uuid4()),
-    }
+def _write_error(failure: _CommandFailure, machine_json: bool) -> None:
+    error = {**failure.error, "correlation_id": str(uuid4())}
     if machine_json:
         print(
             json.dumps(
@@ -134,31 +269,45 @@ def _write_manifest_error(machine_json: bool) -> None:
         )
         return
 
+    related = cast(dict[str, object] | None, error.get("related_error"))
+    related_context = ""
+    if related is not None:
+        related_context = (
+            f" related_error={related['family']}.{related['code']}"
+            f" related_stage={related['stage']}"
+            f" related_input_role={related['input_role']}"
+            f" related_cause={related['cause']}"
+        )
     print(
-        "cryptalis: Manifest.Invalid: "
-        f"{_INVALID_REASON} retryable=false "
-        f"correlation_id={error['correlation_id']}",
+        f"cryptalis: {error['family']}.{error['code']}: {error['reason']} "
+        f"operation={error['operation']} stage={error['stage']} "
+        f"input_role={error['input_role']} cause={error['cause']} retryable=false "
+        f"correlation_id={error['correlation_id']}{related_context}",
         file=sys.stderr,
     )
 
 
 def _inspect_command(arguments: argparse.Namespace) -> int:
-    try:
-        raw = _read_manifest(arguments.path)
-        parent_raw = (
-            None if arguments.parent is None else _read_manifest(arguments.parent)
-        )
-        result = _result(raw, parent_raw)
-    except ManifestInvalid:
-        _write_manifest_error(arguments.machine_json)
-        return 2
-
+    raw = _read_manifest(arguments.path, "child")
+    parent_raw = (
+        None
+        if arguments.parent is None
+        else _read_manifest(arguments.parent, "parent")
+    )
+    result = _result(raw, parent_raw)
     _write_result(result, arguments.machine_json)
     return 0
 
 
 def main(argv: Sequence[str] | None = None) -> int:
     """Run the Cryptalis command-line interface."""
-    arguments = _parser().parse_args(argv)
-    handler = cast(Callable[[argparse.Namespace], int], arguments.handler)
-    return handler(arguments)
+    tokens = list(sys.argv[1:] if argv is None else argv)
+    option_end = tokens.index("--") if "--" in tokens else len(tokens)
+    machine_json = "--json" in tokens[:option_end]
+    try:
+        arguments = _parser().parse_args(tokens)
+        handler = cast(Callable[[argparse.Namespace], int], arguments.handler)
+        return handler(arguments)
+    except _CommandFailure as failure:
+        _write_error(failure, machine_json)
+        return failure.exit_code

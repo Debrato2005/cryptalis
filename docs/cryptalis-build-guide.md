@@ -24,6 +24,9 @@ Artificial intelligence (AI) can edit documentation directly. Explicit user inst
 authorize direct implementation for a named scope under the [playbook](../ENGINEERING_PLAYBOOK.md#solo-manual-typing-workflow).
 The assistant and builder can discuss small related files together. The assistant supplies them separately.
 
+Each slice follows the [explicit failure policy](../ENGINEERING_PLAYBOOK.md#fail-loudly-and-explicitly).
+Explain its failure channel, safe diagnostic context, recovery contract, and success postconditions before typing.
+
 Prerequisite: The builder understands the previous result before the assistant supplies the next file.
 
 For each assisted file, the assistant uses this cycle:
