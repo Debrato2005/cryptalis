@@ -1,8 +1,9 @@
 # Cryptography, Search, and Key Lifecycle Contract
 
-Status: Detailed architecture proposal. Pre-implementation. No frozen wire format or measured gates
+Status: detailed architecture proposal with private candidate F1 structural parsing.
+No encryption implementation, frozen wire format, approved suite, or measured gates.
 
-Reviewed: 2026-09-30. First-party reconciliation: 2026-10-01
+Reviewed: 2026-09-30. First-party reconciliation: 2026-10-01. Parser review: 2026-10-05.
 
 This document owns detailed envelopes, derivation, search leakage, providers, caches, fences,
 rotation and bounded shredding. The [architecture hub](README.md) owns cross-system invariants.
@@ -16,8 +17,8 @@ All capability families remain active research. Equality, IN and scoped uniquene
 production candidates. Advanced search and controlled authority have independent gates. Candidate
 bytes and numeric budgets make prototypes falsifiable.
 
-They are not an implemented protocol, primitive approval, measured performance or declaration of
-production readiness.
+They are not an authenticated protocol implementation, primitive approval, measured performance,
+or declaration of production readiness.
 
 ## 1. Trust, claims and authority
 
@@ -113,7 +114,28 @@ is a competing experiment, not an interchangeable parser branch.
 
 ### 3.2 Parser and resource limits
 
-The parser enforces these candidate bounds before allocation or key lookup:
+Initial private [`parse_candidate_envelope`](../../src/cryptalis/crypto/_candidate_envelope.py)
+support checks candidate F1 structure without authentication or decryption.
+It accepts immutable bytes and returns a frozen `CandidateEnvelope` with untrusted header and body fields.
+It checks the fixed header, candidate suite and codec selectors, binding version, flags, generation,
+and exact total length. The encoded ciphertext length is 5..1,048,576 bytes.
+The lower bound follows from the five-byte scalar frame.
+The total envelope limit is 1,048,724 bytes.
+The parser rejects oversized input before header interpretation.
+It checks all declared lengths before copying nonce, ciphertext, or tag buffers.
+Errors use redacted `EnvelopeMalformed`, `EnvelopeUnsupportedFormat`, and `EnvelopeOversize` categories.
+The result's `repr` excludes byte buffers.
+
+This parser is a private candidate experiment. No public API or CLI command enables encryption.
+It does not check authorization, descriptor approval, field-specific limits, codec content,
+nonce freshness, or authentication tags. Every returned byte remains unauthenticated.
+A well-shaped forged digest or tag can pass structural parsing.
+The [structural example](../../examples/envelopes/f1-structural.hex) contains synthetic header
+and ciphertext bytes. It is not a valid authenticated encryption vector.
+Candidate scalar IDs remain provisional. G-CRYPTO remains open.
+The full fuzz corpus, authenticated composition, and independent review remain pending.
+
+The complete candidate parser and decryption path must enforce these bounds before allocation or key lookup:
 
 - Encoded value/ciphertext maximum 1,048,576 bytes. Total envelope maximum 1,048,724 bytes. Field
   policy may lower it. The five-byte state/length frame leaves at most 1,048,571 content bytes for

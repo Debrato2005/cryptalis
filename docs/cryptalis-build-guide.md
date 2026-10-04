@@ -2,6 +2,7 @@
 
 Status: construction guide. Bounded manifest JSON, content digests, identity-header validation,
 parent-link validation, structural field-format digests, and offline terminal inspection exist.
+Private candidate F1 structural parsing also exists. Authentication and format freeze remain pending.
 See the [checklist](backend-build-checklist.md) for current
 evidence. Reviewed 2026-10-05.
 

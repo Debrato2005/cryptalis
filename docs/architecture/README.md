@@ -100,6 +100,7 @@ boundary also defeat it.
 | Migration mistake/mixed app versions | Immutable source/target plans, row CAS/checkpoints/writer fence | Approved coexistence includes plaintext; crash/retry/two-worker fixtures |
 | Cross-tenant/subject substitution | Host-authenticated grants + stable tuple in AAD and tenant filters | Host policy bugs remain risk; P0 colliding IDs/task/pool/jobs |
 | Untrusted manifest/descriptor substitution | Bounded structural parsing and separate digest domains. Catalogue admission and authenticated authority required | Current helpers establish byte consistency, not policy authenticity or catalogue approval. G-MANIFEST/P0/P10 remain pending |
+| Malformed or forged envelope from a database attacker | Bounded framing before key lookup. Authorized registry selection and AEAD required afterward | The private F1 parser rejects malformed structure but accepts well-shaped forged bytes. G-CRYPTO/G-CROSSKEY/G-AAD remain pending |
 | Cache stale worker/partition | Epoch/lease authorization plus serialized DB fence and acknowledged output drain | Expiry denies new authorization; physical completion requires drain evidence and can remain pending; bytes may remain in suspended RAM; P7 chaos |
 | Restore/resurrection | Independent durable tombstone/release check | Wrapped backup + surviving parent can recover offline; restore and recovery-path tests |
 | Search metadata/frequency/auxiliary/chosen query observer | Capability-specific accepted leakage, explicit domains | Equality/order/token/access patterns; attacks/cost gate per capability |

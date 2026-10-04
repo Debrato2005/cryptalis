@@ -2,7 +2,7 @@
 
 Current state as of 2026-10-05: documentation plus bounded manifest JSON, content digests,
 identity-header validation, parent-link validation, structural field-format digests,
-and offline terminal inspection.
+offline terminal inspection, and private candidate F1 envelope parsing.
 This file is the authority for capability implementation state.
 [Manifest contracts](architecture/manifest-context-api.md#terms-and-maturity)
 define terms and maturity.
@@ -28,8 +28,8 @@ named external reviewer and disclosed independence.
 Each row has an ID, maturity and status, dependencies, owner and gate, required artifact, and
 exit rule. Rows group related properties. They do not limit the number of features.
 
-The current manifest components and [terminal inspector](../src/cryptalis/cli.py) have 168 passing
-tests under `uv run --locked pytest -q` on 2026-10-05. Normal Python imports work,
+The current manifest components, [terminal inspector](../src/cryptalis/cli.py), and private F1
+parser have 223 passing tests under `uv run --locked pytest -q` on 2026-10-05. Normal Python imports work,
 and `uv build` produces a wheel and source archive. These local checks do not complete C01, C25,
 or C26. Complete semantic
 validation, trusted revision history, signature authentication, the remaining CLI contract, and
@@ -50,10 +50,21 @@ Node canonicalization and hashing agree on the parameterless and Unicode-paramet
 These two local checks do not complete the cross-language and fuzz corpus required by G-MANIFEST.
 Catalogue admission, full manifest compilation, payload authentication, and encryption remain pending.
 
+The [private F1 parser](../src/cryptalis/crypto/_candidate_envelope.py) implements structural
+checks under the [crypto owner](architecture/crypto-search-lifecycle.md#32-parser-and-resource-limits).
+Its [boundary tests](../tests/test_candidate_envelope.py) cover fixed bytes, all candidate suites,
+scalar selectors, length and generation boundaries, truncation, unsupported headers, and redacted errors.
+Tests also check immutable inputs/results and ciphertext exclusion from `repr`.
+Forged well-shaped tags and digests remain structurally parseable. No authentication claim follows.
+Python and an independent Node offset parser agree on 5,143 inputs with seed `20261005`.
+The local check includes 1,941 accepted structures and compares every returned field.
+This limited first-party trial does not complete G-CRYPTO or admit C03.
+
 The wheel and source archive build with a temporary writable uv cache.
-A clean temporary environment installs the wheel and passes the descriptor vector, malformed-input
-checks, and the existing parent-link command. Ruff and mypy checks did not run.
-The tools are absent locally, and sandbox DNS blocks their downloads.
+A clean temporary environment installs the wheel and passes the F1 vector, truncated/trailing-input
+checks, and the existing parent-link command. The previous slice also checked the installed descriptor helpers.
+Ruff and mypy checks did not run for this slice. Offline tool resolution confirms that neither
+tool is cached. Their downloads failed because of sandbox DNS during the previous slice.
 
 SPECIFIED means a contract and gate exist. It does not mean the
 gate passed. For the rows marked RESEARCHED here, construction selection remains open. A failed
