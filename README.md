@@ -6,14 +6,15 @@ policy to authenticated payload encryption, search capabilities, PostgreSQL sche
 Alembic migrations. It also connects key lifecycle and application paths to controlled attacks
 and reproducible exposure evidence.
 
-**Status as of 2026-10-05: bounded manifest JSON, domain-separated content digests, and
-identity-header validation with local parent-link rules.** The repository has an installable
+**Status as of 2026-10-05: bounded manifest JSON, domain-separated content digests,
+identity-header validation, and offline terminal inspection.** The repository has an installable
 Python package with a [bounded JSON decoder](src/cryptalis/manifest/parser.py), [restricted RFC
-8785 canonicalizer and SHA-256 digest helper](src/cryptalis/manifest/canonical.py), and [typed
-header decoder](src/cryptalis/manifest/header.py). Sixty-two behavior tests cover these
-boundaries. Complete semantic schema validation, parent-digest matching, signature
-authentication, cryptography, ORM integration, migrations, providers, and assurance tools remain
-pending. Other Cryptalis APIs and commands are proposed contracts. The [capability
+8785 canonicalizer and SHA-256 digest helper](src/cryptalis/manifest/canonical.py), [typed header
+decoder](src/cryptalis/manifest/header.py), and read-only [manifest inspector](src/cryptalis/cli.py).
+Sixty-nine behavior tests cover these boundaries. Complete semantic schema validation,
+parent-digest matching, signature authentication, cryptography, ORM integration, migrations,
+providers, and assurance tools remain pending. Other Cryptalis APIs and commands are proposed
+contracts. The [capability
 checklist](docs/backend-build-checklist.md) separates specified design from executable evidence.
 No runtime version is supported.
 
@@ -24,25 +25,15 @@ Prerequisites: Python 3.12 or later, uv, and the repository root as the working 
 ```bash
 uv sync --locked
 uv run pytest
-uv run python - <<'PY'
-from cryptalis.manifest.canonical import digest_manifest_json
-from cryptalis.manifest.header import decode_manifest_header
-
-raw = (
-    b'{"schema_version":1,'
-    b'"manifest_id":"018f4f87-6f95-7e2a-9d95-38f9b7646f24",'
-    b'"revision":0,"parent_digest":null}'
-)
-print(decode_manifest_header(raw).manifest_id)
-print(digest_manifest_json(raw))
-PY
+uv run cryptalis manifest inspect examples/manifests/genesis.json
+uv run cryptalis manifest inspect examples/manifests/genesis.json --json
 ```
 
-The digest helper hashes the fixed manifest label, one zero byte, and canonical document bytes.
-It hashes every supplied member. It does not establish semantic validity or signature
-authenticity. The header decoder returns the canonical UUID as a typed value. It validates the
-local genesis-link shape. It does not validate parent existence, digest agreement, or complete
-revision ancestry. To create a local wheel and source archive, run `uv build`.
+The inspector reads one local regular file. It prints the validated identity header and content
+digest in text or JSON form. Invalid input returns exit code 2 and a redacted
+`Manifest.Invalid` error. The command performs no network or write action. It does not validate
+the complete manifest schema, parent existence, digest agreement, or revision ancestry. To
+create a local wheel and source archive, run `uv build`.
 
 ## Purpose and boundary
 

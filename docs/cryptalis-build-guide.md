@@ -1,8 +1,8 @@
 # Cryptalis: dependency-aware solo build guide
 
-Status: construction guide. Bounded manifest JSON, domain-separated content digests, and
-identity-header validation with local parent-link rules exist. See the
-[checklist](backend-build-checklist.md) for current evidence. Reviewed 2026-10-05.
+Status: construction guide. Bounded manifest JSON, content digests, identity-header validation,
+and offline terminal inspection exist. See the [checklist](backend-build-checklist.md) for current
+evidence. Reviewed 2026-10-05.
 
 Prerequisites:
 

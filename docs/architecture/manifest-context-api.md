@@ -1,7 +1,7 @@
 # Manifest, identity, and public contracts
 
-Status: specified design. No implementation or validation exists. Reviewed: 2026-09-30.
-Integration corrections: 2026-10-01.
+Status: specified design with initial manifest JSON and inspection support. Most interfaces
+remain proposed. Reviewed: 2026-10-05.
 
 This document defines manifest semantics, identity provenance, shared versions and errors,
 public APIs, CLI commands, configuration, and module contracts. The [blueprint](README.md)
@@ -432,6 +432,12 @@ Plans record kind=proposal. They never record security PASS. Combined results us
 | evidence inspect/validate/export | Bundle + trust policy -> findings/format | Offline; log/signature network explicit; no implicit upload |
 | check --ci | Pinned workspace/snapshots -> passive composition | No scan/key mutation/network default; Verify only preauthorized fixtures |
 | keys rotate/revoke/shred; status | Scope/grant/idempotency -> durable state/receipt | Mutations named explicitly; status read-only; nothing hidden under scan |
+| manifest inspect | One local file -> identity header and digest in text/JSON | Offline and read-only; bounded regular file; partial schema scope |
+
+The initial `manifest inspect` command reads one bounded local regular file. It emits the
+validated identity header and computed digest as text or JSON. Invalid input returns code 2 with
+a redacted `Manifest.Invalid` record. This command implements only the documented header scope.
+It does not complete C25 or establish full semantic validity.
 
 Declarations compile policy. Project configuration selects the digest, catalogue, provider IDs,
 and output paths. Deployment configuration supplies endpoints, credential references, and
@@ -490,7 +496,8 @@ Controlled access and lifecycle decisions obey their explicit durable audit poli
 ## Packages and dependency direction
 
 The responsibility names below define the proposed package structure. Initial manifest decoding,
-canonical output, and identity-header validation exist. The
+canonical output, content digests, identity-header validation, and offline terminal inspection
+exist. The
 [checklist](../backend-build-checklist.md) records implementation state. Shared immutable
 contracts, including evidence DTOs, sit below adapters. Evidence orchestration and rendering sit
 above adapters. The CLI composes use cases and defines no security semantics. No domain layer

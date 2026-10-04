@@ -2,7 +2,7 @@ import json
 from typing import Never
 
 
-_MAX_DOCUMENT_BYTES = 16 * 1024 * 1024
+MAX_DOCUMENT_BYTES = 16 * 1024 * 1024
 _MAX_NESTING_DEPTH = 32
 
 
@@ -89,7 +89,7 @@ def decode_manifest_json(raw: bytes) -> dict[str, object]:
     """Decode bounded UTF-8 JSON; semantic manifest schema checks are separate."""
     if not isinstance(raw, bytes):
         raise ManifestInvalid("Manifest input must be bytes")
-    if len(raw) > _MAX_DOCUMENT_BYTES:
+    if len(raw) > MAX_DOCUMENT_BYTES:
         raise ManifestInvalid("Manifest document exceeds 16 MiB")
 
     _check_nesting(raw)
