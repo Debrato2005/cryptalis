@@ -41,6 +41,20 @@ def test_accepts_canonical_parent_digest():
     assert header.parent_digest == _PARENT_DIGEST
 
 
+@pytest.mark.parametrize(
+    ("revision", "parent_digest"),
+    [
+        pytest.param(0, _PARENT_DIGEST, id="genesis-with-parent"),
+        pytest.param(1, None, id="successor-without-parent"),
+    ],
+)
+def test_rejects_invalid_local_parent_link(revision, parent_digest):
+    with pytest.raises(ManifestInvalid):
+        decode_manifest_header(
+            _header_json(revision=revision, parent_digest=parent_digest)
+        )
+
+
 def test_manifest_header_is_immutable():
     header = decode_manifest_header(_header_json())
 

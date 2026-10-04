@@ -6,14 +6,14 @@ policy to authenticated payload encryption, search capabilities, PostgreSQL sche
 Alembic migrations. It also connects key lifecycle and application paths to controlled attacks
 and reproducible exposure evidence.
 
-**Status as of 2026-10-04: initial manifest decoding, canonical output, and identity-header
-validation.** The repository has an installable Python package with a [bounded JSON
-decoder](src/cryptalis/manifest/parser.py), [restricted RFC 8785
+**Status as of 2026-10-05: initial manifest decoding, canonical output, and identity-header
+validation with local parent-link rules.** The repository has an installable Python package with
+a [bounded JSON decoder](src/cryptalis/manifest/parser.py), [restricted RFC 8785
 canonicalizer](src/cryptalis/manifest/canonical.py), and [typed header
-decoder](src/cryptalis/manifest/header.py). Fifty-six behavior tests cover these boundaries.
-Complete semantic schema validation, manifest hashing, cryptography, ORM integration, migrations,
-providers, and assurance tools remain pending. Other Cryptalis APIs and commands are proposed
-contracts. The [capability
+decoder](src/cryptalis/manifest/header.py). Fifty-eight behavior tests cover these boundaries.
+Complete semantic schema validation, parent-digest matching, manifest hashing, cryptography, ORM
+integration, migrations, providers, and assurance tools remain pending. Other Cryptalis APIs and
+commands are proposed contracts. The [capability
 checklist](docs/backend-build-checklist.md) separates specified design from executable evidence.
 No runtime version is supported.
 
@@ -36,9 +36,9 @@ print(decode_manifest_header(raw).manifest_id)
 PY
 ```
 
-The header decoder returns the canonical UUID as a typed value. It validates identity-header
-representations, but it does not validate a complete manifest schema or revision history. To
-create a local wheel and source archive, run `uv build`.
+The header decoder returns the canonical UUID as a typed value. It validates the local
+genesis-link shape. It does not validate parent existence, digest agreement, or complete revision
+ancestry. To create a local wheel and source archive, run `uv build`.
 
 ## Purpose and boundary
 

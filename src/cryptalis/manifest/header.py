@@ -74,12 +74,30 @@ def _parent_digest(document: dict[str, object]) -> str | None:
     return value
 
 
+def _validate_local_parent_link(
+    revision: int, parent_digest: str | None
+) -> None:
+    if revision == 0 and parent_digest is not None:
+        raise ManifestInvalid(
+            "Manifest revision 0 requires a null parent digest"
+        )
+    if revision > 0 and parent_digest is None:
+        raise ManifestInvalid(
+            "A manifest revision after 0 requires a parent digest"
+        )
+
+
 def decode_manifest_header(raw: bytes) -> ManifestHeader:
     """Decode and validate the identity header from manifest JSON bytes."""
     document = decode_manifest_json(raw)
+    schema_version = _schema_version(document)
+    manifest_id = _manifest_id(document)
+    revision = _revision(document)
+    parent_digest = _parent_digest(document)
+    _validate_local_parent_link(revision, parent_digest)
     return ManifestHeader(
-        schema_version=_schema_version(document),
-        manifest_id=_manifest_id(document),
-        revision=_revision(document),
-        parent_digest=_parent_digest(document),
+        schema_version=schema_version,
+        manifest_id=manifest_id,
+        revision=revision,
+        parent_digest=parent_digest,
     )

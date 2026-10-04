@@ -123,8 +123,10 @@ v1 has no executable extensions. Changes require schema and catalogue compatibil
 G-MANIFEST still requires canonical vectors across languages and fuzz evidence.
 
 Initial `decode_manifest_header` support validates the four required identity-header
-representations for schema version 1. It does not validate the remaining schema, catalogue
-references, revision ancestry, or parent existence.
+representations for schema version 1. Revision numbering starts at 0. Revision 0 is the genesis
+revision and requires `parent_digest: null`. Each later revision requires a canonical parent
+digest. This local rule does not prove parent existence, digest agreement, or complete ancestry.
+The decoder does not validate the remaining schema or catalogue references.
 
 R means required after compilation. C means required when the capability is selected. O means an
 annotation. All referenced enums and policies resolve in the pinned catalogue. Compilation

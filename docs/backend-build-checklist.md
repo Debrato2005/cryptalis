@@ -1,8 +1,9 @@
 # Backend build and evidence checklist
 
-Current state as of 2026-10-04: documentation plus initial manifest decoding, canonical output,
-and identity-header validation. This file is the authority for capability implementation state. [Manifest
-contracts](architecture/manifest-context-api.md#terms-and-maturity) define terms and maturity.
+Current state as of 2026-10-05: documentation plus initial manifest decoding, canonical output,
+and identity-header validation with local parent-link rules. This file is the authority for
+capability implementation state. [Manifest contracts](architecture/manifest-context-api.md#terms-and-maturity)
+define terms and maturity.
 [Architecture owners](architecture/README.md#documentation-ownership) define rationale. The
 [build guide](cryptalis-build-guide.md) defines learning order. Every workstream remains active
 program scope.
@@ -27,10 +28,11 @@ exit rule. Rows group related properties. They do not limit the number of featur
 
 Required gate artifacts below remain future targets. The [JSON decoder](../src/cryptalis/manifest/parser.py),
 [restricted canonicalizer](../src/cryptalis/manifest/canonical.py), and [typed header
-decoder](../src/cryptalis/manifest/header.py) have 56 passing tests under `uv run pytest` on
-2026-10-04. Normal Python imports work, and `uv build` produces a wheel and source archive. These
-local checks do not complete C01 or C26. Complete semantic validation, manifest hashing, and
-cross-language evidence remain pending.
+decoder](../src/cryptalis/manifest/header.py) have 58 passing tests under `uv run pytest` on
+2026-10-05. Normal Python imports work, and `uv build` produces a wheel and source archive. These
+local checks do not complete C01 or C26. Complete semantic validation, parent-digest matching,
+manifest hashing, and cross-language evidence remain pending.
+
 SPECIFIED means a contract and gate exist. It does not mean the
 gate passed. For the rows marked RESEARCHED here, construction selection remains open. A failed
 gate demotes only dependent claims.

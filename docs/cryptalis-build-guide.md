@@ -1,8 +1,8 @@
 # Cryptalis: dependency-aware solo build guide
 
 Status: construction guide. Initial manifest decoding, canonical output, and identity-header
-validation exist. See the [checklist](backend-build-checklist.md) for current evidence. Reviewed
-2026-10-04.
+validation with local parent-link rules exist. See the [checklist](backend-build-checklist.md) for
+current evidence. Reviewed 2026-10-05.
 
 Prerequisites:
 
