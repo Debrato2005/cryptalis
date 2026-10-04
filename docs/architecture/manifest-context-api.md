@@ -1,7 +1,7 @@
 # Manifest, identity, and public contracts
 
-Status: specified design with initial manifest JSON and inspection support. Most interfaces
-remain proposed. Reviewed: 2026-10-05.
+Status: specified design with initial manifest JSON, field-format, and inspection support.
+Most interfaces remain proposed. Reviewed: 2026-10-05.
 
 This document defines manifest semantics, identity provenance, shared versions and errors,
 public APIs, CLI commands, configuration, and module contracts. The [blueprint](README.md)
@@ -193,6 +193,22 @@ Numeric IDs are 1..65535, except descriptor and identity versions. The selected 
 adds narrower constraints. F1 suite and envelope selectors fit u8. Only its enumerated candidate
 values are valid. The generic range cannot admit an unknown suite, unknown format, or overflow
 of a narrower field.
+
+Initial [`canonicalize_field_format_json`](../../src/cryptalis/manifest/descriptor.py) support
+checks structure and returns restricted RFC 8785 bytes.
+`digest_field_format_json` computes the creation-policy digest defined below.
+The helpers require exactly the fourteen descriptor members, canonical UUIDs, declared enums,
+and numeric ranges. Both schema versions must be the integer 1.
+Boolean values cannot substitute for integer IDs. Codec parameters must be an object.
+The bounded JSON rules apply to the entire descriptor.
+Missing members, extra members, and malformed values raise `ManifestInvalid` without input values.
+
+These helpers do not resolve catalogue entries or approve codec parameter semantics.
+An in-range ID can remain unknown, incompatible, or too large for a selected envelope format.
+Runtime admission still requires the exact catalogue and its narrower constraints before key release.
+The helpers do not authenticate a descriptor, select a provider, import a codec, or encrypt data.
+The [example descriptor](../../examples/field-formats/parameterless.json) is a synthetic
+structural vector. Its numeric IDs do not identify approved production algorithms.
 
 The catalogue binds one immutable codec entry ID to a codec/version pair. Reusing an ID with
 different bytes is forbidden. `codec_parameters` can constrain decimal scale/range, never supply

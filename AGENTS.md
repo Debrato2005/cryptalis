@@ -1,7 +1,8 @@
 # Repository instructions
 
 Cryptalis contains documentation, research specifications, initial manifest decoding, canonical
-output, identity-header validation, parent-link validation, and offline terminal inspection.
+output, identity-header validation, parent-link validation, structural field-format digests,
+and offline terminal inspection.
 Treat other APIs, commands, packages, and security properties as proposed until the [capability
 checklist](docs/backend-build-checklist.md) links the required executable evidence.
 

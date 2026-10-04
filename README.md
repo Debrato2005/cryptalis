@@ -7,12 +7,14 @@ Alembic migrations. It also connects key lifecycle and application paths to cont
 and reproducible exposure evidence.
 
 **Status as of 2026-10-05: bounded manifest JSON, domain-separated content digests,
-identity-header validation, parent-link validation, and offline terminal inspection.**
+identity-header validation, parent-link validation, structural field-format digests,
+and offline terminal inspection.**
 
 The repository has an installable Python package with a [bounded JSON decoder](src/cryptalis/manifest/parser.py), [restricted RFC
 8785 canonicalizer and SHA-256 digest helper](src/cryptalis/manifest/canonical.py), [typed header
-decoder](src/cryptalis/manifest/header.py), and read-only [manifest inspector](src/cryptalis/cli.py).
-Eighty-five behavior tests cover these boundaries. Complete semantic schema validation,
+decoder](src/cryptalis/manifest/header.py), [field-format helpers](src/cryptalis/manifest/descriptor.py),
+and read-only [manifest inspector](src/cryptalis/cli.py).
+Behavior tests cover these boundaries. Complete semantic schema validation,
 trusted revision history, and signature authentication remain pending.
 Cryptography, ORM integration, migrations, providers, and assurance tools also remain pending.
 Other Cryptalis APIs and commands are proposed
@@ -40,6 +42,24 @@ The command reads bounded local regular files. Invalid input returns exit code 2
 It does not validate the complete schema, authenticate either document, or establish complete
 ancestry or the current authorized policy. The example files contain headers only.
 To create a local wheel and source archive, run `uv build`.
+
+The field-format helpers check descriptor structure and compute canonical bytes and a
+domain-separated digest. For example:
+
+```python
+from pathlib import Path
+from cryptalis.manifest.descriptor import digest_field_format_json
+
+raw = Path("examples/field-formats/parameterless.json").read_bytes()
+print(digest_field_format_json(raw))
+# b96d954389cb35bb7ccd4d59cac9ccf70cb0028a4073fae3fd4057587663417f
+```
+
+The [example descriptor](examples/field-formats/parameterless.json) is a synthetic structural
+vector. Its numeric IDs do not identify approved production algorithms.
+The helpers do not resolve catalogue entries, approve codec parameters, authenticate policy,
+or encrypt data. Descriptor bytes are stable format bindings for future additional authenticated
+data. They do not supply current authorization.
 
 ## Purpose and boundary
 

@@ -1,0 +1,16 @@
+{
+  "descriptor_schema": 1,
+  "model_id": "018f4f87-6f95-7e2a-9d95-38f9b7646f21",
+  "table_id": "018f4f87-6f95-7e2a-9d95-38f9b7646f22",
+  "field_id": "018f4f87-6f95-7e2a-9d95-38f9b7646f23",
+  "access_mode": "transparent",
+  "suite_id": 1,
+  "envelope_version": 1,
+  "kdf_domain_version": 1,
+  "aad_binding_version": 1,
+  "codec_entry_id": 1,
+  "codec_version": 1,
+  "codec_parameters": {},
+  "null_policy": "sql_null",
+  "identity_encoding_version": 1
+}

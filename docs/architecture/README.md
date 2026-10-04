@@ -1,7 +1,7 @@
 # Cryptalis architecture blueprint
 
 Status: accepted architecture specification with empirical gates.
-Reviewed: 2026-09-30. Integration corrections: 2026-10-01. The
+Reviewed: 2026-09-30. Integration corrections: 2026-10-01. Field-format boundary review: 2026-10-05. The
 [checklist](../backend-build-checklist.md) is the authority for current capability state.
 
 ## Product and first target
@@ -22,8 +22,8 @@ happen before database persistence. Supported paths must keep unwrapped keys out
 and its dumps and backups. PostgreSQL credentials and operator access must not expose those
 keys.
 
-Malware or authorized code in the trusted process can still access plaintext and keys. All
-capabilities are proposed. A complete architecture is separate from implementation evidence.
+Malware or authorized code in the trusted process can still access plaintext and keys.
+Most runtime capabilities remain proposed. A complete architecture is separate from implementation evidence.
 
 ## Documentation ownership
 
@@ -99,6 +99,7 @@ boundary also defeat it.
 | Unregistered/Core/bulk/raw/COPY/ETL writer | Reject registered known paths, roles/framing defense, writer ledger | Unobservable separate writers; no universal prevention; P2 T/R/D/U matrix |
 | Migration mistake/mixed app versions | Immutable source/target plans, row CAS/checkpoints/writer fence | Approved coexistence includes plaintext; crash/retry/two-worker fixtures |
 | Cross-tenant/subject substitution | Host-authenticated grants + stable tuple in AAD and tenant filters | Host policy bugs remain risk; P0 colliding IDs/task/pool/jobs |
+| Untrusted manifest/descriptor substitution | Bounded structural parsing and separate digest domains. Catalogue admission and authenticated authority required | Current helpers establish byte consistency, not policy authenticity or catalogue approval. G-MANIFEST/P0/P10 remain pending |
 | Cache stale worker/partition | Epoch/lease authorization plus serialized DB fence and acknowledged output drain | Expiry denies new authorization; physical completion requires drain evidence and can remain pending; bytes may remain in suspended RAM; P7 chaos |
 | Restore/resurrection | Independent durable tombstone/release check | Wrapped backup + surviving parent can recover offline; restore and recovery-path tests |
 | Search metadata/frequency/auxiliary/chosen query observer | Capability-specific accepted leakage, explicit domains | Equality/order/token/access patterns; attacks/cost gate per capability |

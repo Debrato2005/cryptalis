@@ -1,7 +1,8 @@
 # Backend build and evidence checklist
 
 Current state as of 2026-10-05: documentation plus bounded manifest JSON, content digests,
-identity-header validation, parent-link validation, and offline terminal inspection.
+identity-header validation, parent-link validation, structural field-format digests,
+and offline terminal inspection.
 This file is the authority for capability implementation state.
 [Manifest contracts](architecture/manifest-context-api.md#terms-and-maturity)
 define terms and maturity.
@@ -27,9 +28,10 @@ named external reviewer and disclosed independence.
 Each row has an ID, maturity and status, dependencies, owner and gate, required artifact, and
 exit rule. Rows group related properties. They do not limit the number of features.
 
-The current manifest components and [terminal inspector](../src/cryptalis/cli.py) have 85 passing
-tests under `uv run pytest` on 2026-10-05. Normal Python imports work, and `uv build` produces a
-wheel and source archive. These local checks do not complete C01, C25, or C26. Complete semantic
+The current manifest components and [terminal inspector](../src/cryptalis/cli.py) have 168 passing
+tests under `uv run --locked pytest -q` on 2026-10-05. Normal Python imports work,
+and `uv build` produces a wheel and source archive. These local checks do not complete C01, C25,
+or C26. Complete semantic
 validation, trusted revision history, signature authentication, the remaining CLI contract, and
 cross-language evidence remain pending.
 
@@ -37,6 +39,21 @@ Parent-link checks validate one supplied pair. Tests cover content tampering, id
 substitution with a matching digest, equal or decreasing revisions, unusable parent files,
 and redacted CLI failures. Revisions can skip counter values. Both files can come from an
 attacker. Pair consistency does not authenticate policy or establish complete ancestry.
+
+The [field-format helpers](../src/cryptalis/manifest/descriptor.py) check descriptor structure
+and compute canonical bytes and a separate content digest.
+The [boundary tests](../tests/test_manifest_canonical.py) cover exact bytes, a fixed digest vector,
+changed format members, missing or extra members, and malformed representations.
+They also cover numeric boundaries, ambiguous JSON, and Unicode preservation.
+The fixed digest was independently checked with `sha256sum`.
+Node canonicalization and hashing agree on the parameterless and Unicode-parameter vectors.
+These two local checks do not complete the cross-language and fuzz corpus required by G-MANIFEST.
+Catalogue admission, full manifest compilation, payload authentication, and encryption remain pending.
+
+The wheel and source archive build with a temporary writable uv cache.
+A clean temporary environment installs the wheel and passes the descriptor vector, malformed-input
+checks, and the existing parent-link command. Ruff and mypy checks did not run.
+The tools are absent locally, and sandbox DNS blocks their downloads.
 
 SPECIFIED means a contract and gate exist. It does not mean the
 gate passed. For the rows marked RESEARCHED here, construction selection remains open. A failed

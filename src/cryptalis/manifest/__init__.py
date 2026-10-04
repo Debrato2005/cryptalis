@@ -1,1 +1,1 @@
-"""Manifest decoding, canonical bytes, content digests, and identity headers."""
+"""Manifest and field-format bytes, digests, and manifest identity headers."""
