@@ -1,6 +1,6 @@
 # Cryptalis: dependency-aware solo build guide
 
-Status: construction guide. Initial manifest JSON decoding exists; see the
+Status: construction guide. Initial manifest JSON decoding and canonical output exist. See the
 [checklist](backend-build-checklist.md) for current evidence. Reviewed 2026-10-04.
 
 Prerequisites:

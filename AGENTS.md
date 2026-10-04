@@ -1,6 +1,7 @@
 # Repository instructions
 
-Cryptalis contains documentation, research specifications, and an initial manifest JSON decoder.
+Cryptalis contains documentation, research specifications, a manifest JSON decoder, and restricted
+canonical JSON output.
 Treat other APIs, commands, packages, and security properties as proposed until the [capability
 checklist](docs/backend-build-checklist.md) links the required executable evidence.
 

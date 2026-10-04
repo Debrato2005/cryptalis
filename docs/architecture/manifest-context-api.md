@@ -480,10 +480,10 @@ Controlled access and lifecycle decisions obey their explicit durable audit poli
 ## Packages and dependency direction
 
 The responsibility names below define the proposed package structure. Initial manifest JSON
-decoding exists; the [checklist](../backend-build-checklist.md) records implementation state. Shared immutable
-contracts, including evidence DTOs, sit below adapters. Evidence orchestration and rendering sit
-above adapters. The CLI composes use cases and defines no security semantics. No domain layer
-imports a scanner or SDK.
+decoding and canonical output exist. The [checklist](../backend-build-checklist.md) records
+implementation state. Shared immutable contracts, including evidence DTOs, sit below adapters.
+Evidence orchestration and rendering sit above adapters. The CLI composes use cases and defines
+no security semantics. No domain layer imports a scanner or SDK.
 
 | Module | Public seam and allowed dependencies | Invariant/errors/test layer |
 |---|---|---|

@@ -1,1 +1,1 @@
-"""Manifest input decoding."""
+"""Manifest input decoding and canonical bytes."""
