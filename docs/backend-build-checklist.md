@@ -2,7 +2,7 @@
 
 Current state as of 2026-10-04: documentation plus bounded manifest JSON, content digests,
 identity-header validation, parent-link validation, structural field-format digests,
-offline terminal inspection, and private candidate F1 envelope parsing.
+offline terminal inspection, and private candidate F1/W1 structural parsing.
 This file is the authority for capability implementation state.
 [Manifest contracts](architecture/manifest-context-api.md#terms-and-maturity)
 define terms and maturity.
@@ -28,8 +28,8 @@ named external reviewer and disclosed independence.
 Each row has an ID, maturity and status, dependencies, owner and gate, required artifact, and
 exit rule. Rows group related properties. They do not limit the number of features.
 
-The current manifest components, [terminal inspector](../src/cryptalis/cli.py), and private F1
-parser have 246 passing tests under `uv run --locked pytest -q` on 2026-10-04.
+The current manifest components, [terminal inspector](../src/cryptalis/cli.py), and private F1/W1
+parsers have 290 passing tests under `uv run --locked pytest -q` on 2026-10-04.
 Normal Python imports work, and `uv build` produces a wheel and source archive.
 These local checks do not complete C01, C25, or C26. Complete semantic
 validation, trusted revision history, signature authentication, the remaining CLI contract, and
@@ -68,11 +68,21 @@ Python and an independent Node offset parser agree on 5,143 inputs with seed `20
 The local check includes 1,941 accepted structures and compares every returned field.
 This limited first-party trial does not complete G-CRYPTO or admit C03.
 
-The wheel and source archive build with a temporary writable uv cache.
-A clean temporary environment installs the wheel and passes the F1 vector, truncated/trailing-input
-checks, and the existing parent-link command. The previous slice also checked the installed descriptor helpers.
-Ruff and mypy checks did not run for this slice. Offline tool resolution confirms that neither
-tool is cached. Their downloads failed because of sandbox DNS during the previous slice.
+The [private W1 parser](../src/cryptalis/crypto/_candidate_wrap.py) implements only the
+[local wrapping-record structure](architecture/crypto-search-lifecycle.md#35-local-secret-wrapping-candidate-w1).
+Its [44 boundary tests](../tests/test_candidate_wrap.py) cover all suite/kind pairs, every frame truncation,
+exact lengths, selectors, generation bounds, redaction, and immutable inputs/results.
+Well-shaped forged identities, seeds, nonces, and tags remain parseable. No ownership, freshness, or authentication claim follows.
+Python and an independent Node offset parser agree on 13,541 inputs with seed `20261004`.
+The check includes 1,672 accepted structures and compares every returned field.
+This bounded first-party trial does not complete G-CRYPTO, G-CROSSKEY, or G-PROVIDER and does not admit C03.
+
+The current wheel and source archive build with a temporary writable uv cache.
+A clean temporary environment installs the wheel outside the checkout. It passes two W1 frame checks,
+four typed rejection cases, and the existing parent-link command.
+Earlier slices checked the installed F1 parser and descriptor helpers.
+Ruff and mypy remain unavailable on PATH and in the project environment. These checks did not run.
+Earlier offline resolution found no cached tools, and sandbox DNS blocked their downloads.
 
 SPECIFIED means a contract and gate exist. It does not mean the
 gate passed. For the rows marked RESEARCHED here, construction selection remains open. A failed

@@ -6,16 +6,17 @@ policy to authenticated payload encryption, search capabilities, PostgreSQL sche
 Alembic migrations. It also connects key lifecycle and application paths to controlled attacks
 and reproducible exposure evidence.
 
-**Status as of 2026-10-05: bounded manifest JSON, domain-separated content digests,
+**Status as of 2026-10-04: bounded manifest JSON, domain-separated content digests,
 identity-header validation, parent-link validation, structural field-format digests,
-offline terminal inspection, and private candidate F1 envelope parsing.**
+offline terminal inspection, and private candidate F1/W1 structural parsing.**
 
 The repository has an installable Python package with a [bounded JSON decoder](src/cryptalis/manifest/parser.py), [restricted RFC
 8785 canonicalizer and SHA-256 digest helper](src/cryptalis/manifest/canonical.py), [typed header
 decoder](src/cryptalis/manifest/header.py), [field-format helpers](src/cryptalis/manifest/descriptor.py),
 and read-only [manifest inspector](src/cryptalis/cli.py).
-The [private F1 parser](src/cryptalis/crypto/_candidate_envelope.py) checks candidate envelope
-structure and returns unauthenticated bytes. It performs no key lookup or decryption.
+The private [F1 envelope parser](src/cryptalis/crypto/_candidate_envelope.py) and
+[W1 wrapping-record parser](src/cryptalis/crypto/_candidate_wrap.py) check structure and return
+unauthenticated bytes. They perform no key lookup or decryption.
 Behavior tests cover these boundaries. Complete semantic schema validation,
 trusted revision history, and signature authentication remain pending.
 Cryptography, ORM integration, migrations, providers, and assurance tools also remain pending.
@@ -63,11 +64,13 @@ The helpers do not resolve catalogue entries, approve codec parameters, authenti
 or encrypt data. Descriptor bytes are stable format bindings for future additional authenticated
 data. They do not supply current authorization.
 
-The private F1 parser has no public API or CLI command.
-Its [structural example](examples/envelopes/f1-structural.hex) contains synthetic header and
-ciphertext bytes. It is not a valid authenticated encryption vector.
-The [candidate framing contract](docs/architecture/crypto-search-lifecycle.md#32-parser-and-resource-limits)
-defines parser limits and pending authentication, catalogue, and freeze gates.
+The private parsers have no public API or CLI command.
+The [F1 example](examples/envelopes/f1-structural.hex) and
+[W1 example](examples/envelopes/w1-structural.hex) contain synthetic header and ciphertext bytes.
+Neither example is a valid authenticated encryption vector.
+The crypto owner defines [F1 limits](docs/architecture/crypto-search-lifecycle.md#32-parser-and-resource-limits)
+and [W1 limits](docs/architecture/crypto-search-lifecycle.md#35-local-secret-wrapping-candidate-w1).
+Authentication, authorized registry selection, and format freeze remain pending.
 
 ## Purpose and boundary
 

@@ -1,9 +1,10 @@
 # Cryptography, Search, and Key Lifecycle Contract
 
-Status: detailed architecture proposal with private candidate F1 structural parsing.
+Status: detailed architecture proposal with private candidate F1/W1 structural parsing.
 No encryption implementation, frozen wire format, approved suite, or measured gates.
 
-Reviewed: 2026-09-30. First-party reconciliation: 2026-10-01. Parser review: 2026-10-05.
+Reviewed: 2026-09-30. First-party reconciliation: 2026-10-01. F1 parser review: 2026-10-05.
+W1 parser review: 2026-10-04.
 
 This document owns detailed envelopes, derivation, search leakage, providers, caches, fences,
 rotation and bounded shredding. The [architecture hub](README.md) owns cross-system invariants.
@@ -417,6 +418,23 @@ ciphertext and full 16-byte tag. Total 156 or 168 bytes.
 
 Unknown values, lengths, trailing bytes or unauthorized parent/child ownership reject before branch
 lookup. The general 16KiB provider-blob cap does not relax W1's exact length.
+
+The [private W1 parser](../../src/cryptalis/crypto/_candidate_wrap.py) implements only these structural checks.
+It accepts immutable `bytes`, rejects physical input above 168 bytes before header parsing,
+and requires the exact suite-specific frame length. Both generations must be nonzero.
+Any declared ciphertext length other than 32 is malformed, including oversized declarations.
+It reuses F1's candidate suite registry and `EnvelopeInvalid` error hierarchy.
+
+Unsupported selectors raise `EnvelopeUnsupportedFormat`, oversized physical records raise `EnvelopeOversize`,
+and other malformed inputs raise `EnvelopeMalformed`. Safe diagnostics identify the failed field without input bytes.
+The returned object is immutable and excludes all byte fields from `repr`.
+
+The [W1 boundary tests](../../tests/test_candidate_wrap.py) and
+[synthetic vector](../../examples/envelopes/w1-structural.hex) protect this private experiment.
+Every returned identity and byte remains untrusted. Parsing does not check ownership or seed/nonce freshness,
+authenticate a tag, derive a key, decrypt a secret, or grant release authority.
+Those checks remain required at their authorized boundaries before branch lookup or secret release.
+No public API, CLI command, or production consumer uses this parser.
 
 W1 uses HKDF-SHA-256 with these candidate expressions:
 

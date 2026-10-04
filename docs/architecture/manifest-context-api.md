@@ -555,7 +555,7 @@ Controlled access and lifecycle decisions obey their explicit durable audit poli
 
 The responsibility names below define the proposed package structure. Initial manifest decoding,
 canonical output, content digests, identity-header validation, parent-link validation, structural
-field-format digests, offline terminal inspection, and private candidate F1 envelope parsing exist.
+field-format digests, offline terminal inspection, and private candidate F1/W1 structural parsing exist.
 The [checklist](../backend-build-checklist.md) records implementation state. Shared immutable
 contracts, including evidence DTOs, sit below adapters. Evidence orchestration and rendering sit
 above adapters. The CLI composes use cases and defines no security semantics. No domain layer
@@ -576,10 +576,11 @@ imports a scanner or SDK.
 | cli + integrations | use-case composition/typed optional adapters; public interfaces only | Visible action/I/O / mapped errors / integration |
 | experimental/lab distributions | Known constructions/scenarios; contracts+research adapters | Production cannot import / unsupported profile / differential |
 
-The private F1 structural parser belongs to the crypto module.
-It is an internal framing experiment, not an admitted construction or supported runtime API.
-No production consumer imports it. The [crypto owner](crypto-search-lifecycle.md#32-parser-and-resource-limits)
-defines its unauthenticated boundary and pending admission checks.
+The private F1/W1 structural parsers belong to the crypto module.
+These internal framing experiments are not admitted constructions or supported runtime APIs.
+No production consumer imports them. The crypto owner defines
+[F1](crypto-search-lifecycle.md#32-parser-and-resource-limits) and
+[W1](crypto-search-lifecycle.md#35-local-secret-wrapping-candidate-w1) boundaries and pending admission checks.
 
 ```mermaid
 flowchart BT

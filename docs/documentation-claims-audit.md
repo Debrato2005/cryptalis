@@ -464,3 +464,55 @@ Current source SHA-256:
 
 Current checked Markdown snapshot, audit self excluded: `909cdbb88cd214ea59a4842c6a6ccb8205753bdabab7abe514ac30d44e366413`.
 These hashes identify the working files. They are not signatures or independent security evidence.
+
+## Candidate W1 structural parsing
+
+Slice date: 2026-10-04 UTC. Source baseline: `f9ac025092205bb7cd164759866a5e6d83fb7c7a`.
+The user authorized one engineering slice with `next` under the production controller.
+This slice adds the [private W1 parser](../src/cryptalis/crypto/_candidate_wrap.py),
+[boundary tests](../tests/test_candidate_wrap.py), and [synthetic vector](../examples/envelopes/w1-structural.hex).
+The [crypto owner](architecture/crypto-search-lifecycle.md#35-local-secret-wrapping-candidate-w1) retains the wire contract.
+
+The parser checks the 96-byte header and exact 156/168-byte frame before it returns immutable fields.
+It rejects unsupported selectors, invalid lengths, zero generations, truncation, and trailing bytes.
+Physical input above 168 bytes rejects before header parsing. Errors identify W1 and the failed field without input bytes.
+All byte fields stay outside `repr`. F1's candidate suite registry and typed error hierarchy remain shared and unchanged.
+
+No authentication, ownership, freshness, key lookup, cryptographic operation, or secret release follows from successful parsing.
+
+The first boundary run produced 41 expected failures because W1 parsing did not exist.
+Three later diagnostic regressions failed before version, suite, and flags received separate safe messages.
+A read-only first-party review found no important issue. Its separate offset oracle agreed on 46,232 adversarial inputs.
+AI review does not satisfy independent security review or admission gates.
+
+| Verification actually run | Result |
+|---|---|
+| `PYTHONDONTWRITEBYTECODE=1 .venv/bin/python -m pytest tests/test_candidate_wrap.py -q --tb=short` | 44 passed |
+| `UV_CACHE_DIR=/tmp/cryptalis-uv-cache PYTHONDONTWRITEBYTECODE=1 uv run --locked pytest -q` | 290 passed |
+| `PYTHONDONTWRITEBYTECODE=1 .venv/bin/python /tmp/cryptalis-w1-differential.py` | Python and a separate Node offset parser agreed on 13,541 unique inputs, including 1,672 accepted structures. Seed `20261004`. Every accepted field matched |
+| `UV_CACHE_DIR=/tmp/cryptalis-uv-cache uv build --offline --out-dir /tmp/cryptalis-w1-dist` | Wheel and source archive built |
+| `UV_CACHE_DIR=/tmp/cryptalis-uv-cache PYTHONDONTWRITEBYTECODE=1 .venv/bin/python /tmp/cryptalis-w1-wheel-smoke.py` | Clean installed wheel passed two W1 frames, four typed rejection cases, and the existing parent-link console command outside the checkout |
+
+The first installed smoke run passed W1 checks, then failed because the scratch script expected an absent CLI success field.
+The corrected script checks the documented scope, revision, and parent digest. The complete installed run then passed.
+The differential corpus and package smoke scripts are temporary local checks, not admitted cross-language conformance artifacts.
+Differential corpus SHA-256: `df7d5daf7726af12f4fdbba4f7cb90d8065df1712b15f30bb9dd8859509e6355`.
+
+All 25 pre-existing tracked non-Markdown files match the pre-edit snapshot.
+Only the three linked additions change the tracked non-Markdown tree. Existing source, tests, dependencies, build configuration, and CI stay unchanged.
+No commit or push occurred. Ruff and mypy remain absent from PATH and the project environment, so these checks did not run.
+
+Authentication, authorized registry selection, format freeze, and G-CRYPTO/G-CROSSKEY/G-PROVIDER remain pending. C03 remains incomplete.
+
+Documentation checks covered 20 Markdown files and 389 local links, with zero faults.
+`git diff --check` passed. The documentation draft scored 1.53 findings per 100 words.
+The final strict error-text draft scored 0.00.
+
+Source and vector SHA-256 for this slice:
+
+- `examples/envelopes/w1-structural.hex`: `d7eda7903401ce52bc67cbc01c3bd3bd02ac05b78d1ffaef66743c4eb04440c9`
+- `src/cryptalis/crypto/_candidate_wrap.py`: `18cd89777178a5938848c51d47b48603dab902f57e83a6b330a8643f92748dc4`
+- `tests/test_candidate_wrap.py`: `85aa66f3e2ed625e20f13eedc1a41b38049c0ef4b9815928c878f9b943ba8457`
+
+Checked Markdown snapshot, audit self excluded: `c708aeb51b835fe59663860625e46aa416312782de15e6f878a0aaa68993b7b7`.
+These hashes identify local working files. They are not signatures or independent security evidence.
