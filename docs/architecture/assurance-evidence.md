@@ -102,7 +102,7 @@ profile. The following field conventions do not relax it:
 | `ScenarioSpec` | ID/version, invariants, preconditions, actions/oracle, collectors, controls, cleanup, budgets | `ScenarioResult`. Unsafe target/unsupported version or privilege refused before action |
 | `CollectorSpec` | ID/version, source/point, classes, watermarks, transforms, limits, health/control methods | `CollectorReceipt`: coverage, cursors, loss, redaction stage, health and artifacts. Inaccessible source unavailable |
 | `ToolAdapter` | tool/edition/image/config/rules digests, supported schema, scope and caps | source findings plus execution state and redacted artifact hash. Malformed/partial output never clean |
-| `EvidenceBundle` | result, graph, receipts, artifacts and replay descriptors | canonical manifest plus detached wrapper. Missing required member refused |
+| `EvidenceBundle` | pinned profile/version, graph disposition, result, receipts, artifacts and replay descriptors. Graph when required by the profile | canonical manifest plus detached wrapper. Incompatible profile or missing required member refused. See [bundle profiles](#bundle-profiles-and-graph-disposition) |
 
 Schema majors are incompatible. Readers reject an unknown major or unknown required security fields before they evaluate a gate. Optional namespaced `extensions` are preserved but cannot strengthen conclusions. Rule and scenario meanings cannot change in place. Change their version. Alternatively, assign a new ID and `supersedes`.
 
@@ -584,7 +584,32 @@ JUnit XML exposes CI outcomes. Markdown and HTML explain evidence. Preserve unkn
 attribution and semantics. JUnit maps inconclusive and not-run results to explicit skip or error states plus canonical properties. It never maps them to successful tests.
 XML disables external entities and remote schemas. HTML escapes untrusted content.
 
-`bundle-manifest.json` binds results, graph and receipts to these records:
+### Bundle profiles and graph disposition
+
+Bundle production is optional for first-transition admission. Scoped receipts remain sufficient under the applicable transition gates.
+Every bundle declares `profile_id`, `profile_version`, and graph selection in its canonical manifest.
+The pinned catalogue defines each profile's required members and permitted conclusions.
+These proposed profiles do not establish executable support.
+
+| Profile ID | Graph disposition | Required evidence and scope |
+|---|---|---|
+| `transition` | `not_selected`, `NOT_RUN`, with an explicit reason | Results, scoped receipts, artifacts, and replay descriptors for the selected transition checks. No graph artifact or graph-based conclusion |
+| `graph` | `selected`, with the stage's actual outcome | The same core evidence plus an inventoried graph artifact and its construction receipts. Graph assertions retain their own coverage and outcomes |
+
+The consumer's trusted policy pins acceptable profiles, versions, and required checks before validation.
+A bundle cannot relax that policy by selecting another profile or omitting a graph requirement.
+Reject missing or unknown profiles, incompatible versions, contradictory selection records, and missing required members with safe diagnostics.
+Diagnostics identify the profile, failed validation boundary, and member role without exposing artifact contents.
+A graph-required policy rejects a `transition` bundle even when its inventory and signatures are valid.
+
+A selected graph stage that fails retains its diagnostic receipts and leaves dependent assertions INCONCLUSIVE unless evidence proves FAIL.
+It cannot become `not_selected`, an empty clean graph, or PASS through export.
+Missing a required graph prevents complete bundle production and validation.
+Surface that failure explicitly while retaining available diagnostic receipts outside the incomplete bundle.
+A valid graph artifact can contain FAIL or INCONCLUSIVE results. Inventory validity does not change those outcomes.
+Export preserves profile identity, selection, coverage, and results. It cannot relabel a bundle to bypass consumer policy.
+
+`bundle-manifest.json` binds the profile, graph disposition, results, receipts, and any required graph to these records:
 
 - Target and run
 - Manifest, compiled plan, model, schema and migration
@@ -603,7 +628,8 @@ The schema and bytes are versioned.
 
 Plain sorted JSON is not JCS. Do not hash a logical object and then serialize it differently. Detached signatures remain outside the signed inventory. An explicit wrapper relation prevents recursive hashes.
 
-The manifest does not inventory itself. It inventories results, graph, receipts and artifact members.
+The manifest does not inventory itself. It inventories results, receipts, artifacts, and the graph when the profile requires it.
+An unselected graph has an explicit manifest disposition, not a fabricated member or an implicit omission.
 A trusted expected digest or signature binds the manifest's exact bytes. Detached wrappers are typed transport relations. Independent trust policy requires every mandatory wrapper.
 Removing a wrapper cannot downgrade verification to unsigned evidence.
 
@@ -696,7 +722,7 @@ counterexample fails regardless of aggregate metrics.
 | G-A05 containment | IPv4/IPv6 redirects, rebinding, proxy, metadata, callback, spec, hostile pack/volume, budget/kill. 100% unauthorized denied/caps enforced. Cleanup <=60s in reference lane | active profile unavailable. Cleanup failure visible |
 | G-A06 replay/versioning | 10 independent resets/replays per deterministic scenario give identical semantic results/relations excluding run/time IDs. 100% unsupported schema/pack/tool refused. Old conversion fixtures preserve dimensions/unknowns | flaky classification/gate invalidation. Old bytes/conversion retained |
 | G-A07 benchmarks | >=5 measured independent runs/variant. >=60s warm-up and >=180s measurement for steady workloads. Random order, raw distributions/95% intervals, no control/correctness failure. Throughput CV <=10% or instability reported without comparative claim | no performance claim. Future budgets redeclared before rerun |
-| G-A08 integrity/privacy | >=100 fixtures per inventory/path/version/signer/replay attack family. 100% modified/missing/unlisted/path/duplicate/unknown-version/wrong-signer/issuer/replay-target rejected. Two independent-language encoders agree on >=10,000 canonical numeric/time/ratio vectors and reject all float/unit/clock-invalid fixtures. 100% seeded marker/key/token/TLS artifacts excluded or safely redacted | block publication/CI integrity. Redacted failure retained |
+| G-A08 integrity/privacy | >=100 fixtures per inventory/path/version/signer/replay attack family. 100% modified/missing/unlisted/path/duplicate/unknown-version/wrong-signer/issuer/replay-target rejected. Two independent-language encoders agree on >=10,000 canonical numeric/time/ratio vectors and reject all float/unit/clock-invalid fixtures. 100% seeded marker/key/token/TLS artifacts excluded or safely redacted. Graph-free, required-graph omission, failed-stage, unknown-profile/version, policy-downgrade, and export fixtures preserve exact scope and outcomes | block publication/CI integrity. Redacted failure retained |
 | G-A09 differentiated value | >=30 labeled baseline/protected/mutant/missing-collector chains paired with ZAP/manual. Zero false definitive asset conclusions. >=10 percentage-point impact accuracy gain OR >=20% median explanation-time reduction without accuracy loss. Setup/maintenance/intervals reported | remove graph marketing thesis. Retain integration/learning |
 | G-A10 restricted rule DSL | >=1,000 held-out safe/unsafe/ambiguous fixtures per promoted family against equivalent typed-native rules. 100% result/path/unknown equivalence. Zero pack escape. >=100 depth/node/time exhaustion fixtures remain unknown. Median CPU <=2x native and peak RSS <=125% native on same corpus | retain typed-native default. DSL research-only. Block equivalence/portability claim |
 | G-A11 internal DAST/network | >=30 labeled authenticated role/state chains plus >=100 containment/capture-loss/redirect/replay faults. Compare same action traces against adapter/manual oracle. Zero unauthorized request, false definitive exposure or hidden skipped boundary. 10 reset replays reproduce semantic classification | narrow engine/lane. Fallback pinned adapter. Preserve explicit gaps |

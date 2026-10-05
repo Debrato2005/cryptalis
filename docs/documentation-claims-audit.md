@@ -668,3 +668,47 @@ No commit or push occurred.
 A separate first-party AI reviewer compared the correction against entry copies and the canonical owners.
 The reviewer found no substantive issue in approval timing, action scope, retry reconciliation, or preserved exposure obligations.
 DR02–DR04 remain fair unresolved findings. This review supplies no independent security admission or runtime evidence.
+
+## Graph-optional bundle contract correction — 2026-10-05
+
+Entry: clean tree at `b26b72b`. Scope: DR02, documentation only.
+The [canonical bundle contract](architecture/assurance-evidence.md#bundle-profiles-and-graph-disposition) now declares versioned profiles and explicit graph disposition.
+The transition profile uses scoped evidence without Graph. The graph profile requires its graph artifact and construction receipts.
+Consumer policy prevents profile downgrade. Export preserves failed, inconclusive, and unselected outcomes.
+Missing required evidence produces an explicit failure. Integrity validation never establishes protection success.
+
+DR02 is corrected at the contract level. Implementation and G-A08 evidence remain pending.
+DR03 and DR04 remain OPEN. Historical audit dispositions retain their original scope.
+All seven P0 reviews remain pending. Q1–Q10 remain OPEN.
+No runtime source, test, configuration, dependency, or build file changes belong to this slice.
+
+### Contract acceptance cases
+
+These are paper-review cases. No bundle implementation exists to execute them.
+
+| Case | Required contract result |
+|---|---|
+| `transition` bundle with all required evidence and graph `not_selected` | Graph is NOT_RUN. Validate scoped evidence without invoking Graph. No graph-based conclusion |
+| Graph-required consumer receives a valid `transition` bundle | Explicit policy refusal despite valid hashes or signatures |
+| `graph` bundle omits its required artifact or construction receipt | Explicit member failure. Preserve diagnostics. No complete bundle or successful CI interpretation |
+| Selected graph construction fails | Preserve actual failure and dependent INCONCLUSIVE/FAIL. Never substitute `not_selected`, a clean graph, or PASS |
+| Profile/version absent, unknown, or selection contradictory | Explicit validation refusal. No default profile |
+| Export attempts to remove graph requirements or change profile | Refuse the downgrade. Preserve canonical selection, coverage, and outcomes |
+
+### Verification actually run
+
+| Check | Result and limit |
+|---|---|
+| Existing `DOC_CHECKER_BEGIN` block with `python3` | Exit 0. 20 Markdown files including the generated pytest-cache README, 497 local links, zero faults |
+| `git diff --check` | Initial exit 2 identified an extra blank line at EOF. The correction removed it. Final exit 0, no output |
+| Entry SHA-256 comparison | Exactly two Markdown files changed. All other 48 maintained files remained byte-identical. No new maintained files. Historical audit text remains an exact prefix |
+| Added prose lint before writes | STE-flavored: 611 words, 5 findings, 0.82 per 100 words |
+| Profile-contract strict lint before writes | Exit 0. 266 words, 1 finding, 0.38 per 100 words |
+| Runtime tests, bundle production/import/export, external research | Not run. This documentation-only slice changes no executable behavior. Paper cases are not runtime evidence |
+
+Documentation snapshot SHA-256, audit self excluded: `08bd78ff1d53c69d1539863cd6a4cd567cd92e05be933b9ae4862a06ce79f8a6`.
+These checks do not complete G-A08 or admit EvidenceBundle support.
+No commit or push occurred.
+
+A separate first-party AI reviewer checked the exact diff, StageReceipt outcomes, required coverage, inventories, and signature policy.
+The reviewer found no substantive issue. This review supplies no independent security admission or executable support evidence.
