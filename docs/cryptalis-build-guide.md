@@ -4,6 +4,7 @@ Status: construction guide. Bounded manifest JSON, content digests, identity-hea
 parent-link and bounded ancestry-chain validation, structural field-format digests, and offline
 terminal inspection exist.
 Private candidate F1/W1 framing and scalar syntax encoding and decoding also exist.
+Private structural ActiveState header, digest, and history validation also exist.
 Authentication and format freeze remain pending.
 See the [checklist](backend-build-checklist.md) for current
 evidence. Reviewed 2026-10-04. Build order reconciled 2026-10-05.

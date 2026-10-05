@@ -9,7 +9,8 @@ Broader security-assurance and search work remains separately gated research.
 **Status as of 2026-10-05: bounded manifest JSON, domain-separated content digests,
 identity-header validation, parent-link and bounded ancestry-chain validation, structural
 field-format digests, offline terminal inspection, private candidate F1/W1 framing, and private
-scalar encoding and decoding.**
+scalar encoding and decoding. Private structural ActiveState header, digest, and history
+validation also exist.**
 
 The repository has an installable Python package with a [bounded JSON decoder](src/cryptalis/manifest/parser.py), [restricted RFC
 8785 canonicalizer and SHA-256 digest helper](src/cryptalis/manifest/canonical.py), [typed header
@@ -21,6 +22,9 @@ unauthenticated bytes. They perform no key lookup or decryption.
 The [private scalar codec](src/cryptalis/crypto/_candidate_scalar.py) encodes and decodes candidate
 text, bytes, integer, and decimal syntax. It preserves exact types and decimal representation.
 Encoded bytes contain unprotected values. The codec does not authenticate values or approve field policy.
+The private [ActiveState module](src/cryptalis/contracts/active_state.py) checks structural
+identity, monotonic revisions, rollback, parent links, and bounded complete histories. It performs
+no authentication, compare-and-swap, policy activation, file I/O, or database mutation.
 Behavior tests cover these boundaries. Complete semantic schema validation,
 trusted history authority, and signature authentication remain pending.
 Cryptography, ORM integration, migrations, providers, and assurance tools also remain pending.
@@ -65,6 +69,11 @@ document must name the previous document by its canonical digest. The sequence i
 4,096 documents and 16 MiB in total. This structural check does not authenticate the history,
 select the current head, or grant runtime authority. The terminal inspector still accepts only
 one optional parent.
+
+The [ActiveState examples](examples/active-state) contain a synthetic genesis state and one
+authorization-only successor. They supply fixed structural vectors, not authenticated authority.
+The [C33 contract](docs/architecture/manifest-context-api.md#implemented-structural-activestate-header)
+defines their fields, digest, monotonic rules, and limits.
 
 The field-format helpers check descriptor structure and compute canonical bytes and a
 domain-separated digest. For example:

@@ -860,3 +860,37 @@ The helper supplies structural consistency only. It does not validate the comple
 | Ruff and mypy | Not installed on PATH or in the project environment. These checks did not run |
 
 First-party adversarial review checked mutation, empty and truncated histories, revision gaps, chain substitution, limit ordering, cycles, and diagnostic leakage. It found no unresolved issue within this structural scope. This review is not independent security review and does not complete G-MANIFEST, G-ACTIVE, C01, C33, or the release gate.
+
+## Structural ActiveState kernel - 2026-10-05
+
+Entry: `ed19c1f`, with a clean worktree. The user replied `next` and authorized one C33 slice. No commit or push occurred.
+
+The private `cryptalis.contracts.active_state` module adds an immutable structural header, a domain-separated content digest, one-link checks, and bounded complete-history checks. The header binds the protection domain, authority revision, active manifest identity, active manifest revision and digest, schema generation, and current operation ID.
+
+The parser requires immutable bytes and canonical UUID and digest forms. Authority revision 0 is genesis. Later authority revisions require a parent digest. Successors keep the protection domain and manifest ID. Authority revisions increase. Active manifest revisions and schema generations never decrease. A fixed manifest revision has one digest, and different manifest revisions cannot reuse one digest.
+
+The history validator requires an immutable nonempty tuple. It checks the 4,096-document and 16 MiB aggregate limits before parsing. Fixed diagnostics do not include supplied values. The underlying parser cause remains available for local debugging. Traceback-local redaction remains a host diagnostic responsibility.
+
+The synthetic examples define a genesis state and one authorization-only successor. Node and Python produced the same genesis digest: `24ec34f029d1939dd354bf5df28a2ac1e5f0a39cebae0ce161798bff9ab3512d`.
+
+This kernel does not authenticate state, select the current head, implement compare-and-swap, supply durable idempotency, activate policy, access files, or mutate a database. A database snapshot or attacker can hold another internally consistent chain. Q1 and G-ACTIVE remain open. C33 remains incomplete.
+
+### Verification actually run
+
+| Check | Result and limit |
+|---|---|
+| Focused RED run | 42 expected failures because `cryptalis.contracts` did not exist |
+| `.venv/bin/python -m pytest tests/test_active_state.py -q --tb=short` | Exit 0. 51 focused tests passed |
+| `UV_CACHE_DIR=/tmp/cryptalis-uv-cache PYTHONDONTWRITEBYTECODE=1 uv run --locked pytest -q` | Exit 0. 518 tests passed in 2.96 seconds on Linux and CPython 3.12.3 |
+| Independent Node digest check | The fixed genesis digest matched the Python result |
+| `UV_CACHE_DIR=/tmp/cryptalis-uv-cache uv build --offline` | Exit 0. The wheel and source archive built in a temporary directory |
+| Clean temporary environment and offline wheel installation | The installed wheel accepted a valid history and rejected a cross-domain successor |
+| Ruff and mypy | Not installed on PATH or in the project environment. These checks did not run |
+
+First-party adversarial review checked domain substitution, manifest substitution, authority rollback, schema rollback, inconsistent revision/digest pairs, content substitution, mutable input, size/count exhaustion, cycle prevention, and diagnostic leakage. It found no unresolved issue within this structural scope. This review is not independent security review or production authority evidence.
+
+The final review corrected the rollback fixture so its valid baseline uses a new digest with a new manifest revision.
+The complete suite then passed 518 tests in 3.00 seconds.
+The documentation checker reported 20 Markdown files, 512 local links, and zero faults before this final clarification.
+Added contract prose scored 0.82 findings per 100 words. The audit draft scored 1.36.
+Complete ActiveState semantics remain pending, including readable formats, the write tuple, lifecycle epochs, and operation transitions.

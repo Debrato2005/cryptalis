@@ -1,0 +1,11 @@
+{
+  "schema_version": 1,
+  "protection_domain_id": "018f4f87-6f95-7e2a-9d95-38f9b7646f24",
+  "authority_revision": 1,
+  "parent_digest": "24ec34f029d1939dd354bf5df28a2ac1e5f0a39cebae0ce161798bff9ab3512d",
+  "active_manifest_id": "018f4f87-6f95-7e2a-9d95-38f9b7646f25",
+  "active_manifest_revision": 0,
+  "active_manifest_digest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "schema_generation": 0,
+  "current_operation_id": "018f4f87-6f95-7e2a-9d95-38f9b7646f26"
+}

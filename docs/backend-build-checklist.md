@@ -3,7 +3,8 @@
 Current state as of 2026-10-05: documentation plus bounded manifest JSON, content digests,
 identity-header validation, parent-link and bounded ancestry-chain validation, structural
 field-format digests, offline terminal inspection, private candidate F1/W1 framing, and private
-scalar syntax encoding and decoding.
+scalar syntax encoding and decoding. Private structural ActiveState header, digest, and history
+validation also exist.
 This file is the authority for capability implementation state.
 [Manifest contracts](architecture/manifest-context-api.md#terms-and-maturity)
 define terms and maturity.
@@ -60,6 +61,17 @@ On 2026-10-05, 31 focused header/history tests and the complete 467-test suite p
 Linux and CPython 3.12.3. A source archive and wheel built offline. A clean temporary environment
 installed the wheel and validated a two-document chain with a skipped revision number. These
 checks supply structural evidence only. They do not complete G-MANIFEST, G-ACTIVE, C01, or C33.
+
+The private [ActiveState kernel](../src/cryptalis/contracts/active_state.py) decodes immutable
+authority headers, computes a separate domain digest, checks monotonic parent links, and validates
+one bounded complete history. Its 51 focused tests cover fixed vectors, canonical IDs and digests,
+required fields, domain and manifest substitution, rollback, digest/revision inconsistency,
+aggregate limits, and redacted failures. The synthetic [example history](../examples/active-state)
+contains no signature or authority proof. Node and Python agree on its genesis digest.
+
+The complete suite contains 518 passing tests after this slice. This evidence does not complete
+C33 or G-ACTIVE. It adds no production authority, compare-and-swap, durable idempotency,
+transition execution, cryptography, database behavior, or CLI command.
 
 The [CLI failure tests](../tests/test_cli.py) now cover safe diagnostic stages and input roles,
 invalid arguments in JSON mode, duplicate parent options, option termination, and dependency failures.

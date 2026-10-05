@@ -116,6 +116,52 @@ Session writes recheck that authority. Desired-before-schema and schema-before-d
 An inactive desired diff can coexist only when the existing active mapping remains fully admitted.
 Removing required active declarations or descriptor history rejects startup until an explicit transition resolves the dependency.
 
+### Implemented structural ActiveState header
+
+The private `cryptalis.contracts.active_state` module decodes the common identity and monotonic
+fields from one ActiveState document. The structural header has these required members:
+
+| Member | Structural rule |
+|---|---|
+| `schema_version` | Integer 1 |
+| `protection_domain_id` | Lowercase canonical UUID |
+| `authority_revision` | Nonnegative integer. Revision 0 is genesis |
+| `parent_digest` | Null at genesis. A later revision requires 64 lowercase hexadecimal characters |
+| `active_manifest_id` | Lowercase canonical UUID |
+| `active_manifest_revision` | Nonnegative integer |
+| `active_manifest_digest` | 64 lowercase hexadecimal characters |
+| `schema_generation` | Nonnegative integer |
+| `current_operation_id` | Null or a lowercase canonical UUID |
+
+`digest_active_state_json` uses the restricted canonical JSON profile. It hashes the ASCII label
+`cryptalis-active-state-v1`, one zero byte, and all supplied canonical members. Unknown members
+affect the digest but receive no semantic approval.
+Counters use the shared JSON range `0..2**53-1`. These helpers do not validate readable formats,
+the write tuple, lifecycle epochs, producer versions, or operation transitions. A valid header
+does not establish a complete or admissible ActiveState record.
+
+A successor keeps the protection domain and manifest ID. Its authority revision must increase.
+Its active manifest revision and schema generation cannot decrease. One manifest revision cannot
+have different content digests. Different manifest revisions cannot use one content digest. The
+parent digest must name the complete preceding document.
+
+`validate_active_state_history` requires a nonempty tuple of immutable byte strings. It accepts
+at most 4,096 documents and 16 MiB in total. It checks the aggregate bounds before it parses a
+document. The first state must be authority revision 0. Authority revisions can skip.
+
+The returned dataclass is frozen. Invalid input raises `ActiveStateInvalid` with a fixed
+diagnostic that excludes supplied values. The parser preserves its safe internal cause for local
+debugging.
+
+This module checks structural consistency only. It does not authenticate a state, select the
+current head, do compare-and-swap, supply durable idempotency, activate policy, or read a file.
+A database snapshot or attacker can contain a different internally consistent history. Q1 and
+G-ACTIVE still own the production authority, rollback resistance, recovery, and current-head
+selection.
+
+The [synthetic examples](../../examples/active-state) contain no signature or authority proof.
+They show one genesis state and one authorization-only successor.
+
 ### Total semantic diff contract
 
 The compiler compares authenticated active policy with the generated desired lock and immutable history.
@@ -700,7 +746,7 @@ Controlled access and lifecycle decisions obey their explicit durable audit poli
 The responsibility names below define the proposed package structure. Initial manifest decoding,
 canonical output, content digests, identity-header validation, parent-link and bounded
 ancestry-chain validation, structural field-format digests, offline terminal inspection, private candidate F1/W1 framing,
-and private scalar syntax encoding and decoding exist.
+private scalar syntax encoding and decoding, and private structural ActiveState validation exist.
 The [checklist](../backend-build-checklist.md) records implementation state. Shared immutable
 contracts, including evidence DTOs, sit below adapters. Evidence orchestration and rendering sit
 above adapters. The CLI composes use cases and defines no security semantics. No domain layer
