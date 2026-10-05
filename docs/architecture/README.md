@@ -125,6 +125,16 @@ framing constraints do not authenticate writer authority or ciphertext. Passive 
 Security (TLS) capture does not prove absence of plaintext inside applications. The assurance
 contract defines detailed attack models and collectors.
 
+The synthetic AEAD example has a separate local development boundary. It handles fixed fake
+fields and one temporary in-memory key. A person who can change the example or inspect its
+process can access that key. No host-compromise defense or memory-zeroization claim follows.
+The example accepts no application input and reads no database or provider credentials.
+It intentionally prints only fixed synthetic plaintext and recovery values. It does not print
+keys or ciphertext bodies. An optional private file contains synthetic ciphertext and visible
+metadata. Existing files are never overwritten. Failed writes can leave an incomplete artifact.
+The behavioral checks cover tampering, context substitution, RNG repetition, key leakage, and
+file/output failures. The replay control records the absence of freshness.
+
 ## Data flow and plane boundaries
 
 ```mermaid

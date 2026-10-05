@@ -86,6 +86,15 @@ reversed order, and a consistent replacement chain. It checks the real command e
 Explain why canonicalization ignores whitespace and why consistent digest links supply no authentication.
 The [CLI owner](architecture/manifest-context-api.md#cli-and-configuration) defines the command and its limits. The [checklist](backend-build-checklist.md) records its executable evidence.
 
+## Synthetic Smolink field trial
+
+Run `uv sync --locked` before the synthetic Smolink example.
+Then run `uv run --locked python examples/demo_smolink_crypto.py`.
+Compare the input, encrypted storage preview, and recovered values. Explain which metadata stays
+visible. Read the rejection controls and explain why same-context replay still succeeds.
+The [README](../README.md#smolink-synthetic-encryption-demonstration) gives ciphertext inspection commands. The [crypto owner](architecture/crypto-search-lifecycle.md#synthetic-smolink-primitive-trial) defines the trial boundary.
+The example does not change Smolink or supply its email-query or redirect behavior.
+
 ## Workstream catalogue
 
 The paths below suggest files in proposed packages. Check existing implementation before adding a file.

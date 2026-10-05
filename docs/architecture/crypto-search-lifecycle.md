@@ -1,7 +1,8 @@
 # Cryptography, Search, and Key Lifecycle Contract
 
 Status: detailed architecture proposal with private candidate framing and scalar syntax encoding and decoding.
-No encryption implementation, frozen wire format, approved suite, or measured gates.
+No runtime encryption implementation, frozen wire format, approved suite, or admitted crypto gates.
+A separate synthetic library-native AEAD trial supplies bounded first-party primitive evidence.
 
 Reviewed: 2026-09-30. First-party reconciliation: 2026-10-01. F1 parser review: 2026-10-05.
 W1 parser review: 2026-10-04. Scalar decoder review: 2026-10-04.
@@ -107,6 +108,39 @@ One authorized handle resolves to exactly one subject generation and key, with n
 loop. Header and AAD binding constrain selection. They do not prove commitment when an adversary can
 choose both candidate keys and context. G-CROSSKEY records whether the threat model excludes
 adversarial key registration or requires a reviewed committing construction.
+
+### Synthetic Smolink primitive trial
+
+The [example](../../examples/demo_smolink_crypto.py) runs outside the installed `cryptalis` package. The development group pins
+`cryptography==50.0.2`. Runtime dependencies remain empty. No production module imports the example.
+The library implements AES-256-GCM-SIV. The example uses a fresh 32-byte key for each run,
+fresh 12-byte nonces, and the library's complete 16-byte authentication tag.
+It rejects a repeated nonce in its small fixed trial without a retry.
+No key wrapping, key provider, key cache, persisted key, or custom primitive exists here.
+
+The trial has five UTF-8 text values from fixed synthetic rows. Its associated data binds a lab
+version, algorithm, synthetic domain and tenant, subject, record, model, table, field,
+representation, and purpose. These are lab-specific bytes and generated synthetic logical IDs.
+They are not an admitted descriptor, authenticated grant, production identity source, or F1 frame.
+The tenant label is a trial input. Smolink does not supply this tenant contract.
+Guest ownership remains null. The trial uses a synthetic guest subject only for its binding check.
+
+The trial constructs expected context from its fixed fixture. Saved binding metadata does not
+authorize decryption. Single-component substitutions test cryptographic binding only.
+They do not establish application authorization, tenant isolation in Smolink, or key commitment.
+The example reports the library and OpenSSL versions used by each run.
+
+Failure controls cover changed and truncated ciphertext, a wrong key or nonce, and wrong domain,
+tenant, subject, record, field, representation, and purpose. No failed control returns plaintext
+or a success report. Same-context replay remains accepted and visible as a scope limit.
+Metadata, field lengths, record counts, and public short codes remain visible in the saved snapshot.
+
+The example uses read-only model references from Smolink's `backend/app/models/user.py` and
+`backend/app/models/url.py`. It neither imports nor changes Smolink. Email uniqueness and login
+lookup need separate query design. Redirects need an admitted runtime decryption path.
+This trial supplies neither feature. C34, Q2, G-CRYPTO, and G-CROSSKEY remain open.
+
+The [cryptography API](https://cryptography.io/en/stable/hazmat/primitives/aead/#cryptography.hazmat.primitives.ciphers.aead.AESGCMSIV) defines the primitive interface. The [changelog](https://cryptography.io/en/stable/changelog/#v50-0-2) records the pinned release. The [tests](../../tests/test_smolink_crypto_demo.py) supply the local behavior evidence.
 
 ## 3. Candidate field envelope
 

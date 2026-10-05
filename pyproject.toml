@@ -13,7 +13,10 @@ requires = ["uv_build>=0.12.12,<0.13"]
 build-backend = "uv_build"
 
 [dependency-groups]
-dev = ["pytest"]
+dev = [
+    "cryptography==50.0.2",
+    "pytest",
+]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

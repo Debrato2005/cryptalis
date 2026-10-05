@@ -1028,3 +1028,64 @@ scope. This review is not independent security review.
 This slice adds no dependency, encryption, database access, policy activation, or authority
 authentication. It does not detect an omitted later revision or supply an atomic filesystem
 snapshot. C01, C25, C33, G-MANIFEST, G-ACTIVE, and the release gate remain incomplete.
+
+## Synthetic Smolink AEAD trial - 2026-10-05
+
+Entry: `5c15a93`, with a clean worktree. The user requested a tangible terminal demonstration
+with synthetic data and Smolink as the reference. The user selected the more impressive result
+when offered a primitive trial or structural contract checks. No commit or push occurred.
+
+The [example](../examples/demo_smolink_crypto.py) uses fixed fake `users.email` and
+`urls.destination` values from two users and three URLs. One URL has null ownership.
+The reference files were Smolink's `backend/app/models/user.py` and `backend/app/models/url.py`.
+Their latest relevant commit was `d617363`. No Smolink source or data changed.
+
+The slice uses the existing leading AES-256-GCM-SIV candidate as a library-native research trial.
+It does not turn F1, W1, or a descriptor into an encryption format. The
+[crypto owner](architecture/crypto-search-lifecycle.md#synthetic-smolink-primitive-trial) defines
+the exact scope. The [library API](https://cryptography.io/en/stable/hazmat/primitives/aead/#cryptography.hazmat.primitives.ciphers.aead.AESGCMSIV)
+and [release notes](https://cryptography.io/en/stable/changelog/) supplied the current primary references.
+
+Acceptance requires exact recovery of five values, a randomized rewrite, eleven authentication
+rejections, and visible acceptance of same-context replay. A permissive decrypt substitute must
+fail the evaluator. Generated keys must stay out of stdout, stderr, and the saved snapshot.
+External input is rejected. Optional output uses exclusive creation and mode `0600` on Linux.
+File and terminal failures must return a redacted nonzero result. Success follows all checks.
+
+The first RED run produced seven expected failures because the example and its dependency were
+absent. The first GREEN run passed seven checks. Adversarial review added RNG, key-leakage,
+cleanup, and output-delivery checks. It then exposed two diagnostic defects: an embedded null
+in an output path raised an unstructured exception, and an I/O error without an errno had the
+wrong cause category. Both defects first failed focused regression checks and then received fixes.
+
+The final focused set has 13 passing checks. The complete suite has 612 passing tests.
+Ruff 0.16.3 lint and formatting pass for both new files. Mypy reports only the same three
+existing CLI diagnostics recorded in the preceding slice. The type gate remains incomplete.
+No checker rule, property range, security control, or meaningful assertion was weakened.
+
+`cryptography==50.0.2` is a development dependency. Its locked dependencies are `cffi==2.1.1`
+and `pycparser==3.0`. Existing dependency records remain unchanged. The new lock records have
+130 SHA-256-pinned source and wheel artifacts from `files.pythonhosted.org`.
+Runtime package metadata still has no dependencies. No package module imports this example.
+
+The source archive and wheel built offline. A clean temporary environment installed the wheel
+and then the pinned lab dependency. Outside the checkout, JSON and human presentation passed.
+Five fields recovered exactly, eleven misuse cases rejected, and the private snapshot had mode
+`0600`. The tested backend reported `cryptography 50.0.2` and `OpenSSL 4.0.3 29 Sep 2026`.
+The initial offline lab-dependency install could not resolve a cached registry entry. An
+approved network install completed that check. No production credential was supplied.
+
+The documentation path and heading check found 19 Markdown files, 552 local links, and zero
+faults before this audit addition. `git diff --check` passed. The added main documentation prose
+scored 1.19 findings per 100 words under STE-flavored lint.
+
+First-party review checked authenticated context, exact-key use, no fallback, nonce repetition,
+key and plaintext exclusion from the snapshot, immutable public metadata, guest ownership,
+output preservation, diagnostic redaction, cleanup failures, and the replay limit.
+It found no remaining defect within the stated trial scope. This is not independent review.
+
+The trial prints only fixed synthetic plaintext and recovery values for teaching. It does not
+save keys, guarantee zeroization, supply recoverable storage after process exit, authenticate
+production identity, implement Smolink email queries or redirects, access PostgreSQL, or supply
+a public Cryptalis encryption API. Q1-Q5, C03, C34, G-CRYPTO, G-CROSSKEY, and the release gate
+remain open. The README gives reproducible presentation and ciphertext inspection commands.

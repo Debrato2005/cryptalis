@@ -37,7 +37,8 @@ pre-creation observations, a wrong protection domain or target, and a stale Acti
 The opaque target identity has no implemented resolver and supplies no authority by itself.
 Behavior tests cover these boundaries. Complete semantic schema validation,
 trusted history authority, and signature authentication remain pending.
-Cryptography, ORM integration, migrations, providers, and assurance tools also remain pending.
+Runtime cryptography, ORM integration, migrations, providers, and assurance tools also remain pending.
+The separate synthetic AEAD research example does not change that runtime status.
 Other Cryptalis APIs and commands are proposed
 contracts. The [capability
 checklist](docs/backend-build-checklist.md) separates specified design from executable evidence.
@@ -115,6 +116,50 @@ Authentication, authorized registry selection, and format freeze remain pending.
 The [scalar vectors](examples/scalars/candidate-vectors.json) contain synthetic encoded values.
 The [scalar boundary](docs/architecture/crypto-search-lifecycle.md#implemented-scalar-syntax-boundary)
 defines syntax limits. Field-specific validation, authentication, and format freeze remain pending.
+
+## Smolink synthetic encryption demonstration
+
+Cryptalis also contains a [synthetic Smolink encryption research example](examples/demo_smolink_crypto.py).
+It uses the library-native AES-256-GCM-SIV candidate. It does not implement a Cryptalis runtime
+envelope, approve a suite, or integrate Smolink with Cryptalis.
+
+Run these commands from the Cryptalis repository root:
+
+```bash
+uv sync --locked
+uv run --locked python examples/demo_smolink_crypto.py
+```
+
+The example uses two fake users and three fake URLs. It protects `users.email` and
+`urls.destination`. One URL has `owner_id=None`, as Smolink permits for guests.
+The screen shows the fixed input, encrypted storage preview, recovered values, and checked outcomes.
+Five values recover exactly. Eleven misuse cases reject. A fresh nonce changes the ciphertext
+on rewrite. Replay with the same valid context still works.
+
+To inspect actual ciphertext, create a new temporary directory:
+
+```bash
+cryptalis_demo_dir=$(mktemp -d /tmp/cryptalis-smolink.XXXXXX)
+uv run --locked python examples/demo_smolink_crypto.py --output "$cryptalis_demo_dir/protected.json"
+cat "$cryptalis_demo_dir/protected.json"
+```
+
+The file contains Base64 ciphertext and nonces, synthetic binding metadata, IDs, ownership links,
+and public short codes. It contains no raw key or original field value. Base64 is only the
+storage encoding. The example encrypts the bytes before that encoding.
+It refuses an existing output path. Accept the snapshot only after exit 0.
+Discard any artifact from a failed run. Output flush does not prove durable storage.
+
+The example prints fixed synthetic input and recovery values for teaching. It accepts no input
+file, database connection, application configuration, key argument, or real account data.
+The key exists only during the run. The saved snapshot cannot be decrypted in a later process.
+Normal Python objects do not guarantee memory zeroization.
+
+For a presentation, explain the sequence: synthetic value, ciphertext, exact recovery, and denied
+tampering or wrong context. Then show the replay limit. This is a primitive trial, not a
+production-readiness or SQLAlchemy integration demonstration.
+
+The [crypto owner](docs/architecture/crypto-search-lifecycle.md#synthetic-smolink-primitive-trial) defines the trial boundary. The [checklist](docs/backend-build-checklist.md) records its evidence.
 
 ## Terminal demonstration
 

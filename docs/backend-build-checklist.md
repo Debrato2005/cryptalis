@@ -76,6 +76,16 @@ An internally consistent replacement chain supplies a positive control for the a
 The [terminal demonstration](../examples/demo_manifest_history.py) checks six real subprocess outcomes and removes temporary files.
 This evidence does not complete C01, C25, C33, G-MANIFEST, or G-ACTIVE.
 
+A separate [Smolink-shaped AEAD research example](../examples/demo_smolink_crypto.py) uses the repository's leading suite candidate
+through `cryptography==50.0.2`. The dependency is development-only. It encrypts and recovers five
+fixed fake field values without a database, application import, production key, or runtime API.
+Fourteen reported controls include eleven rejection cases and an accepted replay scope limit.
+The optional file holds only ciphertext, nonces, and declared metadata. No key is persisted.
+This is library-native primitive evidence only. It does not admit a Cryptalis format, close Q2,
+or complete C03, C34, G-CRYPTO, G-CROSSKEY, or the release gate.
+
+The [behavior tests](../tests/test_smolink_crypto_demo.py) and [crypto contract](architecture/crypto-search-lifecycle.md#synthetic-smolink-primitive-trial) define this evidence scope.
+
 The private [ActiveState kernel](../src/cryptalis/contracts/active_state.py) decodes immutable
 authority headers, computes a separate domain digest, checks monotonic parent links, and validates
 one bounded complete history. Its 51 focused tests cover fixed vectors, canonical IDs and digests,
