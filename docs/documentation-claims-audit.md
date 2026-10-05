@@ -831,3 +831,32 @@ The independent byte implementation is an ad hoc first-party Node script, not an
 Corpus SHA-256: `65b108838e96e3a76e570f37517d0bb28a5111b9773aca4aa58b51b2f604b3a2`.
 Scripts and artifacts under `/tmp` are temporary checks. Fixed vectors and behavioral regressions remain in repository tests.
 This evidence does not close G-CRYPTO, C03, C34, full cross-language fuzzing, or the release gate.
+
+## Bounded manifest ancestry-chain validation - 2026-10-05
+
+Entry: `94b0f19`, with a clean worktree. The production engineering controller authorized one direct implementation slice. No commit or push occurred.
+
+The internal `validate_manifest_history` helper checks one complete genesis-to-head sequence. It requires a nonempty tuple of immutable byte strings. The first document must be revision 0. Each later document must keep the manifest ID, increase the revision, and name the canonical digest of the preceding document. Revision gaps remain valid under the current contract.
+
+The validator checks the 4,096-document and 16 MiB aggregate limits before it parses any member. It then uses the existing bounded header decoder and domain-separated digest helper. It returns only the validated head header. Failure raises `ManifestInvalid` with a fixed diagnostic that does not contain supplied content.
+
+This helper detects a missing genesis document, a missing intermediate document, reordering, mixed identities, decreasing revisions, and content substitution. Exact tuple and byte requirements prevent mutation of the supplied container or members during validation. A strict revision increase also prevents a linked cycle within one accepted sequence.
+
+The helper supplies structural consistency only. It does not validate the complete semantic schema, authenticate a chain, select the current authorized head, or detect an omitted later revision. An attacker can construct a different internally consistent history. Q1 and G-ACTIVE still own the authority backend, trusted head, rollback protection, and recovery evidence. The change does not activate policy or add cryptography, database I/O, ORM behavior, or a CLI command.
+
+### Verification actually run
+
+| Check | Result and limit |
+|---|---|
+| Focused RED test before implementation | Collection failed because `validate_manifest_history` did not exist |
+| `.venv/bin/python -m pytest tests/test_manifest_header.py -q --tb=short` | Exit 0. 31 tests passed after implementation |
+| `UV_CACHE_DIR=/tmp/cryptalis-uv-cache PYTHONDONTWRITEBYTECODE=1 uv run --locked pytest -q` | Exit 0. 467 tests passed in 3.21 seconds on Linux and CPython 3.12.3 |
+| Final repeat of the complete suite | Exit 0. 467 tests passed in 2.56 seconds |
+| `UV_CACHE_DIR=/tmp/cryptalis-uv-cache uv build --offline` | Exit 0. The source archive and wheel built in a temporary directory |
+| Clean temporary environment and offline wheel installation | The installed wheel accepted a two-document chain with a skipped revision number |
+| Existing documentation checker | Exit 0. 20 Markdown files, 506 local links, and zero faults |
+| Added documentation prose lint | STE-flavored score 1.17 per 100 words. The audit draft scored 0.80 |
+| `git diff --check` and final diff review | Exit 0 after the final audit update. Ten intended files changed, with no unrelated file |
+| Ruff and mypy | Not installed on PATH or in the project environment. These checks did not run |
+
+First-party adversarial review checked mutation, empty and truncated histories, revision gaps, chain substitution, limit ordering, cycles, and diagnostic leakage. It found no unresolved issue within this structural scope. This review is not independent security review and does not complete G-MANIFEST, G-ACTIVE, C01, C33, or the release gate.

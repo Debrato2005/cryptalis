@@ -232,6 +232,18 @@ The check proves consistency between two supplied documents. It does not authent
 document, validate complete ancestry, or establish the current authorized policy. Both files
 can come from an attacker. Signatures and a trusted history authority remain pending.
 
+Initial `validate_manifest_history(raw_documents)` support checks one complete, ordered
+genesis-to-head sequence. The input must be a nonempty tuple of immutable byte strings. The
+first document must be revision 0. Each later document must keep the manifest ID, increase the
+revision, and name the canonical digest of the preceding document. Revision numbers can skip.
+The helper accepts at most 4,096 documents and 16 MiB for the complete input. It checks these
+aggregate limits before it parses a document.
+
+The helper returns the validated head header. It does not validate the complete semantic
+schema, authenticate the documents, select an authorized head, detect an omitted later revision,
+or supply runtime authority. An attacker can construct a different internally consistent chain.
+Q1 and G-ACTIVE still own trusted history and current-head selection.
+
 R means required after compilation. C means required when the capability is selected. O means an
 annotation. All referenced enums and policies resolve in the pinned catalogue. Compilation
 rejects missing required fields, ambiguity, unresolved references, and incompatible profiles.
@@ -686,8 +698,8 @@ Controlled access and lifecycle decisions obey their explicit durable audit poli
 ## Packages and dependency direction
 
 The responsibility names below define the proposed package structure. Initial manifest decoding,
-canonical output, content digests, identity-header validation, parent-link validation, structural
-field-format digests, offline terminal inspection, private candidate F1/W1 framing,
+canonical output, content digests, identity-header validation, parent-link and bounded
+ancestry-chain validation, structural field-format digests, offline terminal inspection, private candidate F1/W1 framing,
 and private scalar syntax encoding and decoding exist.
 The [checklist](../backend-build-checklist.md) records implementation state. Shared immutable
 contracts, including evidence DTOs, sit below adapters. Evidence orchestration and rendering sit

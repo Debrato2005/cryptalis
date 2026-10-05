@@ -1,8 +1,9 @@
 # Backend build and evidence checklist
 
 Current state as of 2026-10-05: documentation plus bounded manifest JSON, content digests,
-identity-header validation, parent-link validation, structural field-format digests,
-offline terminal inspection, private candidate F1/W1 framing, and private scalar syntax encoding and decoding.
+identity-header validation, parent-link and bounded ancestry-chain validation, structural
+field-format digests, offline terminal inspection, private candidate F1/W1 framing, and private
+scalar syntax encoding and decoding.
 This file is the authority for capability implementation state.
 [Manifest contracts](architecture/manifest-context-api.md#terms-and-maturity)
 define terms and maturity.
@@ -39,13 +40,26 @@ On 2026-10-04, the manifest components, [terminal inspector](../src/cryptalis/cl
 and scalar decoder had 365 passing tests under `uv run --locked pytest -q` on 2026-10-04.
 Normal Python imports work, and `uv build` produces a wheel and source archive.
 These local checks do not complete C01, C25, or C26. Complete semantic
-validation, trusted revision history, signature authentication, the remaining CLI contract, and
+validation, trusted history authority, signature authentication, the remaining CLI contract, and
 cross-language evidence remain pending.
 
 Parent-link checks validate one supplied pair. Tests cover content tampering, identity
 substitution with a matching digest, equal or decreasing revisions, unusable parent files,
 and redacted CLI failures. Revisions can skip counter values. Both files can come from an
 attacker. Pair consistency does not authenticate policy or establish complete ancestry.
+
+The internal [history validator](../src/cryptalis/manifest/header.py) checks a complete supplied
+genesis-to-head chain. It requires immutable sequence inputs, enforces 4,096-document and 16 MiB
+aggregate limits before parsing, preserves valid revision gaps, and checks each identity and
+digest link. Its boundary tests cover valid chains, genesis truncation, reordering, substitution,
+mixed identities, mutable inputs, and both aggregate limits. An internally consistent attacker
+chain still passes. The helper does not authenticate history, select the authorized head, or
+complete C01 or C33. The CLI remains a one-parent inspector.
+
+On 2026-10-05, 31 focused header/history tests and the complete 467-test suite passed on
+Linux and CPython 3.12.3. A source archive and wheel built offline. A clean temporary environment
+installed the wheel and validated a two-document chain with a skipped revision number. These
+checks supply structural evidence only. They do not complete G-MANIFEST, G-ACTIVE, C01, or C33.
 
 The [CLI failure tests](../tests/test_cli.py) now cover safe diagnostic stages and input roles,
 invalid arguments in JSON mode, duplicate parent options, option termination, and dependency failures.

@@ -3,10 +3,16 @@ from dataclasses import dataclass
 from uuid import UUID
 
 from cryptalis.manifest.canonical import digest_manifest_json
-from cryptalis.manifest.parser import ManifestInvalid, decode_manifest_json
+from cryptalis.manifest.parser import (
+    MAX_DOCUMENT_BYTES,
+    ManifestInvalid,
+    decode_manifest_json,
+)
 
 
 _SHA256_HEX = re.compile(r"[0-9a-f]{64}")
+_MAX_HISTORY_DOCUMENTS = 4096
+_MAX_HISTORY_BYTES = MAX_DOCUMENT_BYTES
 
 
 @dataclass(frozen=True, slots=True)
@@ -115,3 +121,39 @@ def validate_manifest_parent_link(raw: bytes, parent_raw: bytes) -> ManifestHead
     if header.parent_digest != digest_manifest_json(parent_raw):
         raise ManifestInvalid("Manifest parent digest does not match")
     return header
+
+
+def validate_manifest_history(raw_documents: tuple[bytes, ...]) -> ManifestHeader:
+    """Validate one bounded genesis-to-head chain without authentication."""
+    if type(raw_documents) is not tuple or not raw_documents:
+        raise ManifestInvalid(
+            "Manifest history must be a nonempty immutable sequence"
+        )
+    if len(raw_documents) > _MAX_HISTORY_DOCUMENTS:
+        raise ManifestInvalid("Manifest history exceeds the document limit")
+
+    total_bytes = 0
+    for raw in raw_documents:
+        if type(raw) is not bytes:
+            raise ManifestInvalid("Manifest history documents must be immutable bytes")
+        total_bytes += len(raw)
+        if total_bytes > _MAX_HISTORY_BYTES:
+            raise ManifestInvalid("Manifest history exceeds the size limit")
+
+    previous_raw = raw_documents[0]
+    previous = decode_manifest_header(previous_raw)
+    if previous.revision != 0:
+        raise ManifestInvalid("Manifest history must start with genesis revision 0")
+
+    for raw in raw_documents[1:]:
+        current = decode_manifest_header(raw)
+        if current.manifest_id != previous.manifest_id:
+            raise ManifestInvalid("Manifest history IDs must match")
+        if current.revision <= previous.revision:
+            raise ManifestInvalid("Manifest history revisions must increase")
+        if current.parent_digest != digest_manifest_json(previous_raw):
+            raise ManifestInvalid("Manifest history parent digest does not match")
+        previous_raw = raw
+        previous = current
+
+    return previous

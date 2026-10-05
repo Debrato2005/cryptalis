@@ -1,1 +1,1 @@
-"""Manifest and field-format bytes, digests, and manifest identity headers."""
+"""Manifest bytes, digests, identity headers, histories, and field formats."""

@@ -7,8 +7,9 @@ The initial runtime target is one no-search synchronous PostgreSQL cell with off
 Broader security-assurance and search work remains separately gated research.
 
 **Status as of 2026-10-05: bounded manifest JSON, domain-separated content digests,
-identity-header validation, parent-link validation, structural field-format digests,
-offline terminal inspection, private candidate F1/W1 framing, and private scalar encoding and decoding.**
+identity-header validation, parent-link and bounded ancestry-chain validation, structural
+field-format digests, offline terminal inspection, private candidate F1/W1 framing, and private
+scalar encoding and decoding.**
 
 The repository has an installable Python package with a [bounded JSON decoder](src/cryptalis/manifest/parser.py), [restricted RFC
 8785 canonicalizer and SHA-256 digest helper](src/cryptalis/manifest/canonical.py), [typed header
@@ -21,7 +22,7 @@ The [private scalar codec](src/cryptalis/crypto/_candidate_scalar.py) encodes an
 text, bytes, integer, and decimal syntax. It preserves exact types and decimal representation.
 Encoded bytes contain unprotected values. The codec does not authenticate values or approve field policy.
 Behavior tests cover these boundaries. Complete semantic schema validation,
-trusted revision history, and signature authentication remain pending.
+trusted history authority, and signature authentication remain pending.
 Cryptography, ORM integration, migrations, providers, and assurance tools also remain pending.
 Other Cryptalis APIs and commands are proposed
 contracts. The [capability
@@ -57,6 +58,13 @@ Accept output only after exit 0. The [CLI contract](docs/architecture/manifest-c
 It does not validate the complete schema, authenticate either document, or establish complete
 ancestry or the current authorized policy. The example files contain headers only.
 To create a local wheel and source archive, run `uv build`.
+
+The internal `validate_manifest_history` helper validates one complete genesis-to-head sequence.
+It requires immutable bytes in an immutable tuple. It permits skipped revision numbers, but each
+document must name the previous document by its canonical digest. The sequence is limited to
+4,096 documents and 16 MiB in total. This structural check does not authenticate the history,
+select the current head, or grant runtime authority. The terminal inspector still accepts only
+one optional parent.
 
 The field-format helpers check descriptor structure and compute canonical bytes and a
 domain-separated digest. For example:
