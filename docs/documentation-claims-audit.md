@@ -771,3 +771,63 @@ The correction adds descriptor and text-chain regressions and narrows the dispos
 Review supplies no independent security admission. Source tests and local installed-wheel smoke checks establish only this bounded CLI behavior.
 The assistant did not commit or push.
 HEAD advanced to `b43c857`, which records the preceding graph-profile correction. Those entry contents remain intact.
+
+## Candidate scalar syntax encoding — 2026-10-05
+
+Entry: `799203e`, with a clean worktree. The user supplied the production engineering controller and requested continuation from the current state.
+That request authorized one direct implementation slice. No commit or push occurred.
+
+The [private scalar codec](../src/cryptalis/crypto/_candidate_scalar.py) now encodes the four existing candidate entries.
+The [crypto owner](architecture/crypto-search-lifecycle.md#implemented-scalar-syntax-boundary) defines the boundary.
+The encoder closes the decoder-only syntax gap while Q1–Q5 and P0 runtime reviews remain open.
+It adds no encryption, field-policy admission, new catalogue entry, public API, or command.
+Existing wire vectors and decoding behavior remain unchanged.
+
+### Invariants and adversarial review
+
+Selectors reject before null encoding. Exact types prevent bool, subclasses, mutable buffers, and accidental coercion.
+State and length framing preserve null versus empty values. Unicode content, leading U+FEFF, integer signs, and decimal representation remain exact.
+Encoded output contains unprotected values and grants no authorization.
+
+Bounds precede integer digit extraction and decimal digit-tuple extraction.
+Decimal validation quantizes to the input's own exponent under a private explicit precision and exponent context.
+It never rounds to a different exponent. The scale check still rejects representations outside the candidate range.
+The context admits the largest valid adjusted exponent and preserves negative zero and trailing zeros.
+Ambient precision, traps, flags, clamping, and integer conversion limits do not select the wire bytes.
+
+Manual first-party adversarial review checked coercion, null bypass, byte versus character limits, coefficient overflow, signed zero, and ambient context changes.
+A 100,000-digit coefficient with a canceling exponent rejected before large digit-tuple conversion.
+The local `tracemalloc` trial measured a 1,344-byte peak after caller-owned input construction.
+This observation does not measure native allocations or establish a general performance bound.
+
+Safe exception messages exclude supplied values. Unicode wrapping retains its original cause under the existing failure contract.
+Exception attributes, traceback locals, and returned plaintext bytes still require host diagnostic controls.
+No independent security review or supported runtime claim follows.
+
+Primary references, accessed 2026-10-05: [Python Decimal quantize](https://docs.python.org/3.12/library/decimal.html#decimal.Decimal.quantize)
+and [integer string-conversion limits](https://docs.python.org/3.12/library/stdtypes.html#integer-string-conversion-length-limitation).
+These sources explain the dependency behavior. They do not prove Cryptalis behavior.
+
+### Verification actually run
+
+| Check | Result and limit |
+|---|---|
+| Entry `uv run --locked pytest -q` | Exit 0. 385 passed |
+| Encoder regressions before implementation | 69 expected failures because the encoder was absent. The 75 existing scalar tests passed |
+| `.venv/bin/python -m pytest tests/test_candidate_scalar.py -q --tb=short` | Exit 0. 144 passed. Fifteen fixed vectors, type rejection, exact limits, ambient context, and 800 seeded typed round trips |
+| `.venv/bin/python -m pytest -q` | Exit 0. 454 passed on Linux/CPython 3.12.3 |
+| `.venv/bin/python /tmp/cryptalis-encode-differential.py` | Independent Node encoder matched 2,065 cases, including 2,028 accepted values. Seed `20261005`. Exact bytes and rejection classes matched |
+| `UV_CACHE_DIR=/tmp/cryptalis-uv-cache uv build --offline --out-dir /tmp/cryptalis-scalar-encode-dist` | Exit 0. Wheel and source archive built |
+| `.venv/bin/python /tmp/cryptalis-encode-wheel-smoke.py` | Clean offline wheel installation outside the checkout passed 15 encode/decode vectors, ten typed rejections, two ambient-context checks, and the parent-link console command |
+| Documentation checks and `git diff --check` | Local links, anchors, fences, whitespace, and the final diff checked. No faults |
+| Added documentation prose lint before writes | STE-flavored score 0.76 per 100 words. Audit prose checked separately |
+| Ruff, mypy, Hypothesis | Absent from PATH or the project environment. Ruff and mypy did not run. No Hypothesis claim follows from the finite seeded corpus |
+
+One later uv invocation failed because its default cache was read-only.
+Verification then used the existing Python environment and a writable temporary uv cache.
+No dependency, build configuration, migration, or CI file changed.
+
+The independent byte implementation is an ad hoc first-party Node script, not an externally reviewed implementation.
+Corpus SHA-256: `65b108838e96e3a76e570f37517d0bb28a5111b9773aca4aa58b51b2f604b3a2`.
+Scripts and artifacts under `/tmp` are temporary checks. Fixed vectors and behavioral regressions remain in repository tests.
+This evidence does not close G-CRYPTO, C03, C34, full cross-language fuzzing, or the release gate.

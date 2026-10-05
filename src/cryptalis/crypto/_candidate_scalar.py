@@ -1,7 +1,8 @@
-"""Bounded candidate scalar decoding without authentication or field-policy admission."""
+"""Bounded candidate scalar syntax without authentication or field-policy admission."""
 
-from decimal import Decimal
+from decimal import Context, Decimal, InvalidOperation
 from struct import Struct
+from typing import cast
 
 from ._candidate_envelope import (
     EnvelopeInvalid as EnvelopeInvalid,
@@ -17,6 +18,78 @@ _DECIMAL_HEADER = Struct(">BiI")
 _MAX_VALUE_BYTES = _MAX_SCALAR_BYTES - _HEADER.size
 _MAX_DIGITS = 1024
 _MAX_SCALE = 1024
+_INTEGER_LIMIT = 10**_MAX_DIGITS
+
+
+def _encode_integer(value: int) -> bytes:
+    if not -_INTEGER_LIMIT < value < _INTEGER_LIMIT:
+        raise EnvelopeOversize("Scalar integer exceeds the digit limit.")
+    magnitude = abs(value)
+    digits = bytearray()
+    while magnitude:
+        magnitude, digit = divmod(magnitude, 10)
+        digits.append(48 + digit)
+    digits.reverse()
+    return (b"-" if value < 0 else b"") + (bytes(digits) if digits else b"0")
+
+
+def _encode_decimal(value: Decimal) -> bytes:
+    if not value.is_finite():
+        raise EnvelopeMalformed("Scalar decimal must be finite.")
+    # Equal exponents prevent rounding. Bound coefficient allocation before as_tuple.
+    context = Context(
+        prec=_MAX_DIGITS,
+        Emin=-_MAX_SCALE,
+        Emax=_MAX_SCALE + _MAX_DIGITS - 1,
+        traps=[InvalidOperation],
+        clamp=0,
+    )
+    try:
+        bounded = value.quantize(value, context=context)
+    except InvalidOperation as error:
+        raise EnvelopeOversize("Scalar decimal exceeds the representation limits.") from error
+    sign, digits, exponent = bounded.as_tuple()
+    scale = -cast(int, exponent)
+    if not -_MAX_SCALE <= scale <= _MAX_SCALE:
+        raise EnvelopeOversize("Scalar decimal scale exceeds the limit.")
+    coefficient = bytes(48 + digit for digit in digits)
+    return _DECIMAL_HEADER.pack(sign, scale, len(coefficient)) + coefficient
+
+
+def encode_candidate_scalar(
+    codec_entry_id: int, value: str | bytes | int | Decimal | None
+) -> bytes:
+    """Encode candidate scalar syntax without field-policy admission or encryption.
+
+    Exact types are required. Returned bytes contain the unprotected value.
+    """
+    if type(codec_entry_id) is not int:
+        raise EnvelopeMalformed("Scalar encoder requires an integer codec selector.")
+    if codec_entry_id not in (1, 2, 3, 4):
+        raise EnvelopeUnsupportedFormat("Scalar encoder does not support this codec.")
+    if value is None:
+        return _HEADER.pack(0, 0)
+
+    expected_type = (str, bytes, int, Decimal)[codec_entry_id - 1]
+    if type(value) is not expected_type:
+        raise EnvelopeMalformed("Scalar value type does not match the codec.")
+    if codec_entry_id == 1:
+        text = cast(str, value)
+        if len(text) > _MAX_VALUE_BYTES:
+            raise EnvelopeOversize("Scalar text exceeds the size limit.")
+        try:
+            payload = text.encode("utf-8", errors="strict")
+        except UnicodeEncodeError as error:
+            raise EnvelopeMalformed("Scalar text contains invalid Unicode.") from error
+    elif codec_entry_id == 2:
+        payload = cast(bytes, value)
+    elif codec_entry_id == 3:
+        payload = _encode_integer(cast(int, value))
+    else:
+        payload = _encode_decimal(cast(Decimal, value))
+    if len(payload) > _MAX_VALUE_BYTES:
+        raise EnvelopeOversize("Scalar value exceeds the size limit.")
+    return _HEADER.pack(1, len(payload)) + payload
 
 
 def _canonical_coefficient(raw: bytes) -> bool:

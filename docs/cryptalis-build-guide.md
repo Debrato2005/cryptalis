@@ -2,7 +2,7 @@
 
 Status: construction guide. Bounded manifest JSON, content digests, identity-header validation,
 parent-link validation, structural field-format digests, and offline terminal inspection exist.
-Private candidate F1/W1 framing and scalar syntax decoding also exist.
+Private candidate F1/W1 framing and scalar syntax encoding and decoding also exist.
 Authentication and format freeze remain pending.
 See the [checklist](backend-build-checklist.md) for current
 evidence. Reviewed 2026-10-04. Build order reconciled 2026-10-05.

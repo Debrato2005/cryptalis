@@ -8,7 +8,7 @@ Broader security-assurance and search work remains separately gated research.
 
 **Status as of 2026-10-05: bounded manifest JSON, domain-separated content digests,
 identity-header validation, parent-link validation, structural field-format digests,
-offline terminal inspection, private candidate F1/W1 framing, and private scalar decoding.**
+offline terminal inspection, private candidate F1/W1 framing, and private scalar encoding and decoding.**
 
 The repository has an installable Python package with a [bounded JSON decoder](src/cryptalis/manifest/parser.py), [restricted RFC
 8785 canonicalizer and SHA-256 digest helper](src/cryptalis/manifest/canonical.py), [typed header
@@ -17,8 +17,9 @@ and read-only [manifest inspector](src/cryptalis/cli.py).
 The private [F1 envelope parser](src/cryptalis/crypto/_candidate_envelope.py) and
 [W1 wrapping-record parser](src/cryptalis/crypto/_candidate_wrap.py) check structure and return
 unauthenticated bytes. They perform no key lookup or decryption.
-The [private scalar decoder](src/cryptalis/crypto/_candidate_scalar.py) checks candidate text, bytes,
-integer, and decimal syntax. It does not authenticate values or approve field policy.
+The [private scalar codec](src/cryptalis/crypto/_candidate_scalar.py) encodes and decodes candidate
+text, bytes, integer, and decimal syntax. It preserves exact types and decimal representation.
+Encoded bytes contain unprotected values. The codec does not authenticate values or approve field policy.
 Behavior tests cover these boundaries. Complete semantic schema validation,
 trusted revision history, and signature authentication remain pending.
 Cryptography, ORM integration, migrations, providers, and assurance tools also remain pending.
@@ -84,7 +85,7 @@ and [W1 limits](docs/architecture/crypto-search-lifecycle.md#35-local-secret-wra
 Authentication, authorized registry selection, and format freeze remain pending.
 The [scalar vectors](examples/scalars/candidate-vectors.json) contain synthetic encoded values.
 The [scalar boundary](docs/architecture/crypto-search-lifecycle.md#implemented-scalar-syntax-boundary)
-defines syntax limits. Encoding and field-specific validation remain pending.
+defines syntax limits. Field-specific validation, authentication, and format freeze remain pending.
 
 ## Purpose and boundary
 

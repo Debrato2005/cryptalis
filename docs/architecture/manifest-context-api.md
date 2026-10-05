@@ -688,7 +688,7 @@ Controlled access and lifecycle decisions obey their explicit durable audit poli
 The responsibility names below define the proposed package structure. Initial manifest decoding,
 canonical output, content digests, identity-header validation, parent-link validation, structural
 field-format digests, offline terminal inspection, private candidate F1/W1 framing,
-and private scalar syntax decoding exist.
+and private scalar syntax encoding and decoding exist.
 The [checklist](../backend-build-checklist.md) records implementation state. Shared immutable
 contracts, including evidence DTOs, sit below adapters. Evidence orchestration and rendering sit
 above adapters. The CLI composes use cases and defines no security semantics. No domain layer

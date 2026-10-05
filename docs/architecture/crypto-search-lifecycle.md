@@ -1,6 +1,6 @@
 # Cryptography, Search, and Key Lifecycle Contract
 
-Status: detailed architecture proposal with private candidate framing and scalar syntax decoding.
+Status: detailed architecture proposal with private candidate framing and scalar syntax encoding and decoding.
 No encryption implementation, frozen wire format, approved suite, or measured gates.
 
 Reviewed: 2026-09-30. First-party reconciliation: 2026-10-01. F1 parser review: 2026-10-05.
@@ -227,9 +227,10 @@ insufficient.
 
 #### Implemented scalar syntax boundary
 
-The [private scalar decoder](../../src/cryptalis/crypto/_candidate_scalar.py) implements candidate entries 1–4 above.
+The [private scalar codec](../../src/cryptalis/crypto/_candidate_scalar.py) implements candidate syntax for entries 1–4 above.
+`encode_candidate_scalar` returns unprotected bytes. `decode_candidate_scalar` returns unauthenticated typed values.
 An explicit integer selector chooses the syntax. Unknown selectors reject even for null.
-It accepts immutable `bytes` and checks state, exact declared length, truncation, and trailing bytes before typed conversion.
+The decoder accepts immutable `bytes` and checks state, exact declared length, truncation, and trailing bytes before typed conversion.
 The encoded record has a 1,048,576-byte cap, including its five-byte outer header.
 Text and raw bytes can therefore contain at most 1,048,571 bytes.
 
@@ -243,15 +244,31 @@ Null differs from empty text or bytes. Invalid states never substitute null.
 Failures use the shared `EnvelopeInvalid` hierarchy. Unknown selectors raise `EnvelopeUnsupportedFormat`.
 Resource bounds raise `EnvelopeOversize`. Invalid syntax, framing, or input types raise `EnvelopeMalformed`.
 
-Safe diagnostics identify the scalar stage or field without input bytes. UTF-8 errors retain their original cause.
-Host diagnostics must not serialize exception attributes or local values because retained causes can contain input bytes.
+The encoder accepts `None` or the exact `str`, `bytes`, `int`, or `Decimal` type selected by the codec.
+It rejects bool, subclasses, mutable byte buffers, and implicit conversion.
+Unknown or mistyped selectors reject before null encoding.
+Text encoding adds no BOM and preserves Unicode content. Lone surrogates reject.
+The encoder checks character count before UTF-8 conversion and byte count before framing.
+A rejected multibyte string can allocate at most four times the maximum text payload during that conversion.
+Caller-owned inputs and diagnostic object retention remain outside this allocation bound.
+
+Integer range checks precede bounded digit extraction. The encoder does not use ambient integer string conversion.
+Decimal validation uses a private explicit context and quantizes to the input's own exponent.
+Equal exponents prevent rounding. The precision cap rejects oversized coefficients before digit-tuple extraction.
+An explicit scale check follows. Negative zero, trailing zeros, and exponent remain unchanged.
+The private context permits all admitted representations, including the largest adjusted exponent.
+No operation changes global integer settings or the caller's decimal context.
+
+Safe diagnostics identify the scalar stage or field without input values. Unicode errors retain their original cause.
+Host diagnostics must not serialize exception attributes or local values because retained causes can contain input values.
 
 The [boundary tests](../../tests/test_candidate_scalar.py) and
 [synthetic vectors](../../examples/scalars/candidate-vectors.json) protect syntax only.
-Successful decoding does not authenticate bytes, approve catalogue entries, match a creation descriptor, or grant release authority.
+Successful encoding or decoding does not authenticate bytes, approve catalogue entries, match a creation descriptor, or grant release authority.
 Field-specific nullability, precision, scale, and negative-zero constraints remain pending.
-The caller must authenticate bytes and approve these constraints before release.
-Encoding, public APIs, and CLI commands remain pending. No production consumer uses this decoder.
+Before storage, the caller must approve field policy and encrypt the encoded value.
+Before plaintext release, the caller must authenticate and approve decoded values.
+Public APIs and CLI commands remain pending. No production consumer uses this private codec.
 
 ### 3.3 AAD and policy compatibility
 

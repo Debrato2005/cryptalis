@@ -2,7 +2,7 @@
 
 Current state as of 2026-10-05: documentation plus bounded manifest JSON, content digests,
 identity-header validation, parent-link validation, structural field-format digests,
-offline terminal inspection, private candidate F1/W1 framing, and private scalar syntax decoding.
+offline terminal inspection, private candidate F1/W1 framing, and private scalar syntax encoding and decoding.
 This file is the authority for capability implementation state.
 [Manifest contracts](architecture/manifest-context-api.md#terms-and-maturity)
 define terms and maturity.
@@ -98,15 +98,25 @@ Earlier slices checked the installed F1 parser and descriptor helpers.
 
 The [private scalar decoder](../src/cryptalis/crypto/_candidate_scalar.py) implements only the
 [candidate syntax boundary](architecture/crypto-search-lifecycle.md#implemented-scalar-syntax-boundary).
-Its [75 boundary tests](../tests/test_candidate_scalar.py) cover fixed typed vectors, exact framing, null/empty distinctions,
+The decoder slice added [75 boundary tests](../tests/test_candidate_scalar.py) for fixed typed vectors, exact framing, null/empty distinctions,
 malformed UTF-8, canonical numeric syntax, digit/scale/size limits, and dependency context changes.
-It preserves decimal representation and Unicode content. No encoding, field-policy approval, or authentication claim follows.
+It preserves decimal representation and Unicode content. That decoder-only slice added no encoding, field-policy approval, or authentication.
 Python and an independent Node decoder agree on 38,483 unique inputs with seed `20261004`.
 The trial includes 3,426 accepted values and compares their types and complete representations.
 This bounded first-party trial does not complete G-CRYPTO or admit C03.
 
+On 2026-10-05, the private encoder added 69 tests and brought the full suite to 454 passing tests.
+The 144 scalar tests cover both directions. The encoder matches all 15 existing vectors without changing their bytes.
+It rejects type coercion and subclasses, nonfinite decimals, invalid Unicode, and resource overflow.
+Bounds precede integer digit extraction and decimal digit-tuple allocation.
+Tests preserve exact decimal representation under restrictive ambient contexts and integers under the 640-digit string limit.
+A seeded round-trip corpus covers 800 typed values.
+An independent Node encoder agrees on 2,065 cases, including 2,028 accepted values, with seed `20261005`.
+This bounded first-party check does not freeze the format, authenticate values, or admit C03/C34.
+The [encoding audit](documentation-claims-audit.md#candidate-scalar-syntax-encoding--2026-10-05) records validation and limits.
+
 The current wheel and source archive build offline. A clean temporary environment installs the wheel outside the checkout.
-It passes 15 scalar vectors, six typed rejection cases, and the existing parent-link console command.
+The encoder wheel trial passes 15 bidirectional vectors, ten typed rejections, two ambient-context checks, and the parent-link console command.
 Ruff and mypy remain unavailable on PATH and in the project environment. These checks did not run.
 Earlier offline resolution found no cached tools, and sandbox DNS blocked their downloads.
 

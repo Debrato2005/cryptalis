@@ -2,6 +2,7 @@
 
 import importlib
 import json
+import random
 import sys
 from decimal import Decimal, localcontext
 from pathlib import Path
@@ -226,3 +227,160 @@ def test_scalar_syntax_does_not_authenticate_a_synthetic_f1_payload():
 
     assert _api().decode_candidate_scalar(untrusted.codec_entry_id, untrusted.ciphertext) == "hello"
     assert untrusted.tag == bytes(16)
+
+
+@pytest.mark.parametrize("vector", _VECTORS)
+def test_scalar_encoder_matches_fixed_wire_vectors(vector):
+    if "decimal_tuple" in vector:
+        sign, digits, exponent = vector["decimal_tuple"]
+        value = Decimal((sign, tuple(digits), exponent))
+    elif "bytes_hex" in vector:
+        value = bytes.fromhex(vector["bytes_hex"])
+    else:
+        value = vector["value"]
+
+    raw = _api().encode_candidate_scalar(vector["codec"], value)
+
+    assert type(raw) is bytes
+    assert raw == bytes.fromhex(vector["hex"])
+
+
+@pytest.mark.parametrize("codec", [True, False, 1.0, "1", None])
+def test_scalar_encoder_rejects_selector_coercion_even_for_null(codec):
+    api = _api()
+    with pytest.raises(api.EnvelopeMalformed):
+        api.encode_candidate_scalar(codec, None)
+
+
+@pytest.mark.parametrize("codec", [0, 5, 65535, -1])
+def test_scalar_encoder_rejects_unknown_selectors_even_for_null(codec):
+    api = _api()
+    with pytest.raises(api.EnvelopeUnsupportedFormat):
+        api.encode_candidate_scalar(codec, None)
+
+
+@pytest.mark.parametrize("codec,value", [
+    (1, b"secret-canary"), (2, "secret-canary"),
+    (2, bytearray(b"secret-canary")), (2, memoryview(b"secret-canary")),
+    (3, True), (3, 1.0), (3, "secret-canary"), (3, Decimal("1")),
+    (4, 1), (4, 1.0), (4, "secret-canary"),
+    (1, type("TextSubclass", (str,), {})("secret-canary")),
+    (2, type("BytesSubclass", (bytes,), {})(b"secret-canary")),
+    (3, type("IntegerSubclass", (int,), {})(1)),
+    (4, type("DecimalSubclass", (Decimal,), {})("1")),
+])
+def test_scalar_encoder_rejects_mismatched_types_without_echoing_values(codec, value):
+    api = _api()
+    with pytest.raises(api.EnvelopeMalformed) as error:
+        api.encode_candidate_scalar(codec, value)
+    assert "secret-canary" not in str(error.value)
+
+
+@pytest.mark.parametrize("value", ["secret-canary\ud800", "secret-canary\udfff"])
+def test_scalar_encoder_rejects_lone_surrogates_with_safe_diagnostics(value):
+    api = _api()
+    with pytest.raises(api.EnvelopeMalformed) as error:
+        api.encode_candidate_scalar(1, value)
+    assert "secret-canary" not in str(error.value)
+    assert isinstance(error.value.__cause__, UnicodeEncodeError)
+
+
+@pytest.mark.parametrize("codec,value", [
+    (1, "x" * 1_048_571),
+    (1, "😀" * 262_142 + "abc"),
+    (2, b"\xff" * 1_048_571),
+], ids=["text-ascii-limit", "text-utf8-limit", "bytes-limit"])
+def test_scalar_encoder_enforces_encoded_byte_limits(codec, value):
+    api = _api()
+    raw = api.encode_candidate_scalar(codec, value)
+    assert len(raw) == 1_048_576
+    assert api.decode_candidate_scalar(codec, raw) == value
+    extra = b"x" if codec == 2 else "x"
+    with pytest.raises(api.EnvelopeOversize):
+        api.encode_candidate_scalar(codec, value + extra)
+
+
+@pytest.mark.parametrize("sign", [1, -1])
+def test_scalar_encoder_integer_bounds_survive_the_interpreter_digit_limit(sign):
+    api = _api()
+    previous = sys.get_int_max_str_digits()
+    try:
+        sys.set_int_max_str_digits(640)
+        value = sign * (10**1024 - 1)
+        raw = api.encode_candidate_scalar(3, value)
+        assert raw == _record((b"-" if sign < 0 else b"") + b"9" * 1024)
+        assert api.decode_candidate_scalar(3, raw) == value
+        with pytest.raises(api.EnvelopeOversize):
+            api.encode_candidate_scalar(3, sign * 10**1024)
+        assert sys.get_int_max_str_digits() == 640
+    finally:
+        sys.set_int_max_str_digits(previous)
+
+
+@pytest.mark.parametrize("sign", [0, 1])
+@pytest.mark.parametrize("exponent", [-1024, 1024])
+@pytest.mark.parametrize("digits", [(0,), (9,) * 1024])
+def test_scalar_encoder_decimal_preserves_representation_without_context_changes(sign, exponent, digits):
+    api = _api()
+    value = Decimal((sign, digits, exponent))
+    with localcontext() as context:
+        context.prec = 1
+        context.Emax = 1
+        context.Emin = -1
+        context.clamp = 1
+        for signal in context.traps:
+            context.traps[signal] = True
+        flags = context.flags.copy()
+        raw = api.encode_candidate_scalar(4, value)
+        result = api.decode_candidate_scalar(4, raw)
+        assert result.as_tuple() == value.as_tuple()
+        assert context.flags == flags
+        assert (context.prec, context.Emax, context.Emin, context.clamp) == (1, 1, -1, 1)
+        assert all(context.traps.values())
+
+
+@pytest.mark.parametrize("value", [
+    Decimal("NaN"), Decimal("-NaN123"), Decimal("sNaN"),
+    Decimal("Infinity"), Decimal("-Infinity"),
+])
+def test_scalar_encoder_rejects_nonfinite_decimal_values(value):
+    api = _api()
+    with pytest.raises(api.EnvelopeMalformed):
+        api.encode_candidate_scalar(4, value)
+
+
+@pytest.mark.parametrize("value", [
+    Decimal((0, (1,) * 1025, 0)),
+    Decimal((0, (1,) + (0,) * 1024, -1024)),
+    Decimal((0, (1,) * 100_000, -99_999)),
+    Decimal("1E-1025"), Decimal("1E+1025"),
+    Decimal("-0E-1025"), Decimal("-0E+1025"),
+    Decimal("1E-999999999"), Decimal("0E+999999999"),
+])
+def test_scalar_encoder_rejects_decimal_resource_overflow_without_rounding(value):
+    api = _api()
+    with pytest.raises(api.EnvelopeOversize):
+        api.encode_candidate_scalar(4, value)
+
+
+def test_scalar_codec_round_trips_a_seeded_typed_corpus():
+    api = _api()
+    rng = random.Random(20261005)
+    alphabet = "\x00\ufefféеe\u0301😀\U0010ffff"
+    for _ in range(200):
+        digits = (rng.randrange(1, 10),) + tuple(rng.randrange(10) for _ in range(rng.randrange(1, 1024)))
+        values = [
+            "".join(rng.choice(alphabet) for _ in range(rng.randrange(50))),
+            rng.randbytes(rng.randrange(50)),
+            rng.randrange(-10**1024 + 1, 10**1024),
+            Decimal((rng.randrange(2), digits, rng.randrange(-1024, 1025))),
+        ]
+        for codec, value in enumerate(values, 1):
+            raw = api.encode_candidate_scalar(codec, value)
+            result = api.decode_candidate_scalar(codec, raw)
+            assert type(result) is type(value)
+            if codec == 4:
+                assert result.as_tuple() == value.as_tuple()
+            else:
+                assert result == value
+            assert api.encode_candidate_scalar(codec, result) == raw
