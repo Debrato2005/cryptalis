@@ -570,10 +570,28 @@ inspection retains `scope: manifest_header`.
 Argument failures return code 2 with a redacted `CLI.InvalidArguments` record.
 File input or authorization failures return code 2 with `Manifest.Invalid`.
 Other file I/O and cleanup failures return code 4 with `Manifest.Unavailable`.
-Neither mode writes files or uses the network. The command does not complete C25 or establish full semantic validity.
+Neither mode changes manifest files or uses the network. The command does not complete C25 or establish full semantic validity.
 
-Under the [failure policy](../../ENGINEERING_PLAYBOOK.md#fail-loudly-and-explicitly), machine mode requires a stable error object on stderr for every failure.
-This includes argument validation. No failure may emit a success result on stdout.
+Under the [failure policy](../../ENGINEERING_PLAYBOOK.md#fail-loudly-and-explicitly), machine mode requires a stable error object when stderr is available.
+This includes argument validation. Validation failures do not write success output.
+
+Result, help, and diagnostic output require a complete write and successful flush.
+Output failures use `CLI.OutputUnavailable`, operational exit 4, and safe `output_role`, stage, and cause fields.
+Stages are `output_write`, `output_flush`, `output_cleanup`, and `output_close`.
+Missing or closed streams and short writes fail explicitly.
+If stderr is unavailable, exit 4 is the remaining error channel. The command cannot supply a JSON diagnostic there.
+
+A failed flush can follow partial or complete output bytes.
+Consumers must require exit 0 and complete framing before accepting a result.
+Successful flush proves local output handoff, not recipient processing or durable storage.
+The terminal entry point redirects a failed native stream to the null sink to prevent another shutdown flush failure.
+If that cleanup fails, it closes the native stream and preserves cleanup and primary failures in safe related diagnostics.
+This bounded disposal never changes failure into success.
+Native close can attempt another flush to the original destination. The original failure remains fatal.
+
+Cleanup can redirect or close the standard output descriptor.
+Treat `main()` as a terminal entry point, not a reusable library output API.
+Custom host streams require caller-managed lifetime. Their arbitrary shutdown behavior is outside the tested native-stream guarantee.
 Reject repeated input-identity or security-policy selectors unless their explicit contract defines an observable, tested precedence rule.
 
 The inspector accepts full option names. Repeated `--parent` options reject before file reads, including identical values and `--parent=PATH` forms.
@@ -618,18 +636,18 @@ A correlation ID alone does not identify the failed stage or establish an observ
 
 Inspection errors include `operation`, `stage`, `input_role`, and `cause`.
 The `header` stage covers JSON decoding and identity-header validation. The `parent_link` stage covers one supplied pair.
-Input roles are `child`, `parent`, `pair`, or null for arguments.
+Input roles are `child`, `parent`, `pair`, or null for arguments and output failures.
 Causes are fixed validator categories or symbolic operating-system error names. `UnknownIoError` reports an absent or unrecognized OS error number.
 
 Missing or unusable paths and permission denial return code 2. Other open, metadata, read, and close failures return code 4.
 If cleanup also fails, `related_error` retains the primary safe diagnostic. Text output also shows its stage, role, and cause.
 
 Wrapped exception causes remain internal. Public diagnostics exclude raw exception text, paths, input values, and traceback payloads.
-All current inspection error records set `retryable: false`. The command performs no retries.
+All current inspection error records set `retryable: false`. The command does not rerun inspection or result writes.
 
 | Family | Codes / retry behavior |
 |---|---|
-| CLI | InvalidArguments. Correct the command arguments |
+| CLI | InvalidArguments, OutputUnavailable. Correct arguments or the output destination. No automatic delivery retry |
 | Manifest | Invalid, UnsupportedVersion, DigestMismatch, Unavailable. Reject invalid input or report operational unavailability |
 | Context | Missing, Unauthorized, Expired, Conflicting, Unavailable; independently get fresh authority |
 | Envelope | Malformed, UnsupportedFormat, AuthenticationFailed, Oversize; fail/quarantine, never NULL fallback |

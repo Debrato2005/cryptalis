@@ -712,3 +712,62 @@ No commit or push occurred.
 
 A separate first-party AI reviewer checked the exact diff, StageReceipt outcomes, required coverage, inventories, and signature policy.
 The reviewer found no substantive issue. This review supplies no independent security admission or executable support evidence.
+
+## CLI output delivery correction — 2026-10-05
+
+Entry: `b26b72b`, with the graph-profile assurance owner and audit edits still uncommitted.
+This code slice preserves those edits and fixes existing CLI output delivery only.
+It does not depend on an unresolved crypto, database, provider, or transition selection.
+
+The entry CLI did not check final output flush or write counts.
+Real full devices and closed pipes returned Python shutdown exit 120 instead of the operational code.
+Missing stdout could silently discard results. Closed streams exposed uncaught exceptions.
+
+The [inspector](../src/cryptalis/cli.py) now checks writes and flushes for result, help, and diagnostic output.
+Safe failures identify the output channel, boundary, and symbolic cause under `CLI.OutputUnavailable`.
+Unavailable stderr leaves exit 4 as the observable channel.
+Native shutdown cleanup has a defined disposal contract and preserves failure.
+Native close can attempt another flush.
+The [canonical CLI owner](architecture/manifest-context-api.md#cli-and-configuration) documents partial output and terminal-descriptor side effects.
+
+The [failure tests](../tests/test_cli.py) exercise real full devices and closed pipes, plus missing/closed streams and short writes.
+A reviewer found descriptor reuse during cleanup. A failing subprocess regression reproduced that defect before correction.
+The replacement descriptor now stays stream-owned when opening the null sink reuses the target.
+Injected null-open and descriptor-duplication failures retain the original output diagnostic and still return an operational failure.
+
+Primary reference: [Python's SIGPIPE guidance](https://docs.python.org/3/library/signal.html#note-on-sigpipe), accessed 2026-10-05.
+It recommends explicit flush and null-sink redirection to prevent a second shutdown failure.
+Cryptalis applies its own exit 4 and safe-diagnostic contract. This source does not prove Cryptalis behavior.
+
+### Boundaries and remaining work
+
+The 20 new tests protect output failures. They do not establish destination receipt or filesystem durability.
+Full-device fixtures require `/dev/full`. The recorded run used Linux and CPython 3.12.3.
+Arbitrary custom-stream finalizers and other operating systems lack this executable evidence.
+No new public command, semantic manifest validation, authenticated authority, cryptography, ORM, or transition behavior was added.
+C25 and release admission remain incomplete. Q1–Q10 and all seven P0 reviews remain open or pending.
+DR03 and DR04 remain OPEN. The preceding graph-profile correction retains its existing scope.
+
+### Verification actually run
+
+| Check | Result and limit |
+|---|---|
+| Initial output regressions before implementation | 10 failures. Real full devices and closed pipes returned exit 120. Both failed diagnostic cases also returned 120 |
+| Missing-stream cases before correction | Two failures with AttributeError. The short-write regression also failed against the entry source, which returned 0 |
+| Closed-stream cases against the entry source | Two failures with uncaught ValueError |
+| Review-driven descriptor and cleanup cases | Three failing cases before correction. Descriptor reuse and failed duplication could restore exit 120. Final implementation preserves descriptor ownership and closes failed native buffers |
+| Text cleanup-chain regression | Two failures before correction. Original output stage and cause were absent from text. Both modes now retain them |
+| `UV_CACHE_DIR=/tmp/cryptalis-uv-cache PYTHONDONTWRITEBYTECODE=1 uv run --locked pytest -q` | Exit 0. 385 passed in 2.38 seconds. Current Linux/CPython evidence only |
+| `UV_CACHE_DIR=/tmp/cryptalis-uv-cache uv build --offline --out-dir /tmp/cryptalis-cli-output-dist` | Exit 0. Wheel and source archive built. Temporary artifacts are local validation, not admitted release evidence |
+| Clean temporary environment and offline wheel installation | Installed the rebuilt wheel. Console and installed-module checks passed 13 cases from `/tmp`, outside the checkout. Success, full device, closed pipe, failed stderr, descriptor reuse, and injected null-open/duplication failures checked |
+| Existing documentation checker | Exit 0. 20 Markdown files including the pytest-cache README, 502 local links, zero faults |
+| `git diff --check` and entry hashes | Exit 0. Six intended files changed. All other 44 maintained files remained byte-identical. The existing assurance-owner edit and historical audit prefix remain intact |
+| Added documentation lint before writes | STE-flavored: 744 words, 3 findings, 0.40 per 100 words. Strict output contract: 179 words, 1 finding, 0.56 per 100 words |
+| Disposal wording refinement | Initial strict score 3.57 failed the 1.5 target. Corrected wording scored 0.00. Native close-time flush remains explicit |
+| Ruff and mypy | Unavailable on PATH. These checks did not run |
+
+Separate first-party AI review found descriptor ownership and disposal wording issues.
+The correction adds descriptor and text-chain regressions and narrows the disposal claim.
+Review supplies no independent security admission. Source tests and local installed-wheel smoke checks establish only this bounded CLI behavior.
+The assistant did not commit or push.
+HEAD advanced to `b43c857`, which records the preceding graph-profile correction. Those entry contents remain intact.

@@ -562,3 +562,205 @@ def test_manifest_parent_identity_and_revision_rules(
         assert result.returncode == 2
         assert result.stdout == ""
         assert json.loads(result.stderr)["error"]["code"] == "Invalid"
+
+
+@pytest.mark.parametrize('machine_json', [False, True])
+@pytest.mark.parametrize('command', ['inspect', 'help'])
+@pytest.mark.parametrize('destination', ['full', 'closed_pipe'])
+def test_failed_stdout_returns_redacted_operational_failure(
+    machine_json, command, destination
+):
+    import os
+
+    if destination == 'full':
+        if not Path('/dev/full').exists():
+            pytest.skip('The full-device fixture requires /dev/full.')
+        sink = open('/dev/full', 'wb', buffering=0)
+    else:
+        reader, writer = os.pipe()
+        os.close(reader)
+        sink = os.fdopen(writer, 'wb', buffering=0)
+    arguments = (
+        ['manifest', 'inspect', str(_EXAMPLES / 'genesis.json')]
+        if command == 'inspect'
+        else ['--help']
+    )
+    if machine_json:
+        arguments.append('--json')
+    with sink:
+        result = subprocess.run(
+            [sys.executable, '-m', 'cryptalis', *arguments],
+            cwd=_REPOSITORY_ROOT, stdout=sink, stderr=subprocess.PIPE,
+            text=True, check=False, timeout=10,
+        )
+
+    assert result.returncode == 4
+    assert 'Traceback' not in result.stderr
+    assert 'Exception ignored' not in result.stderr
+    assert str(_EXAMPLES) not in result.stderr
+    if machine_json:
+        error = json.loads(result.stderr)['error']
+        assert error['family'] == 'CLI'
+        assert error['code'] == 'OutputUnavailable'
+        assert error['stage'] in ('output_write', 'output_flush')
+        assert error['input_role'] is None
+        assert error['output_role'] == 'stdout'
+        assert error['cause'] == ('ENOSPC' if destination == 'full' else 'EPIPE')
+    else:
+        assert 'CLI.OutputUnavailable' in result.stderr
+        assert 'output_role=stdout' in result.stderr
+
+
+@pytest.mark.parametrize('machine_json', [False, True])
+def test_failed_diagnostic_destination_still_returns_operational_failure(
+    machine_json
+):
+    if not Path('/dev/full').exists():
+        pytest.skip('The full-device fixture requires /dev/full.')
+    arguments = ['manifest', 'inspect', 'do-not-echo-output-secret']
+    if machine_json:
+        arguments.append('--json')
+    with open('/dev/full', 'wb', buffering=0) as sink:
+        result = subprocess.run(
+            [sys.executable, '-m', 'cryptalis', *arguments],
+            cwd=_REPOSITORY_ROOT, stdout=subprocess.PIPE, stderr=sink,
+            text=True, check=False, timeout=10,
+        )
+
+    assert result.returncode == 4
+    assert result.stdout == ''
+
+
+@pytest.mark.parametrize('channel', ['stdout', 'stderr'])
+def test_missing_output_channel_is_explicit_failure(monkeypatch, capsys, channel):
+    from cryptalis import cli
+
+    monkeypatch.setattr(cli.sys, channel, None)
+    path = _EXAMPLES / 'genesis.json' if channel == 'stdout' else Path('missing')
+    result = cli.main(['manifest', 'inspect', str(path), '--json'])
+    output = capsys.readouterr()
+
+    assert result == 4
+    assert output.out == ''
+    if channel == 'stdout':
+        error = json.loads(output.err)['error']
+        assert error['code'] == 'OutputUnavailable'
+        assert error['cause'] == 'MissingOutputStream'
+        assert error['output_role'] == 'stdout'
+    else:
+        assert output.err == ''
+
+
+def test_short_output_write_is_not_success(monkeypatch, capsys):
+    import io
+    from cryptalis import cli
+
+    class ShortWriter(io.StringIO):
+        def write(self, text):
+            return 0
+
+    monkeypatch.setattr(cli.sys, 'stdout', ShortWriter())
+    result = cli.main([
+        'manifest', 'inspect', str(_EXAMPLES / 'genesis.json'), '--json'
+    ])
+    output = capsys.readouterr()
+
+    assert result == 4
+    error = json.loads(output.err)['error']
+    assert error['cause'] == 'EIO'
+    assert error['stage'] == 'output_write'
+    assert error['output_role'] == 'stdout'
+
+
+@pytest.mark.parametrize('channel', ['stdout', 'stderr'])
+def test_closed_output_channel_is_explicit_failure(monkeypatch, capsys, channel):
+    import io
+    from cryptalis import cli
+
+    stream = io.StringIO()
+    stream.close()
+    monkeypatch.setattr(cli.sys, channel, stream)
+    path = _EXAMPLES / 'genesis.json' if channel == 'stdout' else Path('missing')
+    result = cli.main(['manifest', 'inspect', str(path), '--json'])
+    output = capsys.readouterr()
+
+    assert result == 4
+    assert output.out == ''
+    if channel == 'stdout':
+        error = json.loads(output.err)['error']
+        assert error['cause'] == 'InvalidOutputStream'
+        assert error['output_role'] == 'stdout'
+    else:
+        assert output.err == ''
+
+
+def test_closed_stdout_descriptor_keeps_operational_exit():
+    result = subprocess.run(
+        [sys.executable, '-c',
+         'import os, sys; from cryptalis.cli import main; '
+         'os.close(sys.stdout.fileno()); raise SystemExit(main(sys.argv[1:]))',
+         'manifest', 'inspect', str(_EXAMPLES / 'genesis.json'), '--json'],
+        cwd=_REPOSITORY_ROOT, capture_output=True, text=True,
+        check=False, timeout=10,
+    )
+
+    assert result.returncode == 4
+    assert result.stdout == ''
+    error = json.loads(result.stderr)['error']
+    assert error['code'] == 'OutputUnavailable'
+    assert error['cause'] == 'EBADF'
+    assert 'Exception ignored' not in result.stderr
+
+
+@pytest.mark.parametrize('cleanup_step', ['open', 'dup2'])
+@pytest.mark.parametrize('machine_json', [False, True])
+def test_output_cleanup_failure_retains_primary_and_operational_exit(
+    cleanup_step, machine_json
+):
+    if not Path('/dev/full').exists():
+        pytest.skip('The full-device fixture requires /dev/full.')
+    program = '''
+import errno, os, sys
+from cryptalis import cli
+original_open = cli.os.open
+
+def failing_open(path, flags):
+    if path == os.devnull:
+        raise OSError(errno.EIO, 'do-not-echo-cleanup-secret')
+    return original_open(path, flags)
+
+def failing_dup2(source, target):
+    raise OSError(errno.EIO, 'do-not-echo-cleanup-secret')
+
+if sys.argv[1] == 'open':
+    cli.os.open = failing_open
+else:
+    cli.os.dup2 = failing_dup2
+raise SystemExit(cli.main(sys.argv[2:]))
+'''
+    arguments = ['manifest', 'inspect', str(_EXAMPLES / 'genesis.json')]
+    if machine_json:
+        arguments.append('--json')
+    with open('/dev/full', 'wb', buffering=0) as sink:
+        result = subprocess.run(
+            [sys.executable, '-c', program, cleanup_step, *arguments],
+            cwd=_REPOSITORY_ROOT, stdout=sink, stderr=subprocess.PIPE,
+            text=True, check=False, timeout=10,
+        )
+
+    assert result.returncode == 4
+    if machine_json:
+        error = json.loads(result.stderr)['error']
+        stages = []
+        while error:
+            stages.append(error['stage'])
+            assert error['code'] == 'OutputUnavailable'
+            error = error.get('related_error')
+        assert 'output_cleanup' in stages
+        assert 'output_flush' in stages
+    else:
+        assert 'CLI.OutputUnavailable' in result.stderr
+        assert 'related_stage=output_flush' in result.stderr
+        assert 'related_cause=ENOSPC' in result.stderr
+    assert 'do-not-echo' not in result.stderr
+    assert 'Exception ignored' not in result.stderr

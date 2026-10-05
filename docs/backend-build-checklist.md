@@ -1,6 +1,6 @@
 # Backend build and evidence checklist
 
-Current state as of 2026-10-04: documentation plus bounded manifest JSON, content digests,
+Current state as of 2026-10-05: documentation plus bounded manifest JSON, content digests,
 identity-header validation, parent-link validation, structural field-format digests,
 offline terminal inspection, private candidate F1/W1 framing, and private scalar syntax decoding.
 This file is the authority for capability implementation state.
@@ -35,8 +35,8 @@ Online/search/fleet/Graph/DAST breadth remains later unchecked scope and is not 
 No P0 contract or research question is marked reviewed/closed by this pass.
 The [P0 review register](architecture/README.md#p0-documentation-review-register) links each reconciled blocker to its owner and pending disposition.
 
-The current manifest components, [terminal inspector](../src/cryptalis/cli.py), private framing parsers,
-and scalar decoder have 365 passing tests under `uv run --locked pytest -q` on 2026-10-04.
+On 2026-10-04, the manifest components, [terminal inspector](../src/cryptalis/cli.py), private framing parsers,
+and scalar decoder had 365 passing tests under `uv run --locked pytest -q` on 2026-10-04.
 Normal Python imports work, and `uv build` produces a wheel and source archive.
 These local checks do not complete C01, C25, or C26. Complete semantic
 validation, trusted revision history, signature authentication, the remaining CLI contract, and
@@ -54,6 +54,13 @@ Permission denial remains exit 2 after file open. Operational I/O and cleanup fa
 The [failure audit](documentation-claims-audit.md#cli-failure-corrections) records F01–F03 corrections.
 During the CLI slice, a clean temporary environment installed the wheel and passed six console smoke cases outside the checkout.
 This evidence does not complete the broader C25 or release gates.
+
+On 2026-10-05, output-delivery corrections brought the full suite to 385 passing tests.
+The 66 CLI tests include full-device and closed-pipe results/help, failed stderr, missing/closed streams, and short writes.
+They also cover descriptor reuse and failed null-sink cleanup with preserved diagnostics.
+Writes and flushes must complete before success. Failed stderr leaves an explicit non-zero exit channel.
+The [output audit](documentation-claims-audit.md#cli-output-delivery-correction--2026-10-05) records scope and installed-wheel verification.
+This correction adds no command or runtime crypto, ORM, provider, or transition support.
 
 The [field-format helpers](../src/cryptalis/manifest/descriptor.py) check descriptor structure
 and compute canonical bytes and a separate content digest.

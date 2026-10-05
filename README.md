@@ -6,7 +6,7 @@ Generated policy history expresses desired behavior. Authenticated external acti
 The initial runtime target is one no-search synchronous PostgreSQL cell with offline maintenance transitions.
 Broader security-assurance and search work remains separately gated research.
 
-**Status as of 2026-10-04: bounded manifest JSON, domain-separated content digests,
+**Status as of 2026-10-05: bounded manifest JSON, domain-separated content digests,
 identity-header validation, parent-link validation, structural field-format digests,
 offline terminal inspection, private candidate F1/W1 framing, and private scalar decoding.**
 
@@ -49,7 +49,10 @@ The inspector prints the validated identity header and content digest in text or
 Use `--parent PATH` to check the link to one supplied parent. Both files must have valid headers,
 the same manifest ID, increasing revisions, and a matching canonical parent digest.
 The command reads bounded local regular files. Invalid input returns exit code 2 and a redacted
-`Manifest.Invalid` error. The command performs no network or write action.
+`Manifest.Invalid` error. The command does not change manifest files or use the network.
+Output write or flush failure returns operational exit 4.
+When stderr works, it reports a redacted `CLI.OutputUnavailable` error.
+Accept output only after exit 0. The [CLI contract](docs/architecture/manifest-context-api.md#cli-and-configuration) defines delivery and cleanup limits.
 It does not validate the complete schema, authenticate either document, or establish complete
 ancestry or the current authorized policy. The example files contain headers only.
 To create a local wheel and source archive, run `uv build`.

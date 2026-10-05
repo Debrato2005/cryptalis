@@ -1,12 +1,13 @@
 import argparse
 import errno
+import io
 import json
 import os
 import stat
 import sys
 from collections.abc import Callable, Sequence
 from pathlib import Path
-from typing import BinaryIO, Literal, NoReturn, cast
+from typing import BinaryIO, Literal, NoReturn, TextIO, cast
 from uuid import uuid4
 
 from cryptalis.manifest.canonical import digest_manifest_json
@@ -59,6 +60,16 @@ class _CommandFailure(Exception):
 
 
 class _ArgumentParser(argparse.ArgumentParser):
+    def print_help(self, file: TextIO | None = None) -> None:
+        _write_output(
+            self.format_help(), sys.stdout if file is None else file, "stdout"
+        )
+
+    def print_usage(self, file: TextIO | None = None) -> None:
+        _write_output(
+            self.format_usage(), sys.stdout if file is None else file, "stdout"
+        )
+
     def error(self, message: str) -> NoReturn:
         raise _CommandFailure(
             "The command arguments are invalid.",
@@ -243,47 +254,122 @@ def _result(raw: bytes, parent_raw: bytes | None = None) -> dict[str, object]:
     }
 
 
+def _output_failure(
+    error: OSError | ValueError | None,
+    stage: str,
+    output_role: Literal["stdout", "stderr"],
+) -> _CommandFailure:
+    if error is None:
+        cause = "MissingOutputStream"
+    elif isinstance(error, ValueError):
+        cause = "InvalidOutputStream"
+    else:
+        cause = errno.errorcode.get(error.errno, "UnknownIoError")
+    failure = _CommandFailure(
+        f"Cannot deliver command output to {output_role}.",
+        family="CLI",
+        code="OutputUnavailable",
+        operation="cli.output",
+        stage=stage,
+        cause=cause,
+        exit_code=4,
+    )
+    failure.error["output_role"] = output_role
+    return failure
+
+
+def _write_output(
+    text: str, stream: TextIO | None, output_role: Literal["stdout", "stderr"]
+) -> None:
+    if stream is None:
+        raise _output_failure(None, "output_write", output_role)
+    stage = "output_write"
+    try:
+        if stream.write(text) != len(text):
+            raise OSError(errno.EIO, "Command output write was incomplete.")
+        stage = "output_flush"
+        stream.flush()
+    except (OSError, ValueError) as error:
+        failure = _output_failure(error, stage, output_role)
+        # A failed native buffer must not retry at interpreter shutdown.
+        if isinstance(stream, io.TextIOWrapper) and not stream.closed:
+            try:
+                target = stream.fileno()
+                sink = os.open(os.devnull, os.O_WRONLY)
+                if sink != target:
+                    try:
+                        os.dup2(sink, target)
+                    finally:
+                        os.close(sink)
+                # If open reused the target, ownership stays with the stream.
+            except (OSError, ValueError) as cleanup_error:
+                cleanup = _output_failure(
+                    cleanup_error, "output_cleanup", output_role
+                )
+                cleanup.error["related_error"] = failure.error
+                try:
+                    stream.close()
+                except (OSError, ValueError) as close_error:
+                    close_failure = _output_failure(
+                        close_error, "output_close", output_role
+                    )
+                    close_failure.error["related_error"] = cleanup.error
+                    raise close_failure from close_error
+                raise cleanup from cleanup_error
+        raise failure from error
+
+
 def _write_result(result: dict[str, object], machine_json: bool) -> None:
     if machine_json:
-        print(json.dumps(result, sort_keys=True, separators=(",", ":")))
-        return
-
-    parent_digest = result["parent_digest"]
-    parent_text = "null" if parent_digest is None else str(parent_digest)
-    print(f"scope: {result['scope']}")
-    print(f"schema_version: {result['schema_version']}")
-    print(f"manifest_id: {result['manifest_id']}")
-    print(f"revision: {result['revision']}")
-    print(f"parent_digest: {parent_text}")
-    print(f"digest: {result['digest']}")
+        text = json.dumps(result, sort_keys=True, separators=(",", ":"))
+    else:
+        parent_digest = result["parent_digest"]
+        parent_text = "null" if parent_digest is None else str(parent_digest)
+        text = (
+            f"scope: {result['scope']}\n"
+            f"schema_version: {result['schema_version']}\n"
+            f"manifest_id: {result['manifest_id']}\n"
+            f"revision: {result['revision']}\n"
+            f"parent_digest: {parent_text}\n"
+            f"digest: {result['digest']}"
+        )
+    _write_output(text + "\n", sys.stdout, "stdout")
 
 
 def _write_error(failure: _CommandFailure, machine_json: bool) -> None:
     error = {**failure.error, "correlation_id": str(uuid4())}
     if machine_json:
-        print(
-            json.dumps(
-                {"error": error}, sort_keys=True, separators=(",", ":")
-            ),
-            file=sys.stderr,
+        _write_output(
+            json.dumps({"error": error}, sort_keys=True, separators=(",", ":"))
+            + "\n",
+            sys.stderr,
+            "stderr",
         )
         return
 
     related = cast(dict[str, object] | None, error.get("related_error"))
     related_context = ""
-    if related is not None:
-        related_context = (
+    related_depth = 1
+    while related is not None:
+        related_context += (
+            f" related_depth={related_depth}"
             f" related_error={related['family']}.{related['code']}"
             f" related_stage={related['stage']}"
             f" related_input_role={related['input_role']}"
             f" related_cause={related['cause']}"
         )
-    print(
+        related = cast(dict[str, object] | None, related.get("related_error"))
+        related_depth += 1
+    output_context = (
+        f" output_role={error['output_role']}" if "output_role" in error else ""
+    )
+    _write_output(
         f"cryptalis: {error['family']}.{error['code']}: {error['reason']} "
         f"operation={error['operation']} stage={error['stage']} "
         f"input_role={error['input_role']} cause={error['cause']} retryable=false "
-        f"correlation_id={error['correlation_id']}{related_context}",
-        file=sys.stderr,
+        f"correlation_id={error['correlation_id']}{output_context}{related_context}\n",
+        sys.stderr,
+        "stderr",
     )
 
 
@@ -309,5 +395,10 @@ def main(argv: Sequence[str] | None = None) -> int:
         handler = cast(Callable[[argparse.Namespace], int], arguments.handler)
         return handler(arguments)
     except _CommandFailure as failure:
-        _write_error(failure, machine_json)
+        try:
+            _write_error(failure, machine_json)
+        except _CommandFailure as diagnostic_failure:
+            diagnostic_failure.error["related_error"] = failure.error
+            # With stderr unavailable, the exit status is the error channel.
+            return diagnostic_failure.exit_code
         return failure.exit_code
