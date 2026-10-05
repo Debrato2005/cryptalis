@@ -5,7 +5,7 @@ parent-link validation, structural field-format digests, and offline terminal in
 Private candidate F1/W1 framing and scalar syntax decoding also exist.
 Authentication and format freeze remain pending.
 See the [checklist](backend-build-checklist.md) for current
-evidence. Reviewed 2026-10-04.
+evidence. Reviewed 2026-10-04. Build order reconciled 2026-10-05.
 
 Prerequisites:
 
@@ -49,36 +49,28 @@ A workstream number or convincing design document does not supply that evidence.
 
 ```mermaid
 flowchart TD
-  Identity[Authn/authz provenance + immutable IDs] --> Manifest[Manifest/compiler/catalogue]
-  Manifest --> Envelope[Envelope/index framing + parser vectors]
-  Envelope --> Shape[Physical/null model]
-  Shape --> DBCheck[DB domain/CHECK/coexistence predicate]
-  Identity --> ORM[ORM state + query compatibility]
-  Envelope --> ORM
-  ORM --> Search[Equality/IN + uniqueness protocol]
-  DBCheck --> Schema[Schema/Alembic plans]
-  Search --> Schema
-  Schema --> Migration[Writer fence + recoverable migration]
-  Manifest --> Keys[Providers/epochs/leases/external tombstone]
-  Keys --> Lifecycle[Rotate/revoke/shred/restore evidence]
-  DTO[Result contracts + collector controls] --> Verify[Deterministic Verify]
-  ORM --> Verify
-  Migration --> Verify
-  Lifecycle --> Verify
-  DTO --> Lab[Contained Pentest/network lab]
-  Verify --> Correlation[Graph/evidence correlation]
-  Lab --> Correlation
+  Authority[Active-state + transition contracts C33] --> Format[Domain / representation / sole suite C34]
+  Format --> Explicit[Minimal explicit field path C35]
+  Explicit --> Session[Pinned public sync Session cell or repository fallback C35]
+  Session --> Preflight[DB profile + read-only preflight + reviewed schema C36]
+  Preflight --> Offline[Offline protect / reconfigure / deprotect C37]
+  Offline --> LocalExit[Local aggregate remove prototype C39]
+  Offline --> Provider[One real provider / precise key operations C38]
+  Provider --> Restore[Recovery manifest / quarantine / admit C38]
+  LocalExit --> Upgrade[Upgrade + full decommission cell C39]
+  Restore --> Upgrade
+  Upgrade --> Release[Telemetry / provenance / independent review C40]
+  Release --> Later[Separate search / async / fleet / online / assurance tracks]
 ```
 
-W-3 requires a literal order: freeze framing and version bytes and parser errors before designing meaningful database checks for malformed shapes.
-A CHECK does not establish cryptographic authenticity.
-Identity provenance precedes key selection and SQL.
-The asynchronous comparison includes explicit warm with local crypto, actual adapted greenlet remote input/output (I/O), and deferred batches.
-Backfill cannot precede a decision about writer coexistence and fencing.
-Tombstone denial precedes destructive key work.
-
-Detailed contracts own each state transition and acceptance budget.
-The Protection Manifest defines policy. The derived Protection Graph contains evidence and unknowns, not policy authority.
+The [checklist foundation rows](backend-build-checklist.md#ordered-foundation-slices) own dependencies and evidence.
+The [unresolved register](architecture/README.md#unresolved-research-questions) owns Q1–Q10.
+Q1–Q5 remain open. Research closure and [P0 documentation review](architecture/README.md#p0-documentation-review-register) precede dependent runtime implementation.
+Current structural descriptor/framing helpers do not admit real ciphertext.
+Freeze revised identity/binding bytes and an established suite before schema checks or ORM transparency.
+Desired policy never supplies active authority. A derived graph supplies evidence only.
+Offline quiescence replaces initial dual writers/journals/fleet leases. Complete verification still precedes activation.
+Search, async, online, multi-provider, graph, and pentest remain later independent gates.
 
 ## Workstream catalogue
 
@@ -96,29 +88,26 @@ The catalogue also uses intermediate representation (IR), abstract syntax tree (
 Data transfer objects (DTOs) define shared result structures.
 Authenticated encryption with associated data (AEAD), nonces, and additional authenticated data (AAD) govern payload protection.
 
-| Thread / purpose | First files and construction sequence | Concepts / dependencies / learning exit |
+| Thread / purpose | Suggested future files and behavior sequence | Dependencies and learning exit |
 |---|---|---|
-| 0 Evidence baseline | Minimal packaging and runner/fixture setup for the first manifest or context behavior gate | Setup enables behavior checks. Import-only smoke tests are not a quality gate. C00/C26 require their own evidence |
-| 1 Trusted context + manifest | contracts/ids, provenance grant DTO, manifest/model, naming, compiler, diff | Host identity versus authorization. Canonical bytes and versioned policy. C01/C02 vectors and substitution gate |
-| 2 Envelope/local keys | crypto/kdf, aead adapter, envelope. Then keys/provider, local | AEAD, nonces, AAD, and domain separation. C03 vectors, parser, failure, and size checks before suite freeze |
-| 3 ORM write/read | sqlalchemy/context, mapping, descriptor, events | Logical versus hidden physical history, rollback, loaders, and identity map. C04/P1 useful enumerated sync/async cells |
-| 4 Async alternatives/query IR | Explicit warm and hidden-row batch experiment. Greenlet/deferred comparisons. Query IR, comparators, and guards | Actual yielding versus blocking, cancellation, cold unknown subjects, and operators that fail explicitly. C05/C06/P2/P3 |
-| 5 Equality/uniqueness | crypto/normalization, search. Then comparator binds and the DB uniqueness protocol | Exact normalized and null semantics, leakage, and shared-domain costs. C08/C09/P5 authoritative domain safe against races |
-| 6 Schema compiler | schema/physical, compiler, compare | Catalogues, domains, CHECK, indexes, and collisions. C10 plan-only output after frozen bytes |
-| 7 Alembic/migration | alembic/operations, renderers, comparators. Then migration/state, plan, backfill, verify | Public extension APIs, additive coexistence, chunk compare-and-swap (CAS), checkpoints, writer fence, and nontransactional index recovery. C11/C12/P6 |
-| 8 Provider/cache/lifecycle | keys/cache, provider adapters, lifecycle, tombstones | Explicit identity and access management (IAM) and provider differences, epochs, leases, concurrent idempotency, and outage. C13..C15/P7 |
-| 9 Bounded shredding/controlled release | Shred request/state/receipt and independent release authority | Restored bytes versus managed access denial, suspended workers, backups, and search residue. C16/C17. No universal erasure |
-| 10 Doctor/plan | doctor/workspace, Python AST, stable syntax/semantic IR, symbols, rule/finding models | Source spans, name resolution, query evidence, and unknowns. C18/C19/P9 corpus, not invented soundness |
-| 11 Dataflow depth | doctor/cfg, def-use, summaries, call graph, typed taint, framework models | Fixed points, async exceptions, and transformations for each sink. Per-rule assurance gates |
-| 12 Results/Verify/graph | Evidence DTOs, verify/invariants, collectors, exposure, scenarios. Then graph provenance and writer ledger | Controls, watermarks, mutants, unknowns, and contradictions. C20/C21/C24/P8 |
-| 13 Pentest/network | Safety broker, pentest/target, external ZAP adapter, endpoints/auth/mutate/execute/replay. Then packet capture (PCAP) ingestion | Roles, state, containment, payload intent, transport layer security (TLS) limits, and baseline/protected/mutant replay. C22/C23 |
-| 14 CLI/release integration | cli composition/config/errors. Then evidence validators/renderers | Safe visible actions and exit codes, import/wheel quarantine, and exact support cells. C25..C30 |
-| 15 Advanced constructions/ecosystem | Isolated search and analyzer experiments. Additional framework/provider/tool adapters | Published oracles, leakage, usability, and maintenance. C31/C32. No ceiling on research breadth |
+| C33 Authority/contracts | contracts/active, transition, approval, receipt, errors; manifest history/current-head validators and development authority | Authenticated intent versus active state, CAS, ancestry, stale/wrong-target/redacted plan. No crypto or DB mutation |
+| C34 Identity/suite | contracts/ids, successor descriptor/catalogue, reviewed AEAD/KDF/wrapping adapter and local provider | Generated representation/domain bindings, exact-key and nonce rules, external vectors and independent review before ciphertext |
+| C35 Explicit field then ORM | Minimal repository/session codec path, then sqlalchemy/context, mapping, descriptor/events through public hooks | One no-search scalar workflow and trusted Session identity. Pinned sync load/history/rollback/refresh/bypass evidence or repository fallback |
+| C36 Database/preflight | schema/snapshot, profile, preflight, physical compiler; alembic operations/renderers | Target identity, roles/ownership/search_path/RLS/executable code/2PC/CDC/index/logging/capacity. Reviewed DDL output only |
+| C37 Offline transition | transition/plan, executor, checkpoint, transform, terminal verifier, finalizer | Writer exclusion, chunk/row revisions, crash/retry/overlap/CAS and exact irreversible approval. PROTECT/reconfigure then DEPROTECT |
+| C38 Keys/recovery | One provider adapter and bounded single-process cache, key-operation effect plans, recovery manifest and restore admission | Native provider states, rewrap versus new writes versus re-encryption, quarantined restore/current denial/offline-recovery limits |
+| C39 Exit/compatibility | Aggregate remove after local deprotect, then compatibility matrix/startup/upgrade checks and provider-dependent exit | Old binaries/jobs/DB objects/copies/recovery reader, package absence, one writer version, adjacent-version/retirement/restore evidence |
+| C40 Release | Safe telemetry/configuration, canary sink fixtures, redacted diagnostics and product artifact verification | Dependency lock, SBOM, provenance/Trusted Publishing, source-to-wheel and import quarantine, independent review |
+| Later search | Normalization/terms/comparators and database uniqueness, then offline REINDEX | Individual equality/IN/leakage/null/collision/coverage gates. No-search baseline first |
+| Later async/fleet/online/CDC | Async alternatives, external provider budgets, mixed writers/journals/concurrent verification, replication profile | Exact independent cells. Never infer them from sync/offline evidence |
+| Later assurance | Doctor IR/CFG/taint, graph/writer correlation, Verify breadth, Pentest/network/tool adapters | Per-rule oracles, containment, collector controls and comparative value. Not a first-transition prerequisite |
+| Later ecosystem | Additional provider/framework/language/construction integrations | Published oracles, independent review, accepted leakage, usable cost, and maintenance commitment |
 
-An early integration checkpoint combines one ORM path, randomized payload and equality, and one safe retrofit.
-It also includes one lifecycle profile, Doctor lint, Verify controls, and authorized ZAP impact evidence.
-It is an integration checkpoint, not the full scope or a production release.
-Advanced search, static application security testing (SAST), dynamic application security testing (DAST), networking, and distributed experiments remain active before release integration.
+Suggested paths are prospective package responsibilities, not authorized scaffolding or existing artifacts.
+Use the [module owner](architecture/manifest-context-api.md#packages-and-dependency-direction) and current tree before choosing an exact file.
+The first useful integration checkpoint is one no-search path, exact DB preflight, and a resumable offline transition with scoped evidence.
+It does not require equality search, Graph, ZAP, multi-process caches, or online coexistence.
+Later research can proceed independently within its declared gates. It supplies no production claim.
 
 ## What each gate teaches
 
@@ -160,6 +149,11 @@ These include automatic schema application, invented context, changed query sema
 ## Next-file assistance
 
 Prerequisite: Name the thread and invariant.
+
+Check C33–C40, current implementation, and the unresolved question dependencies before supplying runtime code.
+If a required Q1–Q5 answer is open, supply its bounded research or contract-review task instead.
+Do not create runtime behavior that depends on that answer.
+After reviewed closure, use one behavior-first file slice and the existing manual workflow.
 
 The assistant's response includes the dependency and gate, exact future file path, purpose, and concepts to understand.
 It supplies one complete file for manual typing, a walkthrough, command, expected outcome, and common discrepancies.

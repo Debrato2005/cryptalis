@@ -50,6 +50,30 @@ compatibility cells. The previous 2.1-beta and Alembic <1.20 proposal is histori
 
 It cannot be called the current upstream state.
 
+### 2026-10-05 official-page observations
+
+Access date: 2026-10-05. The SQLAlchemy 2.0 page identifies 2.0.54, Alembic autogenerate identifies 1.20.0, and PostgreSQL current pages resolve to edition 18.
+These are page observations, not new release selection or installed environment pins.
+Older dated version rows above remain historical observations.
+The following evidence is **documented-only**. No database fixture, Session experiment, restore, or migration ran in this documentation pass.
+
+| ID | Official source / edition | Bounded observation | Pending reproduction and limitation |
+|---|---|---|---|
+| ORM-E6 | [Session events](https://docs.sqlalchemy.org/en/20/orm/session_events.html), 2.0.54 | Session ORM execution and flush use distinct hooks | Pin public ORM/Core/Connection/driver/bulk/loader fixtures. A Session hook cannot imply separate-connection interception |
+| ALE-E3 | [Autogenerate](https://alembic.sqlalchemy.org/en/latest/autogenerate.html), 1.20.0 | Candidate revisions need manual review and correction | Rename, changed CHECK, unknown plugin/head and second-diff fixtures. No backfill or activation proof |
+| PG-E4 | [pg_restore](https://www.postgresql.org/docs/18/app-pgrestore.html), 18 | Restore can execute code chosen by source superusers, including partial restore | Hostile function/trigger/extension/default/view/role fixtures in quarantine, then trusted-schema/data-only comparison. No automatic safe data-only assertion |
+| PG-E5 | [Logical restrictions](https://www.postgresql.org/docs/18/logical-replication-restrictions.html), 18 | Logical replication does not replicate DDL/schema | Publication/subscription/slot/connector and schema-drift fixtures. Initial profile rejects CDC, not an inferred repair |
+| PG-E6 | [PREPARE TRANSACTION](https://www.postgresql.org/docs/18/sql-prepare-transaction.html), [resource settings](https://www.postgresql.org/docs/18/runtime-config-resource.html), 18 | Prepared state survives the session and retains locks. Zero max_prepared_transactions disables the feature | Inspect setting and pg_prepared_xacts; seed prepared work and pool shutdown. Empty sessions alone cannot prove quiescence |
+| PG-E7 | [CREATE INDEX](https://www.postgresql.org/docs/18/sql-createindex.html), 18 | Concurrent failure can leave invalid indexes. Unique enforcement can remain. Snapshot waits and transaction restrictions matter | Cancel/fail concurrent build, inspect definition/owner/indisvalid/indisready and reconcile under reviewed DDL |
+| PG-E8 | [Explicit locks](https://www.postgresql.org/docs/18/explicit-locking.html), [MVCC](https://www.postgresql.org/docs/18/mvcc.html), 18 | Lock conflicts and snapshot visibility constrain DDL and verification | Long transaction/snapshot, lock queue/timeout, post-transform terminal visibility and row-revision fixtures |
+| PG-E9 | [RLS](https://www.postgresql.org/docs/18/ddl-rowsecurity.html), 18 | Superusers/BYPASSRLS bypass RLS. Owners normally bypass unless forced | Effective-role/owner/inherited-grant fixtures. RLS never supplies host authenticated identity |
+| PG-E10 | [Schemas](https://www.postgresql.org/docs/18/ddl-schemas.html), [function security](https://www.postgresql.org/docs/18/perm-functions.html), 18 | Search path trusts schema creators. Executable objects can run with dangerous authority | Shadowed object, SECURITY DEFINER, role/database setting and untrusted-owner fixtures. Inventory visibility needs pinned privilege |
+| PG-E11 | [Logging](https://www.postgresql.org/docs/18/runtime-config-logging.html), [SQLAlchemy engine logging](https://docs.sqlalchemy.org/en/20/core/engines.html#configuring-logging), 2.0.54 | Statement/error/bind and engine parameter settings affect diagnostic exposure | SQL echo/hide_parameters/PG logging canaries. Configuration observations alone do not prove every sink safe |
+| PG-E12 | [PITR](https://www.postgresql.org/docs/18/continuous-archiving.html), 18 | Recovery restores prior database state from base backup and WAL | Restore across protection/deprotection/denial/format-retirement points with current external authority. No fresh target identity selected by this observation |
+
+The [canonical profile](../architecture/orm-schema-migration.md#initial-postgresql-profile-and-live-preflight) owns Cryptalis requirements, not these upstream facts.
+Q3/Q5 remain open. Reproduction must pin the exact interpreter/driver/SQLAlchemy/PostgreSQL build and managed-service settings.
+
 ## Framework API findings
 
 | ID | Exact bounded observation | Level and primary source | Contract consequence |
@@ -138,7 +162,7 @@ contradictions asserted against the current consolidated owners. The review read
 | Historical finding | Current disposition / authoritative owner |
 |---|---|
 | Old build-guide section 5.1 treated scalar-hook remote I/O as impossible while permitting a later bridge comparison | Rewritten [build guide](../cryptalis-build-guide.md) and [async comparison](../architecture/orm-schema-migration.md#sync-and-async-provider-access-comparison) make warm, greenlet and deferred designs empirical alternatives. No impossibility claim |
-| Dossier section 9 placed backfill before coexistence | Dossier is explicitly superseded dated history. [canonical state machine](../architecture/orm-schema-migration.md#migration-state-machine-and-concurrency) admits enforced dual writers before backfill |
+| Dossier section 9 placed backfill before coexistence | [Transition owner](../architecture/orm-schema-migration.md#migration-state-machine-and-concurrency) now specifies offline first. Its future online substeps still require dual writers before backfill |
 | Historical lane called SQLAlchemy 2.1 beta and excluded Alembic 1.20 | Historical snapshot retained as such. Dated [version observations](#version-observations) own the candidate versions, none supported |
 | Earlier audit wording could imply all Alembic operation plugins began at 1.18 | [Alembic owner](../architecture/orm-schema-migration.md#alembic-integration) distinguishes the structured Plugin API from older operation/comparator APIs |
 | SQL NULL could be mistaken for authenticated null presence | [Null owner](../architecture/orm-schema-migration.md#types-normalization-and-nulls) explicitly exposes nullness and unauthenticated absence. Encrypted-null/authenticated-presence remain separate gates |
@@ -152,6 +176,11 @@ binding, and the proposed serialized database fence. All runtime correctness, co
 drain and performance claims remain unexecuted.
 
 ## Reproduction queue
+
+All reproduction below remains pending. The ordered foundation queue starts with C33–C40, not the broad comparison suite.
+Suggested read-only fixture commands are `psql -X --set=ON_ERROR_STOP=1` with pinned disposable connection configuration and a reviewed query file.
+Record actual output for SHOW max_prepared_transactions, pg_prepared_xacts, roles/settings, catalogs, replication and index state.
+No such query file or runtime checker was created here. Session/crash/hostile-restore fixtures require the future behavior suite and current gates.
 
 1. Freeze wheel and source identity and exact environments.
 2. Execute G-ORM-1 through G-ORM-10 with the raw artifact requirements in the

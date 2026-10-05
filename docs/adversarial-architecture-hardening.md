@@ -11,6 +11,9 @@ state. Every result below is researched or proposed unless an executable artifac
 
 ## Supersession and historical interpretation
 
+2026-10-05: The authoritative architecture handoff was reconciled into the [canonical owners](architecture/README.md#documentation-ownership).
+See their [unresolved gates](architecture/README.md#unresolved-research-questions). This dossier remains historical and its F-number findings supply no normative authority.
+
 All technical tables, version proposals, provider/vendor claims, migration orders and prototype
 thresholds below are historical inputs, not current specifications. The September consolidation
 supersedes them through the [ownership hub](architecture/README.md). Current exact ORM versions,

@@ -40,6 +40,24 @@ It must also record add-on, model, rule, template and feed versions, configurati
 | T-OWASP-WSTG | OWASP WSTG stable resolves to v4.2 | Testing catalogue covers identity, authentication, authorization, sessions, configuration, injection, errors, cryptography, business logic and client-side testing | Scenario references pin the version and specific test. A ZAP scan or lab course demonstration is not complete WSTG coverage | [WSTG v4.2 catalogue](https://wstg.owasp.org/v4.2/4-Web_Application_Security_Testing/) |
 | T-OWASP-ASVS | OWASP ASVS latest stable source identifies 5.0.0 | Versioned technical security requirements. Explicit guidance for references to IDs that include the version | Read the exact relevant requirements before mapping them. Do not claim ASVS certification or compliance from field-protection evidence | [ASVS project/version guidance](https://owasp.org/www-project-application-security-verification-standard/) |
 
+## Product artifact provenance
+
+Access date: 2026-10-05. These rows are **documented-only**.
+No publishing workflow, attestation verification, SBOM generation, source-to-wheel comparison, or release attack fixture ran here.
+This source family concerns the distributed Cryptalis product. EvidenceBundle signing is a separate trust boundary.
+
+| ID | Primary source / edition | Bounded fact and release implication | Required future reproduction |
+|---|---|---|---|
+| T-PYPA-ATTEST | [Index hosted attestations](https://packaging.python.org/en/latest/specifications/index-hosted-attestations/), current PyPA specification | Attestation subjects bind distribution artifacts and provenance includes publisher information. Origin does not establish source correctness | Pin schema/verifier/trust policy and reject wrong artifact/repository/workflow/issuer and tampered wheel |
+| T-TRUSTED-PUBLISH | [PyPI Trusted Publishing](https://docs.pypi.org/trusted-publishers/), current PyPI docs | OIDC identity exchanges for short-lived publishing credentials. Publisher configuration and protected workflow identity matter | Exact repository/workflow/environment/issuer, rejected identities, build isolation and absence of long-lived package credentials |
+| T-SLSA | [SLSA provenance v1.2](https://slsa.dev/spec/v1.2/provenance), versioned specification | Build provenance binds artifact subject, build definition and run details under a verifier policy | Verify expected source/builder/materials/artifact, not any signature. Trust chain and unsupported claims remain explicit |
+| T-SBOM | [SPDX 2.3](https://spdx.github.io/spdx-spec/v2.3/), versioned specification | Machine-readable package/file relationships support component inventory and licensing | Compare wheel/native/transitive dependencies against lock/SBOM, report omissions. SBOM does not prove code safety |
+| T-SOURCE-WHEEL | Cryptalis review obligation linked to the [release gate](../../ENGINEERING_PLAYBOOK.md#release-gate) | Source-to-wheel content identity and import quarantine need their own checks. A signed report cannot vouch for a substituted runtime wheel | Clean source/build pins, file inventory and hashes, reproducibility limits, forbidden lab imports, secret-bearing files, dependency/lock drift mutants |
+
+The handoff's `/specifications/attestations/` page failed retrieval.
+The official index-hosted-attestations page above resolved. No failed path became a documented capability.
+The release process owns required checks. These source rows neither implement them nor close C40.
+
 ## Reproduction obligations and unresolved evidence
 
 All rows are `Documented`. None are `Cryptalis-reproduced`, `Cryptalis-benchmarked` or `Independently-reviewed`. Source repository access in the browser is documentation inspection. It does not establish an executed source-code audit.

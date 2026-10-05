@@ -28,6 +28,13 @@ named external reviewer and disclosed independence.
 Each row has an ID, maturity and status, dependencies, owner and gate, required artifact, and
 exit rule. Rows group related properties. They do not limit the number of features.
 
+Handoff reconciliation: 2026-10-05. Existing implementation passages and C00–C32 rows remain unchanged.
+They describe the bounded current slice and broader inventory, not the new implementation order.
+[C33–C40](#ordered-foundation-slices) now govern dependent runtime work.
+Online/search/fleet/Graph/DAST breadth remains later unchecked scope and is not a first-transition dependency.
+No P0 contract or research question is marked reviewed/closed by this pass.
+The [P0 review register](architecture/README.md#p0-documentation-review-register) links each reconciled blocker to its owner and pending disposition.
+
 The current manifest components, [terminal inspector](../src/cryptalis/cli.py), private framing parsers,
 and scalar decoder have 365 passing tests under `uv run --locked pytest -q` on 2026-10-04.
 Normal Python imports work, and `uv build` produces a wheel and source archive.
@@ -135,6 +142,38 @@ gate demotes only dependent claims.
 | C30 Adoption/usability | SPECIFIED `[ ]` | Prototype APIs/workflows | [G-API](architecture/manifest-context-api.md#version-compatibility-and-research-gates): five-maintainer task study, evidence of usability (not population demand) |
 | C31 Advanced search | RESEARCHED `[ ]` | Published constructions/independent oracles | [Crypto gates](architecture/crypto-search-lifecycle.md#research-gates): join/group/range/order/extrema/prefix/substring/text/fuzzy/JSON individually; no blanket search approval |
 | C32 Broader systems tracks | RESEARCHED `[ ]` | Core interfaces only for integration | [Research gates](learning-first-research-philosophy.md#broader-research-gates): Django/DB/languages/UI/policy/honeytokens/anomaly/attack graph/multiregion/packs; each threshold met before supported integration |
+
+## Ordered foundation slices
+
+These unchecked rows replace the build order, not historical evidence or capability IDs.
+The [canonical unresolved register](architecture/README.md#unresolved-research-questions) owns Q1–Q10.
+Q1–Q5 require researched closure and P0 documentation review before dependent runtime behavior.
+Safe independent work includes documentation, primary research, and synthetic contract/vector designs that supply no runtime protection claim.
+
+| ID / capability | Maturity / status | Dependency | Owner / required evidence / exit |
+|---|---|---|---|
+| C33 Active-state/transition contracts | SPECIFIED `[ ]` | P0 review + Q1/Q5 closure for dependent runtime | [Shared authority/plan gates](architecture/manifest-context-api.md#version-compatibility-and-research-gates): immutable DTOs, authenticated history/head, CAS/idempotency, target/preconditions, approval/receipt/errors, local development authority. Future canonical/ancestry/stale/wrong-target/redaction artifacts with pins, replay and reviewer. No crypto or DB mutation |
+| C34 Domain/representation/descriptor/suite freeze | SPECIFIED `[ ]` | C33 + Q2 closure | [Crypto gates](architecture/crypto-search-lifecycle.md#research-gates): successor descriptor/binding/catalogue, sole established composition, exact key dispatch, local test provider. Future two-language/external vectors, tamper/clone/RNG/nonce/fuzz and independent review. Structural schema 1/F1/W1 trials do not close it |
+| C35 Minimal field/Session API and coverage | SPECIFIED `[ ]` | C33/C34 + Q3 closure | [ORM gates](architecture/orm-schema-migration.md#research-gates): explicit no-search scalar path first, trusted identity, no generic crypto. Then one exact public sync Session cell or repository fallback. Future insert/read/update/delete/load/expiry/rollback/denial/logging and rejected Core/bulk/COPY artifacts. Async later |
+| C36 PostgreSQL profile/preflight/schema plan | SPECIFIED `[ ]` | C35 + Q5 closure | [DB profile](architecture/orm-schema-migration.md#initial-postgresql-profile-and-live-preflight): future target/drift/roles/owners/search_path/RLS/code/2PC/CDC/session/index/logging/capacity fixtures and reviewed Alembic plan. Limited visibility refuses. Generate DDL only |
+| C37 Offline protect/reconfigure/deprotect | SPECIFIED `[ ]` | C33..C36 + scoped Q6/Q8 limits | [Offline gate](architecture/orm-schema-migration.md#research-gates): PROTECT and compatible RECONFIGURE_PAYLOAD, then DEPROTECT in one engine. Future crash/cancel/two-executor/checkpoint/full-coverage/CAS/approval E2E artifacts. No online journals or dual writers required |
+| C38 Restore/recovery and one-provider key operations | SPECIFIED `[ ]` | C37 + Q1/Q4/Q5 closure and explicit Q7/Q9 limits | [Provider/restore gates](architecture/crypto-search-lifecycle.md#research-gates): one live cell, native states, separate rewrap/new-write/re-encryption, bounded cache, recovery manifest and quarantined restore admission. Future emulator/live faults, hostile-schema/PITR/current-denial and offline-recovery trials |
+| C39 Upgrade/decommission | SPECIFIED `[ ]` | C37 for local exit prototype; C38 for provider/restore-dependent release | [Compatibility/exit](architecture/orm-schema-migration.md#one-writer-upgrade-admission): aggregate remove after DEPROTECT, old binaries/jobs/copies/reader inventory, package-absent behavior. Future adjacent-version/startup/retired-format/restore/approval artifacts. No mixed writer release |
+| C40 Telemetry and product release | SPECIFIED `[ ]` | C33..C39 + required independent review | [Release gate](../ENGINEERING_PLAYBOOK.md#release-gate): future canary sink/redacted-diagnostics artifacts, lock/SBOM/provenance/Trusted Publishing/source-to-wheel/lab-quarantine evidence and reviewed exact cell. Signing does not imply correctness |
+
+Within these groups, use this behavior-first sequence:
+
+1. Contract/active-state kernel, then identity/descriptor/suite freeze. No crypto or DB mutation in the kernel.
+2. One explicit field path, then a pinned public synchronous Session cell, then read-only DB preflight and reviewed DDL.
+3. Offline PROTECT/compatible RECONFIGURE_PAYLOAD, then DEPROTECT and local aggregate remove.
+4. One real provider/key-operation cell, recovery manifest/quarantined restore, then upgrade/downgrade and full exit admission.
+5. Safe telemetry, product provenance and release review. Only then consider advanced integration tracks.
+
+Later tracks, each unchecked with separate evidence: equality/uniqueness and offline REINDEX, async Session, multi-process provider/cache, online migration/mixed writers, CDC, multi-provider/region, and broad assurance.
+Existing C08/C09/C12/C14/C18–C23/C31/C32 gates apply only to their admitted scope.
+No failed or missing dependency can be bypassed by a passing broader tool suite.
+Every artifact entry names an actual stable path, exact pins, reproduction command/result, limitations, and reviewer before completion.
+No future path in this table is presented as existing evidence.
 
 ## Evidence admission
 

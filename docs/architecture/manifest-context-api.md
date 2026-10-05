@@ -1,7 +1,7 @@
 # Manifest, identity, and public contracts
 
 Status: specified design with initial manifest JSON, field-format, and inspection support.
-Most interfaces remain proposed. Reviewed: 2026-10-04.
+Most interfaces remain proposed. Reviewed: 2026-10-04. Handoff reconciliation: 2026-10-05.
 
 This document defines manifest semantics, identity provenance, shared versions and errors,
 public APIs, CLI commands, configuration, and module contracts. The [blueprint](README.md)
@@ -11,7 +11,13 @@ assigns detailed subsystem contracts to their owners.
 
 | Term | Exact meaning |
 |---|---|
-| Protection Manifest | Immutable, versioned field policy compiled from declarations. Runtime observations cannot change this policy |
+| Protection Manifest | Immutable, versioned policy document in desired or active history. Its presence alone supplies no runtime authority |
+| DeclaredPolicy | Human-authored desired behavior. Editing or removing it never activates, deprotects, or drops stored data |
+| PolicyLock | Generated public IDs, canonical desired manifest, compiler/catalogue pins, and immutable history links. Reviewable and committed without secrets |
+| ActiveState | Authenticated environment state outside the protected database restore domain. Defines active head, readable formats, one write format, schema generation, lifecycle epochs, and current operation |
+| TransitionPlan / TransitionRecord / TransitionReceipt | Immutable target-bound proposal / durable execution, checkpoints and approvals / bounded observations and residual obligations |
+| representation_id | Random never-reused identity of one protected incarnation, distinct from a stable logical field ID |
+| protection_domain_id | Environment/recovery-realm identity supplied by trusted deployment authority, never by a row or request |
 | Protected field | Stable logical ID with declared authenticated payload/context and optional search representations |
 | Logical value / physical representation | Typed application value / persisted envelope, identity, and declared companion structures |
 | Envelope | Versioned payload framing with size bounds. Authentication requires an authorized key and context |
@@ -82,9 +88,93 @@ Abbreviations used across these contracts include:
 [RFC 5116](https://www.rfc-editor.org/rfc/rfc5116) also calls AAD associated data. The contracts
 use AAD for context authenticated with the ciphertext, including identity and format bindings.
 
+## Desired policy and active authority
+
+The authority sequence is `DeclaredPolicy → PolicyLock → external ActiveState → TransitionRecord`.
+The lock supplies a proposed target. Only a verified transition and authenticated CAS can change the active head.
+The record tracks that reconciliation. It cannot bypass current authority.
+
+The compiler generates model, table, field, and representation UUIDs into `cryptalis.lock`.
+Safe renames preserve logical IDs through an explicit reviewed identity mapping.
+Names alone never establish continuity. Ambiguous rename/delete/re-add diffs reject.
+Deprotecting and later reprotecting a field always creates a new `representation_id`, even with identical options.
+History retains retired IDs. No retired representation or physical slot recycles.
+
+Deployment authority supplies `protection_domain_id`. It is separate from portable desired policy.
+Plans, active records, grants, recovery records, and crypto bindings bind that domain.
+Staging clones cannot silently inherit production authority or roots.
+Deliberate DR sharing requires a reviewed recovery plan. The exact procedure remains [Q7](README.md#unresolved-research-questions).
+
+ActiveState requires an authenticated current head, monotonic revision, CAS, durable idempotency, and independent backup/recovery.
+It retains accepted read descriptors, exactly one write tuple/version, schema generation, denial/retirement epochs, and overlapping-operation identity.
+The production backend remains Q1. A local development file adapter supplies no production rollback-resistance claim.
+Restored database checkpoints cannot become the current head or reduce epochs.
+Unavailable or unauthenticated authority denies admission under the declared availability contract.
+
+Startup admits only an exact binary/catalogue/schema/format compatibility tuple for current ActiveState.
+Session writes recheck that authority. Desired-before-schema and schema-before-desired deployments cannot select new semantics.
+An inactive desired diff can coexist only when the existing active mapping remains fully admitted.
+Removing required active declarations or descriptor history rejects startup until an explicit transition resolves the dependency.
+
+### Total semantic diff contract
+
+The compiler compares authenticated active policy with the generated desired lock and immutable history.
+For every valid pair, it emits one ordered plan or an actionable unsupported decomposition.
+It never ignores an unknown semantic member or guesses a rename, key, domain, or format.
+Invalid or ambiguous inputs return Manifest.Invalid before classification.
+
+| Diff outcome | Required consequence |
+|---|---|
+| No semantic change | No transition or data rewrite. Report already active |
+| Descriptions/source locators or proven physical rename | Preserve logical/representation bindings. Reviewed metadata/DDL only. No incidental re-encryption |
+| Authorization-only change | Reconcile current policy/epoch without payload rewrite when compatible. Tightened authority also applies to old descriptors |
+| Unprotected to protected | PROTECT with a new representation and reviewed schema/data plan |
+| Protected payload/identity/codec/null/access binding change | RECONFIGURE_PAYLOAD, explicit compatible read mapping or re-encryption. No reinterpretation of old bytes |
+| Search capability/domain/normalizer/generation change | REINDEX or explicit term retirement. Reject while search is unsupported |
+| Protected to unprotected or declaration removal | DEPROTECT proposal. Preserve active dependency until verified, approved plaintext switch. Never DROP by compiler |
+| Key wrapper or existing payload-key change | KEY_REWRAP or KEY_REENCRYPT from an explicit lifecycle request. Alias movement is not an inferred policy change |
+| Format/binary compatibility change | UPGRADE_FORMAT or metadata admission after compatibility checks. Retirement needs a separate irreversible action |
+| Restore or complete exit request | RESTORE_ADMISSION or DECOMMISSION from explicit operator intent. Never infer from snapshot or package removal |
+| Compound compatible changes | One deterministic ordered plan with dependencies, a single active scope, and explicit irreversible boundaries |
+| Unsupported, conflicting, or unknown combination | Reject with a safe decomposition and blocked capability. No partial implicit activation |
+
+The [ORM owner](orm-schema-migration.md#migration-state-machine-and-concurrency) defines phase execution.
+The [crypto owner](crypto-search-lifecycle.md#key-operation-contract) defines distinct key effects.
+Property tests must cover totality, deterministic ordering, remove/re-add, rename, clone, and unsupported combinations.
+
+### Plan, record, approval, and receipt schema
+
+All records use the restricted canonical encoding and explicit schema/producer versions.
+Unknown required fields reject. Public IDs and aggregate estimates remain access-controlled operational metadata.
+
+| Artifact | Required fields and safety conditions |
+|---|---|
+| TransitionPlan | Plan/operation IDs, kind and ordered work, digest, strategy=offline, creation/expiry, target identity, protection domain, source active revision/head, desired digest, schema fingerprint/generation, exact binary/catalogue/provider references, writer inventory, budgets, preconditions, recovery and last reversible point |
+| TransitionRecord | Plan digest and exact target/scope, monotonic revision, observed generations, overlap-lock ownership, durable idempotency key, completed/attempted phases, per-row/chunk and DDL checkpoint references, retry class, approvals, evidence, finalizer and residual obligations |
+| IrreversibleApproval | Exact plan digest, target identity/domain, enumerated actions and lost recovery paths, approver identity/authority, issue/expiry, observed preconditions, durable one-use disposition. Replays cannot authorize a different action |
+| TransitionReceipt | Plan/target/source/target-active identities, exact binary/catalogue/schema/provider pins, completed phases, verification coverage, action and approval references, recovery obligations, excluded copies, limitations, observation time and evidence basis |
+
+Target identity must distinguish replacement at the same endpoint. Its concrete PostgreSQL source remains Q5.
+No hostname, database name, database OID, or editable JSON claim alone supplies that proof.
+Apply acquires the overlap lock and re-inspects every safety precondition before mutation and immediately before SWITCH/finalization.
+Unexpected changes to data coverage, schema, writers, provider state, target, authority, catalogue, or expiry invalidate the plan.
+Expected effects must match the plan and its durable checkpoints before the next phase can proceed.
+Reconciliation never treats the executor's own planned effects as permission to accept unrelated drift.
+The executor never edits a stale plan to force progress. It reports a fresh-plan or repair action.
+
+Plans and records contain no plaintext, sample values, deterministic value hashes, search terms, key bytes, credentials, or raw exceptions.
+Internal cursors stay in authorized storage. Exports follow redaction policy.
+No plan alone activates policy. No approval alone proves postconditions.
+Separate approval occurs only at irreversible boundaries.
+DEPROTECT requires approval before its first persisted plaintext, including staging before SWITCH.
+The plan binds plaintext storage, resulting WAL/replica/backup exposure, and publication actions to their approval scopes.
+Unchanged application grants do not make plaintext persistence reversible.
+The [ORM execution contract](orm-schema-migration.md#deprotect-decommission-and-finalization) defines these boundaries and failure obligations.
+Ordinary inspection, planning, reversible preparation, and retry do not add repeated approval prompts.
+
 ## Manifest semantics
 
-The compiler turns authoring declarations into an immutable ManifestDocument offline. It takes
+The compiler turns DeclaredPolicy into a generated PolicyLock and immutable desired ManifestDocument offline. It takes
 declarations, mapped metadata, an explicit version catalogue, and a compiler version. It returns
 a canonical document, digest, diagnostics, and a map between logical and physical
 representations.
@@ -154,7 +244,7 @@ Each field uses the canonical encoding rules above.
 | schema_version, manifest_id, revision, parent_digest | R integer, UUID, monotonic integer, digest/null at genesis | Compatible parser; never overwrite old revision |
 | compiler_version, catalogue_digest | R exact release + digest | Recompile/diff; changed semantics require migration |
 | models: model_id, table_id, module/qualified_name, database_schema/table_name | R stable IDs + locator strings | Name change preserves IDs; ownership move reviewed |
-| fields: field_id, attribute, python_codec, original_sql_type | R UUID, name, codec/version, dialect/type/parameters | Codec/type change needs vectors and migration |
+| fields: field_id, representation_id, attribute, python_codec, original_sql_type | R generated logical/incarnation UUIDs, name, codec/version, dialect/type/parameters | Safe rename retains IDs. Re-adoption uses a new representation. Codec/type changes require migration |
 | tenant_locator, subject_locator, record_locator | R typed attribute locator + derivation-policy ID/version | Identity changes require authorized re-encryption |
 | provenance_policy | R issuer/adapter IDs and versions, principal/workload classes, actions/purposes, grant lifetime | Widening security-reviewed, tightening deployment-gated |
 | access_mode, protection_profile, classification | R transparent/controlled; catalogue IDs/enums | Consumer, serialization and release-policy review |
@@ -162,7 +252,7 @@ Each field uses the canonical encoding rules above.
 | normalization | R type codec/version, Unicode/case/whitespace policy | Search reindex; payload preserves original value |
 | null_policy | R sql_null/encrypted_null + uniqueness rule | Schema/query/index migration; null differs from empty |
 | capabilities | R array (empty=no search); operator/construction/version/domain/leakage acceptance/limits | Addition requires query/leakage/cost/lifecycle review |
-| equality, uniqueness, join_domain | C capability ID; scope/null policy; shared-domain UUID/participants | Race-safe dual-index transition on key/domain changes |
+| equality, uniqueness, join_domain | C capability ID; scope/null policy; shared-domain UUID/participants | Disabled initially. Offline reindex first. Online dual-index support requires separate evidence |
 | range, text_prefix, structured | C construction/version, operator subset, token budget, candidate verification/path policy | Research catalogue until individual gates pass |
 | physical_mapping | R columns/tables/types/length/null/index/constraint specs + naming version + nonrecycled uint32 storage/term slots | Collision rejects; reviewed schema diff |
 | key_scope, key_policy, cache_policy, lifecycle_policy | R scope/provider IDs/purposes; TTL/lease/capacity/offline; restore/shred policy | Provider state external; safety review on changes |
@@ -173,6 +263,18 @@ Each field uses the canonical encoding rules above.
 | description, source_locations | O text and source revision/path/span | Revision/digest changes; no automatic payload re-encryption |
 
 ### Immutable field-format descriptor
+
+The next admitted payload descriptor must bind `representation_id` alongside model, table, and field IDs.
+Its immutable digest, catalogue entry, and AAD/KDF version must distinguish it from the current structural schema.
+The environment `protection_domain_id` is trusted deployment authority and a crypto binding, not a mutable physical locator.
+Exact successor bytes, version identifiers, and suite composition remain Q2/C34 review gates.
+Do not emit real ciphertext or reinterpret schema 1 under the new contract.
+
+### Implemented structural descriptor schema 1
+
+The following fourteen-member schema describes the existing helpers exactly.
+It lacks `representation_id` and is not the future admitted production descriptor.
+Current fixtures, hashes, and helpers remain unchanged during this documentation pass.
 
 A descriptor is a separate immutable JCS object. It permits no extensions or annotations. Every
 property below is required:
@@ -227,7 +329,7 @@ readable tuple or a re-encryption migration. Search-policy changes require their
 representation migration. Tightened current authorization still applies to old data.
 
 Store exact descriptor bytes and their catalogue interpretation in immutable manifest history,
-keyed by digest. The active manifest lists accepted creation digests in
+keyed by digest. ActiveState selects an authenticated active manifest that lists accepted creation digests in
 `previous_readable_formats`. It also lists the corresponding suite, envelope, codec, KDF, and
 AAD tuples.
 
@@ -240,7 +342,7 @@ unrelated field must not strand ciphertext. The full manifest digest still binds
 and evidence. [Crypto contracts](crypto-search-lifecycle.md) define exact payload and envelope
 bytes.
 
-Validate the deployed manifest, schema, and catalogue at session creation, query, flush, key
+Validate current ActiveState, its authenticated manifest, schema, and catalogue at session creation, query, flush, key
 authorization, and migration transitions. Drift fails closed. G-MANIFEST covers exact
 descriptor/hash vectors, unrelated annotation changes, revoked old descriptors and unknown
 codec/parameter substitutions.
@@ -267,7 +369,7 @@ action, and purpose.
 
 An immutable ProtectionGrant binds its ID and issuer/version to a principal and authentication
 basis, workload, selected tenant, and subject-derivation rule/version. It also binds operations
-and purposes, manifest digest, allowed key and index generations, epoch, issue and expiry times,
+and purposes, active manifest digest, protection domain, current external authority revision, allowed key and index generations, epoch, issue and expiry times,
 request or job ID, audience, and optional resource set. It contains no plaintext or keys.
 
 A trusted in-process adapter creates an opaque authorized handle. Exported and job grants are
@@ -373,63 +475,48 @@ zeroization claim covers Python values.
 
 ## Public Python surface
 
-These names are proposed and unavailable today. The contracts freeze semantics, not class
-internals. Imports must cause no network I/O or schema mutation. Sync and async variants have
-identical authorization rules.
+The normal proposed surface supplies one declaration and one trusted Session identity.
+Exact SQLAlchemy syntax remains Q3, not a shipped API.
+Imports cause no network I/O, schema mutation, migration, or activation.
 
-| API | Inputs -> outputs; lifetime/I/O | Preconditions/errors/consequence |
-|---|---|---|
-| protect(model, declaration) | Mapped class + typed policy -> declaration; startup sync/offline | Stable IDs/types/context; ManifestInvalid; enforcement starts only after install |
-| compile_manifest(declarations, metadata, catalogue) | -> immutable document/diagnostics/map; offline sync | Deterministic G-MANIFEST; no secrets/live DB |
-| authorize(principal, intent, policy) | -> opaque grant; explicit await if policy remote | ContextUnauthorized/Unavailable/Expired; unchecked requested IDs rejected |
-| register_provider(id, adapter, policy) | -> registry entry; startup, no implicit network | Duplicate/unknown ID rejects; preserve provider semantics |
-| warm / awarm(grant, key_requests) | -> leased KeySet handle; explicit sync/await | Bounded tenant/subject/purpose/generation; unavailable/denied/stale typed errors |
-| protected_session / aprotected_session(factory, manifest, grant, keyset) | -> context-managed Session/AsyncSession; explicit operation admission at execute/flush/commit | One task/tenant; validate versions/schema/lease before SQL; rollback closes handles |
-| reveal / areveal(value, grant, purpose) | ControlledValue -> logical value, bounded release | Stronger profile needs independent release authority; denial releases nothing |
-| compile_schema(manifest, metadata, snapshot, catalogue) | -> SchemaPlan/findings; offline deterministic | No DDL/key bytes; drift/unsupported transforms explicit |
-| plan_migration(source, target, snapshots, writers) | -> immutable MigrationPlan | Phase approvals/evidence; no production auto-apply |
-| request_lifecycle(scope, operation, grant, idempotency_key) | -> durable operation ID/state | Rotation/revoke/shred separate; polling explicit; scope conflict typed |
+```python
+class Customer(Base):
+    email: Mapped[str] = protected_column(String)
 
-A key request binds the provider, tenant, subject, domain, purpose, and generation. It also
-binds a policy-selected quota for invocations and encoded bytes. The quota includes
-`usage_reservation`, requested counts and bytes, and allocation expiry.
+with cryptalis.session(Session, identity=request_identity) as db:
+    customer = db.get(Customer, customer_id)
+```
 
-Warm returns material, separately scoped allocation and lease IDs, and remaining local quota. A
-cached key alone grants no quota. Explicit warm-up or preparation reserves durable quota. Scalar
-hooks consume the quota locally and never refill it.
+The host adapter authenticates request/job identity and derives grants internally.
+Ordinary callers never supply keysets, nonces, AAD, raw keys, generations, or cache leases.
+Normal mapped operations use current ActiveState, not the newest declaration.
+The initial runtime is synchronous and no-search. Async and controlled release require their own admitted cells.
+If public SQLAlchemy hooks fail the coverage experiment, expose an explicit repository boundary instead of private hooks.
 
-Session execute, flush, commit, and controlled reveal require operation admission before local
-scalar or flush work. Sync callers incur the declared control-plane wait. Async wrappers
-explicitly await it. These boundaries register output and commit permits, validate quotas, and
-warm required keys. They do not create an undeclared bridge from scalar hooks to providers.
-
-Operation records remain pending until managed output handoff or reconciled commit or abort.
-Provider-call counts and control-authority calls are separate latency and availability metrics.
-Authority outage denies new operation admission even when provider material is cached. Cached
-preparatory cryptography grants no output permission. The [lifecycle
-owner](crypto-search-lifecycle.md) specifies drain and reservation limits.
-
-Warm cannot prefetch unknown future subjects. An unknown-row query must fetch hidden rows, run a
-bounded explicit awarm batch, then decode descriptors. Otherwise, it rejects cold access. The
-default has no hidden scalar network I/O. Tenant search keys must be warm before the query.
-Two-phase cancellation and lifetime correctness remain subject to the ORM gate.
-
-The proposed adoption flows are:
-
-| Task | Flow |
+| Surface | Contract / I/O / failures |
 |---|---|
-| New field | Declare and review the profile and context, review generated schema, then run Verify |
-| Retrofit | Inspect, plan, expand, coexist, backfill, verify, cut over, observe, and contract |
-| Equality search | Review leakage, then migrate the index |
-| Rotation | Maintain an explicit old-reader set |
-| Incident | Revoke and fence access |
-| Delete | Issue a receipt with bounded scope |
-| Debugging | Explain rejected query IR |
-| CI | Use pinned snapshots |
-| Review | Verify evidence identities, controls, and exclusions |
+| Normal `protected_column`, `cryptalis.session` | Declare desired fields and bind trusted identity once. Session admission, execute/load/refresh/flush/commit expose any bounded authority or preparation wait. Typed denial/cold/unavailable errors |
+| Internal compiler and schema planner | Deterministic PolicyLock/history/diff/plan output. No schema mutation or secret material |
+| Internal `authorize`, `warm/awarm` | Validate grants, reserve bounded quota, and prepare exact material at explicit operation boundaries. Scalar hooks stay local and cannot refill quota |
+| Advanced provider registration | Startup configuration for one admitted provider/profile. No arbitrary header-selected adapter or hidden imports |
+| Advanced controlled `reveal/areveal` | Separate profile with independent release authority where claimed. Not routine transparent-field access |
+| Internal `request_lifecycle` and transition stepping | Compose target-bound generic plans, durable idempotency, native states, and finalizers. No independent activation protocol |
 
-Subsystem owners define operational steps. This table is a flow summary, not an executable
-procedure.
+No generic public `encrypt`, `decrypt`, caller-supplied AAD/key, plaintext fallback, or skip/bypass API belongs to the normal runtime package.
+Maintenance codecs require a separate short-lived operator identity and an authorized target-bound plan.
+Separate approval is required only at its irreversible boundaries.
+Process compromise remains outside the core guarantee.
+
+Material possession, operation authority, and usage quota are separate checks.
+Cached material supplies neither current output permission nor new quota.
+Authority outage denies new admission. Unresolved output/commit remains pending until reconciled handoff or abort.
+The [crypto cache contract](crypto-search-lifecycle.md#initial-single-process-cache-and-authority) owns the initial bounds.
+The [ORM owner](orm-schema-migration.md) owns loader/flush/rollback state and explicit hidden-row batching.
+No unknown-subject query introduces remote work in a scalar hook.
+
+The normal flow is declare, check, migrate, status.
+Search, incident response, controlled release, restore admission, and destructive finalization remain explicit advanced tasks.
+Stable IDs, phase names, key mechanics, retry tokens, and checkpoint details stay in generated records and advanced diagnostics.
 
 ## CLI and configuration
 
@@ -449,16 +536,32 @@ Plans record kind=proposal. They never record security PASS. Combined results us
 
 | Command | Inputs -> outputs | Defaults/network/authorization |
 |---|---|---|
-| doctor | Source/config/manifest/optional snapshot -> findings/coverage JSON/SARIF | Offline, no importing arbitrary app code; live DB explicit read-only grant |
-| plan | Declarations/static/runtime/schema -> minimum observed capability proposal | Read-only; never changes policy |
-| schema explain | Field + manifest/snapshot -> physical/leakage/version facts | Offline; live read-only introspection explicit |
-| migrate plan | Source/target/schema/writers -> recovery/lock/compatibility proposal | No apply; network acquisition read-only explicit |
-| verify | Pinned fixtures/scenarios/collectors -> bounded property bundle | Structural offline default; fixture execution authorized; no production destruction |
-| pentest | Authorization + deployment + scenario -> results/replay | Passive imported evidence default; explicit active interlocks below every engine |
-| evidence inspect/validate/export | Bundle + trust policy -> findings/format | Offline; log/signature network explicit; no implicit upload |
-| check --ci | Pinned workspace/snapshots -> passive composition | No scan/key mutation/network default; Verify only preauthorized fixtures |
-| keys rotate/revoke/shred; status | Scope/grant/idempotency -> durable state/receipt | Mutations named explicitly; status read-only; nothing hidden under scan |
-| manifest inspect | Local child + optional `--parent PATH` -> identity header and digest in text/JSON | Offline, read-only, bounded regular files, header or single parent-link scope |
+| init | Project config + generated cryptalis.lock/history | Proposed, offline, no secrets or runtime activation |
+| check / check --ci | Desired/active compatibility and selected preflight findings | Proposed, offline default. --live requires scoped read-only credentials. Missing live evidence remains unknown |
+| migrate | Fresh plan + safe execution/resume summary | Proposed offline maintenance strategy. Shows target, rows, storage/time uncertainty, rollback point, and pending irreversible actions. Revalidates before mutation |
+| status | Desired/active drift, progress, finalizer and recovery obligations | Proposed read-only. Says declared but inactive or cleanup requires approval |
+| plan --out PATH / apply PATH | Target-bound generic transition proposal / reinspection and execution | Advanced, proposed. Plan is non-sensitive, expiring, and immutable. Apply never trusts editable JSON or skips preconditions |
+| resume / finalize | Existing operation ID / pending progress or exact irreversible actions | Advanced, proposed. Resume reconciles actual effects. Finalize requires separately bound approval and current evidence |
+| restore check / restore admit | Quarantined target + recovery manifest / admission report or transition | Advanced, proposed. Check uses read-only authority. Admit reconciles current external policy/denial before production credentials |
+| upgrade check | Exact binary/catalogue/schema/format matrix -> safe ordering/refusal | Proposed read-only. One active writer version. Downgrade never converts or destroys data automatically |
+| remove | Aggregate field deprotection + DB/binary/job/key/recovery inventory | Proposed guided decommission plan. Package uninstall last. Separate plaintext and retirement approvals |
+| keys rotate | Configured exact scope/profile -> layer changed + remaining old reads | Proposed. No old-path destruction. Revocation, destruction, and incident response are separate advanced plans |
+| doctor; schema explain | Source/snapshot findings or physical/leakage/version facts | Advanced optional read-only analysis. No arbitrary app import or implicit live credentials |
+| verify; pentest | Pinned fixtures/collectors or authorized synthetic lab -> bounded evidence | Advanced optional. Verify works without DAST. No implicit production destructive action |
+| evidence inspect/validate/export | Bundle + trust policy -> scoped findings/rendering | Offline default. No implicit upload or signing authority |
+| manifest inspect | Local child + optional --parent PATH -> identity header/digest | **Implemented narrow slice**, offline read-only regular files. Header or one supplied pair only |
+
+`plan` owns transition proposals. Optional minimum-leakage analysis returns a distinct PlanProposal and never activates it.
+`migrate plan` is a superseded proposed spelling, not an implemented command.
+No proposed command above is available merely because its contract exists.
+The [checklist](../backend-build-checklist.md) owns command maturity.
+
+`migrate` creates a fresh plan and resumes through the internal engine after exact operation reconciliation.
+It reports maintenance requirements before work and one actionable next step after failure or a pending boundary.
+DEPROTECT pauses before the first persisted plaintext and any publication outside its approved scope.
+The same exact approval can cover staging and SWITCH when it explicitly names both actions.
+Normal rotation reports whether wrappers, new writes, or existing payloads changed and which old material remains needed.
+Saved plans and approval artifacts use the schema above.
 
 The initial `manifest inspect` command reads bounded local regular files. It emits the validated
 identity header and computed digest as text or JSON. With `--parent PATH`, it checks one parent
@@ -484,9 +587,19 @@ restrictions. Runtime context supplies grants. Lab authorization supplies target
 It cannot widen production policy.
 
 Presentation and operational settings use default -> project -> deployment -> CLI precedence.
-Effective security policy is the intersection of the manifest, deployment restrictions, current
+Effective security policy is the intersection of the authenticated active manifest, deployment restrictions, current
 grant, and lifecycle state. Conflicts reject the operation. CLI options and environment
 variables cannot add search, bypass provenance, extend leases, or disable safety.
+
+### SafeTelemetryProfile
+
+Proposed runtime defaults disable SQLAlchemy echo and hide parameters.
+Database parameter capture in OpenTelemetry is off. PostgreSQL statement/error/bind logging needs scoped inspection and reviewed configuration.
+Generated repr, errors, traces, metric labels, and support diagnostics exclude protected values, raw terms, key bytes, and ciphertext bodies.
+Safe diagnostics use allowlisted field aliases, format/version, operation/stage, redacted cause, and correlation ID.
+Transparent Python values can still be deliberately logged or exported by host code.
+The [assurance collector contract](assurance-evidence.md#minimal-read-only-preflight-evidence) reports observable settings and unknown sinks.
+Canary sink evidence gates the claimed profile. No docs-only default claim implies implemented configuration.
 
 Credential providers resolve secrets. Manifests and reports do not contain them. Evidence
 includes a digest of the redacted effective configuration.
@@ -526,6 +639,7 @@ All current inspection error records set `retryable: false`. The command perform
 | Query planning | UnsupportedEncryptedQuery, DomainMismatch, UnboundContext; pre-SQL failure, no scan/broader index |
 | Query result | IndexInconsistent; detected after bounded fetch/authenticated decode; fail the whole buffered result with no partial logical release |
 | Schema/migration | Drift, UnsupportedTransform, Conflict, UniquenessConflict, UniquenessCollision, Paused, RepairRequired, Irreversible; operator recovery |
+| Transition | StalePlan, WrongTarget, ExpiredPlan, UnsupportedStrategy, ApprovalRequired, ApprovalInvalid, ActiveStateUnavailable; stop before mutation or irreversible boundary |
 | Lifecycle | ScopeConflict, FenceLost, PendingExternal, RestoreDenied; resume idempotency record or deny |
 | Analysis/evidence/safety | ParseGap, UnknownFlow, CollectorUnavailable, IntegrityFailure, TargetUnauthorized, BudgetExceeded; gap preserved |
 
@@ -562,7 +676,7 @@ contracts, including evidence DTOs, sit below adapters. Evidence orchestration a
 above adapters. The CLI composes use cases and defines no security semantics. No domain layer
 imports a scanner or SDK.
 
-| Module | Public seam and allowed dependencies | Invariant/errors/test layer |
+| Module | Internal responsibility or admitted surface and allowed dependencies | Invariant/errors/test layer |
 |---|---|---|
 | contracts + manifest | IDs/versions/DTOs/parse/compile/diff; stdlib + reviewed codec only | Deterministic policy / Manifest / vectors+fuzz |
 | crypto | envelope/AEAD/KDF/codec/search; contracts+reviewed crypto, no network/ORM | Authenticated release / Envelope / vectors+tamper |
@@ -576,6 +690,10 @@ imports a scanner or SDK.
 | evidence | validate/render/import/attest; contracts+interchange/signature libs, no implicit execution | Integrity distinct from truth / Evidence / parsing+redaction |
 | cli + integrations | use-case composition/typed optional adapters; public interfaces only | Visible action/I/O / mapped errors / integration |
 | experimental/lab distributions | Known constructions/scenarios; contracts+research adapters | Production cannot import / unsupported profile / differential |
+
+Module responsibilities do not expose public crypto or lifecycle helpers.
+The [normal API](#public-python-surface) defines visibility. Internal adapters consume crypto, keys, and transition interfaces.
+The migration module hosts the shared engine. Lifecycle, restore, and exit handlers supply effects within its phases.
 
 The private framing and scalar syntax experiments belong to the crypto module.
 They are not admitted constructions or supported runtime APIs. No production consumer imports them.
@@ -622,15 +740,17 @@ suite, KDF, codec, normalizer, representation, index domain, key generation, mig
 scenario, and evidence schema versions.
 
 Compatibility is an allowlisted tuple. A newer version is not automatically readable. Writes use
-one active tuple. Reads accept only declared old tuples. Migrations bind source and target and
+one ActiveState-selected tuple and one writer version. Reads accept only declared old tuples. Migrations bind source and target and
 fence older writers. [ORM contracts](orm-schema-migration.md) define exact candidate and
 supported runtime cells. Research ledgers record external versions.
 
 | Gate | Question/default/alternatives | Experiment and pass/fail threshold | Safe work / blocked claims |
 |---|---|---|---|
 | G-MANIFEST | Restricted JCS semantic schema vs deterministic CBOR | Two language implementations, 10,000 generated manifests + malformed/limit/version cases; 100% byte/digest agreement and semantic diff classification; 0 accepted ambiguity; any divergence rejects freeze | DTO design safe; interoperability blocked |
+| G-ACTIVE (Q1) | Select production authority versus development-only adapter | Authenticated head/history, forked ancestry, CAS race, duplicate idempotency, stale/DB/control restore, authority loss, wrong binary, abandoned finalizer. Zero rollback/implicit activation, independent recovery evidence and named review | DTO/local-dev design safe. Production backend and dependent runtime behavior blocked |
+| G-PLAN | Total diff and non-sensitive target binding versus unsupported decomposition | Property-generated active/desired pairs, remove/re-add/clone, wrong target/expiry/tamper/replayed approval, drift at every boundary. Exactly one deterministic plan or explicit refusal, no sensitive artifact | Documentation safe. Apply/finalize behavior blocked until Q1/Q5 and P0 review |
 | G-CONTEXT (P0) | One-tenant immutable grants vs separate release/repository boundary | Colliding tenant IDs; token/path/body/model/identity-map substitution, ciphertext plus all identity companions at fixed requested PK, mapping activation/ambiguous commit, inherited tasks, pool/cancellation, expired/restored jobs; 0 unauthorized provider loads/SQL/releases; all failures redacted; any bypass fails | Synthetic adapters safe; isolation/persistence claims blocked |
-| G-API | Explicit warm/session API vs repository/controlled batches | Five maintainers perform field/retrofit/query/incident/delete tasks; >=4/5 finish without guessing security choices, 0 silent policy widening, actionable errors; otherwise revise ergonomic surface | Examples safe; adoption/usability claims blocked |
+| G-API | Trusted Session identity with hidden preparation vs explicit repository/controlled batches | Five maintainers perform field/retrofit/query/incident/delete tasks; >=4/5 finish without guessing security choices, 0 silent policy widening, actionable errors; otherwise revise ergonomic surface | Examples safe; adoption/usability claims blocked |
 | G-BOUNDARY | Layered runtime/lab quarantine vs split distributions | Import/build graph/wheel inspection with seeded reverse/lab imports; 100% violations detected, no payload/test credential/scanner deps in runtime wheel; any escape blocks release | Package design safe; quarantine/support blocked |
 
 The [playbook testing policy](../../ENGINEERING_PLAYBOOK.md#test-layers) owns test-boundary selection.

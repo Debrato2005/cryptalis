@@ -60,6 +60,29 @@ No fair competitor latency result exists in Cryptalis.
 
 Publication requires matching attacker, operator, dataset, platform, provider, and availability semantics, or an explicitly qualitative comparison.
 
+### 2026-10-05 workflow and composition lessons
+
+Access date: 2026-10-05. These primary pages are documented-only, not installed/reproduced comparisons.
+Rolling product docs do not select a Cryptalis dependency version.
+The [canonical blueprint](architecture/README.md#load-bearing-decisions) owns the resulting design decisions.
+No reference product proves Cryptalis behavior.
+
+| Reference / source scope | Adopt, narrow, or reject | Evidence and limit |
+|---|---|---|
+| SQLAlchemy 2.0.54 / Alembic 1.20.0 documentation | Adopt public Session/flush boundaries and reviewed candidate DDL. Narrow to one synchronous cell. Reject universal raw/Core interception and private-hook dependence | [Session events](https://docs.sqlalchemy.org/en/20/orm/session_events.html), [autogenerate](https://alembic.sqlalchemy.org/en/latest/autogenerate.html). Public hooks still need Q3 fixtures |
+| Tink / AWS Encryption SDK, rolling guides | Study established composition, visible authenticated context, exact dispatch and commitment policy. Reject a home-designed primitive or format approval from a parser | [Tink AEAD](https://developers.google.com/tink/aead), [AWS SDK concepts](https://docs.aws.amazon.com/encryption-sdk/latest/developer-guide/concepts.html). Sole suite Q2 remains open |
+| AWS KMS / GCP / Vault, current service/API docs | Adopt native-state reporting and custody separation. Narrow first support to one provider/configuration. Reject rotation/delete/rewrap equivalence and alias-as-identity | [Crypto evidence update](research/crypto-provider-evidence.md#2026-10-05-composition-and-lifecycle-source-update). First provider Q4 remains open |
+| Rails, rolling guide | Adopt simple field ergonomics and diagnostic attention. Keep randomized payloads and separately gated search. Reject deterministic payload as a universal query solution | [Active Record Encryption](https://guides.rubyonrails.org/active_record_encryption.html). Different language and migration/authority model |
+| CipherStash, migration/deployment guides updated 2026-07-30 | Adopt explicit writer inventory, resumability, credential identity, coverage and destructive rollback limits. Narrow initial Cryptalis to offline maintenance and full terminal verification. Defer online dual writers | [Data migration](https://cipherstash.com/docs/guides/migration), [deployment](https://cipherstash.com/docs/guides/deployment). The handoff blog path failed retrieval. These official guides resolved. No vendor migration ran |
+| MongoDB Queryable Encryption, rolling manual | Adopt exact operator/type/version refusal and explicit attacker limitations. Reject transferring a queryable-encryption security claim to deterministic blind indexes | [Limitations](https://www.mongodb.com/docs/manual/core/queryable-encryption/reference/limitations/). Snapshot/transcript scope requires exact construction evidence |
+| Prisma, rolling Data Guide | Adopt dependency-aware additive preparation and explicit cleanup. Narrow first strategy to quiesced writers instead of automatic zero downtime | [Expand/contract](https://www.prisma.io/dataguide/types/relational/expand-and-contract-pattern). This is workflow guidance, not a Cryptalis verifier |
+| Terraform, current CLI docs | Adopt a reviewable saved plan and explicit target/precondition checks. Reject sensitive saved-plan contents and treating editable artifacts as authority | [Plan](https://developer.hashicorp.com/terraform/cli/commands/plan). Cryptalis deliberately excludes data-derived material from plans |
+| Kubernetes, rolling concepts | Adopt desired/observed reconciliation and pending cleanup obligations. Hide the engine behind a small library workflow. Reject a broad public controller/finalizer vocabulary | [Controllers](https://kubernetes.io/docs/concepts/architecture/controller/), [finalizers](https://kubernetes.io/docs/concepts/overview/working-with-objects/finalizers/). Neither selects Q1's authority backend |
+
+Practitioner posts, issues, forums, and incidents remain discovery-only unless separately attributed and corroborated by primary evidence.
+No new practitioner assertion in this pass closes a research question.
+The first product value is a narrow no-search offline protection workflow. Graph/attack correlation remains a later usefulness hypothesis.
+
 ## New and broader discovery
 
 Bounded searches examined Python/SQLAlchemy field protection, ORM search, database proxies, migration, key deletion, security correlation, and encrypted-search research.
@@ -99,7 +122,7 @@ Ask for concrete incidents and rejected tradeoffs in each of these areas:
 - Raw, Core, ETL, and support writers
 - Tenant and subject authority, with job contexts
 - KMS, outage, rotation, and backups
-- Willingness to accept companion schema, explicit query failures, and warm/session setup
+- Willingness to accept companion schema, explicit query failures, trusted Session identity, and a maintenance window
 - Deletion scope and shared index residue
 - Whether graph and exposure evidence changes a review decision
 - Reasons for immediate rejection

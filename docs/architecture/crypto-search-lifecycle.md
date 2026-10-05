@@ -14,8 +14,8 @@ collectors. [Primary-source evidence](../research/crypto-provider-evidence.md) r
 [Prior art](../prior-art.md) owns positioning. The [tracker](../backend-build-checklist.md) alone
 records implementation state.
 
-All capability families remain active research. Equality, IN and scoped uniqueness are initial
-production candidates. Advanced search and controlled authority have independent gates. Candidate
+All capability families remain active research. Search is disabled in the initial runtime target. Equality, IN, and scoped uniqueness are later
+individually gated candidates. Advanced search and controlled authority have independent gates. Candidate
 bytes and numeric budgets make prototypes falsifiable.
 
 They are not an authenticated protocol implementation, primitive approval, measured performance,
@@ -47,6 +47,38 @@ model attributes and pooled connections are transport only.
 A receipt attests recorded observations under its signer's trust model. It does not attest memory
 zeroization, legal erasure or control-plane honesty. searchable and strict_shred are policy
 profiles, never receipt conclusions.
+
+## Required domain and representation bindings
+
+The [identity owner](manifest-context-api.md#desired-policy-and-active-authority) defines generated IDs and current authority.
+The next admitted composition must encode these payload bindings unambiguously in AAD and payload KDF domains:
+
+| Binding | Trusted input and purpose |
+|---|---|
+| protection_domain_id | Current environment/recovery authority, independent of database restore |
+| tenant_id, subject_id, immutable_record_id | Authorized scope and independently checked resource identity |
+| model_id, table_id, field_id | Stable logical ownership. Physical names do not enter payload binding |
+| representation_id | Never-reused protected incarnation from authenticated descriptor/history |
+| immutable descriptor digest and binding/suite/codec versions | Exact creation format, not the whole current manifest digest |
+| declared cryptographic purpose and material generation | Catalogue-selected domain and exact authorized generation, not a request-selected decrypt purpose |
+| authenticated header, fresh seed and nonce under the selected suite | Strict bounded parse, authorized dispatch, then authentication. No trial-key fallback |
+
+Search derivations, when admitted, bind protection domain, field, search representation/domain, normalizer and codec versions, tenant/scope, purpose, and generation.
+Payload, search, wrapping, audit, and receipt purposes cannot substitute for one another.
+Wrapper registries bind domain, tenant/subject scope, exact immutable root/version, purpose, and wrapper/material generations.
+They cannot accept a header-selected provider or alias as authority.
+
+The existing descriptor schema 1 and F1/W1 structures predate these bindings.
+Their current structural parsers and example bytes remain unchanged and unauthenticated.
+The candidate v1 AAD/KDF formulas below are pre-reconciliation experiments, not a production composition.
+They must change with reviewed descriptor/catalogue/binding versions before real ciphertext.
+Exact successor bytes, sole suite/library/key-management composition, and key-commitment policy remain [Q2](README.md#unresolved-research-questions).
+No production encryption or ORM transparency proceeds from the parser slice.
+
+Cross-domain, remove/re-add, descriptor substitution, exact-key/alias-retarget, and one-component AAD/KDF vectors gate that revision.
+Stable renames must preserve readability. Re-adoption must reject historical-incarnation replay.
+Same-record replay within one admitted incarnation remains possible without a separate trusted monotonic freshness authority.
+An intentionally copied domain, authority, and keys create cryptographic equivalence. A staging clone cannot claim isolation from those copies.
 
 ## 2. Suite candidates and selection
 
@@ -252,7 +284,7 @@ search or shred policy or an arbitrary runtime profile name. Protocol label is t
 The literal E calls below declare component positions and types. No implicit type inference is
 permitted. Index domains are stable UUIDs, and normalizer/codec version references are integers.
 
-Candidate AAD:
+Pre-reconciliation candidate AAD, not eligible for production freeze:
 
 ```text
 E("cryptalis/payload/v1", aad_binding_version, header_bytes,
@@ -283,7 +315,7 @@ descriptor](manifest-context-api.md#immutable-field-format-descriptor) and domai
 define the creation digest. Original policy records remain immutable and digest-verified. Unknown
 digests cannot trigger permissive historical reads.
 
-Request ID, expiry, purpose and principal are runtime grant checks, not changing persisted AAD:
+Request ID, expiry, requested release purpose, and principal are runtime grant checks, not changing persisted AAD:
 future independently authorized readers must recover the same value. Controlled release separately
 binds those properties in section 10.
 
@@ -296,7 +328,7 @@ restore compatibility. Raw ciphertext copying is forbidden.
 
 ### 3.4 KDF, domains and randomness
 
-Candidate HKDF-SHA-256 follows [RFC 5869](https://www.rfc-editor.org/rfc/rfc5869) with reviewed
+Pre-reconciliation candidate HKDF-SHA-256 follows [RFC 5869](https://www.rfc-editor.org/rfc/rfc5869) with reviewed
 libraries. Root, branch, subject and index seeds are independently random 32-byte secrets. They are
 never passwords or tenant IDs:
 
@@ -349,6 +381,11 @@ known-repeat pair may produce another encryption. OS RNG failure fails closed. P
 copied PRNG state are forbidden.
 
 Detection cannot prove entropy. Platform, CSPRNG and suite assumptions remain essential.
+
+The following distributed quota reservation protocol is a future fleet profile.
+It is not required by the initial single-process target and supplies no implemented exact-use guarantee.
+The initial adapter still needs reviewed generation/byte caps, local one-way consumption, and fail-closed exhaustion.
+Cross-process allocations and invisible VM-clone claims require their distinct platform evidence before fleet admission.
 
 The reference distributed budget registry lives in the independent durable authority. It does not
 live in the application database, cache or their snapshots. **Default preparation reserves bounded
@@ -580,6 +617,15 @@ distinct release model. The provisional portable-envelope effort recorded in [pr
 art](../prior-art.md) may supply differential codec/vector ideas. Pre-alpha unreviewed
 specifications do not approve a crypto dependency or confer novelty.
 
+Search remains disabled initially. Its presence in a manifest or research prototype cannot enable it.
+The first admitted equality/uniqueness transition uses offline REINDEX through the generic engine.
+It verifies all terms, normalization/null semantics, and one database-enforced uniqueness domain before activation.
+Inference acceptance binds the exact policy, corpus/workload, and observation date.
+Changed distributions can worsen leakage. No automatic signal exports terms or value histograms.
+
+The online dual-generation protocol below is a later strategy with separate G-UNIQUE/G-OFFLINE successor evidence.
+It is not a prerequisite for no-search field protection.
+
 ## 6. Search rotation and continuous uniqueness
 
 Rotation names the source and target index, normalizer and domain. It also names the finite
@@ -618,6 +664,38 @@ Incomplete coverage or invalid concurrent indexes block cutover. Changed normali
 formerly distinct values. Resolve conflicts explicitly without discarding data. A stable separate
 unique key is an alternative with a long-lived compromise/leakage domain. An explicit write pause/
 offline reindex is acceptable if continuous safety cannot be proven.
+
+## Key operation contract
+
+All key changes reuse the [generic transition engine](orm-schema-migration.md#migration-state-machine-and-concurrency).
+The shared owner defines plans, approvals, and receipts. Provider substeps never become separate activation authorities.
+
+| Operation | Actual effect / retained obligations |
+|---|---|
+| Provider master-key automatic rotation | Changes provider-managed future encryption material. Old decryption material can remain. Does not rewrite wrappers or payloads |
+| Wrapper/KEK version change and DEK rewrap | Changes covered wrapping records. Payloads and old backup wrappers can remain unchanged |
+| New payload-write generation | Future writes use new material. Existing rows still need old generations |
+| Existing payload re-encryption | Explicit KEY_REENCRYPT transforms every covered payload and verifies it. Copied old ciphertext remains |
+| Search-key/reindex generation | REINDEX changes terms and uniqueness state independently. Disabled in the initial target |
+| Disable/revoke | Denies the named supported authority/provider operation. Cached bytes and offline recovery can survive |
+| Scheduled destruction | Requests provider-native delayed deletion. Cancelability, disabled state, and exact observation remain visible |
+| Confirmed destruction or irreversible loss | Records destroyed-as-reported or evidenced loss only within declared recovery paths. Requires separate approval and recovery tests |
+| Compromise response | Contains affected writes/releases, inventories exposure, introduces approved new material/format, transforms, verifies, and retires through the same engine |
+
+Normal `keys rotate` selects only the safe operation admitted by the configured profile.
+It reports the changed layer, whether existing payloads changed, old read dependencies, and retained recovery paths.
+It never destroys the old path. Destruction and incident response remain advanced explicit plans.
+
+Exact immutable provider resource/key-version IDs select keys. Aliases are locator hints and resolve only through trusted registry admission.
+Some providers hide internal material versions. Do not invent selectable version IDs that their APIs do not expose.
+One authorized resolver result supplies one exact key. No multi-key trial loop repairs ambiguity.
+G-CROSSKEY and Q2 decide whether the selected composition needs an additional committing construction.
+Nonce-misuse resistance, authenticated headers, and exact-key syntax alone do not prove key commitment.
+
+Incident plans distinguish broken algorithms, parser flaws, exposed KEKs, compromised payload generations, and RNG/nonce faults.
+They name containment, current readable/writable sets, backup exposure, required rewrap/re-encryption, and denied or unavailable recovery paths.
+Ordinary rotation cannot silently stand in for incident remediation.
+Re-encryption cannot retract values or ciphertext already copied.
 
 ## 7. Key hierarchy and provider interface
 
@@ -665,6 +743,12 @@ wrappers, keys or observations.
 
 Per-value derivation lacks forward secrecy while its subject parent and public seed survive.
 
+Provider receipts preserve native state plus provider, region, immutable resource/version, material origin, observation time, and evidence basis.
+States include enabled, disabled, pending deletion, restorable, destroyed as reported, unavailable, and unknown.
+Request acceptance is not destruction. Eventual consistency leaves reconciliation pending until current native observations support the claim.
+Provider support requires one exact cell after [Q4](README.md#unresolved-research-questions) closes.
+AWS, GCP, and Vault references below remain alternatives, not three first-release promises.
+
 ## 8. Cache leases, epochs and operation fences
 
 Caches hold material in-process only. Never put plaintext or shared key material in Redis. Entry
@@ -689,9 +773,30 @@ chooses and tests its own bounds.
 
 Hour-long caching cannot support a 60-second revocation receipt.
 
+### Initial single-process cache and authority
+
+The first adapter uses bounded size, TTL, invocation/byte budgets, deadlines, and negative-cache duration.
+Exact defaults require the selected provider/suite evidence. No duration in a future fleet experiment becomes an initial production promise.
+Cache identity includes protection domain, tenant/subject scope, representation/purpose where applicable, exact key/version, and active lifecycle epoch.
+Material validity and current operation authority are separate. Both must be valid before supported output or commit.
+
+Process-wide single-flight combines loads for the same admitted identity.
+Bounded retries use deadlines and jitter. Failed/denied loads use bounded negative caching without masking new authority or indefinite failure.
+Cancellation resolves waiter/owner state and cannot extend a lease, duplicate quota, or publish partial values.
+Authority unavailability denies new admission even with cached material. A provider outage never selects plaintext.
+Suspension, restart, fork, or restored memory requires fresh admission and invalidates unsupported cached authority.
+Python zeroization and recall of released plaintext remain unclaimed.
+
+Herd/throttle/outage/cancellation/expiry/clock/revocation faults must show bounded memory, calls, and exact denial.
+Cross-tenant starvation and cardinality limits need evidence for the admitted multi-tenant scope.
+External budgets, fleet fairness, partitions, mixed processes, and physical-drain timing require later multi-process gates.
+
+The protocol below describes that future acknowledged-drain profile.
+It does not impose fleet machinery on the initial single-process engine or make authority expiry equal physical completion.
+
 ### 8.1 Reference acknowledged-drain protocol
 
-The initial reference profile uses one linearizable external authority per deployment, durable
+The future multi-process reference profile uses one linearizable external authority per deployment, durable
 registered worker/incarnation and operation records, and database transaction fences for supported
 writers. This is a **proposed protocol**, not an implemented or proven 60-second completion bound.
 The authority's recovery quorum/checkpoint is outside application/database snapshots. An inability
@@ -822,6 +927,10 @@ Fork children discard inherited handles/caches. Stampede suppression does not sh
 
 ## 9. Lifecycle, restoration and destruction receipts
 
+This section describes effect observations inside the shared TransitionRecord, not another transition engine.
+The seven generic phases remain the execution contract.
+The drain protocol and fleet labels below require their later profile evidence. They are not initial offline prerequisites.
+
 Track requests, authorization, record inventory, native provider observations, epochs and leases.
 Also track acknowledgements, fresh and stale processes, restore and reimport, search residue and
 unresolved copies. No terminal label discards those dimensions.
@@ -855,6 +964,43 @@ export and recovery location. Shared root/branch destruction for one subject req
 collateral-impact plan. Replicas, WAL/PITR, DB/key-store dumps, provider snapshots, VM images,
 queues and plaintext exports have separate treatment. Retention expiry needs evidence of actual
 policy execution, not date arithmetic.
+
+### Recovery manifest and restore admission
+
+Cryptalis does not replace PostgreSQL backup tooling. A generated recovery manifest binds these non-secret inputs:
+
+- Exact database/backup identity, recovery target/PITR point, and protection domain
+- Binary, catalogue, manifest, descriptor, envelope, codec, and schema compatibility ranges and exact recorded pins
+- Active/readable format and schema generations and transition/finalizer obligations
+- Exact provider key/version references, material origin, region, and tested recovery prerequisites
+- Current external active/denial/tombstone/retirement authority reference and authentication basis
+- Known replicas, CDC sinks, exports, queues, snapshots, excluded copies, retention/expiry, and tested restore result
+
+Unknown identity or missing history/key/authority evidence blocks admission.
+Q1/Q4/Q5/Q7 remain unresolved selections. No guessed production DR or staging procedure follows from this schema.
+
+Every restore begins quarantined without production application or KMS credentials.
+Prefer schema from reviewed migrations and data-only loading.
+Data-only loading still requires trusted target objects and inspection. It is not an automatic safe-restore certificate.
+Full schema or physical restore remains quarantined until the following surface matches a trusted allowlist:
+
+- Owners, grants, role/database settings, schemas, and effective search_path
+- Extensions, functions including SECURITY DEFINER, operators, casts, triggers and event triggers
+- Views/materialized views, rules, defaults/generated expressions, and RLS policies
+- Publications, subscriptions, slots/CDC, replicas, and external writers
+- Active compatibility, descriptor/key references, operation generations, and current denial/retirement state
+
+`restore check` inspects without admission. `restore admit` executes RESTORE_ADMISSION through the shared engine.
+Current external ActiveState, tombstones, and retirement facts dominate every restored row, wrapper, counter, and checkpoint.
+Production identity connects only after reconciliation and current compatibility evidence.
+PITR can resurrect old plaintext, ciphertext, wrappers, and terms. Admission enforces current managed denial, not disappearance of old bytes.
+Hostile schema, missing old keys, stale authority, wrong domain, and obsolete formats require explicit repair or refusal.
+
+Each rollback plan names the last reversible point, exact retained representation/keys, binary/readable range, expiry, and recovery procedure.
+Retention defaults remain Q8. OBSERVE never implies a usable rollback path.
+Deprotection retires current protected columns/terms/read formats/keys only through separate approved finalizers.
+Decommission retains any declared recovery reader, backup/key dependencies, and operator-attested external inventory.
+DROP COLUMN, VACUUM, uninstall, TTL, or scheduled key deletion does not establish copy sanitization.
 
 ### 9.1 Backup recovery counterexample
 
@@ -891,6 +1037,11 @@ prevents new token derivation, but previously stored equal tokens still disclose
 equality. Tenant-wide lookup needs a token per authorized subject and a separate bounded fanout
 operation. Shared uniqueness/join/group/range domains are incompatible unless strict domain
 isolation is explicitly abandoned.
+
+Lifecycle labels above are Cryptalis effect substates inside TransitionRecord.
+Provider-native states remain separate observations with exact identity, time, and evidence basis.
+They do not create a second public state machine or active-policy authority.
+Every receipt also binds the [shared transition receipt](manifest-context-api.md#plan-record-approval-and-receipt-schema), protection domain, and representation identity.
 
 ### 9.3 Receipts
 
@@ -947,8 +1098,8 @@ evidence. Integration and educational study remain active alternatives.
 ## Research gates
 
 These G-* identifiers own new detailed acceptance contracts. Historical P0–P10 in the [hardening
-dossier](../adversarial-architecture-hardening.md) retain original meanings. All gates are **not
-run**. Source review/documentation checks cannot pass them.
+dossier](../adversarial-architecture-hardening.md) retain original meanings. All production admission gates remain **not
+run**. Current bounded parser trials do not complete them. Source review/documentation checks cannot pass them.
 
 The [playbook testing policy](../../ENGINEERING_PLAYBOOK.md#test-layers) prioritizes complete protection workflows.
 Focused crypto vectors, parser fuzzing, and lifecycle state checks retain their distinct fault-detection value.
@@ -959,9 +1110,11 @@ or reject.
 
 | Gate | Experiment and predeclared acceptance | Failure / redesign |
 |---|---|---|
+| G-FIRST-PROVIDER (Q4) | Select one SDK/service/region/material-origin/recovery cell. Exact-key and alias-retarget, grants/eventual-consistency, disable/enable, schedule/cancel deletion, restore, import/export and outage traces. Named review, zero fictional native-state completion | No first live adapter or dependent KMS behavior before researched closure. Other providers remain alternatives |
+| G-SINGLE-CACHE | One-process herd/throttle/cancel/clock/suspend/revoke trials with bounded calls/memory, separate valid material and authority, no plaintext fallback | Provider integration and bounded availability claims blocked. Fleet tests do not substitute for this cell |
 | G-CRYPTO | Pin library/backend/module/platform/suite/bytes. All published primitive vectors plus 100 composed cross-process/cross-language vectors per codec/domain/version match an independent implementation. 1,000,000 bounded malformed/mutation inputs per parser/suite, all limit boundaries and forced repeated seed/nonce/fork/crash/retry/snapshot faults. Zero unauthenticated releases, unsafe allocations or ambiguous parses. Reject oversize before key/provider lookup. External composition review: zero unresolved critical/high findings. | Keep bytes/suite unfrozen. Replace format/library or constrain platform. Stress counts are not cryptographic proof. |
 | G-CROSSKEY | Substitute handles/generations/suite/provider references across tenants and historical registries. Inject adversarial duplicate-key/alias records and reference-generated multi-key-valid ciphertexts where available. Zero unauthorized key registration/provider loads, exactly one permitted resolver result, no trial-key fallback or cross-domain release. Independent review must resolve whether accepted threat model requires key commitment and analyze the actual suite/composition. AAD alone is not accepted as proof. | Any accepted ciphertext resolving to multiple permitted authorities, attacker-selected key or unresolved commitment requirement blocks suite freeze. Use a reviewed committing envelope or explicitly narrower authority model. |
-| G-AAD | Every one-component tenant/subject/model/table/field/record/policy/version/header substitution. 100 crash/retry placements per authorized rename/move/transfer. All raw relocations reject. Every committed intended value survives migration with exact original/current compatibility. Replay separate. | Redesign IDs/migration. Reject implicit whole-manifest reinterpretation. Freshness needs trusted checkpoint protocol. |
+| G-AAD | Every one-component domain/tenant/subject/model/table/field/representation/record/purpose/generation/policy/version/header substitution. Remove/re-add replay and deliberate DR/staging clone vectors. 100 crash/retry placements per authorized rename/move/transfer. All raw relocations reject. Every committed intended value survives migration with exact original/current compatibility. Replay separate. | Redesign IDs/migration. Reject implicit whole-manifest reinterpretation. Freshness needs trusted checkpoint protocol. |
 | G-EQUALITY | Pin type/Unicode/normalization/null/boundary corpus and two colliding-ID tenants. 100,000 generated values/predicates, zero semantic mismatch/cross-domain reuse, every unsupported operator rejects before SQL. Predeclare accepted domain leakage and auxiliary-frequency/chosen-query attacks. | Disable/reclassify affected domain. Secret HMAC keys do not waive inference review. |
 | G-UNIQUE | 32 concurrent writers, 10,000 equivalent insert/update attempts across U-only/dual/backfill/cutover/contract, all null semantics, changed equivalence, retries and invalid indexes. Exactly one equivalent non-null value commits. Zero enforcement gap/data loss. U-only writers fenced before V backfill and remain fenced through cutover/removal. | Pause writes, accept separately reviewed stable unique domain or remove uniqueness. |
 | G-SEARCH | Per join/range/text/fuzzy/JSON construction: exact paper/variant/oracle, leakage function, snapshot/transcript/auxiliary/chosen-input attackers, differential semantics, rotate/shred and independent production-review path. Exact operators: zero false negatives/semantic differences. Approximate candidates: 100% recall on pinned labeled corpus with measured precision/fanout. No generalization beyond corpus. | Isolate missing-oracle/leakage or over-budget experiment. Other research remains active. No generic search approval. |

@@ -1,10 +1,10 @@
 # Cryptalis
 
-Cryptalis is a planned data-protection and security-assurance system for Python and SQLAlchemy.
-Its versioned Protection Manifest declares field policy. The proposed system connects this
-policy to authenticated payload encryption, search capabilities, PostgreSQL schema, and reviewed
-Alembic migrations. It also connects key lifecycle and application paths to controlled attacks
-and reproducible exposure evidence.
+Cryptalis is a planned data-protection system for Python and SQLAlchemy.
+The future normal workflow is a field declaration, trusted Session identity, `cryptalis check`, and `cryptalis migrate`.
+Generated policy history expresses desired behavior. Authenticated external active state controls runtime behavior after a verified transition.
+The initial runtime target is one no-search synchronous PostgreSQL cell with offline maintenance transitions.
+Broader security-assurance and search work remains separately gated research.
 
 **Status as of 2026-10-04: bounded manifest JSON, domain-separated content digests,
 identity-header validation, parent-link validation, structural field-format digests,
@@ -26,6 +26,12 @@ Other Cryptalis APIs and commands are proposed
 contracts. The [capability
 checklist](docs/backend-build-checklist.md) separates specified design from executable evidence.
 No runtime version is supported.
+
+Handoff reconciliation: 2026-10-05, documentation only.
+External ActiveState, the transition engine, restore admission, deprotection, and complete uninstall/decommission are not implemented.
+The [unresolved questions](docs/architecture/README.md#unresolved-research-questions) remain open.
+Dependent runtime behavior waits for researched answers to Q1–Q5 and [P0 documentation review](docs/architecture/README.md#p0-documentation-review-register).
+This pass does not change the current structural formats or confer support.
 
 ## Run the current slice
 
@@ -91,8 +97,8 @@ accidental persistence through supported paths. It does not prevent SQL injectio
 scripting (XSS), business authorization bugs, application-host compromise, or deliberate export
 of decrypted values. Search terms, IDs, and lengths reveal declared information.
 
-Raw drivers, COPY, extract-transform-load (ETL) processes, and separate writers are explicit
-coverage gaps. A successful exploit and exposure of protected plaintext are separate results.
+The initial profile proposes rejection of mediated Core/text/bulk paths and exclusion of raw drivers, COPY, ETL, and separate writers.
+External paths remain coverage gaps unless database privileges demonstrably exclude them. A successful exploit and exposure of protected plaintext are separate results.
 
 Transparent fields remain ordinary Python values. Application serializers and logs can receive
 these values. Controlled access is a separate profile that requires release bound to purpose and
@@ -104,39 +110,40 @@ denial does not prove erasure of backed-up key bytes or unmanaged copies.
 ## System shape
 
 ```text
-field declarations -> immutable Protection Manifest
-                       |        |         |         |
-                       v        v         v         v
-                  ORM/crypto  schema/   lifecycle  Doctor/plan
-                    queries   Alembic   key/fence   analysis
-                       |        |         |
-                       +---- PostgreSQL --+---- provider/denial ledger
-                                      |
-                      authorized synthetic Verify/Pentest/network lab
-                                      |
-                       derived Protection Graph + bounded evidence
+DeclaredPolicy -> generated PolicyLock + immutable desired history
+                        |
+                        v
+              target-bound offline transition
+                        |
+                 full verification + CAS
+                        |
+                        v
+       external authenticated ActiveState -> admitted runtime
+                        |
+          separate irreversible finalization + bounded receipt
+
+      read-only preflight and optional later assurance evidence
 ```
 
-The first candidate query profile includes randomized protection without search, equality, IN,
-and scoped uniqueness. Join and grouping, range and ordering, extrema, prefix, substring and
-text search, fuzzy search, and structured or JSON queries remain research tracks. Each track
-requires a specific construction. The [search
-contracts](docs/architecture/crypto-search-lifecycle.md) define leakage, cost, lifecycle, and
-enablement gates.
+These names summarize the [shared authority contracts](docs/architecture/manifest-context-api.md#desired-policy-and-active-authority).
+The [ORM owner](docs/architecture/orm-schema-migration.md#migration-state-machine-and-concurrency) defines the single internal engine.
+Editing a declaration does not activate it. Removing a declaration does not decrypt or drop data.
+The future `migrate` flow shows the target, maintenance requirement, storage/time estimates, rollback boundary, and pending irreversible cleanup.
+It transforms offline, verifies completely, then changes authenticated active state.
+Plaintext publication and loss of recovery require separate explicit approval.
 
-The default design uses explicit key warm-up or prefetch, then local cryptography. This default
-still requires comparison with actual greenlet-backed remote I/O and deferred batch
-alternatives.
+Search is disabled initially. Equality, IN, uniqueness, and advanced query capabilities need individual leakage and correctness gates.
+Async, online coexistence, mixed writers, fleet caches, CDC, and multi-provider support remain later cells.
+Key preparation stays internal at explicit Session boundaries. The developer supplies trusted identity once and does not choose keys or AAD.
+The exact public-hook experiment may select an explicit repository path instead.
 
-The multi-year program includes object-relational mapping (ORM), query compilation, migrations,
-and distributed key lifecycle. It also includes Doctor analysis of abstract syntax trees (ASTs),
-control-flow graphs (CFGs), and taint. Pentest covers state, mutation, and replay experiments.
-Verify, network analysis, packet capture (PCAP), DevSecOps evidence, and advanced search
-complete the program scope.
+The [recovery contract](docs/architecture/crypto-search-lifecycle.md#recovery-manifest-and-restore-admission) treats restored data and schema as untrusted.
+Current external policy and denial dominate old snapshots. Deprotection and guided remove retain explicit backup/key/recovery-reader obligations.
+Those workflows remain proposed. Uninstall or column drop is not proof of copy erasure.
 
-Dependencies govern integration and claims. They do not impose a course limit or a minimum
-viable product (MVP) ceiling. Attribution and differential comparison take priority over
-novelty.
+Doctor, Protection Graph, Verify breadth, Pentest, and network evidence remain valuable research tracks.
+They are optional for first-transition value and never activate policy or approve cleanup.
+Attribution and differential comparison take priority over novelty claims.
 
 ## Start here
 
@@ -164,10 +171,10 @@ cryptographic primitives.
 
 ## Next evidence
 
-Start with the provenance, manifest and envelope, ORM state and bypass, and three-way async
-prototypes in the [checklist](docs/backend-build-checklist.md). Lifecycle and restore,
-interrupted migrations, equality uniqueness, and oracle controls each have falsifiable gates.
-Research can proceed independently.
+Start with [C33–C40](docs/backend-build-checklist.md#ordered-foundation-slices): active authority and target-bound transitions, then domain/representation/suite freeze.
+After researched closure and review, build one no-search field/Session path, DB preflight, and resumable offline transition.
+Keys, recovery/restore, upgrade, decommission, telemetry, and artifact provenance follow their dependencies.
+Online/search/fleet/assurance breadth stays later. Documentation and independent research can proceed while runtime gates remain open.
 
 The default learning workflow has the solo builder type source, tests, migrations, and
 configuration, one explained file at a time. Explicit user instructions can authorize direct

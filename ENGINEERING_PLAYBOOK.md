@@ -28,6 +28,27 @@ decisions to build or integrate components.
   Dependencies and evidence gates limit integration and claims.
   They do not impose a semester ceiling or prohibit parallel research and isolated experiments.
 
+### Settled architecture review rules
+
+The [blueprint](docs/architecture/README.md#load-bearing-decisions) owns these decisions.
+Treat this list as review prompts, not a second technical specification.
+
+- Check desired versus active authority and target-bound plan reinspection at every mutation boundary.
+- Block real ciphertext until domain/representation/descriptor/suite/exact-key composition freezes with reviewed evidence.
+- Keep trusted identity at the normal Session boundary. Reject low-level public crypto or bypass controls.
+- Use the one offline transition engine first. Keep online, search, async, fleet, and broad assurance behind separate gates.
+- Check explicit approval for plaintext publication and each irreversible cleanup, with truthful recovery and copy residue.
+- Quarantine restored targets. Admit only through current external authority and reviewed executable-object inventory.
+- Reject unsupported DB-profile cells and incompatible writers before protected work. Use one active writer version initially.
+- Require artifact provenance separately from evidence signing before public release.
+
+The [P0 documentation register](docs/architecture/README.md#p0-documentation-review-register) records each pending review.
+The [unresolved register](docs/architecture/README.md#unresolved-research-questions) keeps Q1–Q5 open.
+Do not implement dependent runtime crypto, ORM, migration, KMS, restore, or decommission behavior before researched closure and P0 documentation review.
+Documentation reconciliation alone does not supply independent review or permission to cross those gates.
+Follow [C33–C40](docs/backend-build-checklist.md#ordered-foundation-slices) in behavior-first slices.
+Reject a PR that silently broadens support, claims absent evidence, or crosses an unapproved irreversible boundary.
+
 ## Fail loudly and explicitly
 
 **Nothing important may fail silently.**
@@ -265,15 +286,20 @@ Optimize regression-detection value per developer and CI cost, rather than the n
   Bind canonical context as additional authenticated data (AAD).
 - Use separate key domains for encryption, equality, join, migration, audit, and receipt operations.
 - Cloud KMS or Vault wraps tenant branch material. Normal field crypto is local.
-- By default, provider misses occur in explicit warm or prefetch operations.
-  Greenlet and deferred alternatives require the canonical measured profile.
-  Do not permit undeclared remote I/O.
+- Review provider preparation at the visible Session boundaries in the [normal API](docs/architecture/manifest-context-api.md#public-python-surface).
+  Keep key preparation internal. Normal callers supply trusted identity once.
+  Greenlet and deferred alternatives require their measured profile. Do not permit undeclared remote I/O.
 - Provider adapters expose actual version, deletion delay, restore, export, outage, and audit semantics.
   They must not present providers as interchangeable.
 - Keys, plaintext, raw search tokens, request bodies, and ciphertext bodies never appear in logs, metrics labels, traces, audit events, or receipts.
 
 Changes to a primitive, envelope, AAD, key hierarchy, normalization, index domain, or access mode require architecture review.
 Changes to a provider, cache, rotation, revocation, or shredding also require that review.
+
+The [crypto owner](docs/architecture/crypto-search-lifecycle.md#key-operation-contract) distinguishes nine key operations and initial cache authority.
+Review rotation claims against actual wrapper, payload, search, provider, and recovery effects.
+Do not infer key commitment from exact-key syntax or nonce-misuse resistance.
+The existing schema-1 descriptor and private F1/W1/scalar parsers establish structural boundaries only.
 
 ## SQLAlchemy rules
 
@@ -293,30 +319,29 @@ Changes to a provider, cache, rotation, revocation, or shredding also require th
 
 ## Migration rules
 
-The ORM and migration owner defines the canonical phase order.
-Coexistence and fencing of compatible writers precede backfill.
-Migrations are resumable and idempotent. They use immutable cursors and checkpoint only redacted metadata.
-Backfill uses leases plus row versions and compare-and-swap (CAS) semantics.
-
-Dual write names one authoritative value. Cutover fences incompatible application versions.
+Use the [ORM transition owner](docs/architecture/orm-schema-migration.md#migration-state-machine-and-concurrency) for exact phases and recovery semantics.
+Initial work uses offline writer quiescence, idempotent row/chunk revisions, terminal full verification, and authenticated CAS activation.
+Review target/precondition reinspection, overlap locks, interrupted DDL/provider effects, and abandoned finalizers.
+Coexistence, dual writes, distributed leases, and online verification remain future strategy review topics.
 
 Generated revisions must show:
 
-- Physical additions and removals, with SQL indexes
-- Data volume and lock expectations
-- Normalization, index, envelope, and key versions
-- Plaintext coexistence and the telemetry window
-- Retry, resume, rollback, and restore behavior
-- Recovery from nontransactional data definition language (DDL), invalid indexes, concurrent writers, version skew, replica lag, and two workers
-- Verification controls
-- The point after which rollback cannot recover deleted plaintext
+- Physical additions/removals, exact schema and format versions, and reviewed Alembic heads
+- Writer exclusions, lock classes/timeouts, scan/rewrite behavior, and disk/WAL/provider budgets with uncertainty
+- Retry, cancellation, resume, invalid-index reconciliation, source/target row coverage, and commit/CAS ambiguity
+- Exact retained rollback data/keys/readers, expiry, restore prerequisites, and irreversible approval actions
+- Deprotect plaintext exposure, decommission inventory, and copy exclusions
 
-Autogeneration never applies migrations.
-Plaintext deletion, removal of an old format, key destruction, and expiry of recovery sources are separately approved irreversible points.
-Incomplete or inconclusive evidence blocks contraction.
-The evidence must address round trips, counts, index consistency, canaries, drift, and restore behavior.
+Autogeneration never applies migrations. Declaration removal never drops data.
+Incomplete or inconclusive evidence blocks SWITCH and FINALIZE.
+Review protect/reconfigure/deprotect workflows and hostile restore/exit behavior before support.
+Every approval belongs to the exact irreversible boundary, not each reversible phase.
 
 ## Search-capability review
+
+Search is disabled in the initial runtime target.
+Later equality/IN/uniqueness uses offline reindex before any online dual-generation profile.
+The [crypto owner](docs/architecture/crypto-search-lifecycle.md) owns leakage, normalization, nulls, and term retirement.
 
 An enabled capability requires:
 
@@ -325,12 +350,12 @@ An enabled capability requires:
 3. A leakage statement for the field
 4. Physical representation and storage budget
 5. Normalization and null semantics
-6. Rotation and dual-index migration
+6. Offline reindex and retirement. Dual-index migration only for a later online profile
 7. Subject-shredding treatment
 8. Tests for unsupported operations
 9. A benchmark against the no-search baseline
 
-`cryptalis plan` can recommend capabilities but never changes the Protection Manifest.
+Optional analysis can recommend capabilities. The shared transition planner cannot activate a recommendation or rewrite desired policy.
 Equijoin, range/order, text, fuzzy, and JSON capabilities remain unavailable until their individual gates pass.
 
 ## Verification safety
@@ -359,6 +384,19 @@ A release candidate remains blocked until all of these conditions hold:
 - An independent reviewer examined cryptographic use and destructive migration behavior.
 - Prior-art and demand research are current.
 - Release notes state limitations, failed experiments, leakage, and incompatible changes.
+
+Before a public release, also require artifact-bound product provenance:
+
+- Locked dependencies and exact runtime/native crypto artifacts with source, license, and supported-version review
+- Minimal wheel and separate experimental/lab distributions, with forbidden-import and secret-bearing-artifact checks
+- SBOM, protected build/publishing environment, PyPI Trusted Publishing, and verified artifact-bound attestations
+- Source-to-wheel contents and reproducibility checks where feasible, with explicit limits
+- Wrong issuer/workflow/repository/artifact, tampered wheel, dependency/lock drift, and emergency dependency-response evidence
+
+The [primary tool ledger](docs/research/assurance-tool-evidence.md#product-artifact-provenance) owns external provenance facts.
+Evidence signing cannot vouch for a substituted wheel. Provenance establishes origin and bytes within its trust chain, not source correctness.
+Required profile tests and independent review remain separate release gates.
+Use a deliberately noncompliant plan/API/release review fixture to check these rules and the canonical-owner links.
 
 A release cannot use “production-ready,” “better,” “more secure,” “zero leakage,” or compliance claims without a definition and evidence set.
 The definition and evidence set must support separate review.

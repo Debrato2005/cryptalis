@@ -571,3 +571,100 @@ Source and vector SHA-256 for this slice:
 
 Checked Markdown snapshot, audit self excluded: `a007735aa6a43ff99313a3cee8a71a298c475e9fa2b045a9a42ca8e510171bf0`.
 These hashes identify local working files. They are not signatures or independent security evidence.
+
+## Authoritative handoff reconciliation — 2026-10-05
+
+Scope: the supplied 2026-10-05 architecture handoff and its ordered file-by-file patch plan, documentation only.
+Fourteen planned documents already contained local edits at entry. This pass preserved them and refined nine documents in plan order.
+The historical `SESSION_HANDOFF.md` remains byte-identical. This audit records observations and supplies no normative runtime contract.
+
+The [P0 register](architecture/README.md#p0-documentation-review-register) links each reconciled blocker to its canonical owner.
+Every P0 review remains pending. [Q1–Q10](architecture/README.md#unresolved-research-questions) remain open.
+No researcher, provider, suite, target-identity source, ORM strategy, or retention default was selected.
+No documentation or runtime gate was promoted to reviewed, closed, or supported.
+
+Refinements clarify internal crypto visibility, planned-effect reconciliation, irreversible-only approval, and future lifecycle substates.
+CI exceptions cannot bypass the P0/Q1–Q5 blockers. Summaries link to canonical owners.
+The checklist and build guide retain the C33–C40 order. Online, search, fleet, and broad assurance remain later gates.
+
+| Check actually run | Result and limit |
+|---|---|
+| Existing `DOC_CHECKER_BEGIN` block extracted and executed with `python3` | PASS. Local paths, case, heading anchors, fences, inline code, control bytes, and whitespace checked. Final raw totals appear below |
+| `git diff --check` | Exit 0, no output |
+| SHA-256 comparison against the entry snapshot | Only nine planned Markdown files changed before this audit append. Source, tests, fixtures, packaging, locks, build/CI configuration, and other files remained unchanged |
+| Exact comparison with entry copies | README implementation-status prose, checklist implementation passages, C00–C32 rows, existing fenced examples, and historical handoff remained byte-identical |
+| ASD-STE100 lint on added prose, before repository writes | Exit 0. 653 words, 9 findings, 1.38 per 100 words. Existing checklist prose scored 3.79. Preserved evidence rows were not rewritten |
+| Selected official-page rechecks | Documented-only. Session event scope, restore code-execution warning, AEAD commitment distinctions, artifact attestations, and SLSA provenance. No executable support evidence |
+| Runtime tests, build, provider trials, migration/restore/decommission execution | Not run. This documentation pass supplies no new runtime or independent security evidence |
+
+Official rechecks used [SQLAlchemy Session events](https://docs.sqlalchemy.org/en/20/orm/session_events.html) and [PostgreSQL 18 pg_restore](https://www.postgresql.org/docs/18/app-pgrestore.html).
+Composition/provenance rechecks used [Tink AEAD](https://developers.google.com/tink/aead), [PyPA index-hosted attestations](https://packaging.python.org/en/latest/specifications/index-hosted-attestations/), and [SLSA provenance v1.2](https://slsa.dev/spec/v1.2/provenance).
+The attempted PyPA `/specifications/digital-attestations/` path returned a tool retrieval error. It supplied no evidence.
+The existing ledgers retain broader dated research provenance. These rechecks do not redate their other observations or answer Q1–Q5.
+
+Final documentation snapshot SHA-256, audit self excluded: `606511cfca4957f95d68c302fa9487f2732449d2eedbfeec98badd02c6ac3ddb`.
+
+Final raw documentation-check output:
+
+```text
+Markdown files=20; local links=488; faults=0
+Snapshot SHA256 (audit self excluded)=606511cfca4957f95d68c302fa9487f2732449d2eedbfeec98badd02c6ac3ddb
+```
+
+Final hash-boundary result: ten Markdown files changed relative to entry, including this audit append.
+All recorded non-documentation hashes remained unchanged. The historical handoff and implemented-status comparisons passed.
+Seven P0 documentation reviews remain pending. Q1–Q10 remain open.
+
+## Full documentation review and plaintext approval correction — 2026-10-05
+
+Scope: all 19 maintained Markdown files, with parallel first-party reviews of independent documentation owners.
+The entry snapshot contained 15 modified Markdown files. Existing work and historical verification records remain intact.
+This pass changes the shared approval contract, ORM execution contract, and this audit only.
+No runtime implementation or external-source verification occurred.
+
+### Findings and disposition
+
+Locations below refer to the entry snapshot. These are proposed-contract gaps, not demonstrated runtime vulnerabilities.
+
+| ID / severity | File / location | Current behavior | Danger | Recommended correction / disposition |
+|---|---|---|---|---|
+| DR01 / P1 | [Shared approval](architecture/manifest-context-api.md#plan-record-approval-and-receipt-schema), lines 168–169. [ORM phases](architecture/orm-schema-migration.md#migration-state-machine-and-concurrency), lines 578–580. [Deprotect](architecture/orm-schema-migration.md#deprotect-decommission-and-finalization), lines 619–622 | Approval centers on SWITCH. Temporary plaintext needs prior approval only if it broadens access | Unchanged application grants can disguise new plaintext exposure through staging, WAL, replicas, or backups | Require approval before first persistence. Bind exposure paths and SWITCH scope. Corrected in the canonical contracts. Runtime evidence remains pending |
+| DR02 / P2 | [Assurance interfaces](architecture/assurance-evidence.md#2-typed-interfaces-and-version-boundary), line 105. Bundle inventory, lines 587 and 606 | Bundle inputs and inventory assume a graph despite graph-free initial evidence | An exporter can reintroduce advanced Graph as a prerequisite for the first transition | Define bundle profiles and explicit optional graph disposition. Preserve mandatory receipts and artifacts. OPEN |
+| DR03 / P2 | [Assurance evidence](architecture/assurance-evidence.md), lines 67 and 376 | Collector prose names documented and operator-attested bases. The assertion enum omits both | A producer can reject required attestations or mislabel them as observed evidence | Define provenance layers or versioned basis entries with attestor, scope, interval, and limits. OPEN |
+| DR04 / P2 | [ORM reproduction queue](research/orm-platform-evidence.md#reproduction-queue), lines 180 and 185–187 | The queue starts with C33–C40 but then instructs every G-ORM-1 through G-ORM-10 | Later search, async, and online gates can obscure the first offline no-search sequence | Separate applicable initial-profile gates from later comparison experiments. OPEN |
+
+### Contract acceptance cases
+
+These are paper-review cases for DR01. They define required future failure-path evidence, not executed runtime tests.
+
+| Case | Required contract result |
+|---|---|
+| No approval, unchanged application grants, plaintext shadow in TRANSFORM | Explicit refusal before the first plaintext write |
+| Approval missing, expired, wrong-target, or missing staging scope | No further plaintext persistence or publication |
+| Valid approval names staging and SWITCH | Both actions stay within the exact scope. No approval prompt per chunk |
+| Approval covers staging only | SWITCH refuses application publication until exact publication approval exists |
+| Crash after first plaintext commit or ambiguous approval disposition | Preserve exposure obligations. Reconcile durable effects before resume. Unknown disposition cannot authorize work |
+
+Q1–Q10 remain OPEN. All seven P0 review dispositions remain pending.
+This first-party correction selects no authority backend, suite, provider, ORM strategy, or target-identity source.
+Future runtime admission still requires researched Q1–Q5 closure and the P0 review gate.
+
+### Verification actually run
+
+| Check | Result and limit |
+|---|---|
+| Existing `DOC_CHECKER_BEGIN` block with `python3` | Exit 0. 20 Markdown files including the generated pytest-cache README, 495 local links, zero faults |
+| `git diff --check` | Exit 0, no output |
+| Entry SHA-256 comparison | Exactly three Markdown files changed. No new maintained files. All other 47 entry files remained byte-identical. Historical audit text remains an exact prefix |
+| `UV_CACHE_DIR=/tmp/cryptalis-uv-cache PYTHONDONTWRITEBYTECODE=1 uv run --locked pytest -q` | Exit 0. 365 passed in 1.98 seconds. Existing runtime regression evidence only. No transition engine exists to test these approval cases |
+| Added prose lint before writes | STE-flavored: 805 words, 8 findings, 0.99 per 100 words |
+| Whole-draft strict lint | Exit 1 at the 1.5 target. Score 1.99, including eight dash markers in dates, location ranges, and question IDs. Preserve those references |
+| Safety-contract strict lint | Exit 0. 351 words, zero findings, 0.00 per 100 words. This scoped draft excludes the audit's historical references |
+
+Documentation snapshot SHA-256, audit self excluded: `6305959a32b5cf0088ff95f0dec950c6b01931face9e4b659c7ad634a43278b3`.
+These checks do not test plaintext persistence, approval consumption, or transition recovery.
+No commit or push occurred.
+
+A separate first-party AI reviewer compared the correction against entry copies and the canonical owners.
+The reviewer found no substantive issue in approval timing, action scope, retry reconciliation, or preserved exposure obligations.
+DR02–DR04 remain fair unresolved findings. This review supplies no independent security admission or runtime evidence.

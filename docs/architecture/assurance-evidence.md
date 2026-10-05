@@ -2,7 +2,7 @@
 
 Status: Accepted design contract. Unimplemented and unmeasured
 
-Reviewed: 2026-10-01
+Reviewed: 2026-10-01. Handoff reconciliation: 2026-10-05
 
 This is the canonical owner of Doctor analysis, minimum-leakage planning, ProtectionGraph, writer
 provenance, Verify, Pentest, collectors, result schemas, evidence integrity and assurance gates.
@@ -35,6 +35,36 @@ authority by reporting a finding. Only an explicitly authorized disposable scena
 First-party signatures establish a producer and exact bytes under a verification policy.
 They do not establish independent assessment, honest instrumentation or global absence of copies.
 A compromised application may forge its own events. Evidence states that trust limitation.
+
+### Minimal read-only preflight evidence
+
+The first offline transition needs small target, drift, writer, and DB-profile checks.
+ProtectionGraph, deep taint, DAST, packet capture, and broad tool aggregation remain optional later tracks.
+They are not prerequisites for first-transition correctness.
+The [ORM owner](orm-schema-migration.md#initial-postgresql-profile-and-live-preflight) owns admission rules and mutation behavior.
+The [shared owner](manifest-context-api.md#plan-record-approval-and-receipt-schema) owns plan and operation schemas.
+
+| Read-only collector | Required observation and limitation |
+|---|---|
+| Target and authority | Current authenticated target/domain/ActiveState head/revision, desired lock digest and drift. Q1/Q5 selection remains unresolved |
+| Transition/finalizer | Plan target/expiry/preconditions, completed/attempted work, checkpoint revisions, pending approvals, rollback and residual obligations. No activation or cleanup authority |
+| Roles/owners/search path/RLS | Effective privileges/memberships/owners, role/database settings and visibility. RLS does not establish host authorization |
+| Executable objects | Extensions/functions/operators/casts/triggers/event triggers/views/materialized views/rules/defaults/generated expressions/RLS policies against trusted inventory |
+| Transactions and writers | pg_prepared_xacts, configured 2PC, sessions/pools/deployments/jobs, lock blockers and credential exclusions. No connection or application_name alone proves absence |
+| Replication/copies | Publications/subscriptions/slots/CDC, replicas and declared external sinks. Unknown downstream copies remain excluded or pending |
+| Schema/index/capacity | Alembic heads, fingerprints, validated constraints, index definition/ownership/readiness/validity, scan/lock/storage/WAL budgets and uncertainty |
+| SQL/telemetry | Observable echo/parameter/log/trace/metric/repr/support settings under the shared SafeTelemetryProfile. Unobservable host agents remain unknown |
+| Recovery/provider | Recovery manifest identity, readable formats, exact key references, provider-native state/time and tested restore prerequisites. Provider request success is not destruction |
+| Exit inventory | Old binaries/images/jobs, DB objects, retained keys/backups/recovery reader, and package-absent application evidence. Operator attestations identify external scope and limitations |
+
+Every collector binds exact target, versions, observation interval, privilege, health, coverage, and redacted artifacts.
+Permission denial, inaccessible catalogs, stale receipts, collector failure, or unknown writer identity are INCONCLUSIVE for the affected absence claim.
+Known violations remain FAIL despite other missing evidence.
+No collector activates policy, approves finalization, mutates a provider, admits a restore, or upgrades support.
+`check` summarizes the blocked condition and one safe remediation from its canonical owner.
+
+Each collector needs a seeded violation, a false-clean/stale control, a privilege-limited fixture, redaction checks, and a failure fixture.
+Evidence reports documented, observed, actively exercised, and operator-attested bases separately.
 
 ## 2. Typed interfaces and version boundary
 
@@ -127,6 +157,11 @@ Mapper inspection may execute application initialization. This sandboxed stage r
 Its receipts record import side effects. Offline source analysis never imports to resolve
 types. Catalog, provider and deployment access is read-only, limited and point-in-time. Parameters are
 discarded before telemetry export.
+
+The minimal preflight can compose D0, selected D3/D4/D6/D7 facts, and a concise report without D8 graph construction.
+It consumes ActiveState and TransitionRecord alongside immutable desired/active manifests.
+Target/drift/writer checks are P0 evidence. Broad static analysis remains P1 and later.
+Offline `check` cannot claim live writer exclusion or provider/schema health.
 
 ### 3.1 Syntax and semantic IR
 
@@ -248,7 +283,7 @@ alternatives, not a numerical optimum or security score.
 
 ### 5.1 Identity and relationships
 
-The Protection Manifest is the normative immutable policy. The Protection Graph contains derived observations and evidence.
+Desired and active manifests are immutable policy records. External ActiveState selects runtime authority. The optional Protection Graph contains derived observations and evidence.
 It cannot establish policy or authorization. `ProtectionGraph` names its proposed record contract.
 
 | Node | Identity binding |
@@ -294,6 +329,11 @@ not identify a process. Fingerprints group statement shapes. They prove neither 
 Logging loss, pool or proxy remapping, triggers and ETL are gaps. Export no plaintext parameters or credentials. An unobserved writer is not necessarily safe. No observed writer does not establish that no writers exist. Stronger attribution needs workload-bound credentials and collector provenance,
 and still describes observed executions only.
 
+The writer ledger also records target/domain, source/target active revision, observed binary, credential exclusions, and the exact quiescence interval.
+Old jobs/images, delayed queues, restore-admitted workloads, and decommission obligations remain distinct entries.
+A graph merge cannot replace the [offline writer proof](orm-schema-migration.md#offline-writer-quiescence-and-recovery).
+Simple scoped receipts can supply first-transition evidence without a graph engine.
+
 ## 6. Verify scenarios and results
 
 `ScenarioSpec` binds hub invariant IDs, fixture and target versions, synthetic principals, tenants and subjects,
@@ -314,6 +354,13 @@ Core scenarios cover these cases:
 - Shred, fresh and stale cases, restore and reimport
 - Audit mutation
 - Markers in DB, HTTP, errors, logs, traces, reports and exports
+
+Initial transition scenarios also cover desired/schema deployment order, stale/wrong-target/expired plans, concurrent overlap locks, and CAS ambiguity.
+Inject crashes at every offline durable boundary, writer/2PC/CDC drift, and incomplete terminal coverage.
+Test plaintext publication and cleanup approvals separately, including replayed or wrong-target approvals.
+Hostile restored executable objects, stale external head/tombstones, missing key versions, old binaries/jobs, and package absence need exact fixtures.
+Provider disable/delete/alias/eventual-consistency observations keep native states.
+Deprotect and decommission results retain copy and rollback limits.
 
 Each supported cell links exact scenarios.
 
@@ -401,6 +448,12 @@ It must pass the restored normal case.
 
 Minimum mutants are plaintext persistence, disabled context or relocation binding, stale-cache acceptance and index mismatch. Only a relevant mutant supports an assertion. Lifecycle and search extensions add matching mutants. Failed control, watermark, loss, timeout or access denial
 prevents absence-pass. Confirmed policy violations still fail.
+
+Read-only configuration collectors use the minimal preflight schema above.
+They do not infer a synthetic exposure-oracle PASS from configuration alone.
+Canary sink tests cover SQL/PG logs, traces, metrics, exceptions, repr, serializers, caches/queues, support diagnostics, and evidence exports.
+Exact observable settings and executed paths bound each conclusion. Host code can deliberately log transparent plaintext.
+Missing sink visibility remains INCONCLUSIVE.
 
 ## 8. Pentest architecture and safety
 
@@ -605,7 +658,9 @@ The selected fast `check --ci` profile is one subset. Required workflow and secu
 CI evaluates canonical JSON after control and integrity checks. Exit codes and precedence follow the
 [shared CLI contract](manifest-context-api.md#cli-and-configuration). A proven `FAIL` survives an
 operational error in canonical results even when the error takes exit-code precedence. Warnings and
-required-not-run follow explicit policy. Exceptions bind owner, reason, scope, expiry and approval. They may waive a gate. They never relabel a result `PASS`.
+required-not-run follow explicit policy. Exceptions bind owner, reason, scope, expiry and approval. They never relabel a result `PASS`.
+An optional evidence-policy exception cannot waive admission invariants, irreversible approval, or the [P0/Q1–Q5 blockers](README.md#p0-documentation-review-register).
+Missing required coverage remains INCONCLUSIVE and cannot authorize SWITCH or FINALIZE.
 
 
 The reference lab uses identical application revisions, routes, fixtures and identities for baseline and protected configurations.
@@ -620,6 +675,11 @@ Stateful/property/fuzz tests cover envelope, query, context, migration, lifecycl
 parsers. Record seeds and minimized counterexamples without secrets. Baselines show new, resolved, unchanged, regressed and reclassified results without suppressing failures. Dependency, manifest, model, rule or collector changes invalidate incompatible baselines.
 Rerun affected compatibility, mutant and serialization fixtures.
 
+The first transition CI lane needs exact behavioral fixtures and healthy scoped receipts, not Graph or DAST.
+Advanced suite breadth cannot close target/authority/identity/restore questions or substitute for independent cryptographic review.
+Product wheel provenance is separate from EvidenceBundle integrity.
+The [release process](../../ENGINEERING_PLAYBOOK.md#release-gate) and [tool ledger](../research/assurance-tool-evidence.md#product-artifact-provenance) own its review and primary basis.
+
 ## Research gates
 
 These stable IDs extend existing P0-P10 obligations without renaming them. All gates are pending.
@@ -628,6 +688,7 @@ counterexample fails regardless of aggregate metrics.
 
 | Gate | Evidence and exact initial acceptance criterion | Failure response |
 |---|---|---|
+| G-PREFLIGHT | Seed wrong target, stale active/desired/schema state, hidden writer/prepared transaction/CDC, hostile executable object, invalid index, provider-native unknown, stale recovery and exit inventory per collector. Test limited privilege, failure and redaction | Zero false-clean outcomes. Missing visibility remains INCONCLUSIVE and never grants mutation authority |
 | G-A01 semantic IR/CFG | pinned lane. >=2 fixtures per modeled construct including exceptional/async. 100% expected spans/bindings/edges. Every unmodeled/budget case unknown | remove affected supported construct. No whole-program claim |
 | G-A02 rule accuracy | per promoted family >=30 unsafe, 30 safe, 10 ambiguous. Held-out labels separate from tuning. Precision >=95%, recall >=90% with counts/uncertainty. 100% critical context/plaintext cases found. 100% ambiguous/unsupported retain uncertainty | research-only/narrow lane. Never silent safe |
 | G-A03 graph/writer attribution | >=30 labeled chains plus 10 timestamp/alias/restore/spoof/conflict cases. 100% exact joins correct, zero false exact. 100% conflicts/unknown writers retained | demote links to hypotheses/block dependent claims |

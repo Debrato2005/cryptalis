@@ -2,7 +2,7 @@
 
 Status: Canonical design contract. Pre-implementation. No supported runtime profile
 
-Evidence reviewed: 2026-09-30
+Evidence reviewed: 2026-09-30. Authoritative handoff reconciliation: 2026-10-05
 
 This document owns detailed SQLAlchemy mapping and query contracts, physical schema, Alembic and
 existing-data migration. Cross-system authority, stable identity, manifest serialization, crypto,
@@ -14,8 +14,8 @@ behavior.
 
 ## Boundaries and artifacts
 
-The adapter consumes a verified manifest, immutable authorized operation context, installed mapping
-profile and current schema/migration checkpoint. It produces physical writes, validated query plans,
+The adapter consumes authenticated current ActiveState and its manifest, trusted Session identity, an admitted mapping
+profile, and the current external TransitionRecord. It produces physical writes, validated query plans,
 logical decoded values and redacted evidence. It never attests authority from request values or
 connection state. Stable logical asset and record IDs bind crypto.
 
@@ -23,8 +23,8 @@ The adapter does not independently add physical table or column renames, or the 
 Ordinary manifest changes preserve the original recorded binding.
 
 Each artifact carries its own format version, originating manifest digest and producer version.
-Families are `MappingPlan/v1`, `QueryIR/v1`, `QueryPlan/v1`, `PhysicalSchemaPlan/v1`,
-`SchemaSnapshot/v1`, `MigrationPlan/v1`, `MigrationCheckpoint/v1` and `CompatibilityCell/v1`.
+Families include MappingPlan, QueryIR, QueryPlan, PhysicalSchemaPlan, SchemaSnapshot, and CompatibilityCell.
+MigrationPlan and MigrationCheckpoint are internal views of the shared TransitionPlan/TransitionRecord, not independent authority or schemas.
 Unknown major formats or required fields fail closed. Extension handling follows the shared
 contract.
 
@@ -38,11 +38,11 @@ values.
 | `adapt_query` | SQLAlchemy expression/parameters, MappingPlan, operation context, migration epoch | QueryIR and QueryPlan with typed binds. No provider calls under warm profile |
 | `prepare_flush` | Session new/dirty/deleted rows, MappingPlan, operation context, warmed handles | Complete physical row updates and state invalidation actions. No commit |
 | `decode_field` | Envelope, original binding, codec ID/version, access authorization | Declared Python value or controlled value. No unauthenticated output |
-| Public `compile_schema(manifest, metadata, snapshot, catalogue)` | Exact shared API inputs. Compiler/version drawn from verified catalogue | SchemaPlan/findings. PhysicalSchemaPlan/v1 is its versioned DTO alias. No DDL/key access |
-| Public `plan_migration(source, target, snapshots, writers)` | Exact shared API inputs. Budgets/recovery policy bound by source/target manifests and inspected inventory | MigrationPlan and blocking findings. No DDL/data motion |
-| Internal `compile_physical_diff` | Source/target compiled plans, catalog snapshot, compiler version | Ordered physical operations with preconditions, locks and fingerprints. Called by public compiler/planner |
-| Internal `assemble_migration_plan` | Reviewed schema diff, reader/writer inventory, declared budgets/recovery limits | Versioned MigrationPlan. Cannot replace public input validation |
-| `step_migration` | Plan ID, phase revision, migration grant, lease/fence, evidence | CAS checkpoint transition plus DDL/chunk journal. Never implicit contract |
+| Internal `compile_schema(active, desired, metadata, snapshot, catalogue)` | Authenticated active/desired inputs. Compiler/version drawn from verified catalogue | SchemaPlan/findings. PhysicalSchemaPlan/v1 is its versioned DTO alias. No DDL/key access |
+| Internal `plan_transition(active, desired, snapshots, writers)` | Shared target/precondition/approval contract. Budgets/recovery policy bound by source/target and inspected inventory | MigrationPlan and blocking findings. No DDL/data motion |
+| Internal `compile_physical_diff` | Source/target compiled plans, catalog snapshot, compiler version | Ordered physical operations with preconditions, locks and fingerprints. Called by internal compiler/planner |
+| Internal `assemble_migration_plan` | Reviewed schema diff, reader/writer inventory, declared budgets/recovery limits | Versioned MigrationPlan. Cannot bypass shared target or precondition validation |
+| Internal `step_migration` | Shared operation ID, phase revision, scoped grant, overlap lock, strategy-specific evidence | CAS checkpoint transition plus DDL/chunk journal. Never implicit contract |
 
 These names describe boundaries, not shipped APIs. Shared errors/configuration must be registered
 through the [manifest/context contract](manifest-context-api.md), rather than a second hierarchy.
@@ -55,11 +55,12 @@ ciphertext, index and version attributes, null and constraint policy, and immuta
 It records admitted operations and loaders. The logical plaintext attribute cannot remain
 independently mapped to a persistent plaintext column after protection is active.
 
-Migration source columns exist only in the named compatibility window.
+Migration source columns exist only within the plan's declared retention and rollback obligations.
+An online compatibility window is a later strategy.
 
 The first candidate uses an immutable scalar `str` or `bytes`, one ordinary declarative mapper and a
-client-established immutable record ID. It admits instance insert, update and delete, full-entity
-select, explicit refresh, and declared equality, IN and null predicates. Every component is a
+client-established immutable record ID. It admits only individually tested instance insert, update, delete, full-entity
+select, explicit refresh, and typed no-search queries. Protected equality/IN/uniqueness remain later gates. Every component is a
 separate fixture cell. Implicit async lazy/deferred loading, inheritance, dataclasses, composites,
 synonyms, hybrids, server-generated binding IDs and mutable containers do not follow from this
 candidate.
@@ -68,8 +69,7 @@ Logical and physical state remain distinct. The setter validates type and size. 
 mapped instrumentation to record a logical mutation. Ciphertext never replaces the public value.
 
 The prototype must prove that public APIs mark descriptor changes dirty without mapping a plaintext
-storage column. Requiring `AttributeImpl`, `ClassManager` or comparable private machinery triggers
-review. An explicit repository or controlled value is the comparison. A descriptor alone is not ORM
+storage column. Requiring AttributeImpl, ClassManager, or comparable private machinery fails initial transparent-path admission. An explicit repository or controlled value is the comparison. A descriptor alone is not ORM
 history support.
 
 `before_flush` validates authority, identity, codec, fence, warmed handle and terms for all affected
@@ -135,6 +135,15 @@ SQLAlchemy documents that `before_flush` may change session state, while `do_orm
 ORM execution rather than unit-of-work SQL. These require distinct fixtures. [Session
 events](https://docs.sqlalchemy.org/en/20/orm/session_events.html)
 
+The normal caller binds trusted identity once through the proposed Session API.
+The adapter derives grants and prepares keys internally at declared boundaries.
+Dedicated protected Session/Engine and non-owner application credentials delimit the admitted cell.
+Unknown or bypass operations reject before SQL when the adapter can mediate them.
+Separate drivers, COPY, and external writers require database privilege exclusion or remain explicit blocking gaps.
+No ORM event claims universal interception.
+Rejected bulk writes name the mapped-row alternative. Rejected maintenance writes name the transition command.
+Errors identify the operation and safe remedy before SQL, without bind values or raw statements.
+
 ## Query IR and execution planning
 
 QueryIR conservatively interprets SQLAlchemy expression trees, not arbitrary SQL strings. It records
@@ -163,6 +172,11 @@ classification and evidence ID. Comparators initially emit logical protected ope
 captured at import or construction. Generate terms after execution authority validation.
 
 Construction without a session is allowed. Execution without authorized context is not.
+
+The equality/IN/search plans below describe later admitted query capabilities.
+The first no-search cell rejects protected-value predicates requiring those representations before SQL.
+Typed record/tenant scope and explicitly admitted null-presence operations retain their own fixtures.
+No declaration, comparator, or index prototype enables search before its gate.
 
 | Logical expression | Candidate physical plan | Required semantics |
 |---|---|---|
@@ -258,6 +272,13 @@ without checkpoint changes fails.
 Dual-search OR does not prove uniqueness.
 
 ## Interception and coverage registry
+
+The initial target is one exact synchronous public-hook cell and one active writer version.
+No current cell is supported. Async, search, online, and mixed-writer entries below are future candidates.
+The dedicated protected Engine rejects arbitrary Core/text and direct protected-column DML through its mediated surface.
+Bulk update/delete, upsert, COPY, and unregistered writers cannot enter the initial guarantee.
+Separate DBAPI traffic is not automatically intercepted. Role tests must show which accidental paths privileges exclude.
+If Q3's public-hook prototype fails, retain an explicit repository path and narrow claims.
 
 CompatibilityCell records exact interpreter/build, OS, SQLAlchemy, applicable Alembic,
 driver/implementation/libpq, PostgreSQL, mapping, operation, loader, sync/async profile,
@@ -444,6 +465,9 @@ triggers need reviewed protected equivalents or compilation rejects. Manifest or
 startup. Startup emits no DDL, backfill or destruction. Relational IDs/FKs follow the shared
 architecture.
 
+Search and uniqueness structures in this section are later gated targets, absent from the first no-search schema.
+The first admitted REINDEX uses the generic offline strategy. The dual-term protocol below is future online work.
+
 Uniqueness uses a database composite unique index over non-null tenant/domain and equality term, not
 application preflight. Conflict errors map constraint ID to field ID without values. Initial terms
 are full construction-defined terms. Truncation needs a collision protocol.
@@ -452,7 +476,7 @@ Unexplained collisions pause for authorized comparison, never delete a row or as
 tokens alone.
 
 Separate old/new unique indexes do not enforce continuous uniqueness if writers emit disjoint
-versions. Initial safe rotation follows this order:
+versions. The future online rotation strategy follows this order:
 
 1. Fence all writers to the dual-term protocol.
 2. Retain the old authoritative unique index while backfilling all new terms.
@@ -469,6 +493,31 @@ every conflict before admitting new semantics. If both generations cannot be pro
 select an explicit bounded write pause or reject online rotation.
 
 Never permit an unenforced uniqueness window.
+
+## Initial PostgreSQL profile and live preflight
+
+This profile is specified, not implemented. Exact target identity remains [Q5](README.md#unresolved-research-questions).
+No database OID or endpoint alone supplies cross-restore/clone/failover identity.
+Preflight uses a scoped read-only inspection identity. Reviewed DDL/data work uses a distinct short-lived migration identity.
+
+| Boundary | Initial requirement and refusal |
+|---|---|
+| Roles and ownership | Application role is neither database/table owner, superuser, BYPASSRLS, schema creator, nor migration role. Inspect inherited memberships, effective grants and default privileges |
+| Protected traffic | Dedicated Session/Engine/role. Exclude unauthorized physical-column writers where privileges permit. Same-role raw access cannot be claimed safe by an ORM hook |
+| Schemas and RLS | Security-boundary objects are schema-qualified. No writable/untrusted schema in effective search_path. Inspect role/database overrides and SECURITY DEFINER settings. RLS is defense in depth, never authenticated Cryptalis authority |
+| Two-phase commit | max_prepared_transactions=0 and empty pg_prepared_xacts at transition checks. Reject prepared or unresolved transactions. Do not auto-commit/rollback another owner's prepared work |
+| CDC/logical replication | Reject publications, subscriptions, slots/CDC connectors, writable replicas or downstream writers touching protected assets. Missing inspection privileges are inconclusive and blocking |
+| Executable objects | Inventory owners/grants/extensions/functions/operators/casts/triggers/event triggers/views/materialized views/rules/defaults/generated expressions/RLS policies. Unexpected payload transforms or dependencies block |
+| Sessions and writers | Inventory deployments/jobs/pools/connections/transactions and lock blockers. Deny new writers and prove old sessions drained. application_name is a hint, not authentication |
+| DDL/index state | Bind Alembic heads, schema fingerprint, predicates, validation, exact index definition/owner/validity and collision inventory. Stamping or row counts never prove transformation |
+| Capacity and telemetry | Estimate rows/bytes, disk/WAL/temp space, locks, scan/rewrite time, provider operations and uncertainties. Enforce declared margins. Review SQL/bind logging and telemetry sinks |
+
+Every DDL step records lock class, bounded lock/statement timeout, scan/rewrite behavior, space/WAL estimate, cancellation, retry, rollback, and reconciliation.
+Long transactions/snapshots and lock queues can still block offline DDL. Inspect them before work, not after a timeout implies completion.
+For concurrent index steps, journal the autocommit boundary and inspect definition, ownership, readiness, validity, and uniqueness after any interruption.
+An invalid index is not absent and can retain effects. Rebuild/drop requires a reviewed recipe and current evidence.
+No generated DDL applies itself. Preflight cannot mutate roles, terminate sessions, approve cleanup, or widen support.
+Managed-service visibility limits require explicit rejection or a narrower evidenced profile.
 
 ## Alembic integration
 
@@ -488,7 +537,7 @@ Autogenerate is candidate DDL, not backfill/cutover proof. Current optional name
 compares names and misses changed expressions. Cryptalis compares predicate contract versions and
 catalog mismatches itself. Renames use explicit identity mapping.
 
-Offline mode renders requirements and DDL but cannot attest catalog/data/provider state or advance
+Alembic offline SQL-generation mode renders requirements and DDL but cannot attest catalog/data/provider state or advance
 checkpoints. [Alembic autogenerate](https://alembic.sqlalchemy.org/en/latest/autogenerate.html)
 
 Revisions embed no plaintext, keys, terms, credentials, network crypto loops or automatic
@@ -506,7 +555,109 @@ transaction block. [CREATE INDEX](https://www.postgresql.org/docs/18/sql-createi
 
 ## Migration state machine and concurrency
 
-The canonical phase order is:
+One internal engine executes every shared TransitionKind:
+
+`INSPECT → PREPARE → TRANSFORM → VERIFY → SWITCH → OBSERVE → FINALIZE`
+
+Kinds are PROTECT, RECONFIGURE_PAYLOAD, REINDEX, DEPROTECT, KEY_REWRAP, KEY_REENCRYPT, UPGRADE_FORMAT, RESTORE_ADMISSION, and DECOMMISSION.
+The [shared owner](manifest-context-api.md#plan-record-approval-and-receipt-schema) owns the plan/record/approval/receipt schemas.
+The [crypto owner](crypto-search-lifecycle.md#key-operation-contract) owns provider/crypto effects and recovery truth.
+No subsystem invents activation or a second irreversible approval protocol.
+
+Only `strategy=offline` is eligible for the initial target. No strategy is implemented or supported today.
+Offline strategy means application writers are stopped. The transition still uses explicitly configured database/provider connections.
+Offline `check` or Alembic SQL generation instead means read-only local inspection without implicit live access.
+Normal `migrate` hides phase details and shows maintenance, progress, repair, and the next required action.
+PAUSED, REPAIR_REQUIRED, FAILED, and INCONCLUSIVE preserve the last completed phase and actual durable effects.
+They cannot erase journals, approvals, or residual obligations.
+
+| Phase | Required effect and completion evidence |
+|---|---|
+| INSPECT | Read authenticated active state, desired lock/history, exact binary/catalogue, target, schema, writers, DB profile, provider and recovery inventory. No mutation |
+| PREPARE | Acquire exclusive overlap lock, recheck target/preconditions, review DDL/data work and budgets, create recovery checkpoint, then stop/deny/drain writers. No authoritative switch |
+| TRANSFORM | Populate non-authoritative targets in bounded idempotent chunks. DEPROTECT requires approval before its first plaintext write. Writers remain quiesced. Coherent row output and source/target revision markers commit together |
+| VERIFY | Full terminal authentication/decode/semantic equivalence for every required current row, complete coverage, reconciled schema/index/provider state, healthy controls and stable quiescence. Sampling/counts/shape alone fail |
+| SWITCH | Recheck every target/precondition and verification generation immediately before authenticated external CAS. Select one active write representation/version. Plaintext publication must remain within its exact approved scope |
+| OBSERVE | Admit only compatible workloads, check health and declared rollback material/expiry. No legacy fallback. Observation cannot assert rollback remains usable |
+| FINALIZE | Reinspect and separately approve each irreversible action. Retire columns/terms/read formats/keys only after coverage, compatibility, recovery and residue evidence. Report pending/excluded copies |
+
+### Offline writer quiescence and recovery
+
+Stop admitted application deployments, scheduled/background jobs, and external write ingress for the exact scope.
+Deny new sessions/writer admission through enforced credentials or deployment controls.
+Drain existing transactions, close pools, and terminate residual sessions only under the declared operator authority.
+Reject prepared transactions and CDC. Acquire the overlap lock and re-inspect writers before transformation.
+Recheck the exclusion through VERIFY and immediately before SWITCH/finalization.
+An empty connection snapshot or process heartbeat alone does not prove writer exclusion.
+Unknown external writers prevent completion unless privileges demonstrably exclude them. Sufficient external evidence remains Q6.
+Read-only `check` reports remediation and never terminates sessions itself.
+
+Each chunk binds operation, target, source/target format and logical row revision.
+Update only while the expected source/revision and operation ownership match.
+Commit target bytes and completion marker atomically. Advance append-only checkpoints after row commit.
+A crash between those commits replays safely. An unchanged completed row does not regenerate ciphertext.
+PostgreSQL xmin is not the durable application revision contract.
+Partial/skipped/deleted/moved ranges remain visible and require a terminal sweep.
+Cursor advancement or SKIP LOCKED never proves complete coverage.
+
+Freeze inspected source membership and logical revisions while application writers remain excluded.
+Use a stable terminal database snapshot appropriate to the verified target. Never hold an obsolete pre-transform snapshot and call it current verification.
+Stream every required row through authentication and codec/null equivalence, plus later enabled term recomputation.
+Record scan/coverage generation and re-inspect DDL/index and writer state before CAS.
+Any drift or unverified row invalidates the switch proof.
+
+Every durable boundary supports cancellation/crash/retry and effect reconciliation.
+Two executors cannot transform overlapping scope independently. Lock loss stops work before further commits or activation.
+Resume checks exact target, current external operation/revision, checkpoint ancestry, actual row/DDL/provider effects, and current denial.
+A restored old checkpoint never grants progress. Ambiguous commit/CAS remains pending until durable identity resolves it.
+After DB work but before external CAS, target storage remains non-authoritative and application admission stays blocked.
+After CAS but before local acknowledgement, resume reads current external state rather than repeating activation.
+No external authority/data-plane atomicity is assumed.
+
+### Deprotect, decommission, and finalization
+
+DEPROTECT uses the same engine and requires exact security-downgrade approval before the first persisted plaintext write.
+This boundary includes temporary columns, staging tables, files, and their resulting WAL, replication, backup, or export exposure.
+Unchanged application grants and a non-authoritative target do not remove this requirement.
+An empty target can use reversible preparation only when it stores no plaintext and introduces no other irreversible effect.
+Keep temporary targets access-isolated.
+The plan names each plaintext destination, exposure path, lost recovery protection, and approved action.
+
+Record authorization before the first plaintext write.
+Authenticate and decode every protected source row before persistence.
+Verify type, value, null, and coverage equivalence offline before SWITCH.
+SWITCH checks approval scope again before application publication.
+One exact approval can cover staging and SWITCH when it names both actions.
+Do not request another approval for each chunk within that valid scope.
+
+Missing, expired, wrong-target, or insufficient approval blocks further plaintext writes or publication with an explicit failure.
+Resume reconciles the approval's durable disposition, checkpoints, and actual exposure before further work.
+Ambiguous disposition remains pending and cannot authorize a write.
+A crash, rollback, or staging deletion cannot prove that plaintext copies disappeared.
+Record partial exposure and retained WAL, replicas, backups, or exports as recovery obligations.
+Declaring an unprotected field or deleting an annotation alone never deprotects or drops data.
+Retire protected columns/terms/read formats/keys separately after observation and recovery checks.
+Each boundary records lost rollback and retained old backups/keys. No automatic retention default answers Q8.
+
+DECOMMISSION aggregates field transitions and application binaries, old containers, delayed jobs, DB objects, providers, copies, and recovery-reader obligations.
+Inspect archive tables/materialized views, replicas, WAL/PITR, exports, queues, and operator-attested external copies.
+Retained ciphertext backups require either a tested standalone recovery reader and exact keys or explicitly approved loss of recovery.
+Prove the application works without Cryptalis before package removal, which occurs last.
+An unknown external copy remains an exclusion or pending obligation. Uninstall is not sanitization.
+
+Approval is separate only for irreversible action, not every generic phase.
+Shared action/target/plan/expiry binding prevents replay or broadening.
+Publishing plaintext, stopping rollback support, dropping recovery data, retiring readable formats, and destroying key recovery are distinct boundaries.
+Incomplete visibility, writer drift, unsupported 2PC/CDC, invalid indexes, or unknown recovery prevents finalization.
+
+### Future online strategy
+
+This entire expand/coexist/backfill/fence protocol is a future strategy inside the generic engine.
+It is not the initial supported path or a separate public transition engine.
+Its internal substeps map to PREPARE, TRANSFORM, VERIFY, SWITCH, OBSERVE, and FINALIZE.
+Online admission needs every applicable mixed-writer, journal, concurrent verification, and distributed-fence gate.
+
+The proposed online substep order is:
 
 ```text
 INSPECT -> PLAN -> EXPAND -> COMPATIBILITY_WINDOW -> BACKFILL
@@ -697,6 +848,10 @@ labels. Synthetic controls may enter quarantined assurance artifacts only under 
 
 ## Research gates
 
+G-TARGET, G-DB-PROFILE, G-OFFLINE, and applicable synchronous no-search state/codec/coverage gates govern the initial target.
+Search-specific fixtures, async comparisons, online writer/fleet fences, replica cutover, and 24-hour online observation remain later profile gates.
+Their numeric budgets do not become offline defaults or first-transition prerequisites.
+
 Results are pending. These are initial falsifiable lab budgets, not product SLAs. A changed budget
 requires a new experiment revision and rationale. Preserve P0-P10 meanings in the [hardening
 dossier](../adversarial-architecture-hardening.md). G-ORM gates are detailed executable owners, not
@@ -721,7 +876,7 @@ weaken the intended property.
 
 | Gate / Question | Why it matters | Current default | Alternatives | Evidence needed | Blocked claim / safe work before proof |
 |---|---|---|---|---|---|
-| G-ORM-1: Can public instrumentation keep logical/physical history and authority coherent through every state transition? | Dirty-state or identity-map errors can publish stale/cross-resource plaintext or store plaintext | Immutable str/bytes descriptor plus hidden same-row attributes, explicit cache transitions, one task/tenant/session | Explicit repository/controlled value. Private instrumentation only after maintenance review | Exact compatibility cell, seeded transition traces, Session histories, SQL/row assertions, binding-substitution controls and failure artifacts | Transparent state/loader support blocked. Mapping DTOs and synthetic state prototype safe |
+| G-ORM-1: Can public instrumentation keep logical/physical history and authority coherent through every state transition? | Dirty-state or identity-map errors can publish stale/cross-resource plaintext or store plaintext | Immutable str/bytes descriptor plus hidden same-row attributes, explicit cache transitions, one task/tenant/session | Explicit repository/controlled value. Private instrumentation remains research-only and cannot admit the first transparent cell | Exact compatibility cell, seeded transition traces, Session histories, SQL/row assertions, binding-substitution controls and failure artifacts | Transparent state/loader support blocked. Mapping DTOs and synthetic state prototype safe |
 | G-ORM-2: Does expression planning and every admitted execution guard preserve logical predicates and reject bypass? | Missing scope or wrong-predicate candidates defeat tenant/query boundaries | Conservatively admitted EQ/IN/null/full-entity trees. Buffered authentication/term/predicate checks. Unchanged LIMIT semantics | Explicit repository statements. A separately declared bounded postfilter planner. Dedicated strict engine | Generated tree corpus, logical result-ID oracle, emitted SQL/binds under quarantined controls, authentic-row/term tampering, bypass classifications | Query/execution-plane prevention blocked. IR/compiler and fixture design safe |
 | G-ORM-3: Are typed bytes, normalization, nulls and limits stable across processes/versions? | Coercion or Unicode/null drift changes round trips, search equivalence and uniqueness | Exact str/bytes codecs, separate normalization, SQL NULL with explicit unauthenticated-presence limit, encoded-value cap | Encrypted-null/authenticated presence. Separately registered richer immutable codecs or mutable adapters | Cross-process golden bytes, malformed/boundary vectors, Unicode version/corpus, null truth tables, declared codec entry/version | Type/null-integrity profiles blocked. Codec experiments and registry design safe |
 | G-ORM-4: Which async provider boundary meets correctness, latency and ergonomic requirements? | A hidden synchronous SDK wait may stall unrelated tasks | Explicit warm/prefetch with bounded hidden-row two-phase reads. No scalar implicit network I/O | Compatible greenlet bridge. Deferred/batch reveal. All compared under matching semantics | Exact provider fault traces, latency histograms/loop-lag recordings, offered/completed load, task/config versions and independent repetitions | Async performance/profile selection blocked. All three synthetic prototypes safe |
@@ -734,6 +889,9 @@ weaken the intended property.
 
 | Gate | Protocol and threshold | Consequence |
 |---|---|---|
+| G-TARGET (Q5) | Pin stable authenticated PostgreSQL identity across same-host replacement, managed restore, staging clone and failover. Wrong-target plans never mutate or activate. Record authority source and reviewer | Production target binding and dependent transition/restore behavior blocked |
+| G-OFFLINE | Protect/reconfigure/deprotect E2E with crash before/after every durable boundary, two executors, stale checkpoints, unexpected row writes, prepared xacts/CDC, invalid indexes, disk/provider faults. Full row equivalence and no unapproved plaintext persistence, switch, or finalization. Inject missing/expired/wrong-target staging approval and crash after the first plaintext commit | Initial transition admission blocked. Online success cannot replace offline evidence |
+| G-DB-PROFILE | Roles/memberships/owners/search_path/RLS/executable-object/session/pool/2PC/CDC/logging fixtures, privilege-limited inspection and live schema drift. Every unsupported cell refuses with remediation | Missing visibility blocks affected preflight claim. No read-only collector mutates the target |
 | G-ORM-1 state (P0/P1/P4) | >=10,000 randomized transitions per sync/async cell plus every deterministic state/loader case. Zero incorrect round trips, stale histories/terms, cross-tenant identity-map output, requested-PK plus full-metadata substitution release or plaintext SQL/rows | Remove failing transparent cell. Redesign |
 | G-ORM-2 query/bypass (P2) | >=1,000 trees per admitted operator/null policy, >=100 unsupported forms and every execution-plane row. Authentic-row/term swaps and LIMIT/OFFSET/IN/OR/null fixtures. Zero incorrect result IDs versus logical oracle, zero partial publication on index inconsistency. Zero T/R plaintext. Rejected constructs fail before their SQL | Reject uncovered forms. D/U remain gaps |
 | G-ORM-3 codecs (P1/P5) | >=1,000 vectors per codec plus boundary corpus, >=10,000 Unicode vectors, complete null truth tables. Byte-identical cross-process encoding. Zero coercion surprises. Unicode drift detected | Narrow codec/profile or migrate explicitly |
@@ -774,9 +932,21 @@ Before runtime admission, prove these properties:
 2. Physical representation after envelope freeze (G-ORM-3/6)
 3. Admitted codec and null integrity (G-ORM-3)
 4. Strict-engine capabilities and cross-scope traversal (G-ORM-2)
-5. Specified uniqueness and fence transitions (G-ORM-7/8/10)
-6. Selected async helper contract (G-ORM-4/5)
+5. Offline transition, target binding, DB-profile and one-writer compatibility gates
+6. Restore/recovery/upgrade evidence for the declared runtime cell
 
-Their candidate behavior is specified here. Prototype results remain unknown. Manual experimental
-implementation may begin without claiming support. Broader encryption alternatives in the ledger
+Search uniqueness, async helpers, and online fences are additional gates only for their later profiles.
+
+Their candidate behavior is specified here. Prototype results remain unknown. Research can proceed independently. Runtime behavior dependent on unresolved Q1–Q5 cannot begin before researched closure and P0 documentation review. Broader encryption alternatives in the ledger
 and [prior-art owner](../prior-art.md) are comparison evidence, not integrations or absence claims.
+
+### One-writer upgrade admission
+
+Generate compatibility from exact binary, manifest schema, catalogue, descriptor, envelope, codec, provider, schema, and transition versions.
+Current ActiveState admits one writer version/tuple and an explicit finite readable set.
+`upgrade check` reports deployment ordering, old job/image exclusions, last reversible point, and exact rollback dependencies.
+Startup refuses incompatible readers/writers or unavailable authority before protected access.
+Downgrade is admission, never implicit data conversion, plaintext publication, or destruction.
+Retirement requires inventory and restore evidence, then separate finalization approval.
+N−1/N/N+1, old job, partial rollout, retired-format restore and incompatible-catalogue fixtures gate support.
+Mixed-version fleets remain later research.

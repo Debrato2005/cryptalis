@@ -1,18 +1,18 @@
 # Cryptalis architecture blueprint
 
 Status: accepted architecture specification with empirical gates.
-Reviewed: 2026-09-30. Integration corrections: 2026-10-01. Field-format boundary review: 2026-10-05. The
+Reviewed: 2026-09-30. Integration corrections: 2026-10-01. Field-format boundary review: 2026-10-05. Authoritative handoff reconciliation: 2026-10-05. The
 [checklist](../backend-build-checklist.md) is the authority for current capability state.
 
 ## Product and first target
 
 Cryptalis is a planned data-protection and security-assurance system for Python and SQLAlchemy.
-A versioned Protection Manifest defines its policy. Application engineers would retrofit
+Declarations express desired policy. An immutable Protection Manifest records it. Authenticated external active state controls runtime admission. Application engineers would retrofit
 selected sensitive fields. Operators would manage keys and migrations. Reviewers would interpret
 protection evidence within its stated scope.
 
 The first application profile is a tenant-aware Python service. It uses one registered
-SQLAlchemy Session/AsyncSession family, PostgreSQL, immutable record UUIDs, and explicit
+synchronous SQLAlchemy Session/Engine cell, PostgreSQL, immutable record UUIDs, and explicit
 authenticated grants. FastAPI is an optional host adapter. Cryptalis does not supply an identity
 authority through FastAPI. The [shared glossary](manifest-context-api.md#terms-and-maturity)
 defines terms and abbreviations.
@@ -62,16 +62,19 @@ architecture decision record (ADR) specifications.
 | ID / status | Decision, credible alternatives, consequence | Owner / falsifier |
 |---|---|---|
 | D01 DECIDED | Protect at the application/ORM boundary. Database encryption would trust the DB. A proxy would lose ORM semantics. Raw writers remain coverage gaps | Threat model and ORM. P2 coverage |
-| D02 DECIDED | Use a normative immutable Protection Manifest and a derived Protection Graph. Decorators alone or scanner-driven policy risk drift. Observations never widen capabilities | Manifest and assurance. G-MANIFEST/G-A gates |
-| D03 DEFAULT | Encrypt payloads locally after explicit warm-up or prefetch. Compare actual greenlet remote I/O and deferred batches. Reject hidden network access in the default profile | ORM async gate P3 |
+| D02 DECIDED, refined 2026-10-05 | Separate DeclaredPolicy, generated PolicyLock, external ActiveState, and TransitionRecord. Immutable history records policy. A declaration never activates it. The optional graph contains observations | [Shared authority](manifest-context-api.md#desired-policy-and-active-authority). G-ACTIVE/G-MANIFEST |
+| D03 DEFAULT, refined 2026-10-05 | Prepare keys internally at explicit Session boundaries, then encrypt locally. Normal callers supply trusted identity once. Async, bridge, and deferred comparisons remain later gates | ORM P3 and shared API. Q3 remains open |
 | D04 DECIDED | Use randomized payloads with separate declared search representations. Reject deterministic payloads as the default because they couple encryption to repetition leakage | Crypto. P5 and search gates |
 | D05 DEFAULT | Use provider KEK -> tenant branch -> wrapped subject generation. Stronger erasure requires per-subject provider destruction or a reviewed puncturable scheme | Crypto. P7 and provider gates |
-| D06 DECIDED | Schema/Alembic integration emits plans only. Migrations add structures before separately authorized contraction | ORM. P6 recovery |
+| D06 DECIDED, refined 2026-10-05 | One internal transition engine, offline maintenance strategy first. Reviewed Alembic DDL, full verification, CAS activation, separate irreversible approval. Online protocols remain future strategies | [Transition owner](orm-schema-migration.md#migration-state-machine-and-concurrency). G-OFFLINE/P6 |
 | D07 DECIDED | Reject unknown query semantics, context, or formats explicitly. Never fall back to plaintext or an implicit client scan | ORM and manifest. P0/P1/P2 |
 | D08 DECIDED | Treat controlled evidence as first-party. An external signed witness establishes integrity and provenance, not measurement truth or independent proof | Assurance. P8 controls and value |
 | D09 DECIDED | Isolate attributed known constructions in research packages. Primitive library selection requires vectors and review | Crypto and modules. P10/G-BOUNDARY |
 | D10 DECIDED | Require authenticated grants from principals to tenants and subjects, plus immutable row identity. Raw IDs and ambient context cannot establish authority | Manifest G-CONTEXT/P0 |
 | D11 DECIDED | Use explicit state, narrow contracts, deterministic behavior, and observable failures. Silent recovery or undefined best effort can hide invalid state. Apply the playbook policy across subsystem boundaries | [Failure policy](../../ENGINEERING_PLAYBOOK.md#fail-loudly-and-explicitly) and [error contract](manifest-context-api.md#errors-and-observability). Failure-path evidence |
+| D12 DECIDED | Generate stable logical IDs, never-reused protected representation IDs, and an environment protection domain. Renames preserve identity. Re-adoption creates a new representation | Manifest identity, crypto bindings. Q2/Q7 remain open |
+| D13 DECIDED | Quarantine every restore. Current external policy and denial dominate restored data and checkpoints. Deprotect and decommission use the same engine and report retained copies | Crypto restore, ORM exit. Q1/Q5 remain open |
+| D14 DECIDED | One active writer version, no search, no CDC or prepared transactions in the initial target. Fleet, online, search, and broad assurance require separate evidence | ORM profile and compatibility. No runtime cell supported |
 
 For a decision change, record the predecessor ID and the primary-source or experimental basis.
 Name the affected owners, consequences for manifests, formats and compatibility, and blocked
@@ -98,12 +101,12 @@ boundary also defeat it.
 | Historical valid ciphertext rollback | AEAD proves authenticity, not freshness | Freshness outside bound unless external row-version authority; rollback scenario reports this limit |
 | Accidental supported-path persistence | Authenticated context, row-aware adapter and atomic companion writes | Plaintext in trusted app remains; inspect SQL/rows/mutants |
 | Unregistered/Core/bulk/raw/COPY/ETL writer | Reject registered known paths, roles/framing defense, writer ledger | Unobservable separate writers; no universal prevention; P2 T/R/D/U matrix |
-| Migration mistake/mixed app versions | Immutable source/target plans, row CAS/checkpoints/writer fence | Approved coexistence includes plaintext; crash/retry/two-worker fixtures |
+| Migration mistake/stale plan | Target-bound plan, offline quiescence, row revisions, complete verification, external CAS | Downtime and copy residue. Wrong-target, crash, and two-executor fixtures |
 | Cross-tenant/subject substitution | Host-authenticated grants + stable tuple in AAD and tenant filters | Host policy bugs remain risk; P0 colliding IDs/task/pool/jobs |
 | Untrusted manifest/descriptor substitution | Bounded structural parsing and separate digest domains. Catalogue admission and authenticated authority required | Current helpers establish byte consistency, not policy authenticity or catalogue approval. G-MANIFEST/P0/P10 remain pending |
 | Malformed or forged envelope from a database attacker | Bounded framing before key lookup. Authorized registry selection and AEAD required afterward | The private F1/W1 parsers reject malformed structure but accept well-shaped forged bytes. G-CRYPTO/G-CROSSKEY/G-AAD remain pending |
 | Cache stale worker/partition | Epoch/lease authorization plus serialized DB fence and acknowledged output drain | Expiry denies new authorization; physical completion requires drain evidence and can remain pending; bytes may remain in suspended RAM; P7 chaos |
-| Restore/resurrection | Independent durable tombstone/release check | Wrapped backup + surviving parent can recover offline; restore and recovery-path tests |
+| Restore/resurrection/hostile schema | Quarantine, trusted executable-object inventory, current external ActiveState and denial | Surviving keys permit offline recovery. Hostile-schema and PITR admission fixtures |
 | Search metadata/frequency/auxiliary/chosen query observer | Capability-specific accepted leakage, explicit domains | Equality/order/token/access patterns; attacks/cost gate per capability |
 | Key/provider outage | Cold deny; bounded authorized cache only | Availability and declared offline lease; outage/expiry tests |
 | Artifact/log/report leak | Synthetic fixtures, redacted observations, safe errors | Transparent Python values can be logged by host code; collector controls/Doctor |
@@ -121,93 +124,65 @@ contract defines detailed attack models and collectors.
 
 ```mermaid
 flowchart TD
-  Decl[Declarations + trusted policies] --> Manifest[Immutable Protection Manifest]
-  Manifest --> Runtime[Data plane: ORM/query + local crypto]
-  Manifest --> Schema[Schema/migration plans]
-  Manifest --> Lifecycle[Lifecycle/control plane]
-  Runtime --> DB[PostgreSQL physical rows]
-  Schema --> Review[Human approval + fenced phase executor]
-  Review --> DB
-  Lifecycle --> Provider[External provider + independent denial ledger]
-  Lifecycle --> Handles[Leased key authority]
-  Handles --> Runtime
-  Manifest --> Analysis[Doctor / minimum-leakage recommendations]
+  Decl[DeclaredPolicy] --> Lock[Generated PolicyLock + immutable history]
+  Lock --> Plan[Target-bound transition plan]
+  Authority[External authenticated ActiveState + denial] --> Plan
+  Plan --> Engine[One internal offline transition engine]
+  Engine --> DB[PostgreSQL data + schema]
+  Engine --> CAS[Verified CAS switch]
+  CAS --> Authority
+  Authority --> Runtime[Admitted Session + local crypto]
+  Runtime --> DB
+  Provider[Exact provider identity + bounded material] --> Runtime
+  Engine --> Finalizer[Separate irreversible approval + residual obligations]
+  Lock --> Check[Read-only check / optional analysis]
   DB --> Facts[Scoped observations]
-  Runtime --> Facts
+  Authority --> Facts
   Provider --> Facts
-  Analysis --> Graph[Derived Protection Graph]
-  Facts --> Graph
-  Lab[Authorized synthetic Verify/Pentest/network lab] --> Facts
-  Graph --> Evidence[Redacted bounded evidence]
+  Check --> Evidence[Bounded evidence / optional graph and lab]
+  Facts --> Evidence
 ```
 
-The proposed write path has this order:
+The [shared owner](manifest-context-api.md#desired-policy-and-active-authority) defines the four artifacts and their schemas.
+The [transition owner](orm-schema-migration.md#migration-state-machine-and-concurrency) defines execution and finalization.
+Neither compilation, schema stamping, a saved plan, nor evidence activates policy.
+Runtime admission uses current external authority and an exact compatibility cell.
 
-1. Validate the trusted grant and immutable identities for typed Python logical state.
-2. Encode the payload.
-3. Normalize its search value.
-4. Encrypt locally under the key lease.
-5. Assemble the authenticated envelope and declared search terms.
-6. Set hidden physical state.
-7. Execute SQL.
-8. Check shape, presence, and uniqueness.
-9. Emit redacted observations.
+The proposed write path validates trusted Session identity and active compatibility before encoding and local encryption.
+It prepares required material internally, then persists one coherent physical representation.
+Search is absent from the initial path. Later admitted terms share its transaction boundary.
 
-Logical state remains separate from ciphertext. Payload and search updates share a transaction
-boundary.
+The read path bounds parsing, checks current authority and resource identity, authenticates the complete binding, then decodes and releases values.
+No unauthenticated bytes become Python values. Internal key preparation has a visible Session I/O boundary.
+Later search verifies candidates independently from completeness. Missing hits need separate evidence.
 
-The proposed read path has this order:
+Restored database state starts untrusted. Current authority, denial, retirement, and operation generations survive outside its restore domain.
+The [crypto owner](crypto-search-lifecycle.md#recovery-manifest-and-restore-admission) defines recovery inputs and admission obligations.
+Deprotection publishes plaintext only with explicit approval. Complete exit retains truthful backup, key, and reader obligations.
 
-1. Parse the physical row within strict bounds.
-2. Validate the grant, ownership, requested resource, and format compatibility.
-3. If the required generation is cold, warm it explicitly.
-4. Authenticate the context tuple.
-5. Decode the payload.
-6. Release a Python value or an opaque controlled value.
-
-The path releases no unauthenticated bytes. The verifier also checks normalized search
-predicates and companion terms. An authenticated row that fails the predicate invalidates the
-whole buffered result. Search completeness and index consistency require separate verification.
-Authenticated encryption with associated data (AEAD) alone cannot detect a missing search hit.
-
-The schema compiler consumes the manifest, model metadata, live snapshot, and catalogue. It
-emits a plan only. Migration and lifecycle executors mutate state only under explicit operation
-grants and fences. Analysis consumes facts and emits proposals. Evidence cannot change policy.
-
-[Manifest contracts](manifest-context-api.md#packages-and-dependency-direction) define module
-import direction and forbidden dependencies.
+Analysis reads facts and emits proposals. Evidence cannot change policy, approve finalization, or admit a restored workload.
+[Module contracts](manifest-context-api.md#packages-and-dependency-direction) define import direction.
 
 ## Integration dependency DAG
 
 ```mermaid
 flowchart TD
-  Identity[Trusted identity + stable asset IDs] --> Manifest[Manifest semantics + catalogue]
-  Manifest --> Format[Suite/envelope/index bytes + parser vectors]
-  Format --> Shape[Physical/null model]
-  Shape --> Check[DB domain/CHECK/coexistence predicates]
-  Manifest --> Query[Query IR + compatibility profile]
-  Format --> Query
-  Identity --> Query
-  Query --> ORM[Verified ordinary ORM cells]
-  Check --> Migration[Schema/Alembic + fenced migration recovery]
-  ORM --> Migration
-  Manifest --> Key[Provider hierarchy + epochs/leases/tombstones]
-  Key --> Fence[Multi-worker + restore evidence]
-  Fence --> Receipt[Bounded lifecycle receipt]
-  Format --> Receipt
-  Contracts[Canonical results/collector controls] --> Verify[Deterministic Verify]
-  ORM --> Verify
-  Migration --> Verify
-  Fence --> Verify
-  Contracts --> Lab[Contained Pentest/network experiments]
-  Verify --> Correlation[Graph + attack-impact evidence]
-  Lab --> Correlation
+  Contract[Desired / active / transition contracts C33] --> Identity[Domain + representation + suite freeze C34]
+  Identity --> Path[Minimal explicit runtime / pinned Session C35]
+  Path --> DB[PostgreSQL preflight + reviewed DDL C36]
+  DB --> Offline[Offline protect / reconfigure / deprotect C37]
+  Offline --> Recovery[One provider + keys + restore C38]
+  Recovery --> Exit[Upgrade + decommission C39]
+  Exit --> Release[Safe telemetry + release provenance C40]
+  Release --> Advanced[Separate search / async / fleet / online / assurance gates]
 ```
 
-Edges govern integrated claims. Isolated research can start independently. Cryptographic
-envelope framing and parser semantics must precede database rejection of plaintext-shaped values
-(W-3). Provenance must precede key selection and protected SQL (W-5). An integration cannot use
-a failed dependency as evidence.
+The [checklist](../backend-build-checklist.md#ordered-foundation-slices) owns the dependency and evidence rows.
+The [build guide](../cryptalis-build-guide.md#dependency-spine) expands learning order.
+Q1–Q5 below block every dependent runtime behavior until research closes and review accepts the answers.
+Current structural parsers do not freeze a production suite or descriptor.
+Independent research can proceed. Failed dependencies cannot support integrated claims.
+Graph, DAST, distributed writer leases, and online journals are not first-transition prerequisites.
 
 ## 23. Canonical security invariants
 
@@ -220,16 +195,67 @@ ID instead of maintaining a duplicate catalogue.
 |---|---|---|---|
 | I01 Supported writes never intentionally persist plaintext | Row-aware transform + atomic physical state / ORM | Positive round trip; plaintext-write mutant; SQL+row collector | Abort transaction; capability claim blocked |
 | I02 Unknown semantics never silently broaden/fallback | Typed query IR/path catalogue / ORM | Every operator/bypass family; emitted SQL confirms no execution for reject paths | UnsupportedEncryptedQuery or visible coverage gap |
-| I03 Payload authenticates stable tenant/subject/record/field/format | Strict AAD/AEAD / crypto | Bit tamper, relocation, identity moves, unknown format vectors | Authentication/format error, no value |
+| I03 Payload authenticates domain/tenant/subject/record/model/table/field/representation/format/purpose/generation | Strict AAD/AEAD / crypto | Bit tamper, relocation, identity moves, unknown format vectors | Authentication/format error, no value |
 | I04 Representations exist only for declared capability | Manifest compiler/domain policy / crypto+ORM | Undeclared query/index mutant; schema/term inventory | Compile/query rejection or drift failure |
 | I05 Key purposes/domains are separated | Versioned derivation labels / crypto | Cross-purpose/tenant/domain vectors and collisions | Key/domain mismatch; no release |
-| I06 Remote I/O is visible in selected profile | Explicit warm default; bridged/deferred gates / ORM | Event-loop lag/cancellation/N+1/provider traces | Cold/error typed, no hidden fallback |
+| I06 Remote I/O is visible in selected profile | Internal preparation at visible Session boundaries; bridged/deferred gates / ORM | Event-loop lag/cancellation/N+1/provider traces | Cold/error typed, no hidden fallback |
 | I07 Identity has authenticated provenance | Immutable grant + tenant/ownership scope / manifest | Colliding IDs, jobs/tasks/pools/identity-map substitutions | Pre-key/pre-SQL Context error |
 | I08 No new operation authority after declared fence; physical completion requires drain | Epoch/lease authorization, serialized commit fence and acknowledged sink drain / lifecycle | Partition/suspend/resume/cache/grant expiry; timestamped operation evidence | Denied/pending, never false completion |
-| I09 Supported restores consult independent denial | External ledger + current release policy / lifecycle | DB/control snapshot rollback and stale queue; fresh/stale decrypt | RestoreDenied/INCONCLUSIVE; offline recovery caveat |
+| I09 Supported restores cannot revive old authority | Quarantine + current external active/denial/retirement state / lifecycle | DB/control snapshot rollback and stale queue; fresh/stale decrypt | RestoreDenied/INCONCLUSIVE; offline recovery caveat |
 | I10 Migration never completes with inconsistent unverified state | CAS/checkpoints/complete coverage/fenced cutover / ORM | Crash every phase, mixed writers, invalid index, unique conflicts | Paused/repair; contraction denied |
 | I11 Missing/failed collectors never create absence PASS | Health/watermarks/positive-negative-mutant controls / assurance | Drop/redact/timeout collector and seed exposure | INCONCLUSIVE for affected claim |
 | I12 Evidence does not become sensitive-value repository | Synthetic oracle + redacted digest-based exports / assurance | Seed value/key/token/credential leak in bundle mutant; retention/access checks | Bundle quarantine; release blocked |
+| I13 Desired intent never activates runtime authority | Generated lock/history, authenticated external head, verified transition and CAS / manifest+ORM | Desired-before-schema, stale history, wrong binary, unavailable authority | Deny admission or pause transition |
+| I14 One operation controls overlapping transition scope | Target-bound immutable plan, reinspection, overlap lock, durable idempotency / manifest+ORM | Wrong target, plan tamper/expiry, two executors, restored checkpoint | Plan invalid or repair required |
+| I15 Initial activation requires stable offline full verification | Writer quiescence, row revisions, terminal coverage, reconciled DDL / ORM | Hidden writer, prepared transaction, CDC, interrupted chunks, invalid index | Switch and finalization denied |
+| I16 Each irreversible boundary requires exact separate approval | Action/target/plan/expiry binding and residual obligations / manifest+ORM+crypto | Plaintext publication, replayed approval, format/key retirement, abandoned cleanup | Boundary blocked. No automatic deprotect/drop/destruction |
+| I17 Identity never silently reuses an incarnation or crosses a domain | Generated representation IDs and domain-bound crypto / manifest+crypto | Remove/re-add, staging clone, alias retarget, cross-domain vectors | No key load or logical release |
+
+## P0 documentation review register
+
+The ordered 2026-10-05 handoff patches are reconciled into the owners below.
+Every row remains **RECONCILED / REVIEW PENDING**. This register supplies no implementation or independent review evidence.
+Research questions remain separate from documentation review.
+
+| Blocker | Canonical review scope | Disposition |
+|---|---|---|
+| Desired versus active authority | [Authority and activation](manifest-context-api.md#desired-policy-and-active-authority) | Review pending. Q1 remains open |
+| Cryptographic identity | [Descriptor](manifest-context-api.md#immutable-field-format-descriptor) and [bindings](crypto-search-lifecycle.md#required-domain-and-representation-bindings) | Review pending. Q2 remains open |
+| Transition contract | [Plan schemas](manifest-context-api.md#plan-record-approval-and-receipt-schema) and [offline execution](orm-schema-migration.md#migration-state-machine-and-concurrency) | Review pending. Q1/Q5 remain open |
+| Public/runtime boundary | [Normal API](manifest-context-api.md#public-python-surface) and [coverage](orm-schema-migration.md#interception-and-coverage-registry) | Review pending. Q3 remains open |
+| Initial PostgreSQL profile | [Profile and preflight](orm-schema-migration.md#initial-postgresql-profile-and-live-preflight) | Review pending. Q5 remains open |
+| Restore and destructive truth | [Recovery/admission](crypto-search-lifecycle.md#recovery-manifest-and-restore-admission) and [key effects](crypto-search-lifecycle.md#key-operation-contract) | Review pending. Q1/Q4/Q5 remain open |
+| Compatibility and exit | [Upgrade admission](orm-schema-migration.md#one-writer-upgrade-admission) and [exit/finalization](orm-schema-migration.md#deprotect-decommission-and-finalization) | Review pending. Applicable Q1–Q5 dependencies remain blocked |
+
+Review closure records the exact document snapshot, reviewer, findings, resolution, and accepted disposition.
+The [checklist](../backend-build-checklist.md#evidence-admission) owns evidence admission.
+Closing a documentation row does not answer a research question or admit a runtime cell.
+No exception, operator approval, or passing optional tool bypasses required Q1–Q5 research closure or P0 documentation review.
+
+## Unresolved research questions
+
+This register owns the ten unresolved questions from the 2026-10-05 authoritative handoff.
+All remain **OPEN**. A settled invariant does not select its implementation.
+No dependent runtime crypto, ORM, migration, KMS, restore, or decommission behavior proceeds while Q1–Q5 remain unresolved.
+P0 documentation reconciliation also needs review before dependent runtime work. This pass does not supply that review.
+
+| Question | Unresolved selection | Closure owner and evidence |
+|---|---|---|
+| Q1 | Concrete external authority for authenticated monotonic ActiveState/CAS and disaster recovery | [Shared authority gate](manifest-context-api.md#version-compatibility-and-research-gates): backend, trust roots, rollback/loss/CAS/idempotency/recovery trials. Local development is not production authority |
+| Q2 | Sole established AEAD/key-management composition and whether exact-key dispatch needs an additional committing construction | [Crypto gates](crypto-search-lifecycle.md#research-gates): exact composition, revised binding bytes, multi-key vectors, independent review |
+| Q3 | Public SQLAlchemy-only path versus explicit repository wrapper across state/loader/async/bypass cells | [ORM gates](orm-schema-migration.md#research-gates): pinned public-hook prototype and rejected-path SQL evidence. Initial sync narrowing does not answer the full question |
+| Q4 | First live KMS/provider and regional/recovery configuration | [Provider gate](crypto-search-lifecycle.md#research-gates): exact service/SDK/region/material origin and native-state/fault/restore evidence |
+| Q5 | Safe stable PostgreSQL target identity across managed restore, clone, and failover | [Target gate](orm-schema-migration.md#research-gates): replacement-at-same-endpoint, restore, clone, failover identity fixtures. Hostname/OID alone cannot close it |
+| Q6 | Sufficient evidence that every writer is quiesced when external systems exist | ORM offline gate: privilege exclusion, session/pool/job inventory and scoped operator attestations. Unknown writers block completion |
+| Q7 | Whether production DR shares protection domain/authority and exact staging-clone procedure | Crypto restore gate: explicit recovery-realm design, clone/DR vectors and credential separation. No automatic inheritance |
+| Q8 | Rollback retention defaults during deprotection and upgrade | ORM compatibility and crypto recovery gates: explicit retained material, exposure, expiry and tested recovery. No invented default duration |
+| Q9 | Product goal of strong per-subject deletion versus managed denial with recoverability | Crypto lifecycle gate: declared recovery graph and independent trials. Initial claim can remain managed denial only |
+| Q10 | Safe aggregate equality-risk signals without value-frequency leakage | Assurance and crypto equality gates: bounded signals, redaction and inference trials. Search stays disabled |
+
+Q1–Q5 require researched answers and reviewed closure before a supported production cell.
+Q6–Q10 can initially remain open through explicit narrowing of support and claims.
+Closure records need a primary-source basis, pinned artifacts, reproduction commands/results, limitations, reviewer identity, and accepted disposition.
+Documentation checks never close these questions.
 
 ## Fatal risks and resolution gates
 
