@@ -894,3 +894,137 @@ The complete suite then passed 518 tests in 3.00 seconds.
 The documentation checker reported 20 Markdown files, 512 local links, and zero faults before this final clarification.
 Added contract prose scored 0.82 findings per 100 words. The audit draft scored 1.36.
 Complete ActiveState semantics remain pending, including readable formats, the write tuple, lifecycle epochs, and operation transitions.
+
+## Process-local development authority - 2026-10-05
+
+Entry: `2c7e5ed`, with a clean worktree. The user replied `continue` and authorized one C33 slice.
+No commit or push occurred.
+
+The private `cryptalis.contracts.development_authority` module loads only a structurally valid,
+bounded ActiveState history. It returns frozen snapshots and immutable history. Its
+compare-and-swap operation holds one process-local lock through expected-head comparison,
+successor validation, bounded history validation, and publication.
+
+Validation failure leaves the head unchanged. One exact retry after a lost success response
+returns the current snapshot without appending a duplicate entry. A different successor from the
+same old head fails as stale. Two threads that race with different successors cannot both win.
+An unrelated stale expectation fails before proposal parsing. Fixed diagnostics exclude supplied
+bytes and digest values.
+
+The RED run collected 11 failures because the module did not exist. After implementation, 62
+focused ActiveState and development-authority tests passed. The complete suite passed 529 tests
+in 2.90 seconds on Linux and CPython 3.12.3.
+
+`uv build --offline` produced the source archive and wheel. A clean temporary environment
+installed the wheel. From outside the checkout, it loaded the fixed genesis vector, applied the
+fixed successor, retried the same request, and confirmed one successor entry. The installed
+snapshot reported authority revision 1 and digest
+`ca395dddc1950be3c73f0562f7517f7570d9051fa4b8212f9a813ebddc7671e3`.
+
+The documentation checker reported 20 Markdown files, 514 local links, and zero faults.
+The added development-authority prose scored 0.58 findings per 100 words in STE-flavored lint.
+
+First-party security review checked invalid initial state, mutable input rejection through the
+structural kernel, failure atomicity, stale-before-parse ordering, diagnostic redaction, competing
+writers, exact retry, and package installation. It found no unresolved defect within the stated
+process-local scope. This is not independent security review.
+
+The adapter does not authenticate writers or state. It does not persist state or idempotency,
+coordinate processes, survive restart or restore, detect an omitted later head, resist host
+rollback, activate policy, execute transitions, access a database, or add a public command. Q1,
+G-ACTIVE, C33, and the release gate remain open.
+
+## Private transition-plan admission - 2026-10-05
+
+Entry: `2c7e5ed`, with the preceding development-authority slice still uncommitted. The user
+replied `continue` and authorized one more C33 slice. No commit or push occurred.
+
+The private `cryptalis.contracts.transition` module adds frozen in-memory plan and observation
+records. The plan binds IDs, a declared kind, the offline strategy, a UTC validity window, the
+protection domain, the source ActiveState revision and digest, the desired manifest digest, and
+an opaque target identity. The target bytes stay out of record representations.
+
+The admission check validates every record field before it compares current facts. It rejects
+unknown kinds, a non-offline strategy, an invalid validity window, unsafe counters, mutable or
+oversize target identity, hostile time-zone objects, expiry, a pre-creation observation, wrong
+domain or target, and a stale ActiveState head. Fixed diagnostics do not include supplied values.
+
+The first RED run produced 40 expected import failures because the module did not exist. The
+first GREEN run passed 102 focused checks. Adversarial review then added four failing cases for a
+hostile time-zone object, a pre-creation observation, and unsafe plan and observation counters.
+After the fix, 106 focused ActiveState, development-authority, and transition checks passed.
+
+The complete suite passed 573 tests in 4.06 seconds on Linux and CPython 3.12.3.
+`uv build --offline` produced the source archive and wheel. A clean temporary environment installed the
+wheel and admitted a matching synthetic offline plan from outside the checkout.
+
+The documentation checker reported 20 Markdown files, 516 local links, and zero faults.
+`uv lock --check` and `git diff --check` returned exit 0. Ruff and mypy were not installed, so
+those checks did not run.
+
+The added transition prose scored 0.88 findings per 100 words in STE-flavored lint.
+
+First-party adversarial review checked time handling, exclusive expiry, target replacement,
+cross-domain use, stale authority, mutable input, bounded identity bytes, unsupported strategy,
+safe counters, immutable records, and diagnostic redaction. It found no unresolved defect within
+this private contract scope. This review is not independent security review.
+
+The opaque target identity has no implemented resolver or production trust source. The module
+does not serialize or authenticate a plan, compute its digest, validate the complete schema,
+acquire a lock, execute a phase, record approval or receipt, access a database, or mutate state.
+Q5, G-PLAN, C33, and the release gate remain open.
+
+## Terminal manifest-history inspection - 2026-10-05
+
+Entry: `2c7e5ed`. Development-authority and transition-plan files and their documentation were
+already uncommitted. This slice preserves those files. No commit or push occurred.
+
+The user authorized direct implementation of one coherent slice with a terminal demonstration.
+The selected slice exposes the existing structural history validator through a read-only command.
+Dependent cryptography and database work still require the unresolved research and review gates.
+
+Acceptance requires genesis first, one manifest identity, increasing revisions, canonical parent
+digest links, bounded regular-file input, redacted failures, and complete output delivery.
+Revision gaps remain valid. Success must state `scope: manifest_history` and `authenticated: false`.
+The [CLI owner](architecture/manifest-context-api.md#cli-and-configuration) defines the complete command contract.
+
+The [implementation](../src/cryptalis/cli.py) calls the existing history validator after bounded reads.
+It rejects more than 4,096 paths before file access. The reader limits each read to the remaining
+aggregate budget plus one overflow byte. It retains the existing file cleanup and output failure
+channels. The [tests](../tests/test_cli_history.py) check real command results and file preservation.
+Small stream substitutes measure read sizes and inject operational failures.
+
+The [demonstration](../examples/demo_manifest_history.py) checks six subprocess outcomes with
+synthetic temporary files. It accepts a valid chain and presentation changes. It rejects a
+changed ancestor, a missing middle ancestor, and reversed order. A consistent replacement chain
+also passes with `authenticated: false`. This control prevents a structural result from becoming
+an authentication claim.
+
+| Check | Result |
+|---|---|
+| Baseline: `uv run --locked --offline pytest -q` | 573 passed |
+| RED: new history CLI tests before implementation | 23 expected failures, 2 argument-rejection cases passed |
+| Focused CLI and header/history tests before the demonstration test | 122 passed |
+| Final new history and demonstration tests | 26 passed |
+| Final complete suite: `uv run --locked --offline pytest -q` | 599 passed in 5.73 seconds on Linux and CPython 3.12.3 |
+| Ruff 0.16.3: `check --no-cache` on the three changed Python files | Passed |
+| Ruff: `format --check` on the two new Python files | Passed. Existing CLI formatting was preserved |
+| Mypy on the CLI and demonstration, Python target 3.12 | Failed with three existing CLI diagnostics. The unchanged baseline produced the same diagnostics |
+| `uv build --offline` | Wheel and source archive built |
+| Clean temporary environment, offline wheel install, execution outside the checkout | Six demonstration outcomes passed. The installed console script inspected a two-file history |
+| Markdown path and heading check | 19 tracked Markdown files, 538 local links, zero faults before this audit addition |
+| `git diff --check` | Passed |
+| Added documentation prose lint | 0.35 findings per 100 words |
+
+Mypy reports two incompatible `ArgumentParser` method overrides and one nullable errno lookup.
+These diagnostics also occur in the unchanged baseline. This slice adds no diagnostic, but the
+type gate remains incomplete. No checker rule or security assertion was disabled.
+
+First-party adversarial review checked resource bounds, stale byte links, identity substitution,
+partial ancestry, complete replacement, unsupported versions, nonregular files, cleanup, output
+delivery, and diagnostic leakage. It found no unresolved defect within the stated structural
+scope. This review is not independent security review.
+
+This slice adds no dependency, encryption, database access, policy activation, or authority
+authentication. It does not detect an omitted later revision or supply an atomic filesystem
+snapshot. C01, C25, C33, G-MANIFEST, G-ACTIVE, and the release gate remain incomplete.

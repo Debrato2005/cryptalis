@@ -162,6 +162,57 @@ selection.
 The [synthetic examples](../../examples/active-state) contain no signature or authority proof.
 They show one genesis state and one authorization-only successor.
 
+### Implemented process-local development authority
+
+The private `cryptalis.contracts.development_authority` module loads one structurally valid,
+bounded ActiveState history into memory. `read` returns a frozen snapshot. `history` returns the
+immutable genesis-to-head tuple. The adapter has no file, database, or network effects.
+
+`compare_and_swap` accepts one canonical expected-head digest and one successor byte string. It
+holds one process-local lock while it compares the expected digest, validates the successor and
+bounded history, and publishes the new snapshot. Validation completes before publication. A
+failed validation does not change the head. Two threads that propose different successors from
+one expected head cannot both succeed.
+
+If a caller loses the success response, one immediate retry with the same expected digest and
+the same canonical successor returns the current snapshot without adding a history entry. A
+different proposal from that old head fails as stale. An unrelated stale digest fails before the
+adapter parses the proposal. Diagnostics do not include supplied bytes or digest values.
+
+This adapter is for local development and executable contract tests only. Its state, lock, and
+retry knowledge disappear when the process ends. It does not authenticate a writer or state,
+persist an idempotency record, coordinate processes, detect a later omitted head, survive restore,
+or resist host rollback. It does not activate policy. Q1 and G-ACTIVE still own the external
+production backend, trust roots, durable CAS and idempotency, independent recovery, and rollback
+evidence. C33 remains incomplete.
+
+### Implemented private transition admission
+
+The private `cryptalis.contracts.transition` module defines frozen in-memory records for one plan
+header and one observation. The plan binds its IDs, kind, offline strategy, UTC validity window,
+protection domain, source ActiveState head, desired manifest digest, and opaque target identity.
+The observation supplies the time, protection domain, ActiveState head, and opaque target
+identity that a caller observed before an effect boundary.
+
+`admit_transition_plan` validates both records before it compares current facts. It accepts the
+nine declared transition kinds and only the initial offline strategy. Counters use the shared
+JSON-safe range. Target identity must be immutable and contain from 1 through 4,096 bytes. Record
+representations exclude those bytes.
+
+Plan expiry is exclusive. An observation cannot predate plan creation. The protection domain and
+opaque target identity must match. The authority revision and ActiveState digest must also match.
+Typed failures distinguish invalid input, unsupported strategy, expiry, wrong target, and stale
+source. Fixed diagnostics do not include supplied IDs, digests, target bytes, or times.
+
+This module does not define the source or serialized encoding of target identity. Q5 must select
+and validate that source. A hostname, database name, database object identifier, or editable
+claim cannot establish target authority alone. The caller must get the opaque identity from a
+future trusted resolver.
+
+The module does not parse or serialize plans. It does not compute a plan digest or validate the
+complete plan schema. It does not authenticate records, acquire locks, execute transitions,
+activate policy, access a database, or mutate state. C33 and G-PLAN remain incomplete.
+
 ### Total semantic diff contract
 
 The compiler compares authenticated active policy with the generated desired lock and immutable history.
@@ -608,6 +659,7 @@ Plans record kind=proposal. They never record security PASS. Combined results us
 | verify; pentest | Pinned fixtures/collectors or authorized synthetic lab -> bounded evidence | Advanced optional. Verify works without DAST. No implicit production destructive action |
 | evidence inspect/validate/export | Bundle + trust policy -> scoped findings/rendering | Offline default. No implicit upload or signing authority |
 | manifest inspect | Local child + optional --parent PATH -> identity header/digest | **Implemented narrow slice**, offline read-only regular files. Header or one supplied pair only |
+| manifest inspect-history | Explicit genesis-to-head paths -> structural history result | **Implemented narrow slice**, bounded offline regular-file input. Always `authenticated: false` |
 
 `plan` owns transition proposals. Optional minimum-leakage analysis returns a distinct PlanProposal and never activates it.
 `migrate plan` is a superseded proposed spelling, not an implemented command.
@@ -629,6 +681,28 @@ Argument failures return code 2 with a redacted `CLI.InvalidArguments` record.
 File input or authorization failures return code 2 with `Manifest.Invalid`.
 Other file I/O and cleanup failures return code 4 with `Manifest.Unavailable`.
 Neither mode changes manifest files or uses the network. The command does not complete C25 or establish full semantic validity.
+
+The `manifest inspect-history PATH [PATH ...] [--json]` command checks one explicit supplied
+history. Paths must occur in genesis-to-head order. A single genesis file is valid.
+Revision gaps are valid. The command calls `validate_manifest_history` after bounded file reads.
+It does not discover files, sort paths, accept `--parent`, or select an authorized head.
+
+Successful text and JSON results contain the validated head header, head digest, `genesis_digest`,
+`document_count`, `scope: manifest_history`, and `authenticated: false`.
+This result establishes structural consistency of the supplied bytes only. A consistent attacker
+chain still passes. It cannot detect an omitted later revision, authenticate policy, or activate runtime authority.
+Each file supplies one byte snapshot. Concurrent edits do not produce an atomic filesystem snapshot.
+
+The command rejects more than 4,096 paths before file access. It enforces the 16 MiB aggregate
+limit during reads. Each read permits only the remaining byte budget plus one overflow byte.
+The input byte limit is not a process memory limit. Parsing and canonicalization require extra memory.
+Operating-system argument limits can restrict how many paths the caller can supply.
+
+History failures use `operation: manifest.inspect_history` and `input_role: history`.
+Malformed chains return `Manifest.Invalid`, exit 2, and `stage: history`.
+Resource failures use `stage: history_limits` with `DocumentLimit` or `ByteLimit`.
+File and output failures retain the existing I/O and delivery contract.
+No success output precedes complete validation. Diagnostics exclude supplied paths and document contents.
 
 Under the [failure policy](../../ENGINEERING_PLAYBOOK.md#fail-loudly-and-explicitly), machine mode requires a stable error object when stderr is available.
 This includes argument validation. Validation failures do not write success output.
@@ -746,7 +820,8 @@ Controlled access and lifecycle decisions obey their explicit durable audit poli
 The responsibility names below define the proposed package structure. Initial manifest decoding,
 canonical output, content digests, identity-header validation, parent-link and bounded
 ancestry-chain validation, structural field-format digests, offline terminal inspection, private candidate F1/W1 framing,
-private scalar syntax encoding and decoding, and private structural ActiveState validation exist.
+private scalar syntax encoding and decoding, private structural ActiveState validation, and one
+private process-local development authority exist.
 The [checklist](../backend-build-checklist.md) records implementation state. Shared immutable
 contracts, including evidence DTOs, sit below adapters. Evidence orchestration and rendering sit
 above adapters. The CLI composes use cases and defines no security semantics. No domain layer

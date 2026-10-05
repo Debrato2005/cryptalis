@@ -4,6 +4,8 @@ Cryptalis contains documentation, research specifications, initial manifest deco
 output, identity-header validation, parent-link validation, bounded ancestry-chain validation,
 structural field-format digests, offline terminal inspection, private candidate F1/W1 framing,
 private scalar encoding and decoding, and private structural ActiveState validation.
+It also contains a private process-local development authority with in-memory compare-and-swap.
+Private transition-plan admission checks expiry, target binding, and ActiveState freshness.
 Treat other APIs, commands, packages, and security properties as proposed until the [capability
 checklist](docs/backend-build-checklist.md) links the required executable evidence.
 
@@ -37,3 +39,13 @@ implementation precision.
 Prefer clarity over mechanical simplification. Use the installed `asd-ste100` skill when
 substantial prose is created or revised. Layer 1 is the primary writing system. Layer 2
 reply-shaping rules are optional guidance, not repository-writing requirements.
+
+## Shell execution in WSL
+
+If the command executor already runs in WSL, run repository commands directly with the Linux shell.
+Use `/home/debrato/Projects/cryptalis` as the working directory.
+Do not wrap Linux commands with `wsl.exe`, `cmd.exe`, or `powershell.exe` in that environment.
+In this session, sandboxed `wsl.exe` failed with `UtilBindVsockAnyPort: socket failed 1` before the Linux command started.
+The same WSL launch succeeded outside the sandbox, and direct Linux commands succeeded inside it.
+For required Windows commands, request approval to run outside the sandbox after a sandbox-related failure.
+Keep repository checks inside the sandbox when direct Linux execution works.

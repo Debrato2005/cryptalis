@@ -101,9 +101,9 @@ boundary also defeat it.
 | Historical valid ciphertext rollback | AEAD proves authenticity, not freshness | Freshness outside bound unless external row-version authority; rollback scenario reports this limit |
 | Accidental supported-path persistence | Authenticated context, row-aware adapter and atomic companion writes | Plaintext in trusted app remains; inspect SQL/rows/mutants |
 | Unregistered/Core/bulk/raw/COPY/ETL writer | Reject registered known paths, roles/framing defense, writer ledger | Unobservable separate writers; no universal prevention; P2 T/R/D/U matrix |
-| Migration mistake/stale plan | Target-bound plan, offline quiescence, row revisions, complete verification, external CAS | Downtime and copy residue. Wrong-target, crash, and two-executor fixtures |
+| Migration mistake/stale plan | Target-bound plan, private in-memory expiry/target/source checks, offline quiescence, row revisions, complete verification, external CAS | Current checks have no target resolver, serialized plan, executor, or durable record. Wrong-target, crash, and two-executor fixtures remain pending |
 | Cross-tenant/subject substitution | Host-authenticated grants + stable tuple in AAD and tenant filters | Host policy bugs remain risk; P0 colliding IDs/task/pool/jobs |
-| Untrusted manifest/descriptor/ActiveState substitution | Bounded structural parsing, ancestry-chain checks, monotonic ActiveState fields, and separate digest domains. Catalogue admission and authenticated authority required | Current helpers establish byte consistency, not policy authenticity, current-head authority, or catalogue approval. G-MANIFEST/G-ACTIVE/P0/P10 remain pending |
+| Untrusted manifest/descriptor/ActiveState substitution | Bounded structural parsing, ancestry-chain checks, monotonic ActiveState fields, separate digest domains, and process-local development CAS. Catalogue admission and authenticated authority required | Current helpers establish byte consistency and serialize only one process. They do not establish policy authenticity, durable current-head authority, or catalogue approval. G-MANIFEST/G-ACTIVE/P0/P10 remain pending |
 | Malformed or forged envelope from a database attacker | Bounded framing before key lookup. Authorized registry selection and AEAD required afterward | The private F1/W1 parsers reject malformed structure but accept well-shaped forged bytes. G-CRYPTO/G-CROSSKEY/G-AAD remain pending |
 | Cache stale worker/partition | Epoch/lease authorization plus serialized DB fence and acknowledged output drain | Expiry denies new authorization; physical completion requires drain evidence and can remain pending; bytes may remain in suspended RAM; P7 chaos |
 | Restore/resurrection/hostile schema | Quarantine, trusted executable-object inventory, current external ActiveState and denial | Surviving keys permit offline recovery. Hostile-schema and PITR admission fixtures |
@@ -113,6 +113,11 @@ boundary also defeat it.
 | Fully compromised application/host or malicious authorized code | Beyond core protection | Can read plaintext/keys, bypass grants; independent controlled release is separate profile |
 | Business auth flaws, XSS, SQL injection itself | Host AppSec responsibility; Pentest can exercise impact | Vulnerability remains even if DB ciphertext holds; results separated |
 | Deliberate post-decrypt export/unmanaged copies | Beyond technical deletion scope | Export/log/backups excluded explicitly; no universal erasure/compliance claim |
+
+The read-only history command extends the local file entry point to an explicit ordered sequence.
+It bounds file count and aggregate bytes. It neither adds authentication nor selects current authority.
+A complete consistent replacement and an omitted later revision remain outside its detection scope.
+The history tests include a replacement-chain control with `authenticated: false`.
 
 A supported-path claim names its exact prevention and compatibility scope. Detected-only and
 unobservable paths remain coverage gaps, even when a clean run does not exercise them. Database

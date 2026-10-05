@@ -4,7 +4,8 @@ Current state as of 2026-10-05: documentation plus bounded manifest JSON, conten
 identity-header validation, parent-link and bounded ancestry-chain validation, structural
 field-format digests, offline terminal inspection, private candidate F1/W1 framing, and private
 scalar syntax encoding and decoding. Private structural ActiveState header, digest, and history
-validation also exist.
+validation, a process-local development authority, and private transition-plan admission also
+exist.
 This file is the authority for capability implementation state.
 [Manifest contracts](architecture/manifest-context-api.md#terms-and-maturity)
 define terms and maturity.
@@ -55,12 +56,25 @@ aggregate limits before parsing, preserves valid revision gaps, and checks each 
 digest link. Its boundary tests cover valid chains, genesis truncation, reordering, substitution,
 mixed identities, mutable inputs, and both aggregate limits. An internally consistent attacker
 chain still passes. The helper does not authenticate history, select the authorized head, or
-complete C01 or C33. The CLI remains a one-parent inspector.
+complete C01 or C33. The CLI also accepts a complete supplied history through `manifest inspect-history`.
 
 On 2026-10-05, 31 focused header/history tests and the complete 467-test suite passed on
 Linux and CPython 3.12.3. A source archive and wheel built offline. A clean temporary environment
 installed the wheel and validated a two-document chain with a skipped revision number. These
 checks supply structural evidence only. They do not complete G-MANIFEST, G-ACTIVE, C01, or C33.
+
+The terminal inspector also checks an explicit complete supplied history through
+`manifest inspect-history`. It reuses the structural history validator and bounded regular-file
+reader. It rejects excessive file counts before access and excessive aggregate bytes during reads.
+The result states its scope and `authenticated: false`. Existing single-file and parent-link
+inspection retain their output contracts.
+
+The [history CLI tests](../tests/test_cli_history.py) cover valid revision gaps, canonical presentation changes, tampering,
+missing or reordered ancestors, duplicate entries, identity substitution, unsupported versions,
+nonregular files, count and byte limits, redacted I/O failures, and failed output delivery.
+An internally consistent replacement chain supplies a positive control for the authentication limit.
+The [terminal demonstration](../examples/demo_manifest_history.py) checks six real subprocess outcomes and removes temporary files.
+This evidence does not complete C01, C25, C33, G-MANIFEST, or G-ACTIVE.
 
 The private [ActiveState kernel](../src/cryptalis/contracts/active_state.py) decodes immutable
 authority headers, computes a separate domain digest, checks monotonic parent links, and validates
@@ -69,9 +83,44 @@ required fields, domain and manifest substitution, rollback, digest/revision inc
 aggregate limits, and redacted failures. The synthetic [example history](../examples/active-state)
 contains no signature or authority proof. Node and Python agree on its genesis digest.
 
-The complete suite contains 518 passing tests after this slice. This evidence does not complete
-C33 or G-ACTIVE. It adds no production authority, compare-and-swap, durable idempotency,
+The complete suite contained 518 passing tests after the structural ActiveState slice. This
+evidence does not complete C33 or G-ACTIVE. It adds no production authority, durable idempotency,
 transition execution, cryptography, database behavior, or CLI command.
+
+The private [development authority](../src/cryptalis/contracts/development_authority.py) loads a
+valid bounded history and serializes compare-and-swap inside one Python process. It publishes
+immutable snapshots only after successor and full-history validation. An exact retry of the
+current successor does not add a duplicate entry. Different competing successors from one head
+cannot both succeed. An unrelated stale digest fails before proposal parsing.
+
+Its 11 focused behavior tests include invalid initialization, immutable snapshots, valid update,
+lost-response retry, malformed input with no state change, stale-request redaction, and a
+two-thread race. The complete suite passed 529 tests on Linux and CPython 3.12.3. An offline
+source archive and wheel build succeeded. A clean temporary environment installed the wheel and
+applied and retried the synthetic successor without a duplicate history entry.
+
+This adapter loses its state on process exit. It has no writer authentication, persistence,
+cross-process coordination, durable idempotency, independent recovery, or rollback resistance.
+It supplies no public command, transition execution, policy activation, cryptography, or database
+behavior. C33 and G-ACTIVE remain incomplete.
+
+The private [transition contract](../src/cryptalis/contracts/transition.py) defines immutable
+in-memory plan and observation records. Its admission check validates the offline strategy, UTC
+validity window, protection domain, opaque target identity, and exact source ActiveState revision
+and digest. It returns no mutation authority and has no external effects.
+
+Its 44 focused cases cover all nine transition kinds, exclusive expiry, pre-creation
+observations, wrong-domain and wrong-target substitution, stale revision and digest, unsupported
+strategy, immutable target bytes, resource bounds, hostile time-zone objects, and fixed redacted
+diagnostics. The focused ActiveState, development-authority, and transition set passed 106 tests.
+The complete suite passed 573 tests on Linux and CPython 3.12.3. An offline source archive and
+wheel build succeeded. A clean temporary environment installed the wheel and admitted a matching
+synthetic offline plan.
+
+The opaque target identity has no implemented resolver or production trust source. No hostname,
+database name, database object identifier, or editable claim establishes target authority alone.
+There is no serialized plan schema, plan digest, authentication, durable record, approval,
+receipt, executor, database access, or policy activation. C33 and G-PLAN remain incomplete.
 
 The [CLI failure tests](../tests/test_cli.py) now cover safe diagnostic stages and input roles,
 invalid arguments in JSON mode, duplicate parent options, option termination, and dependency failures.

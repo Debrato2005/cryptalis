@@ -10,7 +10,8 @@ Broader security-assurance and search work remains separately gated research.
 identity-header validation, parent-link and bounded ancestry-chain validation, structural
 field-format digests, offline terminal inspection, private candidate F1/W1 framing, and private
 scalar encoding and decoding. Private structural ActiveState header, digest, and history
-validation also exist.**
+validation, a process-local development authority, and private transition-plan admission also
+exist.**
 
 The repository has an installable Python package with a [bounded JSON decoder](src/cryptalis/manifest/parser.py), [restricted RFC
 8785 canonicalizer and SHA-256 digest helper](src/cryptalis/manifest/canonical.py), [typed header
@@ -24,7 +25,16 @@ text, bytes, integer, and decimal syntax. It preserves exact types and decimal r
 Encoded bytes contain unprotected values. The codec does not authenticate values or approve field policy.
 The private [ActiveState module](src/cryptalis/contracts/active_state.py) checks structural
 identity, monotonic revisions, rollback, parent links, and bounded complete histories. It performs
-no authentication, compare-and-swap, policy activation, file I/O, or database mutation.
+no authentication, policy activation, file I/O, or database mutation.
+The private [development authority](src/cryptalis/contracts/development_authority.py) loads one
+valid in-memory history and serializes compare-and-swap updates inside one Python process. It
+returns immutable snapshots, rejects competing stale writers, and treats an exact retry of the
+current successor as idempotent. It has no persistence, cross-process coordination,
+authentication, or rollback resistance.
+The private [transition contract](src/cryptalis/contracts/transition.py) checks one immutable
+in-memory plan against caller-supplied observations. It rejects an unsupported strategy, expiry,
+pre-creation observations, a wrong protection domain or target, and a stale ActiveState head.
+The opaque target identity has no implemented resolver and supplies no authority by itself.
 Behavior tests cover these boundaries. Complete semantic schema validation,
 trusted history authority, and signature authentication remain pending.
 Cryptography, ORM integration, migrations, providers, and assurance tools also remain pending.
@@ -33,8 +43,8 @@ contracts. The [capability
 checklist](docs/backend-build-checklist.md) separates specified design from executable evidence.
 No runtime version is supported.
 
-Handoff reconciliation: 2026-10-05, documentation only.
-External ActiveState, the transition engine, restore admission, deprotection, and complete uninstall/decommission are not implemented.
+Handoff reconciliation: 2026-10-05, partial C33 implementation.
+External production ActiveState, serialized transition plans, the transition engine, restore admission, deprotection, and complete uninstall/decommission are not implemented.
 The [unresolved questions](docs/architecture/README.md#unresolved-research-questions) remain open.
 Dependent runtime behavior waits for researched answers to Q1–Q5 and [P0 documentation review](docs/architecture/README.md#p0-documentation-review-register).
 This pass does not change the current structural formats or confer support.
@@ -67,13 +77,15 @@ The internal `validate_manifest_history` helper validates one complete genesis-t
 It requires immutable bytes in an immutable tuple. It permits skipped revision numbers, but each
 document must name the previous document by its canonical digest. The sequence is limited to
 4,096 documents and 16 MiB in total. This structural check does not authenticate the history,
-select the current head, or grant runtime authority. The terminal inspector still accepts only
-one optional parent.
+select the current head, or grant runtime authority. The terminal inspector also accepts an explicit complete history through
+`manifest inspect-history`.
 
 The [ActiveState examples](examples/active-state) contain a synthetic genesis state and one
 authorization-only successor. They supply fixed structural vectors, not authenticated authority.
 The [C33 contract](docs/architecture/manifest-context-api.md#implemented-structural-activestate-header)
 defines their fields, digest, monotonic rules, and limits.
+The development authority can use this history for process-local tests and demonstrations. It is
+not a public command and cannot represent a production authority service.
 
 The field-format helpers check descriptor structure and compute canonical bytes and a
 domain-separated digest. For example:
@@ -103,6 +115,31 @@ Authentication, authorized registry selection, and format freeze remain pending.
 The [scalar vectors](examples/scalars/candidate-vectors.json) contain synthetic encoded values.
 The [scalar boundary](docs/architecture/crypto-search-lifecycle.md#implemented-scalar-syntax-boundary)
 defines syntax limits. Field-specific validation, authentication, and format freeze remain pending.
+
+## Terminal demonstration
+
+Run the terminal demonstration from the repository root:
+
+```bash
+uv run --locked python examples/demo_manifest_history.py
+```
+
+The demonstration checks six outcomes with synthetic files. A complete chain and a whitespace
+change pass. A changed ancestor, missing middle ancestor, and reversed history fail with exit 2.
+A consistent replacement chain also passes with `authenticated: false`. This last control shows
+the authentication limit. Digest links establish consistency, not who authorized the history.
+The demonstration checks each exit code and removes its temporary files.
+
+To inspect an explicit local history, supply paths in genesis-to-head order:
+
+```bash
+uv run --locked cryptalis manifest inspect-history examples/manifests/genesis.json examples/manifests/successor.json --json
+```
+
+The result includes the head header, head digest, genesis digest, document count, and
+`scope: manifest_history`. Every successful history result states `authenticated: false`.
+The command accepts at most 4,096 files and 16 MiB of aggregate input.
+It does not authenticate the chain, select the current authorized head, or detect an omitted later revision.
 
 ## Purpose and boundary
 

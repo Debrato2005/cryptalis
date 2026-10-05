@@ -5,6 +5,10 @@ parent-link and bounded ancestry-chain validation, structural field-format diges
 terminal inspection exist.
 Private candidate F1/W1 framing and scalar syntax encoding and decoding also exist.
 Private structural ActiveState header, digest, and history validation also exist.
+One private development adapter supplies process-local in-memory compare-and-swap and exact
+current-successor retry handling. It supplies no durable or production authority.
+Private in-memory transition admission checks the offline strategy, expiry, opaque target
+identity, protection domain, and source ActiveState head. It does not execute a transition.
 Authentication and format freeze remain pending.
 See the [checklist](backend-build-checklist.md) for current
 evidence. Reviewed 2026-10-04. Build order reconciled 2026-10-05.
@@ -73,6 +77,14 @@ Freeze revised identity/binding bytes and an established suite before schema che
 Desired policy never supplies active authority. A derived graph supplies evidence only.
 Offline quiescence replaces initial dual writers/journals/fleet leases. Complete verification still precedes activation.
 Search, async, online, multi-provider, graph, and pentest remain later independent gates.
+
+## Current terminal learning exercise
+
+Run `uv run --locked python examples/demo_manifest_history.py` from the repository root.
+The [demonstration](../examples/demo_manifest_history.py) compares a valid chain, presentation changes, broken links, missing ancestors,
+reversed order, and a consistent replacement chain. It checks the real command exit codes.
+Explain why canonicalization ignores whitespace and why consistent digest links supply no authentication.
+The [CLI owner](architecture/manifest-context-api.md#cli-and-configuration) defines the command and its limits. The [checklist](backend-build-checklist.md) records its executable evidence.
 
 ## Workstream catalogue
 

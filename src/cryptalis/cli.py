@@ -12,12 +12,14 @@ from uuid import uuid4
 
 from cryptalis.manifest.canonical import digest_manifest_json
 from cryptalis.manifest.header import (
+    _MAX_HISTORY_BYTES,
+    _MAX_HISTORY_DOCUMENTS,
     ManifestHeader,
     decode_manifest_header,
+    validate_manifest_history,
     validate_manifest_parent_link,
 )
 from cryptalis.manifest.parser import MAX_DOCUMENT_BYTES, ManifestInvalid
-
 
 _INVALID_PATH_ERRNOS = frozenset(
     (
@@ -137,13 +139,32 @@ def _parser() -> argparse.ArgumentParser:
         help="Write one machine-readable JSON object.",
     )
     inspect.set_defaults(handler=_inspect_command)
+    history = manifest_commands.add_parser(
+        "inspect-history",
+        help="Inspect a supplied genesis-to-head history without authentication.",
+        allow_abbrev=False,
+    )
+    history.add_argument(
+        "paths",
+        type=Path,
+        nargs="+",
+        help="Local manifest files in genesis-to-head order.",
+    )
+    history.add_argument(
+        "--json",
+        action="store_true",
+        dest="machine_json",
+        help="Write one machine-readable JSON object.",
+    )
+    history.set_defaults(handler=_inspect_history_command)
     return parser
 
 
 def _io_failure(
     error: OSError,
     stage: Literal["open", "stat", "read", "close"],
-    input_role: Literal["child", "parent"],
+    input_role: Literal["child", "parent", "history"],
+    operation: str = "manifest.inspect",
 ) -> _CommandFailure:
     invalid_path = (
         stage == "open" and error.errno in _INVALID_PATH_ERRNOS
@@ -167,23 +188,31 @@ def _io_failure(
         ),
         code="Invalid" if invalid_path else "Unavailable",
         exit_code=2 if invalid_path else 4,
+        operation=operation,
     )
 
 
-def _read_manifest(path: Path, input_role: Literal["child", "parent"]) -> bytes:
+def _read_manifest(
+    path: Path,
+    input_role: Literal["child", "parent", "history"],
+    *,
+    max_bytes: int = MAX_DOCUMENT_BYTES,
+    operation: str = "manifest.inspect",
+) -> bytes:
     flags = os.O_RDONLY | getattr(os, "O_BINARY", 0)
     flags |= getattr(os, "O_NONBLOCK", 0)
 
     try:
         descriptor = os.open(path, flags)
     except OSError as error:
-        raise _io_failure(error, "open", input_role) from error
+        raise _io_failure(error, "open", input_role, operation) from error
     except ValueError as error:
         raise _CommandFailure(
             f"The {input_role} manifest path is invalid.",
             stage="open",
             input_role=input_role,
             cause="InvalidPath",
+            operation=operation,
         ) from error
 
     stage: Literal["stat", "read"] = "stat"
@@ -195,12 +224,13 @@ def _read_manifest(path: Path, input_role: Literal["child", "parent"]) -> bytes:
                 stage="stat",
                 input_role=input_role,
                 cause="NotRegularFile",
+                operation=operation,
             )
         stage = "read"
         stream = os.fdopen(descriptor, "rb")
-        return stream.read(MAX_DOCUMENT_BYTES + 1)
+        return stream.read(max_bytes + 1)
     except OSError as error:
-        raise _io_failure(error, stage, input_role) from error
+        raise _io_failure(error, stage, input_role, operation) from error
     finally:
         primary_error = sys.exception()
         try:
@@ -209,7 +239,7 @@ def _read_manifest(path: Path, input_role: Literal["child", "parent"]) -> bytes:
             else:
                 stream.close()
         except OSError as error:
-            failure = _io_failure(error, "close", input_role)
+            failure = _io_failure(error, "close", input_role, operation)
             if isinstance(primary_error, _CommandFailure):
                 failure.error["related_error"] = primary_error.error
             raise failure from error
@@ -333,6 +363,12 @@ def _write_result(result: dict[str, object], machine_json: bool) -> None:
             f"parent_digest: {parent_text}\n"
             f"digest: {result['digest']}"
         )
+        if result["scope"] == "manifest_history":
+            text += (
+                f"\ndocument_count: {result['document_count']}"
+                f"\ngenesis_digest: {result['genesis_digest']}"
+                "\nauthenticated: false"
+            )
     _write_output(text + "\n", sys.stdout, "stdout")
 
 
@@ -381,6 +417,64 @@ def _inspect_command(arguments: argparse.Namespace) -> int:
         else _read_manifest(arguments.parent, "parent")
     )
     result = _result(raw, parent_raw)
+    _write_result(result, arguments.machine_json)
+    return 0
+
+
+def _inspect_history_command(arguments: argparse.Namespace) -> int:
+    operation = "manifest.inspect_history"
+    if len(arguments.paths) > _MAX_HISTORY_DOCUMENTS:
+        raise _CommandFailure(
+            "Supply at most 4096 manifest history files.",
+            stage="history_limits",
+            input_role="history",
+            cause="DocumentLimit",
+            operation=operation,
+        )
+
+    documents: list[bytes] = []
+    remaining = _MAX_HISTORY_BYTES
+    for path in arguments.paths:
+        # The sentinel byte detects overflow without reading another full file.
+        raw = _read_manifest(
+            path,
+            "history",
+            max_bytes=min(MAX_DOCUMENT_BYTES, remaining),
+            operation=operation,
+        )
+        if len(raw) > remaining:
+            raise _CommandFailure(
+                "The complete manifest history must not exceed 16 MiB.",
+                stage="history_limits",
+                input_role="history",
+                cause="ByteLimit",
+                operation=operation,
+            )
+        remaining -= len(raw)
+        documents.append(raw)
+
+    try:
+        header = validate_manifest_history(tuple(documents))
+    except ManifestInvalid as error:
+        raise _CommandFailure(
+            "Supply a valid manifest history in genesis-to-head order.",
+            stage="history",
+            input_role="history",
+            cause="ManifestInvalid",
+            operation=operation,
+        ) from error
+
+    result: dict[str, object] = {
+        "scope": "manifest_history",
+        "schema_version": header.schema_version,
+        "manifest_id": str(header.manifest_id),
+        "revision": header.revision,
+        "parent_digest": header.parent_digest,
+        "digest": digest_manifest_json(documents[-1]),
+        "document_count": len(documents),
+        "genesis_digest": digest_manifest_json(documents[0]),
+        "authenticated": False,
+    }
     _write_result(result, arguments.machine_json)
     return 0
 
