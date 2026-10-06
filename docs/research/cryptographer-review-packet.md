@@ -17,10 +17,10 @@ AESGCMSIV is not claimed to be key committing. There are zero verified productio
 
 | Canonical source | SHA-256 of exact UTF-8 file bytes |
 |---|---|
-| [docs/security.md](../security.md) | `fd799b94a6c5fb9f24c1213d9eaec1880157fdb723a95832a8b2d97146a4c3cb` |
-| [docs/architecture/README.md](../architecture/README.md) | `31c332e49b3d42d0d6cbb55debac73d060c34be407faad325710dae8122224aa` |
-| [docs/compatibility.md](../compatibility.md) | `2092c44c0f96b5eb26526df141fb4bfffd4640ecfad70037df2e3240cd3c7b65` |
-| [docs/lifecycle.md](../lifecycle.md) | `2b76d244d1fb780b9698f37eb150bfd0731628c4e554b9adca3c3ef94a00ae86` |
+| [docs/security.md](../security.md) | `d3af956484e428a678309861740c15f040fbdab38909a5675d49c5442d63d7bf` |
+| [docs/architecture/README.md](../architecture/README.md) | `2953af2a83a760be1c4da2c07e50f5c4283902157752f200427b531d2eb6fa07` |
+| [docs/compatibility.md](../compatibility.md) | `9989ea0a96ad7c92df8fea4a5f91972d6a64b2ac7b2fdefcbc388216c90973a0` |
+| [docs/lifecycle.md](../lifecycle.md) | `ec37428c2f0dca0727ada8a49b283e64d374e471c049cfbded4c6d50e0d35938` |
 
 ## Exact exported construction
 
@@ -155,7 +155,7 @@ but an attacker can replay both revision and authentic envelope. Binding all fie
 of unchanged fields, consuming quotas and amplifying writes. The revision stays useful for concurrency, not authenticated freshness.
 A row/presence MAC would detect a fresh NULL substitution or mixed-field substitution if its MAC remains intact.
 An attacker can replay an old valid absent-field marker or omit the entire row. S4 demonstrates both the useful check and its limit.
-This profile deliberately rejects the extra presence-MAC format/root/NULL-only-row/projection/rotation machinery: its scoped promise
+This profile deliberately rejects the extra presence-MAC format/root dependency on NULL-only reads/projection/rotation machinery: its scoped promise
 is authenticity of returned non-null values, not authenticated presence or whole-row consistency. Nullable data requiring that
 integrity property is ineligible. Host approval cannot call its requirement satisfied. Required fields retain ordinary NOT NULL,
 which is not a defense against a privileged DB writer. This is an explicit narrowed claim, not a proof that MACs have no value.
@@ -266,7 +266,17 @@ Each format-2 descriptor has exactly `descriptor_schema`=2, `model_id`, `table_i
 `codec_parameters` contains only the admitted original length/range/precision/scale bounds from compatibility. Unknown parameters reject.
 The lock records immutable UUID normalizer/index domains separately. Search changes do not redefine payload bytes.
 
-JSON uses the chosen bounded canonical profile: ASCII member names, strict Unicode values, no floats, duplicate keys or lone surrogates.
+Canonical bytes use the restricted RFC 8785 JCS profile defined here, not an implicit choice by existing code.
+Accept ASCII member names, strict Unicode string values, true/false/null and nonnegative integer numbers <=2**53-1.
+Reject floats, duplicate keys, lone surrogates and unknown schema members before serialization.
+Serialize UTF-8 without BOM or whitespace. Object members sort by raw UTF-16 code units (equivalently ASCII order for admitted names).
+Array order remains unchanged; declared set inputs are independently sorted by their schema rule before JCS.
+Numbers use minimal unsigned decimal, no exponent/leading zero; accepted numeric zero serializes as `0`.
+String quote and backslash escape as `\"` and `\\`. Use `\b`, `\t`, `\n`, `\f`, `\r` for those five controls;
+other U+0000..U+001F use lowercase `\u00xx`. All other admitted characters are literal UTF-8, including `/` and U+2028/U+2029.
+No Unicode normalization or slash/non-ASCII escaping occurs. Boolean/null spellings are lowercase JSON literals.
+This profile fixes descriptor, lock and operation-request bytes. [RFC 8785](https://www.rfc-editor.org/rfc/rfc8785.html) supplies JCS;
+the restrictions/limits here narrow it. Two independently structured encoders and frozen edge vectors must agree at G-MANIFEST/G-TRANSITION.
 Counters lie in `0..2**53-1`. Application numeric values use separate typed codecs.
 Limits: 16 MiB/document, depth 32, 10,000 fields, identifiers at most 128 UTF-8 bytes.
 Unknown critical fields, duplicate set entries, conflicting locators and unsafe SQL dependencies reject.
@@ -323,33 +333,55 @@ Applications may format phone/email values before assignment. Cryptalis validate
 
 ### Ordinary commit evidence
 
-Every protected mutation gets a random operation UUID and immutable request digest before DML, registered externally with
+Each explicit preparation/flush batch gets a fresh mutation operation UUID and immutable request digest before DML, registered externally with
 worker incarnation, exact target/fence and original backend fingerprint. Digest covers the canonical operation shape, scoped
 identities, expected revisions and a keyed commitment to value bytes, not public low-entropy plaintext hashes.
+One DB transaction has its own immutable transaction UUID and may contain several such batches, including flush B followed by flush C.
+Never change an existing batch digest or reuse its UUID for later writes. The backend fingerprint also pins the assigned PostgreSQL
+xid8 and transaction UUID; a live backend executing a later transaction is not evidence that the original transaction can commit.
 Choose the lexicographically smallest (root-handle UUID bytes, generation) among the mutation's admitted payload roots as its
-immutable commitment anchor. Deletes include the deleted rows' roots. An empty protected mutation requires no mutation record.
+immutable commitment anchor. Deletes include the deleted rows' roots. Resolve an admitted payload-scope root even for an all-NULL
+mutation; its cold lookup/wrap/unwrap cost is explicit, although no NULL ciphertext or row-presence MAC is stored.
+An empty protected mutation requires no mutation record.
 Derive `Kop = HKDF-SHA256(anchor_root, salt=payload-extract salt for that root,
 info=E("cryptalis/mutation-commitment/1", operation_UUID), length=32)` using the security owner's fixed tag/tuple encoding.
 The request digest is full HMAC-SHA-256(Kop, E("cryptalis/mutation-request/1", canonical_request_bytes)).
 The last component is tag 5 opaque bytes. The request uses the manifest's canonical JSON rules and exactly these members:
-`version`=1, `domain_id`, `target_incarnation`, `fence_token`, `anchor_handle`, `anchor_generation`, `operation_id`,
-and `mutations` sorted by model UUID, typed record identity and action. Each mutation contains `model_id`, `record`,
+`version`=1, `domain_id`, `target_incarnation`, `transaction_id`, `compiled_lock_digest` (lowercase SHA-256 hex),
+`fence_token`, `anchor_handle`, `anchor_generation`, `operation_id`,
+and `mutations` sorted by model UUID bytes, the security owner's raw typed-record bytes, then action ASCII bytes.
+Each mutation contains `model_id`, `record`,
 `tenant_id`, `subject_id` (UUID or null), `action` (insert/update/delete), `expected_revision` (uint decimal string or null),
 `ordinary_changes` (defined below), and `fields` sorted by field UUID. A field has `field_id`, `descriptor_digest` (lowercase hex), `codec_id`, and
 `value` (null or canonical padded Base64 of the encoded scalar bytes). Record identity is exactly
 `{"kind":"uuid","value":"canonical UUID"}` or `{"kind":"u64","value":"minimal unsigned decimal"}`.
-Integers for tokens/generations follow the bounded manifest counters. Reject duplicate mutation/field identities.
-The frozen request also covers every explicitly changed ordinary mapped attribute in an `ordinary_changes` array, with
-its lock-pinned original type ID and exact admitted scalar bytes encoded the same way. Unknown/custom processors reject.
+Integers for tokens/generations follow the bounded manifest counters. Reject duplicate (model_id, typed record) identities within a batch, even with different actions, and duplicate field IDs.
+Each `ordinary_changes` entry has exactly `attribute_id` (nonzero lock-pinned UUID), `sql_type_id` (immutable catalogue UUID),
+`wire_oid` (original PostgreSQL type OID), `wire_format`=0 (TEXT), and `value` (null or canonical padded Base64 bytes).
+Sort by attribute UUID bytes and reject duplicate IDs. The lock records immutable ordinary attribute identities and original
+type/dumper artifacts; renames retain identities by reviewed mapping. Same-type attributes are never identified by position or type alone.
+Ordinary non-null bytes are the exact result of the original admitted SQLAlchemy built-in bind processor followed by the pinned
+psycopg public `get_dumper_by_oid(oid, Format.TEXT)` / `Dumper.dump` with UTF8 connection encoding.
+The prepared immutable bytes, OID and format must be the actual DML parameters, not a second adaptation of a mutable value.
+No AUTO format selection, quoting, custom dumper/processor or unclassified SQL type is admitted to this mixed mutation path.
+Lock-pinned ordinary server defaults are part of the request intent via compiled_lock_digest, not invented client values.
+Unknown implicit effects or ordinary type/dumper behavior block that mutation until qualification. Independent original-type/wire
+vectors are required; this use of documented driver adaptation does not claim a portable custom codec for every host type.
 The whole canonical request is bounded to 16 MiB and depth 32 before its keyed digest is computed.
 Host-side implicit effects outside this closed write inventory are ineligible. The root/generation stays a read dependency
 through reconciliation and the retry-retention barrier. Do not log canonical requests or the anchor root/key.
 Independent canonical-byte/commitment vectors and full changed-attribute/default inventory remain G-TRANSITION/G-ORM evidence.
-All effects (including DELETE and rollback-mirror updates) commit with one logged outcome row in the same PostgreSQL transaction.
-The outcome stores domain/target/operation, request digest, worker/token, protocol/generation and committed effect summary;
+Each batch's effects (including DELETE and rollback-mirror updates) receive one logged outcome row in that same PostgreSQL transaction.
+All batches' rows/markers commit or roll back together. A marker proves that batch participated in the committed transaction,
+not that its intermediate value remains the final value after a later batch. Terminal reconciliation resolves every registered batch
+under that transaction UUID. No batch marker/ownership is acknowledged as committed after flush alone.
+The outcome stores domain/target/transaction/operation, request digest, worker/token, protocol/generation and committed effect summary;
 no plaintext, search terms or raw SQL. UNIQUE(domain, operation) prevents a repeated operation from executing twice.
 A different digest under the same ID is `OperationIdentityConflict`. An already committed matching operation returns its
-recorded outcome after current authorization, not a fresh mutation. Statement retries after a rolled-back transaction reuse that ID.
+recorded outcome after current authorization, not a fresh mutation. A multi-batch transaction cannot retry one isolated batch.
+A deliberate full-transaction retry retains the transaction/batch IDs, digests and sequence. It starts a new backend attempt only
+after every original batch is NOT_COMMITTED. Register the new fingerprint conditionally under current authorization and retain
+prior fingerprints. No automatic retry follows UNKNOWN.
 
 If COMMIT was sent and acknowledgement is lost, do not mark rollback, resend effects, clear ownership or delete the outcome.
 Reconcile the original external record and backend on the exact current writer target. First establish that original backend
@@ -363,6 +395,9 @@ External receipts record the observed DB outcome afterwards. They are not atomic
 Registered operations remain until classification/conditional acknowledgement. Marker GC requires all operation owners terminal,
 external acknowledgements durable, no supported delayed retry/recovery dependency and approved retention closure.
 There is no fixed TTL or row-delete cascade. Capacity exhaustion in the outcome ledger denies new mutations safely.
+The marker guarantee assumes admitted PostgreSQL ACID/lineage and outcome-ledger integrity. Runtime roles cannot UPDATE/DELETE
+outcomes; insertion is bound to the registered same-transaction mutation. Privileged metadata corruption/loss makes classification
+UNKNOWN. Marker absence is not authenticated absence against a malicious database owner.
 Authority loss cannot reconstruct permission from DB markers alone. H2 does not create a cross-service transaction.
 
 ## Specific questions requiring a written human answer
@@ -372,7 +407,7 @@ Authority loss cannot reconstruct permission from DB markers alone. H2 does not 
 | Q1 | Does AES-256-GCM-SIV with OS random 96-bit nonces, 1-MiB payload cap, 32-byte hashed AAD and aggregate 2**24 calls/2**40 bytes per root achieve a defensible multi-key lifetime bound? State assumptions and actual confidentiality/forgery bounds, including rejected decryption attempts |
 | Q2 | Is hashing the complete typed AAD context an acceptable SHA-256 composition? Can any tag/position/absence/typed-record encoding collide or admit relocation/type confusion? Supply independent canonical vectors |
 | Q3 | Does the descriptor exclude only legitimately mutable data? Are representation/subject incarnation/generation/version domains sufficient across rename, restore, scope transfer and re-adoption? |
-| Q4 | Are HKDF extract salts and payload/search/operation-commitment info domains separated correctly under shared payload roots and independent search roots? Assess full-width HMAC request commitments as well |
+| Q4 | Are HKDF extract salts and payload/search/operation-commitment info domains separated correctly under shared payload roots and independent search roots? Assess full-width request HMAC, canonical bytes, immutable ordinary attribute/type/wire identities and transaction/batch retry contexts |
 | Q5 | Is one exact admitted root dispatch sufficient without key commitment for this attacker model? Demonstrate/identify cross-key attacks that still apply without attacker-controlled key registration |
 | Q6 | Are raw scalar, Decimal/Unicode/email/phone equivalence and bounded normalization definitions unambiguous and lossless? Confirm independent payload/search byte vectors and invalid-input rejection |
 | Q7 | Do durable burned reservations preserve ceilings across fields/workers/retries/fork/restore and rollback mirrors? What root partition or shorter lifetime is necessary if live data cannot fit? |

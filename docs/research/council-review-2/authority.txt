@@ -1,0 +1,26 @@
+Message Type: FINAL_ANSWER
+Task name: /root
+Sender: /root/council2_authority
+Payload:
+VERDICT: H1/H2’s central ordering and recovery failures are resolved at the contract level. Worker ownership survives lock loss, denial waits for drain and reconciliation, PostgreSQL enforces fence tokens, and outcome markers survive later data deletion. One request-identity gap remains. These conclusions do not establish production execution.
+
+1. **MEDIUM — Ordinary changes lack a required attribute identity in the commitment.**  
+   **Owner:** `docs/lifecycle.md:99–100`, alongside the exact request structure at `docs/lifecycle.md:91–98`.
+
+   The request covers each changed ordinary mapped attribute through its original type ID and encoded value. It does not require an attribute identifier, a canonical ordering rule, or duplicate-attribute rejection. Protected fields explicitly carry `field_id`, so their identities do not have this gap.
+
+   Concrete trace: one protected model contains ordinary attributes `nickname` and `label`, both with the same admitted type. Request A changes only `nickname` to `"x"`. Request B changes only `label` to `"x"`. Both use the same operation UUID, row identity, expected revision, protected fields and commitment anchor. A serializer that records only the stated ordinary type/value pairs produces identical canonical requests and HMAC digests. After A commits, retry B can return A’s recorded outcome instead of raising `OperationIdentityConflict`. The intended business effects differ, but the immutable commitment cannot distinguish them.
+
+   This is a permitted contract interpretation, not an observed runtime defect. The smallest correction is an exact ordinary-change element schema containing a lock-pinned attribute identity, type ID and encoded value. Sort by attribute identity and reject duplicates. Freeze independent vectors where two requests differ only in the changed ordinary attribute. Require different request digests and conflict rejection under the same operation UUID.
+
+RETAINED LIMITS: The revised fence-first ordering blocks the original admission race. Durable worker registration also covers a surviving process with a buffered read after its backend loses the shared lock. The decisive executable test must suspend that process, terminate its backend, race denial, and require PENDING until authenticated drain or independent termination evidence. A connection snapshot or heartbeat timeout cannot substitute.
+
+H2 now requires terminality of the original backend before marker absence establishes NOT_COMMITTED. Target lineage and durability must also remain proven. The PostgreSQL supplement deliberately discards an acknowledgement after successful COMMIT. It does not exercise an actual transport cut, queued COMMIT, backend replacement, or failover loss. Those remain named proof gates.
+
+External ownership correctly forbids takeover while an old AWS request may still execute, including after dispatcher death. Current native state alone cannot close an action if an unresolved request can later change that state. The contract preserves PENDING in that case.
+
+Capacity includes burned reservations, target growth, rollback mirrors and physical/provider headroom. Original-operation resumption preserves immutable proposals and absolute exposure deadlines. Restore uses current external denial and quarantines new targets. I found no additional concrete unsafe trace in those revised rules.
+
+CONFIDENCE: Moderate for the contract conclusions. Live AWS ownership, IAM separation, termination evidence, backend lineage, commitment vectors and recovery remain UNKNOWN. This review used read-only source inspection and executed no tests.
+
+

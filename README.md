@@ -15,6 +15,14 @@ KMS custody, regional DynamoDB current authority and an independent S3 receipt b
 It requires reviewed IAM roles, workload identity, worker drain/termination evidence, monitoring and backup/key ownership.
 Authority outage denies even warm-key operations. There is no offline production override.
 
+Before editing configuration, confirm eligibility:
+
+- [Integrity boundary](docs/security.md#context-and-replay): authenticated nullable presence, row freshness or hostile query completeness cannot be required.
+- [Uniqueness](docs/compatibility.md#query-semantics): exactly tenant/field across all rows, including soft-deleted rows. Partial/composite/global or soft-delete reuse requirements exclude adoption.
+- [Mapping/query paths](docs/compatibility.md#orm-state-and-write-paths): admitted bootstrap, identities, bounded explicit reads and scalar types fit; bulk/lazy/custom protected paths can be removed.
+- [Operations](docs/lifecycle.md#writer-exclusion-and-crash-safety): domain-wide pauses and possibly indefinite pending denial under unproved worker/effect terminality are acceptable.
+- [Recovery/exit](docs/lifecycle.md#deprotect-and-remove): one owner retains backup readers, keys and current-authority proof after package-free exit.
+
 Declare fields in one public JSON manifest. Attach before any model instance/session/query cache exists, with a dedicated registry/engine.
 Refactor unsupported mappings, identity generation and queries. Replace session construction. Review physical schema changes.
 Plan maintenance downtime, full verification, rollback capacity and recovery readers before activation.

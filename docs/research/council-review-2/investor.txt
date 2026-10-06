@@ -1,0 +1,33 @@
+Message Type: FINAL_ANSWER
+Task name: /root
+Sender: /root/council2_investor
+Payload:
+**VERDICT**
+
+Proceed with bounded feasibility experiments. Do not authorize the full build from these results. I found no demonstrated fatal product defect. The revised contracts address H1–H4/M5–M10 at the design level, but deployment viability remains UNKNOWN.
+
+**WHAT I UNDERSTAND**
+
+A1 now states a substantial operating contract. Hot reads require two authority snapshots. Mutations add registration and closure writes. Cold roots, quotas and larger batches add calls. Five separated IAM roles, worker termination evidence and independent receipt custody require operator work.
+
+Authority outages deny warm operations. Subject revocation pauses the domain. Unresolved external requests can prevent takeover indefinitely. These are inherent availability costs, not benchmark noise. They disqualify customers who require offline operation or guaranteed rapid recovery. They do not establish failure for every small AWS backend.
+
+A4 correctly places F01–F06 before compiler/provider implementation. All 15 kill criteria remain visible: four PASS_DESIGN, eleven UNKNOWN, zero production PASS. Auditability, adoption and safe removal remain unproved.
+
+**WHAT I DO NOT BELIEVE**
+
+1. **MEDIUM — The fixed-load trial can make the throughput gate non-discriminating.**  
+   `docs/compatibility.md:201` and `docs/compatibility.md:209`. Consider an unprotected backend with capacity of 200 operations/second and a protected backend with capacity of 110. Both complete the prescribed 100 operations/second with identical failure rates. Their observed throughput ratio is 100%, despite protected capacity being 55% of baseline. If the 70% target means sustainable capacity, this trial can falsely pass it. Define throughput explicitly. Measure sustainable throughput with a load sweep under identical latency and failure limits, alongside the prescribed fixed-load latency trials.
+
+2. **MEDIUM — The product gate lacks decisive limits for operating burden.**  
+   `docs/build-guide.md:24`, `docs/research/hardening-resolution.md:61`, and `docs/compatibility.md:212`. A host could satisfy latency, service-cost and transformation-rate targets yet require unacceptable deployment effort or domain downtime. For example, one worker with unproved termination keeps subject revocation pending and prevents the domain from reopening. A maintenance-rate target does not bound this interruption. Before F05, register customer-approved limits for integration effort, maintenance downtime, drain/recovery tasks and package-free exit. Inject an unresolved worker and require an explicit eligibility outcome. Preserve pending denial when termination remains unproved.
+
+**CREDIBILITY RISK**
+
+“No daemon” and “three managed resources” do not prove a small operating burden. The USD50 target excludes variable audit/network charges and covers a narrow hot-read workload. Package-free application operation also retains external authority and backup-reader obligations. Those distinctions must survive demonstrations and sales claims.
+
+Confidence is moderate in the written limits, low in customer adoption and live operational viability. No production cell or independent audit closes those gaps.
+
+**WHAT WOULD MAKE ME CARE**
+
+One representative backend that meets registered latency, sustainable-throughput, cost, downtime and operator-effort budgets. Its evidence must include cold roots, outages, interrupted recovery, package-free application operation and denied recovery of revoked data from an old backup. Human review must then establish that the resulting system is understandable and auditable.

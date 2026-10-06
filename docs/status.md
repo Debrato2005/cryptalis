@@ -1,6 +1,6 @@
 # Implementation status
 
-Evidence date: 2026-10-06. Source baseline: `49d34f2`.
+Evidence date: 2026-10-07, Asia/Calcutta. Source baseline: `49d34f2`.
 This document owns current implementation claims. Design owners define intended behavior, not evidence of execution.
 
 ## Maturity
@@ -66,7 +66,8 @@ That documentation-only pass changed no executable file and made no install/comm
 These historical observations do not describe the later authorized hardening task's file/install scope.
 
 Hardening baseline: `.venv/bin/python -m pytest -q`, **612 passed in 7.96 seconds**, exit 0.
-Final hardening regression/scope receipts are recorded in [the resolution record](research/hardening-resolution.md).
+Final hardening regression: **612 passed in 6.95 seconds**, exit 0.
+Scope/spike receipts are recorded in [the resolution record](research/hardening-resolution.md).
 The original 16 production source files are compared by SHA-256 with [the captured baseline](../spikes/results/package-baseline.json).
 Original source/tests/fixtures/build/dependency files remain outside the spike write boundary.
 
@@ -79,11 +80,12 @@ Exact dependency hashes, hypotheses, commands and raw result files are in [spike
 
 | Experiment | Observation | Important limit |
 |---|---|---|
-| S1 real PostgreSQL sync/async public-API ORM | Dirty entity/scalar separation, identity refresh/expiry/rollback, merge/bulk rejection, whole-buffer failure and late flush rejection pass | One imperative model/field, fake local material, incomplete Result/mapping/query/cancellation coverage |
-| S2 bounded exploration and local PG supplement | 1,216 states / 3,664 transitions. Lock-only drain counterexample, stale-owner/capacity/recovery checks, atomic marker survives later deletion | Two operations, atomic fake authority, discarded application ACK rather than transport cut, no live worker termination/AWS/failover |
+| S1 real PostgreSQL sync/async public-API ORM | Dirty entity/scalar separation, identity refresh/expiry/rollback, failed refresh without autoflush, merge/bulk rejection, whole-buffer failure and late flush/autoflush/await rejection pass | One imperative model/field, fake local material, incomplete Result/mapping/query/cancellation coverage |
+| S2 bounded exploration and local PG supplement | 1,216 states / 3,664 transitions. Lock-only drain counterexample, stale-owner/capacity/recovery checks, two immutable batch markers commit together and survive later deletion | Two operations, atomic fake authority, discarded application ACK rather than transport cut, no live worker termination/AWS/failover |
 | S3 real PostgreSQL search | Concurrent duplicate produces one commit/one conflict, NULL/IN and all-row soft-delete rule, real index plan/storage observed | Synthetic normalizer/data. Hostile unreturned term corruption permits logical duplicate |
 | S4 crypto smoke/fork | Native AEAD works. Tamper/relocation/wrong context/key/nonce reject. Inherited PID handle denies | Synthetic descriptor/root and fresh child fixture, no independent vector/composition/RNG/provider proof |
 | M5 predicate supplement | PostgreSQL hidden division projection introduces error. Validator rejects 10 unsafe forms. Six three-valued outcomes match | Small grammar subset, not full runtime differential oracle |
+| Canonical/request supplement | Two local encoders agree on Unicode/control/order/NULL/integer fixtures; different ordinary attribute IDs change HMAC; duplicate IDs reject | First-party fixtures and one driver type, no full compiler or independent expert vectors |
 
 No AWS service call or production credential was used. No cloud gate passed.
 Cold-provider/IAM/authority/latest-history/recovery/destruction evidence remains UNKNOWN.

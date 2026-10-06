@@ -117,8 +117,9 @@ RDS target identity and fence generation must match current authority. A restore
    A heartbeat may identify suspected loss. Expiry never removes ownership or proves termination.
 2. Start the DB transaction, acquire its shared fence, then read current external admission. Compare exact token, target,
    grant, scope, descriptors and epochs. Acquire no permit before this fence. Prepare roots and quotas only within that admission.
-3. For a mutation, conditionally register an immutable operation UUID, worker incarnation, token, target, request digest
-   and original backend fingerprint in authority before its first protected DML. Registration rechecks denial and epochs.
+3. For a mutation, conditionally register an immutable operation UUID, worker incarnation, token, target, request digest,
+   transaction UUID and original backend/xid8 fingerprint in authority before its first protected DML. Each later explicit flush
+   batch uses a new operation UUID/digest in that same transaction; registration rechecks denial and epochs.
    A read uses the durable worker registration and local in-flight count. It needs no per-read remote registration write.
 4. Fetch/transform only under the same transaction and fence. Before buffer publication or COMMIT, read current authority again.
    A pre-denial admitted operation may finish while denial is PENDING if its original token/ownership remains valid.
@@ -186,7 +187,8 @@ Replacing/restoring the table creates another identity and cannot reactivate it.
 AWS-only is retained: one KMS KEK per domain, one regional authority table shared across domains, and one independent receipt bucket.
 No always-running Cryptalis service, queue, scheduler, S3 write per ordinary request, custom KMS or freshness service is required.
 A small internal provider contract exposes current admission, conditional ownership/quota, exact-root unwrap and retained receipt inspection.
-It has one production AWS implementation. The fake local implementation is test-only and cannot select production admission.
+The designed contract selects one AWS production implementation, unimplemented today.
+The fake local implementation is test-only and cannot select production admission.
 Collapsing authority into restored PostgreSQL loses non-restored denial. Collapsing independent receipts into the mutable authority
 loses conservative recovery inventory after authority identity loss. KMS alone cannot store current lifecycle/worker state.
 Removing receipts is a different product with permanent loss on every authority failure. It is not a fallback.
@@ -338,7 +340,7 @@ but an attacker can replay both revision and authentic envelope. Binding all fie
 of unchanged fields, consuming quotas and amplifying writes. The revision stays useful for concurrency, not authenticated freshness.
 A row/presence MAC would detect a fresh NULL substitution or mixed-field substitution if its MAC remains intact.
 An attacker can replay an old valid absent-field marker or omit the entire row. S4 demonstrates both the useful check and its limit.
-This profile deliberately rejects the extra presence-MAC format/root/NULL-only-row/projection/rotation machinery: its scoped promise
+This profile deliberately rejects the extra presence-MAC format/root dependency on NULL-only reads/projection/rotation machinery: its scoped promise
 is authenticity of returned non-null values, not authenticated presence or whole-row consistency. Nullable data requiring that
 integrity property is ineligible. Host approval cannot call its requirement satisfied. Required fields retain ordinary NOT NULL,
 which is not a defense against a privileged DB writer. This is an explicit narrowed claim, not a proof that MACs have no value.
@@ -465,13 +467,13 @@ Cleanup failure remains visible alongside the primary failure. Background tasks 
 
 | Operation family | Success | Failure / partial progress | Retry and rollback |
 |---|---|---|---|
-| init, explain, plan | Complete validated artifact/output, no activation | Manifest/Mapping/Plan.Invalid or Unavailable, no accepted partial file | Atomic output replacement only for authorized target. Retry after remedy |
+| init, explain, plan, keys rotate, revoke, destroy, remove | Complete validated proposal/output with PROPOSAL_ONLY and NOT_APPLIED; no activation | Manifest/Mapping/Plan.Invalid or Unavailable, no accepted partial file | Atomic output replacement only for authorized target. Retry after remedy |
 | doctor/status/keys status/restore check | Complete bounded findings, health and scope recorded | UNKNOWN on missing observation, FAIL on demonstrated violation. A proven FAIL cannot be erased by UNKNOWN | Read-only retry. No automatic remediation |
 | ordinary read | Entire bounded logical result authenticated and consistent | ContextDenied, KeyUnavailable, AuthenticationFailed, IndexInconsistent, UnsupportedProtectedQuery or BufferLimit. No partial publication | Close poisoned session. Corruption needs integrity inspection. Denial needs current authority. Overflow needs a bounded query. Fresh session alone is not a remedy |
 | ordinary write | Coherent payload/terms/revision committed under current fence | Typed denial/format/type/query error before DML, or DB/commit ambiguity. Transaction abort/close | Reconcile original operation by terminal backend and durable outcome marker. Never infer commit from current row presence |
-| apply/keys rotate | All required rows, schema, authority and native states verified before switch | TransitionIncomplete, ApprovalRequired, WrongTarget, StalePlan, ProviderUnavailable or RepairRequired | Use apply --resume OPERATION after current inspection. Rollback only while verified dependencies remain |
+| apply (protect/reconfigure/reindex/rotate/upgrade) | All required rows, schema, authority and native states verified before switch | TransitionIncomplete, ApprovalRequired, WrongTarget, StalePlan, ProviderUnavailable or RepairRequired | Use apply --resume OPERATION after current inspection. Rollback only while verified dependencies remain |
 | rollback/finalize | Verified reversal / exact approved effects and obligations | IrreversibleState, missing mirror/readers/copies, or pending effects | No generic Alembic downgrade after destructive boundary |
-| revoke/destroy/restore admit/remove | Scoped state satisfies lifecycle contract | PENDING or INCONCLUSIVE for unproven destruction/drain/recovery, explicit denial for unsafe restore/removal | Reconcile actual provider/authority/DB effects. Never reinterpret pending as erased |
+| apply (revoke/destroy/deprotect/remove), restore admit | Scoped state satisfies lifecycle contract | PENDING or INCONCLUSIVE for unproven destruction/drain/recovery, explicit denial for unsafe restore/removal | Reconcile actual provider/authority/DB effects. Never reinterpret pending as erased |
 
 CLI machine output contains schema version, operation, stage, result state, correlation ID, safe code, retryability and permitted progress. Correlation IDs are opaque and have no authorization meaning.
 Codes: 0=complete requested result, 2=invalid/unsupported/denied, 3=incomplete/pending/critical UNKNOWN,

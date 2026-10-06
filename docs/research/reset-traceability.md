@@ -630,3 +630,7 @@ M8 adds operation-ID recovery. M9 renames managed subject denial without changin
 Partial protected refresh and arbitrary stable functions are now explicitly unsupported. The previous broader surface lacked safe proof.
 A3 keeps the original no-freshness/no-authenticated-presence boundary and explicitly blocks customers requiring those properties.
 Historical research recommendations, immutable council text and existing executable names are evidence, not alternate current contracts.
+
+The [second council dispositions](council-review-2/report.md) refine exact canonical/request identity, eligibility,
+performance/operating tests and proposal-versus-execution wording. Per-flush batch markers share a transaction identity.
+These corrections preserve the historical 323 source-section hashes and 130 property IDs. They do not close production gates.

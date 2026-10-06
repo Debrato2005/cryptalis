@@ -1,0 +1,9 @@
+{
+  "provenance": "Exact current-chat rerun, failure in frozen spike after pending removal moved post-verification",
+  "records": [
+    {
+      "timestamp": "2026-10-06T20:28:26.202Z",
+      "output": "[{\"type\": \"input_text\", \"text\": \"Script completed\\nWall time 4.3 seconds\\nOutput:\\n\"}, {\"type\": \"input_text\", \"text\": \"{\\\"chunk_id\\\":\\\"4300d2\\\",\\\"wall_time_seconds\\\":0.308649747,\\\"exit_code\\\":1,\\\"original_token_count\\\":136,\\\"output\\\":\\\"Traceback (most recent call last):\\\\n  File \\\\\\\"/home/debrato/Projects/cryptalis/spikes/run_database.py\\\\\\\", line 433, in <module>\\\\n    initial_data(engine);sync=sync_cases(engine);initial_data(engine);async_=asyncio.run(async_cases())\\\\n                              ^^^^^^^^^^^^^^^^^^\\\\n  File \\\\\\\"/home/debrato/Projects/cryptalis/spikes/run_database.py\\\\\\\", line 295, in sync_cases\\\\n    u.email = \\\\\\\"discard-on-refresh\\\\\\\"; s.refresh(u); assert u.email == \\\\\\\"pending-B\\\\\\\"\\\\n                                                         ^^^^^^^^^^^^^^^^^^^^^^\\\\nAssertionError\\\\n\\\"}\"}]"
+    }
+  ]
+}

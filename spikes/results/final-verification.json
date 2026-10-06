@@ -1,0 +1,196 @@
+{
+  "task_date": "2026-10-07 Asia/Calcutta",
+  "existing_research_suite": {
+    "command": ".venv/bin/python -m pytest -q",
+    "cwd": "/home/debrato/Projects/cryptalis",
+    "exit_code": 0,
+    "stdout": "........................................................................ [ 11%]\n........................................................................ [ 23%]\n........................................................................ [ 35%]\n........................................................................ [ 47%]\n........................................................................ [ 58%]\n........................................................................ [ 70%]\n........................................................................ [ 82%]\n........................................................................ [ 94%]\n....................................                                     [100%]\n612 passed in 6.95s\n",
+    "initial_tool_receipt": {
+      "chunk_id": "e75c3e",
+      "wall_time_seconds": 1.001247258,
+      "session_id": 21927,
+      "original_token_count": 13,
+      "output": "................................................."
+    },
+    "completion_tool_receipt": {
+      "chunk_id": "1da7b5",
+      "wall_time_seconds": 2.1681e-05,
+      "exit_code": 0,
+      "original_token_count": 173,
+      "output": "....................... [ 11%]\n........................................................................ [ 23%]\n........................................................................ [ 35%]\n........................................................................ [ 47%]\n........................................................................ [ 58%]\n........................................................................ [ 70%]\n........................................................................ [ 82%]\n........................................................................ [ 94%]\n....................................                                     [100%]\n612 passed in 6.95s\n"
+    }
+  },
+  "scope": "Local research tests and disposable spike evidence only. No production qualification.",
+  "spike_results": [
+    {
+      "result_file": "spikes/results/S1.json",
+      "reported_status": "PASS_LOCAL_PROTOTYPE",
+      "source": "spikes/run_database.py",
+      "source_sha256": "e8d7fb1346d114b756c132aff0b549057e0ab613a9833fd5ca1fcb07a8058ca6",
+      "result_sha256": "acd000029b23d02f025b0fe24914f4577d822ba08dfe19e77c4d7ed46ec339f7",
+      "scope": "Observed earlier in this task; no new run implied by receipt aggregation"
+    },
+    {
+      "result_file": "spikes/results/S2-postgres.json",
+      "reported_status": "PASS_LOCAL_POSTGRES",
+      "source": "spikes/run_database.py",
+      "source_sha256": "e8d7fb1346d114b756c132aff0b549057e0ab613a9833fd5ca1fcb07a8058ca6",
+      "result_sha256": "438401c58018507cf4abed9782ca92be027c18757febea40e186a44fd67a8332",
+      "scope": "Observed earlier in this task; no new run implied by receipt aggregation"
+    },
+    {
+      "result_file": "spikes/results/S2.json",
+      "reported_status": "PASS_LOCAL_MODEL",
+      "source": "spikes/run_protocol.py",
+      "source_sha256": "021e3e447b990252808661fc0a202140ffb31cc8da54327f7e52b8e280cc7ee5",
+      "result_sha256": "b109d6426af92045cc63c7802c5b7f7e53d4a95816cb1d35803ca143027769f9",
+      "scope": "Observed earlier in this task; no new run implied by receipt aggregation"
+    },
+    {
+      "result_file": "spikes/results/S3.json",
+      "reported_status": "PASS_LOCAL_POSTGRES",
+      "source": "spikes/run_database.py",
+      "source_sha256": "e8d7fb1346d114b756c132aff0b549057e0ab613a9833fd5ca1fcb07a8058ca6",
+      "result_sha256": "4bfcd32431a4a0e49cda37c43f381aaf786c5497faa61df6a78390f2c2c3f08d",
+      "scope": "Observed earlier in this task; no new run implied by receipt aggregation"
+    },
+    {
+      "result_file": "spikes/results/S4.json",
+      "reported_status": "PASS_LOCAL_SMOKE",
+      "source": "spikes/run_crypto.py",
+      "source_sha256": "949ed6a63a09f5b63c1d18b7ac3957ee8237cdb3d5d367ace0ae818b4194980c",
+      "result_sha256": "30519ee56ca3f19114416148b10b28ec5b1260f29fbc1db8f2e680cbbab134ae",
+      "scope": "Observed earlier in this task; no new run implied by receipt aggregation"
+    },
+    {
+      "result_file": "spikes/results/M5.json",
+      "reported_status": "PASS_LOCAL_SUPPLEMENT",
+      "source": "spikes/run_semantics.py",
+      "source_sha256": "6d16a03a0fd10ac728299246d40483d82a954ce12d28f389521238ae289e2443",
+      "result_sha256": "08214656bf61b64c321dd7065e9b0c271b07c8557e6c7225ebd58aeb919f210d",
+      "scope": "Observed earlier in this task; no new run implied by receipt aggregation"
+    },
+    {
+      "result_file": "spikes/results/canonical.json",
+      "reported_status": "PASS_LOCAL_FIXTURE",
+      "source": "spikes/run_canonical.py",
+      "source_sha256": "c67597d84c361aa91fd3a839d8f78f5cfaf8f3ea0d8b45c4dc98ddd0ba166dd0",
+      "result_sha256": "ad8e79ee462d8a6e60424c4f8b0d7451714344df47b17826293fcc1801ef3347",
+      "scope": "Observed earlier in this task; no new run implied by receipt aggregation"
+    }
+  ],
+  "source_scope_baseline": "spikes/results/package-baseline.json",
+  "documentation_integrity": "spikes/results/document-checks.json",
+  "diff_inspection": "Chair inspected owned canonical/experiment diffs; starting user files/deletions kept unstaged and hash checked",
+  "first_council_evidence_hashes_checked": 12,
+  "cleanup_and_diff_receipts": {
+    "owned_postgresql_cleanup": {
+      "chunk_id": "5f554a",
+      "wall_time_seconds": 2.3334e-05,
+      "exit_code": 0,
+      "original_token_count": 14,
+      "output": "waiting for server to shut down.... done\nserver stopped\n"
+    },
+    "final_diff_check": {
+      "chunk_id": "73ba95",
+      "wall_time_seconds": 0.085515503,
+      "exit_code": 0,
+      "original_token_count": 0,
+      "output": ""
+    }
+  },
+  "final_document_metrics": {
+    "status": "PASS_DOCUMENT_CHECKS",
+    "errors": [],
+    "local_file_anchor_links": 898,
+    "external_links_not_network_checked": 205,
+    "trace_source_sections_checked": 323,
+    "trace_properties": 130,
+    "decisions": {
+      "total": 42,
+      "decided": 9,
+      "blocked": 33
+    },
+    "production_source_files_unchanged": 16,
+    "starting_non_markdown_files_unchanged": 44,
+    "unrelated_starting_user_files_unchanged": 3,
+    "starting_user_deletions_preserved": 14,
+    "expert_packet_source_hashes_checked": 4,
+    "second_council_evidence_hashes_checked": 9,
+    "canonical_metrics": {
+      "README.md": {
+        "lines": 104,
+        "words": 705
+      },
+      "AGENTS.md": {
+        "lines": 61,
+        "words": 466
+      },
+      "ENGINEERING_PLAYBOOK.md": {
+        "lines": 146,
+        "words": 1300
+      },
+      "docs/architecture/README.md": {
+        "lines": 344,
+        "words": 3655
+      },
+      "docs/security.md": {
+        "lines": 508,
+        "words": 6750
+      },
+      "docs/lifecycle.md": {
+        "lines": 382,
+        "words": 5027
+      },
+      "docs/compatibility.md": {
+        "lines": 240,
+        "words": 3391
+      },
+      "docs/build-guide.md": {
+        "lines": 147,
+        "words": 3082
+      },
+      "docs/status.md": {
+        "lines": 129,
+        "words": 1422
+      },
+      "docs/decisions.md": {
+        "lines": 102,
+        "words": 2354
+      },
+      "docs/prior-art.md": {
+        "lines": 89,
+        "words": 1282
+      }
+    },
+    "canonical_total_lines": 2252,
+    "canonical_total_words": 29434,
+    "limits": [
+      "machine checks cannot establish normative semantic completeness",
+      "historical review text is immutable evidence",
+      "duplicate ownership requires human/council review"
+    ]
+  },
+  "final_document_checker_sha256": "8f89190f5a39c78d6598a7f113041840e99b2d324865aa3dbd1bc548733e9698",
+  "unfiltered_staged_whitespace_check": {
+    "timestamp": "2026-10-06T20:53:27.932Z",
+    "receipt": {
+      "chunk_id": "7ce699",
+      "wall_time_seconds": 0.418965154,
+      "exit_code": 2,
+      "original_token_count": 203,
+      "output": "docs/research/council-review-2/authority.txt:7: trailing whitespace.\n+1. **MEDIUM \u2014 Ordinary changes lack a required attribute identity in the commitment.**  \ndocs/research/council-review-2/authority.txt:25: new blank line at EOF.\ndocs/research/council-review-2/claims.txt:20: new blank line at EOF.\ndocs/research/council-review-2/copy.txt:26: new blank line at EOF.\ndocs/research/council-review-2/crypto.txt:7: trailing whitespace.\n+**MEDIUM \u2014 Canonical digest bytes remain underspecified.**  \ndocs/research/council-review-2/investor.txt:19: trailing whitespace.\n+1. **MEDIUM \u2014 The fixed-load trial can make the throughput gate non-discriminating.**  \ndocs/research/council-review-2/investor.txt:22: trailing whitespace.\n+2. **MEDIUM \u2014 The product gate lacks decisive limits for operating burden.**  \n"
+    }
+  },
+  "whitespace_disposition": "Keep exact recovered native transcript bytes; editable files checked separately with transcript .txt exclusion.",
+  "editable_staged_whitespace_check": {
+    "command": "git diff --cached --check -- . ':(exclude)docs/research/council-review-2/*.txt'",
+    "receipt": {
+      "chunk_id": "f3fc1d",
+      "wall_time_seconds": 0.391232991,
+      "exit_code": 0,
+      "original_token_count": 0,
+      "output": ""
+    }
+  }
+}

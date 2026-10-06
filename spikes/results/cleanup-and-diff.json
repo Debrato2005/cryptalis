@@ -1,0 +1,16 @@
+{
+  "owned_postgresql_cleanup": {
+    "chunk_id": "5f554a",
+    "wall_time_seconds": 0.000023334,
+    "exit_code": 0,
+    "original_token_count": 14,
+    "output": "waiting for server to shut down.... done\nserver stopped\n"
+  },
+  "final_diff_check": {
+    "chunk_id": "73ba95",
+    "wall_time_seconds": 0.085515503,
+    "exit_code": 0,
+    "original_token_count": 0,
+    "output": ""
+  }
+}

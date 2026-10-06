@@ -1,6 +1,7 @@
 {
   "spike": "S1",
   "status": "PASS_LOCAL_PROTOTYPE",
+  "source_sha256": "e8d7fb1346d114b756c132aff0b549057e0ab613a9833fd5ca1fcb07a8058ca6",
   "sync": [
     "dirty_no_autoflush_entity_vs_scalar",
     "refresh_discards_pending",
@@ -8,12 +9,16 @@
     "rollback_invalidates",
     "merge_and_bulk_rejected",
     "last_row_corruption_no_publication",
-    "late_before_flush_write_rejected"
+    "failed_refresh_no_autoflush_or_publication",
+    "late_before_flush_write_rejected",
+    "sync_autoflush_late_addition_rejected"
   ],
   "async": [
     "async_dirty_scalar_identity",
     "async_commit_refresh",
-    "async_late_addition_rejected_without_provider_IO_in_event"
+    "async_late_addition_rejected_without_provider_IO_in_event",
+    "async_await_addition_rejected_without_resealing",
+    "async_autoflush_late_addition_rejected"
   ],
   "mapping": "bootstrap public registry.dispose/map_imperatively/add_mapped_attribute",
   "publication": "single Session.info frame replacement; pending descriptor values independent",

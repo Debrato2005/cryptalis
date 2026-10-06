@@ -74,16 +74,35 @@ def main():
     actual = {str(p.relative_to(ROOT)) for p in (ROOT/"src").rglob("*.py")}
     if actual != set(source): errors.append("Production source file inventory changed")
     baseline_path=Path('/tmp/cryptalis-hardening-baseline/files.json'); original_count=0
+    user_files=0; user_deletions=0
     if baseline_path.exists():
-        for name,sha in json.loads(baseline_path.read_text()).items():
+        starting=json.loads(baseline_path.read_text())
+        for name,sha in starting.items():
             if name.endswith('.md') or name.startswith('docs/research/council-review-1/'): continue
             original_count+=1
             if digest(ROOT/name)!=sha: errors.append('Original non-Markdown file changed: '+name)
+        for name in ['AGENTS.md','ENGINEERING_PLAYBOOK.md','docs/prior-art.md']:
+            if digest(ROOT/name)!=starting[name]: errors.append('Unrelated starting user work changed: '+name)
+            user_files+=1
+        for line in (baseline_path.parent/'status.txt').read_text().splitlines():
+            if line.startswith(' D '):
+                name=line[3:];user_deletions+=1
+                if (ROOT/name).exists(): errors.append('Starting user deletion restored: '+name)
+    packet=(ROOT/'docs/research/cryptographer-review-packet.md').read_text()
+    packet_hashes=re.findall(r'\| \[(docs/[^\]]+)\]\([^)]*\) \| `([0-9a-f]{64})` \|',packet)
+    if len(packet_hashes)!=4: errors.append('Expert packet source identity inventory changed')
+    for name,sha in packet_hashes:
+        if digest(ROOT/name)!=sha: errors.append('Expert packet is stale: '+name)
+    council=json.loads((ROOT/'docs/research/council-review-2/preservation.json').read_text())
+    for name,sha in council['sha256'].items():
+        if digest(ROOT/'docs/research/council-review-2'/name)!=sha: errors.append('Council evidence changed: '+name)
     result = {"status":"PASS_DOCUMENT_CHECKS" if not errors else "FAIL", "errors":errors,
               "local_file_anchor_links":links,"external_links_not_network_checked":external,
               "trace_source_sections_checked":section_count,"trace_properties":len(property_ids),
               "decisions":{"total":len(rows),"decided":decided,"blocked":blocked},
               "production_source_files_unchanged":len(source),"starting_non_markdown_files_unchanged":original_count,
+              "unrelated_starting_user_files_unchanged":user_files,"starting_user_deletions_preserved":user_deletions,
+              "expert_packet_source_hashes_checked":len(packet_hashes),"second_council_evidence_hashes_checked":len(council['sha256']),
               "canonical_metrics":metrics,"canonical_total_lines":total_lines,"canonical_total_words":total_words,
               "limits":["machine checks cannot establish normative semantic completeness", "historical review text is immutable evidence", "duplicate ownership requires human/council review"]}
     (ROOT/"spikes/results/document-checks.json").write_text(json.dumps(result,indent=2)+"\n")

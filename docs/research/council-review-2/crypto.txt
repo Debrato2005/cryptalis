@@ -1,0 +1,28 @@
+Message Type: FINAL_ANSWER
+Task name: /root
+Sender: /root/council2_crypto
+Payload:
+**VERDICT:** No fatal cryptographic or search defect established within the revised, narrower scope. Continue the invalidating feasibility work. One MEDIUM specification gap prevents the expert packet from qualifying as an exact construction export. This conclusion does not qualify a production runtime.
+
+**MEDIUM — Canonical digest bytes remain underspecified.**  
+`docs/architecture/README.md:220`, `docs/lifecycle.md:91`, `docs/research/cryptographer-review-packet.md:269`.
+
+The “chosen bounded canonical profile” defines accepted JSON values and limits, but does not define serialization bytes. It omits member ordering, whitespace, string escapes and output encoding. Those bytes feed the descriptor SHA-256, compiled-lock digest and mutation HMAC.
+
+Concrete trace: two implementations serialize the same admitted descriptor with different member order. Both satisfy every stated profile restriction. Their descriptor digests differ. That difference changes the payload HKDF info, authenticated header and AAD. An independently written recovery reader consequently rejects an otherwise authentic envelope. Similarly, two serializations of one mutation request produce different HMACs and can trigger `OperationIdentityConflict` during reconciliation.
+
+The existing canonicalizer calls its output restricted RFC 8785. However, the final owner does not explicitly adopt that algorithm or make that implementation normative. Existing research code cannot silently supply the missing final contract.
+
+The mutation format also describes `ordinary_changes` without an exact entry schema, immutable attribute identifier, ordering rule or duplicate rule (`docs/lifecycle.md:99`). Its requirement to cover attributes is sound, but independent implementations cannot reconstruct one unique request representation.
+
+Smallest change: name the exact canonicalization algorithm and restrictions in the owner. Define each ordinary-change entry, its identifier, ordering and duplicate rejection. Regenerate the packet. The deciding test uses two independent implementations to produce identical descriptor, lock and request bytes. Include non-ASCII strings, escaped controls, reordered input members, NULL, and two same-type ordinary attributes. This is a contract ambiguity, distinct from the already disclosed absence of vectors.
+
+**RETAINED LIMITS:** The 80-byte CPD2 header and 96-byte overhead are internally consistent. Fixed tuple tags and lengths separate payload/search contexts. Payload and operation HKDF info domains differ. Independent search roots and full-width HMAC terms avoid intentional truncation collisions. I found no concrete relocation or domain-confusion trace under the admitted-root model.
+
+The selected 32-byte key, 12-byte nonce and 16-byte tag agree with the versioned [AESGCMSIV API](https://cryptography.io/en/50.0.2/hazmat/primitives/aead/#cryptography.hazmat.primitives.ciphers.aead.AESGCMSIV). Durable burned reservations and old-mirror headroom address the identified usage-reset and rollback-exhaustion mechanisms. They do not establish aggregate confidentiality or forgery bounds. The owners correctly leave those bounds open.
+
+A3 acknowledges useful partial protection from revisions and presence MACs. Its rejection is defensible only with the stated customer exclusions. Historical replay does not make presence MACs useless. The revised text preserves that distinction.
+
+NULL substitution, same-context replay, omission, unauthenticated ordinary predicate outcomes, chosen-input leakage and hostile global uniqueness remain explicit limits. Concurrent uniqueness assumes intact terms and constraints. None becomes a fulfilled integrity requirement through operator approval.
+
+**CONFIDENCE:** Moderate for this specification assessment. All four packet source hashes match the current files. No edits or tests occurred. Exact vectors, full ORM/query composition, production artifact/backend qualification, multi-key bounds, provider recovery and customer acceptance remain unknown. These unknowns block deployment claims. Their absence alone does not prove a construction flaw.

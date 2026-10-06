@@ -80,33 +80,55 @@ The [authority protocol](security.md#admission-and-fencing) owns token/worker/ef
 
 ### Ordinary commit evidence
 
-Every protected mutation gets a random operation UUID and immutable request digest before DML, registered externally with
+Each explicit preparation/flush batch gets a fresh mutation operation UUID and immutable request digest before DML, registered externally with
 worker incarnation, exact target/fence and original backend fingerprint. Digest covers the canonical operation shape, scoped
 identities, expected revisions and a keyed commitment to value bytes, not public low-entropy plaintext hashes.
+One DB transaction has its own immutable transaction UUID and may contain several such batches, including flush B followed by flush C.
+Never change an existing batch digest or reuse its UUID for later writes. The backend fingerprint also pins the assigned PostgreSQL
+xid8 and transaction UUID; a live backend executing a later transaction is not evidence that the original transaction can commit.
 Choose the lexicographically smallest (root-handle UUID bytes, generation) among the mutation's admitted payload roots as its
-immutable commitment anchor. Deletes include the deleted rows' roots. An empty protected mutation requires no mutation record.
+immutable commitment anchor. Deletes include the deleted rows' roots. Resolve an admitted payload-scope root even for an all-NULL
+mutation; its cold lookup/wrap/unwrap cost is explicit, although no NULL ciphertext or row-presence MAC is stored.
+An empty protected mutation requires no mutation record.
 Derive `Kop = HKDF-SHA256(anchor_root, salt=payload-extract salt for that root,
 info=E("cryptalis/mutation-commitment/1", operation_UUID), length=32)` using the security owner's fixed tag/tuple encoding.
 The request digest is full HMAC-SHA-256(Kop, E("cryptalis/mutation-request/1", canonical_request_bytes)).
 The last component is tag 5 opaque bytes. The request uses the manifest's canonical JSON rules and exactly these members:
-`version`=1, `domain_id`, `target_incarnation`, `fence_token`, `anchor_handle`, `anchor_generation`, `operation_id`,
-and `mutations` sorted by model UUID, typed record identity and action. Each mutation contains `model_id`, `record`,
+`version`=1, `domain_id`, `target_incarnation`, `transaction_id`, `compiled_lock_digest` (lowercase SHA-256 hex),
+`fence_token`, `anchor_handle`, `anchor_generation`, `operation_id`,
+and `mutations` sorted by model UUID bytes, the security owner's raw typed-record bytes, then action ASCII bytes.
+Each mutation contains `model_id`, `record`,
 `tenant_id`, `subject_id` (UUID or null), `action` (insert/update/delete), `expected_revision` (uint decimal string or null),
 `ordinary_changes` (defined below), and `fields` sorted by field UUID. A field has `field_id`, `descriptor_digest` (lowercase hex), `codec_id`, and
 `value` (null or canonical padded Base64 of the encoded scalar bytes). Record identity is exactly
 `{"kind":"uuid","value":"canonical UUID"}` or `{"kind":"u64","value":"minimal unsigned decimal"}`.
-Integers for tokens/generations follow the bounded manifest counters. Reject duplicate mutation/field identities.
-The frozen request also covers every explicitly changed ordinary mapped attribute in an `ordinary_changes` array, with
-its lock-pinned original type ID and exact admitted scalar bytes encoded the same way. Unknown/custom processors reject.
+Integers for tokens/generations follow the bounded manifest counters. Reject duplicate (model_id, typed record) identities within a batch, even with different actions, and duplicate field IDs.
+Each `ordinary_changes` entry has exactly `attribute_id` (nonzero lock-pinned UUID), `sql_type_id` (immutable catalogue UUID),
+`wire_oid` (original PostgreSQL type OID), `wire_format`=0 (TEXT), and `value` (null or canonical padded Base64 bytes).
+Sort by attribute UUID bytes and reject duplicate IDs. The lock records immutable ordinary attribute identities and original
+type/dumper artifacts; renames retain identities by reviewed mapping. Same-type attributes are never identified by position or type alone.
+Ordinary non-null bytes are the exact result of the original admitted SQLAlchemy built-in bind processor followed by the pinned
+psycopg public `get_dumper_by_oid(oid, Format.TEXT)` / `Dumper.dump` with UTF8 connection encoding.
+The prepared immutable bytes, OID and format must be the actual DML parameters, not a second adaptation of a mutable value.
+No AUTO format selection, quoting, custom dumper/processor or unclassified SQL type is admitted to this mixed mutation path.
+Lock-pinned ordinary server defaults are part of the request intent via compiled_lock_digest, not invented client values.
+Unknown implicit effects or ordinary type/dumper behavior block that mutation until qualification. Independent original-type/wire
+vectors are required; this use of documented driver adaptation does not claim a portable custom codec for every host type.
 The whole canonical request is bounded to 16 MiB and depth 32 before its keyed digest is computed.
 Host-side implicit effects outside this closed write inventory are ineligible. The root/generation stays a read dependency
 through reconciliation and the retry-retention barrier. Do not log canonical requests or the anchor root/key.
 Independent canonical-byte/commitment vectors and full changed-attribute/default inventory remain G-TRANSITION/G-ORM evidence.
-All effects (including DELETE and rollback-mirror updates) commit with one logged outcome row in the same PostgreSQL transaction.
-The outcome stores domain/target/operation, request digest, worker/token, protocol/generation and committed effect summary;
+Each batch's effects (including DELETE and rollback-mirror updates) receive one logged outcome row in that same PostgreSQL transaction.
+All batches' rows/markers commit or roll back together. A marker proves that batch participated in the committed transaction,
+not that its intermediate value remains the final value after a later batch. Terminal reconciliation resolves every registered batch
+under that transaction UUID. No batch marker/ownership is acknowledged as committed after flush alone.
+The outcome stores domain/target/transaction/operation, request digest, worker/token, protocol/generation and committed effect summary;
 no plaintext, search terms or raw SQL. UNIQUE(domain, operation) prevents a repeated operation from executing twice.
 A different digest under the same ID is `OperationIdentityConflict`. An already committed matching operation returns its
-recorded outcome after current authorization, not a fresh mutation. Statement retries after a rolled-back transaction reuse that ID.
+recorded outcome after current authorization, not a fresh mutation. A multi-batch transaction cannot retry one isolated batch.
+A deliberate full-transaction retry retains the transaction/batch IDs, digests and sequence. It starts a new backend attempt only
+after every original batch is NOT_COMMITTED. Register the new fingerprint conditionally under current authorization and retain
+prior fingerprints. No automatic retry follows UNKNOWN.
 
 If COMMIT was sent and acknowledgement is lost, do not mark rollback, resend effects, clear ownership or delete the outcome.
 Reconcile the original external record and backend on the exact current writer target. First establish that original backend
@@ -120,6 +142,9 @@ External receipts record the observed DB outcome afterwards. They are not atomic
 Registered operations remain until classification/conditional acknowledgement. Marker GC requires all operation owners terminal,
 external acknowledgements durable, no supported delayed retry/recovery dependency and approved retention closure.
 There is no fixed TTL or row-delete cascade. Capacity exhaustion in the outcome ledger denies new mutations safely.
+The marker guarantee assumes admitted PostgreSQL ACID/lineage and outcome-ledger integrity. Runtime roles cannot UPDATE/DELETE
+outcomes; insertion is bound to the registered same-transaction mutation. Privileged metadata corruption/loss makes classification
+UNKNOWN. Marker absence is not authenticated absence against a malicious database owner.
 Authority loss cannot reconstruct permission from DB markers alone. H2 does not create a cross-service transaction.
 
 ### Capacity preflight and exhaustion

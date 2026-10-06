@@ -1,0 +1,21 @@
+Message Type: FINAL_ANSWER
+Task name: /root
+Sender: /root/council2_claims
+Payload:
+**VERDICT:** Accept the revised claim boundaries, with production feasibility UNKNOWN. I found no material claim defect in the inspected frozen sources. H1–H4/M5–M10 have revised mechanisms or explicit scope restrictions. Their RESOLVED_DESIGN disposition does not establish runtime correctness.
+
+**CLAIM STATUS:** The maturity definitions and capability table remain calibrated. `docs/status.md:10–17` separates design, executable scope and recorded verification, then states zero production cells and zero independent audits. `docs/status.md:75–90` identifies each local experiment’s limits. I checked all 16 source hashes against `spikes/results/package-baseline.json`. All matched.
+
+The expert packet’s four source hashes also match the current canonical files (`docs/research/cryptographer-review-packet.md:18–23`). The packet explicitly requests human review and records missing vectors, composed bounds and live operational evidence. It does not claim an audit.
+
+Exact version claims distinguish publication, local installation and target qualification (`docs/research/hardening-evidence.md:8–18`). The recorded local cell matches the reported dependency versions. The CPython 3.14.8/RDS 18.6 target remains unqualified. I did not repeat upstream publication checks because no specific disputed pin fact arose.
+
+**ENDPOINT/DENOMINATOR ISSUE:** The 612 research tests, 1,216 explored states and 3,664 transitions are different evidence sets. None measures production coverage. S2 explores two operations with atomic fake authority. Its PostgreSQL supplement discards acknowledgement after a known successful commit. It does not test uncertain transport failure or failover lineage (`docs/status.md:83`). S1 covers one imperative model/field. S4 uses synthetic descriptor/root material. These denominators support narrow observations only.
+
+The kill-list tally is correct: four PASS_DESIGN, eleven UNKNOWN, zero production PASS (`docs/research/hardening-resolution.md:50–67`). PASS_DESIGN addresses warning, disclosure or architectural ownership properties. It does not establish safe accepted datasets, recoverability or cryptographic security.
+
+**SAFE WORDING:** “The revised design addresses the identified failure traces through changed mechanisms and narrower eligibility. Local experiments support specific subsets. Full runtime behavior, target compatibility, live AWS operation, customer suitability and independent review remain unverified.”
+
+**RED FLAG:** Do not shorten “resolved in design” to “resolved.” Nullable integrity, freshness/completeness and hostile global uniqueness remain excluded requirements. This is a narrower product boundary, not a mechanism that fulfills those requirements. Confidence is high in the inspected claim separation. Confidence in production feasibility remains limited by the explicitly named UNKNOWN gates. No tests or service calls occurred during this review.
+
+

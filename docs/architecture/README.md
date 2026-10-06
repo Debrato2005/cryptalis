@@ -99,7 +99,8 @@ a general transaction across Python objects or protection from malicious host co
 
 Ordinary entity select/get with `no_autoflush` preserves dirty value B while predicates/scalar projections observe stored value A.
 Explicit refresh uses `inspect(instance).identity`, never an expired identity attribute that can trigger an implicit loader.
-Full refresh discards pending protected assignments only after verification. Partial protected refresh rejects in this profile.
+Full refresh suppresses autoflush during its verified reload and discards pending protected assignments only after verification.
+It must not persist pending B before reloading stored A. Partial protected refresh rejects in this profile.
 `populate_existing`, merge/reattach, deferred/lazy/streaming protected loads and detached protected reads reject explicitly.
 Expire invalidates protected availability. The getter raises `ProtectedValueUnavailable` with an explicit refresh remedy.
 Rollback, close, expunge and failure invalidate adapter frames/handles. Failure closes the session. Already returned values remain host-owned.
@@ -108,7 +109,8 @@ Rollback, close, expunge and failure invalidate adapter frames/handles. Failure 
 ### Closed write preparation
 
 Session execute/get/refresh/flush/commit and protected begin-context exits are explicit I/O boundaries.
-Autoflush uses the same preparation. Nested transactions, selective flush(objects) and direct async `.sync_session` operations reject.
+Autoflush uses the same preparation and is invoked explicitly before private scalar collection, which can bypass native ORM autoflush.
+Respect the public no_autoflush setting. Async preparation must recheck its original seal after await; never replace it with the changed write set. Nested transactions, selective flush(objects) and direct async `.sync_session` operations reject.
 Before any await/provider work, enumerate and freeze the write set: object identity, immutable binding, operation kind,
 pending value/type, row revision, active/mirror descriptors and exact root/term/quota needs. Snapshot encoded immutable bytes,
 not references to mutable caller containers. Pending/new objects and protected deletes are included.
@@ -206,7 +208,7 @@ The declaration never contains secrets, key bytes, credentials, URLs for dynamic
 Deployment settings contain public exact resource identities. Credential providers use workload identity rather than manifest secrets.
 
 Compilation produces `cryptalis.lock.json`, an INTERNAL ONLY public, committed artifact.
-It includes schema/version, compiler release, stable model/table/field UUIDs, never-reused representation UUIDs, physical slots,
+It includes schema/version, compiler release, stable model/table/field and ordinary-attribute UUIDs, never-reused representation UUIDs, physical slots,
 exact immutable payload descriptors, normalizer/index versions, original SQL types, and finite reader/writer compatibility tuples.
 The compiler infers only unambiguous types from the supplied mapping. Ambiguous rename/delete/re-add requires an explicit reviewed identity map in the plan.
 Payload descriptor changes and protection re-adoption allocate a new representation. Renames retain stable logical IDs.
@@ -217,7 +219,17 @@ Each format-2 descriptor has exactly `descriptor_schema`=2, `model_id`, `table_i
 `codec_parameters` contains only the admitted original length/range/precision/scale bounds from compatibility. Unknown parameters reject.
 The lock records immutable UUID normalizer/index domains separately. Search changes do not redefine payload bytes.
 
-JSON uses the chosen bounded canonical profile: ASCII member names, strict Unicode values, no floats, duplicate keys or lone surrogates.
+Canonical bytes use the restricted RFC 8785 JCS profile defined here, not an implicit choice by existing code.
+Accept ASCII member names, strict Unicode string values, true/false/null and nonnegative integer numbers <=2**53-1.
+Reject floats, duplicate keys, lone surrogates and unknown schema members before serialization.
+Serialize UTF-8 without BOM or whitespace. Object members sort by raw UTF-16 code units (equivalently ASCII order for admitted names).
+Array order remains unchanged; declared set inputs are independently sorted by their schema rule before JCS.
+Numbers use minimal unsigned decimal, no exponent/leading zero; accepted numeric zero serializes as `0`.
+String quote and backslash escape as `\"` and `\\`. Use `\b`, `\t`, `\n`, `\f`, `\r` for those five controls;
+other U+0000..U+001F use lowercase `\u00xx`. All other admitted characters are literal UTF-8, including `/` and U+2028/U+2029.
+No Unicode normalization or slash/non-ASCII escaping occurs. Boolean/null spellings are lowercase JSON literals.
+This profile fixes descriptor, lock and operation-request bytes. [RFC 8785](https://www.rfc-editor.org/rfc/rfc8785.html) supplies JCS;
+the restrictions/limits here narrow it. Two independently structured encoders and frozen edge vectors must agree at G-MANIFEST/G-TRANSITION.
 Counters lie in `0..2**53-1`. Application numeric values use separate typed codecs.
 Limits: 16 MiB/document, depth 32, 10,000 fields, identifiers at most 128 UTF-8 bytes.
 Unknown critical fields, duplicate set entries, conflicting locators and unsafe SQL dependencies reject.
@@ -284,6 +296,10 @@ These commands are DESIGNED. The [status](../status.md#executable-entry-points) 
 | `cryptalis remove` | Produce aggregate deprotect/removal plan. Package removal occurs only after package-free application verification |
 
 Plan operations are `protect`, `reconfigure`, `reindex`, `rotate`, `deprotect`, `upgrade`, `restore`, `revoke`, `destroy`, and `remove`.
+`keys rotate`, `revoke`, `destroy` and `remove` are convenience proposal commands and require `--out PLAN`.
+Their successful output states `PROPOSAL_ONLY`, `NOT_APPLIED` and the exact `cryptalis apply PLAN` next action.
+Proposal success creates no denial, deletion, rotation, plaintext staging or removal effect.
+`apply` executes the proposal's named operation; only its postconditions can establish scoped completion.
 Saved plans and commands cannot bypass current authority. Repeated security selectors reject rather than select the last argument.
 Plaintext publication requires approval before its first staging write. Finalization requires approval only at genuinely irreversible actions.
 One scoped approval can cover repeated chunks within the same admitted plan. Ordinary reads/writes and reversible planning require no approval dialogue.

@@ -13,9 +13,9 @@ It does not mean the complete runtime protocol is implemented or verified.
 | ID | Resolution | Canonical owner / ledger | Executed subset / remaining test |
 |---|---|---|---|
 | H1 | Fence before admission, DB token check, registered worker/mutation drain, immutable external dispatcher. No TTL takeover | [security](../security.md#admission-and-fencing), D33 | S2 exploration + PG stale-token/shared-lock checks. Real AWS/CAS/IAM/failover/termination UNKNOWN |
-| H2 | Atomic ordinary outcome row, original UUID/digest, terminal-backend-before-absence rule, retained marker independent of data deletion | [lifecycle](../lifecycle.md#ordinary-commit-evidence), D34 | S2 + real PG commit/rollback/delete marker. Transport-cut/target lineage/retention unbuilt |
+| H2 | Immutable per-flush outcome rows under one transaction UUID, original batch UUID/digest, terminal-backend-before-absence rule, retained marker independent of data deletion | [lifecycle](../lifecycle.md#ordinary-commit-evidence), D34 | S2 + real PG two-batch commit/rollback/delete markers; canonical attribute-identity fixture. Real wire emission/transport-cut/target lineage/retention unbuilt |
 | H3 | Public bootstrap mapping, separate pending state and physical snapshots, one logical publication frame, explicit identity refresh. Partial refresh/merge/deferred host mappings rejected | [integration](../architecture/README.md#orm-state-and-publication), D35 | S1 real sync/async subset. Full declarative/Result/history/loader cell UNKNOWN |
-| H4 | Freeze complete write set before await, prepare outside hooks, check again at final SQL emission, reject late writes | [integration](../architecture/README.md#closed-write-preparation), D35 | S1 late sync/async callbacks reject. Cascades/defaults/autoflush/cancel/end-hook coverage UNKNOWN |
+| H4 | Freeze complete write set before await, prepare outside hooks, check again at final SQL emission, reject late writes | [integration](../architecture/README.md#closed-write-preparation), D35 | S1 late sync/async flush/autoflush/await additions reject. Full cascade/default/cancel/end-hook coverage UNKNOWN |
 | M5 | Closed total plain atoms and protected leaves, full-tree rejection including unused branches, exact three-valued semantics | [compatibility](../compatibility.md#query-semantics), D36 | M5 reproduces division error, rejects 10 unsafe forms, checks six truth results. Full oracle unbuilt |
 | M6 | Live/target/retry/growth/mirror root headroom and physical/provider preflight. Exhaustion pauses; mirror failure denies whole write | [lifecycle](../lifecycle.md#capacity-preflight-and-exhaustion), D37 | S2 tiny-cap three failure checks. Live account/storage/quota/rollback evidence UNKNOWN |
 | M7 | Exactly all-row tenant/field uniqueness, NULLS DISTINCT, no partial/composite/global/soft-delete reuse. Intact-term assumption and membership oracle stated | [compatibility](../compatibility.md#query-semantics), D38 | S3 actual concurrent conflict and hostile-term duplicate counterexample. Broader cells unbuilt |
@@ -35,7 +35,7 @@ No first-review finding is dismissed because existing source already chooses an 
 | A3 | Revision/presence MAC/commitment/count mitigations assessed. S4 shows fresh presence check helps but authentic historical absence replays. Keep narrower returned-non-null authenticity claim and customer ineligibility for stronger requirements | Independent review of intended customer boundary. No freshness service or automatic full scan |
 | A4 | All 33 blocked decisions contain INVALIDATING properties. Only bounded parameters/optimizations are tuning within those contracts. F01–F06 precede compiler/provider implementation | Failed feasibility gate changes architecture/scope, never weakens oracle |
 | A5 | All 15 original kill criteria reproduced below. No whole-product PASS inferred from prose/local spikes | Production feasibility remains UNKNOWN |
-| A6 | Numerical hot read/write p50/p95/p99, cold-root, async lag, maintenance throughput and monthly control-plane TARGETS set with workload definition | UNMEASURED. Failing target blocks intended deployment eligibility |
+| A6 | Numerical hot/cold latency, sustainable capacity, loop lag, maintenance/cost and integration/pause/drain/recovery/exit TARGETS with deciding workload definitions | UNMEASURED. Failing target blocks intended deployment eligibility |
 | A7 | [Cryptographer packet](cryptographer-review-packet.md) exports exact owned construction bytes/contexts/bounds and questions, with source hashes | No independent review returned |
 | A8 | Historical section/property traceability retained with explicit hardening dispositions. Canonical-owner, links/anchors, old naming, gates/counts and scope checks recorded at final verification | Machine checks do not prove semantic completeness. Council and human review remain separate |
 
@@ -85,5 +85,47 @@ This tally is not a security score. A new FAIL overrides it and requires redesig
 
 ## Verification and second council
 
-Pending at draft time. Final command receipts, documentation integrity metrics, native reviewer findings/dispositions and commit IDs
-will be recorded here after the frozen second review. No pending check is currently labeled PASS.
+Seven fresh native reviewers returned **0 HIGH and 6 MEDIUM findings**, with two findings overlapping on ordinary attribute identity.
+The [second report](council-review-2/report.md) preserves all outputs and gives five grouped correction dispositions:
+exact canonical/request bytes, early eligibility, sustainable-throughput measurement, operating-effort targets and proposal/execution wording.
+The chair also corrected refresh/autoflush/await regressions and the multiple-flush identity contract. Failed outputs remain preserved.
+The final corrected bytes were not re-reviewed. The frozen source baseline and reviewer verdicts cannot be treated as review of later edits.
+The [archived checkpoint](council-review-2/work-ledger.md) records authorization, chronology and assumptions.
+
+| Check | Observed outcome | Practical limit |
+|---|---|---|
+| Existing research suite | 612 passed in 6.95 s, exit 0; baseline 612/7.96 s | Regression evidence for existing research source, not the final runtime |
+| S1 | Nine sync and five async real-PG cases pass, including failed refresh and late flush/autoflush/await writes | One imperative model/field, small Result wrapper, fixture keys |
+| S2 + PG | 1,216 explored states/3,664 edges; capacity/owner/recovery subsets and two-batch atomic markers pass | Fake authority, no live AWS/termination or actual transport cut |
+| S3 | Concurrent conflict, NULL/IN/soft-delete scope, index plan/storage and hostile-term counterexample observed | Intact-index assumption still required, not hostile global uniqueness |
+| S4 | AEAD negative cases and inherited-PID rejection pass; authentic/presence replay limits observed | No independent vectors/bounds, entropy or actual provider re-admission proof |
+| M5 / canonical supplements | Unsafe expression/truth cases and two canonical encoders/attribute identities pass | Small first-party subsets, one original driver type |
+| Runtime/write scope | 16 production source hashes and 44 starting non-Markdown hashes match. Three unrelated user files and 14 starting deletions preserved | Own commits leave those user changes unstaged |
+| Documentation integrity | File/anchor, 323 original section hashes, 130 property IDs, 42 decisions, all gate names, four expert-source and nine council-evidence hashes pass | External-link crawl and semantic completeness are not machine-proven |
+| Local fixture cleanup | Owned PostgreSQL cluster stopped successfully | Ignored local venv and fixture directory retained for reproduction |
+
+[Final receipts](../../spikes/results/final-verification.json) contain exact test stdout/exit and spike/source hashes.
+[Document metrics](../../spikes/results/document-checks.json) contain final link counts and per-owner line/word totals.
+Editable-file whitespace checks pass. The unfiltered staged check flags spaces/blank lines in verbatim reviewer transcripts;
+those exact bytes remain preserved and the receipt records the exception.
+The canonical set fits the declared 2,500-line/30,000-word local review budget. Evidence archives are outside that reading path.
+No production source, existing tests/build/dependency files or cloud resource changed. No push, reset, revert or global install occurred.
+Scoped sandbox access was used for authorized local network/socket and Git metadata work. It did not alter runtime permissions.
+Task commits before this final disposition: 95befb5, 8c04b10, d456c12 and 1a77e67. Final commit identity is in Git history and the chat report.
+
+## Remaining expert and feasibility work
+
+All 33 blocked decisions remain INVALIDATING: D01–D06, D08–D09, D11, D13–D25, D27–D29, D31,
+D33–D35, D37, D39–D40 and D42. No blocked decision is tuning-only. Counts remain **9 DECIDED / 33 BLOCKED / 42 total**.
+The [decision owner](../decisions.md#hardening-decisions-and-feasibility-triage) explains the distinction.
+
+The [15 expert questions](cryptographer-review-packet.md#specific-questions-requiring-a-written-human-answer) require written human answers.
+They cover AEAD multi-key lifetime/forgery bounds, hashed AAD/context vectors, descriptor domains, HKDF/request HMAC and exact
+canonical/attribute/wire identities, key commitment, scalar/normalizer equivalence, durable quotas, RNG/fork assumptions, leakage,
+presence-MAC tradeoffs, rotation/recovery dependencies, distributed authority/drain, history/lineage, bounded destruction and release evidence.
+ORM/database and distributed-system specialists must also review complete publication/write inventory and real ownership/recovery.
+No human answer or independent audit returned in this task.
+
+Actual selected production artifacts/cell, full mappings/Result/loaders/defaults/cascades/cancellation, immutable actual DML-wire emission,
+real IAM/authority/effect/drain/termination/transport-cut/failover/restore/destruction, latest-history proof, customer comprehension and
+whole-backend performance/cost/operating targets remain UNKNOWN or UNMEASURED. These gates still block deployment claims.

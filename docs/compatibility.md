@@ -201,18 +201,36 @@ Pre-register a workload-specific latency/throughput/storage budget before measur
 Reference workload: same-region deployment, 100 offered operations/second, <=50% of baseline saturation,
 one tenant/session, <=5 admission items, one 256-byte protected field, 100,000 rows, 1% cold-root misses,
 same semantic indexes/data/hardware, 30-minute steady trials with raw runs and confidence intervals.
+The fixed offered-load trial measures latency only. Separately sweep offered load for each backend to find sustainable capacity:
+the highest completed operations/second held for 30 minutes with failure rate <=0.1%, no growing queue and identical
+absolute p95<=200 ms / p99<=500 ms limits. Report offered/completed rates, errors and all latency distributions.
+Compare protected versus baseline sustainable capacity under those same limits; two backends both serving 100 ops/s is not a throughput proof.
 Measure overhead as the difference between protected and identical unprotected whole-backend latency quantiles;
 report each distribution and failure rate as well. Do not subtract unrelated clocks or imply per-request attribution.
 
 | TARGET workload | p50 / p95 / p99 budget | Other TARGET | State |
 |---|---|---|---|
-| Hot one-row read | +10 / +30 / +75 ms | >=70% baseline throughput at same failure rate | UNMEASURED |
-| Hot one-row mutation, including ownership/commit acknowledgement | +20 / +60 / +150 ms | >=60% baseline throughput | UNMEASURED |
+| Hot one-row read | +10 / +30 / +75 ms | >=70% baseline sustainable capacity under the shared limits | UNMEASURED |
+| Hot one-row mutation, including ownership/commit acknowledgement | +20 / +60 / +150 ms | >=60% baseline sustainable capacity under the shared limits | UNMEASURED |
 | One cold-root operation, total added latency | +50 / +150 / +500 ms | Zero key calls per warm field | UNMEASURED |
-| Maintenance transform plus full verification, 256-byte field | No request-latency promise during pause | >=2,000 rows/s and >=1 MiB/s combined. Report each phase | UNMEASURED |
+| Maintenance transform plus full verification, 1-KiB field/one tenant root | No request-latency promise during pause | >=2,000 rows/s and >=1 MiB/s combined. Report each phase | UNMEASURED |
 | Async hot/cold operations | Same path budgets | p99 added event-loop lag <=10 ms | UNMEASURED |
 | Dependency outage | Fail within applicable 5-s preparation/30-s operation deadline | No plaintext/stale-authority fallback. Unknown effects remain PENDING | UNMEASURED |
 
+Initial operating-burden TARGETS are chair assumptions for an eligible existing AWS backend, not observed usability or customer approval.
+Register customer-approved limits before F05 and require explicit eligibility decisions for unresolved-worker/outage cases.
+
+| TARGET task / denominator | Limit | State |
+|---|---|---|
+| Integrate one eligible model/five protected fields, excluding full product implementation/audit | <=16 engineer-hours plus <=4 operator-hours for service/IAM setup | UNMEASURED |
+| Maintenance including drain/transform/full verification/switch, 100,000 rows/1-KiB field/one root | <=15 minutes domain pause | UNMEASURED |
+| Routine observed worker drain | p95<=10 s / p99<=30 s | UNMEASURED |
+| Recover a known-terminal, recoverable interrupted operation | <=15 minutes elapsed, <=5 documented commands and <=30 operator-minutes | UNMEASURED |
+| Package-free live-host exit for one eligible model | <=8 engineer/operator-hours; named ongoing backup dependencies | UNMEASURED |
+
+Unknown worker/backend/request terminality has no bounded completion promise. Inject that case and report the deployment
+ineligible for the bounded task until proof exists, while denial stays PENDING. Customer-required bounded availability/offline
+operation excludes this profile. No deadline manufactures safe completion. A customer may require tighter limits, not waived safety.
 Large-buffer/cold-subject workloads get separate registered budgets. These targets do not apply universally.
 Failure invalidates production eligibility at the intended load and triggers architecture/product review before full expansion.
 Use identical data, semantics, hardware, offered load, indexes and driver settings. Record versions, cache state, raw repetitions and uncertainty.

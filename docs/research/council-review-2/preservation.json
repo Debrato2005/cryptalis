@@ -1,0 +1,23 @@
+{
+  "provenance": "Seven verbatim native FINAL_ANSWER payloads recovered from the current chat. No content edited.",
+  "chat_session": "rollout-2026-10-06T12-40-33-01a1113a-defe-7bb3-8953-bdf9c69bc7ca.jsonl",
+  "contract_commit": "d456c1291c9898d116942cb2e7c09959ed756f68",
+  "brief_commit": "1a77e67",
+  "native_only": true,
+  "reviewers": 7,
+  "high_findings": 0,
+  "medium_findings": 6,
+  "grouped_corrections": 5,
+  "post_review_corrections_not_reviewed_again": true,
+  "sha256": {
+    "frozen-brief.txt": "216dc0d34f24a6e4716df441c8ca9caf7151dda8ebb0dc779d7c2ddbba11da24",
+    "review-baseline.json": "086b4ed864f8c3be2f958fbb589769b6bf6dc1bd42cd8c8f3c92bdd5b93b9849",
+    "authority.txt": "19e4ae0d71a7c56e248d65066247de019a396dbd8522286925c40c05913a5c13",
+    "crypto.txt": "4837490b951d5531b0b34609385c58b616f3ada3b874797eeb96ff9edd473643",
+    "orm.txt": "c4f20bfd187d788bc907627e44f49f4f7547a2947c682e93ad4eb49fe842f1c1",
+    "claims.txt": "7f36470770dc817233e0018b0217d5c05f621f1229c18ec78ad937c84d217424",
+    "ux.txt": "a078f517c375d60fa5f0f3b2013000e0f5324e72cebfefc7de80b38a35a90f38",
+    "investor.txt": "9520ebfecac5afe51f7042e530ab66c6162209c49a6202226a742400a209b942",
+    "copy.txt": "375f2ea1e8ffeb766f1f6f722c2def58ee93e5c2b7435330fdcedde71f16873d"
+  }
+}

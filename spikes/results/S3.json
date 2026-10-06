@@ -1,6 +1,7 @@
 {
   "spike": "S3",
   "status": "PASS_LOCAL_POSTGRES",
+  "source_sha256": "e8d7fb1346d114b756c132aff0b549057e0ab613a9833fd5ca1fcb07a8058ca6",
   "evidence": {
     "server": "PostgreSQL 16.2 on x86_64-pc-linux-gnu, compiled by gcc (GCC) 10.2.1 20210130 (Red Hat 10.2.1-11), 64-bit",
     "race": [
@@ -27,7 +28,7 @@
         }
       }
     ],
-    "heap_bytes": 1097728,
+    "heap_bytes": 1114112,
     "indexes_bytes": 1466368,
     "mean_term_datum_bytes": "33.0000000000000000",
     "hostile_term_corruption": "logical duplicate accepted; expected boundary"

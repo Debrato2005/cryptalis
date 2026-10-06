@@ -1,9 +1,11 @@
 {
   "spike": "S2-PostgreSQL-supplement",
   "status": "PASS_LOCAL_POSTGRES",
+  "source_sha256": "e8d7fb1346d114b756c132aff0b549057e0ab613a9833fd5ca1fcb07a8058ca6",
   "evidence": {
     "exclusive": "BLOCKED_BY_SHARED",
     "outcome_after_later_delete": "COMMITTED_MARKER_RETAINED",
+    "multi_flush_transaction": "TWO_IMMUTABLE_BATCH_MARKERS_COMMIT_TOGETHER",
     "stale_database_token": "TYPED_DENIAL_BEFORE_MUTATION",
     "rollback": "DATA_AND_MARKER_ABSENT",
     "acknowledgement_fault": "application acknowledgement discarded after commit; not an actual transport cut"

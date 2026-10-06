@@ -166,7 +166,15 @@ class ProtectedSession(Session):
         if self.info.get("collecting"):
             return super().execute(statement, params, **kwargs)
         if not statement.is_select: raise UnsupportedProtectedOperation("Bulk/Core DML excluded")
-        self.freeze()
+        if self.info.get("async_prepared"):
+            if write_set(self) != self.info.get("sealed_write_set"):
+                raise LateProtectedWrite("Write set changed during awaited preparation")
+        else:
+            self.freeze()
+        # Scalar physical collection does not reliably invoke ORM autoflush.
+        # Preserve the public contract explicitly after material preparation.
+        if self.autoflush:
+            self.flush()
         def rewrite(node):
             if isinstance(node, BindParameter) and isinstance(node.type, QueryValue):
                 val = [term(x) for x in node.value] if node.expanding else term(node.value)
@@ -212,7 +220,8 @@ class ProtectedSession(Session):
     def refresh(self, instance, attribute_names=None, **kwargs):
         if attribute_names not in (None, ["email"]):
             raise UnsupportedProtectedOperation("Only complete protected refresh in this spike")
-        self.get(User, inspect(instance).identity[0])
+        with self.no_autoflush:
+            self.get(User, inspect(instance).identity[0])
         if hasattr(instance, "_pending_email"): del instance._pending_email
     def close(self):
         self.info["publication"] = MappingProxyType({}); super().close()
@@ -241,6 +250,8 @@ class ProtectedAsyncSession(AsyncSession):
     async def prepare(self):
         await self.run_sync(lambda s: s.freeze())
         await asyncio.sleep(0)  # Bounded fake async material preparation boundary.
+        hook = self.sync_session.info.pop("after_prepare_hook", None)
+        if hook is not None: hook(self.sync_session)
         self.sync_session.info["async_prepared"] = True
     async def execute(self, statement, params=None, **kwargs):
         await self.prepare()
@@ -309,11 +320,27 @@ def sync_cases(engine):
         traces.append("last_row_corruption_no_publication")
     initial_data(engine)
     with ProtectedSession(engine, expire_on_commit=False) as s:
+        u = s.get(User, 1); u.email = "must-not-autoflush-on-refresh"
+        with engine.begin() as c:
+            c.execute(table.update().where(table.c.id == 1).values(ct=b"corrupt"))
+        expect(ProtectedAuthenticationFailure, lambda: s.refresh(u))
+        expect(ProtectedUnavailable, lambda: u.email)
+        with engine.connect() as c:
+            assert c.execute(select(table.c.ct).where(table.c.id == 1)).scalar_one() == b"corrupt"
+        traces.append("failed_refresh_no_autoflush_or_publication")
+    initial_data(engine)
+    with ProtectedSession(engine, expire_on_commit=False) as s:
         s.add(User(3,"prepared"));s.freeze()
         def late(session,ctx,instances):session.add(User(4,"late"))
         event.listen(s,"before_flush",late,insert=True)
         expect(LateProtectedWrite,lambda:s.flush());s.rollback()
         traces.append("late_before_flush_write_rejected")
+    with ProtectedSession(engine, expire_on_commit=False) as s:
+        s.add(User(9, "prepared-autoflush"))
+        def late_auto(session, ctx, instances): session.add(User(10, "late-autoflush"))
+        event.listen(s, "before_flush", late_auto, insert=True)
+        expect(LateProtectedWrite, lambda: s.execute(select(User)))
+        s.rollback(); traces.append("sync_autoflush_late_addition_rejected")
     return traces
 
 
@@ -340,6 +367,21 @@ async def async_cases():
             except LateProtectedWrite:pass
             else:raise AssertionError("Late async addition accepted")
             await s.rollback();traces.append("async_late_addition_rejected_without_provider_IO_in_event")
+        async with ProtectedAsyncSession(engine,expire_on_commit=False) as s:
+            s.add(User(7,"prepared"))
+            s.sync_session.info["after_prepare_hook"] = lambda session: session.add(User(8,"added-during-await"))
+            try: await s.execute(select(User))
+            except LateProtectedWrite: pass
+            else: raise AssertionError("Async execute resealed a changed prepared set")
+            await s.rollback();traces.append("async_await_addition_rejected_without_resealing")
+        async with ProtectedAsyncSession(engine,expire_on_commit=False) as s:
+            s.add(User(11, "prepared-autoflush"))
+            def late_auto(session, ctx, instances): session.add(User(12, "late-autoflush"))
+            event.listen(s.sync_session, "before_flush", late_auto, insert=True)
+            try: await s.execute(select(User))
+            except LateProtectedWrite: pass
+            else: raise AssertionError("Late async autoflush addition accepted")
+            await s.rollback(); traces.append("async_autoflush_late_addition_rejected")
     finally:await engine.dispose()
     return traces
 
@@ -391,8 +433,9 @@ def database_protocol_cases():
         c.execute("CREATE TABLE spike_fence(id int primary key, token bigint not null)")
         c.execute("INSERT INTO spike_fence VALUES(1,0)")
         c.execute("CREATE TABLE spike_mutation(id int primary key, value text)")
-        c.execute("CREATE TABLE spike_outcome(operation uuid primary key, request_digest bytea not null)")
+        c.execute("CREATE TABLE spike_outcome(operation uuid primary key, request_digest bytea not null, transaction_id uuid not null)")
     op=uuid.UUID(int=900);digest=hashlib.sha256(b"synthetic immutable request").digest()
+    transaction_id=uuid.UUID(int=999);second_op=uuid.UUID(int=904)
     with psycopg.connect(DSN) as c:
         assert c.execute("SELECT token FROM spike_fence WHERE id=1 FOR SHARE").fetchone()[0]==0
         with psycopg.connect(DSN) as other:
@@ -400,11 +443,14 @@ def database_protocol_cases():
             except psycopg.errors.LockNotAvailable:exclusive="BLOCKED_BY_SHARED"
             else:raise AssertionError("Exclusive mutation escaped shared fence")
         c.execute("INSERT INTO spike_mutation VALUES(1,'synthetic')")
-        c.execute("INSERT INTO spike_outcome VALUES(%s,%s)",(op,digest))
+        c.execute("INSERT INTO spike_outcome VALUES(%s,%s,%s)",(op,digest,transaction_id))
+        c.execute("UPDATE spike_mutation SET value='synthetic-later-flush' WHERE id=1")
+        c.execute("INSERT INTO spike_outcome VALUES(%s,%s,%s)",(second_op,hashlib.sha256(b"second flush request").digest(),transaction_id))
         c.commit()  # Then deliberately discard application acknowledgement.
     with psycopg.connect(DSN) as c:
         c.execute("DELETE FROM spike_mutation WHERE id=1")
         assert c.execute("SELECT request_digest FROM spike_outcome WHERE operation=%s",(op,)).fetchone()[0]==digest
+        assert c.execute("SELECT count(*) FROM spike_outcome WHERE transaction_id=%s",(transaction_id,)).fetchone()[0]==2
         c.execute("UPDATE spike_fence SET token=1 WHERE id=1")
         # The stale token is checked by PostgreSQL, not merely by local code.
         changed=c.execute("INSERT INTO spike_mutation SELECT 2,'synthetic' WHERE EXISTS (SELECT 1 FROM spike_fence WHERE id=1 AND token=%s)",(0,)).rowcount
@@ -417,11 +463,12 @@ def database_protocol_cases():
     rollback_op=uuid.UUID(int=901)
     with psycopg.connect(DSN) as c:
         c.execute("INSERT INTO spike_mutation VALUES(3,'rolled-back')")
-        c.execute("INSERT INTO spike_outcome VALUES(%s,%s)",(rollback_op,digest));c.rollback()
+        c.execute("INSERT INTO spike_outcome VALUES(%s,%s,%s)",(rollback_op,digest,uuid.UUID(int=998)));c.rollback()
     with psycopg.connect(DSN) as c:
         assert c.execute("SELECT count(*) FROM spike_outcome WHERE operation=%s",(rollback_op,)).fetchone()[0]==0
         assert c.execute("SELECT count(*) FROM spike_mutation WHERE id=3").fetchone()[0]==0
     return {"exclusive":exclusive,"outcome_after_later_delete":"COMMITTED_MARKER_RETAINED",
+            "multi_flush_transaction":"TWO_IMMUTABLE_BATCH_MARKERS_COMMIT_TOGETHER",
             "stale_database_token":stale, "rollback":"DATA_AND_MARKER_ABSENT",
             "acknowledgement_fault":"application acknowledgement discarded after commit; not an actual transport cut"}
 
@@ -431,16 +478,17 @@ if __name__=="__main__":
     engine=raw_engine()
     try:
         initial_data(engine);sync=sync_cases(engine);initial_data(engine);async_=asyncio.run(async_cases())
-        s1={"spike":"S1","status":"PASS_LOCAL_PROTOTYPE","sync":sync,"async":async_,
+        source_sha = hashlib.sha256(Path(__file__).read_bytes()).hexdigest()
+        s1={"spike":"S1","status":"PASS_LOCAL_PROTOTYPE","source_sha256":source_sha,"sync":sync,"async":async_,
             "mapping":"bootstrap public registry.dispose/map_imperatively/add_mapped_attribute",
             "publication":"single Session.info frame replacement; pending descriptor values independent",
             "limits":["one model/field and synthetic local keys", "not CPD2 or real authority",
                       "full Result/query/relationship/mapping cell not established", "not production implementation"]}
         (out/"S1.json").write_text(json.dumps(s1,indent=2)+"\n");print(json.dumps(s1,indent=2))
-        s3={"spike":"S3","status":"PASS_LOCAL_POSTGRES","evidence":search_cases(),
+        s3={"spike":"S3","status":"PASS_LOCAL_POSTGRES","source_sha256":source_sha,"evidence":search_cases(),
             "limits":["one synthetic text normalizer", "not a complete differential SQL grammar oracle"]}
         (out/"S3.json").write_text(json.dumps(s3,indent=2)+"\n");print(json.dumps(s3,indent=2))
-        protocol={"spike":"S2-PostgreSQL-supplement","status":"PASS_LOCAL_POSTGRES",
+        protocol={"spike":"S2-PostgreSQL-supplement","status":"PASS_LOCAL_POSTGRES","source_sha256":source_sha,
                   "evidence":database_protocol_cases(), "limits":["no DynamoDB or real worker termination"]}
         (out/"S2-postgres.json").write_text(json.dumps(protocol,indent=2)+"\n");print(json.dumps(protocol,indent=2))
     finally:engine.dispose()

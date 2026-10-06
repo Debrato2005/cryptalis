@@ -1,0 +1,21 @@
+Message Type: FINAL_ANSWER
+Task name: /root
+Sender: /root/council2_ux
+Payload:
+VERDICT: RESOLVED_DESIGN with one remaining MEDIUM product finding. I found no fatal product contradiction. M8 and M9 now have concrete contracts. M10 improves substantially, but eligibility still requires too much reading before integration. Runtime capability and customer acceptance remain UNKNOWN.
+
+USER COMPREHENSION: The opening separates research code from the intended runtime. It exposes AWS dependencies, host changes, maintenance, and plaintext rollback. `revoke --subject` correctly means managed denial. `destroy --domain` reports separate access, custody, and recovery states. A successful deletion request cannot imply erased data.
+
+**MEDIUM — eligibility arrives too late.** [README.md:18](/home/debrato/Projects/cryptalis/README.md:18) leads directly into declaration and attachment. The stronger exclusions appear at [security.md:341](/home/debrato/Projects/cryptalis/docs/security.md:341) and [compatibility.md:88](/home/debrato/Projects/cryptalis/docs/compatibility.md:88).
+
+Concrete trace: a developer needs authenticated nullable presence and email reuse after soft deletion. They see supported protection, equality, and uniqueness, then start mapping and identity changes. Their manifest syntax can fit the example. Later reading establishes that both requirements exclude adoption. The documents disclose the limits, but the entry workflow does not make the developer decide them first.
+
+Smallest change: place a short eligibility checklist before declaration. Include nullable presence, freshness/completeness, uniqueness scope, permitted mappings/queries, and domain-wide pauses. Link each item to its canonical owner. Deciding test: give representative developers compatible and incompatible backend descriptions. Require correct eligibility decisions before they edit configuration.
+
+INTERACTION VALUE: The recovery catalogue materially improves usability. It distinguishes original-operation resume, inspection-only reconciliation, reversible abort, verified rollback/finalization, and proof-only authority recovery. Typed remedies separate corruption, denial, and buffer overflow. Repeated fresh sessions cannot masquerade as repair. Unknown dispatchers, backends, or receipt history remain meaningful blocked states.
+
+FRICTION: Adoption requires substantial application and operational work. Result, cache, retry, concurrency, quota, capacity, rollback, latency, throughput, and service-cost budgets exist. They remain limits or unmeasured targets. The USD50 target excludes variable audit/network charges. Adoption effort, acceptable downtime, recovery workload, and package-free exit still lack representative customer evidence. These are declared gates, not demonstrated defects.
+
+RECOMMENDATION: Retain the contracts and run the already required representative builder/operator study before full implementation. Exercise lost plans, expired plans, ambiguous commits, quota exhaustion, rollback deadlines, revoked subjects, and permanently unprovable authority. Require participants to name the permitted next action and the unavailable recovery route.
+
+Confidence: moderate for document coherence, low for operational usability. This read-only review ran no tests and supplies no production evidence.

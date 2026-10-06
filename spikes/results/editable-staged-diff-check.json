@@ -1,0 +1,10 @@
+{
+  "command": "git diff --cached --check -- . ':(exclude)docs/research/council-review-2/*.txt'",
+  "receipt": {
+    "chunk_id": "f3fc1d",
+    "wall_time_seconds": 0.391232991,
+    "exit_code": 0,
+    "original_token_count": 0,
+    "output": ""
+  }
+}

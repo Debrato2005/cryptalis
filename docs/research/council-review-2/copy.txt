@@ -1,0 +1,27 @@
+Message Type: FINAL_ANSWER
+Task name: /root
+Sender: /root/council2_copy
+Payload:
+**VERDICT:** M9/M10 now have clear design boundaries. The narrative states AWS prerequisites, adoption changes, plaintext exposure, managed denial and delayed destruction. I found one material command-contract mismatch. I found no fatal narrative defect. Production feasibility and operator comprehension remain UNKNOWN.
+
+**BEST MESSAGE:** “Current code is a research foundation, not this runtime” ([README.md:7](/home/debrato/Projects/cryptalis/README.md:7)). It appears before the adoption workflow. The opening also names maintenance downtime, unsupported mappings, authority outages and historical plaintext. These limits help a reader assess adoption before seeing familiar ORM syntax.
+
+**WEAK LANGUAGE:**
+
+1. **MEDIUM — [docs/security.md:472](/home/debrato/Projects/cryptalis/docs/security.md:472), also line 474.** The failure table groups `apply/keys rotate` under completed transformation and switch. It groups `revoke/destroy/remove` under completed lifecycle postconditions. However, [docs/architecture/README.md:280](/home/debrato/Projects/cryptalis/docs/architecture/README.md:280) describes those commands as planning commands.
+
+   Concrete misinterpretation: an operator runs `cryptalis revoke --subject ID`, receives a completed proposal, and believes subject access is denied. Alternatively, an implementer follows the security table and gives a planning command mutation effects.
+
+   Smallest repair: place proposal commands in the planning row. Name executed operations as `apply` with the relevant plan kind. State that proposal success creates no denial, deletion or removal effect. A deciding test should give operators only command output and ask whether access changed and which action remains.
+
+The sentence “It has one production AWS implementation” at [docs/security.md:189](/home/debrato/Projects/cryptalis/docs/security.md:189) also needs future tense. The DESIGNED header bounds it, but the sentence alone suggests executable implementation.
+
+**REWRITE:** “The designed provider contract selects one AWS production implementation. It is unimplemented today. The fake implementation supplies test evidence only.”
+
+For the command table: “`keys rotate`, `revoke`, `destroy` and `remove` create reviewable proposals. Apply the proposal through `cryptalis apply PLAN`. Proposal success does not establish lifecycle completion.”
+
+**NARRATIVE FIT:** The canonical ownership map and README reading path give distinct responsibilities to architecture, security, lifecycle, compatibility and status. Research records retain evidence limits rather than define competing runtime contracts. Local observations name their actual cell and narrow scope. Performance and cost numbers remain unmeasured TARGETS.
+
+Keep those distinctions in command output. Actual outputs, adoption usability, complete ORM behavior, AWS ownership, recovery and destruction remain unproved. This review used read-only document inspection and did not execute tests.
+
+
