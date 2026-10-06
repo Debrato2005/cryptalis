@@ -1,0 +1,139 @@
+==================== TASK: RESOLVE THE ADVERSARIAL REVIEW AND HARDEN THE ARCHITECTURE ====================
+
+You are continuing work on the Cryptalis repository. The architecture/documentation reset is
+done and an LLM Council adversarial review has run. Your job is to FIX everything it found,
+find and fix what it missed, and PROVE the central protocols with small executable spikes,
+before anyone commits to the full build.
+
+Principles (unchanged): Cryptalis is a manifest-driven protection layer; usability first;
+fail closed; nothing security-critical fails silently; unknown != safe; designed != implemented
+!= verified; one canonical owner per contract; do not constrain the architecture to existing
+code; YAGNI aggressively. Do not resolve a finding by rewording it. Each fix is either a
+concrete mechanism with a test, or an explicit downgrade of the claim. Never weaken an
+invariant to make a design or test pass.
+
+------------------------------------------------------------------
+0. AUTHORIZATION (overrides AGENTS.md "do not install/commit" for this task only)
+------------------------------------------------------------------
+Allowed: work on main; commit your own changes with clear messages; create a project-local
+virtualenv and install pinned dev dependencies into it (record versions); run local
+PostgreSQL (docker or local binary) for spikes; run the existing test suite; locate and run
+the LLM Council skill (previously found in the OncoSyn folder).
+Forbidden: git push, reset, revert, force operations; touching or discarding uncommitted user
+work; global installs; real cloud/AWS calls or credentials; modifying production runtime
+source under the package tree. Spike code lives only in a separate top-level spikes/
+directory and never counts as IMPLEMENTED or VERIFIED.
+Do not stop to ask questions. Choose the safer option, record the assumption, continue.
+Keep docs/_reset/notes.md (ledger, to-do, assumptions, sources); commit it regularly; re-read
+it after any context reset; remove or archive it at the end.
+
+------------------------------------------------------------------
+1. PRESERVE THE EVIDENCE FIRST
+------------------------------------------------------------------
+Copy the council report, its frozen brief and any reviewer outputs from /tmp into
+docs/research/council-review-1/ before doing anything else. If they are gone, locate the
+council output elsewhere or re-run the council on the current docs. Read the full report.
+Where it differs from the summary below, the report wins.
+
+------------------------------------------------------------------
+2. FIX THE COUNCIL FINDINGS (each needs: protocol/spec in its canonical owner doc, invariants,
+   failure table, an adversarial test scenario in the build guide, and a ledger entry)
+------------------------------------------------------------------
+HIGH
+H1. Admission/fence ordering and ownership after lock loss. Specify the exact order of
+    admission check, fence/lease token, database commit and every irreversible external effect.
+    Define what a stale or ex-owner process may and may not do, and how that is enforced
+    (token checked at the authority or the DB, not just in the process). Define behaviour when
+    the lock/lease is lost mid-operation.
+H2. Durable evidence for ordinary commit reconciliation. Handle the ambiguous commit
+    (connection drops after COMMIT is sent): how does Cryptalis learn whether the DB commit
+    happened relative to external receipts/effects? Design the evidence record (for example
+    written in the same DB transaction), idempotency keys, and the reconcile procedure.
+H3. ORM state preservation and atomic publication through public APIs. Define what happens to
+    the identity map, attribute expiry/refresh, merge, deferred loads, hybrid/column
+    properties, and how payload plus search terms are published atomically. Use only public,
+    documented SQLAlchemy extension points on the pinned version. If that cannot be done
+    safely, shrink the supported surface and say so.
+H4. Async preparation when flush callbacks add protected writes. Cascades, events and defaults
+    can create protected writes during flush, when async I/O is not allowed. Define the
+    pre-flush preparation phase, how late additions are detected, and fail closed on them.
+FURTHER
+M5. Predicate errors: fix the exact admitted predicate grammar (NULL, negation, OR, empty IN,
+    case-insensitive, casts, joins). Everything else raises a typed error, never wrong results.
+M6. Quota and rollback capacity: rollback mirrors, extra columns/indexes, KMS/DynamoDB/S3
+    quotas and throttling. Add a preflight capacity check and defined behaviour on exhaustion
+    mid-transition.
+M7. Uniqueness limits: scope (tenant, soft delete, multi-column, partial indexes), concurrent
+    insert races, what the conflict leaks, and what is unsupported by design.
+M8. Recovery commands: a catalogue of stuck states and the operator command for each
+    (resume, abort, reconcile, break-glass). Each must be idempotent and must never publish
+    plaintext. Include them in tests.
+M9. Subject-denial naming: the word "shred" overclaims. Rename the command, output strings
+    and docs to reflect managed denial; keep domain destruction distinct. Keep claims
+    consistent everywhere.
+M10. Adoption wording: rewrite README and claims to state the real adoption cost (stack
+    scope, AWS dependency, operational prerequisites). Remove any "simple/transparent/zero
+    change" wording the design cannot support.
+
+------------------------------------------------------------------
+3. ISSUES THE COUNCIL DID NOT RAISE (investigate each; fix or document with evidence)
+------------------------------------------------------------------
+A1. Control-plane weight. The design requires AWS KMS + DynamoDB + S3 receipts. Evaluate it
+    against the product kill list ("giant control plane for a small library"): hot-path calls
+    per request, cost, outage behaviour (fail-closed means availability risk), IAM
+    complexity, lock-in, minimum viable footprint. Consider whether external state can be
+    collapsed or abstracted behind a small provider interface with a clearly non-production
+    local provider. If AWS-only is retained, state that plainly in README and justify it.
+A2. Verify every pinned crypto and version claim from primary sources: that
+    AES-256-GCM-SIV is available in the pinned `cryptography` build (OpenSSL requirement,
+    wheel support), that the stated version numbers actually exist, HKDF usage, nonce and
+    key-usage bounds under the chosen mode. Anything unverifiable is flagged, not asserted.
+A3. Accepted leakage re-check: same-context replay, omission and nullable NULL substitution.
+    Assess cheap mitigations (for example row-level version/commitment in the authenticated
+    context, presence markers) and either adopt or justify rejection. No freshness service.
+A4. Blocked-decision triage. Of the decisions marked DECIDED-BLOCKED-ON-TEST, mark which
+    could INVALIDATE the architecture if the test fails versus which are only tuning. Order
+    the build guide so invalidating tests run first.
+A5. Re-run the product kill list (every item) against the current docs. Record pass/fail with
+    evidence. Any fail triggers redesign, not a footnote.
+A6. Performance budget: set target numbers (p50/p95/p99 overhead, cold-key latency,
+    migration throughput) as TARGETS to be measured, never as claims.
+A7. Expert review packet: one document for an external cryptographer containing the exact
+    constructions, contexts, derivations, bounds and specific questions to answer.
+A8. Documentation integrity: re-run the traceability map (no normative requirement lost),
+    link check, contradiction/terminology search, duplicate-contract search, and keep
+    docs/status.md truthful. Respect the documentation budgets.
+
+------------------------------------------------------------------
+4. PROVE THE CENTRAL PROTOCOLS (spikes in spikes/, no production code)
+------------------------------------------------------------------
+Each spike: written hypothesis, pass/fail criteria, a result file with raw evidence.
+S1. SQLAlchemy attachment, sync and async, against real PostgreSQL: identity map, refresh,
+    merge, bulk operations detection, writes added during flush, public APIs only.
+S2. Admission/fence and commit-reconciliation protocol with a fake in-memory authority and
+    deterministic fault injection (lock loss, stale owner, crash between each step, ambiguous
+    commit). Use property-based/stateful testing or state-space exploration.
+S3. Equality terms and uniqueness on PostgreSQL: concurrent inserts, IN, NULL semantics,
+    index use in the plan, storage cost.
+S4. Crypto smoke test: chosen AEAD available, tamper/relocation/wrong-context rejection,
+    nonce handling across fork.
+Fakes do not satisfy real-AWS gates; those stay DECIDED-BLOCKED-ON-TEST with the gate named.
+If a spike disproves an assumption, change the architecture. Do not bend the test.
+
+------------------------------------------------------------------
+5. SECOND ADVERSARIAL ROUND
+------------------------------------------------------------------
+After the fixes, run the LLM Council again with a frozen brief focused on the revised
+contracts (H1-H4, M5-M10, A1-A3). Save outputs to docs/research/council-review-2/. Fix every
+HIGH finding. Maximum two further rounds; remaining items are recorded, not hidden.
+
+------------------------------------------------------------------
+6. FINAL CHECKS AND REPORT
+------------------------------------------------------------------
+Run the existing test suite; confirm production runtime files are byte-identical to baseline;
+inspect the final diff. Final report (compact): per-finding table (ID, resolution, owner doc,
+test); additional issues and outcomes; spike results; kill-list results; new ledger counts
+(DECIDED / DECIDED-BLOCKED-ON-TEST, invalidating ones listed); expert-review list; claims
+downgraded; assumptions made; anything unverified. Do not state or imply the architecture is
+complete or audited.
+============================================================================================

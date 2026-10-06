@@ -1,0 +1,21 @@
+{
+  "copies": [
+    {
+      "source": "/tmp/cryptalis-council-report-final.md",
+      "file": "report.md",
+      "sha256": "dace62c1a3036095a14570b2e0430901aa28b8300eaa135e4b90f2d475b6a641"
+    },
+    {
+      "source": "/tmp/cryptalis-council-frozen-brief.txt",
+      "file": "frozen-brief.txt",
+      "sha256": "091a903af4c7f3ce7ea7bfb5076bee297553b8584107cea75788a2ffbc36df3d"
+    },
+    {
+      "source": "/tmp/cryptalis-council-baseline.json",
+      "file": "review-baseline.json",
+      "sha256": "4e68e2c63261602be1e78b9c338f8ba43286c6a344cd918b7f17b5637323a13c"
+    }
+  ],
+  "reviewer_files_found": 0,
+  "individual_reviews": "Not written to /tmp during round one. Returned native messages remain in the chat; recovered transcripts will be labeled as recovered."
+}
