@@ -1,0 +1,41 @@
+{
+  "commit": "d456c1291c9898d116942cb2e7c09959ed756f68",
+  "task_date": "2026-10-07 Asia/Calcutta",
+  "source_sha256": {
+    "README.md": "b0fb24801c5c3e6ad935c9df94f847e1b87c47a5085c5432e24fcdf2c0ac031d",
+    "docs/architecture/README.md": "31c332e49b3d42d0d6cbb55debac73d060c34be407faad325710dae8122224aa",
+    "docs/security.md": "fd799b94a6c5fb9f24c1213d9eaec1880157fdb723a95832a8b2d97146a4c3cb",
+    "docs/lifecycle.md": "2b76d244d1fb780b9698f37eb150bfd0731628c4e554b9adca3c3ef94a00ae86",
+    "docs/compatibility.md": "2092c44c0f96b5eb26526df141fb4bfffd4640ecfad70037df2e3240cd3c7b65",
+    "docs/status.md": "fdf05a09edcc4819e07c0580e206bf77ec4d69345449ba8bb562d348ce218c7d",
+    "docs/decisions.md": "d1f92d001896a844bafd2a9346d4f355646f7d7236549c2da9c221fc4873dd90",
+    "docs/build-guide.md": "71d8a362a1bac2d2317c01bbddbdc39c7cbddbbac080413798de477f9aef19ce",
+    "docs/research/hardening-evidence.md": "01cf136157ffd40ab8f04fa22e3613718c0101abbd9261e48e839bf9e91e4701",
+    "docs/research/hardening-resolution.md": "44bd36d5a37f07b710b23ee2e5b52c0f1fb1686542a28012601c8057a0a0a055",
+    "docs/research/cryptographer-review-packet.md": "56b54e9e8578a66ac73e6db7f73669446d4f1c4f51297adb10a7294176c0d535",
+    "spikes/README.md": "8eaa6625635558e8c4a8d58825df744af7ace0efbdd066b8161ebdcfe3f6cc02",
+    "spikes/run_database.py": "9d36cb5caf1668945456054fd78462eb0d0e767289573e105d3b5c9efaa9c9c5",
+    "spikes/run_protocol.py": "021e3e447b990252808661fc0a202140ffb31cc8da54327f7e52b8e280cc7ee5",
+    "spikes/run_crypto.py": "949ed6a63a09f5b63c1d18b7ac3957ee8237cdb3d5d367ace0ae818b4194980c",
+    "spikes/run_semantics.py": "6d16a03a0fd10ac728299246d40483d82a954ce12d28f389521238ae289e2443",
+    "spikes/results/M5.json": "08214656bf61b64c321dd7065e9b0c271b07c8557e6c7225ebd58aeb919f210d",
+    "spikes/results/S1.json": "7cb219c7c3d67942a3836696142ad94838c6cd748e8413c1ca4865e6c17c3580",
+    "spikes/results/S2-postgres.json": "d9fee1df7865f2330799500c9824f9d007649f2cbacf2bd57a1b9e8f8734d1ab",
+    "spikes/results/S2.json": "b109d6426af92045cc63c7802c5b7f7e53d4a95816cb1d35803ca143027769f9",
+    "spikes/results/S3.json": "aad28f0b3aa329926387a8573efa616fb52fe753b72d0b5076b71790db72cec7",
+    "spikes/results/S4.json": "30519ee56ca3f19114416148b10b28ec5b1260f29fbc1db8f2e680cbbab134ae",
+    "spikes/results/document-checks.json": "fe2cf60a8dfdf26ffa4c1522fdba6aa259ad51b456200d3f35b44eb06e16f8ee",
+    "spikes/results/environment.json": "c41135cb7eafc675d58749d29be97311458822648a08402c85ac57a57ec94080",
+    "spikes/results/package-baseline.json": "96e67dd9458bce17b2ae30a6d231aa14769555486ac33d6f838fe0ef69562892"
+  },
+  "native_only": true,
+  "planned_reviewers": [
+    "authority",
+    "orm",
+    "crypto",
+    "claims",
+    "ux",
+    "investor",
+    "copy"
+  ]
+}

@@ -1,0 +1,45 @@
+DECISION:
+Do the revised Cryptalis contracts actually resolve H1–H4/M5–M10, and do A1–A3 reveal a remaining fatal mechanism, semantic, claim or product defect?
+
+GOAL:
+Find concrete failure traces before full implementation. Recommend the smallest safe contract change or decisive test. Review is first-party AI evidence, never an audit.
+
+FACTS:
+- Production runtime src is unchanged. Existing research suite baseline:612 passed. Zero verified production cells/independent audits.
+- Canonical design now has42 decisions:9 DECIDED,33 DECIDED-BLOCKED-ON-TEST; every blocked decision contains INVALIDATING properties. Fatal experiments precede compiler/provider build.
+- Local disposable cell: CPython3.12.3/SQLAlchemy2.1.3/psycopg3.3.6/cryptography50.0.2/OpenSSL4.0.3/PostgreSQL16.2. Selected CPython3.14.8/RDS18.6 cell unqualified.
+- S1: one public-API imperative model/field proves dirty B/entity versus stored A/scalar, explicit identity refresh/expiry/rollback, bulk/merge reject, last-row corruption zero logical publication and late sync/async flush rejection. Initial expired-ID and callback-order mechanisms failed; revised public identity and SQL-emission guard pass unchanged oracles.
+- S2:1216 states/3664 transitions for two operations with atomic fake authority; lock-only drain counterexample; imperative stale-owner/capacity/fake-recovery examples. Local PG supplement proves shared/exclusive lock behavior, DB stale-token denial, same-transaction markers surviving later row deletion. ACK discarded after commit, not actual transport cut.
+- S3:real PG duplicate race one commit/one conflict, IN/NULL/all-row soft-delete/index/storage. Hostile unreturned term corruption deliberately allows a logical duplicate.
+- S4:actual AEAD smoke/context/tamper/fork-PID guard pass; authentic replay and historical absent-marker replay succeed as documented. Synthetic descriptor/root/fresh-child material, no composed/RNG/provider proof.
+- M5:local PG reproduces hidden projection division error where original OR succeeds; small validator rejects10 unsafe forms and checks six three-valued outcomes. Full runtime differential surface unbuilt.
+
+REVISED CANDIDATE:
+- Worker registration precedes all work; DB shared fence precedes current admission. Mutations register UUID/digest/backend ownership before DML, commit durable outcome with data, retain external ownership through terminal reconciliation. DB/authority validate monotonic tokens. Reads require worker ownership+continuous fence through handoff.
+- Denial waits worker drain/proven termination AND mutation reconciliation, not empty connections/TTL. An immutable external action dispatcher cannot transfer/re-dispatch while an old SDK request may still run. AWS APIs do not accept custom fencing tokens; unknown effects remain pending.
+- Public ORM bootstrap remap, pending logical state separate from fetched snapshots, one immutable publication-frame swap, complete protected refresh only. Closed prepared write set is checked before SQL; late additions reject. Host callbacks beyond the final guard are ineligible. Documented run_sync, no provider I/O in synchronous events.
+- Narrow total predicate grammar; exact tenant/field all-row UNIQUE/NULLS DISTINCT with intact-term assumption. Capacity includes retry/growth/old mirror/root/storage/provider headroom. Recovery resumes original durable proposal, read-only reconcile, reversible abort, proof-only break-glass. revoke subject and destroy domain are distinct.
+- AWS-only KMS+regionalDDB+independentS3, no new daemon. Hot read two current transaction snapshots; mutation adds registration/closure writes, roots/quota/pages extra. Cost/latency/downtime/usability are unmeasured invalidating TARGETS.
+- Reject added freshness/presence-MAC service/format for this profile, explicitly exclude customers requiring authenticated nullable presence, row freshness/completeness or hostile global uniqueness. Cheap mitigations' useful partial protection is acknowledged.
+
+CONSTRAINTS:
+- Read-only. No edits, installs, tests, cloud/service calls, credentials or sibling communication. Use native tools to inspect referenced sources when genuinely needed. No parent/sibling history.
+- Design drives code. No private SQLAlchemy workaround, stale authority, plaintext fallback, quota reset or weakened invariant.
+- Distinguish a concrete unsafe/contradictory contract from an honestly named unimplemented gate. Do not call the latter a resolved production capability.
+- Exact primary pin/API/RFC facts are in the source record. Independently check high-risk disputed facts only, not every already-inspected source.
+
+UNKNOWNS:
+Full mapping/Result/flush/default/cancel/query cells, live AWS/IAM/termination/failover/receipt-history/capacity/destruction, exact commitment vectors, intended customer adoption, performance/cost, package-free exit and human crypto review.
+
+SOURCES (all under /home/debrato/Projects/cryptalis):
+- C1 README.md — eligibility/exposure; docs/architecture/README.md — public mapping/frame/seal/hooks/CLI.
+- C2 docs/security.md — admission/fencing/external dispatcher, exact CPD2/HKDF/HMAC/bounds, A3 exclusions, control-plane cost/outage.
+- C3 docs/lifecycle.md — outcome commitment/marker/retention, capacity, recovery catalogue, revocation/destruction/exit.
+- C4 docs/compatibility.md — exact grammar/types/uniqueness/stack/latency TARGETS.
+- C5 docs/status.md; docs/decisions.md; docs/build-guide.md — evidence limits/42 decisions/fatal order/adversarial scenarios.
+- E1 docs/research/hardening-evidence.md; hardening-resolution.md; cryptographer-review-packet.md — primary source facts,15 kill criteria, exact hashed expert export.
+- E2 spikes/README.md; spikes/run_database.py; run_protocol.py; run_crypto.py; run_semantics.py; spikes/results/*.json — narrow executed mechanisms and raw limits.
+- E3 docs/research/council-review-1/report.md — first findings, not implementation proof. New reviewers do not read recovered sibling-role transcripts.
+
+OUTPUT:
+Follow your role contract. For each material finding give severity HIGH/MEDIUM/LOW, exact path:line, concrete counterexample, mechanism change or deciding test. Prefer at most3 findings. No finding requires forced padding. Explicitly state remaining confidence/unknowns.
