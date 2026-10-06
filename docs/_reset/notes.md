@@ -20,8 +20,8 @@ Task date: 2026-10-07, Asia/Calcutta. This ledger is temporary and will be archi
 |---|---|---|
 | H1-H4 | Exact authority, commit, ORM and async contracts plus executable spikes | Drafted canonical revisions; local S1/S2 pass, full gates blocked |
 | M5-M10 | Predicate grammar, capacity, uniqueness, recovery, denial names and adoption | Drafted canonical revisions; local predicate/capacity/recovery/search subsets pass |
-| A1-A3 | Control-plane comparison, primary version/crypto verification and cheap leakage mitigations | TODO |
-| A4-A8 | Gate triage, kill list, measured targets, expert packet and documentation integrity | TODO |
+| A1-A3 | Control-plane comparison, primary version/crypto verification and cheap leakage mitigations | Canonical contracts/evidence recorded; live cost/crypto composition/customer fit remain UNKNOWN |
+| A4-A8 | Gate triage, kill list, measured targets, expert packet and documentation integrity | 42 decisions (9 scope,33 blocked), all blocked invalidating. 15 kill criteria (4 design PASS,11 UNKNOWN), numerical TARGETS, hashed expert export and document checks recorded |
 | S1-S4 | Local real-PostgreSQL ORM/search, state exploration and crypto smoke evidence | Executed successfully; raw results in spikes/results. S2 1216 states/3664 transitions |
 | Council 2 | Fresh independent review of revised contracts, preserve outputs and resolve HIGH findings | TODO |
 | Final | Regression tests, package hash comparison, scope/diff inspection, counts and archive | TODO |
@@ -37,6 +37,10 @@ Task date: 2026-10-07, Asia/Calcutta. This ledger is temporary and will be archi
 - S3 raw plans include public synthetic terms. They are lab evidence, not permitted production diagnostics.
 - Current baseline research regression: 612 passed in 7.96 s. Final rerun pending.
 - Stop the owned PostgreSQL cluster after final evidence, retain results and archive this ledger.
+- Commit 8c04b10 saved recovered outputs and executable local spikes. Main contract/evidence commit is next.
+- Document checks pass: 868 internal file/anchor links, 323 historical section hashes,130 trace properties,16 src files and44 starting non-Markdown files unchanged.
+- Canonical owners total2181 lines/28295 raw words. Initial self-imposed25k-word target was missed and explicitly replaced with30k to retain exact required protocols; no numeric user cap was found. Original no-50k/crawlability requirement remains.
+- Second council will use fresh isolated read-only reviewers and frozen source hashes. No AWS gate or production maturity label changed.
 - Run invalidating feasibility experiments before committing to full compiler/provider implementation.
 
 ## Sources
