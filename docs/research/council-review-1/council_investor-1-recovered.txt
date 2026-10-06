@@ -1,0 +1,20 @@
+Message Type: FINAL_ANSWER
+Task name: /root
+Sender: /root/council_investor
+Payload:
+VERDICT: Cryptalis merits a bounded feasibility grant, but the evidence does not yet justify commitment to the complete implementation sequence.
+
+WHAT I UNDERSTAND: The useful proposition combines database-copy confidentiality, familiar application attributes, equality queries, and an explicit route through migration and removal. The differentiation lies in that integration and lifecycle contract. The documentation states its implementation limits honestly: zero verified production cells and zero independent cryptographic audits. These are disclosed proof gaps, not concealed defects. [Owner](/home/debrato/Projects/cryptalis/docs/status.md:17)
+
+WHAT I DO NOT BELIEVE:
+
+1. **A small retrofit is established for a meaningful customer segment.** The contract requires identities before insertion and rejects protected lazy loading, bulk writes, several mapping styles, and load callbacks. An existing application can depend on those paths across requests and background jobs. Adoption then requires extensive business-code changes, which erodes the principal value claim. First measure required changes in a representative application. Do not treat the integration score as customer evidence. [Identity owner](/home/debrato/Projects/cryptalis/docs/architecture/README.md:83), [path owner](/home/debrato/Projects/cryptalis/docs/compatibility.md:132), [score qualification](/home/debrato/Projects/cryptalis/docs/decisions.md:14)
+
+2. **Maintenance remains operationally acceptable at useful scale.** Transformation requires writer exclusion and a complete terminal scan. Exclusive mutation pauses protected work across the domain, including otherwise unaffected tenants. A large reindex or failed executor can therefore consume the maintenance window and extend an outage through reconciliation. This is an accepted architecture limit with untested adoption consequences. Require a measured completion-and-recovery budget before selecting domain size. [Verification owner](/home/debrato/Projects/cryptalis/docs/lifecycle.md:62), [availability owner](/home/debrato/Projects/cryptalis/docs/security.md:117)
+
+3. **Safe exit means a manageable remaining obligation.** The recovery reader still requires current external authority after package removal. Permanent authority loss without complete current proof denies the old domain even when keys survive. A customer can retain encrypted backups, uninstall successfully, then lose the table or trusted journal history. Those backups become operationally unrecoverable. Establish who funds, administers, and exercises this dependency for the entire backup lifetime. [Removal owner](/home/debrato/Projects/cryptalis/docs/lifecycle.md:234), [authority owner](/home/debrato/Projects/cryptalis/docs/security.md:148)
+
+CREDIBILITY RISK: The implementation order spends effort on compiler and provider machinery before testing the central adoption assumption. Public-hook integration appears at S04 and product performance at S13. A precise specification can consume substantial funding before the team learns whether customers can operate the product. [Sequence owner](/home/debrato/Projects/cryptalis/docs/build-guide.md:18)
+
+WHAT WOULD MAKE ME CARE: Move one disposable vertical feasibility experiment ahead of the full build. Use a representative application, one protected unique identifier, and synthetic records at customer-relevant scale. Exercise ordinary reads and writes, protect, reindex, interrupted recovery, tombstoned restore, and package-free removal. Pre-register limits for application changes, latency, downtime, operating cost, and recovery time. Retain every invariant. Fund the architecture only if this experiment meets those limits without private ORM hooks or undocumented operator rescue.
+

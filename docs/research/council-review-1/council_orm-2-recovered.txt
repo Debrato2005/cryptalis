@@ -1,0 +1,9 @@
+Message Type: FINAL_ANSWER
+Task name: /root
+Sender: /root/council_orm
+Payload:
+KEEP: Fence-first reads can be sufficient. Conditional DynamoDB registration is not mandatory for every read.
+
+REASON: Acquire the shared fence before observing authority. Hold it through complete authenticated result handoff. A denial cannot obtain its exclusive fence and complete meanwhile. Documented pre-deny reads can finish while denial remains PENDING.
+
+DECISIVE CRITERION: Prove no protected handoff survives shared-lock release unowned. If publication, commit reconciliation or required acknowledgement continues afterward, register durable ownership before releasing the lock. Denial must drain that ownership. Epoch-conditional registration is necessary when registration itself can race denial without fence protection.

@@ -1,0 +1,39 @@
+{
+  "spike": "S3",
+  "status": "PASS_LOCAL_POSTGRES",
+  "evidence": {
+    "server": "PostgreSQL 16.2 on x86_64-pc-linux-gnu, compiled by gcc (GCC) 10.2.1 20210130 (Red Hat 10.2.1-11), 64-bit",
+    "race": [
+      "COMMITTED",
+      "CONFLICT"
+    ],
+    "null_rows": 2,
+    "soft_delete": "CONFLICT",
+    "index_plan": [
+      {
+        "Plan": {
+          "Node Type": "Index Scan",
+          "Parallel Aware": false,
+          "Async Capable": false,
+          "Scan Direction": "Forward",
+          "Index Name": "spike_search_tenant_eq_key",
+          "Relation Name": "spike_search",
+          "Alias": "spike_search",
+          "Startup Cost": 0.41,
+          "Total Cost": 8.43,
+          "Plan Rows": 1,
+          "Plan Width": 8,
+          "Index Cond": "((tenant = '00000000-0000-0000-0000-000000000002'::text) AND (eq = '\\x42dcd311cd3627a676cf2fd8c7df06a0d6107f5ec134eb2e82f9fe3544641302'::bytea))"
+        }
+      }
+    ],
+    "heap_bytes": 1097728,
+    "indexes_bytes": 1466368,
+    "mean_term_datum_bytes": "33.0000000000000000",
+    "hostile_term_corruption": "logical duplicate accepted; expected boundary"
+  },
+  "limits": [
+    "one synthetic text normalizer",
+    "not a complete differential SQL grammar oracle"
+  ]
+}

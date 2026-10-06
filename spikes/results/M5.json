@@ -1,0 +1,19 @@
+{
+  "status": "PASS_LOCAL_SUPPLEMENT",
+  "admitted": 8,
+  "rejected": 10,
+  "three_valued_results": [
+    null,
+    true,
+    null,
+    false,
+    true,
+    false
+  ],
+  "non_total_counterexample": "HIDDEN_PROJECTION_DIVISION_ERROR",
+  "limits": [
+    "small grammar subset",
+    "not full runtime differential query oracle",
+    "joins/complete Result unqualified"
+  ]
+}

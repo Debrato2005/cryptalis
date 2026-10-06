@@ -1,0 +1,32 @@
+{
+  "spike": "S2",
+  "status": "PASS_LOCAL_MODEL",
+  "states": 1216,
+  "transitions": 3664,
+  "lock_only_drain_counterexample": "State(phases=(5, 6), alive=(False, False), locks=(False, False), registered=(True, False), markers=(True, True), data_commits=(True, True), known=(None, True), publications=(False, False), denied=True, complete=False, db_token=0)",
+  "effect_checks": {
+    "stale_owner": "DENIED",
+    "expiry_takeover": "DENIED",
+    "repeat_dispatch": "RECONCILE"
+  },
+  "capacity_checks": [
+    "oversized_live_set",
+    "burned_retry_headroom",
+    "exhausted_rollback_mirror"
+  ],
+  "recovery_checks": [
+    "repeat_resume_one_effect",
+    "repeat_abort_retains_denial",
+    "unknown_owner_pending",
+    "wrong_target_digest_denied",
+    "post_switch_abort_denied",
+    "unprovable_recovery_denied"
+  ],
+  "limits": [
+    "two operations",
+    "atomic fake authority",
+    "no AWS semantics or IAM",
+    "no proof of worker termination",
+    "not Cryptalis runtime verification"
+  ]
+}

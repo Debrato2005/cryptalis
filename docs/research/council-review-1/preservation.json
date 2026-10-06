@@ -17,5 +17,45 @@
     }
   ],
   "reviewer_files_found": 0,
-  "individual_reviews": "Not written to /tmp during round one. Returned native messages remain in the chat; recovered transcripts will be labeled as recovered."
+  "individual_reviews": "Not written to /tmp during round one. Returned native messages remain in the chat; recovered transcripts will be labeled as recovered.",
+  "recovered_messages": [
+    {
+      "file": "council_authority-1-recovered.txt",
+      "sha256": "0582e3f98f972fd1cd67f2ef6c70dddd4ae2b31b1ffb18f2e82369074023133b"
+    },
+    {
+      "file": "council_authority-2-recovered.txt",
+      "sha256": "2d03ab8c5f50757206b85d5c1251632f7dabf0595bb12d30899528b039964ea3"
+    },
+    {
+      "file": "council_claims-1-recovered.txt",
+      "sha256": "a0a42fab821d7cf457c95d42490fe5c83494b29b59f597bd84ca96269ee9021f"
+    },
+    {
+      "file": "council_copy-1-recovered.txt",
+      "sha256": "f17b0c10859472454acadc513e323ecfd4e5b050b0debc0b218c9e0e05c8f3f4"
+    },
+    {
+      "file": "council_crypto-1-recovered.txt",
+      "sha256": "789b42b20e1eb917258dfeddab15741a9855aa1a0aa71a6d369cd29b726a3f7c"
+    },
+    {
+      "file": "council_investor-1-recovered.txt",
+      "sha256": "9616e8bbec51c94c9f67550c203f1034271b195e4d91ec59a4d2a1af8f1b1be5"
+    },
+    {
+      "file": "council_orm-1-recovered.txt",
+      "sha256": "2a2906b707601f663b3ab8df66b6309c5bee8446f5c952f8ee10d9663aa345a3"
+    },
+    {
+      "file": "council_orm-2-recovered.txt",
+      "sha256": "2606db0270a4c98842dca301e4aaac168e5e77f491fbcf40e4df299be45fb2d4"
+    },
+    {
+      "file": "council_ux-1-recovered.txt",
+      "sha256": "2e23b951b520901e83bcdb9d01a2fc3c6e5e3a79d227fe7e0c905bb553371a52"
+    }
+  ],
+  "recovery_source": "Current Codex chat rollout-2026-10-06T12-40-33-01a1113a-defe-7bb3-8953-bdf9c69bc7ca.jsonl; native agent_message FINAL_ANSWER content preserved verbatim",
+  "original_request_recovery": "original-reset-request.txt decoded verbatim from earliest matching current-chat user request; not reconstructed from council summary"
 }

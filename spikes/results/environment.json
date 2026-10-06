@@ -1,0 +1,21 @@
+{
+  "python": "3.12.3",
+  "platform": "Linux-6.18.33.2-microsoft-standard-WSL2-x86_64-with-glibc2.39",
+  "packages": {
+    "psycopg-binary": "3.3.6",
+    "psycopg": "3.3.6",
+    "cffi": "2.1.1",
+    "platformdirs": "4.12.3",
+    "fasteners": "0.20",
+    "pgserver": "0.1.4",
+    "pycparser": "3.0",
+    "greenlet": "3.3.2",
+    "psutil": "7.2.2",
+    "SQLAlchemy": "2.1.3",
+    "cryptography": "50.0.2",
+    "typing_extensions": "4.16.0"
+  },
+  "openssl": "OpenSSL 4.0.3 29 Sep 2026",
+  "database": "bundled PostgreSQL 16.2, Unix socket only",
+  "selected_production_cell": false
+}

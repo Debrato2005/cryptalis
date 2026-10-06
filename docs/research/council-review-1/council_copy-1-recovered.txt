@@ -1,0 +1,21 @@
+Message Type: FINAL_ANSWER
+Task name: /root
+Sender: /root/council_copy
+Payload:
+VERDICT: Narrow the adoption message, rename subject “shred,” and define failure-specific remedies before operator trials.
+
+BEST MESSAGE: Cryptalis proposes field encryption for a constrained AWS/SQLAlchemy deployment, with declared equality leakage and maintenance downtime. The runtime remains unimplemented and unverified.
+
+WEAK LANGUAGE:
+
+1. **Adoption breadth — credible comprehension risk.** [README.md](/home/debrato/Projects/cryptalis/README.md:12) leads with “one setup call” and ordinary expressions. The exact AWS stack, loading restrictions and maintenance pause appear later in separate owners. A developer can approve adoption, then discover that lazy loads, bulk jobs or deployment topology require application changes. This is a documented restriction presented too late, rather than a hidden runtime defect. Put a short eligibility checklist before the example. Test comprehension with a representative backend: ask its operator to identify required application changes, excluded writers and downtime before reading implementation details.
+
+2. **Subject destruction — terminology conflicts with the accepted limit.** [docs/architecture/README.md](/home/debrato/Projects/cryptalis/docs/architecture/README.md:255) names the command `shred --subject`, although [docs/lifecycle.md](/home/debrato/Projects/cryptalis/docs/lifecycle.md:183) defines managed denial. An operator can record “subject shredded” in a deletion ticket while backup wrappers and shared terms survive. Rename this action `revoke --subject` or `deny --subject`. Reserve destruction language for its independently observed custody state. Test whether operators can correctly distinguish denial, surviving recovery and domain destruction from command output alone.
+
+3. **Diagnostic next action — concrete contract gap.** [docs/security.md](/home/debrato/Projects/cryptalis/docs/security.md:387) groups authentication failure, index inconsistency, authorization denial and buffer overflow under a fresh-session remedy. Repeating an unchanged query against corrupt stored data causes another failure without resolving its cause. Define separate remedies: authorization reinspection, authorized integrity inspection, or a smaller bounded query. Mark authentication/index failures non-retryable until inspection resolves them. Inject each failure and require an operator to select the safe next action without source access.
+
+REWRITE:
+
+> Cryptalis currently supplies research parsers and synthetic examples. Its proposed runtime targets one reviewed Linux, SQLAlchemy and AWS RDS deployment with KMS, DynamoDB and an independently administered S3 journal. Admitted assignments and equality queries retain ordinary syntax. Adoption also requires compatible mappings, explicit bounded reads, complete writer inventory, schema changes and maintenance pauses. Equality reveals declared patterns. Migration initially retains a plaintext rollback mirror. Subject revocation does not erase recoverable backups. Recovery requires surviving keys, readers and provable current authority. No production runtime or compatibility cell is verified today.
+
+NARRATIVE FIT: The early maturity notice prevents implementation overclaims. However, the reading order makes operators traverse mechanisms before deciding deployment eligibility. Put eligibility before setup, then show storage exposure, rollback deadlines and recovery dependencies. Keep current evidence immediately accessible. Put each safe remedy beside its diagnostic.

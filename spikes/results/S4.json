@@ -1,0 +1,24 @@
+{
+  "spike": "S4",
+  "status": "PASS_LOCAL_SMOKE",
+  "evidence": {
+    "openssl": "OpenSSL 4.0.3 29 Sep 2026",
+    "header_bytes": 80,
+    "rejected": [
+      "tamper",
+      "relocation",
+      "wrong_key",
+      "wrong_context",
+      "wrong_nonce"
+    ],
+    "same_context_replay": "ACCEPTED_DOCUMENTED_LIMIT",
+    "fork_inherited": "DENIED",
+    "fresh_child_nonce_observation": "distinct in this sample, not an RNG proof",
+    "presence_MAC_counterexample": "detects fresh substitution but accepts historical absent-marker replay",
+    "descriptor_limit": "synthetic digest; not a complete canonical-descriptor vector suite"
+  },
+  "limits": [
+    "not an independent cryptographic audit",
+    "no live provider, quota or destruction proof"
+  ]
+}

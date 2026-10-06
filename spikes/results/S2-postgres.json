@@ -1,0 +1,14 @@
+{
+  "spike": "S2-PostgreSQL-supplement",
+  "status": "PASS_LOCAL_POSTGRES",
+  "evidence": {
+    "exclusive": "BLOCKED_BY_SHARED",
+    "outcome_after_later_delete": "COMMITTED_MARKER_RETAINED",
+    "stale_database_token": "TYPED_DENIAL_BEFORE_MUTATION",
+    "rollback": "DATA_AND_MARKER_ABSENT",
+    "acknowledgement_fault": "application acknowledgement discarded after commit; not an actual transport cut"
+  },
+  "limits": [
+    "no DynamoDB or real worker termination"
+  ]
+}

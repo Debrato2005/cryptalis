@@ -9,18 +9,20 @@ Task date: 2026-10-07, Asia/Calcutta. This ledger is temporary and will be archi
 - Existing documentation changes belong to the earlier architecture reset in this chat. Preserve their exact starting copies in /tmp/cryptalis-hardening-baseline.
 - Commit new evidence and checkpoint files first. Do not stage unrelated starting changes.
 - First-review report, frozen brief and baseline are preserved in docs/research/council-review-1.
-- Individual first-round outputs were not saved as files. Recover the returned chat messages with that provenance label.
-- Python 3.12.3 and PostgreSQL 16 client tools exist locally. Server availability and exact target dependency availability remain UNKNOWN.
+- Nine individual first-round/dispute outputs were recovered verbatim from this chat and labeled recovered. Original reset request also recovered.
+- Local spike venv has exact hash-pinned dependencies. Bundled pgserver 0.1.4 supplies PostgreSQL 16.2, running on owned Unix socket with TCP disabled.
+- Production target version publications were checked against primary sources. Actual CPython 3.14.8/RDS18.6 cell remains UNKNOWN.
+- Commit 95befb5 preserved first-review evidence/checkpoint. Scoped Git metadata escalation was required by the read-only .git sandbox.
 
 ## Work ledger
 
 | IDs | Work | State |
 |---|---|---|
-| H1-H4 | Exact authority, commit, ORM and async contracts plus executable spikes | TODO |
-| M5-M10 | Predicate grammar, capacity, uniqueness, recovery, denial names and adoption | TODO |
+| H1-H4 | Exact authority, commit, ORM and async contracts plus executable spikes | Drafted canonical revisions; local S1/S2 pass, full gates blocked |
+| M5-M10 | Predicate grammar, capacity, uniqueness, recovery, denial names and adoption | Drafted canonical revisions; local predicate/capacity/recovery/search subsets pass |
 | A1-A3 | Control-plane comparison, primary version/crypto verification and cheap leakage mitigations | TODO |
 | A4-A8 | Gate triage, kill list, measured targets, expert packet and documentation integrity | TODO |
-| S1-S4 | Local real-PostgreSQL ORM/search, state exploration and crypto smoke evidence | TODO |
+| S1-S4 | Local real-PostgreSQL ORM/search, state exploration and crypto smoke evidence | Executed successfully; raw results in spikes/results. S2 1216 states/3664 transitions |
 | Council 2 | Fresh independent review of revised contracts, preserve outputs and resolve HIGH findings | TODO |
 | Final | Regression tests, package hash comparison, scope/diff inspection, counts and archive | TODO |
 
@@ -29,7 +31,12 @@ Task date: 2026-10-07, Asia/Calcutta. This ledger is temporary and will be archi
 - A local development cell cannot qualify the selected production cell.
 - Fakes cannot establish AWS semantics, IAM, provider quotas, target identity or destruction.
 - Never count spike code as IMPLEMENTED or VERIFIED Cryptalis runtime.
-- Locate the original complete product kill list and numerical documentation budgets. If unavailable, state the recovered criteria and provenance gap.
+- Complete original 15-item kill list recovered in original-reset-request.txt. No numeric documentation cap was stated; retain the no-50k-word/crawlable constraint and record measured local budget assumptions.
+- ORM experiment changed the design after two real failures: expired-ID access caused implicit loading; callback ordering defeated a before_flush-only seal. Public inspection identity and final SQL guard now pass unchanged oracles.
+- Closed predicate grammar is necessary: actual PG hidden division projection fails where the original OR query succeeds. M5 rejects executable expressions.
+- S3 raw plans include public synthetic terms. They are lab evidence, not permitted production diagnostics.
+- Current baseline research regression: 612 passed in 7.96 s. Final rerun pending.
+- Stop the owned PostgreSQL cluster after final evidence, retain results and archive this ledger.
 - Run invalidating feasibility experiments before committing to full compiler/provider implementation.
 
 ## Sources

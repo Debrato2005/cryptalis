@@ -1,0 +1,18 @@
+Message Type: FINAL_ANSWER
+Task name: /root
+Sender: /root/council_claims
+Payload:
+VERDICT: Retain the conditional design claims, but narrow the opening encryption promise to finalized ordinary writes.
+
+CLAIM STATUS: **Observed:** the reviewed documents explicitly distinguish design, executable research and production evidence. The frozen packet accepts the recorded 612 tests. I did not rerun them. **Inferred:** the selected mechanisms could establish the bounded guarantees if their gates pass. **Hypothetical:** protected ORM execution, live authority, lifecycle transitions and production deployment. **Unknown:** atomic publication through public ORM hooks, distributed drain completeness, cryptographic composition and operational performance. None becomes verified from documentation or parser tests.
+
+ENDPOINT / DENOMINATOR ISSUE:
+
+1. **Medium wording risk, not an undisclosed implementation defect.** `/home/debrato/Projects/cryptalis/README.md:4` and `/home/debrato/Projects/cryptalis/docs/architecture/README.md:7` say selected fields encrypt before PostgreSQL receives them. Read literally across the complete designed lifecycle, this exceeds the contract. After protection switches, an ordinary update writes the ciphertext and its plaintext rollback mirror atomically. `/home/debrato/Projects/cryptalis/docs/lifecycle.md:95` defines that behavior, and line 102 explicitly names its plaintext exposure. Deprotection also deliberately writes plaintext staging columns at line 213. The README discloses mirrors at line 53, so this is a headline scope ambiguity. Repair: specify “finalized protected storage” and qualify lifecycle plaintext copies in the same opening paragraph. The decisive evidence must inspect emitted SQL and persisted rows separately during protection observation, finalized operation and deprotection.
+
+No second material contradiction emerged from the reviewed owners. In particular, query success explicitly excludes completeness against malicious omission. Subject shred explicitly preserves possible cryptographic recovery. Domain destruction requires historical KEK coverage and known-copy evidence. Production compatibility and independent audits both remain zero. These are disclosed boundaries, not hidden failures.
+
+SAFE WORDING: “Cryptalis specifies a field-protection layer for one selected SQLAlchemy/PostgreSQL/AWS stack. After finalized protection, admitted ordinary writes store selected payloads as ciphertext. Approved lifecycle operations can retain or create plaintext copies. Search exposes declared patterns. Current executable evidence covers research components and synthetic demonstrations, not the designed runtime.”
+
+RED FLAG: The most material unresolved claim risk is atomic plaintext publication and revocation completion across ORM state, worker ownership and database fences. Require real-stack fault evidence before either claim becomes public runtime assurance.
+

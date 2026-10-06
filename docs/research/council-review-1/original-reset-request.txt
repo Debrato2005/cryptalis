@@ -1,0 +1,2052 @@
+You are working on the current Cryptalis repository.
+
+Your task is to perform a **complete architecture and documentation reset** of Cryptalis.
+
+This is not an incremental architecture patch. Do not add another document on top of the existing architecture. Research the problem deeply, challenge the current design, remove unnecessary complexity, resolve contradictions, and rewrite/consolidate the documentation so the repository has **one final coherent architecture that another coding agent can immediately understand and implement**.
+
+Do **not** implement production runtime features in this pass. This pass is architecture, security design, product UX, documentation consolidation, and implementation handoff.
+
+---
+
+# 0. Core outcome
+
+Cryptalis should become:
+
+> **A manifest-driven application data-protection layer that can be added to an existing backend with minimal backend changes, encrypts selected sensitive data before PostgreSQL sees it, preserves explicitly supported queries over encrypted data, manages the entire key/data lifecycle, fails closed, and can be safely rolled back or completely removed.**
+
+The primary product property is **usability**.
+
+A normal developer should not need to become a cryptographer.
+
+The intended mental model is approximately:
+
+```text
+existing backend
+      +
+cryptalis manifest
+      +
+minimal integration
+      ↓
+normal application behaviour
+      ↓
+encrypted sensitive database fields
+      +
+declared encrypted search
+      +
+managed keys/lifecycle
+```
+
+Complex internals are allowed.
+
+Complex public UX is not.
+
+---
+
+# 1. No V1 / V2 / V3 architecture
+
+There is no "we will solve this in V2."
+
+Design the final intended Cryptalis architecture now.
+
+Do not defer essential correctness problems with phrases such as:
+
+- V1 does not support this
+- later version
+- future architecture
+- eventual design
+- we will solve this afterwards
+
+For every important capability, make one of these decisions:
+
+```text
+SUPPORTED
+UNSUPPORTED BY DESIGN
+INTERNAL ONLY
+```
+
+If something is too dangerous, too expensive, too complex, or does not provide enough value, explicitly exclude it.
+
+That is better than leaving it as vague future work.
+
+However:
+
+**Internal technical versioning is mandatory.**
+
+Manifest schema versions, ciphertext format IDs, normalization versions, index-format versions, key generations and compatibility ranges are necessary for upgrades and old-data readability.
+
+Do not confuse internal format versioning with product-generation architecture.
+
+---
+
+# 2. Begin by understanding the actual repository
+
+Before redesigning anything:
+
+1. Read `AGENTS.md`.
+2. Read `README.md`.
+3. Read `ENGINEERING_PLAYBOOK.md`.
+4. Inspect the entire repository tree.
+5. Read the architecture/documentation map.
+6. Inspect all current `docs/architecture/*`.
+7. Inspect `docs/backend-build-checklist.md`.
+8. Inspect existing research/evidence documents.
+9. Inspect current source modules and tests enough to understand what is actually implemented.
+10. Inspect recent git history and current git status.
+
+Do not assume documentation equals implementation.
+
+Keep these states separate:
+
+```text
+DESIGNED
+IMPLEMENTED
+VERIFIED
+```
+
+Never convert a designed capability into an implementation claim.
+
+Do not destroy or reset existing user work.
+
+Do not rewrite runtime source code in this pass.
+
+---
+
+# 3. Use relevant skills and tools
+
+Discover the available skills/plugins before starting.
+
+If **Ponytail** exists in the Codex environment, load and use it according to its own instructions.
+
+Use relevant architecture, security, threat-model, research, planning, codebase-navigation and documentation skills.
+
+Use Superpowers skills where applicable, especially for:
+
+- architectural reasoning
+- adversarial review
+- parallel independent research
+- final plan construction
+
+Use web research extensively.
+
+Use primary sources whenever possible.
+
+Use GitHub issues, Reddit, Hacker News and security community discussion to discover real operational/developer pain, but verify technical claims against authoritative sources.
+
+Do not use skills merely because they exist.
+
+Do not let a methodology or skill add architecture that the product does not need.
+
+**YAGNI aggressively.**
+
+Prefer:
+
+> sophisticated internal mechanism + boring public UX
+
+over:
+
+> sophisticated public framework.
+
+---
+
+# 4. Token-efficient working method
+
+This is a long-running task, but be disciplined with context.
+
+After mapping the repository:
+
+- use `rg`/targeted searches instead of repeatedly reopening entire large documents;
+- maintain one compact internal decision ledger;
+- split independent research into parallel lanes when useful;
+- fetch only the parts of external documentation needed;
+- do not paste huge source documents into reasoning;
+- resolve contradictions once and update the canonical owner;
+- do not duplicate the same contract across several docs;
+- prefer one canonical definition with links from other documents;
+- continuously remove obsolete text while rewriting;
+- avoid creating another 50k-word architecture document unless the information genuinely requires it.
+
+The final documentation must be **easier to crawl than the current repository**.
+
+A new coding agent should understand the product, security boundary, architecture and next implementation step quickly.
+
+---
+
+# 5. Product usability is the highest-priority constraint
+
+Cryptalis fails as a product if developers need to restructure their application around it.
+
+The ideal adoption experience is approximately:
+
+```bash
+cryptalis init
+# edit cryptalis manifest
+
+cryptalis doctor
+cryptalis plan
+cryptalis apply
+```
+
+Then the application continues using ordinary model attributes and ordinary supported queries.
+
+Investigate what the minimum integration hook actually needs to be.
+
+Possibilities include:
+
+- one SQLAlchemy attachment/setup call;
+- SQLAlchemy instrumentation;
+- PostgreSQL wire-protocol proxy;
+- explicit repository adapter;
+- another safer design discovered during research.
+
+Do not assume the current SQLAlchemy design is correct merely because it exists.
+
+Compare approaches objectively.
+
+For each approach examine:
+
+```text
+backend changes
+query transparency
+security boundary
+raw-SQL bypasses
+SQL semantics
+async behaviour
+migration behaviour
+debuggability
+performance
+protocol/parser complexity
+deployment complexity
+framework coupling
+uninstallability
+failure modes
+```
+
+Select **one primary architecture**.
+
+Do not leave this unresolved.
+
+A secondary integration mode may exist only if it provides substantial user value without multiplying the security model.
+
+---
+
+# 6. Minimal backend changes means minimal
+
+For the supported stack, aim for this property:
+
+Existing code:
+
+```python
+user.email = "alice@example.com"
+
+session.scalar(
+    select(User).where(User.email == email)
+)
+```
+
+should remain conceptually the same after protection.
+
+Avoid forcing users to scatter calls like:
+
+```python
+encrypt(...)
+decrypt(...)
+blind_index(...)
+EncryptedString(...)
+CryptalisEmail(...)
+search_encrypted(...)
+```
+
+through business logic.
+
+If perfect transparency would create unsafe hidden behaviour, choose the smallest explicit integration necessary and explain why.
+
+Never sacrifice correctness merely to advertise "zero-code."
+
+But treat every extra application change as a product cost.
+
+---
+
+# 7. The manifest is the main user-facing abstraction
+
+Design the manifest so a developer declares **security intent**, not cryptographic plumbing.
+
+It should answer things like:
+
+```text
+which fields are protected?
+which fields must remain searchable?
+which query capabilities are needed?
+what normalization semantics apply?
+what key scope is required?
+which approved encryption profile is used?
+```
+
+It should not normally require developers to configure:
+
+```text
+nonce length
+tag length
+HKDF labels
+AAD byte encoding
+blind-index truncation internals
+key derivation trees
+ciphertext framing
+KMS retry algorithms
+```
+
+Prefer safe named Cryptalis profiles.
+
+For example:
+
+```yaml
+users:
+  identity: id
+
+  fields:
+    email:
+      protect: true
+      search: equality
+      normalize: email
+      encryption: standard
+
+    address:
+      protect: true
+```
+
+This is illustrative, not a schema mandate.
+
+Research and design the actual final manifest.
+
+The manifest must contain **no secret key material**.
+
+It should be safe for the complete backend source and Cryptalis configuration to be public from a cryptographic perspective.
+
+Its secrecy must never be required for data confidentiality.
+
+---
+
+# 8. Public-source threat model
+
+Design Cryptalis according to Kerckhoffs's principle.
+
+Assume an attacker possesses:
+
+```text
+complete backend source
+Cryptalis source
+Cryptalis manifest
+database schema
+ciphertext format specification
+algorithms
+PostgreSQL dump
+database backups
+search indexes
+```
+
+but does **not** possess the external key authority.
+
+Protected plaintext should remain unrecoverable except for explicitly documented leakage.
+
+This is a fundamental product invariant.
+
+Clearly distinguish what Cryptalis does **not** protect against.
+
+At minimum analyze:
+
+```text
+application process compromise / RCE
+malicious authorized application code
+KMS/Vault/HSM authority compromise
+broken application authorization
+IDOR/business-logic bugs
+post-decryption export
+plaintext deliberately logged by host application
+endpoint legitimately returning plaintext
+```
+
+Do not imply database encryption solves application compromise.
+
+---
+
+# 9. Resolve the complete threat model
+
+Build a concise adversary matrix covering at least:
+
+```text
+stolen pg_dump
+stolen snapshot
+stolen backup
+curious DBA
+cloud DB read access
+database write attacker
+ciphertext tampering
+ciphertext relocation
+ciphertext replay
+cross-tenant substitution
+SQL injection
+raw SQL
+COPY
+bulk updates
+ETL
+CDC
+alternate workers
+migration scripts
+compromised application
+stolen KMS credentials
+provider outage
+old application binary
+stale worker
+restored old database
+restored old VM
+malicious dependency
+release-pipeline compromise
+```
+
+For each state:
+
+```text
+STOPPED
+PARTIALLY MITIGATED
+NOT STOPPED
+```
+
+and explain why.
+
+Do not market partial mitigation as prevention.
+
+---
+
+# 10. P0 failures — architecture must solve these
+
+Treat these as product-killing risks.
+
+## Bypass paths
+
+Raw SQL, `COPY`, Core/bulk operations, ETL, alternate workers and migrations must not silently persist plaintext into supposedly protected storage.
+
+Research how to enforce or detect this without destroying usability.
+
+Consider:
+
+- ORM interception;
+- physical schema design;
+- DB permissions;
+- private physical columns;
+- constraints/framing checks;
+- proxy enforcement;
+- writer registration;
+- static/runtime doctor checks.
+
+Do not claim universal prevention if the mechanism only detects some paths.
+
+Unknown coverage must remain `UNKNOWN`, never `PASS`.
+
+## Silent fallback
+
+Unsupported encrypted queries must never:
+
+- become plaintext queries;
+- silently skip encryption;
+- silently return incomplete results;
+- silently change semantics.
+
+Use typed failures such as:
+
+```text
+UnsupportedEncryptedQuery
+```
+
+or equivalent.
+
+Default deny.
+
+## Ciphertext relocation
+
+Authenticated encryption alone is insufficient if ciphertext can be copied between valid locations.
+
+Research and define exact authenticated context.
+
+Likely candidates include stable identifiers for:
+
+```text
+protection domain
+tenant
+subject if applicable
+record identity
+model/table logical identity
+field logical identity
+representation
+format
+key generation
+purpose
+```
+
+Do not bind long-term ciphertext only to mutable SQL names if table/column renames must remain possible.
+
+## Replay/freshness
+
+AEAD authenticity does not establish freshness.
+
+Decide exactly which replay threats Cryptalis prevents and which it does not.
+
+Do not casually build an enormous freshness service unless the threat justifies it.
+
+Choose the simplest mechanism consistent with the declared protection.
+
+## Nonce/RNG safety
+
+Research and select the exact approved primitive/composition.
+
+Compare current vetted options and libraries.
+
+Do not invent cryptography.
+
+Address:
+
+```text
+nonce generation
+multi-process workers
+fork
+multiple hosts
+RNG failure
+key/nonce limits
+key commitment if the actual threat model requires it
+format authentication
+```
+
+The architecture must contain one clear answer, not several candidate algorithms.
+
+## Key authority
+
+Resolve:
+
+```text
+where root authority lives
+provider identity
+secret-zero bootstrap
+workload authentication
+least privilege
+key scope
+provider outage
+audit
+cache boundaries
+revocation
+```
+
+Long-lived raw root keys in application `.env` are not an acceptable production design.
+
+Prefer cloud workload identity / Vault authentication / equivalent mechanisms where applicable.
+
+## Rotation
+
+Explicitly distinguish:
+
+```text
+KEK/wrapper rewrap
+payload encryption-key generation change
+search-index key rotation/reindex
+```
+
+Do not treat these as the same operation.
+
+Design rolling-deploy compatibility:
+
+```text
+read new generation
+→ change writer generation
+→ migrate existing data
+→ verify coverage
+→ retire old generation only when safe
+```
+
+## Migration safety
+
+Protection migrations must be:
+
+```text
+resumable
+idempotent
+bounded
+observable
+crash-safe
+concurrency-aware
+fully verified
+```
+
+Investigate shadow representations and safe cutover.
+
+Define the exact irreversible boundary.
+
+Do not report a partial migration as success.
+
+## Residual plaintext
+
+Protecting current rows does not erase historical plaintext from:
+
+```text
+WAL
+dead tuples
+TOAST
+replicas
+snapshots
+backups
+exports
+```
+
+Design truthful reporting.
+
+Do not make impossible sanitization claims.
+
+## Rollback
+
+Easy rollback is a core product requirement.
+
+Define what rollback means before and after irreversible cleanup.
+
+Prefer keeping a verified rollback representation until the user crosses an explicit contraction/finalization boundary.
+
+After destructive cleanup, do not pretend rollback remains cheap.
+
+## Restore
+
+A restored old database must not automatically restore old authority.
+
+Research and define the smallest external non-restored state necessary to prevent:
+
+```text
+revoked keys becoming valid
+deleted subjects becoming recoverable
+old policy becoming authoritative
+completed destructive operations being forgotten
+```
+
+## Removal / uninstall
+
+Cryptalis must not create vendor lock-in.
+
+Design a complete:
+
+```text
+protected → plaintext → Cryptalis-independent
+```
+
+workflow.
+
+It must:
+
+- backfill plaintext safely;
+- verify every required value;
+- switch the application;
+- prove the application works without Cryptalis;
+- inventory old encrypted backups and required readers/keys;
+- retire search metadata;
+- retire protected columns;
+- retire eligible keys only when safe;
+- remove Cryptalis metadata;
+- remove the package last.
+
+Do not equate package uninstall with secure decommissioning.
+
+## Crypto-shredding
+
+Resolve the exact scope and claim.
+
+Differentiate:
+
+```text
+access revoked
+key material no longer used for new operations
+provider deletion requested
+provider deletion pending
+recovery still possible
+bounded destruction verified
+```
+
+Never print `ERASED` because one local row was deleted.
+
+Research NIST SP 800-88 Rev. 2 and provider-specific deletion semantics.
+
+Consider restore-resistant tombstones.
+
+Resolve the interaction between:
+
+```text
+per-subject shredding
+shared search indexes
+backup recoverability
+key granularity
+```
+
+## Search-token/ciphertext consistency
+
+Payload ciphertext and its searchable representation must never drift.
+
+Define atomic update semantics and consistency verification.
+
+## Supply-chain security
+
+Cryptalis itself handles plaintext and keys, so package compromise is catastrophic.
+
+Research current 2026 Python/PyPI supply-chain incidents before making claims.
+
+Define a proportionate release policy covering:
+
+```text
+maintainer authentication
+protected release environment
+minimal dependencies
+hash locking
+SBOM
+artifact signing/provenance
+reproducible builds where practical
+install/import-time behaviour
+security disclosure
+critical format flaw response
+```
+
+Do not build custom supply-chain tooling if mature tools already exist.
+
+---
+
+# 11. Searchable encryption is a core feature, not a side experiment
+
+A central product requirement is:
+
+> **Protected data remains searchable for explicitly supported query semantics.**
+
+At minimum deeply evaluate:
+
+```text
+equality
+IN
+uniqueness
+```
+
+Do not automatically implement range, ordering, text, regex, prefix, fuzzy, joins or JSON merely because competitors support them.
+
+For each candidate capability determine:
+
+```text
+real user value
+leakage
+security attacks
+storage amplification
+write amplification
+migration complexity
+rotation complexity
+shredding interaction
+query semantics
+performance cost
+implementation complexity
+```
+
+Then either support it in the final architecture or mark it:
+
+```text
+UNSUPPORTED BY DESIGN
+```
+
+Do not say "future."
+
+---
+
+# 12. Equality search leakage must be explicit
+
+Research:
+
+- blind indexes;
+- keyed HMAC equality terms;
+- truncated HMAC/beacon approaches;
+- partitioned beacons;
+- false-positive filtering;
+- tenant-specific domains;
+- frequency leakage;
+- search-pattern leakage;
+- access-pattern leakage;
+- chosen-input attacks;
+- auxiliary-information attacks.
+
+The final architecture must include a leakage profile.
+
+If equality search reveals equality classes/frequency, say so plainly.
+
+Do not describe searchable ciphertext as opaque.
+
+---
+
+# 13. Low-entropy and correlated fields
+
+A searchable boolean/status/country/diagnosis field may reveal nearly everything even when cryptographically protected.
+
+Design `cryptalis doctor` to identify dangerous configurations.
+
+Research how systems such as AWS searchable-encryption beacons reason about skew, frequency and correlation.
+
+Analyze groups of fields as well as individual fields.
+
+Do not build heavyweight privacy machinery unless evidence shows the complexity is justified.
+
+The safest answer may be:
+
+```text
+reject or strongly warn
+```
+
+for certain searchable data classes.
+
+---
+
+# 14. Chosen-input and access-pattern attacks
+
+Assume some applications allow attackers to insert known values.
+
+Determine whether that lets them label search terms or infer queries.
+
+Research searchable-encryption leakage-abuse and file/record-injection literature.
+
+Document exactly what Cryptalis does and does not mitigate.
+
+Do not attempt ORAM/PIR/differential privacy simply to claim academic completeness unless the product value justifies the operational cost.
+
+---
+
+# 15. Normalization and SQL semantics
+
+Encrypted equality must define exact semantics.
+
+Resolve:
+
+```text
+Unicode normalization
+case folding
+email normalization
+phone normalization
+whitespace
+NULL
+empty string
+decimals
+timestamps
+collations
+unique constraints
+IN semantics
+type fidelity
+```
+
+Normalization must be:
+
+```text
+versioned
+deterministic
+field-declared
+migration-aware
+```
+
+Changing a normalizer must trigger a deliberate reindex/reconfiguration operation.
+
+---
+
+# 16. Plaintext escaping outside PostgreSQL
+
+Map plaintext boundaries honestly.
+
+Investigate:
+
+```text
+SQLAlchemy echo/debug
+exception locals
+Sentry/APM
+tracing
+request logging
+Redis
+Elasticsearch
+queues
+CSV exports
+analytics
+data warehouses
+CDC/Debezium
+Postgres statement logging
+error DETAIL
+core dumps
+swap
+debuggers
+Python object repr
+```
+
+Cryptalis cannot guarantee host application plaintext never leaks.
+
+Its own logs/errors/diagnostics must never emit secrets.
+
+`doctor` may detect high-confidence risks, but it must not claim complete coverage when dynamic application behaviour is unknowable.
+
+---
+
+# 17. `cryptalis doctor`
+
+Doctor should be one of the core product surfaces.
+
+Avoid turning it into an overengineered research static-analysis platform unless evidence proves that necessary.
+
+Design useful high-confidence checks first.
+
+Doctor should cover, where feasible:
+
+```text
+manifest validity
+manifest/schema drift
+ORM mapping
+supported writer paths
+unsupported queries
+dangerous raw paths
+search leakage warnings
+low-entropy searchable fields
+normalization compatibility
+key/provider reachability
+provider/key state
+key references accidentally containing secrets
+migration state
+rotation state
+restore dependencies
+backup/key dependencies
+format compatibility
+known logging/exposure configuration
+package/version compatibility
+uninstall readiness
+```
+
+Use four result states:
+
+```text
+PASS
+WARN
+FAIL
+UNKNOWN
+```
+
+`UNKNOWN != PASS`.
+
+Nothing security-critical may fail silently.
+
+---
+
+# 18. Public command surface
+
+Keep it boring.
+
+Research and settle the exact final CLI, but aim for a small surface similar to:
+
+```text
+cryptalis init
+cryptalis doctor
+cryptalis plan
+cryptalis apply
+cryptalis status
+cryptalis explain
+
+cryptalis rollback
+
+cryptalis keys status
+cryptalis keys rotate
+cryptalis shred
+
+cryptalis restore check
+cryptalis restore admit
+
+cryptalis remove / uninstall
+```
+
+Do not expose internal transition/state-machine vocabulary unless operators actually need it.
+
+One internal engine may support many operations while the public commands remain simple.
+
+---
+
+# 19. One transition engine internally
+
+Avoid separate migration machinery for every feature.
+
+Research whether one state machine can safely handle:
+
+```text
+protect
+change protection settings
+add/change search representation
+rotate/reindex
+reencrypt
+deprotect
+restore admission
+remove
+format upgrade
+```
+
+The internal phases may resemble:
+
+```text
+PLAN
+PREPARE
+TRANSFORM
+VERIFY
+SWITCH
+OBSERVE
+FINALIZE
+```
+
+or something simpler/better.
+
+The exact names do not matter.
+
+The guarantees do.
+
+Keep reversible work reversible.
+
+Require explicit approval only at genuinely irreversible or plaintext-publication boundaries.
+
+Do not make ordinary usage approval-heavy.
+
+---
+
+# 20. Performance is part of security
+
+If Cryptalis is slow enough that teams bypass it, the security architecture failed.
+
+Research and define the performance model.
+
+Never perform one remote KMS operation per ordinary field value unless there is overwhelming justification.
+
+Investigate:
+
+```text
+envelope encryption
+locally usable derived/branch material
+bounded cache
+cache authorization
+cold start
+provider outage
+batching
+index write amplification
+ciphertext expansion
+query planning
+candidate decrypt/filter
+migration throughput
+```
+
+Benchmark architecture must cover real end-to-end paths:
+
+```text
+application
+→ ORM/proxy
+→ Cryptalis
+→ key/cache/provider
+→ PostgreSQL
+→ Cryptalis
+→ application
+```
+
+Measure at least:
+
+```text
+p50
+p95
+p99
+throughput
+CPU
+memory
+DB storage
+index storage
+write amplification
+cold-key latency
+hot-key latency
+migration throughput
+```
+
+Compare to the same backend without Cryptalis.
+
+Do not use primitive AES microbenchmarks as product performance evidence.
+
+---
+
+# 21. Compatibility must be explicit
+
+Do not claim "works with Python/Postgres" generically.
+
+Create a support matrix.
+
+Investigate at least the relevant current versions of:
+
+```text
+Python
+SQLAlchemy
+psycopg
+asyncpg if applicable
+Alembic
+PostgreSQL
+PgBouncer
+connection pooling
+sync sessions
+async sessions
+bulk operations
+prepared statements
+logical replication
+CDC
+```
+
+Choose exactly what is supported.
+
+Unsupported combinations fail clearly.
+
+Do not silently degrade security for compatibility.
+
+---
+
+# 22. Research competitors deeply
+
+Study current primary documentation and implementation details for at least:
+
+## CipherStash
+
+Investigate:
+
+- Proxy architecture
+- SDK architecture
+- query rewriting
+- encrypted search constructions
+- equality/range/text/JSON capability
+- leakage
+- key derivation/custody
+- migration CLI
+- deployment/rollback
+- developer ergonomics
+- current limitations
+
+Start from current official docs such as:
+
+- `https://cipherstash.com/docs/`
+- `/docs/reference/proxy`
+- `/docs/security/cryptography`
+- `/docs/concepts/searchable-encryption`
+- `/docs/guides/deployment`
+
+Do not copy CipherStash blindly.
+
+Determine what it proves is practical and where Cryptalis can be simpler or safer.
+
+## Acra
+
+Research:
+
+- AcraServer SQL proxy
+- transparent encryption
+- blind-index/search architecture
+- SQL parser implications
+- configuration
+- key handling
+- operational complexity
+
+Use current official Cossack Labs docs.
+
+## CipherSweet
+
+Research:
+
+- randomized authenticated field encryption
+- separate blind indexes
+- domain/key separation
+- normalization
+- collision/truncation planning
+- limitations
+
+Use it as a construction/ergonomics reference, not proof of Cryptalis correctness.
+
+## MongoDB Queryable Encryption
+
+Research:
+
+- automatic query transformation
+- randomized encrypted payload
+- supported operators
+- performance overhead
+- index metadata
+- migration limitations
+- snapshot/query-transcript threat limitations
+- operational restrictions
+
+## AWS Database Encryption SDK
+
+Research:
+
+- client-side field encryption
+- searchable beacons
+- beacon length/partitioning
+- frequency leakage
+- false positives
+- skew/correlation guidance
+- existing-data migration limitations
+- keyrings/material providers
+
+## Tink
+
+Research:
+
+- keyset model
+- primary key
+- rotation
+- old-key reads
+- safe crypto API design
+
+## Vault Transit
+
+Research:
+
+- key versioning
+- rotate
+- rewrap
+- min encryption/decryption versions
+- destruction semantics
+- operational behaviour
+
+## Rails Active Record Encryption / Lockbox / BlindIndex
+
+Research developer ergonomics, transparent fields, deterministic search trade-offs, key rotation, previous schemes and migration behaviour.
+
+## pgcrypto / TDE / disk encryption
+
+Explain precisely why these solve different threat models.
+
+---
+
+# 23. Research the academic failure modes
+
+Use primary papers, not blog summaries alone.
+
+Cover at least:
+
+```text
+search-pattern leakage
+access-pattern leakage
+volume leakage
+frequency attacks
+auxiliary-information attacks
+file/record injection
+dynamic searchable encryption leakage
+deterministic/OPE/ORE inference
+AEAD key commitment where relevant
+```
+
+The goal is not to implement every academic defence.
+
+The goal is to know which leakage Cryptalis intentionally accepts and prevent false security claims.
+
+---
+
+# 24. Use community evidence for usability
+
+Search current:
+
+```text
+Reddit
+Hacker News
+GitHub issues
+Stack Overflow where useful
+framework issue trackers
+```
+
+Look specifically for complaints about:
+
+```text
+client-side field encryption
+searchable encryption
+CipherStash
+MongoDB Queryable Encryption / CSFLE
+ORM encrypted fields
+SQLAlchemy hooks
+Alembic migrations
+key rotation
+KMS latency
+encrypted-field debugging
+schema migrations
+backup restore
+```
+
+Extract recurring product pain.
+
+Do not design around isolated anecdotes.
+
+Use community feedback to identify usability problems, then validate technical conclusions elsewhere.
+
+---
+
+# 25. Do not build what mature tools already solve
+
+Cryptalis should not become:
+
+```text
+its own KMS
+its own HSM
+its own secret scanner
+its own generic SAST platform
+its own DAST framework
+its own package signer
+its own PostgreSQL
+its own general migration framework
+```
+
+Integrate or rely on mature systems where appropriate.
+
+Cryptalis should own the logic unique to:
+
+```text
+declared data-protection intent
+transparent field protection
+encrypted-query semantics
+field/key/search lifecycle
+safe transitions
+rollback
+restore admission
+deprotection
+removal
+Cryptalis-specific validation
+```
+
+---
+
+# 26. Simplify or remove overengineered existing concepts
+
+Critically review current concepts such as:
+
+```text
+DeclaredPolicy
+PolicyLock
+manifest history
+ActiveState
+transition records
+field-format descriptor digests
+Protection Graph
+Doctor semantic analysis
+Pentest
+assurance bundles
+advanced evidence collectors
+network analysis
+```
+
+Do not delete mechanisms merely because their names are complex.
+
+Ask:
+
+```text
+Does correctness require this?
+Does the user need to see this?
+Can it become an internal implementation detail?
+Can an existing tool replace it?
+Does it directly protect a real threat?
+Does it make adoption harder?
+```
+
+Retain necessary correctness mechanisms internally.
+
+Remove unnecessary product concepts.
+
+Move advanced assurance/research features out of the core architecture if they do not materially improve the primary product.
+
+Do not let Cryptalis become a general AppSec platform.
+
+---
+
+# 27. Required usability invariant
+
+The final architecture should make this statement as true as technically possible:
+
+> A developer declares sensitive fields and required query behaviour once, integrates Cryptalis with minimal application changes, and continues writing ordinary supported backend code. Cryptalis handles encryption, search representations, keys, migration, rotation, verification, rollback, restore and removal.
+
+Any place where this cannot be true must be explicitly documented.
+
+---
+
+# 28. Failure semantics
+
+Nothing important may fail silently.
+
+For every public operation define:
+
+```text
+success condition
+failure channel
+partial-progress behaviour
+retry behaviour
+rollback behaviour
+diagnostic information
+sensitive information that must never appear
+```
+
+Security-sensitive uncertainty must be explicit.
+
+Never:
+
+```text
+missing key → plaintext fallback
+unsupported query → plaintext fallback
+unknown writer → assume protected
+partial migration → success
+failed verification → switch
+missing evidence → pass
+authentication failure → return bytes
+old restored policy → automatically authoritative
+```
+
+---
+
+# 29. Stress-test architecture
+
+Every supported capability must have adversarial acceptance tests defined in documentation.
+
+Design tests for at least:
+
+```text
+tampered ciphertext
+relocated ciphertext
+cross-tenant substitution
+wrong record ID
+old ciphertext replay
+corrupted envelope
+unknown format
+wrong key
+disabled key
+destroy-pending key
+provider outage
+provider throttling
+cache expiry
+process restart
+fork
+stale worker
+two concurrent migrations
+crash at every transition phase
+resume after crash
+rollback before finalization
+rollback after finalization
+restore old DB
+restore old VM/cache
+old application binary
+rolling deploy
+search-key rotation
+index/payload mismatch
+low-entropy search
+chosen-input search attack
+normalization changes
+Unicode edge cases
+NULL
+unique constraints
+bulk write
+raw SQL
+COPY
+ETL
+migration script
+logging configuration
+uninstall with old encrypted backups
+shred then restore stale backup
+```
+
+For every test specify the expected state:
+
+```text
+PASS
+FAIL
+DENIED
+PENDING
+INCONCLUSIVE
+```
+
+Stress tests are evidence requirements.
+
+Do not claim a capability works merely because the architecture describes it.
+
+---
+
+# 30. Final documentation architecture
+
+The current documentation is too large and overlapping.
+
+Do not add another layer.
+
+Consolidate aggressively.
+
+Prefer **fewer canonical documents with clear ownership**.
+
+A reasonable target is roughly:
+
+```text
+README.md
+AGENTS.md
+ENGINEERING_PLAYBOOK.md
+
+docs/
+  architecture/README.md
+  security.md
+  lifecycle.md
+  compatibility.md
+  build-guide.md
+  status.md
+  prior-art.md
+
+  research/
+    evidence/reference material only
+```
+
+You may choose a better structure after examining the repository.
+
+Do not mechanically create these files if existing ownership can be made clearer with fewer files.
+
+The principles are mandatory:
+
+### README
+
+For a new user:
+
+```text
+What is Cryptalis?
+Why does it exist?
+What does using it look like?
+What threat does it solve?
+What does it NOT solve?
+What is actually implemented today?
+Where do I go next?
+```
+
+Keep it concise.
+
+### Canonical architecture
+
+One document must own:
+
+```text
+system boundaries
+data flow
+integration model
+components
+public API/CLI
+manifest role
+physical storage
+query transformation
+internal dependency direction
+security invariants
+```
+
+### Security
+
+Own:
+
+```text
+adversary matrix
+plaintext boundary
+key authority
+crypto design
+search leakage
+failure semantics
+residual risks
+security claims
+```
+
+### Lifecycle
+
+Own:
+
+```text
+protect
+migration
+reconfigure
+rotation
+reindex
+rollback
+restore
+shred
+deprotect
+remove/uninstall
+upgrade compatibility
+```
+
+### Compatibility
+
+Own:
+
+```text
+supported stack
+supported query semantics
+unsupported paths
+known interoperability restrictions
+performance evidence matrix
+```
+
+### Build guide
+
+Give future coding agents the exact dependency order.
+
+Each slice should state:
+
+```text
+why it exists
+public behaviour
+internal component
+dependencies
+security invariants
+tests
+failure cases
+definition of done
+```
+
+### Status
+
+One simple source of truth:
+
+```text
+SPECIFIED
+IMPLEMENTED
+VERIFIED
+```
+
+Do not mix aspirational architecture with current runtime capability.
+
+### Prior art / research
+
+Keep external evidence and competitor analysis here.
+
+It must not become another normative architecture.
+
+---
+
+# 31. Delete contradictions
+
+After rewriting:
+
+Search the entire repository for:
+
+```text
+V1
+V2
+V3
+later
+future
+planned
+eventually
+TBD
+TODO
+OPEN
+research question
+unsupported assumption
+proxy
+search disabled
+no-search
+ActiveState
+PolicyLock
+Doctor
+deprotect
+uninstall
+rollback
+shred
+```
+
+Review every match.
+
+Internal format names such as schema/version numbers may remain when technically required.
+
+But remove stale product-roadmap language, obsolete decisions and duplicated contracts.
+
+If an old document contradicts the final architecture:
+
+```text
+rewrite it
+merge it
+archive it if history genuinely matters
+or delete it
+```
+
+Do not leave contradictory docs for future agents to discover.
+
+---
+
+# 32. No unresolved architecture register
+
+The current architecture contains many open research questions.
+
+The purpose of this task is to **research and close them**.
+
+Do not finish with another giant list of open architecture decisions.
+
+For each material issue:
+
+1. research it;
+2. compare alternatives;
+3. choose;
+4. explain why;
+5. document the residual limitation.
+
+If empirical implementation evidence is still required, architecture may say:
+
+```text
+DESIGN DECIDED — PRODUCTION SUPPORT BLOCKED UNTIL TEST X PASSES
+```
+
+That is acceptable.
+
+What is not acceptable:
+
+```text
+we have no idea which design we want
+```
+
+---
+
+# 33. Architecture decision format
+
+For every major decision, be able to answer:
+
+```text
+Problem:
+Why does Cryptalis need this?
+
+User experience:
+What does the developer/operator actually see?
+
+Internal mechanism:
+How does Cryptalis implement it?
+
+Security property:
+Which threat does it mitigate?
+
+Leakage / limitation:
+What remains exposed?
+
+Failure behaviour:
+How does it fail?
+
+Performance cost:
+What does it add?
+
+Lifecycle:
+How is it migrated, rotated, restored and removed?
+
+Alternatives rejected:
+Why were simpler/other designs rejected?
+
+Verification:
+Which tests prove the supported claim?
+```
+
+Do not repeat this template mechanically where it adds noise, but all questions must be answerable.
+
+---
+
+# 34. Core architecture acceptance test
+
+Everything must converge on this test:
+
+> **Can a normal developer retrofit Cryptalis into an existing supported backend with normal application behaviour, and be unable to accidentally bypass encryption, corrupt search, mishandle keys, destroy recoverability, or silently fall back to plaintext?**
+
+Also enforce:
+
+> **If the entire backend source, Cryptalis source, manifest, schema, algorithms and database dump are public, protected plaintext still remains confidential as long as the external secrets/key authority are not compromised, subject to the explicitly declared leakage profile.**
+
+If either statement is false, identify exactly why and redesign until the remaining limitation is fundamental and documented.
+
+---
+
+# 35. Product kill list
+
+Before finalizing the architecture, explicitly try to kill the product.
+
+Cryptalis is unacceptable if any of these are inherent outcomes:
+
+```text
+key rotation commonly risks permanent data loss
+migration corruption is easy
+rollback is mostly theoretical
+uninstall strands data
+search makes sensitive values nearly plaintext without warning
+raw/common backend paths silently bypass protection
+old data becomes unreadable after normal upgrades
+key loss/recovery behaviour is unclear
+normal ORM queries silently return wrong results
+security depends on source/config secrecy
+KMS latency makes ordinary workloads unusable
+developers need crypto expertise to use the system
+the architecture requires a giant control plane for a small library
+the package is so complex nobody can audit it
+the documentation has multiple competing truths
+```
+
+If a design creates one of these, change the design.
+
+---
+
+# 36. Explicit non-goals unless research disproves them
+
+Do not expand the project into these merely for completeness:
+
+```text
+general AppSec scanner
+generic penetration-testing suite
+generic attack graph platform
+universal SQL firewall
+custom KMS/HSM
+all ORMs
+all databases
+all programming languages
+every encrypted query operator
+full application-compromise defence
+general compliance platform
+universal secure deletion
+```
+
+Cryptalis should be excellent at its own protection boundary.
+
+---
+
+# 37. Research quality rules
+
+Second-guess every major conclusion.
+
+For important claims:
+
+- prefer current official documentation;
+- verify publication/release dates;
+- compare at least two independent sources where appropriate;
+- distinguish vendor claims from reproduced evidence;
+- distinguish academic attacks from attacks actually applicable to the selected construction;
+- distinguish theoretical capability from supported product behaviour;
+- do not cite stale product capabilities;
+- do not infer properties from algorithm names;
+- do not use "industry standard" as an argument;
+- do not invent benchmark numbers;
+- do not claim compliance;
+- do not claim erasure beyond the proven boundary.
+
+When a simpler architecture is sufficient, choose it.
+
+---
+
+# 38. Final implementation order
+
+After architecture/doc consolidation, produce one implementation dependency sequence.
+
+It should build a complete useful vertical product before optional breadth.
+
+The sequence should approximately prioritize:
+
+```text
+manifest and policy compiler
+↓
+approved crypto format/key hierarchy
+↓
+transparent runtime integration
+↓
+ordinary protected read/write
+↓
+equality / IN / uniqueness search
+↓
+doctor + drift/failure checks
+↓
+schema planning
+↓
+protect migration
+↓
+verification
+↓
+rollback
+↓
+rotation / rewrap / reindex
+↓
+restore admission
+↓
+shredding
+↓
+deprotect / remove
+↓
+release/security hardening
+```
+
+Change this order if research demonstrates a better dependency structure.
+
+Do not postpone lifecycle safety until after adding fancy query capabilities.
+
+---
+
+# 39. Documentation must support future agents
+
+At the end, an agent entering the repository should need a short deterministic reading path.
+
+Update `AGENTS.md` accordingly.
+
+It should say approximately:
+
+```text
+1. Read README.
+2. Read canonical architecture.
+3. Read security/threat model.
+4. Read current status.
+5. Read only the subsystem document relevant to your task.
+6. Read implementation/build gate for that slice.
+7. Inspect source/tests.
+8. Never infer implementation from architecture.
+```
+
+Also preserve important engineering rules such as:
+
+```text
+nothing important fails silently
+security claims require evidence
+unknown != safe
+do not weaken a security invariant to make a test pass
+do not duplicate normative contracts
+do not silently broaden query capability
+do not introduce plaintext fallback
+```
+
+Make agent continuation easy and token-efficient.
+
+---
+
+# 40. Final verification pass
+
+Before stopping:
+
+1. Review every changed documentation file.
+2. Check internal links.
+3. Search for contradictory old terminology.
+4. Search for duplicated normative definitions.
+5. Search for unresolved architecture questions.
+6. Search for unsupported security claims.
+7. Verify the public UX is consistent everywhere.
+8. Verify the threat model matches the crypto/search/lifecycle design.
+9. Verify migration/rollback/restore/remove are one coherent lifecycle.
+10. Verify search leakage claims match the chosen constructions.
+11. Verify manifest examples match the final schema.
+12. Verify supported query examples match actual intended interception semantics.
+13. Verify key/provider semantics do not promise provider capabilities that do not exist.
+14. Verify implementation status remains truthful.
+15. Run existing tests to ensure the documentation pass did not accidentally disturb the repository.
+16. Inspect the final git diff.
+
+Do not modify runtime implementation merely to make the documentation match.
+
+Instead record the implementation delta in the build/status documents.
+
+---
+
+# 41. Final response to me
+
+Do not dump the entire rewritten documentation into chat.
+
+Give me a compact handoff containing:
+
+```text
+1. Final one-sentence definition of Cryptalis.
+2. The final primary integration model and why.
+3. The final public UX.
+4. The final manifest philosophy.
+5. The final encryption/search design.
+6. The final key hierarchy/lifecycle design.
+7. The final rollback/restore/shred/uninstall model.
+8. Exactly what attacks Cryptalis stops.
+9. Exactly what it does not stop.
+10. Search leakage accepted.
+11. Major architectural concepts removed/simplified/hidden.
+12. Files rewritten/merged/deleted.
+13. Final documentation reading order.
+14. Implementation sequence.
+15. Current code → final architecture gaps.
+16. Tests/research still required before production claims.
+```
+
+Also explicitly state:
+
+```text
+ARCHITECTURE DECISIONS LEFT OPEN: 0
+```
+
+If this is not true, continue researching and resolving them before finishing.
+
+Implementation verification may remain pending.
+
+Architecture ambiguity may not.
+
+---
+
+# Final product doctrine
+
+Continuously test every decision against these rules:
+
+> **Useful beats impressive.**
+
+> **Secure defaults beat configurability.**
+
+> **One manifest beats cryptographic plumbing spread across the backend.**
+
+> **Normal backend code should remain normal wherever safety permits.**
+
+> **Search must work only where its leakage is understood and deliberately accepted.**
+
+> **Rollback and removal are product features, not documentation footnotes.**
+
+> **Cryptalis must never hold users' data hostage.**
+
+> **Public source code and public configuration must not weaken cryptographic confidentiality.**
+
+> **Nothing security-critical fails silently.**
+
+> **If a feature cannot be explained clearly in terms of why it exists, what threat it solves, what it costs, how it fails, and how it is removed, it probably does not belong in Cryptalis.**
+
+Build the final architecture around those principles.
+
+ DECISION LEDGER (replaces "ARCHITECTURE DECISIONS LEFT OPEN: 0")
+For every major decision record: problem, options compared, choice, reason, rejected
+alternatives, residual limitation, confidence (high/medium/low), and status:
+  DECIDED
+  DECIDED-BLOCKED-ON-TEST <test name>   (design chosen; production claim needs this test)
+Do not fake closure. A decision that research cannot settle is reported as
+DECIDED-BLOCKED-ON-TEST with a chosen default, never silently dropped. The final report
+states the exact count of each status.
+
+C. TRACEABILITY BEFORE DELETION
+Before deleting or merging any existing document, record a map: every normative
+requirement or invariant in the old docs -> its new location, or "dropped" with a reason.
+Do not delete a constraint just because it sat in a document you are removing.
+
+D. EXPERT REVIEW LIST
+Your research is not a cryptographic audit. In the final handoff, list every decision that
+requires independent human cryptographer/security review (AEAD and nonce construction,
+AAD/context binding, key derivation hierarchy, blind-index construction and truncation,
+rotation/rewrap protocol, shredding claims). Do not describe any of them as audited.
+
+E. ADDITIONAL REQUIRED DECISIONS (each must appear in the ledger)
+1. Manifest integrity: the manifest needs no secrecy, but it needs integrity. Who may
+   weaken protection (protect:false, search removed, weaker profile)? How are tampering
+   and downgrade detected (review gate, signed/pinned manifest, runtime check against
+   external state)?
+2. Key-authority loss: backup, escrow and disaster recovery of the root key authority.
+   What happens when it is permanently lost? State the data-loss boundary plainly.
+3. Rollback window: keeping a rollback representation means plaintext persists until
+   finalization. Define the bound (time/explicit command) and the exposure trade-off.
+4. Restore-resistant state: where does the external non-restored state live, what are
+   its availability and trust requirements, and what does Cryptalis do when it is
+   unreachable (fail closed)?
+5. Per-subject shredding vs shared equality-index keys: shared index keys can keep
+   linking records after a subject's payload key is destroyed; per-subject index keys
+   break cross-subject search. Choose explicitly, state the leakage or search cost, and
+   state what "shredded" does and does not mean under that choice.
+6. Integration choice: weigh bypass resistance, query transparency, SQL-parser attack
+   surface, async support and uninstallability explicitly, with the weights stated,
+   before selecting the primary model.
+7. Primitive pinning: name the exact AEAD, nonce strategy, KDF and library, with the
+   reasoning and the limits (key/nonce usage bounds, fork behaviour).
+
+F. ACCEPTANCE TEST REWORD
+Replace the section 34 "unable to accidentally bypass" claim with:
+  "Every write path to a protected field is either protected, rejected, or detected and
+   reported by doctor. No path silently persists plaintext. Unknown coverage is UNKNOWN,
+   never PASS."
+Do not claim universal bypass prevention for any ORM-level mechanism.
+H. RESEARCH HYGIENE
+- Do not hardcode documentation URLs from this prompt. Navigate from each vendor's
+  current docs index and cite the actual page used with its access date.
+- Confirm release/publication dates; reject stale capability claims.
+- Treat Reddit/HN/GitHub issues as pain signals only; confirm every technical claim
+  against an authoritative source.
+- For supply-chain claims, research the current (2026) PyPI/npm incident record and
+  verify trusted-publishing guidance from PyPA before stating a policy.
+- Record every source used in docs/research/ with a one-line "what this established".

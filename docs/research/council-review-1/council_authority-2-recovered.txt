@@ -1,0 +1,5 @@
+Message Type: FINAL_ANSWER
+Task name: /root
+Sender: /root/council_authority
+Payload:
+CHANGE. REASON: Fence-first is sufficient while the shared lock remains held through complete plaintext handoff. Denial may become PENDING, but its exclusive fence cannot complete before that handoff. Conditional remote registration is therefore one solution, not mandatory for every read. Durable ownership still covers commit acknowledgement after transaction-lock release, publication acknowledgement after handoff, and backend termination or failover while a surviving worker retains publishable buffers. DECISIVE CRITERION: Prove lock continuity through handoff, or keep denial PENDING until every worker that could publish after lock loss is terminal or reconciled. A connection snapshot cannot supply that proof.

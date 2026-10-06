@@ -1,0 +1,23 @@
+Message Type: FINAL_ANSWER
+Task name: /root
+Sender: /root/council_ux
+Payload:
+**VERDICT:** Retain the narrow product scope, but make interrupted-operation recovery explicit and test operator comprehension before implementation.
+
+**USER COMPREHENSION:** The design clearly separates intended protection from current executable evidence ([status.md](/home/debrato/Projects/cryptalis/docs/status.md:14)). Familiar attributes help developers, but familiar SQLAlchemy syntax does not imply familiar query or loading breadth. Protected joins, aggregation, text search, lazy loading, and streaming remain excluded ([compatibility.md](/home/debrato/Projects/cryptalis/docs/compatibility.md:50), [compatibility.md](/home/debrato/Projects/cryptalis/docs/compatibility.md:137)).
+
+Lifecycle distinctions are sound but demanding. “Protected” can still include a plaintext rollback mirror. Subject shred means denial, not destruction. Package removal can leave authority, keys, and recovery-reader obligations ([lifecycle.md](/home/debrato/Projects/cryptalis/docs/lifecycle.md:102), [lifecycle.md](/home/debrato/Projects/cryptalis/docs/lifecycle.md:183), [lifecycle.md](/home/debrato/Projects/cryptalis/docs/lifecycle.md:234)). Operators must understand that intact backups and keys cannot compensate for unprovable current authority ([lifecycle.md](/home/debrato/Projects/cryptalis/docs/lifecycle.md:173)). These are documented limits, not hidden implementation defects.
+
+**INTERACTION VALUE:** An existing account backend gets useful email lookup and tenant-scoped uniqueness without business encryption calls. Adoption still requires compatible identities, queries, writers, and a maintenance window. The plan exposes these costs before migration. Exit authenticates plaintext, tests actual application behavior without the package, and assigns retained backup obligations. That workflow offers substantial decision value if operators can distinguish application exit from recovery-system retirement ([architecture/README.md](/home/debrato/Projects/cryptalis/docs/architecture/README.md:247), [lifecycle.md](/home/debrato/Projects/cryptalis/docs/lifecycle.md:224)).
+
+**FRICTION:**
+
+1. **P1 — Public recovery-contract gap.** An operator starts protection, loses the terminal, and returns after plan expiry. The lifecycle requires resumption by operation ID, but the public surface exposes only `apply PLAN`. The operator receives an ID without a defined invocation and can mistakenly generate a replacement operation while writes remain fenced. Define the recovery command before implementation ([lifecycle.md](/home/debrato/Projects/cryptalis/docs/lifecycle.md:16), [architecture/README.md](/home/debrato/Projects/cryptalis/docs/architecture/README.md:248)).
+
+2. **P1 — Accepted deadline with unresolved operational usability.** Protection switches successfully on Friday. Nobody acts on the status deadline. After 24 hours, mirrored application writes stop. Safe behavior becomes an availability incident requiring an irreversible decision under pressure. Rehearse ownership, monitoring, rollback, and finalization before accepting this default ([lifecycle.md](/home/debrato/Projects/cryptalis/docs/lifecycle.md:104)).
+
+3. **P2 — Familiar result method, surprising bounded behavior.** A developer retains an unbounded query followed by `.first()`. Cryptalis authenticates the complete fetched buffer and raises `BufferLimit`, closing the session. A previously successful endpoint now fails. This is an accepted scope limit. Adoption examples and remedies should direct callers to explicit SQL limits where appropriate ([architecture/README.md](/home/debrato/Projects/cryptalis/docs/architecture/README.md:118), [security.md](/home/debrato/Projects/cryptalis/docs/security.md:387)).
+
+**RECOMMENDATION:** Add `cryptalis resume OPERATION` to the public contract. Status and partial failures must return its exact invocation and current prerequisites.
+
+The smallest decisive experiment is a CLI prototype exercise: interrupt protection, expire the original plan, then give an unfamiliar operator only status and failure output. Pass when they identify durable progress and resume the existing operation without creating another plan or assuming rollback.
