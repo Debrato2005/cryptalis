@@ -1,0 +1,43 @@
+{
+  "cell": "SQLite/public SQLAlchemy hooks only",
+  "outcomes": {
+    "instance_write_plaintext_absent": "PASS",
+    "normal_read_and_expiry": "PASS",
+    "same_id_distinct_field_read": "PASS",
+    "scalar_projection_context": "PASS",
+    "equal": "PASS",
+    "membership": "PASS",
+    "empty_membership": "PASS",
+    "null": "PASS",
+    "negative_null_semantics": "PASS",
+    "shared_domain_join": "PASS",
+    "dirty_entity_native_history": "PASS",
+    "dirty_scalar_stored_value": "PASS",
+    "refresh_discards_pending": "PASS",
+    "native_autoflush": "PASS",
+    "rollback_and_expiry": "PASS",
+    "native_merge": "PASS",
+    "unsupported_range": "PASS",
+    "unsupported_prefix": "PASS",
+    "unsupported_bulk": "PASS",
+    "unsupported_text": "PASS",
+    "unsupported_sort": "PASS",
+    "unsupported_function": "PASS",
+    "unsupported_distinct": "PASS",
+    "unsupported_grouping": "PASS",
+    "tamper_rejected": "PASS",
+    "relocation_rejected": "PASS",
+    "typed_core_plaintext_bind_rejected": "PASS",
+    "same_id_cross_field_transplant_rejected": "PASS",
+    "raw_driver_bypass": "FAIL_REQUIRES_SCHEMA_AND_ROLE_GUARDS"
+  },
+  "postgresql_sql": "SELECT CASE WHEN (\"user\".email IS NULL) THEN NULL ELSE int8send(\"user\".id) || \"user\".email END AS email \nFROM \"user\" \nWHERE substr(\"user\".email, %(substr_1)s::INTEGER, %(substr_2)s::INTEGER) = %(substr_3)s",
+  "live_postgres": "BLOCKED_SOCKET_SANDBOX",
+  "limits": [
+    "One synthetic tenant and text codec",
+    "No async, concurrent uniqueness or provider calls",
+    "Public clause rejection grammar needs complete differential tests",
+    "PreparedText changes the exact Python type",
+    "No universal driver interception"
+  ]
+}

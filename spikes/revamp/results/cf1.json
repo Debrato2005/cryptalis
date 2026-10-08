@@ -1,0 +1,82 @@
+{
+  "cell": "offline CF1 synthetic text profile",
+  "outcomes": {
+    "independent_T_encoding_vector": "PASS",
+    "roundtrip_0_0": "PASS",
+    "exact_overhead_0_0": "PASS",
+    "roundtrip_1_0": "PASS",
+    "exact_overhead_1_0": "PASS",
+    "roundtrip_0_1": "PASS",
+    "exact_overhead_0_1": "PASS",
+    "roundtrip_1_1": "PASS",
+    "exact_overhead_1_1": "PASS",
+    "wrong_field": "PASS",
+    "wrong_tenant": "PASS",
+    "wrong_record": "PASS",
+    "payload_tamper": "PASS",
+    "unknown_flags": "PASS",
+    "truncation": "PASS",
+    "retired_generation": "PASS",
+    "retired_search_generation": "PASS",
+    "companion_set_order_preserved": "PASS",
+    "tenant_search_domains_separated": "PASS",
+    "explicit_equality_join_prefix_field_scope": "PASS",
+    "returned_companion_tamper": "PASS",
+    "search_rotation_reseals_current_payload": "PASS",
+    "old_header_new_companions": "PASS",
+    "new_header_old_companions": "PASS",
+    "remove_capability_reseals": "PASS",
+    "removed_header_old_companions": "PASS",
+    "payload_rotation_keeps_search_terms": "PASS",
+    "NUL_text_rejected": "PASS",
+    "oversized_fixture_text_rejected": "PASS",
+    "empty_nonnull_text": "PASS"
+  },
+  "vectors": [
+    {
+      "equality": false,
+      "prefix": false,
+      "frame_hex": "4346310001000000000100000000000102030405060708090a0b3594c52b09314b36567b31fa9cdb6e4bca142673",
+      "companions": {}
+    },
+    {
+      "equality": true,
+      "prefix": false,
+      "frame_hex": "43463100010100000001000000010face48851d9a2f7fa1dc90f5c0c3ea486126a4314f735810538eaad9ead6df4000102030405060708090a0bcf0bda66062e2bff448ae3c094d24e9d160ec034",
+      "companions": {}
+    },
+    {
+      "equality": false,
+      "prefix": true,
+      "frame_hex": "434631000102000000010000000105df40a4a9ab29bbb979aa6208225ca109ade35afe8b800540bb804ab2b56cd5000102030405060708090a0ba9e551b4a2186d4edacadf73aebba42badb01761",
+      "companions": {
+        "prefix": [
+          "602270b80cfc100b09865efa5ee7f0a05693917f8df9eabd901d8e5955b789f9",
+          "6e1c04667b0772faf729f56de7a80268854d3d87b7afc2be8ad95523c3cce668",
+          "8bb44469eebd96ccccccd374e37598e80d4fac04098ef250bb7a55470d3e2715",
+          "f052dbe3d9d35bbd6571cc1f6405992b2c8ccfbc35b5bb2fe5bb5c41ca9e4cba"
+        ]
+      }
+    },
+    {
+      "equality": true,
+      "prefix": true,
+      "frame_hex": "43463100010300000001000000010face48851d9a2f7fa1dc90f5c0c3ea486126a4314f735810538eaad9ead6df405df40a4a9ab29bbb979aa6208225ca109ade35afe8b800540bb804ab2b56cd5000102030405060708090a0b8e83324ab8772ebe01125623ce4c4fbb70e65c56",
+      "companions": {
+        "prefix": [
+          "602270b80cfc100b09865efa5ee7f0a05693917f8df9eabd901d8e5955b789f9",
+          "6e1c04667b0772faf729f56de7a80268854d3d87b7afc2be8ad95523c3cce668",
+          "8bb44469eebd96ccccccd374e37598e80d4fac04098ef250bb7a55470d3e2715",
+          "f052dbe3d9d35bbd6571cc1f6405992b2c8ccfbc35b5bb2fe5bb5c41ca9e4cba"
+        ]
+      }
+    }
+  ],
+  "limits": [
+    "Same AEAD library seals/opens; no independent AEAD implementation comparison",
+    "Fixture descriptor/keys are public lab choices, not qualified generic SQL codecs",
+    "No provider, ORM, PostgreSQL, NULL presence authentication, or usage-bound proof",
+    "Search collision detection and hostile completeness remain absent",
+    "Vector-only fixed nonces are not the runtime RNG rule"
+  ]
+}

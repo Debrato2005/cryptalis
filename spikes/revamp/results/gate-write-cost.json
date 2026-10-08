@@ -1,0 +1,169 @@
+{
+  "status": "PASS_LOCAL_CASES_ONLY",
+  "connection_url": "NEVER_RECORDED",
+  "outcomes": {
+    "current_adapter_identical_workload_results": "PASS",
+    "current_adapter_committed_batch_readback": "PASS"
+  },
+  "schema": "revamp_gate_write-cost_1502f2ebd3e64671bb177f207a2363e2",
+  "full_gates": "UNKNOWN_OR_FAIL_UNTIL_COMPLETE_EVIDENCE",
+  "adoption_edits": {
+    "original_source_sha256": "f9a0e1c1b5cc5232d4763a50e5fdaf1f67e1f0490d8256337c982daf4036836b",
+    "adapted_source_sha256": "f20b7e03a2a99188129e2e28eb3f525b179be1daa4032155f1918bcfc4d3aecb",
+    "adapted_source_path": "/tmp/cryptalis-retrofit-fixture-zmupfmsa/adapted_app.py",
+    "model_lines_changed": 0,
+    "business_query_lines_changed": 0,
+    "writer_lines_changed": 1,
+    "assertions_changed": 0,
+    "attachment_calls": 1,
+    "writer_change": "Opaque SQL update becomes equivalent typed Core update"
+  },
+  "source_sha256": "6df2c1ce7dc21aff47641687deefaf1f90b753532e62199f9ec72e5db6a7bd49",
+  "implementation_sha256": {
+    "integration_adapter.py": "3847550042698f21620fb28e70258e45fba986b013e93ff0d95d38b8e5aa88d5",
+    "integration_crypto.py": "58b579ad764e7d16f7bbc986727cf371aac22aca6a1222c09e7512eb7bf31e10",
+    "integration_transition.py": "6c316893181aafbb8c449bd0ea7bb9307eadbe3952d0c0404a213e98aa65b89f",
+    "integration_async.py": "623eae103343ab42908c278c8775b1273203466717c809b3713f18e7d3236c85",
+    "integration_harness.py": "668a0a745ee44139908427642aae59a777539cf1fac3185d19378ef433056637",
+    "plain_app.py": "f9a0e1c1b5cc5232d4763a50e5fdaf1f67e1f0490d8256337c982daf4036836b"
+  },
+  "rows": 10000,
+  "baseline": {
+    "reads": {
+      "point_entity": {
+        "samples": 100,
+        "p50_ms": 0.7976259948918596,
+        "p95_ms": 1.1529939947649837,
+        "p99_ms": 1.7148500046459958,
+        "total_ms": 83.86206296563614,
+        "cpu_seconds": 0.058978843,
+        "throughput_ops_s": 1190.0867769499087,
+        "rows_materialized_per_sample": 1
+      },
+      "equality_entity": {
+        "samples": 100,
+        "p50_ms": 0.8562919974792749,
+        "p95_ms": 1.331036997726187,
+        "p99_ms": 1.5343090053647757,
+        "total_ms": 91.90675597346853,
+        "cpu_seconds": 0.06455523200000002,
+        "throughput_ops_s": 1086.1793722506513,
+        "rows_materialized_per_sample": 1
+      },
+      "membership_entities": {
+        "samples": 100,
+        "p50_ms": 1.3396389986155555,
+        "p95_ms": 2.434879992506467,
+        "p99_ms": 3.2589059992460534,
+        "total_ms": 147.69637398421764,
+        "cpu_seconds": 0.09484430900000007,
+        "throughput_ops_s": 675.5135660849766,
+        "rows_materialized_per_sample": 20
+      },
+      "native_unprotected_range_prefix_page": {
+        "samples": 20,
+        "p50_ms": 1.0884950024774298,
+        "p95_ms": 1.4969049952924252,
+        "p99_ms": 1.7485170101281255,
+        "total_ms": 22.804969004937448,
+        "cpu_seconds": 0.01364148799999998,
+        "throughput_ops_s": 875.0016404623071,
+        "rows_materialized_per_sample": 5
+      },
+      "native_join_decimal": {
+        "samples": 100,
+        "p50_ms": 1.0122899984708056,
+        "p95_ms": 1.3816959981340915,
+        "p99_ms": 1.5720209921710193,
+        "total_ms": 107.05149498244282,
+        "cpu_seconds": 0.056064314999999976,
+        "throughput_ops_s": 932.5594630907162,
+        "rows_materialized_per_sample": 1
+      }
+    },
+    "writes": {
+      "samples": 10,
+      "p50_ms": 4.356231991550885,
+      "p95_ms": 6.622007989790291,
+      "p99_ms": 6.622007989790291,
+      "total_ms": 47.60709097899962,
+      "rows": 400,
+      "batch_rows": 40,
+      "cpu_seconds": 0.026947980999999954,
+      "throughput_rows_s": 8397.599110088207
+    }
+  },
+  "protected": {
+    "reads": {
+      "point_entity": {
+        "samples": 100,
+        "p50_ms": 2.1049829956609756,
+        "p95_ms": 3.0028009932721034,
+        "p99_ms": 3.5597420064732432,
+        "total_ms": 221.83911698812153,
+        "cpu_seconds": 0.18885097299999987,
+        "throughput_ops_s": 450.53233977045295,
+        "rows_materialized_per_sample": 1
+      },
+      "equality_entity": {
+        "samples": 100,
+        "p50_ms": 3.992224999819882,
+        "p95_ms": 5.6376910069957376,
+        "p99_ms": 7.044997997581959,
+        "total_ms": 429.84054806584027,
+        "cpu_seconds": 0.367595358,
+        "throughput_ops_s": 232.5803920733967,
+        "rows_materialized_per_sample": 1
+      },
+      "membership_entities": {
+        "samples": 100,
+        "p50_ms": 7.75413699739147,
+        "p95_ms": 9.64559000567533,
+        "p99_ms": 12.290076003409922,
+        "total_ms": 793.9879671175731,
+        "cpu_seconds": 0.670135283,
+        "throughput_ops_s": 125.8676163346596,
+        "rows_materialized_per_sample": 20
+      },
+      "native_unprotected_range_prefix_page": {
+        "samples": 20,
+        "p50_ms": 2.9490040033124387,
+        "p95_ms": 4.127401000005193,
+        "p99_ms": 4.902647997369058,
+        "total_ms": 63.898961001541466,
+        "cpu_seconds": 0.051457890000000006,
+        "throughput_ops_s": 312.74785752996274,
+        "rows_materialized_per_sample": 5
+      },
+      "native_join_decimal": {
+        "samples": 100,
+        "p50_ms": 2.332985997782089,
+        "p95_ms": 3.1592610030202195,
+        "p99_ms": 4.3309050088282675,
+        "total_ms": 246.08764110598713,
+        "cpu_seconds": 0.1800320929999999,
+        "throughput_ops_s": 406.0933198259529,
+        "rows_materialized_per_sample": 1
+      }
+    },
+    "writes": {
+      "samples": 10,
+      "p50_ms": 10.199585987720639,
+      "p95_ms": 15.520125001785345,
+      "p99_ms": 15.520125001785345,
+      "total_ms": 108.8759189879056,
+      "rows": 400,
+      "batch_rows": 40,
+      "cpu_seconds": 0.09074039000000012,
+      "throughput_rows_s": 3673.2677213518923
+    }
+  },
+  "reused_scale_receipt": "gate-performance.json",
+  "production_budgets": "UNKNOWN",
+  "limits": [
+    "Ten thousand rows for changed adapter cost; not a replacement million-row plan",
+    "Four hundred committed updated rows, ten batches; no long production soak",
+    "Local provider only; real provider latency, approved budgets and production profile remain UNKNOWN"
+  ],
+  "cleanup": "OWN_SCHEMA_DROPPED"
+}

@@ -1,5 +1,8 @@
 # Integration and encrypted-search research
 
+> Historical research archive. The [revamp record](revamp-evidence.md) supersedes its architecture choices and scope.
+> This file records past evidence, not the current specification or runtime qualification.
+
 Access date: 2026-10-06. Status: external evidence and design comparison. No runtime support, benchmark, or independent audit claim.
 
 This file supplies evidence for the canonical reset. It does not own a second architecture.

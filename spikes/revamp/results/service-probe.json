@@ -1,0 +1,12 @@
+{
+  "status": "CONNECTED_RESTRICTED_ROLE",
+  "url_environment_present": true,
+  "authentication": "OBSERVED",
+  "mutations": "NONE",
+  "connection_url": "NEVER_RECORDED",
+  "stage": "identity",
+  "server_version": "16.15 (Ubuntu 16.15-0ubuntu0.24.04.1)",
+  "non_superuser": true,
+  "no_createdb": true,
+  "no_createrole": true
+}

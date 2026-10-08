@@ -1,0 +1,23 @@
+{
+  "outcomes": {
+    "interruption_after_committed_chunk": "PASS",
+    "retry_retains_committed_ciphertext": "PASS",
+    "full_row_value_verification": "PASS",
+    "tampered_target_blocks_verification": "PASS",
+    "decrypt_back_preserves_post_cutover_write": "PASS",
+    "static_mirror_counterexample": "STALE_WITHOUT_DUAL_WRITES",
+    "local_provider_rewrap_payload_unchanged": "PASS_LOCAL_PROVIDER_ONLY",
+    "plaintext_switch_generated_storage_removed": "PASS",
+    "package_free_sql_read": "PASS_SQL_ONLY",
+    "external_policy_rejects_old_generation": "PASS_MODEL_ONLY"
+  },
+  "rows": 100,
+  "database": "PostgreSQL 16.2 SET ROLE in single-user mode",
+  "limits": [
+    "No concurrent writers, network crash, advisory lock race or live service authentication",
+    "No SQLAlchemy/async lifecycle integration or provider calls",
+    "Package-free SQL is not a complete package-free application test",
+    "Policy model is not an authenticated deployment or restore test",
+    "Plaintext staging uses synthetic values and is explicitly part of this lab"
+  ]
+}

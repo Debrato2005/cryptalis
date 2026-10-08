@@ -1,0 +1,17 @@
+{
+  "rows": 100,
+  "cell": "PG16.2 single-user SET ROLE",
+  "atomic_mirror_retains_current_value": true,
+  "failed_mirror_update_rolls_back_ciphertext": true,
+  "unmirrored_writer_detected_by_full_check": true,
+  "current_data_decrypt_back_survives_mirror_divergence": true,
+  "logical_column_bytes": {
+    "payload": 9203,
+    "plaintext_mirror": 3203
+  },
+  "limits": [
+    "No concurrent writers/driver/network crash",
+    "Plaintext mirror is an explicit synthetic lab exposure",
+    "No whole-application migration/rollback or measured production pause"
+  ]
+}

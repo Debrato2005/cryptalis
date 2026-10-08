@@ -1,0 +1,14 @@
+{
+  "rows": 1000000,
+  "total_bytes": 230293504,
+  "transport_volatility": {
+    "int8send": "i",
+    "substring": "i",
+    "uuid_send": "i"
+  },
+  "role": "SET ROLE non-superuser owner",
+  "packed_expression_index_used": true,
+  "exact_id_array_match": true,
+  "crypto_frame": "CF1-shaped physical surrogate; not CF1 authentication evidence",
+  "full_application": "UNKNOWN"
+}

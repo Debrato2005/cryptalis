@@ -1,0 +1,32 @@
+{
+  "range_exact_cases": 1056768,
+  "prefix_exact_cases": 121,
+  "ngram_contains_counterexample": "REJECT_EXACT_SUBSTRING_PROMISE",
+  "frequency_attack": {
+    "technique": "frequency ranking (Naveed et al. CCS 2015)",
+    "dataset": "independently sampled synthetic name frequencies; not real records",
+    "rows": 100000,
+    "auxiliary_rows": 100000,
+    "row_recovery_rate": 1.0,
+    "class_recovery_rate": 1.0,
+    "real_customer_distribution": "UNKNOWN"
+  },
+  "prefix_frequency_attack": {
+    "technique": "frequency ranking of observable full token-array equivalence classes",
+    "rows": 100000,
+    "auxiliary_rows": 100000,
+    "row_recovery_rate": 1.0,
+    "class_recovery_rate": 1.0,
+    "real_customer_distribution": "UNKNOWN",
+    "structure_attack": "NOT_EXECUTED"
+  },
+  "range_frequency_attack": {
+    "technique": "frequency ranking of observable full token-array equivalence classes",
+    "rows": 100000,
+    "auxiliary_rows": 100000,
+    "row_recovery_rate": 0.27211,
+    "class_recovery_rate": 0.3333333333333333,
+    "real_customer_distribution": "UNKNOWN",
+    "structure_attack": "NOT_EXECUTED"
+  }
+}

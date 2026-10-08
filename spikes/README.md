@@ -1,5 +1,8 @@
 # Disposable hardening experiments
 
+> Earlier labs and document inventories are historical research. The [revamp experiments](revamp/README.md) target the current simplified design.
+> The earlier check_documents.py asserts replaced decision/gate counts and is not the new contract checker.
+
 These experiments test narrow hypotheses. They are not Cryptalis runtime IMPLEMENTED or VERIFIED capability.
 Production package imports/code are not used or changed. All keys/rows/identities are public synthetic fixtures.
 The selected production cell remains unqualified. Exact local versions are in [environment.json](results/environment.json).

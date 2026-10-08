@@ -1,0 +1,71 @@
+{
+  "postgres": "16.2",
+  "mode": "single-user SET ROLE revamp_owner",
+  "restricted_role": true,
+  "service_authentication_concurrency_and_driver": "NOT_TESTED_SOCKET_BLOCKED",
+  "row_count": 1000000,
+  "measurements": {
+    "equality": {
+      "index_scan": true,
+      "exact_selected_ids": true,
+      "database_only_ms": {
+        "plain_p50": 0.003,
+        "protected_p50": 0.003,
+        "plain_p95": 0.012,
+        "protected_p95": 0.006
+      },
+      "iterations_after_warmup": 20,
+      "ddl": "CREATE UNIQUE INDEX revamp_eq ON revamp_protected USING btree(eq bytea_ops);"
+    },
+    "prefix": {
+      "index_scan": true,
+      "exact_selected_ids": true,
+      "database_only_ms": {
+        "plain_p50": 4.5145,
+        "protected_p50": 1.324,
+        "plain_p95": 6.234,
+        "protected_p95": 1.515
+      },
+      "iterations_after_warmup": 20,
+      "ddl": "CREATE INDEX revamp_prefix ON revamp_protected USING gin(prefix array_ops);"
+    },
+    "range": {
+      "index_scan": true,
+      "exact_selected_ids": true,
+      "database_only_ms": {
+        "plain_p50": 0.369,
+        "protected_p50": 0.098,
+        "plain_p95": 0.454,
+        "protected_p95": 0.136
+      },
+      "iterations_after_warmup": 20,
+      "ddl": "CREATE INDEX revamp_range ON revamp_protected USING gin(range_terms array_ops);"
+    }
+  },
+  "sizes": {
+    "rows": 1000000,
+    "protected_bytes": 849829888,
+    "plain_bytes": 155254784,
+    "privileges": {
+      "rolsuper": false,
+      "rolcreatedb": false,
+      "rolcreaterole": false,
+      "rolreplication": false,
+      "rolbypassrls": false
+    },
+    "extensions": [
+      "plpgsql"
+    ]
+  },
+  "storage_multiplier": 5.473775854791051,
+  "client_generation_seconds": null,
+  "whole_backend_latency": "UNMEASURED",
+  "scope": "Physical queries over client-generated HMAC representations. No ORM/driver/KMS timing or service privileges proven.",
+  "stock_extensions_required": [],
+  "majors_not_executed": [
+    14,
+    15,
+    17,
+    18
+  ]
+}

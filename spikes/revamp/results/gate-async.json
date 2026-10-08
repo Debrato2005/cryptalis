@@ -1,0 +1,50 @@
+{
+  "status": "PASS_LOCAL_CASES_ONLY",
+  "connection_url": "NEVER_RECORDED",
+  "outcomes": {
+    "async_generated_cascade_history": "PASS",
+    "async_exact_scalar_type": "PASS",
+    "async_eager_relationship": "PASS",
+    "async_bulk_generated_identity": "PASS",
+    "async_point_update_rollback": "PASS",
+    "async_server_cursor_values": "PASS",
+    "async_opaque_sql_rejected": "PASS",
+    "async_driver_execute_rejected": "PASS",
+    "async_copy_rejected_before_enter": "PASS",
+    "async_info_protocol_handle_rejected": "PASS",
+    "async_raw_rejections_no_wire": "PASS",
+    "async_contextvars_isolation": "PASS",
+    "async_driver_cancellation_observed": "PASS",
+    "async_post_cancellation_recovery": "PASS"
+  },
+  "schema": "revamp_gate_async_7188335527c44a28b7a4c9270afc3e9f",
+  "full_gates": "UNKNOWN_OR_FAIL_UNTIL_COMPLETE_EVIDENCE",
+  "adoption_edits": {
+    "original_source_sha256": "f9a0e1c1b5cc5232d4763a50e5fdaf1f67e1f0490d8256337c982daf4036836b",
+    "adapted_source_sha256": "f20b7e03a2a99188129e2e28eb3f525b179be1daa4032155f1918bcfc4d3aecb",
+    "adapted_source_path": "/tmp/cryptalis-retrofit-fixture-hni9tgpm/adapted_app.py",
+    "model_lines_changed": 0,
+    "business_query_lines_changed": 0,
+    "writer_lines_changed": 1,
+    "assertions_changed": 0,
+    "attachment_calls": 1,
+    "writer_change": "Opaque SQL update becomes equivalent typed Core update"
+  },
+  "source_sha256": "86da49ead7422163a6e8969134fb3642c0a2a7c29321a5eabf34f44d1d7ce027",
+  "implementation_sha256": {
+    "integration_adapter.py": "3847550042698f21620fb28e70258e45fba986b013e93ff0d95d38b8e5aa88d5",
+    "integration_crypto.py": "58b579ad764e7d16f7bbc986727cf371aac22aca6a1222c09e7512eb7bf31e10",
+    "integration_transition.py": "6c316893181aafbb8c449bd0ea7bb9307eadbe3952d0c0404a213e98aa65b89f",
+    "integration_async.py": "623eae103343ab42908c278c8775b1273203466717c809b3713f18e7d3236c85",
+    "integration_harness.py": "668a0a745ee44139908427642aae59a777539cf1fac3185d19378ef433056637",
+    "plain_app.py": "f9a0e1c1b5cc5232d4763a50e5fdaf1f67e1f0490d8256337c982daf4036836b"
+  },
+  "provider_scope": "MEMORY_ONLY_LOCAL_PROVIDER; REAL_PROVIDER_AWAIT_CANCELLATION_UNKNOWN",
+  "async_bootstrap_changes": {
+    "model": 0,
+    "business_query": 0,
+    "engine_factory": 1,
+    "reason": "Select guarded async creator; ordinary AsyncSession remains native"
+  },
+  "cleanup": "OWN_SCHEMA_DROPPED"
+}

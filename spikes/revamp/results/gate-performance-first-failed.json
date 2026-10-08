@@ -1,0 +1,239 @@
+{
+  "status": "PASS_LOCAL_CASES_ONLY",
+  "connection_url": "NEVER_RECORDED",
+  "outcomes": {
+    "identical_native_results_all_workloads": "PASS",
+    "selective_actual_cf1_index_plan": "PASS",
+    "million_row_membership_and_nulls": "PASS"
+  },
+  "schema": "revamp_gate_performance_d584f04048954e38b3f346315d8489cc",
+  "full_gates": "UNKNOWN_OR_FAIL_UNTIL_COMPLETE_EVIDENCE",
+  "adoption_edits": {
+    "original_source_sha256": "f9a0e1c1b5cc5232d4763a50e5fdaf1f67e1f0490d8256337c982daf4036836b",
+    "adapted_source_sha256": "f20b7e03a2a99188129e2e28eb3f525b179be1daa4032155f1918bcfc4d3aecb",
+    "adapted_source_path": "/tmp/cryptalis-retrofit-fixture-_e81a18g/adapted_app.py",
+    "model_lines_changed": 0,
+    "business_query_lines_changed": 0,
+    "writer_lines_changed": 1,
+    "assertions_changed": 0,
+    "attachment_calls": 1,
+    "writer_change": "Opaque SQL update becomes equivalent typed Core update"
+  },
+  "source_sha256": "077742b3dae36f49d56d4eafd7cf0fad8f5f561751c28501b701c916485c9819",
+  "implementation_sha256": {
+    "integration_adapter.py": "fe523a034bbc6260bd458fa557c860aeb8f00c29d879bf957c53d3747fb01263",
+    "integration_crypto.py": "58b579ad764e7d16f7bbc986727cf371aac22aca6a1222c09e7512eb7bf31e10"
+  },
+  "native_load_seconds": 25.678445084005943,
+  "rows": 1000000,
+  "distribution": {
+    "tenants": 10,
+    "rows_per_tenant": 100000,
+    "null_fraction": 0.01,
+    "non_null_email": "unique ASCII synthetic addresses",
+    "age": "0..99",
+    "display_name": "1000 labels; plaintext declared"
+  },
+  "baseline": {
+    "sizes": {
+      "account": {
+        "heap_bytes": 8192,
+        "index_bytes": 32768,
+        "total_bytes": 49152
+      },
+      "customer": {
+        "heap_bytes": 84459520,
+        "index_bytes": 108183552,
+        "total_bytes": 192692224
+      },
+      "invoice": {
+        "heap_bytes": 8192,
+        "index_bytes": 16384,
+        "total_bytes": 24576
+      }
+    },
+    "reads": {
+      "point_entity": {
+        "samples": 100,
+        "p50_ms": 0.6784809957025573,
+        "p95_ms": 0.8968659967649728,
+        "p99_ms": 1.0397219884907827,
+        "total_ms": 68.61154598300345,
+        "cpu_seconds": 0.04520204899999847,
+        "throughput_ops_s": 1454.6004648781425,
+        "rows_materialized_per_sample": 1
+      },
+      "equality_entity": {
+        "samples": 100,
+        "p50_ms": 0.6558570021297783,
+        "p95_ms": 0.9279939986299723,
+        "p99_ms": 1.1085290025221184,
+        "total_ms": 67.47528501728084,
+        "cpu_seconds": 0.04455066899999949,
+        "throughput_ops_s": 1479.7066225181552,
+        "rows_materialized_per_sample": 1
+      },
+      "membership_entities": {
+        "samples": 100,
+        "p50_ms": 0.8953090000431985,
+        "p95_ms": 1.093062004656531,
+        "p99_ms": 1.3252659991849214,
+        "total_ms": 90.76055798504967,
+        "cpu_seconds": 0.06238583100000028,
+        "throughput_ops_s": 1098.604113631457,
+        "rows_materialized_per_sample": 20
+      },
+      "native_unprotected_range_prefix_page": {
+        "samples": 20,
+        "p50_ms": 21.995309987687506,
+        "p95_ms": 23.85157700337004,
+        "p99_ms": 26.623372003086843,
+        "total_ms": 440.86987400078215,
+        "cpu_seconds": 0.023845029000000295,
+        "throughput_ops_s": 45.35653791305938,
+        "rows_materialized_per_sample": 5
+      },
+      "native_join_decimal": {
+        "samples": 100,
+        "p50_ms": 0.7634219946339726,
+        "p95_ms": 2.0449539879336953,
+        "p99_ms": 4.3788660113932565,
+        "total_ms": 95.59846798947547,
+        "cpu_seconds": 0.058922220000001246,
+        "throughput_ops_s": 1044.2646340473375,
+        "rows_materialized_per_sample": 1
+      }
+    },
+    "writes": {
+      "samples": 10,
+      "p50_ms": 5.675293999956921,
+      "p95_ms": 9.257219004211947,
+      "p99_ms": 9.257219004211947,
+      "total_ms": 62.2703450062545,
+      "rows": 400,
+      "batch_rows": 40,
+      "cpu_seconds": 0.025184843999999984,
+      "throughput_rows_s": 6421.014594956072
+    }
+  },
+  "protected": {
+    "sizes": {
+      "_cl_chunk": {
+        "heap_bytes": 10240000,
+        "index_bytes": 786432,
+        "total_bytes": 11067392
+      },
+      "_cl_operation": {
+        "heap_bytes": 8192,
+        "index_bytes": 16384,
+        "total_bytes": 32768
+      },
+      "account": {
+        "heap_bytes": 8192,
+        "index_bytes": 32768,
+        "total_bytes": 49152
+      },
+      "customer": {
+        "heap_bytes": 246874112,
+        "index_bytes": 103735296,
+        "total_bytes": 350707712
+      },
+      "invoice": {
+        "heap_bytes": 8192,
+        "index_bytes": 16384,
+        "total_bytes": 24576
+      }
+    },
+    "reads": {
+      "point_entity": {
+        "samples": 100,
+        "p50_ms": 2.960402998724021,
+        "p95_ms": 4.150480002863333,
+        "p99_ms": 4.515540000284091,
+        "total_ms": 305.8692150952993,
+        "cpu_seconds": 0.2605957619999941,
+        "throughput_ops_s": 326.70535293824423,
+        "rows_materialized_per_sample": 1
+      },
+      "equality_entity": {
+        "samples": 100,
+        "p50_ms": 4.937180012348108,
+        "p95_ms": 6.517490997794084,
+        "p99_ms": 6.813419997342862,
+        "total_ms": 495.8095860638423,
+        "cpu_seconds": 0.42365989900000045,
+        "throughput_ops_s": 201.63205745676026,
+        "rows_materialized_per_sample": 1
+      },
+      "membership_entities": {
+        "samples": 100,
+        "p50_ms": 13.754329003859311,
+        "p95_ms": 16.147702001035213,
+        "p99_ms": 17.176531997392885,
+        "total_ms": 1191.011550006806,
+        "cpu_seconds": 0.9848039619999867,
+        "throughput_ops_s": 83.91031105052643,
+        "rows_materialized_per_sample": 20
+      },
+      "native_unprotected_range_prefix_page": {
+        "samples": 20,
+        "p50_ms": 120.98563399922568,
+        "p95_ms": 127.09752799128182,
+        "p99_ms": 135.39020001189783,
+        "total_ms": 2297.7190060337307,
+        "cpu_seconds": 0.10146486200000027,
+        "throughput_ops_s": 8.703893194088254,
+        "rows_materialized_per_sample": 5
+      },
+      "native_join_decimal": {
+        "samples": 100,
+        "p50_ms": 2.052290001302026,
+        "p95_ms": 2.587013994343579,
+        "p99_ms": 2.861650995328091,
+        "total_ms": 209.1555470105959,
+        "cpu_seconds": 0.17237662099999795,
+        "throughput_ops_s": 477.6424067546752,
+        "rows_materialized_per_sample": 1
+      }
+    },
+    "writes": {
+      "samples": 10,
+      "p50_ms": 13.567481000791304,
+      "p95_ms": 18.78766799927689,
+      "p99_ms": 18.78766799927689,
+      "total_ms": 139.60264397610445,
+      "rows": 400,
+      "batch_rows": 40,
+      "cpu_seconds": 0.09996532000000968,
+      "throughput_rows_s": 2864.8394324969927
+    }
+  },
+  "equality_plan": {
+    "index_names": [
+      "cl_1628d22d01704a089811_eq_9f4be5eb6c98"
+    ],
+    "actual_rows": 1,
+    "execution_ms": 0.046
+  },
+  "migration": {
+    "wall_seconds": 128.82055323799432,
+    "cpu_seconds": 73.162998536,
+    "rows_s": 7762.7364179418855,
+    "total_pause_seconds_including_vacuum_analyze": 130.37976508800057,
+    "cluster_wal_delta_bytes": 675212960,
+    "database_temp_delta_bytes": 51888128
+  },
+  "process_peak_rss_kib": 80084,
+  "query_compilation_cache": "DISABLED_PUBLIC_OPTION_FOR_HOST_POINT_CONTEXT",
+  "production_budgets": "UNKNOWN_NO_APPROVED_BUDGETS_OR_PROVIDER",
+  "limits": [
+    "Local memory provider only; no mature-provider RPC cost",
+    "Warm local PostgreSQL 16.15; no 14-18 matrix",
+    "20 samples for native range/prefix; its p99 estimate is coarse",
+    "WAL/temp deltas include unrelated cluster/database activity if present",
+    "No advanced encrypted range/prefix fields in this manifest",
+    "Sustained writes: 400 rows, ten batches; longer soak not qualified",
+    "No production deployment procedure, fault-storage quota or independent review qualification"
+  ],
+  "cleanup": "OWN_SCHEMA_DROPPED"
+}

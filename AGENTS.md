@@ -1,51 +1,64 @@
 # Repository instructions
 
-Cryptalis contains documentation, research specifications, initial manifest decoding, canonical
-output, identity-header validation, parent-link validation, bounded ancestry-chain validation,
-structural field-format digests, offline terminal inspection, private candidate F1/W1 framing,
-private scalar encoding and decoding, and private structural ActiveState validation.
-It also contains a private process-local development authority with in-memory compare-and-swap.
-Private transition-plan admission checks expiry, target binding, and ActiveState freshness.
-Treat other APIs, commands, packages, and security properties as proposed until the [capability
-checklist](docs/backend-build-checklist.md) links the required executable evidence.
+Cryptalis contains a research foundation and a final intended architecture.
+Read the [status](docs/status.md) before claiming any runtime capability.
+A document is not executable evidence. SUPPORTED selects design scope, not current production support.
+Use SPECIFIED / IMPLEMENTED / VERIFIED with the exact evidence boundary. Do not describe spike code as product code.
+Architecture drives code. Current source/APIs/modules/tests/schemas/commands are not preservation requirements.
+Authorized implementation may refactor, replace, merge or remove them when the final contract requires it.
+A documentation-only task still leaves executable files unchanged.
 
-Preserve the default manual learning workflow in the [engineering playbook](ENGINEERING_PLAYBOOK.md). AI
-assistance may edit documentation directly. The human builder normally types source, tests, migrations,
-build configuration, containers, and CI files, one explained file at a time.
+## Deterministic reading path
 
-**Nothing important may fail silently.** Follow the [explicit failure policy](ENGINEERING_PLAYBOOK.md#fail-loudly-and-explicitly).
-Use explicit failure channels, safe actionable diagnostics, and failure-path evidence. Documentation alone does not close implementation gaps.
+1. Read [README](README.md) and [canonical architecture](docs/architecture/README.md).
+2. Read [security](docs/security.md), then [lifecycle](docs/lifecycle.md).
+3. Read [compatibility](docs/compatibility.md), then [status](docs/status.md).
+4. Read the [approved decisions](docs/decisions.md#approved-scope-decisions-2026-10-08), then the [ordered build slices](docs/build-guide.md#ordered-build-slices).
+5. Read [engineering playbook](ENGINEERING_PLAYBOOK.md) before implementation.
 
-Follow the [testing policy](ENGINEERING_PLAYBOOK.md#test-layers). Prefer end-to-end and integration
-checks of observable behavior. Do not generate unit tests for each function or to increase coverage.
-Use focused unit tests when they uniquely protect cryptographic or security logic, deterministic algorithms,
-parsers, state machines, protocols, or difficult edge cases. Each test must protect a meaningful property
-or regression and remain valid across reasonable internal refactors.
+Use the [ownership map](docs/architecture/README.md#documentation-ownership) for the contract being changed.
+Research files are external evidence, not alternate specifications.
+The [traceability record](docs/research/reset-traceability.md) explains replaced constraints. Git preserves historical wording.
 
-Use the installed `security-best-practices` skill for secure defaults and relevant Python host-adapter reviews.
-Use `security-threat-model` when threat modeling is requested. Extend the canonical threat model rather than creating a competing specification.
-Require the [release gate](ENGINEERING_PLAYBOOK.md#release-gate) before making production-readiness claims.
-Skills and AI review do not replace executable capability evidence or independent security review.
+## Work boundaries
 
-Use the [architecture ownership map](docs/architecture/README.md#documentation-ownership) to
-find canonical contracts. Preserve existing local work. Do not create competing specifications.
+Preserve existing local work. Inspect current Git status and repository truth before a continuation.
+Do not install, commit, push, reset or revert without authorization.
+Documentation assistance may edit Markdown directly.
+The human builder normally types source, tests, migrations, build configuration, containers and CI files.
+Use one explained file at a time unless the user explicitly authorizes another workflow.
+The [manual workflow](ENGINEERING_PLAYBOOK.md#manual-workflow) defines each RED/GREEN slice.
+Implement one build slice per run, in the approved order. Each slice requires real PostgreSQL 16 tests before the next.
+Advanced range/order/prefix/text work requires all seven slices, then [six-gate admission](docs/compatibility.md#capability-admission) and leakage opt-in.
 
-Use ASD-STE100-inspired writing for human-readable technical prose. Use STE-flavored mode for
-normal explanations and documentation. Use strict mode for procedures, instructions,
-troubleshooting, error text, and safety-critical content. Preserve necessary technical
-terminology, identifiers, uncertainty, qualifiers, mathematical meaning, scientific meaning, and
-implementation precision.
+Nothing important may fail silently.
+Follow the [explicit failure policy](ENGINEERING_PLAYBOOK.md#fail-loudly-and-explicitly).
+Use typed failures, safe remedies, partial-progress states and meaningful failure-path evidence.
+Missing security evidence is UNKNOWN. Do not convert it to PASS.
+Do not repair a failed literal read-only command or continue adjacent work without authorization.
 
-Prefer clarity over mechanical simplification. Use the installed `asd-ste100` skill when
-substantial prose is created or revised. Layer 1 is the primary writing system. Layer 2
-reply-shaping rules are optional guidance, not repository-writing requirements.
+Use the [testing policy](ENGINEERING_PLAYBOOK.md#test-layers).
+Prefer observable end-to-end and integration behavior.
+Focused unit tests must uniquely protect deterministic, cryptographic, parser, protocol or state-machine properties.
+Do not create tests for every function, private structure, import or coverage count.
+
+Use the installed security-best-practices skill for secure defaults and relevant Python host-adapter reviews.
+Use security-threat-model when the user requests threat modeling.
+Extend [docs/security.md](docs/security.md) rather than create a competing threat specification.
+Skills and AI review do not replace executable evidence or independent human security review.
+Require the [release gate](ENGINEERING_PLAYBOOK.md#release-gate) before any production-readiness claim.
+
+Use ASD-STE100-inspired prose. Apply STE-flavored mode to explanations and strict mode to procedures, diagnostics and safety instructions.
+Preserve necessary terminology, qualifiers, uncertainty, math and implementation precision.
+Use the installed asd-ste100 skill for substantial prose. Layer 1 governs writing. Layer 2 is optional reply guidance.
 
 ## Shell execution in WSL
 
-If the command executor already runs in WSL, run repository commands directly with the Linux shell.
+Before the first repository command, check the executor environment and working directory.
+If the executor runs in Linux or WSL, run Linux commands directly with the Linux shell.
 Use `/home/debrato/Projects/cryptalis` as the working directory.
-Do not wrap Linux commands with `wsl.exe`, `cmd.exe`, or `powershell.exe` in that environment.
-In this session, sandboxed `wsl.exe` failed with `UtilBindVsockAnyPort: socket failed 1` before the Linux command started.
-The same WSL launch succeeded outside the sandbox, and direct Linux commands succeeded inside it.
-For required Windows commands, request approval to run outside the sandbox after a sandbox-related failure.
-Keep repository checks inside the sandbox when direct Linux execution works.
+Do not wrap Linux commands with `wsl.exe`, `cmd.exe` or `powershell.exe`.
+Do not repeat an unchanged command after `UtilBindVsockAnyPort: socket failed 1`.
+Do not change sandbox permissions to make ordinary Linux repository commands work.
+For required Windows commands, request approval after a sandbox-related failure.
+A failure before process creation has no command exit status.

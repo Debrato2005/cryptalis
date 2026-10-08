@@ -1,12 +1,15 @@
 # Operations and release evidence for the architecture reset
 
+> Historical research archive. The [revamp record](revamp-evidence.md) supersedes its architecture choices and scope.
+> This file records past evidence, not the current specification or runtime qualification.
+
 Access date for every external source below: **2026-10-06**.
 
 This document records research and recommendations. It is not a normative architecture or executable capability evidence.
 No migration, provider call, release workflow, artifact verification, or adversarial fixture ran in this research lane.
 Source dates establish publication or event timing. They do not establish that a package version or deployment remains safe today.
 
-Final selection: the [lifecycle owner](../lifecycle.md#rollback-and-finalization) chooses a 24-hour default rollback window, with an absolute seven-day maximum.
+Final selection: the [lifecycle owner](../lifecycle.md#rollback) chooses a 24-hour default rollback window, with an absolute seven-day maximum.
 The seven-day default recommendation below is a rejected research input. Online transitions are excluded.
 
 ## Findings that constrain the design

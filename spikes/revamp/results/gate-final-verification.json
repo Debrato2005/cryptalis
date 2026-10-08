@@ -1,0 +1,138 @@
+{
+  "status": "PASS_SCOPED_FINAL_VERIFICATION",
+  "full_gates": {
+    "G-ADAPTER": {
+      "status": "UNKNOWN",
+      "reason": "Non-owning runtime principal and external writer exclusion are unqualified; complete SQL grammar, multi-field/default/codec mappings and platform matrix remain pending"
+    },
+    "G-CRYPTO": {
+      "status": "UNKNOWN",
+      "reason": "Frozen independent vectors, generic codecs, nonce/usage/fork bounds and independent human composition review remain pending"
+    },
+    "G-QUERY": {
+      "status": "UNKNOWN",
+      "reason": "Complete PostgreSQL semantics/platforms, advanced encrypted query integration/attacks and approved per-capability budgets remain pending"
+    },
+    "G-LIFECYCLE": {
+      "status": "UNKNOWN",
+      "reason": "Real deployment writer exclusion, independent fresh-process recovery/backup reader provenance, format upgrades, storage exhaustion and external provider transformations remain pending"
+    },
+    "G-PROVIDER": {
+      "status": "UNKNOWN",
+      "reason": "The user has selected no production provider. Memory-only local functional evidence cannot qualify custody, native deletion or remote cancellation"
+    },
+    "G-POLICY": {
+      "status": "UNKNOWN",
+      "reason": "The user has selected no deployment procedure. Authenticated publication/startup pin, stale workers, restore quarantine and restored-old-policy denial have no executable host evidence"
+    },
+    "G-RELEASE": {
+      "status": "UNKNOWN",
+      "reason": "Independent human review is unavailable (`external-review-required`); approved application/adoption budgets and locked artifact/provenance qualification remain pending"
+    }
+  },
+  "service_checks": {
+    "retrofit": {
+      "command": "spikes/.venv/bin/python spikes/revamp/run_gate_retrofit.py",
+      "exit_code": 0,
+      "checks": 51,
+      "receipt_sha256": "d1fc04383e4ce1b286f0f804c03d2fcbf0da1aa51e3bda301344177be8989df6",
+      "current_implementation_hashes_match": true
+    },
+    "boundary": {
+      "command": "spikes/.venv/bin/python spikes/revamp/run_gate_boundary.py",
+      "exit_code": 0,
+      "checks": 25,
+      "receipt_sha256": "ec2875226dd9f0bd64119d2791bb5519026a8a97c0c5e824a8e07e5330ddd348",
+      "current_implementation_hashes_match": true
+    },
+    "async": {
+      "command": "spikes/.venv/bin/python spikes/revamp/run_gate_async.py",
+      "exit_code": 0,
+      "checks": 14,
+      "receipt_sha256": "0a418c97b8b5fa70048478474e1206a4380f174043264c7dc364aa1256f3fd26",
+      "current_implementation_hashes_match": true
+    },
+    "context": {
+      "command": "spikes/.venv/bin/python spikes/revamp/run_gate_context.py",
+      "exit_code": 0,
+      "checks": 48,
+      "receipt_sha256": "25a00305bc3c2d1b2ae764ef666435fa65a8a48d2d65054c5ba97ba98d5059f7",
+      "current_implementation_hashes_match": true
+    },
+    "lifecycle": {
+      "command": "spikes/.venv/bin/python spikes/revamp/run_gate_lifecycle.py",
+      "exit_code": 0,
+      "checks": 23,
+      "receipt_sha256": "376f1a506ae6c093f5969f66aeb4d41456a33caeee6fe5cca59ebfe3ff58d3a5",
+      "current_implementation_hashes_match": true
+    },
+    "faults": {
+      "command": "spikes/.venv/bin/python spikes/revamp/run_gate_faults.py",
+      "exit_code": 0,
+      "checks": 13,
+      "receipt_sha256": "5521e8f3cda14c23fa2362325fd549989f5d551aabaf2c675d0ab6e518f54d8e",
+      "current_implementation_hashes_match": true
+    },
+    "write-cost": {
+      "command": "spikes/.venv/bin/python spikes/revamp/run_gate_write_cost.py",
+      "exit_code": 0,
+      "checks": 2,
+      "receipt_sha256": "91c8d4207fda9f8b43d568b60790f4db15010316a52ff6695216006c24c6e55a",
+      "current_implementation_hashes_match": true
+    }
+  },
+  "package_free_child_checks": 35,
+  "reused_scale": {
+    "receipt": "gate-performance.json",
+    "checks": 3,
+    "rows": 1000000,
+    "sha256": "ce7ae6ac328891620b5fe31ada769cad652032de3f5a32bdfba16fee9f4f3307",
+    "limit": "Earlier adapter revision; unchanged CF1/index scale evidence. Current adapter cost is separately measured."
+  },
+  "reused_prior_evidence": {
+    "research_test_suite": 612,
+    "owner_links": 147,
+    "decision_dispositions": 33,
+    "kill_inventory": 15
+  },
+  "preservation": {
+    "starting_paths": 67,
+    "unchanged_files": 45,
+    "additive_markdown_files": [
+      "docs/architecture/README.md",
+      "docs/build-guide.md",
+      "docs/compatibility.md",
+      "docs/lifecycle.md",
+      "docs/research/revamp-evidence.md",
+      "docs/security.md",
+      "docs/status.md",
+      "spikes/revamp/README.md"
+    ],
+    "preserved_deletions": 14,
+    "original_non_markdown_unchanged": 100
+  },
+  "final_checks": {
+    "new_python_files_compiled": 14,
+    "new_links_checked": 28,
+    "git_diff_check": "PASS",
+    "remaining_owned_gate_schemas": 0,
+    "review": "Current candidate, final evidence and additive diff inspected; no independent human security review"
+  },
+  "implementation_sha256": {
+    "integration_adapter.py": "3847550042698f21620fb28e70258e45fba986b013e93ff0d95d38b8e5aa88d5",
+    "integration_harness.py": "668a0a745ee44139908427642aae59a777539cf1fac3185d19378ef433056637",
+    "integration_crypto.py": "58b579ad764e7d16f7bbc986727cf371aac22aca6a1222c09e7512eb7bf31e10",
+    "integration_transition.py": "6c316893181aafbb8c449bd0ea7bb9307eadbe3952d0c0404a213e98aa65b89f",
+    "integration_async.py": "623eae103343ab42908c278c8775b1273203466717c809b3713f18e7d3236c85",
+    "run_gate_performance.py": "077742b3dae36f49d56d4eafd7cf0fad8f5f561751c28501b701c916485c9819",
+    "run_gate_async.py": "86da49ead7422163a6e8969134fb3642c0a2a7c29321a5eabf34f44d1d7ce027",
+    "run_gate_lifecycle.py": "b00292944a5c42a977ac9e82a340f9d2d35a45e6c9f4f0d42d40ffdcbb62c117",
+    "run_gate_boundary.py": "c616d5173b6d0bc446114f96c7dd4205d6cdf2f5ae6e4e04e8e1f839ca63b4c3",
+    "run_gate_write_cost.py": "6df2c1ce7dc21aff47641687deefaf1f90b753532e62199f9ec72e5db6a7bd49",
+    "run_gate_context.py": "dd9b38d2d369046d350afe56e0291d1a721a63a165103e8b1fe7f57993b2ca72",
+    "run_gate_faults.py": "00aa3c577833744ec457440528dd06639389433467588936932d1bca5834a9eb",
+    "run_gate_retrofit.py": "4e3f26fde73c8e39d9d792bc2b16e68dcaa69a2c19127a059a8c9be0e2fa32f4",
+    "run_package_free_original.py": "b0c1435b51e6a9410f33f4f05045de8dc7afcc6988594c7530f639442d8714f2"
+  },
+  "connection_url": "NEVER_RECORDED"
+}

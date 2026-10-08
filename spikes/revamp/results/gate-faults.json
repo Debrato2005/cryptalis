@@ -1,0 +1,47 @@
+{
+  "status": "PASS_LOCAL_CASES_ONLY",
+  "connection_url": "NEVER_RECORDED",
+  "outcomes": {
+    "real_sql_error_stops_chunk": "PASS",
+    "sql_failed_chunk_data_and_marker_roll_back": "PASS",
+    "provider_failure_stops_chunk": "PASS",
+    "provider_failed_chunk_data_and_marker_roll_back": "PASS",
+    "changed_operation_plan_blocks_resume": "PASS",
+    "computed_tenant_assignment_rejected_before_wire": "PASS",
+    "protected_sql_function_assignment_rejected_before_wire": "PASS",
+    "insert_select_protected_writer_rejected": "PASS",
+    "static_multirow_insert_rejected": "PASS",
+    "rejected_expression_writers_have_no_wire_execution": "PASS",
+    "failed_writer_keeps_original_authenticated_row": "PASS",
+    "caller_cannot_forge_internal_dml_admission": "PASS",
+    "forged_admission_has_no_wire_effect": "PASS"
+  },
+  "schema": "revamp_gate_faults_1e7324b872f3479799bcef74d6e04b0e",
+  "full_gates": "UNKNOWN_OR_FAIL_UNTIL_COMPLETE_EVIDENCE",
+  "adoption_edits": {
+    "original_source_sha256": "f9a0e1c1b5cc5232d4763a50e5fdaf1f67e1f0490d8256337c982daf4036836b",
+    "adapted_source_sha256": "f20b7e03a2a99188129e2e28eb3f525b179be1daa4032155f1918bcfc4d3aecb",
+    "adapted_source_path": "/tmp/cryptalis-retrofit-fixture-bi81in0i/adapted_app.py",
+    "model_lines_changed": 0,
+    "business_query_lines_changed": 0,
+    "writer_lines_changed": 1,
+    "assertions_changed": 0,
+    "attachment_calls": 1,
+    "writer_change": "Opaque SQL update becomes equivalent typed Core update"
+  },
+  "source_sha256": "00aa3c577833744ec457440528dd06639389433467588936932d1bca5834a9eb",
+  "implementation_sha256": {
+    "integration_adapter.py": "3847550042698f21620fb28e70258e45fba986b013e93ff0d95d38b8e5aa88d5",
+    "integration_crypto.py": "58b579ad764e7d16f7bbc986727cf371aac22aca6a1222c09e7512eb7bf31e10",
+    "integration_transition.py": "6c316893181aafbb8c449bd0ea7bb9307eadbe3952d0c0404a213e98aa65b89f",
+    "integration_async.py": "623eae103343ab42908c278c8775b1273203466717c809b3713f18e7d3236c85",
+    "integration_harness.py": "668a0a745ee44139908427642aae59a777539cf1fac3185d19378ef433056637",
+    "plain_app.py": "f9a0e1c1b5cc5232d4763a50e5fdaf1f67e1f0490d8256337c982daf4036836b"
+  },
+  "limits": [
+    "No actual disk-full or WAL quota fault was induced",
+    "Injected provider failure is local only",
+    "Real restore/deployment provenance and independent-process provider restart remain UNKNOWN"
+  ],
+  "cleanup": "OWN_SCHEMA_DROPPED"
+}

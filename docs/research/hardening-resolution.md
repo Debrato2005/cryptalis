@@ -1,5 +1,8 @@
 # Architecture hardening resolution record
 
+> Historical research archive. The [revamp record](revamp-evidence.md) supersedes its architecture choices and scope.
+> This file records past evidence, not the current specification or runtime qualification.
+
 Date: 2026-10-07, Asia/Calcutta. This is first-party design/evidence work, not an audit or production qualification.
 Canonical owners define future implementation. Existing production source remains outside the write scope.
 The first council's exact [report](council-review-1/report.md), [brief](council-review-1/frozen-brief.txt), recovered outputs,
@@ -12,18 +15,18 @@ It does not mean the complete runtime protocol is implemented or verified.
 
 | ID | Resolution | Canonical owner / ledger | Executed subset / remaining test |
 |---|---|---|---|
-| H1 | Fence before admission, DB token check, registered worker/mutation drain, immutable external dispatcher. No TTL takeover | [security](../security.md#admission-and-fencing), D33 | S2 exploration + PG stale-token/shared-lock checks. Real AWS/CAS/IAM/failover/termination UNKNOWN |
-| H2 | Immutable per-flush outcome rows under one transaction UUID, original batch UUID/digest, terminal-backend-before-absence rule, retained marker independent of data deletion | [lifecycle](../lifecycle.md#ordinary-commit-evidence), D34 | S2 + real PG two-batch commit/rollback/delete markers; canonical attribute-identity fixture. Real wire emission/transport-cut/target lineage/retention unbuilt |
-| H3 | Public bootstrap mapping, separate pending state and physical snapshots, one logical publication frame, explicit identity refresh. Partial refresh/merge/deferred host mappings rejected | [integration](../architecture/README.md#orm-state-and-publication), D35 | S1 real sync/async subset. Full declarative/Result/history/loader cell UNKNOWN |
-| H4 | Freeze complete write set before await, prepare outside hooks, check again at final SQL emission, reject late writes | [integration](../architecture/README.md#closed-write-preparation), D35 | S1 late sync/async flush/autoflush/await additions reject. Full cascade/default/cancel/end-hook coverage UNKNOWN |
+| H1 | Fence before admission, DB token check, registered worker/mutation drain, immutable external dispatcher. No TTL takeover | [security](../security.md#key-hierarchy-and-providers), D33 | S2 exploration + PG stale-token/shared-lock checks. Real AWS/CAS/IAM/failover/termination UNKNOWN |
+| H2 | Immutable per-flush outcome rows under one transaction UUID, original batch UUID/digest, terminal-backend-before-absence rule, retained marker independent of data deletion | [lifecycle](../lifecycle.md#plan-and-phases), D34 | S2 + real PG two-batch commit/rollback/delete markers; canonical attribute-identity fixture. Real wire emission/transport-cut/target lineage/retention unbuilt |
+| H3 | Public bootstrap mapping, separate pending state and physical snapshots, one logical publication frame, explicit identity refresh. Partial refresh/merge/deferred host mappings rejected | [integration](../architecture/README.md#sqlalchemy-integration), D35 | S1 real sync/async subset. Full declarative/Result/history/loader cell UNKNOWN |
+| H4 | Freeze complete write set before await, prepare outside hooks, check again at final SQL emission, reject late writes | [integration](../architecture/README.md#sqlalchemy-integration), D35 | S1 late sync/async flush/autoflush/await additions reject. Full cascade/default/cancel/end-hook coverage UNKNOWN |
 | M5 | Closed total plain atoms and protected leaves, full-tree rejection including unused branches, exact three-valued semantics | [compatibility](../compatibility.md#query-semantics), D36 | M5 reproduces division error, rejects 10 unsafe forms, checks six truth results. Full oracle unbuilt |
-| M6 | Live/target/retry/growth/mirror root headroom and physical/provider preflight. Exhaustion pauses; mirror failure denies whole write | [lifecycle](../lifecycle.md#capacity-preflight-and-exhaustion), D37 | S2 tiny-cap three failure checks. Live account/storage/quota/rollback evidence UNKNOWN |
+| M6 | Live/target/retry/growth/mirror root headroom and physical/provider preflight. Exhaustion pauses; mirror failure denies whole write | [lifecycle](../lifecycle.md#supported-deployment-candidate), D37 | S2 tiny-cap three failure checks. Live account/storage/quota/rollback evidence UNKNOWN |
 | M7 | Exactly all-row tenant/field uniqueness, NULLS DISTINCT, no partial/composite/global/soft-delete reuse. Intact-term assumption and membership oracle stated | [compatibility](../compatibility.md#query-semantics), D38 | S3 actual concurrent conflict and hostile-term duplicate counterexample. Broader cells unbuilt |
-| M8 | Original-proposal operation-ID resume, inspect-only reconcile, reversible abort, proof-only break-glass with current authority | [lifecycle](../lifecycle.md#recovery-catalogue), D39 | S2 repeat/wrong-target/digest/unknown-owner subset. Real commands and all catalogue rows unbuilt |
+| M8 | Original-proposal operation-ID resume, inspect-only reconcile, reversible abort, proof-only break-glass with current authority | [lifecycle](../lifecycle.md#recovery-behavior), D39 | S2 repeat/wrong-target/digest/unknown-owner subset. Real commands and all catalogue rows unbuilt |
 | M9 | `revoke --subject` means managed denial. `destroy --domain` is separately observed custody destruction | [lifecycle](../lifecycle.md#revocation-and-destruction), D26/D27 | Terminology checks. Operator comprehension and actual command outputs UNKNOWN |
 | M10 | AWS-only eligibility, bootstrap/mapping/session/schema changes, maintenance/backup/IAM obligations first. Finalized ordinary ciphertext versus approved plaintext copies explicit | [README](../../README.md#intended-adoption), D32/D40 | Static claim check. Representative adoption/usability UNKNOWN |
 
-All ten have explicit invariant/failure behavior in their owner and named [adversarial build scenarios](../build-guide.md#hardening-specific-acceptance-scenarios).
+All ten have explicit invariant/failure behavior in their owner and named [adversarial build scenarios](../build-guide.md#ordered-build-slices).
 No first-review finding is dismissed because existing source already chooses an abstraction.
 
 ## Additional investigation
@@ -117,7 +120,7 @@ Task commits before this final disposition: 95befb5, 8c04b10, d456c12 and 1a77e6
 
 All 33 blocked decisions remain INVALIDATING: D01–D06, D08–D09, D11, D13–D25, D27–D29, D31,
 D33–D35, D37, D39–D40 and D42. No blocked decision is tuning-only. Counts remain **9 DECIDED / 33 BLOCKED / 42 total**.
-The [decision owner](../decisions.md#hardening-decisions-and-feasibility-triage) explains the distinction.
+The [decision owner](../decisions.md#selected-choices) explains the distinction.
 
 The [15 expert questions](cryptographer-review-packet.md#specific-questions-requiring-a-written-human-answer) require written human answers.
 They cover AEAD multi-key lifetime/forgery bounds, hashed AAD/context vectors, descriptor domains, HKDF/request HMAC and exact

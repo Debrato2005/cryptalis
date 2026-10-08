@@ -1,5 +1,8 @@
 # Leakage, normalization and integration evidence
 
+> Historical research archive. The [revamp record](revamp-evidence.md) supersedes its architecture choices and scope.
+> This file records past evidence, not the current specification or runtime qualification.
+
 Access date for every source: **2026-10-06**.
 This is an external evidence ledger. It defines no second architecture.
 Primary papers establish attack assumptions and examples, not a local attack reproduction or audit.

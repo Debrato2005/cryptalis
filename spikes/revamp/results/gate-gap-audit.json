@@ -1,0 +1,145 @@
+{
+  "status": "PASS_SCOPED_GAP_AUDIT_ONLY",
+  "audit_date": "2026-10-08",
+  "full_gates": {
+    "G-ADAPTER": {
+      "status": "UNKNOWN",
+      "reason": "Non-owning runtime principal and external writer exclusion are unqualified; complete SQL grammar, multi-field/default/codec mappings and platform matrix remain pending; latest SELECT DISTINCT denial has offline evidence only and needs real-service regression"
+    },
+    "G-CRYPTO": {
+      "status": "UNKNOWN",
+      "reason": "Frozen independent vectors, generic codecs, nonce/usage/fork bounds and independent human composition review remain pending; three RFC primitive vectors now pass, but full independent CF1 composition vectors remain missing"
+    },
+    "G-QUERY": {
+      "status": "UNKNOWN",
+      "reason": "Complete PostgreSQL semantics/platforms, advanced encrypted query integration/attacks and approved per-capability budgets remain pending"
+    },
+    "G-LIFECYCLE": {
+      "status": "UNKNOWN",
+      "reason": "Real deployment writer exclusion, independent fresh-process recovery/backup reader provenance, format upgrades, storage exhaustion and external provider transformations remain pending"
+    },
+    "G-PROVIDER": {
+      "status": "UNKNOWN",
+      "reason": "The user has selected no production provider. Memory-only local functional evidence cannot qualify custody, native deletion or remote cancellation"
+    },
+    "G-POLICY": {
+      "status": "UNKNOWN",
+      "reason": "The user has selected no deployment procedure. Authenticated publication/startup pin, stale workers, restore quarantine and restored-old-policy denial have no executable host evidence"
+    },
+    "G-RELEASE": {
+      "status": "UNKNOWN",
+      "reason": "Independent human review is unavailable (`external-review-required`); approved application/adoption budgets and locked artifact/provenance qualification remain pending"
+    }
+  },
+  "acceptance_criteria_owner": "docs/status.md#missing-evidence-and-promotion-criteria",
+  "classifications": {
+    "L": "Locally obtainable now",
+    "E": "External infrastructure, provider or deployment",
+    "H": "Independent human or security review",
+    "D": "Explicit product or security decision or approved budget"
+  },
+  "closed_local_subsets": {
+    "select_distinct": {
+      "red": "protected_scalar_distinct_accepted",
+      "red_exit_code": 1,
+      "green_checks": 13,
+      "receipt": "gate-grammar.json",
+      "scope": "Actual expression admission hook with an inert connection; no planner, driver or database qualification"
+    },
+    "primitive_vectors": {
+      "checks": 9,
+      "published_vectors": 3,
+      "receipt": "crypto-vectors.json",
+      "source": "https://www.rfc-editor.org/rfc/rfc8452.html#appendix-C.2",
+      "scope": "AES-256-GCM-SIV primitive only; CF1 composition remains unqualified"
+    }
+  },
+  "previous_final_receipt": {
+    "path": "gate-final-verification.json",
+    "preserved": "UNCHANGED",
+    "adapter_revision": "3847550042698f21620fb28e70258e45fba986b013e93ff0d95d38b8e5aa88d5",
+    "current_adapter_matches": false,
+    "scope": "Established previous-revision service evidence; implementation-match assertions are historical"
+  },
+  "latest_service_regression": {
+    "status": "NOT_RUN",
+    "reason": "CRYPTALIS_TEST_DATABASE_URL is absent in this executor",
+    "required": [
+      "real-service retrofit and boundary checks for the latest admission change",
+      "async admission regression for the latest shared hook"
+    ],
+    "production_or_other_database_substituted": false
+  },
+  "reused_evidence": {
+    "project_tests": 612,
+    "seven_service_probes": "ESTABLISHED_FOR_RECORDED_REVISIONS",
+    "package_free_child_checks": 35,
+    "million_rows": 1000000,
+    "full_gate_promotion": false,
+    "format_crypto_transition_index_changes": false,
+    "latest_service_performance_measured": false
+  },
+  "consistency_corrections": [
+    "SELECT DISTINCT is separate from the tested scoped COUNT DISTINCT rewrite",
+    "Source index checks do not establish generic CHECK/FK/default/collation preservation",
+    "Writer inventory is an assertion; chunk locks do not exclude external credentials",
+    "In-memory backup decoding and fork inheritance do not establish durable independent recovery",
+    "Injected SQL/provider faults do not establish disk/WAL exhaustion or resource-pressure behavior",
+    "Database switch and local attachment installation do not establish authenticated production policy activation"
+  ],
+  "environment": {
+    "python": "3.12.3",
+    "os": "Linux",
+    "database_url": "ABSENT_NOT_DISCLOSED"
+  },
+  "artifact_sha256": {
+    "docs/status.md": "55c27796437c0089081bee433efae03b96aed81c28c50fee8a31e72bc910bc85",
+    "spikes/revamp/integration_adapter.py": "d64f279472d03993a797478afc2843013a8aac05364e075975a0e8fccf2fd2bb",
+    "spikes/revamp/run_gate_grammar.py": "28d595748285fcaa0184eb5641952072aaf528b6e63a9141667440ff85633e26",
+    "spikes/revamp/run_crypto_vectors.py": "ff18a647970cae00b448bd1b4a1ee3c7f02758231e4b8a4d9fe428cd8d340c8f",
+    "spikes/revamp/results/gate-grammar.json": "ebbccfede9e675f34b2d532f78645a0806fc98f0da0ed990491488846d2c8ff8",
+    "spikes/revamp/results/crypto-vectors.json": "af567d45761523594f547702418334938c6b153610cab66cf70e967b7662243b",
+    "spikes/revamp/results/gate-final-verification.json": "6fde303643a91c35c83f531d1446a26169381df47a3b8ed08a44377970444ff5"
+  },
+  "validation": {
+    "status": "PASS_AUDIT_DELTA_ONLY",
+    "changed_existing_files": [
+      "docs/status.md",
+      "spikes/revamp/integration_adapter.py"
+    ],
+    "starting_deletions_preserved": 14,
+    "prior_receipts_unchanged": 26,
+    "tracked_non_markdown_in_audit_snapshot_unchanged": 93,
+    "new_local_links_checked": 4,
+    "grammar_checks": 13,
+    "primitive_vector_checks": 9,
+    "existing_content_preserved_except_explicit_additions": true,
+    "full_gate_verdicts": "SEVEN_UNKNOWN",
+    "service_regression": "NOT_RUN_DATABASE_URL_ABSENT",
+    "changed_new_python_compile": "PASS_THREE_FILES_NO_BYTECODE",
+    "git_diff_check": "PASS",
+    "commands": [
+      "spikes/.venv/bin/python spikes/revamp/run_gate_grammar.py > spikes/revamp/results/gate-grammar.json",
+      "spikes/.venv/bin/python spikes/revamp/run_crypto_vectors.py > spikes/revamp/results/crypto-vectors.json",
+      "python3 - <<'PY'\nfrom pathlib import Path\npaths=['spikes/revamp/integration_adapter.py','spikes/revamp/run_gate_grammar.py','spikes/revamp/run_crypto_vectors.py']\nfor name in paths:\n compile(Path(name).read_bytes(),name,'exec')\nprint('PASS: three changed/new Python files compile; no bytecode written')\nPY",
+      "python3 /tmp/cryptalis-gap-audit-iuujessb/verify_gap_audit.py",
+      "git diff --check",
+      "node hooks/run-python.cjs scripts/ste-lint.py --fail-over 2.5 /tmp/cryptalis-gap-audit-iuujessb/status-addendum.md"
+    ],
+    "lint_command_workdir": "/mnt/c/Users/Debrato/.codex/skills/asd-ste100",
+    "prior_original_non_markdown_100": "ESTABLISHED_EVIDENCE_RETAINED_NOT_RERUN"
+  },
+  "prose_lint": {
+    "status_addendum_per100w": 0.56
+  },
+  "connection_url": "NEVER_RECORDED",
+  "final_files_changed": [
+    "docs/status.md",
+    "spikes/revamp/integration_adapter.py",
+    "spikes/revamp/run_gate_grammar.py",
+    "spikes/revamp/run_crypto_vectors.py",
+    "spikes/revamp/results/gate-grammar.json",
+    "spikes/revamp/results/crypto-vectors.json",
+    "spikes/revamp/results/gate-gap-audit.json"
+  ]
+}

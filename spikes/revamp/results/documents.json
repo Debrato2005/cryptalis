@@ -1,0 +1,77 @@
+{
+  "status": "PASS_DOCUMENT_BOUNDARIES",
+  "draft_preflight": false,
+  "errors": [],
+  "current_owner_links_checked": 147,
+  "historical_blocked_decisions_mapped": 33,
+  "kill_results": 15,
+  "essential_gates": [
+    "G-ADAPTER",
+    "G-CRYPTO",
+    "G-LIFECYCLE",
+    "G-POLICY",
+    "G-PROVIDER",
+    "G-QUERY",
+    "G-RELEASE"
+  ],
+  "starting_non_markdown_unchanged": 100,
+  "starting_deletions_preserved": 14,
+  "starting_markdown_changed": [
+    "ENGINEERING_PLAYBOOK.md",
+    "README.md",
+    "docs/architecture/README.md",
+    "docs/build-guide.md",
+    "docs/compatibility.md",
+    "docs/decisions.md",
+    "docs/lifecycle.md",
+    "docs/prior-art.md",
+    "docs/research/cryptographer-review-packet.md",
+    "docs/research/hardening-evidence.md",
+    "docs/research/hardening-resolution.md",
+    "docs/research/reset-crypto-authority-evidence.md",
+    "docs/research/reset-integration-search-evidence.md",
+    "docs/research/reset-leakage-semantics-evidence.md",
+    "docs/research/reset-operations-release-evidence.md",
+    "docs/research/reset-traceability.md",
+    "docs/security.md",
+    "docs/status.md",
+    "spikes/README.md"
+  ],
+  "core_metrics": {
+    "README.md": {
+      "before_words": 705,
+      "after_words": 790
+    },
+    "docs/architecture/README.md": {
+      "before_words": 3655,
+      "after_words": 2142
+    },
+    "docs/security.md": {
+      "before_words": 6750,
+      "after_words": 2237
+    },
+    "docs/lifecycle.md": {
+      "before_words": 5027,
+      "after_words": 1965
+    },
+    "docs/compatibility.md": {
+      "before_words": 3391,
+      "after_words": 2910
+    },
+    "docs/status.md": {
+      "before_words": 1422,
+      "after_words": 1001
+    },
+    "docs/build-guide.md": {
+      "before_words": 3082,
+      "after_words": 734
+    }
+  },
+  "before_core_words": 24032,
+  "after_core_words": 11779,
+  "limits": [
+    "Historical body links/hashes retain original context; current owner links checked",
+    "External URLs were researched separately, not crawled by this checker",
+    "Link/hash/inventory checks do not prove semantic completeness or runtime safety"
+  ]
+}

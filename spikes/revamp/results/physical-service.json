@@ -1,0 +1,1271 @@
+{
+  "status": "PASS_LISTED_PHYSICAL_CASES_ONLY",
+  "schema": "revamp_physical_service_a2a75ce8fdbf49bd8fd1a9506ba03c46",
+  "rows": 1000000,
+  "outcomes": {
+    "million_rows_loaded": "PASS",
+    "built_in_bytea_and_array_classes": "PASS",
+    "equality_exact_ids": "PASS",
+    "equality_selective_index": "PASS",
+    "prefix_exact_ids": "PASS",
+    "prefix_selective_index": "PASS",
+    "range_exact_ids": "PASS",
+    "range_selective_index": "PASS",
+    "packed_duplicate_rejected": "PASS"
+  },
+  "connection_url": "NEVER_RECORDED",
+  "source_sha256": "d13a4b195c2c9ddc5f1a1022611b14642044e2894e0262f2e398da3495eb57c3",
+  "dependencies_sha256": {
+    "run_native_service.py": "9c5f114cfca8a9e7161da2720bc2eb7e36e516d1f1ff01f19db4a4401f18ce0e",
+    "run_stock_postgres.py": "150e0b13aecc6258c5425fcd9ae0e89ce45cb5a1151ea1508f47aba916d46dbd",
+    "probe_service.py": "a9776d1af1e2ae0813fd95149835289a6dad78aad72f0ef0f7e399c8c4c22218"
+  },
+  "gates": {
+    "G-QUERY": "INCOMPLETE",
+    "G-RELEASE": "INCOMPLETE"
+  },
+  "limits": [
+    "Synthetic physical fixture; plaintext control intentionally stored",
+    "Only email has an encrypted payload; name/age arrays have no complete field payload path",
+    "CF1-shaped packed surrogate is not CF1 cryptographic evidence",
+    "No ORM/provider/whole-backend timing",
+    "Warm sequential EXPLAIN samples; no p99 or production tail claim",
+    "Column sizes are marginal bytes, not isolated per-capability total storage",
+    "No advanced structural attacks or other PostgreSQL/provider qualification"
+  ],
+  "server_version": "16.15 (Ubuntu 16.15-0ubuntu0.24.04.1)",
+  "installed_extensions": [
+    "plpgsql"
+  ],
+  "client_generation_and_two_copy_seconds": 29.17150301899528,
+  "index_build_and_analyze_seconds": 14.025833096005954,
+  "actual_index_classes": [
+    [
+      "btree",
+      "bytea_ops"
+    ],
+    [
+      "btree",
+      "int8_ops"
+    ],
+    [
+      "btree",
+      "text_ops"
+    ],
+    [
+      "btree",
+      "text_pattern_ops"
+    ],
+    [
+      "gin",
+      "array_ops"
+    ]
+  ],
+  "queries": {
+    "equality": {
+      "selected_rows": 1,
+      "selectivity": 1e-06,
+      "exact_selected_ids": true,
+      "plain": {
+        "warm_runs": 20,
+        "p50_ms": 0.012,
+        "p95_ms": 0.019,
+        "required_index_used_every_run": true,
+        "first_plan_node_types": [
+          "Index Scan"
+        ],
+        "actual_rows": 1,
+        "observations": [
+          {
+            "execution_ms": 0.017,
+            "index_used": true,
+            "node_types": [
+              "Index Scan"
+            ],
+            "actual_rows": 1
+          },
+          {
+            "execution_ms": 0.014,
+            "index_used": true,
+            "node_types": [
+              "Index Scan"
+            ],
+            "actual_rows": 1
+          },
+          {
+            "execution_ms": 0.009,
+            "index_used": true,
+            "node_types": [
+              "Index Scan"
+            ],
+            "actual_rows": 1
+          },
+          {
+            "execution_ms": 0.008,
+            "index_used": true,
+            "node_types": [
+              "Index Scan"
+            ],
+            "actual_rows": 1
+          },
+          {
+            "execution_ms": 0.022,
+            "index_used": true,
+            "node_types": [
+              "Index Scan"
+            ],
+            "actual_rows": 1
+          },
+          {
+            "execution_ms": 0.015,
+            "index_used": true,
+            "node_types": [
+              "Index Scan"
+            ],
+            "actual_rows": 1
+          },
+          {
+            "execution_ms": 0.009,
+            "index_used": true,
+            "node_types": [
+              "Index Scan"
+            ],
+            "actual_rows": 1
+          },
+          {
+            "execution_ms": 0.007,
+            "index_used": true,
+            "node_types": [
+              "Index Scan"
+            ],
+            "actual_rows": 1
+          },
+          {
+            "execution_ms": 0.006,
+            "index_used": true,
+            "node_types": [
+              "Index Scan"
+            ],
+            "actual_rows": 1
+          },
+          {
+            "execution_ms": 0.006,
+            "index_used": true,
+            "node_types": [
+              "Index Scan"
+            ],
+            "actual_rows": 1
+          },
+          {
+            "execution_ms": 0.006,
+            "index_used": true,
+            "node_types": [
+              "Index Scan"
+            ],
+            "actual_rows": 1
+          },
+          {
+            "execution_ms": 0.006,
+            "index_used": true,
+            "node_types": [
+              "Index Scan"
+            ],
+            "actual_rows": 1
+          },
+          {
+            "execution_ms": 0.006,
+            "index_used": true,
+            "node_types": [
+              "Index Scan"
+            ],
+            "actual_rows": 1
+          },
+          {
+            "execution_ms": 0.018,
+            "index_used": true,
+            "node_types": [
+              "Index Scan"
+            ],
+            "actual_rows": 1
+          },
+          {
+            "execution_ms": 0.013,
+            "index_used": true,
+            "node_types": [
+              "Index Scan"
+            ],
+            "actual_rows": 1
+          },
+          {
+            "execution_ms": 0.019,
+            "index_used": true,
+            "node_types": [
+              "Index Scan"
+            ],
+            "actual_rows": 1
+          },
+          {
+            "execution_ms": 0.019,
+            "index_used": true,
+            "node_types": [
+              "Index Scan"
+            ],
+            "actual_rows": 1
+          },
+          {
+            "execution_ms": 0.012,
+            "index_used": true,
+            "node_types": [
+              "Index Scan"
+            ],
+            "actual_rows": 1
+          },
+          {
+            "execution_ms": 0.012,
+            "index_used": true,
+            "node_types": [
+              "Index Scan"
+            ],
+            "actual_rows": 1
+          },
+          {
+            "execution_ms": 0.017,
+            "index_used": true,
+            "node_types": [
+              "Index Scan"
+            ],
+            "actual_rows": 1
+          },
+          {
+            "execution_ms": 0.013,
+            "index_used": true,
+            "node_types": [
+              "Index Scan"
+            ],
+            "actual_rows": 1
+          }
+        ]
+      },
+      "protected": {
+        "warm_runs": 20,
+        "p50_ms": 0.006500000000000001,
+        "p95_ms": 0.02,
+        "required_index_used_every_run": true,
+        "first_plan_node_types": [
+          "Index Scan"
+        ],
+        "actual_rows": 1,
+        "observations": [
+          {
+            "execution_ms": 0.019,
+            "index_used": true,
+            "node_types": [
+              "Index Scan"
+            ],
+            "actual_rows": 1
+          },
+          {
+            "execution_ms": 0.01,
+            "index_used": true,
+            "node_types": [
+              "Index Scan"
+            ],
+            "actual_rows": 1
+          },
+          {
+            "execution_ms": 0.014,
+            "index_used": true,
+            "node_types": [
+              "Index Scan"
+            ],
+            "actual_rows": 1
+          },
+          {
+            "execution_ms": 0.012,
+            "index_used": true,
+            "node_types": [
+              "Index Scan"
+            ],
+            "actual_rows": 1
+          },
+          {
+            "execution_ms": 0.018,
+            "index_used": true,
+            "node_types": [
+              "Index Scan"
+            ],
+            "actual_rows": 1
+          },
+          {
+            "execution_ms": 0.02,
+            "index_used": true,
+            "node_types": [
+              "Index Scan"
+            ],
+            "actual_rows": 1
+          },
+          {
+            "execution_ms": 0.022,
+            "index_used": true,
+            "node_types": [
+              "Index Scan"
+            ],
+            "actual_rows": 1
+          },
+          {
+            "execution_ms": 0.011,
+            "index_used": true,
+            "node_types": [
+              "Index Scan"
+            ],
+            "actual_rows": 1
+          },
+          {
+            "execution_ms": 0.011,
+            "index_used": true,
+            "node_types": [
+              "Index Scan"
+            ],
+            "actual_rows": 1
+          },
+          {
+            "execution_ms": 0.007,
+            "index_used": true,
+            "node_types": [
+              "Index Scan"
+            ],
+            "actual_rows": 1
+          },
+          {
+            "execution_ms": 0.007,
+            "index_used": true,
+            "node_types": [
+              "Index Scan"
+            ],
+            "actual_rows": 1
+          },
+          {
+            "execution_ms": 0.006,
+            "index_used": true,
+            "node_types": [
+              "Index Scan"
+            ],
+            "actual_rows": 1
+          },
+          {
+            "execution_ms": 0.006,
+            "index_used": true,
+            "node_types": [
+              "Index Scan"
+            ],
+            "actual_rows": 1
+          },
+          {
+            "execution_ms": 0.006,
+            "index_used": true,
+            "node_types": [
+              "Index Scan"
+            ],
+            "actual_rows": 1
+          },
+          {
+            "execution_ms": 0.006,
+            "index_used": true,
+            "node_types": [
+              "Index Scan"
+            ],
+            "actual_rows": 1
+          },
+          {
+            "execution_ms": 0.006,
+            "index_used": true,
+            "node_types": [
+              "Index Scan"
+            ],
+            "actual_rows": 1
+          },
+          {
+            "execution_ms": 0.006,
+            "index_used": true,
+            "node_types": [
+              "Index Scan"
+            ],
+            "actual_rows": 1
+          },
+          {
+            "execution_ms": 0.006,
+            "index_used": true,
+            "node_types": [
+              "Index Scan"
+            ],
+            "actual_rows": 1
+          },
+          {
+            "execution_ms": 0.006,
+            "index_used": true,
+            "node_types": [
+              "Index Scan"
+            ],
+            "actual_rows": 1
+          },
+          {
+            "execution_ms": 0.006,
+            "index_used": true,
+            "node_types": [
+              "Index Scan"
+            ],
+            "actual_rows": 1
+          },
+          {
+            "execution_ms": 0.006,
+            "index_used": true,
+            "node_types": [
+              "Index Scan"
+            ],
+            "actual_rows": 1
+          }
+        ]
+      }
+    },
+    "prefix": {
+      "selected_rows": 9911,
+      "selectivity": 0.009911,
+      "exact_selected_ids": true,
+      "plain": {
+        "warm_runs": 20,
+        "p50_ms": 5.541,
+        "p95_ms": 6.951,
+        "required_index_used_every_run": true,
+        "first_plan_node_types": [
+          "Bitmap Heap Scan",
+          "Bitmap Index Scan"
+        ],
+        "actual_rows": 9911,
+        "observations": [
+          {
+            "execution_ms": 61.344,
+            "index_used": true,
+            "node_types": [
+              "Bitmap Heap Scan",
+              "Bitmap Index Scan"
+            ],
+            "actual_rows": 9911
+          },
+          {
+            "execution_ms": 6.951,
+            "index_used": true,
+            "node_types": [
+              "Bitmap Heap Scan",
+              "Bitmap Index Scan"
+            ],
+            "actual_rows": 9911
+          },
+          {
+            "execution_ms": 6.494,
+            "index_used": true,
+            "node_types": [
+              "Bitmap Heap Scan",
+              "Bitmap Index Scan"
+            ],
+            "actual_rows": 9911
+          },
+          {
+            "execution_ms": 6.012,
+            "index_used": true,
+            "node_types": [
+              "Bitmap Heap Scan",
+              "Bitmap Index Scan"
+            ],
+            "actual_rows": 9911
+          },
+          {
+            "execution_ms": 6.957,
+            "index_used": true,
+            "node_types": [
+              "Bitmap Heap Scan",
+              "Bitmap Index Scan"
+            ],
+            "actual_rows": 9911
+          },
+          {
+            "execution_ms": 6.247,
+            "index_used": true,
+            "node_types": [
+              "Bitmap Heap Scan",
+              "Bitmap Index Scan"
+            ],
+            "actual_rows": 9911
+          },
+          {
+            "execution_ms": 6.374,
+            "index_used": true,
+            "node_types": [
+              "Bitmap Heap Scan",
+              "Bitmap Index Scan"
+            ],
+            "actual_rows": 9911
+          },
+          {
+            "execution_ms": 6.222,
+            "index_used": true,
+            "node_types": [
+              "Bitmap Heap Scan",
+              "Bitmap Index Scan"
+            ],
+            "actual_rows": 9911
+          },
+          {
+            "execution_ms": 5.51,
+            "index_used": true,
+            "node_types": [
+              "Bitmap Heap Scan",
+              "Bitmap Index Scan"
+            ],
+            "actual_rows": 9911
+          },
+          {
+            "execution_ms": 5.194,
+            "index_used": true,
+            "node_types": [
+              "Bitmap Heap Scan",
+              "Bitmap Index Scan"
+            ],
+            "actual_rows": 9911
+          },
+          {
+            "execution_ms": 5.496,
+            "index_used": true,
+            "node_types": [
+              "Bitmap Heap Scan",
+              "Bitmap Index Scan"
+            ],
+            "actual_rows": 9911
+          },
+          {
+            "execution_ms": 5.586,
+            "index_used": true,
+            "node_types": [
+              "Bitmap Heap Scan",
+              "Bitmap Index Scan"
+            ],
+            "actual_rows": 9911
+          },
+          {
+            "execution_ms": 5.535,
+            "index_used": true,
+            "node_types": [
+              "Bitmap Heap Scan",
+              "Bitmap Index Scan"
+            ],
+            "actual_rows": 9911
+          },
+          {
+            "execution_ms": 5.547,
+            "index_used": true,
+            "node_types": [
+              "Bitmap Heap Scan",
+              "Bitmap Index Scan"
+            ],
+            "actual_rows": 9911
+          },
+          {
+            "execution_ms": 5.195,
+            "index_used": true,
+            "node_types": [
+              "Bitmap Heap Scan",
+              "Bitmap Index Scan"
+            ],
+            "actual_rows": 9911
+          },
+          {
+            "execution_ms": 4.89,
+            "index_used": true,
+            "node_types": [
+              "Bitmap Heap Scan",
+              "Bitmap Index Scan"
+            ],
+            "actual_rows": 9911
+          },
+          {
+            "execution_ms": 5.107,
+            "index_used": true,
+            "node_types": [
+              "Bitmap Heap Scan",
+              "Bitmap Index Scan"
+            ],
+            "actual_rows": 9911
+          },
+          {
+            "execution_ms": 5.481,
+            "index_used": true,
+            "node_types": [
+              "Bitmap Heap Scan",
+              "Bitmap Index Scan"
+            ],
+            "actual_rows": 9911
+          },
+          {
+            "execution_ms": 5.054,
+            "index_used": true,
+            "node_types": [
+              "Bitmap Heap Scan",
+              "Bitmap Index Scan"
+            ],
+            "actual_rows": 9911
+          },
+          {
+            "execution_ms": 5.388,
+            "index_used": true,
+            "node_types": [
+              "Bitmap Heap Scan",
+              "Bitmap Index Scan"
+            ],
+            "actual_rows": 9911
+          },
+          {
+            "execution_ms": 5.963,
+            "index_used": true,
+            "node_types": [
+              "Bitmap Heap Scan",
+              "Bitmap Index Scan"
+            ],
+            "actual_rows": 9911
+          }
+        ]
+      },
+      "protected": {
+        "warm_runs": 20,
+        "p50_ms": 8.543,
+        "p95_ms": 9.408,
+        "required_index_used_every_run": true,
+        "first_plan_node_types": [
+          "Bitmap Heap Scan",
+          "Bitmap Index Scan"
+        ],
+        "actual_rows": 9911,
+        "observations": [
+          {
+            "execution_ms": 50.247,
+            "index_used": true,
+            "node_types": [
+              "Bitmap Heap Scan",
+              "Bitmap Index Scan"
+            ],
+            "actual_rows": 9911
+          },
+          {
+            "execution_ms": 10.04,
+            "index_used": true,
+            "node_types": [
+              "Bitmap Heap Scan",
+              "Bitmap Index Scan"
+            ],
+            "actual_rows": 9911
+          },
+          {
+            "execution_ms": 8.425,
+            "index_used": true,
+            "node_types": [
+              "Bitmap Heap Scan",
+              "Bitmap Index Scan"
+            ],
+            "actual_rows": 9911
+          },
+          {
+            "execution_ms": 8.639,
+            "index_used": true,
+            "node_types": [
+              "Bitmap Heap Scan",
+              "Bitmap Index Scan"
+            ],
+            "actual_rows": 9911
+          },
+          {
+            "execution_ms": 8.746,
+            "index_used": true,
+            "node_types": [
+              "Bitmap Heap Scan",
+              "Bitmap Index Scan"
+            ],
+            "actual_rows": 9911
+          },
+          {
+            "execution_ms": 8.682,
+            "index_used": true,
+            "node_types": [
+              "Bitmap Heap Scan",
+              "Bitmap Index Scan"
+            ],
+            "actual_rows": 9911
+          },
+          {
+            "execution_ms": 8.247,
+            "index_used": true,
+            "node_types": [
+              "Bitmap Heap Scan",
+              "Bitmap Index Scan"
+            ],
+            "actual_rows": 9911
+          },
+          {
+            "execution_ms": 8.535,
+            "index_used": true,
+            "node_types": [
+              "Bitmap Heap Scan",
+              "Bitmap Index Scan"
+            ],
+            "actual_rows": 9911
+          },
+          {
+            "execution_ms": 7.599,
+            "index_used": true,
+            "node_types": [
+              "Bitmap Heap Scan",
+              "Bitmap Index Scan"
+            ],
+            "actual_rows": 9911
+          },
+          {
+            "execution_ms": 9.054,
+            "index_used": true,
+            "node_types": [
+              "Bitmap Heap Scan",
+              "Bitmap Index Scan"
+            ],
+            "actual_rows": 9911
+          },
+          {
+            "execution_ms": 7.891,
+            "index_used": true,
+            "node_types": [
+              "Bitmap Heap Scan",
+              "Bitmap Index Scan"
+            ],
+            "actual_rows": 9911
+          },
+          {
+            "execution_ms": 8.101,
+            "index_used": true,
+            "node_types": [
+              "Bitmap Heap Scan",
+              "Bitmap Index Scan"
+            ],
+            "actual_rows": 9911
+          },
+          {
+            "execution_ms": 6.934,
+            "index_used": true,
+            "node_types": [
+              "Bitmap Heap Scan",
+              "Bitmap Index Scan"
+            ],
+            "actual_rows": 9911
+          },
+          {
+            "execution_ms": 9.11,
+            "index_used": true,
+            "node_types": [
+              "Bitmap Heap Scan",
+              "Bitmap Index Scan"
+            ],
+            "actual_rows": 9911
+          },
+          {
+            "execution_ms": 9.408,
+            "index_used": true,
+            "node_types": [
+              "Bitmap Heap Scan",
+              "Bitmap Index Scan"
+            ],
+            "actual_rows": 9911
+          },
+          {
+            "execution_ms": 8.444,
+            "index_used": true,
+            "node_types": [
+              "Bitmap Heap Scan",
+              "Bitmap Index Scan"
+            ],
+            "actual_rows": 9911
+          },
+          {
+            "execution_ms": 8.642,
+            "index_used": true,
+            "node_types": [
+              "Bitmap Heap Scan",
+              "Bitmap Index Scan"
+            ],
+            "actual_rows": 9911
+          },
+          {
+            "execution_ms": 9.053,
+            "index_used": true,
+            "node_types": [
+              "Bitmap Heap Scan",
+              "Bitmap Index Scan"
+            ],
+            "actual_rows": 9911
+          },
+          {
+            "execution_ms": 8.127,
+            "index_used": true,
+            "node_types": [
+              "Bitmap Heap Scan",
+              "Bitmap Index Scan"
+            ],
+            "actual_rows": 9911
+          },
+          {
+            "execution_ms": 8.538,
+            "index_used": true,
+            "node_types": [
+              "Bitmap Heap Scan",
+              "Bitmap Index Scan"
+            ],
+            "actual_rows": 9911
+          },
+          {
+            "execution_ms": 8.548,
+            "index_used": true,
+            "node_types": [
+              "Bitmap Heap Scan",
+              "Bitmap Index Scan"
+            ],
+            "actual_rows": 9911
+          }
+        ]
+      }
+    },
+    "range": {
+      "selected_rows": 812,
+      "selectivity": 0.000812,
+      "exact_selected_ids": true,
+      "plain": {
+        "warm_runs": 20,
+        "p50_ms": 0.496,
+        "p95_ms": 0.762,
+        "required_index_used_every_run": true,
+        "first_plan_node_types": [
+          "Bitmap Heap Scan",
+          "Bitmap Index Scan"
+        ],
+        "actual_rows": 812,
+        "observations": [
+          {
+            "execution_ms": 1.491,
+            "index_used": true,
+            "node_types": [
+              "Bitmap Heap Scan",
+              "Bitmap Index Scan"
+            ],
+            "actual_rows": 812
+          },
+          {
+            "execution_ms": 0.842,
+            "index_used": true,
+            "node_types": [
+              "Bitmap Heap Scan",
+              "Bitmap Index Scan"
+            ],
+            "actual_rows": 812
+          },
+          {
+            "execution_ms": 0.573,
+            "index_used": true,
+            "node_types": [
+              "Bitmap Heap Scan",
+              "Bitmap Index Scan"
+            ],
+            "actual_rows": 812
+          },
+          {
+            "execution_ms": 0.451,
+            "index_used": true,
+            "node_types": [
+              "Bitmap Heap Scan",
+              "Bitmap Index Scan"
+            ],
+            "actual_rows": 812
+          },
+          {
+            "execution_ms": 0.417,
+            "index_used": true,
+            "node_types": [
+              "Bitmap Heap Scan",
+              "Bitmap Index Scan"
+            ],
+            "actual_rows": 812
+          },
+          {
+            "execution_ms": 0.547,
+            "index_used": true,
+            "node_types": [
+              "Bitmap Heap Scan",
+              "Bitmap Index Scan"
+            ],
+            "actual_rows": 812
+          },
+          {
+            "execution_ms": 0.473,
+            "index_used": true,
+            "node_types": [
+              "Bitmap Heap Scan",
+              "Bitmap Index Scan"
+            ],
+            "actual_rows": 812
+          },
+          {
+            "execution_ms": 0.588,
+            "index_used": true,
+            "node_types": [
+              "Bitmap Heap Scan",
+              "Bitmap Index Scan"
+            ],
+            "actual_rows": 812
+          },
+          {
+            "execution_ms": 0.413,
+            "index_used": true,
+            "node_types": [
+              "Bitmap Heap Scan",
+              "Bitmap Index Scan"
+            ],
+            "actual_rows": 812
+          },
+          {
+            "execution_ms": 0.404,
+            "index_used": true,
+            "node_types": [
+              "Bitmap Heap Scan",
+              "Bitmap Index Scan"
+            ],
+            "actual_rows": 812
+          },
+          {
+            "execution_ms": 0.397,
+            "index_used": true,
+            "node_types": [
+              "Bitmap Heap Scan",
+              "Bitmap Index Scan"
+            ],
+            "actual_rows": 812
+          },
+          {
+            "execution_ms": 0.433,
+            "index_used": true,
+            "node_types": [
+              "Bitmap Heap Scan",
+              "Bitmap Index Scan"
+            ],
+            "actual_rows": 812
+          },
+          {
+            "execution_ms": 0.512,
+            "index_used": true,
+            "node_types": [
+              "Bitmap Heap Scan",
+              "Bitmap Index Scan"
+            ],
+            "actual_rows": 812
+          },
+          {
+            "execution_ms": 0.473,
+            "index_used": true,
+            "node_types": [
+              "Bitmap Heap Scan",
+              "Bitmap Index Scan"
+            ],
+            "actual_rows": 812
+          },
+          {
+            "execution_ms": 0.412,
+            "index_used": true,
+            "node_types": [
+              "Bitmap Heap Scan",
+              "Bitmap Index Scan"
+            ],
+            "actual_rows": 812
+          },
+          {
+            "execution_ms": 0.511,
+            "index_used": true,
+            "node_types": [
+              "Bitmap Heap Scan",
+              "Bitmap Index Scan"
+            ],
+            "actual_rows": 812
+          },
+          {
+            "execution_ms": 0.647,
+            "index_used": true,
+            "node_types": [
+              "Bitmap Heap Scan",
+              "Bitmap Index Scan"
+            ],
+            "actual_rows": 812
+          },
+          {
+            "execution_ms": 0.623,
+            "index_used": true,
+            "node_types": [
+              "Bitmap Heap Scan",
+              "Bitmap Index Scan"
+            ],
+            "actual_rows": 812
+          },
+          {
+            "execution_ms": 0.762,
+            "index_used": true,
+            "node_types": [
+              "Bitmap Heap Scan",
+              "Bitmap Index Scan"
+            ],
+            "actual_rows": 812
+          },
+          {
+            "execution_ms": 0.531,
+            "index_used": true,
+            "node_types": [
+              "Bitmap Heap Scan",
+              "Bitmap Index Scan"
+            ],
+            "actual_rows": 812
+          },
+          {
+            "execution_ms": 0.481,
+            "index_used": true,
+            "node_types": [
+              "Bitmap Heap Scan",
+              "Bitmap Index Scan"
+            ],
+            "actual_rows": 812
+          }
+        ]
+      },
+      "protected": {
+        "warm_runs": 20,
+        "p50_ms": 0.442,
+        "p95_ms": 0.743,
+        "required_index_used_every_run": true,
+        "first_plan_node_types": [
+          "Bitmap Heap Scan",
+          "Bitmap Index Scan"
+        ],
+        "actual_rows": 812,
+        "observations": [
+          {
+            "execution_ms": 4.255,
+            "index_used": true,
+            "node_types": [
+              "Bitmap Heap Scan",
+              "Bitmap Index Scan"
+            ],
+            "actual_rows": 812
+          },
+          {
+            "execution_ms": 1.451,
+            "index_used": true,
+            "node_types": [
+              "Bitmap Heap Scan",
+              "Bitmap Index Scan"
+            ],
+            "actual_rows": 812
+          },
+          {
+            "execution_ms": 0.504,
+            "index_used": true,
+            "node_types": [
+              "Bitmap Heap Scan",
+              "Bitmap Index Scan"
+            ],
+            "actual_rows": 812
+          },
+          {
+            "execution_ms": 0.421,
+            "index_used": true,
+            "node_types": [
+              "Bitmap Heap Scan",
+              "Bitmap Index Scan"
+            ],
+            "actual_rows": 812
+          },
+          {
+            "execution_ms": 0.45,
+            "index_used": true,
+            "node_types": [
+              "Bitmap Heap Scan",
+              "Bitmap Index Scan"
+            ],
+            "actual_rows": 812
+          },
+          {
+            "execution_ms": 0.579,
+            "index_used": true,
+            "node_types": [
+              "Bitmap Heap Scan",
+              "Bitmap Index Scan"
+            ],
+            "actual_rows": 812
+          },
+          {
+            "execution_ms": 0.605,
+            "index_used": true,
+            "node_types": [
+              "Bitmap Heap Scan",
+              "Bitmap Index Scan"
+            ],
+            "actual_rows": 812
+          },
+          {
+            "execution_ms": 0.55,
+            "index_used": true,
+            "node_types": [
+              "Bitmap Heap Scan",
+              "Bitmap Index Scan"
+            ],
+            "actual_rows": 812
+          },
+          {
+            "execution_ms": 0.448,
+            "index_used": true,
+            "node_types": [
+              "Bitmap Heap Scan",
+              "Bitmap Index Scan"
+            ],
+            "actual_rows": 812
+          },
+          {
+            "execution_ms": 0.622,
+            "index_used": true,
+            "node_types": [
+              "Bitmap Heap Scan",
+              "Bitmap Index Scan"
+            ],
+            "actual_rows": 812
+          },
+          {
+            "execution_ms": 0.474,
+            "index_used": true,
+            "node_types": [
+              "Bitmap Heap Scan",
+              "Bitmap Index Scan"
+            ],
+            "actual_rows": 812
+          },
+          {
+            "execution_ms": 0.422,
+            "index_used": true,
+            "node_types": [
+              "Bitmap Heap Scan",
+              "Bitmap Index Scan"
+            ],
+            "actual_rows": 812
+          },
+          {
+            "execution_ms": 0.743,
+            "index_used": true,
+            "node_types": [
+              "Bitmap Heap Scan",
+              "Bitmap Index Scan"
+            ],
+            "actual_rows": 812
+          },
+          {
+            "execution_ms": 0.436,
+            "index_used": true,
+            "node_types": [
+              "Bitmap Heap Scan",
+              "Bitmap Index Scan"
+            ],
+            "actual_rows": 812
+          },
+          {
+            "execution_ms": 0.412,
+            "index_used": true,
+            "node_types": [
+              "Bitmap Heap Scan",
+              "Bitmap Index Scan"
+            ],
+            "actual_rows": 812
+          },
+          {
+            "execution_ms": 0.406,
+            "index_used": true,
+            "node_types": [
+              "Bitmap Heap Scan",
+              "Bitmap Index Scan"
+            ],
+            "actual_rows": 812
+          },
+          {
+            "execution_ms": 0.402,
+            "index_used": true,
+            "node_types": [
+              "Bitmap Heap Scan",
+              "Bitmap Index Scan"
+            ],
+            "actual_rows": 812
+          },
+          {
+            "execution_ms": 0.397,
+            "index_used": true,
+            "node_types": [
+              "Bitmap Heap Scan",
+              "Bitmap Index Scan"
+            ],
+            "actual_rows": 812
+          },
+          {
+            "execution_ms": 0.394,
+            "index_used": true,
+            "node_types": [
+              "Bitmap Heap Scan",
+              "Bitmap Index Scan"
+            ],
+            "actual_rows": 812
+          },
+          {
+            "execution_ms": 0.395,
+            "index_used": true,
+            "node_types": [
+              "Bitmap Heap Scan",
+              "Bitmap Index Scan"
+            ],
+            "actual_rows": 812
+          },
+          {
+            "execution_ms": 0.392,
+            "index_used": true,
+            "node_types": [
+              "Bitmap Heap Scan",
+              "Bitmap Index Scan"
+            ],
+            "actual_rows": 812
+          }
+        ]
+      }
+    }
+  },
+  "relation_bytes": {
+    "plain": 155394048,
+    "protected": 854171648
+  },
+  "index_bytes": {
+    "packed_eq": 59064320,
+    "plain_eq": 40640512,
+    "plain_pkey": 22487040,
+    "plain_prefix": 6979584,
+    "plain_range": 6987776,
+    "protected_pkey": 22487040,
+    "protected_prefix": 11403264,
+    "protected_range": 14278656
+  },
+  "column_datum_bytes": {
+    "payload": 97888896,
+    "prefix": 266305992,
+    "range_terms": 312000000
+  },
+  "bundle_storage_multiplier": 5.496810585692446,
+  "cleanup": "OWN_SCHEMA_DROPPED",
+  "total_seconds_including_cleanup": 45.901448929012986
+}

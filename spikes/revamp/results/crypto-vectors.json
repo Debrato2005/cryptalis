@@ -1,0 +1,23 @@
+{
+  "status": "PASS_INDEPENDENT_PRIMITIVE_VECTORS_ONLY",
+  "source": "https://www.rfc-editor.org/rfc/rfc8452.html#appendix-C.2",
+  "cryptography_version": "50.0.2",
+  "outcomes": {
+    "empty_encrypt": "PASS",
+    "empty_decrypt": "PASS",
+    "empty_changed_tag_rejected": "PASS",
+    "eight_bytes_encrypt": "PASS",
+    "eight_bytes_decrypt": "PASS",
+    "eight_bytes_changed_tag_rejected": "PASS",
+    "with_aad_encrypt": "PASS",
+    "with_aad_decrypt": "PASS",
+    "with_aad_changed_tag_rejected": "PASS"
+  },
+  "source_sha256": "ff18a647970cae00b448bd1b4a1ee3c7f02758231e4b8a4d9fe428cd8d340c8f",
+  "vectors_sha256": "7dde70427e4307f8d8fb42949c43317ba1b3d217cf5d17a81e25e96c83e1cecb",
+  "limits": [
+    "Three published primitive vectors, not full CF1/codec/KDF/HMAC/companion vectors",
+    "No nonce-lifetime bound, independent human review or provider qualification",
+    "G-CRYPTO remains UNKNOWN"
+  ]
+}

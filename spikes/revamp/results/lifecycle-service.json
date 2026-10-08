@@ -1,0 +1,57 @@
+{
+  "status": "PASS_LISTED_LIFECYCLE_CASES_ONLY",
+  "schema": "revamp_lifecycle_service_8c32785bbbfc4cb9855b136a38d6585c",
+  "rows": 1000,
+  "outcomes": {
+    "second_executor_lock_denied": "PASS",
+    "concurrent_writer_blocked_by_table_lock": "PASS",
+    "worker_process_ended_after_commit": "PASS",
+    "chunk_and_marker_committed_together": "PASS",
+    "inspected_retry_idempotent": "PASS",
+    "retry_keeps_committed_ciphertext": "PASS",
+    "full_resume_verification": "PASS",
+    "tamper_blocks_verification": "PASS",
+    "missing_row_blocks_verification": "PASS",
+    "extra_row_blocks_verification": "PASS",
+    "unexpected_null_payload_blocks_verification": "PASS",
+    "missing_companions_blocks_verification": "PASS",
+    "null_term_blocks_verification": "PASS",
+    "short_term_blocks_verification": "PASS",
+    "duplicate_terms_blocks_verification": "PASS",
+    "relocation_blocks_verification": "PASS",
+    "mixed_search_generation_blocks_verification": "PASS",
+    "missing_index_blocks_verification": "PASS",
+    "trailing_transport_rejected": "PASS",
+    "negative_payload_length_rejected": "PASS",
+    "failed_verification_did_not_switch": "PASS",
+    "payload_rotation_keeps_companions": "PASS",
+    "search_rotation_changes_companions": "PASS",
+    "decrypt_back_full_current_values": "PASS",
+    "package_free_native_application": "PASS",
+    "package_free_current_write": "PASS",
+    "generated_tables_removed_last": "PASS"
+  },
+  "connection_url": "NEVER_RECORDED",
+  "source_sha256": "447a5947cc7f34f7bd614c4a3d9ba59eef0bc5efd91a61874554ad76aaf4d89d",
+  "dependencies_sha256": {
+    "run_native_service.py": "9c5f114cfca8a9e7161da2720bc2eb7e36e516d1f1ff01f19db4a4401f18ce0e",
+    "run_cf1.py": "1f9ecee4ece2ee753c2dd826796f4896aa8af17cfbb2f8ed1454304d1266fccf",
+    "probe_service.py": "a9776d1af1e2ae0813fd95149835289a6dad78aad72f0ef0f7e399c8c4c22218"
+  },
+  "gates": {
+    "G-LIFECYCLE": "INCOMPLETE",
+    "G-CRYPTO": "INCOMPLETE",
+    "G-POLICY": "INCOMPLETE",
+    "G-PROVIDER": "INCOMPLETE"
+  },
+  "limits": [
+    "1000 synthetic rows; public offline CF1 roots and narrow text codec",
+    "Table lock excludes one tested writer; no deployment worker inventory/drain proof",
+    "Post-commit process exit suppresses completion; no transport-level lost COMMIT reply fault",
+    "No live provider rewrap/deletion or authenticated deployment-policy publication",
+    "Native package-free two-column application only; original three-model oracle remains unqualified",
+    "Companion transport uses actual PG/psycopg bytes; no advanced SQLAlchemy adapter qualification",
+    "No retained backup/old-reader retirement proof or scale/pause budget"
+  ],
+  "cleanup": "OWN_SCHEMA_DROPPED"
+}

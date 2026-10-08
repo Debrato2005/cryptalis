@@ -1,382 +1,222 @@
-# Data and key lifecycle
+# One transition engine
 
-Status: DESIGNED. One INTERNAL ONLY engine owns every lifecycle operation.
-No transition executor, live provider or restore admission exists in the [current code](status.md).
-The [architecture](architecture/README.md#public-surface) owns command names. The [security owner](security.md) owns key authority and claims.
+**SPECIFIED:** lifecycle contract. **IMPLEMENTED:** isolated spike executor only. [Status](status.md) states the evidence limits.
+VERIFIED paragraphs below describe recorded receipts, not current product qualification. All other requirements remain SPECIFIED.
+Every protection change uses expand → backfill → verify → switch → contract.
+Rollback, deprotect, search changes, and key transformations reuse this path.
 
-## Maintenance transitions
+**VERIFIED, recorded earlier lab:** the service lab passes 27 listed checks over 1,000 synthetic rows. It observes a blocked concurrent writer,
+a process exit after a committed chunk, inspected idempotent resume, full verification mutants, CF1 companion transport,
+payload/search rotation, and current-data decrypt-back. An isolated ordinary application then reads and updates the recovered data with Cryptalis/lab-reader imports blocked.
+This is not the original application's complete retrofit/removal test. Post-commit process exit is not a transport-level lost COMMIT-reply test.
+Live provider custody, authenticated deployment publication, retained-backup readers and full writer ownership remain unqualified.
 
-The supported strategy is a bounded maintenance write pause across one protection domain. One domain owns one lifecycle operation. Online backfill, mixed-generation dual writers and writable CDC are UNSUPPORTED BY DESIGN.
-Read availability can continue only when every admitted reader uses the unchanged source representation and holds a compatible fence.
-No read availability is promised during DDL, verification or switch. Plans show downtime rather than hide it.
+## Integrated lifecycle checkpoint: 2026-10-07
 
-A plan binds operation ID, kind, source/current-head digest and revision, desired compiled-lock digest, target incarnation,
-schema/Alembic heads, exact binary/format/provider identities, selected scopes, prerequisites, estimates, expiry, approvals and recovery obligations.
-Its schema is 2. A domain-labeled SHA-256 over canonical complete bytes is pinned in external pending-operation state.
-Plans expire after 15 minutes before initial execution. A started durable operation resumes by current operation ID and reinspection, not a renewed stale plan.
-Approvals name action, plan digest, target, scope, operator identity, validity window and irreversible consequence.
-An operator cannot replay approval onto a different target, operation, cleanup action or weakened policy.
+The preceding 27-check lab is historical. The new [23-check receipt](../spikes/revamp/results/gate-lifecycle.json)
+uses the original three-model application's actual CF1 data and one transition executor for protect, rotate and deprotect.
+Chunk members and transformed rows commit together. Resume inspects the original digest/membership and preserves committed ciphertext.
+**VERIFIED, recorded spike:** streaming verification checks membership, native values/types/NULLs, and generations before the transactional switch.
+It compares inspected source index names/definitions and their validity/readiness flags. Target unique-index construction exercises the fixture's scoped uniqueness.
+Generic CHECK/FK/default/collation and dependency preservation remain UNKNOWN. Source-index observations do not prove them.
+A competing executor is denied; an actual concurrent writer is observably blocked while the maintenance lock is held.
+That observation does not prove deployment-wide writer exclusion between chunks.
 
-| Internal phase | Required effect and completion evidence |
+The lost-reply test shuts down the receive side of the original connected socket before COMMIT completes.
+It observes EOF and an initially absent marker, then independently observes the original transaction terminal and a matching committed marker.
+It never consumes the COMMIT reply through libpq. Resume preserves the committed bytes.
+The separate [fault receipt](../spikes/revamp/results/gate-faults.json) proves that real SQL errors and injected local-provider failures
+roll back both staged chunk data and its marker. Actual disk/WAL exhaustion remains pending.
+
+Payload rotation, search rotation and local rewrap are separate tested actions. Current post-cutover application edits survive rollback,
+reprotection and deprotect with all original columns and types compared. Eligible shadows, indexes, trigger and journal are removed.
+A fresh process blocks Cryptalis/crypto readers, verifies all current data, commits an ordinary edit, then runs the untouched 29-assertion original oracle.
+Only its owned synthetic rows are cleared between the current-data proof and the oracle's empty-database fixture.
+
+The database phase remains `SWITCHED_DATABASE_POLICY_PENDING`. Authenticated host publication/startup, restored-old-policy denial,
+stale-worker termination, durable independent-process readers/keys, format/codec upgrade and native provider deletion remain UNKNOWN.
+The local backup decode and fork-inherited interruption test do not qualify retained-backup custody or a fresh independent provider restart.
+The [million-row protection receipt](../spikes/revamp/results/gate-performance.json) measures initial protection; it does not qualify
+million-row rotation/deprotect, a production pause ceiling or a storage-exhaustion response.
+These pending requirements keep the complete lifecycle gate UNKNOWN.
+
+## Maintenance and ownership
+
+Use a bounded maintenance write pause for affected tables.
+The deployment operator stops known workers/jobs and excludes unsupported writers before transformation.
+The runtime principal cannot change schema, operation metadata, or lifecycle privileges.
+Unknown writer coverage blocks apply. An empty connection snapshot alone does not prove that excluded writers cannot reconnect.
+
+One PostgreSQL journal stores the immutable operation ID/plan digest, target binding, source/desired lock, phase, and chunk outcomes.
+Chunk data and its completion marker commit in one transaction.
+A session advisory lock serializes cooperating executors. It is not external writer exclusion or fencing of provider calls.
+Hold table locks where required. Reinspect durable operation state after a crash or lost connection.
+A second executor must acquire the lock and reconcile the original operation before it resumes work.
+
+No operation leases, distributed worker registrations, receipt dispatcher, or per-request mutation ledger are required.
+The deployment stop, database transaction, and provider native outcome define the SPECIFIED boundary.
+Unresolved in-flight work remains pending. A timeout does not establish worker termination or external effect completion.
+
+## Plan and phases
+
+The plan binds its exact target, original/desired lock digests, schema facts, data scopes, writer inventory, readers/keys, approvals, and estimates.
+`plan` creates no data or schema effects. It shows changed query semantics, leakage, and plaintext exposure before approval.
+A changed manifest is a request, not authorization to weaken the active representation.
+
+| Phase | Required evidence |
 |---|---|
-| PLAN | Read current external authority, mappings, exact infrastructure target, schema, writers, keys and recovery inventory. Produce no data/DDL effects |
-| PREPARE | Claim exclusive external operation ownership and DB overlap lock. Deny new writes, restrict runtime writer role, drain transactions/pools/jobs. Reinspect current facts. Create additive isolated shadows and a recovery checkpoint |
-| TRANSFORM | One scoped executor processes bounded idempotent chunks. Authenticate/decode source when protected, derive target/terms, commit coherent target plus operation/source revision marker atomically |
-| VERIFY | Full terminal row/value/type/NULL/term equivalence and source membership coverage under current writer exclusion. Inspect catalog/index/provider state and controls. No count-only, shape-only or sampling substitute |
-| SWITCH | Reinspect target, scope, writer exclusion and verification generation. Conditional external head change selects one writer representation. Reconcile lost response by operation ID, not blind retry |
-| OBSERVE | Start only admitted compatible writers/readers. Report health, exact reversible representation, mirror exposure and deadline. Failed controls or stale mirror suspend readiness |
-| FINALIZE | Reinspect inventory and require approval for each irreversible action. Retire only eligible columns/terms/readers/keys, journal actual effects and retained copy obligations |
+| Expand | Inspected additive shadows/indexes and durable operation identity. Old representation remains authoritative |
+| Backfill | Bounded chunks authenticate source where protected and write complete target payload/companions plus marker atomically |
+| Verify | Full required row membership, decoded value/type/NULL equivalence, companion recomputation, and valid constraints/indexes under writer exclusion |
+| Switch | Verification still matches the stopped source. Database schema/state and the independently controlled deployment pin select the same representation |
+| Contract | Package/reader/key/backup dependencies permit exact approved retirement. Actual effects and retained obligations remain observable |
 
-Before any nontransactional DDL/provider effect, persist exact intent, action, target and idempotency identity durably.
-Then record observed outcome or ambiguity. Never send a destructive request before its independent intent receipt exists.
-Every chunk transaction checks current operation ownership and fence generation and commits its marker with the transformed data.
-Each phase records last completed step and every attempted external/DDL/data effect.
-Execution states are RUNNING, REPAIR_REQUIRED, FAILED, PENDING, INCONCLUSIVE and COMPLETE.
-SWITCH does not mean FINALIZE completed. Status distinguishes active protection, retained rollback exposure, and finalized current storage.
-No generic workflow framework or separate key/restore activation engine is required.
+Schema/data switch can be transactional within PostgreSQL.
+Updating an external deployment artifact is a separate effect, not a cross-service atomic commit.
+Writers remain stopped between those effects. Startup denies either mismatch until inspection finishes the switch.
+Use the existing deployment tool to publish the exact planned policy artifact.
+Do not write a new distributed CAS or automatic policy service merely to hide maintenance downtime.
 
-## Writer exclusion and crash safety
+Default chunk size is a measured tuning parameter, not a security guarantee.
+The executor resumes committed chunks without regenerating their ciphertext.
+Counters/cursors alone do not prove membership coverage. Full terminal verification is mandatory.
+Verification mutants must include wrong payload, missing row, stale companion, duplicate normalization, and invalid index.
+Disk/WAL/provider exhaustion stops progress and retains completed chunks. It never produces a partial-success switch.
 
-Enumerate effective DB roles/memberships, owners, grants, sessions, pools, jobs, binaries, separate drivers, migrations, replicas and external workers.
-`application_name`, shared DB credentials and process heartbeats are hints, not authenticated writer identity.
-Disable new affected authority admissions, revoke relevant runtime writes, drain admitted transactions and acquire the exclusive domain DB fence.
-Unknown external writers block transformation unless privileges demonstrably exclude them.
-An empty connection snapshot alone never proves future write exclusion.
-The application principal has no owner/superuser/BYPASSRLS/schema-creation powers and cannot undo maintenance restrictions.
-Separate migration roles hold exactly reviewed effects. Ordinary web grants cannot migrate.
+For a lost COMMIT response, do not automatically retry business writes or assert rollback.
+For transition chunks, inspect the original operation/chunk marker on the trusted current primary after the original transaction is terminal.
+A matching marker and transformed rows establish the committed chunk within PostgreSQL's durability assumptions.
+An absent marker while the original transaction can still commit is UNKNOWN.
+Privileged corruption, failover data loss, or wrong-target inspection also prevents a confident classification.
+No global exactly-once guarantee follows from a marker.
 
-The supported DB profile requires `max_prepared_transactions=0`, no prepared transactions, no protected CDC/publications/subscriptions or downstream writers,
-trusted schema/search_path, reviewed RLS and a complete executable-object inventory.
-Functions, triggers, rules, casts, operators, extensions, defaults, generated columns, views and policies can change restore or DML behavior.
-Unexpected objects or missing inspection privileges block dependent readiness.
-Lock/statement timeouts, catalog definitions, invalid indexes, disk/temp/WAL limits and cancellation recipes belong in each physical plan.
+## Rollback
 
-Default chunks contain at most 500 rows or 8 MiB encoded data, whichever comes first. Lower limits are allowed.
-The source snapshot and explicit durable row revision define membership. PostgreSQL `xmin` is not a permanent logical revision.
-Target bytes and completion marker commit together. A later checkpoint can replay that commit without regenerating already completed ciphertext.
-A cursor, `SKIP LOCKED`, count or skipped range is not terminal coverage evidence.
-Deletion, insertion behind the cursor, scope transfer, constraint drift or unexpected writer invalidates verification.
-One operation owns overlapping assets. A second executor cannot independently publish or transform them.
-Lock loss, authority unavailability or expiry stops new effects. No stale worker can use its old permit to commit under a changed DB fence.
+The default is decrypt-back or transform-back from **current** active data.
+It is the same verified engine used for deprotect. A static pre-switch snapshot is not a lossless rollback after post-switch writes.
 
-The terminal verifier scans every required current row after transformation in a stable snapshot with writers still excluded.
-It authenticates source/target where encrypted, compares exact payload value/type/representation, validates NULL state and recomputes all required terms.
-It records complete membership and revision coverage plus exact valid constraints/indexes.
-Independent samples supplement the full scan. They never certify unscanned rows.
-Controls deliberately introduce wrong values, stale terms, missing rows and wrong target identity to prove the verifier can fail.
-No row plaintext or token appears in the receipt. Recheck durable operation ownership/fence inside each data-and-marker transaction.
+Before switch, `apply --abort OPERATION` can remove operation-owned shadows and retain the unchanged source.
+After switch, rollback pauses writers, reads current values, transforms the previous representation, verifies, and performs a new switch.
+It requires compatible readers/keys and a lossless prior type/constraint contract.
+If current values cannot fit that contract, report the exact conflict class and keep the active representation.
+Do not discard new values or restore an old data snapshot silently.
 
-Record durable intent before nontransactional DDL/provider effects. DDL outside transaction boundaries is journaled separately. Concurrent index construction is not required by this maintenance design.
-If an existing or manually reviewed concurrent step leaves an invalid index, inspect definition/owner/validity/readiness before repair.
-`IF NOT EXISTS`, a name or Alembic stamping is not proof of completed schema/data work.
-Alembic uses public operation/render/autogenerate interfaces to propose reviewed DDL. It does not backfill or activate policy implicitly.
-Repeated autogenerate on the reconciled schema emits no Cryptalis diff. A downgrade refuses after irreversible state instead of fabricating recovery.
+Rollback/removal remains available through decrypt-back until explicit user finalization retires its required recovery dependencies.
+Finalization uses the existing lifecycle and adds no command or mode.
+The selected default retains no live plaintext rollback mirror and no timer that forces finalization.
+Plaintext needed for rollback appears only in the explicitly approved reverse transition.
+Rollback can be slower. Status shows estimated pause and actual progress.
+A required old key/reader cannot be retired while it remains the only approved reverse or backup recovery route.
 
-DB and DynamoDB have no cross-service atomic commit.
-Before switch, shadows remain non-authoritative and writer admission stays blocked. After switch, the external head dominates a stale local checkpoint.
-Every lost acknowledgement remains PENDING until actual catalog/row/provider/authority state resolves it.
-Process crash before/after each durable boundary, two executors, cancellation and resource exhaustion are mandatory acceptance scenarios.
-The [authority protocol](security.md#admission-and-fencing) owns token/worker/effect ordering. This engine cannot bypass it.
+The earlier local experiment changed a value after cutover, then recovered that current value through decrypt-back.
+The integrated checkpoint records the original application's narrow rollback/removal evidence. Neither qualifies the full lifecycle gate.
 
-### Ordinary commit evidence
+## Changes and rotation
 
-Each explicit preparation/flush batch gets a fresh mutation operation UUID and immutable request digest before DML, registered externally with
-worker incarnation, exact target/fence and original backend fingerprint. Digest covers the canonical operation shape, scoped
-identities, expected revisions and a keyed commitment to value bytes, not public low-entropy plaintext hashes.
-One DB transaction has its own immutable transaction UUID and may contain several such batches, including flush B followed by flush C.
-Never change an existing batch digest or reuse its UUID for later writes. The backend fingerprint also pins the assigned PostgreSQL
-xid8 and transaction UUID; a live backend executing a later transaction is not evidence that the original transaction can commit.
-Choose the lexicographically smallest (root-handle UUID bytes, generation) among the mutation's admitted payload roots as its
-immutable commitment anchor. Deletes include the deleted rows' roots. Resolve an admitted payload-scope root even for an all-NULL
-mutation; its cold lookup/wrap/unwrap cost is explicit, although no NULL ciphertext or row-presence MAC is stored.
-An empty protected mutation requires no mutation record.
-Derive `Kop = HKDF-SHA256(anchor_root, salt=payload-extract salt for that root,
-info=E("cryptalis/mutation-commitment/1", operation_UUID), length=32)` using the security owner's fixed tag/tuple encoding.
-The request digest is full HMAC-SHA-256(Kop, E("cryptalis/mutation-request/1", canonical_request_bytes)).
-The last component is tag 5 opaque bytes. The request uses the manifest's canonical JSON rules and exactly these members:
-`version`=1, `domain_id`, `target_incarnation`, `transaction_id`, `compiled_lock_digest` (lowercase SHA-256 hex),
-`fence_token`, `anchor_handle`, `anchor_generation`, `operation_id`,
-and `mutations` sorted by model UUID bytes, the security owner's raw typed-record bytes, then action ASCII bytes.
-Each mutation contains `model_id`, `record`,
-`tenant_id`, `subject_id` (UUID or null), `action` (insert/update/delete), `expected_revision` (uint decimal string or null),
-`ordinary_changes` (defined below), and `fields` sorted by field UUID. A field has `field_id`, `descriptor_digest` (lowercase hex), `codec_id`, and
-`value` (null or canonical padded Base64 of the encoded scalar bytes). Record identity is exactly
-`{"kind":"uuid","value":"canonical UUID"}` or `{"kind":"u64","value":"minimal unsigned decimal"}`.
-Integers for tokens/generations follow the bounded manifest counters. Reject duplicate (model_id, typed record) identities within a batch, even with different actions, and duplicate field IDs.
-Each `ordinary_changes` entry has exactly `attribute_id` (nonzero lock-pinned UUID), `sql_type_id` (immutable catalogue UUID),
-`wire_oid` (original PostgreSQL type OID), `wire_format`=0 (TEXT), and `value` (null or canonical padded Base64 bytes).
-Sort by attribute UUID bytes and reject duplicate IDs. The lock records immutable ordinary attribute identities and original
-type/dumper artifacts; renames retain identities by reviewed mapping. Same-type attributes are never identified by position or type alone.
-Ordinary non-null bytes are the exact result of the original admitted SQLAlchemy built-in bind processor followed by the pinned
-psycopg public `get_dumper_by_oid(oid, Format.TEXT)` / `Dumper.dump` with UTF8 connection encoding.
-The prepared immutable bytes, OID and format must be the actual DML parameters, not a second adaptation of a mutable value.
-No AUTO format selection, quoting, custom dumper/processor or unclassified SQL type is admitted to this mixed mutation path.
-Lock-pinned ordinary server defaults are part of the request intent via compiled_lock_digest, not invented client values.
-Unknown implicit effects or ordinary type/dumper behavior block that mutation until qualification. Independent original-type/wire
-vectors are required; this use of documented driver adaptation does not claim a portable custom codec for every host type.
-The whole canonical request is bounded to 16 MiB and depth 32 before its keyed digest is computed.
-Host-side implicit effects outside this closed write inventory are ineligible. The root/generation stays a read dependency
-through reconciliation and the retry-retention barrier. Do not log canonical requests or the anchor root/key.
-Independent canonical-byte/commitment vectors and full changed-attribute/default inventory remain G-TRANSITION/G-ORM evidence.
-Each batch's effects (including DELETE and rollback-mirror updates) receive one logged outcome row in that same PostgreSQL transaction.
-All batches' rows/markers commit or roll back together. A marker proves that batch participated in the committed transaction,
-not that its intermediate value remains the final value after a later batch. Terminal reconciliation resolves every registered batch
-under that transaction UUID. No batch marker/ownership is acknowledged as committed after flush alone.
-The outcome stores domain/target/transaction/operation, request digest, worker/token, protocol/generation and committed effect summary;
-no plaintext, search terms or raw SQL. UNIQUE(domain, operation) prevents a repeated operation from executing twice.
-A different digest under the same ID is `OperationIdentityConflict`. An already committed matching operation returns its
-recorded outcome after current authorization, not a fresh mutation. A multi-batch transaction cannot retry one isolated batch.
-A deliberate full-transaction retry retains the transaction/batch IDs, digests and sequence. It starts a new backend attempt only
-after every original batch is NOT_COMMITTED. Register the new fingerprint conditionally under current authorization and retain
-prior fingerprints. No automatic retry follows UNKNOWN.
-
-If COMMIT was sent and acknowledgement is lost, do not mark rollback, resend effects, clear ownership or delete the outcome.
-Reconcile the original external record and backend on the exact current writer target. First establish that original backend
-is terminal: completed, rolled back or verified terminated with no prepared transaction. Then read the durable marker using
-a fresh current-primary transaction (not a stale replica/snapshot or restored checkpoint). Matching marker means COMMITTED,
-including when later work deleted the data row. Absent marker means NOT_COMMITTED only after terminality and trusted target
-lineage/durability are proven. Otherwise outcome remains UNKNOWN. Failover data-loss ambiguity cannot manufacture rollback.
-No automatic commit retry occurs from marker absence while the original backend might still commit.
-
-External receipts record the observed DB outcome afterwards. They are not atomically committed with PostgreSQL.
-Registered operations remain until classification/conditional acknowledgement. Marker GC requires all operation owners terminal,
-external acknowledgements durable, no supported delayed retry/recovery dependency and approved retention closure.
-There is no fixed TTL or row-delete cascade. Capacity exhaustion in the outcome ledger denies new mutations safely.
-The marker guarantee assumes admitted PostgreSQL ACID/lineage and outcome-ledger integrity. Runtime roles cannot UPDATE/DELETE
-outcomes; insertion is bound to the registered same-transaction mutation. Privileged metadata corruption/loss makes classification
-UNKNOWN. Marker absence is not authenticated absence against a malicious database owner.
-Authority loss cannot reconstruct permission from DB markers alone. H2 does not create a cross-service transaction.
-
-### Capacity preflight and exhaustion
-
-Before shadows, provider effects or switch, inventory exact live rows/bytes, old and target per-root usage reservations,
-unspent/retry-burned quotas, accepted growth during the bounded rollback window and both current/mirror encryption costs.
-For each generation require live transformation calls/bytes + reserved crash/retry allowance + observed-window write allowance
-<= remaining 2**24/2**40 ceilings. An oversized live set is rejected before effects. Split-scope redesign needs a reviewed contract.
-Old-generation mirror writes consume old quotas even after switch. Do not allocate every old byte/call to migration.
-If mirror headroom cannot cover the approved write rate/window, deny writer reopening until an approved verified finalization
-or generation plan fits. Declining rollback must be explicit before the first irreversible switch, never automatic exhaustion cleanup.
-
-The physical plan estimates old/target/shadow/mirror columns, both term indexes and constraint rebuilds, outcome records,
-WAL/archive/backup growth, temporary space and table/index bloat. Reserve at least estimated peak plus 25% safety headroom;
-measure estimates with representative data. Unknown available disk/temp/WAL or provider capacity blocks preflight.
-KMS, DynamoDB transaction/item/throughput, SDK concurrency/deadlines, S3 request/retention and account/Region quotas are inspected
-inputs, not universal constants. Preflight uses operator-supplied inspected facts. No guessed quota is admitted.
-Rate-limit chunks within those budgets. No global guarantee of uninterrupted service follows from the estimate.
-
-| Failure | Required outcome/remedy | Invariant |
-|---|---|---|
-| Live set exceeds fresh generation cap | `CapacityInsufficient` before effects. Reviewed scope/generation redesign | No usage reset/silent oversize |
-| Quota reservations burned by crashes/retries | Recompute before next chunk. Pause if remaining cap insufficient | Restored DB cannot refund usage |
-| Disk/WAL/provider throttle mid-transition | Roll back uncommitted chunk; PENDING with committed markers/fences. Inspect and resume | No partial switch or plaintext fallback |
-| Mirror quota/write or deadline fails | Deny the entire ordinary write. Reconcile/finalize with bound approval | Advertised rollback remains current |
-| Unknown quota/owner/backend after loss | UNKNOWN. Reconcile without new effect | Missing capacity/outcome is not safe |
-
-### Recovery catalogue
-
-All commands below are DESIGNED. They first authenticate the operator, inspect current authority/target/token and the original
-immutable operation proposal stored with its digest. A supplied expired plan cannot renew it: resumption revalidates current
-permissions, exact effects and absolute rollback deadline. Changed effects need a new reviewed plan after safe closure.
-Outputs are bounded IDs/states/remedies only. They never emit plaintext, terms, bind values or raw exceptions.
-Resume of previously approved deprotection can persist the approved plaintext representation. It does not print its values.
-Break-glass cannot waive a tombstone, invent current journal completeness or claim destruction after a permission failure.
-
-| Stuck state | Operator command | Idempotent rule / safe result |
-|---|---|---|
-| Lost ordinary COMMIT reply / unknown backend | `cryptalis reconcile OPERATION` | Terminal-backend and exact-marker procedure above; UNKNOWN remains pending |
-| Prepared or partially transformed operation, known owner terminal | `cryptalis apply --resume OPERATION` | Original proposal/action IDs. Inspect markers before each chunk. No old-plan reactivation |
-| Reversible pre-switch shadow, abort requested | `cryptalis abort OPERATION` | Drain/inspect, remove only operation-owned reversible shadows, acknowledge closure. Permanent denials/intents stay |
-| Switched/mirrored operation | `cryptalis rollback OPERATION` or `cryptalis finalize OPERATION` | Verify current mirror/dependencies or approve exact cleanup. Abort returns `IrreversibleState` |
-| Invalid index / DDL response lost | `cryptalis reconcile OPERATION`, then `apply --resume OPERATION` | Inspect exact definition/ownership/validity. No name-only success |
-| Provider action in flight / lease expired | `cryptalis reconcile OPERATION` | No transfer/re-dispatch until old dispatcher terminal and native state resolved |
-| Capacity/authority/receipt outage | `cryptalis status`, then `reconcile OPERATION` and `apply --resume OPERATION` | Restore inspected dependency/capacity first. Retain fencing and known effects |
-| Subject denial pending worker drain | `cryptalis reconcile OPERATION` | Terminate/drain authenticated incarnations. Never expire denial |
-| New restored target / stale checkpoint | `cryptalis restore check TARGET`, then `restore admit PLAN` | Quarantine, current target-bound full verification. Resume on wrong target denies |
-| Authority identity/state loss | `cryptalis recover authority --domain ID --evidence PATH` | Separate break-glass role, complete current archive/native proof. Unprovable old domain remains denied |
-
-Unknown states return typed `ReconciliationRequired` plus operation ID, never an undocumented manual permission bypass.
-Repeated reconcile cannot apply a data mutation. Repeated resume/abort recognizes durable completed steps and changes no extra effects.
-G-TRANSITION/G-RESTORE exercise every catalogue row, repeated calls, wrong target/digest/role and output canaries.
-
-## Protect and reconfigure
-
-Protection creates ciphertext/term shadows and leaves the source unchanged during transformation.
-Full verification must finish before active mapping switches. New rows must never be inserted in plaintext to obtain an identity for subsequent encryption.
-Existing record IDs must satisfy the [identity contract](architecture/README.md#manifest) or adoption rejects with a concrete remedy.
-A rename preserves stable logical IDs. A new representation, changed scope or type uses authenticated source-to-target transformation.
-Removing a declaration is a downgrade request, not permission to drop protection.
-Changing a normalizer, adding/removing search or changing uniqueness uses deliberate REINDEX/RECONFIGURE.
-Equivalent values that merge under the new normalizer block switch until the host resolves conflicts without discarded data.
-No planner silently removes search because a sample observed no queries.
-
-## Rollback and finalization
-
-Before switch, rollback abandons shadows after writer exclusion and restores unchanged source admission.
-After switch, rollback requires a current verified source representation, exact admitted reader and intact key dependencies.
-If writers resume, they update the active target and rollback mirror atomically in one row transaction.
-Any mirror error aborts the whole write. A static pre-switch snapshot is not application rollback after later writes.
-Observation-window writes must satisfy both representations and retained constraints. Incompatible values fail atomically with a finalization remedy.
-No lossy conversion or silently removed old UNIQUE constraint preserves a rollback claim.
-Reversal fences writers, verifies every current mirrored value and performs a new monotonic authority transition.
-It does not reduce the external authority revision or revive a tombstone.
-
-For protection, that mirror is plaintext. Status says `PROTECTED_WITH_PLAINTEXT_ROLLBACK`, not finalized database confidentiality.
-The plan records the deliberate exposure, who can read the mirror, destinations and affected WAL/backups/replicas.
-The default rollback window is 24 hours from first switch. The absolute maximum is first switch plus 7 days.
-At deadline, further mirrored writes stop until the operator finalizes or rolls back. No automatic destructive cleanup occurs.
-Extensions require new explicit exposure approval and current inventory within that absolute maximum.
-New approvals or operation IDs cannot reset the original exposure deadline. Expiry denies the complete mirrored transaction.
-Elapsed time does not erase existing plaintext or authorize contraction.
-Normal users see one pending action and deadline through status, not internal phase vocabulary.
-
-Finalization stops and drains mirror writers, verifies the current active representation, checks package/read/key/copy dependencies, and requests exact cleanup approval.
-The first irreversible cleanup boundary is explicitly recorded per action: source removal, reader retirement, recovery-key deletion or custody destruction.
-Deleting a plaintext mirror loses cheap old-application rollback. Afterwards rollback requires a new verified deprotect/transform,
-or an explicitly retained independently recoverable backup with reconciliation of post-backup writes.
-Restoring a pre-cutover backup alone is not lossless rollback. `rollback` returns `IrreversibleState` when the promised route is gone.
-No automatic column drop, key deletion or Alembic downgrade follows a declaration change or observation period.
-
-## Rotation and upgrades
-
-| Operation | Actual layer and required transformation |
+| Change | Engine action |
 |---|---|
-| KMS automatic material rotation | KMS retains old decrypt material. Payload roots, terms and row ciphertext remain unchanged |
-| `--layer wrapper` | Rewrap independent roots under a new admitted KEK. Verify every wrapper/context. Payload/terms need no rewrite |
-| `--layer payload` | Prepare independent target payload roots for the executor, re-encrypt and verify under maintenance fence, then select new application writes at SWITCH |
-| `--layer search` | Create independent search roots/term slots, full maintenance reindex, valid new UNIQUE enforcement, then switch |
+| Protect or stop protection | Transform payload, create/drop declared search representations, verify, switch, contract |
+| Add/remove a query capability | Derive/retire companions and indexes. Reseal payload when authenticated search metadata changes. Verify source/target and queries |
+| Normalizer/search-domain change | Full reindex and duplicate/constraint review. New identity, no in-place reinterpretation |
+| Payload key generation | Re-encrypt payloads and authenticated companion metadata. Search roots can remain stable |
+| Search key generation | Rebuild terms/arrays and indexes. Reseal authenticated payload headers with fresh nonces. Keep writers stopped |
+| Provider/KEK change | Rewrap exact roots and verify unwrap/context under the new provider. Payload/search bytes stay unchanged |
+| Format/codec upgrade | Deploy required readers first, transform, verify, then switch writers. Retire old readers only after dependency review |
 
-Reader-first order is mandatory: deploy readers for old and new admitted formats/generations and verify all worker compatibility.
-Prepare the target generation for maintenance transforms, stop application write admission, transform and fully verify existing data,
-then select the new application writer generation at SWITCH. Retire eligible old dependencies only after observation/finalization.
-There is exactly one active write protocol and one selected write generation per scope. Adjacent package binaries can coexist only if both implement that protocol and all required readers.
-Old jobs, containers and delayed workers cannot write an obsolete generation after the fence changes.
-Unknown formats, descriptors or incompatible binaries fail startup or operation admission.
-
-The maintenance design needs no online dual-index OR protocol. Writes stay stopped while uniqueness moves to the new generation.
-At no admitted writer boundary is uniqueness unenforced. Separate independent UNIQUE indexes are not treated as cross-generation enforcement.
-Reindex can temporarily retain old terms for rollback. Same-row old/new links increase leakage during that explicit window.
-KEY_REWRAP preserves secret bytes. KEY_REENCRYPT changes payload protection. REINDEX changes search independently.
-No ordinary rotation automatically destroys old keys or erases copied old ciphertext.
-
-Retiring a generation requires current row coverage, compatible binary inventory, old backup/reader dependencies and explicit finalization.
-Semantic normalizer changes use new IDs. Internal format/schema version changes retain exact old readers while required data remains.
-Renaming a format ID or algorithm in place is forbidden. Unknown critical fields cannot be ignored for compatibility.
-Compromise response separately names leaked payload/search roots, KEK/workload credentials, primitive or format defects and already copied data.
-Contain admissions first. Plan the needed new custody/material/format and verified transformations. Rewrap alone does not cure an exposed payload root.
+Keep exactly one active application writer representation during maintenance cutover.
+No partial-generation OR query or cross-generation uniqueness gap is silently admitted.
+Native KMS KEK material rotation is different from root rewrap, payload rotation, or search reindex.
+Rewrap alone does not cure a leaked payload/search root.
+No normal rotation automatically deletes historical keys or makes copied old ciphertext safe after compromise.
 
 ## Restore and authority loss
 
-Bind the production target to account, Region, immutable RDS `DbiResourceId`, database identity and externally approved incarnation.
-ARN/endpoint/name alone can be reused and are insufficient. Obtain resource identity from authenticated AWS control-plane inspection.
-Use TLS hostname validation and the admitted destination/role. A database row UUID or OID cannot attest infrastructure identity.
-Failover within the same admitted RDS resource follows its checked cell. Restore/clone and blue-green replacement require a new target admission.
-Development PostgreSQL without this identity resolver is INTERNAL ONLY and supplies no production restore guarantee.
+These are deployment requirements. Only a local policy model ran; no authenticated restore test passed.
+A restore starts in quarantine with production writers stopped.
+The operator inspects trusted schema, target identity, current deployment policy, key wrappers, formats, and backup lineage.
+A restored operation journal is progress evidence, not current authority.
+Old consistent metadata cannot select an older active policy or revive externally revoked access.
 
-A restored target starts isolated with no production writer admission. Restore metadata, schema and checkpoints are untrusted.
-`pg_restore` can execute source-superuser-controlled code. Inspect a quarantined environment and rebuild trusted schema before admitting data.
-Do not assume data-only selection makes hostile schema safe.
-Read current external head, denial/tombstones, accepted formats and completed destructive operations independently of restored DB state.
-Current revoked subjects/scopes cannot be released. Inventory and remove/quarantine their restored rows/terms under current denial,
-without overriding that denial to decrypt them. Record excluded irrecoverable values explicitly.
-Verify every required admissible row and reconcile schema/key/reader dependencies before conditional target admission.
-Old DB counters, restored provider credentials or old VM caches never restore authority.
+Compare the database representation to the current policy artifact outside the restore.
+If it is older, plan a verified transformation to current policy before admission.
+If required readers/keys no longer exist, identify irrecoverable scopes and refuse silent incomplete recovery.
+If current policy provenance is unavailable, keep service stopped. A restored database pin cannot replace it.
 
-Production disaster recovery stays within the same protection domain only after current ledger proof and exact target admission.
-There is no automatic cross-region authority failover. A staging clone uses a different domain, keys and workload credentials.
-Production data transfer to staging requires an explicit authorized re-encryption transition. Raw ciphertext copying does not inherit authorization.
-Restored VMs restart the runtime, discard caches/permits/clients and re-admit. Invisible VM-memory rollback remains unsupported.
+The host's existing current authorization must enforce subject denial independently when that denial must survive restore.
+Putting the only deny record inside PostgreSQL cannot supply that property.
+Deployment policy can reject retired generations. It does not prove every row is fresh within an admitted generation.
+No policy counter detects arbitrary same-context row replay or an invisible old application/RAM clone by itself.
+Workers must restart under current policy and target credentials after restore.
+Managed-provider target identity and failover behavior remain external compatibility tests.
 
-Recovery inventory retains DB backup lineage, exact formats, wrapped roots, provider resources, nonsecret policy bytes, readers and external destructive-intent receipts.
-It contains no raw root escrow. Standard AWS-generated KEKs cannot be exported for a Cryptalis escrow file.
-The product chooses provider durability rather than customer raw-key escrow. Imported/escrowed/custom-store custody is excluded.
-If a KEK is permanently deleted or irrecoverably lost, every dependent wrapped payload/search root and ciphertext can become permanently unreadable.
-Loss of a subject wrapper without a retained copy can also lose its values. Loss of a search root can be repaired only if payloads remain decryptable for reindex.
-Authority loss with intact keys denies service. Current latest state must remain independently provable.
-The [external authority contract](security.md#external-authority) defines receipt custody, intent ordering and crash reconciliation.
-Permanent authority identity/state loss without current complete proof permanently denies the old domain, without TTL.
-An old authority backup or immutable prefix cannot authorize reactivation.
-No break-glass instruction silently clears a tombstone or trusts an incomplete recovery graph.
-This can make existing ciphertext operationally unrecoverable even while KMS material survives.
-It is a deliberate fail-closed boundary, not a claim that provider durability solves authority loss.
+KMS/provider loss and policy loss differ. Intact keys with unprovable current policy deny service.
+Permanent loss of every recovery key/wrapper can make ciphertext permanently unreadable.
+The operator retains a tested recovery inventory and reader artifact. There is no Cryptalis key-hostage service.
 
 ## Revocation and destruction
 
-`revoke --subject` means managed access denial, not per-subject cryptographic destruction.
-It records irreversible current subject-incarnation tombstone, denies new reads/writes, fences/drains registered operations,
-and removes current protected rows/terms through an authorized scoped plan where host relational dependencies permit.
-If dependencies prevent removal, retain quarantined denied rows and report PENDING cleanup. Reads of a denied candidate fail the whole buffer.
-Recreation needs a new subject incarnation. It cannot reuse the tombstoned identity.
-Restoring a stale backup does not clear that managed denial.
+Subject revocation means host-authorized managed denial and row cleanup, not cryptographic erasure.
+Default tenant roots remain able to decrypt a subject's old encrypted backup when the required authority survives.
+Shared search roots can retain subject linkage. Deleting a current row or wrapper does not destroy backed-up copies.
 
-Payload roots are independent, but their old wrappers can survive in backups under the surviving domain KEK.
-Those wrappers remain cryptographically recoverable with sufficient external authority. Shared tenant-field equality keys also retain linkage to old subject terms.
-Deleting current wrappers/rows or denying access never proves unrecoverability.
-Per-subject cryptographic erasure, per-subject search keys that break cross-subject equality, and custom puncturable encryption are UNSUPPORTED BY DESIGN.
-
-`destroy --domain` can destroy the dedicated KMS custody scope only after separately approved irreversible inventory.
-Report three independent axes: managed access (admitted/revoked/drain-pending/no-new-use), provider custody (requested/pending/native-deleted),
-and recovery (recoverable/unknown/bounded-destruction-verified). They can coexist. Denial or pending deletion does not imply destruction.
-Provider observations also retain their native state, time, exact resource, Region, origin and evidence source.
-AWS deletion waits 7–30 days, is cancelable during the pending interval, and can complete up to 24 hours after the scheduled date.
-Request success is not destruction. Cached/copied descendant keys are unaffected by the provider call.
-
-Bounded destruction requires managed drain, known key-copy/custody inventory, no prohibited escrow/import/replica paths,
-observed completed deletion of every current AND historical domain KEK that wraps any surviving root, and independent recovery trials over each route.
-Rewrap can leave historical wrappers recoverable through an old KEK. Destroying only the current KEK is insufficient.
-Recovery trials need positive controls proving they reached the intended material/reader route.
-Permission/transport failures, malformed backups and unavailable readers are INCONCLUSIVE, never destruction evidence.
-Unknown copies or workers make the stronger conclusion INCONCLUSIVE. No local row deletion prints `ERASED`.
-The evidence states its effort/custody/copy boundary under NIST SP 800-88 Rev. 2 concepts. It makes no certification or universal sanitization claim.
-Host exports, already disclosed values, logs, prior plaintext and unmanaged copies remain excluded.
+Domain/tenant key destruction is a separate provider-admin operation after inventory and explicit approval.
+Tenant-level destruction requires a provider KEK dedicated to that tenant, or another independently proved root-destruction route.
+Deleting a tenant wrapper cannot erase its backed-up copies under a surviving shared KEK.
+Report requested deletion, provider pending state, observed native deletion, remaining cached/copied keys, and physical backup expiry separately.
+Do not call recoverable values shredded, erased forever, or cryptographically destroyed.
+A provider deletion request is not proof of completed deletion or loss of every descendant key.
+No per-subject KMS key, puncturable encryption, tombstone service, or instantaneous revocation protocol is selected by default.
 
 ## Deprotect and remove
 
-Deprotect requires scoped downgrade approval before the first plaintext staging write, including shadow columns, temporary tables and files.
-Approval describes resulting WAL/backups/replicas and application publication. A switch-only approval is too late.
-The same valid approval can cover staging and switch if both actions are explicit.
-Expired, wrong-target, missing or ambiguous approval denies further plaintext writes. A crash records existing partial exposure rather than erase its history.
+Approve plaintext exposure before the first plaintext staging write.
+The approval names scope, target, resulting WAL/backups, and retained recovery ownership.
+Authenticate current ciphertext, reconstruct original ordinary SQL types, recompute/verify exact values, and switch while writers remain stopped.
 
-The engine fences writers, authenticates every required admissible source value, backfills isolated ordinary-type columns, and verifies exact value/type/NULL coverage.
-A deprotect observation window uses attached mirror-capable writers while encrypted rollback remains promised.
-Removal keeps production writes fenced through package-free tests on an isolated ordinary-schema copy.
-It explicitly finalizes the encrypted rollback route before resuming ordinary package-free production writers.
-Application deprotection alone does not remove historical encrypted recovery obligations.
+Removal completes only after:
 
-Removal is one aggregate plan with this order:
+1. The ordinary-schema application passes real read/write/query tests without Cryptalis attachment or import.
+2. Search companions/indexes, ciphertext columns, and eligible internal metadata are retired after dependency review.
+3. Every retained encrypted backup has a tested reader/key route or an explicit approved loss disposition.
+4. Old workers/jobs no longer require Cryptalis readers or write protected representations.
+5. Package removal occurs last. Status names ongoing external key/backup obligations.
 
-1. Inventory every protected field, schema object, binary/job, key, backup, export and required reader.
-2. Deprotect and fully verify all required admissible values under the approved publication scope.
-3. Switch the host mapping, retain the production writer fence, and run real package-free read/write/query tests on an isolated ordinary-schema copy.
-4. Retain a tested standalone recovery reader, exact formats and keys for encrypted backups, or explicitly approve loss of those recovery routes.
-5. Retire search terms/indexes, protected columns, admitted old readers and eligible key dependencies through exact finalization actions.
-6. Remove Cryptalis database metadata only after operation/recovery receipts move to their independent retention owner.
-7. Remove attachment/configuration and uninstall the package last. Report retained external recovery obligations separately.
+Rollback during deprotect/removal uses the same transform-back path. It is not a second mirror protocol.
+The earlier package-free SQL read does not satisfy application removal. The integrated checkpoint records a narrow original-application child test.
+Durable retained-backup recovery and the full removal gate remain UNKNOWN.
+Dropping columns does not erase dead tuples, WAL, backups, or host exports.
+Historical plaintext and encrypted-reader obligations remain explicit after application exit.
 
-The standalone recovery reader enforces the same pinned current external authority, tombstones, exact backup formats/scopes and target admission.
-Unavailable/unprovable current authority denies recovery. Retain its authority configuration, dependency pins, instructions and tested format coverage independently.
-Application exit does not delete external tombstones or recovery authority. Test revoked-subject recovery from a stale encrypted backup.
-After explicit encrypted-rollback finalization and package-free gate, resume production ordinary writers.
+## Recovery behavior
 
-Package-free application operation is a proof gate. A package import smoke test alone is insufficient.
-An unknown encrypted archive, old job or required key blocks eligible retirement. The plan can leave external backup obligations with the operator,
-but it cannot strand those backups or call them removed without an explicit disposition.
-The reader is an independently pinned recovery artifact, never a secret lock-in service.
+`status` reports the original operation, last durable phase, attempted effect, pending work, and remedy.
+`apply --resume` reinspects that operation and actual state before another effect.
+An expired initial plan cannot authorize changed effects. It can identify an already approved operation for current reinspection.
+Unknown provider effect requires native inspection before retry. Advisory locks do not fence an already dispatched KMS request.
+No separate reconcile, break-glass, receipt repair, or restore-admission language is required for the normal product.
+If an essential outcome cannot be established, remain PENDING/UNKNOWN and state the specific required observation.
 
-## Residual plaintext and reports
+## Supported deployment candidate
 
-Current-row protection does not erase old plaintext from dead tuples, TOAST, WAL/PITR, replicas, snapshots, backups, exports or downstream systems.
-Vacuum and column deletion are not universal media sanitization. Migration and deprotection can create additional plaintext copies.
-Reports distinguish current representation, rollback mirror, known historical copy with retention/owner, and UNKNOWN external inventory.
-Copy expiry is an observed custody fact, not an invented guarantee.
-Finalized current storage can coexist with historical plaintext exposure. Status must show both.
+The selected candidate uses one application deployment, one current PostgreSQL primary, and an existing trusted release operator.
+The operator controls worker termination, database credentials, deployment artifacts, and restore quarantine.
+No profile qualifies yet. Multi-deployment writer coordination is unavailable until that exact host procedure passes its tests.
 
-An operation receipt records schema version, operation/plan/target IDs, source/target digests, scope, phases/effects, coverage,
-observation times, collector/control health, operator attestations, native provider observations, exclusions and recovery obligations.
-No raw values, keys, terms or ciphertext bodies are included. Exact finalized bytes are hashed and retained independently.
-Required checks are selected before evaluation. A failed check cannot be removed from scope to turn the result green.
-Documentation, first-party tests, operator attestation, independently observed facts and independent review remain distinct evidence bases.
-A receipt proves only its declared provenance and scope. It does not make a collector honest or establish complete erasure.
-Receipt schema 2 requires every listed member, including explicit empty exclusions, and rejects unknown security fields or incompatible versions.
-Parse with the bounded JSON profile, hash exact complete bytes, and render from the same immutable validated object.
-UTC times record clock source and uncertainty. Deadlines use local monotonic elapsed time after trusted UTC admission.
-Uncertain/invalid time or clock discontinuity denies expiry-dependent actions. Independent clocks are not interchangeable.
+1. Stop affected writers and wait for their transactions to finish. Confirm that alternate credentials cannot restart a writer.
+2. Run the database transition and full verification under the maintenance principal. Record the exact pending policy artifact digest.
+3. Switch the database representation. Leave writers stopped. `status` names the operator and the required artifact publication.
+4. Publish the exact artifact through the trusted deployment tool. Restart workers with fresh target credentials and empty key caches.
+5. Admit traffic only after startup compares the current artifact, target, schema, and active representation.
+
+Interruptions between steps 3 and 4 retain `writers: STOPPED` and a named pending effect.
+Neither the restored journal nor a stale worker can approve publication. Missing provenance keeps service stopped.
+This procedure needs real tests for both switch boundaries, stale policy, old workers, and unavailable host denial authority.
+
+`plan` must estimate temporary storage, WAL, provider calls, verification duration, and total writer pause.
+Pause budgets remain undecided (D). The operator must approve the concrete measured/estimated pause before an actual transition.
+No production pause ceiling is approved.
+The admitted text/equality plan enforces encoded-text and bind limits before SQL.
+Range tree depth/cover and prefix term bounds are INTERNAL ONLY until capability admission.
+Resource bounds prevent uncontrolled expansion. They do not establish an approved write-throughput budget.
+Advanced capability/normalizer/search-domain changes are UNSUPPORTED BY DESIGN until [admission](compatibility.md#capability-admission).
+The selected lifecycle scope uses text, application-generated primary keys, and explicit tenancy.

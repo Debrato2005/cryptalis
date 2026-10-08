@@ -1,5 +1,8 @@
 # Cryptographer review packet
 
+> Historical research archive. The [revamp record](revamp-evidence.md) supersedes its architecture choices and scope.
+> This file records past evidence, not the current specification or runtime qualification.
+
 Frozen export for external human review, 2026-10-07 Asia/Calcutta. This is not a second contract owner.
 The canonical owner is [security](../security.md); mapping/semantic/lifecycle dependencies have their linked owners.
 The export must be regenerated when a source hash changes. No independent cryptographic review or audit has occurred.
@@ -282,7 +285,7 @@ Limits: 16 MiB/document, depth 32, 10,000 fields, identifiers at most 128 UTF-8 
 Unknown critical fields, duplicate set entries, conflicting locators and unsafe SQL dependencies reject.
 The compiled lock digest is SHA-256 of `cryptalis-lock-v2`, one zero byte, and canonical complete lock bytes.
 The deployment registry pins that digest. Changing files does not authorize weaker protection.
-Deployment approval follows the [manifest-integrity contract](../security.md#manifest-integrity).
+Deployment approval follows the [manifest-integrity contract](../security.md#key-hierarchy-and-providers).
 Internal immutable history retains admitted descriptors. Ordinary developers edit one declaration.
 
 
@@ -325,7 +328,7 @@ Mapped Decimal scale follows the declared 0..precision rule. Search numeric cano
 Existing SQL NUMERIC constraints remain declared. Overflow rejects, never truncates or silently rounds.
 Only text fields can use the text-specific normalizers. No algorithm changes based on field names.
 Changing a normalizer ID or its frozen tables requires deliberate reindex and duplicate-conflict review.
-The [security owner](../security.md#search-and-leakage) freezes exact output bytes and post-normalization limits.
+The [security owner](../security.md#capability-leakage) freezes exact output bytes and post-normalization limits.
 An interpreter Unicode upgrade never changes an existing index in place.
 Unicode 18.0.0 upstream documentation exists, but the chosen frozen 17.0.0 catalogue is deliberate compatibility state, not a latest-version claim.
 Locale casefolding, automatic full-email lowercase, SQL locale collation, timestamps/timezones, floats/NaN, JSON/mutable collections and arrays are UNSUPPORTED BY DESIGN.

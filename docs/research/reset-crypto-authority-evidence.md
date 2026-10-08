@@ -1,12 +1,15 @@
 # Reset research: cryptography and external authority
 
+> Historical research archive. The [revamp record](revamp-evidence.md) supersedes its architecture choices and scope.
+> This file records past evidence, not the current specification or runtime qualification.
+
 Access date for every source below: **2026-10-06**. This document records research, not a normative contract or security audit.
 
 The review inspected current official documentation and the cited paper. It ran no provider experiment, cryptographic vector, benchmark, or independent review.
 Publication dates are explicit where the source establishes them. An unversioned service page does not identify an SDK release or tested deployment.
 The recommendations are design choices. The canonical architecture and security documents own the adopted contracts.
 
-Final selection: the [security owner](../security.md#keys-and-caches) chooses a 300-second material-cache age and a separate 30-second operation deadline.
+Final selection: the [security owner](../security.md#key-hierarchy-and-providers) chooses a 300-second material-cache age and a separate 30-second operation deadline.
 The 60-second recommendation below is a rejected research input. It does not define runtime behavior.
 
 ## Repository basis

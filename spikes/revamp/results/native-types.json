@@ -1,0 +1,26 @@
+{
+  "cell": "SQLite public before_flush/before_execute parameter alternative",
+  "outcomes": {
+    "exact_type_after_flush": "PASS",
+    "history_after_flush": "PASS",
+    "duplicate_values_distinct_row_context": "PASS",
+    "prepared_context_cleared": "PASS",
+    "no_plaintext_wire_bind": "PASS",
+    "exact_type_after_update": "PASS",
+    "updated_scalar": "PASS",
+    "rollback_native_value": "PASS",
+    "refresh_native_value": "PASS",
+    "expiry_native_value": "PASS",
+    "merge_native_value": "PASS",
+    "autoflush_native_value": "PASS",
+    "unprepared_core_rejected": "PASS"
+  },
+  "ordinary_python_type_preserved": true,
+  "limits": [
+    "Not a complete clause/raw/COPY guard",
+    "No PG driver or async evidence",
+    "Explicit bigint IDs and one field/tenant only",
+    "Generated identities, multi-table flushes, cascades and parameter shapes unqualified",
+    "Reuses the old lab frame, not CF1"
+  ]
+}

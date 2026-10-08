@@ -1,0 +1,25 @@
+{
+  "status": "PASS_OFFLINE_ADMISSION_ONLY",
+  "outcomes": {
+    "protected_scalar_distinct": "PASS",
+    "protected_entity_columns_distinct": "PASS",
+    "protected_alias_distinct": "PASS",
+    "protected_labeled_distinct": "PASS",
+    "protected_nested_distinct": "PASS",
+    "protected_union_member_distinct": "PASS",
+    "protected_orm_entity_distinct": "PASS",
+    "protected_orm_alias_distinct": "PASS",
+    "protected_distinct_on": "PASS",
+    "ordinary_protected_projection": "PASS",
+    "plaintext_distinct": "PASS",
+    "plaintext_distinct_on": "PASS",
+    "scoped_count_distinct_retains_existing_rewrite": "PASS"
+  },
+  "source_sha256": "28d595748285fcaa0184eb5641952072aaf528b6e63a9141667440ff85633e26",
+  "adapter_sha256": "d64f279472d03993a797478afc2843013a8aac05364e075975a0e8fccf2fd2bb",
+  "limits": [
+    "Inert connection; no PostgreSQL or driver execution",
+    "Planner/provider bypassed for expression admission only",
+    "Complete grammar and every full gate remain UNKNOWN"
+  ]
+}

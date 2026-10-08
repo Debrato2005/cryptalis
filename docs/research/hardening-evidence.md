@@ -1,5 +1,8 @@
 # Hardening source and observation record
 
+> Historical research archive. The [revamp record](revamp-evidence.md) supersedes its architecture choices and scope.
+> This file records past evidence, not the current specification or runtime qualification.
+
 Accessed 2026-10-07 Asia/Calcutta. These primary sources establish publication/API/service facts, not Cryptalis runtime support.
 No AWS service API or credential was used. Sources were read as public documentation.
 
