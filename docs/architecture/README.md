@@ -130,7 +130,8 @@ Protected projections disable compilation caching because their processors retai
 Unprotected projections retain native caching. Guards reject public raw-driver, opaque SQL, COPY, and unprepared-write routes.
 **VERIFIED:** native/attached comparisons and cache regression sensitivity have the exact boundary in the
 [slice 3 checkpoint](../status.md#slice-3-checkpoint-2026-10-08).
-Separate non-owning runtime credentials and deployment enforcement remain unverified. Slice 4 cannot start yet.
+Separate non-owning runtime CRUD and tested persistent DDL/ownership denials have local PostgreSQL evidence.
+These grants do not enforce attachment use by separate writers. Deployment enforcement remains unverified; all seven full gates remain UNKNOWN.
 
 **IMPLEMENTED, spike only:** the [2026-10-07 checkpoint](../status.md#current-integrated-checkpoint-2026-10-07) uses public hooks on one text field.
 It preallocates server-generated int32 sequence IDs. That historical behavior conflicts with the approved app-assigned-key contract and supplies no product admission.

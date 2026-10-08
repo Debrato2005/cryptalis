@@ -190,5 +190,34 @@
     "tests/profile_sqlalchemy_adapter.py",
     "pyproject.toml",
     "uv.lock"
-  ]
+  ],
+  "latest_connection_recheck": {
+    "timestamp_utc": "2026-10-08T19:40:00Z",
+    "boundary": "Current agent environment; launching-shell verification was not reproduced",
+    "initial_git_status": "clean",
+    "migrator": {
+      "variable": "CRYPTALIS_TEST_DATABASE_URL",
+      "variable_set": true,
+      "probe": "psycopg.connect(connect_timeout=5), then select 1",
+      "outcome": "CONNECTION_FAILED; select 1 did not execute",
+      "exception_type": "OperationalError",
+      "sqlstate": null,
+      "credential_redacted_message": "connection failed: connection to server at \"127.0.0.1\", port 55432 failed: FATAL:  password authentication failed for user \"cryptalis_migrator\"\nconnection to server at \"127.0.0.1\", port 55432 failed: FATAL:  password authentication failed for user \"cryptalis_migrator\""
+    },
+    "runtime": {
+      "variables_checked": [
+        "CRYPTALIS_TEST_RUNTIME_DATABASE_URL",
+        "CRYPTALIS_RUNTIME_DATABASE_URL"
+      ],
+      "variables_set": false,
+      "outcome": "NOT_ATTEMPTED; runtime credentials absent from agent environment",
+      "current_role_existence": "UNKNOWN; no catalog connection succeeded"
+    },
+    "database_mutations": "NONE",
+    "tests_run": "NONE; required database prerequisite failed",
+    "advancement": "BLOCKED; stop at Slice 3",
+    "remedy": "Start or relaunch the agent with both working connection variables inherited privately; recheck through psycopg before fixture work",
+    "preservation_snapshot": "/tmp/cryptalis-slice3-connection-4s84mgop",
+    "full_gates": "All seven UNKNOWN"
+  }
 }

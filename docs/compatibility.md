@@ -93,7 +93,8 @@ A declared single-tenant table needs no synthetic public tenant column.
 Generated/separate equality terms are compiler choices for admitted constraints. They do not admit protected joins or FKs.
 Shape checks reject malformed bytes, but cannot certify encryption without keys.
 [Database prerequisites](../README.md#database-prerequisites) state migration/runtime role boundaries.
-Exact generated CHECK/default/collation DDL preservation and non-owning runtime enforcement remain UNKNOWN.
+Exact generated CHECK/default/collation DDL preservation and deployment writer exclusion remain UNKNOWN.
+The [slice 3 runtime checkpoint](status.md#restricted-runtime-role-completion-2026-10-08) verifies local non-owning CRUD and tested persistent DDL/ownership denials.
 
 ## Capability admission
 
@@ -161,7 +162,8 @@ Driver time combines network wait and PostgreSQL work; those parts are not indep
 This small plaintext profile does not explain the historical million-row anomaly. Its cause remains **UNKNOWN**.
 No equality/IN, isolated storage/index, sustained-write, remote-provider, or async performance qualification was performed.
 Adoption in this fixture used one manifest, one attach call, authenticated tenant scope, and application-assigned IDs.
-No business-query or model declarations changed between native and attached paths. Runtime credential/deployment work remains unverified.
+No business-query or model declarations changed between native and attached paths.
+The later runtime checkpoint verifies separate credentials and fixture grants; deployment enforcement remains unverified.
 
 ### Historical storage and transition costs
 

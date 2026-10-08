@@ -734,3 +734,277 @@ def test_ambiguous_columns_and_alternate_target_mapping_reject_before_driver(app
             with pytest.raises(UnsupportedProtectedOperation):
                 session.execute(statement)
             assert len(observed) == before, "An unvalidated column reached the driver"
+
+
+@pytest.fixture
+def runtime_access(app):
+    """Grant customer CRUD and the relationship lookup required for deletion."""
+    if not os.environ.get("CRYPTALIS_TEST_RUNTIME_DATABASE_URL"):
+        pytest.skip("Separate restricted runtime credentials are required")
+    with psycopg.connect(os.environ["CRYPTALIS_TEST_DATABASE_URL"]) as owner, \
+            psycopg.connect(os.environ["CRYPTALIS_TEST_RUNTIME_DATABASE_URL"]) as runtime:
+        assert runtime.execute("select 1").fetchone() == (1,)
+        assert int(runtime.execute("show server_version_num").fetchone()[0]) // 10000 == 16
+        assert (owner.info.host, owner.info.port, owner.info.dbname) == (runtime.info.host, runtime.info.port, runtime.info.dbname)
+        owner_role = owner.execute("select current_user").fetchone()[0]
+        runtime_role = runtime.execute("select current_user").fetchone()[0]
+        assert owner_role != runtime_role
+        assert runtime.execute("select not rolsuper and not rolcreatedb and not rolcreaterole and not rolreplication and not rolbypassrls from pg_roles where rolname=current_user").fetchone() == (True,)
+        assert runtime.execute("select pg_has_role(current_user, %s, 'USAGE'), pg_has_role(current_user, %s, 'SET')", (owner_role, owner_role)).fetchone() == (False, False)
+        schema, role = sql.Identifier(app.schema), sql.Identifier(runtime_role)
+        owner.execute(sql.SQL("REVOKE ALL ON SCHEMA {} FROM PUBLIC, {}").format(schema, role))
+        owner.execute(sql.SQL("REVOKE ALL ON TABLE {}.customer, {}.article FROM PUBLIC, {}").format(schema, schema, role))
+        owner.execute(sql.SQL("GRANT USAGE ON SCHEMA {} TO {}").format(schema, role))
+        owner.execute(sql.SQL("GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE {}.customer TO {}").format(schema, role))
+        owner.execute(sql.SQL("GRANT SELECT ON TABLE {}.article TO {}").format(schema, role))
+        owner.commit()
+        target = app.schema + ".customer"
+        assert runtime.execute("select has_schema_privilege(current_user, %s, 'USAGE'), has_schema_privilege(current_user, %s, 'CREATE')", (app.schema, app.schema)).fetchone() == (True, False)
+        for privilege in ("SELECT", "INSERT", "UPDATE", "DELETE", "TRUNCATE", "REFERENCES", "TRIGGER"):
+            assert runtime.execute("select has_table_privilege(current_user, %s, %s)", (target, privilege)).fetchone() == (privilege in ("SELECT", "INSERT", "UPDATE", "DELETE"),)
+            assert runtime.execute("select has_table_privilege(current_user, %s, %s)", (target, privilege + " WITH GRANT OPTION")).fetchone() == (False,)
+        for privilege in ("SELECT", "INSERT", "UPDATE", "DELETE", "TRUNCATE", "REFERENCES", "TRIGGER"):
+            assert runtime.execute("select has_table_privilege(current_user, %s, %s)", (app.schema + ".article", privilege)).fetchone() == (privilege == "SELECT",)
+            assert runtime.execute("select has_table_privilege(current_user, %s, %s)", (app.schema + ".article", privilege + " WITH GRANT OPTION")).fetchone() == (False,)
+        assert runtime.execute("select nspowner = (select oid from pg_roles where rolname=%s) from pg_namespace where nspname=%s", (owner_role, app.schema)).fetchone() == (True,)
+        assert runtime.execute("select relowner = (select oid from pg_roles where rolname=%s) from pg_class where oid=%s::regclass", (owner_role, target)).fetchone() == (True,)
+    return owner_role, runtime_role
+
+
+@pytest.mark.parametrize("protected", [False, True], ids=["native", "attached"])
+@pytest.mark.parametrize("mode", ["sync", "async"])
+def test_restricted_runtime_crud_matches_native_application(app, runtime_access, protected, mode):
+    """The same runtime principal and application values exercise both paths."""
+    if protected:
+        app.switch()
+    identities = [uuid4() for _ in range(3)]
+    values = [None, "", "runtime é e\u0301 雪😀"]
+    Customer = app.Customer
+    observed = []
+    def observe(connection, cursor, statement, parameters, context, many):
+        observed.append(parameters)
+    def rows():
+        return [Customer(id=identity, tenant_id=TENANT, name=f"runtime-visible-{index}",
+                         note=value, secret="runtime-private", rank=index)
+                for index, (identity, value) in enumerate(zip(identities, values))]
+    def storage():
+        # Independent connection observes committed storage, not ORM state.
+        with psycopg.connect(os.environ["CRYPTALIS_TEST_DATABASE_URL"]) as connection:
+            stored = connection.execute(sql.SQL("select note, secret from {}.customer order by rank").format(sql.Identifier(app.schema))).fetchall()
+        if protected:
+            assert stored[0][0] is None
+            for note, secret in stored:
+                for payload in (note, secret):
+                    if payload is not None:
+                        assert bytes(payload).startswith(b"CF1\0") and b"runtime-private" not in bytes(payload)
+            assert "runtime-visible-0" in repr(observed)
+            assert "runtime-private" not in repr(observed) and values[2] not in repr(observed)
+        else:
+            assert stored == [(value, "runtime-private") for value in values]
+    statement = select(Customer.note).order_by(Customer.rank)
+    if mode == "sync":
+        engine = create_engine("postgresql+psycopg://", echo=False, hide_parameters=True,
+                               creator=lambda: psycopg.connect(os.environ["CRYPTALIS_TEST_RUNTIME_DATABASE_URL"]))
+        try:
+            if protected:
+                sessions = attach(app.mapping, engine, lock=app.plan.lock_bytes, keys=app.rings.__getitem__)
+            else:
+                native = sessionmaker(engine)
+                sessions = lambda *, tenant_id: native()
+            event.listen(engine, "before_cursor_execute", observe)
+            with sessions(tenant_id=TENANT) as session:
+                session.add_all(rows())
+                session.commit()
+                assert session.scalars(statement).all() == values
+            storage()
+            with sessions(tenant_id=TENANT) as session:
+                row = session.get(Customer, identities[2])
+                assert type(row.note) is str and row.note == values[2]
+                row.note = "updated runtime"
+                session.commit()
+                session.refresh(row)
+                assert row.note == "updated runtime"
+                row.note = "must roll back"
+                session.flush()
+                session.rollback()
+                assert session.get(Customer, identities[2]).note == "updated runtime"
+                if protected:
+                    before = len(observed)
+                    with pytest.raises(UnsupportedProtectedOperation):
+                        session.execute(text(f'ALTER TABLE "{app.schema}".customer ADD COLUMN forbidden int'))
+                    assert len(observed) == before
+                for identity in identities:
+                    session.delete(session.get(Customer, identity))
+                session.commit()
+            with sessions(tenant_id=TENANT) as session:
+                assert session.scalars(select(Customer)).all() == []
+        finally:
+            engine.dispose()
+    else:
+        async def scenario():
+            engine = create_async_engine("postgresql+psycopg://", echo=False, hide_parameters=True,
+                                         async_creator=lambda: psycopg.AsyncConnection.connect(os.environ["CRYPTALIS_TEST_RUNTIME_DATABASE_URL"]))
+            try:
+                if protected:
+                    sessions = await attach(app.mapping, engine, lock=app.plan.lock_bytes, keys=app.rings.__getitem__)
+                else:
+                    native = async_sessionmaker(engine)
+                    sessions = lambda *, tenant_id: native()
+                event.listen(engine.sync_engine, "before_cursor_execute", observe)
+                async with sessions(tenant_id=TENANT) as session:
+                    session.add_all(rows())
+                    await session.commit()
+                    assert (await session.scalars(statement)).all() == values
+                storage()
+                async with sessions(tenant_id=TENANT) as session:
+                    row = await session.get(Customer, identities[2])
+                    assert type(row.note) is str and row.note == values[2]
+                    row.note = "updated runtime"
+                    await session.commit()
+                    await session.refresh(row)
+                    assert row.note == "updated runtime"
+                    row.note = "must roll back"
+                    await session.flush()
+                    await session.rollback()
+                    assert (await session.get(Customer, identities[2])).note == "updated runtime"
+                    if protected:
+                        before = len(observed)
+                        with pytest.raises(UnsupportedProtectedOperation):
+                            await session.execute(text(f'ALTER TABLE "{app.schema}".customer ADD COLUMN forbidden int'))
+                        assert len(observed) == before
+                    for identity in identities:
+                        await session.delete(await session.get(Customer, identity))
+                    await session.commit()
+                async with sessions(tenant_id=TENANT) as session:
+                    assert (await session.scalars(select(Customer))).all() == []
+            finally:
+                await engine.dispose()
+        asyncio.run(scenario())
+    with psycopg.connect(os.environ["CRYPTALIS_TEST_DATABASE_URL"]) as connection:
+        assert connection.execute(sql.SQL("select count(*) from {}.customer").format(sql.Identifier(app.schema))).fetchone() == (0,)
+
+
+@pytest.mark.parametrize("mode", ["sync", "async"])
+def test_postgresql_refuses_runtime_ddl_and_ownership_without_attachment(app, runtime_access, mode):
+    """Actual SQLSTATE 42501 is the oracle; Python guards cannot supply it."""
+    app.switch()
+    owner_role, runtime_role = runtime_access
+    schema = sql.Identifier(app.schema)
+    denied = [
+        sql.SQL("CREATE TABLE {}.forbidden(id int)").format(schema),
+        sql.SQL("ALTER TABLE {}.customer ADD COLUMN forbidden int").format(schema),
+        sql.SQL("CREATE INDEX forbidden ON {}.customer(rank)").format(schema),
+        sql.SQL("TRUNCATE TABLE {}.customer").format(schema),
+        sql.SQL("DROP TABLE {}.customer").format(schema),
+        sql.SQL("ALTER TABLE {}.customer OWNER TO {}").format(schema, sql.Identifier(runtime_role)),
+        sql.SQL("ALTER SCHEMA {} OWNER TO {}").format(schema, sql.Identifier(runtime_role)),
+        sql.SQL("DROP SCHEMA {} CASCADE").format(schema),
+        sql.SQL("SET ROLE {}").format(sql.Identifier(owner_role)),
+    ]
+    if mode == "sync":
+        with psycopg.connect(os.environ["CRYPTALIS_TEST_RUNTIME_DATABASE_URL"], autocommit=True) as connection:
+            for statement in denied:
+                with pytest.raises(psycopg.errors.InsufficientPrivilege) as refused:
+                    with connection.transaction():
+                        connection.execute(statement)
+                assert refused.value.sqlstate == "42501"
+                assert connection.execute("select 1").fetchone() == (1,)
+    else:
+        async def scenario():
+            async with await psycopg.AsyncConnection.connect(os.environ["CRYPTALIS_TEST_RUNTIME_DATABASE_URL"], autocommit=True) as connection:
+                for statement in denied:
+                    with pytest.raises(psycopg.errors.InsufficientPrivilege) as refused:
+                        async with connection.transaction():
+                            await connection.execute(statement)
+                    assert refused.value.sqlstate == "42501"
+                    assert await (await connection.execute("select 1")).fetchone() == (1,)
+        asyncio.run(scenario())
+    with psycopg.connect(os.environ["CRYPTALIS_TEST_DATABASE_URL"]) as connection:
+        assert connection.execute("select nspowner = (select oid from pg_roles where rolname=%s) from pg_namespace where nspname=%s", (owner_role, app.schema)).fetchone() == (True,)
+        assert connection.execute("select relowner = (select oid from pg_roles where rolname=%s) from pg_class where oid=%s::regclass", (owner_role, app.schema + ".customer")).fetchone() == (True,)
+        assert connection.execute("select to_regclass(%s)", (app.schema + ".forbidden",)).fetchone() == (None,)
+        assert "forbidden" not in [column["name"] for column in inspect(app.engine).get_columns("customer", schema=app.schema)]
+
+
+@pytest.mark.parametrize("mode", ["sync", "async"])
+def test_independent_runtime_writer_can_tamper_replay_null_and_delete(app, runtime_access, mode):
+    """Security-doc attack cases expose the limit of ordinary CRUD privileges."""
+    app.switch()
+    identity = uuid4()
+    target = sql.SQL("{}.customer").format(sql.Identifier(app.schema))
+    def capture():
+        with psycopg.connect(os.environ["CRYPTALIS_TEST_RUNTIME_DATABASE_URL"]) as writer:
+            return bytes(writer.execute(sql.SQL("SELECT note FROM {} WHERE id=%s").format(target), (identity,)).fetchone()[0])
+    def attacks(original):
+        current = capture()
+        assert current != original
+        tampered = current[:-1] + bytes([current[-1] ^ 1])
+        for attack, replacement, expected in (("tamper", tampered, None), ("replay", original, "original"),
+                                               ("null", None, None), ("delete", None, None)):
+            # Each independent connection authenticates again with the runtime URL.
+            with psycopg.connect(os.environ["CRYPTALIS_TEST_RUNTIME_DATABASE_URL"]) as writer:
+                statement = (sql.SQL("DELETE FROM {} WHERE id=%s").format(target) if attack == "delete" else
+                             sql.SQL("UPDATE {} SET note=%s WHERE id=%s").format(target))
+                parameters = (identity,) if attack == "delete" else (replacement, identity)
+                assert writer.execute(statement, parameters).rowcount == 1
+            with psycopg.connect(os.environ["CRYPTALIS_TEST_RUNTIME_DATABASE_URL"]) as observer:
+                stored = observer.execute(sql.SQL("SELECT note FROM {} WHERE id=%s").format(target), (identity,)).fetchone()
+                assert stored == (None if attack == "delete" else (replacement,))
+            yield attack, expected
+    async def scenario():
+        engine = create_async_engine("postgresql+psycopg://", echo=False, hide_parameters=True,
+                                     async_creator=lambda: psycopg.AsyncConnection.connect(os.environ["CRYPTALIS_TEST_RUNTIME_DATABASE_URL"]))
+        try:
+            sessions = await attach(app.mapping, engine, lock=app.plan.lock_bytes, keys=app.rings.__getitem__)
+            async with sessions(tenant_id=TENANT) as session:
+                session.add(app.Customer(id=identity, tenant_id=TENANT, name="bypass", note="original", rank=1))
+                await session.commit()
+            original = capture()
+            async with sessions(tenant_id=TENANT) as session:
+                row = await session.get(app.Customer, identity)
+                row.note = "current"
+                await session.commit()
+                await session.refresh(row)
+                assert row.note == "current"
+            for attack, expected in attacks(original):
+                async with sessions(tenant_id=TENANT) as session:
+                    if attack == "tamper":
+                        with pytest.raises(AuthenticationFailed):
+                            await session.get(app.Customer, identity)
+                    else:
+                        row = await session.get(app.Customer, identity)
+                        if attack == "delete":
+                            assert row is None
+                        else:
+                            assert row.note == expected
+        finally:
+            await engine.dispose()
+    if mode == "async":
+        asyncio.run(scenario())
+    else:
+        engine = create_engine("postgresql+psycopg://", echo=False, hide_parameters=True,
+                               creator=lambda: psycopg.connect(os.environ["CRYPTALIS_TEST_RUNTIME_DATABASE_URL"]))
+        try:
+            sessions = attach(app.mapping, engine, lock=app.plan.lock_bytes, keys=app.rings.__getitem__)
+            with sessions(tenant_id=TENANT) as session:
+                session.add(app.Customer(id=identity, tenant_id=TENANT, name="bypass", note="original", rank=1))
+                session.commit()
+            original = capture()
+            with sessions(tenant_id=TENANT) as session:
+                row = session.get(app.Customer, identity)
+                row.note = "current"
+                session.commit()
+                assert row.note == "current"
+            for attack, expected in attacks(original):
+                with sessions(tenant_id=TENANT) as session:
+                    if attack == "tamper":
+                        with pytest.raises(AuthenticationFailed):
+                            session.get(app.Customer, identity)
+                    else:
+                        row = session.get(app.Customer, identity)
+                        if attack == "delete":
+                            assert row is None
+                        else:
+                            assert row.note == expected
+        finally:
+            engine.dispose()

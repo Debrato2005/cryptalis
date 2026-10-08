@@ -1,8 +1,8 @@
 # Slice 3: SQLAlchemy storage attachment
 
 **IMPLEMENTED:** bounded sync/async storage attachment in `src/cryptalis/sqlalchemy.py`.
-**VERIFIED:** 41 real PostgreSQL adapter cases; 777 full-suite cases on the recorded local cell.
-**BLOCKED:** separate non-owning runtime credentials are unavailable. Finish slice 3 before slice 4.
+**VERIFIED:** 49 real PostgreSQL adapter cases; 785 full-suite cases on the recorded local cell.
+Separate restricted runtime credentials verify sync/async CRUD and tested persistent DDL/ownership denials.
 All seven full gates remain **UNKNOWN**. No production provider or independent review exists.
 
 ## Purpose and mechanism
@@ -35,13 +35,38 @@ with sessions(tenant_id=authenticated_tenant) as session:
 
 ## Repeat the checks
 
-Keep `CRYPTALIS_TEST_DATABASE_URL` private. Set it to the authorized disposable service.
-The suite checks `select 1`, PostgreSQL 16, and the restricted role before fixture work.
+Use the authorized disposable PostgreSQL service. Keep both private URL files outside the repository.
+Run this block from the project root. Reload both files and repeat the sanity checks before every database command.
+The suite checks PostgreSQL 16 and role restrictions before fixture work.
 
 ```bash
-.venv/bin/python -m pytest -q tests/test_sqlalchemy_adapter.py --tb=short
-.venv/bin/python -m pytest -q tests/test_sqlalchemy_adapter.py -k interleaved --tb=short
-.venv/bin/python tests/profile_sqlalchemy_adapter.py
+set -e
+export CRYPTALIS_TEST_DATABASE_URL="$(sed 's#^postgresql+psycopg://#postgresql://#' ~/.cryptalis-test-url)"
+export CRYPTALIS_TEST_RUNTIME_DATABASE_URL="$(sed 's#^postgresql+psycopg://#postgresql://#' ~/.cryptalis-test-runtime-url)"
+.venv/bin/python - <<'PY'
+import hashlib
+import os
+import psycopg
+
+names = ("CRYPTALIS_TEST_DATABASE_URL", "CRYPTALIS_TEST_RUNTIME_DATABASE_URL")
+for name in names:
+    value = os.environ.get(name, "")
+    print(name, "set=" + str(bool(value)), "sha256_prefix=" + (hashlib.sha256(value.encode()).hexdigest()[:8] if value else "UNAVAILABLE"))
+failed = False
+for name in names:
+    if not os.environ.get(name):
+        failed = True
+        continue
+    try:
+        with psycopg.connect(os.environ[name], connect_timeout=10) as connection:
+            assert connection.execute("select 1").fetchone() == (1,)
+        print(name, "SELECT_1=OK")
+    except psycopg.Error as error:
+        print(name, "SELECT_1=FAILED", type(error).__name__, "SQLSTATE=" + str(error.sqlstate))
+        failed = True
+raise SystemExit(1 if failed else 0)
+PY
+.venv/bin/python -m pytest -q tests/test_sqlalchemy_adapter.py --tb=line
 ```
 
 ## Exact behavior checked in the main thread
@@ -87,6 +112,10 @@ Async performance, sustained writes, and remote provider costs remain unmeasured
 
 See [status](status.md#slice-3-checkpoint-2026-10-08), [verification receipt](_reset/slice3-verification.json),
 and [local profile](compatibility.md#slice-3-local-profile-2026-10-08).
-The fixture owner does not prove runtime privilege isolation or separate-writer exclusion.
+The [runtime receipt](_reset/slice3-runtime-verification.json) records separate-login CRUD and PostgreSQL refusal of nine persistent DDL/ownership/role operations.
+Fixture grants are schema `USAGE`, customer CRUD, and article `SELECT` for native deletion relationship lookup, without ownership or grant options.
+Runtime database `TEMP` remains available. These tests do not deny every DDL statement or prove separate-writer exclusion.
+Independent runtime connections can commit changed bytes, replay an older authenticated value, substitute nullable NULL, and delete rows.
+Attached reads reject changed ciphertext. They accept the tested replay, NULL, and row absence; they do not establish freshness, presence, or completeness.
 Search predicates and Core/bulk writes reject. Equality/IN/uniqueness belong to slice 4.
-Next: provision restricted runtime access and verify CRUD plus DDL/ownership refusal before advancing.
+This run stops at slice 3. Deployment writer exclusion, production custody, and independent review remain UNKNOWN.

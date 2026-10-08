@@ -1,0 +1,39 @@
+{
+  "timestamp_utc": "2026-10-08T20:04:58.643681+00:00",
+  "boundary": "Current Linux agent executor; connection prerequisites only",
+  "slice": 3,
+  "variables_present": {
+    "CRYPTALIS_TEST_DATABASE_URL": true,
+    "CRYPTALIS_TEST_RUNTIME_DATABASE_URL": true,
+    "CRYPTALIS_RUNTIME_DATABASE_URL": false
+  },
+  "probe": "One psycopg.connect(connect_timeout=5) attempt per supplied role, then SELECT 1",
+  "migrator": {
+    "variable": "CRYPTALIS_TEST_DATABASE_URL",
+    "outcome": "CONNECTION_FAILED; SELECT 1 did not execute",
+    "exception_type": "OperationalError",
+    "sqlstate": null,
+    "credential_redacted_message": "connection failed: connection to server at \"127.0.0.1\", port 55432 failed: FATAL:  password authentication failed for user \"cryptalis_migrator\"\nconnection to server at \"127.0.0.1\", port 55432 failed: FATAL:  password authentication failed for user \"cryptalis_migrator\""
+  },
+  "runtime": {
+    "variable": "CRYPTALIS_TEST_RUNTIME_DATABASE_URL",
+    "outcome": "SELECT_1_PASSED",
+    "result": [1],
+    "privilege_isolation": "UNKNOWN; connection success does not establish privileges"
+  },
+  "database_mutations": "NONE",
+  "tests_run": "NONE; both connection prerequisites must pass before fixture work",
+  "unverified_behaviors": [
+    "Authorized runtime CRUD",
+    "Denied runtime DDL and ownership operations",
+    "Sync and async attachment under separate runtime credentials"
+  ],
+  "advancement": "BLOCKED; stopped at Slice 3",
+  "remedy": "Supply working migration credentials privately in CRYPTALIS_TEST_DATABASE_URL, then recheck both connections before runtime tests",
+  "preservation_snapshot": "/tmp/cryptalis-slice3-runtime-ygqno58x",
+  "initial_modified_files": [
+    "docs/_reset/slice3-verification.json",
+    "docs/status.md"
+  ],
+  "full_gates": "All seven UNKNOWN"
+}

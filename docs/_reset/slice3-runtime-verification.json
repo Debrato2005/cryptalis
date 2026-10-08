@@ -1,0 +1,132 @@
+{
+  "timestamp_utc": "2026-10-08T20:45:47.378757+00:00",
+  "slice": 3,
+  "boundary": "Product storage attachment only; real disposable PostgreSQL 16; separate restricted non-owning runtime login; local development provider",
+  "connection_prerequisite": {
+    "source": "Both private URL files loaded afresh in every database shell command; postgresql+psycopg scheme normalized for psycopg; no URL recorded",
+    "CRYPTALIS_TEST_DATABASE_URL": {
+      "set": true,
+      "sha256_prefix": "0f63934e",
+      "select_1": "OK"
+    },
+    "CRYPTALIS_TEST_RUNTIME_DATABASE_URL": {
+      "set": true,
+      "sha256_prefix": "4e551e31",
+      "select_1": "OK"
+    },
+    "same_target": true
+  },
+  "cell": {
+    "python": "3.12.3",
+    "platform": "Linux-6.18.33.2-microsoft-standard-WSL2-x86_64-with-glibc2.39",
+    "postgresql": "16.15 (Ubuntu 16.15-0ubuntu0.24.04.1)",
+    "sqlalchemy": "2.1.3",
+    "psycopg": "3.3.6",
+    "cryptography": "50.0.2"
+  },
+  "grants_in_owned_test_schemas_only": {
+    "schema": [
+      "USAGE"
+    ],
+    "customer": [
+      "SELECT",
+      "INSERT",
+      "UPDATE",
+      "DELETE"
+    ],
+    "article": [
+      "SELECT"
+    ],
+    "article_reason": "Native SQLAlchemy relationship lookup during customer deletion; first run without SELECT failed equally in native and attached sync/async cases",
+    "grant_options": false,
+    "schema_or_table_ownership": false,
+    "runtime_owner_role_inheritance_or_set_role": false,
+    "runtime_elevated_role_flags": false,
+    "role_creation_or_role_attribute_changes": "NONE",
+    "global_privilege_changes": "NONE"
+  },
+  "asserted_behaviors": [
+    "Native and attached sync/async runtime CRUD preserve NULL, empty text, exact Unicode, scalar/entity reads, commit/refresh, flushed update rollback, and deletion",
+    "Migrator connection independently observes committed protected bytea frames; bind collector sees an unprotected marker and no supplied protected insert markers",
+    "Effective customer CRUD and article SELECT privileges exist without grant options, TRUNCATE, REFERENCES, TRIGGER, schema CREATE or ownership",
+    "Opaque DDL rejects through sync/async attachment before driver execution",
+    "Nine independent PostgreSQL statements return SQLSTATE 42501 in both sync and async: CREATE TABLE, ADD COLUMN, CREATE INDEX, TRUNCATE, DROP TABLE, table OWNER TO runtime, schema OWNER TO runtime, DROP SCHEMA, SET ROLE fixture owner",
+    "Denied statements roll back; later SELECT 1 succeeds; original table/schema ownership remains and no forbidden column/table/index exists",
+    "Independent runtime connections reconnect and commit tamper, stale replay after a legitimate update, NULL substitution and deletion; fresh connections observe each effect",
+    "Attached sync/async reads reject tampered ciphertext, accept the stale authenticated value, accept nullable SQL NULL, and observe missing deleted rows"
+  ],
+  "final_adapter_suite": {
+    "command": ".venv/bin/python -m pytest tests/test_sqlalchemy_adapter.py -q --tb=line",
+    "passed": 49,
+    "failed": 0,
+    "seconds": 9.0
+  },
+  "final_full_suite": {
+    "command": ".venv/bin/python -m pytest -q --tb=line --junitxml=<private temporary evidence path>",
+    "passed": 785,
+    "failed": 0,
+    "errors": 0,
+    "skipped": 0,
+    "seconds": 20.27
+  },
+  "runtime_cases_in_full_suite": [
+    "test_restricted_runtime_crud_matches_native_application[sync-native]",
+    "test_restricted_runtime_crud_matches_native_application[sync-attached]",
+    "test_restricted_runtime_crud_matches_native_application[async-native]",
+    "test_restricted_runtime_crud_matches_native_application[async-attached]",
+    "test_postgresql_refuses_runtime_ddl_and_ownership_without_attachment[sync]",
+    "test_postgresql_refuses_runtime_ddl_and_ownership_without_attachment[async]",
+    "test_independent_runtime_writer_can_tamper_replay_null_and_delete[sync]",
+    "test_independent_runtime_writer_can_tamper_replay_null_and_delete[async]"
+  ],
+  "earlier_run": {
+    "passed": 4,
+    "failed": 4,
+    "cause": "Missing article SELECT on native relationship lookup during customer deletion",
+    "fix": "Grant article SELECT only in owned fixtures; check every other article privilege and grant option remains absent"
+  },
+  "review": {
+    "type": "Focused AI test review; not independent human security review",
+    "finding_resolved": "Replay now follows committed value B and restores captured historical value A; sync helper no longer runs through asyncio",
+    "remaining_material_test_findings": 0
+  },
+  "scope_limits": {
+    "external_writer_exclusion": "UNKNOWN; the runtime data privileges explicitly allow independent driver writes and reconnects",
+    "ddl": "Denials cover persistent objects in owned protected schemas and SET ROLE to fixture owner; runtime database TEMP remains available; no claim that every DDL statement is denied",
+    "observed_runtime_database_create_temp_public_create": [
+      false,
+      true,
+      false
+    ],
+    "host_tenant_authorization": "UNKNOWN; supplied by host, not established by CRUD or payload authentication",
+    "lifecycle_metadata_permissions": "UNKNOWN; no product lifecycle metadata exists in slice 3",
+    "plaintext_page_anomaly": "Historical million-row anomaly remains UNKNOWN; prior bounded product profile was not rerun",
+    "provider_custody_and_deployment_enforcement": "UNKNOWN; ephemeral development provider only",
+    "production_qualification": "NONE; no independent review or production provider"
+  },
+  "preservation": {
+    "snapshot": "/tmp/cryptalis-slice3-runtime-z85zd936",
+    "existing_receipts_unchanged": true,
+    "existing_tests_retained_byte_for_byte": true,
+    "product_source_unchanged": true,
+    "spikes_revamp_unchanged": true,
+    "remaining_adapter_schemas": 0,
+    "slice_4_started": false,
+    "commit_performed": false,
+    "push_performed": false
+  },
+  "file_sha256": {
+    "src/cryptalis/sqlalchemy.py": "2ab43ba528cde7f50b9c8d9fcfa0cf3bff571e5582432781a22143296f2d34d8",
+    "src/cryptalis/_sqlalchemy_guard.py": "f1b855b7b8b881f8360b69dffdeb12d6dc2fbdaea3f33dd6ed45b2588be477d3",
+    "tests/test_sqlalchemy_adapter.py": "b6710a02f9a99e7860b840b2b5017b7fd6ae0c9b532b188df92b07c4a6014765"
+  },
+  "full_gates": {
+    "G-ADAPTER": "UNKNOWN",
+    "G-CRYPTO": "UNKNOWN",
+    "G-QUERY": "UNKNOWN",
+    "G-LIFECYCLE": "UNKNOWN",
+    "G-PROVIDER": "UNKNOWN",
+    "G-POLICY": "UNKNOWN",
+    "G-RELEASE": "UNKNOWN"
+  }
+}

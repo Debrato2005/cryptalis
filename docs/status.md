@@ -1,7 +1,7 @@
 # Implementation status
 
 **IMPLEMENTED:** research prototype with a product manifest compiler, CF1 text primitives, a local development provider,
-and a bounded sync/async SQLAlchemy storage attachment. Slice 3 advancement is blocked as stated below.
+and a bounded sync/async SQLAlchemy storage attachment. Separate runtime-role verification is complete for the local slice 3 cell.
 No PostgreSQL/provider/runtime cell, production key provider, independent review, or release is qualified.
 VERIFIED below refers only to the named checks and their exact revisions.
 All other contract and promotion requirements are SPECIFIED. All seven full gates remain UNKNOWN.
@@ -17,7 +17,7 @@ Read projections carry payload, record identity, and declared tenant context. Au
 Protected SELECTs disable compilation caching so operation-specific result processors cannot retain another tenant, point, or key set.
 Unprotected SELECTs retain native compilation caching. Public raw-driver, COPY, opaque SQL, and unprepared-write routes reject.
 
-**VERIFIED, restricted local cell:** the adapter suite returned **41 passed in 8.01 s**; the full suite returned **777 passed in 18.41 s**.
+**VERIFIED, earlier restricted fixture-owner run:** the adapter suite returned **41 passed in 8.01 s**; the full suite returned **777 passed in 18.41 s**.
 Commands: `.venv/bin/python -m pytest -q tests/test_sqlalchemy_adapter.py --tb=short`
 and `.venv/bin/python -m pytest -q --tb=short`.
 The cell uses Linux/WSL, Python 3.12.3, SQLAlchemy 2.1.3, psycopg 3.3.6, cryptography 50.0.2, and PostgreSQL 16.15.
@@ -46,10 +46,66 @@ Point p50/p95: native 0.435/0.618 ms and attached 1.715/2.903 ms. The p95 differ
 Plaintext page p50/p95: native 1.428/1.906 ms and attached 2.238/2.810 ms. Both paths recorded 60 cache hits.
 [Compatibility](compatibility.md#slice-3-local-profile-2026-10-08) owns profiling details and limits.
 
+### Restricted runtime-role completion: 2026-10-08
+
+**VERIFIED, local slice 3 cell:** the adapter suite returned **49 passed in 9.00 s**.
+The full suite returned **785 passed in 20.27 s**, with no failures, errors, or skips.
+Commands: `.venv/bin/python -m pytest tests/test_sqlalchemy_adapter.py -q --tb=line`
+and `.venv/bin/python -m pytest -q --tb=line` (the full run also wrote a temporary JUnit receipt).
+Each database shell command loaded both URLs fresh from the private files before a psycopg `SELECT 1` check.
+The SHA-256 prefixes were `0f63934e` for the fixture owner and `4e551e31` for the runtime login.
+Both roles are restricted, use the same PostgreSQL 16.15 target, and have distinct identities.
+The runtime login cannot inherit or `SET ROLE` to the fixture owner.
+
+Only owned fixture objects received grants: schema `USAGE`, customer `SELECT/INSERT/UPDATE/DELETE`, and article `SELECT`.
+The article read is required by native SQLAlchemy relationship lookup during customer deletion.
+The first run without it failed equally in native and attached sync/async cases; the corrected grant passed.
+Effective privilege checks reject schema `CREATE`, ownership, grant options, `TRUNCATE`, `REFERENCES`, and `TRIGGER`.
+Sync/async native and attached controls verify exact NULL/empty/Unicode values, CRUD, refresh, and flushed-update rollback.
+An independent connection observes committed protected bytes. A bind collector sees an unprotected marker and no supplied protected insert markers.
+Opaque DDL rejects through the attachment before driver execution.
+
+Independent sync and async psycopg connections receive SQLSTATE `42501` for nine operations:
+create table, add column, create index, truncate, drop table, change table owner, change schema owner, drop schema, and switch to the fixture-owner role.
+Each refusal rolls back; later queries succeed; inspected ownership and schema remain unchanged.
+These denials concern the owned persistent schema. The runtime login retains database `TEMP` privilege; no universal DDL-denial claim follows.
+
+A separate runtime writer can reconnect and commit data changes without the attachment.
+Fresh connections observe its changed ciphertext, replayed historical frame after a legitimate application update, NULL substitution, and deletion.
+Sync/async attached reads reject changed ciphertext but accept the older authenticated value, nullable NULL, and row absence.
+This proves the tested schema privilege separation and read-time tamper refusal. It does not prove writer exclusion, freshness, presence, completeness, or host authorization.
+Deployment enforcement, lifecycle-metadata permissions, provider custody, and independent review remain UNKNOWN.
+The [runtime verification receipt](_reset/slice3-runtime-verification.json) records hashes, cases, grants, and limits.
+Product source, all existing tests, both earlier receipts, and `spikes/revamp` remain unchanged.
+All fixture schemas were removed. No roles or global grants changed. Slice 4 was not started.
+All seven full gates remain **UNKNOWN**. This run stops at the local slice 3 checkpoint.
+
+### Earlier prerequisite failures (historical)
+
+The completion above supersedes these connection and role-availability blockers. The records remain preserved.
+
 **BLOCKED advancement:** separate non-owning runtime credentials are unavailable. `cryptalis_runtime` is absent;
 the only additional membership reported is the built-in non-login role `pg_database_owner`. No roles or permissions were added.
 The fixture owner cannot prove runtime privilege isolation or deployment writer exclusion.
 Finish this slice with provisioned restricted runtime access, native CRUD controls, and DDL/ownership refusal evidence before slice 4.
+
+**Latest connection recheck, 2026-10-08 19:40 UTC:** this agent process has `CRYPTALIS_TEST_DATABASE_URL` set,
+but psycopg reports `FATAL: password authentication failed for user "cryptalis_migrator"`.
+Neither `CRYPTALIS_TEST_RUNTIME_DATABASE_URL` nor `CRYPTALIS_RUNTIME_DATABASE_URL` is set in this process.
+The runtime connection could not be attempted. No fixture, privilege, or runtime test ran during this recheck.
+The earlier role-catalog observation above is historical; this attempt does not establish whether the runtime role now exists.
+Resume in a process that receives both working connection variables. Do not put credentials in repository files or diagnostics.
+
+**Connection recheck, 2026-10-08 20:04 UTC:** both `CRYPTALIS_TEST_DATABASE_URL` and
+`CRYPTALIS_TEST_RUNTIME_DATABASE_URL` are present in this agent executor.
+One psycopg connection attempt per role returned `SELECT 1 = 1` for the runtime connection.
+The migration connection failed with `FATAL: password authentication failed for user "cryptalis_migrator"`.
+The required two-connection prerequisite did not pass. No database objects changed and no runtime tests ran.
+Authorized CRUD, DDL/ownership denial, and sync/async attachment under separate runtime credentials remain unverified.
+This recheck supersedes the earlier missing-runtime-credentials observation; it does not establish role privileges.
+Supply working migration credentials privately, then recheck both connections before fixture work.
+The [connection receipt](_reset/slice3-runtime-recheck-20261008T200458Z.json) records the exact failure and preservation snapshot.
+
 The historical million-row anomaly remains UNKNOWN. No production provider, independent review, deployment admission,
 transition executor, search rewriting, rotation, or release qualification follows from this checkpoint.
 All seven full gates remain **UNKNOWN**. See the [walkthrough](walkthrough-sqlalchemy.md).

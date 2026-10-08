@@ -1,7 +1,8 @@
 # Cryptalis
 
 **IMPLEMENTED: research prototype with a product manifest compiler, CF1 primitives, a local development provider, and a bounded SQLAlchemy storage attachment.**
-The sync/async attachment has scoped PostgreSQL tests. Slice 3 advancement is blocked by missing separate runtime-role evidence.
+The sync/async attachment has scoped PostgreSQL tests under separate restricted runtime credentials.
+Tested runtime DDL and ownership changes are refused. Separate writers can still change data; deployment writer exclusion remains unverified.
 All seven full gates remain **UNKNOWN**. Read [status](docs/status.md) for evidence and revision limits.
 No runtime compatibility cell, production key provider, or independent review is qualified.
 The [slice 3 walkthrough](docs/walkthrough-sqlalchemy.md) gives the implemented API and its limits.

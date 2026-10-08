@@ -45,8 +45,20 @@ Attachment refuses checked-out native connections before pool replacement. Same-
 Real async database cancellation propagates and permits explicit rollback and later-session recovery.
 Cancellation during awaited key preparation leaves PostgreSQL unchanged and permits a later write.
 [Status](status.md#slice-3-checkpoint-2026-10-08) and its hashed receipt define the exact evidence boundary.
-The local provider is ephemeral. Separate non-owning runtime credentials, writer exclusion, provider custody,
-deployment policy admission, and independent review remain UNKNOWN. Slice 3 advancement is blocked.
+**VERIFIED, separate restricted runtime login:** sync/async attachment CRUD matches native SQLAlchemy in owned PostgreSQL 16.15 schemas.
+Runtime grants are schema `USAGE`, customer CRUD, and article `SELECT` for native relationship lookup during deletion.
+The role has no ownership, fixture-owner inheritance, grant options, or schema `CREATE`.
+Independent sync/async driver calls receive SQLSTATE `42501` for the nine tested persistent DDL, ownership, truncate, and role-switch operations.
+Database `TEMP` remains available. These tests do not establish database-wide least privilege or denial of every DDL statement.
+
+The same runtime credentials can reconnect through an independent driver and commit data changes.
+Changed ciphertext fails on an attached read. Replaying an older valid frame after a committed application update restores the older value.
+Replacing a nullable payload with SQL NULL is accepted; deleting a row produces ordinary row absence.
+Thus schema privilege separation does not enforce attachment use, writer exclusion, freshness, presence, or result completeness.
+The host must exclude unsupported routes and authorize tenant access. No database grant added here supplies those controls.
+The [runtime receipt](_reset/slice3-runtime-verification.json) records the exact evidence and limits.
+The local provider is ephemeral. Writer exclusion, provider custody, deployment policy admission, lifecycle-metadata permissions,
+and independent review remain UNKNOWN. All seven full gates remain UNKNOWN.
 Same-context replay, SQL NULL substitution, hostile omitted rows, and host authorization limits remain unchanged.
 
 ## Trust boundaries
