@@ -1,10 +1,39 @@
 # Implementation status
 
-**IMPLEMENTED:** research prototype. Protection runtime exists only as isolated code under `spikes/revamp`.
-The public package contains research utilities, not the SPECIFIED SQLAlchemy protection runtime.
+**IMPLEMENTED:** research prototype with a product manifest compiler and research utilities.
+Protection runtime remains isolated code under `spikes/revamp`. The package does not attach protection to SQLAlchemy sessions.
 No PostgreSQL/provider/runtime cell, production key provider, independent review, or release is qualified.
-VERIFIED below refers only to recorded receipts and their exact revisions. This documentation pass runs no runtime tests.
+VERIFIED below refers only to the named checks and their exact revisions.
 All other contract and promotion requirements are SPECIFIED. All seven full gates remain UNKNOWN.
+
+## Slice 1 checkpoint: 2026-10-08
+
+**IMPLEMENTED:** `cryptalis.manifest.compiler.compile_protection` parses field intent, resolves a supplied registry,
+and inspects PostgreSQL catalogs. A fresh read-only transaction holds a repeatable schema snapshot.
+Unqualified mappings resolve through the original PostgreSQL search path.
+The result contains canonical lock bytes, a digest, and semantic changes. Compilation creates no database effects and reads no application values.
+
+**VERIFIED:** `.venv/bin/python -m pytest -q --tb=short` returned **706 passed**, including **58 compiler cases**.
+The compiler tests use PostgreSQL **16.15**, Python **3.12.3**, SQLAlchemy **2.1.3**, and psycopg **3.3.6** under the restricted disposable role.
+They compare native schema and data before and after planning. They execute proposed additive DDL only in test-owned schemas.
+A real INSERT injection fails with SQLSTATE `25006`, including through an AUTOCOMMIT engine.
+
+This compiler admits native text, application-assigned UUID or bigint keys, explicit UUID tenancy or a single-tenant declaration,
+and qualified native uniqueness. Storage-only fields need no search review or search collation.
+Searchable fields require `pg_catalog.C` equivalence, matching leakage acceptance, and an explicit host review of the value domain.
+Small or unknown domains block search. The host declares complete writer coverage and excluded routes. These records remain host assertions.
+
+Known unsafe schemas and inconsistent prior locks raise typed errors.
+The lock includes original admitted constraints, additive DDL, immutable context descriptors, and reader requirements.
+A tenant change requires resealing. A SQL rename preserves the descriptor.
+Missing or changed stable identities cannot silently replace existing identities.
+[Architecture](architecture/README.md#implemented-compiler-syntax) owns the exact syntax.
+
+**Limits:** no attachment, encryption, provider, transition executor, or runtime query rewrite exists in the product.
+Other ID codecs, protected varchar/custom types, non-UUID tenant columns, protected defaults, unsupported dependencies, and schema translation reject.
+A new unique request needs a qualified native source constraint first.
+The additive DDL does not qualify CF1 framing or authorize a switch.
+External writer exclusion and domain assertions remain unverified. All seven full gates remain **UNKNOWN**.
 
 ## Approved scope and build order
 
@@ -143,7 +172,8 @@ Same-context replay, nullable-field substitution with SQL NULL and hostile omitt
 
 ## Existing package
 
-The current package has structural record decoding/canonicalization, bounded manifest/header inspection, local crypto/search examples, and local transition-admission research.
+The current package has the product compiler above, structural record decoding/canonicalization, bounded manifest/header inspection,
+local crypto/search examples, and local transition-admission research.
 Those APIs do not provide SQLAlchemy database protection, managed key custody, safe deployment admission, or production lifecycle.
 Architecture drives replacement. Existing research formats and tests are not permanent runtime requirements.
 

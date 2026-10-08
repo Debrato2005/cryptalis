@@ -126,13 +126,13 @@ The public manifest uses bounded JSON. Its field-intent declaration is independe
 
 | Member or fact | Rule |
 |---|---|
-| `schema` | Declaration schema identity. Freeze the exact public syntax in the compiler slice |
+| `schema` | `cryptalis.protection/v1` for implemented field intent |
 | `profile` | Selected library crypto profile. No arbitrary algorithms or executable normalizers |
 | `models`, `fields` | Names resolve within the supplied registry. No imports from strings. Unlisted fields retain native behavior |
 | `protect` | True requests protection. Removal requests a verified transition, never automatic plaintext writes |
 | `queries` | Empty means storage-only. `equality` includes `IN`. `unique` implies tenant-scoped equality |
 | `accept_leakage` | Required matching acceptance for every search capability. Missing acceptance blocks plan |
-| Tenant declaration | Exactly one tenant column or explicit single-tenant declaration per protected table. Exact member spelling belongs to the compiler slice |
+| `tenancy` | Exactly `{"column": "attribute_name"}` or `{"single_tenant": true}` per protected table |
 | Mapping facts | Text codec, deterministic exact collation, nullability, application-assigned PK, tenant scope, constraint scope, and writer inventory |
 
 Range bounds, prefix limits, shared-join domains, arbitrary normalizers, and non-text codecs are not admitted manifest capabilities.
@@ -148,6 +148,71 @@ A deployment-controlled artifact outside database restore pins active lock, targ
 Existing deployment integrity controls authenticate it. Manifest and policy contain no secret key bytes.
 A database checkpoint cannot activate a manifest. Startup rejects disagreement among policy, lock, target, and representation.
 G-POLICY remains UNKNOWN. No trusted publication/restore procedure is selected.
+
+### Implemented compiler syntax
+
+**IMPLEMENTED:** `cryptalis.manifest.compiler.compile_protection` uses the declaration below.
+[Status](../status.md#slice-1-checkpoint-2026-10-08) owns its tested cell and limits.
+The compiler accepts bounded UTF-8 JSON with no duplicate or unknown members.
+Domain, table, and field IDs are distinct, nonzero canonical UUIDs. Names resolve only in the supplied registry.
+The compiler never imports a module from a name.
+
+```json
+{
+  "schema": "cryptalis.protection/v1",
+  "profile": "cf1",
+  "domain_id": "10000000-0000-0000-0000-000000000001",
+  "models": [{
+    "model": "Customer",
+    "table_id": "20000000-0000-0000-0000-000000000001",
+    "tenancy": {"column": "tenant_id"},
+    "fields": [{
+      "name": "email",
+      "field_id": "30000000-0000-0000-0000-000000000001",
+      "protect": true,
+      "queries": ["unique"],
+      "accept_leakage": ["equality", "unique"]
+    }]
+  }]
+}
+```
+
+Queries permit `equality` and `unique`. An empty list means storage-only. Equality also declares `IN`.
+Unique implies equality and requires both leakage acknowledgments. `protect` must be true.
+Removal uses a semantic diff and a later verified transition.
+
+The lock schema is `cryptalis.lock/v1`. Its exact top-level members are
+`schema`, `profile`, `domain_id`, `database`, `declaration`, `models`, `writer_inventory`, `search_reviews`, `ddl`, and `required_readers`.
+The declaration is canonical. Models contain `model`, `table_id`, `schema`, `table`, `record`, `tenancy`, `fields`, and `source_schema`.
+Fields contain `name`, `column`, `field_id`, `queries`, `representation`, `payload_column`, `unique_indexes`, `original`, `source`, `descriptor`, and `descriptor_digest`.
+
+The source schema stores inspected relation, column, constraint, index, and dependency facts.
+Catalog type modifiers use strings because PostgreSQL uses negative sentinels.
+Unrelated SQL definitions use SHA-256 fingerprints of their canonical JSON string values.
+Original admitted unique constraints and indexes retain their exact definitions for later restoration.
+The lock contains no database connection string or application values.
+`ddl.expand` contains additive proposals. `ddl.requires_before_switch` names prerequisites that remain unimplemented.
+Reader requirements describe the intended readers. They do not claim those readers exist.
+
+The record codec is `uuid16/v1` or `int64-be/v1`. UUID context uses 16 exact bytes.
+Bigint context uses `T` with the `int64` tag and eight signed big-endian bytes, as [security](../security.md#cryptographic-format) specifies.
+Single-tenant context uses the stable table UUID. The text codec is `utf8-exact/v1`.
+The normalizer is `identity/v1`. The null policy is `sql-null/v1`. Composed and decomposed text remain distinct.
+
+Descriptor digests exclude SQL names. They bind the domain, table, field, record codec, tenant codec, text codec, normalizer, null policy, and representation.
+The representation is `cf1-storage/v1` or `cf1-packed-equality/v1`. The descriptor schema is `cryptalis.context/v1`.
+For equality, the stable field UUID identifies the search domain. Crypto implementation and independent vectors belong to slice 2.
+
+`WriterInventory` requires `complete=True` and a nonempty inventory for each protected table.
+Writer records name a table UUID, a distinct writer name, a route, an exclusion flag, and a nonsecret evidence reference.
+Only `sqlalchemy` routes can remain admitted. `raw_sql`, `copy`, and `external` routes require exclusion. Unknown routes always reject.
+`SearchReview` names a searchable field UUID, a small-domain classification, and a nonsecret evidence reference.
+These declarations do not prove enforcement.
+
+`PlanningRejected` gives typed issues, remedies, an operation ID, stage, retry classification, and effects `NONE`.
+`InspectionUnavailable` gives a safe SQLSTATE and a remedy. Raw driver text and SQL binds do not enter these error messages.
+A previous lock must match its declaration, native facts, context descriptors, originals, DDL, and reader requirements before diff.
+A lock hash detects change. It does not authenticate deployment authority.
 
 ## Physical storage
 

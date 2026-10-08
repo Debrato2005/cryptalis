@@ -1,7 +1,8 @@
 # Security and leakage
 
 **SPECIFIED:** security contract, not an audit. [Status](status.md) owns executable evidence.
-IMPLEMENTED means isolated spike code. VERIFIED means only the named recorded checks. All unlabelled requirements below are SPECIFIED.
+IMPLEMENTED has the exact boundary in status. Protection runtime remains isolated spike code.
+VERIFIED means only the named recorded checks. All unlabelled requirements below are SPECIFIED.
 The selected scope is text storage, equality/IN, and tenant-scoped uniqueness with application-assigned keys.
 Advanced search representations and shared joins are INTERNAL ONLY and remain UNSUPPORTED BY DESIGN as public capabilities until admission.
 The trusted application transforms protected plaintext before PostgreSQL receives it through an admitted path.

@@ -1,7 +1,7 @@
 # Cryptalis
 
-**IMPLEMENTED: research prototype. Protection runtime exists only as isolated spike code.**
-The package contains research utilities, not the specified SQLAlchemy protection runtime.
+**IMPLEMENTED: research prototype with a product manifest compiler and research utilities.**
+Protection runtime remains isolated spike code. The package does not attach protection to SQLAlchemy sessions.
 All seven full gates remain **UNKNOWN**. Read [status](docs/status.md) for evidence and revision limits.
 No runtime compatibility cell, production key provider, or independent review is qualified.
 
@@ -62,7 +62,23 @@ with sessions() as session:
 
 **SPECIFIED:** an empty query list means storage-only. Equality permits `IN`. Uniqueness implies equality within the declared tenant scope.
 No field receives an undeclared search representation. The compiler must reject a search capability without its leakage acknowledgment.
-The public manifest syntax remains a compiler-slice contract. Existing structural inspectors do not validate this field-intent declaration.
+The [implemented compiler syntax](docs/architecture/README.md#implemented-compiler-syntax) defines field intent.
+Existing structural inspectors do not validate this declaration.
+
+**IMPLEMENTED:** inspect intent and a native schema through the compiler API:
+
+```python
+from cryptalis.manifest.compiler import compile_protection
+
+plan = compile_protection(
+    manifest_bytes, Base.registry, engine,
+    writers=writer_inventory, search_reviews=domain_reviews,
+)
+```
+
+The result contains canonical lock bytes, a digest, and semantic changes. Compilation creates no database effects.
+The host supplies complete writer coverage and value-domain reviews. These records remain host assertions.
+[Status](docs/status.md#slice-1-checkpoint-2026-10-08) gives the tested compiler cell and its limits.
 
 ## Protection and cost
 
