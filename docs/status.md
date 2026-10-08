@@ -1,10 +1,58 @@
 # Implementation status
 
-**IMPLEMENTED:** research prototype with a product manifest compiler, CF1 text primitives, and a local development provider.
-The package does not attach protection to SQLAlchemy sessions.
+**IMPLEMENTED:** research prototype with a product manifest compiler, CF1 text primitives, a local development provider,
+and a bounded sync/async SQLAlchemy storage attachment. Slice 3 advancement is blocked as stated below.
 No PostgreSQL/provider/runtime cell, production key provider, independent review, or release is qualified.
 VERIFIED below refers only to the named checks and their exact revisions.
 All other contract and promotion requirements are SPECIFIED. All seven full gates remain UNKNOWN.
+
+## Slice 3 checkpoint: 2026-10-08
+
+**IMPLEMENTED:** `cryptalis.sqlalchemy.attach` returns a tenant-scoped Session factory.
+Async attachment is awaited. The target must already store protected fields as `bytea`.
+The host supplies a trusted compiler lock and exact tenant keyrings. Attachment does not migrate data or authenticate deployment authority.
+Only ordinary ORM flush writes and admitted SELECTs are implemented. Search rewriting belongs to slice 4.
+Prepared CF1 frames replace driver binds while mapped attributes remain ordinary text or NULL.
+Read projections carry payload, record identity, and declared tenant context. Authentication precedes each value's release.
+Protected SELECTs disable compilation caching so operation-specific result processors cannot retain another tenant, point, or key set.
+Unprotected SELECTs retain native compilation caching. Public raw-driver, COPY, opaque SQL, and unprepared-write routes reject.
+
+**VERIFIED, restricted local cell:** the adapter suite returned **41 passed in 8.01 s**; the full suite returned **777 passed in 18.41 s**.
+Commands: `.venv/bin/python -m pytest -q tests/test_sqlalchemy_adapter.py --tb=short`
+and `.venv/bin/python -m pytest -q --tb=short`.
+The cell uses Linux/WSL, Python 3.12.3, SQLAlchemy 2.1.3, psycopg 3.3.6, cryptography 50.0.2, and PostgreSQL 16.15.
+The URL stayed private. Tests created and dropped only their own schemas under the restricted fixture owner.
+Native and attached controls exercise exact text/NULLs, state/history, autoflush, merge, refresh/expiry, rollback,
+entities/scalars/labels, aliases, outer joins, relationships, batches, streaming, and interleaved tenants.
+Async controls exercise concurrent tenant tasks and cancellation observed through PostgreSQL's `PgSleep` wait event.
+Cancellation during awaited key preparation leaves the database unchanged and permits a later write.
+Sync and async updates/deletes work after commit expires context attributes.
+Single-tenant bigint outer joins retain native NULLs. Same-named tables in separate schemas retain distinct values.
+Cancellation is propagated; rollback removes the pending row; a later tenant session recovers.
+Defensive checks verify driver-bind privacy with a visible unprotected control, valid-frame wrong-tenant refusal,
+wrong returned point, relocated/changed ciphertext, unsupported grammar before driver execution, mapping mutation, failed-flush cleanup, and guarded reconnects.
+Ambiguous columns and alternate protected mappings reject. Attachment refuses existing checked-out connections.
+Target translation, changed primary-key mappings, and catalog nullability/default mismatches reject.
+
+**VERIFIED regression sensitivity:** the main thread used an isolated copy of the current source and tests.
+Only the copy lost the protected SELECT cache-disable call. All four native sync/async entity/scalar controls passed.
+All four attached cases failed with `AuthenticationFailed`. Restoring the copy gave eight passes.
+The original source remained unchanged during this proof. No assertion was weakened.
+The withheld output was unavailable in the main-thread context. Its findings supplied no relied-upon evidence.
+[Verification receipt](_reset/slice3-verification.json) binds these observations to source/test hashes.
+
+**VERIFIED bounded cost:** 5,000 synthetic rows, 40 paired samples, warm local keys, fully consumed results.
+Point p50/p95: native 0.435/0.618 ms and attached 1.715/2.903 ms. The p95 difference was 2.285 ms.
+Plaintext page p50/p95: native 1.428/1.906 ms and attached 2.238/2.810 ms. Both paths recorded 60 cache hits.
+[Compatibility](compatibility.md#slice-3-local-profile-2026-10-08) owns profiling details and limits.
+
+**BLOCKED advancement:** separate non-owning runtime credentials are unavailable. `cryptalis_runtime` is absent;
+the only additional membership reported is the built-in non-login role `pg_database_owner`. No roles or permissions were added.
+The fixture owner cannot prove runtime privilege isolation or deployment writer exclusion.
+Finish this slice with provisioned restricted runtime access, native CRUD controls, and DDL/ownership refusal evidence before slice 4.
+The historical million-row anomaly remains UNKNOWN. No production provider, independent review, deployment admission,
+transition executor, search rewriting, rotation, or release qualification follows from this checkpoint.
+All seven full gates remain **UNKNOWN**. See the [walkthrough](walkthrough-sqlalchemy.md).
 
 ## Slice 2 checkpoint: 2026-10-08
 
@@ -35,7 +83,8 @@ Local rewrap preserves existing frames. Failure diagnostics exclude supplied sec
 AI review found and corrected nil-UUID refusal and writable-policy retention of old cache entries.
 AI review does not replace independent human security review.
 
-**Limits:** SQLAlchemy attachment, query rewriting, database transitions, and deployment rotations remain pending.
+**Limits at slice 2:** SQLAlchemy attachment, query rewriting, database transitions, and deployment rotations remained pending.
+The slice 3 checkpoint above records the later bounded attachment evidence.
 The local provider cannot recover after process loss. No production provider exists.
 SQL NULL substitution and same-context replay remain accepted scope limits.
 Remote cancellation, custody, independent recovery, usage bounds, collision assumptions, and independent review remain unqualified.
@@ -207,9 +256,10 @@ Same-context replay, nullable-field substitution with SQL NULL and hostile omitt
 
 ## Existing package
 
-The current package has the product compiler and CF1 primitives above, structural record decoding/canonicalization, bounded manifest/header inspection,
+The current package has the product compiler, CF1 primitives, and bounded SQLAlchemy attachment above, structural record decoding/canonicalization, bounded manifest/header inspection,
 local crypto/search examples, and local transition-admission research.
-Those APIs do not provide SQLAlchemy database protection, managed key custody, safe deployment admission, or production lifecycle.
+Only the slice 3 attachment supplies the stated storage protection within its tested boundary.
+These APIs do not qualify managed key custody, safe deployment admission, or production lifecycle.
 Architecture drives replacement. Existing research formats and tests are not permanent runtime requirements.
 
 The existing suite returned **612 passed in 7.95 s**, exit 0, after canonical documentation replacement.

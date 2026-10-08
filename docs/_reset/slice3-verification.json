@@ -1,0 +1,194 @@
+{
+  "boundary": "Main-thread real PostgreSQL 16 regression proof; no withheld agent result used",
+  "cell": {
+    "cryptography": "50.0.2",
+    "mode": "sync and async",
+    "platform": "Linux-6.18.33.2-microsoft-standard-WSL2-x86_64-with-glibc2.39",
+    "postgresql": "16.15 (Ubuntu 16.15-0ubuntu0.24.04.1)",
+    "psycopg": "3.3.6",
+    "python": "3.12.3",
+    "sqlalchemy": "2.1.3"
+  },
+  "defensive_checks": [
+    "Verify host tenant and requested point before release; reject relocated or altered frames",
+    "Verify supplied protected markers do not cross driver-bind boundary, with an unprotected positive control",
+    "Verify unsupported queries, ambiguous columns, alternate protected mappings, opaque SQL, COPY, raw/protocol routes reject before execution",
+    "Verify schema translation, metadata mutations and catalog/context mismatches reject",
+    "Verify attachment refuses existing checked-out native connections before pool replacement",
+    "Verify missing row identity, wrong tenant, changed identity and failed database flush leave recoverable explicit rollback paths",
+    "Verify cancellation during awaited key preparation propagates, PostgreSQL is unchanged, and a later write succeeds"
+  ],
+  "dependency_lock_check": {
+    "command": "UV_CACHE_DIR=/tmp/cryptalis-adapter-uv-cache uv lock --check --offline",
+    "exit_code": 0
+  },
+  "final_adapter_suite": {
+    "command": ".venv/bin/python -m pytest tests/test_sqlalchemy_adapter.py -q --tb=short",
+    "failed": 0,
+    "passed": 41,
+    "seconds": 8.01
+  },
+  "final_full_suite": {
+    "command": ".venv/bin/python -m pytest -q --tb=short",
+    "failed": 0,
+    "passed": 777,
+    "seconds": 18.41
+  },
+  "final_preservation": {
+    "cache_proof_original_source_unchanged": true,
+    "existing_work_snapshot_retained": true,
+    "git_commit_performed": false,
+    "git_push_performed": false,
+    "snapshot_location": "/tmp/cryptalis-slice3-preserved-current",
+    "source_corrections": "Focused additions for independently reproduced native and defensive checks",
+    "spikes_revamp_changed": false
+  },
+  "final_test_sha256": "ef7c24fd52d31be0ebc5054294f4c1229aa497467d59182fd4cf1ba93adbff08",
+  "full_gates": "All seven UNKNOWN; local ephemeral provider; no independent review",
+  "main_thread_cache_proof": {
+    "cases": "Sync and async, entity and scalar; two tenants, changing points, autoflush, rollback; four native controls",
+    "isolated_source_restored_byte_for_byte": true,
+    "method": "Isolated source/test copy, real PostgreSQL; original worktree never mutated",
+    "original_source_sha256": "2ab43ba528cde7f50b9c8d9fcfa0cf3bff571e5582432781a22143296f2d34d8",
+    "original_unchanged": true,
+    "test_sha256": "ef7c24fd52d31be0ebc5054294f4c1229aa497467d59182fd4cf1ba93adbff08",
+    "with_fix_exit": 0,
+    "with_fix_summary": "8 passed, 33 deselected in 1.85s",
+    "without_fix_exit": 1,
+    "without_fix_summary": "4 failed, 4 passed, 33 deselected in 2.35s"
+  },
+  "native_comparison": {
+    "covered": [
+      "Exact text/NULL/empty/Unicode values, entities/scalars/labels, aliases, outer joins and relationships",
+      "Native joined collection unique() requirement, sync partitions and async server cursor streaming",
+      "ORM history, identity maps, flush/autoflush/commit/expiry/refresh/merge/rollback",
+      "Sync and async unprotected update/delete after commit expires context",
+      "Interleaved tenant/row operations for entity and scalar statements, sync and async; unprotected CACHE_HIT control",
+      "Explicit single-tenant bigint records and NULL outer joins; explicit UUID with Python default mapping",
+      "Same table names and row IDs across two physical schemas",
+      "Database cancellation observed in PostgreSQL, rollback and subsequent tenant recovery"
+    ],
+    "performed_in_main_thread": true
+  },
+  "prior_receipt": {
+    "boundary": "Main-thread real PostgreSQL 16 regression proof; no withheld agent result used",
+    "cell": {
+      "cryptography": "50.0.2",
+      "mode": "sync",
+      "platform": "Linux-6.18.33.2-microsoft-standard-WSL2-x86_64-with-glibc2.39",
+      "postgresql": "16.15 (Ubuntu 16.15-0ubuntu0.24.04.1)",
+      "psycopg": "3.3.6",
+      "python": "3.12.3",
+      "sqlalchemy": "2.1.3"
+    },
+    "final_adapter_suite": {
+      "command": ".venv/bin/python -m pytest -q tests/test_sqlalchemy_adapter.py --tb=short",
+      "failed": 0,
+      "passed": 16
+    },
+    "final_full_suite": {
+      "command": ".venv/bin/python -m pytest -q --tb=short",
+      "failed": 0,
+      "passed": 752,
+      "seconds": 12.81
+    },
+    "final_preservation": {
+      "git_commit_performed": false,
+      "git_push_performed": false,
+      "initial_adapter_and_dependency_files_match_snapshot": true,
+      "spikes_revamp_changed": false
+    },
+    "final_test_sha256": "114dc4fdb256189c1131429b888eb54568d14e040f26002ad48ae4ea7e067eba",
+    "full_gates": "All seven UNKNOWN; local ephemeral provider; no independent review",
+    "native_comparison": {
+      "covered": [
+        "ORM state, flush, refresh, expiry, merge, autoflush, rollback",
+        "Entities, scalar tuples and labels, aliases, outer joins, relationships, streaming",
+        "Interleaved tenant and row operations; unprotected CACHE_HIT control"
+      ],
+      "selected_cases_passed": 8
+    },
+    "protected_adapter_sha256": "207ecafb2e08c4bb9ea1524efd66a3c319d111513728607599ed02b798cf2684",
+    "restored_fix": {
+      "exit_code": 0,
+      "failed": 0,
+      "passed": 4,
+      "source_restored_byte_for_byte": true
+    },
+    "runtime_prerequisite": "BLOCKED: separate non-owning runtime credentials not available; only an additional built-in non-login role is visible for SET ROLE; cryptalis_runtime absent",
+    "temporary_change": "Remove only the protected-projection compiled_cache=None branch in do_orm_execute",
+    "test_command": ".venv/bin/python -m pytest -q tests/test_sqlalchemy_adapter.py -k interleaved --tb=short",
+    "test_sha256_at_proof": "382216a9d758e0f11581b4d7ab90147c99bc8f16a9ef2f001fd96c9918ba6976",
+    "without_fix": {
+      "attached_entity": "AuthenticationFailed",
+      "attached_scalar": "AuthenticationFailed",
+      "exit_code": 1,
+      "failed": 2,
+      "native_entity": "PASS",
+      "native_scalar": "PASS",
+      "passed": 2
+    },
+    "workspace_files": [
+      "README.md",
+      "docs/architecture/README.md",
+      "docs/compatibility.md",
+      "docs/security.md",
+      "docs/status.md",
+      "docs/_reset/notes.md",
+      "docs/walkthrough-sqlalchemy.md",
+      "docs/_reset/slice3-verification.json",
+      "docs/_reset/slice3-performance.json",
+      "src/cryptalis/sqlalchemy.py",
+      "src/cryptalis/_sqlalchemy_guard.py",
+      "tests/test_sqlalchemy_adapter.py",
+      "tests/profile_sqlalchemy_adapter.py",
+      "pyproject.toml",
+      "uv.lock"
+    ]
+  },
+  "prior_receipt_boundary": "Preserved previous checkpoint record; current claims use the main-thread evidence below",
+  "protected_adapter_sha256": "2ab43ba528cde7f50b9c8d9fcfa0cf3bff571e5582432781a22143296f2d34d8",
+  "restored_fix": {
+    "exit_code": 0,
+    "failed": 0,
+    "passed": 8,
+    "source_restored_byte_for_byte": true,
+    "summary": "8 passed, 33 deselected in 1.85s"
+  },
+  "runtime_prerequisite": "BLOCKED: main-thread role query found no cryptalis_runtime; only additional membership reported is built-in non-login pg_database_owner; no separate runtime credentials supplied",
+  "temporary_change": "Remove only state.update_execution_options(compiled_cache=None) in isolated source/test copy; original worktree never mutated",
+  "test_command": ".venv/bin/python -m pytest -q tests/test_sqlalchemy_adapter.py -k interleaved --tb=short",
+  "test_sha256_at_proof": "ef7c24fd52d31be0ebc5054294f4c1229aa497467d59182fd4cf1ba93adbff08",
+  "withheld_output": "Unavailable in main-thread context; no withheld finding used as evidence; native comparison repeated directly",
+  "without_fix": {
+    "attached_async_entity": "AuthenticationFailed",
+    "attached_async_scalar": "AuthenticationFailed",
+    "attached_sync_entity": "AuthenticationFailed",
+    "attached_sync_scalar": "AuthenticationFailed",
+    "exit_code": 1,
+    "failed": 4,
+    "native_async_entity": "passed",
+    "native_async_scalar": "passed",
+    "native_sync_entity": "passed",
+    "native_sync_scalar": "passed",
+    "passed": 4,
+    "summary": "4 failed, 4 passed, 33 deselected in 2.35s"
+  },
+  "workspace_files": [
+    "README.md",
+    "docs/architecture/README.md",
+    "docs/compatibility.md",
+    "docs/security.md",
+    "docs/status.md",
+    "docs/_reset/notes.md",
+    "docs/walkthrough-sqlalchemy.md",
+    "docs/_reset/slice3-verification.json",
+    "docs/_reset/slice3-performance.json",
+    "src/cryptalis/sqlalchemy.py",
+    "src/cryptalis/_sqlalchemy_guard.py",
+    "tests/test_sqlalchemy_adapter.py",
+    "tests/profile_sqlalchemy_adapter.py",
+    "pyproject.toml",
+    "uv.lock"
+  ]
+}

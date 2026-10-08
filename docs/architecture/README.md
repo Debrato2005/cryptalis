@@ -116,6 +116,22 @@ Bulk writes need complete row identity, tenant context, and companions. Opaque S
 Separate drivers remain writer-inventory gaps. Unsupported or unknown writers block protection unless the deployment excludes them.
 Shape constraints cannot prove encryption to a database without keys. Full verification detects observed authentication failures, not every privileged bypass.
 
+### Implemented storage attachment
+
+**IMPLEMENTED, bounded prototype:** `cryptalis.sqlalchemy.attach(registry, engine, lock=lock_bytes, keys=keyrings)`.
+`keyrings` is a `Keyring` or a callable that resolves one from the authenticated tenant UUID.
+Attachment returns a factory called as `sessions(tenant_id=tenant_uuid)`. Await attachment for an AsyncEngine.
+The compiler lock must be trusted by the host. Physical protected columns must already be `bytea`.
+This call does not perform a schema/data transition. Attach before application sessions or model use.
+The engine must use PostgreSQL/psycopg, `echo=False`, and `hide_parameters=True`, with no checked-out connections at activation.
+Ordinary ORM flush writes and admitted SELECT projections are implemented. Core/bulk writes and protected search predicates reject in this slice.
+Mapped text attributes remain ordinary `str` or NULL. Generated projections carry row and tenant context for authentication.
+Protected projections disable compilation caching because their processors retain prepared material and operation context.
+Unprotected projections retain native caching. Guards reject public raw-driver, opaque SQL, COPY, and unprepared-write routes.
+**VERIFIED:** native/attached comparisons and cache regression sensitivity have the exact boundary in the
+[slice 3 checkpoint](../status.md#slice-3-checkpoint-2026-10-08).
+Separate non-owning runtime credentials and deployment enforcement remain unverified. Slice 4 cannot start yet.
+
 **IMPLEMENTED, spike only:** the [2026-10-07 checkpoint](../status.md#current-integrated-checkpoint-2026-10-07) uses public hooks on one text field.
 It preallocates server-generated int32 sequence IDs. That historical behavior conflicts with the approved app-assigned-key contract and supplies no product admission.
 The latest DISTINCT denial has offline evidence only. Neither the historical service receipts nor performance measurements qualify that revision.

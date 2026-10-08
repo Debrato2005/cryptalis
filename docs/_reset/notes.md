@@ -14,3 +14,20 @@ This file records interpretation only. Existing owners define the contracts. All
 - Historical receipts and archive claims keep their recorded revisions and scope. Neither cost receipt measures the latest DISTINCT rejection.
 
 This pass keeps existing local changes and edits only documentation. The user reviews the uncommitted changes.
+
+## Slice 3 checkpoint: 2026-10-08
+
+- IMPLEMENTED: bounded `cryptalis.sqlalchemy.attach`, sync/async ORM storage, context projections, and guarded public driver routes.
+- VERIFIED: main-thread native comparisons; 41 adapter cases and 777 full-suite cases on restricted PostgreSQL 16.15.
+- The withheld output was unavailable in the main-thread context. Its findings supplied no relied-upon evidence.
+- Cache regression used an isolated current-source/test copy. Native sync/async entity/scalar: 4 passed without the fix. Attached: 4 failed. Restored copy: 8 passed.
+- Defensive checks retained and strengthened: valid-frame tenant/row context, driver-bind privacy, unsupported-query refusal, real cancellation/rollback, failed flushes, and mapping mutation.
+- No security contract changed. The cache proof left the original source unchanged. Existing work was preserved with focused corrections.
+- Native controls found and checked fixes for expired context, single-tenant outer joins, Python default mappings, and schema-specific row preparation.
+- Defensive checks now reject ambiguous columns, alternate protected mappings, target/catalog mismatches, and attachment with existing native connections.
+- Async cancellation before key preparation completes leaves PostgreSQL unchanged. Real database cancellation and recovery retain native behavior.
+- [Verification receipt](slice3-verification.json) records commands and hashes. [Profile receipt](slice3-performance.json) records bounded costs and limits.
+- The historical million-row plaintext-page anomaly remains UNKNOWN; the current small profile cannot explain it.
+- BLOCKED advancement: separate non-owning runtime credentials are absent. Fixture-owner tests do not prove privilege isolation. No roles or permissions were added.
+- Next run: finish slice 3 with provisioned restricted runtime credentials, native CRUD controls, and DDL/ownership refusal evidence. Then start slice 4.
+- All seven full gates remain UNKNOWN. No production provider, independent review, authenticated deployment procedure, commit, or push.

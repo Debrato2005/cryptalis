@@ -1,7 +1,7 @@
 # Security and leakage
 
 **SPECIFIED:** security contract, not an audit. [Status](status.md) owns executable evidence.
-IMPLEMENTED has the exact boundary in status. Protection runtime remains isolated spike code.
+IMPLEMENTED has the exact boundary in status. The package includes a bounded storage attachment; full runtime qualification remains UNKNOWN.
 VERIFIED means only the named recorded checks. All unlabelled requirements below are SPECIFIED.
 The selected scope is text storage, equality/IN, and tenant-scoped uniqueness with application-assigned keys.
 Advanced search representations and shared joins are INTERNAL ONLY and remain UNSUPPORTED BY DESIGN as public capabilities until admission.
@@ -22,6 +22,32 @@ Local cold/warm/expired/outage and rewrap tests are functional evidence only. Th
 remote-provider cancellation, native deletion or production custody. No production provider or deployment procedure has been designated.
 Independent human cryptographic/security review is unavailable: `external-review-required` remains UNKNOWN.
 Frozen independent admitted text/ID vectors, exact collation evidence, and nonce/usage bounds remain required before security qualification.
+
+## Slice 3 storage enforcement: 2026-10-08
+
+**IMPLEMENTED, bounded prototype:** admitted ORM writes prepare row-bound CF1 frames before SQL.
+Public execution hooks substitute those frames without changing mapped plaintext attributes.
+Generated read projections carry the expected record and declared tenant context with the payload.
+The processor verifies host tenant and requested point, then authenticates and decodes each value.
+Keys are prepared outside synchronous async hooks. Protected SELECT compilation caching is disabled.
+Unprotected SELECTs retain native caching. The host must authenticate the lock and tenant scope.
+Guards reject unsupported grammar, opaque SQL, COPY, protocol handles, and unprepared writes on the attached engine.
+These guards do not constrain independent connections or a compromised application.
+
+**VERIFIED, local restricted fixture owner:** native PostgreSQL comparisons verify ordinary values and ORM behavior.
+Sync and async interleaved two-tenant tests fail without the cache fix and pass after its restoration in an isolated copy.
+Four native controls pass in both runs. The proof leaves the original worktree unchanged.
+Valid ciphertext is rejected under the wrong tenant; wrong returned points, relocated frames, and changed bytes reject before value release.
+A driver-bind collector observes an unprotected marker and detects no supplied protected markers during tested writes.
+Unsupported query controls verify rejection before driver execution, including ambiguous columns and alternate protected mappings.
+Changed storage/context mappings, translated targets, and catalog mismatches reject.
+Attachment refuses checked-out native connections before pool replacement. Same-named tables in separate schemas retain distinct row preparation.
+Real async database cancellation propagates and permits explicit rollback and later-session recovery.
+Cancellation during awaited key preparation leaves PostgreSQL unchanged and permits a later write.
+[Status](status.md#slice-3-checkpoint-2026-10-08) and its hashed receipt define the exact evidence boundary.
+The local provider is ephemeral. Separate non-owning runtime credentials, writer exclusion, provider custody,
+deployment policy admission, and independent review remain UNKNOWN. Slice 3 advancement is blocked.
+Same-context replay, SQL NULL substitution, hostile omitted rows, and host authorization limits remain unchanged.
 
 ## Trust boundaries
 

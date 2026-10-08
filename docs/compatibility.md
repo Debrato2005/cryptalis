@@ -131,6 +131,40 @@ The plaintext page-query anomaly has an unknown cause. Profile it in the SQLAlch
 Separate expression admission, statement compilation/cache behavior, driver/database time, row decoding, and materialization in the matched workload.
 No encrypted range/prefix/order capability follows from these plaintext queries.
 
+### Slice 3 local profile: 2026-10-08
+
+**VERIFIED, bounded package adapter:** `.venv/bin/python tests/profile_sqlalchemy_adapter.py`.
+The [hashed receipt](_reset/slice3-performance.json) records 5,000 synthetic rows, 100-row pages, and 40 paired samples.
+The local cell uses Python 3.12.3, SQLAlchemy 2.1.3, psycopg 3.3.6, cryptography 50.0.2, PostgreSQL 16.15, and warm local keys.
+Both paths use identical data and application-generated UUIDs. Queries consume and compare native values and types.
+Protected fixtures are seeded through ordinary attached ORM writes. Empty fixture conversion to `bytea` is test setup, not product apply.
+The final main-thread run followed the full suite and cache proof, with no concurrent Cryptalis checks.
+Shared-host activity remains uncontrolled. The receipt retains earlier runs and their limits.
+
+| Current bounded workload | Native p50/p95 ms | Attached p50/p95 ms | Added p95 ms |
+|---|---:|---:|---:|
+| Point entity | 0.435 / 0.618 | 1.715 / 2.903 | 2.285 |
+| Unprotected range/prefix/page projection | 1.428 / 1.906 | 2.238 / 2.810 | 0.904 |
+
+The point result is within the 3 ms added-p95 target in this local run. It does not qualify the deployment target.
+Earlier runs vary with shared-host activity and code changes. The receipt retains those observations without deployment qualification.
+Both plaintext page paths recorded 60 compilation-cache hits and one miss.
+Protected entity statements disable compilation caching to prevent retention of another operation's tenant, point, or prepared keys.
+Native unprotected compilation caching remains enabled.
+
+Ten extra cProfile page queries separate exclusive Python time into categories.
+Attached admission/guard cost 0.285 ms/query, compilation/cache 0.017 ms, driver/database 1.956 ms,
+and decoding/materialization 0.065 ms. Native compilation/cache cost 0.015 ms, driver/database 1.590 ms,
+and decoding/materialization 0.048 ms. Dispatch, key preparation, and other ORM/engine work remain separate in the receipt.
+Profiling changes timings. Cumulative calls overlap; exclusive categories do not.
+Driver time combines network wait and PostgreSQL work; those parts are not independently separated.
+This small plaintext profile does not explain the historical million-row anomaly. Its cause remains **UNKNOWN**.
+No equality/IN, isolated storage/index, sustained-write, remote-provider, or async performance qualification was performed.
+Adoption in this fixture used one manifest, one attach call, authenticated tenant scope, and application-assigned IDs.
+No business-query or model declarations changed between native and attached paths. Runtime credential/deployment work remains unverified.
+
+### Historical storage and transition costs
+
 The customer relation/index total rose from 192,692,224 to 350,707,712 bytes, plus 11,100,160 bytes of operation/chunk tables.
 That whole-relation total does not establish the per-column 2× target. Isolated protected-column/index evidence remains UNKNOWN.
 Protection/verification took 128.821 s. Observed pause with VACUUM/ANALYZE was 130.380 s. Neither value is an approved pause budget.

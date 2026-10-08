@@ -1,0 +1,546 @@
+{
+  "application_edits": [
+    "One manifest",
+    "One attach call replacing the session factory",
+    "Authenticated tenant_id passed to factory",
+    "Application-generated UUID primary keys"
+  ],
+  "attached": {
+    "cache_hits": {
+      "CACHE_HIT": 60,
+      "CACHE_MISS": 1
+    },
+    "first_query_ms": 4.3873,
+    "median_ms": 2.238,
+    "p95_ms": 2.8102,
+    "profile": {
+      "exclusive_ms_per_query": {
+        "admission_and_guard": 0.2853,
+        "attachment_dispatch": 0.1847,
+        "compilation_cache": 0.0173,
+        "decoding_materialization": 0.065,
+        "driver_database": 1.9556,
+        "key_preparation": 0.0259,
+        "other_orm_engine_python": 2.3813
+      },
+      "largest_cumulative_calls": [
+        {
+          "calls": 10,
+          "category": "admission_and_guard",
+          "cumulative_ms_per_query": 2.6024,
+          "function": "execute"
+        },
+        {
+          "calls": 30,
+          "category": "admission_and_guard",
+          "cumulative_ms_per_query": 2.1308,
+          "function": "admit"
+        },
+        {
+          "calls": 10,
+          "category": "admission_and_guard",
+          "cumulative_ms_per_query": 1.8675,
+          "function": "execute"
+        },
+        {
+          "calls": 10,
+          "category": "driver_database",
+          "cumulative_ms_per_query": 1.8631,
+          "function": "execute"
+        },
+        {
+          "calls": 10,
+          "category": "driver_database",
+          "cumulative_ms_per_query": 1.8577,
+          "function": "wait"
+        },
+        {
+          "calls": 570,
+          "category": "admission_and_guard",
+          "cumulative_ms_per_query": 0.8787,
+          "function": "protected"
+        },
+        {
+          "calls": 10,
+          "category": "admission_and_guard",
+          "cumulative_ms_per_query": 0.7502,
+          "function": "before_execute"
+        },
+        {
+          "calls": 10,
+          "category": "admission_and_guard",
+          "cumulative_ms_per_query": 0.7276,
+          "function": "check_cursor"
+        },
+        {
+          "calls": 20,
+          "category": "driver_database",
+          "cumulative_ms_per_query": 0.2226,
+          "function": "_execute_gen"
+        },
+        {
+          "calls": 20,
+          "category": "driver_database",
+          "cumulative_ms_per_query": 0.1652,
+          "function": "_maybe_prepare_gen"
+        },
+        {
+          "calls": 10,
+          "category": "driver_database",
+          "cumulative_ms_per_query": 0.0632,
+          "function": "_send_query_prepared"
+        },
+        {
+          "calls": 20,
+          "category": "admission_and_guard",
+          "cumulative_ms_per_query": 0.0581,
+          "function": "_check"
+        }
+      ],
+      "profiled_ms_per_query": 4.915,
+      "samples": 10
+    }
+  },
+  "boundary": "Bounded local plaintext projection; historical million-row anomaly remains UNKNOWN",
+  "cell": {
+    "cryptography": "50.0.2",
+    "mode": "sync",
+    "postgresql": "16.15 (Ubuntu 16.15-0ubuntu0.24.04.1)",
+    "psycopg": "3.3.6",
+    "python": "3.12.3",
+    "sqlalchemy": "2.1.3"
+  },
+  "command": ".venv/bin/python tests/profile_sqlalchemy_adapter.py",
+  "earlier_main_thread_runs": [
+    {
+      "attached": {
+        "median_ms": 2.2362,
+        "p95_ms": 2.9265
+      },
+      "boundary": "Before final row-address and column-admission corrections",
+      "native": {
+        "median_ms": 1.5115,
+        "p95_ms": 1.8787
+      },
+      "point_reads": {
+        "added_p95_ms": 1.5927,
+        "attached_p50_ms": 1.7242,
+        "attached_p95_ms": 2.1696,
+        "equal_values_and_types": true,
+        "native_p50_ms": 0.4287,
+        "native_p95_ms": 0.5769,
+        "paired_samples": 40,
+        "target_added_p95_ms": 3
+      }
+    },
+    {
+      "attached": {
+        "median_ms": 1.448,
+        "p95_ms": 1.7941
+      },
+      "boundary": "Final source; process overlapped isolated cache proof; excluded from final timing table",
+      "native": {
+        "median_ms": 0.9691,
+        "p95_ms": 1.1235
+      },
+      "point_reads": {
+        "added_p95_ms": 0.7599,
+        "attached_p50_ms": 0.9952,
+        "attached_p95_ms": 1.2355,
+        "equal_values_and_types": true,
+        "native_p50_ms": 0.2781,
+        "native_p95_ms": 0.4756,
+        "paired_samples": 40,
+        "target_added_p95_ms": 3
+      }
+    }
+  ],
+  "equal_results": true,
+  "executed_in_main_thread": true,
+  "fixture_only_edits": [
+    "Owned empty schema protected column converted to bytea; product transition is not implemented"
+  ],
+  "measurement_limits": [
+    "cProfile changes timings; exclusive categories sum without overlap, cumulative calls overlap",
+    "Driver category includes wait/network/PostgreSQL time; these components are not independently separated",
+    "Same long-lived read session and warm keys; no production-provider cost",
+    "5000-row local evidence does not explain the earlier million-row result"
+  ],
+  "median_added_ms": 0.8007,
+  "native": {
+    "cache_hits": {
+      "CACHE_HIT": 60,
+      "CACHE_MISS": 1
+    },
+    "first_query_ms": 3.444,
+    "median_ms": 1.4284,
+    "p95_ms": 1.9064,
+    "profile": {
+      "exclusive_ms_per_query": {
+        "compilation_cache": 0.015,
+        "decoding_materialization": 0.0482,
+        "driver_database": 1.5895,
+        "other_orm_engine_python": 0.4819
+      },
+      "largest_cumulative_calls": [
+        {
+          "calls": 10,
+          "category": "driver_database",
+          "cumulative_ms_per_query": 1.5179,
+          "function": "execute"
+        },
+        {
+          "calls": 10,
+          "category": "driver_database",
+          "cumulative_ms_per_query": 1.5136,
+          "function": "wait"
+        },
+        {
+          "calls": 20,
+          "category": "driver_database",
+          "cumulative_ms_per_query": 0.1699,
+          "function": "_execute_gen"
+        },
+        {
+          "calls": 20,
+          "category": "driver_database",
+          "cumulative_ms_per_query": 0.1277,
+          "function": "_maybe_prepare_gen"
+        },
+        {
+          "calls": 10,
+          "category": "driver_database",
+          "cumulative_ms_per_query": 0.042,
+          "function": "fetchall"
+        },
+        {
+          "calls": 10,
+          "category": "driver_database",
+          "cumulative_ms_per_query": 0.0396,
+          "function": "_send_query_prepared"
+        },
+        {
+          "calls": 10,
+          "category": "driver_database",
+          "cumulative_ms_per_query": 0.0304,
+          "function": "_convert_query"
+        },
+        {
+          "calls": 10,
+          "category": "driver_database",
+          "cumulative_ms_per_query": 0.0282,
+          "function": "convert"
+        },
+        {
+          "calls": 10,
+          "category": "driver_database",
+          "cumulative_ms_per_query": 0.0242,
+          "function": "description"
+        },
+        {
+          "calls": 10,
+          "category": "driver_database",
+          "cumulative_ms_per_query": 0.0239,
+          "function": "_set_results"
+        },
+        {
+          "calls": 10,
+          "category": "driver_database",
+          "cumulative_ms_per_query": 0.0218,
+          "function": "_select_current_result"
+        },
+        {
+          "calls": 30,
+          "category": "driver_database",
+          "cumulative_ms_per_query": 0.0195,
+          "function": "__init__"
+        }
+      ],
+      "profiled_ms_per_query": 2.1347,
+      "samples": 10
+    }
+  },
+  "page_rows": 100,
+  "paired_samples": 40,
+  "plaintext_page_p95_difference_ms": 0.9038,
+  "point_reads": {
+    "added_p95_ms": 2.2849,
+    "attached_p50_ms": 1.7151,
+    "attached_p95_ms": 2.9026,
+    "equal_values_and_types": true,
+    "native_p50_ms": 0.4351,
+    "native_p95_ms": 0.6177,
+    "paired_samples": 40,
+    "target_added_p95_ms": 3
+  },
+  "prior_receipt": {
+    "application_edits": [
+      "One manifest",
+      "One attach call replacing the session factory",
+      "Authenticated tenant_id passed to factory",
+      "Application-generated UUID primary keys"
+    ],
+    "attached": {
+      "cache_hits": {
+        "CACHE_HIT": 60,
+        "CACHE_MISS": 1
+      },
+      "first_query_ms": 4.1236,
+      "median_ms": 2.1341,
+      "p95_ms": 2.7585,
+      "profile": {
+        "exclusive_ms_per_query": {
+          "admission_and_guard": 0.2001,
+          "attachment_dispatch": 0.15,
+          "compilation_cache": 0.014,
+          "decoding_materialization": 0.0545,
+          "driver_database": 1.8702,
+          "key_preparation": 0.022,
+          "other_orm_engine_python": 1.7959
+        },
+        "largest_cumulative_calls": [
+          {
+            "calls": 10,
+            "category": "admission_and_guard",
+            "cumulative_ms_per_query": 2.2756,
+            "function": "execute"
+          },
+          {
+            "calls": 10,
+            "category": "admission_and_guard",
+            "cumulative_ms_per_query": 1.7979,
+            "function": "execute"
+          },
+          {
+            "calls": 10,
+            "category": "driver_database",
+            "cumulative_ms_per_query": 1.7943,
+            "function": "execute"
+          },
+          {
+            "calls": 10,
+            "category": "driver_database",
+            "cumulative_ms_per_query": 1.7898,
+            "function": "wait"
+          },
+          {
+            "calls": 30,
+            "category": "admission_and_guard",
+            "cumulative_ms_per_query": 1.5167,
+            "function": "admit"
+          },
+          {
+            "calls": 570,
+            "category": "admission_and_guard",
+            "cumulative_ms_per_query": 0.7718,
+            "function": "protected"
+          },
+          {
+            "calls": 10,
+            "category": "admission_and_guard",
+            "cumulative_ms_per_query": 0.5435,
+            "function": "before_execute"
+          },
+          {
+            "calls": 10,
+            "category": "admission_and_guard",
+            "cumulative_ms_per_query": 0.4719,
+            "function": "check_cursor"
+          },
+          {
+            "calls": 20,
+            "category": "driver_database",
+            "cumulative_ms_per_query": 0.1954,
+            "function": "_execute_gen"
+          },
+          {
+            "calls": 20,
+            "category": "driver_database",
+            "cumulative_ms_per_query": 0.1473,
+            "function": "_maybe_prepare_gen"
+          },
+          {
+            "calls": 10,
+            "category": "driver_database",
+            "cumulative_ms_per_query": 0.051,
+            "function": "_send_query_prepared"
+          },
+          {
+            "calls": 10,
+            "category": "key_preparation",
+            "cumulative_ms_per_query": 0.0496,
+            "function": "prepare"
+          }
+        ],
+        "profiled_ms_per_query": 4.1066,
+        "samples": 10
+      }
+    },
+    "boundary": "Bounded local plaintext projection; historical million-row anomaly remains UNKNOWN",
+    "cell": {
+      "cryptography": "50.0.2",
+      "mode": "sync",
+      "platform": "Linux-6.18.33.2-microsoft-standard-WSL2-x86_64-with-glibc2.39",
+      "postgresql": "16.15 (Ubuntu 16.15-0ubuntu0.24.04.1)",
+      "psycopg": "3.3.6",
+      "python": "3.12.3",
+      "sqlalchemy": "2.1.3"
+    },
+    "equal_results": true,
+    "fixture_only_edits": [
+      "Owned empty schema protected column converted to bytea; product transition is not implemented"
+    ],
+    "measurement_limits": [
+      "cProfile changes timings; exclusive categories sum without overlap, cumulative calls overlap",
+      "Driver category includes wait/network/PostgreSQL time; these components are not independently separated",
+      "Same long-lived read session and warm keys; no production-provider cost",
+      "5000-row local evidence does not explain the earlier million-row result",
+      "This receipt was collected after the full pytest suite finished; other shared-host activity is not controlled"
+    ],
+    "median_added_ms": 0.6904,
+    "native": {
+      "cache_hits": {
+        "CACHE_HIT": 60,
+        "CACHE_MISS": 1
+      },
+      "first_query_ms": 5.3766,
+      "median_ms": 1.5075,
+      "p95_ms": 1.8199,
+      "profile": {
+        "exclusive_ms_per_query": {
+          "compilation_cache": 0.0127,
+          "decoding_materialization": 0.0487,
+          "driver_database": 1.5545,
+          "other_orm_engine_python": 0.5087
+        },
+        "largest_cumulative_calls": [
+          {
+            "calls": 10,
+            "category": "driver_database",
+            "cumulative_ms_per_query": 1.4871,
+            "function": "execute"
+          },
+          {
+            "calls": 10,
+            "category": "driver_database",
+            "cumulative_ms_per_query": 1.483,
+            "function": "wait"
+          },
+          {
+            "calls": 20,
+            "category": "driver_database",
+            "cumulative_ms_per_query": 0.1646,
+            "function": "_execute_gen"
+          },
+          {
+            "calls": 20,
+            "category": "driver_database",
+            "cumulative_ms_per_query": 0.1238,
+            "function": "_maybe_prepare_gen"
+          },
+          {
+            "calls": 10,
+            "category": "driver_database",
+            "cumulative_ms_per_query": 0.0384,
+            "function": "fetchall"
+          },
+          {
+            "calls": 10,
+            "category": "driver_database",
+            "cumulative_ms_per_query": 0.037,
+            "function": "_send_query_prepared"
+          },
+          {
+            "calls": 10,
+            "category": "driver_database",
+            "cumulative_ms_per_query": 0.03,
+            "function": "_convert_query"
+          },
+          {
+            "calls": 10,
+            "category": "driver_database",
+            "cumulative_ms_per_query": 0.028,
+            "function": "convert"
+          },
+          {
+            "calls": 10,
+            "category": "driver_database",
+            "cumulative_ms_per_query": 0.0238,
+            "function": "description"
+          },
+          {
+            "calls": 10,
+            "category": "driver_database",
+            "cumulative_ms_per_query": 0.0217,
+            "function": "_set_results"
+          },
+          {
+            "calls": 10,
+            "category": "driver_database",
+            "cumulative_ms_per_query": 0.0197,
+            "function": "_select_current_result"
+          },
+          {
+            "calls": 30,
+            "category": "driver_database",
+            "cumulative_ms_per_query": 0.0194,
+            "function": "__init__"
+          }
+        ],
+        "profiled_ms_per_query": 2.1246,
+        "samples": 10
+      }
+    },
+    "page_rows": 100,
+    "paired_samples": 40,
+    "point_reads": {
+      "added_p95_ms": 2.2687,
+      "attached_p50_ms": 1.7854,
+      "attached_p95_ms": 3.2631,
+      "equal_values_and_types": true,
+      "native_p50_ms": 0.5417,
+      "native_p95_ms": 0.9944,
+      "paired_samples": 40,
+      "target_added_p95_ms": 3
+    },
+    "preliminary_overlapping_test_run": {
+      "attached_page_p50_ms": 1.301,
+      "attached_page_p95_ms": 1.4919,
+      "boundary": "Earlier same-source run overlapped the full pytest suite; retained for transparency, not target qualification",
+      "native_page_p50_ms": 0.9155,
+      "native_page_p95_ms": 1.0922,
+      "point_reads": {
+        "added_p95_ms": 0.9034,
+        "attached_p50_ms": 0.8976,
+        "attached_p95_ms": 1.4173,
+        "equal_values_and_types": true,
+        "native_p50_ms": 0.262,
+        "native_p95_ms": 0.5139,
+        "paired_samples": 40,
+        "target_added_p95_ms": 3
+      }
+    },
+    "protected_columns_selected": false,
+    "protected_rows_seeded_through_orm": true,
+    "rows": 5000,
+    "source_sha256": {
+      "pyproject.toml": "abebf2ff66acdc3bac2b349b9b8f3ff82620371b464af7940638799df4a473d8",
+      "src/cryptalis/_sqlalchemy_guard.py": "f1b855b7b8b881f8360b69dffdeb12d6dc2fbdaea3f33dd6ed45b2588be477d3",
+      "src/cryptalis/sqlalchemy.py": "207ecafb2e08c4bb9ea1524efd66a3c319d111513728607599ed02b798cf2684",
+      "tests/profile_sqlalchemy_adapter.py": "e86690838c256d0e16b1ef498d154d3616f66960ca6a5215f01f61e734d2bed4",
+      "uv.lock": "344e1cafd4c1fe93b3545756b683c2b14da68f442e0596f3f00d461c4fec6e5a"
+    }
+  },
+  "prior_receipt_boundary": "Preserved previous checkpoint record; current costs use the final main-thread quiet run",
+  "protected_columns_selected": false,
+  "protected_rows_seeded_through_orm": true,
+  "rows": 5000,
+  "run_boundary": "Final source, after full suite and cache proof; no concurrent Cryptalis checks; shared-host activity uncontrolled",
+  "source_sha256": {
+    "pyproject.toml": "abebf2ff66acdc3bac2b349b9b8f3ff82620371b464af7940638799df4a473d8",
+    "src/cryptalis/_sqlalchemy_guard.py": "f1b855b7b8b881f8360b69dffdeb12d6dc2fbdaea3f33dd6ed45b2588be477d3",
+    "src/cryptalis/sqlalchemy.py": "2ab43ba528cde7f50b9c8d9fcfa0cf3bff571e5582432781a22143296f2d34d8",
+    "tests/profile_sqlalchemy_adapter.py": "e86690838c256d0e16b1ef498d154d3616f66960ca6a5215f01f61e734d2bed4",
+    "uv.lock": "344e1cafd4c1fe93b3545756b683c2b14da68f442e0596f3f00d461c4fec6e5a"
+  }
+}

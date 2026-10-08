@@ -1,9 +1,10 @@
 # Cryptalis
 
-**IMPLEMENTED: research prototype with a product manifest compiler, CF1 text primitives, and a local development provider.**
-The package does not attach protection to SQLAlchemy sessions.
+**IMPLEMENTED: research prototype with a product manifest compiler, CF1 primitives, a local development provider, and a bounded SQLAlchemy storage attachment.**
+The sync/async attachment has scoped PostgreSQL tests. Slice 3 advancement is blocked by missing separate runtime-role evidence.
 All seven full gates remain **UNKNOWN**. Read [status](docs/status.md) for evidence and revision limits.
 No runtime compatibility cell, production key provider, or independent review is qualified.
+The [slice 3 walkthrough](docs/walkthrough-sqlalchemy.md) gives the implemented API and its limits.
 
 **SPECIFIED:** Cryptalis adds application-side protection to a Python 3.12+, SQLAlchemy 2.x, psycopg 3, PostgreSQL 16 backend.
 One manifest selects protected text fields. One attachment handles admitted writes, reads, and expressions.
