@@ -101,27 +101,25 @@ name = "cryptalis"
 version = "0.1.0"
 source = { editable = "." }
 dependencies = [
+    { name = "cryptography" },
     { name = "psycopg", extra = ["binary"] },
     { name = "sqlalchemy" },
 ]
 
 [package.dev-dependencies]
 dev = [
-    { name = "cryptography" },
     { name = "pytest" },
 ]
 
 [package.metadata]
 requires-dist = [
+    { name = "cryptography", specifier = "==50.0.2" },
     { name = "psycopg", extras = ["binary"], specifier = "==3.3.6" },
     { name = "sqlalchemy", specifier = "==2.1.3" },
 ]
 
 [package.metadata.requires-dev]
-dev = [
-    { name = "cryptography", specifier = "==50.0.2" },
-    { name = "pytest" },
-]
+dev = [{ name = "pytest" }]
 
 [[package]]
 name = "cryptography"

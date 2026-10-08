@@ -109,7 +109,7 @@ AES-GCM requires stronger nonce uniqueness discipline. ChaCha20-Poly1305 also re
 Extended-nonce libraries can be alternatives after portability and review. No silent algorithm fallback is allowed.
 Primary algorithm and library evidence is in [prior art](prior-art.md).
 
-Proposed CF1 payload framing:
+CF1 payload framing:
 
 | Byte field | Exact encoding |
 |---|---|
@@ -126,7 +126,9 @@ Proposed CF1 payload framing:
 Reject unknown suite/flags/generations, short/trailing malformed data, and values beyond the qualified field bound.
 NULL is SQL NULL, not a zero-byte encrypted value. Empty text remains an authenticated non-null payload.
 Storage-only overhead is 42 bytes. Packed equality overhead is 74 bytes, before SQL tuple/index costs.
-A companion commitment adds 32 bytes. Derived arrays add their own SQL storage. Independent CF1 vectors remain unexecuted.
+A companion commitment adds 32 bytes. Derived arrays add their own SQL storage.
+The product implements storage-only and packed equality frames. It rejects the companion flag and all advanced representations.
+Independent product vectors cover both formats and both admitted record and tenant codecs. Companion vectors remain unqualified.
 The first adapter spike uses a different small lab frame. Its success does not verify CF1.
 The offline CF1 text fixture passes 30 framing/context/rotation mutation checks. Same-library roundtrips do not qualify independent AEAD vectors or the generic composition.
 
@@ -164,6 +166,43 @@ Expected context comes from the host/mapping and generated row projection, not c
 Per-record key derivation limits repeated use of one payload key. It does not establish a reviewed aggregate lifetime bound by itself.
 No quantified security bound or approved key-retirement threshold exists yet.
 Independent review must settle those bounds before real-data admission. The former distributed quota service is not retained by assumption.
+
+### Implemented CF1 primitives and local custody
+
+`cryptalis.crypto` exports `FieldDescriptor`, `seal_text`, `open_text`, `KeyProvider`,
+`DevelopmentKeyProvider`, `create_root`, `KeyContext`, `KeyPolicy`, and `Keyring`.
+`FieldDescriptor.from_compiled(document, digest)` consumes one trusted compiler descriptor.
+A matching digest checks structure. It does not authenticate the deployment policy.
+Seal and open take the descriptor, expected tenant and record, and prepared keys.
+They encode exact UTF-8 text without NUL and refuse encoded values above **16 MiB**.
+Empty text uses an authenticated frame. SQL NULL remains SQL NULL.
+Nil UUIDs are valid native tenant and record values. Single-tenant context equals the stable table UUID.
+
+Each keyring pins one immutable policy for one domain and tenant.
+The policy admits at most **32 wrapped roots** and selects active write generations.
+Frame generations select only already prepared keys. They cannot select provider authority or cause network calls.
+`prepare()` and `prepare_async()` return keys for an operation.
+The cache defaults to **60 seconds** and permits a maximum of **300 seconds**.
+Access does not extend expiry. Each crypto operation checks expiry before it returns a value.
+These operational limits are prototype safeguards. They are not reviewed cryptographic usage limits.
+
+`create_root(provider, context)` uses independent operating-system randomness.
+Wrapped roots carry exact provider identity, domain, tenant, purpose, root identity, and generation.
+Provider payloads are opaque bytes with a **64 KiB** limit.
+The development wrapper binds this metadata with AES-256-GCM-SIV and a fresh 12-byte nonce.
+Its sealed bytes contain the nonce and a 32-byte root with a full 16-byte tag.
+It retains the local key-encryption key only in memory. Process loss prevents recovery.
+Local `rewrap` preserves the root and creates a wrapper under the replacement provider.
+This does not implement a deployment rotation workflow.
+
+Sync and async preparation publish keys only after every required root passes checks.
+Cancellation rejects late provider material, including when a provider suppresses cancellation.
+Inherited providers, keyrings, and prepared keys refuse use after fork.
+The child must construct a fresh provider and prepare fresh roots.
+Python immutable bytes do not give a verified zeroization guarantee.
+Failures have safe codes, operation IDs, stages, retry indicators, effect states, and remedies.
+Raw provider and cryptographic exception text does not enter those diagnostics.
+The [slice 2 checkpoint](status.md#slice-2-checkpoint-2026-10-08) records the exact evidence boundary.
 
 Full-width terms avoid intentional false positives. Exact query claims remain conditional on HMAC collision resistance and intact indexed representations.
 Recomputing a term from returned plaintext does not detect a collision with a different value. AEAD cannot repair that semantic error.

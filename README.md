@@ -1,7 +1,7 @@
 # Cryptalis
 
-**IMPLEMENTED: research prototype with a product manifest compiler and research utilities.**
-Protection runtime remains isolated spike code. The package does not attach protection to SQLAlchemy sessions.
+**IMPLEMENTED: research prototype with a product manifest compiler, CF1 text primitives, and a local development provider.**
+The package does not attach protection to SQLAlchemy sessions.
 All seven full gates remain **UNKNOWN**. Read [status](docs/status.md) for evidence and revision limits.
 No runtime compatibility cell, production key provider, or independent review is qualified.
 

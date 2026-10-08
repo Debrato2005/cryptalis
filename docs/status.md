@@ -1,10 +1,45 @@
 # Implementation status
 
-**IMPLEMENTED:** research prototype with a product manifest compiler and research utilities.
-Protection runtime remains isolated code under `spikes/revamp`. The package does not attach protection to SQLAlchemy sessions.
+**IMPLEMENTED:** research prototype with a product manifest compiler, CF1 text primitives, and a local development provider.
+The package does not attach protection to SQLAlchemy sessions.
 No PostgreSQL/provider/runtime cell, production key provider, independent review, or release is qualified.
 VERIFIED below refers only to the named checks and their exact revisions.
 All other contract and promotion requirements are SPECIFIED. All seven full gates remain UNKNOWN.
+
+## Slice 2 checkpoint: 2026-10-08
+
+**IMPLEMENTED:** `cryptalis.crypto` seals and authenticates bounded text with trusted compiler descriptors and prepared keys.
+It uses library AES-256-GCM-SIV, HKDF-SHA-256, and full HMAC-SHA-256.
+Strict UTF-8 preserves exact text. SQL NULL remains SQL NULL. The encoded text limit is 16 MiB.
+The product implements storage-only and packed equality frames, UUID/bigint records, and both declared tenancy codecs.
+It rejects unknown flags, companion representations, malformed frames, missing generations, and invalid text.
+
+`Keyring` pins a finite policy and exact provider identities. Frame headers cannot select provider authority.
+Sync and async preparation publish keys only after all roots pass checks.
+The cache has fixed expiry, with a 60-second default and 300-second maximum. Access does not extend it.
+Inherited providers and keys refuse use after fork. A child can create and prepare fresh local material.
+The ephemeral development provider wraps, unwraps, and rewraps roots in memory.
+[Security](security.md#implemented-cf1-primitives-and-local-custody) owns these operational limits and APIs.
+
+**VERIFIED:** the focused CF1 suite returned **30 passed**, including **eight real PostgreSQL persistence cases**.
+The full suite returned **736 passed** with `.venv/bin/python -m pytest -q --tb=short`.
+The environment uses PostgreSQL 16.15, Python 3.12.3, cryptography 50.0.2, SQLAlchemy 2.1.3, and psycopg 3.3.6.
+Those cases compare recovered values with native text under actual compiled descriptors.
+They cover both frame formats, both record codecs, and both tenant codecs, including nil UUIDs and bigint endpoints.
+Eight frozen CF1 vectors use a separate RFC 8452 reference with OpenSSL AES blocks and separate HKDF/HMAC code.
+Published RFC 8452, RFC 5869, and RFC 4231 vectors check that reference and the installed primitives.
+The fixture reproduction command is `.venv/bin/python tests/reference_cf1_vectors.py`.
+
+Attack and failure cases cover byte changes, relocation, wrong roots, retirement, expiry, failed/canceled preparation, and fork.
+Local rewrap preserves existing frames. Failure diagnostics exclude supplied secrets and raw provider errors, including during RNG failure.
+AI review found and corrected nil-UUID refusal and writable-policy retention of old cache entries.
+AI review does not replace independent human security review.
+
+**Limits:** SQLAlchemy attachment, query rewriting, database transitions, and deployment rotations remain pending.
+The local provider cannot recover after process loss. No production provider exists.
+SQL NULL substitution and same-context replay remain accepted scope limits.
+Remote cancellation, custody, independent recovery, usage bounds, collision assumptions, and independent review remain unqualified.
+All seven full release gates remain **UNKNOWN**.
 
 ## Slice 1 checkpoint: 2026-10-08
 
@@ -29,7 +64,7 @@ A tenant change requires resealing. A SQL rename preserves the descriptor.
 Missing or changed stable identities cannot silently replace existing identities.
 [Architecture](architecture/README.md#implemented-compiler-syntax) owns the exact syntax.
 
-**Limits:** no attachment, encryption, provider, transition executor, or runtime query rewrite exists in the product.
+**Slice 1 limits:** this checkpoint did not implement attachment, encryption, a provider, transitions, or runtime query rewriting.
 Other ID codecs, protected varchar/custom types, non-UUID tenant columns, protected defaults, unsupported dependencies, and schema translation reject.
 A new unique request needs a qualified native source constraint first.
 The additive DDL does not qualify CF1 framing or authorize a switch.
@@ -172,7 +207,7 @@ Same-context replay, nullable-field substitution with SQL NULL and hostile omitt
 
 ## Existing package
 
-The current package has the product compiler above, structural record decoding/canonicalization, bounded manifest/header inspection,
+The current package has the product compiler and CF1 primitives above, structural record decoding/canonicalization, bounded manifest/header inspection,
 local crypto/search examples, and local transition-admission research.
 Those APIs do not provide SQLAlchemy database protection, managed key custody, safe deployment admission, or production lifecycle.
 Architecture drives replacement. Existing research formats and tests are not permanent runtime requirements.
