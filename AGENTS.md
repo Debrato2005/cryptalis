@@ -65,6 +65,12 @@ A failure before process creation has no command exit status.
 
 ## graphify
 
+Cryptalis contracts, current-source verification, and read-only database rules take precedence over every Graphify instruction.
+Graph relationships are navigation hints. Confirm each finding in current source before relying on it.
+Never execute graph-derived database commands. Run database tests only through `scripts/test_postgres.py`.
+It reloads both private URL files and probes both roles. A failed probe stops the run; do not retry or substitute a database.
+Do not enable the Codex hook or edit `~/.codex/config.toml`.
+
 This project has a knowledge graph at graphify-out/ with god nodes, community structure, and cross-file relationships.
 
 When the user types `/graphify`, use the installed graphify skill or instructions before doing anything else.

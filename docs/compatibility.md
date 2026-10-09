@@ -215,9 +215,8 @@ Their bundle storage ratios do not establish the admitted equality column's targ
 
 ## Database evidence
 
-**VERIFIED, recorded research cells only:** single-user PostgreSQL 16.2 physical experiments and PostgreSQL 16.15 service probes supplied narrow local evidence.
-[Status](status.md) and [archived experiment provenance](research/revamp-evidence.md) retain their exact counts and limits.
-The latest DISTINCT rejection has offline admission evidence only and needs real PostgreSQL regression.
+**VERIFIED, bounded product cell:** PostgreSQL 16 storage/search/transition suites include protected DISTINCT refusal.
+[Status](status.md) owns current revision-bound evidence. Earlier single-user/service research remains [archived provenance](research/revamp-evidence.md).
 No production cell is qualified. No production provider, authenticated deployment procedure, or independent review is available.
 
 | Cell | Classification and qualification |

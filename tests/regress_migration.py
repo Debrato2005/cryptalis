@@ -26,7 +26,7 @@ MUTATIONS=[
  ('atomic_marker','migration.py',"_save(c,p,state)\n        return True","c.commit()\n        _save(c,p,state)\n        return True",'test_lost_commit_reply_is_reconciled_from_terminal_real_transaction'),
  ('publication','migration.py',"if pin.phase!='ACTIVATING': raise TransitionFailure('matching_external_publication_required',p.operation_id)",'if False: pass','test_external_publication_unavailable_keeps_runtime_stopped'),
  ('external_authority','migration.py','if (not isinstance(p,MigrationPlan) or not isinstance(pin,DeploymentPin) or','if False and (not isinstance(p,MigrationPlan) or not isinstance(pin,DeploymentPin) or','test_invalid_external_authority_or_missing_writer_approval_has_no_effects[target]'),
- ('writer_approval','migration.py','if approval is not None and (not isinstance(approval,MaintenanceApproval) or','if False and (not isinstance(approval,MaintenanceApproval) or','test_invalid_external_authority_or_missing_writer_approval_has_no_effects[approval]'),
+ ('writer_approval','migration.py','if (not isinstance(approval.writer_exclusion,str) or','if False and (not isinstance(approval.writer_exclusion,str) or','test_invalid_external_authority_or_missing_writer_approval_has_no_effects[approval]'),
  ('active_generation','migration.py',"if frame is not None and (int.from_bytes(frame[6:10],'big')!=admitted.payload_generation or int.from_bytes(frame[10:14],'big')!=(admitted.search_generation if f['queries'] else 0)):",'if False:','test_valid_retained_generation_cannot_satisfy_active_generation_verification'),
  ('switch_table_lock','migration.py','def _lock_tables(c,p):','def _lock_tables(c,p):\n    return','test_switch_verification_holds_table_lock_until_ddl_commit'),
  ('trigger_inventory','migration.py','return list(row)+[[list(item) for item in inventory]]','return list(row)','test_unplanned_trigger_blocks_resume_without_relying_on_boolean_schema_flag'),
@@ -43,8 +43,10 @@ def main():
             assert source.count(old)==1,(name,source.count(old))
             path.write_text(source.replace(old,new))
             for cache in (copy/'src').rglob('__pycache__'): shutil.rmtree(cache)
-            command=[sys.executable,'-m','pytest','-q','tests/test_migration.py::'+test,'--tb=short']
+            command=[sys.executable,str(ROOT/'scripts/test_postgres.py'),'--','-q','tests/test_migration.py::'+test,'--tb=short']
             failed=subprocess.run(command,cwd=copy,env=env,capture_output=True,text=True,timeout=90)
+            if failed.returncode==2:
+                print(failed.stdout); raise SystemExit(2)
             path.write_text(source)
             for cache in (copy/'src').rglob('__pycache__'): shutil.rmtree(cache)
             restored=subprocess.run(command,cwd=copy,env=env,capture_output=True,text=True,timeout=90)
@@ -56,6 +58,8 @@ def main():
             if not valid:
                 print(failed.stdout[-4000:]); print(restored.stdout[-2000:]); raise SystemExit(1)
     assert all(hashlib.sha256(Path(p).read_bytes()).hexdigest()==digest for p,digest in originals.items())
-    Path('docs/_reset/slice5-regressions.json').write_text(json.dumps({'source_hashes':originals,'worktree_unchanged':True,'mutations':receipts},indent=2)+'\n')
+    revision=hashlib.sha256(json.dumps(originals,sort_keys=True).encode()).hexdigest()[:16]
+    with (ROOT/'docs/_reset'/f'slice5-regressions-audit-{revision}.json').open('x') as stream:
+        stream.write(json.dumps({'source_hashes':originals,'worktree_unchanged':True,'mutations':receipts},indent=2)+'\n')
 
 if __name__=='__main__': main()

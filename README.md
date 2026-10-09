@@ -105,7 +105,8 @@ Plaintext migrations and removal can leave historical WAL, backup, and snapshot 
 **SPECIFIED targets:** added p95 at most 3 ms for point/equality reads, at most 8 ms for `IN` with 20 values.
 Storage targets at most 2× for a protected column with an equality index.
 Local measurements and remaining limits belong to [compatibility](docs/compatibility.md#slice-4-local-million-row-profile-2026-10-08).
-Recorded latency misses these targets. The [performance owner](docs/compatibility.md#performance-targets-and-recorded-costs) gives measurements and the unexplained plaintext-page slowdown.
+The recorded slice 4 warm synchronous point/equality and IN-20 workloads meet their latency targets; the column-plus-index ratio is 1.4928×.
+Earlier profiles missed targets. These revision-bound observations do not qualify deployment performance; the historical page slowdown remains unexplained.
 Write-throughput and pause budgets remain undecided (D).
 
 No production provider is designated. The local provider supplies functional evidence only.

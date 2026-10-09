@@ -1,6 +1,7 @@
 # One transition engine
 
-**SPECIFIED:** lifecycle contract. **IMPLEMENTED:** isolated spike executor only. [Status](status.md) states the evidence limits.
+**SPECIFIED:** lifecycle contract. **IMPLEMENTED:** bounded product protection transition with plan/apply/verify and pre-switch abort.
+Decrypt-back, removal and rotation remain unimplemented product slices. [Status](status.md) states the evidence limits.
 VERIFIED paragraphs below describe recorded receipts, not current product qualification. All other requirements remain SPECIFIED.
 Every protection change uses expand → backfill → verify → switch → contract.
 Rollback, deprotect, search changes, and key transformations reuse this path.

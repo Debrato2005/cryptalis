@@ -21,7 +21,7 @@ from sqlalchemy.sql.elements import BinaryExpression, BindParameter, BooleanClau
 from sqlalchemy.sql.functions import FunctionElement
 from sqlalchemy.sql.selectable import Alias, CTE, FromClause, Select, Join, Subquery
 from sqlalchemy.sql.dml import Insert, Update, Delete
-from sqlalchemy.types import JSON, TypeDecorator
+from sqlalchemy.types import JSON, NullType, TypeDecorator
 
 from ._sqlalchemy_guard import install_guard
 from ._sqlalchemy_search import rewrite_search, search_shape, validate_search_storage
@@ -115,7 +115,9 @@ class _ReadText(TypeDecorator):
             elif type(record) is not int:
                 raise AuthenticationFailed()
             tenant = UUID(tenant)
-            if tenant != self.tenant or any(record != expected for expected in self.points):
+            if tenant != self.tenant or any(
+                    record not in expected if isinstance(expected, frozenset) else record != expected
+                    for expected in self.points):
                 raise AuthenticationFailed()
             if payload is not None:
                 if type(payload) is not str or len(payload) > 2 * (MAX_TEXT_BYTES + 74):
@@ -176,22 +178,81 @@ def _protected(expression):
 
 
 def _points(statement, parameters):
+    """Capture row constraints before SQL; never let absent bind data waive one.
+
+    A callable default, transformed identity, or compiler-specific override is
+    outside this bounded grammar. Explicit public binds remain native values.
+    IN captures the admitted set, including relationship-loader batches.
+    """
     result = []
+    inputs = {}
+    for node in visitors.iterate(statement):
+        if isinstance(node, BindParameter):
+            inputs.setdefault(node.key, {})[id(node)] = node
+
+    def ungroup(expression):
+        while isinstance(expression, Grouping):
+            expression = expression.element
+        return expression
+
+    def primary(expression):
+        return any(isinstance(node, ColumnClause) and node.primary_key
+                   for node in visitors.iterate(expression))
+
+    def value_of(bind, column):
+        if (type(column.type) not in (Uuid, BigInteger) or
+                type(bind.type) not in (type(column.type), NullType) or
+                any(type(other.type) not in (type(column.type), NullType)
+                    for other in inputs[bind.key].values()) or
+                isinstance(statement, Select) and any(key not in inputs for key in parameters)):
+            raise UnsupportedProtectedOperation()
+        if bind.key in parameters:
+            value = parameters[bind.key]
+        else:
+            if bind.callable is not None or bind.required or len(inputs[bind.key]) != 1:
+                raise UnsupportedProtectedOperation()
+            value = bind.value
+        # Other occurrences of this placeholder can change its compiled
+        # semantics. Refuse callable collisions even if this occurrence is plain.
+        if bind.key not in parameters and any(other.callable is not None for other in inputs[bind.key].values()):
+            raise UnsupportedProtectedOperation()
+        values = value if bind.expanding else [value]
+        if not isinstance(values, (list, tuple)):
+            raise UnsupportedProtectedOperation()
+        expected_type = UUID if type(column.type) is Uuid else int
+        if any(item is not None and type(item) is not expected_type for item in values):
+            raise UnsupportedProtectedOperation()
+        return frozenset(item for item in values if item is not None) if bind.expanding else value
+
     def visit(expression):
+        expression = ungroup(expression)
         if isinstance(expression, BooleanClauseList) and expression.operator is operators.and_:
             for clause in expression.clauses:
                 visit(clause)
-        elif isinstance(expression, BinaryExpression) and expression.operator is operators.eq:
-            left, right = expression.left, expression.right
+            return
+        if not primary(expression):
+            return
+        if isinstance(expression, BinaryExpression) and expression.operator in (operators.eq, operators.in_op):
+            left, right = ungroup(expression.left), ungroup(expression.right)
             if isinstance(left, BindParameter):
                 left, right = right, left
-            if getattr(left, "primary_key", False) and isinstance(right, BindParameter):
-                value = parameters.get(right.key, right.value)
-                if value is not None:
-                    result.append((left, value))
-    for criterion in statement.whereclause.clauses if isinstance(statement.whereclause, BooleanClauseList) and statement.whereclause.operator is operators.and_ else (statement.whereclause,):
-        if criterion is not None:
-            visit(criterion)
+            if (isinstance(left, ColumnClause) and left.primary_key and isinstance(right, BindParameter) and
+                    right.expanding == (expression.operator is operators.in_op)):
+                result.append((left, value_of(right, left)))
+                return
+        # A primary-key predicate cannot silently lose requested-row validation.
+        # Tuple, OR, cast/function, subquery, and opaque forms need admission.
+        raise UnsupportedProtectedOperation()
+    if statement.whereclause is not None:
+        visit(statement.whereclause)
+    if isinstance(statement, Select):
+        where_nodes = {id(node) for node in visitors.iterate(statement.whereclause)} if statement.whereclause is not None else set()
+        for node in visitors.iterate(statement):
+            if (isinstance(node, BinaryExpression) and id(node) not in where_nodes and primary(node) and
+                    any(isinstance(child, BindParameter) for child in visitors.iterate(node))):
+                # ON and HAVING are not unconditional WHERE constraints. Do not
+                # drop them or turn an outer join's nullable side into a point.
+                raise UnsupportedProtectedOperation()
     return tuple(result)
 
 
@@ -569,9 +630,10 @@ def _execute(state):
     session = state.session
     session._owner.admit(state.statement)
     parameters = state.parameters if isinstance(state.parameters, dict) else {}
+    protected_read = any(session._owner.protected(c) for c in state.statement.selected_columns)
     operation = _Operation(session._owner, session._keys(), session._tenant, session,
-                           points=_points(state.statement, parameters), parameters=parameters)
-    if any(session._owner.protected(c) for c in state.statement.selected_columns) or session._owner.protected(state.statement):
+                           points=_points(state.statement, parameters) if protected_read else (), parameters=parameters)
+    if protected_read or session._owner.protected(state.statement):
         # Entity SELECT cache keys can name the Table without its column types.
         # Disable the ORM's cache too, so no compiled processor retains another
         # operation's tenant, requested point or prepared material.

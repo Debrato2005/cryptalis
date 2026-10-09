@@ -11,7 +11,8 @@ from psycopg import sql
 import pytest
 from sqlalchemy import Column, ForeignKey, Integer, MetaData, Table, Text, Uuid, event, select, text, func, insert, update
 from sqlalchemy import bindparam, create_engine, inspect, literal, literal_column, type_coerce
-from sqlalchemy import BigInteger
+from sqlalchemy import BigInteger, and_, or_, tuple_, cast
+from sqlalchemy.sql.elements import Grouping
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 from sqlalchemy.orm import Session, aliased, joinedload, registry, relationship, selectinload, sessionmaker
 
@@ -253,6 +254,204 @@ def test_protected_plaintext_never_crosses_driver_boundary_and_failures_release_
     with sessions(tenant_id=TENANT) as s:
         with pytest.raises(AuthenticationFailed):
             s.get(Customer, identity)
+
+
+_POINT_FORMS = ("bound", "grouped", "nested_and", "reversed", "literal", "late",
+                "late_override", "single_in", "late_in", "multi_in", "callable", "callable_override", "tuple_eq",
+                "tuple_in", "or", "cast", "text", "literal_sql", "unique_override",
+                "unique_default", "conflicting_defaults", "conflicting_override")
+_REFUSED_POINT_FORMS = {"callable", "tuple_eq", "tuple_in", "or", "cast", "text",
+                        "literal_sql", "unique_override", "conflicting_defaults"}
+
+
+def _point_predicate(Customer, identity, mode, calls):
+    params = {}
+    bound = bindparam("point", identity, type_=Uuid())
+    predicate = Customer.id == bound
+    if mode == "grouped":
+        predicate = Grouping(predicate)
+    elif mode == "nested_and":
+        predicate = Grouping(and_(Grouping(predicate), Grouping(and_(Customer.rank >= 0, Customer.name != "absent"))))
+    elif mode == "reversed":
+        predicate = bound == Customer.id
+    elif mode == "literal":
+        predicate = Customer.id == literal(identity, Uuid())
+    elif mode in ("late", "late_override"):
+        predicate = Customer.id == bindparam("point", uuid4(), type_=Uuid()) if mode == "late_override" else Customer.id == bindparam("point", type_=Uuid())
+        params = {"point": identity}
+    elif mode == "single_in":
+        predicate = Customer.id.in_([identity])
+    elif mode == "late_in":
+        predicate = Customer.id.in_(bindparam("points", expanding=True, type_=Uuid()))
+        params = {"points": [identity]}
+    elif mode == "multi_in":
+        predicate = Customer.id.in_([identity, uuid4(), None])
+    elif mode in ("callable", "callable_override"):
+        def value():
+            calls.append(True)
+            return identity
+        predicate = Customer.id == bindparam("point", callable_=value, type_=Uuid())
+        if mode == "callable_override":
+            params = {"point": identity}
+    elif mode == "tuple_eq":
+        predicate = tuple_(Customer.id) == tuple_(literal(identity, Uuid()))
+    elif mode == "tuple_in":
+        predicate = tuple_(Customer.id).in_([(identity,)])
+    elif mode == "or":
+        predicate = or_(predicate, Customer.name == "absent")
+    elif mode == "cast":
+        predicate = cast(Customer.id, Uuid()) == identity
+    elif mode == "text":
+        predicate = text("id = :point").bindparams(bound)
+    elif mode == "literal_sql":
+        predicate = Customer.id == literal_column("'" + str(identity) + "'::uuid")
+    elif mode == "unique_override":
+        predicate = Customer.id == bindparam("point", uuid4(), unique=True, type_=Uuid())
+        params = {"point_1": identity}
+    elif mode == "unique_default":
+        predicate = Customer.id == bindparam("point", identity, unique=True, type_=Uuid())
+    elif mode in ("conflicting_defaults", "conflicting_override"):
+        predicate = and_(predicate, Customer.id == bindparam("point", uuid4(), type_=Uuid()))
+        if mode == "conflicting_override":
+            params = {"point": identity}
+    return predicate, params
+
+
+@pytest.mark.parametrize("asynchronous", [False, True], ids=["sync", "async"])
+@pytest.mark.parametrize("projection", ["entity", "scalar"])
+@pytest.mark.parametrize("first_form", ["grouped", "callable"])
+def test_requested_row_variants_use_native_oracle_and_reject_substituted_rows(app, asynchronous, projection, first_form):
+    """Native SQL identifies a requested row; a different valid frame must never pass."""
+    Customer = app.Customer
+    identity, other = uuid4(), uuid4()
+    selected = Customer if projection == "entity" else Customer.note
+    # Independent native SQLAlchemy engine remains outside attachment guards.
+    oracle = create_engine("postgresql+psycopg://", hide_parameters=True,
+                           creator=lambda: psycopg.connect(os.environ["CRYPTALIS_TEST_DATABASE_URL"]))
+    def substitute(connection, statement, multiparams, params, options):
+        return select(selected).where(Customer.id == other), [], {}
+    def cases():
+        for mode in (first_form, *(form for form in _POINT_FORMS if form != first_form)):
+            calls = []
+            predicate, params = _point_predicate(Customer, identity, mode, calls)
+            with Session(oracle) as native:
+                # Isolate each expression's bind semantics. A native cached
+                # non-callable template can otherwise omit a later callable.
+                expected = native.scalar(select(Customer.name).where(predicate), params,
+                                         execution_options={"compiled_cache": None})
+            # Duplicate named defaults use the compiler's final definition.
+            assert expected == (None if mode == "conflicting_defaults" else "requested"), mode
+            assert len(calls) == (1 if mode == "callable" else 0)
+            calls.clear()
+            yield mode, select(selected).where(predicate), params, calls
+    def check(session, engine):
+        observed = []
+        event.listen(engine, "before_cursor_execute", lambda *args: observed.append(True))
+        for mode, statement, params, calls in cases():
+            before = len(observed)
+            if mode in _REFUSED_POINT_FORMS:
+                with pytest.raises(UnsupportedProtectedOperation):
+                    session.scalar(statement, params)
+                assert len(observed) == before, mode + " reached SQL"
+                assert not calls, "Admission evaluated a host callable"
+                continue
+            value = session.scalar(statement, params)
+            assert (value.note if projection == "entity" else value) == "requested payload"
+            session.expunge_all()
+            event.listen(engine, "before_execute", substitute, retval=True)
+            try:
+                with pytest.raises(AuthenticationFailed):
+                    session.scalar(statement, params)
+            finally:
+                event.remove(engine, "before_execute", substitute)
+    def seed(session):
+        session.add_all([Customer(id=identity, tenant_id=TENANT, name="requested", note="requested payload", secret="", rank=1),
+                         Customer(id=other, tenant_id=TENANT, name="substituted", note="different valid payload", secret="", rank=2)])
+    if not asynchronous:
+        sessions = factory(app, True)
+        try:
+            with sessions(tenant_id=TENANT) as session:
+                seed(session)
+                session.commit()
+            with sessions(tenant_id=TENANT) as session:
+                check(session, app.engine)
+        finally:
+            oracle.dispose()
+        return
+    app.switch()
+    async def scenario():
+        engine = create_async_engine("postgresql+psycopg://", hide_parameters=True,
+                                     async_creator=lambda: psycopg.AsyncConnection.connect(os.environ["CRYPTALIS_TEST_DATABASE_URL"]))
+        try:
+            sessions = await attach(app.mapping, engine, lock=app.plan.lock_bytes, keys=app.rings.__getitem__)
+            async with sessions(tenant_id=TENANT) as session:
+                seed(session)
+                await session.commit()
+            async with sessions(tenant_id=TENANT) as session:
+                await session.run_sync(lambda sync: check(sync, engine.sync_engine))
+        finally:
+            await engine.dispose()
+            oracle.dispose()
+    asyncio.run(scenario())
+
+
+@pytest.mark.parametrize("form", ["having", "join_on"])
+@pytest.mark.parametrize("projection", ["entity", "scalar"])
+def test_requested_identity_outside_where_cannot_skip_admission(app, form, projection):
+    sessions, Customer, Article = factory(app, True), app.Customer, app.Article
+    identity, other = uuid4(), uuid4()
+    with sessions(tenant_id=TENANT) as session:
+        session.add_all([Customer(id=identity, tenant_id=TENANT, name="requested", note="requested payload", secret="", rank=1),
+                         Customer(id=other, tenant_id=TENANT, name="other", note="other valid payload", secret="", rank=2),
+                         Article(id=uuid4(), customer_id=identity, title="requested article")])
+        session.commit()
+    def statement(selected):
+        point = Customer.id == bindparam("point", identity, type_=Uuid())
+        if form == "having":
+            return select(selected).group_by(Customer.id).having(point)
+        return select(selected).join(Article, and_(Article.customer_id == Customer.id, point))
+    oracle = create_engine("postgresql+psycopg://", hide_parameters=True,
+                           creator=lambda: psycopg.connect(os.environ["CRYPTALIS_TEST_DATABASE_URL"]))
+    try:
+        with Session(oracle) as native:
+            assert native.scalar(statement(Customer.name)) == "requested"
+    finally:
+        oracle.dispose()
+    observed = []
+    event.listen(app.engine, "before_cursor_execute", lambda *args: observed.append(True))
+    selected = Customer if projection == "entity" else Customer.note
+    def substitute(connection, statement, multiparams, params, options):
+        return select(selected).where(Customer.id == other), [], {}
+    event.listen(app.engine, "before_execute", substitute, retval=True)
+    try:
+        with sessions(tenant_id=TENANT) as session:
+            with pytest.raises(UnsupportedProtectedOperation):
+                session.scalar(statement(selected))
+        assert not observed, "Unadmitted identity constraint reached SQL"
+    finally:
+        event.remove(app.engine, "before_execute", substitute)
+
+
+@pytest.mark.parametrize("form", ["or", "cast", "range"])
+def test_plain_projection_keeps_native_primary_key_predicates(app, form):
+    sessions, Customer = factory(app, True), app.Customer
+    identity = uuid4()
+    with sessions(tenant_id=TENANT) as session:
+        session.add(Customer(id=identity, tenant_id=TENANT, name="native plain value", note="private", secret="", rank=1))
+        session.commit()
+    predicates = {"or": or_(Customer.id == identity, Customer.rank == -1),
+                  "cast": cast(Customer.id, Uuid()) == identity,
+                  "range": Customer.id >= identity}
+    statement = select(Customer.name).where(predicates[form])
+    oracle = create_engine("postgresql+psycopg://", hide_parameters=True,
+                           creator=lambda: psycopg.connect(os.environ["CRYPTALIS_TEST_DATABASE_URL"]))
+    try:
+        with Session(oracle) as native:
+            expected = native.scalars(statement).all()
+        with sessions(tenant_id=TENANT) as session:
+            assert session.scalars(statement).all() == expected == ["native plain value"]
+    finally:
+        oracle.dispose()
 
 
 def test_unprepared_opaque_computed_nested_ddl_and_raw_driver_paths_reject(app):

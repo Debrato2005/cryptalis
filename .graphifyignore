@@ -7,6 +7,7 @@ docs/_reset/
 docs/research/
 # Machine-local caches, environments, and build output.
 graphify-out/
+.local/
 .venv/
 __pycache__/
 *.pyc
@@ -14,6 +15,11 @@ __pycache__/
 .ruff_cache/
 dist/
 build/
+docs/_build/
+*.egg-info/
+.mypy_cache/
+.hypothesis/
+.coverage
 # Private material is never indexed.
 .env
 .env.*
@@ -21,4 +27,12 @@ build/
 *.key
 credentials/
 secrets/
+.aws/
+.ssh/
 *token-checks*
+.cryptalis-test-url
+.cryptalis-test-runtime-url
+*credentials*
+*.pgpass
+.pgpass
+*.log

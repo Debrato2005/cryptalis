@@ -22,7 +22,7 @@ with sessions(tenant_id=authenticated_tenant) as session:
 
 The target must already contain CF1 bytea columns, exact generated expression indexes and validated framing checks.
 The walkthrough fixtures create these objects with the owner login; the application uses only runtime CRUD grants.
-Product migration, verification and deployment admission belong to slice 5. Do not apply fixture DDL to real data.
+Use the [product protection transition](walkthrough-migration.md) for existing data. Do not apply fixture DDL to real data.
 The B-tree indexes the full 32-byte keyed term inside each frame, with tenant first when declared.
 Payload and term change in one ORM write. Native unique indexes arbitrate concurrent writes; duplicates raise `IntegrityError`.
 NULL stays NULL. NULLs remain distinct for uniqueness. Empty IN matches no rows; NULL in IN keeps native three-valued truth.
@@ -31,30 +31,11 @@ Protected joins, derived tables, inequality, NOT IN, patterns, ordering, groupin
 Custom codecs, callables, generated parameter-name overrides and conflicting named defaults without explicit values also reject.
 Protected compilation is per operation; plain queries retain SQLAlchemy caching.
 
-Reload both private files before each database command. Stop if either sanity check fails.
+Run from the project root. The wrapper loads both private files fresh and probes both roles.
+Inherited URLs are ignored. A failed probe stops the run with sanitized diagnostics.
 
 ```bash
-set -e
-export CRYPTALIS_TEST_DATABASE_URL="$(sed 's#^postgresql+psycopg://#postgresql://#' ~/.cryptalis-test-url)"
-export CRYPTALIS_TEST_RUNTIME_DATABASE_URL="$(sed 's#^postgresql+psycopg://#postgresql://#' ~/.cryptalis-test-runtime-url)"
-.venv/bin/python - <<'PY'
-import hashlib, os, psycopg
-names = ("CRYPTALIS_TEST_DATABASE_URL", "CRYPTALIS_TEST_RUNTIME_DATABASE_URL")
-for name in names:
-    value = os.environ.get(name, "")
-    print(name, "set=" + str(bool(value)), "sha256=" + hashlib.sha256(value.encode()).hexdigest()[:8])
-failed = any(not os.environ.get(name) for name in names)
-for name in names:
-    if not os.environ.get(name): continue
-    try:
-        with psycopg.connect(os.environ[name], connect_timeout=10) as connection:
-            assert connection.execute("select 1").fetchone() == (1,)
-        print(name, "SELECT_1=OK")
-    except psycopg.Error as error:
-        print(name, type(error).__name__, "SQLSTATE=" + str(error.sqlstate)); failed = True
-raise SystemExit(1 if failed else 0)
-PY
-.venv/bin/python -m pytest tests/test_sqlalchemy_search.py -q --tb=short
+.venv/bin/python scripts/test_postgres.py -- -q tests/test_sqlalchemy_search.py --tb=short
 ```
 Returned frames authenticate. Separate writers can hide matches, replay frames, substitute NULL or delete rows.
 The host must pin the correct keys and exclude bypass writers. Grants do not prove freshness or complete results.

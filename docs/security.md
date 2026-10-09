@@ -63,6 +63,9 @@ Same-context replay, SQL NULL substitution, hostile omitted rows, and host autho
 
 ## Slice 4 search enforcement: 2026-10-08
 
+Earlier slice 3/4 row-isolation tests omit grouped and callable primary-key binds.
+The [corrective checkpoint](status.md#corrective-audit-checkpoint-2026-10-09) records their repair and the revised evidence boundary.
+
 **IMPLEMENTED, bounded prototype:** exact-text equality/IN uses full HMAC terms from the independently keyed CF1 header.
 Each comparison includes declared tenant scope. Native B-tree expression indexes enforce declared uniqueness during races.
 Payload and term are one bytea value. Public framing checks refuse malformed shape; they cannot prove AEAD authenticity.

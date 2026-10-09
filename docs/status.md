@@ -7,6 +7,22 @@ No PostgreSQL/provider/runtime cell, production key provider, independent review
 VERIFIED below refers only to the named checks and their exact revisions.
 All other contract and promotion requirements are SPECIFIED. All seven full gates remain UNKNOWN.
 
+## Corrective audit checkpoint: 2026-10-09
+
+**VERIFIED, bounded PostgreSQL 16 cell:** source/test revision `audit-a07004dfcda8cd05`, based on `fe2b061`.
+This is a content-bound worktree revision, not a Git commit. [Full receipt](_reset/audit-verification-a07004dfcda8cd05.json): **975 passed**.
+[Slice 3](_reset/slice3-audit-a07004dfcda8cd05.json): 64 cases; [slice 4](_reset/slice4-audit-a07004dfcda8cd05.json): 75;
+[slice 5](_reset/slice5-audit-a07004dfcda8cd05.json): 53 existing plus 40 audit cases. Old receipts remain unchanged.
+Earlier slice 3 and 4 row-isolation claims did **not** cover grouped or callable primary-key binds.
+The fix captures grouped AND/scalar-IN identities, normalizes explicit bind values and rejects ambiguous forms before SQL.
+Protected primary-key lookups in HAVING or JOIN ON also reject. Plain projections retain native primary-key grammar.
+All maintenance entries require approval before connection or locks. Read-only plan/deployment/attachment checks are exempt.
+Acquisition, phase and cleanup failures retain safe diagnostics, operation identity and both primary/cleanup outcomes.
+The credential wrapper reloads both private files and probes both roles; three real authentication-failure controls verify suite redaction.
+[Audit regressions](_reset/audit-regressions-a07004dfcda8cd05.json) compare original and fixed code in isolated copies;
+[20 existing safety removals](_reset/slice5-regressions-audit-1407433d842664f6.json) fail without their mechanism and pass after restoration.
+No slice 6 work, production provider or independent review is added. All seven gates remain **UNKNOWN**.
+
 ## Slice 5 checkpoint: 2026-10-09
 
 **IMPLEMENTED:** `cryptalis.migration.plan`, `apply`, `verify`, and pre-switch `abort`.
@@ -414,11 +430,11 @@ Raw-driver negative controls demonstrate that separate privileged writers can by
 
 ## Blocking evidence
 
-The latest DISTINCT fix lacks real PostgreSQL regression. The app-assigned-key plan-time contract and full admitted scope need executable evidence.
-Historical service access and local application observations did not qualify a runtime release. Recheck the exact environment before any new runtime claim.
-No service, provider, artifact, or project test runs during this documentation pass. Prior receipts remain unchanged.
+Slices 1–5 have bounded product evidence for app-assigned-key planning, storage/search admission and protection transitions.
+Earlier receipts omit grouped and callable primary-key binds; their row-isolation claims do not cover those forms.
+The [corrective checkpoint](#corrective-audit-checkpoint-2026-10-09) records their repair. No runtime release is qualified.
 
-Independent-process recovery, non-owning runtime enforcement, deployment writer exclusion, retained-backup readers, format upgrades,
+Full independent recovery, deployment writer exclusion, retained-backup readers, format upgrades,
 real resource-exhaustion faults, production provider custody, authenticated policy publication/restore, and independent review remain required.
 [Gate criteria](#missing-evidence-and-promotion-criteria) state the deciding observations without restoring the deleted control plane.
 No production provider is designated. The local provider is functional evidence only.

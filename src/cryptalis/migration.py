@@ -28,10 +28,13 @@ class TransitionFailure(RuntimeError):
     """Safe, actionable failure; durable progress requires current inspection."""
     effects = 'INSPECT_JOURNAL'
     retry = 'after_inspection'
-    def __init__(self, code, operation_id=None, sqlstate=None):
+    def __init__(self, code, operation_id=None, sqlstate=None, *, cleanup_errors=()):
         self.code, self.operation_id, self.sqlstate = code, operation_id, sqlstate
+        self.cleanup_errors = tuple(cleanup_errors)
+        cleanup = ''.join(f' cleanup={stage}:{cause}:{state or "UNKNOWN"};'
+                          for stage,cause,state in self.cleanup_errors)
         super().__init__(f'{code}; operation={operation_id or "unstarted"}; SQLSTATE={sqlstate or "UNKNOWN"}. '
-                         'Keep writers stopped. Inspect this operation and the external current policy before resume.')
+                         'Keep writers stopped. Inspect this operation and the external current policy before resume.' + cleanup)
 
 
 @dataclass(frozen=True)
@@ -141,7 +144,7 @@ def plan(manifest, mapping, engine, *, writers, search_reviews=(), keys, runtime
         raise TransitionFailure('missing_measured_storage_or_wal_costs')
     lock = json.loads(proposal.lock_bytes)
     policies, scopes, rows, plaintext_bytes = {}, [], 0, 0
-    with engine.connect() as c:
+    with _connection(engine) as c:
         target = _target(c)
         role = c.exec_driver_sql('SELECT rolsuper, rolcreaterole, rolcreatedb, rolbypassrls, rolreplication, pg_catalog.pg_has_role(rolname,current_user,\'MEMBER\') FROM pg_catalog.pg_roles WHERE rolname=%s',(runtime_role,)).one_or_none()
         if role is None or any(role) or runtime_role == target[-1]: raise TransitionFailure('unsafe_runtime_role')
@@ -176,29 +179,80 @@ def plan(manifest, mapping, engine, *, writers, search_reviews=(), keys, runtime
         'lock':lock,'source_lock_digest':proposal.source_lock_digest,'key_policies':policies,'scopes':scopes,'estimates':estimates}))
 
 
-def _admit(p,pin,approval=None):
+def _admit(p,pin):
     if (not isinstance(p,MigrationPlan) or not isinstance(pin,DeploymentPin) or
         (pin.target_id,pin.operation_id,pin.plan_digest) != (p.target_id,p.operation_id,p.digest) or
         pin.phase not in PHASES + ('ACTIVATING',)):
         raise TransitionFailure('external_policy_mismatch',p.operation_id if isinstance(p,MigrationPlan) else None)
-    if approval is not None and (not isinstance(approval,MaintenanceApproval) or
-            not isinstance(approval.writer_exclusion,str) or not approval.writer_exclusion.strip() or
+
+
+def _approve_maintenance(p,approval):
+    if not isinstance(approval,MaintenanceApproval):
+        raise TransitionFailure('maintenance_approval_required',p.operation_id)
+    if (not isinstance(approval.writer_exclusion,str) or not approval.writer_exclusion.strip() or
             type(approval.approved_pause_seconds) not in (int,float) or not math.isfinite(approval.approved_pause_seconds) or
             approval.approved_pause_seconds < p.document['estimates']['writer_pause_seconds_estimate']):
         raise TransitionFailure('writer_exclusion_or_pause_not_approved',p.operation_id)
 
 
+def _safe_failure(exc,operation_id,cleanup_errors):
+    if isinstance(exc,TransitionFailure):
+        return TransitionFailure(exc.code,exc.operation_id or operation_id,exc.sqlstate,
+                                 cleanup_errors=exc.cleanup_errors + tuple(cleanup_errors))
+    if isinstance(exc,SQLAlchemyError):
+        return TransitionFailure('database_effect_requires_inspection',operation_id,
+                                 getattr(getattr(exc,'orig',None),'sqlstate',None),cleanup_errors=cleanup_errors)
+    if isinstance(exc,CryptoFailure):
+        return TransitionFailure(exc.code,operation_id,cleanup_errors=cleanup_errors)
+    return TransitionFailure('operation_failed_requires_inspection',operation_id,cleanup_errors=cleanup_errors)
+
+
+@contextmanager
+def _connection(engine,operation_id=None,*,exclusive=False):
+    """Sanitize acquisition and operation errors; report every cleanup failure.
+
+    Exclusive executors invalidate their physical session so session advisory
+    locks cannot return to a pool. Read-only callers close their own connection.
+    """
+    c=None; driver=None; primary=None; cleanup_errors=[]
+    try:
+        c=engine.connect()
+        if exclusive: driver=c.connection.driver_connection
+        yield c
+    except BaseException as exc:
+        primary=exc
+    finally:
+        if c is not None:
+            for stage in (('rollback','invalidate','close') if exclusive else ('close',)):
+                try:
+                    getattr(c,stage)()
+                except Exception as exc:
+                    cleanup_errors.append((stage,type(exc).__name__,getattr(getattr(exc,'orig',None),'sqlstate',None)))
+                    if stage=='invalidate' and driver is not None:
+                        # Even a failed SQLAlchemy invalidation must not leave
+                        # a session advisory lock on a reusable connection.
+                        try: driver.close()
+                        except Exception as fallback:
+                            cleanup_errors.append(('driver_close',type(fallback).__name__,getattr(fallback,'sqlstate',None)))
+    if primary is not None:
+        if isinstance(primary,Exception):
+            raise _safe_failure(primary,operation_id,cleanup_errors) from None
+        if cleanup_errors: primary.add_note(f'Cryptalis cleanup failures: {cleanup_errors!r}')
+        raise primary
+    if cleanup_errors:
+        raise TransitionFailure('connection_cleanup_requires_inspection',operation_id,cleanup_errors=cleanup_errors) from None
+
+
 @contextmanager
 def _executor(p,engine,pin,approval):
-    _admit(p,pin,approval)
+    _admit(p,pin)
+    _approve_maintenance(p,approval)
     try:
         _previous_lock(p.lock_bytes,p.document['lock'],engine)
     except ValueError:
         raise TransitionFailure('invalid_compiler_lock',p.operation_id) from None
-    c=engine.connect()
     lock=int.from_bytes(hashlib.sha256(_canonical([(m['schema'],m['table']) for m in p.document['lock']['models']])).digest()[:8],'big',signed=True)
-    acquired=False
-    try:
+    with _connection(engine,p.operation_id,exclusive=True) as c:
         if _target(c) != p.document['target']: raise TransitionFailure('wrong_database_target',p.operation_id)
         c.exec_driver_sql("SET lock_timeout = '5s'")
         c.exec_driver_sql('SET synchronous_commit = on')
@@ -206,15 +260,6 @@ def _executor(p,engine,pin,approval):
         c.commit()
         if not acquired: raise TransitionFailure('executor_already_running',p.operation_id)
         yield c
-    except SQLAlchemyError as exc:
-        raise TransitionFailure('database_effect_requires_inspection',p.operation_id,getattr(exc.orig,'sqlstate',None)) from None
-    except CryptoFailure as exc:
-        raise TransitionFailure(exc.code,p.operation_id) from None
-    finally:
-        # Close the physical session: a pooled advisory lock must never escape.
-        try: c.rollback()
-        finally:
-            c.invalidate(); c.close()
 
 
 def _state(c,p,pin,*,allow_aborted=False):
@@ -443,7 +488,6 @@ def apply(p,engine,*,keys,pin,approval,chunk_size=1000,until='PENDING'):
     external publication. ACTIVE requires the host's independently current pin.
     """
     if type(chunk_size) is not int or not 1<=chunk_size<=5000 or until not in PHASES[1:]: raise TransitionFailure('invalid_apply_bound')
-    if not isinstance(approval,MaintenanceApproval): raise TransitionFailure('maintenance_approval_required')
     with _executor(p,engine,pin,approval) as c:
         state=_state(c,p,pin); c.commit()
         if state is None:
@@ -474,8 +518,14 @@ def verify(p,engine,*,keys,pin,approval):
 
 
 def check_deployment(p,engine,*,pin):
+    """Read-only policy inspection; no maintenance approval or exclusive lock.
+
+    The other read-only exemptions are plan and check_attachment. The latter
+    inspects a supplied connection and does not acquire or own that connection.
+    apply, verify and abort always require approval in their shared executor.
+    """
     _admit(p,pin)
-    with engine.connect() as c: _check_connection(p,c,pin)
+    with _connection(engine,p.operation_id) as c: _check_connection(p,c,pin)
 
 
 def abort(p,engine,*,pin,approval):
