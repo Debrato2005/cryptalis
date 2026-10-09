@@ -1,11 +1,12 @@
 # Cryptalis
 
-**IMPLEMENTED: research prototype with a product manifest compiler, CF1 primitives, a local development provider, and a bounded SQLAlchemy storage attachment.**
+**IMPLEMENTED: research prototype with a manifest compiler, CF1 primitives, a local development provider, and bounded SQLAlchemy storage, equality/IN and tenant-scoped uniqueness.**
 The sync/async attachment has scoped PostgreSQL tests under separate restricted runtime credentials.
 Tested runtime DDL and ownership changes are refused. Separate writers can still change data; deployment writer exclusion remains unverified.
 All seven full gates remain **UNKNOWN**. Read [status](docs/status.md) for evidence and revision limits.
 No runtime compatibility cell, production key provider, or independent review is qualified.
 The [slice 3 walkthrough](docs/walkthrough-sqlalchemy.md) gives the implemented API and its limits.
+The [search walkthrough](docs/walkthrough-search.md) covers slice 4 and its native-index mechanism.
 
 **SPECIFIED:** Cryptalis adds application-side protection to a Python 3.12+, SQLAlchemy 2.x, psycopg 3, PostgreSQL 16 backend.
 One manifest selects protected text fields. One attachment handles admitted writes, reads, and expressions.
@@ -100,8 +101,9 @@ Same-context replay, malicious result omission, nullable-field substitution with
 Plaintext migrations and removal can leave historical WAL, backup, and snapshot exposure.
 [Security](docs/security.md) owns accepted leakage and these limits.
 
-**SPECIFIED targets, not achieved:** added p95 at most 3 ms for point/equality reads, at most 8 ms for `IN` with 20 values.
+**SPECIFIED targets:** added p95 at most 3 ms for point/equality reads, at most 8 ms for `IN` with 20 values.
 Storage targets at most 2× for a protected column with an equality index.
+Local measurements and remaining limits belong to [compatibility](docs/compatibility.md#slice-4-local-million-row-profile-2026-10-08).
 Recorded latency misses these targets. The [performance owner](docs/compatibility.md#performance-targets-and-recorded-costs) gives measurements and the unexplained plaintext-page slowdown.
 Write-throughput and pause budgets remain undecided (D).
 

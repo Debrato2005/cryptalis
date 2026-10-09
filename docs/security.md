@@ -61,6 +61,28 @@ The local provider is ephemeral. Writer exclusion, provider custody, deployment 
 and independent review remain UNKNOWN. All seven full gates remain UNKNOWN.
 Same-context replay, SQL NULL substitution, hostile omitted rows, and host authorization limits remain unchanged.
 
+## Slice 4 search enforcement: 2026-10-08
+
+**IMPLEMENTED, bounded prototype:** exact-text equality/IN uses full HMAC terms from the independently keyed CF1 header.
+Each comparison includes declared tenant scope. Native B-tree expression indexes enforce declared uniqueness during races.
+Payload and term are one bytea value. Public framing checks refuse malformed shape; they cannot prove AEAD authenticity.
+Attachment checks exact index/check definitions under `pg_catalog` search-path resolution, including validity, keys and operator classes.
+Aliases retain physical-column lineage. Forged mappings, protected derived tables, joins and unadmitted grammar refuse before the driver.
+Search binds use ordinary text codecs and explicit values. Custom codecs, callables, ambiguous unsupplied named defaults and generated parameter-name overrides refuse.
+These codec checks cover every placeholder sharing a search name, including plain fields. Protected ON conditions cannot reuse WHERE permits.
+Independent frozen vectors verify query terms; native PostgreSQL comparisons verify truth, result membership and uniqueness outcomes.
+Search wrappers and generation are pinned per tenant for the attachment lifetime. A replacement refuses before query or write.
+This pin does not authenticate a fresh deployment or infer the correct root from existing data. The host must supply that authority.
+Cross-process policy publication, stale-deployment exclusion, full data verification and search-key transitions remain unqualified.
+
+Independent runtime writers can change a public term and hide a matching row without changing its payload length or framing.
+An attached point read rejects the changed frame. An equality query need not return it, so no completeness check occurs.
+Plausible framing with invalid AEAD can pass PostgreSQL's CHECK and later fail an attached read.
+Replay, NULL substitution, deletion and hostile global uniqueness remain outside the returned-row authentication guarantee.
+Small-domain and leakage reviews remain trusted host assertions. They do not stop authorized chosen-input enumeration.
+The [slice 4 receipt](_reset/slice4-verification.json) records tests, isolated regression removals and local claim boundaries.
+All seven gates remain UNKNOWN. No production provider or independent review exists.
+
 ## Trust boundaries
 
 | Boundary | Assumption and control |

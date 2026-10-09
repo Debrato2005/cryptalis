@@ -111,6 +111,23 @@ def _term(encoded, field, material):
     return mac.finalize()
 
 
+def equality_term(value: str | None, field: FieldDescriptor, tenant: UUID,
+                  keys: PreparedKeys) -> bytes | None:
+    """Prepare a query term with the same frozen composition as a CF1 header."""
+    if not isinstance(field, FieldDescriptor) or not field.equality or not isinstance(keys, PreparedKeys):
+        raise InvalidContext()
+    _native_uuid(tenant)
+    if (field.domain_id, tenant) != (keys.policy.domain_id, keys.policy.tenant_id):
+        raise KeyUnavailable()
+    if field.tenant_codec == "single-tenant-uuid/v1" and tenant != field.table_id:
+        raise InvalidContext()
+    generation = keys.policy.search_generation
+    material = keys._resolve(field.domain_id, tenant, "search", generation)
+    result = None if value is None else _term(_encode(value), field, material)
+    keys._resolve(field.domain_id, tenant, "search", generation)
+    return result
+
+
 def _context(field, tenant, record, keys):
     if not isinstance(field, FieldDescriptor) or not isinstance(keys, PreparedKeys):
         raise InvalidContext()

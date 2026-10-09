@@ -1,12 +1,13 @@
-"""Storage attachment through public SQLAlchemy hooks. Research prototype.
+"""Bounded text storage and equality through public SQLAlchemy hooks.
 
 The host supplies a trusted lock and authenticated tenant scope. This module
-does not migrate schemas, rewrite search predicates, or qualify external writers.
+does not migrate schemas or qualify external writers. Research prototype.
 """
 
 from contextvars import ContextVar
 from dataclasses import dataclass, field
 from functools import wraps
+from hashlib import sha256
 from uuid import UUID
 
 from sqlalchemy import BigInteger, LargeBinary, Text, Uuid, event, func, inspect, type_coerce
@@ -15,25 +16,26 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, AsyncSessionTransa
 from sqlalchemy.orm import Session, registry
 from sqlalchemy.orm.attributes import NO_VALUE
 from sqlalchemy.sql import operators, visitors
-from sqlalchemy.sql.elements import BinaryExpression, BindParameter, BooleanClauseList, Cast, ColumnClause, Label, TextClause, UnaryExpression
+from sqlalchemy.sql.elements import BinaryExpression, BindParameter, BooleanClauseList, Cast, ColumnClause, Grouping, Label, TextClause, UnaryExpression
 from sqlalchemy.sql.functions import FunctionElement
-from sqlalchemy.sql.selectable import FromClause, Select
+from sqlalchemy.sql.selectable import Alias, CTE, FromClause, Select, Join, Subquery
 from sqlalchemy.sql.dml import Insert, Update, Delete
 from sqlalchemy.types import JSON, TypeDecorator
 
 from ._sqlalchemy_guard import install_guard
+from ._sqlalchemy_search import rewrite_search, search_shape, validate_search_storage
 from .crypto import CryptoFailure, AuthenticationFailed, FieldDescriptor, Keyring, KeyUnavailable, MAX_TEXT_BYTES, open_text, seal_text
 from .manifest.parser import decode_manifest_json
 
 
 class UnsupportedProtectedOperation(CryptoFailure):
     stage = "SQLAlchemy admission"
-    remedy = "Use the attached factory, ordinary ORM writes, and direct protected projections. Remove unsupported SQL or expressions."
+    remedy = "Use the attached factory, ordinary ORM writes, direct projections, and declared equality/IN with ordinary text binds. Remove unsupported SQL or bind codecs."
 
 
 class PolicyMismatch(CryptoFailure):
     stage = "attachment validation"
-    remedy = "Check the trusted lock, physical bytea target, mapping, and guarded engine configuration. Attach before application use."
+    remedy = "Check the trusted lock, bytea target, search index/check, tenant key policy, mapping, and guarded engine configuration. Attach before application use."
 
 
 @dataclass(frozen=True)
@@ -65,6 +67,20 @@ class _Operation:
     prepared: dict = field(default_factory=dict, repr=False)
     rows: dict = field(default_factory=dict, repr=False)
     points: tuple = ()
+    search_nodes: list = field(default_factory=list, repr=False)
+    search_identities: dict = field(default_factory=dict, repr=False)
+    parameters: dict = field(default_factory=dict, repr=False)
+
+    def generated(self, node):
+        if self.search_identities.get(id(node)) is node:
+            return True
+        for permitted in self.search_nodes:
+            if isinstance(node, type(permitted)) and node.compare(permitted):
+                # Keep the reference alive until the operation ends; an object
+                # ID alone could be reused after garbage collection.
+                self.search_identities[id(node)] = node
+                return True
+        return False
 
 
 _operation = ContextVar("cryptalis_sqlalchemy_operation", default=None)
@@ -184,6 +200,7 @@ class _Attachment:
         self.bindings = []
         self.models = {}
         self.fingerprint = ()
+        self.search_pins = {}
 
     def protected(self, expression):
         # ORM annotations can retain a native type from mapping construction.
@@ -201,6 +218,14 @@ class _Attachment:
         if (not isinstance(ring, Keyring) or ring.policy.tenant_id != tenant or
                 str(ring.policy.domain_id) != self.document["domain_id"]):
             raise PolicyMismatch()
+        if any(binding.descriptor.equality for binding in self.bindings):
+            roots = [wrapper for wrapper in ring.policy.wrappers if wrapper.context.purpose == "search"]
+            if len(roots) != 1 or roots[0].context.generation != ring.policy.search_generation:
+                raise PolicyMismatch()
+            root = roots[0]
+            pin = (root.provider_id, root.context, sha256(root.sealed).digest())
+            if self.search_pins.setdefault(tenant, pin) != pin:
+                raise PolicyMismatch()
         return ring
 
     def prepare(self, tenant):
@@ -256,16 +281,17 @@ class _Attachment:
                         column.server_onupdate is not None or actual.get("default") is not None or actual.get("computed") is not None):
                     raise PolicyMismatch()
                 if field["queries"]:
-                    # Search/unique runtime semantics belong to slice 4. Do not
-                    # accept a declared constraint that this slice cannot honor.
-                    raise UnsupportedProtectedOperation()
+                    if (not isinstance(field["queries"], list) or not field["queries"] or
+                            not set(field["queries"]) <= {"equality", "unique"}):
+                        raise PolicyMismatch()
+                    validate_search_storage(connection, model, field)
                 descriptor = FieldDescriptor.from_compiled(field["descriptor"], field["descriptor_digest"])
                 if (str(descriptor.domain_id), str(descriptor.table_id), str(descriptor.field_id)) != (
                         self.document["domain_id"], model["table_id"], field["field_id"]):
                     raise PolicyMismatch()
                 if (descriptor.record_codec != model["record"]["codec"] or
                         descriptor.tenant_codec != ("uuid16/v1" if tenant is not None else "single-tenant-uuid/v1") or
-                        descriptor.representation != field["representation"] or descriptor.equality):
+                        descriptor.representation != field["representation"] or descriptor.equality != bool(field["queries"])):
                     raise PolicyMismatch()
                 binding = _Binding(column, mapper.get_property_by_column(column).key, descriptor,
                                    record, mapper.get_property_by_column(record).key, tenant,
@@ -329,6 +355,10 @@ class _Attachment:
             raise UnsupportedProtectedOperation()
         safe_count_stars = set()
         for node in visitors.iterate(statement):
+            operation = _operation.get()
+            generated = operation is not None and operation.owner is self and operation.generated(node)
+            if generated:
+                continue
             if isinstance(node, FunctionElement) and node.name == "count":
                 arguments = list(node.clauses)
                 if len(arguments) == 1 and isinstance(arguments[0], ColumnClause) and arguments[0].name == "*":
@@ -336,23 +366,74 @@ class _Attachment:
         for node in visitors.iterate(statement):
             if isinstance(node, TextClause):
                 raise UnsupportedProtectedOperation()
+            if isinstance(node, Join) and self.protected(node.onclause):
+                raise UnsupportedProtectedOperation()
+            operation = _operation.get()
+            if operation is not None and operation.owner is self and operation.generated(node):
+                continue
             if isinstance(node, ColumnClause) and node.is_literal and id(node) not in safe_count_stars:
                 raise UnsupportedProtectedOperation()
             if isinstance(node, ColumnClause) and id(node) not in safe_count_stars:
                 table = node.table
+                source = table
+                while isinstance(source, Alias):
+                    source = source.element
+                if isinstance(source, (Subquery, CTE)) and self.protected(node):
+                    raise UnsupportedProtectedOperation()
                 if table is None:
                     raise UnsupportedProtectedOperation()
                 for binding in self.bindings:
                     target = binding.column.table
-                    if (node.name == binding.column.name and table.name == target.name and
-                            table.schema in (None, target.schema) and not node.shares_lineage(binding.column)):
-                        raise UnsupportedProtectedOperation()
+                    for origin in node.base_columns:
+                        physical = getattr(origin, "table", None)
+                        if (physical is not None and origin.name == binding.column.name and physical.name == target.name and
+                                physical.schema in (None, target.schema) and not origin.shares_lineage(binding.column)):
+                            raise UnsupportedProtectedOperation()
             if self.protected(node) and not isinstance(node, (Select, FromClause, ColumnClause, Label)):
-                raise UnsupportedProtectedOperation()
+                boolean = isinstance(node, BooleanClauseList) and node.operator in (operators.and_, operators.or_)
+                if not boolean and search_shape(self, node) is None:
+                    raise UnsupportedProtectedOperation()
             if isinstance(node, Select):
+                # ORM join predicates appear as direct public children before
+                # they become Join objects. Consume only WHERE/projection
+                # occurrences; an additional protected ON occurrence refuses.
+                eligible = list(node.selected_columns)
+                children = tuple(node.get_children())
+                where = node.whereclause
+                if where is not None:
+                    # Multiple .where() criteria form a new AND wrapper. Its
+                    # direct clauses are the SELECT children; descendants of
+                    # an explicit AND/OR must never become spare ON permits.
+                    def ungroup(expression):
+                        while isinstance(expression, Grouping):
+                            expression = expression.element
+                        return expression
+                    root = ungroup(where)
+                    if any(root is child for child in children):
+                        eligible.append(root)
+                    elif isinstance(root, BooleanClauseList) and root.operator is operators.and_:
+                        eligible.extend(ungroup(clause) for clause in root.clauses)
+                    elif self.protected(root):
+                        raise UnsupportedProtectedOperation()
+                    predicates = [where]
+                    while predicates:
+                        predicate = predicates.pop()
+                        predicate = ungroup(predicate)
+                        if operation is not None and operation.owner is self and operation.generated(predicate):
+                            continue
+                        if isinstance(predicate, BooleanClauseList) and predicate.operator in (operators.and_, operators.or_):
+                            predicates.extend(predicate.clauses)
+                        elif self.protected(predicate) and search_shape(self, predicate) is None:
+                            raise UnsupportedProtectedOperation()
+                for child in children:
+                    if self.protected(child) and not isinstance(child, FromClause):
+                        match = next((i for i, allowed in enumerate(eligible) if child is allowed), None)
+                        if match is None:
+                            raise UnsupportedProtectedOperation()
+                        eligible.pop(match)
                 remaining = list(node.order_by(None).group_by(None).get_children())
                 for child in node.get_children():
-                    match = next((i for i, candidate in enumerate(remaining) if child.compare(candidate)), None)
+                    match = next((i for i, candidate in enumerate(remaining) if child is candidate or child.compare(candidate)), None)
                     if match is not None:
                         remaining.pop(match)
                         continue
@@ -480,14 +561,15 @@ def _execute(state):
     session._owner.admit(state.statement)
     parameters = state.parameters if isinstance(state.parameters, dict) else {}
     operation = _Operation(session._owner, session._keys(), session._tenant, session,
-                           points=_points(state.statement, parameters))
-    if any(session._owner.protected(c) for c in state.statement.selected_columns):
+                           points=_points(state.statement, parameters), parameters=parameters)
+    if any(session._owner.protected(c) for c in state.statement.selected_columns) or session._owner.protected(state.statement):
         # Entity SELECT cache keys can name the Table without its column types.
         # Disable the ORM's cache too, so no compiled processor retains another
         # operation's tenant, requested point or prepared material.
         state.update_execution_options(compiled_cache=None)
     token = _operation.set(operation)
     try:
+        state.statement = rewrite_search(session._owner, state.statement, operation)
         return state.invoke_statement()
     finally:
         _operation.reset(token)

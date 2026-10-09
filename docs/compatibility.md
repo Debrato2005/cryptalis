@@ -108,7 +108,7 @@ The six-gate grouping and conservative unadmitted grammar assumptions are record
 
 ## Performance targets and recorded costs
 
-**SPECIFIED targets, not achieved:**
+**SPECIFIED targets; local observations do not qualify a deployment:**
 
 | Workload | Approved target |
 |---|---|
@@ -126,9 +126,11 @@ These observations predate the latest DISTINCT change and do not measure the cur
 | Point entity, 100 samples | 0.897 | 4.150 | 3.253 | Misses 3 ms |
 | Equality entity, 100 samples | 0.928 | 6.517 | 5.589 | Misses 3 ms |
 | IN-20 entities, 100 samples | 1.093 | 16.148 | 15.055 | Misses 8 ms |
-| Plaintext range/prefix/page, 20 samples | 23.852 | 127.098 | 103.246 | About 5.3× native. No protected field in this query |
+| Plaintext-filter range/prefix/page, 20 samples | 23.852 | 127.098 | 103.246 | About 5.3× native. Full entity includes protected email |
 
-The plaintext page-query anomaly has an unknown cause. Profile it in the SQLAlchemy integration slice before attributing its cost.
+The page-query anomaly has an unknown cause. Slice 4 source inspection corrects the former plaintext-only label:
+[`browse_customers`](../spikes/revamp/plain_app.py) calls `active_customers`, which selects the complete Customer including email.
+The historical receipt is retired as current-product cost evidence. The measurements and unexplained historical cause remain preserved.
 Separate expression admission, statement compilation/cache behavior, driver/database time, row decoding, and materialization in the matched workload.
 No encrypted range/prefix/order capability follows from these plaintext queries.
 
@@ -164,6 +166,39 @@ No equality/IN, isolated storage/index, sustained-write, remote-provider, or asy
 Adoption in this fixture used one manifest, one attach call, authenticated tenant scope, and application-assigned IDs.
 No business-query or model declarations changed between native and attached paths.
 The later runtime checkpoint verifies separate credentials and fixture grants; deployment enforcement remains unverified.
+
+### Slice 4 local million-row profile: 2026-10-08
+
+**VERIFIED, local warm synchronous cell only:** the [receipt](_reset/slice4-performance.json) binds the final source hashes to 1,000,000 rows per path.
+Both native and attached applications use the restricted runtime login, application UUIDs, identical 53-byte synthetic text and fully consumed results.
+Owner credentials perform only fixture setup, ANALYZE, storage inspection and independent plan inspection. No extension is required.
+Each workload has 10 warmups and 100 alternating paired samples. Entity samples expunge the identity map and materialize fresh objects.
+Added p95 means attached p95 minus native p95; the receipt also records paired median differences and p99 estimates.
+
+| Current workload | Native p50/p95 ms | Attached p50/p95 ms | Added p95 ms |
+|---|---:|---:|---:|
+| Point entity | 0.476 / 0.790 | 2.245 / 3.126 | 2.336 |
+| Equality entity | 0.383 / 0.821 | 2.255 / 3.382 | 2.561 |
+| IN-20 entities | 1.116 / 1.543 | 3.300 / 4.548 | 3.005 |
+| Plain projection, range/prefix, broad OFFSET, 100 rows | 49.050 / 111.791 | 64.975 / 134.355 | 22.564 |
+| Protected entities, plaintext range/prefix, five rows | 0.540 / 0.776 | 2.927 / 3.976 | 3.199 |
+
+Point/equality and IN-20 meet their selected added-p95 targets in this run. No target was invented for either page workload.
+The isolated protected column plus equality index is **1.4928×** the matched plaintext column plus equality index, below the 2× target.
+The plaintext index is on name; the protected index is on tenant plus full term, as selected by the compiler. Whole-relation ratios are not the target denominator.
+PostgreSQL plans used the generated expression index for equality and IN-20. There is no hidden filtering or result refill.
+Both plain-projection paths recorded 109 cache hits and one miss; protected projections/predicates disable caching.
+The receipt separates admission, compilation, key/term preparation, driver/database wait, decoding and other ORM work for all five workloads.
+Server plans also record buffer reads and execution time; larger protected heaps affect ordinary plaintext page scans.
+These observations do not establish the cause of the old 127/24 ms receipt. Its full-entity query and former plaintext-only label are retired as current-product evidence.
+The current structural control differs in IDs, tenancy, distribution, selectivity and schema; historical causality remains UNKNOWN.
+
+An earlier diagnostic equality run missed 3 ms at 3.565 ms added p95. Profiling removed repeated generated-node comparisons and unnecessary compilation.
+The final source retained all admission checks and regression controls. Shared-host activity is uncontrolled; the earlier measurement remains in the receipt.
+Seeding observed about 29,873 native and 10,648 attached rows/s. One 2,000-row chunk reached key expiry, rolled back and recovered with fresh keys.
+An independent elapsed-expiry test checks no SQL/rows before recovery. Expiry limits were unchanged; a second profile retry failure would stop the run.
+1,000 committed updates in ten batches observed about 7,493 native and 3,654 attached rows/s. This is an observation, not a write budget or load qualification.
+Cold/remote providers, async costs, sustained-load/platform qualification and deployment admission remain unverified. All seven full gates remain UNKNOWN.
 
 ### Historical storage and transition costs
 

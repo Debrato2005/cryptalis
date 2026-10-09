@@ -124,14 +124,22 @@ Attachment returns a factory called as `sessions(tenant_id=tenant_uuid)`. Await 
 The compiler lock must be trusted by the host. Physical protected columns must already be `bytea`.
 This call does not perform a schema/data transition. Attach before application sessions or model use.
 The engine must use PostgreSQL/psycopg, `echo=False`, and `hide_parameters=True`, with no checked-out connections at activation.
-Ordinary ORM flush writes and admitted SELECT projections are implemented. Core/bulk writes and protected search predicates reject in this slice.
+Ordinary ORM flush writes, direct projections and declared equality/IN are implemented. Core/bulk writes and unadmitted grammar reject.
 Mapped text attributes remain ordinary `str` or NULL. Generated projections carry row and tenant context for authentication.
-Protected projections disable compilation caching because their processors retain prepared material and operation context.
+Protected projections and predicates disable compilation caching because their processors retain prepared material and operation context.
 Unprotected projections retain native caching. Guards reject public raw-driver, opaque SQL, COPY, and unprepared-write routes.
 **VERIFIED:** native/attached comparisons and cache regression sensitivity have the exact boundary in the
 [slice 3 checkpoint](../status.md#slice-3-checkpoint-2026-10-08).
 Separate non-owning runtime CRUD and tested persistent DDL/ownership denials have local PostgreSQL evidence.
 These grants do not enforce attachment use by separate writers. Deployment enforcement remains unverified; all seven full gates remain UNKNOWN.
+
+**IMPLEMENTED, slice 4:** equality uses the CF1 frame's full HMAC-SHA-256 term through a built-in expression index.
+Attachment validates the exact tenant key, bytea operator class, index validity/uniqueness and public framing CHECK.
+Query binds become terms per operation; tenant predicates scope each declared comparison. NULL/empty-IN retain native truth.
+The native unique index arbitrates races. Payload and term occupy one frame, so a write cannot update them separately.
+Host search-domain review and leakage acceptance remain required. Search roots/generations cannot change within an attachment.
+Fresh attachments still depend on the correct trusted host policy. Deployment binding and reindex transitions remain slice 5/7 work.
+The [slice 4 checkpoint](../status.md#slice-4-checkpoint-2026-10-08) defines executable evidence and limitations.
 
 **IMPLEMENTED, spike only:** the [2026-10-07 checkpoint](../status.md#current-integrated-checkpoint-2026-10-07) uses public hooks on one text field.
 It preallocates server-generated int32 sequence IDs. That historical behavior conflicts with the approved app-assigned-key contract and supplies no product admission.
@@ -234,7 +242,7 @@ A lock hash detects change. It does not authenticate deployment authority.
 ## Physical storage
 
 Storage-only text receives randomized `bytea` payloads. Equality adds one full HMAC-SHA-256 term.
-The default candidate packs the term in the payload with an expression index.
+The slice 4 product packs the term in the payload with an expression index.
 Separate/generated terms are compiler output for admitted tenant-scoped constraints, not another integration mode.
 No custom extension, type, or operator class is required.
 Payload and companion commit in the same transaction. Search roots remain independent of payload roots.

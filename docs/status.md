@@ -1,10 +1,39 @@
 # Implementation status
 
 **IMPLEMENTED:** research prototype with a product manifest compiler, CF1 text primitives, a local development provider,
-and a bounded sync/async SQLAlchemy storage attachment. Separate runtime-role verification is complete for the local slice 3 cell.
+and bounded sync/async SQLAlchemy storage, equality/IN and tenant-scoped uniqueness. Separate runtime-role verification is complete for the local cell.
 No PostgreSQL/provider/runtime cell, production key provider, independent review, or release is qualified.
 VERIFIED below refers only to the named checks and their exact revisions.
 All other contract and promotion requirements are SPECIFIED. All seven full gates remain UNKNOWN.
+
+## Slice 4 checkpoint: 2026-10-08
+
+**IMPLEMENTED:** declared exact-text equality/IN, mapped aliases, AND/OR and native tenant-scoped uniqueness.
+The attachment hashes ordinary text query values with the existing independent search-root composition.
+PostgreSQL uses a B-tree over the full term inside the CF1 frame, with tenant first when declared. No extension or companion column is needed.
+One bytea write updates payload and term together. Native constraints arbitrate races and preserve distinct NULLs.
+Attachment validates exact index/check definitions, keys, operator classes, uniqueness and valid/ready/live state.
+Catalog deparsing uses `pg_catalog` resolution to reject function shadowing. Search key changes within an attachment refuse.
+Protected predicates/projections compile per operation; plain projections keep native compilation caching.
+
+**VERIFIED, local PostgreSQL 16.15:** **75 search cases**, **four independent frozen-term vector cases**, and **864 full-suite cases**.
+The application path uses the separate non-owning runtime role; owner setup grants only schema USAGE and customer CRUD in disposable schemas.
+Native sync/async controls compare text membership, SQL NULL/empty-IN truth, aliases, typed/reverse/late/shared binds and two protected fields.
+Concurrent same-tenant insert races produce one commit and one native `23505`; cross-tenant duplicates and distinct NULLs commit.
+Uniqueness failures roll back payload/term updates; later writes and queries recover. Duplicate backfill blocks unique-index creation.
+Wrong-tenant queries expose no protected value. Known small domains, absent review/leakage acceptance and malformed physical contracts reject.
+Listed unsupported grammar, forged/wrapped aliases, protected JOIN/derived tables, codecs, callables and ambiguous bind names refuse before SQL.
+Real elapsed key-lease expiry leaves PostgreSQL unchanged; fresh sync/async sessions recover.
+Independent writers can still hide search membership or install structurally plausible invalid AEAD. Point reads reject changed frames.
+Returned-row authentication supplies no freshness, presence, result completeness or adversarial global-uniqueness guarantee.
+
+[Verification receipt](_reset/slice4-verification.json) records exact source/test hashes, test intent and isolated regression removals.
+[Performance receipt](_reset/slice4-performance.json) records the million-row runtime ORM measurements and their limits.
+The earlier page-query source includes a protected entity projection; its former plaintext-only label is retired.
+Its historical timing and causal explanation remain historical/UNKNOWN. Current profiling separates plain projections from protected entities with plaintext filters.
+Empty-schema fixture conversion is not product migration. Fresh-deployment policy binding, writer exclusion, lifecycle and key rotation remain unqualified.
+No production provider or independent human review exists. All seven full gates remain **UNKNOWN**. No commit or push occurred.
+See the [60-line search walkthrough](walkthrough-search.md). This run stops at slice 4.
 
 ## Slice 3 checkpoint: 2026-10-08
 
@@ -314,7 +343,7 @@ Same-context replay, nullable-field substitution with SQL NULL and hostile omitt
 
 The current package has the product compiler, CF1 primitives, and bounded SQLAlchemy attachment above, structural record decoding/canonicalization, bounded manifest/header inspection,
 local crypto/search examples, and local transition-admission research.
-Only the slice 3 attachment supplies the stated storage protection within its tested boundary.
+The slice 3/4 attachment supplies stated storage and search behavior only within the tested boundaries above.
 These APIs do not qualify managed key custody, safe deployment admission, or production lifecycle.
 Architecture drives replacement. Existing research formats and tests are not permanent runtime requirements.
 

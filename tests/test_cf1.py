@@ -76,6 +76,26 @@ def test_frozen_independent_cf1_vectors(vector, monkeypatch):
     assert seal_text(vector["text"], field, tenant, record, keys) == frozen
 
 
+@pytest.mark.parametrize("vector", [v for v in VECTORS["vectors"] if v["search_generation"]], ids=lambda v: v["name"])
+def test_query_equality_terms_match_frozen_independent_frames(vector):
+    from cryptalis.crypto.cf1 import equality_term
+    field = FieldDescriptor.from_compiled(vector["descriptor"], vector["descriptor_digest"])
+    tenant = UUID(vector["tenant_id"])
+    provider = DevelopmentKeyProvider()
+    wrappers = tuple(provider.wrap(bytes.fromhex(vector[purpose + "_root"]),
+                     KeyContext(field.domain_id, tenant, purpose, UUID(vector[purpose + "_root_id"]),
+                                vector[purpose + "_generation"])) for purpose in ("payload", "search"))
+    keys = Keyring(KeyPolicy(field.domain_id, tenant, wrappers, vector["payload_generation"],
+                            vector["search_generation"]), {provider.provider_id: provider}).prepare()
+    assert equality_term(vector["text"], field, tenant, keys) == bytes.fromhex(vector["frame"])[14:46]
+    assert equality_term(None, field, tenant, keys) is None
+    with pytest.raises(KeyUnavailable):
+        equality_term(vector["text"], field, uuid4(), keys)
+    for invalid in (42, b"text", "x\x00y", "\ud800"):
+        with pytest.raises(InvalidText):
+            equality_term(invalid, field, tenant, keys)
+
+
 def test_published_primitive_vectors_for_installed_backend():
     from cryptography.hazmat.primitives import hashes, hmac
     from cryptography.hazmat.primitives.ciphers.aead import AESGCMSIV

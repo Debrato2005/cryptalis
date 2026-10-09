@@ -21,7 +21,8 @@ These decisions are final. Scope-only D blockers are resolved. No decision suppl
 
 **VERIFIED, earlier revision only:** the million-row receipt records equality p95 about 6.5 ms versus 0.93 ms native and IN-20 about 16.1 ms versus 1.1 ms.
 Both miss the approved added-latency targets. Point reads also miss. These are known performance work, not current-revision qualification.
-A plaintext range/prefix/page query with no protected field cost about 5× native: p95 about 127 ms versus 24 ms.
+A range/prefix/page query with plaintext filters cost about 5× native: p95 about 127 ms versus 24 ms.
+Slice 4 source inspection corrects its earlier label: it projects the full Customer, including protected email.
 Its cause is UNKNOWN and must be profiled in the integration slice.
 [Compatibility](compatibility.md#performance-targets-and-recorded-costs) owns exact values, target accounting, storage denominator, and revision mismatch.
 

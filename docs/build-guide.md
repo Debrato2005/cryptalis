@@ -49,7 +49,8 @@ Reuse PostgreSQL, SQLAlchemy, library crypto, providers, and the existing deploy
 | Failure cases | Opaque SQL/COPY/protocol paths, forged admission metadata, computed/unprepared protected writes, wrong point/tenant/record, unsupported nested grammar, runtime DDL/metadata mutation, reconnecting excluded writers |
 | Definition of done | Storage behavior and negative controls pass on the exact PostgreSQL cell. Profile the plaintext-page anomaly and record its cause or remaining UNKNOWN evidence. Record actual application/model/writer/deployment edits |
 
-The earlier million-row plaintext range/prefix/page query cost about 127 ms p95 versus 24 ms native, despite containing no protected field.
+The earlier million-row range/prefix/page query cost about 127 ms p95 versus 24 ms native.
+Its filters are plaintext, but `browse_customers` selects the full Customer including protected email; the former plaintext-only label was incorrect.
 Its cause is UNKNOWN. Profile admission, compilation/cache, driver/database work, decoding, and materialization before accepting an explanation.
 The [10,000-row receipt](../spikes/revamp/results/gate-write-cost.json) predates the latest DISTINCT change and measures an earlier revision.
 Do not describe it or the million-row receipt as current-adapter service evidence.

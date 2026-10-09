@@ -31,3 +31,15 @@ This pass keeps existing local changes and edits only documentation. The user re
 - BLOCKED advancement: separate non-owning runtime credentials are absent. Fixture-owner tests do not prove privilege isolation. No roles or permissions were added.
 - Next run: finish slice 3 with provisioned restricted runtime credentials, native CRUD controls, and DDL/ownership refusal evidence. Then start slice 4.
 - All seven full gates remain UNKNOWN. No production provider, independent review, authenticated deployment procedure, commit, or push.
+
+## Slice 4 checkpoint: 2026-10-08
+
+- IMPLEMENTED: exact-text equality/IN through full CF1 keyed terms and built-in expression indexes; native tenant-scoped uniqueness.
+- VERIFIED: 75 real PostgreSQL search cases, four frozen query-term vectors and 864 full-suite cases. Owner setup and non-owning runtime application paths remain separate.
+- Fifteen isolated protection removals fail their oracle-backed tests; copied originals restore passing results without changing the worktree.
+- The final million-row source is hash-stable. Added p95 is 2.336 ms point, 2.561 ms equality and 3.005 ms IN-20; isolated column/index storage is 1.4928× native.
+- Real key expiry stopped an earlier seed. Bounded rollback/retry preserves the lease and recovered one final chunk. Expiry failure/recovery also has sync/async PostgreSQL evidence.
+- Read-only spike source inspection corrects the old plaintext-only page label: its filters are plaintext but its entity includes protected email. Historical cause remains UNKNOWN; the old receipt is retired as current-product evidence.
+- [Verification](slice4-verification.json), [performance](slice4-performance.json) and the [60-line walkthrough](../walkthrough-search.md) record the exact local boundary.
+- Independent writers can hide matches or replay values. Fresh-deployment key/policy binding and writer exclusion remain unqualified; grants do not prove them.
+- Existing work and all 60 hashed spike files are preserved. No slice 5, commit or push. All seven gates remain UNKNOWN; no production provider or independent review exists.
