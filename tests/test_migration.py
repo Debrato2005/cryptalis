@@ -49,7 +49,7 @@ def keys(tenant):
     return Keyring(KeyPolicy(DOMAIN, tenant, wrappers, 1, 1), {PROVIDER: provider})
 
 
-def independent_open(body, descriptor, tenant, record, payload_context=None):
+def independent_open(body, descriptor, tenant, record, payload_context=None, *, field_id=FIELD_ID):
     """Separate HKDF/HMAC/framing path; same qualified AEAD primitive only."""
     if body is None:
         return None
@@ -62,16 +62,19 @@ def independent_open(body, descriptor, tenant, record, payload_context=None):
         salt = hashlib.sha256(pack(b'CF1/root', DOMAIN.bytes, tenant.bytes, context.root_id.bytes, context.generation.to_bytes(4, 'big'))).digest()
         prk = hmac.digest(salt, root, 'sha256')
         return hmac.digest(prk, info + b'\x01', 'sha256')
-    assert body[:6] == bytes.fromhex('434631000101')
+    equality = descriptor['representation'] == 'cf1-packed-equality/v1'
+    assert body[:6] == bytes.fromhex('434631000101' if equality else '434631000100')
     assert int.from_bytes(body[6:10],'big')==(payload_context.generation if payload_context else 1)
-    assert body[10:14] == bytes.fromhex('00000001')
-    header = body[:46]
-    key = derive('payload', pack(b'CF1/payload-key', FIELD_ID.bytes, record.bytes))
+    assert body[10:14] == bytes.fromhex('00000001' if equality else '00000000')
+    size = 46 if equality else 14
+    header = body[:size]
+    key = derive('payload', pack(b'CF1/payload-key', field_id.bytes, record.bytes))
     digest = hashlib.sha256(json.dumps(descriptor, sort_keys=True, separators=(',', ':')).encode()).digest()
-    aad = pack(b'CF1/payload', DOMAIN.bytes, tenant.bytes, FIELD_ID.bytes, record.bytes, digest, header)
-    value = AESGCMSIV(key).decrypt(body[46:58], body[58:], aad)
-    search_key = derive('search', pack(b'CF1/search-key', FIELD_ID.bytes, b'utf8-exact/v1', b'identity/v1', b'equality'))
-    assert hmac.compare_digest(header[14:46], hmac.digest(search_key, pack(b'equality', value), 'sha256'))
+    aad = pack(b'CF1/payload', DOMAIN.bytes, tenant.bytes, field_id.bytes, record.bytes, digest, header)
+    value = AESGCMSIV(key).decrypt(body[size:size+12], body[size+12:], aad)
+    if equality:
+        search_key = derive('search', pack(b'CF1/search-key', field_id.bytes, b'utf8-exact/v1', b'identity/v1', b'equality'))
+        assert hmac.compare_digest(header[14:46], hmac.digest(search_key, pack(b'equality', value), 'sha256'))
     return value.decode('utf8')
 
 

@@ -10,7 +10,7 @@ import tempfile
 
 ROOT=Path(__file__).resolve().parents[1]
 MUTATIONS=[
- ('authentication','migration.py','value=open_text(frame,FieldDescriptor.from_compiled(f[\'descriptor\'],f[\'descriptor_digest\']),tenant,row[0],material[tenant])','value=source','test_full_verification_refuses_corruption_and_never_switches[tag]'),
+ ('authentication','migration.py','value=open_text(frame,descriptors[i],tenant,row[0],material[tenant])','value=source','test_full_verification_refuses_corruption_and_never_switches[tag]'),
  ('value_comparison','migration.py','if type(value)!=type(source) or value!=source:','if False:','test_full_verification_refuses_corruption_and_never_switches[source]'),
  ('membership','migration.py','if _scope(c,model)!=progress[\'scope\']:','if False:','test_full_verification_refuses_corruption_and_never_switches[missing]'),
  ('source_schema','migration.py','if _facts(c,model)!=observed[\'schema\']:','if False:','test_full_verification_refuses_corruption_and_never_switches[index]'),

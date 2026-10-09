@@ -7,6 +7,79 @@ No PostgreSQL/provider/runtime cell, production key provider, independent review
 VERIFIED below refers only to the named checks and their exact revisions.
 All other contract and promotion requirements are SPECIFIED. All seven full gates remain UNKNOWN.
 
+## Step A corrective checkpoint: 2026-10-09
+
+**IMPLEMENTED:** same-schema tables share the existing operation guard function, with a separate trigger on each table.
+Expand creates the function once per schema. Activation/abort inspect every fence, drop every operation trigger, then drop each function without CASCADE in the same transaction.
+An existing function is never replaced or adopted; `guard_function_conflict` reports native `42723`. Names, artifacts, pins and journal state are unchanged.
+Frozen field descriptors are validated once per backfill chunk and once per model verification pass. No descriptor, tenant key or row context is retained across operations.
+AEAD, field/tenant/row binding, fresh nonces, key expiry/generation checks, full verification and bounded lock retries remain unchanged.
+
+**VERIFIED:** [final checkpoint](_reset/step-a-corrective-final-030b935c0581cb72.json) at content revision `worktree-030b935c0581cb72`;
+[full suite](_reset/step-a-corrective-final-verification-030b935c0581cb72.json): **1,004 passed**, including 18 same-schema E2E/attack cases.
+The tests assert exact NULL/empty/Unicode values across two tables, three fields and two tenants; both write fences; five process-kill/resume phases;
+idempotent pre-switch abort; atomic failure during second-table expansion/retirement; conflict preservation; fence-drift refusal; and rejection of valid wrong-field/tenant/row frames before switch.
+[Corrective proofs](_reset/step-a-corrective-regressions-030b935c0581cb72.json): original engine fails the native two-table application test, fixed engine passes;
+six isolated removals fail/restoration passes, and all five old single-table checkpoint phases resume through the new engine.
+[Twenty prior safety removals](_reset/slice5-regressions-audit-729b0f0ba9f8fea6.json) and [five bounded-lock removals](_reset/step-a-lock-regressions-0fadd110317d7e85.json) still fail/restoration passes.
+Graphify was refreshed; source confirms guard creation/retirement and descriptor call paths. All database commands used the fresh-credential wrapper.
+
+| Instrumented one-million-row measurement | Recorded baseline | Corrected engine |
+|---|---:|---:|
+| Backfill / throughput | 98.126 s / 10,191 rows/s | 67.804 s / 14,748 rows/s |
+| Backfill main CPU / descriptor CPU | 64.588 s / 17.739 s | 35.658 s / 0.030 s |
+| Verification / descriptor CPU | 65.404 s / 16.214 s | 42.214 s / 0.000062 s |
+| Writer pause / observed expansion reader wait | 169.145 s / 5.496 s | 116.291 s / 6.106 s |
+
+The [paired 20,000-row control](_reset/step-a-corrective-summary-c64053e2b5558c3f.json) measured backfill 2.065→1.128 s and verification 1.579→1.131 s before the single new million-row run.
+[New measurement](_reset/step-a-optimized-million-1000000-a94d3d18190b80fb.json) reuses the baseline data, chunks and instrumentation: 500 UPDATE batches, 5,027 inspection/marker calls and 500 pipeline sync points remain unchanged.
+Backfill SQL-call wall time was 37.560 s, including 29.340 s combined server/network/scheduling time; commits took 2.887 s. Exact database execution/wait time is unavailable.
+Cluster-wide backfill WAL was 1,189,163,448 bytes; equality-index growth was 88,588,288 bytes. Physical per-index writes are UNKNOWN; no database/WAL optimization is claimed.
+WSL still exposed 20 CPUs, 7.47 GiB RAM and 2 GiB swap with no overrides. Starting load was 0.864/0.682/0.467, versus 0.154/0.352/0.353;
+available memory was 3.94 versus 6.12 GiB. New process peak RSS was 98.31 MiB. Cache/checkpoint/load differences and instrumentation limit causal claims.
+The observed writer-pause reduction is 31.2%; the paired CPU/descriptor evidence supports a real reduction in Python work. Remaining sealing/verification work and expansion locking still cost time.
+The engine verified all million values; an independent decoder checked eight representative rows, and the smaller E2E cases independently decoded every field.
+The small-run receipt label was overwritten by an instrumentation-loop variable; source hashes identify baseline/fixed runs. The label was corrected before the million-row run; timing/workload logic was unchanged.
+No Slice 6, parallelism, dual writes, public configuration or security-contract change. All seven gates remain **UNKNOWN**; no production provider or independent review exists.
+
+## Step A protection measurement and lock checkpoint: 2026-10-09
+
+**VERIFIED, instrumented one-million-row PostgreSQL run at Git `0383cec`:** [measurement](_reset/step-a-protection-0383cec.json).
+The user confirmed that unrelated programs were closed. WSL exposed 20 logical CPUs (20 reported cores, one thread per core), 7.47 GiB RAM and 2 GiB swap;
+no `.wslconfig` overrides or narrower cgroup CPU/memory limits were found. Load averages changed from 0.154/0.352/0.353 to 1.133/0.791/0.532.
+
+| Phase | Wall time | Main client CPU |
+|---|---:|---:|
+| Expand | 5.521 s | 4.711 s |
+| Backfill, 500 chunks of 2,000 rows | 98.126 s; 10,191 rows/s | 64.588 s |
+| One final verification and switch | 65.433 s; verification 65.404 s | 63.865 s |
+| Local ACTIVE acknowledgement | 0.023 s | 0.009 s |
+
+Writer pause was **169.145 s**, excluding seed/plan/drain and real publication delay. Expansion index creation took 0.229 s over NULL shadows.
+DDL SQL calls took 0.062 s at expansion and 0.0013 s at switch; these overlap phase times.
+Lock-request calls took 0.114/0.252/0.143 ms at expansion/verification/activation. No executor lock wait was sampled; exact server wait time is unavailable.
+The plain reader waited 5.496 s during expansion. Client-observed ACCESS EXCLUSIVE intervals were 5.512/0.018/0.016 s at expansion/switch/activation.
+Backfill/verification reads continued; their maximum observed latencies were 156/37 ms, with no sampled reader lock wait in those phases.
+Backfill CPU: seal 32.371 s, repeated descriptor preparation 17.739 s, key preparation 0.025 s. Client CPU dominates this workload with public test roots.
+There were 500 UPDATE batches, 5,027 inspection/marker calls, 500 pipeline sync points and 504 driver commits; exact wire round trips are unavailable.
+SQL-call wall time was 40.831 s, including 8.854 s client CPU and 31.977 s non-CPU time. The latter includes server/network/scheduling, not isolated database wait.
+Sampled database waits included 73 WALSync, 22 WALWrite and 79 DataFileWrite observations; variable sampling intervals do not establish wait seconds.
+Backfill cluster-wide WAL advanced 1,269,621,872 bytes. Equality-index size grew 76,800,000 bytes; per-index physical writes and table-attributed WAL remain UNKNOWN.
+Instrumentation adds overhead and its component timers overlap. A [failed observer run](_reset/step-a-failed-instrumentation-0383cec.json) is retained as failed evidence;
+restricted-role activity fields were NULL. Corrected instrumentation passed a [1,000-row control](_reset/step-a-smoke-1000-0383cec.json) before the million-row run.
+
+**IMPLEMENTED local fix:** the executor keeps a 5 s session lock timeout. ACCESS EXCLUSIVE acquisition now uses three 100 ms attempts, with 50 ms gaps and savepoint rollback.
+Cutover explicitly upgrades before DDL; rollback releases partial upgrades but retains EXCLUSIVE verification locks. Exhaustion reports `table_lock_busy_retry`/`55P03` without switching.
+These limits bound individual acquisition attempts, not time spent holding a granted lock or an entire multi-table operation.
+[Regression proof](_reset/step-a-lock-regressions-e137d3240bd453e9.json): `0383cec` gives three failures/one native-control pass; fixed code gives four passes. Five safety removals fail and restoration passes.
+[Full verification](_reset/step-a-lock-verification-e137d3240bd453e9.json): **986 passed** at content revision `worktree-e137d3240bd453e9`.
+[Twenty prior safety removals](_reset/slice5-regressions-audit-0e01c8924bb16893.json) still fail their tests and restoration passes. All database work used the fresh-credential wrapper.
+Graphify was refreshed and findings were checked in source. A [same-schema two-table control](_reset/step-a-guard-reproduction-e137d3240bd453e9.json) reproduced duplicate guard-function creation (`42723`) with atomic rollback. The corrective checkpoint above fixes it; this control remains historical evidence.
+Parallel workers are **not recommended before slice 7** on this evidence. First evaluate preparing the immutable descriptor once, then repeat a controlled profile.
+Disjoint workers would need atomic per-range coverage, stable context/key generations, crash reconciliation, terminal original transactions, serialized cutover, and mandatory global verification; the current single cursor does not supply that protocol.
+The historical 508.7/197.0 s variation is still UNKNOWN: source, instrumentation, load, chunking and cache conditions were not controlled across those runs.
+Slice 6/7, decrypt-back measurements and package-free removal remain unimplemented. No dual writes or parallelism were added. All seven gates remain **UNKNOWN**.
+
 ## Step 0 protection-pause checkpoint: 2026-10-09
 
 **IMPLEMENTED:** uninterrupted apply verifies and switches in one transaction, with one full verification pass.

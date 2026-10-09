@@ -9,6 +9,7 @@ from dataclasses import dataclass
 import hashlib
 import json
 import math
+import time
 from uuid import UUID, uuid4
 from psycopg import sql
 
@@ -301,8 +302,20 @@ def _save(c,p,state):
 
 
 def _guard_names(p,model):
+    # Functions are schema-scoped; this table-independent operation function
+    # is shared within each schema. Trigger names are local to each table.
     suffix=p.operation_id.hex
     return '_cryptalis_'+suffix+'_pause', '_cryptalis_'+suffix+'_guard'
+
+
+def _drop_guards(c,p):
+    functions=set()
+    for model in p.document['lock']['models']:
+        trigger,function=_guard_names(p,model)
+        c.exec_driver_sql(f'DROP TRIGGER {_quote(c,trigger)} ON {_table(c,model)}')
+        functions.add(_quote(c,model['schema'])+'.'+_quote(c,function))
+    # No CASCADE: an unexpected dependent object aborts the transaction.
+    for fn in sorted(functions): c.exec_driver_sql(f'DROP FUNCTION {fn}()')
 
 
 def _guard_facts(c,p,model):
@@ -327,9 +340,26 @@ def _guard_facts(c,p,model):
 def _lock_tables(c,p,*,verification=False):
     # EXCLUSIVE excludes even locking readers and privileged writers, while
     # plain SELECT retains ACCESS SHARE. DDL upgrades to ACCESS EXCLUSIVE.
-    mode='EXCLUSIVE' if verification else 'ACCESS EXCLUSIVE'
-    for model in sorted(p.document['lock']['models'],key=lambda m:(m['schema'],m['table'])):
-        c.exec_driver_sql(f'LOCK TABLE {_table(c,model)} IN {mode} MODE')
+    models=sorted(p.document['lock']['models'],key=lambda m:(m['schema'],m['table']))
+    if verification:
+        for model in models: c.exec_driver_sql(f'LOCK TABLE {_table(c,model)} IN EXCLUSIVE MODE')
+        return
+    previous=c.exec_driver_sql('SHOW lock_timeout').scalar_one()
+    for attempt in range(3):
+        try:
+            # A waiting ACCESS EXCLUSIVE request also queues new SELECTs.
+            # Rollback to this savepoint releases partial upgrades, while
+            # retaining earlier verification locks and its validated data.
+            with c.begin_nested():
+                c.exec_driver_sql("SET LOCAL lock_timeout = '100ms'")
+                for model in models:
+                    c.exec_driver_sql(f'LOCK TABLE {_table(c,model)} IN ACCESS EXCLUSIVE MODE')
+                c.exec_driver_sql("SELECT pg_catalog.set_config('lock_timeout', %s, true)",(previous,))
+            return
+        except SQLAlchemyError as exc:
+            if getattr(getattr(exc,'orig',None),'sqlstate',None)!='55P03': raise
+        if attempt<2: time.sleep(.05)
+    raise TransitionFailure('table_lock_busy_retry',p.operation_id,'55P03')
 
 
 def _stream(c,model,*,payloads=False,after=None,limit=1000):
@@ -372,7 +402,7 @@ def _expand(c,p):
     c.exec_driver_sql(f'CREATE TABLE {_journal(c,p)} (operation_id uuid PRIMARY KEY, plan_digest text NOT NULL, state jsonb NOT NULL)')
     c.exec_driver_sql(f'REVOKE ALL ON {_journal(c,p)} FROM PUBLIC')
     c.exec_driver_sql(f'GRANT SELECT ON {_journal(c,p)} TO {_quote(c,p.document["runtime_role"])}')
-    models={}
+    models={}; functions=set()
     for model in p.document['lock']['models']:
         table=_table(c,model); trigger,function=_guard_names(p,model)
         fn=_quote(c,model['schema'])+'.'+_quote(c,function)
@@ -381,8 +411,15 @@ def _expand(c,p):
         owner=p.document['target'][-1].replace("'","''")
         body=f"BEGIN IF CURRENT_USER <> '{owner}' THEN RAISE EXCEPTION USING ERRCODE='55000', MESSAGE='Cryptalis maintenance: writers paused; retry only after matching deployment publication'; END IF; RETURN NULL; END"
         literal=sql.Literal(body).as_string(c.connection.driver_connection)
-        c.exec_driver_sql(f'CREATE FUNCTION {fn}() RETURNS trigger LANGUAGE plpgsql SET search_path = pg_catalog AS {literal}')
-        c.exec_driver_sql(f'REVOKE ALL ON FUNCTION {fn}() FROM PUBLIC')
+        if fn not in functions:
+            try:
+                c.exec_driver_sql(f'CREATE FUNCTION {fn}() RETURNS trigger LANGUAGE plpgsql SET search_path = pg_catalog AS {literal}')
+            except SQLAlchemyError as exc:
+                if getattr(getattr(exc,'orig',None),'sqlstate',None)=='42723':
+                    raise TransitionFailure('guard_function_conflict',p.operation_id,'42723') from None
+                raise
+            c.exec_driver_sql(f'REVOKE ALL ON FUNCTION {fn}() FROM PUBLIC')
+            functions.add(fn)
         c.exec_driver_sql(f'CREATE TRIGGER {_quote(c,trigger)} BEFORE INSERT OR UPDATE OR DELETE OR TRUNCATE ON {table} FOR EACH STATEMENT EXECUTE FUNCTION {fn}()')
         c.exec_driver_sql(f'ALTER TABLE {table} ENABLE ALWAYS TRIGGER {_quote(c,trigger)}')
         for f in model['fields']:
@@ -413,11 +450,14 @@ def _backfill_chunk(c,p,state,keys,chunk_size):
         progress=state['models'][model['table_id']]
         rows=_stream(c,model,after=progress['cursor'],limit=chunk_size)
         if not rows: continue
+        # Immutable field-only context. Never retain keys or tenant/row context
+        # across chunks; those are still resolved and checked below per value.
+        descriptors=tuple(FieldDescriptor.from_compiled(f['descriptor'],f['descriptor_digest']) for f in model['fields'])
         scoped='column' in model['tenancy']; material={}; params=[]
         for row in rows:
             tenant=row[1] if scoped else UUID(model['table_id']); offset=2 if scoped else 1
             if tenant not in material: material[tenant]=_ring(keys,tenant,p).prepare()
-            body=[seal_text(row[offset+i],FieldDescriptor.from_compiled(f['descriptor'],f['descriptor_digest']),tenant,row[0],material[tenant]) for i,f in enumerate(model['fields'])]
+            body=[seal_text(row[offset+i],descriptor,tenant,row[0],material[tenant]) for i,descriptor in enumerate(descriptors)]
             params.append(tuple(body)+(row[0],))
         statement=f'UPDATE {_table(c,model)} SET '+','.join(_quote(c,f['payload_column'])+'=%s' for f in model['fields'])+f' WHERE {_quote(c,model["record"]["column"])}=%s'
         c.exec_driver_sql(statement,params)
@@ -436,6 +476,7 @@ def _verify(c,p,state,keys):
         progress=state['models'][model['table_id']]
         if _scope(c,model)!=progress['scope']: raise TransitionFailure('membership_changed',p.operation_id)
         if progress['rows']!=progress['scope']['count']: raise TransitionFailure('incomplete_backfill',p.operation_id)
+        descriptors=tuple(FieldDescriptor.from_compiled(f['descriptor'],f['descriptor_digest']) for f in model['fields'])
         cursor=None; digest=hashlib.sha256()
         while rows:=_stream(c,model,payloads=True,after=cursor):
             material={}
@@ -449,7 +490,7 @@ def _verify(c,p,state,keys):
                     admitted=material[tenant].policy
                     if frame is not None and (int.from_bytes(frame[6:10],'big')!=admitted.payload_generation or int.from_bytes(frame[10:14],'big')!=(admitted.search_generation if f['queries'] else 0)):
                         raise TransitionFailure('generation_mismatch',p.operation_id)
-                    value=open_text(frame,FieldDescriptor.from_compiled(f['descriptor'],f['descriptor_digest']),tenant,row[0],material[tenant])
+                    value=open_text(frame,descriptors[i],tenant,row[0],material[tenant])
                     if type(value)!=type(source) or value!=source: raise TransitionFailure('value_verification_failed',p.operation_id)
                     digest.update(b'\x00' if frame is None else b'\x01'+len(frame).to_bytes(4,'big')+frame)
             cursor=str(rows[-1][0])
@@ -465,6 +506,7 @@ def _switch(c,p,state,keys):
     # Verification and DDL share this transaction and its write-excluding lock.
     # A separately committed VERIFIED checkpoint still requires a fresh pass.
     state['verification']=digests
+    _lock_tables(c,p)
     for model in p.document['lock']['models']:
         for f in model['fields']:
             table=_table(c,model)
@@ -488,9 +530,8 @@ def _activate(c,p,state,pin):
     _lock_tables(c,p); _active_schema(c,p,state)
     for model in p.document['lock']['models']:
         if _guard_facts(c,p,model)!=state['models'][model['table_id']]['guard']: raise TransitionFailure('writer_fence_changed',p.operation_id)
-        trigger,function=_guard_names(p,model)
-        c.exec_driver_sql(f'DROP TRIGGER {_quote(c,trigger)} ON {_table(c,model)}')
-        c.exec_driver_sql(f'DROP FUNCTION {_quote(c,model["schema"])}.{_quote(c,function)}()')
+    _drop_guards(c,p)
+    for model in p.document['lock']['models']:
         state['models'][model['table_id']]['active_schema']=_facts(c,model)
     state['phase']='ACTIVE'; _save(c,p,state)
 
@@ -566,9 +607,8 @@ def abort(p,engine,*,pin,approval):
             for model in p.document['lock']['models']:
                 for f in model['fields']:
                     c.exec_driver_sql(f'ALTER TABLE {_table(c,model)} DROP COLUMN {_quote(c,f["payload_column"])}')
-                trigger,function=_guard_names(p,model)
-                c.exec_driver_sql(f'DROP TRIGGER {_quote(c,trigger)} ON {_table(c,model)}')
-                c.exec_driver_sql(f'DROP FUNCTION {_quote(c,model["schema"])}.{_quote(c,function)}()')
+            _drop_guards(c,p)
+            for model in p.document['lock']['models']:
                 if _facts(c,model)!=model['source_schema']: raise TransitionFailure('abort_source_schema_changed',p.operation_id)
             state['phase']='ABORTED'; _save(c,p,state)
         return _progress(p,state)

@@ -1,0 +1,361 @@
+{
+  "scope": "Instrumented merged protection, public synthetic roots; research prototype",
+  "rows": 1000,
+  "base_revision": "0383cec",
+  "source_sha256": {
+    "src/cryptalis/_sqlalchemy_guard.py": "f1b855b7b8b881f8360b69dffdeb12d6dc2fbdaea3f33dd6ed45b2588be477d3",
+    "src/cryptalis/cli.py": "0bef2ced749503a4d7a0c3a6096eceb5dd16f1f6989a54224bd2bafc73d4cce3",
+    "src/cryptalis/__init__.py": "c1a82f9f958187e4b5423d11df5a035b17d75b34a0947af6be4aac436cd2fed2",
+    "src/cryptalis/__main__.py": "9967032819ce6f18e02a40d033958d5f4f7c328faf8693bc07ecc42a1a525707",
+    "src/cryptalis/_sqlalchemy_search.py": "f2619552b36be5b65622503badbfdf6d8af20120d65e607be78411a13adca18e",
+    "src/cryptalis/sqlalchemy.py": "336c18e91685749bcc3f5ae3ced8fc774ba155d89b6f3816d303ebaf95f55d85",
+    "src/cryptalis/migration.py": "ed0f789ff8790981aca39a9321f59670cb9925b6d8734d92b9e298aa5a980bb7",
+    "src/cryptalis/contracts/transition.py": "407c8028827ac7660cf6c4d3d4cfae30ca2dacf69ca80749e4e52f07d5c3d923",
+    "src/cryptalis/contracts/__init__.py": "7a621ddfa3ed2dd543a3495b8cedaed3f892fc6b1fae0b6e8d04285741bd8660",
+    "src/cryptalis/contracts/active_state.py": "b22608114fda5f49b2fa054fef24763bc9735c37612edfce0b13e16ca0df7532",
+    "src/cryptalis/contracts/development_authority.py": "1fe8519fe06fd0121829b92e04f1b5be2b8b72e39f3b8eecc3d60b6e168810d7",
+    "src/cryptalis/crypto/keys.py": "700300c3cf76c2a7fc181ef10bb32e5dffa878f3bd4e301c8daf3649baa33ae3",
+    "src/cryptalis/crypto/__init__.py": "e9b520aa1c44eec1517ab4cedf038f44da2e62be1dd10680c1199f9a8d0c0b7a",
+    "src/cryptalis/crypto/_candidate_wrap.py": "18cd89777178a5938848c51d47b48603dab902f57e83a6b330a8643f92748dc4",
+    "src/cryptalis/crypto/_candidate_scalar.py": "b97a21a29b4bc9453af8c4c0a8f22b4860892b85854b5d1196ebca2f5094269a",
+    "src/cryptalis/crypto/cf1.py": "88754b09576e6717e8ab82bd0990446d64b7ef3489da663a1a600e59cf6e28d4",
+    "src/cryptalis/crypto/_candidate_envelope.py": "9c28cb84a85123130328b2273eb27786a95f7953a41f0ec27f1c11100e28e55f",
+    "src/cryptalis/manifest/compiler.py": "94c026696ed118b682e722c92d8a45ee4c5b38565472247f49f0f061ac390154",
+    "src/cryptalis/manifest/descriptor.py": "739d0438451c47746850c6aa488add4cfd7782ddeebd743741cccd290d2ce20d",
+    "src/cryptalis/manifest/parser.py": "47cd75cc2ca611fe186d36d5d046317b0746714945c11fd2f84917d2f1020448",
+    "src/cryptalis/manifest/header.py": "6e450d8565e3d7c19ecedd6c6b3120715ea5c7ee3b1ee439fef9e5080bb5eb6a",
+    "src/cryptalis/manifest/declaration.py": "348d8e9c4605a28924166e3c1f88bd23f0b6b3ebaae402f52cf0d2c3403ca6b8",
+    "src/cryptalis/manifest/canonical.py": "6fe7e3d22cece14e5d85de912acdaf782a5421bfaa5c4dd796f78ab5bd4c2ec8",
+    "src/cryptalis/manifest/__init__.py": "d2dc8653181d66161df9d9eb29ea79fb36b38fd93848d4da4a25184cda6885cd"
+  },
+  "measurement_script": "\"\"\"Temporary measurement only. Product source is hash-checked unchanged.\"\"\"\nfrom collections import Counter, defaultdict\nfrom dataclasses import replace\nimport configparser\nimport hashlib\nimport json\nimport os\nfrom pathlib import Path\nimport platform\nimport resource\nimport sys\nfrom threading import Event, Thread\nimport time\nfrom uuid import UUID\n\nROOT = Path('/home/debrato/Projects/cryptalis')\nsys.path.insert(0, str(ROOT / 'tests'))\nimport psycopg\nfrom psycopg._pipeline_base import BasePipeline\nfrom sqlalchemy import event, select\nimport cryptalis.migration as m\nfrom cryptalis.crypto.keys import Keyring\nfrom cryptalis.crypto.cf1 import FieldDescriptor\nfrom cryptalis.manifest.compiler import Writer, WriterInventory, SearchReview\nfrom cryptalis.sqlalchemy import attach\nfrom test_migration import application, keys, TABLE_ID, FIELD_ID, TENANT, independent_open\n\n\ndef machine():\n    data = {'logical_cpus': os.cpu_count(), 'affinity_cpus': len(os.sched_getaffinity(0)),\n            'load_average': os.getloadavg(), 'kernel': platform.release()}\n    for line in Path('/proc/meminfo').read_text().splitlines():\n        if line.startswith(('MemTotal:', 'MemAvailable:', 'SwapTotal:')):\n            data[line.split(':')[0]] = line.split(':')[1].strip()\n    for name in ('cpu.max', 'memory.max', 'cpuset.cpus.effective'):\n        p = Path('/sys/fs/cgroup/init.scope') / name\n        data['cgroup_' + name] = p.read_text().strip() if p.exists() else 'unavailable'\n    cfg = configparser.ConfigParser(); cfg.read('/mnt/c/Users/Debrato/.wslconfig')\n    data['wsl_overrides'] = {s: {k: v for k, v in cfg[s].items() if k in ('memory', 'processors', 'swap', 'automemoryreclaim')} for s in cfg.sections()}\n    data['unrelated_programs_closed'] = 'User confirmed; Windows process inventory not independently verified.'\n    return data\n\n\ndef value(i):\n    return [None, '', '\u96ea\ud83d\ude00', 'e\\u0301', '\u00e9', 'exact', 'trailing '][i] if i < 7 else f'user-{hashlib.blake2b(str(i).encode(), digest_size=16).hexdigest()}@example.invalid'\n\n\ndef test_million_row_protection(monkeypatch):\n    n = int(os.environ.get('CRYPTALIS_PROFILE_ROWS', '1000000'))\n    assert 1000 <= n <= 1_000_000\n    initial = machine()\n    hashes = {str(p.relative_to(ROOT)): hashlib.sha256(p.read_bytes()).hexdigest() for p in (ROOT / 'src/cryptalis').rglob('*.py')}\n    metrics = defaultdict(lambda: defaultdict(float)); phase = ['setup']; owner_pids = set()\n    sql_counts = defaultdict(Counter); sync_counts = Counter(); waits = defaultdict(Counter)\n    reader_timings = defaultdict(list); monitor_errors = []; held = {}; strong_intervals = []\n    def timed(target, name, label):\n        original = getattr(target, name)\n        def instrument(*args, **kwargs):\n            start = time.perf_counter(); cpu = time.thread_time()\n            try: return original(*args, **kwargs)\n            finally:\n                group = metrics[phase[0]]\n                group[label + '_wall_s'] += time.perf_counter() - start\n                group[label + '_cpu_s'] += time.thread_time() - cpu\n                group[label + '_calls'] += 1\n        monkeypatch.setattr(target, name, instrument)\n    for target, name, label in ((m, '_backfill_chunk', 'backfill_chunk'), (m, '_verify', 'verification'),\n            (m, 'seal_text', 'seal'), (m, 'open_text', 'open'), (m, '_scope', 'membership'),\n            (m, '_ring', 'key_policy'), (Keyring, 'prepare', 'key_preparation'),\n            (FieldDescriptor, 'from_compiled', 'descriptor_preparation')):\n        timed(target, name, label)\n    original_sync = BasePipeline._enqueue_sync\n    def count_sync(self):\n        if self.pgconn.backend_pid in owner_pids: sync_counts[phase[0]] += 1\n        return original_sync(self)\n    monkeypatch.setattr(BasePipeline, '_enqueue_sync', count_sync)\n    original_commit = psycopg.Connection.commit\n    def commit(self):\n        start = time.perf_counter(); cpu = time.thread_time()\n        try: return original_commit(self)\n        finally:\n            if self.info.backend_pid in owner_pids:\n                metrics[phase[0]]['commit_wall_s'] += time.perf_counter() - start\n                metrics[phase[0]]['commit_cpu_s'] += time.thread_time() - cpu\n                metrics[phase[0]]['commit_calls'] += 1\n                if self.info.backend_pid in held:\n                    strong_intervals.append((phase[0], time.perf_counter() - held.pop(self.info.backend_pid)))\n    monkeypatch.setattr(psycopg.Connection, 'commit', commit)\n    with application(rows=0) as app:\n        start = time.perf_counter()\n        with psycopg.connect(os.environ['CRYPTALIS_TEST_RUNTIME_DATABASE_URL']) as c:\n            for lo in range(0, n, 2000):\n                c.cursor().executemany(f'INSERT INTO \"{app.schema}\".customer(id,tenant_id,name,label) VALUES (%s,%s,%s,%s)',\n                    [(UUID(int=i+100), TENANT, value(i), f'label-{i}') for i in range(lo, min(n, lo+2000))])\n                c.commit()\n        seed_s = time.perf_counter() - start\n        p = m.plan(json.dumps(app.plan.document['lock']['declaration']).encode(), app.mapping, app.owner,\n            writers=WriterInventory(True, (Writer(TABLE_ID, 'app', 'sqlalchemy', evidence='synthetic native application'),)),\n            search_reviews=(SearchReview(FIELD_ID, False, 'synthetic unbounded identifiers'),), keys=keys,\n            runtime_role=app.role, target_id=app.plan.target_id, backfill_rows_per_second=1000,\n            verify_rows_per_second=1000, temporary_bytes_per_row=700, wal_bytes_per_row=2000)\n        pin = m.DeploymentPin(p.target_id, p.operation_id, p.digest, 'PREPARED')\n        print(json.dumps({'stage': 'seeded', 'rows': n, 'seconds': seed_s, 'machine': initial}), flush=True)\n        def before(connection, cursor, statement, parameters, context, many):\n            pid = connection.connection.driver_connection.info.backend_pid; owner_pids.add(pid)\n            context.profile = (time.perf_counter(), time.thread_time(), pid)\n        def after(connection, cursor, statement, parameters, context, many):\n            start, cpu, pid = context.profile\n            wall = time.perf_counter() - start; used = time.thread_time() - cpu\n            label = ('index_construction' if statement.startswith('CREATE ') and 'INDEX ' in statement else\n                     'lock_request' if statement.startswith('LOCK TABLE') else\n                     'ddl' if statement.startswith(('ALTER ', 'CREATE ', 'DROP ', 'GRANT ', 'REVOKE ')) else\n                     'payload_updates' if statement.startswith('UPDATE ') and many else 'inspection_or_marker')\n            metrics[phase[0]][label + '_wall_s'] += wall\n            metrics[phase[0]][label + '_client_cpu_s'] += used\n            metrics[phase[0]]['sql_call_wall_s'] += wall\n            metrics[phase[0]]['sql_call_client_cpu_s'] += used\n            metrics[phase[0]]['sql_call_non_cpu_s'] += max(0, wall-used)\n            sql_counts[phase[0]][label] += 1\n            if many: sql_counts[phase[0]]['parameter_sets'] += len(parameters)\n            if statement.startswith('LOCK TABLE') and 'ACCESS EXCLUSIVE' in statement:\n                held.setdefault(pid, time.perf_counter())\n            elif statement.startswith('ALTER TABLE') and 'DROP COLUMN' in statement:\n                held.setdefault(pid, time.perf_counter())\n        event.listen(app.owner, 'before_cursor_execute', before)\n        event.listen(app.owner, 'after_cursor_execute', after)\n        stop = Event(); ready = Event(); reader_pid = [None]\n        def reader():\n            try:\n                with psycopg.connect(os.environ['CRYPTALIS_TEST_RUNTIME_DATABASE_URL'], autocommit=True) as c:\n                    reader_pid[0] = c.info.backend_pid\n                    c.execute(\"SET statement_timeout='30s'\"); ready.set()\n                    while not stop.is_set():\n                        stage = phase[0]; tick = time.perf_counter()\n                        c.execute(f'SELECT id FROM \"{app.schema}\".customer LIMIT 1').fetchone()\n                        reader_timings[stage].append(time.perf_counter()-tick)\n                        stop.wait(.02)\n            except Exception as exc: monitor_errors.append(('reader', type(exc).__name__))\n        def sampler():\n            try:\n                with psycopg.connect(os.environ['CRYPTALIS_TEST_DATABASE_URL'], autocommit=True) as c:\n                    while not stop.is_set():\n                        rows = c.execute('SELECT pid,state,wait_event_type,wait_event FROM pg_catalog.pg_stat_activity WHERE pid = ANY(%s)',\n                                         (list(owner_pids) + ([reader_pid[0]] if reader_pid[0] else []),)).fetchall()\n                        for pid, state, kind, detail in rows:\n                            role = 'reader' if pid == reader_pid[0] else 'executor'\n                            waits[phase[0]][role + ':' + str(state) + ':' + str(kind) + ':' + str(detail)] += 1\n                        # A restricted owner cannot inspect another login's\n                        # activity state. pg_locks still exposes lock waits.\n                        if reader_pid[0]:\n                            for mode, granted in c.execute('SELECT mode,granted FROM pg_catalog.pg_locks WHERE pid=%s AND locktype=%s',\n                                                          (reader_pid[0], 'relation')).fetchall():\n                                if not granted: waits[phase[0]]['reader:LOCK_WAIT:' + mode] += 1\n                        stop.wait(.02)\n            except Exception as exc: monitor_errors.append(('sampler', type(exc).__name__))\n        threads = [Thread(target=reader), Thread(target=sampler)]\n        for thread in threads: thread.start()\n        assert ready.wait(5)\n        snapshots = {}\n        def snapshot():\n            with app.owner.connect() as c:\n                sizes = c.exec_driver_sql('SELECT indexrelname,pg_relation_size(indexrelid) FROM pg_catalog.pg_stat_user_indexes WHERE schemaname=%s AND relname=%s', (app.schema, 'customer')).all()\n                return {'wal_lsn': c.exec_driver_sql('SELECT pg_current_wal_insert_lsn()::text').scalar_one(),\n                        'index_bytes': {name: size for name, size in sizes},\n                        'relation_bytes': c.exec_driver_sql('SELECT pg_total_relation_size(%s::regclass)', (f'\"{app.schema}\".customer',)).scalar_one()}\n        snapshots['before'] = snapshot()\n        durations = {}; cpu_times = {}; pause = time.perf_counter()\n        try:\n            for stage in ('EXPANDED', 'BACKFILLED', 'PENDING', 'ACTIVE'):\n                phase[0] = stage\n                if stage == 'ACTIVE': pin = replace(pin, phase='ACTIVATING')\n                start = time.perf_counter(); cpu = time.thread_time()\n                result = m.apply(p, app.owner, keys=keys, pin=pin, approval=app.approval, chunk_size=2000, until=stage)\n                durations[stage] = time.perf_counter()-start; cpu_times[stage] = time.thread_time()-cpu\n                assert result.phase == stage\n                if stage == 'ACTIVE': total_pause_s = time.perf_counter()-pause\n                snapshots[stage] = snapshot()\n                print(json.dumps({'stage': stage, 'seconds': durations[stage], 'client_main_cpu_s': cpu_times[stage]}), flush=True)\n        finally:\n            stop.set()\n            for thread in threads: thread.join(timeout=35)\n            event.remove(app.owner, 'before_cursor_execute', before)\n            event.remove(app.owner, 'after_cursor_execute', after)\n        assert not monitor_errors, monitor_errors\n        assert not any(thread.is_alive() for thread in threads)\n        phase[0] = 'postcheck'\n        with app.owner.connect() as c:\n            assert c.exec_driver_sql(f'SELECT count(*) FROM \"{app.schema}\".customer').scalar_one() == n\n            rows = c.exec_driver_sql(f'SELECT id, name FROM \"{app.schema}\".customer WHERE id = ANY(%s)',\n                ([UUID(int=i+100) for i in range(7)] + [UUID(int=n+99)],)).all()\n            descriptor = p.document['lock']['models'][0]['fields'][0]['descriptor']\n            for identity, frame in rows:\n                assert independent_open(bytes(frame) if frame is not None else None, descriptor, TENANT, identity) == value(identity.int-100)\n            wal_deltas = {stage: int(c.exec_driver_sql('SELECT pg_wal_lsn_diff(%s::pg_lsn,%s::pg_lsn)',\n                (snapshots[stage]['wal_lsn'], snapshots[previous]['wal_lsn'])).scalar_one())\n                for stage, previous in zip(('EXPANDED','BACKFILLED','PENDING','ACTIVE'),('before','EXPANDED','BACKFILLED','PENDING'))}\n        factory = attach(app.mapping, app.runtime, lock=p.lock_bytes, keys=keys, deployment=(p, replace(pin, phase='ACTIVE')))\n        with factory(tenant_id=TENANT) as session:\n            row = session.get(app.Customer, UUID(int=103)); row.name = 'post-protection-edit'; session.commit()\n            assert session.scalar(select(app.Customer.name).where(app.Customer.id==UUID(int=103))) == 'post-protection-edit'\n    assert all(hashlib.sha256((ROOT / path).read_bytes()).hexdigest() == digest for path, digest in hashes.items())\n    result = {'scope': 'Instrumented merged protection, public synthetic roots; research prototype',\n        'rows': n, 'base_revision': '0383cec', 'source_sha256': hashes,\n        'measurement_script': Path(__file__).read_text(), 'machine_start': initial, 'machine_end': machine(),\n        'seed_seconds': seed_s, 'phase_seconds': durations, 'phase_client_main_cpu_seconds': cpu_times,\n        'metrics': {k: dict(v) for k,v in metrics.items()}, 'sql_calls': {k: dict(v) for k,v in sql_counts.items()},\n        'pipeline_sync_points': dict(sync_counts), 'wait_samples': {k: dict(v) for k,v in waits.items()},\n        'wait_sampling_period_seconds': .02, 'total_writer_pause_seconds': total_pause_s,\n        'plain_reader': {k: {'queries': len(v), 'max_latency_s': max(v), 'total_latency_s': sum(v)} for k,v in reader_timings.items()},\n        'access_exclusive_held_intervals_seconds': strong_intervals, 'snapshots': snapshots,\n        'wal_bytes_cluster_wide_context_only': wal_deltas,\n        'peak_rss_kib': resource.getrusage(resource.RUSAGE_SELF).ru_maxrss,\n        'limits': ['Instrumentation and observer threads add overhead; component timers overlap.',\n                   'SQL call non-CPU time includes server/network/client scheduling, not isolated server time.',\n                   'Pipeline sync points are measured; exact wire round trips are not available.',\n                   'Per-index physical writes are not exposed by PostgreSQL 16 per-index statistics; size growth is reported.',\n                   'WAL LSN deltas are cluster-wide, not attributed.', 'Immediate test publication; real publication delay is additional.'],\n        'gates': {g:'UNKNOWN' for g in ('G-ADAPTER','G-CRYPTO','G-QUERY','G-LIFECYCLE','G-PROVIDER','G-POLICY','G-RELEASE')}}\n    name = 'step-a-protection-0383cec.json' if n == 1_000_000 else f'step-a-smoke-{n}-0383cec.json'\n    with (ROOT/'docs/_reset'/name).open('x') as stream:\n        stream.write(json.dumps(result, indent=2)+'\\n')\n    print(json.dumps({'stage':'complete', 'pause_seconds':total_pause_s, 'backfill_rows_per_second':n/durations['BACKFILLED'],\n                      'verification_seconds':metrics['PENDING']['verification_wall_s']}), flush=True)\n",
+  "machine_start": {
+    "logical_cpus": 20,
+    "affinity_cpus": 20,
+    "load_average": [
+      0.103515625,
+      0.35888671875,
+      0.3544921875
+    ],
+    "kernel": "6.18.33.2-microsoft-standard-WSL2",
+    "MemTotal": "7836328 kB",
+    "MemAvailable": "6410140 kB",
+    "SwapTotal": "2097152 kB",
+    "cgroup_cpu.max": "max 100000",
+    "cgroup_memory.max": "max",
+    "cgroup_cpuset.cpus.effective": "unavailable",
+    "wsl_overrides": {
+      "wsl2": {}
+    },
+    "unrelated_programs_closed": "User confirmed; Windows process inventory not independently verified."
+  },
+  "machine_end": {
+    "logical_cpus": 20,
+    "affinity_cpus": 20,
+    "load_average": [
+      0.103515625,
+      0.35888671875,
+      0.3544921875
+    ],
+    "kernel": "6.18.33.2-microsoft-standard-WSL2",
+    "MemTotal": "7836328 kB",
+    "MemAvailable": "6377728 kB",
+    "SwapTotal": "2097152 kB",
+    "cgroup_cpu.max": "max 100000",
+    "cgroup_memory.max": "max",
+    "cgroup_cpuset.cpus.effective": "unavailable",
+    "wsl_overrides": {
+      "wsl2": {}
+    },
+    "unrelated_programs_closed": "User confirmed; Windows process inventory not independently verified."
+  },
+  "seed_seconds": 0.030755006009712815,
+  "phase_seconds": {
+    "EXPANDED": 0.06211734897806309,
+    "BACKFILLED": 0.1652055960148573,
+    "PENDING": 0.13383009398239665,
+    "ACTIVE": 0.03410646700649522
+  },
+  "phase_client_main_cpu_seconds": {
+    "EXPANDED": 0.022491761999999915,
+    "BACKFILLED": 0.10420410199999997,
+    "PENDING": 0.10792587100000006,
+    "ACTIVE": 0.012335926999999969
+  },
+  "metrics": {
+    "setup": {
+      "inspection_or_marker_wall_s": 0.002471125015290454,
+      "inspection_or_marker_client_cpu_s": 0.0005871249999999106,
+      "sql_call_wall_s": 0.002471125015290454,
+      "sql_call_client_cpu_s": 0.0005871249999999106,
+      "sql_call_non_cpu_s": 0.0018840000152905434
+    },
+    "EXPANDED": {
+      "inspection_or_marker_wall_s": 0.025884835078613833,
+      "inspection_or_marker_client_cpu_s": 0.005706391000000144,
+      "sql_call_wall_s": 0.04749071807600558,
+      "sql_call_client_cpu_s": 0.0069838290000002745,
+      "sql_call_non_cpu_s": 0.040506889076005304,
+      "commit_wall_s": 0.0030155699932947755,
+      "commit_cpu_s": 0.0003505089999998878,
+      "commit_calls": 4.0,
+      "lock_request_wall_s": 0.00019801899907179177,
+      "lock_request_client_cpu_s": 0.00010093700000002315,
+      "ddl_wall_s": 0.015539513988187537,
+      "ddl_client_cpu_s": 0.0010253160000001094,
+      "index_construction_wall_s": 0.005868350010132417,
+      "index_construction_client_cpu_s": 0.00015118499999999813,
+      "membership_wall_s": 0.007438234984874725,
+      "membership_cpu_s": 0.006664761000000019,
+      "membership_calls": 1.0
+    },
+    "BACKFILLED": {
+      "inspection_or_marker_wall_s": 0.029882566013839096,
+      "inspection_or_marker_client_cpu_s": 0.005021761999999486,
+      "sql_call_wall_s": 0.0768073860090226,
+      "sql_call_client_cpu_s": 0.017136925999999497,
+      "sql_call_non_cpu_s": 0.059670460009023096,
+      "commit_wall_s": 0.0059191179752815515,
+      "commit_cpu_s": 0.00042583200000001487,
+      "commit_calls": 5.0,
+      "key_policy_wall_s": 0.000291529024252668,
+      "key_policy_cpu_s": 0.00029548599999995595,
+      "key_policy_calls": 1.0,
+      "key_preparation_wall_s": 9.054000838659704e-05,
+      "key_preparation_cpu_s": 9.189600000003573e-05,
+      "key_preparation_calls": 1.0,
+      "descriptor_preparation_wall_s": 0.023487173166358843,
+      "descriptor_preparation_cpu_s": 0.02400786000000088,
+      "descriptor_preparation_calls": 1000.0,
+      "seal_wall_s": 0.04643279858282767,
+      "seal_cpu_s": 0.04705514599999938,
+      "seal_calls": 1000.0,
+      "payload_updates_wall_s": 0.0469248199951835,
+      "payload_updates_client_cpu_s": 0.012115164000000012,
+      "backfill_chunk_wall_s": 0.14594012399902567,
+      "backfill_chunk_cpu_s": 0.09665651400000008,
+      "backfill_chunk_calls": 2.0
+    },
+    "PENDING": {
+      "inspection_or_marker_wall_s": 0.030809155956376344,
+      "inspection_or_marker_client_cpu_s": 0.006551407999999759,
+      "sql_call_wall_s": 0.03203880393994041,
+      "sql_call_client_cpu_s": 0.007018486999999629,
+      "sql_call_non_cpu_s": 0.02502031693994078,
+      "commit_wall_s": 0.004261368972947821,
+      "commit_cpu_s": 0.000296818000000032,
+      "commit_calls": 4.0,
+      "lock_request_wall_s": 0.00021582198678515851,
+      "lock_request_client_cpu_s": 0.0001264559999999415,
+      "membership_wall_s": 0.007209441013401374,
+      "membership_cpu_s": 0.005968670000000009,
+      "membership_calls": 1.0,
+      "key_policy_wall_s": 0.00028996699256822467,
+      "key_policy_cpu_s": 0.00029265500000008604,
+      "key_policy_calls": 1.0,
+      "key_preparation_wall_s": 8.376201731152833e-05,
+      "key_preparation_cpu_s": 8.53819999999672e-05,
+      "key_preparation_calls": 1.0,
+      "descriptor_preparation_wall_s": 0.024466033035423607,
+      "descriptor_preparation_cpu_s": 0.024999719000002085,
+      "descriptor_preparation_calls": 1000.0,
+      "open_wall_s": 0.04558658172027208,
+      "open_cpu_s": 0.045409916000000106,
+      "open_calls": 1000.0,
+      "verification_wall_s": 0.10847860699868761,
+      "verification_cpu_s": 0.09783219599999993,
+      "verification_calls": 1.0,
+      "ddl_wall_s": 0.0010138259967789054,
+      "ddl_client_cpu_s": 0.00034062299999992884
+    },
+    "ACTIVE": {
+      "inspection_or_marker_wall_s": 0.025915812904713675,
+      "inspection_or_marker_client_cpu_s": 0.004187911000000266,
+      "sql_call_wall_s": 0.02672135687316768,
+      "sql_call_client_cpu_s": 0.004479263000000233,
+      "sql_call_non_cpu_s": 0.022242093873167446,
+      "commit_wall_s": 0.0028907450032420456,
+      "commit_cpu_s": 0.00022135800000000483,
+      "commit_calls": 4.0,
+      "lock_request_wall_s": 0.00019296599202789366,
+      "lock_request_client_cpu_s": 9.557699999995783e-05,
+      "ddl_wall_s": 0.0006125779764261097,
+      "ddl_client_cpu_s": 0.00019577500000000914
+    },
+    "postcheck": {
+      "descriptor_preparation_wall_s": 8.851001621223986e-05,
+      "descriptor_preparation_cpu_s": 8.822699999999628e-05,
+      "descriptor_preparation_calls": 1.0,
+      "key_preparation_wall_s": 0.00016146100824698806,
+      "key_preparation_cpu_s": 0.00016044000000015046,
+      "key_preparation_calls": 3.0,
+      "commit_wall_s": 0.003003591002197936,
+      "commit_cpu_s": 0.00010339900000000402,
+      "commit_calls": 1.0
+    }
+  },
+  "sql_calls": {
+    "setup": {
+      "inspection_or_marker": 3
+    },
+    "EXPANDED": {
+      "inspection_or_marker": 33,
+      "lock_request": 1,
+      "ddl": 9,
+      "index_construction": 1
+    },
+    "BACKFILLED": {
+      "inspection_or_marker": 37,
+      "payload_updates": 1,
+      "parameter_sets": 1000
+    },
+    "PENDING": {
+      "inspection_or_marker": 34,
+      "lock_request": 1,
+      "ddl": 2
+    },
+    "ACTIVE": {
+      "inspection_or_marker": 30,
+      "lock_request": 1,
+      "ddl": 2
+    }
+  },
+  "pipeline_sync_points": {
+    "BACKFILLED": 1
+  },
+  "wait_samples": {
+    "EXPANDED": {
+      "executor:idle in transaction:Client:ClientRead": 1,
+      "reader:None:None:None": 3,
+      "reader:LOCK_WAIT:AccessShareLock": 2,
+      "executor:active:None:None": 1
+    },
+    "BACKFILLED": {
+      "executor:idle in transaction:Client:ClientRead": 2,
+      "reader:None:None:None": 5,
+      "executor:active:None:None": 3
+    },
+    "PENDING": {
+      "executor:idle:Client:ClientRead": 2,
+      "reader:None:None:None": 5,
+      "executor:idle in transaction:Client:ClientRead": 3
+    },
+    "ACTIVE": {
+      "executor:active:None:None": 1,
+      "reader:None:None:None": 2,
+      "reader:LOCK_WAIT:AccessShareLock": 1,
+      "executor:idle in transaction:Client:ClientRead": 1
+    }
+  },
+  "wait_sampling_period_seconds": 0.02,
+  "total_writer_pause_seconds": 0.4408079909917433,
+  "plain_reader": {
+    "setup": {
+      "queries": 1,
+      "max_latency_s": 0.0010009529942180961,
+      "total_latency_s": 0.0010009529942180961
+    },
+    "EXPANDED": {
+      "queries": 2,
+      "max_latency_s": 0.035483821004163474,
+      "total_latency_s": 0.03608359501231462
+    },
+    "BACKFILLED": {
+      "queries": 6,
+      "max_latency_s": 0.0577824029896874,
+      "total_latency_s": 0.05981925499509089
+    },
+    "PENDING": {
+      "queries": 5,
+      "max_latency_s": 0.010625030001392588,
+      "total_latency_s": 0.022573126945644617
+    },
+    "ACTIVE": {
+      "queries": 2,
+      "max_latency_s": 0.02172989401151426,
+      "total_latency_s": 0.02203943202039227
+    }
+  },
+  "access_exclusive_held_intervals_seconds": [
+    [
+      "EXPANDED",
+      0.0492953899956774
+    ],
+    [
+      "PENDING",
+      0.012062447989592329
+    ],
+    [
+      "ACTIVE",
+      0.02207629199256189
+    ]
+  ],
+  "snapshots": {
+    "before": {
+      "wal_lsn": "3/3C057740",
+      "index_bytes": {
+        "customer_pkey": 49152,
+        "native_name": 155648
+      },
+      "relation_bytes": 368640
+    },
+    "EXPANDED": {
+      "wal_lsn": "3/3C06C308",
+      "index_bytes": {
+        "customer_pkey": 49152,
+        "native_name": 155648,
+        "_cryptalis_000000000000000000000000000001f7_eq": 57344
+      },
+      "relation_bytes": 425984
+    },
+    "BACKFILLED": {
+      "wal_lsn": "3/3C128B00",
+      "index_bytes": {
+        "customer_pkey": 90112,
+        "native_name": 172032,
+        "_cryptalis_000000000000000000000000000001f7_eq": 180224
+      },
+      "relation_bytes": 868352
+    },
+    "PENDING": {
+      "wal_lsn": "3/3C12A948",
+      "index_bytes": {
+        "customer_pkey": 90112,
+        "_cryptalis_000000000000000000000000000001f7_eq": 180224
+      },
+      "relation_bytes": 696320
+    },
+    "ACTIVE": {
+      "wal_lsn": "3/3C12B938",
+      "index_bytes": {
+        "customer_pkey": 90112,
+        "_cryptalis_000000000000000000000000000001f7_eq": 180224
+      },
+      "relation_bytes": 696320
+    }
+  },
+  "wal_bytes_cluster_wide_context_only": {
+    "EXPANDED": 84936,
+    "BACKFILLED": 772088,
+    "PENDING": 7752,
+    "ACTIVE": 4080
+  },
+  "peak_rss_kib": 84700,
+  "limits": [
+    "Instrumentation and observer threads add overhead; component timers overlap.",
+    "SQL call non-CPU time includes server/network/client scheduling, not isolated server time.",
+    "Pipeline sync points are measured; exact wire round trips are not available.",
+    "Per-index physical writes are not exposed by PostgreSQL 16 per-index statistics; size growth is reported.",
+    "WAL LSN deltas are cluster-wide, not attributed.",
+    "Immediate test publication; real publication delay is additional."
+  ],
+  "gates": {
+    "G-ADAPTER": "UNKNOWN",
+    "G-CRYPTO": "UNKNOWN",
+    "G-QUERY": "UNKNOWN",
+    "G-LIFECYCLE": "UNKNOWN",
+    "G-PROVIDER": "UNKNOWN",
+    "G-POLICY": "UNKNOWN",
+    "G-RELEASE": "UNKNOWN"
+  }
+}

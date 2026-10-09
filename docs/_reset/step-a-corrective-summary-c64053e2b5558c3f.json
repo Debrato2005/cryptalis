@@ -1,0 +1,288 @@
+{
+  "scope": "Completed Step A correction; research prototype",
+  "fixing_revision": "worktree-c64053e2b5558c3f",
+  "product_sha256": {
+    "src/cryptalis/_sqlalchemy_guard.py": "f1b855b7b8b881f8360b69dffdeb12d6dc2fbdaea3f33dd6ed45b2588be477d3",
+    "src/cryptalis/cli.py": "0bef2ced749503a4d7a0c3a6096eceb5dd16f1f6989a54224bd2bafc73d4cce3",
+    "src/cryptalis/__init__.py": "c1a82f9f958187e4b5423d11df5a035b17d75b34a0947af6be4aac436cd2fed2",
+    "src/cryptalis/__main__.py": "9967032819ce6f18e02a40d033958d5f4f7c328faf8693bc07ecc42a1a525707",
+    "src/cryptalis/_sqlalchemy_search.py": "f2619552b36be5b65622503badbfdf6d8af20120d65e607be78411a13adca18e",
+    "src/cryptalis/sqlalchemy.py": "336c18e91685749bcc3f5ae3ced8fc774ba155d89b6f3816d303ebaf95f55d85",
+    "src/cryptalis/migration.py": "bb2a61595e85156595e7fb666fa57abb966ce4d405aacb07d5ec812eb746fe94",
+    "src/cryptalis/contracts/transition.py": "407c8028827ac7660cf6c4d3d4cfae30ca2dacf69ca80749e4e52f07d5c3d923",
+    "src/cryptalis/contracts/__init__.py": "7a621ddfa3ed2dd543a3495b8cedaed3f892fc6b1fae0b6e8d04285741bd8660",
+    "src/cryptalis/contracts/active_state.py": "b22608114fda5f49b2fa054fef24763bc9735c37612edfce0b13e16ca0df7532",
+    "src/cryptalis/contracts/development_authority.py": "1fe8519fe06fd0121829b92e04f1b5be2b8b72e39f3b8eecc3d60b6e168810d7",
+    "src/cryptalis/crypto/keys.py": "700300c3cf76c2a7fc181ef10bb32e5dffa878f3bd4e301c8daf3649baa33ae3",
+    "src/cryptalis/crypto/__init__.py": "e9b520aa1c44eec1517ab4cedf038f44da2e62be1dd10680c1199f9a8d0c0b7a",
+    "src/cryptalis/crypto/_candidate_wrap.py": "18cd89777178a5938848c51d47b48603dab902f57e83a6b330a8643f92748dc4",
+    "src/cryptalis/crypto/_candidate_scalar.py": "b97a21a29b4bc9453af8c4c0a8f22b4860892b85854b5d1196ebca2f5094269a",
+    "src/cryptalis/crypto/cf1.py": "88754b09576e6717e8ab82bd0990446d64b7ef3489da663a1a600e59cf6e28d4",
+    "src/cryptalis/crypto/_candidate_envelope.py": "9c28cb84a85123130328b2273eb27786a95f7953a41f0ec27f1c11100e28e55f",
+    "src/cryptalis/manifest/compiler.py": "94c026696ed118b682e722c92d8a45ee4c5b38565472247f49f0f061ac390154",
+    "src/cryptalis/manifest/descriptor.py": "739d0438451c47746850c6aa488add4cfd7782ddeebd743741cccd290d2ce20d",
+    "src/cryptalis/manifest/parser.py": "47cd75cc2ca611fe186d36d5d046317b0746714945c11fd2f84917d2f1020448",
+    "src/cryptalis/manifest/header.py": "6e450d8565e3d7c19ecedd6c6b3120715ea5c7ee3b1ee439fef9e5080bb5eb6a",
+    "src/cryptalis/manifest/declaration.py": "348d8e9c4605a28924166e3c1f88bd23f0b6b3ebaae402f52cf0d2c3403ca6b8",
+    "src/cryptalis/manifest/canonical.py": "6fe7e3d22cece14e5d85de912acdaf782a5421bfaa5c4dd796f78ab5bd4c2ec8",
+    "src/cryptalis/manifest/__init__.py": "d2dc8653181d66161df9d9eb29ea79fb36b38fd93848d4da4a25184cda6885cd"
+  },
+  "full_suite_receipt": "step-a-corrective-verification-0fadd110317d7e85.json",
+  "full_suite_passed": 1004,
+  "files_changed_after_full_suite": [
+    "tests/profile_migration_step_a.py"
+  ],
+  "post_suite_change": "Only benchmark output-label variable was renamed. Timing and workload logic unchanged; corrected harness passed the million-row run.",
+  "post_suite_profile_sha256": "69a5d7326184875f36004366df5f1db0cf1c780c49c82559835dc40490087cf7",
+  "regression_receipts": [
+    "step-a-corrective-regressions-0fadd110317d7e85.json",
+    "step-a-lock-regressions-0fadd110317d7e85.json",
+    "slice5-regressions-audit-729b0f0ba9f8fea6.json"
+  ],
+  "regression_proofs": {
+    "original_two_table_fails_fixed_passes": true,
+    "safety_removals_restoration_passes": 31,
+    "old_checkpoint_phases_resumed": 5
+  },
+  "measurements": {
+    "million_baseline_receipt": "step-a-protection-0383cec.json",
+    "million_after_receipt": "step-a-optimized-million-1000000-a94d3d18190b80fb.json",
+    "million_baseline": {
+      "rows": 1000000,
+      "phase_seconds": {
+        "EXPANDED": 5.52085630199872,
+        "BACKFILLED": 98.12599386298098,
+        "PENDING": 65.4333263389999,
+        "ACTIVE": 0.023443106008926407
+      },
+      "backfill_rows_per_second": 10190.979582804104,
+      "backfill_cpu_seconds": 64.587838504,
+      "descriptor_cpu_seconds": 17.739050062993066,
+      "descriptor_calls": 1000000.0,
+      "seal_cpu_seconds": 32.37065737999448,
+      "verification_seconds": 65.40374094800791,
+      "verification_cpu_seconds": 63.85764796999999,
+      "verification_descriptor_cpu_seconds": 16.213952431989483,
+      "verification_descriptor_calls": 1000000.0,
+      "writer_pause_seconds": 169.1450980709924,
+      "plain_reader": {
+        "setup": {
+          "queries": 1,
+          "max_latency_s": 0.0007541980012319982,
+          "total_latency_s": 0.0007541980012319982
+        },
+        "EXPANDED": {
+          "queries": 1,
+          "max_latency_s": 5.496007395006018,
+          "total_latency_s": 5.496007395006018
+        },
+        "BACKFILLED": {
+          "queries": 2700,
+          "max_latency_s": 0.15608863098896109,
+          "total_latency_s": 21.138310232840013
+        },
+        "PENDING": {
+          "queries": 2066,
+          "max_latency_s": 0.03668045101221651,
+          "total_latency_s": 14.24660342533025
+        },
+        "ACTIVE": {
+          "queries": 2,
+          "max_latency_s": 0.0003510749957058579,
+          "total_latency_s": 0.0006735839997418225
+        }
+      },
+      "backfill_sql_call_wall_seconds": 40.8309035631537,
+      "backfill_sql_call_non_cpu_seconds": 31.976508235148703,
+      "backfill_wal_cluster_bytes": 1269621872,
+      "peak_rss_kib": 85220
+    },
+    "million_after": {
+      "rows": 1000000,
+      "phase_seconds": {
+        "EXPANDED": 6.128864036989398,
+        "BACKFILLED": 67.80438300801325,
+        "PENDING": 42.26664911399712,
+        "ACTIVE": 0.04225590999703854
+      },
+      "backfill_rows_per_second": 14748.309115677937,
+      "backfill_cpu_seconds": 35.657699262,
+      "descriptor_cpu_seconds": 0.029886373999991278,
+      "descriptor_calls": 500.0,
+      "seal_cpu_seconds": 23.772771561997864,
+      "verification_seconds": 42.21433655600413,
+      "verification_cpu_seconds": 40.877654966,
+      "verification_descriptor_cpu_seconds": 6.243500000380209e-05,
+      "verification_descriptor_calls": 1.0,
+      "writer_pause_seconds": 116.29054824297782,
+      "plain_reader": {
+        "setup": {
+          "queries": 1,
+          "max_latency_s": 0.0015897789853625,
+          "total_latency_s": 0.0015897789853625
+        },
+        "EXPANDED": {
+          "queries": 2,
+          "max_latency_s": 6.106096393981716,
+          "total_latency_s": 6.10774868199951
+        },
+        "BACKFILLED": {
+          "queries": 2628,
+          "max_latency_s": 0.06525242299539968,
+          "total_latency_s": 9.664729612879455
+        },
+        "PENDING": {
+          "queries": 1380,
+          "max_latency_s": 0.04641549600637518,
+          "total_latency_s": 8.021264774142765
+        },
+        "ACTIVE": {
+          "queries": 3,
+          "max_latency_s": 0.010322888992959633,
+          "total_latency_s": 0.01113160199020058
+        }
+      },
+      "backfill_sql_call_wall_seconds": 37.55998141330201,
+      "backfill_sql_call_non_cpu_seconds": 29.34025669231855,
+      "backfill_wal_cluster_bytes": 1189163448,
+      "peak_rss_kib": 100672
+    },
+    "small_before_receipt": "step-a-descriptor_preparation-20000-ff9a8eae0fa0c749.json",
+    "small_after_receipt": "step-a-descriptor_preparation-20000-a94d3d18190b80fb.json",
+    "small_before": {
+      "rows": 20000,
+      "phase_seconds": {
+        "EXPANDED": 0.16776913299690932,
+        "BACKFILLED": 2.0645476449863054,
+        "PENDING": 1.6054372550279368,
+        "ACTIVE": 0.036741471994901076
+      },
+      "backfill_rows_per_second": 9687.352117336417,
+      "backfill_cpu_seconds": 1.271864385,
+      "descriptor_cpu_seconds": 0.3454117240000101,
+      "descriptor_calls": 20000.0,
+      "seal_cpu_seconds": 0.6364207669999862,
+      "verification_seconds": 1.579091489984421,
+      "verification_cpu_seconds": 1.5511041890000001,
+      "verification_descriptor_cpu_seconds": 0.39797786300000526,
+      "verification_descriptor_calls": 20000.0,
+      "writer_pause_seconds": 3.910591210005805,
+      "plain_reader": {
+        "setup": {
+          "queries": 1,
+          "max_latency_s": 0.0006557060114573687,
+          "total_latency_s": 0.0006557060114573687
+        },
+        "EXPANDED": {
+          "queries": 1,
+          "max_latency_s": 0.147347278019879,
+          "total_latency_s": 0.147347278019879
+        },
+        "BACKFILLED": {
+          "queries": 64,
+          "max_latency_s": 0.06511963001685217,
+          "total_latency_s": 0.4461003088799771
+        },
+        "PENDING": {
+          "queries": 46,
+          "max_latency_s": 0.036820416018599644,
+          "total_latency_s": 0.4638749090372585
+        },
+        "ACTIVE": {
+          "queries": 3,
+          "max_latency_s": 0.007322964025661349,
+          "total_latency_s": 0.008214789035264403
+        }
+      },
+      "backfill_sql_call_wall_seconds": 0.9385180011449847,
+      "backfill_sql_call_non_cpu_seconds": 0.7660470641449826,
+      "backfill_wal_cluster_bytes": 15293168,
+      "peak_rss_kib": 105516
+    },
+    "small_after": {
+      "rows": 20000,
+      "phase_seconds": {
+        "EXPANDED": 0.11926435900386423,
+        "BACKFILLED": 1.1279870659927838,
+        "PENDING": 1.1590517729928251,
+        "ACTIVE": 0.03623345497180708
+      },
+      "backfill_rows_per_second": 17730.69975975057,
+      "backfill_cpu_seconds": 0.627828775,
+      "descriptor_cpu_seconds": 0.0005469580000000418,
+      "descriptor_calls": 10.0,
+      "seal_cpu_seconds": 0.4208218309999975,
+      "verification_seconds": 1.1309176310023759,
+      "verification_cpu_seconds": 1.080918238,
+      "verification_descriptor_cpu_seconds": 5.7371999999888956e-05,
+      "verification_descriptor_calls": 1.0,
+      "writer_pause_seconds": 2.4780291310162283,
+      "plain_reader": {
+        "setup": {
+          "queries": 1,
+          "max_latency_s": 0.0005369060090743005,
+          "total_latency_s": 0.0005369060090743005
+        },
+        "EXPANDED": {
+          "queries": 1,
+          "max_latency_s": 0.09416958899237216,
+          "total_latency_s": 0.09416958899237216
+        },
+        "BACKFILLED": {
+          "queries": 41,
+          "max_latency_s": 0.0487347949820105,
+          "total_latency_s": 0.23750140590709634
+        },
+        "PENDING": {
+          "queries": 35,
+          "max_latency_s": 0.027015050989575684,
+          "total_latency_s": 0.36654163990169764
+        },
+        "ACTIVE": {
+          "queries": 1,
+          "max_latency_s": 0.012459799996577203,
+          "total_latency_s": 0.012459799996577203
+        }
+      },
+      "backfill_sql_call_wall_seconds": 0.6064825451176148,
+      "backfill_sql_call_non_cpu_seconds": 0.4618588241176127,
+      "backfill_wal_cluster_bytes": 15293168,
+      "peak_rss_kib": 100768
+    },
+    "small_label_correction": "Both small-run labels were overwritten by the timer-loop label. Their source hashes prove old versus new engine identity; original receipts remain unchanged."
+  },
+  "local_versions": {
+    "python": "3.12.3",
+    "sqlalchemy": "2.1.3",
+    "psycopg": "3.3.6",
+    "cryptography": "50.0.2"
+  },
+  "preservation": {
+    "initial_unrelated_files_unchanged": true,
+    "initial_receipts_unchanged": true,
+    "crypto_source_unchanged": true,
+    "lock_and_journal_mechanisms_ast_unchanged": true,
+    "no_commit_push_or_spike_edits": true
+  },
+  "static_checks": {
+    "python_compileall": "passed",
+    "git_diff_check": "passed",
+    "ruff_mypy_bandit": "Not installed; not run"
+  },
+  "limits": [
+    "Same recorded data and instrumentation; process load, available memory, cache and checkpoint conditions differ.",
+    "One before/after small pair and one new million-row run; no claim that every timing difference is caused by code.",
+    "SQL-call non-CPU time is not isolated database execution or wait time. Per-index physical writes and table-attributed WAL unknown.",
+    "Full engine verifies one million rows; separate decoder checks eight representative million-row samples and all fields in smaller E2E cases.",
+    "No independent human security review or production provider exists."
+  ],
+  "gates": {
+    "G-ADAPTER": "UNKNOWN",
+    "G-CRYPTO": "UNKNOWN",
+    "G-QUERY": "UNKNOWN",
+    "G-LIFECYCLE": "UNKNOWN",
+    "G-PROVIDER": "UNKNOWN",
+    "G-POLICY": "UNKNOWN",
+    "G-RELEASE": "UNKNOWN"
+  }
+}
