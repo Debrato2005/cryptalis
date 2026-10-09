@@ -43,3 +43,15 @@ This pass keeps existing local changes and edits only documentation. The user re
 - [Verification](slice4-verification.json), [performance](slice4-performance.json) and the [60-line walkthrough](../walkthrough-search.md) record the exact local boundary.
 - Independent writers can hide matches or replay values. Fresh-deployment key/policy binding and writer exclusion remain unqualified; grants do not prove them.
 - Existing work and all 60 hashed spike files are preserved. No slice 5, commit or push. All seven gates remain UNKNOWN; no production provider or independent review exists.
+
+## Slice 5 checkpoint: 2026-10-09
+
+- IMPLEMENTED: maintenance `plan`/`apply`/`verify`, atomic PostgreSQL journal chunks, full value verification, publication-gated switch, and pre-switch abort.
+- VERIFIED: 53 migration cases within 917 suite cases; 20 isolated safety removals fail and copied restorations pass.
+- Fresh private probes passed for both roles. Application sync/async CRUD uses the restricted runtime role; owner credentials perform setup and transitions.
+- Process kills, real lost replies, corruption, concurrent paused writers, an older own-schema snapshot restore, and metadata/authority refusals have scoped evidence.
+- Final million-row backfill: 3,942 rows/s; writer pause: 508.7 s. Earlier source: 11,559 rows/s and 197.0 s; variation cause UNKNOWN.
+- Fixed storage/WAL guesses were replaced with explicit host observations. Measurements are not bounds or an approved pause ceiling.
+- SQL switch drops the original column. No live plaintext rollback mirror remains; heap tuples, WAL, snapshots and backups can still contain plaintext.
+- Host writer exclusion, pin provenance, restore quarantine, production provider, real exhaustion, retained-backup recovery and independent review remain unqualified.
+- All seven gates remain UNKNOWN. No slice 6/7 implementation, spike edits, commit or push. [Receipt](slice5-verification.json) owns the evidence boundary.

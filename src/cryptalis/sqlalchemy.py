@@ -8,6 +8,7 @@ from contextvars import ContextVar
 from dataclasses import dataclass, field
 from functools import wraps
 from hashlib import sha256
+import json
 from uuid import UUID
 
 from sqlalchemy import BigInteger, LargeBinary, Text, Uuid, event, func, inspect, type_coerce
@@ -195,8 +196,9 @@ def _points(statement, parameters):
 
 
 class _Attachment:
-    def __init__(self, mapping, engine, document, keys):
+    def __init__(self, mapping, engine, document, keys, deployment=None):
         self.mapping, self.engine, self.document, self.keys = mapping, engine, document, keys
+        self.deployment = deployment
         self.bindings = []
         self.models = {}
         self.fingerprint = ()
@@ -218,6 +220,11 @@ class _Attachment:
         if (not isinstance(ring, Keyring) or ring.policy.tenant_id != tenant or
                 str(ring.policy.domain_id) != self.document["domain_id"]):
             raise PolicyMismatch()
+        if self.deployment is not None:
+            from cryptalis.migration import _policy
+            plan, _ = self.deployment
+            if _policy(ring) != plan.document["key_policies"].get(str(tenant)):
+                raise PolicyMismatch()
         if any(binding.descriptor.equality for binding in self.bindings):
             roots = [wrapper for wrapper in ring.policy.wrappers if wrapper.context.purpose == "search"]
             if len(roots) != 1 or roots[0].context.generation != ring.policy.search_generation:
@@ -235,6 +242,8 @@ class _Attachment:
         return await self._ring(tenant).prepare_async()
 
     def validate(self, connection):
+        from cryptalis.migration import check_attachment
+        check_attachment(connection, json.dumps(self.document, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode(), self.deployment)
         if connection.dialect.name != "postgresql" or connection.dialect.driver != "psycopg":
             raise PolicyMismatch()
         if (connection.get_execution_options().get("schema_translate_map") or
@@ -630,7 +639,7 @@ class _Factory:
         return cls(bind=self._owner.engine, _owner=self._owner, tenant_id=tenant_id, **options)
 
 
-def attach(mapping: registry, engine: Engine | AsyncEngine, *, lock: bytes, keys):
+def attach(mapping: registry, engine: Engine | AsyncEngine, *, lock: bytes, keys, deployment=None):
     """Attach an already protected target. Await this call for an AsyncEngine.
 
     Schema transition is not performed. The host authenticates the lock and the
@@ -641,7 +650,7 @@ def attach(mapping: registry, engine: Engine | AsyncEngine, *, lock: bytes, keys
         if (not isinstance(mapping, registry) or not isinstance(engine, (Engine, AsyncEngine)) or
                 document["schema"] != "cryptalis.lock/v1" or document["profile"] != "cf1"):
             raise PolicyMismatch()
-        owner = _Attachment(mapping, engine, document, keys)
+        owner = _Attachment(mapping, engine, document, keys, deployment)
     except Exception:
         raise PolicyMismatch() from None
     if isinstance(engine, AsyncEngine):

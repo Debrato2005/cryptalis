@@ -185,6 +185,9 @@ Rollback during deprotect/removal uses the same transform-back path. It is not a
 The earlier package-free SQL read does not satisfy application removal. The integrated checkpoint records a narrow original-application child test.
 Durable retained-backup recovery and the full removal gate remain UNKNOWN.
 Dropping columns does not erase dead tuples, WAL, backups, or host exports.
+PostgreSQL can also retain dropped-column bytes in existing heap tuples: `DROP COLUMN` hides the column from SQL,
+but does not immediately remove its stored data ([PostgreSQL 16 ALTER TABLE](https://www.postgresql.org/docs/16/sql-altertable.html)).
+Protection switch retires the original SQL column after verification. It does not establish plaintext erasure.
 Historical plaintext and encrypted-reader obligations remain explicit after application exit.
 
 ## Recovery behavior

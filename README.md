@@ -1,12 +1,13 @@
 # Cryptalis
 
-**IMPLEMENTED: research prototype with a manifest compiler, CF1 primitives, a local development provider, and bounded SQLAlchemy storage, equality/IN and tenant-scoped uniqueness.**
+**IMPLEMENTED: research prototype with a manifest compiler, CF1 primitives, a local development provider, bounded SQLAlchemy storage/search, and a maintenance protection transition.**
 The sync/async attachment has scoped PostgreSQL tests under separate restricted runtime credentials.
 Tested runtime DDL and ownership changes are refused. Separate writers can still change data; deployment writer exclusion remains unverified.
 All seven full gates remain **UNKNOWN**. Read [status](docs/status.md) for evidence and revision limits.
 No runtime compatibility cell, production key provider, or independent review is qualified.
 The [slice 3 walkthrough](docs/walkthrough-sqlalchemy.md) gives the implemented API and its limits.
 The [search walkthrough](docs/walkthrough-search.md) covers slice 4 and its native-index mechanism.
+The [migration walkthrough](docs/walkthrough-migration.md) covers slice 5: plan, atomic backfill, full verification, and publication-gated switch.
 
 **SPECIFIED:** Cryptalis adds application-side protection to a Python 3.12+, SQLAlchemy 2.x, psycopg 3, PostgreSQL 16 backend.
 One manifest selects protected text fields. One attachment handles admitted writes, reads, and expressions.

@@ -1,10 +1,56 @@
 # Implementation status
 
 **IMPLEMENTED:** research prototype with a product manifest compiler, CF1 text primitives, a local development provider,
-and bounded sync/async SQLAlchemy storage, equality/IN and tenant-scoped uniqueness. Separate runtime-role verification is complete for the local cell.
+and bounded sync/async SQLAlchemy storage/search plus a PostgreSQL maintenance protection transition.
+Separate runtime-role verification is complete for the local cell.
 No PostgreSQL/provider/runtime cell, production key provider, independent review, or release is qualified.
 VERIFIED below refers only to the named checks and their exact revisions.
 All other contract and promotion requirements are SPECIFIED. All seven full gates remain UNKNOWN.
+
+## Slice 5 checkpoint: 2026-10-09
+
+**IMPLEMENTED:** `cryptalis.migration.plan`, `apply`, `verify`, and pre-switch `abort`.
+One phase loop uses a PostgreSQL journal, cooperating session advisory lock, transactional DDL, and bounded atomic chunks.
+Plans bind the native schema, compiler lock, target, runtime role, inventoried tenant key policies, writer assertions, and host cost estimates.
+Expand drains table access and installs an owner-controlled statement trigger that rejects restricted-runtime writes across chunk commits and process crashes.
+Resume preserves committed ciphertext. Full verification checks membership, native value/type/NULL parity, authentication, terms, generations, constraints/indexes, and trigger inventory.
+Switch repeats verification under exclusive table locks and retires the original SQL column without CASCADE.
+Database switch remains PENDING until the host supplies the exact externally published ACTIVATING pin.
+After acknowledgement, startup requires the externally current ACTIVE pin, target/schema agreement, planned runtime role, and matching tenant key policies.
+
+**VERIFIED, local PostgreSQL 16.15:** **53 migration cases** within **917 passing full-suite cases**.
+The original native application supplies plaintext/type/NULL oracles; a separate stdlib HKDF/HMAC and AEAD decoder checks migrated frames against those values.
+Independent child processes are killed at durable phase boundaries and during a partly completed backfill, then resume without replacing committed frames.
+A real PostgreSQL transport fault discards an already-terminal COMMIT reply. Resume inspects the committed marker and retains the first chunk's bytes.
+Connection faults during expand, verify, and transactional switch preserve the original representation and prevent false completion.
+Concurrent runtime writes committed before fencing are included; writes during maintenance reject with `55000`, and an attached retry works after publication.
+The runtime can read progress but cannot mutate the journal, disable the fence, alter its schema, or acquire ownership.
+Real corruption, missing rows, changed source/index/trigger metadata, missing markers, and wrong active generations refuse switch.
+A real own-schema `pg_dump`/`psql` older-snapshot restore cannot advance under the current external ACTIVE pin.
+Missing publication, stale pins, altered keys, owner attachment, and competing executors refuse.
+**Twenty isolated safety removals** fail their behavioral oracles; restoring each copied source restores a passing result.
+
+[Verification](_reset/slice5-verification.json), [regression proofs](_reset/slice5-regressions.json), and
+[performance](_reset/slice5-performance.json) retain commands, hashes, scope, and costs.
+The final isolated million-row run backfilled **3,942 rows/s** in 253.7 s; the measured write pause was **508.7 s**.
+Expand took 5.3 s, verify 148.6 s, and repeated verification plus database switch 100.9 s.
+The pause ends at local ACTIVE acknowledgement; actual host publication delay adds to it.
+Runtime write attempts in all four paused phases returned `55000`; an attached post-switch edit/read succeeded.
+The observed phase maximum for the customer heap and indexes was 600,793,088 bytes; cluster-wide WAL increased about 1.396 GB.
+These do not prove secure erasure, attributed WAL, storage bounds, or a production pause budget.
+The earlier source measured 11,559 rows/s and 197.0 s pause. The cause of the run-to-run difference remains **UNKNOWN**.
+An underestimated fixed WAL multiplier was replaced with required host staging cost inputs; no multiplier is presented as a bound.
+The [60-line walkthrough](walkthrough-migration.md) explains plaintext retention and deployment responsibilities.
+
+**Limits:** protection is a maintenance operation. It does not admit online plaintext writes during backfill.
+Owner/DDL writers must be excluded by the host. The tests do not qualify a deployment's worker termination, credential control, policy provenance, or restore quarantine.
+A supplied pin is a host assertion, not authentication implemented by this package. A restored journal never selects current authority.
+Same-context row replay, hostile result omission, nullable substitution, and writers that bypass attachment remain outside the claimed boundary.
+Only inventoried tenant policies are admitted. One protection operation per schema is currently admitted; an aborted journal remains for inspection.
+Decrypt-back, package-free removal, rotation, finalization, retained-backup recovery, and production provider integration are not implemented by this slice.
+No source mirror survives SQL switch, but dropped-column bytes can remain in heap tuples, WAL, snapshots, and backups. No erasure claim follows.
+Storage/WAL and rate estimates require host staging observations; they are not bounds. Real exhaustion and production pause budgets remain UNKNOWN/D.
+No production provider or independent review exists. All seven gates remain **UNKNOWN**. No commit or push occurred.
 
 ## Slice 4 checkpoint: 2026-10-08
 

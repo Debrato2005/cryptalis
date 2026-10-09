@@ -1,0 +1,164 @@
+{
+  "rows": 1000000,
+  "fingerprints": {
+    "CRYPTALIS_TEST_DATABASE_URL": "0f63934e",
+    "CRYPTALIS_TEST_RUNTIME_DATABASE_URL": "4e551e31"
+  },
+  "versions": {
+    "python": "3.12.3",
+    "postgresql": "16.15 (Ubuntu 16.15-0ubuntu0.24.04.1)",
+    "sqlalchemy": "2.1.3",
+    "psycopg": "3.3.6",
+    "cryptography": "50.0.2"
+  },
+  "source_hashes": {
+    "src/cryptalis/_sqlalchemy_guard.py": "f1b855b7b8b881f8360b69dffdeb12d6dc2fbdaea3f33dd6ed45b2588be477d3",
+    "src/cryptalis/cli.py": "0bef2ced749503a4d7a0c3a6096eceb5dd16f1f6989a54224bd2bafc73d4cce3",
+    "src/cryptalis/__init__.py": "c1a82f9f958187e4b5423d11df5a035b17d75b34a0947af6be4aac436cd2fed2",
+    "src/cryptalis/__main__.py": "9967032819ce6f18e02a40d033958d5f4f7c328faf8693bc07ecc42a1a525707",
+    "src/cryptalis/_sqlalchemy_search.py": "f2619552b36be5b65622503badbfdf6d8af20120d65e607be78411a13adca18e",
+    "src/cryptalis/sqlalchemy.py": "fd01c0195487cdcb5090d832dafc9b83bbd07bd9314fcc58e83a024a5e0e2b34",
+    "src/cryptalis/migration.py": "9a084c6367d6e463d154ac4643e216a0594e1630dbe2a2d19df6a7f55631fb9e",
+    "src/cryptalis/contracts/transition.py": "407c8028827ac7660cf6c4d3d4cfae30ca2dacf69ca80749e4e52f07d5c3d923",
+    "src/cryptalis/contracts/__init__.py": "7a621ddfa3ed2dd543a3495b8cedaed3f892fc6b1fae0b6e8d04285741bd8660",
+    "src/cryptalis/contracts/active_state.py": "b22608114fda5f49b2fa054fef24763bc9735c37612edfce0b13e16ca0df7532",
+    "src/cryptalis/contracts/development_authority.py": "1fe8519fe06fd0121829b92e04f1b5be2b8b72e39f3b8eecc3d60b6e168810d7",
+    "src/cryptalis/crypto/keys.py": "700300c3cf76c2a7fc181ef10bb32e5dffa878f3bd4e301c8daf3649baa33ae3",
+    "src/cryptalis/crypto/__init__.py": "e9b520aa1c44eec1517ab4cedf038f44da2e62be1dd10680c1199f9a8d0c0b7a",
+    "src/cryptalis/crypto/_candidate_wrap.py": "18cd89777178a5938848c51d47b48603dab902f57e83a6b330a8643f92748dc4",
+    "src/cryptalis/crypto/_candidate_scalar.py": "b97a21a29b4bc9453af8c4c0a8f22b4860892b85854b5d1196ebca2f5094269a",
+    "src/cryptalis/crypto/cf1.py": "88754b09576e6717e8ab82bd0990446d64b7ef3489da663a1a600e59cf6e28d4",
+    "src/cryptalis/crypto/_candidate_envelope.py": "9c28cb84a85123130328b2273eb27786a95f7953a41f0ec27f1c11100e28e55f",
+    "src/cryptalis/manifest/compiler.py": "94c026696ed118b682e722c92d8a45ee4c5b38565472247f49f0f061ac390154",
+    "src/cryptalis/manifest/descriptor.py": "739d0438451c47746850c6aa488add4cfd7782ddeebd743741cccd290d2ce20d",
+    "src/cryptalis/manifest/parser.py": "47cd75cc2ca611fe186d36d5d046317b0746714945c11fd2f84917d2f1020448",
+    "src/cryptalis/manifest/header.py": "6e450d8565e3d7c19ecedd6c6b3120715ea5c7ee3b1ee439fef9e5080bb5eb6a",
+    "src/cryptalis/manifest/declaration.py": "348d8e9c4605a28924166e3c1f88bd23f0b6b3ebaae402f52cf0d2c3403ca6b8",
+    "src/cryptalis/manifest/canonical.py": "6fe7e3d22cece14e5d85de912acdaf782a5421bfaa5c4dd796f78ab5bd4c2ec8",
+    "src/cryptalis/manifest/__init__.py": "d2dc8653181d66161df9d9eb29ea79fb36b38fd93848d4da4a25184cda6885cd"
+  },
+  "source_stable": true,
+  "seed_seconds": 39.02017226497992,
+  "phase_seconds": {
+    "EXPANDED": 5.323092234990327,
+    "BACKFILLED": 253.66155941900797,
+    "VERIFIED": 148.6064831969852,
+    "PENDING": 100.90138481900794,
+    "ACTIVE": 0.03680520600755699
+  },
+  "backfill_rows_per_second": 3942.2607126220546,
+  "total_writer_pause_seconds": 508.6976482789905,
+  "writer_pause_definition": "First expand invocation through ACTIVE database acknowledgement; local publication is an immediate test pin update. Real deployment publication delay is additional.",
+  "writer_refusals": [
+    {
+      "phase": "EXPANDED",
+      "sqlstate": "55000",
+      "refusal_ms": 5.8765480061993
+    },
+    {
+      "phase": "BACKFILLED",
+      "sqlstate": "55000",
+      "refusal_ms": 5.947900994215161
+    },
+    {
+      "phase": "VERIFIED",
+      "sqlstate": "55000",
+      "refusal_ms": 4.627977992640808
+    },
+    {
+      "phase": "PENDING",
+      "sqlstate": "55000",
+      "refusal_ms": 4.637805977836251
+    }
+  ],
+  "first_post_switch_write_read_ms": 25.586699979612604,
+  "initial_total_relation_bytes": 290816000,
+  "final_total_relation_bytes_including_dead_tuples": 466542592,
+  "phase_total_relation_bytes": {
+    "EXPANDED": 331513856,
+    "BACKFILLED": 600793088,
+    "VERIFIED": 600793088,
+    "PENDING": 466542592,
+    "ACTIVE": 466542592
+  },
+  "plan_cost_estimates": {
+    "backfill_seconds_estimate": 1000,
+    "cost_basis": "Host-supplied per-row staging observations/estimates; not bounds or qualification.",
+    "limits": "Host rate estimates exclude lock drain, DDL, index build, publication delay and capacity guarantees.",
+    "plaintext_bytes": 53000000,
+    "provider_unwraps_per_cold_preparation": 2,
+    "rows": 1000000,
+    "temporary_bytes_estimate": 700000000,
+    "verify_seconds_estimate": 1000,
+    "wal_bytes_estimate": 2000000000,
+    "writer_pause_seconds_estimate": 3000
+  },
+  "wal_bytes_cluster_wide_context_only": 1396475856,
+  "cpu_seconds": 418.2075602,
+  "peak_rss_kib": 81444,
+  "limits": [
+    "Public synthetic fixture keys; no provider custody claim",
+    "Host exclusion and publication attested by test caller, not a production deployment",
+    "WAL LSN measures entire cluster, not attribution",
+    "No plaintext erasure claim",
+    "No numeric pause ceiling approved"
+  ],
+  "gates": {
+    "G-ADAPTER": "UNKNOWN",
+    "G-CRYPTO": "UNKNOWN",
+    "G-QUERY": "UNKNOWN",
+    "G-LIFECYCLE": "UNKNOWN",
+    "G-PROVIDER": "UNKNOWN",
+    "G-POLICY": "UNKNOWN",
+    "G-RELEASE": "UNKNOWN"
+  },
+  "initial_run_context_only": {
+    "source_hashes": {
+      "src/cryptalis/_sqlalchemy_guard.py": "f1b855b7b8b881f8360b69dffdeb12d6dc2fbdaea3f33dd6ed45b2588be477d3",
+      "src/cryptalis/cli.py": "0bef2ced749503a4d7a0c3a6096eceb5dd16f1f6989a54224bd2bafc73d4cce3",
+      "src/cryptalis/__init__.py": "c1a82f9f958187e4b5423d11df5a035b17d75b34a0947af6be4aac436cd2fed2",
+      "src/cryptalis/__main__.py": "9967032819ce6f18e02a40d033958d5f4f7c328faf8693bc07ecc42a1a525707",
+      "src/cryptalis/_sqlalchemy_search.py": "f2619552b36be5b65622503badbfdf6d8af20120d65e607be78411a13adca18e",
+      "src/cryptalis/sqlalchemy.py": "fd01c0195487cdcb5090d832dafc9b83bbd07bd9314fcc58e83a024a5e0e2b34",
+      "src/cryptalis/migration.py": "1de63684752754baf88e80ff2300e8c07ca59641d1e036c73670446aa26670c7",
+      "src/cryptalis/contracts/transition.py": "407c8028827ac7660cf6c4d3d4cfae30ca2dacf69ca80749e4e52f07d5c3d923",
+      "src/cryptalis/contracts/__init__.py": "7a621ddfa3ed2dd543a3495b8cedaed3f892fc6b1fae0b6e8d04285741bd8660",
+      "src/cryptalis/contracts/active_state.py": "b22608114fda5f49b2fa054fef24763bc9735c37612edfce0b13e16ca0df7532",
+      "src/cryptalis/contracts/development_authority.py": "1fe8519fe06fd0121829b92e04f1b5be2b8b72e39f3b8eecc3d60b6e168810d7",
+      "src/cryptalis/crypto/keys.py": "700300c3cf76c2a7fc181ef10bb32e5dffa878f3bd4e301c8daf3649baa33ae3",
+      "src/cryptalis/crypto/__init__.py": "e9b520aa1c44eec1517ab4cedf038f44da2e62be1dd10680c1199f9a8d0c0b7a",
+      "src/cryptalis/crypto/_candidate_wrap.py": "18cd89777178a5938848c51d47b48603dab902f57e83a6b330a8643f92748dc4",
+      "src/cryptalis/crypto/_candidate_scalar.py": "b97a21a29b4bc9453af8c4c0a8f22b4860892b85854b5d1196ebca2f5094269a",
+      "src/cryptalis/crypto/cf1.py": "88754b09576e6717e8ab82bd0990446d64b7ef3489da663a1a600e59cf6e28d4",
+      "src/cryptalis/crypto/_candidate_envelope.py": "9c28cb84a85123130328b2273eb27786a95f7953a41f0ec27f1c11100e28e55f",
+      "src/cryptalis/manifest/compiler.py": "94c026696ed118b682e722c92d8a45ee4c5b38565472247f49f0f061ac390154",
+      "src/cryptalis/manifest/descriptor.py": "739d0438451c47746850c6aa488add4cfd7782ddeebd743741cccd290d2ce20d",
+      "src/cryptalis/manifest/parser.py": "47cd75cc2ca611fe186d36d5d046317b0746714945c11fd2f84917d2f1020448",
+      "src/cryptalis/manifest/header.py": "6e450d8565e3d7c19ecedd6c6b3120715ea5c7ee3b1ee439fef9e5080bb5eb6a",
+      "src/cryptalis/manifest/declaration.py": "348d8e9c4605a28924166e3c1f88bd23f0b6b3ebaae402f52cf0d2c3403ca6b8",
+      "src/cryptalis/manifest/canonical.py": "6fe7e3d22cece14e5d85de912acdaf782a5421bfaa5c4dd796f78ab5bd4c2ec8",
+      "src/cryptalis/manifest/__init__.py": "d2dc8653181d66161df9d9eb29ea79fb36b38fd93848d4da4a25184cda6885cd"
+    },
+    "seed_seconds": 15.521444679005072,
+    "phase_seconds": {
+      "EXPANDED": 4.12202312098816,
+      "BACKFILLED": 86.510218342999,
+      "VERIFIED": 55.102347998006735,
+      "PENDING": 51.20454309799243,
+      "ACTIVE": 0.04184596202685498
+    },
+    "backfill_rows_per_second": 11559.328125091097,
+    "total_writer_pause_seconds": 197.03258133202326,
+    "wal_bytes_cluster_wide_context_only": 1429791376,
+    "cpu_seconds": 172.147633242,
+    "peak_rss_kib": 81380,
+    "scope": "Earlier source before explicit cost inputs and complete trigger inventory. Not final-revision qualification."
+  },
+  "variation": {
+    "cause": "UNKNOWN",
+    "final_cpu_seconds": 418.2075602,
+    "initial_cpu_seconds": 172.147633242,
+    "observation": "Native seed and crypto/verification phases both slowed. One late vmstat sample showed 94 percent CPU idle, no sampled swap I/O, and about 2 GiB allocated swap; this does not establish causality. CPU cgroup stats reported no throttling; selected control files were unavailable.",
+    "limit": "Two local runs are observations, not an approved performance or pause ceiling."
+  }
+}
