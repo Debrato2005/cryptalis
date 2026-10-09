@@ -1,0 +1,394 @@
+{
+  "scope": "Native membership only; no backfill or production qualification",
+  "rows": 5000,
+  "protected_fields": 2,
+  "bytes_per_field": 32768,
+  "source_bytes": 327680000,
+  "expected_scope": {
+    "count": 5000,
+    "membership": "504ba1384a70eefce3fd4a71899139c0e98b8473e9ffb757499b85ce50d799ff"
+  },
+  "source_sha256": {
+    "src/cryptalis/_sqlalchemy_guard.py": "f1b855b7b8b881f8360b69dffdeb12d6dc2fbdaea3f33dd6ed45b2588be477d3",
+    "src/cryptalis/cli.py": "0bef2ced749503a4d7a0c3a6096eceb5dd16f1f6989a54224bd2bafc73d4cce3",
+    "src/cryptalis/__init__.py": "c1a82f9f958187e4b5423d11df5a035b17d75b34a0947af6be4aac436cd2fed2",
+    "src/cryptalis/__main__.py": "9967032819ce6f18e02a40d033958d5f4f7c328faf8693bc07ecc42a1a525707",
+    "src/cryptalis/_sqlalchemy_search.py": "f2619552b36be5b65622503badbfdf6d8af20120d65e607be78411a13adca18e",
+    "src/cryptalis/sqlalchemy.py": "336c18e91685749bcc3f5ae3ced8fc774ba155d89b6f3816d303ebaf95f55d85",
+    "src/cryptalis/migration.py": "bb2a61595e85156595e7fb666fa57abb966ce4d405aacb07d5ec812eb746fe94",
+    "src/cryptalis/contracts/transition.py": "407c8028827ac7660cf6c4d3d4cfae30ca2dacf69ca80749e4e52f07d5c3d923",
+    "src/cryptalis/contracts/__init__.py": "7a621ddfa3ed2dd543a3495b8cedaed3f892fc6b1fae0b6e8d04285741bd8660",
+    "src/cryptalis/contracts/active_state.py": "b22608114fda5f49b2fa054fef24763bc9735c37612edfce0b13e16ca0df7532",
+    "src/cryptalis/contracts/development_authority.py": "1fe8519fe06fd0121829b92e04f1b5be2b8b72e39f3b8eecc3d60b6e168810d7",
+    "src/cryptalis/crypto/keys.py": "700300c3cf76c2a7fc181ef10bb32e5dffa878f3bd4e301c8daf3649baa33ae3",
+    "src/cryptalis/crypto/__init__.py": "e9b520aa1c44eec1517ab4cedf038f44da2e62be1dd10680c1199f9a8d0c0b7a",
+    "src/cryptalis/crypto/_candidate_wrap.py": "18cd89777178a5938848c51d47b48603dab902f57e83a6b330a8643f92748dc4",
+    "src/cryptalis/crypto/_candidate_scalar.py": "b97a21a29b4bc9453af8c4c0a8f22b4860892b85854b5d1196ebca2f5094269a",
+    "src/cryptalis/crypto/cf1.py": "88754b09576e6717e8ab82bd0990446d64b7ef3489da663a1a600e59cf6e28d4",
+    "src/cryptalis/crypto/_candidate_envelope.py": "9c28cb84a85123130328b2273eb27786a95f7953a41f0ec27f1c11100e28e55f",
+    "src/cryptalis/manifest/compiler.py": "94c026696ed118b682e722c92d8a45ee4c5b38565472247f49f0f061ac390154",
+    "src/cryptalis/manifest/descriptor.py": "739d0438451c47746850c6aa488add4cfd7782ddeebd743741cccd290d2ce20d",
+    "src/cryptalis/manifest/parser.py": "47cd75cc2ca611fe186d36d5d046317b0746714945c11fd2f84917d2f1020448",
+    "src/cryptalis/manifest/header.py": "6e450d8565e3d7c19ecedd6c6b3120715ea5c7ee3b1ee439fef9e5080bb5eb6a",
+    "src/cryptalis/manifest/declaration.py": "348d8e9c4605a28924166e3c1f88bd23f0b6b3ebaae402f52cf0d2c3403ca6b8",
+    "src/cryptalis/manifest/canonical.py": "6fe7e3d22cece14e5d85de912acdaf782a5421bfaa5c4dd796f78ab5bd4c2ec8",
+    "src/cryptalis/manifest/__init__.py": "d2dc8653181d66161df9d9eb29ea79fb36b38fd93848d4da4a25184cda6885cd"
+  },
+  "machine": {
+    "logical_cpus": 20,
+    "affinity_cpus": 20,
+    "load_average": [
+      0.1787109375,
+      0.27197265625,
+      0.328125
+    ],
+    "kernel": "6.18.33.2-microsoft-standard-WSL2",
+    "MemTotal": "7836328 kB",
+    "MemAvailable": "3422704 kB",
+    "SwapTotal": "2097152 kB",
+    "cpu.max": "max 100000",
+    "memory.max": "max"
+  },
+  "load_average_end": [
+    0.24462890625,
+    0.2841796875,
+    0.33203125
+  ],
+  "scan_seconds": [
+    0.376863659999799,
+    0.3218442779907491,
+    0.31706018501427025,
+    0.32795229798648506,
+    0.3219146369956434
+  ],
+  "scan_cpu_seconds": [
+    0.35951162699999994,
+    0.30880798099999995,
+    0.303369923,
+    0.3143963999999999,
+    0.30588867799999986
+  ],
+  "median_scan_seconds": 0.3219146369956434,
+  "median_cpu_seconds": 0.30880798099999995,
+  "peak_rss_kib_before": 99436,
+  "peak_rss_kib_after": 293612,
+  "traced_python_peak_bytes": 131838126,
+  "native_plans": {
+    "identities": [
+      {
+        "Plan": {
+          "Node Type": "Limit",
+          "Parallel Aware": false,
+          "Async Capable": false,
+          "Startup Cost": 0.29,
+          "Total Cost": 79.48,
+          "Plan Rows": 1000,
+          "Plan Width": 32,
+          "Actual Startup Time": 0.006,
+          "Actual Total Time": 0.217,
+          "Actual Rows": 1000,
+          "Actual Loops": 1,
+          "Shared Hit Blocks": 1004,
+          "Shared Read Blocks": 0,
+          "Shared Dirtied Blocks": 0,
+          "Shared Written Blocks": 0,
+          "Local Hit Blocks": 0,
+          "Local Read Blocks": 0,
+          "Local Dirtied Blocks": 0,
+          "Local Written Blocks": 0,
+          "Temp Read Blocks": 0,
+          "Temp Written Blocks": 0,
+          "WAL Records": 0,
+          "WAL FPI": 0,
+          "WAL Bytes": 0,
+          "Plans": [
+            {
+              "Node Type": "Index Scan",
+              "Parent Relationship": "Outer",
+              "Parallel Aware": false,
+              "Async Capable": false,
+              "Scan Direction": "Forward",
+              "Index Name": "customer_pkey",
+              "Relation Name": "customer",
+              "Alias": "customer",
+              "Startup Cost": 0.29,
+              "Total Cost": 2862.39,
+              "Plan Rows": 36140,
+              "Plan Width": 32,
+              "Actual Startup Time": 0.005,
+              "Actual Total Time": 0.175,
+              "Actual Rows": 1000,
+              "Actual Loops": 1,
+              "Shared Hit Blocks": 1004,
+              "Shared Read Blocks": 0,
+              "Shared Dirtied Blocks": 0,
+              "Shared Written Blocks": 0,
+              "Local Hit Blocks": 0,
+              "Local Read Blocks": 0,
+              "Local Dirtied Blocks": 0,
+              "Local Written Blocks": 0,
+              "Temp Read Blocks": 0,
+              "Temp Written Blocks": 0,
+              "WAL Records": 0,
+              "WAL FPI": 0,
+              "WAL Bytes": 0
+            }
+          ]
+        },
+        "Planning": {
+          "Shared Hit Blocks": 0,
+          "Shared Read Blocks": 0,
+          "Shared Dirtied Blocks": 0,
+          "Shared Written Blocks": 0,
+          "Local Hit Blocks": 0,
+          "Local Read Blocks": 0,
+          "Local Dirtied Blocks": 0,
+          "Local Written Blocks": 0,
+          "Temp Read Blocks": 0,
+          "Temp Written Blocks": 0
+        },
+        "Planning Time": 0.024,
+        "Triggers": [],
+        "Execution Time": 0.244
+      }
+    ],
+    "source_values": [
+      {
+        "Plan": {
+          "Node Type": "Limit",
+          "Parallel Aware": false,
+          "Async Capable": false,
+          "Startup Cost": 0.29,
+          "Total Cost": 79.48,
+          "Plan Rows": 1000,
+          "Plan Width": 96,
+          "Actual Startup Time": 0.005,
+          "Actual Total Time": 0.202,
+          "Actual Rows": 1000,
+          "Actual Loops": 1,
+          "Shared Hit Blocks": 1004,
+          "Shared Read Blocks": 0,
+          "Shared Dirtied Blocks": 0,
+          "Shared Written Blocks": 0,
+          "Local Hit Blocks": 0,
+          "Local Read Blocks": 0,
+          "Local Dirtied Blocks": 0,
+          "Local Written Blocks": 0,
+          "Temp Read Blocks": 0,
+          "Temp Written Blocks": 0,
+          "WAL Records": 0,
+          "WAL FPI": 0,
+          "WAL Bytes": 0,
+          "Plans": [
+            {
+              "Node Type": "Index Scan",
+              "Parent Relationship": "Outer",
+              "Parallel Aware": false,
+              "Async Capable": false,
+              "Scan Direction": "Forward",
+              "Index Name": "customer_pkey",
+              "Relation Name": "customer",
+              "Alias": "customer",
+              "Startup Cost": 0.29,
+              "Total Cost": 2862.39,
+              "Plan Rows": 36140,
+              "Plan Width": 96,
+              "Actual Startup Time": 0.004,
+              "Actual Total Time": 0.161,
+              "Actual Rows": 1000,
+              "Actual Loops": 1,
+              "Shared Hit Blocks": 1004,
+              "Shared Read Blocks": 0,
+              "Shared Dirtied Blocks": 0,
+              "Shared Written Blocks": 0,
+              "Local Hit Blocks": 0,
+              "Local Read Blocks": 0,
+              "Local Dirtied Blocks": 0,
+              "Local Written Blocks": 0,
+              "Temp Read Blocks": 0,
+              "Temp Written Blocks": 0,
+              "WAL Records": 0,
+              "WAL FPI": 0,
+              "WAL Bytes": 0
+            }
+          ]
+        },
+        "Planning": {
+          "Shared Hit Blocks": 0,
+          "Shared Read Blocks": 0,
+          "Shared Dirtied Blocks": 0,
+          "Shared Written Blocks": 0,
+          "Local Hit Blocks": 0,
+          "Local Read Blocks": 0,
+          "Local Dirtied Blocks": 0,
+          "Local Written Blocks": 0,
+          "Temp Read Blocks": 0,
+          "Temp Written Blocks": 0
+        },
+        "Planning Time": 0.018,
+        "Triggers": [],
+        "Execution Time": 0.25
+      }
+    ]
+  },
+  "profile_calls": [
+    {
+      "file": "_cursor_base.py",
+      "function": "_maybe_prepare_gen",
+      "calls": 5769,
+      "exclusive_s": 0.177957144,
+      "cumulative_s": 0.178585703
+    },
+    {
+      "file": "cursor.py",
+      "function": "fetchall",
+      "calls": 6,
+      "exclusive_s": 0.103398739,
+      "cumulative_s": 0.10340915
+    },
+    {
+      "file": "connection.py",
+      "function": "wait",
+      "calls": 6,
+      "exclusive_s": 0.016280893,
+      "cumulative_s": 0.19604368400000002
+    },
+    {
+      "file": "migration.py",
+      "function": "_scope",
+      "calls": 1,
+      "exclusive_s": 0.006720364,
+      "cumulative_s": 0.32845223100000004
+    },
+    {
+      "file": "encoder.py",
+      "function": "iterencode",
+      "calls": 5000,
+      "exclusive_s": 0.0047714590000000005,
+      "cumulative_s": 0.0047714590000000005
+    },
+    {
+      "file": "uuid.py",
+      "function": "__str__",
+      "calls": 10005,
+      "exclusive_s": 0.0037737210000000003,
+      "cumulative_s": 0.0037737210000000003
+    },
+    {
+      "file": "__init__.py",
+      "function": "dumps",
+      "calls": 5000,
+      "exclusive_s": 0.002773965,
+      "cumulative_s": 0.011633443
+    },
+    {
+      "file": "encoder.py",
+      "function": "encode",
+      "calls": 5000,
+      "exclusive_s": 0.002452896,
+      "cumulative_s": 0.008292346
+    },
+    {
+      "file": "compiler.py",
+      "function": "_canonical",
+      "calls": 5000,
+      "exclusive_s": 0.002068531,
+      "cumulative_s": 0.014463167
+    },
+    {
+      "file": "migration.py",
+      "function": "_stream",
+      "calls": 6,
+      "exclusive_s": 0.001687813,
+      "cumulative_s": 0.302887676
+    },
+    {
+      "file": "_cursor_base.py",
+      "function": "_execute_gen",
+      "calls": 5769,
+      "exclusive_s": 0.0009430770000000001,
+      "cumulative_s": 0.179762791
+    },
+    {
+      "file": "~",
+      "function": "<built-in method builtins.isinstance>",
+      "calls": 10120,
+      "exclusive_s": 0.0007079730000000001,
+      "cumulative_s": 0.0007079730000000001
+    },
+    {
+      "file": "~",
+      "function": "<method 'update' of '_hashlib.HASH' objects>",
+      "calls": 5000,
+      "exclusive_s": 0.000595768,
+      "cumulative_s": 0.000595768
+    },
+    {
+      "file": "encoder.py",
+      "function": "__init__",
+      "calls": 5000,
+      "exclusive_s": 0.000567132,
+      "cumulative_s": 0.000567132
+    },
+    {
+      "file": "~",
+      "function": "<method 'encode' of 'str' objects>",
+      "calls": 5007,
+      "exclusive_s": 0.000440582,
+      "cumulative_s": 0.000440582
+    },
+    {
+      "file": "result.py",
+      "function": "all",
+      "calls": 6,
+      "exclusive_s": 0.000430484,
+      "cumulative_s": 0.103915168
+    },
+    {
+      "file": "~",
+      "function": "<method 'join' of 'str' objects>",
+      "calls": 5006,
+      "exclusive_s": 0.000389822,
+      "cumulative_s": 0.000446221
+    },
+    {
+      "file": "~",
+      "function": "<built-in method builtins.len>",
+      "calls": 5035,
+      "exclusive_s": 0.000325404,
+      "cumulative_s": 0.000325404
+    },
+    {
+      "file": "_cursor_base.py",
+      "function": "_send_query_prepared",
+      "calls": 6,
+      "exclusive_s": 0.000314635,
+      "cumulative_s": 0.000314635
+    },
+    {
+      "file": "_cursor_base.py",
+      "function": "_select_current_result",
+      "calls": 6,
+      "exclusive_s": 0.000162463,
+      "cumulative_s": 0.00019482400000000002
+    }
+  ],
+  "script": "\"\"\"Optional native scan profile. Invoke only through scripts/test_postgres.py.\"\"\"\nimport cProfile\nimport hashlib\nimport json\nimport os\nfrom pathlib import Path\nimport platform\nimport pstats\nimport resource\nimport statistics\nimport sys\nimport time\nimport tracemalloc\nfrom uuid import UUID\n\nEVIDENCE = Path(__file__).resolve().parents[1]\nSOURCE = Path(os.environ.get('CRYPTALIS_MEMBERSHIP_SOURCE_ROOT', str(EVIDENCE)))\nsys.path.insert(0, str(SOURCE / 'tests'))\nimport cryptalis.migration as migration\nfrom cryptalis.manifest.compiler import Writer, WriterInventory, compile_protection\nfrom test_migration import application, TABLE_ID\nfrom test_migration_membership import membership\n\n\ndef test_native_membership_profile():\n    assert Path(migration.__file__).resolve().is_relative_to(SOURCE / 'src')\n    width = int(os.environ.get('CRYPTALIS_MEMBERSHIP_WIDTH', '32'))\n    assert width in (32, 32768)\n    hashes = {str(p.relative_to(SOURCE)): hashlib.sha256(p.read_bytes()).hexdigest()\n              for p in (SOURCE / 'src/cryptalis').rglob('*.py')}\n    initial = {'logical_cpus': os.cpu_count(), 'affinity_cpus': len(os.sched_getaffinity(0)),\n               'load_average': os.getloadavg(), 'kernel': platform.release()}\n    for line in Path('/proc/meminfo').read_text().splitlines():\n        if line.startswith(('MemTotal:', 'MemAvailable:', 'SwapTotal:')):\n            initial[line.split(':')[0]] = line.split(':')[1].strip()\n    for name in ('cpu.max', 'memory.max'):\n        path = Path('/sys/fs/cgroup/init.scope') / name\n        initial[name] = path.read_text().strip() if path.exists() else 'unavailable'\n    with application(rows=0) as app:\n        with app.owner.begin() as c:\n            c.exec_driver_sql(f'DROP INDEX \"{app.schema}\".native_name')\n            c.exec_driver_sql(f'''INSERT INTO \"{app.schema}\".customer(id,tenant_id,name,label)\n                SELECT md5(i::text)::uuid, md5((i%%3)::text)::uuid,\n                       repeat(md5(i::text),%s),repeat(md5((-i)::text),%s)\n                FROM generate_series(1,5000) AS i''', (width//32, width//32))\n        declaration = app.plan.document['lock']['declaration']\n        fields = declaration['models'][0]['fields']\n        fields[0]['queries'] = []; fields[0]['accept_leakage'] = []\n        fields.append({'name': 'label', 'field_id': str(UUID(int=802)),\n                       'protect': True, 'queries': [], 'accept_leakage': []})\n        lock = compile_protection(json.dumps(declaration).encode(), app.mapping, app.owner,\n            writers=WriterInventory(True, (Writer(TABLE_ID, 'app', 'sqlalchemy', evidence='native scan profile'),)))\n        model = json.loads(lock.lock_bytes)['models'][0]\n        with app.owner.connect() as c:\n            native = c.exec_driver_sql(f'SELECT id,tenant_id FROM \"{app.schema}\".customer ORDER BY id').all()\n            expected = membership(native)\n            size = c.exec_driver_sql(f'SELECT sum(octet_length(name)+octet_length(label)) FROM \"{app.schema}\".customer').scalar_one()\n            plans = {}\n            for label, columns in (('identities', 'id,tenant_id'), ('source_values', 'id,tenant_id,name,label')):\n                plans[label] = c.exec_driver_sql(f'EXPLAIN (ANALYZE, BUFFERS, WAL, FORMAT JSON) SELECT {columns} FROM \"{app.schema}\".customer ORDER BY id LIMIT 1000').scalar_one()\n            rss_before = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss\n            durations, cpus = [], []\n            for _ in range(5):\n                started = time.perf_counter(); cpu = time.thread_time()\n                assert migration._scope(c, model) == expected\n                durations.append(time.perf_counter()-started); cpus.append(time.thread_time()-cpu)\n            collector = cProfile.Profile(); collector.enable()\n            assert migration._scope(c, model) == expected\n            collector.disable(); stats = pstats.Stats(collector)\n            calls = [{'file': Path(file).name, 'function': name, 'calls': count,\n                      'exclusive_s': exclusive, 'cumulative_s': cumulative}\n                     for (file, line, name), (_, count, exclusive, cumulative, _) in stats.stats.items()]\n            tracemalloc.start()\n            assert migration._scope(c, model) == expected\n            _, python_peak = tracemalloc.get_traced_memory(); tracemalloc.stop()\n            rss_after = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss\n    assert hashes == {path: hashlib.sha256((SOURCE / path).read_bytes()).hexdigest() for path in hashes}\n    result = {'scope': 'Native membership only; no backfill or production qualification',\n        'rows': 5000, 'protected_fields': 2, 'bytes_per_field': width,\n        'source_bytes': size, 'expected_scope': expected, 'source_sha256': hashes,\n        'machine': initial, 'load_average_end': os.getloadavg(),\n        'scan_seconds': durations, 'scan_cpu_seconds': cpus,\n        'median_scan_seconds': statistics.median(durations), 'median_cpu_seconds': statistics.median(cpus),\n        'peak_rss_kib_before': rss_before, 'peak_rss_kib_after': rss_after,\n        'traced_python_peak_bytes': python_peak, 'native_plans': plans,\n        'profile_calls': sorted(calls, key=lambda x: x['exclusive_s'], reverse=True)[:20],\n        'script': Path(__file__).read_text(), 'base_revision': '7edd1647b39c933ec1eac14f24ce84ff7d29bfba',\n        'limitations': ['Warm repeated scans, compressible synthetic text, two fields, three tenants.',\n            'RSS is process high-water including setup; tracemalloc excludes libpq/native buffers.',\n            'EXPLAIN times server execution without client row transfer/decoding.',\n            'Does not establish byte-bounded backfill/verification or whole migration improvement.',\n            'Current unrelated-program state is not independently established; no million-row rerun.'],\n        'gates': {g: 'UNKNOWN' for g in ('G-ADAPTER','G-CRYPTO','G-QUERY','G-LIFECYCLE','G-PROVIDER','G-POLICY','G-RELEASE')}}\n    revision = hashlib.sha256(json.dumps(hashes, sort_keys=True).encode()).hexdigest()[:16]\n    receipt = EVIDENCE / 'docs/_reset' / f'membership-profile-{width}-{revision}.json'\n    with receipt.open('x') as stream:\n        stream.write(json.dumps(result, indent=2)+'\\n')\n    print(json.dumps({'bytes_per_field': width, 'median_seconds': result['median_scan_seconds'],\n                      'median_cpu_seconds': result['median_cpu_seconds'], 'rss_kib': rss_after,\n                      'python_peak_bytes': python_peak}), flush=True)\n",
+  "base_revision": "7edd1647b39c933ec1eac14f24ce84ff7d29bfba",
+  "limitations": [
+    "Warm repeated scans, compressible synthetic text, two fields, three tenants.",
+    "RSS is process high-water including setup; tracemalloc excludes libpq/native buffers.",
+    "EXPLAIN times server execution without client row transfer/decoding.",
+    "Does not establish byte-bounded backfill/verification or whole migration improvement.",
+    "Current unrelated-program state is not independently established; no million-row rerun."
+  ],
+  "gates": {
+    "G-ADAPTER": "UNKNOWN",
+    "G-CRYPTO": "UNKNOWN",
+    "G-QUERY": "UNKNOWN",
+    "G-LIFECYCLE": "UNKNOWN",
+    "G-PROVIDER": "UNKNOWN",
+    "G-POLICY": "UNKNOWN",
+    "G-RELEASE": "UNKNOWN"
+  }
+}

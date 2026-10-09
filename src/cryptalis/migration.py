@@ -362,13 +362,14 @@ def _lock_tables(c,p,*,verification=False):
     raise TransitionFailure('table_lock_busy_retry',p.operation_id,'55P03')
 
 
-def _stream(c,model,*,payloads=False,after=None,limit=1000):
+def _stream(c,model,*,payloads=False,identity_only=False,after=None,limit=1000):
     names=[model['record']['column']]
     scoped='column' in model['tenancy']
     if scoped: names.append(model['tenancy']['column'])
-    for f in model['fields']:
-        names.append(f['column'])
-        if payloads: names.append(f['payload_column'])
+    if not identity_only:
+        for f in model['fields']:
+            names.append(f['column'])
+            if payloads: names.append(f['payload_column'])
     sql='SELECT '+','.join(_quote(c,n) for n in names)+f' FROM {_table(c,model)}'
     params=()
     if after is not None:
@@ -380,7 +381,9 @@ def _stream(c,model,*,payloads=False,after=None,limit=1000):
 
 def _scope(c,model):
     digest=hashlib.sha256(); total=0; cursor=None
-    while rows:=_stream(c,model,after=cursor):
+    # Membership binds only identities. Full value/frame authentication still
+    # runs separately in _verify before the same transaction can switch.
+    while rows:=_stream(c,model,identity_only=True,after=cursor):
         for row in rows:
             tenant=row[1] if 'column' in model['tenancy'] else UUID(model['table_id'])
             digest.update(_canonical([str(row[0]),str(tenant)])); total+=1

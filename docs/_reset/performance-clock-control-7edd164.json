@@ -1,0 +1,44 @@
+{
+  "scope": "Read-only current-clock comparison; no database",
+  "samples": [
+    {
+      "monotonic_s": 0.023061576997861266,
+      "cpu_s": 0.024165219999999998,
+      "raw_s": 0.02416728000389412
+    },
+    {
+      "monotonic_s": 0.0235929980117362,
+      "cpu_s": 0.024698396999999997,
+      "raw_s": 0.024725602997932583
+    },
+    {
+      "monotonic_s": 0.023152297013439238,
+      "cpu_s": 0.024261462999999997,
+      "raw_s": 0.02426437201211229
+    },
+    {
+      "monotonic_s": 0.023046579997753724,
+      "cpu_s": 0.024148553000000003,
+      "raw_s": 0.02415025100344792
+    },
+    {
+      "monotonic_s": 0.022353071020916104,
+      "cpu_s": 0.023422471,
+      "raw_s": 0.023424026992870495
+    }
+  ],
+  "wall_clock": {
+    "implementation": "clock_gettime(CLOCK_MONOTONIC)",
+    "monotonic": true,
+    "adjustable": false,
+    "resolution": 1e-09
+  },
+  "cpu_clock": {
+    "implementation": "clock_gettime(CLOCK_THREAD_CPUTIME_ID)",
+    "monotonic": true,
+    "adjustable": false,
+    "resolution": 1e-09
+  },
+  "clocksource": "tsc",
+  "limits": "Current monotonic/raw rate differs; cause and historical timing effects UNKNOWN. Do not subtract CPU from wall as isolated database wait."
+}

@@ -83,3 +83,12 @@ This pass keeps existing local changes and edits only documentation. The user re
 - [Latest million-row profile](step-a-optimized-million-1000000-a94d3d18190b80fb.json): 67.804 s backfill, 42.214 s verification, 116.291 s writer pause. Descriptor CPU 17.739→0.030 s; expansion reader wait 6.106 s remains. Paired 20,000-row controls preceded this one new million-row run.
 - [Status](../status.md#step-a-corrective-checkpoint-2026-10-09) owns conditions and limits. Starting load/memory differed; exact server wait and physical index writes remain UNKNOWN. Small-receipt labels contain an instrumentation-variable mistake; their source hashes identify each run. Million-row metadata is corrected.
 - Stop boundary: corrected Step A, ready for review. Slice 6 begins only in a separate approved run. No concurrency protocol, dual writes, spike changes, commit or push. All seven gates remain UNKNOWN.
+
+## Membership performance checkpoint: 2026-10-09
+
+- The user approved one identity-only membership correction before Slice 6. Journal bytes, cursor/lock/recovery contracts and full value authentication remain unchanged.
+- [Current suite](audit-verification-31ac368e2bbf3bd3.json): 1,009 passed. [Proof](membership-regressions-31ac368e2bbf3bd3.json): committed source four native failures/one control pass; fixed five passes; three removals fail/restoration passes. Twenty prior safety removals retain their proof.
+- [Status](../status.md#membership-performance-correction-2026-10-09) owns evidence. Paired wide scans fell 302.48→16.92 ms; separate-process traced peak 131.84→0.59 MB. Whole small-transition timing is environmentally variable; no new million-row pause is claimed.
+- [Assessment](../research/performance-checkpoint.md) ranks byte-bounded buffers and framing/derivation work. Dirty-identity capture with incremental verification is a proposal requiring explicit writer-fencing/coverage/recovery approval; nothing online was implemented.
+- Current raw/CPU and monotonic clocks differ in rate. Cause, historical variation, server wait attribution, production provider and independent review remain UNKNOWN. All seven gates remain UNKNOWN.
+- Stop boundary: approved corrective checkpoint. Next product slice is 6. No spike changes, installation, commit or push.

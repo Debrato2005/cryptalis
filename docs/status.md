@@ -7,6 +7,28 @@ No PostgreSQL/provider/runtime cell, production key provider, independent review
 VERIFIED below refers only to the named checks and their exact revisions.
 All other contract and promotion requirements are SPECIFIED. All seven full gates remain UNKNOWN.
 
+## Membership performance correction: 2026-10-09
+
+**IMPLEMENTED:** membership scans select row/tenant identities without protected source values.
+Backfill and complete source/frame verification keep their original projections. Ordered digest bytes, cursors, journal, locks and public API are unchanged.
+The user approved this bounded correction before Slice 6; no online or parallel protocol was authorized.
+**VERIFIED:** [full current suite](_reset/audit-verification-31ac368e2bbf3bd3.json): **1,009 passed** in 102.12 s at `worktree-31ac368e2bbf3bd3`, based on Git `7edd164`.
+[Regression proof](_reset/membership-regressions-31ac368e2bbf3bd3.json): committed source fails four native column-permission cases; fixed source passes all five tests.
+The independent oracles check exact journal membership, UUID/bigint boundaries, both tenancy forms, multiple fields/tenants, pagination and all 1,007 decoded application values.
+Projection, tenant-binding and pagination removals each fail/restoration passes. [Twenty prior safety removals](_reset/slice5-regressions-audit-d6a6b23daa40d329.json) retain their failure/restoration evidence.
+Existing corruption, atomic commit, process interruption, lost reply, fence, lock queue, generation and external-pin tests still pass.
+Graphify was refreshed; source confirms `_scope` serves expansion/verification, while backfill and value verification retain their value projections. Graph `scope()` test fixtures are unrelated.
+
+[Same-connection wide-text control](_reset/membership-paired-32768-a81d3cf873c3edd8.json): median membership time **302.48→16.92 ms** for 5,000 rows with two 32 KiB fields.
+[Separate-process before](_reset/membership-profile-32768-a94d3d18190b80fb.json)/[after](_reset/membership-profile-32768-a81d3cf873c3edd8.json): traced Python peak **131.84→0.59 MB**, process RSS **286.7→98.4 MiB**.
+For two 32-byte fields, the [paired median](_reset/membership-paired-32-a81d3cf873c3edd8.json) was 32.54→30.33 ms. These are warm synthetic scan measurements, not backfill memory bounds.
+A matched 30,000-row transition observed pause 3.741→2.813 s and expansion reader latency 0.224→0.113 s.
+Unchanged backfill also ran faster; cache/scheduling variation prevents attributing the whole-pause difference to this patch. Verification membership was slower in that pair.
+The [research assessment](research/performance-checkpoint.md) owns exact phase/CPU/WAL conditions, primary sources, ranked opportunities, byte-budget analysis and an unimplemented online proposal.
+[Clock control](_reset/performance-clock-control-7edd164.json) observes raw/CPU versus monotonic rate discrepancy; cause and historical timing effects remain UNKNOWN.
+No new million-row measurement, crypto/cache redesign, index-timing change, Slice 6 or concurrency protocol. The historical million-row pause remains 116.291 s.
+All seven full gates remain **UNKNOWN**. No production provider or independent review exists.
+
 ## Step A corrective checkpoint: 2026-10-09
 
 **IMPLEMENTED:** same-schema tables share the existing operation guard function, with a separate trigger on each table.

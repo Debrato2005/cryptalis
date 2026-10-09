@@ -1,0 +1,788 @@
+{
+  "scope": "Single-process warm CF1 CPU research; public fixture roots; no database",
+  "source_sha256": {
+    "src/cryptalis/_sqlalchemy_guard.py": "f1b855b7b8b881f8360b69dffdeb12d6dc2fbdaea3f33dd6ed45b2588be477d3",
+    "src/cryptalis/cli.py": "0bef2ced749503a4d7a0c3a6096eceb5dd16f1f6989a54224bd2bafc73d4cce3",
+    "src/cryptalis/__init__.py": "c1a82f9f958187e4b5423d11df5a035b17d75b34a0947af6be4aac436cd2fed2",
+    "src/cryptalis/__main__.py": "9967032819ce6f18e02a40d033958d5f4f7c328faf8693bc07ecc42a1a525707",
+    "src/cryptalis/_sqlalchemy_search.py": "f2619552b36be5b65622503badbfdf6d8af20120d65e607be78411a13adca18e",
+    "src/cryptalis/sqlalchemy.py": "336c18e91685749bcc3f5ae3ced8fc774ba155d89b6f3816d303ebaf95f55d85",
+    "src/cryptalis/migration.py": "b16a47c0502ad3f0e1f2e7c96072d00506825248eaa732b62d46896680ae276e",
+    "src/cryptalis/contracts/transition.py": "407c8028827ac7660cf6c4d3d4cfae30ca2dacf69ca80749e4e52f07d5c3d923",
+    "src/cryptalis/contracts/__init__.py": "7a621ddfa3ed2dd543a3495b8cedaed3f892fc6b1fae0b6e8d04285741bd8660",
+    "src/cryptalis/contracts/active_state.py": "b22608114fda5f49b2fa054fef24763bc9735c37612edfce0b13e16ca0df7532",
+    "src/cryptalis/contracts/development_authority.py": "1fe8519fe06fd0121829b92e04f1b5be2b8b72e39f3b8eecc3d60b6e168810d7",
+    "src/cryptalis/crypto/keys.py": "700300c3cf76c2a7fc181ef10bb32e5dffa878f3bd4e301c8daf3649baa33ae3",
+    "src/cryptalis/crypto/__init__.py": "e9b520aa1c44eec1517ab4cedf038f44da2e62be1dd10680c1199f9a8d0c0b7a",
+    "src/cryptalis/crypto/_candidate_wrap.py": "18cd89777178a5938848c51d47b48603dab902f57e83a6b330a8643f92748dc4",
+    "src/cryptalis/crypto/_candidate_scalar.py": "b97a21a29b4bc9453af8c4c0a8f22b4860892b85854b5d1196ebca2f5094269a",
+    "src/cryptalis/crypto/cf1.py": "88754b09576e6717e8ab82bd0990446d64b7ef3489da663a1a600e59cf6e28d4",
+    "src/cryptalis/crypto/_candidate_envelope.py": "9c28cb84a85123130328b2273eb27786a95f7953a41f0ec27f1c11100e28e55f",
+    "src/cryptalis/manifest/compiler.py": "94c026696ed118b682e722c92d8a45ee4c5b38565472247f49f0f061ac390154",
+    "src/cryptalis/manifest/descriptor.py": "739d0438451c47746850c6aa488add4cfd7782ddeebd743741cccd290d2ce20d",
+    "src/cryptalis/manifest/parser.py": "47cd75cc2ca611fe186d36d5d046317b0746714945c11fd2f84917d2f1020448",
+    "src/cryptalis/manifest/header.py": "6e450d8565e3d7c19ecedd6c6b3120715ea5c7ee3b1ee439fef9e5080bb5eb6a",
+    "src/cryptalis/manifest/declaration.py": "348d8e9c4605a28924166e3c1f88bd23f0b6b3ebaae402f52cf0d2c3403ca6b8",
+    "src/cryptalis/manifest/canonical.py": "6fe7e3d22cece14e5d85de912acdaf782a5421bfaa5c4dd796f78ab5bd4c2ec8",
+    "src/cryptalis/manifest/__init__.py": "d2dc8653181d66161df9d9eb29ea79fb36b38fd93848d4da4a25184cda6885cd"
+  },
+  "measurements": [
+    {
+      "encoded_bytes": 53,
+      "values": 10000,
+      "seal": {
+        "seconds": 0.18830147600965574,
+        "cpu_seconds": 0.19497399400000004
+      },
+      "open": {
+        "seconds": 0.16260589298326522,
+        "cpu_seconds": 0.16837040800000003
+      },
+      "profiles": {
+        "seal": {
+          "total_profiled_seconds": 0.5612353399999997,
+          "calls": [
+            {
+              "file": "cf1.py",
+              "name": "seal_text",
+              "calls": 10000,
+              "exclusive_s": 0.054678177,
+              "cumulative_s": 0.561221176
+            },
+            {
+              "file": "keys.py",
+              "name": "tuple_bytes",
+              "calls": 60000,
+              "exclusive_s": 0.046181098000000004,
+              "cumulative_s": 0.250880364
+            },
+            {
+              "file": "cf1.py",
+              "name": "_term",
+              "calls": 10000,
+              "exclusive_s": 0.019639493,
+              "cumulative_s": 0.205637651
+            },
+            {
+              "file": "cf1.py",
+              "name": "_derive",
+              "calls": 20000,
+              "exclusive_s": 0.033300264,
+              "cumulative_s": 0.197124568
+            },
+            {
+              "file": "~",
+              "name": "<method 'join' of 'bytes' objects>",
+              "calls": 60000,
+              "exclusive_s": 0.027532157,
+              "cumulative_s": 0.115368801
+            },
+            {
+              "file": "keys.py",
+              "name": "<genexpr>",
+              "calls": 330000,
+              "exclusive_s": 0.059711956000000004,
+              "cumulative_s": 0.087836644
+            },
+            {
+              "file": "~",
+              "name": "<built-in method builtins.any>",
+              "calls": 60000,
+              "exclusive_s": 0.023497603000000002,
+              "cumulative_s": 0.07739380500000001
+            },
+            {
+              "file": "cf1.py",
+              "name": "_aad",
+              "calls": 10000,
+              "exclusive_s": 0.0051975400000000005,
+              "cumulative_s": 0.06806754100000001
+            },
+            {
+              "file": "keys.py",
+              "name": "<genexpr>",
+              "calls": 330000,
+              "exclusive_s": 0.042667012000000004,
+              "cumulative_s": 0.053896202000000004
+            },
+            {
+              "file": "~",
+              "name": "<method 'derive' of 'cryptography.hazmat.primitives.kdf.hkdf.HKDF' objects>",
+              "calls": 20000,
+              "exclusive_s": 0.042322397000000005,
+              "cumulative_s": 0.053872235000000004
+            },
+            {
+              "file": "keys.py",
+              "name": "_resolve",
+              "calls": 40000,
+              "exclusive_s": 0.02472539,
+              "cumulative_s": 0.049081497
+            },
+            {
+              "file": "~",
+              "name": "<method 'to_bytes' of 'int' objects>",
+              "calls": 490000,
+              "exclusive_s": 0.034745194,
+              "cumulative_s": 0.034745194
+            },
+            {
+              "file": "~",
+              "name": "<built-in method builtins.len>",
+              "calls": 680000,
+              "exclusive_s": 0.030817718,
+              "cumulative_s": 0.030817718
+            },
+            {
+              "file": "uuid.py",
+              "name": "bytes",
+              "calls": 120000,
+              "exclusive_s": 0.015955408,
+              "cumulative_s": 0.025242564000000002
+            },
+            {
+              "file": "cf1.py",
+              "name": "_context",
+              "calls": 10000,
+              "exclusive_s": 0.006361451000000001,
+              "cumulative_s": 0.020082926
+            },
+            {
+              "file": "~",
+              "name": "<method 'encrypt' of 'cryptography.hazmat.bindings._rust.openssl.aead.AESGCMSIV' objects>",
+              "calls": 10000,
+              "exclusive_s": 0.014798649,
+              "cumulative_s": 0.014798649
+            },
+            {
+              "file": "<frozen abc>",
+              "name": "__instancecheck__",
+              "calls": 50000,
+              "exclusive_s": 0.0075318170000000005,
+              "cumulative_s": 0.013966088000000002
+            },
+            {
+              "file": "cf1.py",
+              "name": "_record",
+              "calls": 10000,
+              "exclusive_s": 0.004385824,
+              "cumulative_s": 0.010777713000000001
+            },
+            {
+              "file": "uuid.py",
+              "name": "__eq__",
+              "calls": 50000,
+              "exclusive_s": 0.007274597000000001,
+              "cumulative_s": 0.010396242
+            },
+            {
+              "file": "cf1.py",
+              "name": "_encode",
+              "calls": 10000,
+              "exclusive_s": 0.005021914000000001,
+              "cumulative_s": 0.007939521
+            },
+            {
+              "file": "~",
+              "name": "<built-in method _abc._abc_instancecheck>",
+              "calls": 50000,
+              "exclusive_s": 0.006434271,
+              "cumulative_s": 0.006434271
+            },
+            {
+              "file": "~",
+              "name": "<built-in method posix.getpid>",
+              "calls": 40000,
+              "exclusive_s": 0.0063342730000000005,
+              "cumulative_s": 0.0063342730000000005
+            },
+            {
+              "file": "~",
+              "name": "<method 'get' of 'mappingproxy' objects>",
+              "calls": 40000,
+              "exclusive_s": 0.005335889,
+              "cumulative_s": 0.005335889
+            },
+            {
+              "file": "~",
+              "name": "<built-in method _hashlib.openssl_sha256>",
+              "calls": 20000,
+              "exclusive_s": 0.005229969,
+              "cumulative_s": 0.005229969
+            },
+            {
+              "file": "~",
+              "name": "<built-in method builtins.isinstance>",
+              "calls": 90000,
+              "exclusive_s": 0.005206197,
+              "cumulative_s": 0.005206197
+            }
+          ]
+        },
+        "open": {
+          "total_profiled_seconds": 0.5671244380000002,
+          "calls": [
+            {
+              "file": "cf1.py",
+              "name": "open_text",
+              "calls": 10000,
+              "exclusive_s": 0.062238381,
+              "cumulative_s": 0.5671060450000001
+            },
+            {
+              "file": "keys.py",
+              "name": "tuple_bytes",
+              "calls": 60000,
+              "exclusive_s": 0.047398043,
+              "cumulative_s": 0.252991061
+            },
+            {
+              "file": "cf1.py",
+              "name": "_derive",
+              "calls": 20000,
+              "exclusive_s": 0.034274095000000004,
+              "cumulative_s": 0.200418165
+            },
+            {
+              "file": "cf1.py",
+              "name": "_term",
+              "calls": 10000,
+              "exclusive_s": 0.019676599000000003,
+              "cumulative_s": 0.199352828
+            },
+            {
+              "file": "~",
+              "name": "<method 'join' of 'bytes' objects>",
+              "calls": 60000,
+              "exclusive_s": 0.027823741000000003,
+              "cumulative_s": 0.115385624
+            },
+            {
+              "file": "keys.py",
+              "name": "<genexpr>",
+              "calls": 330000,
+              "exclusive_s": 0.059132585,
+              "cumulative_s": 0.08756188300000001
+            },
+            {
+              "file": "~",
+              "name": "<built-in method builtins.any>",
+              "calls": 60000,
+              "exclusive_s": 0.02315876,
+              "cumulative_s": 0.07798754100000001
+            },
+            {
+              "file": "cf1.py",
+              "name": "_aad",
+              "calls": 10000,
+              "exclusive_s": 0.005178625,
+              "cumulative_s": 0.06866707400000001
+            },
+            {
+              "file": "~",
+              "name": "<method 'derive' of 'cryptography.hazmat.primitives.kdf.hkdf.HKDF' objects>",
+              "calls": 20000,
+              "exclusive_s": 0.043319653,
+              "cumulative_s": 0.055299623000000006
+            },
+            {
+              "file": "keys.py",
+              "name": "<genexpr>",
+              "calls": 330000,
+              "exclusive_s": 0.043464655000000005,
+              "cumulative_s": 0.054828781
+            },
+            {
+              "file": "keys.py",
+              "name": "_resolve",
+              "calls": 40000,
+              "exclusive_s": 0.025630423000000003,
+              "cumulative_s": 0.050568483000000004
+            },
+            {
+              "file": "~",
+              "name": "<method 'to_bytes' of 'int' objects>",
+              "calls": 470000,
+              "exclusive_s": 0.032240058,
+              "cumulative_s": 0.032240058
+            },
+            {
+              "file": "~",
+              "name": "<built-in method builtins.len>",
+              "calls": 670000,
+              "exclusive_s": 0.031020006000000003,
+              "cumulative_s": 0.031020006000000003
+            },
+            {
+              "file": "uuid.py",
+              "name": "bytes",
+              "calls": 120000,
+              "exclusive_s": 0.015996680000000003,
+              "cumulative_s": 0.02520404
+            },
+            {
+              "file": "cf1.py",
+              "name": "_context",
+              "calls": 10000,
+              "exclusive_s": 0.0063800670000000006,
+              "cumulative_s": 0.020454117
+            },
+            {
+              "file": "~",
+              "name": "<method 'decrypt' of 'cryptography.hazmat.bindings._rust.openssl.aead.AESGCMSIV' objects>",
+              "calls": 10000,
+              "exclusive_s": 0.014862505000000002,
+              "cumulative_s": 0.014862505000000002
+            },
+            {
+              "file": "<frozen abc>",
+              "name": "__instancecheck__",
+              "calls": 50000,
+              "exclusive_s": 0.007961726,
+              "cumulative_s": 0.014359276
+            },
+            {
+              "file": "cf1.py",
+              "name": "_record",
+              "calls": 10000,
+              "exclusive_s": 0.004441383,
+              "cumulative_s": 0.0110615
+            },
+            {
+              "file": "uuid.py",
+              "name": "__eq__",
+              "calls": 50000,
+              "exclusive_s": 0.007621198000000001,
+              "cumulative_s": 0.010808397
+            },
+            {
+              "file": "~",
+              "name": "<built-in method posix.getpid>",
+              "calls": 40000,
+              "exclusive_s": 0.006557418000000001,
+              "cumulative_s": 0.006557418000000001
+            },
+            {
+              "file": "~",
+              "name": "<built-in method _abc._abc_instancecheck>",
+              "calls": 50000,
+              "exclusive_s": 0.00639755,
+              "cumulative_s": 0.00639755
+            },
+            {
+              "file": "~",
+              "name": "<method 'get' of 'mappingproxy' objects>",
+              "calls": 40000,
+              "exclusive_s": 0.005519766000000001,
+              "cumulative_s": 0.005519766000000001
+            },
+            {
+              "file": "~",
+              "name": "<built-in method _hashlib.openssl_sha256>",
+              "calls": 20000,
+              "exclusive_s": 0.005453084,
+              "cumulative_s": 0.005453084
+            },
+            {
+              "file": "~",
+              "name": "<built-in method builtins.isinstance>",
+              "calls": 90000,
+              "exclusive_s": 0.005289711000000001,
+              "cumulative_s": 0.005289711000000001
+            },
+            {
+              "file": "~",
+              "name": "<method 'digest' of '_hashlib.HASH' objects>",
+              "calls": 20000,
+              "exclusive_s": 0.0050177780000000005,
+              "cumulative_s": 0.0050177780000000005
+            }
+          ]
+        }
+      }
+    },
+    {
+      "encoded_bytes": 32768,
+      "values": 1000,
+      "seal": {
+        "seconds": 0.09582839498762041,
+        "cpu_seconds": 0.09921154199999993
+      },
+      "open": {
+        "seconds": 0.0816354569979012,
+        "cpu_seconds": 0.08453057000000008
+      },
+      "profiles": {
+        "seal": {
+          "total_profiled_seconds": 0.12157122400000002,
+          "calls": [
+            {
+              "file": "cf1.py",
+              "name": "seal_text",
+              "calls": 1000,
+              "exclusive_s": 0.006905336000000001,
+              "cumulative_s": 0.121552983
+            },
+            {
+              "file": "~",
+              "name": "<method 'encrypt' of 'cryptography.hazmat.bindings._rust.openssl.aead.AESGCMSIV' objects>",
+              "calls": 1000,
+              "exclusive_s": 0.051489315,
+              "cumulative_s": 0.051489315
+            },
+            {
+              "file": "cf1.py",
+              "name": "_term",
+              "calls": 1000,
+              "exclusive_s": 0.0023834330000000003,
+              "cumulative_s": 0.03182407
+            },
+            {
+              "file": "keys.py",
+              "name": "tuple_bytes",
+              "calls": 6000,
+              "exclusive_s": 0.005504181,
+              "cumulative_s": 0.027882065
+            },
+            {
+              "file": "cf1.py",
+              "name": "_derive",
+              "calls": 2000,
+              "exclusive_s": 0.0038018540000000003,
+              "cumulative_s": 0.021314846000000002
+            },
+            {
+              "file": "~",
+              "name": "<method 'join' of 'bytes' objects>",
+              "calls": 6000,
+              "exclusive_s": 0.0035955920000000003,
+              "cumulative_s": 0.013095732
+            },
+            {
+              "file": "keys.py",
+              "name": "<genexpr>",
+              "calls": 33000,
+              "exclusive_s": 0.006641813000000001,
+              "cumulative_s": 0.00950014
+            },
+            {
+              "file": "~",
+              "name": "<built-in method builtins.any>",
+              "calls": 6000,
+              "exclusive_s": 0.002566276,
+              "cumulative_s": 0.00803233
+            },
+            {
+              "file": "~",
+              "name": "<method 'update' of 'cryptography.hazmat.bindings._rust.openssl.hmac.HMAC' objects>",
+              "calls": 1000,
+              "exclusive_s": 0.007413989,
+              "cumulative_s": 0.007413989
+            },
+            {
+              "file": "cf1.py",
+              "name": "_aad",
+              "calls": 1000,
+              "exclusive_s": 0.0005485160000000001,
+              "cumulative_s": 0.007021468
+            },
+            {
+              "file": "~",
+              "name": "<method 'derive' of 'cryptography.hazmat.primitives.kdf.hkdf.HKDF' objects>",
+              "calls": 2000,
+              "exclusive_s": 0.005126603,
+              "cumulative_s": 0.006368777000000001
+            },
+            {
+              "file": "keys.py",
+              "name": "_resolve",
+              "calls": 4000,
+              "exclusive_s": 0.0028026730000000003,
+              "cumulative_s": 0.0054673410000000006
+            },
+            {
+              "file": "keys.py",
+              "name": "<genexpr>",
+              "calls": 33000,
+              "exclusive_s": 0.004330732,
+              "cumulative_s": 0.005466054000000001
+            },
+            {
+              "file": "~",
+              "name": "<method 'to_bytes' of 'int' objects>",
+              "calls": 49000,
+              "exclusive_s": 0.003459801,
+              "cumulative_s": 0.003459801
+            },
+            {
+              "file": "~",
+              "name": "<built-in method builtins.len>",
+              "calls": 68000,
+              "exclusive_s": 0.003193799,
+              "cumulative_s": 0.003193799
+            },
+            {
+              "file": "uuid.py",
+              "name": "bytes",
+              "calls": 12000,
+              "exclusive_s": 0.001614275,
+              "cumulative_s": 0.002549761
+            },
+            {
+              "file": "cf1.py",
+              "name": "_context",
+              "calls": 1000,
+              "exclusive_s": 0.0006771160000000001,
+              "cumulative_s": 0.00216292
+            },
+            {
+              "file": "cf1.py",
+              "name": "_encode",
+              "calls": 1000,
+              "exclusive_s": 0.001085814,
+              "cumulative_s": 0.0020125010000000003
+            },
+            {
+              "file": "<frozen abc>",
+              "name": "__instancecheck__",
+              "calls": 5000,
+              "exclusive_s": 0.0007633640000000001,
+              "cumulative_s": 0.001482624
+            },
+            {
+              "file": "cf1.py",
+              "name": "_record",
+              "calls": 1000,
+              "exclusive_s": 0.000489334,
+              "cumulative_s": 0.0011647
+            },
+            {
+              "file": "uuid.py",
+              "name": "__eq__",
+              "calls": 5000,
+              "exclusive_s": 0.000752102,
+              "cumulative_s": 0.001068128
+            },
+            {
+              "file": "~",
+              "name": "<built-in method posix.getpid>",
+              "calls": 4000,
+              "exclusive_s": 0.0007816100000000001,
+              "cumulative_s": 0.0007816100000000001
+            },
+            {
+              "file": "~",
+              "name": "<method 'encode' of 'str' objects>",
+              "calls": 1000,
+              "exclusive_s": 0.000759119,
+              "cumulative_s": 0.000759119
+            },
+            {
+              "file": "~",
+              "name": "<built-in method _abc._abc_instancecheck>",
+              "calls": 5000,
+              "exclusive_s": 0.00071926,
+              "cumulative_s": 0.00071926
+            },
+            {
+              "file": "~",
+              "name": "<built-in method _hashlib.openssl_sha256>",
+              "calls": 2000,
+              "exclusive_s": 0.0006572500000000001,
+              "cumulative_s": 0.0006572500000000001
+            }
+          ]
+        },
+        "open": {
+          "total_profiled_seconds": 0.12199395299999999,
+          "calls": [
+            {
+              "file": "cf1.py",
+              "name": "open_text",
+              "calls": 1000,
+              "exclusive_s": 0.009084298000000001,
+              "cumulative_s": 0.12198046500000001
+            },
+            {
+              "file": "~",
+              "name": "<method 'decrypt' of 'cryptography.hazmat.bindings._rust.openssl.aead.AESGCMSIV' objects>",
+              "calls": 1000,
+              "exclusive_s": 0.050511462,
+              "cumulative_s": 0.050511462
+            },
+            {
+              "file": "cf1.py",
+              "name": "_term",
+              "calls": 1000,
+              "exclusive_s": 0.0022173970000000003,
+              "cumulative_s": 0.031159481000000003
+            },
+            {
+              "file": "keys.py",
+              "name": "tuple_bytes",
+              "calls": 6000,
+              "exclusive_s": 0.005423903000000001,
+              "cumulative_s": 0.028217171000000003
+            },
+            {
+              "file": "cf1.py",
+              "name": "_derive",
+              "calls": 2000,
+              "exclusive_s": 0.003908719000000001,
+              "cumulative_s": 0.021341358
+            },
+            {
+              "file": "~",
+              "name": "<method 'join' of 'bytes' objects>",
+              "calls": 6000,
+              "exclusive_s": 0.0034488260000000003,
+              "cumulative_s": 0.013327319
+            },
+            {
+              "file": "keys.py",
+              "name": "<genexpr>",
+              "calls": 33000,
+              "exclusive_s": 0.00697956,
+              "cumulative_s": 0.009878493
+            },
+            {
+              "file": "~",
+              "name": "<built-in method builtins.any>",
+              "calls": 6000,
+              "exclusive_s": 0.002349222,
+              "cumulative_s": 0.008238584
+            },
+            {
+              "file": "~",
+              "name": "<method 'update' of 'cryptography.hazmat.bindings._rust.openssl.hmac.HMAC' objects>",
+              "calls": 1000,
+              "exclusive_s": 0.007370008000000001,
+              "cumulative_s": 0.007370008000000001
+            },
+            {
+              "file": "cf1.py",
+              "name": "_aad",
+              "calls": 1000,
+              "exclusive_s": 0.000523846,
+              "cumulative_s": 0.006982406
+            },
+            {
+              "file": "~",
+              "name": "<method 'derive' of 'cryptography.hazmat.primitives.kdf.hkdf.HKDF' objects>",
+              "calls": 2000,
+              "exclusive_s": 0.005012618,
+              "cumulative_s": 0.0062252670000000005
+            },
+            {
+              "file": "keys.py",
+              "name": "<genexpr>",
+              "calls": 33000,
+              "exclusive_s": 0.0047456370000000005,
+              "cumulative_s": 0.005889362
+            },
+            {
+              "file": "keys.py",
+              "name": "_resolve",
+              "calls": 4000,
+              "exclusive_s": 0.0027158710000000003,
+              "cumulative_s": 0.005389327
+            },
+            {
+              "file": "~",
+              "name": "<method 'to_bytes' of 'int' objects>",
+              "calls": 47000,
+              "exclusive_s": 0.00330318,
+              "cumulative_s": 0.00330318
+            },
+            {
+              "file": "~",
+              "name": "<built-in method builtins.len>",
+              "calls": 67000,
+              "exclusive_s": 0.0031247090000000003,
+              "cumulative_s": 0.0031247090000000003
+            },
+            {
+              "file": "uuid.py",
+              "name": "bytes",
+              "calls": 12000,
+              "exclusive_s": 0.001793571,
+              "cumulative_s": 0.002740665
+            },
+            {
+              "file": "cf1.py",
+              "name": "_context",
+              "calls": 1000,
+              "exclusive_s": 0.0006886230000000001,
+              "cumulative_s": 0.0021249050000000003
+            },
+            {
+              "file": "<frozen abc>",
+              "name": "__instancecheck__",
+              "calls": 5000,
+              "exclusive_s": 0.0007840340000000001,
+              "cumulative_s": 0.001448835
+            },
+            {
+              "file": "~",
+              "name": "<method 'decode' of 'bytes' objects>",
+              "calls": 1000,
+              "exclusive_s": 0.001244543,
+              "cumulative_s": 0.001244543
+            },
+            {
+              "file": "cf1.py",
+              "name": "_record",
+              "calls": 1000,
+              "exclusive_s": 0.00046651900000000004,
+              "cumulative_s": 0.0011389
+            },
+            {
+              "file": "uuid.py",
+              "name": "__eq__",
+              "calls": 5000,
+              "exclusive_s": 0.000770623,
+              "cumulative_s": 0.001085779
+            },
+            {
+              "file": "~",
+              "name": "<built-in method posix.getpid>",
+              "calls": 4000,
+              "exclusive_s": 0.000722565,
+              "cumulative_s": 0.000722565
+            },
+            {
+              "file": "~",
+              "name": "<built-in method _abc._abc_instancecheck>",
+              "calls": 5000,
+              "exclusive_s": 0.000664801,
+              "cumulative_s": 0.000664801
+            },
+            {
+              "file": "~",
+              "name": "<built-in method _hashlib.openssl_sha256>",
+              "calls": 2000,
+              "exclusive_s": 0.000627389,
+              "cumulative_s": 0.000627389
+            },
+            {
+              "file": "~",
+              "name": "<method 'get' of 'mappingproxy' objects>",
+              "calls": 4000,
+              "exclusive_s": 0.0006116520000000001,
+              "cumulative_s": 0.0006116520000000001
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "python": "3.12.3",
+  "script": "import cProfile\nimport hashlib\nimport json\nfrom pathlib import Path\nimport platform\nimport pstats\nimport time\nfrom uuid import UUID\n\nfrom test_cf1 import descriptor, setup_keys, TENANT\nfrom cryptalis.crypto.cf1 import seal_text, open_text\n\nROOT = Path('/home/debrato/Projects/cryptalis')\nhashes = {str(p.relative_to(ROOT)): hashlib.sha256(p.read_bytes()).hexdigest()\n          for p in (ROOT/'src/cryptalis').rglob('*.py')}\nresults = []\nfor width, n in ((53, 10000), (32768, 1000)):\n    field = descriptor(equality=True)\n    _, ring = setup_keys(equality=True)\n    keys = ring.prepare()\n    value = 'x' * width\n    records = [UUID(int=i+10) for i in range(n)]\n    start = time.perf_counter(); cpu = time.thread_time()\n    frames = [seal_text(value, field, TENANT, record, keys) for record in records]\n    seal = {'seconds': time.perf_counter()-start, 'cpu_seconds': time.thread_time()-cpu}\n    start = time.perf_counter(); cpu = time.thread_time()\n    for frame, record in zip(frames, records):\n        assert open_text(frame, field, TENANT, record, keys) == value\n    opened = {'seconds': time.perf_counter()-start, 'cpu_seconds': time.thread_time()-cpu}\n    profiles = {}\n    for name in ('seal', 'open'):\n        profile = cProfile.Profile(); profile.enable()\n        for record, frame in zip(records, frames):\n            if name == 'seal': seal_text(value, field, TENANT, record, keys)\n            else: assert open_text(frame, field, TENANT, record, keys) == value\n        profile.disable(); stats = pstats.Stats(profile)\n        calls = [{'file': Path(path).name, 'name': fn, 'calls': count, 'exclusive_s': own, 'cumulative_s': total}\n                 for (path, line, fn), (_, count, own, total, _) in stats.stats.items()]\n        profiles[name] = {'total_profiled_seconds': stats.total_tt,\n                         'calls': sorted(calls, key=lambda c:c['cumulative_s'], reverse=True)[:25]}\n    results.append({'encoded_bytes': width, 'values': n, 'seal': seal, 'open': opened, 'profiles': profiles})\nrevision = hashlib.sha256(json.dumps(hashes, sort_keys=True).encode()).hexdigest()[:16]\nreceipt = {'scope': 'Single-process warm CF1 CPU research; public fixture roots; no database',\n    'source_sha256': hashes, 'measurements': results, 'python': platform.python_version(),\n    'script': Path(__file__).read_text(),\n    'limitations': ['Current code only; no crypto change or comparative improvement.',\n                   'cProfile cumulative calls overlap; profiled timings include instrumentation.',\n                   'Roundtrip assertions are measurement controls; frozen vectors provide separate correctness evidence.',\n                   'Thread/process scaling, remote providers and production workloads remain unmeasured.'],\n    'qualification': 'All seven gates UNKNOWN'}\nwith (ROOT/'docs/_reset'/f'performance-crypto-cost-{revision}.json').open('x') as f:\n    f.write(json.dumps(receipt, indent=2)+'\\n')\nprint(json.dumps([{k:v for k,v in r.items() if k!='profiles'} for r in results]))\n",
+  "limitations": [
+    "Current code only; no crypto change or comparative improvement.",
+    "cProfile cumulative calls overlap; profiled timings include instrumentation.",
+    "Roundtrip assertions are measurement controls; frozen vectors provide separate correctness evidence.",
+    "Thread/process scaling, remote providers and production workloads remain unmeasured."
+  ],
+  "qualification": "All seven gates UNKNOWN"
+}
