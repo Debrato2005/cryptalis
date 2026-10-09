@@ -216,3 +216,18 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Generated Graphify graphs, reports, snapshots, and caches
+/graphify-out/
+
+# Machine-local Codex hook with an absolute executable path
+/.codex/hooks.json
+
+# Private configuration and key material
+.env.*
+*.pem
+*.key
+credentials/
+secrets/
+graphify-out/
+.codex/hooks.json
