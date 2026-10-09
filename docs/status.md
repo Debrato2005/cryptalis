@@ -7,6 +7,22 @@ No PostgreSQL/provider/runtime cell, production key provider, independent review
 VERIFIED below refers only to the named checks and their exact revisions.
 All other contract and promotion requirements are SPECIFIED. All seven full gates remain UNKNOWN.
 
+## Step 0 protection-pause checkpoint: 2026-10-09
+
+**IMPLEMENTED:** uninterrupted apply verifies and switches in one transaction, with one full verification pass.
+Saved VERIFIED checkpoints still require fresh verification and an unchanged frame digest before switch.
+Verification uses PostgreSQL EXCLUSIVE locks: plain reads continue, while writes and locking reads wait.
+DDL still acquires ACCESS EXCLUSIVE. A reader that delays DDL past the lock timeout leaves source data and the BACKFILLED marker unchanged.
+`print(plan_result)` reports native row count, supplied measured rates, and the estimated uninterrupted writer pause.
+Extra verification checkpoints/retries, drain, DDL, index construction, and publication delay are excluded; this is not a pause bound.
+**VERIFIED, bounded PostgreSQL 16 cell:** content revision `worktree-c72bb439d7e13334`, based on Git `9f335c6`.
+[Full verification](_reset/step0-verification-c72bb439d7e13334.json): **982 passed**, including seven new native lock/SQL and independent-decoder cases.
+[Step 0 proofs](_reset/step0-regressions-c72bb439d7e13334.json): committed engine gives six failures and one pass; fixed copy gives seven passes.
+Seven isolated Step 0 mutations and [20 existing safety removals](_reset/slice5-regressions-audit-72f0a976a1fe9d8f.json) fail their behavioral checks; restoration passes.
+The authentication attack now flips a tag bit instead of assigning a byte that could already have that value.
+No new million-row pause was measured. The historical 508.7 s receipt and unexplained timing variation remain historical evidence.
+No protocol change, dual writes, slice 6/7, production provider or independent review is added. All seven gates remain **UNKNOWN**.
+
 ## Corrective audit checkpoint: 2026-10-09
 
 **VERIFIED, bounded PostgreSQL 16 cell:** source/test revision `audit-a07004dfcda8cd05`, based on `fe2b061`.
@@ -30,7 +46,7 @@ One phase loop uses a PostgreSQL journal, cooperating session advisory lock, tra
 Plans bind the native schema, compiler lock, target, runtime role, inventoried tenant key policies, writer assertions, and host cost estimates.
 Expand drains table access and installs an owner-controlled statement trigger that rejects restricted-runtime writes across chunk commits and process crashes.
 Resume preserves committed ciphertext. Full verification checks membership, native value/type/NULL parity, authentication, terms, generations, constraints/indexes, and trigger inventory.
-Switch repeats verification under exclusive table locks and retires the original SQL column without CASCADE.
+At that recorded revision, switch repeated verification under exclusive table locks and retired the original SQL column without CASCADE.
 Database switch remains PENDING until the host supplies the exact externally published ACTIVATING pin.
 After acknowledgement, startup requires the externally current ACTIVE pin, target/schema agreement, planned runtime role, and matching tenant key policies.
 

@@ -55,3 +55,12 @@ This pass keeps existing local changes and edits only documentation. The user re
 - SQL switch drops the original column. No live plaintext rollback mirror remains; heap tuples, WAL, snapshots and backups can still contain plaintext.
 - Host writer exclusion, pin provenance, restore quarantine, production provider, real exhaustion, retained-backup recovery and independent review remain unqualified.
 - All seven gates remain UNKNOWN. No slice 6/7 implementation, spike edits, commit or push. [Receipt](slice5-verification.json) owns the evidence boundary.
+
+## Step 0 protection-pause checkpoint: 2026-10-09
+
+- Uninterrupted protection now verifies and switches in one transaction. Saved VERIFIED checkpoints still require a fresh pass and unchanged digest.
+- Native EXCLUSIVE lock tests allow plain reads and block writes/locking reads. DDL lock timeout preserves source data and the BACKFILLED marker.
+- Printing the plan shows native row count, measured rates, and an uninterrupted pause estimate. Extra passes, drain, DDL, indexes, and publication are excluded.
+- [Verification](step0-verification-c72bb439d7e13334.json): 982 passed. [Regression proofs](step0-regressions-c72bb439d7e13334.json): seven targeted removals fail/restoration passes; the original engine gives six failures/one pass.
+- Twenty prior migration safety removals still fail/restoration passes. The tag attack now changes a bit unconditionally.
+- No new million-row timing or slice 6/7 work. Timing variation, production provider, independent review, and all seven gates remain UNKNOWN. No commit or push.

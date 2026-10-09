@@ -62,6 +62,16 @@ class MigrationPlan:
             raise TransitionFailure('invalid_plan')
         for name in ('operation_id', 'target_id'):
             if UUID(doc[name]).int == 0: raise TransitionFailure('invalid_plan')
+    def __str__(self):
+        costs = self.document['estimates']
+        rates = (f'backfill {costs["backfill_rows_per_second"]:g} rows/s; '
+                 f'verify {costs["verify_rows_per_second"]:g} rows/s'
+                 if 'backfill_rows_per_second' in costs and 'verify_rows_per_second' in costs
+                 else 'measured rates unavailable in this historical artifact')
+        return (f'Estimated writer pause: {costs["writer_pause_seconds_estimate"]} s '
+                f'for {costs["rows"]} rows ({rates}). '
+                'Uninterrupted backfill and one final verification; a verification checkpoint or retry adds another pass. '
+                + costs['limits'])
     @property
     def document(self): return json.loads(self.artifact)
     @property
@@ -171,7 +181,9 @@ def plan(manifest, mapping, engine, *, writers, search_reviews=(), keys, runtime
     estimates={'rows':rows,'plaintext_bytes':plaintext_bytes,'temporary_bytes_estimate':rows*temporary_bytes_per_row,
         'wal_bytes_estimate':rows*wal_bytes_per_row,'provider_unwraps_per_cold_preparation':sum(len((keys(UUID(t)) if callable(keys) else keys).policy.wrappers) for t in policies),
         'backfill_seconds_estimate':math.ceil(rows/rates[0]), 'verify_seconds_estimate':math.ceil(rows/rates[1]),
-        'writer_pause_seconds_estimate':math.ceil(rows/rates[0]+2*rows/rates[1]),
+        'backfill_rows_per_second':rates[0], 'verify_rows_per_second':rates[1],
+        'writer_pause_seconds_estimate':math.ceil(rows/rates[0]+rows/rates[1]),
+        'checkpoint_extra_verify_seconds_estimate':math.ceil(rows/rates[1]),
         'cost_basis':'Host-supplied per-row staging observations/estimates; not bounds or qualification.',
         'limits':'Host rate estimates exclude lock drain, DDL, index build, publication delay and capacity guarantees.'}
     return MigrationPlan(_canonical({'format':'cryptalis.transition/v1','kind':'protect','operation_id':str(uuid4()),
@@ -312,9 +324,12 @@ def _guard_facts(c,p,model):
     return list(row)+[[list(item) for item in inventory]]
 
 
-def _lock_tables(c,p):
+def _lock_tables(c,p,*,verification=False):
+    # EXCLUSIVE excludes even locking readers and privileged writers, while
+    # plain SELECT retains ACCESS SHARE. DDL upgrades to ACCESS EXCLUSIVE.
+    mode='EXCLUSIVE' if verification else 'ACCESS EXCLUSIVE'
     for model in sorted(p.document['lock']['models'],key=lambda m:(m['schema'],m['table'])):
-        c.exec_driver_sql(f'LOCK TABLE {_table(c,model)} IN ACCESS EXCLUSIVE MODE')
+        c.exec_driver_sql(f'LOCK TABLE {_table(c,model)} IN {mode} MODE')
 
 
 def _stream(c,model,*,payloads=False,after=None,limit=1000):
@@ -443,9 +458,13 @@ def _verify(c,p,state,keys):
 
 
 def _switch(c,p,state,keys):
-    _lock_tables(c,p)
+    _lock_tables(c,p,verification=True)
     digests=_verify(c,p,state,keys)
-    if digests != state.get('verification'): raise TransitionFailure('verification_changed_before_switch',p.operation_id)
+    if 'verification' in state and digests != state['verification']:
+        raise TransitionFailure('verification_changed_before_switch',p.operation_id)
+    # Verification and DDL share this transaction and its write-excluding lock.
+    # A separately committed VERIFIED checkpoint still requires a fresh pass.
+    state['verification']=digests
     for model in p.document['lock']['models']:
         for f in model['fields']:
             table=_table(c,model)
@@ -496,8 +515,11 @@ def apply(p,engine,*,keys,pin,approval,chunk_size=1000,until='PENDING'):
             with c.begin():
                 if state['phase']=='EXPANDED': _backfill_chunk(c,p,state,keys,chunk_size)
                 elif state['phase']=='BACKFILLED':
-                    _lock_tables(c,p); state['verification']=_verify(c,p,state,keys)
-                    state['phase']='VERIFIED'; _save(c,p,state)
+                    if PHASES.index(until)>PHASES.index('VERIFIED'):
+                        _switch(c,p,state,keys)
+                    else:
+                        _lock_tables(c,p,verification=True); state['verification']=_verify(c,p,state,keys)
+                        state['phase']='VERIFIED'; _save(c,p,state)
                 elif state['phase']=='VERIFIED': _switch(c,p,state,keys)
                 elif state['phase']=='PENDING': _activate(c,p,state,pin)
         with c.begin():
@@ -513,7 +535,7 @@ def verify(p,engine,*,keys,pin,approval):
         if state is None or state['phase'] not in ('BACKFILLED','VERIFIED'): raise TransitionFailure('source_verification_unavailable',p.operation_id)
         c.commit()
         with c.begin():
-            _lock_tables(c,p); result=_verify(c,p,state,keys)
+            _lock_tables(c,p,verification=True); result=_verify(c,p,state,keys)
         return result
 
 

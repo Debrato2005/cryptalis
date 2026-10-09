@@ -9,6 +9,7 @@ import json
 import os
 from pathlib import Path
 import sys
+import subprocess
 import time
 from types import ModuleType
 
@@ -62,6 +63,7 @@ def main():
     parser.add_argument("--wrong-password-proof", action="store_true",
                         help="Use a public wrong password in the owner probe; run no tests.")
     parser.add_argument("--receipt", type=Path)
+    parser.add_argument("--scope", default="PostgreSQL verification; research prototype")
     parser.add_argument("--receipt-dir", type=Path,
                         help="Write new revision-bound full and slice 3/4/5 receipts.")
     parser.add_argument("pytest_args", nargs=argparse.REMAINDER)
@@ -103,10 +105,12 @@ def main():
         files = sorted(Path("src/cryptalis").rglob("*.py")) + sorted(Path("tests").rglob("*.py")) + sorted(Path("scripts").rglob("*.py"))
         hashes = {str(path): hashlib.sha256(path.read_bytes()).hexdigest() for path in files}
         revision = hashlib.sha256(json.dumps(hashes, sort_keys=True).encode()).hexdigest()
+        base = subprocess.run(["git", "rev-parse", "HEAD"],
+                              cwd=Path(__file__).resolve().parents[1], capture_output=True, text=True, check=True).stdout.strip()
         receipt = {
-            "scope": "Corrective audit verification; research prototype",
-            "base_revision": "fe2b061",
-            "fixing_revision": "audit-" + revision[:16],
+            "scope": args.scope,
+            "base_revision": base,
+            "fixing_revision": "worktree-" + revision[:16],
             "source_test_sha256": hashes,
             "preflight": {"select_1_each": "passed", "sha256_prefixes": fingerprints(urls)},
             "pytest_args": pytest_args, "counts": results.counts, "exit_code": code,

@@ -201,7 +201,7 @@ def test_full_verification_refuses_corruption_and_never_switches(attack):
         run(app,'BACKFILLED')
         payload='_cryptalis_'+FIELD_ID.hex
         with app.owner.begin() as c:
-            if attack=='tag': c.exec_driver_sql(f'UPDATE "{app.schema}".customer SET "{payload}"=set_byte("{payload}",octet_length("{payload}")-1,1) WHERE id=%s',(UUID(int=103),))
+            if attack=='tag': c.exec_driver_sql(f'UPDATE "{app.schema}".customer SET "{payload}"=set_byte("{payload}",octet_length("{payload}")-1,get_byte("{payload}",octet_length("{payload}")-1) # 1) WHERE id=%s',(UUID(int=103),))
             if attack=='missing': c.exec_driver_sql(f'DELETE FROM "{app.schema}".customer WHERE id=%s',(UUID(int=103),))
             if attack=='null': c.exec_driver_sql(f'UPDATE "{app.schema}".customer SET "{payload}"=NULL WHERE id=%s',(UUID(int=103),))
             if attack=='source': c.exec_driver_sql(f'UPDATE "{app.schema}".customer SET name=%s WHERE id=%s',('changed',UUID(int=103)))

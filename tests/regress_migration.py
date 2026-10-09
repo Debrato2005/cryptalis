@@ -28,7 +28,7 @@ MUTATIONS=[
  ('external_authority','migration.py','if (not isinstance(p,MigrationPlan) or not isinstance(pin,DeploymentPin) or','if False and (not isinstance(p,MigrationPlan) or not isinstance(pin,DeploymentPin) or','test_invalid_external_authority_or_missing_writer_approval_has_no_effects[target]'),
  ('writer_approval','migration.py','if (not isinstance(approval.writer_exclusion,str) or','if False and (not isinstance(approval.writer_exclusion,str) or','test_invalid_external_authority_or_missing_writer_approval_has_no_effects[approval]'),
  ('active_generation','migration.py',"if frame is not None and (int.from_bytes(frame[6:10],'big')!=admitted.payload_generation or int.from_bytes(frame[10:14],'big')!=(admitted.search_generation if f['queries'] else 0)):",'if False:','test_valid_retained_generation_cannot_satisfy_active_generation_verification'),
- ('switch_table_lock','migration.py','def _lock_tables(c,p):','def _lock_tables(c,p):\n    return','test_switch_verification_holds_table_lock_until_ddl_commit'),
+ ('switch_table_lock','migration.py','def _lock_tables(c,p,*,verification=False):','def _lock_tables(c,p,*,verification=False):\n    return','test_switch_verification_holds_table_lock_until_ddl_commit'),
  ('trigger_inventory','migration.py','return list(row)+[[list(item) for item in inventory]]','return list(row)','test_unplanned_trigger_blocks_resume_without_relying_on_boolean_schema_flag'),
 ]
 

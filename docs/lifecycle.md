@@ -2,6 +2,8 @@
 
 **SPECIFIED:** lifecycle contract. **IMPLEMENTED:** bounded product protection transition with plan/apply/verify and pre-switch abort.
 Decrypt-back, removal and rotation remain unimplemented product slices. [Status](status.md) states the evidence limits.
+The protection engine verifies and switches in one transaction; saved verification checkpoints require a fresh pass on resume.
+Plain reads continue during verification. Writes and locking reads wait; schema DDL can pause all access.
 VERIFIED paragraphs below describe recorded receipts, not current product qualification. All other requirements remain SPECIFIED.
 Every protection change uses expand → backfill → verify → switch → contract.
 Rollback, deprotect, search changes, and key transformations reuse this path.

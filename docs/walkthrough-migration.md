@@ -8,7 +8,7 @@ All seven gates remain UNKNOWN. Use the authorized disposable PostgreSQL 16 cell
 3. Use owner maintenance and restricted runtime roles. Approve measured costs and pause.
 
 ```python
-from cryptalis.migration import plan, apply, verify, MaintenanceApproval
+from cryptalis.migration import plan, apply, MaintenanceApproval
 from cryptalis.sqlalchemy import attach
 
 p = plan(manifest_bytes, Base.registry, owner_engine,
@@ -17,10 +17,9 @@ p = plan(manifest_bytes, Base.registry, owner_engine,
     backfill_rows_per_second=measured_backfill_rate,
     verify_rows_per_second=measured_verify_rate,
     temporary_bytes_per_row=measured_storage_cost, wal_bytes_per_row=measured_wal_cost)
+print(p)  # Estimated pause from native row count and the supplied measured rates.
 approval = MaintenanceApproval(writer_exclusion_evidence, approved_pause_seconds)
 options = dict(keys=tenant_keyrings, pin=prepared_pin, approval=approval)
-apply(p, owner_engine, **options, until="BACKFILLED")
-verify(p, owner_engine, **options)
 apply(p, owner_engine, **options)  # Switch database; return PENDING.
 ```
 
@@ -34,9 +33,10 @@ Runtime writes during maintenance fail with SQLSTATE `55000`; callers must roll 
 Backfill commits each bounded chunk with its marker. Resume with the same artifact and current pin.
 Committed chunks retain their ciphertext. Failed chunks leave neither rows nor markers partially changed.
 Verification decrypts every value and checks source equality, types, NULLs, membership, generations, and schema.
-Switch repeats verification under table locks. Failure preserves the original SQL representation.
+Default apply verifies and switches in one transaction. A saved VERIFIED checkpoint is checked again on resume.
+Explicit `verify` adds a pass. The pause estimate excludes extra passes, drain, DDL, index build, and publication delay.
 
-The original plaintext column exists through backfill and verification. Table locks can also pause reads.
+Plain reads continue during verification; all writes and locking reads wait. Expansion and switch DDL can pause reads.
 Switch drops it and renames the ciphertext shadow. There is no live plaintext rollback mirror.
 **Plaintext-at-rest remains possible:** dropped-column bytes can remain in heap tuples, WAL, snapshots, and backups.
 `DROP COLUMN` is not erasure ([PostgreSQL 16](https://www.postgresql.org/docs/16/sql-altertable.html)). Retain recovery dependencies until explicit finalization.
