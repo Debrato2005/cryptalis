@@ -7,6 +7,34 @@ No PostgreSQL/provider/runtime cell, production key provider, independent review
 VERIFIED below refers only to the named checks and their exact revisions.
 All other contract and promotion requirements are SPECIFIED. All seven full gates remain UNKNOWN.
 
+## Textual reference admission correction: 2026-10-19
+
+**IMPLEMENTED:** protected textual names in `ORDER BY`, `GROUP BY`, `DISTINCT ON`,
+window ordering/partitioning, and `WITHIN GROUP`/aggregate ordering resolve against
+the native SQL name spaces. The attachment refuses before the driver when any
+resolved candidate is a protected column. Public output labels and FROM names that
+shadow protected names retain native resolution.
+Without this check, PostgreSQL can sort or group by randomized ciphertext and
+silently change results. The earlier check inspected only selected output keys. It
+missed unprojected FROM names, aliases, table-qualified names, window clauses, and
+ordered aggregates.
+The attachment resolves names with an empty native compilation state. It does not
+render protected columns, capture keys, or add SQL. No manifest, crypto, storage, or
+query-plan capability changed.
+
+**VERIFIED, local PostgreSQL 16.15 cell:**
+[focused SQLAlchemy 2.1.3](_reset/textual-admission-focused-sa21-20261019.json) reports
+**303 passed**, including 164 textual-boundary cases and the existing adapter/search suites.
+[Full SQLAlchemy 2.1.3](_reset/textual-admission-full-sa21-20261019.json) reports
+**1,173 passed**, with 48 upstream `distinct_on` deprecation warnings.
+[focused SQLAlchemy 2.0.51](_reset/textual-admission-focused-sa20-20261019.json) reports
+**275 passed and 28 native-version skips**.
+The native execution path is the oracle in every case. Both sync and async paths run.
+The RED reproduction failed four attached unprojected `GROUP BY` cases before the change.
+Admission adds one name-resolution pass per SELECT that contains textual references.
+Performance was not separately measured because admitted SQL, plans, and crypto bytes are unchanged.
+All seven full gates remain **UNKNOWN**.
+
 ## Membership performance correction: 2026-10-09
 
 **IMPLEMENTED:** membership scans select row/tenant identities without protected source values.

@@ -111,6 +111,7 @@ A changed tenant requires authorization, new context, and resealing. Stable reco
 The compiler freezes exact context encodings for each admitted app-assigned ID mapping before vectors and integration tests.
 
 Comparators rewrite only the admitted grammar. Public expression traversal rejects unadmitted operators, nested clauses, functions, and protected DISTINCT.
+Textual `ORDER BY`, `GROUP BY`, `DISTINCT ON`, window, and ordered-aggregate names resolve against native name spaces before the driver; a protected candidate refuses.
 Do not substitute string matching against arbitrary SQL for expression admission.
 Bulk writes need complete row identity, tenant context, and companions. Opaque SQL/COPY and raw protocol paths must reject within guarded attachment routes.
 Separate drivers remain writer-inventory gaps. Unsupported or unknown writers block protection unless the deployment excludes them.

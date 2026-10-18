@@ -17,7 +17,7 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, AsyncSessionTransa
 from sqlalchemy.orm import Session, registry
 from sqlalchemy.orm.attributes import NO_VALUE
 from sqlalchemy.sql import operators, visitors
-from sqlalchemy.sql.elements import BinaryExpression, BindParameter, BooleanClauseList, Cast, ColumnClause, Grouping, Label, TextClause, UnaryExpression
+from sqlalchemy.sql.elements import BinaryExpression, BindParameter, BooleanClauseList, Cast, ColumnClause, Grouping, Label, TextClause, TypeCoerce, UnaryExpression
 from sqlalchemy.sql.functions import FunctionElement
 from sqlalchemy.sql.selectable import Alias, CTE, FromClause, Select, Join, Subquery
 from sqlalchemy.sql.dml import Insert, Update, Delete
@@ -271,6 +271,79 @@ class _Attachment:
         return any(isinstance(node, ColumnClause) and any(node.shares_lineage(b.column) for b in self.bindings)
                    for node in visitors.iterate(expression))
 
+    def _admit_textual_references(self, statement):
+        # Label references have no column lineage. Check every local occurrence,
+        # not just outer ORDER/GROUP clauses; nested SELECTs own their namespace.
+        selected_roots = tuple(statement._all_selected_columns)
+        order_roots = tuple(statement._order_by_clauses)
+        group_roots = tuple(statement._group_by_clauses)
+        distinct_roots = tuple(statement._distinct_on)
+        roots = [(c, True, True) for c in selected_roots]
+        roots += [(c, False, False) for c in order_roots + distinct_roots]
+        roots += [(c, False, True) for c in group_roots]
+        assigned = {id(c) for c in selected_roots + order_roots + group_roots + distinct_roots}
+        roots += [(c, False, True) for c in statement.get_children() if id(c) not in assigned]
+        resolution = None
+
+        def references(part, within_columns, input_first):
+            if isinstance(part, Select):
+                return
+            visit = getattr(part, "__visit_name__", None)
+            if visit == "postgresql_distinct_on":
+                # SQLAlchemy 2.1 syntax extension; 2.0 uses _distinct_on above.
+                for child in part._distinct_on:
+                    yield from references(child, False, False)
+                return
+            if visit == "textual_label_reference":
+                yield part.element, within_columns, input_first
+                return
+            transparent = isinstance(part, (Grouping, TypeCoerce)) or (
+                isinstance(part, UnaryExpression) and part.modifier in (
+                    operators.asc_op, operators.desc_op,
+                    operators.nulls_first_op, operators.nulls_last_op))
+            # A comma-separated ORDER BY list preserves each bare label.
+            transparent = transparent or visit == "order_by_list"
+            for child in part.get_children():
+                yield from references(child, within_columns, input_first or not transparent)
+
+        for root, within_columns, input_first in roots:
+            if any(root is clause for clause in order_roots + group_roots) and self.protected(root):
+                raise UnsupportedProtectedOperation()
+            for textual, within_columns, input_first in references(root, within_columns, input_first):
+                if resolution is None:
+                    try:
+                        # Empty compilation state supplies the native namespaces
+                        # without rendering protected columns or capturing keys.
+                        dialect = self.engine.dialect
+                        state = statement._compile_state_factory(
+                            statement, dialect.statement_compiler(dialect, None))
+                        combined, from_only, _ = state._label_resolve_dict
+                        selected = tuple(state.statement._all_selected_columns)
+                        sources = tuple(c for source in state.froms for c in source.c)
+                        resolution = combined, from_only, selected, sources
+                    except Exception:
+                        raise UnsupportedProtectedOperation() from None
+                combined, from_only, selected, sources = resolution
+                resolved = (from_only if within_columns else combined).get(textual)
+                if resolved is None:
+                    raise UnsupportedProtectedOperation()
+                if within_columns:
+                    candidates = tuple(c for c in sources if c._allow_label_resolve and c.key == textual)
+                else:
+                    # Labels render unqualified. GROUP BY and names embedded in
+                    # expressions use PostgreSQL input-name precedence; bare
+                    # ORDER BY / DISTINCT ON output labels retain precedence.
+                    inputs = tuple(c for c in sources if c.name == resolved.name)
+                    if isinstance(resolved, Label) and input_first and inputs:
+                        candidates = inputs
+                    else:
+                        candidates = tuple(c for c in selected if c._allow_label_resolve and
+                                           (c._tq_label or c.key) == textual)
+                        if not candidates:
+                            candidates = tuple(c for c in sources if c._allow_label_resolve and c.key == textual)
+                if not candidates or any(self.protected(c) for c in candidates):
+                    raise UnsupportedProtectedOperation()
+
     def _ring(self, tenant):
         if not isinstance(tenant, UUID):
             raise PolicyMismatch()
@@ -459,11 +532,17 @@ class _Attachment:
                         if (physical is not None and origin.name == binding.column.name and physical.name == target.name and
                                 physical.schema in (None, target.schema) and not origin.shares_lineage(binding.column)):
                             raise UnsupportedProtectedOperation()
-            if self.protected(node) and not isinstance(node, (Select, FromClause, ColumnClause, Label)):
+            # Parentheses carry no new operation. Their children still pass
+            # every admission check below; do not reject native AND/OR grouping.
+            if self.protected(node) and not isinstance(node, (Select, FromClause, ColumnClause, Label, Grouping)):
                 boolean = isinstance(node, BooleanClauseList) and node.operator in (operators.and_, operators.or_)
                 if not boolean and search_shape(self, node) is None:
                     raise UnsupportedProtectedOperation()
             if isinstance(node, Select):
+                def ungroup(expression):
+                    while isinstance(expression, Grouping):
+                        expression = expression.element
+                    return expression
                 # ORM join predicates appear as direct public children before
                 # they become Join objects. Consume only WHERE/projection
                 # occurrences; an additional protected ON occurrence refuses.
@@ -474,12 +553,10 @@ class _Attachment:
                     # Multiple .where() criteria form a new AND wrapper. Its
                     # direct clauses are the SELECT children; descendants of
                     # an explicit AND/OR must never become spare ON permits.
-                    def ungroup(expression):
-                        while isinstance(expression, Grouping):
-                            expression = expression.element
-                        return expression
                     root = ungroup(where)
-                    if any(root is child for child in children):
+                    if any(where is child for child in children):
+                        eligible.append(where)
+                    elif any(root is child for child in children):
                         eligible.append(root)
                     elif isinstance(root, BooleanClauseList) and root.operator is operators.and_:
                         eligible.extend(ungroup(clause) for clause in root.clauses)
@@ -497,20 +574,11 @@ class _Attachment:
                             raise UnsupportedProtectedOperation()
                 for child in children:
                     if self.protected(child) and not isinstance(child, FromClause):
-                        match = next((i for i, allowed in enumerate(eligible) if child is allowed), None)
+                        match = next((i for i, allowed in enumerate(eligible) if ungroup(child) is ungroup(allowed)), None)
                         if match is None:
                             raise UnsupportedProtectedOperation()
                         eligible.pop(match)
-                remaining = list(node.order_by(None).group_by(None).get_children())
-                for child in node.get_children():
-                    match = next((i for i, candidate in enumerate(remaining) if child is candidate or child.compare(candidate)), None)
-                    if match is not None:
-                        remaining.pop(match)
-                        continue
-                    textual = getattr(child, "element", None)
-                    labeled = type(textual) is str and any(c.key == textual and self.protected(c) for c in node.selected_columns)
-                    if self.protected(child) or labeled:
-                        raise UnsupportedProtectedOperation()
+                self._admit_textual_references(node)
 
     def prepare_rows(self, session, operation):
         for obj in tuple(session.new) + tuple(session.dirty) + tuple(session.deleted):
