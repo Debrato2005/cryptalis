@@ -308,7 +308,7 @@ G-PROVIDER, G-POLICY, and independent review requirements remain UNKNOWN. No loc
 
 Failures expose an operation ID, stage, safe code, retry class, durable progress, and a concrete remedy.
 They do not expose plaintext, key bytes, ciphertext bodies, terms, SQL binds, or raw provider exception text.
-Engine defaults use `echo=False` and `hide_parameters=True`. Host logging remains a separate trusted responsibility.
+Engine defaults use `echo=False` and `hide_parameters=True`. Attachment refuses an engine with query echo enabled or parameter hiding disabled before any connection or key access. Host logging remains a separate trusted responsibility.
 
 | Condition | Required result |
 |---|---|

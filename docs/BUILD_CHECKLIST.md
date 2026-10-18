@@ -40,7 +40,7 @@ Requirement text is abbreviated. The full definitions remain in the research
 | OBJ-SEC-01 | Encrypt before PostgreSQL; prove at SQL/driver boundaries | VERIFIED, bounded | `crypto/cf1.py`, `sqlalchemy.py`; slice 2/3 receipts in `docs/_reset`; real runtime-role tests | Broader writer/auth/provider boundaries; independent review |
 | OBJ-SEC-02 | Bind tenant, field, row, generation; reject malformed/swapped frames | VERIFIED, bounded | CF1 AAD, descriptor binding, sync/async tamper tests | Collision assumptions and composition review |
 | OBJ-SEC-03 | Authorization, result lineage, tenant isolation, parameterization | PARTIAL | Tenant-scoped sessions, requested-point checks, typed errors | Host authorization is external; audit remaining ORM routes |
-| OBJ-SEC-04 | Detect plaintext bypass through ORM, bulk, SQL, COPY, jobs, logs | PARTIAL | Guarded attachment rejects raw SQL/COPY/opaque writes; writer inventory at plan | Complete route inventory; deployment enforcement is unverified |
+| OBJ-SEC-04 | Detect plaintext bypass through ORM, bulk, SQL, COPY, jobs, logs | PARTIAL | Guarded attachment rejects raw SQL/COPY/opaque writes and unsafe engine logging before connect/key access; writer inventory at plan | Complete route inventory; deployment enforcement is unverified |
 | OBJ-SEC-05 | Isolate keys; bound nonces, leases, cache lifetime, fork safety | VERIFIED, bounded | `crypto/keys.py` strict policy, cache expiry, fork refusal | Remote cancellation, usage limits, production custody |
 | OBJ-SEC-06 | Reduce equality/frequency/access leakage with documented trade-offs | SPECIFIED | Equality leakage is declared; no stronger profile admitted | Threat-model and benchmark a lower-leakage profile; six-gate admission |
 | OBJ-SEC-07 | Independent red-team, crypto, adapter, provider, supply-chain review | BLOCKED | None | Assign independent reviewers; do not self-certify |
@@ -76,7 +76,7 @@ Requirement text is abbreviated. The full definitions remain in the research
 
 | Date | Research reference | Mechanism | Product files | Evidence | Status |
 |---|---|---|---|---|---|
-| 2026-10-19 | `debgh-workspace/cryptalis-research-lab` branch `accel/integration-s20-20261014`, commit `15cf040`; `candidate/src/cryptalis/sqlalchemy.py::_admit_textual_references`; tests `test_textual_from_boundary.py`, `test_textual_clause_boundary.py`, `test_textual_group_shadow_boundary.py` | Native-name-space admission for protected textual ORDER/GROUP/DISTINCT/window/ordered-aggregate references | `src/cryptalis/sqlalchemy.py`; three product test modules | RED: 4 unprojected GROUP BY cases did not raise. GREEN: 303 focused SA2.1, 1,173 full SA2.1, 275 + 28 skips focused SA2.0 | VERIFIED, local cell |
+| 2026-10-19 | `debgh-workspace/cryptalis-research-lab` branch `accel/integration-s20-20261014`, commit `15cf040`; `candidate/src/cryptalis/sqlalchemy.py::UnsafeEngineLogging`; test `test_attachment_engine_preflight.py` | Refuse unsafe query echo or parameter hiding before connection or key access | `src/cryptalis/sqlalchemy.py`; `tests/test_attachment_engine_preflight.py` | RED: 12 unsafe-setting subtests reached `do_connect`. GREEN: 307 focused SA2.1, 1,177 full SA2.1, 143 focused SA2.0 | VERIFIED, local cell |
 
 ## Seven gates
 

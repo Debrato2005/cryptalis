@@ -124,7 +124,7 @@ Shape constraints cannot prove encryption to a database without keys. Full verif
 Attachment returns a factory called as `sessions(tenant_id=tenant_uuid)`. Await attachment for an AsyncEngine.
 The compiler lock must be trusted by the host. Physical protected columns must already be `bytea`.
 This call does not perform a schema/data transition. Attach before application sessions or model use.
-The engine must use PostgreSQL/psycopg, `echo=False`, and `hide_parameters=True`, with no checked-out connections at activation.
+The engine must use PostgreSQL/psycopg, `echo=False`, and `hide_parameters=True`. Attachment refuses unsafe logging settings before it opens a connection or resolves a key, and it requires no checked-out connections at activation.
 Ordinary ORM flush writes, direct projections and declared equality/IN are implemented. Core/bulk writes and unadmitted grammar reject.
 Mapped text attributes remain ordinary `str` or NULL. Generated projections carry row and tenant context for authentication.
 Protected projections and predicates disable compilation caching because their processors retain prepared material and operation context.

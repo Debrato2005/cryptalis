@@ -7,6 +7,24 @@ No PostgreSQL/provider/runtime cell, production key provider, independent review
 VERIFIED below refers only to the named checks and their exact revisions.
 All other contract and promotion requirements are SPECIFIED. All seven full gates remain UNKNOWN.
 
+## Engine logging preflight: 2026-10-19
+
+**IMPLEMENTED:** `attach` refuses an engine with `echo` enabled or `hide_parameters`
+disabled before it opens a connection or resolves a key. The refusal is a typed
+`UnsafeEngineLogging` failure with stage `engine logging admission` and a concrete
+remedy. The earlier check ran during post-connect validation, so an unsafe engine
+could reach the driver and key access before refusal.
+No manifest, crypto, storage, or query-plan capability changed.
+
+**VERIFIED, local PostgreSQL 16.15 cell:**
+[focused SQLAlchemy 2.1.3](_reset/engine-preflight-focused-sa21-20261019.json) and
+[full SQLAlchemy 2.1.3](_reset/engine-preflight-full-sa21-20261019.json) report
+**307 passed** and **1,177 passed**. Focused SQLAlchemy 2.0.51
+([receipt](_reset/engine-preflight-focused-sa20-20261019.json)) reports **143 passed**.
+The deterministic preflight tests use a `do_connect` sentinel and key sentinel. They
+assert that no connection or key access occurs and that no URL credential appears in
+the failure. These counts are not gate evidence; all seven gates remain UNKNOWN.
+
 ## Textual reference admission correction: 2026-10-19
 
 **IMPLEMENTED:** protected textual names in `ORDER BY`, `GROUP BY`, `DISTINCT ON`,
