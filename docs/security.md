@@ -67,6 +67,7 @@ Earlier slice 3/4 row-isolation tests omit grouped and callable primary-key bind
 The [corrective checkpoint](status.md#corrective-audit-checkpoint-2026-10-09) records their repair and the revised evidence boundary.
 
 **IMPLEMENTED, bounded prototype:** exact-text equality/IN uses full HMAC terms from the independently keyed CF1 header.
+Simple negative equality and `NOT IN` reuse the same terms; NULL presence uses a SQL NULL check and needs no equality representation.
 Each comparison includes declared tenant scope. Native B-tree expression indexes enforce declared uniqueness during races.
 Payload and term are one bytea value. Public framing checks refuse malformed shape; they cannot prove AEAD authenticity.
 Attachment checks exact index/check definitions under `pg_catalog` search-path resolution, including validity, keys and operator classes.

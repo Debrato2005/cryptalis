@@ -46,6 +46,7 @@ Rollback/removal transforms current data through decrypt-back until explicit fin
 |---|---|---|
 | Text storage/read/write, entity/scalar projection, SQL NULL | SUPPORTED | Randomized authenticated payload. Preserve exact str, empty text, NULL, native ORM state, and expected row/tenant context |
 | Equality `==` and `IN` | SUPPORTED | Declared full tenant/domain-bound HMAC term. Preserve typed binds and native NULL/empty-list truth tables |
+| Simple negative equality `!=`, `NOT IN`, and NULL presence | SUPPORTED | Reuse the authenticated term for values and a SQL NULL check for storage-only fields. Preserve native three-valued truth, NULL elements, empty lists, and outer-join NULL extension. General Boolean NOT remains unadmitted |
 | Tenant-scoped uniqueness | SUPPORTED | Full term plus tenant scope in a race-safe native unique index. Explicit single-tenant declaration supplies its one scope |
 | Comparisons `<`, `<=`, `>`, `>=`, BETWEEN/ranges | UNSUPPORTED BY DESIGN | No admitted range representation |
 | ORDER BY and sorted pagination on protected values | UNSUPPORTED BY DESIGN | No admitted order representation. Ciphertext ordering is forbidden |
@@ -54,7 +55,7 @@ Rollback/removal transforms current data through decrypt-back until explicit fin
 | SUM, AVG, MIN, MAX, arithmetic | UNSUPPORTED BY DESIGN | Selected payload/equality format does not implement these operations |
 | General DISTINCT, DISTINCT ON, GROUP BY, COUNT DISTINCT | UNSUPPORTED BY DESIGN | Randomized-payload comparison changes logical semantics. A spike's scoped aggregate rewrite does not admit this family |
 | Joins/FKs on protected fields | UNSUPPORTED BY DESIGN | No admitted shared search-domain or protected-FK contract |
-| `!=`, NOT IN, field-to-field equality, other unadmitted functions/operators | UNSUPPORTED BY DESIGN | Approved scope does not independently admit these shapes |
+| Field-to-field equality, general Boolean NOT, other unadmitted functions/operators | UNSUPPORTED BY DESIGN | Approved scope does not independently admit these shapes |
 | Non-text protected values, JSON predicates, custom protected types | UNSUPPORTED BY DESIGN | Text is the only admitted protected type |
 | Opaque raw SQL/COPY protected writes and unknown external writers | UNSUPPORTED BY DESIGN | Reject guarded routes. Plan blocks protection unless the deployment excludes separate routes |
 | Research range/prefix arrays, order candidates, scoped aggregate helpers, internal binary projections | INTERNAL ONLY | Experiments and adapter machinery, not public query capabilities |
@@ -66,7 +67,7 @@ Tenant-scoped uniqueness uses PostgreSQL's original qualified NULL behavior. Unq
 
 Compare every admitted shape with the same native PostgreSQL application.
 Test typed/reversed/late binds, AND/OR compositions of admitted predicates, aliases, projections, pagination, and outer joins through unprotected keys.
-Preserve SQL UNKNOWN. Preserve NULL elements and empty `IN` lists. Reject an unadmitted nested operator before SQL.
+Preserve SQL UNKNOWN. Preserve NULL elements, empty `IN` lists, and `NOT IN` three-valued truth. Simple negative forms may add the authenticated tenant scope through an OR with an absent outer-join record key. General Boolean NOT that could invert that scope is rejected. Reject an unadmitted nested operator before SQL.
 NULL payloads remain SQL NULL. Empty strings encrypt normally. Reject PostgreSQL-forbidden NUL text before SQL.
 Strict UTF-8 never changes composed/decomposed text or silently casefolds it.
 

@@ -7,6 +7,32 @@ No PostgreSQL/provider/runtime cell, production key provider, independent review
 VERIFIED below refers only to the named checks and their exact revisions.
 All other contract and promotion requirements are SPECIFIED. All seven full gates remain UNKNOWN.
 
+## Negative predicate boundaries: 2026-10-19
+
+**IMPLEMENTED:** protected text admits simple `!=`, `NOT IN`, `IS NULL`, and
+`IS NOT NULL` predicates in sync and async statements. Value predicates reuse the
+declared authenticated equality term. NULL presence uses the SQL NULL check, so a
+storage-only field needs no equality capability.
+For NULL and `NOT IN` predicates, the tenant guard is the declared scope OR the
+record key is NULL. This preserves SQL three-valued truth for NULL-extended
+outer-join rows. The record key resolves by lineage and must match exactly once;
+otherwise the attachment refuses.
+General Boolean NOT around a compound expression remains refused because it could
+invert the embedded tenant guard. No new leakage class is admitted; the existing
+equality enumeration and frequency limits remain.
+Before this change the same shapes were refused. A naive negation port would have
+dropped absent outer-join rows, so the guard change is part of the admission.
+
+**VERIFIED, local PostgreSQL 16.15 cell:**
+[focused SQLAlchemy 2.1.3](_reset/negative-predicates-focused-sa21-20261019.json)
+reports **366 passed** and [full SQLAlchemy 2.1.3](_reset/negative-predicates-full-sa21-20261019.json)
+reports **1,236 passed**. Focused SQLAlchemy 2.0.51
+([receipt](_reset/negative-predicates-focused-sa20-20261019.json)) reports **202 passed**.
+The native-oracle matrix covers typed, reversed, late, and mixed NULL binds,
+empty lists, aliases, pagination, OR composition, and outer joins. The RED run
+before the change reported 57 failures and 2 passes. These counts are not gate
+evidence; all seven gates remain UNKNOWN.
+
 ## Engine logging preflight: 2026-10-19
 
 **IMPLEMENTED:** `attach` refuses an engine with `echo` enabled or `hide_parameters`

@@ -392,8 +392,9 @@ def test_unsupported_search_grammar_never_reaches_driver(mode):
         C, alias = app.Customer, aliased(app.Customer)
         independent = Table("customer", MetaData(schema=app.schema), Column("id", Uuid),
                             Column("tenant_id", Uuid), Column("name", Text(collation="C")))
-        statements = [select(C).where(C.name != "x"), select(C).where(C.name.is_not(None)), select(C).where(C.name.not_in(["x"])),
-                      select(C).where(not_(C.name.in_(["x"]))), select(C).where(C.name > "x"),
+        # W4 explicitly admits simple negative equality/IN and null presence.
+        # General Boolean NOT still cannot invert an embedded tenant guard.
+        statements = [select(C).where(not_(and_(C.name == "x", C.rank > 0))), select(C).where(C.name > "x"),
                       select(C).where(C.name.like("x%")), select(C).where(C.name.ilike("x%")),
                       select(C).where(C.name.startswith("x")), select(C).where(C.name.contains("x")),
                       select(C).where(C.name == C.label), select(C).where(C.name == alias.name),
@@ -407,7 +408,6 @@ def test_unsupported_search_grammar_never_reaches_driver(mode):
                       select(C).where(func.lower(C.name) == "x"),
                       select(C).where(C.name.in_(select(alias.name))),
                       select(C).where(C.id.in_(select(alias.id).order_by(alias.name.desc()))),
-                      select((C.name != "x").label("not_equal")),
                       select(select(C.name).subquery().c.name),
                       select(C).where(C.id.in_(select(alias.id).where(alias.name.like("x%"))))]
         for spoof in (independent.alias("spoof"), independent.alias("first").alias("chained")):

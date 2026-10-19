@@ -1,6 +1,6 @@
 """Bounded equality admission, deferred terms, and native index validation."""
 
-from sqlalchemy import LargeBinary, String, Text, Unicode, UnicodeText, Uuid, and_, bindparam, func, literal, literal_column, type_coerce
+from sqlalchemy import LargeBinary, String, Text, Unicode, UnicodeText, Uuid, and_, or_, bindparam, func, literal, literal_column, type_coerce
 from sqlalchemy.sql import operators, visitors
 from sqlalchemy.sql.elements import BinaryExpression, BindParameter, ColumnClause, Null
 from sqlalchemy.types import NullType, TypeDecorator
@@ -30,21 +30,23 @@ def search_shape(owner, expression):
     if not isinstance(expression, BinaryExpression):
         return None
     left, right = expression.left, expression.right
-    if expression.operator is operators.eq and isinstance(left, BindParameter):
+    if expression.operator in (operators.eq, operators.ne) and isinstance(left, BindParameter):
         left, right = right, left
     if not isinstance(left, ColumnClause) or left.is_literal:
         return None
     bindings = [binding for binding in owner.bindings if left.shares_lineage(binding.column)]
-    if len(bindings) != 1 or not bindings[0].descriptor.equality:
+    if len(bindings) != 1:
         return None
-    null = expression.operator is operators.is_ and isinstance(right, Null)
-    if not null and not (expression.operator in (operators.eq, operators.in_op) and isinstance(right, BindParameter)):
+    null = expression.operator in (operators.is_, operators.is_not) and isinstance(right, Null)
+    if not null and not bindings[0].descriptor.equality:
+        return None
+    if not null and not (expression.operator in (operators.eq, operators.ne, operators.in_op, operators.not_in_op) and isinstance(right, BindParameter)):
         return None
     if not null and not ordinary_bind(owner, right):
         return None
     if not null and right.callable is not None:
         return None
-    if expression.operator is operators.in_op and not right.expanding:
+    if expression.operator in (operators.in_op, operators.not_in_op) and not right.expanding:
         return None
     return bindings[0], left, right, null
 
@@ -76,7 +78,7 @@ def rewrite_search(owner, statement, operation):
         binding, column, value, null = shape
         physical = type_coerce(column, LargeBinary())
         if null:
-            predicate = physical.is_(None)
+            predicate = physical.is_(None) if node.operator is operators.is_ else physical.is_not(None)
         else:
             # Fixed offsets must be SQL constants, so PostgreSQL generic plans
             # match the expression index as well as custom plans.
@@ -90,7 +92,20 @@ def rewrite_search(owner, statement, operation):
             predicate = BinaryExpression(term, prepared, node.operator)
         if binding.tenant is not None:
             tenant_column = column.table.c[binding.tenant.key]
-            predicate = and_(tenant_column == literal(operation.tenant, Uuid()), predicate)
+            scope = tenant_column == literal(operation.tenant, Uuid())
+            if null or node.operator is operators.not_in_op:
+                # Empty NOT IN is TRUE even on a null-extended row.
+                # Attachment validates the record column as a non-null primary
+                # key. Its NULL value identifies an absent outer-joined row,
+                # whose IS NULL result must remain TRUE. Resolve the key by
+                # lineage, never by a possibly ambiguous joined-column name.
+                records = [candidate for candidate in column.table.c
+                           if candidate.shares_lineage(binding.record)]
+                if len(records) != 1:
+                    from .sqlalchemy import UnsupportedProtectedOperation
+                    raise UnsupportedProtectedOperation()
+                scope = or_(records[0].is_(None), scope)
+            predicate = and_(scope, predicate)
         # Admit these generated nodes and SQLAlchemy's structural clones only
         # within this operation. Original SQL is admitted before rewriting.
         # Caller-supplied execution options cannot manufacture this permit.
