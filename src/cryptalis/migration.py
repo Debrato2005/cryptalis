@@ -583,15 +583,19 @@ def verify(p,engine,*,keys,pin,approval):
         return result
 
 
-def check_deployment(p,engine,*,pin):
+def check_deployment(p,engine,*,pin,restore=None):
     """Read-only policy inspection; no maintenance approval or exclusive lock.
 
     The other read-only exemptions are plan and check_attachment. The latter
     inspects a supplied connection and does not acquire or own that connection.
     apply, verify and abort always require approval in their shared executor.
+
+    ``restore`` is an adopted ``cryptalis.restore/v1`` binding for a restored
+    copy of the planned target. It changes target and journal-state evidence
+    checks only; the pin and the plan stay the source artifacts.
     """
     _admit(p,pin)
-    with _connection(engine,p.operation_id) as c: _check_connection(p,c,pin)
+    with _connection(engine,p.operation_id) as c: _check_connection(p,c,pin,binding=restore)
 
 
 def abort(p,engine,*,pin,approval):
@@ -617,25 +621,39 @@ def abort(p,engine,*,pin,approval):
         return _progress(p,state)
 
 
-def _check_connection(p,c,pin):
+def _check_connection(p,c,pin,*,binding=None):
     _admit(p,pin)
     state=_state(c,p,pin)
+    target=p.document['target']
+    if binding is not None and state is not None:
+        from cryptalis.restore import _current
+        target=_current(p,binding,c,state)
     # Runtime identity differs; compare the non-principal target facts only.
-    if _target(c)[:-1]!=p.document['target'][:-1] or pin.phase!='ACTIVE' or state is None or state['phase']!='ACTIVE':
+    if _target(c)[:-1]!=target[:-1] or pin.phase!='ACTIVE' or state is None or state['phase']!='ACTIVE':
         raise TransitionFailure('deployment_not_current',p.operation_id)
-    _active_schema(c,p,state)
+    if binding is None:
+        _active_schema(c,p,state)
+    else:
+        from cryptalis.restore import _check_schema
+        _check_schema(c,p,state,binding)
 
 
 def check_attachment(c,lock,deployment):
-    """Migration-owned tables require external-pin admission at startup."""
+    """Migration-owned tables require external-pin admission at startup.
+
+    ``deployment`` is ``(plan, pin)`` or ``(plan, pin, restore_binding)``. The
+    third element is an adopted ``cryptalis.restore/v1`` binding for a restored
+    protected copy; ``None`` keeps the source-target check.
+    """
     models=json.loads(lock)['models']
     found=any(c.exec_driver_sql('SELECT pg_catalog.to_regclass(%s)',(_quote(c,m['schema'])+'.'+_quote(c,JOURNAL),)).scalar_one() is not None for m in models)
     if not found:
         if deployment is not None: raise TransitionFailure('missing_transition')
         return
-    if not isinstance(deployment,tuple) or len(deployment)!=2: raise TransitionFailure('external_pin_required')
-    p,pin=deployment
+    if not isinstance(deployment,tuple) or len(deployment) not in (2,3): raise TransitionFailure('external_pin_required')
+    p,pin=deployment[0],deployment[1]
+    binding=deployment[2] if len(deployment)==3 else None
     if not isinstance(p,MigrationPlan) or p.lock_bytes!=lock: raise TransitionFailure('attachment_lock_mismatch')
     if c.exec_driver_sql('SELECT current_user').scalar_one()!=p.document['runtime_role']:
         raise TransitionFailure('attachment_requires_planned_runtime_role',p.operation_id)
-    _check_connection(p,c,pin)
+    _check_connection(p,c,pin,binding=binding)

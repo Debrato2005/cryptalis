@@ -1,8 +1,9 @@
 # Implementation status
 
 **IMPLEMENTED:** research prototype with a product manifest compiler, CF1 text primitives, a local development provider,
-bounded sync/async SQLAlchemy storage/search, a PostgreSQL maintenance protection transition, and an in-place
-decrypt-back/removal path for that transition format.
+bounded sync/async SQLAlchemy storage/search, a PostgreSQL maintenance protection transition, an in-place
+decrypt-back/removal path for that transition format, and an approved fresh-cluster protected-backup
+recovery and adoption path.
 Separate runtime-role verification is complete for the local cell.
 No PostgreSQL/provider/runtime cell, production key provider, independent review, or release is qualified.
 VERIFIED below refers only to the named checks and their exact revisions.
@@ -31,32 +32,43 @@ on 2.0.51 ([receipt](_reset/independent-app-full-sa20-20261019.json)).
 package-free restart does not exercise a web framework, connection-pool warm-up, or a
 second independent codebase. G-LIFECYCLE remains UNKNOWN.
 
-## Fresh-cluster protected-backup recovery: 2026-10-19
+## Fresh-cluster protected-backup recovery and adoption: 2026-10-19
 
 **IMPLEMENTED:** `scripts/fresh_cluster_qualification.py` initializes a new PostgreSQL 16
 cluster, creates same-named roles and databases, and runs the recovery suite through the
 mandatory credential wrapper with a temporary HOME. `tests/test_fresh_cluster_export.py`
 writes a plaintext pre-protection dump, a protected dump after attached edits, and a
 manifest of expected values and retained artifacts. `tests/test_fresh_cluster_restore.py`
-runs only against the new cluster.
+runs only against the new cluster. `cryptalis.restore/v1` (`restore.py`) issues a
+`RestoreBinding` after a read-only adoption scan; `migration.check_deployment(...,
+restore=binding)`, `attach((plan, pin, binding))`, and `deprotection.plan(..., restore=
+binding)` evaluate the binding.
 
 **VERIFIED, isolated PostgreSQL 16.15 cluster:** the plaintext dump restores natively and
 matches the pre-protection rows. The protected dump restores with the same roles; the
 payload column is `bytea`; the runtime role reads ciphertext only; the retained key policy
 and descriptor recover every exact value (NULL, empty, Unicode, trailing space, edited,
-added) through both the product decoder and the independent decoder oracle. The restored
-journal cannot become current authority: `check_deployment` and reverse planning refuse
-with `deployment_not_current`, and `attach` refuses with `PolicyMismatch`.
-[Export](_reset/fresh-cluster-export-20261019.json) and
-[restore](_reset/fresh-cluster-restore-20261019.json) receipts record the wrapper runs.
+added) through both the product decoder and the independent decoder oracle. Without a
+binding, the restored journal cannot become current authority: `check_deployment` and
+reverse planning refuse with `deployment_not_current`, and `attach` refuses with
+`PolicyMismatch`. With an approved binding, the restored schema attaches, serves exact
+search, accepts edits and deletes, reverses to plaintext, and removes the package objects
+with matching native values and schema facts. Refusals are typed:
+`restore_approval_required`, `restore_source_is_current`, `invalid_restore_binding`,
+`restored_frame_verification_failed`, `restored_state_changed`, `restore_target_mismatch`,
+`restore_binding_mismatch`, and `restored_constraint_probe_failed`.
+[Export](_reset/fresh-cluster-export-20261019-2.json) and
+[adoption](_reset/fresh-cluster-restore-20261019-2.json) receipts record the wrapper runs.
 The full suites remain green with the qualification modules skipped outside the
-orchestrator: **1,299 passed, 2 skipped** on SQLAlchemy 2.1.3
-([receipt](_reset/fresh-cluster-full-sa21-20261019.json)) and **1,271 passed, 30 skipped**
-on 2.0.51 ([receipt](_reset/fresh-cluster-full-sa20-20261019.json)).
+orchestrator: **1,302 passed, 2 skipped** on SQLAlchemy 2.1.3
+([receipt](_reset/restore-full-sa21-20261019.json)) and **1,274 passed, 30 skipped**
+on 2.0.51 ([receipt](_reset/restore-full-sa20-20261019.json)).
 
-**Limits:** the restored protected schema cannot yet be attached or reversed in the new
-cluster because the deployment binding includes the source database identity. Recovery is
-frame-level with retained keys, not a qualified bring-up path. G-LIFECYCLE remains UNKNOWN.
+**Limits:** the host asserts source fencing and quarantine; the package does not
+authenticate either. Adoption refuses a restated frame constraint with no retained frame
+row, and it qualifies the restated text behaviorally, not textually. A pinned external
+application, physical column order, and the unrecorded metadata limits remain. G-LIFECYCLE
+remains UNKNOWN.
 
 ## In-place decrypt-back and removal: 2026-10-19
 

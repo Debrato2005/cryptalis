@@ -82,7 +82,8 @@ def provision(port, password, manifest, plain_database):
     with psycopg.connect(host='127.0.0.1', port=port, user='postgres', password=password,
                          dbname='postgres', autocommit=True) as c:
         credentials = {}
-        for key, role in (('owner', manifest['owner_role']), ('runtime', manifest['runtime_role'])):
+        for key, role in (('owner', manifest['owner_role']), ('runtime', manifest['runtime_role']),
+                          ('plaintext', manifest['runtime_role'] + '_plaintext')):
             secret = secrets.token_urlsafe(24)
             existing = c.execute('SELECT 1 FROM pg_catalog.pg_roles WHERE rolname=%s', (role,)).fetchone()
             if existing is None:
@@ -136,10 +137,11 @@ def main():
     try:
         credentials = provision(port, password, manifest, plain_database)
         home = write_home(workdir, port, manifest, credentials)
-        restore = run_pytest(restore_receipt, 'Fresh-cluster protected-backup recovery; isolated cluster',
+        restore = run_pytest(restore_receipt, 'Fresh-cluster protected-backup recovery and adoption; isolated cluster',
                              'tests/test_fresh_cluster_restore.py',
                              {'HOME': str(home), 'CRYPTALIS_FRESH_CLUSTER_DIR': str(workdir),
-                              'CRYPTALIS_FRESH_PLAIN_DATABASE': plain_database})
+                              'CRYPTALIS_FRESH_PLAIN_DATABASE': plain_database,
+                              'CRYPTALIS_FRESH_PLAINTEXT_ROLE': credentials['plaintext'][0]})
     finally:
         stop_cluster(cluster)
     print('workdir', workdir)

@@ -361,7 +361,7 @@ class _Attachment:
             raise PolicyMismatch()
         if self.deployment is not None:
             from cryptalis.migration import _policy
-            plan, _ = self.deployment
+            plan = self.deployment[0]
             if _policy(ring) != plan.document["key_policies"].get(str(tenant)):
                 raise PolicyMismatch()
         if any(binding.descriptor.equality for binding in self.bindings):
@@ -432,7 +432,12 @@ class _Attachment:
                     if (not isinstance(field["queries"], list) or not field["queries"] or
                             not set(field["queries"]) <= {"equality", "unique"}):
                         raise PolicyMismatch()
-                    validate_search_storage(connection, model, field)
+                    admitted = None
+                    if self.deployment is not None and len(self.deployment) == 3:
+                        from cryptalis.restore import _frame_expression, admitted_frame
+                        item = admitted_frame(self.deployment[2], model, field)
+                        admitted = _frame_expression(item['definition']) if item is not None else None
+                    validate_search_storage(connection, model, field, admitted=admitted)
                 descriptor = FieldDescriptor.from_compiled(field["descriptor"], field["descriptor_digest"])
                 if (str(descriptor.domain_id), str(descriptor.table_id), str(descriptor.field_id)) != (
                         self.document["domain_id"], model["table_id"], field["field_id"]):
@@ -779,6 +784,10 @@ def attach(mapping: registry, engine: Engine | AsyncEngine, *, lock: bytes, keys
 
     Schema transition is not performed. The host authenticates the lock and the
     tenant passed to the returned factory. Only ORM flush writes are admitted.
+
+    ``deployment`` is ``(plan, pin)`` or ``(plan, pin, restore_binding)``. The
+    third element is an adopted ``cryptalis.restore/v1`` binding when the
+    target is a restored protected copy.
     """
     try:
         document = decode_manifest_json(lock)

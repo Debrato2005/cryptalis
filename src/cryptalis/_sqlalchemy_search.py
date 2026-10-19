@@ -116,12 +116,16 @@ def rewrite_search(owner, statement, operation):
     return visitors.replacement_traverse(statement, {}, replace)
 
 
-def validate_search_storage(connection, model, field):
+def validate_search_storage(connection, model, field, *, admitted=None):
     """Accept only the selected PG16 expression and validated framing check.
 
     No write, SQL parser, extension, or permission change occurs here. Strict
     catalog definitions are deliberate: an equivalent unqualified variant
     must be inspected and admitted before it becomes a compatibility cell.
+
+    ``admitted`` is an inspected restatement from an adopted
+    ``cryptalis.restore/v1`` binding. The live definition must equal the
+    adopted text exactly; adoption qualified that text with savepoint probes.
     """
     # Catalog deparsing must qualify functions from every untrusted schema.
     # The attachment connection rolls this transaction-local setting back.
@@ -157,11 +161,10 @@ def validate_search_storage(connection, model, field):
         FROM pg_catalog.pg_constraint WHERE conrelid=pg_catalog.to_regclass(%s)
         AND conname=%s AND contype='c'
         """, (target, "_cryptalis_" + suffix + "_frame")).one_or_none()
-    expected_check = (
-        f"(({column} IS NULL) OR (((octet_length({column}) >= 74) AND (octet_length({column}) <= 16777290)) "
-        f"AND (\"substring\"({column}, 1, 6) = decode('434631000101'::text, 'hex'::text)) "
-        f"AND (\"substring\"({column}, 7, 4) <> decode('00000000'::text, 'hex'::text)) "
-        f"AND (\"substring\"({column}, 11, 4) <> decode('00000000'::text, 'hex'::text))))"
-    )
+    expected_check = (admitted if admitted is not None else
+                      f"(({column} IS NULL) OR (((octet_length({column}) >= 74) AND (octet_length({column}) <= 16777290)) "
+                      f"AND (\"substring\"({column}, 1, 6) = decode('434631000101'::text, 'hex'::text)) "
+                      f"AND (\"substring\"({column}, 7, 4) <> decode('00000000'::text, 'hex'::text)) "
+                      f"AND (\"substring\"({column}, 11, 4) <> decode('00000000'::text, 'hex'::text))))")
     if check is None or tuple(check) != (True, False, expected_check):
         raise ValueError("Unqualified framing check")

@@ -26,8 +26,8 @@ No objective is complete until its acceptance evidence and applicable gate pass.
 - Implemented scope: text storage, exact equality, `IN`, tenant-scoped uniqueness,
   sync/async attachment, maintenance protection transition, in-place decrypt-back and
   additive removal for that transition format, an independent application lifecycle with
-  package-free restart, a fresh-cluster protected-backup recovery harness, CF1 primitives,
-  and a local development provider.
+  package-free restart, a fresh-cluster protected-backup recovery harness with approved
+  restore adoption, CF1 primitives, and a local development provider.
 - All seven qualification gates remain UNKNOWN.
 - Every protected type other than text, every advanced predicate, online migration,
   complete rotation, production KMS, and independent review remain open.
@@ -55,8 +55,8 @@ Requirement text is abbreviated. The full definitions remain in the research
 | OBJ-LIFE-02 | Resumable, atomic, byte-bounded backfill with verification | VERIFIED, bounded | Journal, advisory lock, chunks, crash/resume tests | Exact memory/WAL bounds remain host inputs |
 | OBJ-LIFE-03 | Near-zero-downtime migration with capture and catch-up | SPECIFIED | Maintenance pause fallback only | Design, review, and measure an online protocol |
 | OBJ-LIFE-04 | Parallel/adaptive migration without lost or duplicate work | SPECIFIED | None | Depends on OBJ-LIFE-03 |
-| OBJ-LIFE-05 | Decrypt-back current edits; preserve schema behavior; package-free exit | VERIFIED, bounded | `deprotection.py` implements `cryptalis.reverse/v1`: staged plaintext, verified backfill, transactional switch, recorded constraint/index/collation restoration, guarded activation, approved removal, and terminal-state assertions; seven lifecycle cases pass on both profiles; an independent three-model application completes protect/search/modify/decrypt-back/remove and a package-free restarted process performs native CRUD | Restored-cluster bring-up/adoption, pinned external application run, physical column order, comments/statistics/storage/compression, retained-native |
-| OBJ-LIFE-06 | Rollback, restore, stale pin refusal, RPO/RTO, disaster drills | PARTIAL | Older-snapshot and stale-pin refusals; reverse abort, pin/state ordering, corrupt-frame and disabled-guard refusals; isolated-cluster plaintext and protected restore with frame recovery and loud authority refusal | Restored-cluster authority rebinding, fresh-cluster and provider-outage drills |
+| OBJ-LIFE-05 | Decrypt-back current edits; preserve schema behavior; package-free exit | VERIFIED, bounded | `deprotection.py` implements `cryptalis.reverse/v1`: staged plaintext, verified backfill, transactional switch, recorded constraint/index/collation restoration, guarded activation, approved removal, and terminal-state assertions; seven lifecycle cases pass on both profiles; an independent three-model application completes protect/search/modify/decrypt-back/remove and a package-free restarted process performs native CRUD; the same reverse completes on an adopted restored cluster with the binding | Pinned external application run, physical column order, comments/statistics/storage/compression, retained-native |
+| OBJ-LIFE-06 | Rollback, restore, stale pin refusal, RPO/RTO, disaster drills | PARTIAL | Older-snapshot and stale-pin refusals; reverse abort, pin/state ordering, corrupt-frame and disabled-guard refusals; isolated-cluster plaintext and protected restore with frame recovery and loud authority refusal; `cryptalis.restore/v1` adoption issues a binding after approval, frame authentication, schema comparison, and behavioral probes; the adopted cluster then attaches, reverses, and removes | Host-authenticated fencing/quarantine, provider-outage drills, RPO/RTO measurement |
 | OBJ-LIFE-07 | Three separate rotation workflows | PARTIAL | Internal rewrap candidate and bounded payload-batch preparation, verified 2026-10-19 | Active-policy publication, rotation executor, search reindex, recovery proofs |
 | OBJ-LIFE-08 | Production KMS with outage/revocation/cost evidence | BLOCKED | Local development provider only | Authorized provider account and independent review |
 | OBJ-LIFE-09 | Install, upgrade, decommission, clean uninstall | PARTIAL | Importable package; approved in-database removal retires reverse-owned objects after decrypt-back; a package-free restarted application process performs native CRUD | Versioned upgrade/removal, external application evidence |
@@ -99,12 +99,11 @@ Requirement text is abbreviated. The full definitions remain in the research
 
 ## Next critical path
 
-1. Design and approve a restored protected-schema bring-up binding, because the current
-   deployment target refuses a fresh cluster with `deployment_not_current`.
-2. Run the same lifecycle through a pinned external application, then repeat it on a
+1. Run the same lifecycle through a pinned external application, then repeat it on a
    fresh PostgreSQL cluster.
-3. Record the remaining metadata limits (physical column order, comments, statistics,
-   storage, compression) and extend the fresh-cluster range (multi-table, faults).
-4. Continue correctness slices that protect the compatibility promise with native
+2. Close the remaining reverse-lifecycle metadata and recovery gaps (physical column
+   order, comments, statistics, storage, compression, retained-native).
+3. Continue correctness slices that protect the compatibility promise with native
    PostgreSQL oracles; establish a second independent application baseline.
+4. Extend the fresh-cluster range with multi-table, fault, and provider-outage drills.
 5. Keep every external review and provider item explicitly UNKNOWN.

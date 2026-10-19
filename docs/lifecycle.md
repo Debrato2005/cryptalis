@@ -223,22 +223,53 @@ reader proof, and the retained-native alternative remain UNKNOWN.
 Layout comparison and the decision not to promote retained-native are recorded in
 [the 2026-10-19 evaluation](../_reset/layout-evaluation-20261019.md).
 
-### Restored protected backups: 2026-10-19
+### Restored protected-backup adoption: 2026-10-19
 
 **VERIFIED, isolated PostgreSQL 16.15 cluster:** a protected `pg_dump` of one schema
 restores into a fresh cluster with the same role names and the recorded privileges.
 The runtime role observes `bytea` only. The retained key policy and descriptor recover
 every exact value through the product decoder and an independent decoder oracle.
-A restored journal is progress evidence, never restore authority: deployment checks and
-reverse planning refuse with `deployment_not_current`, and attachment refuses with
-`PolicyMismatch`. Receipts:
-[export](../_reset/fresh-cluster-export-20261019.json),
-[restore](../_reset/fresh-cluster-restore-20261019.json).
+A restored journal remains progress evidence, never restore authority by itself.
 
-**Open:** an approved bring-up path for a restored protected schema in a new cluster does
-not exist yet. The deployment binding includes the source database identity, so the host
-must authorize a new target binding before attach, query, or decrypt-back can run there.
-Until then, recovery is frame-level with retained keys and readers.
+`cryptalis.restore/v1` (`src/cryptalis/restore.py`) adds the approved bring-up contract.
+A host `RestoreApproval` asserts the restore intent, the quarantine, and a fenced source
+(`source_fenced`). Adoption runs read-only as the owner: it authenticates every retained
+frame with the retained keys, verifies the target facts and environment, compares the
+restored schema to the source lock, and issues a `RestoreBinding`. The binding records the
+source plan identity and original target facts, the restored target facts and environment,
+the restored source journal state digest, the retained custody set, and each restated
+compiler frame `CHECK`.
+
+A logical dump and restore can restate a frame `CHECK` with different boolean grouping.
+Adoption accepts only frame `CHECK` restatements, and only when every other schema fact is
+structurally equal and savepoint probes prove that the restored constraint still rejects
+crafted malformed frames: a truncated frame, a zeroed frame-id byte, a zeroed payload
+length field, and the same payload probe on a query field. The probes write and roll back
+inside savepoints and accept only SQLSTATE 23514. A restated frame without a retained row,
+a failed probe, or any other definition change is refused with
+`restored_constraint_probe_failed` or `restored_definition_restatement_unsupported`.
+Later checks compare the live structure and the restored journal state against the binding,
+so a stale, cloned, tampered, or drifted copy is refused with a typed failure.
+
+Attachment accepts `(plan, pin, binding)`. The binding changes the evaluated target only:
+the source plan, pin, and journal are unchanged, and a binding never authorizes a different
+source. Reverse `plan(..., restore=binding)` records the binding in the reverse artifact and
+re-checks the binding identity against the source pin.
+
+**Evidence:** the qualification module refuses missing or unfenced approval, the current
+source, tampered bindings, and corrupt frames, then completes the adopted lifecycle: attach,
+ORM read, exact search, modify, add, delete, reverse to plaintext under the binding,
+removal, schema-fact equality, native `psycopg` readback, and journal absence. Receipts:
+[export](../_reset/fresh-cluster-export-20261019-2.json),
+[adoption](../_reset/fresh-cluster-restore-20261019-2.json). The full suites report
+**1,302 passed, 2 skipped** on SQLAlchemy 2.1.3
+([receipt](../_reset/restore-full-sa21-20261019.json)) and **1,274 passed, 30 skipped** on
+2.0.51 ([receipt](../_reset/restore-full-sa20-20261019.json)).
+
+**Limits:** the host asserts source fencing and quarantine; this package does not
+authenticate either. Adoption refuses a restated constraint without a retained frame row,
+and it qualifies restated text behaviorally, not textually. Physical column order and the
+unrecorded metadata limits remain.
 
 ### Independent application exit: 2026-10-19
 

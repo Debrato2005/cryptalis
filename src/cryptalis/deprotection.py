@@ -52,7 +52,8 @@ class DeprotectionPlan:
                 raise ValueError
             if set(document) != {'format', 'kind', 'operation_id', 'target_id', 'source_plan',
                     'source_pin', 'lock', 'target', 'runtime_role', 'journal_schema', 'key_policies',
-                    'active_schemas', 'retirable_aborted', 'estimates', 'plaintext_runtime_role'}:
+                    'active_schemas', 'retirable_aborted', 'estimates', 'plaintext_runtime_role',
+                    'restore'}:
                 raise ValueError
             source = m.MigrationPlan(_canonical(document['source_plan']))
             source_pin = document['source_pin']
@@ -97,6 +98,13 @@ class DeprotectionPlan:
             for name in ('backfill_rows_per_second', 'verify_rows_per_second'):
                 value = document['estimates'][name]
                 if type(value) not in (int, float) or not math.isfinite(value) or value <= 0:
+                    raise ValueError
+            if document['restore'] is not None:
+                from cryptalis.restore import RestoreBinding
+                binding = RestoreBinding(_canonical(document['restore']))
+                if (binding.source_plan_digest != source.digest
+                        or binding.source_operation_id != source.operation_id
+                        or binding.source_target != document['target']):
                     raise ValueError
         except Exception:
             raise m.TransitionFailure('invalid_reverse_plan') from None
@@ -177,11 +185,19 @@ def _grounded(source, plaintext_runtime_role, rates, temporary_bytes_per_row, wa
 
 
 def plan(source, engine, *, source_pin, keys, plaintext_runtime_role, backfill_rows_per_second,
-         verify_rows_per_second, temporary_bytes_per_row, wal_bytes_per_row):
-    """Read-only reverse proposal. No decrypt, staging, or implicit consent."""
+         verify_rows_per_second, temporary_bytes_per_row, wal_bytes_per_row, restore=None):
+    """Read-only reverse proposal. No decrypt, staging, or implicit consent.
+
+    ``restore`` is an adopted ``cryptalis.restore/v1`` binding when the target
+    is a restored protected copy. The binding is recorded in the reverse
+    artifact, so apply and remove refuse a different target without it.
+    """
     m._admit(source, source_pin)
     if source_pin.phase != 'ACTIVE':
         raise m.TransitionFailure('source_pin_must_be_active', source.operation_id)
+    if restore is not None:
+        from cryptalis.restore import _identity
+        _identity(source, restore)
     _grounded(source, plaintext_runtime_role,
               (backfill_rows_per_second, verify_rows_per_second),
               temporary_bytes_per_row, wal_bytes_per_row)
@@ -193,9 +209,10 @@ def plan(source, engine, *, source_pin, keys, plaintext_runtime_role, backfill_r
     schemas = {}
     rows_total = 0
     plaintext_bytes = 0
+    current = source.document['target'] if restore is None else restore.target
     with m._connection(engine, source.operation_id) as c:
-        m._check_connection(source, c, source_pin)
-        if m._target(c) != source.document['target']:
+        m._check_connection(source, c, source_pin, binding=restore)
+        if m._target(c)[:-1] != current[:-1]:
             raise m.TransitionFailure('maintenance_requires_planned_owner', source.operation_id)
         for model in source.document['lock']['models']:
             ownership = c.exec_driver_sql(
@@ -247,7 +264,8 @@ def plan(source, engine, *, source_pin, keys, plaintext_runtime_role, backfill_r
         'lock': source.document['lock'], 'target': source.document['target'],
         'runtime_role': source.document['runtime_role'], 'journal_schema': source.document['journal_schema'],
         'key_policies': policies, 'active_schemas': schemas, 'retirable_aborted': retired,
-        'estimates': estimates, 'plaintext_runtime_role': plaintext_runtime_role}))
+        'estimates': estimates, 'plaintext_runtime_role': plaintext_runtime_role,
+        'restore': restore.document if restore is not None else None}))
 
 
 def _inventory(c, p, source, own):
@@ -286,8 +304,13 @@ def _executor(p, engine, pin, approval, consent):
         raise m.TransitionFailure('invalid_compiler_lock', p.operation_id) from None
     identity = [(model['schema'], model['table']) for model in p.document['lock']['models']]
     lock = int.from_bytes(hashlib.sha256(_canonical(identity)).digest()[:8], 'big', signed=True)
+    target = p.document['target']
+    if p.document.get('restore') is not None:
+        from cryptalis.restore import RestoreBinding, _identity
+        _identity(p.source, RestoreBinding(_canonical(p.document['restore'])))
+        target = p.document['restore']['target']
     with m._connection(engine, p.operation_id, exclusive=True) as c:
-        if m._target(c) != p.document['target']:
+        if m._target(c)[:-1] != target[:-1]:
             raise m.TransitionFailure('wrong_database_target', p.operation_id)
         c.exec_driver_sql("SET lock_timeout = '5s'")
         c.exec_driver_sql('SET synchronous_commit = on')
@@ -324,6 +347,9 @@ def _state(c, p, pin, *, allow_aborted=False):
     if (source_row is None or source_row[0] != p.source.digest
             or type(source_row[1]) is not dict or source_row[1].get('phase') != 'ACTIVE'):
         raise m.TransitionFailure('source_state_changed', p.operation_id)
+    if (p.document.get('restore') is not None
+            and m._hash(source_row[1]) != p.document['restore']['journal_state_digest']):
+        raise m.TransitionFailure('restored_state_changed', p.operation_id)
     required = {'PLAINTEXT_ACTIVATING': 'PLAINTEXT_PENDING', 'REMOVING': 'PLAINTEXT_ACTIVE'}.get(pin.phase, pin.phase)
     if required not in PHASES or PHASES.index(phase) < PHASES.index(required):
         raise m.TransitionFailure('restored_state_behind_external_pin', p.operation_id)
@@ -682,7 +708,8 @@ def check_removed(p, engine, *, pin):
     _pin(p, pin)
     if pin.phase != 'REMOVED':
         raise m.TransitionFailure('matching_external_publication_required', p.operation_id)
+    target = p.document['target'] if p.document.get('restore') is None else p.document['restore']['target']
     with m._connection(engine, p.operation_id) as c:
-        if m._target(c) != p.document['target']:
+        if m._target(c)[:-1] != target[:-1]:
             raise m.TransitionFailure('wrong_database_target', p.operation_id)
         _assert_removed(c, p)
