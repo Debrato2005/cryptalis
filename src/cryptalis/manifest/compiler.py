@@ -16,6 +16,8 @@ from sqlalchemy.engine import Engine
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import registry as Registry
 
+from psycopg import Error as PsycopgError
+
 from cryptalis.manifest.declaration import parse_protection_declaration
 from cryptalis.manifest.parser import MAX_DOCUMENT_BYTES, ManifestInvalid, decode_manifest_json
 
@@ -719,8 +721,8 @@ def compile_protection(raw: bytes, mapping: Registry, engine: Engine, *,
                         field["descriptor"]["domain_id"] = str(declaration.domain_id)
                         field["descriptor_digest"] = _digest(field["descriptor"])
                     models.append(compiled)
-    except SQLAlchemyError as error:
-        sqlstate = getattr(getattr(error, "orig", None), "sqlstate", None)
+    except (SQLAlchemyError, PsycopgError) as error:
+        sqlstate = getattr(getattr(error, "orig", error), "sqlstate", None)
         raise InspectionUnavailable(sqlstate) from None
     if issues:
         raise PlanningRejected(issues)

@@ -7,6 +7,22 @@ No PostgreSQL/provider/runtime cell, production key provider, independent review
 VERIFIED below refers only to the named checks and their exact revisions.
 All other contract and promotion requirements are SPECIFIED. All seven full gates remain UNKNOWN.
 
+## Direct driver inspection failures: 2026-10-19
+
+**IMPLEMENTED:** compiler inspection maps both SQLAlchemy and direct psycopg errors
+to `InspectionUnavailable`. SQLSTATE is read from the driver error, whether it is
+wrapped by SQLAlchemy or raised directly by an event listener. Raw driver text and
+SQL binds remain outside the public failure.
+Before this change, a direct psycopg error from a `before_cursor_execute` listener
+escaped on SQLAlchemy 2.0.51 while the same case was mapped on 2.1.3.
+
+**VERIFIED, local PostgreSQL 16.15 cell:** focused compiler and diagnostics suites
+report **61 passed** on each profile.
+[Full SQLAlchemy 2.1.3](_reset/inspection-errors-full-sa21-20261019.json) reports
+**1,292 passed** and [full SQLAlchemy 2.0.51](_reset/full-sa20-20261019.json) reports
+**1,264 passed, 28 skipped**. These counts are not gate evidence; all seven gates
+remain UNKNOWN.
+
 ## Inactive payload-rotation batches: 2026-10-19
 
 **IMPLEMENTED, internal only:** `cryptalis.crypto._payload_rotation.prepare_payload_rotation_batch`
