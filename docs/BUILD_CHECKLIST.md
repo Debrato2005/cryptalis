@@ -55,7 +55,7 @@ Requirement text is abbreviated. The full definitions remain in the research
 | OBJ-LIFE-04 | Parallel/adaptive migration without lost or duplicate work | SPECIFIED | None | Depends on OBJ-LIFE-03 |
 | OBJ-LIFE-05 | Decrypt-back current edits; preserve schema behavior; package-free exit | PARTIAL | Protection transition and retained-layout tests | Independent fresh-cluster restore; broader metadata |
 | OBJ-LIFE-06 | Rollback, restore, stale pin refusal, RPO/RTO, disaster drills | PARTIAL | Older-snapshot and stale-pin refusals | Fresh-cluster and provider-outage drills |
-| OBJ-LIFE-07 | Three separate rotation workflows | SPECIFIED | Local rewrap preparation only | Payload rotation, search reindex, recovery proofs |
+| OBJ-LIFE-07 | Three separate rotation workflows | PARTIAL | Internal rewrap candidate preparation, verified 2026-10-19 | Active-policy publication, payload rotation, search reindex, recovery proofs |
 | OBJ-LIFE-08 | Production KMS with outage/revocation/cost evidence | BLOCKED | Local development provider only | Authorized provider account and independent review |
 | OBJ-LIFE-09 | Install, upgrade, decommission, clean uninstall | PARTIAL | Importable package; removal is not a product command | Versioned upgrade/removal and package-free evidence |
 | OBJ-DX-01 | Minimal model/query changes; one manifest and one attach | IMPLEMENTED | `compile_protection`, `attach`, CLI inspection | Unify status/plan/apply/remove entry points |
@@ -76,6 +76,7 @@ Requirement text is abbreviated. The full definitions remain in the research
 
 | Date | Research reference | Mechanism | Product files | Evidence | Status |
 |---|---|---|---|---|---|
+| 2026-10-19 | `debgh-workspace/cryptalis-research-lab` branch `accel/integration-s20-20261014`, commit `15cf040`; `candidate/src/cryptalis/crypto/_rewrap.py`; test `test_rewrap_preparation.py` | Inactive rewrap candidate over every admitted root with target identity checks and no partial result | `src/cryptalis/crypto/_rewrap.py`; `tests/test_rewrap_preparation.py` | GREEN: 16 focused, 1,252 full SA2.1, 54 focused SA2.0 | VERIFIED, internal, local cell |
 | 2026-10-19 | `debgh-workspace/cryptalis-research-lab` branch `accel/integration-s20-20261014`, commit `15cf040`; `candidate/src/cryptalis/_sqlalchemy_search.py` negative-predicate hunks; test `test_sqlalchemy_negative_predicates.py`; updated search grammar test | Simple `!=`, `NOT IN`, and NULL presence with native truth and outer-join tenant-guard preservation | `src/cryptalis/_sqlalchemy_search.py`; `tests/test_sqlalchemy_negative_predicates.py`; `tests/test_sqlalchemy_search.py` | RED: 57 failed, 2 passed. GREEN: 366 focused SA2.1, 1,236 full SA2.1, 202 focused SA2.0 | VERIFIED, local cell |
 | 2026-10-19 | `debgh-workspace/cryptalis-research-lab` branch `accel/integration-s20-20261014`, commit `15cf040`; `candidate/src/cryptalis/sqlalchemy.py::UnsafeEngineLogging`; test `test_attachment_engine_preflight.py` | Refuse unsafe query echo or parameter hiding before connection or key access | `src/cryptalis/sqlalchemy.py`; `tests/test_attachment_engine_preflight.py` | RED: 12 unsafe-setting subtests reached `do_connect`. GREEN: 307 focused SA2.1, 1,177 full SA2.1, 143 focused SA2.0 | VERIFIED, local cell |
 

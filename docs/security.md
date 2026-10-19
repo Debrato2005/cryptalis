@@ -258,6 +258,13 @@ Its sealed bytes contain the nonce and a 32-byte root with a full 16-byte tag.
 It retains the local key-encryption key only in memory. Process loss prevents recovery.
 Local `rewrap` preserves the root and creates a wrapper under the replacement provider.
 This does not implement a deployment rotation workflow.
+**IMPLEMENTED, internal candidate only:** `prepare_rewrap(source, target)` resolves every
+admitted root under the source lease, wraps each root under the target provider identity,
+unwraps and compares it, and returns an inactive policy with the same contexts and
+generations. It does not publish, persist, or change the source policy. Invalid target
+identity, provider faults, wrong roots/contexts/providers, identity drift, and source
+expiry return `KeyUnavailable` without a partial candidate. Interruption propagates.
+No rotation executor, active-policy publication, or retained-artifact update exists.
 
 Sync and async preparation publish keys only after every required root passes checks.
 Cancellation rejects late provider material, including when a provider suppresses cancellation.

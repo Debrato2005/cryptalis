@@ -7,6 +7,26 @@ No PostgreSQL/provider/runtime cell, production key provider, independent review
 VERIFIED below refers only to the named checks and their exact revisions.
 All other contract and promotion requirements are SPECIFIED. All seven full gates remain UNKNOWN.
 
+## Internal rewrap candidate preparation: 2026-10-19
+
+**IMPLEMENTED, internal only:** `cryptalis.crypto._rewrap.prepare_rewrap(source, target)`
+prepares an inactive replacement policy. It resolves every admitted source root under
+the existing lease, wraps each root with the target provider, unwraps and compares the
+exact bytes and context, and returns the same contexts and generations under the target
+provider identity. The source policy and cache stay unchanged.
+Invalid target identity, provider faults, wrong roots/contexts/providers, identity
+drift, and source expiry return `KeyUnavailable` without a partial candidate.
+Interruption propagates. No rotation executor, active-policy publication, persistent
+custody, payload rotation, search reindex, or retained-artifact update exists.
+
+**VERIFIED, local cell:** the focused wrapper run reports **16 passed** for
+[SQLAlchemy 2.1.3](_reset/rewrap-preparation-focused-sa21-20261019.json) and **54 passed**
+for [SQLAlchemy 2.0.51](_reset/rewrap-preparation-focused-sa20-20261019.json).
+The [full SQLAlchemy 2.1.3 suite](_reset/rewrap-preparation-full-sa21-20261019.json)
+reports **1,252 passed**. The tests use an independent
+development provider, old-frame reads, and bad-provider oracles. These counts are not
+gate evidence; all seven gates remain UNKNOWN.
+
 ## Negative predicate boundaries: 2026-10-19
 
 **IMPLEMENTED:** protected text admits simple `!=`, `NOT IN`, `IS NULL`, and
