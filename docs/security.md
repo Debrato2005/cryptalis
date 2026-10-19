@@ -329,6 +329,7 @@ Engine defaults use `echo=False` and `hide_parameters=True`. Attachment refuses 
 | Condition | Required result |
 |---|---|
 | Missing or expired key | `KeyUnavailable`, no plaintext fallback |
+| Provider outage, revoked identity or malformed material | `KeyUnavailable` (or `TransitionFailure` carrying that code), no partial commit; retry after provider recovery |
 | Unsupported query/mapping/writer | `UnsupportedProtectedOperation`, reject the affected path before admitted plaintext SQL |
 | Wrong context or invalid tag | `AuthenticationFailed`, no unauthenticated value |
 | Payload/companion mismatch | `RepresentationMismatch`, fail the operation rather than filter candidates |

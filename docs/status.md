@@ -67,7 +67,8 @@ orchestrator: **1,302 passed, 2 skipped** on SQLAlchemy 2.1.3
 on 2.0.51 ([receipt](_reset/restore-full-sa20-20261019.json)).
 
 **Limits:** the host asserts source fencing and quarantine; the package does not
-authenticate either. Adoption refuses a restated frame constraint with no retained frame
+authenticate either and has no cryptographic evidence of source isolation. Adoption
+refuses a restated frame constraint with no retained frame
 row, and it qualifies the restated text behaviorally, not textually. A pinned external
 application, physical column order, and the unrecorded metadata limits remain. G-LIFECYCLE
 remains UNKNOWN.
@@ -156,6 +157,34 @@ The [full SQLAlchemy 2.1.3 suite](_reset/rewrap-preparation-full-sa21-20261019.j
 reports **1,252 passed**. The tests use an independent
 development provider, old-frame reads, and bad-provider oracles. These counts are not
 gate evidence; all seven gates remain UNKNOWN.
+
+## Local provider outage, revocation and lease drills: 2026-10-19
+
+**VERIFIED, local cell:** `tests/test_provider_failures.py` drives `Keyring` and both the
+migration and attachment executors against a real PostgreSQL 16 cluster with a synthetic
+local provider. The drill reports **4 passed** for
+[SQLAlchemy 2.1.3](_reset/provider-failures-focused-sa21-20261019.json) and
+[SQLAlchemy 2.0.51](_reset/provider-failures-focused-sa20-20261019.json).
+
+The drills prove these behaviors:
+- A second-chunk provider outage returns typed `KeyUnavailable` through
+  `TransitionFailure`, rolls back the failing chunk, keeps the committed prefix
+  (2 journal rows, 1 chunk), and a healthy retry resumes to `PENDING`.
+- Revoked provider identity and malformed short material refuse before any backfill
+  write (0 journal rows, 0 ciphertext rows), and a healthy retry completes.
+- An attached sync commit with an expired lease and an offline provider fails closed
+  with no committed row; a healthy retry commits.
+- An attached async commit with an expired lease and an offline provider fails closed
+  with no committed row; a healthy retry commits.
+
+Wrong-root material, cancellation and replay remain covered by the CF1 and adapter
+oracles in `tests/test_cf1.py` and `tests/test_sqlalchemy_adapter.py`.
+
+The [full SQLAlchemy 2.1.3 suite](_reset/provider-failures-full-sa21-20261019.json)
+reports **1,306 passed, 2 skipped** and the
+[full SQLAlchemy 2.0.51 suite](_reset/provider-failures-full-sa20-20261019.json)
+reports **1,278 passed, 30 skipped**. These counts are not gate evidence; all seven
+gates remain UNKNOWN.
 
 ## Negative predicate boundaries: 2026-10-19
 

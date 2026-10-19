@@ -269,7 +269,8 @@ removal, schema-fact equality, native `psycopg` readback, and journal absence. R
 2.0.51 ([receipt](../_reset/restore-full-sa20-20261019.json)).
 
 **Limits:** the host asserts source fencing and quarantine; this package does not
-authenticate either. Adoption refuses a restated constraint without a retained frame row,
+authenticate either and has no cryptographic evidence of source isolation. Adoption
+refuses a restated constraint without a retained frame row,
 and it qualifies restated text behaviorally, not textually. Physical column order and the
 unrecorded metadata limits remain.
 
