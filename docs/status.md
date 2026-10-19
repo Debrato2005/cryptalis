@@ -7,6 +7,27 @@ No PostgreSQL/provider/runtime cell, production key provider, independent review
 VERIFIED below refers only to the named checks and their exact revisions.
 All other contract and promotion requirements are SPECIFIED. All seven full gates remain UNKNOWN.
 
+## Inactive payload-rotation batches: 2026-10-19
+
+**IMPLEMENTED, internal only:** `cryptalis.crypto._payload_rotation.prepare_payload_rotation_batch`
+decodes current frames under the exact source payload generation and reseals the same
+exact text under the target generation. It preserves record identity and the source
+search-header bytes, and returns a complete immutable tuple or raises.
+It admits one field and tenant, distinct source/target payload roots, an unchanged
+search generation, bounded rows/bytes, and unique records. The source and target
+leases are rechecked after transformation, so an expired lease cannot yield an earlier
+successful batch. No SQL, provider, policy, schema, or publication effect occurs.
+The function does not implement a rotation executor or active-policy switch.
+
+**VERIFIED, local cell:** the focused wrapper run reports **40 passed** for
+[SQLAlchemy 2.1.3](_reset/payload-rotation-focused-sa21-20261019.json) and the
+[full SQLAlchemy 2.1.3 suite](_reset/payload-rotation-full-sa21-20261019.json) reports
+**1,292 passed**. Focused SQLAlchemy 2.0.51
+([receipt](_reset/payload-rotation-focused-sa20-20261019.json)) reports **90 passed**.
+The tests use frozen CF1 vectors, an independent framing/AEAD oracle, source/target
+root separation, record and header preservation, bounded-batch refusals, and lease
+faults. These counts are not gate evidence; all seven gates remain UNKNOWN.
+
 ## Internal rewrap candidate preparation: 2026-10-19
 
 **IMPLEMENTED, internal only:** `cryptalis.crypto._rewrap.prepare_rewrap(source, target)`

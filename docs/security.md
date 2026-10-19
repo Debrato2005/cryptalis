@@ -265,6 +265,14 @@ generations. It does not publish, persist, or change the source policy. Invalid 
 identity, provider faults, wrong roots/contexts/providers, identity drift, and source
 expiry return `KeyUnavailable` without a partial candidate. Interruption propagates.
 No rotation executor, active-policy publication, or retained-artifact update exists.
+**IMPLEMENTED, internal batch only:** `prepare_payload_rotation_batch(rows, field, tenant,
+source=..., target=...)` decodes each current frame under the exact source payload
+generation, reseals the same exact text under the target generation, preserves record
+identity and the source search-header bytes, and returns a complete immutable tuple or
+raises. It admits one field and tenant, distinct source/target payload roots, an
+unchanged search generation, bounded rows/bytes, and unique records. It performs no SQL,
+provider, policy, or schema change. A caller must integrate any result into a separately
+approved journaled lifecycle before a database switch.
 
 Sync and async preparation publish keys only after every required root passes checks.
 Cancellation rejects late provider material, including when a provider suppresses cancellation.
