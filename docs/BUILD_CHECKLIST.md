@@ -107,4 +107,6 @@ Requirement text is abbreviated. The full definitions remain in the research
 3. Continue correctness slices that protect the compatibility promise with native
    PostgreSQL oracles; establish a second independent application baseline.
 4. Extend the fresh-cluster range with multi-table, fault, and provider-outage drills.
-5. Keep every external review and provider item explicitly UNKNOWN.
+5. Keep every external review and provider item explicitly UNKNOWN; review the
+   [lab reconciliation](research/lab-reconciliation-2026-10-19.md) for refused-metadata
+   signals, without adopting lab code.
