@@ -212,6 +212,58 @@ def test_restored_target_refuses_corrupt_frames_and_tampered_bindings():
         mapping.dispose()
 
 
+def test_restored_target_refuses_post_adoption_drift():
+    source, pin = artifacts()
+    owner, runtime = engine('CRYPTALIS_TEST_DATABASE_URL'), engine('CRYPTALIS_TEST_RUNTIME_DATABASE_URL')
+    mapping, Customer = customer_mapping()
+    binding = r.plan(source, owner, pin=pin, keys=keys, approval=approval())
+    table = f'"{SCHEMA}".customer'
+    field_id = source.document['lock']['models'][0]['fields'][0]['field_id']
+    frame = '_cryptalis_' + uuid.UUID(field_id).hex + '_frame'
+    definition = binding.document['restatements'][0]['definition']
+    weakened = definition.replace('>= 74', '>= 73')
+    assert weakened != definition
+    with owner.begin() as c:
+        c.exec_driver_sql(f'ALTER TABLE {table} DROP CONSTRAINT {frame}')
+        c.exec_driver_sql(f'ALTER TABLE {table} ADD CONSTRAINT {frame} {weakened}')
+    try:
+        with pytest.raises(m.TransitionFailure, match='restored_schema_changed'):
+            m.check_deployment(source, owner, pin=pin, restore=binding)
+        with pytest.raises(PolicyMismatch):
+            attach(mapping, runtime, lock=source.lock_bytes, keys=keys, deployment=(source, pin, binding))
+    finally:
+        with owner.begin() as c:
+            c.exec_driver_sql(f'ALTER TABLE {table} DROP CONSTRAINT {frame}')
+            c.exec_driver_sql(f'ALTER TABLE {table} ADD CONSTRAINT {frame} {definition}')
+    with owner.begin() as c:
+        c.exec_driver_sql(f'ALTER TABLE {table} DROP CONSTRAINT {frame}')
+        c.exec_driver_sql(f'ALTER TABLE {table} ADD CONSTRAINT {frame} CHECK (true)')
+    try:
+        with pytest.raises(m.TransitionFailure, match='restored_schema_mismatch'):
+            m.check_deployment(source, owner, pin=pin, restore=binding)
+    finally:
+        with owner.begin() as c:
+            c.exec_driver_sql(f'ALTER TABLE {table} DROP CONSTRAINT {frame}')
+            c.exec_driver_sql(f'ALTER TABLE {table} ADD CONSTRAINT {frame} {definition}')
+    journal = f'"{MANIFEST["journal_schema"]}"."_cryptalis_journal"'
+    with owner.begin() as c:
+        c.exec_driver_sql(f"""UPDATE {journal} SET state = state || '{{"drift": true}}'::jsonb""")
+    try:
+        with pytest.raises(m.TransitionFailure, match='restored_state_changed'):
+            m.check_deployment(source, owner, pin=pin, restore=binding)
+        with pytest.raises(PolicyMismatch):
+            attach(mapping, runtime, lock=source.lock_bytes, keys=keys, deployment=(source, pin, binding))
+    finally:
+        with owner.begin() as c:
+            c.exec_driver_sql(f"UPDATE {journal} SET state = state - 'drift'")
+    try:
+        assert m.check_deployment(source, owner, pin=pin, restore=binding) is None
+    finally:
+        owner.dispose()
+        runtime.dispose()
+        mapping.dispose()
+
+
 def test_restored_cluster_completes_adopted_lifecycle():
     source, pin = artifacts()
     owner, runtime = engine('CRYPTALIS_TEST_DATABASE_URL'), engine('CRYPTALIS_TEST_RUNTIME_DATABASE_URL')

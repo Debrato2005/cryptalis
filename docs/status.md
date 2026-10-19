@@ -56,9 +56,11 @@ search, accepts edits and deletes, reverses to plaintext, and removes the packag
 with matching native values and schema facts. Refusals are typed:
 `restore_approval_required`, `restore_source_is_current`, `invalid_restore_binding`,
 `restored_frame_verification_failed`, `restored_state_changed`, `restore_target_mismatch`,
-`restore_binding_mismatch`, and `restored_constraint_probe_failed`.
-[Export](_reset/fresh-cluster-export-20261019-2.json) and
-[adoption](_reset/fresh-cluster-restore-20261019-2.json) receipts record the wrapper runs.
+`restore_binding_mismatch`, `restored_schema_mismatch`, `restored_schema_changed`,
+and `restored_constraint_probe_failed`. Post-adoption drills also refuse structural
+schema drift, definition-only drift, and journal-state drift on the restored copy.
+[Export](_reset/fresh-cluster-export-20261019-3.json) and
+[adoption](_reset/fresh-cluster-restore-20261019-3.json) receipts record the wrapper runs.
 The full suites remain green with the qualification modules skipped outside the
 orchestrator: **1,302 passed, 2 skipped** on SQLAlchemy 2.1.3
 ([receipt](_reset/restore-full-sa21-20261019.json)) and **1,274 passed, 30 skipped**

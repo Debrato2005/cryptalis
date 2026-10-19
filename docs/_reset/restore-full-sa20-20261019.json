@@ -1,7 +1,7 @@
 {
-  "scope": "Restore/v1 adoption: full SA2.0.51 suite on primary cluster",
-  "base_revision": "2f7ae4d1d2eb1be533e53579d7d803919d1c11c1",
-  "fixing_revision": "worktree-8a6b12544e27ed28",
+  "scope": "Restore/v1 adoption and post-adoption drift refusal: full SA2.0.51 suite on primary cluster",
+  "base_revision": "4ed901e17aca1dc3f8a0bf884385f8971f8f3447",
+  "fixing_revision": "worktree-c0103062bf4f95a9",
   "source_test_sha256": {
     "src/cryptalis/__init__.py": "c1a82f9f958187e4b5423d11df5a035b17d75b34a0947af6be4aac436cd2fed2",
     "src/cryptalis/__main__.py": "9967032819ce6f18e02a40d033958d5f4f7c328faf8693bc07ecc42a1a525707",
@@ -58,7 +58,7 @@
     "tests/test_deprotection.py": "8f639eba3e17897c93a3f566af9cd61d07347b15aad4f1730e9da310ba0a516c",
     "tests/test_development_authority.py": "7ec9747dd8e5f4c9bffe073a777f70388c3b2d8c9ca22b9c2d9af95d0c49ea80",
     "tests/test_fresh_cluster_export.py": "f00462666ef5c87cf4c25a32e8e240fc7ca8711b12c619070ff07a8a9e241beb",
-    "tests/test_fresh_cluster_restore.py": "b564f5c2ad244be98b2468e7a8f88ad33db97384a5031ebf834cd26735fd4794",
+    "tests/test_fresh_cluster_restore.py": "eba6e6a0499692ea2949c8cef575d50da94c7b154b3ad336342efd8892809b65",
     "tests/test_independent_application.py": "dcb1e6cb46ea678c9d77caa09bae5ca02cfdaf00cc6ff39fdc372a10be6f42ef",
     "tests/test_manifest_canonical.py": "f95532844a798f986c44034096625eccd835a13d0df9c0c3befc0a3d5d4cc1e9",
     "tests/test_manifest_header.py": "d3d3724688f7ed790e35f253bce9cab77909f42819355e16f7a59e5e8b55cb8f",
@@ -205,7 +205,7 @@
       "passed": 44
     }
   },
-  "elapsed_seconds": 189.72271886700764,
+  "elapsed_seconds": 182.92330394899182,
   "gates": {
     "G-ADAPTER": "UNKNOWN",
     "G-CRYPTO": "UNKNOWN",

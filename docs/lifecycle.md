@@ -257,11 +257,13 @@ source. Reverse `plan(..., restore=binding)` records the binding in the reverse 
 re-checks the binding identity against the source pin.
 
 **Evidence:** the qualification module refuses missing or unfenced approval, the current
-source, tampered bindings, and corrupt frames, then completes the adopted lifecycle: attach,
+source, tampered bindings, and corrupt frames; it then refuses post-adoption structural
+schema drift, definition-only frame drift, and journal-state drift on the restored copy;
+it restores the adopted facts and completes the adopted lifecycle: attach,
 ORM read, exact search, modify, add, delete, reverse to plaintext under the binding,
 removal, schema-fact equality, native `psycopg` readback, and journal absence. Receipts:
-[export](../_reset/fresh-cluster-export-20261019-2.json),
-[adoption](../_reset/fresh-cluster-restore-20261019-2.json). The full suites report
+[export](../_reset/fresh-cluster-export-20261019-3.json),
+[adoption](../_reset/fresh-cluster-restore-20261019-3.json). The full suites report
 **1,302 passed, 2 skipped** on SQLAlchemy 2.1.3
 ([receipt](../_reset/restore-full-sa21-20261019.json)) and **1,274 passed, 30 skipped** on
 2.0.51 ([receipt](../_reset/restore-full-sa20-20261019.json)).
