@@ -1,11 +1,40 @@
 # Implementation status
 
 **IMPLEMENTED:** research prototype with a product manifest compiler, CF1 text primitives, a local development provider,
-and bounded sync/async SQLAlchemy storage/search plus a PostgreSQL maintenance protection transition.
+bounded sync/async SQLAlchemy storage/search, a PostgreSQL maintenance protection transition, and an in-place
+decrypt-back/removal path for that transition format.
 Separate runtime-role verification is complete for the local cell.
 No PostgreSQL/provider/runtime cell, production key provider, independent review, or release is qualified.
 VERIFIED below refers only to the named checks and their exact revisions.
 All other contract and promotion requirements are SPECIFIED. All seven full gates remain UNKNOWN.
+
+## In-place decrypt-back and removal: 2026-10-19
+
+**IMPLEMENTED:** `cryptalis.deprotection` adds `cryptalis.reverse/v1` for an admitted
+`cryptalis.transition/v1` source. Reverse state shares the source journal and advisory
+lock; the source row remains `ACTIVE`. Expand stages native plaintext columns and fences
+inventoried schemas, backfill decrypts current frames, verification re-authenticates every
+value, and switch replaces the ciphertext column without `CASCADE`, restoring recorded
+constraints, indexes, and collation. Pre-switch abort removes reverse-owned objects.
+Removal requires a literal `RemovalApproval`, matching external pins, an empty metadata
+diff against the recorded source schema, and no remaining `_cryptalis` relations or
+functions in inventoried schemas.
+
+**VERIFIED, local PostgreSQL 16.15 cell:** seven lifecycle cases pass on SQLAlchemy 2.1.3
+and 2.0.51. The [full 2.1.3 run](_reset/reverse-full-sa21-20261019.json) reports
+**1,299 passed**; the [full 2.0.51 run](_reset/reverse-full-sa20-20261019.json) reports
+**1,271 passed, 28 skipped**. The cases cover edits and deletes during protection, a row
+added while protected, wrong custody, corrupt frames, disabled guards, lost COMMIT replies,
+abort, repeated terminal requests, metadata restoration, and unsafe plan/removal refusals.
+These counts are not gate evidence.
+
+**Limits:** in-place reverse cannot restore physical column order (`attnum`). The compiler
+lock records no comments, statistics targets, storage, or compression settings, so those
+remain UNKNOWN. Fresh-cluster restore, a real package-free application run, retained-backup
+reader proof, and production pause budgets remain open. The
+[layout evaluation](_reset/layout-evaluation-20261019.md) records why retained-native is
+not promoted. All seven gates remain **UNKNOWN**.
+
 
 ## Direct driver inspection failures: 2026-10-19
 

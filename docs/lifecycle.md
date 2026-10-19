@@ -1,7 +1,8 @@
 # One transition engine
 
-**SPECIFIED:** lifecycle contract. **IMPLEMENTED:** bounded product protection transition with plan/apply/verify and pre-switch abort.
-Decrypt-back, removal and rotation remain unimplemented product slices. [Status](status.md) states the evidence limits.
+**SPECIFIED:** lifecycle contract. **IMPLEMENTED:** bounded product protection transition with plan/apply/verify and pre-switch abort,
+plus an in-place decrypt-back and additive-removal path.
+Rotation, online transition, retained-backup recovery and package uninstall remain unimplemented product slices. [Status](status.md) states the evidence limits.
 The protection engine verifies and switches in one transaction; saved verification checkpoints require a fresh pass on resume.
 Plain reads continue during verification. Writes and locking reads wait; schema DDL can pause all access.
 VERIFIED paragraphs below describe recorded receipts, not current product qualification. All other requirements remain SPECIFIED.
@@ -187,6 +188,41 @@ Removal completes only after:
 Rollback during deprotect/removal uses the same transform-back path. It is not a second mirror protocol.
 The earlier package-free SQL read does not satisfy application removal. The integrated checkpoint records a narrow original-application child test.
 Durable retained-backup recovery and the full removal gate remain UNKNOWN.
+
+### In-place reverse format: 2026-10-19
+
+**IMPLEMENTED:** `cryptalis.deprotection` adds `cryptalis.reverse/v1` for an admitted
+`cryptalis.transition/v1` source. The reverse row shares the source journal and advisory
+lock; the source row remains `ACTIVE` and is never mutated. Reverse phases are
+`PREPARED`, `EXPANDED`, `BACKFILLED`, `VERIFIED`, `PLAINTEXT_PENDING`, and
+`PLAINTEXT_ACTIVE`. External pins are `PLAINTEXT_ACTIVATING`, `REMOVING`, and `REMOVED`;
+a pin may not claim a later plaintext phase than the journal has reached, and the journal
+may not report plaintext active while the external pin still declares ciphertext.
+Expand adds native-typed plaintext staging columns and fences inventoried schemas.
+Backfill decrypts current frames and verifies membership, authentication, and exact values.
+Switch drops the ciphertext column without `CASCADE`, renames staging into the original
+column name, restores recorded constraints and indexes, and records the resulting schema.
+Pre-switch abort removes only reverse-owned staging and guards. Removal requires a
+`RemovalApproval`, matching external pins, an empty metadata diff, no remaining
+`_cryptalis` relations or functions in inventoried schemas, and the recorded retirable
+aborted rows. A repeated terminal request asserts the recorded state and does not invent a
+new success.
+
+**VERIFIED, local PostgreSQL 16.15 cell:** seven lifecycle cases pass on SQLAlchemy 2.1.3
+and 2.0.51. Full suites report **1,299 passed** on 2.1.3 and **1,271 passed, 28 skipped**
+on 2.0.51 ([2.1.3 receipt](../_reset/reverse-full-sa21-20261019.json),
+[2.0.51 receipt](../_reset/reverse-full-sa20-20261019.json)).
+The cases cover edited and deleted rows, a row added while protected, wrong custody,
+corrupt frames, disabled guards, lost replies, abort, metadata restoration, and unsafe
+plan/removal refusals. Counts are not gate evidence.
+
+**Limits:** in-place reverse cannot restore physical column order (`attnum`), and the
+existing compiler lock records no comments, statistics targets, storage, or compression
+settings. Fresh-cluster restore, a real package-free application run, retained-backup
+reader proof, and the retained-native alternative remain UNKNOWN.
+Layout comparison and the decision not to promote retained-native are recorded in
+[the 2026-10-19 evaluation](../_reset/layout-evaluation-20261019.md).
+
 Dropping columns does not erase dead tuples, WAL, backups, or host exports.
 PostgreSQL can also retain dropped-column bytes in existing heap tuples: `DROP COLUMN` hides the column from SQL,
 but does not immediately remove its stored data ([PostgreSQL 16 ALTER TABLE](https://www.postgresql.org/docs/16/sql-altertable.html)).

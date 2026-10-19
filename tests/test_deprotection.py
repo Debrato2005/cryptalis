@@ -1,0 +1,281 @@
+"""Real PostgreSQL decrypt-back and removal evidence for cryptalis.reverse/v1."""
+from dataclasses import replace
+import hashlib
+import importlib
+from uuid import UUID
+
+import pytest
+from sqlalchemy import Column, MetaData, Table, Text, Uuid, select
+from sqlalchemy.orm import registry, sessionmaker
+
+from cryptalis.crypto import Keyring
+from cryptalis.sqlalchemy import UnsupportedProtectedOperation, attach
+from test_migration import (application, engine, frames, keys, publish, run,
+                            PublicFixtureProvider, PROVIDER, FIELD_ID, TENANT)
+
+d = importlib.import_module('cryptalis.deprotection')
+
+
+class WrongProvider(PublicFixtureProvider):
+    def unwrap(self, wrapper, context):
+        return hashlib.sha256(('WRONG ROOT:' + str(context)).encode()).digest()
+
+
+def bad_keys(tenant):
+    good = keys(tenant)
+    return Keyring(good.policy, {PROVIDER: WrongProvider()})
+
+
+def least_privilege_role(app):
+    with app.owner.connect() as c:
+        rows = c.exec_driver_sql(
+            "SELECT rolname, pg_catalog.pg_has_role(rolname, current_user, 'MEMBER') "
+            "FROM pg_catalog.pg_roles WHERE NOT rolsuper AND NOT rolcreaterole AND NOT rolcreatedb "
+            "AND NOT rolbypassrls AND NOT rolreplication ORDER BY rolname").all()
+    for name, member in rows:
+        if not member and name != app.role:
+            return name
+    pytest.skip('no distinct non-inherited least-privilege role is available')
+
+
+def proposal(app):
+    return d.plan(app.plan, app.owner, source_pin=app.pin, keys=keys,
+                  plaintext_runtime_role=least_privilege_role(app),
+                  backfill_rows_per_second=1000, verify_rows_per_second=1000,
+                  temporary_bytes_per_row=700, wal_bytes_per_row=700)
+
+
+def consent(plan, phase='PREPARED'):
+    return d.PlaintextApproval(plan.target_id, plan.operation_id, plan.digest, True,
+                               'synthetic public backup recovery evidence'), \
+        app_pin(plan, phase)
+
+
+def app_pin(plan, phase):
+    import cryptalis.migration as migration
+    return migration.DeploymentPin(plan.target_id, plan.operation_id, plan.digest, phase)
+
+
+def reverse(app, plan, until='PLAINTEXT_PENDING', phase='PREPARED', chunk_size=2, key_resolver=None):
+    pure, pin = consent(plan, phase)
+    return d.apply(plan, app.owner, keys=key_resolver or keys, pin=pin, approval=app.approval,
+                   consent=pure, chunk_size=chunk_size, until=until)
+
+
+def data_type(app, column):
+    with app.owner.connect() as c:
+        return c.exec_driver_sql(
+            'SELECT data_type FROM information_schema.columns WHERE table_schema=%s AND table_name=%s AND column_name=%s',
+            (app.schema, 'customer', column)).scalar_one_or_none()
+
+
+def native_rows(app):
+    fresh = engine('CRYPTALIS_TEST_RUNTIME_DATABASE_URL')
+    mapping = registry(metadata=MetaData(schema=app.schema))
+    table = Table('customer', mapping.metadata, Column('id', Uuid, primary_key=True, autoincrement=False),
+                  Column('tenant_id', Uuid, nullable=False), Column('name', Text(collation='C')),
+                  Column('label', Text))
+    class Customer: pass
+    mapping.map_imperatively(Customer, table)
+    try:
+        with sessionmaker(fresh)() as session:
+            return {row.id: (row.tenant_id, row.name) for row in session.scalars(select(Customer))}
+    finally:
+        fresh.dispose()
+        mapping.dispose()
+
+
+def attached_edits(app):
+    sessions = attach(app.mapping, app.runtime, lock=app.plan.lock_bytes, keys=keys,
+                      deployment=(app.plan, app.pin))
+    with sessions(tenant_id=TENANT) as session:
+        row = session.get(app.Customer, UUID(int=101))
+        row.name = 'edited while protected'
+        session.commit()
+        session.add(app.Customer(id=UUID(int=999), tenant_id=TENANT,
+                                 name='added while protected', label='fresh'))
+        session.commit()
+        session.delete(session.get(app.Customer, UUID(int=106)))
+        session.commit()
+    with sessions(tenant_id=TENANT) as session:
+        return {row.id: (row.tenant_id, row.name) for row in session.scalars(select(app.Customer))}
+
+
+def test_full_decrypt_back_preserves_edited_values_and_removes_cryptalis():
+    with application() as app:
+        run(app)
+        publish(app)
+        expected = attached_edits(app)
+        plan = proposal(app)
+        assert reverse(app, plan).phase == 'PLAINTEXT_PENDING'
+        assert data_type(app, 'name') == 'text'
+        assert native_rows(app) == expected
+        active, pin = consent(plan, 'PLAINTEXT_ACTIVATING')
+        assert d.apply(plan, app.owner, keys=keys, pin=pin, approval=app.approval,
+                       consent=active, until='PLAINTEXT_ACTIVE').phase == 'PLAINTEXT_ACTIVE'
+        repeated = d.apply(plan, app.owner, keys=keys, pin=replace(pin, phase='PLAINTEXT_ACTIVE'),
+                           approval=app.approval, consent=active, until='PLAINTEXT_ACTIVE')
+        assert repeated.phase == 'PLAINTEXT_ACTIVE'
+        assert native_rows(app) == expected
+        with pytest.raises(UnsupportedProtectedOperation):
+            attach(app.mapping, app.runtime, lock=app.plan.lock_bytes, keys=keys,
+                   deployment=(app.plan, app.pin))
+        removal = d.RemovalApproval(plan.target_id, plan.operation_id, plan.digest,
+                                    'synthetic package-free workload run', 'synthetic backup recovery', True)
+        assert d.remove(plan, app.owner, pin=replace(pin, phase='REMOVING'), approval=app.approval,
+                        removal=removal, consent=active).phase == 'REMOVED'
+        assert d.check_removed(plan, app.owner, pin=replace(pin, phase='REMOVED')) is None
+        assert native_rows(app) == expected
+        with app.owner.connect() as c:
+            assert c.exec_driver_sql('SELECT count(*) FROM information_schema.columns WHERE table_schema=%s '
+                                     "AND pg_catalog.strpos(column_name,'_cryptalis')=1",
+                                     (app.schema,)).scalar_one() == 0
+
+
+def test_reverse_resume_after_lost_replies_is_idempotent():
+    with application() as app:
+        run(app)
+        publish(app)
+        before = frames(app, True)
+        plan = proposal(app)
+        assert reverse(app, plan, until='EXPANDED', chunk_size=1).phase == 'EXPANDED'
+        assert reverse(app, plan, until='EXPANDED', chunk_size=1).phase == 'EXPANDED'
+        assert frames(app, True) == before
+        assert reverse(app, plan, until='BACKFILLED', chunk_size=1).phase == 'BACKFILLED'
+        assert reverse(app, plan, until='BACKFILLED', chunk_size=1).phase == 'BACKFILLED'
+        assert reverse(app, plan, until='VERIFIED').phase == 'VERIFIED'
+        assert reverse(app, plan).phase == 'PLAINTEXT_PENDING'
+        assert reverse(app, plan).phase == 'PLAINTEXT_PENDING'
+        assert native_rows(app) == app.source
+
+
+def test_interrupted_guard_or_corrupt_frame_never_switches():
+    with application() as app:
+        run(app)
+        publish(app)
+        plan = proposal(app)
+        reverse(app, plan, until='BACKFILLED')
+        with app.owner.begin() as c:
+            c.exec_driver_sql(f'UPDATE "{app.schema}".customer SET name=set_byte(name,'
+                              'octet_length(name)-1,get_byte(name,octet_length(name)-1) # 1) '
+                              'WHERE id=%s', (UUID(int=103),))
+        with pytest.raises(app.m.TransitionFailure):
+            reverse(app, plan, until='PLAINTEXT_PENDING')
+        assert data_type(app, 'name') == 'bytea'
+        with app.owner.begin() as c:
+            c.exec_driver_sql(f'ALTER TABLE "{app.schema}".customer DISABLE TRIGGER ALL')
+        with pytest.raises(app.m.TransitionFailure, match='writer_fence_changed'):
+            reverse(app, plan, until='VERIFIED')
+
+
+def test_wrong_custody_never_commits_plaintext_staging():
+    with application() as app:
+        run(app)
+        publish(app)
+        plan = proposal(app)
+        with pytest.raises(app.m.TransitionFailure):
+            reverse(app, plan, until='BACKFILLED', chunk_size=100, key_resolver=bad_keys)
+        with app.owner.connect() as c:
+            staged = '_cryptalis_' + FIELD_ID.hex + '_plain'
+            assert c.exec_driver_sql(f'SELECT count(*) FROM "{app.schema}".customer '
+                                     f'WHERE "{staged}" IS NOT NULL').scalar_one() == 0
+        assert reverse(app, plan, until='BACKFILLED', chunk_size=100).phase == 'BACKFILLED'
+
+
+def test_abort_removes_additive_objects_and_keeps_protection_current():
+    with application() as app:
+        run(app)
+        publish(app)
+        plan = proposal(app)
+        reverse(app, plan, until='EXPANDED')
+        assert d.abort(plan, app.owner, pin=app_pin(plan, 'EXPANDED'), approval=app.approval,
+                       consent=consent(plan)[0]).phase == 'ABORTED'
+        assert app.m.check_deployment(app.plan, app.owner, pin=app.pin) is None
+        assert data_type(app, 'name') == 'bytea'
+        with pytest.raises(app.m.TransitionFailure, match='operation_aborted'):
+            reverse(app, plan, until='PLAINTEXT_PENDING')
+        second = proposal(app)
+        assert second.document['retirable_aborted'] == [
+            {'operation_id': str(plan.operation_id), 'plan_digest': plan.digest}]
+        reverse(app, second, until='PLAINTEXT_PENDING')
+        active = consent(second, 'PLAINTEXT_ACTIVATING')[0]
+        d.apply(second, app.owner, keys=keys, pin=app_pin(second, 'PLAINTEXT_ACTIVATING'),
+                approval=app.approval, consent=active, until='PLAINTEXT_ACTIVE')
+        removal = d.RemovalApproval(second.target_id, second.operation_id, second.digest,
+                                    'synthetic package-free run', 'synthetic backup recovery', True)
+        d.remove(second, app.owner, pin=app_pin(second, 'REMOVING'), approval=app.approval,
+                 removal=removal, consent=active)
+        d.check_removed(second, app.owner, pin=app_pin(second, 'REMOVED'))
+        assert native_rows(app) == app.source
+
+
+def test_metadata_is_restored_except_recorded_limits():
+    with application() as app:
+        run(app)
+        publish(app)
+        plan = proposal(app)
+        reverse(app, plan, until='PLAINTEXT_PENDING')
+        active = consent(plan, 'PLAINTEXT_ACTIVATING')[0]
+        d.apply(plan, app.owner, keys=keys, pin=app_pin(plan, 'PLAINTEXT_ACTIVATING'),
+                approval=app.approval, consent=active, until='PLAINTEXT_ACTIVE')
+        removal = d.RemovalApproval(plan.target_id, plan.operation_id, plan.digest,
+                                    'synthetic package-free run', 'synthetic backup recovery', True)
+        d.remove(plan, app.owner, pin=app_pin(plan, 'REMOVING'), approval=app.approval,
+                 removal=removal, consent=active)
+        for model in app.plan.document['lock']['models']:
+            with app.owner.connect() as c:
+                current = app.m._facts(c, model)
+            assert d._metadata_diff(model['source_schema'], current) == []
+        with app.owner.connect() as c:
+            assert c.exec_driver_sql(
+                'SELECT co.collname FROM pg_catalog.pg_attribute a '
+                'JOIN pg_catalog.pg_collation co ON co.oid=a.attcollation '
+                'JOIN pg_catalog.pg_class t ON t.oid=a.attrelid '
+                'JOIN pg_catalog.pg_namespace n ON n.oid=t.relnamespace '
+                'WHERE n.nspname=%s AND t.relname=%s AND a.attname=%s',
+                (app.schema, 'customer', 'name')).scalar_one() == 'C'
+
+
+def test_plan_and_removal_refuse_unsafe_inputs():
+    with application() as app:
+        run(app)
+        publish(app)
+        with pytest.raises(app.m.TransitionFailure, match='source_pin_must_be_active'):
+            d.plan(app.plan, app.owner, source_pin=app_pin(app.plan, 'PENDING'), keys=keys,
+                   plaintext_runtime_role=least_privilege_role(app),
+                   backfill_rows_per_second=1000, verify_rows_per_second=1000,
+                   temporary_bytes_per_row=700, wal_bytes_per_row=700)
+        with pytest.raises(app.m.TransitionFailure, match='distinct_plaintext_runtime_role_required'):
+            d.plan(app.plan, app.owner, source_pin=app.pin, keys=keys,
+                   plaintext_runtime_role=app.role,
+                   backfill_rows_per_second=1000, verify_rows_per_second=1000,
+                   temporary_bytes_per_row=700, wal_bytes_per_row=700)
+        with pytest.raises(app.m.TransitionFailure, match='invalid_reverse_plan'):
+            d.DeprotectionPlan(b'{not json')
+        plan = proposal(app)
+        with pytest.raises(app.m.TransitionFailure, match='invalid_reverse_plan'):
+            d.DeprotectionPlan(plan.artifact[:-2])
+        with pytest.raises(app.m.TransitionFailure, match='restored_or_missing_reverse_transition'):
+            d.remove(plan, app.owner, pin=app_pin(plan, 'REMOVING'), approval=app.approval,
+                     removal=d.RemovalApproval(plan.target_id, plan.operation_id, plan.digest,
+                                               'synthetic run', 'synthetic recovery', True),
+                     consent=consent(plan)[0])
+        reverse(app, plan, until='PLAINTEXT_PENDING')
+        active = consent(plan, 'PLAINTEXT_ACTIVATING')[0]
+        with pytest.raises(app.m.TransitionFailure, match='removal_approval_required'):
+            d.remove(plan, app.owner, pin=app_pin(plan, 'REMOVING'), approval=app.approval,
+                     removal=d.RemovalApproval(plan.target_id, plan.operation_id, 'f' * 64,
+                                               'synthetic run', 'synthetic recovery', True),
+                     consent=active)
+        with pytest.raises(app.m.TransitionFailure, match='matching_external_publication_required'):
+            d.check_removed(plan, app.owner, pin=app_pin(plan, 'PLAINTEXT_ACTIVE'))
+        with pytest.raises(app.m.TransitionFailure, match='removal_approval_required'):
+            d.remove(plan, app.owner, pin=app_pin(plan, 'REMOVING'), approval=app.approval,
+                     removal=d.RemovalApproval(plan.target_id, plan.operation_id, plan.digest,
+                                               'synthetic run', 'synthetic recovery', False),
+                     consent=active)
+        with pytest.raises(app.m.TransitionFailure, match='restored_state_behind_external_pin'):
+            d.remove(plan, app.owner, pin=app_pin(plan, 'PLAINTEXT_ACTIVE'), approval=app.approval,
+                     removal=d.RemovalApproval(plan.target_id, plan.operation_id, plan.digest,
+                                               'synthetic run', 'synthetic recovery', True),
+                     consent=active)
