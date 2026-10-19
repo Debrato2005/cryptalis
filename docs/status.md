@@ -8,6 +8,29 @@ No PostgreSQL/provider/runtime cell, production key provider, independent review
 VERIFIED below refers only to the named checks and their exact revisions.
 All other contract and promotion requirements are SPECIFIED. All seven full gates remain UNKNOWN.
 
+## Independent application adoption and package-free restart: 2026-10-19
+
+**IMPLEMENTED:** `tests/independent_app.py` is an ordinary three-model application
+(accounts, customers with a real foreign key, notes) that imports no Cryptalis component
+and refuses such imports when `CRYPTALIS_FORBIDDEN` is set.
+`tests/test_independent_application.py` runs the complete host workflow against it:
+schema creation and seeding through application code, manifest planning, protection to
+`ACTIVE`, ORM reads and exact search under attachment, edits and inserts during
+protection, decrypt-back, approved removal, metadata comparison, and a fresh package-free
+process that edits, inserts, deletes, and reads through the application's own code.
+
+**VERIFIED, local PostgreSQL 16.15 cell:** the lifecycle case passes on SQLAlchemy 2.1.3
+and 2.0.51, including a zero-row protected table, two tenants, Unicode, empty and
+trailing text, a deleted row, and a real foreign key. The package-free child process
+reports `cryptalis` in no output and matches the expected native values. Full suites
+report **1,300 passed, 2 skipped** on 2.1.3
+([receipt](_reset/independent-app-full-sa21-20261019.json)) and **1,272 passed, 30 skipped**
+on 2.0.51 ([receipt](_reset/independent-app-full-sa20-20261019.json)).
+
+**Limits:** the application is an in-repo fixture, not a pinned external application; the
+package-free restart does not exercise a web framework, connection-pool warm-up, or a
+second independent codebase. G-LIFECYCLE remains UNKNOWN.
+
 ## Fresh-cluster protected-backup recovery: 2026-10-19
 
 **IMPLEMENTED:** `scripts/fresh_cluster_qualification.py` initializes a new PostgreSQL 16

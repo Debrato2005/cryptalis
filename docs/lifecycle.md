@@ -240,6 +240,16 @@ not exist yet. The deployment binding includes the source database identity, so 
 must authorize a new target binding before attach, query, or decrypt-back can run there.
 Until then, recovery is frame-level with retained keys and readers.
 
+### Independent application exit: 2026-10-19
+
+**VERIFIED, local PostgreSQL 16.15 cell:** an ordinary three-model application with a real
+foreign key, two tenants, and a zero-row protected table completes protect, exact search,
+modify, decrypt-back, and approved removal under attachment. A fresh process with
+Cryptalis imports blocked then edits, inserts, deletes, and reads through the
+application's own code and matches the expected native values. The post-removal schema
+facts equal the recorded source facts for every protected table. The application module
+imports no Cryptalis component; only the host bootstrap does.
+
 Dropping columns does not erase dead tuples, WAL, backups, or host exports.
 PostgreSQL can also retain dropped-column bytes in existing heap tuples: `DROP COLUMN` hides the column from SQL,
 but does not immediately remove its stored data ([PostgreSQL 16 ALTER TABLE](https://www.postgresql.org/docs/16/sql-altertable.html)).

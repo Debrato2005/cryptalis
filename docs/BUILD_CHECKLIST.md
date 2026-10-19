@@ -25,8 +25,9 @@ No objective is complete until its acceptance evidence and applicable gate pass.
   SQLAlchemy 2.1.3 and 2.0.51 profiles, psycopg 3.3.6, cryptography 50.0.2.
 - Implemented scope: text storage, exact equality, `IN`, tenant-scoped uniqueness,
   sync/async attachment, maintenance protection transition, in-place decrypt-back and
-  additive removal for that transition format, a fresh-cluster protected-backup recovery
-  harness, CF1 primitives, and a local development provider.
+  additive removal for that transition format, an independent application lifecycle with
+  package-free restart, a fresh-cluster protected-backup recovery harness, CF1 primitives,
+  and a local development provider.
 - All seven qualification gates remain UNKNOWN.
 - Every protected type other than text, every advanced predicate, online migration,
   complete rotation, production KMS, and independent review remain open.
@@ -54,14 +55,14 @@ Requirement text is abbreviated. The full definitions remain in the research
 | OBJ-LIFE-02 | Resumable, atomic, byte-bounded backfill with verification | VERIFIED, bounded | Journal, advisory lock, chunks, crash/resume tests | Exact memory/WAL bounds remain host inputs |
 | OBJ-LIFE-03 | Near-zero-downtime migration with capture and catch-up | SPECIFIED | Maintenance pause fallback only | Design, review, and measure an online protocol |
 | OBJ-LIFE-04 | Parallel/adaptive migration without lost or duplicate work | SPECIFIED | None | Depends on OBJ-LIFE-03 |
-| OBJ-LIFE-05 | Decrypt-back current edits; preserve schema behavior; package-free exit | VERIFIED, bounded | `deprotection.py` implements `cryptalis.reverse/v1`: staged plaintext, verified backfill, transactional switch, recorded constraint/index/collation restoration, guarded activation, approved removal, and terminal-state assertions; seven lifecycle cases pass on both profiles | Restored-cluster bring-up/adoption, real package-free application run, physical column order, comments/statistics/storage/compression, retained-native |
+| OBJ-LIFE-05 | Decrypt-back current edits; preserve schema behavior; package-free exit | VERIFIED, bounded | `deprotection.py` implements `cryptalis.reverse/v1`: staged plaintext, verified backfill, transactional switch, recorded constraint/index/collation restoration, guarded activation, approved removal, and terminal-state assertions; seven lifecycle cases pass on both profiles; an independent three-model application completes protect/search/modify/decrypt-back/remove and a package-free restarted process performs native CRUD | Restored-cluster bring-up/adoption, pinned external application run, physical column order, comments/statistics/storage/compression, retained-native |
 | OBJ-LIFE-06 | Rollback, restore, stale pin refusal, RPO/RTO, disaster drills | PARTIAL | Older-snapshot and stale-pin refusals; reverse abort, pin/state ordering, corrupt-frame and disabled-guard refusals; isolated-cluster plaintext and protected restore with frame recovery and loud authority refusal | Restored-cluster authority rebinding, fresh-cluster and provider-outage drills |
 | OBJ-LIFE-07 | Three separate rotation workflows | PARTIAL | Internal rewrap candidate and bounded payload-batch preparation, verified 2026-10-19 | Active-policy publication, rotation executor, search reindex, recovery proofs |
 | OBJ-LIFE-08 | Production KMS with outage/revocation/cost evidence | BLOCKED | Local development provider only | Authorized provider account and independent review |
-| OBJ-LIFE-09 | Install, upgrade, decommission, clean uninstall | PARTIAL | Importable package; approved in-database removal retires reverse-owned objects after decrypt-back; no `cryptalis remove` command | Versioned upgrade/removal and package-free evidence |
+| OBJ-LIFE-09 | Install, upgrade, decommission, clean uninstall | PARTIAL | Importable package; approved in-database removal retires reverse-owned objects after decrypt-back; a package-free restarted application process performs native CRUD | Versioned upgrade/removal, external application evidence |
 | OBJ-DX-01 | Minimal model/query changes; one manifest and one attach | IMPLEMENTED | `compile_protection`, `attach`, CLI inspection | Unify status/plan/apply/remove entry points |
 | OBJ-DX-02 | Read-only `cryptalis doctor` with explicit UNKNOWN results | PARTIAL | Bounded database/declaration diagnostics | Implement the full doctor and provider/role coverage |
-| OBJ-DX-03 | Real FastAPI/SQLModel app plus a second independent app | PARTIAL | Synthetic Smolink demo; no real-app qualification in product | Run a pinned real app; add a second app |
+| OBJ-DX-03 | Real FastAPI/SQLModel app plus a second independent app | PARTIAL | Synthetic Smolink demo; in-repo independent three-model application (real FK, two tenants, zero-row protected table) completes the full lifecycle and a package-free restart; no web framework or external app | Run a pinned real application; add a second app |
 | OBJ-DX-04 | Normal ORM identity, loading, sessions, pooling, async | PARTIAL | Bounded sync/async adapter and search tests | Broader ORM/framework coverage |
 | OBJ-DX-05 | Complete quickstart, threat model, leakage, recovery docs | PARTIAL | README, architecture, security, lifecycle, walkthroughs | Keep docs tied to admitted APIs and evidence |
 | OBJ-PERF-01 | Continuous native vs protected latency/resource measurements | PARTIAL | Slice 3/4 profiles and million-row receipts | Cold/concurrent/tail/WAL/provider measurements |
@@ -100,8 +101,8 @@ Requirement text is abbreviated. The full definitions remain in the research
 
 1. Design and approve a restored protected-schema bring-up binding, because the current
    deployment target refuses a fresh cluster with `deployment_not_current`.
-2. Run the decrypt-back result through a real pinned application with Cryptalis imports
-   blocked, then repeat on a fresh PostgreSQL cluster.
+2. Run the same lifecycle through a pinned external application, then repeat it on a
+   fresh PostgreSQL cluster.
 3. Record the remaining metadata limits (physical column order, comments, statistics,
    storage, compression) and extend the fresh-cluster range (multi-table, faults).
 4. Continue correctness slices that protect the compatibility promise with native
