@@ -25,7 +25,8 @@ No objective is complete until its acceptance evidence and applicable gate pass.
   SQLAlchemy 2.1.3 and 2.0.51 profiles, psycopg 3.3.6, cryptography 50.0.2.
 - Implemented scope: text storage, exact equality, `IN`, tenant-scoped uniqueness,
   sync/async attachment, maintenance protection transition, in-place decrypt-back and
-  additive removal for that transition format, CF1 primitives, and a local development provider.
+  additive removal for that transition format, a fresh-cluster protected-backup recovery
+  harness, CF1 primitives, and a local development provider.
 - All seven qualification gates remain UNKNOWN.
 - Every protected type other than text, every advanced predicate, online migration,
   complete rotation, production KMS, and independent review remain open.
@@ -53,8 +54,8 @@ Requirement text is abbreviated. The full definitions remain in the research
 | OBJ-LIFE-02 | Resumable, atomic, byte-bounded backfill with verification | VERIFIED, bounded | Journal, advisory lock, chunks, crash/resume tests | Exact memory/WAL bounds remain host inputs |
 | OBJ-LIFE-03 | Near-zero-downtime migration with capture and catch-up | SPECIFIED | Maintenance pause fallback only | Design, review, and measure an online protocol |
 | OBJ-LIFE-04 | Parallel/adaptive migration without lost or duplicate work | SPECIFIED | None | Depends on OBJ-LIFE-03 |
-| OBJ-LIFE-05 | Decrypt-back current edits; preserve schema behavior; package-free exit | VERIFIED, bounded | `deprotection.py` implements `cryptalis.reverse/v1`: staged plaintext, verified backfill, transactional switch, recorded constraint/index/collation restoration, guarded activation, approved removal, and terminal-state assertions; seven lifecycle cases pass on both profiles | Fresh-cluster restore, real package-free application run, physical column order, comments/statistics/storage/compression, retained-native |
-| OBJ-LIFE-06 | Rollback, restore, stale pin refusal, RPO/RTO, disaster drills | PARTIAL | Older-snapshot and stale-pin refusals; reverse abort, pin/state ordering, corrupt-frame and disabled-guard refusals | Fresh-cluster and provider-outage drills |
+| OBJ-LIFE-05 | Decrypt-back current edits; preserve schema behavior; package-free exit | VERIFIED, bounded | `deprotection.py` implements `cryptalis.reverse/v1`: staged plaintext, verified backfill, transactional switch, recorded constraint/index/collation restoration, guarded activation, approved removal, and terminal-state assertions; seven lifecycle cases pass on both profiles | Restored-cluster bring-up/adoption, real package-free application run, physical column order, comments/statistics/storage/compression, retained-native |
+| OBJ-LIFE-06 | Rollback, restore, stale pin refusal, RPO/RTO, disaster drills | PARTIAL | Older-snapshot and stale-pin refusals; reverse abort, pin/state ordering, corrupt-frame and disabled-guard refusals; isolated-cluster plaintext and protected restore with frame recovery and loud authority refusal | Restored-cluster authority rebinding, fresh-cluster and provider-outage drills |
 | OBJ-LIFE-07 | Three separate rotation workflows | PARTIAL | Internal rewrap candidate and bounded payload-batch preparation, verified 2026-10-19 | Active-policy publication, rotation executor, search reindex, recovery proofs |
 | OBJ-LIFE-08 | Production KMS with outage/revocation/cost evidence | BLOCKED | Local development provider only | Authorized provider account and independent review |
 | OBJ-LIFE-09 | Install, upgrade, decommission, clean uninstall | PARTIAL | Importable package; approved in-database removal retires reverse-owned objects after decrypt-back; no `cryptalis remove` command | Versioned upgrade/removal and package-free evidence |
@@ -97,11 +98,12 @@ Requirement text is abbreviated. The full definitions remain in the research
 
 ## Next critical path
 
-1. Run the decrypt-back result through a real pinned application with Cryptalis imports
+1. Design and approve a restored protected-schema bring-up binding, because the current
+   deployment target refuses a fresh cluster with `deployment_not_current`.
+2. Run the decrypt-back result through a real pinned application with Cryptalis imports
    blocked, then repeat on a fresh PostgreSQL cluster.
-2. Prove a retained-backup reader/key route and record the remaining metadata limits
-   (physical column order, comments, statistics, storage, compression).
-3. Continue correctness slices that protect the compatibility promise with native
-   PostgreSQL oracles.
-4. Establish a second independent application baseline.
+3. Record the remaining metadata limits (physical column order, comments, statistics,
+   storage, compression) and extend the fresh-cluster range (multi-table, faults).
+4. Continue correctness slices that protect the compatibility promise with native
+   PostgreSQL oracles; establish a second independent application baseline.
 5. Keep every external review and provider item explicitly UNKNOWN.

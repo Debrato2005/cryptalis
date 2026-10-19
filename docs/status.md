@@ -8,6 +8,33 @@ No PostgreSQL/provider/runtime cell, production key provider, independent review
 VERIFIED below refers only to the named checks and their exact revisions.
 All other contract and promotion requirements are SPECIFIED. All seven full gates remain UNKNOWN.
 
+## Fresh-cluster protected-backup recovery: 2026-10-19
+
+**IMPLEMENTED:** `scripts/fresh_cluster_qualification.py` initializes a new PostgreSQL 16
+cluster, creates same-named roles and databases, and runs the recovery suite through the
+mandatory credential wrapper with a temporary HOME. `tests/test_fresh_cluster_export.py`
+writes a plaintext pre-protection dump, a protected dump after attached edits, and a
+manifest of expected values and retained artifacts. `tests/test_fresh_cluster_restore.py`
+runs only against the new cluster.
+
+**VERIFIED, isolated PostgreSQL 16.15 cluster:** the plaintext dump restores natively and
+matches the pre-protection rows. The protected dump restores with the same roles; the
+payload column is `bytea`; the runtime role reads ciphertext only; the retained key policy
+and descriptor recover every exact value (NULL, empty, Unicode, trailing space, edited,
+added) through both the product decoder and the independent decoder oracle. The restored
+journal cannot become current authority: `check_deployment` and reverse planning refuse
+with `deployment_not_current`, and `attach` refuses with `PolicyMismatch`.
+[Export](_reset/fresh-cluster-export-20261019.json) and
+[restore](_reset/fresh-cluster-restore-20261019.json) receipts record the wrapper runs.
+The full suites remain green with the qualification modules skipped outside the
+orchestrator: **1,299 passed, 2 skipped** on SQLAlchemy 2.1.3
+([receipt](_reset/fresh-cluster-full-sa21-20261019.json)) and **1,271 passed, 30 skipped**
+on 2.0.51 ([receipt](_reset/fresh-cluster-full-sa20-20261019.json)).
+
+**Limits:** the restored protected schema cannot yet be attached or reversed in the new
+cluster because the deployment binding includes the source database identity. Recovery is
+frame-level with retained keys, not a qualified bring-up path. G-LIFECYCLE remains UNKNOWN.
+
 ## In-place decrypt-back and removal: 2026-10-19
 
 **IMPLEMENTED:** `cryptalis.deprotection` adds `cryptalis.reverse/v1` for an admitted

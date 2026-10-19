@@ -223,6 +223,23 @@ reader proof, and the retained-native alternative remain UNKNOWN.
 Layout comparison and the decision not to promote retained-native are recorded in
 [the 2026-10-19 evaluation](../_reset/layout-evaluation-20261019.md).
 
+### Restored protected backups: 2026-10-19
+
+**VERIFIED, isolated PostgreSQL 16.15 cluster:** a protected `pg_dump` of one schema
+restores into a fresh cluster with the same role names and the recorded privileges.
+The runtime role observes `bytea` only. The retained key policy and descriptor recover
+every exact value through the product decoder and an independent decoder oracle.
+A restored journal is progress evidence, never restore authority: deployment checks and
+reverse planning refuse with `deployment_not_current`, and attachment refuses with
+`PolicyMismatch`. Receipts:
+[export](../_reset/fresh-cluster-export-20261019.json),
+[restore](../_reset/fresh-cluster-restore-20261019.json).
+
+**Open:** an approved bring-up path for a restored protected schema in a new cluster does
+not exist yet. The deployment binding includes the source database identity, so the host
+must authorize a new target binding before attach, query, or decrypt-back can run there.
+Until then, recovery is frame-level with retained keys and readers.
+
 Dropping columns does not erase dead tuples, WAL, backups, or host exports.
 PostgreSQL can also retain dropped-column bytes in existing heap tuples: `DROP COLUMN` hides the column from SQL,
 but does not immediately remove its stored data ([PostgreSQL 16 ALTER TABLE](https://www.postgresql.org/docs/16/sql-altertable.html)).
