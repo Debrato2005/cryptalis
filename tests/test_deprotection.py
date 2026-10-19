@@ -236,6 +236,77 @@ def test_metadata_is_restored_except_recorded_limits():
                 (app.schema, 'customer', 'name')).scalar_one() == 'C'
 
 
+def catalog_metadata(app):
+    with app.owner.connect() as c:
+        table = c.exec_driver_sql(
+            'SELECT pg_catalog.obj_description(t.oid) FROM pg_catalog.pg_class t '
+            'JOIN pg_catalog.pg_namespace n ON n.oid=t.relnamespace '
+            "WHERE n.nspname=%s AND t.relname='customer'", (app.schema,)).scalar_one()
+        columns = {row[0]: row[1:] for row in c.exec_driver_sql(
+            'SELECT a.attname, pg_catalog.col_description(t.oid, a.attnum), a.attstattarget, '
+            'a.attstorage, a.attacl::text FROM pg_catalog.pg_attribute a '
+            'JOIN pg_catalog.pg_class t ON t.oid=a.attrelid '
+            'JOIN pg_catalog.pg_namespace n ON n.oid=t.relnamespace '
+            "WHERE n.nspname=%s AND t.relname='customer' AND a.attnum>0 AND NOT a.attisdropped "
+            'ORDER BY a.attname', (app.schema,)).all()}
+        index = c.exec_driver_sql(
+            'SELECT i.reloptions::text, pg_catalog.obj_description(i.oid) FROM pg_catalog.pg_class i '
+            'JOIN pg_catalog.pg_namespace n ON n.oid=i.relnamespace '
+            "WHERE n.nspname=%s AND i.relname='native_name'", (app.schema,)).one()
+    return table, columns, index
+
+
+def test_unrecorded_column_metadata_is_lost_without_detection():
+    """Characterize the recorded gap. Invert this test when the metadata slice lands."""
+
+    def setup(c, schema, role):
+        c.exec_driver_sql(f'COMMENT ON TABLE "{schema}".customer IS \'table comment\'')
+        c.exec_driver_sql(f'COMMENT ON COLUMN "{schema}".customer.name IS \'protected column comment\'')
+        c.exec_driver_sql(f'COMMENT ON COLUMN "{schema}".customer.label IS \'plain column comment\'')
+        c.exec_driver_sql(f'ALTER TABLE "{schema}".customer ALTER COLUMN name SET STATISTICS 500')
+        c.exec_driver_sql(f'ALTER TABLE "{schema}".customer ALTER COLUMN name SET STORAGE EXTERNAL')
+        c.exec_driver_sql(f'ALTER INDEX "{schema}".native_name SET (fillfactor=70)')
+        c.exec_driver_sql(f'COMMENT ON INDEX "{schema}".native_name IS \'index comment\'')
+        c.exec_driver_sql(f'GRANT SELECT (name, label) ON "{schema}".customer TO "{role}"')
+
+    with application(setup=setup) as app:
+        before_table, before_columns, before_index = catalog_metadata(app)
+        assert before_table == 'table comment'
+        assert before_columns['label'][0] == 'plain column comment'
+        assert before_columns['label'][3] is not None
+        assert before_columns['name'][0] == 'protected column comment'
+        assert before_columns['name'][1] == 500
+        assert before_columns['name'][2] == 'e'
+        assert before_columns['name'][3] is not None
+        assert 'fillfactor=70' in before_index[0]
+        assert before_index[1] == 'index comment'
+        run(app)
+        publish(app)
+        plan = proposal(app)
+        reverse(app, plan, until='PLAINTEXT_PENDING')
+        active = consent(plan, 'PLAINTEXT_ACTIVATING')[0]
+        d.apply(plan, app.owner, keys=keys, pin=app_pin(plan, 'PLAINTEXT_ACTIVATING'),
+                approval=app.approval, consent=active, until='PLAINTEXT_ACTIVE')
+        removal = d.RemovalApproval(plan.target_id, plan.operation_id, plan.digest,
+                                    'synthetic package-free run', 'synthetic backup recovery', True)
+        d.remove(plan, app.owner, pin=app_pin(plan, 'REMOVING'), approval=app.approval,
+                 removal=removal, consent=active)
+        after_table, after_columns, after_index = catalog_metadata(app)
+        assert after_table == 'table comment'
+        assert after_columns['label'][0] == 'plain column comment'
+        assert after_columns['label'][3] == before_columns['label'][3]
+        assert after_columns['name'][0] is None
+        assert after_columns['name'][1] == -1
+        assert after_columns['name'][2] == 'x'
+        assert after_columns['name'][3] is None
+        assert 'fillfactor=70' in after_index[0]
+        assert after_index[1] is None
+        for model in app.plan.document['lock']['models']:
+            with app.owner.connect() as c:
+                current = app.m._facts(c, model)
+            assert d._metadata_diff(model['source_schema'], current) == []
+
+
 def test_plan_and_removal_refuse_unsafe_inputs():
     with application() as app:
         run(app)

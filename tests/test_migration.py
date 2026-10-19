@@ -84,7 +84,7 @@ def engine(variable):
 
 
 @contextmanager
-def application(rows=7, unique=True):
+def application(rows=7, unique=True, setup=None):
     owner, runtime = engine('CRYPTALIS_TEST_DATABASE_URL'), engine('CRYPTALIS_TEST_RUNTIME_DATABASE_URL')
     schema = 'cryptalis_migration_' + uuid4().hex
     mapping = registry(metadata=MetaData(schema=schema))
@@ -108,6 +108,8 @@ def application(rows=7, unique=True):
             c.execute(sql.SQL('REVOKE ALL ON SCHEMA {} FROM PUBLIC').format(sql.Identifier(schema)))
             c.execute(sql.SQL('GRANT USAGE ON SCHEMA {} TO {}').format(sql.Identifier(schema), sql.Identifier(role)))
             c.execute(sql.SQL('GRANT SELECT, INSERT, UPDATE, DELETE ON {}.customer TO {}').format(sql.Identifier(schema), sql.Identifier(role)))
+        if setup is not None:
+            with owner.begin() as c: setup(c, schema, role)
         source = {UUID(int=i+100): (TENANT, [None, '', '雪😀', 'e\u0301', 'é', 'exact', 'trailing '][i % 7] if i < 7 else f'user-{i}@example.invalid') for i in range(rows)}
         with sessionmaker(runtime)() as s:
             s.add_all(Customer(id=k, tenant_id=t, name=v, label=f'label-{k.int}') for k,(t,v) in source.items())

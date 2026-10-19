@@ -35,15 +35,16 @@ These catalog facts have no field in the lock:
 - Table options (`reloptions`, e.g. fillfactor/autovacuum), tablespace, table ACL,
   owner, and partition key/bounds.
 - Row-security policy definitions (`pg_policy`), rule bodies, trigger definitions,
-  constraint comments, and index comments/options/tablespace.
+  and index or constraint comments. Index storage options and tablespace are not separate
+  fields, but `pg_get_indexdef` embeds them in the recorded definition text.
 - Extended statistics objects (`pg_statistic_ext`).
 - Sequence parameters, ownership and ACLs for non-identity keys.
 
 Some of these survive in place because the table is not rebuilt: table comment, table
 options, table ACL, owner, policies, rules and triggers stay attached to the relation.
 Protected-column facts do not survive: the switch drops the source column and renames the
-staging column. The same loss applies to index comments/options/tablespace and constraint
-comments for recreated objects.
+staging column. The same loss applies to index and constraint comments for recreated
+objects. Index options survive because the recorded `CREATE INDEX` text carries them.
 
 ## Preservation matrix
 
@@ -52,7 +53,8 @@ comments for recreated objects.
 | Protected column type, collation, nullability | Restored | Restored |
 | Recorded constraints and indexes | Restored from definitions | Restored by `pg_dump` |
 | Protected-column comment/statistics/storage/compression/ACL | Lost | Lost |
-| Index comment/options/tablespace | Lost | Lost |
+| Index options and tablespace | Restored through the recorded definition | Restored by `pg_dump` |
+| Index and constraint comments | Lost | Lost |
 | Table comment/options/ACL/owner/RLS/rules/triggers | Kept | Kept by `pg_dump` |
 | Physical column position (`attnum`) | Changed | Changed |
 | Extended statistics | Not recorded (UNKNOWN) | Not recorded (UNKNOWN) |
@@ -64,8 +66,8 @@ dropped when protection switched, so the dump cannot carry its old column metada
 
 - A comment or storage setting on a protected column disappears without a typed refusal.
   Removal does not detect it because the lock never recorded it.
-- An index recreated from `pg_get_indexdef` loses options, tablespace and comment.
-  Definition text does not include them.
+- An index recreated from `pg_get_indexdef` keeps options and tablespace but loses its
+  comment. Definition text carries storage parameters, not comments.
 - A column statistics target loss changes planner behavior after decrypt-back.
 - The fresh-cluster path is stronger than in-place reverse, but it is not a fix for the
   protected-column loss.
@@ -109,16 +111,36 @@ not preserve `attnum` either.
 5. No entry is dropped silently. Unknown kinds have an explicit refusal or an opaque
    preserved form with a digest.
 
-## Recommended next experiment
+## Observed in the isolated probe: 2026-10-19
 
-Prototype in isolation, without product format changes:
+`tests/test_deprotection.py::test_unrecorded_column_metadata_is_lost_without_detection`
+builds a table with a table comment, a protected-column comment, a plain-column comment,
+a statistics target, external storage, a column ACL, an index comment and an index
+fillfactor. It protects and fully reverses the table, then reads the catalog again.
+The focused runs report **61 passed** for
+[SQLAlchemy 2.1.3](../_reset/metadata-gap-focused-sa21-20261019.json) and
+[SQLAlchemy 2.0.51](../_reset/metadata-gap-focused-sa20-20261019.json). The full suites
+report **1,307 passed, 2 skipped**
+([2.1.3](../_reset/metadata-gap-full-sa21-20261019.json)) and **1,279 passed, 30 skipped**
+([2.0.51](../_reset/metadata-gap-full-sa20-20261019.json)).
 
-1. Build a scratch table with comments, statistics targets, storage, compression, ACLs,
-   RLS and index options.
-2. Protect and reverse it with the current code.
-3. Capture `pg_dump --schema-only` and catalog diffs before and after.
-4. Record the exact lost facts and the statements that would restore them.
-5. Only then propose a lock version, canonical bytes, digests, and the reader matrix.
+Observed results:
+
+- Table comment, plain-column comment and plain-column ACL survive.
+- Protected-column comment, statistics target, storage setting and ACL are lost.
+- The index comment is lost. The index fillfactor survives because the recreated index
+  definition text carries it.
+- `_metadata_diff` reports no difference after the losses. The gap is silent.
+- A metadata change after plan compile is refused when it enters the recorded facts.
+  `ALTER INDEX ... SET (fillfactor=...)` changes the definition digest, and the executor
+  refuses with `source_schema_changed`.
+
+## Next steps
+
+1. Extend the probe to compression, RLS, rules, triggers, table options and partition
+   bounds; compression needs built-in lz4 support.
+2. Capture the lost facts at compile time and restore them in the reverse switch.
+3. Only then propose a lock version, canonical bytes, digests, and the reader matrix.
 
 ## Open questions
 
