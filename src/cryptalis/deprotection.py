@@ -13,9 +13,9 @@ statistics after this operation.
 Known limits, made explicit in removal approval:
 - Physical column order changes. The restored column occupies the payload
   slot. Positional ``SELECT *`` readers must adjust.
-- The transition lock does not record comments, statistics targets, storage
-  or compression settings. The compiler drops the original column before
-  those settings can be captured.
+- The transition lock does not record comments, statistics targets, storage,
+  compression settings or column grants. Protection planning and switches, and
+  reverse planning, refuse a protected column that carries them.
 """
 from contextlib import contextmanager
 from dataclasses import dataclass
@@ -220,6 +220,7 @@ def plan(source, engine, *, source_pin, keys, plaintext_runtime_role, backfill_r
                 (m._table(c, model),)).scalar_one()
             if ownership != source.document['target'][-1]:
                 raise m.TransitionFailure('maintenance_requires_table_owner', source.operation_id)
+            m._refuse_unrecorded_metadata(c, source, model)
         retired = _inventory(c, source, source, own=None)
         role = c.exec_driver_sql(
             'SELECT rolsuper, rolcreaterole, rolcreatedb, rolbypassrls, rolreplication, '
@@ -509,6 +510,7 @@ def _switch(c, p, state, keys):
     m._lock_tables(c, p)
     for model in p.document['lock']['models']:
         table = m._table(c, model)
+        m._refuse_unrecorded_metadata(c, p, model)
         for field in model['fields']:
             # No CASCADE: an unexpected dependency blocks the atomic switch.
             c.exec_driver_sql(f'ALTER TABLE {table} DROP COLUMN {m._quote(c, field["column"])}')

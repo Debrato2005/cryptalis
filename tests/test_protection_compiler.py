@@ -114,6 +114,25 @@ def snapshot(app):
     return columns, indexes, rows
 
 
+@pytest.mark.parametrize('statement, code', [
+    ("COMMENT ON COLUMN \"{schema}\".customer.email IS 'unsupported'", 'unsupported_protected_metadata'),
+    ('ALTER TABLE "{schema}".customer ALTER COLUMN email SET STATISTICS 100', 'unsupported_protected_metadata'),
+    ('ALTER TABLE "{schema}".customer ALTER COLUMN email SET STORAGE EXTERNAL', 'unsupported_protected_metadata'),
+    ('ALTER TABLE "{schema}".customer ALTER COLUMN email SET COMPRESSION pglz', 'unsupported_protected_metadata'),
+    ('GRANT SELECT (email) ON "{schema}".customer TO PUBLIC', 'unsupported_protected_metadata'),
+    ("COMMENT ON CONSTRAINT email_unique ON \"{schema}\".customer IS 'unsupported'", 'unsupported_recreated_metadata'),
+    ("COMMENT ON INDEX \"{schema}\".email_unique IS 'unsupported'", 'unsupported_recreated_metadata'),
+])
+def test_unrecorded_protected_metadata_is_refused(app, statement, code):
+    engine, mapping, _, schema = app
+    with engine.begin() as c:
+        c.execute(text(statement.format(schema=schema)))
+    with pytest.raises(PlanningRejected) as caught:
+        compile_app(app)
+    assert {issue.code for issue in caught.value.issues} == {code}
+    assert all(issue.remedy.startswith('Remove the') for issue in caught.value.issues)
+
+
 def test_native_schema_compiles_deterministically_without_effects(app):
     before = snapshot(app)
     plan = compile_app(app)

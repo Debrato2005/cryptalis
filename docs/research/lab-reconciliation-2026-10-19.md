@@ -60,9 +60,10 @@ The correct product response is one of two explicit choices:
 1. Capture and restore the metadata under a versioned, digest-bound artifact, or
 2. Refuse reverse before staging when the lock does not cover observed metadata.
 
-Option 2 is smaller and matches the explicit-failure policy. It needs a design decision
-because it turns a silent acceptance into a refusal for schemas that carry unrecorded
-protected-column metadata.
+Option 2 is smaller and matches the explicit-failure policy. This repository implemented
+option 2 on 2026-10-19 for protection planning and switches, and for reverse planning,
+without a lock change. Option 1
+(capture and restore) remains a reviewed format change.
 
 ## Other lab state
 
@@ -80,8 +81,8 @@ protected-column metadata.
 
 ## Next steps
 
-1. Decide option 1 or option 2 for unrecorded protected-column metadata. Prefer option 2
-   as an interim fail-closed guard.
+1. Keep option 2 as the interim fail-closed guard. Option 1 (capture and restore) needs a
+   reviewed format change.
 2. Extend the product probe to compression, RLS, rules, triggers and partition bounds.
 3. Re-check the lab at the next checkpoint. Promote nothing without independent review
    and the seven gates.

@@ -135,11 +135,31 @@ Observed results:
   `ALTER INDEX ... SET (fillfactor=...)` changes the definition digest, and the executor
   refuses with `source_schema_changed`.
 
+## Guard implemented: 2026-10-19
+
+Option 2 is implemented without a lock change. Protection planning refuses protected
+columns with a comment, non-default statistics target, storage or compression setting, or
+column grant, and refuses comments on constraints and indexes that it recreates. Reverse
+planning, the protection switch, and the reverse switch refuse the protected-column
+attributes when they appear after planning. The failure codes are
+`unsupported_protected_metadata` and `unsupported_recreated_metadata`; planning remedies
+say to remove the metadata.
+
+The former characterization test is now
+`test_surviving_metadata_is_preserved_through_decrypt_back`. Refusal evidence is in
+`tests/test_protection_compiler.py`, `tests/test_deprotection.py` and
+`tests/test_migration.py`. Focused runs report **128 passed** for
+[SQLAlchemy 2.1.3](../_reset/metadata-refusal-focused-sa21-20261019.json) and
+[SQLAlchemy 2.0.51](../_reset/metadata-refusal-focused-sa20-20261019.json). The full suites
+report **1,316 passed, 2 skipped**
+([2.1.3](../_reset/metadata-refusal-full-sa21-20261019.json)) and **1,288 passed, 30 skipped**
+([2.0.51](../_reset/metadata-refusal-full-sa20-20261019.json)).
+
 ## Next steps
 
 1. Extend the probe to compression, RLS, rules, triggers, table options and partition
    bounds; compression needs built-in lz4 support.
-2. Capture the lost facts at compile time and restore them in the reverse switch.
+2. Capture the refused facts at compile time and restore them in the reverse switch.
 3. Only then propose a lock version, canonical bytes, digests, and the reader matrix.
 
 ## Open questions

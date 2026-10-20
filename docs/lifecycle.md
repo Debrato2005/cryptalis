@@ -216,10 +216,12 @@ The cases cover edited and deleted rows, a row added while protected, wrong cust
 corrupt frames, disabled guards, lost replies, abort, metadata restoration, and unsafe
 plan/removal refusals. Counts are not gate evidence.
 
-**Limits:** in-place reverse cannot restore physical column order (`attnum`), and the
-existing compiler lock records no comments, statistics targets, storage, or compression
-settings. Fresh-cluster restore, a real package-free application run, retained-backup
-reader proof, and the retained-native alternative remain UNKNOWN.
+**Limits:** in-place reverse cannot restore physical column order (`attnum`). The lock
+records no comments, statistics targets, storage, compression settings or column grants,
+so protection planning and switches, and reverse planning, refuse a protected column that
+carries them, and protection refuses comments on constraints and indexes it recreates. Fresh-cluster
+restore, a real package-free application run, retained-backup reader proof, and the
+retained-native alternative remain UNKNOWN.
 Layout comparison and the decision not to promote retained-native are recorded in
 [the 2026-10-19 evaluation](../_reset/layout-evaluation-20261019.md).
 

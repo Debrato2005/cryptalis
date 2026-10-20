@@ -216,6 +216,66 @@ def _schema_facts(connection, schema: str, table: str):
             "_relation_names": {r["name"] for r in relation_names}}
 
 
+def unrecorded_column_metadata(connection, schema, table, names):
+    """Return (column, kinds) for attribute metadata the lock does not record."""
+    wanted = set(names)
+    observed = []
+    for column in _rows(connection, """
+        SELECT a.attname AS name, a.attstattarget AS statistics, a.attstorage AS storage,
+               a.attcompression AS compression, a.attacl IS NOT NULL AS has_acl,
+               pg_catalog.col_description(a.attrelid, a.attnum) AS comment
+        FROM pg_catalog.pg_attribute a
+        JOIN pg_catalog.pg_class t ON t.oid=a.attrelid
+        JOIN pg_catalog.pg_namespace n ON n.oid=t.relnamespace
+        WHERE n.nspname=:schema AND t.relname=:table AND a.attnum>0 AND NOT a.attisdropped
+    """, schema=schema, table=table):
+        if column["name"] not in wanted:
+            continue
+        kinds = [kind for kind, present in (
+            ("comment", column["comment"] is not None),
+            ("statistics target", column["statistics"] != -1),
+            ("storage setting", column["storage"] != "x"),
+            ("compression setting", column["compression"] != ""),
+            ("column grant", column["has_acl"])) if present]
+        if kinds:
+            observed.append((column["name"], kinds))
+    return observed
+
+
+def _unrecorded_metadata_issues(connection, schema, table, compiled, issues):
+    fields = compiled["fields"]
+    protected = {field["column"]: field for field in fields}
+    for column, observed in unrecorded_column_metadata(connection, schema, table, protected):
+        issues.append(Issue("unsupported_protected_metadata",
+                            f"{compiled['model']}.{protected[column]['name']}",
+                            "Remove the " + ", ".join(observed) + " from the protected column "
+                            "before planning; Cryptalis does not record it."))
+    constraints = sorted({item["name"] for field in fields for item in field["original"]["constraints"]})
+    indexes = sorted({item["name"] for field in fields for item in field["original"]["indexes"]} | set(constraints))
+    if not constraints and not indexes:
+        return
+    commented_constraints = {row["name"] for row in _rows(connection, """
+        SELECT co.conname AS name FROM pg_catalog.pg_constraint co
+        JOIN pg_catalog.pg_class t ON t.oid=co.conrelid
+        JOIN pg_catalog.pg_namespace n ON n.oid=t.relnamespace
+        WHERE n.nspname=:schema AND t.relname=:table
+          AND pg_catalog.obj_description(co.oid, 'pg_constraint') IS NOT NULL
+    """, schema=schema, table=table)}
+    commented_indexes = {row["name"] for row in _rows(connection, """
+        SELECT i.relname AS name FROM pg_catalog.pg_class i
+        JOIN pg_catalog.pg_namespace n ON n.oid=i.relnamespace
+        WHERE n.nspname=:schema AND pg_catalog.obj_description(i.oid, 'pg_class') IS NOT NULL
+    """, schema=schema)}
+    for name in sorted(commented_constraints & set(constraints)):
+        issues.append(Issue("unsupported_recreated_metadata", f"{compiled['model']}.{name}",
+                            "Remove the constraint comment before planning; Cryptalis recreates "
+                            "the constraint without comments."))
+    for name in sorted(commented_indexes & set(indexes)):
+        issues.append(Issue("unsupported_recreated_metadata", f"{compiled['model']}.{name}",
+                            "Remove the index comment before planning; Cryptalis recreates "
+                            "the index without comments."))
+
+
 def _id_codec(column, actual):
     if actual["type_schema"] != "pg_catalog":
         return None
@@ -717,6 +777,7 @@ def compile_protection(raw: bytes, mapping: Registry, engine: Engine, *,
                     continue
                 compiled = _compile_model(model, mapper, facts, issues, schema)
                 if compiled:
+                    _unrecorded_metadata_issues(connection, schema, table.name, compiled, issues)
                     for field in compiled["fields"]:
                         field["descriptor"]["domain_id"] = str(declaration.domain_id)
                         field["descriptor_digest"] = _digest(field["descriptor"])

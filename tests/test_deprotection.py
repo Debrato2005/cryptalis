@@ -256,30 +256,38 @@ def catalog_metadata(app):
     return table, columns, index
 
 
-def test_unrecorded_column_metadata_is_lost_without_detection():
-    """Characterize the recorded gap. Invert this test when the metadata slice lands."""
+def test_reverse_refuses_metadata_added_while_protected():
+    import cryptalis.migration as migration
+    with application() as app:
+        run(app)
+        publish(app)
+        with app.owner.begin() as c:
+            c.exec_driver_sql(f'COMMENT ON COLUMN "{app.schema}".customer.name IS \'late comment\'')
+            c.exec_driver_sql(f'ALTER TABLE "{app.schema}".customer ALTER COLUMN name SET STATISTICS 100')
+        with pytest.raises(migration.TransitionFailure) as caught:
+            proposal(app)
+        assert caught.value.code == 'unsupported_protected_metadata'
+
+
+def test_surviving_metadata_is_preserved_through_decrypt_back():
+    """Metadata outside the protected column survives the recorded definitions."""
 
     def setup(c, schema, role):
         c.exec_driver_sql(f'COMMENT ON TABLE "{schema}".customer IS \'table comment\'')
-        c.exec_driver_sql(f'COMMENT ON COLUMN "{schema}".customer.name IS \'protected column comment\'')
         c.exec_driver_sql(f'COMMENT ON COLUMN "{schema}".customer.label IS \'plain column comment\'')
-        c.exec_driver_sql(f'ALTER TABLE "{schema}".customer ALTER COLUMN name SET STATISTICS 500')
-        c.exec_driver_sql(f'ALTER TABLE "{schema}".customer ALTER COLUMN name SET STORAGE EXTERNAL')
         c.exec_driver_sql(f'ALTER INDEX "{schema}".native_name SET (fillfactor=70)')
-        c.exec_driver_sql(f'COMMENT ON INDEX "{schema}".native_name IS \'index comment\'')
-        c.exec_driver_sql(f'GRANT SELECT (name, label) ON "{schema}".customer TO "{role}"')
+        c.exec_driver_sql(f'GRANT SELECT (label) ON "{schema}".customer TO "{role}"')
 
     with application(setup=setup) as app:
         before_table, before_columns, before_index = catalog_metadata(app)
         assert before_table == 'table comment'
         assert before_columns['label'][0] == 'plain column comment'
         assert before_columns['label'][3] is not None
-        assert before_columns['name'][0] == 'protected column comment'
-        assert before_columns['name'][1] == 500
-        assert before_columns['name'][2] == 'e'
-        assert before_columns['name'][3] is not None
+        assert before_columns['name'][0] is None
+        assert before_columns['name'][1] == -1
+        assert before_columns['name'][2] == 'x'
+        assert before_columns['name'][3] is None
         assert 'fillfactor=70' in before_index[0]
-        assert before_index[1] == 'index comment'
         run(app)
         publish(app)
         plan = proposal(app)

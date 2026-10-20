@@ -18,7 +18,8 @@ from sqlalchemy.exc import SQLAlchemyError
 
 from cryptalis.crypto.cf1 import FieldDescriptor, seal_text, open_text
 from cryptalis.crypto.keys import CryptoFailure, Keyring
-from cryptalis.manifest.compiler import compile_protection, _schema_facts, _canonical, _previous_lock
+from cryptalis.manifest.compiler import (compile_protection, _schema_facts, _canonical, _previous_lock,
+                                          unrecorded_column_metadata)
 from cryptalis.manifest.parser import decode_manifest_json
 
 JOURNAL = '_cryptalis_journal'
@@ -112,6 +113,12 @@ def _facts(c, model):
     facts.pop('_relation_names')
     for item in facts['constraints'] + facts['indexes']: item.pop('definition')
     return facts
+
+
+def _refuse_unrecorded_metadata(c, p, model):
+    protected = [field['column'] for field in model['fields']]
+    if unrecorded_column_metadata(c, model['schema'], model['table'], protected):
+        raise TransitionFailure('unsupported_protected_metadata', p.operation_id)
 
 
 def _target(c):
@@ -402,6 +409,7 @@ def _expand(c,p):
     _lock_tables(c,p)
     for model in p.document['lock']['models']:
         if _facts(c,model)!=model['source_schema']: raise TransitionFailure('source_schema_changed',p.operation_id)
+        _refuse_unrecorded_metadata(c,p,model)
     c.exec_driver_sql(f'CREATE TABLE {_journal(c,p)} (operation_id uuid PRIMARY KEY, plan_digest text NOT NULL, state jsonb NOT NULL)')
     c.exec_driver_sql(f'REVOKE ALL ON {_journal(c,p)} FROM PUBLIC')
     c.exec_driver_sql(f'GRANT SELECT ON {_journal(c,p)} TO {_quote(c,p.document["runtime_role"])}')
@@ -511,6 +519,7 @@ def _switch(c,p,state,keys):
     state['verification']=digests
     _lock_tables(c,p)
     for model in p.document['lock']['models']:
+        _refuse_unrecorded_metadata(c,p,model)
         for f in model['fields']:
             table=_table(c,model)
             # No CASCADE: an unexpected dependency blocks the atomic switch.

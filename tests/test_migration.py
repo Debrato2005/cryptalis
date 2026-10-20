@@ -438,6 +438,32 @@ def test_plan_reuses_compiler_unsafe_configuration_refusals(unsafe):
             assert c.exec_driver_sql('SELECT to_regclass(%s)',(f'"{app.schema}"._cryptalis_journal',)).scalar_one() is None
 
 
+def test_metadata_added_after_planning_is_refused_before_effects():
+    with application() as app:
+        with app.owner.begin() as c:
+            c.exec_driver_sql(f'COMMENT ON COLUMN "{app.schema}".customer.name IS \'late comment\'')
+        with pytest.raises(app.m.TransitionFailure) as caught:
+            run(app, 'EXPANDED')
+        assert caught.value.code == 'unsupported_protected_metadata'
+        with app.owner.connect() as c:
+            assert c.exec_driver_sql(
+                "SELECT count(*) FROM information_schema.columns "
+                "WHERE table_schema=%s AND column_name LIKE %s",
+                (app.schema, '_cryptalis_%')).scalar_one() == 0
+    with application() as app:
+        run(app, 'EXPANDED')
+        with app.owner.begin() as c:
+            c.exec_driver_sql(f'ALTER TABLE "{app.schema}".customer ALTER COLUMN name SET STATISTICS 100')
+        with pytest.raises(app.m.TransitionFailure) as caught:
+            run(app, 'PENDING')
+        assert caught.value.code == 'unsupported_protected_metadata'
+        with app.owner.connect() as c:
+            names = {row[0] for row in c.exec_driver_sql(
+                "SELECT column_name FROM information_schema.columns "
+                "WHERE table_schema=%s AND table_name='customer'", (app.schema,))}
+        assert {'name', '_cryptalis_' + FIELD_ID.hex} <= names
+
+
 def test_source_schema_change_and_key_policy_change_block_resume():
     with application() as app:
         run(app,'EXPANDED')
