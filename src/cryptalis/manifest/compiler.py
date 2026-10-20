@@ -223,6 +223,7 @@ def unrecorded_column_metadata(connection, schema, table, names):
     for column in _rows(connection, """
         SELECT a.attname AS name, a.attstattarget AS statistics, a.attstorage AS storage,
                a.attcompression AS compression, a.attacl IS NOT NULL AS has_acl,
+               a.attoptions IS NOT NULL AS has_options,
                pg_catalog.col_description(a.attrelid, a.attnum) AS comment
         FROM pg_catalog.pg_attribute a
         JOIN pg_catalog.pg_class t ON t.oid=a.attrelid
@@ -236,10 +237,25 @@ def unrecorded_column_metadata(connection, schema, table, names):
             ("statistics target", column["statistics"] != -1),
             ("storage setting", column["storage"] != "x"),
             ("compression setting", column["compression"] != ""),
-            ("column grant", column["has_acl"])) if present]
+            ("column grant", column["has_acl"]),
+            ("column option", column["has_options"])) if present]
         if kinds:
             observed.append((column["name"], kinds))
     return observed
+
+
+def protected_extended_statistics(connection, schema, table, names):
+    """Return extended-statistics names that reference a protected column."""
+    wanted = set(names)
+    return sorted({row["name"] for row in _rows(connection, """
+        SELECT DISTINCT s.stxname AS name, a.attname AS column
+        FROM pg_catalog.pg_statistic_ext s
+        JOIN pg_catalog.pg_class t ON t.oid=s.stxrelid
+        JOIN pg_catalog.pg_namespace n ON n.oid=t.relnamespace
+        JOIN pg_catalog.pg_attribute a ON a.attrelid=t.oid
+             AND a.attnum = ANY (s.stxkeys::int2[])
+        WHERE n.nspname=:schema AND t.relname=:table
+    """, schema=schema, table=table) if row["column"] in wanted})
 
 
 def _unrecorded_metadata_issues(connection, schema, table, compiled, issues):
@@ -250,6 +266,10 @@ def _unrecorded_metadata_issues(connection, schema, table, compiled, issues):
                             f"{compiled['model']}.{protected[column]['name']}",
                             "Remove the " + ", ".join(observed) + " from the protected column "
                             "before planning; Cryptalis does not record it."))
+    for name in protected_extended_statistics(connection, schema, table, protected):
+        issues.append(Issue("unsupported_dependency", f"{compiled['model']}.{name}",
+                            "Drop the extended statistics that reference the protected column "
+                            "before planning; Cryptalis does not recreate them."))
     constraints = sorted({item["name"] for field in fields for item in field["original"]["constraints"]})
     indexes = sorted({item["name"] for field in fields for item in field["original"]["indexes"]} | set(constraints))
     if not constraints and not indexes:

@@ -119,6 +119,7 @@ def snapshot(app):
     ('ALTER TABLE "{schema}".customer ALTER COLUMN email SET STATISTICS 100', 'unsupported_protected_metadata'),
     ('ALTER TABLE "{schema}".customer ALTER COLUMN email SET STORAGE EXTERNAL', 'unsupported_protected_metadata'),
     ('ALTER TABLE "{schema}".customer ALTER COLUMN email SET COMPRESSION pglz', 'unsupported_protected_metadata'),
+    ('ALTER TABLE "{schema}".customer ALTER COLUMN email SET (n_distinct=10)', 'unsupported_protected_metadata'),
     ('GRANT SELECT (email) ON "{schema}".customer TO PUBLIC', 'unsupported_protected_metadata'),
     ("COMMENT ON CONSTRAINT email_unique ON \"{schema}\".customer IS 'unsupported'", 'unsupported_recreated_metadata'),
     ("COMMENT ON INDEX \"{schema}\".email_unique IS 'unsupported'", 'unsupported_recreated_metadata'),
@@ -131,6 +132,18 @@ def test_unrecorded_protected_metadata_is_refused(app, statement, code):
         compile_app(app)
     assert {issue.code for issue in caught.value.issues} == {code}
     assert all(issue.remedy.startswith('Remove the') for issue in caught.value.issues)
+
+
+def test_extended_statistics_on_protected_column_are_refused(app):
+    engine, mapping, _, schema = app
+    with engine.begin() as c:
+        c.execute(text(f'CREATE STATISTICS "{schema}".email_stats (ndistinct) '
+                       f'ON email, note FROM "{schema}".customer'))
+    with pytest.raises(PlanningRejected) as caught:
+        compile_app(app)
+    issues = [issue for issue in caught.value.issues if issue.code == 'unsupported_dependency']
+    assert [issue.location for issue in issues] == ['Customer.email_stats']
+    assert 'extended statistics' in issues[0].remedy
 
 
 def test_native_schema_compiles_deterministically_without_effects(app):

@@ -269,6 +269,19 @@ def test_reverse_refuses_metadata_added_while_protected():
         assert caught.value.code == 'unsupported_protected_metadata'
 
 
+def test_reverse_refuses_extended_statistics_on_protected_column():
+    import cryptalis.migration as migration
+    with application() as app:
+        run(app)
+        publish(app)
+        with app.owner.begin() as c:
+            c.exec_driver_sql(f'CREATE STATISTICS "{app.schema}".late_stats '
+                              f'(ndistinct) ON name, label FROM "{app.schema}".customer')
+        with pytest.raises(migration.TransitionFailure) as caught:
+            proposal(app)
+        assert caught.value.code == 'unsupported_dependency'
+
+
 def test_surviving_metadata_is_preserved_through_decrypt_back():
     """Metadata outside the protected column survives the recorded definitions."""
 
@@ -277,6 +290,9 @@ def test_surviving_metadata_is_preserved_through_decrypt_back():
         c.exec_driver_sql(f'COMMENT ON COLUMN "{schema}".customer.label IS \'plain column comment\'')
         c.exec_driver_sql(f'ALTER INDEX "{schema}".native_name SET (fillfactor=70)')
         c.exec_driver_sql(f'GRANT SELECT (label) ON "{schema}".customer TO "{role}"')
+        c.exec_driver_sql(f'CREATE STATISTICS "{schema}".label_stats (ndistinct) '
+                          f'ON label, tenant_id FROM "{schema}".customer')
+        c.exec_driver_sql(f'ALTER TABLE "{schema}".customer SET (autovacuum_enabled=false)')
 
     with application(setup=setup) as app:
         before_table, before_columns, before_index = catalog_metadata(app)
@@ -288,6 +304,16 @@ def test_surviving_metadata_is_preserved_through_decrypt_back():
         assert before_columns['name'][2] == 'x'
         assert before_columns['name'][3] is None
         assert 'fillfactor=70' in before_index[0]
+        with app.owner.connect() as c:
+            before_stats = c.exec_driver_sql(
+                'SELECT count(*) FROM pg_catalog.pg_statistic_ext '
+                'WHERE stxrelid=pg_catalog.to_regclass(%s)',
+                (f'{app.schema}.customer',)).scalar_one()
+            before_options = c.exec_driver_sql(
+                'SELECT reloptions::text FROM pg_catalog.pg_class '
+                'WHERE oid=pg_catalog.to_regclass(%s)',
+                (f'{app.schema}.customer',)).scalar_one()
+        assert before_stats == 1
         run(app)
         publish(app)
         plan = proposal(app)
@@ -309,6 +335,15 @@ def test_surviving_metadata_is_preserved_through_decrypt_back():
         assert after_columns['name'][3] is None
         assert 'fillfactor=70' in after_index[0]
         assert after_index[1] is None
+        with app.owner.connect() as c:
+            assert c.exec_driver_sql(
+                'SELECT count(*) FROM pg_catalog.pg_statistic_ext '
+                'WHERE stxrelid=pg_catalog.to_regclass(%s)',
+                (f'{app.schema}.customer',)).scalar_one() == before_stats
+            assert c.exec_driver_sql(
+                'SELECT reloptions::text FROM pg_catalog.pg_class '
+                'WHERE oid=pg_catalog.to_regclass(%s)',
+                (f'{app.schema}.customer',)).scalar_one() == before_options
         for model in app.plan.document['lock']['models']:
             with app.owner.connect() as c:
                 current = app.m._facts(c, model)

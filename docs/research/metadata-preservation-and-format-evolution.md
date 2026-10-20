@@ -31,7 +31,7 @@ recorded definitions. Other columns are not rebuilt. Removal compares
 These catalog facts have no field in the lock:
 
 - Column comment, statistics target (`attstattarget`), storage (`attstorage`),
-  compression (`attcompression`), column ACL (`attacl`).
+  compression (`attcompression`), column ACL (`attacl`), column options (`attoptions`).
 - Table options (`reloptions`, e.g. fillfactor/autovacuum), tablespace, table ACL,
   owner, and partition key/bounds.
 - Row-security policy definitions (`pg_policy`), rule bodies, trigger definitions,
@@ -41,7 +41,8 @@ These catalog facts have no field in the lock:
 - Sequence parameters, ownership and ACLs for non-identity keys.
 
 Some of these survive in place because the table is not rebuilt: table comment, table
-options, table ACL, owner, policies, rules and triggers stay attached to the relation.
+options, table ACL, and owner stay attached to the relation. Admission refuses RLS,
+rules, user triggers, inheritance and partitioning, so they never reach a transition.
 Protected-column facts do not survive: the switch drops the source column and renames the
 staging column. The same loss applies to index and constraint comments for recreated
 objects. Index options survive because the recorded `CREATE INDEX` text carries them.
@@ -52,12 +53,13 @@ objects. Index options survive because the recorded `CREATE INDEX` text carries 
 |---|---|---|
 | Protected column type, collation, nullability | Restored | Restored |
 | Recorded constraints and indexes | Restored from definitions | Restored by `pg_dump` |
-| Protected-column comment/statistics/storage/compression/ACL | Lost | Lost |
+| Protected-column comment/statistics/storage/compression/ACL/options | Lost; refused at protection | Lost |
 | Index options and tablespace | Restored through the recorded definition | Restored by `pg_dump` |
-| Index and constraint comments | Lost | Lost |
-| Table comment/options/ACL/owner/RLS/rules/triggers | Kept | Kept by `pg_dump` |
+| Index and constraint comments | Lost; refused at protection | Lost |
+| Table comment/options/ACL/owner | Kept | Kept by `pg_dump` |
+| RLS, rules, user triggers, inheritance, partitioning | Refused at protection | Not applicable |
 | Physical column position (`attnum`) | Changed | Changed |
-| Extended statistics | Not recorded (UNKNOWN) | Not recorded (UNKNOWN) |
+| Extended statistics on a protected column | Refused at protection | Not applicable |
 
 The protected dump carries `bytea` under the protected column name. The source column was
 dropped when protection switched, so the dump cannot carry its old column metadata.
@@ -135,30 +137,46 @@ Observed results:
   `ALTER INDEX ... SET (fillfactor=...)` changes the definition digest, and the executor
   refuses with `source_schema_changed`.
 
+## Extended statistics and column options: 2026-10-19
+
+Two further silent losses were found after the guard landed:
+
+- `ALTER TABLE ... ALTER COLUMN ... SET (n_distinct=...)` writes `attoptions`. The
+  protection switch loses it. The first probe did not inspect `attoptions`.
+- A `pg_statistic_ext` object that references a protected column is dropped by the
+  protection switch with no error and no `_metadata_diff`. A probe with
+  `CREATE STATISTICS ... ON name, label` reached `PENDING` and the statistics object was
+  gone. PostgreSQL requires at least two columns per extended statistics object.
+
+The guard now refuses both. Extended statistics use `unsupported_dependency`; column
+options use `unsupported_protected_metadata`. The positive case creates extended
+statistics on a plain column and table options; both survive decryption and removal.
+
 ## Guard implemented: 2026-10-19
 
 Option 2 is implemented without a lock change. Protection planning refuses protected
-columns with a comment, non-default statistics target, storage or compression setting, or
-column grant, and refuses comments on constraints and indexes that it recreates. Reverse
-planning, the protection switch, and the reverse switch refuse the protected-column
-attributes when they appear after planning. The failure codes are
-`unsupported_protected_metadata` and `unsupported_recreated_metadata`; planning remedies
-say to remove the metadata.
+columns with a comment, non-default statistics target, storage or compression setting,
+column grant or column option, and refuses comments on constraints and indexes that it
+recreates and extended statistics that reference a protected column. Reverse planning,
+the protection switch, and the reverse switch refuse the attributes and statistics when
+they appear after planning. The failure codes are `unsupported_protected_metadata`,
+`unsupported_recreated_metadata` and `unsupported_dependency`; planning remedies say to
+remove the metadata or object.
 
 The former characterization test is now
 `test_surviving_metadata_is_preserved_through_decrypt_back`. Refusal evidence is in
 `tests/test_protection_compiler.py`, `tests/test_deprotection.py` and
-`tests/test_migration.py`. Focused runs report **128 passed** for
+`tests/test_migration.py`. Focused runs report **131 passed** for
 [SQLAlchemy 2.1.3](../_reset/metadata-refusal-focused-sa21-20261019.json) and
 [SQLAlchemy 2.0.51](../_reset/metadata-refusal-focused-sa20-20261019.json). The full suites
-report **1,316 passed, 2 skipped**
-([2.1.3](../_reset/metadata-refusal-full-sa21-20261019.json)) and **1,288 passed, 30 skipped**
+report **1,319 passed, 2 skipped**
+([2.1.3](../_reset/metadata-refusal-full-sa21-20261019.json)) and **1,291 passed, 30 skipped**
 ([2.0.51](../_reset/metadata-refusal-full-sa20-20261019.json)).
 
 ## Next steps
 
-1. Extend the probe to compression, RLS, rules, triggers, table options and partition
-   bounds; compression needs built-in lz4 support.
+1. Probe tablespace moves and sequence metadata; compression, column options, RLS,
+   rules, triggers and partitioning are refused, and table options survive.
 2. Capture the refused facts at compile time and restore them in the reverse switch.
 3. Only then propose a lock version, canonical bytes, digests, and the reader matrix.
 

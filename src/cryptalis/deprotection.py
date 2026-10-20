@@ -14,8 +14,9 @@ Known limits, made explicit in removal approval:
 - Physical column order changes. The restored column occupies the payload
   slot. Positional ``SELECT *`` readers must adjust.
 - The transition lock does not record comments, statistics targets, storage,
-  compression settings or column grants. Protection planning and switches, and
-  reverse planning, refuse a protected column that carries them.
+  compression settings, column grants or column options. Protection planning and
+  switches, and reverse planning, refuse a protected column that carries them, and
+  extended statistics that reference it.
 """
 from contextlib import contextmanager
 from dataclasses import dataclass

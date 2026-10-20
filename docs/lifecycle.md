@@ -217,9 +217,10 @@ corrupt frames, disabled guards, lost replies, abort, metadata restoration, and 
 plan/removal refusals. Counts are not gate evidence.
 
 **Limits:** in-place reverse cannot restore physical column order (`attnum`). The lock
-records no comments, statistics targets, storage, compression settings or column grants,
-so protection planning and switches, and reverse planning, refuse a protected column that
-carries them, and protection refuses comments on constraints and indexes it recreates. Fresh-cluster
+records no comments, statistics targets, storage, compression settings, column grants or
+column options, so protection planning and switches, and reverse planning, refuse a
+protected column that carries them. Protection also refuses comments on constraints and
+indexes it recreates and extended statistics that reference a protected column. Fresh-cluster
 restore, a real package-free application run, retained-backup reader proof, and the
 retained-native alternative remain UNKNOWN.
 Layout comparison and the decision not to promote retained-native are recorded in

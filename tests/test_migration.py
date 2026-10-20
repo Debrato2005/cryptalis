@@ -462,6 +462,14 @@ def test_metadata_added_after_planning_is_refused_before_effects():
                 "SELECT column_name FROM information_schema.columns "
                 "WHERE table_schema=%s AND table_name='customer'", (app.schema,))}
         assert {'name', '_cryptalis_' + FIELD_ID.hex} <= names
+    with application() as app:
+        run(app, 'EXPANDED')
+        with app.owner.begin() as c:
+            c.exec_driver_sql(f'CREATE STATISTICS "{app.schema}".late_stats '
+                              f'(ndistinct) ON name, label FROM "{app.schema}".customer')
+        with pytest.raises(app.m.TransitionFailure) as caught:
+            run(app, 'PENDING')
+        assert caught.value.code == 'unsupported_dependency'
 
 
 def test_source_schema_change_and_key_policy_change_block_resume():
