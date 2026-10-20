@@ -15,8 +15,8 @@ Known limits, made explicit in removal approval:
   slot. Positional ``SELECT *`` readers must adjust.
 - The transition lock does not record comments, statistics targets, storage,
   compression settings, column grants or column options. Protection planning and
-  switches, and reverse planning, refuse a protected column that carries them, and
-  extended statistics that reference it.
+  switches, and reverse planning, refuse a protected column that carries them,
+  extended statistics that reference it, and sequences it owns.
 """
 from contextlib import contextmanager
 from dataclasses import dataclass

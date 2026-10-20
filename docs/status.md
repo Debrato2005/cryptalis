@@ -14,27 +14,30 @@ All other contract and promotion requirements are SPECIFIED. All seven full gate
 **IMPLEMENTED:** protection planning refuses a protected column that carries a comment,
 a non-default statistics target, a non-default storage or compression setting, a column
 grant, or a column option (`attoptions`, for example `n_distinct`). It also refuses
-comments on constraints and indexes that it recreates, and extended statistics that
-reference a protected column. Reverse planning, the protection switch, and the reverse
-switch refuse the same attributes and statistics when they appear after planning. The
-failure codes are `unsupported_protected_metadata`, `unsupported_recreated_metadata` and
+comments on constraints and indexes that it recreates, extended statistics that
+reference a protected column, and sequences owned by a protected column. Reverse
+planning, the protection switch, and the reverse switch refuse the same attributes and
+objects when they appear after planning. The failure codes are
+`unsupported_protected_metadata`, `unsupported_recreated_metadata` and
 `unsupported_dependency`; planning remedies say to remove the metadata or object. The
 lock format does not change.
 
-**VERIFIED, local PostgreSQL 16.15 cell:** nine protection refusal cases (six column
-attributes, two recreated-object comments, one extended-statistics object), two reverse
-refusal cases, a late-metadata executor case, and a positive preservation case pass on
-SQLAlchemy 2.1.3 and 2.0.51. Focused runs report **131 passed** on each cell
+**VERIFIED, local PostgreSQL 16.15 cell:** ten protection refusal cases (six column
+attributes, two recreated-object comments, one extended-statistics object, one owned
+sequence), three reverse refusal cases, an executor-refusal case, and a positive
+preservation case pass on SQLAlchemy 2.1.3 and 2.0.51. Focused runs report **133 passed**
+on each cell
 ([2.1.3](_reset/metadata-refusal-focused-sa21-20261019.json),
 [2.0.51](_reset/metadata-refusal-focused-sa20-20261019.json)). Full suites report
-**1,319 passed, 2 skipped** ([2.1.3](_reset/metadata-refusal-full-sa21-20261019.json))
-and **1,291 passed, 30 skipped** ([2.0.51](_reset/metadata-refusal-full-sa20-20261019.json)).
+**1,321 passed, 2 skipped** ([2.1.3](_reset/metadata-refusal-full-sa21-20261019.json))
+and **1,293 passed, 30 skipped** ([2.0.51](_reset/metadata-refusal-full-sa20-20261019.json)).
 
 Metadata capture and restoration remain unimplemented; the in-place switch still changes
 the physical column order.
 
-**UNKNOWN:** tablespace moves, sequence metadata, and whether a pinned external
-application depends on the refused attributes.
+**UNKNOWN:** tablespace moves (the local cell has no additional tablespace and the
+least-privilege owner cannot create one), and whether a pinned external application
+depends on the refused attributes.
 
 ## Independent application adoption and package-free restart: 2026-10-19
 

@@ -220,7 +220,8 @@ plan/removal refusals. Counts are not gate evidence.
 records no comments, statistics targets, storage, compression settings, column grants or
 column options, so protection planning and switches, and reverse planning, refuse a
 protected column that carries them. Protection also refuses comments on constraints and
-indexes it recreates and extended statistics that reference a protected column. Fresh-cluster
+indexes it recreates, extended statistics that reference a protected column, and sequences
+owned by a protected column. Fresh-cluster
 restore, a real package-free application run, retained-backup reader proof, and the
 retained-native alternative remain UNKNOWN.
 Layout comparison and the decision not to promote retained-native are recorded in

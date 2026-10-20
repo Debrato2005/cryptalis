@@ -19,7 +19,8 @@ from sqlalchemy.exc import SQLAlchemyError
 from cryptalis.crypto.cf1 import FieldDescriptor, seal_text, open_text
 from cryptalis.crypto.keys import CryptoFailure, Keyring
 from cryptalis.manifest.compiler import (compile_protection, _schema_facts, _canonical, _previous_lock,
-                                          unrecorded_column_metadata, protected_extended_statistics)
+                                          unrecorded_column_metadata, protected_extended_statistics,
+                                          protected_owned_sequences)
 from cryptalis.manifest.parser import decode_manifest_json
 
 JOURNAL = '_cryptalis_journal'
@@ -120,6 +121,8 @@ def _refuse_unrecorded_metadata(c, p, model):
     if unrecorded_column_metadata(c, model['schema'], model['table'], protected):
         raise TransitionFailure('unsupported_protected_metadata', p.operation_id)
     if protected_extended_statistics(c, model['schema'], model['table'], protected):
+        raise TransitionFailure('unsupported_dependency', p.operation_id)
+    if protected_owned_sequences(c, model['schema'], model['table'], protected):
         raise TransitionFailure('unsupported_dependency', p.operation_id)
 
 

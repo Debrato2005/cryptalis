@@ -38,7 +38,8 @@ These catalog facts have no field in the lock:
   and index or constraint comments. Index storage options and tablespace are not separate
   fields, but `pg_get_indexdef` embeds them in the recorded definition text.
 - Extended statistics objects (`pg_statistic_ext`).
-- Sequence parameters, ownership and ACLs for non-identity keys.
+- Sequence parameters, ownership and ACLs for non-identity keys. A sequence owned by a
+  protected column is now refused; other sequences are not touched.
 
 Some of these survive in place because the table is not rebuilt: table comment, table
 options, table ACL, and owner stay attached to the relation. Admission refuses RLS,
@@ -60,6 +61,7 @@ objects. Index options survive because the recorded `CREATE INDEX` text carries 
 | RLS, rules, user triggers, inheritance, partitioning | Refused at protection | Not applicable |
 | Physical column position (`attnum`) | Changed | Changed |
 | Extended statistics on a protected column | Refused at protection | Not applicable |
+| Sequence owned by a protected column | Refused at protection | Not applicable |
 
 The protected dump carries `bytea` under the protected column name. The source column was
 dropped when protection switched, so the dump cannot carry its old column metadata.
@@ -137,7 +139,7 @@ Observed results:
   `ALTER INDEX ... SET (fillfactor=...)` changes the definition digest, and the executor
   refuses with `source_schema_changed`.
 
-## Extended statistics and column options: 2026-10-19
+## Extended statistics, column options and owned sequences: 2026-10-19
 
 Two further silent losses were found after the guard landed:
 
@@ -148,35 +150,43 @@ Two further silent losses were found after the guard landed:
   `CREATE STATISTICS ... ON name, label` reached `PENDING` and the statistics object was
   gone. PostgreSQL requires at least two columns per extended statistics object.
 
-The guard now refuses both. Extended statistics use `unsupported_dependency`; column
+A third probe found that a sequence with `OWNED BY` on the protected column is dropped
+with the column. A sequence owned by a plain column survives. The guard now refuses all
+three. Extended statistics and owned sequences use `unsupported_dependency`; column
 options use `unsupported_protected_metadata`. The positive case creates extended
-statistics on a plain column and table options; both survive decryption and removal.
+statistics on a plain column, a sequence owned by a plain column, and table options; all
+survive decryption and removal.
+
+The local cell has only `pg_default` and `pg_global` tablespaces, and the least-privilege
+owner cannot create another. Tablespace moves therefore remain UNKNOWN; the table is not
+rebuilt, so an existing tablespace should survive in place.
 
 ## Guard implemented: 2026-10-19
 
 Option 2 is implemented without a lock change. Protection planning refuses protected
 columns with a comment, non-default statistics target, storage or compression setting,
 column grant or column option, and refuses comments on constraints and indexes that it
-recreates and extended statistics that reference a protected column. Reverse planning,
-the protection switch, and the reverse switch refuse the attributes and statistics when
-they appear after planning. The failure codes are `unsupported_protected_metadata`,
-`unsupported_recreated_metadata` and `unsupported_dependency`; planning remedies say to
-remove the metadata or object.
+recreates, extended statistics that reference a protected column, and sequences owned by
+a protected column. Reverse planning, the protection switch, and the reverse switch
+refuse the attributes and objects when they appear after planning. The failure codes are
+`unsupported_protected_metadata`, `unsupported_recreated_metadata` and
+`unsupported_dependency`; planning remedies say to remove the metadata or object.
 
 The former characterization test is now
 `test_surviving_metadata_is_preserved_through_decrypt_back`. Refusal evidence is in
 `tests/test_protection_compiler.py`, `tests/test_deprotection.py` and
-`tests/test_migration.py`. Focused runs report **131 passed** for
+`tests/test_migration.py`. Focused runs report **133 passed** for
 [SQLAlchemy 2.1.3](../_reset/metadata-refusal-focused-sa21-20261019.json) and
 [SQLAlchemy 2.0.51](../_reset/metadata-refusal-focused-sa20-20261019.json). The full suites
-report **1,319 passed, 2 skipped**
-([2.1.3](../_reset/metadata-refusal-full-sa21-20261019.json)) and **1,291 passed, 30 skipped**
+report **1,321 passed, 2 skipped**
+([2.1.3](../_reset/metadata-refusal-full-sa21-20261019.json)) and **1,293 passed, 30 skipped**
 ([2.0.51](../_reset/metadata-refusal-full-sa20-20261019.json)).
 
 ## Next steps
 
-1. Probe tablespace moves and sequence metadata; compression, column options, RLS,
-   rules, triggers and partitioning are refused, and table options survive.
+1. Probe tablespace moves when a second tablespace is available. Compression, column
+   options, RLS, rules, triggers, partitioning, owned sequences and extended statistics
+   are refused; table options and unowned sequences survive.
 2. Capture the refused facts at compile time and restore them in the reverse switch.
 3. Only then propose a lock version, canonical bytes, digests, and the reader matrix.
 

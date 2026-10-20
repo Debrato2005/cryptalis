@@ -470,6 +470,15 @@ def test_metadata_added_after_planning_is_refused_before_effects():
         with pytest.raises(app.m.TransitionFailure) as caught:
             run(app, 'PENDING')
         assert caught.value.code == 'unsupported_dependency'
+    with application() as app:
+        run(app, 'EXPANDED')
+        with app.owner.begin() as c:
+            c.exec_driver_sql(f'CREATE SEQUENCE "{app.schema}".late_seq')
+            c.exec_driver_sql(f'ALTER SEQUENCE "{app.schema}".late_seq '
+                              f'OWNED BY "{app.schema}".customer.name')
+        with pytest.raises(app.m.TransitionFailure) as caught:
+            run(app, 'PENDING')
+        assert caught.value.code == 'unsupported_dependency'
 
 
 def test_source_schema_change_and_key_policy_change_block_resume():

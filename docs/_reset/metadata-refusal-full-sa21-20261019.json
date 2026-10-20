@@ -1,7 +1,7 @@
 {
-  "scope": "Unrecorded metadata refusal plus extended statistics and column options: full SQLAlchemy 2.1.3 suite on primary cluster",
-  "base_revision": "bc3e9b1f9085677351fdb7a4f6f97eb91792e741",
-  "fixing_revision": "worktree-aa0ad325c98d1c37",
+  "scope": "Unrecorded metadata refusal plus dependent objects: full SQLAlchemy 2.1.3 suite on primary cluster",
+  "base_revision": "b68fc0a5411cb41ba3f11420bd7a5b8150741162",
+  "fixing_revision": "worktree-d458f6cbc01a0dac",
   "source_test_sha256": {
     "src/cryptalis/__init__.py": "c1a82f9f958187e4b5423d11df5a035b17d75b34a0947af6be4aac436cd2fed2",
     "src/cryptalis/__main__.py": "9967032819ce6f18e02a40d033958d5f4f7c328faf8693bc07ecc42a1a525707",
@@ -20,15 +20,15 @@
     "src/cryptalis/crypto/_rewrap.py": "797d1789c983e8c4eba36a792c8d4b5c00cba734bd25b61d6a970f1711be734b",
     "src/cryptalis/crypto/cf1.py": "88754b09576e6717e8ab82bd0990446d64b7ef3489da663a1a600e59cf6e28d4",
     "src/cryptalis/crypto/keys.py": "700300c3cf76c2a7fc181ef10bb32e5dffa878f3bd4e301c8daf3649baa33ae3",
-    "src/cryptalis/deprotection.py": "8faf12145433167061348bfb3f6d9e2fab40b70ac909c2c1bc7a61449be5fdbc",
+    "src/cryptalis/deprotection.py": "14607cc5fa1ec71055524456e73b8c1739ba53fcdf923a86d2d61c34d410989a",
     "src/cryptalis/manifest/__init__.py": "d2dc8653181d66161df9d9eb29ea79fb36b38fd93848d4da4a25184cda6885cd",
     "src/cryptalis/manifest/canonical.py": "6fe7e3d22cece14e5d85de912acdaf782a5421bfaa5c4dd796f78ab5bd4c2ec8",
-    "src/cryptalis/manifest/compiler.py": "61635b885d369f14b51f1caa9a5f0bd2dc59603f395905af7f20ea01876bc870",
+    "src/cryptalis/manifest/compiler.py": "214aded0323bd323d228d5e63cf9d59aae555230fbb8b74528e1132718c91da0",
     "src/cryptalis/manifest/declaration.py": "348d8e9c4605a28924166e3c1f88bd23f0b6b3ebaae402f52cf0d2c3403ca6b8",
     "src/cryptalis/manifest/descriptor.py": "739d0438451c47746850c6aa488add4cfd7782ddeebd743741cccd290d2ce20d",
     "src/cryptalis/manifest/header.py": "6e450d8565e3d7c19ecedd6c6b3120715ea5c7ee3b1ee439fef9e5080bb5eb6a",
     "src/cryptalis/manifest/parser.py": "47cd75cc2ca611fe186d36d5d046317b0746714945c11fd2f84917d2f1020448",
-    "src/cryptalis/migration.py": "62f16ea23f4a82042b22936dba7c034e52cc0c7f90a09dfa35c6d78ba8ecc46d",
+    "src/cryptalis/migration.py": "c61bfd2eb6fa632d3f7e6071f16e82c9a7fc1fdf888f4ebf3ecbca22193ea99c",
     "src/cryptalis/restore.py": "cff0bd9f85c7657d6a16154d1684d4128577659b3280715199623c36a255eef0",
     "src/cryptalis/sqlalchemy.py": "0c086a71eb15545cc30ffe0cabc9a25900955f939adee1af73d42ca162bb46cc",
     "tests/conftest.py": "fa521d4bec6b84320304ad59d22e7551c342d7e60f2c254c8b6495b07bdf06dd",
@@ -55,7 +55,7 @@
     "tests/test_cli.py": "d013dce84a813bdde34917a2778d1669bdd89e7960dd975f22905a2b5e8a0ca9",
     "tests/test_cli_history.py": "44b0886c98b3031fa6e18499f456f162b69bd5424b4c7e88bc670d97af379df5",
     "tests/test_database_diagnostics.py": "69c1faee437d1940edfb2a216ea5f350b7447fabda2286e20118fa09139fd4ff",
-    "tests/test_deprotection.py": "a20747faf2b87c0b46226ae55a47351b14e69cbfaa18adefa0f08a30135c3342",
+    "tests/test_deprotection.py": "aa310613b72cf9a168fc8b03ecfec8d8b6c50e44b7d480a25ab5faab1739cce8",
     "tests/test_development_authority.py": "7ec9747dd8e5f4c9bffe073a777f70388c3b2d8c9ca22b9c2d9af95d0c49ea80",
     "tests/test_fresh_cluster_export.py": "f00462666ef5c87cf4c25a32e8e240fc7ca8711b12c619070ff07a8a9e241beb",
     "tests/test_fresh_cluster_restore.py": "eba6e6a0499692ea2949c8cef575d50da94c7b154b3ad336342efd8892809b65",
@@ -63,14 +63,14 @@
     "tests/test_manifest_canonical.py": "f95532844a798f986c44034096625eccd835a13d0df9c0c3befc0a3d5d4cc1e9",
     "tests/test_manifest_header.py": "d3d3724688f7ed790e35f253bce9cab77909f42819355e16f7a59e5e8b55cb8f",
     "tests/test_manifest_parser.py": "3028e621d207b5e1435f504bada3a465720993c41681b7422978750de75dd0f7",
-    "tests/test_migration.py": "600a40e2a3a661f2c40605c0f5d07fb9575880250dd6ded82fed5bca8da822d5",
+    "tests/test_migration.py": "83af6c48aa79c98ab82e95d5c42444ed69ede4b3f3a600b9bad2837d496b3141",
     "tests/test_migration_audit.py": "e940cac409c564233943a406358da1d1fe0bbcf75d960a60fcd30f53b88183df",
     "tests/test_migration_lock_queue.py": "d96f94d068c51099d20346cc191fc7824316ea95cdeac42b756db62c43f25b83",
     "tests/test_migration_membership.py": "a6ec0e602bbea264a1af29b6608a44e782aca7d7fac9a6835c58ea0766e6b623",
     "tests/test_migration_multitable.py": "1ca5347d89250aca07c329a7e26b83ff10ed0bff7adf19568ff28f0612949c26",
     "tests/test_migration_pause.py": "7f0618266c5d3a3c7bbf05e3c5f2972ac4109ba4d7c7c72869d37fe587729d3f",
     "tests/test_payload_rotation_preparation.py": "b5453a66ad2400c5295b3e6edce1c2b7464c4b96af2bc5ee69896516619434c5",
-    "tests/test_protection_compiler.py": "cce345d19ed64f03bd639ad41b06c5664380b71adf942b728971ec422a16fb0a",
+    "tests/test_protection_compiler.py": "a0c36b3b026ece546a37de3b10e9eeda61b285a628a001ba119d9be8ba545976",
     "tests/test_protection_declaration.py": "23e047858168d10d5788aaf5bcbd5af867e35cef2f8b4e035ed616b2015fdd38",
     "tests/test_provider_failures.py": "17bcb79abf92038dc0aab0249b0118b25813fc57e4a115df395eda60887e3036",
     "tests/test_restore.py": "aaee9dec26c8264b3a39c615e013681fe7a4f3466b8496d1cb52efe18e621860",
@@ -98,7 +98,7 @@
     "-q"
   ],
   "counts": {
-    "passed": 1337
+    "passed": 1339
   },
   "exit_code": 0,
   "modules": {
@@ -130,7 +130,7 @@
       "passed": 3
     },
     "tests/test_deprotection.py": {
-      "passed": 10
+      "passed": 11
     },
     "tests/test_development_authority.py": {
       "passed": 11
@@ -169,7 +169,7 @@
       "passed": 40
     },
     "tests/test_protection_compiler.py": {
-      "passed": 67
+      "passed": 68
     },
     "tests/test_protection_declaration.py": {
       "passed": 36
@@ -208,7 +208,7 @@
       "passed": 44
     }
   },
-  "elapsed_seconds": 192.9510293839994,
+  "elapsed_seconds": 179.87782639599754,
   "gates": {
     "G-ADAPTER": "UNKNOWN",
     "G-CRYPTO": "UNKNOWN",

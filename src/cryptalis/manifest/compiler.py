@@ -258,6 +258,22 @@ def protected_extended_statistics(connection, schema, table, names):
     """, schema=schema, table=table) if row["column"] in wanted})
 
 
+def protected_owned_sequences(connection, schema, table, names):
+    """Return sequences owned by a protected column."""
+    wanted = set(names)
+    return sorted({row["name"] for row in _rows(connection, """
+        SELECT s.relname AS name, a.attname AS column
+        FROM pg_catalog.pg_depend d
+        JOIN pg_catalog.pg_class s ON s.oid=d.objid AND s.relkind='S'
+        JOIN pg_catalog.pg_class t ON t.oid=d.refobjid
+        JOIN pg_catalog.pg_namespace n ON n.oid=t.relnamespace
+        JOIN pg_catalog.pg_attribute a ON a.attrelid=t.oid AND a.attnum=d.refobjsubid
+        WHERE d.classid='pg_catalog.pg_class'::regclass
+          AND d.refclassid='pg_catalog.pg_class'::regclass
+          AND d.deptype IN ('a', 'i') AND n.nspname=:schema AND t.relname=:table
+    """, schema=schema, table=table) if row["column"] in wanted})
+
+
 def _unrecorded_metadata_issues(connection, schema, table, compiled, issues):
     fields = compiled["fields"]
     protected = {field["column"]: field for field in fields}
@@ -270,6 +286,10 @@ def _unrecorded_metadata_issues(connection, schema, table, compiled, issues):
         issues.append(Issue("unsupported_dependency", f"{compiled['model']}.{name}",
                             "Drop the extended statistics that reference the protected column "
                             "before planning; Cryptalis does not recreate them."))
+    for name in protected_owned_sequences(connection, schema, table, protected):
+        issues.append(Issue("unsupported_dependency", f"{compiled['model']}.{name}",
+                            "Drop the sequence or change its ownership before planning; Cryptalis "
+                            "drops the protected column and its owned sequences."))
     constraints = sorted({item["name"] for field in fields for item in field["original"]["constraints"]})
     indexes = sorted({item["name"] for field in fields for item in field["original"]["indexes"]} | set(constraints))
     if not constraints and not indexes:

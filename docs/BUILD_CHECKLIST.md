@@ -103,8 +103,8 @@ Requirement text is abbreviated. The full definitions remain in the research
    fresh PostgreSQL cluster.
 2. Close the remaining reverse-lifecycle metadata and recovery gaps (physical column
    order, metadata capture/restore, retained-native); comments, statistics targets,
-   storage, compression, column grants, column options and extended statistics are now
-   refused at planning. See the
+   storage, compression, column grants, column options, extended statistics and owned
+   sequences are now refused at planning. See the
    [metadata research note](research/metadata-preservation-and-format-evolution.md).
 3. Continue correctness slices that protect the compatibility promise with native
    PostgreSQL oracles; establish a second independent application baseline.

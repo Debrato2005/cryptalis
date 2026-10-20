@@ -282,6 +282,20 @@ def test_reverse_refuses_extended_statistics_on_protected_column():
         assert caught.value.code == 'unsupported_dependency'
 
 
+def test_reverse_refuses_sequence_owned_by_protected_column():
+    import cryptalis.migration as migration
+    with application() as app:
+        run(app)
+        publish(app)
+        with app.owner.begin() as c:
+            c.exec_driver_sql(f'CREATE SEQUENCE "{app.schema}".late_seq')
+            c.exec_driver_sql(f'ALTER SEQUENCE "{app.schema}".late_seq '
+                              f'OWNED BY "{app.schema}".customer.name')
+        with pytest.raises(migration.TransitionFailure) as caught:
+            proposal(app)
+        assert caught.value.code == 'unsupported_dependency'
+
+
 def test_surviving_metadata_is_preserved_through_decrypt_back():
     """Metadata outside the protected column survives the recorded definitions."""
 
@@ -292,6 +306,8 @@ def test_surviving_metadata_is_preserved_through_decrypt_back():
         c.exec_driver_sql(f'GRANT SELECT (label) ON "{schema}".customer TO "{role}"')
         c.exec_driver_sql(f'CREATE STATISTICS "{schema}".label_stats (ndistinct) '
                           f'ON label, tenant_id FROM "{schema}".customer')
+        c.exec_driver_sql(f'CREATE SEQUENCE "{schema}".label_seq')
+        c.exec_driver_sql(f'ALTER SEQUENCE "{schema}".label_seq OWNED BY "{schema}".customer.label')
         c.exec_driver_sql(f'ALTER TABLE "{schema}".customer SET (autovacuum_enabled=false)')
 
     with application(setup=setup) as app:
@@ -344,6 +360,9 @@ def test_surviving_metadata_is_preserved_through_decrypt_back():
                 'SELECT reloptions::text FROM pg_catalog.pg_class '
                 'WHERE oid=pg_catalog.to_regclass(%s)',
                 (f'{app.schema}.customer',)).scalar_one() == before_options
+            assert c.exec_driver_sql(
+                'SELECT pg_catalog.to_regclass(%s)',
+                (f'{app.schema}.label_seq',)).scalar_one() is not None
         for model in app.plan.document['lock']['models']:
             with app.owner.connect() as c:
                 current = app.m._facts(c, model)

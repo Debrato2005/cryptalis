@@ -146,6 +146,18 @@ def test_extended_statistics_on_protected_column_are_refused(app):
     assert 'extended statistics' in issues[0].remedy
 
 
+def test_sequence_owned_by_protected_column_is_refused(app):
+    engine, mapping, _, schema = app
+    with engine.begin() as c:
+        c.execute(text(f'CREATE SEQUENCE "{schema}".email_seq'))
+        c.execute(text(f'ALTER SEQUENCE "{schema}".email_seq OWNED BY "{schema}".customer.email'))
+    with pytest.raises(PlanningRejected) as caught:
+        compile_app(app)
+    issues = [issue for issue in caught.value.issues if issue.code == 'unsupported_dependency']
+    assert [issue.location for issue in issues] == ['Customer.email_seq']
+    assert 'sequence' in issues[0].remedy
+
+
 def test_native_schema_compiles_deterministically_without_effects(app):
     before = snapshot(app)
     plan = compile_app(app)
