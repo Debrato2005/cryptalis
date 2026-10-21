@@ -114,16 +114,6 @@ def snapshot(app):
     return columns, indexes, rows
 
 
-def test_unrecorded_column_grants_are_refused(app):
-    engine, mapping, _, schema = app
-    with engine.begin() as c:
-        c.execute(text(f'GRANT SELECT (email) ON "{schema}".customer TO PUBLIC'))
-    with pytest.raises(PlanningRejected) as caught:
-        compile_app(app)
-    assert {issue.code for issue in caught.value.issues} == {'unsupported_protected_metadata'}
-    assert all(issue.remedy.startswith('Remove the') for issue in caught.value.issues)
-
-
 def test_source_metadata_is_captured(app):
     engine, mapping, _, schema = app
     with engine.begin() as c:
@@ -134,12 +124,13 @@ def test_source_metadata_is_captured(app):
         c.execute(text(f'ALTER TABLE "{schema}".customer ALTER COLUMN email SET (n_distinct=10)'))
         c.execute(text(f"""COMMENT ON CONSTRAINT email_unique ON "{schema}".customer IS 'constraint comment'"""))
         c.execute(text(f"""COMMENT ON INDEX "{schema}".email_unique IS 'index comment'"""))
+        c.execute(text(f'GRANT SELECT (email), UPDATE (email) ON "{schema}".customer TO PUBLIC'))
     lock = json.loads(compile_app(app).lock_bytes)
     assert lock['schema'] == 'cryptalis.lock/v2'
     metadata = lock['models'][0]['source_metadata']
     assert metadata['columns']['email'] == {
         'comment': 'protected column comment', 'statistics': '100', 'storage': 'e',
-        'compression': 'p', 'options': ['n_distinct=10'], 'acl': []}
+        'compression': 'p', 'options': ['n_distinct=10'], 'acl': ['PUBLIC|rw|false']}
     assert metadata['constraints'] == {'email_unique': 'constraint comment'}
     assert metadata['indexes'] == {'email_unique': 'index comment'}
     assert metadata['extended_statistics'] == []

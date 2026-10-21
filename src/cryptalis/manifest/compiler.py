@@ -280,6 +280,34 @@ def _recorded_names(fields):
     return constraints, indexes
 
 
+ACL_LETTERS = {"SELECT": "r", "UPDATE": "w", "INSERT": "a", "REFERENCES": "x"}
+ACL_ORDER = "rwax"
+
+
+def _column_acl(connection, schema, table, columns):
+    grants = {}
+    for row in _rows(connection, """
+        SELECT a.attname AS name, COALESCE(g.rolname, 'PUBLIC') AS grantee,
+               x.privilege_type AS privilege, x.is_grantable AS grantable
+        FROM pg_catalog.pg_attribute a
+        JOIN pg_catalog.pg_class t ON t.oid=a.attrelid
+        JOIN pg_catalog.pg_namespace n ON n.oid=t.relnamespace
+        CROSS JOIN LATERAL pg_catalog.aclexplode(a.attacl) AS x
+        LEFT JOIN pg_catalog.pg_roles g ON g.oid=x.grantee
+        WHERE n.nspname=:schema AND t.relname=:table
+          AND a.attnum>0 AND NOT a.attisdropped
+    """, schema=schema, table=table):
+        if row["name"] not in columns:
+            continue
+        key = (row["name"], row["grantee"], bool(row["grantable"]))
+        grants.setdefault(key, set()).add(ACL_LETTERS[row["privilege"]])
+    for (name, grantee, grantable), letters in grants.items():
+        ordered = "".join(sorted(letters, key=ACL_ORDER.index))
+        columns[name]["acl"].append(f"{grantee}|{ordered}|{str(grantable).lower()}")
+    for facts in columns.values():
+        facts["acl"].sort()
+
+
 def source_metadata(connection, schema, table, fields):
     """Capture protected-column facts the lock must restore after reverse."""
     columns = {field["column"]: {"comment": None, "statistics": "-1", "storage": "x",
@@ -295,10 +323,11 @@ def source_metadata(connection, schema, table, fields):
     """, schema=schema, table=table):
         if row["name"] not in columns:
             continue
-        columns[row["name"]] = {
+        columns[row["name"]].update({
             "comment": row["comment"], "statistics": str(row["statistics"]),
             "storage": row["storage"], "compression": row["compression"],
-            "options": list(row["options"] or []), "acl": []}
+            "options": list(row["options"] or [])})
+    _column_acl(connection, schema, table, columns)
     constraints, indexes = _recorded_names(fields)
     comments = {}
     comments["constraints"] = {row["name"]: row["comment"] for row in _rows(connection, """
@@ -343,12 +372,6 @@ def source_metadata(connection, schema, table, fields):
 def _metadata_issues(connection, schema, table, compiled, issues):
     fields = compiled["fields"]
     protected = {field["column"]: field for field in fields}
-    for column, kinds in unrecorded_column_metadata(connection, schema, table, protected):
-        if "column grant" in kinds:
-            issues.append(Issue("unsupported_protected_metadata",
-                                f"{compiled['model']}.{protected[column]['name']}",
-                                "Remove the column grant before planning; column grants are not "
-                                "captured yet."))
     for row in _rows(connection, """
         SELECT s.stxname AS name FROM pg_catalog.pg_statistic_ext s
         JOIN pg_catalog.pg_class t ON t.oid=s.stxrelid

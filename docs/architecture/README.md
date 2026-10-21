@@ -215,8 +215,9 @@ Fields contain `name`, `column`, `field_id`, `queries`, `representation`, `paylo
 
 The source schema stores inspected relation, column, constraint, index, and dependency facts.
 `source_metadata` stores protected-column attributes (comment, statistics target,
-storage, compression, options, ACL names), constraint and index comments, and extended
-statistics rebuilt from captured fields. Statistics targets use strings because the
+storage, compression, options, ACL entries), constraint and index comments, and extended
+statistics rebuilt from captured fields. The protection switch applies captured column
+grants to the ciphertext column; reverse restores them. Statistics targets use strings because the
 manifest integer grammar is non-negative and bounded.
 Catalog type modifiers use strings because PostgreSQL uses negative sentinels.
 Unrelated SQL definitions use SHA-256 fingerprints of their canonical JSON string values.

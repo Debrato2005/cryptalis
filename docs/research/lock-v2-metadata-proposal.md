@@ -1,17 +1,18 @@
 # Lock v2 source-metadata proposal
 
-**APPROVED 2026-10-21.** Slice A is implemented: new protection plans emit
-`cryptalis.lock/v2`, capture protected-column metadata, and restore it during in-place
-reverse. Column grants and owned sequences remain refused until slice B.
+**APPROVED 2026-10-21.** Slices A and B are implemented: new protection plans emit
+`cryptalis.lock/v2`, capture protected-column metadata including column grants, apply
+grants to the ciphertext column at the protection switch, and restore the captured facts
+during in-place reverse. Owned sequences remain refused.
 [Status](../status.md) owns current evidence.
 [Metadata research](metadata-preservation-and-format-evolution.md) owns the observed gaps.
 
 ## Problem
 
 Before lock v2, protection and reverse refused metadata that the lock could not restore.
-The refusal is fail-closed and verified. Slice A now captures comments, statistics
-targets, storage, compression, options, constraint and index comments, and extended
-statistics. A host must still remove column grants and owned sequences before planning.
+The refusal is fail-closed and verified. Lock v2 now captures comments, statistics
+targets, storage, compression, options, column grants, constraint and index comments, and
+extended statistics. A host must still remove owned sequences before planning.
 
 Capture and restore needs an authenticated artifact. The journal is progress evidence,
 not restore authority. A host inventory outside the lock weakens the deployment
@@ -48,9 +49,10 @@ each model: `source_metadata`.
 columns survive the switch and are not captured.
 
 `acl` entries use role names, sorted by role. The form is
-`GRANTEE|PRIVILEGES|GRANTABLE`. `PRIVILEGES` is the canonical ACL letter order.
-`GRANTABLE` is `true` when the grant option is present. `PUBLIC` is a valid grantee.
-Grantor names are not stored; restoration runs as the table owner.
+`GRANTEE|PRIVILEGES|GRANTABLE`. `PRIVILEGES` is the canonical ACL letter order
+(`rwax`). `GRANTABLE` is `true` when the grant option is present. `PUBLIC` is a valid
+grantee. Grantor names are not stored; restoration runs as the table owner. A role name
+can contain a delimiter because the entry is split from the right.
 
 `options` is the `attoptions` array. `storage` and `compression` use the catalog
 single-character values (`p` is pglz, `l` is lz4). `statistics` is the decimal target
@@ -85,10 +87,11 @@ before the switch. A difference is `source_metadata_changed` with the operation 
 does not guess a merge.
 
 The reverse planner and switch cannot compare against the source column, because the
-protection switch removed that metadata. They refuse any metadata found on the
-ciphertext column or any extended statistics or owned sequence that references it.
-Metadata expected from the lock is restored by the reverse switch. The existing refusal
-codes remain valid for v1 locks, which carry no metadata.
+protection switch removed that metadata. They compare the ciphertext column ACL with the
+lock and refuse a difference with `source_metadata_changed`. They refuse any other
+metadata found on the ciphertext column, and any extended statistics or owned sequence
+that references it. Metadata expected from the lock is restored by the reverse switch.
+The existing refusal codes remain valid for v1 locks, which carry no metadata.
 
 ## Reverse restore
 
@@ -96,9 +99,9 @@ After the column rename and the recorded constraint/index restoration, the rever
 applies metadata in this order:
 
 1. Column comment, statistics target, storage, compression, and options.
-2. Column grants. **Not implemented in slice A.** Column grants remain refused. Slice B
-   must also apply the captured grants to the ciphertext column at the protection
-   switch. Otherwise runtime column privileges are lost before reverse.
+2. Column grants. The protection switch applies the captured grants to the ciphertext
+   column. Reverse restores them to the plaintext column. Each role must exist; a missing
+   role raises `acl_role_missing` and no mapped grant is attempted.
 3. Constraint and index comments.
 4. Extended statistics, created from the captured kinds and column names, then the
    statistics target and comment.
@@ -139,11 +142,14 @@ Slice A evidence is in `tests/test_protection_compiler.py`,
   comments, and extended statistics before protection and after removal.
 - Drift: `test_metadata_added_after_planning_is_refused_before_effects` covers a late
   comment, statistics target, grant, extended statistics, and owned sequence.
-- Refusal: column grants and owned sequences still refuse with typed codes in both
-  directions.
+- Grants: `test_source_metadata_is_preserved_through_decrypt_back` checks capture, forward
+  application at `PENDING`, and restore after removal. `test_reverse_refuses_changed_column_grant`
+  and `test_reverse_refuses_revoked_column_grant` check changed grants.
+- Refusal: owned sequences and expression extended statistics still refuse with typed
+  codes.
 - Compatibility: v1 locks remain readable. The v1 path has no metadata to restore.
-- Slice B negative cases are not implemented: missing role, invalid ACL text, and
-  forward grant application.
+- Missing role and invalid ACL text paths are implemented but not executed because the
+  least-privilege owner cannot create roles or a malformed lock.
 - A dedicated fresh-cluster case with captured metadata remains a separate phase.
 
 ## Implementation slices after approval
@@ -152,9 +158,10 @@ Slice A evidence is in `tests/test_protection_compiler.py`,
    stop refusing captured kinds; add drift checks and compatibility tests.
 2. **DONE, slice A:** restore captured facts in the reverse switch; add the catalog
    oracle.
-3. **NEXT, slice B:** apply captured column grants at the protection switch and restore
-   them during reverse; add missing-role and invalid-ACL tests.
-4. Extend fresh-cluster adoption and reverse after adoption.
+3. **DONE, slice B:** apply captured column grants at the protection switch and restore
+   them during reverse; add changed-grant tests.
+4. **NEXT:** extend fresh-cluster adoption and reverse after adoption with captured
+   metadata.
 5. Update status, lifecycle, compatibility, and receipts.
 
 ## Approved decisions

@@ -13,27 +13,29 @@ All other contract and promotion requirements are SPECIFIED. All seven full gate
 
 **IMPLEMENTED:** new protection plans emit `cryptalis.lock/v2`. Each model records
 `source_metadata` for protected columns: comment, statistics target, storage,
-compression, options, and an empty ACL list; constraint and index comments; and extended
+compression, options, and column grants; constraint and index comments; and extended
 statistics with kind letters, sorted columns, statistics target, comment, and a
-definition digest. The protection switch still refuses column grants, extended
-statistics with expressions, and sequences owned by a protected column. A catalog
-change after planning raises `source_metadata_changed`; the reverse switch refuses late
-metadata on the ciphertext column and then restores the captured facts. The restore
-compares the resulting catalog with `source_metadata` and raises
-`metadata_restore_mismatch` on any difference.
+definition digest. Grants use `GRANTEE|PRIVILEGES|GRANTABLE` with canonical privilege
+letters and `PUBLIC` as a valid grantee. The protection switch applies captured grants
+to the ciphertext column. A catalog change after planning raises
+`source_metadata_changed`; the reverse switch refuses changed grants and late metadata
+on the ciphertext column, then restores the captured facts. A missing role raises
+`acl_role_missing`. The restore compares the resulting catalog with `source_metadata`
+and raises `metadata_restore_mismatch` on any difference. Extended statistics with
+expressions and sequences owned by a protected column remain refused.
 
 The reader accepts `cryptalis.lock/v1` and `cryptalis.lock/v2`. A v1 lock restores no
 metadata because it carries none.
 
-**VERIFIED, local PostgreSQL 16.15 cell:** capture, drift, reverse refusal, and exact
-catalog restore pass in `tests/test_protection_compiler.py`,
-`tests/test_deprotection.py`, and `tests/test_migration.py`. The full suite reports
-**1,315 passed, 2 skipped** on SQLAlchemy 2.1.3
-([receipt](_reset/lock-v2-full-sa21-20261021-2.json)).
+**VERIFIED, local PostgreSQL 16.15 cell:** capture, grant forwarding at `PENDING`,
+drift, reverse refusal, and exact catalog restore pass in
+`tests/test_protection_compiler.py`, `tests/test_deprotection.py`, and
+`tests/test_migration.py`. The full suite reports **1,316 passed, 2 skipped** on
+SQLAlchemy 2.1.3 ([receipt](_reset/lock-v2-full-sa21-20261021-3.json)).
 
 **UNKNOWN:** the SQLAlchemy 2.0.51 cell was not rerun because its local virtual
-environment is absent. Column grants remain refused; their forward application to the
-ciphertext column and reverse restore are the next slice. Owned sequences remain
+environment is absent. The missing-role path is implemented but has no executable test
+because the least-privilege owner cannot create or drop roles. Owned sequences remain
 refused. Tablespace moves remain UNKNOWN (the local cell has no additional tablespace
 and the least-privilege owner cannot create one). Physical column order still changes.
 
@@ -98,8 +100,8 @@ on 2.0.51 ([receipt](_reset/restore-full-sa20-20261019.json)).
 authenticate either and has no cryptographic evidence of source isolation. Adoption
 refuses a restated frame constraint with no retained frame
 row, and it qualifies the restated text behaviorally, not textually. A pinned external
-application, physical column order, and the column-grant and owned-sequence limits
-remain. G-LIFECYCLE remains UNKNOWN.
+application, physical column order, and the owned-sequence limit remain. G-LIFECYCLE
+remains UNKNOWN.
 
 ## In-place decrypt-back and removal: 2026-10-19
 

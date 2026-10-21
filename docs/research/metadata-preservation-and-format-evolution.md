@@ -172,34 +172,35 @@ refused the attributes and objects when they appeared after planning.
 
 ## Lock v2 capture and restore: 2026-10-21
 
-`cryptalis.lock/v2` adds `source_metadata` to each model. Slice A captures protected
-column comments, statistics targets, storage, compression, and options; constraint and
+`cryptalis.lock/v2` adds `source_metadata` to each model. It captures protected column
+comments, statistics targets, storage, compression, options, and grants; constraint and
 index comments; and extended statistics on protected columns. The protection switch
+applies captured grants to the ciphertext column so runtime column privileges survive
+the swap. Reverse restores them to the plaintext column. The protection switch
 compares the current catalog with the capture before expand and before the switch and
 raises `source_metadata_changed` on a difference. Reverse still refuses metadata added to
 the ciphertext column, then restores the captured facts and compares the catalog with the
 lock. The reader accepts v1 and v2; v1 carries no metadata.
 
-Column grants and owned sequences remain refused. Slice B must apply captured grants to
-the ciphertext column at the protection switch as well as restore them at reverse.
-Otherwise runtime column privileges are lost before reverse.
+Owned sequences and expression extended statistics remain refused. A missing grantee
+role raises `acl_role_missing`; no mapped grant is attempted.
 
 Evidence is in `tests/test_protection_compiler.py`,
 `tests/test_deprotection.py`, and `tests/test_migration.py`. The positive case is now
-`test_source_metadata_is_preserved_through_decrypt_back`. The full suite reports
-**1,315 passed, 2 skipped** on SQLAlchemy 2.1.3
-([receipt](../_reset/lock-v2-full-sa21-20261021-2.json)). The SQLAlchemy 2.0.51 cell was
+`test_source_metadata_is_preserved_through_decrypt_back`, which checks grants at
+capture, at `PENDING`, and after removal. The full suite reports
+**1,316 passed, 2 skipped** on SQLAlchemy 2.1.3
+([receipt](../_reset/lock-v2-full-sa21-20261021-3.json)). The SQLAlchemy 2.0.51 cell was
 not rerun because its local virtual environment is absent. The earlier refusal receipts
 remain historical evidence for v1 locks.
 
 ## Next steps
 
-1. Implement slice B: apply captured column grants at the protection switch and restore
-   them during reverse. Test missing roles and invalid ACL entries.
-2. Extend fresh-cluster adoption to v2 locks.
+1. Extend fresh-cluster adoption to v2 locks with captured metadata, including ACL roles.
+2. Test missing roles and invalid ACL entries when a role-creating fixture is available.
 3. Probe tablespace moves when a second tablespace is available. RLS, rules, triggers,
    partitioning, owned sequences, and expression extended statistics are refused; table
-   options and unowned sequences survive.
+   options, column grants, and unowned sequences survive.
 
 ## Open questions
 

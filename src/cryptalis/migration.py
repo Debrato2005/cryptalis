@@ -116,10 +116,43 @@ def _facts(c, model):
     return facts
 
 
+ACL_PRIVILEGES = {'r': 'SELECT', 'w': 'UPDATE', 'a': 'INSERT', 'x': 'REFERENCES'}
+
+
+def _apply_column_acl(c, table, column, entries, operation_id):
+    for entry in entries:
+        try:
+            grantee, letters, grantable = entry.rsplit('|', 2)
+        except (AttributeError, ValueError):
+            raise TransitionFailure('metadata_restore_invalid', operation_id) from None
+        if grantable not in ('false', 'true') or not letters or any(
+                letter not in ACL_PRIVILEGES for letter in letters):
+            raise TransitionFailure('metadata_restore_invalid', operation_id)
+        if grantee != 'PUBLIC' and c.exec_driver_sql(
+                'SELECT 1 FROM pg_catalog.pg_roles WHERE rolname=%s', (grantee,)).scalar_one_or_none() is None:
+            raise TransitionFailure('acl_role_missing', operation_id)
+        role = 'PUBLIC' if grantee == 'PUBLIC' else _quote(c, grantee)
+        privileges = ', '.join(ACL_PRIVILEGES[letter] for letter in letters)
+        statement = f'GRANT {privileges} ({_quote(c, column)}) ON {table} TO {role}'
+        if grantable == 'true':
+            statement += ' WITH GRANT OPTION'
+        c.exec_driver_sql(statement)
+
+
 def _refuse_unrecorded_metadata(c, p, model):
     protected = [field['column'] for field in model['fields']]
-    if unrecorded_column_metadata(c, model['schema'], model['table'], protected):
-        raise TransitionFailure('unsupported_protected_metadata', p.operation_id)
+    metadata = model.get('source_metadata')
+    if metadata is not None:
+        observed = source_metadata(c, model['schema'], model['table'], model['fields'])
+        for field in model['fields']:
+            if (observed['columns'][field['column']]['acl']
+                    != metadata['columns'][field['column']]['acl']):
+                raise TransitionFailure('source_metadata_changed', p.operation_id)
+    for column, kinds in unrecorded_column_metadata(c, model['schema'], model['table'], protected):
+        if metadata is not None:
+            kinds = [kind for kind in kinds if kind != 'column grant']
+        if kinds:
+            raise TransitionFailure('unsupported_protected_metadata', p.operation_id)
     if protected_extended_statistics(c, model['schema'], model['table'], protected):
         raise TransitionFailure('unsupported_dependency', p.operation_id)
     if protected_owned_sequences(c, model['schema'], model['table'], protected):
@@ -134,10 +167,6 @@ def _check_source_metadata(c, p, model):
     observed = source_metadata(c, model['schema'], model['table'], fields)
     if observed != model['source_metadata']:
         raise TransitionFailure('source_metadata_changed', p.operation_id)
-    for column, kinds in unrecorded_column_metadata(
-            c, model['schema'], model['table'], [field['column'] for field in fields]):
-        if 'column grant' in kinds:
-            raise TransitionFailure('unsupported_protected_metadata', p.operation_id)
     if protected_owned_sequences(c, model['schema'], model['table'],
                                  [field['column'] for field in fields]):
         raise TransitionFailure('unsupported_dependency', p.operation_id)
@@ -542,13 +571,16 @@ def _switch(c,p,state,keys):
     _lock_tables(c,p)
     for model in p.document['lock']['models']:
         _check_source_metadata(c,p,model)
+        table=_table(c,model)
         for f in model['fields']:
-            table=_table(c,model)
             # No CASCADE: an unexpected dependency blocks the atomic switch.
             c.exec_driver_sql(f'ALTER TABLE {table} DROP COLUMN {_quote(c,f["column"])}')
             c.exec_driver_sql(f'ALTER TABLE {table} RENAME COLUMN {_quote(c,f["payload_column"])} TO {_quote(c,f["column"])}')
             if not f['source']['nullable']:
                 c.exec_driver_sql(f'ALTER TABLE {table} ALTER COLUMN {_quote(c,f["column"])} SET NOT NULL')
+            if 'source_metadata' in model:
+                _apply_column_acl(c, table, f['column'],
+                                  model['source_metadata']['columns'][f['column']]['acl'], p.operation_id)
         state['models'][model['table_id']]['active_schema']=_facts(c,model)
     state['phase']='PENDING'; _save(c,p,state)
 

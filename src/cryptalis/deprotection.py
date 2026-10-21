@@ -544,6 +544,7 @@ def _restore_metadata(c, p, model):
                 if not re.fullmatch(r'[a-z_][a-z0-9_]*(=[-0-9.]+)?', option):
                     raise m.TransitionFailure('metadata_restore_invalid', p.operation_id)
             c.exec_driver_sql(f'ALTER TABLE {target} SET ({", ".join(facts["options"])})')
+        m._apply_column_acl(c, table, column, facts['acl'], p.operation_id)
     for name, comment in metadata['constraints'].items():
         c.exec_driver_sql(f'COMMENT ON CONSTRAINT {m._quote(c, name)} ON {table} IS {_literal(comment)}')
     for name, comment in metadata['indexes'].items():

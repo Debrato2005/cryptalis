@@ -273,6 +273,19 @@ def catalog_metadata(app):
     return table, columns, index, constraint, statistics
 
 
+def column_acl(app, column):
+    with app.owner.connect() as c:
+        return {(row[0], row[1], bool(row[2])) for row in c.exec_driver_sql(
+            'SELECT COALESCE(g.rolname, \'PUBLIC\'), x.privilege_type, x.is_grantable '
+            'FROM pg_catalog.pg_attribute a '
+            'CROSS JOIN LATERAL pg_catalog.aclexplode(a.attacl) AS x '
+            'LEFT JOIN pg_catalog.pg_roles g ON g.oid=x.grantee '
+            'JOIN pg_catalog.pg_class t ON t.oid=a.attrelid '
+            'JOIN pg_catalog.pg_namespace n ON n.oid=t.relnamespace '
+            "WHERE n.nspname=%s AND t.relname='customer' AND a.attname=%s",
+            (app.schema, column)).all()}
+
+
 def test_reverse_refuses_metadata_added_while_protected():
     import cryptalis.migration as migration
     with application() as app:
@@ -281,10 +294,37 @@ def test_reverse_refuses_metadata_added_while_protected():
         with app.owner.begin() as c:
             c.exec_driver_sql(f'COMMENT ON COLUMN "{app.schema}".customer.name IS \'late comment\'')
             c.exec_driver_sql(f'ALTER TABLE "{app.schema}".customer ALTER COLUMN name SET STATISTICS 100')
-            c.exec_driver_sql(f'GRANT SELECT (name) ON "{app.schema}".customer TO PUBLIC')
         with pytest.raises(migration.TransitionFailure) as caught:
             proposal(app)
         assert caught.value.code == 'unsupported_protected_metadata'
+
+
+def test_reverse_refuses_changed_column_grant():
+    import cryptalis.migration as migration
+    with application() as app:
+        run(app)
+        publish(app)
+        with app.owner.begin() as c:
+            c.exec_driver_sql(f'GRANT SELECT (name) ON "{app.schema}".customer TO PUBLIC')
+        with pytest.raises(migration.TransitionFailure) as caught:
+            proposal(app)
+        assert caught.value.code == 'source_metadata_changed'
+
+
+def test_reverse_refuses_revoked_column_grant():
+    import cryptalis.migration as migration
+
+    def setup(c, schema, role):
+        c.exec_driver_sql(f'GRANT SELECT (name) ON "{schema}".customer TO "{role}"')
+
+    with application(setup=setup) as app:
+        run(app)
+        publish(app)
+        with app.owner.begin() as c:
+            c.exec_driver_sql(f'REVOKE SELECT (name) ON "{app.schema}".customer FROM "{app.role}"')
+        with pytest.raises(migration.TransitionFailure) as caught:
+            proposal(app)
+        assert caught.value.code == 'source_metadata_changed'
 
 
 def test_reverse_refuses_extended_statistics_on_protected_column():
@@ -321,6 +361,7 @@ def test_source_metadata_is_preserved_through_decrypt_back():
         c.exec_driver_sql(f'COMMENT ON TABLE "{schema}".customer IS \'table comment\'')
         c.exec_driver_sql(f'COMMENT ON COLUMN "{schema}".customer.label IS \'plain column comment\'')
         c.exec_driver_sql(f'COMMENT ON COLUMN "{schema}".customer.name IS \'protected column comment\'')
+        c.exec_driver_sql(f'GRANT SELECT (name) ON "{schema}".customer TO "{role}" WITH GRANT OPTION')
         c.exec_driver_sql(f'ALTER TABLE "{schema}".customer ALTER COLUMN name SET STATISTICS 500')
         c.exec_driver_sql(f'ALTER TABLE "{schema}".customer ALTER COLUMN name SET STORAGE EXTERNAL')
         c.exec_driver_sql(f'ALTER TABLE "{schema}".customer ALTER COLUMN name SET COMPRESSION pglz')
@@ -347,13 +388,15 @@ def test_source_metadata_is_preserved_through_decrypt_back():
         assert before_columns['name'][0] == 'protected column comment'
         assert before_columns['name'][1] == 500
         assert before_columns['name'][2] == 'e'
-        assert before_columns['name'][3] is None
+        assert before_columns['name'][3] is not None
         assert before_columns['name'][4] == 'p'
         assert before_columns['name'][5] == '{n_distinct=10}'
         assert 'fillfactor=70' in before_index[0]
         assert before_index[1] == 'index comment'
         assert before_constraint == 'primary key comment'
         assert before_stats == (['d', 'f'], 700, 'protected statistics comment', ['name', 'label'])
+        before_acl = column_acl(app, 'name')
+        assert before_acl == {(app.role, 'SELECT', True)}
         with app.owner.connect() as c:
             before_options = c.exec_driver_sql(
                 'SELECT reloptions::text FROM pg_catalog.pg_class '
@@ -365,6 +408,7 @@ def test_source_metadata_is_preserved_through_decrypt_back():
                 'WHERE stxrelid=pg_catalog.to_regclass(%s)',
                 (f'{app.schema}.customer',)).scalar_one() == 2
         run(app)
+        assert column_acl(app, 'name') == before_acl
         publish(app)
         plan = proposal(app)
         reverse(app, plan, until='PLAINTEXT_PENDING')
@@ -389,6 +433,7 @@ def test_source_metadata_is_preserved_through_decrypt_back():
         assert after_constraint == 'primary key comment'
         assert after_stats[:3] == before_stats[:3]
         assert sorted(after_stats[3]) == ['label', 'name']
+        assert column_acl(app, 'name') == before_acl
         with app.owner.connect() as c:
             assert c.exec_driver_sql(
                 'SELECT reloptions::text FROM pg_catalog.pg_class '

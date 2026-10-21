@@ -476,7 +476,7 @@ def test_metadata_added_after_planning_is_refused_before_effects():
             c.exec_driver_sql(f'GRANT SELECT (name) ON "{app.schema}".customer TO PUBLIC')
         with pytest.raises(app.m.TransitionFailure) as caught:
             run(app, 'PENDING')
-        assert caught.value.code == 'unsupported_protected_metadata'
+        assert caught.value.code == 'source_metadata_changed'
     with application() as app:
         run(app, 'EXPANDED')
         with app.owner.begin() as c:

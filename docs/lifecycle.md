@@ -216,12 +216,11 @@ The cases cover edited and deleted rows, a row added while protected, wrong cust
 corrupt frames, disabled guards, lost replies, abort, metadata restoration, and unsafe
 plan/removal refusals. Counts are not gate evidence.
 
-**Limits:** in-place reverse cannot restore physical column order (`attnum`). The lock
-records no comments, statistics targets, storage, compression settings, column grants or
-column options, so protection planning and switches, and reverse planning, refuse a
-protected column that carries them. Protection also refuses comments on constraints and
-indexes it recreates, extended statistics that reference a protected column, and sequences
-owned by a protected column. Fresh-cluster
+**Limits:** in-place reverse cannot restore physical column order (`attnum`). Lock v2
+captures and restores protected-column comments, statistics targets, storage,
+compression, options, column grants, constraint and index comments, and extended
+statistics. Protection refuses expression extended statistics and sequences owned by a
+protected column. Fresh-cluster
 restore, a real package-free application run, retained-backup reader proof, and the
 retained-native alternative remain UNKNOWN.
 Layout comparison and the decision not to promote retained-native are recorded in
@@ -275,8 +274,8 @@ removal, schema-fact equality, native `psycopg` readback, and journal absence. R
 **Limits:** the host asserts source fencing and quarantine; this package does not
 authenticate either and has no cryptographic evidence of source isolation. Adoption
 refuses a restated constraint without a retained frame row,
-and it qualifies restated text behaviorally, not textually. Physical column order,
-column-grant capture, and owned-sequence capture remain.
+and it qualifies restated text behaviorally, not textually. Physical column order and
+owned-sequence capture remain.
 
 ### Independent application exit: 2026-10-19
 
