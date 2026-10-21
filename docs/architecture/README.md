@@ -207,12 +207,17 @@ Queries permit `equality` and `unique`. An empty list means storage-only. Equali
 Unique implies equality and requires both leakage acknowledgments. `protect` must be true.
 Removal uses a semantic diff and a later verified transition.
 
-The lock schema is `cryptalis.lock/v1`. Its exact top-level members are
+The lock schema is `cryptalis.lock/v2`. New plans emit v2; readers accept v1 and v2.
+Its exact top-level members are
 `schema`, `profile`, `domain_id`, `database`, `declaration`, `models`, `writer_inventory`, `search_reviews`, `ddl`, and `required_readers`.
-The declaration is canonical. Models contain `model`, `table_id`, `schema`, `table`, `record`, `tenancy`, `fields`, and `source_schema`.
+The declaration is canonical. Models contain `model`, `table_id`, `schema`, `table`, `record`, `tenancy`, `fields`, `source_schema`, and `source_metadata`.
 Fields contain `name`, `column`, `field_id`, `queries`, `representation`, `payload_column`, `unique_indexes`, `original`, `source`, `descriptor`, and `descriptor_digest`.
 
 The source schema stores inspected relation, column, constraint, index, and dependency facts.
+`source_metadata` stores protected-column attributes (comment, statistics target,
+storage, compression, options, ACL names), constraint and index comments, and extended
+statistics rebuilt from captured fields. Statistics targets use strings because the
+manifest integer grammar is non-negative and bounded.
 Catalog type modifiers use strings because PostgreSQL uses negative sentinels.
 Unrelated SQL definitions use SHA-256 fingerprints of their canonical JSON string values.
 Original admitted unique constraints and indexes retain their exact definitions for later restoration.

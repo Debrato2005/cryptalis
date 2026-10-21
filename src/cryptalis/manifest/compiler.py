@@ -274,46 +274,94 @@ def protected_owned_sequences(connection, schema, table, names):
     """, schema=schema, table=table) if row["column"] in wanted})
 
 
-def _unrecorded_metadata_issues(connection, schema, table, compiled, issues):
-    fields = compiled["fields"]
-    protected = {field["column"]: field for field in fields}
-    for column, observed in unrecorded_column_metadata(connection, schema, table, protected):
-        issues.append(Issue("unsupported_protected_metadata",
-                            f"{compiled['model']}.{protected[column]['name']}",
-                            "Remove the " + ", ".join(observed) + " from the protected column "
-                            "before planning; Cryptalis does not record it."))
-    for name in protected_extended_statistics(connection, schema, table, protected):
-        issues.append(Issue("unsupported_dependency", f"{compiled['model']}.{name}",
-                            "Drop the extended statistics that reference the protected column "
-                            "before planning; Cryptalis does not recreate them."))
-    for name in protected_owned_sequences(connection, schema, table, protected):
-        issues.append(Issue("unsupported_dependency", f"{compiled['model']}.{name}",
-                            "Drop the sequence or change its ownership before planning; Cryptalis "
-                            "drops the protected column and its owned sequences."))
+def _recorded_names(fields):
     constraints = sorted({item["name"] for field in fields for item in field["original"]["constraints"]})
     indexes = sorted({item["name"] for field in fields for item in field["original"]["indexes"]} | set(constraints))
-    if not constraints and not indexes:
-        return
-    commented_constraints = {row["name"] for row in _rows(connection, """
-        SELECT co.conname AS name FROM pg_catalog.pg_constraint co
+    return constraints, indexes
+
+
+def source_metadata(connection, schema, table, fields):
+    """Capture protected-column facts the lock must restore after reverse."""
+    columns = {field["column"]: {"comment": None, "statistics": "-1", "storage": "x",
+                                 "compression": "", "options": [], "acl": []} for field in fields}
+    for row in _rows(connection, """
+        SELECT a.attname AS name, a.attstattarget AS statistics, a.attstorage AS storage,
+               a.attcompression AS compression, a.attoptions AS options,
+               pg_catalog.col_description(a.attrelid, a.attnum) AS comment
+        FROM pg_catalog.pg_attribute a
+        JOIN pg_catalog.pg_class t ON t.oid=a.attrelid
+        JOIN pg_catalog.pg_namespace n ON n.oid=t.relnamespace
+        WHERE n.nspname=:schema AND t.relname=:table AND a.attnum>0 AND NOT a.attisdropped
+    """, schema=schema, table=table):
+        if row["name"] not in columns:
+            continue
+        columns[row["name"]] = {
+            "comment": row["comment"], "statistics": str(row["statistics"]),
+            "storage": row["storage"], "compression": row["compression"],
+            "options": list(row["options"] or []), "acl": []}
+    constraints, indexes = _recorded_names(fields)
+    comments = {}
+    comments["constraints"] = {row["name"]: row["comment"] for row in _rows(connection, """
+        SELECT co.conname AS name, pg_catalog.obj_description(co.oid, 'pg_constraint') AS comment
+        FROM pg_catalog.pg_constraint co
         JOIN pg_catalog.pg_class t ON t.oid=co.conrelid
         JOIN pg_catalog.pg_namespace n ON n.oid=t.relnamespace
         WHERE n.nspname=:schema AND t.relname=:table
           AND pg_catalog.obj_description(co.oid, 'pg_constraint') IS NOT NULL
-    """, schema=schema, table=table)}
-    commented_indexes = {row["name"] for row in _rows(connection, """
-        SELECT i.relname AS name FROM pg_catalog.pg_class i
+    """, schema=schema, table=table) if row["name"] in constraints}
+    comments["indexes"] = {row["name"]: row["comment"] for row in _rows(connection, """
+        SELECT i.relname AS name, pg_catalog.obj_description(i.oid, 'pg_class') AS comment
+        FROM pg_catalog.pg_class i
         JOIN pg_catalog.pg_namespace n ON n.oid=i.relnamespace
         WHERE n.nspname=:schema AND pg_catalog.obj_description(i.oid, 'pg_class') IS NOT NULL
-    """, schema=schema)}
-    for name in sorted(commented_constraints & set(constraints)):
-        issues.append(Issue("unsupported_recreated_metadata", f"{compiled['model']}.{name}",
-                            "Remove the constraint comment before planning; Cryptalis recreates "
-                            "the constraint without comments."))
-    for name in sorted(commented_indexes & set(indexes)):
-        issues.append(Issue("unsupported_recreated_metadata", f"{compiled['model']}.{name}",
-                            "Remove the index comment before planning; Cryptalis recreates "
-                            "the index without comments."))
+    """, schema=schema, table=table) if row["name"] in indexes}
+    entries = []
+    for row in _rows(connection, """
+        SELECT s.stxname AS name, s.stxkind::text[] AS kinds, s.stxstattarget AS target,
+               pg_catalog.obj_description(s.oid, 'pg_statistic_ext') AS comment,
+               (SELECT pg_catalog.array_agg(a.attname ORDER BY a.attnum)
+                FROM pg_catalog.unnest(s.stxkeys::int2[]) AS k(attnum)
+                JOIN pg_catalog.pg_attribute a ON a.attrelid=s.stxrelid AND a.attnum=k.attnum
+               ) AS columns
+        FROM pg_catalog.pg_statistic_ext s
+        JOIN pg_catalog.pg_class t ON t.oid=s.stxrelid
+        JOIN pg_catalog.pg_namespace n ON n.oid=t.relnamespace
+        WHERE n.nspname=:schema AND t.relname=:table
+        ORDER BY s.stxname
+    """, schema=schema, table=table):
+        names = list(row["columns"] or [])
+        if not set(names) & set(columns):
+            continue
+        entry = {
+            "name": row["name"], "kinds": sorted(row["kinds"]), "columns": sorted(names),
+            "statistics": str(row["target"]), "comment": row["comment"]}
+        entry["definition_digest"] = _digest(entry)
+        entries.append(entry)
+    return {"columns": columns, **comments, "extended_statistics": entries}
+
+
+def _metadata_issues(connection, schema, table, compiled, issues):
+    fields = compiled["fields"]
+    protected = {field["column"]: field for field in fields}
+    for column, kinds in unrecorded_column_metadata(connection, schema, table, protected):
+        if "column grant" in kinds:
+            issues.append(Issue("unsupported_protected_metadata",
+                                f"{compiled['model']}.{protected[column]['name']}",
+                                "Remove the column grant before planning; column grants are not "
+                                "captured yet."))
+    for row in _rows(connection, """
+        SELECT s.stxname AS name FROM pg_catalog.pg_statistic_ext s
+        JOIN pg_catalog.pg_class t ON t.oid=s.stxrelid
+        JOIN pg_catalog.pg_namespace n ON n.oid=t.relnamespace
+        WHERE n.nspname=:schema AND t.relname=:table AND s.stxexprs IS NOT NULL
+    """, schema=schema, table=table):
+        issues.append(Issue("unsupported_dependency", f"{compiled['model']}.{row['name']}",
+                            "Drop expression extended statistics before planning; Cryptalis "
+                            "does not capture them."))
+    for name in protected_owned_sequences(connection, schema, table, protected):
+        issues.append(Issue("unsupported_dependency", f"{compiled['model']}.{name}",
+                            "Drop the sequence or change its ownership before planning; Cryptalis "
+                            "drops the protected column and its owned sequences."))
 
 
 def _id_codec(column, actual):
@@ -545,7 +593,7 @@ def _previous_lock(raw, current, engine):
     """Reject inconsistent compiler artifacts before computing a semantic diff."""
     old = decode_manifest_json(raw)
     try:
-        if (old.keys() != current.keys() or old["schema"] != "cryptalis.lock/v1"
+        if (old.keys() != current.keys() or old["schema"] not in ("cryptalis.lock/v1", "cryptalis.lock/v2")
                 or old["profile"] != "cf1" or old["domain_id"] != current["domain_id"]
                 or old["database"] != {"major": 16, "encoding": "UTF8"}):
             raise ValueError
@@ -556,7 +604,10 @@ def _previous_lock(raw, current, engine):
             raise ValueError
         seen = set()
         for model, declared in zip(old["models"], declaration.models, strict=True):
-            if model.keys() != current["models"][0].keys() or model["table_id"] != str(declared.table_id) or model["model"] != declared.model:
+            expected = set(current["models"][0].keys())
+            if old["schema"] == "cryptalis.lock/v1":
+                expected.discard("source_metadata")
+            if model.keys() != expected or model["table_id"] != str(declared.table_id) or model["model"] != declared.model:
                 raise ValueError
             if model["table_id"] in seen or not isinstance(model["schema"], str) or not isinstance(model["table"], str):
                 raise ValueError
@@ -573,6 +624,27 @@ def _previous_lock(raw, current, engine):
                 tenant_codec = "uuid16/v1"
             if model["source_schema"].keys() != {"relation", "columns", "constraints", "indexes", "dependencies"}:
                 raise ValueError
+            if old["schema"] == "cryptalis.lock/v2":
+                metadata = model["source_metadata"]
+                if set(metadata) != {"columns", "constraints", "indexes", "extended_statistics"}:
+                    raise ValueError
+                if not all(isinstance(metadata[key], dict) for key in ("columns", "constraints", "indexes")):
+                    raise ValueError
+                if not isinstance(metadata["extended_statistics"], list):
+                    raise ValueError
+                for facts in metadata["columns"].values():
+                    if set(facts) != {"comment", "statistics", "storage", "compression", "options", "acl"}:
+                        raise ValueError
+                    if not isinstance(facts["options"], list) or not isinstance(facts["acl"], list):
+                        raise ValueError
+                if not all(isinstance(value, str) for value in (*metadata["constraints"].values(),
+                                                                *metadata["indexes"].values())):
+                    raise ValueError
+                for entry in metadata["extended_statistics"]:
+                    if set(entry) != {"name", "kinds", "columns", "statistics", "comment", "definition_digest"}:
+                        raise ValueError
+                    if not isinstance(entry["kinds"], list) or not isinstance(entry["columns"], list):
+                        raise ValueError
             if not isinstance(model["fields"], list) or len(model["fields"]) != len(declared.fields):
                 raise ValueError
             for field, intent in zip(model["fields"], declared.fields, strict=True):
@@ -817,7 +889,9 @@ def compile_protection(raw: bytes, mapping: Registry, engine: Engine, *,
                     continue
                 compiled = _compile_model(model, mapper, facts, issues, schema)
                 if compiled:
-                    _unrecorded_metadata_issues(connection, schema, table.name, compiled, issues)
+                    _metadata_issues(connection, schema, table.name, compiled, issues)
+                    compiled["source_metadata"] = source_metadata(
+                        connection, schema, table.name, compiled["fields"])
                     for field in compiled["fields"]:
                         field["descriptor"]["domain_id"] = str(declaration.domain_id)
                         field["descriptor_digest"] = _digest(field["descriptor"])
@@ -827,7 +901,7 @@ def compile_protection(raw: bytes, mapping: Registry, engine: Engine, *,
         raise InspectionUnavailable(sqlstate) from None
     if issues:
         raise PlanningRejected(issues)
-    document = {"schema": "cryptalis.lock/v1", "profile": "cf1",
+    document = {"schema": "cryptalis.lock/v2", "profile": "cf1",
                 "domain_id": str(declaration.domain_id), "database": {"major": 16, "encoding": "UTF8"},
                 "declaration": json.loads(declaration.canonical_bytes()), "models": models,
                 "writer_inventory": host, "search_reviews": reviews}

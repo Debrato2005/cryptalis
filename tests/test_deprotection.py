@@ -244,7 +244,8 @@ def catalog_metadata(app):
             "WHERE n.nspname=%s AND t.relname='customer'", (app.schema,)).scalar_one()
         columns = {row[0]: row[1:] for row in c.exec_driver_sql(
             'SELECT a.attname, pg_catalog.col_description(t.oid, a.attnum), a.attstattarget, '
-            'a.attstorage, a.attacl::text FROM pg_catalog.pg_attribute a '
+            'a.attstorage, a.attacl::text, a.attcompression, a.attoptions::text '
+            'FROM pg_catalog.pg_attribute a '
             'JOIN pg_catalog.pg_class t ON t.oid=a.attrelid '
             'JOIN pg_catalog.pg_namespace n ON n.oid=t.relnamespace '
             "WHERE n.nspname=%s AND t.relname='customer' AND a.attnum>0 AND NOT a.attisdropped "
@@ -253,7 +254,23 @@ def catalog_metadata(app):
             'SELECT i.reloptions::text, pg_catalog.obj_description(i.oid) FROM pg_catalog.pg_class i '
             'JOIN pg_catalog.pg_namespace n ON n.oid=i.relnamespace '
             "WHERE n.nspname=%s AND i.relname='native_name'", (app.schema,)).one()
-    return table, columns, index
+        constraint = c.exec_driver_sql(
+            'SELECT pg_catalog.obj_description(o.oid, %s) FROM pg_catalog.pg_constraint o '
+            'JOIN pg_catalog.pg_class t ON t.oid=o.conrelid '
+            'JOIN pg_catalog.pg_namespace n ON n.oid=t.relnamespace '
+            "WHERE n.nspname=%s AND t.relname='customer' AND o.conname='customer_pkey'",
+            ('pg_constraint', app.schema)).scalar_one()
+        statistics = c.exec_driver_sql(
+            'SELECT s.stxkind::text[], s.stxstattarget, pg_catalog.obj_description(s.oid, %s), '
+            '(SELECT pg_catalog.array_agg(a.attname ORDER BY a.attnum) '
+            ' FROM pg_catalog.unnest(s.stxkeys::int2[]) AS k(attnum) '
+            ' JOIN pg_catalog.pg_attribute a ON a.attrelid=s.stxrelid AND a.attnum=k.attnum) '
+            'FROM pg_catalog.pg_statistic_ext s '
+            'JOIN pg_catalog.pg_class t ON t.oid=s.stxrelid '
+            'JOIN pg_catalog.pg_namespace n ON n.oid=t.relnamespace '
+            "WHERE n.nspname=%s AND t.relname='customer' AND s.stxname=%s",
+            ('pg_statistic_ext', app.schema, 'name_stats')).one_or_none()
+    return table, columns, index, constraint, statistics
 
 
 def test_reverse_refuses_metadata_added_while_protected():
@@ -264,6 +281,7 @@ def test_reverse_refuses_metadata_added_while_protected():
         with app.owner.begin() as c:
             c.exec_driver_sql(f'COMMENT ON COLUMN "{app.schema}".customer.name IS \'late comment\'')
             c.exec_driver_sql(f'ALTER TABLE "{app.schema}".customer ALTER COLUMN name SET STATISTICS 100')
+            c.exec_driver_sql(f'GRANT SELECT (name) ON "{app.schema}".customer TO PUBLIC')
         with pytest.raises(migration.TransitionFailure) as caught:
             proposal(app)
         assert caught.value.code == 'unsupported_protected_metadata'
@@ -296,14 +314,25 @@ def test_reverse_refuses_sequence_owned_by_protected_column():
         assert caught.value.code == 'unsupported_dependency'
 
 
-def test_surviving_metadata_is_preserved_through_decrypt_back():
-    """Metadata outside the protected column survives the recorded definitions."""
+def test_source_metadata_is_preserved_through_decrypt_back():
+    """Captured protected metadata plus surviving metadata restores exactly."""
 
     def setup(c, schema, role):
         c.exec_driver_sql(f'COMMENT ON TABLE "{schema}".customer IS \'table comment\'')
         c.exec_driver_sql(f'COMMENT ON COLUMN "{schema}".customer.label IS \'plain column comment\'')
+        c.exec_driver_sql(f'COMMENT ON COLUMN "{schema}".customer.name IS \'protected column comment\'')
+        c.exec_driver_sql(f'ALTER TABLE "{schema}".customer ALTER COLUMN name SET STATISTICS 500')
+        c.exec_driver_sql(f'ALTER TABLE "{schema}".customer ALTER COLUMN name SET STORAGE EXTERNAL')
+        c.exec_driver_sql(f'ALTER TABLE "{schema}".customer ALTER COLUMN name SET COMPRESSION pglz')
+        c.exec_driver_sql(f'ALTER TABLE "{schema}".customer ALTER COLUMN name SET (n_distinct=10)')
+        c.exec_driver_sql(f"""COMMENT ON CONSTRAINT customer_pkey ON "{schema}".customer IS 'primary key comment'""")
+        c.exec_driver_sql(f"""COMMENT ON INDEX "{schema}".native_name IS 'index comment'""")
         c.exec_driver_sql(f'ALTER INDEX "{schema}".native_name SET (fillfactor=70)')
         c.exec_driver_sql(f'GRANT SELECT (label) ON "{schema}".customer TO "{role}"')
+        c.exec_driver_sql(f'CREATE STATISTICS "{schema}".name_stats (ndistinct, dependencies) '
+                          f'ON name, label FROM "{schema}".customer')
+        c.exec_driver_sql(f'ALTER STATISTICS "{schema}".name_stats SET STATISTICS 700')
+        c.exec_driver_sql(f"""COMMENT ON STATISTICS "{schema}".name_stats IS 'protected statistics comment'""")
         c.exec_driver_sql(f'CREATE STATISTICS "{schema}".label_stats (ndistinct) '
                           f'ON label, tenant_id FROM "{schema}".customer')
         c.exec_driver_sql(f'CREATE SEQUENCE "{schema}".label_seq')
@@ -311,25 +340,30 @@ def test_surviving_metadata_is_preserved_through_decrypt_back():
         c.exec_driver_sql(f'ALTER TABLE "{schema}".customer SET (autovacuum_enabled=false)')
 
     with application(setup=setup) as app:
-        before_table, before_columns, before_index = catalog_metadata(app)
+        before_table, before_columns, before_index, before_constraint, before_stats = catalog_metadata(app)
         assert before_table == 'table comment'
         assert before_columns['label'][0] == 'plain column comment'
         assert before_columns['label'][3] is not None
-        assert before_columns['name'][0] is None
-        assert before_columns['name'][1] == -1
-        assert before_columns['name'][2] == 'x'
+        assert before_columns['name'][0] == 'protected column comment'
+        assert before_columns['name'][1] == 500
+        assert before_columns['name'][2] == 'e'
         assert before_columns['name'][3] is None
+        assert before_columns['name'][4] == 'p'
+        assert before_columns['name'][5] == '{n_distinct=10}'
         assert 'fillfactor=70' in before_index[0]
+        assert before_index[1] == 'index comment'
+        assert before_constraint == 'primary key comment'
+        assert before_stats == (['d', 'f'], 700, 'protected statistics comment', ['name', 'label'])
         with app.owner.connect() as c:
-            before_stats = c.exec_driver_sql(
-                'SELECT count(*) FROM pg_catalog.pg_statistic_ext '
-                'WHERE stxrelid=pg_catalog.to_regclass(%s)',
-                (f'{app.schema}.customer',)).scalar_one()
             before_options = c.exec_driver_sql(
                 'SELECT reloptions::text FROM pg_catalog.pg_class '
                 'WHERE oid=pg_catalog.to_regclass(%s)',
                 (f'{app.schema}.customer',)).scalar_one()
-        assert before_stats == 1
+        with app.owner.connect() as c:
+            assert c.exec_driver_sql(
+                'SELECT count(*) FROM pg_catalog.pg_statistic_ext '
+                'WHERE stxrelid=pg_catalog.to_regclass(%s)',
+                (f'{app.schema}.customer',)).scalar_one() == 2
         run(app)
         publish(app)
         plan = proposal(app)
@@ -341,21 +375,21 @@ def test_surviving_metadata_is_preserved_through_decrypt_back():
                                     'synthetic package-free run', 'synthetic backup recovery', True)
         d.remove(plan, app.owner, pin=app_pin(plan, 'REMOVING'), approval=app.approval,
                  removal=removal, consent=active)
-        after_table, after_columns, after_index = catalog_metadata(app)
+        after_table, after_columns, after_index, after_constraint, after_stats = catalog_metadata(app)
         assert after_table == 'table comment'
-        assert after_columns['label'][0] == 'plain column comment'
-        assert after_columns['label'][3] == before_columns['label'][3]
-        assert after_columns['name'][0] is None
-        assert after_columns['name'][1] == -1
-        assert after_columns['name'][2] == 'x'
-        assert after_columns['name'][3] is None
+        assert after_columns['label'] == before_columns['label']
+        assert after_columns['name'] == before_columns['name']
+        assert after_columns['name'][0] == 'protected column comment'
+        assert after_columns['name'][1] == 500
+        assert after_columns['name'][2] == 'e'
+        assert after_columns['name'][4] == 'p'
+        assert after_columns['name'][5] == '{n_distinct=10}'
         assert 'fillfactor=70' in after_index[0]
-        assert after_index[1] is None
+        assert after_index[1] == 'index comment'
+        assert after_constraint == 'primary key comment'
+        assert after_stats[:3] == before_stats[:3]
+        assert sorted(after_stats[3]) == ['label', 'name']
         with app.owner.connect() as c:
-            assert c.exec_driver_sql(
-                'SELECT count(*) FROM pg_catalog.pg_statistic_ext '
-                'WHERE stxrelid=pg_catalog.to_regclass(%s)',
-                (f'{app.schema}.customer',)).scalar_one() == before_stats
             assert c.exec_driver_sql(
                 'SELECT reloptions::text FROM pg_catalog.pg_class '
                 'WHERE oid=pg_catalog.to_regclass(%s)',

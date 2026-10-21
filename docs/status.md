@@ -9,35 +9,33 @@ No PostgreSQL/provider/runtime cell, production key provider, independent review
 VERIFIED below refers only to the named checks and their exact revisions.
 All other contract and promotion requirements are SPECIFIED. All seven full gates remain UNKNOWN.
 
-## Unrecorded metadata refusal at protection and reverse: 2026-10-19
+## Lock v2 metadata capture and restore: 2026-10-21
 
-**IMPLEMENTED:** protection planning refuses a protected column that carries a comment,
-a non-default statistics target, a non-default storage or compression setting, a column
-grant, or a column option (`attoptions`, for example `n_distinct`). It also refuses
-comments on constraints and indexes that it recreates, extended statistics that
-reference a protected column, and sequences owned by a protected column. Reverse
-planning, the protection switch, and the reverse switch refuse the same attributes and
-objects when they appear after planning. The failure codes are
-`unsupported_protected_metadata`, `unsupported_recreated_metadata` and
-`unsupported_dependency`; planning remedies say to remove the metadata or object. The
-lock format does not change.
+**IMPLEMENTED:** new protection plans emit `cryptalis.lock/v2`. Each model records
+`source_metadata` for protected columns: comment, statistics target, storage,
+compression, options, and an empty ACL list; constraint and index comments; and extended
+statistics with kind letters, sorted columns, statistics target, comment, and a
+definition digest. The protection switch still refuses column grants, extended
+statistics with expressions, and sequences owned by a protected column. A catalog
+change after planning raises `source_metadata_changed`; the reverse switch refuses late
+metadata on the ciphertext column and then restores the captured facts. The restore
+compares the resulting catalog with `source_metadata` and raises
+`metadata_restore_mismatch` on any difference.
 
-**VERIFIED, local PostgreSQL 16.15 cell:** ten protection refusal cases (six column
-attributes, two recreated-object comments, one extended-statistics object, one owned
-sequence), three reverse refusal cases, an executor-refusal case, and a positive
-preservation case pass on SQLAlchemy 2.1.3 and 2.0.51. Focused runs report **133 passed**
-on each cell
-([2.1.3](_reset/metadata-refusal-focused-sa21-20261019.json),
-[2.0.51](_reset/metadata-refusal-focused-sa20-20261019.json)). Full suites report
-**1,321 passed, 2 skipped** ([2.1.3](_reset/metadata-refusal-full-sa21-20261019.json))
-and **1,293 passed, 30 skipped** ([2.0.51](_reset/metadata-refusal-full-sa20-20261019.json)).
+The reader accepts `cryptalis.lock/v1` and `cryptalis.lock/v2`. A v1 lock restores no
+metadata because it carries none.
 
-Metadata capture and restoration remain unimplemented; the in-place switch still changes
-the physical column order.
+**VERIFIED, local PostgreSQL 16.15 cell:** capture, drift, reverse refusal, and exact
+catalog restore pass in `tests/test_protection_compiler.py`,
+`tests/test_deprotection.py`, and `tests/test_migration.py`. The full suite reports
+**1,315 passed, 2 skipped** on SQLAlchemy 2.1.3
+([receipt](_reset/lock-v2-full-sa21-20261021-2.json)).
 
-**UNKNOWN:** tablespace moves (the local cell has no additional tablespace and the
-least-privilege owner cannot create one), and whether a pinned external application
-depends on the refused attributes.
+**UNKNOWN:** the SQLAlchemy 2.0.51 cell was not rerun because its local virtual
+environment is absent. Column grants remain refused; their forward application to the
+ciphertext column and reverse restore are the next slice. Owned sequences remain
+refused. Tablespace moves remain UNKNOWN (the local cell has no additional tablespace
+and the least-privilege owner cannot create one). Physical column order still changes.
 
 ## Independent application adoption and package-free restart: 2026-10-19
 
@@ -100,8 +98,8 @@ on 2.0.51 ([receipt](_reset/restore-full-sa20-20261019.json)).
 authenticate either and has no cryptographic evidence of source isolation. Adoption
 refuses a restated frame constraint with no retained frame
 row, and it qualifies the restated text behaviorally, not textually. A pinned external
-application, physical column order, and the unrecorded metadata limits remain. G-LIFECYCLE
-remains UNKNOWN.
+application, physical column order, and the column-grant and owned-sequence limits
+remain. G-LIFECYCLE remains UNKNOWN.
 
 ## In-place decrypt-back and removal: 2026-10-19
 

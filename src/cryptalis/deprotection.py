@@ -23,6 +23,7 @@ from dataclasses import dataclass
 import hashlib
 import json
 import math
+import re
 import time
 from uuid import UUID, uuid4
 
@@ -32,7 +33,7 @@ from sqlalchemy.exc import SQLAlchemyError
 
 from cryptalis import migration as m
 from cryptalis.crypto.cf1 import FieldDescriptor, open_text
-from cryptalis.manifest.compiler import _canonical, _previous_lock
+from cryptalis.manifest.compiler import _canonical, _previous_lock, source_metadata
 from cryptalis.manifest.parser import decode_manifest_json
 
 FORMAT = 'cryptalis.reverse/v1'
@@ -502,6 +503,74 @@ def _verify(c, p, state, keys):
     return digests
 
 
+STORAGE_NAMES = {'p': 'PLAIN', 'e': 'EXTERNAL', 'x': 'EXTENDED', 'm': 'MAIN'}
+COMPRESSION_NAMES = {'p': 'pglz', 'l': 'lz4'}
+STATISTICS_KINDS = {'d': 'ndistinct', 'f': 'dependencies', 'm': 'mcv'}
+
+
+def _literal(value):
+    return "'" + str(value).replace("'", "''") + "'"
+
+
+def _restore_metadata(c, p, model):
+    table = m._table(c, model)
+    metadata = model.get('source_metadata')
+    if metadata is None:
+        return
+    for column, facts in metadata['columns'].items():
+        target = f'{table} ALTER COLUMN {m._quote(c, column)}'
+        if facts['comment'] is not None:
+            c.exec_driver_sql(f'COMMENT ON COLUMN {table}.{m._quote(c, column)} IS {_literal(facts["comment"])}')
+        if facts['statistics'] != '-1':
+            try:
+                target_statistics = int(facts['statistics'])
+            except (TypeError, ValueError):
+                raise m.TransitionFailure('metadata_restore_invalid', p.operation_id) from None
+            if not 0 <= target_statistics <= 10000:
+                raise m.TransitionFailure('metadata_restore_invalid', p.operation_id)
+            c.exec_driver_sql(f'ALTER TABLE {target} SET STATISTICS {target_statistics}')
+        if facts['storage'] != 'x':
+            name = STORAGE_NAMES.get(facts['storage'])
+            if name is None:
+                raise m.TransitionFailure('metadata_restore_invalid', p.operation_id)
+            c.exec_driver_sql(f'ALTER TABLE {target} SET STORAGE {name}')
+        if facts['compression']:
+            name = COMPRESSION_NAMES.get(facts['compression'])
+            if name is None:
+                raise m.TransitionFailure('metadata_restore_invalid', p.operation_id)
+            c.exec_driver_sql(f'ALTER TABLE {target} SET COMPRESSION {name}')
+        if facts['options']:
+            for option in facts['options']:
+                if not re.fullmatch(r'[a-z_][a-z0-9_]*(=[-0-9.]+)?', option):
+                    raise m.TransitionFailure('metadata_restore_invalid', p.operation_id)
+            c.exec_driver_sql(f'ALTER TABLE {target} SET ({", ".join(facts["options"])})')
+    for name, comment in metadata['constraints'].items():
+        c.exec_driver_sql(f'COMMENT ON CONSTRAINT {m._quote(c, name)} ON {table} IS {_literal(comment)}')
+    for name, comment in metadata['indexes'].items():
+        index = f'{m._quote(c, model["schema"])}.{m._quote(c, name)}'
+        c.exec_driver_sql(f'COMMENT ON INDEX {index} IS {_literal(comment)}')
+    for entry in metadata['extended_statistics']:
+        kinds = [STATISTICS_KINDS.get(kind) for kind in entry['kinds']]
+        if any(kind is None for kind in kinds):
+            raise m.TransitionFailure('metadata_restore_invalid', p.operation_id)
+        columns = ', '.join(m._quote(c, column) for column in entry['columns'])
+        name = f'{m._quote(c, model["schema"])}.{m._quote(c, entry["name"])}'
+        c.exec_driver_sql(f'CREATE STATISTICS {name} ({", ".join(kinds)}) ON {columns} FROM {table}')
+        if entry['statistics'] != '-1':
+            try:
+                target_statistics = int(entry['statistics'])
+            except (TypeError, ValueError):
+                raise m.TransitionFailure('metadata_restore_invalid', p.operation_id) from None
+            if not 0 <= target_statistics <= 10000:
+                raise m.TransitionFailure('metadata_restore_invalid', p.operation_id)
+            c.exec_driver_sql(f'ALTER STATISTICS {name} SET STATISTICS {target_statistics}')
+        if entry['comment'] is not None:
+            c.exec_driver_sql(f'COMMENT ON STATISTICS {name} IS {_literal(entry["comment"])}')
+    observed = source_metadata(c, model['schema'], model['table'], model['fields'])
+    if observed != metadata:
+        raise m.TransitionFailure('metadata_restore_mismatch', p.operation_id)
+
+
 def _switch(c, p, state, keys):
     m._lock_tables(c, p, verification=True)
     digests = _verify(c, p, state, keys)
@@ -526,6 +595,12 @@ def _switch(c, p, state, keys):
         for original in sorted((item for field in model['fields'] for item in field['original']['indexes']),
                                key=lambda item: item['name']):
             c.exec_driver_sql(original['definition'])
+        try:
+            _restore_metadata(c, p, model)
+        except m.TransitionFailure:
+            raise
+        except SQLAlchemyError:
+            raise m.TransitionFailure('metadata_restore_failed', p.operation_id) from None
         state['models'][model['table_id']]['plaintext_schema'] = m._facts(c, model)
     state['phase'] = 'PLAINTEXT_PENDING'
     m._save(c, p, state)

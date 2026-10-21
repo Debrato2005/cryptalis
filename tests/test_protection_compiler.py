@@ -114,36 +114,52 @@ def snapshot(app):
     return columns, indexes, rows
 
 
-@pytest.mark.parametrize('statement, code', [
-    ("COMMENT ON COLUMN \"{schema}\".customer.email IS 'unsupported'", 'unsupported_protected_metadata'),
-    ('ALTER TABLE "{schema}".customer ALTER COLUMN email SET STATISTICS 100', 'unsupported_protected_metadata'),
-    ('ALTER TABLE "{schema}".customer ALTER COLUMN email SET STORAGE EXTERNAL', 'unsupported_protected_metadata'),
-    ('ALTER TABLE "{schema}".customer ALTER COLUMN email SET COMPRESSION pglz', 'unsupported_protected_metadata'),
-    ('ALTER TABLE "{schema}".customer ALTER COLUMN email SET (n_distinct=10)', 'unsupported_protected_metadata'),
-    ('GRANT SELECT (email) ON "{schema}".customer TO PUBLIC', 'unsupported_protected_metadata'),
-    ("COMMENT ON CONSTRAINT email_unique ON \"{schema}\".customer IS 'unsupported'", 'unsupported_recreated_metadata'),
-    ("COMMENT ON INDEX \"{schema}\".email_unique IS 'unsupported'", 'unsupported_recreated_metadata'),
-])
-def test_unrecorded_protected_metadata_is_refused(app, statement, code):
+def test_unrecorded_column_grants_are_refused(app):
     engine, mapping, _, schema = app
     with engine.begin() as c:
-        c.execute(text(statement.format(schema=schema)))
+        c.execute(text(f'GRANT SELECT (email) ON "{schema}".customer TO PUBLIC'))
     with pytest.raises(PlanningRejected) as caught:
         compile_app(app)
-    assert {issue.code for issue in caught.value.issues} == {code}
+    assert {issue.code for issue in caught.value.issues} == {'unsupported_protected_metadata'}
     assert all(issue.remedy.startswith('Remove the') for issue in caught.value.issues)
 
 
-def test_extended_statistics_on_protected_column_are_refused(app):
+def test_source_metadata_is_captured(app):
+    engine, mapping, _, schema = app
+    with engine.begin() as c:
+        c.execute(text(f"""COMMENT ON COLUMN "{schema}".customer.email IS 'protected column comment'"""))
+        c.execute(text(f'ALTER TABLE "{schema}".customer ALTER COLUMN email SET STATISTICS 100'))
+        c.execute(text(f'ALTER TABLE "{schema}".customer ALTER COLUMN email SET STORAGE EXTERNAL'))
+        c.execute(text(f'ALTER TABLE "{schema}".customer ALTER COLUMN email SET COMPRESSION pglz'))
+        c.execute(text(f'ALTER TABLE "{schema}".customer ALTER COLUMN email SET (n_distinct=10)'))
+        c.execute(text(f"""COMMENT ON CONSTRAINT email_unique ON "{schema}".customer IS 'constraint comment'"""))
+        c.execute(text(f"""COMMENT ON INDEX "{schema}".email_unique IS 'index comment'"""))
+    lock = json.loads(compile_app(app).lock_bytes)
+    assert lock['schema'] == 'cryptalis.lock/v2'
+    metadata = lock['models'][0]['source_metadata']
+    assert metadata['columns']['email'] == {
+        'comment': 'protected column comment', 'statistics': '100', 'storage': 'e',
+        'compression': 'p', 'options': ['n_distinct=10'], 'acl': []}
+    assert metadata['constraints'] == {'email_unique': 'constraint comment'}
+    assert metadata['indexes'] == {'email_unique': 'index comment'}
+    assert metadata['extended_statistics'] == []
+
+
+def test_extended_statistics_are_captured(app):
     engine, mapping, _, schema = app
     with engine.begin() as c:
         c.execute(text(f'CREATE STATISTICS "{schema}".email_stats (ndistinct) '
                        f'ON email, note FROM "{schema}".customer'))
-    with pytest.raises(PlanningRejected) as caught:
-        compile_app(app)
-    issues = [issue for issue in caught.value.issues if issue.code == 'unsupported_dependency']
-    assert [issue.location for issue in issues] == ['Customer.email_stats']
-    assert 'extended statistics' in issues[0].remedy
+        c.execute(text(f'ALTER STATISTICS "{schema}".email_stats SET STATISTICS 500'))
+        c.execute(text(f"""COMMENT ON STATISTICS "{schema}".email_stats IS 'statistics comment'"""))
+    metadata = json.loads(compile_app(app).lock_bytes)['models'][0]['source_metadata']
+    entry = metadata['extended_statistics'][0]
+    assert entry['name'] == 'email_stats'
+    assert entry['kinds'] == ['d']
+    assert entry['columns'] == ['email', 'note']
+    assert entry['statistics'] == '500'
+    assert entry['comment'] == 'statistics comment'
+    assert len(entry['definition_digest']) == 64
 
 
 def test_sequence_owned_by_protected_column_is_refused(app):

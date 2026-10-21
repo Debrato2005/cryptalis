@@ -444,7 +444,7 @@ def test_metadata_added_after_planning_is_refused_before_effects():
             c.exec_driver_sql(f'COMMENT ON COLUMN "{app.schema}".customer.name IS \'late comment\'')
         with pytest.raises(app.m.TransitionFailure) as caught:
             run(app, 'EXPANDED')
-        assert caught.value.code == 'unsupported_protected_metadata'
+        assert caught.value.code == 'source_metadata_changed'
         with app.owner.connect() as c:
             assert c.exec_driver_sql(
                 "SELECT count(*) FROM information_schema.columns "
@@ -456,7 +456,7 @@ def test_metadata_added_after_planning_is_refused_before_effects():
             c.exec_driver_sql(f'ALTER TABLE "{app.schema}".customer ALTER COLUMN name SET STATISTICS 100')
         with pytest.raises(app.m.TransitionFailure) as caught:
             run(app, 'PENDING')
-        assert caught.value.code == 'unsupported_protected_metadata'
+        assert caught.value.code == 'source_metadata_changed'
         with app.owner.connect() as c:
             names = {row[0] for row in c.exec_driver_sql(
                 "SELECT column_name FROM information_schema.columns "
@@ -469,7 +469,14 @@ def test_metadata_added_after_planning_is_refused_before_effects():
                               f'(ndistinct) ON name, label FROM "{app.schema}".customer')
         with pytest.raises(app.m.TransitionFailure) as caught:
             run(app, 'PENDING')
-        assert caught.value.code == 'unsupported_dependency'
+        assert caught.value.code == 'source_metadata_changed'
+    with application() as app:
+        run(app, 'EXPANDED')
+        with app.owner.begin() as c:
+            c.exec_driver_sql(f'GRANT SELECT (name) ON "{app.schema}".customer TO PUBLIC')
+        with pytest.raises(app.m.TransitionFailure) as caught:
+            run(app, 'PENDING')
+        assert caught.value.code == 'unsupported_protected_metadata'
     with application() as app:
         run(app, 'EXPANDED')
         with app.owner.begin() as c:

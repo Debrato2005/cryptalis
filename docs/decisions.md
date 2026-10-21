@@ -18,6 +18,7 @@ These decisions are final. Scope-only D blockers are resolved. No decision suppl
 | 6. Targets | Added p95 ≤ 3 ms point/equality, ≤ 8 ms IN-20. Protected column with equality index ≤ 2× storage | Read/storage-budget D resolved as targets, not achievements. Write-throughput and pause budgets remain D |
 | 7. Authorities/review | No designated production key provider and no independent review. Local provider is functional evidence only | G-PROVIDER, G-POLICY, and review requirements remain UNKNOWN. No production publication/restore procedure is selected |
 | 8. Build order | Compiler → crypto/KeyProvider/dev provider → sync/async SQLAlchemy → equality/IN/uniqueness → plan/apply/verify → decrypt-back/remove → three rotation operations | One slice per run. Each requires real PostgreSQL tests before the next. Advanced work requires all seven slices, then six-gate admission and leakage opt-in |
+| 9. Lock v2 metadata | Add `cryptalis.lock/v2` `source_metadata`; dual v1/v2 reader; new plans emit v2; in-place restore first, fresh cluster separate | Approved 2026-10-21. Column grants and owned sequences stay refused until their slices land |
 
 **VERIFIED, earlier revision only:** the million-row receipt records equality p95 about 6.5 ms versus 0.93 ms native and IN-20 about 16.1 ms versus 1.1 ms.
 Both miss the approved added-latency targets. Point reads also miss. These are known performance work, not current-revision qualification.

@@ -163,33 +163,43 @@ rebuilt, so an existing tablespace should survive in place.
 
 ## Guard implemented: 2026-10-19
 
-Option 2 is implemented without a lock change. Protection planning refuses protected
+The first guard landed without a lock change. Protection planning refused protected
 columns with a comment, non-default statistics target, storage or compression setting,
-column grant or column option, and refuses comments on constraints and indexes that it
+column grant or column option, and refused comments on constraints and indexes that it
 recreates, extended statistics that reference a protected column, and sequences owned by
 a protected column. Reverse planning, the protection switch, and the reverse switch
-refuse the attributes and objects when they appear after planning. The failure codes are
-`unsupported_protected_metadata`, `unsupported_recreated_metadata` and
-`unsupported_dependency`; planning remedies say to remove the metadata or object.
+refused the attributes and objects when they appeared after planning.
 
-The former characterization test is now
-`test_surviving_metadata_is_preserved_through_decrypt_back`. Refusal evidence is in
-`tests/test_protection_compiler.py`, `tests/test_deprotection.py` and
-`tests/test_migration.py`. Focused runs report **133 passed** for
-[SQLAlchemy 2.1.3](../_reset/metadata-refusal-focused-sa21-20261019.json) and
-[SQLAlchemy 2.0.51](../_reset/metadata-refusal-focused-sa20-20261019.json). The full suites
-report **1,321 passed, 2 skipped**
-([2.1.3](../_reset/metadata-refusal-full-sa21-20261019.json)) and **1,293 passed, 30 skipped**
-([2.0.51](../_reset/metadata-refusal-full-sa20-20261019.json)).
+## Lock v2 capture and restore: 2026-10-21
+
+`cryptalis.lock/v2` adds `source_metadata` to each model. Slice A captures protected
+column comments, statistics targets, storage, compression, and options; constraint and
+index comments; and extended statistics on protected columns. The protection switch
+compares the current catalog with the capture before expand and before the switch and
+raises `source_metadata_changed` on a difference. Reverse still refuses metadata added to
+the ciphertext column, then restores the captured facts and compares the catalog with the
+lock. The reader accepts v1 and v2; v1 carries no metadata.
+
+Column grants and owned sequences remain refused. Slice B must apply captured grants to
+the ciphertext column at the protection switch as well as restore them at reverse.
+Otherwise runtime column privileges are lost before reverse.
+
+Evidence is in `tests/test_protection_compiler.py`,
+`tests/test_deprotection.py`, and `tests/test_migration.py`. The positive case is now
+`test_source_metadata_is_preserved_through_decrypt_back`. The full suite reports
+**1,315 passed, 2 skipped** on SQLAlchemy 2.1.3
+([receipt](../_reset/lock-v2-full-sa21-20261021-2.json)). The SQLAlchemy 2.0.51 cell was
+not rerun because its local virtual environment is absent. The earlier refusal receipts
+remain historical evidence for v1 locks.
 
 ## Next steps
 
-1. Probe tablespace moves when a second tablespace is available. Compression, column
-   options, RLS, rules, triggers, partitioning, owned sequences and extended statistics
-   are refused; table options and unowned sequences survive.
-2. Review the [lock v2 metadata proposal](lock-v2-metadata-proposal.md) for capture and
-   restore. It needs approval before implementation.
-3. After approval, implement capture, then reverse restore, then the fresh-cluster phase.
+1. Implement slice B: apply captured column grants at the protection switch and restore
+   them during reverse. Test missing roles and invalid ACL entries.
+2. Extend fresh-cluster adoption to v2 locks.
+3. Probe tablespace moves when a second tablespace is available. RLS, rules, triggers,
+   partitioning, owned sequences, and expression extended statistics are refused; table
+   options and unowned sequences survive.
 
 ## Open questions
 

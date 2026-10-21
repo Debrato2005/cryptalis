@@ -275,8 +275,8 @@ removal, schema-fact equality, native `psycopg` readback, and journal absence. R
 **Limits:** the host asserts source fencing and quarantine; this package does not
 authenticate either and has no cryptographic evidence of source isolation. Adoption
 refuses a restated constraint without a retained frame row,
-and it qualifies restated text behaviorally, not textually. Physical column order and the
-unrecorded metadata limits remain.
+and it qualifies restated text behaviorally, not textually. Physical column order,
+column-grant capture, and owned-sequence capture remain.
 
 ### Independent application exit: 2026-10-19
 

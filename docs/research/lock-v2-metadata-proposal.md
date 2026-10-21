@@ -1,17 +1,17 @@
 # Lock v2 source-metadata proposal
 
-**PROPOSED — NOT APPROVED.** This document requests a format decision. It does not
-change the lock, compiler, executor, or reader behavior.
+**APPROVED 2026-10-21.** Slice A is implemented: new protection plans emit
+`cryptalis.lock/v2`, capture protected-column metadata, and restore it during in-place
+reverse. Column grants and owned sequences remain refused until slice B.
 [Status](../status.md) owns current evidence.
 [Metadata research](metadata-preservation-and-format-evolution.md) owns the observed gaps.
 
 ## Problem
 
-Protection and reverse now refuse metadata that the lock cannot restore. The refusal is
-fail-closed and verified. It is not a restoration feature. A host that needs a protected
-column comment, statistics target, storage or compression setting, column option, column
-grant, constraint or index comment, or extended statistics must remove those facts before
-planning.
+Before lock v2, protection and reverse refused metadata that the lock could not restore.
+The refusal is fail-closed and verified. Slice A now captures comments, statistics
+targets, storage, compression, options, constraint and index comments, and extended
+statistics. A host must still remove column grants and owned sequences before planning.
 
 Capture and restore needs an authenticated artifact. The journal is progress evidence,
 not restore authority. A host inventory outside the lock weakens the deployment
@@ -28,18 +28,18 @@ each model: `source_metadata`.
   "columns": {
     "name": {
       "comment": "customer name",
-      "statistics": 500,
+      "statistics": "500",
       "storage": "e",
-      "compression": "pglz",
+      "compression": "p",
       "options": ["n_distinct=10"],
-      "acl": ["app_role|SELECT|false"]
+      "acl": []
     }
   },
-  "constraints": {"email_unique": {"comment": "unique login"}},
-  "indexes": {"email_lookup": {"comment": "lookup path"}},
+  "constraints": {"email_unique": "unique login"},
+  "indexes": {"email_lookup": "lookup path"},
   "extended_statistics": [
-    {"name": "customer_stats", "kinds": ["d", "f"], "columns": ["name", "label"],
-     "statistics": -1, "comment": null, "definition_digest": "<sha256>"}
+    {"name": "customer_stats", "kinds": ["d", "f"], "columns": ["label", "name"],
+     "statistics": "-1", "comment": null, "definition_digest": "<sha256>"}
   ]
 }
 ```
@@ -52,13 +52,14 @@ columns survive the switch and are not captured.
 `GRANTABLE` is `true` when the grant option is present. `PUBLIC` is a valid grantee.
 Grantor names are not stored; restoration runs as the table owner.
 
-`options` is the sorted `attoptions` array. `storage` and `compression` use the catalog
-single-character values. `statistics` is the integer target. Empty values are `null` or
-`[]`, not omission. Null and empty are distinct.
+`options` is the `attoptions` array. `storage` and `compression` use the catalog
+single-character values (`p` is pglz, `l` is lz4). `statistics` is the decimal target
+string, as a string because the manifest integer grammar is non-negative and bounded.
+Empty values are `null` or `[]`, not omission. Null and empty are distinct.
 
-Extended statistics entries store names, kind letters, ordered column names, statistics
-target, comment, and a digest over the canonical entry without the digest. Definitions
-are rebuilt from these fields, not parsed from SQL text.
+Extended statistics entries store names, kind letters, sorted column names, statistics
+target string, comment, and a digest over the canonical entry without the digest.
+Definitions are rebuilt from these fields, not parsed from SQL text.
 
 Owned sequences are **not** captured. A sequence owned by a protected column remains
 refused. Its `last_value` and `is_called` move with forward writes during protection;
@@ -80,12 +81,14 @@ entries contain role names. The lock still contains no connection string.
 ## Drift and refusal
 
 The executor compares captured metadata with the current catalog before expand and
-before the switch. A difference is `source_metadata_changed` with the model and object
-name. It does not guess a merge.
+before the switch. A difference is `source_metadata_changed` with the operation id. It
+does not guess a merge.
 
-The reverse planner and switch perform the same comparison against the lock. A change
-after the protection plan is refused. The existing refusal codes remain valid for v1
-locks, which carry no metadata.
+The reverse planner and switch cannot compare against the source column, because the
+protection switch removed that metadata. They refuse any metadata found on the
+ciphertext column or any extended statistics or owned sequence that references it.
+Metadata expected from the lock is restored by the reverse switch. The existing refusal
+codes remain valid for v1 locks, which carry no metadata.
 
 ## Reverse restore
 
@@ -93,8 +96,9 @@ After the column rename and the recorded constraint/index restoration, the rever
 applies metadata in this order:
 
 1. Column comment, statistics target, storage, compression, and options.
-2. Column grants. Each role must exist. A missing role refuses the switch; no automatic
-   or name-mapped grant is attempted.
+2. Column grants. **Not implemented in slice A.** Column grants remain refused. Slice B
+   must also apply the captured grants to the ciphertext column at the protection
+   switch. Otherwise runtime column privileges are lost before reverse.
 3. Constraint and index comments.
 4. Extended statistics, created from the captured kinds and column names, then the
    statistics target and comment.
@@ -120,37 +124,44 @@ The protected dump carries no source metadata for the dropped column. A restored
 therefore has no source metadata until reverse restores it. Adoption reads `lock/v2`;
 reverse after adoption applies the captured metadata with the same rules.
 
-The first implementation phase covers in-place reverse only. Fresh-cluster adoption of
-v2 locks is a separate phase with its own tests.
+The first implementation phase covers in-place reverse. The adoption reader accepts v2,
+and reverse after adoption shares the restore code. A dedicated fresh-cluster case with
+captured metadata is still required before that path is qualified.
 
-## Test plan
+## Test status
 
-- Capture: every field and object kind round-trips through canonical bytes; null and
-  empty forms stay distinct.
-- Restore: catalog oracle equality for comments, statistics target, storage,
-  compression, options, ACLs, constraint/index comments, and extended statistics.
-- Negative: missing role, unknown statistics kind, mismatched definition digest, extra
-  or missing metadata entry, and invalid ACL text all refuse with a typed code.
-- Drift: a change after planning refuses with `source_metadata_changed` at expand,
-  switch, reverse plan, and reverse switch.
-- Compatibility: v1 lock still reverses; v2 lock rejects under an old reader; v1 plan
-  cannot emit metadata.
-- Fresh-cluster: separate phase after in-place evidence.
+Slice A evidence is in `tests/test_protection_compiler.py`,
+`tests/test_deprotection.py`, and `tests/test_migration.py`.
+- Capture: `test_source_metadata_is_captured` and
+  `test_extended_statistics_are_captured` check the v2 lock fields.
+- Restore: `test_source_metadata_is_preserved_through_decrypt_back` compares protected
+  comments, statistics target, storage, compression, options, constraint and index
+  comments, and extended statistics before protection and after removal.
+- Drift: `test_metadata_added_after_planning_is_refused_before_effects` covers a late
+  comment, statistics target, grant, extended statistics, and owned sequence.
+- Refusal: column grants and owned sequences still refuse with typed codes in both
+  directions.
+- Compatibility: v1 locks remain readable. The v1 path has no metadata to restore.
+- Slice B negative cases are not implemented: missing role, invalid ACL text, and
+  forward grant application.
+- A dedicated fresh-cluster case with captured metadata remains a separate phase.
 
 ## Implementation slices after approval
 
-1. Emit and validate `lock/v2`; capture protected-column facts; stop refusing captured
-   kinds; add drift checks and compatibility tests.
-2. Restore captured facts in the reverse switch; add the catalog oracle and negative
-   tests.
-3. Extend fresh-cluster adoption and reverse after adoption.
-4. Update status, lifecycle, compatibility, and receipts.
+1. **DONE, slice A:** emit and validate `lock/v2`; capture protected-column facts;
+   stop refusing captured kinds; add drift checks and compatibility tests.
+2. **DONE, slice A:** restore captured facts in the reverse switch; add the catalog
+   oracle.
+3. **NEXT, slice B:** apply captured column grants at the protection switch and restore
+   them during reverse; add missing-role and invalid-ACL tests.
+4. Extend fresh-cluster adoption and reverse after adoption.
+5. Update status, lifecycle, compatibility, and receipts.
 
-## Decisions requested
+## Approved decisions
 
-1. Approve `cryptalis.lock/v2` with a dual reader and v2-only new plans.
-2. Approve the capture scope: protected-column attributes and ACLs, constraint/index
+1. Approved `cryptalis.lock/v2` with a dual reader and v2-only new plans.
+2. Approved the capture scope: protected-column attributes and ACLs, constraint/index
    comments, and extended statistics.
-3. Approve the ACL rule: role names must exist; no mapping; PUBLIC allowed.
-4. Confirm that owned sequences stay refused.
-5. Approve in-place restore first, with fresh-cluster restore as a separate phase.
+3. Approved the ACL rule: role names must exist; no mapping; PUBLIC allowed.
+4. Confirmed that owned sequences stay refused.
+5. Approved in-place restore first, with fresh-cluster restore as a separate phase.
