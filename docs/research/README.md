@@ -8,6 +8,9 @@ records verified catalog gaps and format-evolution options. It is research evide
 approved format or contract.
 [Lab reconciliation](lab-reconciliation-2026-10-19.md) records the external lab state,
 the seven held S16 assertions and the product-side signals. It adopts no lab code or claim.
+[Lock v2 metadata proposal](lock-v2-metadata-proposal.md) requests a format decision for
+capturing and restoring refused metadata. It is proposed, not approved, and changes no
+behavior.
 
 [Performance checkpoint](performance-checkpoint.md) records the approved identity-only membership correction, measured limits and future proposals.
 Its byte-budget and online designs require separate review; they are not lifecycle contracts or implemented features.

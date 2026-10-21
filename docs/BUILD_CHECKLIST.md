@@ -105,7 +105,8 @@ Requirement text is abbreviated. The full definitions remain in the research
    order, metadata capture/restore, retained-native); comments, statistics targets,
    storage, compression, column grants, column options, extended statistics and owned
    sequences are now refused at planning. See the
-   [metadata research note](research/metadata-preservation-and-format-evolution.md).
+   [metadata research note](research/metadata-preservation-and-format-evolution.md) and
+   the [lock v2 proposal](research/lock-v2-metadata-proposal.md), which needs approval.
 3. Continue correctness slices that protect the compatibility promise with native
    PostgreSQL oracles; establish a second independent application baseline.
 4. Extend the fresh-cluster range with multi-table, fault, and provider-outage drills.

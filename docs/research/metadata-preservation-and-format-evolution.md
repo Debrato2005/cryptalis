@@ -187,8 +187,9 @@ report **1,321 passed, 2 skipped**
 1. Probe tablespace moves when a second tablespace is available. Compression, column
    options, RLS, rules, triggers, partitioning, owned sequences and extended statistics
    are refused; table options and unowned sequences survive.
-2. Capture the refused facts at compile time and restore them in the reverse switch.
-3. Only then propose a lock version, canonical bytes, digests, and the reader matrix.
+2. Review the [lock v2 metadata proposal](lock-v2-metadata-proposal.md) for capture and
+   restore. It needs approval before implementation.
+3. After approval, implement capture, then reverse restore, then the fresh-cluster phase.
 
 ## Open questions
 
