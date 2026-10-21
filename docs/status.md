@@ -39,6 +39,30 @@ because the least-privilege owner cannot create or drop roles. Owned sequences r
 refused. Tablespace moves remain UNKNOWN (the local cell has no additional tablespace
 and the least-privilege owner cannot create one). Physical column order still changes.
 
+## Release artifacts and SBOM: 2026-10-21
+
+**IMPLEMENTED:** `scripts/release_check.py` builds the wheel and sdist twice, compares
+SHA-256 hashes, verifies every wheel `RECORD` digest and size, rejects forbidden archive
+members, requires project metadata and the license file, scans runtime source for
+network or telemetry import terms, and exports a CycloneDX 1.5 SBOM from the locked
+runtime dependency set. Package metadata declares the MIT license and includes the
+license file.
+
+**VERIFIED, local Python 3.12.3 and uv 0.12.12 cell:** two consecutive builds produced
+identical wheel and sdist hashes. The wheel has 39 members; its `RECORD` hashes and sizes
+match. The sdist has 39 members. The SBOM contains `cryptalis`, `cryptography`,
+`psycopg`, `sqlalchemy`, and their locked transitive components. A wheel installed into
+a new virtual environment imports from that environment and starts `cryptalis --help`.
+The runtime source scan found no network or telemetry import terms.
+`uv lock --check` passes. The [receipt](_reset/release-check-20261021.json) records
+source hashes, artifact hashes, and the clean-install path. G-RELEASE remains UNKNOWN.
+
+**Limits:** reproducibility is same-host and same-uv only. There is no independent
+rebuild, signed provenance or attestation, Trusted Publishing, vulnerability scan,
+old-reader compatibility, upgrade/uninstall matrix, or controlled release identity.
+The clean install resolved dependencies from the network; it did not use an offline,
+hash-verified install. Independent review and publication remain external blockers.
+
 ## Independent application adoption and package-free restart: 2026-10-19
 
 **IMPLEMENTED:** `tests/independent_app.py` is an ordinary three-model application
