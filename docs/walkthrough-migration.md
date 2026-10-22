@@ -65,12 +65,61 @@ sessions = attach(Base.registry, runtime_engine, lock=p.lock_bytes,
 
 Startup rejects stale pins, schema mismatches, owner credentials, and unplanned tenant key policies.
 `apply`, `verify` and `abort` require maintenance approval before connection or locks.
-Read-only `plan`, `status`, `check_deployment`, and supplied-connection `check_attachment` are exempt.
+Read-only `plan`, `status`, `diagnose_deployment`, `check_deployment`, and
+supplied-connection `check_attachment` are exempt.
 Before switch, `abort` restores native writes and retains the journal; it cannot undo cutover.
 Run tests through `scripts/test_postgres.py`; it reloads both private files and probes both roles.
 Protection admits one initial operation per schema. Root rewrap adds an exact
 successor chain. General journal reuse remains unfinished.
 [Evidence](status.md) records tests, costs, and limits.
+
+## Diagnose an active deployment
+
+**IMPLEMENTED, bounded:** Doctor checks one existing active runtime deployment.
+It accepts an immutable `MigrationPlan`, its exact ACTIVE pin, and a private
+connection file for the declared runtime role. Reverse plans and rotation
+preparation P artifacts are outside this command's scope.
+
+```bash
+cryptalis doctor plan.json --pin current-pin.json --database-url-file /private/runtime-connection.txt --json
+```
+
+For an adopted target, add `--restore-binding binding.json`. The binding must
+match the source plan. Doctor admits the plan, ACTIVE pin, and optional binding
+before connection. It then uses the existing attachment admission checks in
+one read-only, repeatable-read transaction. These checks compare the actual
+runtime identity, target, lineage, effective privileges, and protected schema.
+Use runtime credentials; maintenance credentials do not satisfy this check.
+The [input limits below](#inspect-committed-progress) also apply to Doctor.
+
+Success reports `scope: active_runtime_deployment`, overall `status: UNKNOWN`,
+and `checks.runtime_deployment: PASS`. These six checks remain UNKNOWN:
+`provider_keys`, `frame_authentication`, `query_routes`, `writer_exclusion`,
+`host_authority`, and `recovery_capacity`.
+The report also gives `effects: NONE`, `verification: NOT_PERFORMED`, and
+`authority: HOST_SUPPLIED_PIN`. Doctor uses no keys, authenticates no frames,
+and does not repeat a rotation's frozen cutover proof. Later valid ACTIVE
+edits remain admitted. The supplied pin does not authenticate its own publication.
+
+Exit 0 means the scoped runtime check passed. It does not promote UNKNOWN
+checks to PASS. Invalid or denied input returns 2. An observed deployment
+mismatch returns 3. An unavailable connection, cleanup, or output returns 4.
+Failures use the standard stderr error envelope. `error.checks` reports a
+runtime deployment FAIL for an observed mismatch, or UNKNOWN when inspection
+could not finish. Diagnostics omit credentials and raw driver error text.
+
+The Python API returns `None` on success and raises `TransitionFailure` on refusal:
+
+```python
+from cryptalis.migration import diagnose_deployment
+
+diagnose_deployment(p, runtime_engine, pin=active_pin)
+# For an adopted target: diagnose_deployment(p, runtime_engine, pin=active_pin, restore=binding)
+```
+
+Current effective grants can change after this observation. Doctor does not
+freeze administrative changes, exclude independent writers, or qualify a
+production deployment. [Status](status.md) owns executable evidence and limits.
 
 ## Inspect committed progress
 
@@ -93,6 +142,9 @@ Exit 0 means ACTIVE metadata matches the supplied ACTIVE pin.
 Exit 2 means invalid or denied input. Exit 3 means incomplete or uncertain state.
 Exit 4 means an operational, cleanup, or output failure.
 The command never advances a transition or publishes policy.
+ACTIVE and PENDING inspection repeat the shared effective runtime privilege
+checks. Status can use an inspection connection; Doctor additionally requires
+the actual declared runtime identity. Both remain metadata observations.
 
 For an approved restored target, add `--restore-binding binding.json`.
 The binding supplies target and restored-state evidence. The source plan and

@@ -1075,6 +1075,24 @@ def check_deployment(p,engine,*,pin,restore=None):
     with _connection(engine,p.operation_id) as c: _check_connection(p,c,pin,binding=restore)
 
 
+def diagnose_deployment(p, engine, *, pin, restore=None):
+    """Inspect active attachment admission in one read-only catalog snapshot.
+
+    Use the declared runtime connection. This checks no provider, frame, query
+    route, writer exclusion, host authority, or recovery/capacity guarantee.
+    A successful return means only that current attachment metadata matches.
+    """
+    _admit(p, pin)
+    if pin.phase != 'ACTIVE':
+        raise TransitionFailure('external_policy_mismatch', p.operation_id)
+    if restore is not None:
+        from cryptalis.restore import _identity
+        _identity(p, restore)
+    with _connection(engine, p.operation_id) as c:
+        c.exec_driver_sql('SET TRANSACTION ISOLATION LEVEL REPEATABLE READ, READ ONLY')
+        check_attachment(c, p.lock_bytes, (p, pin, restore))
+
+
 def status(p, engine, *, pin, restore=None):
     """Observe one committed journal/schema snapshot without keys or effects.
 
@@ -1104,6 +1122,8 @@ def status(p, engine, *, pin, restore=None):
                     raise TransitionFailure('source_schema_changed', p.operation_id)
                 _check_source_metadata(c, p, model)
         elif phase in ('PENDING', 'ACTIVE'):
+            _runtime_safety(c, p.document['runtime_role'], target[-1], p.document['lock']['models'],
+                            journal=_journal(c, p), operation_id=p.operation_id)
             _active_schema(c, p, state)
             if phase == 'PENDING':
                 for model in p.document['lock']['models']:

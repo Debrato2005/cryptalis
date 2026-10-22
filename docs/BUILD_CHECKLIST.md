@@ -27,12 +27,21 @@ No objective is complete until its acceptance evidence and applicable gate pass.
   Payload/search preparation uses sealed activation and shared publication.
   Restore adoption uses the existing host-approved binding. Effective privilege,
   ancestry and metadata checks precede effectful restore probes or key work.
-  See the [current checkpoint](status.md#search-key-rotation-and-backup-checkpoint-2026-10-23).
-- The search checkpoint passes 92 focused cases, including independent crypto,
+  Read-only Doctor repeats runtime attachment admission in one snapshot and
+  reports six unobserved boundaries plus its aggregate result UNKNOWN.
+  ACTIVE/PENDING status repeats effective privilege admission.
+  See the [current checkpoint](status.md#doctor-and-runtime-status-checkpoint-2026-10-23).
+- The Doctor checkpoint passes 88 focused cases plus two final cleanup controls.
+  Search TEXT/VARCHAR backups each pass one export and 30 restore cases,
+  including Doctor on an adopted runtime. Reproducible archives and all 36
+  installed package files pass, including CLI startup and Doctor help.
+  Full regression passes 1,887 tests and 18 subtests, with three separate-environment
+  skips. All 125 Python source/test/script hashes match the final worktree.
+  The prior search checkpoint passes 92 focused cases, including independent crypto,
   native search/uniqueness/current-value removal, mixed rotation lineage,
   lost COMMIT replies and SIGKILL recovery. Search TEXT/VARCHAR backups each
   pass one export and 29 restore cases. Older protection, rewrap and payload
-  profiles also pass at the same Python hashes. Full regression passes
+  profiles also pass at the same Python hashes. Its earlier full regression passes
   1,869 tests and 18 subtests, with three separate-environment skips.
   Reproducible archives and all 36 installed package files pass, including CLI.
 - Current execution uses local PostgreSQL 16 and Python 3.12.3 with SQLAlchemy
@@ -58,7 +67,7 @@ Requirement text is abbreviated. The full definitions remain in the research
 | OBJ-SEC-01 | Encrypt before PostgreSQL; prove at SQL/driver boundaries | VERIFIED, bounded | `crypto/cf1.py`, `sqlalchemy.py`; slice 2/3 receipts in `docs/_reset`; real runtime-role tests | Broader writer/auth/provider boundaries; independent review |
 | OBJ-SEC-02 | Bind tenant, field, row, generation; reject malformed/swapped frames | VERIFIED, bounded | CF1 AAD, descriptor binding, sync/async tamper tests | Collision assumptions and composition review |
 | OBJ-SEC-03 | Authorization, result lineage, tenant isolation, parameterization | PARTIAL | Tenant-scoped sessions, requested-point checks, typed errors | Host authorization is external; audit remaining ORM routes |
-| OBJ-SEC-04 | Detect plaintext bypass through ORM, bulk, SQL, COPY, jobs, logs | PARTIAL | Guarded attachment rejects raw SQL/COPY/opaque writes and unsafe engine logging before connect/key access; writer inventory at plan; effective runtime privilege refusal before restore probes/keys, repeated at planning, active admission, shared maintenance and host-phase-selected reverse execution | Complete route inventory; deployment enforcement is unverified |
+| OBJ-SEC-04 | Detect plaintext bypass through ORM, bulk, SQL, COPY, jobs, logs | PARTIAL | Guarded attachment rejects raw SQL/COPY/opaque writes and unsafe engine logging before connect/key access; writer inventory at plan; effective runtime privilege refusal before restore probes/keys, repeated at planning, active admission, Doctor, ACTIVE/PENDING status, shared maintenance and host-phase-selected reverse execution | Complete route inventory; deployment enforcement is unverified |
 | OBJ-SEC-05 | Isolate keys; bound nonces, leases, cache lifetime, fork safety | VERIFIED, bounded | `crypto/keys.py` strict policy, cache expiry, fork refusal; local provider outage/revocation/lease drills pass on both SQLAlchemy cells | Remote cancellation, usage limits, production custody |
 | OBJ-SEC-06 | Reduce equality/frequency/access leakage with documented trade-offs | SPECIFIED | Equality leakage is declared; no stronger profile admitted | Threat-model and benchmark a lower-leakage profile; six-gate admission |
 | OBJ-SEC-07 | Independent red-team, crypto, adapter, provider, supply-chain review | BLOCKED | None | Assign independent reviewers; do not self-certify |
@@ -76,8 +85,8 @@ Requirement text is abbreviated. The full definitions remain in the research
 | OBJ-LIFE-07 | Three separate rotation workflows | PARTIAL | Root-rewrap successor cutover and shared activation, byte preservation, exact lineage, pending retry/cancellation, process/COMMIT recovery and repeated-rewrap decrypt-back/removal; source-pinned payload planning, durable shadows, source-only cancellation, immutable sealed target proof, atomic cutover/shared publication, mixed custody lineage/current-value removal and native process/COMMIT recovery; fresh-cluster TEXT/VARCHAR payload-backup adoption after later edits, independent selected-generation decoding and old-generation refusal; sealed search reindex, one active namespace with retained readers, native uniqueness/rollback, mixed search/payload/rewrap/search lineage and fresh-cluster search backups | Rotation on adopted restored targets, adopted-restore rewrap/cancellation, external provider/authority qualification |
 | OBJ-LIFE-08 | Production KMS with outage/revocation/cost evidence | BLOCKED | Local development provider only | Authorized provider account and independent review |
 | OBJ-LIFE-09 | Install, upgrade, decommission, clean uninstall | PARTIAL | Importable package; approved in-database removal retires reverse-owned objects after decrypt-back; a package-free restarted application process performs native CRUD | Versioned upgrade/removal and broader external application evidence |
-| OBJ-DX-01 | Minimal model/query changes; one manifest and one attach | IMPLEMENTED | `compile_protection`, `attach`, CLI inspection, read-only protection and reverse `status` | Unify plan/apply/remove entry points; complete status coverage |
-| OBJ-DX-02 | Read-only `cryptalis doctor` with explicit UNKNOWN results | PARTIAL | Bounded database/declaration diagnostics | Implement the full doctor and provider/role coverage |
+| OBJ-DX-01 | Minimal model/query changes; one manifest and one attach | IMPLEMENTED | `compile_protection`, `attach`, CLI inspection, bounded ACTIVE Doctor, read-only protection and reverse `status` | Unify plan/apply/remove entry points; complete status coverage |
+| OBJ-DX-02 | Read-only `cryptalis doctor` with explicit UNKNOWN results | PARTIAL | ACTIVE runtime Doctor and shared Python diagnostic use one read-only repeatable snapshot for exact plan/pin/restore, runtime identity, target, lineage, effective privileges and schema; six unobserved boundaries and aggregate UNKNOWN; native refusal, no-key, cleanup and output evidence | Pre-adoption manifest/schema scan, query/write route inventory, key/provider diagnostics and operational prerequisites |
 | OBJ-DX-03 | Real FastAPI/SQLModel app plus a second independent app | PARTIAL | Pinned Smolink revision 498d24b runs its original FastAPI app, HTTP URL creation and refusal cases, real Redis, repository/ORM CRUD, protect/decrypt-back/remove, and a fresh import-denied process; 38 original Python source hashes match, with zero source/model/query edits; only Url.destination is protected; the in-repo three-model application retains its separate evidence | Broader protected fields and application suite, exact packaged Python 3.13 cell, SQLModel integration, and a second external app |
 | OBJ-DX-04 | Normal ORM identity, loading, sessions, pooling, async | PARTIAL | Bounded sync/async adapter and search tests | Broader ORM/framework coverage |
 | OBJ-DX-05 | Complete quickstart, threat model, leakage, recovery docs | PARTIAL | README, architecture, security, lifecycle, walkthroughs | Keep docs tied to admitted APIs and evidence |

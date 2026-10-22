@@ -293,8 +293,14 @@ original source frames no longer exist. P resume and cancellation refuse
 SUPERSEDED. Shared `migration.apply` requires ACTIVATING or ACTIVE authority
 for A. ACTIVATING repeats target proof even if the journal claims ACTIVE.
 A genuine ACTIVE pin permits later edits and latest-value removal. Keyless
-status remains `NOT_PERFORMED`. Search reindex remains SPECIFIED. Payload
-rotation on adopted restored targets remains unsupported. All seven full gates
+status remains `NOT_PERFORMED`. Search rotation uses the same staging and
+publication engines, with separate policy and frame checks. Its preparation
+artifact uses `cryptalis.search-rotation/v1`; activation uses
+`cryptalis.transition/v4`. It retains source roots, selects one new search
+generation, preserves payload selection, and replaces terms under fresh
+authenticated nonces. Native UPDATE maintains equality/unique indexes atomically.
+Storage-only frames remain exact. Generation rotation on adopted restored
+targets remains unsupported. All seven full gates
 remain UNKNOWN.
 See [lifecycle](../lifecycle.md#changes-and-rotation) for recovery and publication boundaries.
 [Security](../security.md#cryptographic-format) owns framing, commitments, keys, and failure rules.
@@ -305,6 +311,9 @@ remains UNKNOWN. [Lifecycle](../lifecycle.md) states the verifier's actual check
 
 The table defines the **SPECIFIED** final command surface.
 A bounded `status` command now reports protection and reverse progress and metadata.
+A bounded `doctor` checks an existing ACTIVE deployment through the declared
+runtime connection. It repeats shared attachment admission in a read-only
+snapshot. Unobserved boundaries and its aggregate result remain UNKNOWN.
 Other commands below remain unimplemented package commands.
 Full status coverage of keys, retained obligations, and rotation
 remains SPECIFIED. The migration walkthrough defines the implemented subset.
@@ -316,6 +325,7 @@ See [committed progress](../walkthrough-migration.md#inspect-committed-progress)
 | `cryptalis plan` | Report incompatibilities, semantic diff, DDL, leakage, writers, estimates, and approvals. Refuse any incompatibility |
 | `cryptalis apply PLAN` | Run or resume the verified transition |
 | `cryptalis status` | Show representation, progress, failures, keys, and retained obligations |
+| `cryptalis doctor` | Inspect active runtime admission; report unobserved boundaries as UNKNOWN |
 | `cryptalis rollback` | Transform current data to the previous compatible representation |
 | `cryptalis keys rotate` | Select rewrap, payload rotation, or search reindex through the same executor |
 | `cryptalis remove` | Decrypt-back, verify, test package-free operation, retire eligible generated objects |

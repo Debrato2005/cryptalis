@@ -607,7 +607,28 @@ def test_valid_old_generation_frame_cannot_enter_a_rotated_restore():
         owner.dispose()
 
 
-def test_restored_cluster_completes_adopted_lifecycle():
+def test_doctor_refuses_source_incompatible_binding_before_connection(tmp_path):
+    from test_cli import _run_cli
+    from test_doctor_cli import diagnostic, doctor_arguments, doctor_inputs
+    source, pin = artifacts()
+    owner = engine('CRYPTALIS_TEST_DATABASE_URL')
+    try:
+        binding = r.plan(source, owner, pin=pin, keys=keys, approval=approval())
+        document = binding.document
+        document['restatements'][0]['definition'] = 'CHECK (true)'
+        document['restatements'][0]['observed_digest'] = hashlib.sha256(_canonical('CHECK (true)')).hexdigest()
+        bad = r.RestoreBinding(_canonical(document))
+        paths = doctor_inputs(SimpleNamespace(plan=source, pin=pin), tmp_path)
+        binding_path = tmp_path / 'binding.json'
+        binding_path.write_bytes(bad.artifact)
+        paths['database'].write_text('host=127.0.0.1 port=1 dbname=PRIVATE_DOCTOR_INPUT')
+        diagnostic(_run_cli(*doctor_arguments(paths), '--restore-binding', str(binding_path)),
+                   2, 'UNKNOWN', 'restored_definition_restatement_unsupported')
+    finally:
+        owner.dispose()
+
+
+def test_restored_cluster_completes_adopted_lifecycle(tmp_path):
     source, pin = artifacts()
     owner, runtime = engine('CRYPTALIS_TEST_DATABASE_URL'), engine('CRYPTALIS_TEST_RUNTIME_DATABASE_URL')
     mapping, Customer = customer_mapping()
@@ -618,6 +639,15 @@ def test_restored_cluster_completes_adopted_lifecycle():
     assert observed_status.verification == 'NOT_PERFORMED'
     with runtime.connect() as c:
         assert m.check_attachment(c, source.lock_bytes, (source, pin, binding)) is None
+    assert m.diagnose_deployment(source, runtime, pin=pin, restore=binding) is None
+    from test_cli import _run_cli
+    from test_doctor_cli import checks, doctor_arguments, doctor_inputs
+    paths = doctor_inputs(SimpleNamespace(plan=source, pin=pin), tmp_path)
+    binding_path = tmp_path / 'binding.json'
+    binding_path.write_bytes(binding.artifact)
+    observed = _run_cli(*doctor_arguments(paths), '--restore-binding', str(binding_path))
+    assert observed.returncode == 0 and observed.stderr == ''
+    checks(json.loads(observed.stdout), 'PASS')
     sessions = attach(mapping, runtime, lock=source.lock_bytes, keys=keys, deployment=(source, pin, binding))
     with sessions(tenant_id=TENANT) as session:
         observed = {str(row.id): [str(row.tenant_id), row.name] for row in session.scalars(select(Customer))}

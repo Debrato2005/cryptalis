@@ -10,6 +10,78 @@ No PostgreSQL/provider/runtime cell, production key provider, independent review
 VERIFIED below refers only to the named checks and their exact revisions.
 All other contract and promotion requirements are SPECIFIED. All seven full gates remain UNKNOWN.
 
+## Doctor and runtime status checkpoint: 2026-10-23
+
+**IMPLEMENTED, bounded native verification:** `cryptalis doctor` inspects an
+existing ACTIVE deployment through its actual declared runtime connection.
+`migration.diagnose_deployment` admits the immutable plan, exact ACTIVE pin,
+and optional matching restore binding before connection. It repeats shared
+attachment admission in one read-only, repeatable-read catalog snapshot.
+The check covers runtime identity, target, lineage, effective privileges and
+schema. It requests no keys, authenticates no frames, takes no maintenance
+locks and changes no rows, journal or schema.
+
+Doctor reports `runtime_deployment: PASS` only after inspection and connection
+cleanup succeed. Provider keys, frame authentication, query routes, writer
+exclusion, host authority and recovery capacity remain UNKNOWN. The aggregate
+result also remains UNKNOWN. Exit 0 means the scoped observed check passed.
+Typed observed refusals report FAIL. Unavailable inspection, cleanup and output
+failures report UNKNOWN. Diagnostics retain safe primary and cleanup codes
+without raw connection or exception details.
+
+Ordinary ACTIVE/PENDING `migration.status` now repeats shared runtime privilege
+admission before reporting matching metadata. Previously it could return
+success after unsafe schema CREATE or journal-column UPDATE grants. Restored
+status already used the shared check. All status remains keyless and reports
+`verification: NOT_PERFORMED`.
+
+**VERIFIED:** the initial Doctor controls retain 12 failures. Two separate
+native controls directly expose the unsafe ACTIVE status success. The corrected
+focused run passes 88 cases in 39.50 seconds. They include real runtime and
+owner connections, unsafe ACTIVE/PENDING grants, same-artifact recovery after
+REVOKE, malformed/unpublished authority before connection, wrong credentials,
+native transaction settings, forbidden provider work, unchanged native
+snapshots, lost output and actual post-close failures. Doctor accepts later
+ACTIVE edits after search rotation and refuses a changed predecessor chain.
+Two final cleanup controls pass in 0.68 seconds after adding sanitized close
+stage evidence alongside the primary refusal.
+
+Search TEXT and VARCHAR fresh-cluster profiles each pass one export and
+30 restore cases in the approved isolated-cluster harness. Doctor accepts
+the adopted binding through the actual runtime role. A source-incompatible
+binding fails before connection. The same profiles still complete latest-value
+CRUD, decrypt-back and native removal. The wheel and sdist build reproducibly
+offline. All 36 installed files match the wheel, and installed CLI startup and
+Doctor help pass. These checks qualify no release or production provider.
+
+**VERIFIED, Python 3.12.3 / SQLAlchemy 2.1.3 local cell:** full regression passes
+**1,887 tests and 18 subtests**, with three separate-environment skips and
+48 existing DISTINCT ON deprecation warnings, in 519.66 seconds. The wrapper
+counts subtests with passed cases. All 125 Python source/test/script hashes
+match at run start, run end and final inspection. The fixing fingerprint is
+`worktree-c6c36eaa97093f1b`; cleanup, both fresh-cluster profiles and release
+checks match the same current product bytes. The SQLAlchemy 2.0.51 cell and
+pinned Smolink application were not rerun for this slice. Earlier evidence
+below remains revision-bound.
+The command does not scan pre-adoption applications, qualify providers,
+authenticate host policy, prove freshness or observe all query/write routes.
+All seven full gates remain UNKNOWN.
+
+Next operator work exposes payload/search preparation status through the CLI
+and corrects two typed search-rotation diagnostics. Pre-adoption application
+scanning and provider diagnostics remain product gaps.
+
+Evidence: [initial Doctor failures](_reset/doctor-native-red-20261023.json),
+[direct status failures](_reset/doctor-status-privilege-red-20261023.json),
+[first corrected native controls](_reset/doctor-native-green-20261023.json),
+[expanded native controls](_reset/doctor-native-final-20261023.json),
+[final cleanup diagnostics](_reset/doctor-cleanup-final-20261023.json),
+[TEXT adopted recovery](_reset/fresh-cluster-restore-20261023-15.json),
+[VARCHAR adopted recovery](_reset/fresh-cluster-restore-20261023-16.json),
+[reproducible archives](_reset/doctor-release-20261023.json), and
+[installed wheel](_reset/doctor-installed-20261023.json), and
+[full regression](_reset/doctor-full-20261023.json).
+
 ## Search-key rotation and backup checkpoint: 2026-10-23
 
 **IMPLEMENTED, bounded native verification:** search rotation now has planning,
@@ -81,9 +153,10 @@ online migration and independent review remain open. All seven full gates
 remain UNKNOWN. Search rotation deletes no retained keys and establishes no
 unlinkability or cryptographic-erasure guarantee.
 
-Next operator work adds Doctor and aligns ordinary ACTIVE status with
-deployment privilege admission. Status remains a metadata observation and
-reports cryptographic verification as `NOT_PERFORMED`.
+The later [Doctor checkpoint](#doctor-and-runtime-status-checkpoint-2026-10-23)
+adds bounded diagnosis and aligns ACTIVE/PENDING status with deployment
+privilege admission. Status remains a metadata observation and reports
+cryptographic verification as `NOT_PERFORMED`.
 
 Evidence: [first extraction failures](_reset/search-foundation-first-20261023.json),
 [corrected extraction and clock failures](_reset/search-foundation-corrected-20261023.json),

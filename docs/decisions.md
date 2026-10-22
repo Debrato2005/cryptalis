@@ -41,7 +41,7 @@ All choices below are SPECIFIED. Research mechanisms remain INTERNAL ONLY until 
 | Current authority | Deployment-controlled policy/target/wrapper identities outside database restore. Host current authorization remains separate | Database self-admission or a mandatory authority service | Publication/restore procedure and writer exclusion remain unqualified. G-POLICY |
 | Lifecycle | One PG journal, cooperating advisory lock, writer pause, full verify, separate artifact publication | General workflow engine or distributed dispatcher | Lost replies, independent recovery, retained backups and exclusion need full G-LIFECYCLE evidence |
 | Rollback | Transform current data through the removal engine until explicit finalization | Timed live plaintext mirror or stale snapshot restore | Compatible readers/keys and full current-data proof. G-LIFECYCLE |
-| Diagnostics | Reuse init/plan/apply/status/startup checks | Separate diagnostic platform or SQL parser | No missing observation becomes PASS. Package CLI remains SPECIFIED |
+| Diagnostics | Reuse init/plan/apply/status/startup checks, including bounded Doctor admission | Separate diagnostic platform or SQL parser | No missing observation becomes PASS. Broader Doctor checks remain UNKNOWN |
 | Erasure | Host managed denial and separately observed provider/tenant destruction | Instant arbitrary-process revocation or default per-subject key topology | Backups, surviving wrappers and cached keys can recover values |
 | Supply chain | Mature lock/SBOM/build/provenance/Trusted Publishing tools | Custom signer/scanner platform | Independent artifact and release review. G-RELEASE |
 
@@ -51,9 +51,32 @@ The former DynamoDB authority, S3 receipts, distributed fencing, registered-work
 receipt dispatcher, shared crypto quotas, custom mapper/publication frames, timed plaintext mirror, doctor, shred/tombstone,
 and break-glass/restore-admit command families are removed from the selected contract.
 These are historical dispositions, not dependencies or public capabilities.
+The later [bounded Doctor decision](#bounded-doctor-diagnosis-2026-10-23)
+supersedes the removed Doctor command scope. The former diagnostic subsystem
+and its absolute guarantees remain removed.
 Their absolute guarantees are also removed: immediate arbitrary-worker denial, atomic multi-service lifecycle,
 whole-result publication, subject cryptographic erasure, and hostile-database completeness/freshness.
 A removed mechanism cannot retain its old guarantee through wording alone.
+
+## Bounded Doctor diagnosis: 2026-10-23
+
+The current product mandate requires a useful `cryptalis doctor`. Add a thin
+read-only interface over existing runtime deployment admission. It introduces
+no new authority, diagnostic framework, SQL parser, or application scan.
+`migration.diagnose_deployment` accepts an immutable migration plan, exact
+ACTIVE pin, actual runtime connection, and optional matching restore binding.
+It admits host artifacts before connection and checks one repeatable-read,
+read-only snapshot through `check_attachment`. ACTIVE/PENDING status also
+repeats the shared effective privilege checks.
+
+A passed runtime check leaves the overall Doctor result UNKNOWN. Provider
+keys, frame authentication, query routes, writer exclusion, host authority,
+and recovery capacity remain unobserved. Exit 0 means only scoped admission
+passed. Later ACTIVE edits remain valid; Doctor does not repeat frozen
+activation frame proofs. The host still authenticates deployment publication.
+[The walkthrough](walkthrough-migration.md#diagnose-an-active-deployment)
+owns command inputs and results. [Status](status.md) owns executable evidence.
+All seven full gates remain UNKNOWN.
 
 ## Complexity budget
 

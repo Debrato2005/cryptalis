@@ -53,8 +53,9 @@ The deployment operator stops known workers/jobs and excludes unsupported writer
 The runtime principal cannot change schema, operation metadata, or lifecycle privileges.
 Unknown writer coverage blocks apply. An empty connection snapshot alone does not prove that excluded writers cannot reconnect.
 
-Initial planning, ACTIVE connection checks, restored connection checks, and
-the shared maintenance executor check effective runtime privileges. Runtime role
+Initial planning, ACTIVE connection checks, restored connection checks,
+ACTIVE/PENDING status, Doctor, and the shared maintenance executor check
+effective runtime privileges. Runtime role
 attributes and owner membership must exclude administrative authority. Effective
 CREATE on the database or declared schemas is refused. Protected tables and
 the journal must retain the planned owner. Runtime TRIGGER/TRUNCATE privileges

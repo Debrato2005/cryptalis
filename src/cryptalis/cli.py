@@ -107,7 +107,7 @@ def _parser() -> argparse.ArgumentParser:
     parser = _ArgumentParser(
         prog="cryptalis",
         allow_abbrev=False,
-        description="Inspect Cryptalis artifacts and transition progress.",
+        description="Inspect Cryptalis artifacts, deployments and transition progress.",
     )
     commands = parser.add_subparsers(dest="command", required=True)
     manifest = commands.add_parser(
@@ -166,6 +166,15 @@ def _parser() -> argparse.ArgumentParser:
     status.add_argument('--restore-binding', type=Path, help='Approved restored-target binding, when applicable.')
     status.add_argument('--json', action='store_true', dest='machine_json', help='Write one JSON object.')
     status.set_defaults(handler=_status_command)
+    doctor = commands.add_parser('doctor', help='Inspect active runtime admission without changes.',
+                                 allow_abbrev=False)
+    doctor.add_argument('plan', type=Path, help='Published protection or rotation activation artifact.')
+    doctor.add_argument('--pin', type=Path, required=True, help='Current host-controlled ACTIVE deployment pin.')
+    doctor.add_argument('--database-url-file', type=Path, required=True,
+                        help='Private file with the declared runtime PostgreSQL connection URL or conninfo.')
+    doctor.add_argument('--restore-binding', type=Path, help='Approved restored-target binding, when applicable.')
+    doctor.add_argument('--json', action='store_true', dest='machine_json', help='Write one JSON object.')
+    doctor.set_defaults(handler=_status_command)
     return parser
 
 
@@ -488,30 +497,57 @@ def _inspect_history_command(arguments: argparse.Namespace) -> int:
     return 0
 
 
+def _doctor_checks(runtime_status='UNKNOWN', runtime_code='RuntimeDeployment.NotInspected'):
+    unknown = {
+        'provider_keys': 'Provider access, key compatibility and custody were not inspected.',
+        'frame_authentication': 'Stored frames and their current generations were not authenticated.',
+        'query_routes': 'Application query routes were not inspected.',
+        'writer_exclusion': 'External writers and deployment fencing were not inspected.',
+        'host_authority': 'The supplied host pin and restore approval were not authenticated.',
+        'recovery_capacity': 'Recovery inventory, pause, storage and WAL capacity were not measured.',
+    }
+    return {
+        'runtime_deployment': {'status': runtime_status, 'code': runtime_code},
+        **{name: {'status': 'UNKNOWN', 'reason': reason} for name, reason in unknown.items()},
+    }
+
+
+def _doctor_failure(failure, *, observed=False):
+    failure.error['status'] = 'FAIL' if observed else 'UNKNOWN'
+    failure.error['checks'] = _doctor_checks('FAIL' if observed else 'UNKNOWN', failure.error['code'])
+    return failure
+
+
 def _status_command(arguments: argparse.Namespace) -> int:
     # Runtime dependencies stay lazy: manifest inspection and CLI help remain
     # usable without database or cryptographic imports.
+    doctor = arguments.command == 'doctor'
+    operation = 'deployment.doctor' if doctor else 'transition.status'
     try:
         import psycopg
         from sqlalchemy import create_engine
-        from cryptalis.migration import DeploymentPin, MigrationPlan, TransitionFailure, status, _decode_transition_json
+        from cryptalis.migration import (DeploymentPin, MigrationPlan, TransitionFailure,
+                                         status, diagnose_deployment, _decode_transition_json)
         from cryptalis.deprotection import DeprotectionPlan, status as reverse_status
         from cryptalis.manifest.parser import decode_manifest_json
         from cryptalis.restore import RestoreBinding
         from uuid import UUID
     except ImportError:
-        raise _CommandFailure('Install the declared runtime dependencies before database inspection.',
-            family='Transition', code='DependenciesUnavailable', operation='transition.status',
-            stage='load_runtime', cause='ImportError', exit_code=4) from None
+        failure = _CommandFailure('Install the declared runtime dependencies before database inspection.',
+            family='Transition', code='DependenciesUnavailable', operation=operation,
+            stage='load_runtime', cause='ImportError', exit_code=4)
+        raise (_doctor_failure(failure) if doctor else failure) from None
 
     try:
         def read(path, role, limit=MAX_DOCUMENT_BYTES):
-            raw = _read_local_file(path, role, max_bytes=limit, operation='transition.status')
+            raw = _read_local_file(path, role, max_bytes=limit, operation=operation)
             if len(raw) > limit:
                 raise ValueError('input bound')
             return raw
         raw_plan = read(arguments.plan, 'plan')
         reverse = _decode_transition_json(raw_plan).get('format') == 'cryptalis.reverse/v1'
+        if doctor and reverse:
+            raise ValueError('Doctor requires an active protection artifact')
         plan = DeprotectionPlan(raw_plan) if reverse else MigrationPlan(raw_plan)
         pin_document = decode_manifest_json(read(arguments.pin, 'pin', 65536))
         if set(pin_document) != {'target_id', 'operation_id', 'plan_digest', 'phase'}:
@@ -531,38 +567,62 @@ def _status_command(arguments: argparse.Namespace) -> int:
         connection_info = connection_info.replace('postgresql+psycopg://', 'postgresql://', 1)
     except _CommandFailure as failure:
         failure.error['family'] = 'Transition'
-        raise
+        raise (_doctor_failure(failure) if doctor else failure) from None
     except (ValueError, TypeError, KeyError, AttributeError, TransitionFailure):
-        raise _CommandFailure('Supply a valid plan, pin, private connection file, and optional restore binding.',
-            family='Transition', code='InvalidInput', operation='transition.status',
-            stage='inputs', cause='InvalidInput') from None
+        failure = _CommandFailure('Supply a valid plan, pin, private connection file, and optional restore binding.',
+            family='Transition', code='InvalidInput', operation=operation,
+            stage='inputs', cause='InvalidInput')
+        raise (_doctor_failure(failure) if doctor else failure) from None
 
     engine = None
     try:
         engine = create_engine('postgresql+psycopg://', echo=False, hide_parameters=True,
             creator=lambda: psycopg.connect(connection_info, connect_timeout=5))
-        observed = reverse_status(plan, engine, pin=pin) if reverse else status(plan, engine, pin=pin, restore=binding)
+        if doctor:
+            diagnose_deployment(plan, engine, pin=pin, restore=binding)
+        else:
+            observed = reverse_status(plan, engine, pin=pin) if reverse else status(plan, engine, pin=pin, restore=binding)
     except TransitionFailure as error:
-        operational = error.code in ('operation_failed_requires_inspection',
+        operational = bool(error.cleanup_errors) or error.code in ('operation_failed_requires_inspection',
             'database_effect_requires_inspection', 'connection_cleanup_requires_inspection')
         denied = error.code in ('external_policy_mismatch', 'wrong_database_target',
-            'restore_binding_mismatch', 'invalid_plan', 'invalid_reverse_plan', 'external_reverse_policy_mismatch')
-        raise _CommandFailure('Status is unavailable. Inspect this operation and the current external policy.',
-            family='Transition', code=error.code, operation='transition.status',
+            'restore_binding_mismatch', 'restore_binding_required', 'restored_definition_restatement_unsupported',
+            'invalid_plan', 'invalid_reverse_plan', 'external_reverse_policy_mismatch')
+        failure = _CommandFailure('Inspection failed. Check this operation and the current external policy.',
+            family='Transition', code=error.code, operation=operation,
             stage='database_inspection', cause=error.sqlstate or 'InspectionFailed',
-            exit_code=4 if operational else 2 if denied else 3) from None
+            exit_code=4 if operational else 2 if denied else 3)
+        if error.cleanup_errors:
+            failure.error['cleanup_errors'] = [
+                {'stage': stage, 'cause': cause, 'sqlstate': sqlstate}
+                for stage, cause, sqlstate in error.cleanup_errors]
+        raise (_doctor_failure(failure, observed=not (operational or denied)) if doctor else failure) from None
     finally:
         if engine is not None:
             primary = sys.exception()
             try:
                 engine.dispose()
             except Exception as error:
-                failure = _CommandFailure('Status connection cleanup failed. Inspect the database session.',
-                    family='Transition', code='CleanupUnavailable', operation='transition.status',
+                failure = _CommandFailure('Inspection connection cleanup failed. Inspect the database session.',
+                    family='Transition', code='CleanupUnavailable', operation=operation,
                     stage='connection_cleanup', cause=type(error).__name__, exit_code=4)
                 if isinstance(primary, _CommandFailure):
                     failure.error['related_error'] = primary.error
-                raise failure from None
+                raise (_doctor_failure(failure) if doctor else failure) from None
+    if doctor:
+        result = {
+            'scope': 'active_runtime_deployment', 'operation_id': str(plan.operation_id),
+            'status': 'UNKNOWN', 'checks': _doctor_checks('PASS', 'RuntimeDeployment.Matches'),
+            'verification': 'NOT_PERFORMED', 'authority': 'HOST_SUPPLIED_PIN', 'effects': 'NONE',
+        }
+        if arguments.machine_json:
+            output = json.dumps(result, sort_keys=True, separators=(',', ':'))
+        else:
+            output = '\n'.join(f'{key}: {value}' for key, value in result.items() if key != 'checks')
+            output += '\n' + '\n'.join(f'{name}: {check["status"]} '
+                f'({check.get("code", check.get("reason"))})' for name, check in result['checks'].items())
+        _write_output(output + '\n', sys.stdout, 'stdout')
+        return 0
     result = {
         'scope': 'reverse_transition' if reverse else 'protection_transition', 'operation_id': str(observed.operation_id),
         'phase': observed.phase, 'external_phase': observed.external_phase,
@@ -589,6 +649,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         handler = cast(Callable[[argparse.Namespace], int], arguments.handler)
         return handler(arguments)
     except _CommandFailure as failure:
+        if tokens and tokens[0] == 'doctor' and 'checks' not in failure.error:
+            _doctor_failure(failure)
         try:
             _write_error(failure, machine_json)
         except _CommandFailure as diagnostic_failure:

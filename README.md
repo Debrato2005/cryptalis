@@ -136,10 +136,15 @@ Maintenance needs operator-controlled writer exclusion and evidence that existin
 
 ## Current commands
 
-**IMPLEMENTED:** structural artifact inspection, synthetic crypto utilities, and
-bounded read-only protection-transition status.
+**IMPLEMENTED:** structural artifact inspection, synthetic crypto utilities,
+bounded read-only protection/reverse status, and active-deployment Doctor.
 The status command observes an existing plan and host-supplied pin.
-It does not apply protection. See the migration walkthrough for inputs and exit codes.
+Doctor checks current runtime identity, effective privileges, target, lineage,
+and schema against an immutable migration plan and supplied ACTIVE pin.
+Use the declared runtime connection, rather than maintenance credentials.
+Neither command applies protection or authenticates stored frames.
+Doctor reports unobserved checks as UNKNOWN, even when its scoped check passes.
+See the migration walkthrough for inputs and exit codes.
 The specified `init`, `plan`, `apply`, `rollback`, `keys rotate`, and `remove`
 commands remain unimplemented package commands.
 The full operational status contract also remains incomplete.
@@ -148,9 +153,11 @@ The full operational status contract also remains incomplete.
 .venv/bin/python -m cryptalis manifest inspect examples/manifests/genesis.json --json
 .venv/bin/python examples/demo_smolink_crypto.py --json
 .venv/bin/python -m cryptalis status plan.json --pin current-pin.json --database-url-file /private/connection.txt --json
+.venv/bin/python -m cryptalis doctor plan.json --pin current-pin.json --database-url-file /private/runtime-connection.txt --json
 ```
 
 [Migration walkthrough](docs/walkthrough-migration.md#inspect-committed-progress) defines status inputs and limits.
+[Doctor diagnosis](docs/walkthrough-migration.md#diagnose-an-active-deployment) defines its separate scope and UNKNOWN results.
 
 ## Read next
 

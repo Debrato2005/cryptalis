@@ -197,7 +197,8 @@ After journal retirement, progress counters are unavailable rather than zero.
 
 **IMPLEMENTED, shared privilege admission:** initial protection planning checks
 runtime safety before key work. ACTIVE connection checks, restored deployment
-checks, and the shared maintenance executor repeat the same effective-privilege checks.
+checks, ACTIVE/PENDING status, Doctor, and the shared maintenance executor
+repeat the same effective-privilege checks.
 The runtime must differ from the owner and cannot hold superuser, role-creation,
 database-creation, RLS-bypass, replication, or owner-membership authority.
 Effective CREATE on the current database or any declared schema is refused.
@@ -212,6 +213,24 @@ remains admitted through the declared writer boundary. The runtime journal
 access is SELECT only. Unsafe privileges raise `unsafe_runtime_role`. Owner
 drift raises `maintenance_requires_table_owner`. These checks do not establish
 coverage of unknown writers or authenticate deployment policy.
+
+**IMPLEMENTED, bounded Doctor:** `migration.diagnose_deployment` and
+`cryptalis doctor` inspect an existing ACTIVE deployment without keys.
+The immutable migration plan, exact ACTIVE pin, and optional matching restore
+binding pass admission before connection. A read-only, repeatable-read snapshot
+then uses the shared attachment check for the actual declared runtime role,
+target, lineage, effective privileges, and schema. Doctor authenticates no
+frames and does not compare current ACTIVE data with frozen activation frames.
+Later valid edits remain admitted.
+
+Only `runtime_deployment` can report PASS in this scope. Provider keys, frame
+authentication, query routes, writer exclusion, host authority, and recovery
+capacity remain UNKNOWN. The aggregate result remains UNKNOWN, with
+`verification: NOT_PERFORMED`, `effects: NONE`, and
+`authority: HOST_SUPPLIED_PIN`. An observed mismatch reports runtime FAIL;
+unavailable inspection reports UNKNOWN. Current grants can change later.
+This observation neither authenticates host publication nor establishes
+production readiness. See [Doctor diagnosis](walkthrough-migration.md#diagnose-an-active-deployment).
 
 **IMPLEMENTED, bounded reverse admission:** reverse planning checks the source
 and declared plaintext runtime roles before key work. Reverse execution and
@@ -535,7 +554,10 @@ Engine defaults use `echo=False` and `hide_parameters=True`. Attachment refuses 
 | Lost COMMIT/provider reply | Explicit UNKNOWN/PENDING. Inspect the original action before retry |
 | Missing required observation | UNKNOWN, never PASS |
 
-CLI exit 0 means complete requested success. Invalid/denied input returns 2, incomplete/UNKNOWN returns 3, and operational/output failure returns 4.
+CLI exit 0 means complete requested scoped success. Invalid/denied input returns 2, incomplete state or an observed mismatch returns 3, and operational/output failure returns 4.
+Doctor can exit 0 while its six unobserved checks and aggregate result remain
+UNKNOWN. Its failure envelope includes `error.checks`; unavailable inspection
+keeps the runtime check UNKNOWN.
 Successful plan output is a proposal, not applied protection.
 Report existing effects if cleanup or output also fails. Nothing security-critical may fail silently.
 
