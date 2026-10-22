@@ -15,15 +15,16 @@ from uuid import UUID
 
 import psycopg
 import pytest
-from sqlalchemy import String
+from sqlalchemy import Column, MetaData, String, Table, Text, Uuid, select
+from sqlalchemy.orm import registry
 
 from cryptalis import migration as m, rotation as r
 from cryptalis.sqlalchemy import attach
 from test_deprotection import catalog_metadata, column_acl
-from test_migration import application, frames, keys, publish, run, TENANT, FIELD_ID
+from test_migration import application, engine, frames, keys, publish, run, TENANT, FIELD_ID
 from rewrap_worker import target_keys
 from payload_rotation_worker import target_keys as payload_keys
-from test_payload_rotation_cutover import customer_sessions
+from search_rotation_worker import target_keys as search_keys
 from test_payload_rotation_execution import staged_frames
 from test_rewrap_abort import index_identity
 
@@ -98,13 +99,35 @@ def attached_edits(app):
         session.commit()
 
 
+def published_sessions(app, varchar, key_factory):
+    mapping = registry(metadata=MetaData(schema=app.schema))
+    table = Table('customer', mapping.metadata,
+        Column('id', Uuid, primary_key=True, autoincrement=False),
+        Column('tenant_id', Uuid, nullable=False),
+        Column('name', String(64, collation='C') if varchar else Text(collation='C')),
+        Column('label', Text))
+    class Customer:
+        pass
+    mapping.map_imperatively(Customer, table)
+    runtime = engine('CRYPTALIS_TEST_RUNTIME_DATABASE_URL')
+    try:
+        sessions = attach(mapping, runtime, lock=app.plan.lock_bytes, keys=key_factory,
+                          deployment=(app.plan, app.pin))
+        return mapping, Customer, sessions, runtime
+    except BaseException:
+        runtime.dispose()
+        mapping.dispose()
+        raise
+
+
 def test_export_fresh_cluster_source():
     workdir = Path(os.environ['CRYPTALIS_FRESH_CLUSTER_DIR'])
     varchar = os.environ.get('CRYPTALIS_FRESH_SOURCE_VARCHAR') == '1'
     rewrapped = os.environ.get('CRYPTALIS_FRESH_SOURCE_REWRAP') == '1'
     payload_rotated = os.environ.get('CRYPTALIS_FRESH_SOURCE_PAYLOAD_ROTATION') == '1'
+    search_rotated = os.environ.get('CRYPTALIS_FRESH_SOURCE_SEARCH_ROTATION') == '1'
     pre_rotation_frame = None
-    if rewrapped and payload_rotated:
+    if sum((rewrapped, payload_rotated, search_rotated)) > 1:
         pytest.fail('FreshCluster.ProfileMismatch: select one rotation profile.')
     with application(setup=source_metadata_fixture,
                      value_type=String(64, collation='C') if varchar else None) as app:
@@ -129,36 +152,40 @@ def test_export_fresh_cluster_source():
                            approval=app.approval, until='ACTIVE').phase == 'ACTIVE'
             app.pin = replace(app.pin, phase='ACTIVE')
             assert frames(app, True) == before
-        if payload_rotated:
+        if payload_rotated or search_rotated:
+            purpose = 'payload' if payload_rotated else 'search'
+            rotation_keys = payload_keys if payload_rotated else search_keys
             original = frames(app, True)
             pre_rotation_frame = {'record_id': str(EDITED_ID),
                                   'frame': base64.b64encode(original[EDITED_ID]).decode('ascii')}
             index_before = index_identity(app)
-            preparation = r.plan_payload_rotation(app.plan, app.owner, source_pin=app.pin,
-                keys=keys, target_keys=payload_keys, backfill_rows_per_second=1000,
+            preparation = getattr(r, 'plan_' + purpose + '_rotation')(app.plan, app.owner, source_pin=app.pin,
+                keys=keys, target_keys=rotation_keys, backfill_rows_per_second=1000,
                 verify_rows_per_second=1000, temporary_bytes_per_row=1024, wal_bytes_per_row=2048)
             pin = m.DeploymentPin(app.plan.target_id, preparation.operation_id, preparation.digest, 'PREPARED')
-            assert r.apply_payload_rotation(preparation, app.owner, keys=keys, target_keys=payload_keys,
+            assert getattr(r, 'apply_' + purpose + '_rotation')(preparation, app.owner, keys=keys, target_keys=rotation_keys,
                                             pin=pin, approval=app.approval).phase == 'BACKFILLED'
             sealed = {identity: values[0] for identity, values in staged_frames(app, preparation).items()}
-            activation = r.seal_payload_rotation(preparation, app.owner, keys=keys, target_keys=payload_keys,
+            activation = getattr(r, 'seal_' + purpose + '_rotation')(preparation, app.owner, keys=keys, target_keys=rotation_keys,
                 pin=pin, approval=app.approval, copy_rows_per_second=1000, copy_wal_bytes_per_row=2048)
             pin = m.DeploymentPin(activation.target_id, activation.operation_id, activation.digest, 'PREPARED')
-            assert r.switch_payload_rotation(preparation, activation, app.owner, keys=keys,
-                target_keys=payload_keys, pin=pin, approval=app.approval).phase == 'PENDING'
+            assert getattr(r, 'switch_' + purpose + '_rotation')(preparation, activation, app.owner, keys=keys,
+                target_keys=rotation_keys, pin=pin, approval=app.approval).phase == 'PENDING'
             assert frames(app, True) == sealed and index_identity(app) == index_before
             app.plan, app.pin = activation, replace(pin, phase='ACTIVATING')
-            assert m.apply(app.plan, app.owner, keys=payload_keys, pin=app.pin,
+            assert m.apply(app.plan, app.owner, keys=rotation_keys, pin=app.pin,
                            approval=app.approval, until='ACTIVE').phase == 'ACTIVE'
             app.pin = replace(app.pin, phase='ACTIVE')
             assert frames(app, True) == sealed and index_identity(app) == index_before
-            mapping, Customer, sessions, runtime_engine = customer_sessions(app, varchar)
+            mapping, Customer, sessions, runtime_engine = published_sessions(app, varchar, rotation_keys)
+            later_value = 'edited after ' + purpose + ' publication'
             try:
                 with sessions(tenant_id=TENANT) as session:
-                    session.get(Customer, ADDED_ID).name = 'edited after payload publication'
+                    session.get(Customer, ADDED_ID).name = later_value
                     session.commit()
                 with sessions(tenant_id=TENANT) as session:
-                    assert session.get(Customer, ADDED_ID).name == 'edited after payload publication'
+                    assert session.get(Customer, ADDED_ID).name == later_value
+                    assert session.scalar(select(Customer.id).where(Customer.name == later_value)) == ADDED_ID
             finally:
                 runtime_engine.dispose()
                 mapping.dispose()
@@ -171,11 +198,12 @@ def test_export_fresh_cluster_source():
         field = model['fields'][0]
         expected = {str(identity): [str(tenant), value] for identity, (tenant, value) in app.source.items()}
         expected[str(EDITED_ID)] = [str(TENANT), 'edited while protected']
-        expected[str(ADDED_ID)] = [str(TENANT), 'edited after payload publication' if payload_rotated else 'added while protected']
+        expected[str(ADDED_ID)] = [str(TENANT), later_value if payload_rotated or search_rotated else 'added while protected']
         del expected[str(DELETED_ID)]
         manifest = {
             'rewrapped': rewrapped,
             'payload_rotated': payload_rotated,
+            'search_rotated': search_rotated,
             'pre_rotation_frame': pre_rotation_frame,
             'native_type': 'varchar' if varchar else 'text', 'native_limit': 64 if varchar else None,
             'database': parsed['dbname'], 'owner_role': parsed['user'], 'runtime_role': runtime['user'],

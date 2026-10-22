@@ -41,20 +41,7 @@ def _binding(field, tenant, source, target):
             raise InvalidContext()
 
 
-def prepare_payload_rotation_batch(rows, field, tenant, *, source, target,
-                                   max_rows=1000, max_bytes=64 * 1024 * 1024):
-    """Return the complete immutable inactive batch, or raise without a batch.
-
-One field/tenant per call; identities and current source frames are immutable.
-The selected source generation is exact, not any retained reader generation.
-Source + target frames + decoded UTF8 + native identities form the logical byte
-budget. Object/allocator/provider/driver overhead is outside that budget.
-"""
-    if (type(rows) is not tuple or type(max_rows) is not int or
-            not 1 <= max_rows <= MAX_BATCH_ROWS or len(rows) > max_rows or
-            type(max_bytes) is not int or not 1 <= max_bytes <= MAX_BATCH_BYTES):
-        raise InvalidContext()
-    _binding(field, tenant, source, target)
+def _validate_rows(rows,field,tenant,max_bytes):
     overhead = 74 if field.equality else 42
     identity_bytes = 16 + (8 if field.record_codec == 'int64-be/v1' else 16)
     budget = 0
@@ -75,6 +62,23 @@ budget. Object/allocator/provider/driver overhead is outside that budget.
             budget += 2 * len(frame) + len(frame) - overhead
         if budget > max_bytes:
             raise InvalidContext()
+
+
+def prepare_payload_rotation_batch(rows, field, tenant, *, source, target,
+                                   max_rows=1000, max_bytes=64 * 1024 * 1024):
+    """Return the complete immutable inactive batch, or raise without a batch.
+
+One field/tenant per call; identities and current source frames are immutable.
+The selected source generation is exact, not any retained reader generation.
+Source + target frames + decoded UTF8 + native identities form the logical byte
+budget. Object/allocator/provider/driver overhead is outside that budget.
+"""
+    if (type(rows) is not tuple or type(max_rows) is not int or
+            not 1 <= max_rows <= MAX_BATCH_ROWS or len(rows) > max_rows or
+            type(max_bytes) is not int or not 1 <= max_bytes <= MAX_BATCH_BYTES):
+        raise InvalidContext()
+    _binding(field, tenant, source, target)
+    _validate_rows(rows,field,tenant,max_bytes)
 
     result = []
     header_size = 46 if field.equality else 14

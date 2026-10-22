@@ -475,8 +475,8 @@ The native fresh-cluster harness has a separate payload profile:
 .venv/bin/python scripts/fresh_cluster_qualification.py --payload-rotation --varchar
 ```
 
-Select either `--payload-rotation` or `--rewrap`. The options are mutually
-exclusive fixture profiles. `--varchar` selects native VARCHAR(64). The harness
+Select one of `--payload-rotation`, `--search-rotation`, or `--rewrap`.
+The options are mutually exclusive fixture profiles. `--varchar` selects native VARCHAR(64). The harness
 uses the approved disposable PostgreSQL 16 targets and `scripts/test_postgres.py`.
 The payload fixture exports a backup after publication and a later protected
 edit. It checks retained-policy recovery, independent generation-2 decoding,
@@ -485,16 +485,87 @@ and native metadata restoration. See [status](status.md) for current receipts.
 
 These controls do not qualify external custody, authenticated publication, or
 source fencing. Rotating payload keys on an adopted restored target remains
-unsupported. Search rotation remains unimplemented. All seven full gates
-remain UNKNOWN.
+unsupported. All seven full gates remain UNKNOWN.
+
+## Search-key rotation contract
+
+**IMPLEMENTED, bounded native verification:** the following APIs implement search
+rotation through shared staging, cutover, and publication. [Status](status.md)
+owns current receipts and their exact verification boundaries. Planning inputs
+and maintenance controls parallel [payload rotation](#plan-payload-key-rotation).
+
+Retain exact source wrappers and material, then add one independent search root
+above all retained search generations. Keep the selected payload root unchanged.
+Keep policies with no selected search generation unchanged. Searchable frames receive new terms
+and fresh nonces. Storage-only frames retain their exact bytes.
+
+| API | Required artifact and result |
+|---|---|
+| `plan_search_rotation` | Current source ACTIVE pin and both policies. Returns inactive SearchRotationPlan P, format `cryptalis.search-rotation/v1` |
+| `apply_search_rotation` | P's operation pin and maintenance approval. Commits bounded encrypted chunks, then full paired verification for BACKFILLED |
+| `status_search_rotation` | P and its pin. Reports recorded progress with `NOT_PERFORMED` and no fresh cryptographic proof |
+| `abort_search_rotation` | Republished source ACTIVE pin and source keys. Cancels P before switch without target-provider access |
+| `seal_search_rotation` | BACKFILLED P, both policies, P's pin, approval, and measured copy costs. Returns deterministic activation A from actual staged bytes |
+| `switch_search_rotation` | Exact saved P and A, both policies, A's PREPARED/PENDING pin, and approval. Commits the database switch to PENDING |
+
+A is a `cryptalis.transition/v4` MigrationPlan with `kind: search_rotation`.
+Its proof fields are `search_rotation_plan_digest`,
+`search_rotation_observations`, and `search_batch_limits`. Persist exact P and A
+through the trusted host process before switch. P never authorizes publication.
+
+Keep writers stopped through sealing, final paired proof, atomic native UPDATE,
+and publication. The UPDATE maintains the existing expression and unique
+indexes as it copies target ciphertext into the existing public columns.
+Source-to-P-to-A supersession and guard exchange share the transaction.
+A fresh target pass must match A before commit. PENDING retry authenticates
+current target bytes against A, because source bytes no longer exist.
+
+Supply measured `copy_rows_per_second` and `copy_wal_bytes_per_row` that include
+all native index maintenance. The final full-table write and index updates use
+one transaction. Preparation chunk limits do not bound that write. Storage
+capacity, WAL, process memory, and pause ceilings remain unqualified.
+
+Publish exact A and target policies, then acknowledge with
+`migration.apply(A, ..., until="ACTIVE")` under the current ACTIVATING pin.
+An ACTIVE pin also supports terminal inspection. ACTIVATING must authenticate
+A's target proof even if the journal claims ACTIVE. A genuine ACTIVE deployment
+permits later edits and latest-value decrypt-back/removal. Only one selected
+search generation serves queries. Retained readers do not admit mixed-generation
+OR queries.
+
+### Recover a search-rotation backup
+
+Use the existing restore approval and `RestoreBinding` path with the exact
+search v4 A, its current ACTIVE pin, and retained target policy. The native
+profile exports a backup after publication and a later edit to row 999.
+That edit differs from A's sealed observations. Adoption authenticates current
+generation-2 frames. The independent decoder checks the new search root and
+HMAC while the payload root stays unchanged. A valid generation-1 frame and
+the original source policy fail admission.
+
+```bash
+.venv/bin/python scripts/fresh_cluster_qualification.py --search-rotation
+.venv/bin/python scripts/fresh_cluster_qualification.py --search-rotation --varchar
+```
+
+Choose one of `--search-rotation`, `--payload-rotation`, or `--rewrap`.
+These fixture profiles are mutually exclusive. `--varchar` selects native
+VARCHAR(64). Both stages use the mandatory PostgreSQL credential wrapper.
+The text profile completes adoption, current reads/search, later edits,
+decrypt-back/removal, and native metadata checks. [Status](status.md) records
+which profiles completed and preserves the exact receipts.
+
+This evidence does not qualify external custody, authenticated publication, or
+source fencing. Rotation on an adopted restored target remains unsupported.
+All seven full gates remain UNKNOWN.
 
 ## Measured throughput
 
 Use positive finite integer or floating-point observations for measured rows per second.
 The saved plan retains the supplied rates, including a rate below one row per second.
 Pause estimates round the calculated time to whole seconds.
-Protection, reverse, and payload-activation plan readers accept their measured
-rate fields after artifact reload. Payload activation also accepts measured
+Protection, reverse, and generation-rotation plans accept their measured rate
+fields after artifact reload. Payload and search activation also accept measured
 `copy_rows_per_second`. Other numeric fields retain their integer-only format.
 These estimates are planning observations, not pause limits or deployment qualification.
 

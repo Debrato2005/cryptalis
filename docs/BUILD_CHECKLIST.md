@@ -21,93 +21,32 @@ No objective is complete until its acceptance evidence and applicable gate pass.
 
 ## Current boundary
 
-- Reverse planning and execution now check effective runtime privileges through
-  the shared predicate. The host pin selects source or plaintext runtime safety.
-  Journal edits cannot change that selection. An actually absent journal under
-  REMOVED preserves native metadata checks and later application edits without
-  either former runtime boundary. Twenty native controls pass after 19 initial
-  failures. Full regression passes 1,809 tests and 18 subtests, with three separate-environment skips. Each final TEXT/VARCHAR payload-backup profile passes one export and 28 restore cases. Reproducible archives and all 35 installed
-  package files pass, including CLI startup. Actual credential retirement,
-  host authority and all seven full gates remain unqualified or UNKNOWN. See
-  [status](status.md#reverse-runtime-admission-checkpoint-2026-10-23).
-- Published payload backups now retain later application edits through approved
-  fresh-cluster recovery. TEXT and VARCHAR each pass one export and 28 restore
-  cases, including independent selected-generation decoding and valid old-frame
-  refusal. The older rewrap/VARCHAR backup passes one export and 26 restore
-  cases, with one payload-only skip. Restore admission checks ancestry, strict
-  state, privileges and metadata before schema probes or key work. The shared
-  runtime check covers planning, ACTIVE connections and maintenance execution.
-  Seven ordinary native refusal controls pass. Full regression passes 1,789 tests and 18 subtests, with three separate-environment skips.
-  Reproducible archives and all 35 installed package files pass, including CLI
-  startup. Search reindex, adopted-target rotation and all seven full gates
-  remain open or UNKNOWN. See [status](status.md#payload-backup-recovery-and-runtime-admission-checkpoint-2026-10-23).
-- Payload rotation now seals actual target frames into immutable activation A,
-  copies verified shadows into existing public columns, and commits exact
-  source/preparation/successor lineage with the writer-fence exchange. Shared
-  publication rechecks A on ACTIVATING retries, including a journal claim of ACTIVE.
-  The 37 final native controls cover mixed payload/rewrap/payload lineage,
-  latest-value removal, metadata/journal attacks and real process/COMMIT recovery.
-  Full regression passes 1,782 tests and 18 subtests, with three separate-environment
-  skips. Reproducible archives and all 35 installed package
-  files pass release checks, including CLI startup. Search reindex, rotation on
-  adopted restored targets and full qualification remain open. See
-  [status](status.md#sealed-payload-cutover-checkpoint-2026-10-23).
-- Root-rewrap cutover now uses a transition/v2 successor through the existing
-  executor and publication path. Native recovery controls preserve frames and
-  equality-index identity, reject stale authority, and exercise two custody
-  changes followed by latest-value decrypt-back/removal. Pending cancellation now
-  restores source authority under the republished source ACTIVE pin, with target
-  outage, terminal COMMIT loss and independent restart controls. Its expanded
-  lifecycle run passes 177 cases. A final 52-case run adds shared-guard cancellation
-  across multiple tables and tenants. Payload/search rotation and adopted-restore
-  rewrap/cancellation remain open. See
-  [cancellation](status.md#pending-rewrap-cancellation-checkpoint-2026-10-23) and
-  [status](status.md#active-root-rewrap-checkpoint-2026-10-23).
-  Full regression passes 1,647 tests and 18 subtests, with three separate-environment
-  skips. After harness-only profile admission changes, each rewrapped text/VARCHAR
-  backup passes one export and 15 restore cases on a new PostgreSQL 16 cluster.
-  The installed wheel matches all 33 packaged files and starts its CLI.
-- Rewrap planning checkpoint, 2026-10-23: 35 native planner cases pass within
-  the 55-case planner/provider run and later full/focused suites. Five offline
-  protocol groups pass. That earlier checkpoint covered inactive planning.
-  The execution checkpoint above adds successor cutover and shared activation. See
-  [status](status.md#inactive-rewrap-planning-checkpoint-2026-10-23).
-  A later offline check installs the local wheel into a disposable environment,
-  matches 33 installed files against the archive, and starts its CLI. Dependencies
-  were not installed or qualified by this check; see the
-  [installed-wheel receipt](_reset/rewrap-plan-installed-wheel-20261023.json).
-- Development checks diagnose the default read-only Git mount and denied sockets.
-  Scoped approved execution restores Git writes and both fresh PostgreSQL probes.
-  Full regression passes 1,620 tests plus 18 subtests, with three separate-environment
-  skips. A final diagnostic-only guard then passes 76 focused checks. The full
-  suite predates that final guard. See
-  [status](status.md#development-environment-recovery-2026-10-23).
-- Current lifecycle evidence: local PostgreSQL 16, Python 3.12.3, SQLAlchemy 2.1.3,
-  psycopg 3.3.6, cryptography 50.0.2. The full and fresh-cluster receipts below
-  bind source hashes. The full SQLAlchemy 2.0.51 profile was not rerun.
-  A pinned Smolink lifecycle passes separately on Python 3.13 with SQLAlchemy 2.0.51
-  and 2.1.3, using alternate greenlet and driver cells; see [status](status.md#pinned-smolink-adoption-2026-10-22).
-- Release artifacts: reproducible wheel and sdist, verified `RECORD`, license
-  metadata, and a CycloneDX 1.5 SBOM pass on the local cell. Provenance,
-  signing, publication identity, and independent rebuild remain UNKNOWN. The
-  2026-10-22 correction verifies complete wheel RECORD coverage and refuses unsafe
-  archive members. The installed-artifact correction compares the current wheel with
-  installed files and imports verified source under an isolated bytecode cache.
-  Scoped approved execution outside the sandbox restores both private-role probes
-  and Git writes. An earlier full suite, before numeric API admission, passes 1,567 tests, with 3 separate-environment
-  tests skipped and 18 subtests passed; [receipt](_reset/frame-policy-full-sa21-20261022.json).
-  Each source type, historical text and native VARCHAR, passes one export and 15
-  restore cases on a new cluster with metadata and approved status inspection;
-  current [VARCHAR](_reset/fresh-cluster-restore-20261022-28.json) and
-  [text](_reset/fresh-cluster-restore-20261022-27.json) receipts report matching start/end Python hashes.
-- Implemented scope: native text and VARCHAR storage, exact equality, `IN`, tenant-scoped uniqueness,
-  sync/async attachment, maintenance protection transition, read-only transition status, in-place decrypt-back and
-  additive removal for that transition format, an independent application lifecycle and
-  a pinned external Smolink URL workload with an import-free restart, a fresh-cluster protected-backup recovery harness with approved
-  restore adoption, CF1 primitives, and a local development provider.
-- All seven qualification gates remain UNKNOWN.
-- Every protected type outside the text family, every advanced predicate, online migration,
-  complete rotation, production KMS, and independent review remain open.
+- Implemented scope includes native text/VARCHAR storage, equality/IN,
+  tenant uniqueness, sync/async attachment, maintenance protection,
+  decrypt-back/removal, and separate root-rewrap, payload and search rotation.
+  Payload/search preparation uses sealed activation and shared publication.
+  Restore adoption uses the existing host-approved binding. Effective privilege,
+  ancestry and metadata checks precede effectful restore probes or key work.
+  See the [current checkpoint](status.md#search-key-rotation-and-backup-checkpoint-2026-10-23).
+- The search checkpoint passes 92 focused cases, including independent crypto,
+  native search/uniqueness/current-value removal, mixed rotation lineage,
+  lost COMMIT replies and SIGKILL recovery. Search TEXT/VARCHAR backups each
+  pass one export and 29 restore cases. Older protection, rewrap and payload
+  profiles also pass at the same Python hashes. Full regression passes
+  1,869 tests and 18 subtests, with three separate-environment skips.
+  Reproducible archives and all 36 installed package files pass, including CLI.
+- Current execution uses local PostgreSQL 16 and Python 3.12.3 with SQLAlchemy
+  2.1.3. The full SQLAlchemy 2.0.51 cell and pinned Smolink application were
+  not rerun for search rotation. Their [earlier evidence](status.md#pinned-smolink-adoption-2026-10-22)
+  remains revision-bound. Private-role probes and Git writes use scoped approved
+  execution. Default sandbox restrictions remain in place.
+- The import ledger and dated status checkpoints preserve earlier evidence.
+  Reproducibility includes wheel RECORD, license metadata and an SBOM.
+  Signing, publication identity and independent rebuild remain UNKNOWN.
+  Non-text types, advanced predicates, online migration, adopted-target rotation,
+  production custody/retirement, authenticated host authority and independent
+  review remain open. All seven qualification gates remain UNKNOWN.
+
 
 ## Objective ledger
 
@@ -134,7 +73,7 @@ Requirement text is abbreviated. The full definitions remain in the research
 | OBJ-LIFE-04 | Parallel/adaptive migration without lost or duplicate work | SPECIFIED | None | Depends on OBJ-LIFE-03 |
 | OBJ-LIFE-05 | Decrypt-back current edits; preserve schema behavior; package-free exit | VERIFIED, bounded | `deprotection.py` implements `cryptalis.reverse/v1`: staged plaintext, verified backfill, transactional switch, recorded constraint/index/collation restoration, guarded activation, approved removal, and terminal-state assertions; seven lifecycle cases pass on both profiles; an independent three-model application completes protect/search/modify/decrypt-back/remove and a package-free restarted process performs native CRUD; the same reverse completes on an adopted restored cluster with the binding; lock v2 captures and restores protected-column comments, statistics targets, storage, compression, options, column grants, constraint/index comments and extended statistics; grants are applied to the ciphertext column at protection; owned sequences remain refused; native catalogs now verify captured metadata through fresh-cluster restore and adopted removal; terminal removal refuses late metadata drift and retains the journal on failed retirement | Broader external application scope, physical column order, owned-sequence restore, retained-native |
 | OBJ-LIFE-06 | Rollback, restore, stale pin refusal, RPO/RTO, disaster drills | PARTIAL | Older-snapshot and stale-pin refusals; reverse abort, pin/state ordering, corrupt-frame and disabled-guard refusals; isolated-cluster plaintext and protected restore with frame recovery and loud authority refusal; `cryptalis.restore/v1` adoption issues a binding after approval, frame authentication, schema comparison, and behavioral probes; the adopted cluster then attaches, reverses, and removes; local provider outage/revocation/lease drills keep the committed prefix and fail closed | Host-authenticated fencing/quarantine, RPO/RTO measurement |
-| OBJ-LIFE-07 | Three separate rotation workflows | PARTIAL | Root-rewrap successor cutover and shared activation, byte preservation, exact lineage, pending retry/cancellation, process/COMMIT recovery and repeated-rewrap decrypt-back/removal; source-pinned payload planning, durable shadows, source-only cancellation, immutable sealed target proof, atomic cutover/shared publication, mixed custody lineage/current-value removal and native process/COMMIT recovery; fresh-cluster TEXT/VARCHAR payload-backup adoption after later edits, independent selected-generation decoding and old-generation refusal | Search reindex, rotation on adopted restored targets, adopted-restore rewrap/cancellation, external provider/authority qualification |
+| OBJ-LIFE-07 | Three separate rotation workflows | PARTIAL | Root-rewrap successor cutover and shared activation, byte preservation, exact lineage, pending retry/cancellation, process/COMMIT recovery and repeated-rewrap decrypt-back/removal; source-pinned payload planning, durable shadows, source-only cancellation, immutable sealed target proof, atomic cutover/shared publication, mixed custody lineage/current-value removal and native process/COMMIT recovery; fresh-cluster TEXT/VARCHAR payload-backup adoption after later edits, independent selected-generation decoding and old-generation refusal; sealed search reindex, one active namespace with retained readers, native uniqueness/rollback, mixed search/payload/rewrap/search lineage and fresh-cluster search backups | Rotation on adopted restored targets, adopted-restore rewrap/cancellation, external provider/authority qualification |
 | OBJ-LIFE-08 | Production KMS with outage/revocation/cost evidence | BLOCKED | Local development provider only | Authorized provider account and independent review |
 | OBJ-LIFE-09 | Install, upgrade, decommission, clean uninstall | PARTIAL | Importable package; approved in-database removal retires reverse-owned objects after decrypt-back; a package-free restarted application process performs native CRUD | Versioned upgrade/removal and broader external application evidence |
 | OBJ-DX-01 | Minimal model/query changes; one manifest and one attach | IMPLEMENTED | `compile_protection`, `attach`, CLI inspection, read-only protection and reverse `status` | Unify plan/apply/remove entry points; complete status coverage |
@@ -155,6 +94,7 @@ Requirement text is abbreviated. The full definitions remain in the research
 
 | Date | Research reference | Mechanism | Product files | Evidence | Status |
 |---|---|---|---|---|---|
+| 2026-10-23 | Search rotation and retained readers | Immutable search P/v1 and activation v4, fresh authenticated terms under unchanged payload custody, shared atomic cutover and one query namespace | Rotation planner, common generation engine, search crypto preparation and bound adapter admission | 92 focused cases, real COMMIT/SIGKILL recovery; [native](_reset/search-rotation-native-first-20261023.json); search TEXT/VARCHAR each one export and 29 restore cases; [backup](_reset/fresh-cluster-restore-20261023-11.json); 36 installed files and CLI startup | VERIFIED for listed local controls; [full regression](_reset/search-rotation-full-20261023.json) passes 1,869 plus 18 subtests; production custody/authority/retirement and seven gates remain unqualified or UNKNOWN |
 | 2026-10-23 | Reverse runtime boundary | Host-pin-selected effective privileges before staging/publication/retirement, plaintext planning, actual absent-journal REMOVED exception | Shared reverse plan/state admission and native role/grant controls | 19 initial failures, 20 passing controls; [native](_reset/reverse-runtime-first-20261023.json); full 1,809 plus 18 subtests; [full](_reset/reverse-runtime-full-20261023.json); TEXT/VARCHAR each one export and 28 restore cases; [recovery](_reset/fresh-cluster-restore-20261023-9.json); reproducible archives and 35 installed files with CLI startup | VERIFIED for recorded privilege observations and preserved native edits; production credential retirement, host authority and seven full gates remain unqualified or UNKNOWN |
 | 2026-10-23 | Payload-backup recovery and runtime admission | Current ACTIVE backup values, exact source/P/A proof and generation, effective native privilege checks before probes/keys | Restore and shared migration admission, native fresh-cluster profiles | TEXT/VARCHAR each one export and 28 restore cases; older rewrap/VARCHAR 26 plus one skip; seven ordinary refusal controls; [recovery](_reset/fresh-cluster-restore-20261023-6.json); full 1,789 plus 18 subtests; [full](_reset/restore-runtime-full-20261023.json); 35 installed files and CLI startup | VERIFIED for recorded local controls; adopted-target rotation, search reindex and all seven gates remain open or UNKNOWN |
 | 2026-10-23 | Sealed payload cutover | Deterministic host-pinned A, repeated paired checks, atomic public-frame copy and guard/lineage exchange, target-only retry and shared publication | `rotation.seal_payload_rotation`, `switch_payload_rotation`, migration v3 admission and bounded publication verifier | 37 final native lifecycle/adversarial/recovery cases; [native](_reset/payload-cutover-final-native-20261023.json); independent copy wall/WAL interval observations; full regression 1,782 plus 18 subtests; [full](_reset/payload-cutover-full-20261023.json); 35 installed package files and CLI startup | VERIFIED for named local controls; search reindex, fresh-cluster payload-backup qualification and seven full gates remain open or UNKNOWN |

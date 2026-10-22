@@ -18,6 +18,7 @@ from cryptalis.crypto._payload_rotation import MAX_BATCH_BYTES, MAX_BATCH_ROWS
 
 FORMAT = 'cryptalis.rewrap/v1'
 PAYLOAD_FORMAT = 'cryptalis.payload-rotation/v1'
+SEARCH_FORMAT = 'cryptalis.search-rotation/v1'
 
 
 def _uuid(value, *, nonzero=True):
@@ -149,7 +150,8 @@ class RewrapPlan:
         document = source.document
         ancestors = document.get('predecessors', [])
         ancestors.append({'operation_id': str(source.operation_id), 'plan_digest': source.digest})
-        for name in ('payload_rotation_plan_digest','payload_rotation_observations','payload_batch_limits'):
+        for name in ('payload_rotation_plan_digest','payload_rotation_observations','payload_batch_limits',
+                     'search_rotation_plan_digest','search_rotation_observations','search_batch_limits'):
             document.pop(name,None)
         document.update(format='cryptalis.transition/v2', kind='rewrap',
             operation_id=str(self.operation_id), predecessors=ancestors, rewrap_plan_digest=self.digest,
@@ -221,14 +223,15 @@ def _payload_estimates(models, policies, backfill, verify, temporary, wal):
 
 
 @dataclass(frozen=True, repr=False)
-class PayloadRotationPlan:
+class _GenerationRotationPlan:
     """Inactive source-pinned preparation artifact. It cannot activate a policy."""
     artifact: bytes
 
     def __post_init__(self):
         try:
             sizes = ('frame_bytes','logical_bytes','largest_row_logical_bytes')
-            d, source, _ = _read_proposal(self.artifact, PAYLOAD_FORMAT, 'payload_rotation',
+            purpose=self.purpose
+            d, source, _ = _read_proposal(self.artifact, self.format, purpose+'_rotation',
                 extra=('successor_operation_id','batch_limits'), sizes=sizes)
             identities = {source.operation_id, _uuid(d['operation_id'])} | {
                 UUID(p['operation_id']) for p in source.document.get('predecessors', [])}
@@ -237,17 +240,23 @@ class PayloadRotationPlan:
                 raise ValueError
             domain = _uuid(source.document['lock']['domain_id'])
             for tenant, policy in d['key_policies'].items():
+                other='search' if purpose=='payload' else 'payload'
                 if set(policy) != {'source','target','source_contexts','target_contexts',
-                                  'source_payload_generation','target_payload_generation','search_generation'}:
+                                  'source_'+purpose+'_generation','target_'+purpose+'_generation',other+'_generation'}:
                     raise ValueError
                 _digest(policy['source']); _digest(policy['target'])
-                if policy['source'] != source.document['key_policies'][tenant] or policy['target'] == policy['source']:
+                if policy['source'] != source.document['key_policies'][tenant]:
                     raise ValueError
                 tenant_id = _uuid(tenant, nonzero=False)
                 old = _read_contexts(policy['source_contexts'],domain,tenant_id)
                 new = _read_contexts(policy['target_contexts'],domain,tenant_id)
-                _payload_shape(old,new,policy['source_payload_generation'],policy['target_payload_generation'],
-                               policy['search_generation'])
+                shape=_payload_shape if purpose=='payload' else _search_shape
+                shape(old,new,policy['source_'+purpose+'_generation'],policy['target_'+purpose+'_generation'],
+                      policy[other+'_generation'])
+                unchanged=purpose=='search' and policy['source_search_generation'] is None
+                if (policy['target']==policy['source'])!=unchanged:raise ValueError
+            if purpose=='search' and not any(p['source_search_generation'] is not None for p in d['key_policies'].values()):
+                raise ValueError
             costs, limits = d['estimates'], d['batch_limits']
             for name, value in costs.items():
                 if name not in ('backfill_rows_per_second','verify_rows_per_second','limits'):
@@ -264,7 +273,7 @@ class PayloadRotationPlan:
                     costs['verify_rows_per_second'],costs['temporary_bytes_per_row'],costs['wal_bytes_per_row']):
                 raise ValueError
         except Exception:
-            raise m.TransitionFailure('invalid_payload_rotation_plan') from None
+            raise m.TransitionFailure('invalid_'+self.purpose+'_rotation_plan') from None
 
     @property
     def document(self): return json.loads(self.artifact)
@@ -277,10 +286,63 @@ class PayloadRotationPlan:
 
     def __str__(self):
         d = self.document
-        return (f'Inactive payload-rotation preparation: {d["estimates"]["rows"]} rows; estimated writer pause '
+        return (f'Inactive {self.purpose}-rotation preparation: {d["estimates"]["rows"]} rows; estimated writer pause '
                 f'{d["estimates"]["writer_pause_seconds_estimate"]} s. No database or policy changes. '
                 + d['estimates']['limits'])
     __repr__ = __str__
+
+
+class PayloadRotationPlan(_GenerationRotationPlan):
+    purpose='payload'
+    format=PAYLOAD_FORMAT
+
+
+class SearchRotationPlan(_GenerationRotationPlan):
+    purpose='search'
+    format=SEARCH_FORMAT
+
+
+def _search_shape(old,new,old_generation,new_generation,payload_generation):
+    if (type(payload_generation) is not int or ('payload',payload_generation) not in {
+            (context.purpose,context.generation) for context in old}):
+        raise ValueError
+    if old_generation is None:
+        if new_generation is not None or old!=new:raise ValueError
+        return
+    added=new-old
+    if (not old<=new or len(added)!=1 or type(old_generation) is not int
+            or type(new_generation) is not int or ('search',old_generation) not in {
+                (context.purpose,context.generation) for context in old}):
+        raise ValueError
+    root=next(iter(added))
+    if (root.purpose!='search' or root.generation!=new_generation
+            or new_generation<=max(c.generation for c in old if c.purpose=='search')):
+        raise ValueError
+
+
+def _same_search_roots(source,target):
+    try:
+        _search_shape({w.context for w in source.policy.wrappers},
+                      {w.context for w in target.policy.wrappers},source.policy.search_generation,
+                      target.policy.search_generation,source.policy.payload_generation)
+        a,b=source.policy,target.policy
+        if ((a.domain_id,a.tenant_id,a.payload_generation)!=(b.domain_id,b.tenant_id,b.payload_generation)
+                or not set(a.wrappers)<=set(b.wrappers)):
+            raise ValueError
+        roots=[]
+        for w in a.wrappers:
+            c=w.context
+            old=source._resolve(c.domain_id,c.tenant_id,c.purpose,c.generation)
+            new=target._resolve(c.domain_id,c.tenant_id,c.purpose,c.generation)
+            if old.context!=new.context or not compare_digest(old.root,new.root):raise ValueError
+            roots.append(old)
+        if b.search_generation is not None:
+            new=target._resolve(b.domain_id,b.tenant_id,'search',b.search_generation)
+            if any(compare_digest(new.root,old.root) for old in roots):raise ValueError
+    except KeyUnavailable:
+        raise
+    except ValueError:
+        raise m.TransitionFailure('search_rotation_policy_changed') from None
 
 
 def _same_payload_roots(source, target):
@@ -304,7 +366,7 @@ def _same_payload_roots(source, target):
         raise m.TransitionFailure('payload_rotation_policy_changed') from None
 
 
-def _prepare_payload(source, keys, target_keys):
+def _prepare_generation(source, keys, target_keys, purpose):
     policies, prepared = {}, {}
     for tenant in source.document['key_policies']:
         identity = UUID(tenant)
@@ -316,13 +378,23 @@ def _prepare_payload(source, keys, target_keys):
         if not isinstance(new,Keyring):
             raise m.TransitionFailure('missing_target_key_policy',source.operation_id)
         pair = old.prepare(), new.prepare()
-        _same_payload_roots(*pair)
+        (_same_payload_roots if purpose=='payload' else _same_search_roots)(*pair)
         prepared[identity] = pair
         policies[tenant] = dict(source=m._policy(old),target=m._policy(new),
             source_contexts=_contexts(old.policy),target_contexts=_contexts(new.policy),
-            source_payload_generation=old.policy.payload_generation,
-            target_payload_generation=new.policy.payload_generation,search_generation=old.policy.search_generation)
+            **{'source_'+purpose+'_generation':getattr(old.policy,purpose+'_generation'),
+               'target_'+purpose+'_generation':getattr(new.policy,purpose+'_generation'),
+               ('search_generation' if purpose=='payload' else 'payload_generation'):
+                   old.policy.search_generation if purpose=='payload' else old.policy.payload_generation})
     return policies, prepared
+
+
+def _prepare_payload(source,keys,target_keys):
+    return _prepare_generation(source,keys,target_keys,'payload')
+
+
+def _prepare_search(source,keys,target_keys):
+    return _prepare_generation(source,keys,target_keys,'search')
 
 
 def _payload_stream(c, model, after, limits, *, payloads=False):
@@ -352,13 +424,13 @@ def _payload_stream(c, model, after, limits, *, payloads=False):
     return m._stream(c,model,after=after,limit=count,payloads=payloads) if count else []
 
 
-def plan_payload_rotation(source, engine, *, source_pin, keys, target_keys,
+def _plan_generation_rotation(source, engine, *, purpose, source_pin, keys, target_keys,
         backfill_rows_per_second, verify_rows_per_second, temporary_bytes_per_row, wal_bytes_per_row,
         max_batch_rows=1000, max_batch_bytes=64*1024*1024):
     """Pin source observations and exact retained custody in a read-only snapshot.
 
     This proposal does not stage frames, publish policy or authorize cutover.
-    Future sealing must pin the actual verified randomized target ciphertext.
+    Sealing pins the actual verified randomized target ciphertext.
     """
     m._admit(source,source_pin)
     if source_pin.phase != 'ACTIVE':
@@ -371,7 +443,7 @@ def plan_payload_rotation(source, engine, *, source_pin, keys, target_keys,
         from cryptalis.deprotection import _inventory
         _inventory(c,source,source,own=None)
         state = m._state(c,source,source_pin)
-        policies, prepared = _prepare_payload(source,keys,target_keys)
+        policies, prepared = _prepare_generation(source,keys,target_keys,purpose)
         models = _observe_active(c,source,keys,prepared={t:p[0] for t,p in prepared.items()},
                                  peers={t:p[1] for t,p in prepared.items()},batch_limits=limits)
         for model in source.document['lock']['models']:
@@ -381,52 +453,127 @@ def plan_payload_rotation(source, engine, *, source_pin, keys, target_keys,
         pin.update(target_id=str(source_pin.target_id),operation_id=str(source_pin.operation_id))
         costs = _payload_estimates(models,policies,backfill_rows_per_second,verify_rows_per_second,
                                   temporary_bytes_per_row,wal_bytes_per_row)
-        proposal = PayloadRotationPlan(m._canonical(dict(format=PAYLOAD_FORMAT,kind='payload_rotation',
+        plan_type=PayloadRotationPlan if purpose=='payload' else SearchRotationPlan
+        proposal = plan_type(m._canonical(dict(format=plan_type.format,kind=purpose+'_rotation',
             operation_id=str(uuid4()),successor_operation_id=str(uuid4()),source_plan=source.document,source_pin=pin,
             required_readers=source.document['lock']['required_readers'],journal_state_digest=m._hash(state),
             models=models,key_policies=policies,batch_limits=limits,estimates=costs)))
         for pair in prepared.values():
-            _same_payload_roots(*pair)
+            (_same_payload_roots if purpose=='payload' else _same_search_roots)(*pair)
     except Exception as exc:
         raise m._safe_failure(exc,source.operation_id,()) from None
     return proposal
 
 
+def plan_payload_rotation(source,engine,*,source_pin,keys,target_keys,
+        backfill_rows_per_second,verify_rows_per_second,temporary_bytes_per_row,wal_bytes_per_row,
+        max_batch_rows=1000,max_batch_bytes=64*1024*1024):
+    return _plan_generation_rotation(source,engine,purpose='payload',source_pin=source_pin,keys=keys,
+        target_keys=target_keys,backfill_rows_per_second=backfill_rows_per_second,
+        verify_rows_per_second=verify_rows_per_second,temporary_bytes_per_row=temporary_bytes_per_row,
+        wal_bytes_per_row=wal_bytes_per_row,max_batch_rows=max_batch_rows,max_batch_bytes=max_batch_bytes)
+
+
+def plan_search_rotation(source,engine,*,source_pin,keys,target_keys,
+        backfill_rows_per_second,verify_rows_per_second,temporary_bytes_per_row,wal_bytes_per_row,
+        max_batch_rows=1000,max_batch_bytes=64*1024*1024):
+    if not any(f['queries'] for model in source.document['lock']['models'] for f in model['fields']):
+        raise m.TransitionFailure('search_rotation_requires_searchable_fields',source.operation_id)
+    return _plan_generation_rotation(source,engine,purpose='search',source_pin=source_pin,keys=keys,
+        target_keys=target_keys,backfill_rows_per_second=backfill_rows_per_second,
+        verify_rows_per_second=verify_rows_per_second,temporary_bytes_per_row=temporary_bytes_per_row,
+        wal_bytes_per_row=wal_bytes_per_row,max_batch_rows=max_batch_rows,max_batch_bytes=max_batch_bytes)
+
+
+def _require_proposal(proposal,purpose):
+    expected=PayloadRotationPlan if purpose=='payload' else SearchRotationPlan
+    if type(proposal) is not expected:
+        raise m.TransitionFailure('invalid_'+purpose+'_rotation_plan')
+
+
 def apply_payload_rotation(proposal,engine,*,keys,target_keys,pin,approval,until='BACKFILLED',max_chunks=None):
     """Stage encrypted chunks under P. This operation cannot publish or switch."""
-    from cryptalis._payload_transition import apply
+    _require_proposal(proposal,'payload')
+    from cryptalis._rotation_transition import apply
     return apply(proposal,engine,keys=keys,target_keys=target_keys,pin=pin,approval=approval,
                  until=until,max_chunks=max_chunks)
 
 
 def status_payload_rotation(proposal,engine,*,pin):
     """Read recorded preparation progress. No value verification or effects."""
-    from cryptalis._payload_transition import status
+    _require_proposal(proposal,'payload')
+    from cryptalis._rotation_transition import status
     return status(proposal,engine,pin=pin)
 
 
 def abort_payload_rotation(proposal,engine,*,keys,source_pin,approval):
     """Discard only P's staging under the republished source ACTIVE pin."""
-    from cryptalis._payload_transition import abort
+    _require_proposal(proposal,'payload')
+    from cryptalis._rotation_transition import abort
     return abort(proposal,engine,keys=keys,source_pin=source_pin,approval=approval)
 
 
 def seal_payload_rotation(proposal,engine,*,keys,target_keys,pin,approval,
                           copy_rows_per_second,copy_wal_bytes_per_row):
     """Seal actual paired target observations without changing data or authority."""
-    from cryptalis._payload_activation import seal
+    _require_proposal(proposal,'payload')
+    from cryptalis._rotation_activation import seal
     return seal(proposal,engine,keys=keys,target_keys=target_keys,pin=pin,approval=approval,
                 copy_rows_per_second=copy_rows_per_second,copy_wal_bytes_per_row=copy_wal_bytes_per_row)
 
 
 def switch_payload_rotation(proposal,activation,engine,*,keys,target_keys,pin,approval):
     """Copy verified shadows and commit source-to-preparation-to-activation lineage."""
-    from cryptalis._payload_activation import switch
+    _require_proposal(proposal,'payload')
+    from cryptalis._rotation_activation import switch
     return switch(proposal,activation,engine,keys=keys,target_keys=target_keys,pin=pin,approval=approval)
 
 
 def _verify_payload_target(c,activation,keys):
-    from cryptalis._payload_activation import verify_target
+    from cryptalis._rotation_activation import verify_target
+    return verify_target(c,activation,keys)
+
+
+def apply_search_rotation(proposal,engine,*,keys,target_keys,pin,approval,until='BACKFILLED',max_chunks=None):
+    """Stage encrypted chunks under P. This operation cannot publish or switch."""
+    _require_proposal(proposal,'search')
+    from cryptalis._rotation_transition import apply
+    return apply(proposal,engine,keys=keys,target_keys=target_keys,pin=pin,approval=approval,
+                 until=until,max_chunks=max_chunks)
+
+
+def status_search_rotation(proposal,engine,*,pin):
+    """Read recorded preparation progress. No value verification or effects."""
+    _require_proposal(proposal,'search')
+    from cryptalis._rotation_transition import status
+    return status(proposal,engine,pin=pin)
+
+
+def abort_search_rotation(proposal,engine,*,keys,source_pin,approval):
+    """Discard only P's staging under the republished source ACTIVE pin."""
+    _require_proposal(proposal,'search')
+    from cryptalis._rotation_transition import abort
+    return abort(proposal,engine,keys=keys,source_pin=source_pin,approval=approval)
+
+
+def seal_search_rotation(proposal,engine,*,keys,target_keys,pin,approval,
+                          copy_rows_per_second,copy_wal_bytes_per_row):
+    """Seal actual paired target observations without changing data or authority."""
+    _require_proposal(proposal,'search')
+    from cryptalis._rotation_activation import seal
+    return seal(proposal,engine,keys=keys,target_keys=target_keys,pin=pin,approval=approval,
+                copy_rows_per_second=copy_rows_per_second,copy_wal_bytes_per_row=copy_wal_bytes_per_row)
+
+
+def switch_search_rotation(proposal,activation,engine,*,keys,target_keys,pin,approval):
+    """Copy verified shadows and commit source-to-preparation-to-activation lineage."""
+    _require_proposal(proposal,'search')
+    from cryptalis._rotation_activation import switch
+    return switch(proposal,activation,engine,keys=keys,target_keys=target_keys,pin=pin,approval=approval)
+
+
+def _verify_search_target(c,activation,keys):
+    from cryptalis._rotation_activation import verify_target
     return verify_target(c,activation,keys)
 
 

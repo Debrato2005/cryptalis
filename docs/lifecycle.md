@@ -2,9 +2,9 @@
 
 **SPECIFIED:** lifecycle contract. **IMPLEMENTED:** bounded product protection transition with plan/apply/verify and pre-switch abort,
 plus an in-place decrypt-back and additive-removal path.
-Root rewrap and payload-key rotation have bounded product cutover and shared publication paths.
-Payload preparation stages and verifies encrypted chunks, inspects progress, and supports cancellation before switch.
-Search rotation and online transition remain unimplemented product slices. [Status](status.md) states the evidence and remaining limits.
+Root rewrap, payload-key rotation, and search-key rotation have bounded cutover and shared publication paths.
+Generation preparation stages and verifies encrypted chunks, inspects progress, and supports cancellation before switch.
+Online transitions remain unimplemented product work. [Status](status.md) states the evidence and remaining limits.
 The protection engine verifies and switches in one transaction; saved verification checkpoints require a fresh pass on resume.
 Plain reads continue during verification. Writes and locking reads wait; schema DDL can pause all access.
 VERIFIED paragraphs below describe recorded receipts, not current product qualification. All other requirements remain SPECIFIED.
@@ -137,7 +137,7 @@ The integrated checkpoint records the original application's narrow rollback/rem
 | Add/remove a query capability | Derive/retire companions and indexes. Reseal payload when authenticated search metadata changes. Verify source/target and queries |
 | Normalizer/search-domain change | Full reindex and duplicate/constraint review. New identity, no in-place reinterpretation |
 | Payload key generation | Re-encrypt payloads and authenticated companion metadata. Search roots can remain stable |
-| Search key generation | Rebuild terms/arrays and indexes. Reseal authenticated payload headers with fresh nonces. Keep writers stopped |
+| Search key generation | Recompute declared search terms and reseal searchable CF1 frames with fresh nonces. Maintain native indexes during atomic UPDATE. Keep writers stopped |
 | Provider/KEK change | Rewrap exact roots and verify unwrap/context under the new provider. Payload/search bytes stay unchanged |
 | Format/codec upgrade | Deploy required readers first, transform, verify, then switch writers. Retire old readers only after dependency review |
 
@@ -238,6 +238,59 @@ defines the preparation and activation boundary. Preparation, sealing, and
 cutover on an adopted restored target remain unsupported. All seven full gates
 remain UNKNOWN.
 
+### Search-key rotation
+
+**IMPLEMENTED, bounded native verification:** search rotation uses the same two-artifact
+preparation, sealing, cutover, and publication protocol as payload rotation.
+`rotation.plan_search_rotation` returns P as `cryptalis.search-rotation/v1`.
+P supplies no application deployment authority. The activation artifact A is a
+`cryptalis.transition/v4` MigrationPlan with `kind: search_rotation`. Its exact
+proof fields are `search_rotation_plan_digest`, `search_rotation_observations`,
+and `search_batch_limits`.
+
+For each policy with a selected search generation, retain every exact source
+wrapper and root material. Add one independent search root above all retained
+search generations. Keep the selected payload root and generation unchanged.
+A tenant policy with no selected search generation stays unchanged. Searchable frames receive
+new terms and fresh nonces under the unchanged selected payload root.
+Storage-only frames retain their exact bytes, including when their tenant also
+has searchable fields. One selected search generation serves application queries.
+Retained search readers do not authorize mixed-generation OR queries.
+
+`apply_search_rotation` stages bounded chunks under P's exact guards and schema.
+Rows and progress commit together. Resume reuses authenticated staged bytes.
+BACKFILLED retries repeat paired source/target proof. `status_search_rotation`
+reports `NOT_PERFORMED`. `abort_search_rotation` requires the republished source
+ACTIVE pin and source custody, removes only P's staging, and preserves later
+source edits on terminal retries. It needs no target provider.
+
+`seal_search_rotation` authenticates the source against P and binds A to the
+actual new target frame hashes. Persist P and A before destructive switch.
+`switch_search_rotation` repeats paired proof, copies shadows into existing public
+columns, and maintains native expression and unique indexes through UPDATE.
+Source SUPERSEDED to P, P SUPERSEDED to A, guard exchange, and A PENDING
+commit atomically with a fresh target check. Original columns and metadata remain
+intact. PENDING recovery checks A's target proof because original frames are gone.
+A switched P cannot resume preparation or cancel the cutover.
+
+Shared `migration.apply` accepts A only for ACTIVE publication with an
+ACTIVATING or ACTIVE pin. ACTIVATING repeats A's target proof even if the
+journal claims ACTIVE. A genuine ACTIVE pin permits later application edits
+and latest-value decrypt-back/removal. The existing restore-binding format remains
+the selected recovery contract. Rotation on an adopted target stays unsupported.
+
+Measured `copy_rows_per_second` and `copy_wal_bytes_per_row` must include native
+maintenance of every affected expression and unique index. The terminal copy
+and index updates share one full-table transaction, beyond bounded preparation
+chunks. Logical batch limits establish no process-memory, storage-capacity, WAL,
+or pause bound. The same five authentication passes accompany the terminal copy.
+
+Native controls cover current-value search and uniqueness, retained readers,
+paired proof, cancellation, lost COMMIT replies, and SIGKILL with fresh-process
+recovery. The text backup profile also completes adoption and latest-value
+removal. [Status](status.md) owns current receipts and verification boundaries.
+All seven full gates remain UNKNOWN.
+
 Keep exactly one active application writer representation during maintenance cutover.
 No partial-generation OR query or cross-generation uniqueness gap is silently admitted.
 Native KMS KEK material rotation is different from root rewrap, payload rotation, or search reindex.
@@ -287,7 +340,7 @@ Inspect current progress with the original source plan and current source pin.
 An ACTIVE successor requires a new rewrap rather than cancellation.
 Rewrap and cancellation on an adopted restored target remain unimplemented.
 After activation, a new rewrap can change custody again without rewriting data.
-Search rotation remains unimplemented. The full lifecycle gate remains UNKNOWN.
+The full lifecycle gate remains UNKNOWN.
 See [status](status.md#active-root-rewrap-checkpoint-2026-10-23).
 
 ## Restore and authority loss
@@ -506,9 +559,32 @@ receipts and test totals.
 
 Backup adoption after payload rotation differs from rotation on an adopted
 target. Payload preparation, sealing, and cutover on an adopted target remain
-unsupported. Search rotation remains unimplemented. Host publication provenance,
+unsupported. Host publication provenance,
 source fencing, and provider custody remain external qualification boundaries.
 All seven full gates remain UNKNOWN.
+
+### Search-rotation backup adoption: 2026-10-23
+
+**IMPLEMENTED, bounded native verification:** the text profile exports an ACTIVE
+search v4 successor and a later protected edit to row 999. That edit differs
+from A's sealed frames. Adoption uses the existing `cryptalis.restore/v1`
+`RestoreBinding` and authenticates current selected-generation frames. It does
+not freeze the backup to A's original sealing hashes.
+
+The independent decoder derives the generation-2 search root, HKDF keys, and
+HMAC terms from public fixture definitions. The selected payload root remains
+unchanged. The product reader and independent decoder recover the same current
+values. A valid original search-generation-1 frame fails adoption, although its
+root remains retained. The original source policy also fails target admission.
+
+Authority controls reject missing source/P ancestors, forged links, proof-digest
+changes, and malformed counters before probes or key preparation. The adopted
+application reads, searches, edits, decrypts current values, and removes eligible
+journal/storage objects. Native metadata checks preserve the source contract.
+The harness also accepts `--varchar`. [Status](status.md) owns each profile's
+receipts and qualification boundary. This evidence does not qualify production
+custody, host publication, or source fencing. Rotation on an adopted target
+remains unsupported. All seven full gates remain UNKNOWN.
 
 ### Independent application exit: 2026-10-19
 

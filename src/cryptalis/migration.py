@@ -38,8 +38,8 @@ def _decode_transition_json(raw):
                   for prefix in ((), ('source_plan',))
                   for name in ('backfill_rows_per_second', 'verify_rows_per_second')}
     for prefix, owner in (((),document),(('source_plan',),document.get('source_plan') if type(document) is dict else None)):
-        if (type(owner) is dict and owner.get('format')=='cryptalis.transition/v3'
-                and owner.get('kind')=='payload_rotation'):
+        if (type(owner) is dict and (owner.get('format'),owner.get('kind')) in (
+                    ('cryptalis.transition/v3','payload_rotation'),('cryptalis.transition/v4','search_rotation'))):
             rate_paths.add(prefix+('estimates','copy_rows_per_second'))
 
     def check(value, path):
@@ -134,6 +134,18 @@ def _payload_activation_estimates(rows, backfill, verify, copy, copy_wal):
                'index work, capacity guarantees and provider overhead. Copy WAL is a host estimate, not a bound.')
 
 
+def _search_activation_estimates(rows,backfill,verify,copy,copy_wal):
+    costs=_payload_activation_estimates(rows,backfill,verify,copy,copy_wal)
+    costs['limits']=('Host-measured copy rate and WAL must include native equality and unique-index maintenance. '
+        'Estimates cover terminal copy and five verification passes, excluding prior staging/sealing, '
+        'DDL, lock drain, publication, capacity guarantees and provider overhead. '
+        'Copy WAL is a host estimate, not a bound.')
+    return costs
+
+
+_GENERATION_ROTATIONS=('payload_rotation','search_rotation')
+
+
 @dataclass(frozen=True)
 class MigrationPlan:
     artifact: bytes
@@ -145,14 +157,16 @@ class MigrationPlan:
                             'key_policies', 'scopes', 'estimates'}
             rewrap = doc.get('format') == 'cryptalis.transition/v2' and doc.get('kind') == 'rewrap'
             payload = doc.get('format') == 'cryptalis.transition/v3' and doc.get('kind') == 'payload_rotation'
-            if rewrap or payload:
-                proof_key = 'payload_rotation_plan_digest' if payload else 'rewrap_plan_digest'
-                observations_key = 'payload_rotation_observations' if payload else 'rewrap_observations'
+            search = doc.get('format') == 'cryptalis.transition/v4' and doc.get('kind') == 'search_rotation'
+            rotating=payload or search
+            if rewrap or rotating:
+                proof_key = doc['kind']+'_plan_digest'
+                observations_key = doc['kind']+'_observations'
                 members |= {'predecessors', proof_key, observations_key}
-                if payload:
-                    members.add('payload_batch_limits')
+                if rotating:
+                    members.add(('payload' if payload else 'search')+'_batch_limits')
                 ancestors = doc['predecessors']
-                if type(ancestors) is not list or len(ancestors) < (2 if payload else 1):
+                if type(ancestors) is not list or len(ancestors) < (2 if rotating else 1):
                     raise ValueError
                 seen = {str(UUID(doc['operation_id']))}
                 for item in ancestors:
@@ -168,7 +182,7 @@ class MigrationPlan:
                 if (type(doc[proof_key]) is not str or len(doc[proof_key]) != 64
                         or any(c not in '0123456789abcdef' for c in doc[proof_key])):
                     raise ValueError
-                if payload and ancestors[-1]['plan_digest'] != doc[proof_key]:
+                if rotating and ancestors[-1]['plan_digest'] != doc[proof_key]:
                     raise ValueError
             elif doc.get('format') != 'cryptalis.transition/v1' or doc.get('kind') != 'protect':
                 raise ValueError
@@ -190,7 +204,7 @@ class MigrationPlan:
             # Compiler validation needs identifier quoting, never a connection.
             _previous_lock(_canonical(doc['lock']), doc['lock'], SimpleNamespace(dialect=postgresql.dialect()))
             _validate_estimates(doc['estimates'])
-            if rewrap or payload:
+            if rewrap or rotating:
                 observed = doc[observations_key]
                 if set(observed) != {model['table_id'] for model in doc['lock']['models']}:
                     raise ValueError
@@ -204,8 +218,8 @@ class MigrationPlan:
                             raise ValueError
                 if sum(item['rows'] for item in observed.values()) != doc['estimates']['rows']:
                     raise ValueError
-            if payload:
-                limits, costs = doc['payload_batch_limits'], doc['estimates']
+            if rotating:
+                limits, costs = doc[('payload' if payload else 'search')+'_batch_limits'], doc['estimates']
                 scopes={}
                 for item in doc['scopes']:
                     if (type(item) is not dict or set(item)!={'table_id','estimated_rows'}
@@ -224,7 +238,8 @@ class MigrationPlan:
                                     'copy_rows_per_second', 'limits'):
                         if type(value) is not int or not 0 <= value < 2**53:
                             raise ValueError
-                if costs != _payload_activation_estimates(costs['rows'], costs['backfill_rows_per_second'],
+                estimate=_payload_activation_estimates if payload else _search_activation_estimates
+                if costs != estimate(costs['rows'], costs['backfill_rows_per_second'],
                         costs['verify_rows_per_second'], costs['copy_rows_per_second'], costs['copy_wal_bytes_per_row']):
                     raise ValueError
         except (ManifestInvalid, ValueError, TypeError, KeyError, AttributeError, TransitionFailure):
@@ -234,8 +249,8 @@ class MigrationPlan:
         if self.document['kind'] == 'rewrap':
             return (f'Estimated root-rewrap verification pause: {costs["writer_pause_seconds_estimate"]} s '
                     f'for {costs["rows"]} rows. Payload and search bytes stay unchanged. ' + costs['limits'])
-        if self.document['kind'] == 'payload_rotation':
-            return (f'Estimated payload-rotation copy and verification pause: {costs["writer_pause_seconds_estimate"]} s '
+        if self.document['kind'] in _GENERATION_ROTATIONS:
+            return (f'Estimated {self.document["kind"].removesuffix("_rotation")}-rotation copy and verification pause: {costs["writer_pause_seconds_estimate"]} s '
                     f'for {costs["rows"]} rows. Atomic copy WAL estimate: {costs["copy_wal_bytes_estimate"]} bytes. '
                     + costs['limits'])
         rates = (f'backfill {costs["backfill_rows_per_second"]:g} rows/s; '
@@ -564,30 +579,29 @@ def _state(c,p,pin,*,allow_aborted=False):
     kind = p.document['kind']
     exists=c.exec_driver_sql('SELECT pg_catalog.to_regclass(%s)',(_journal(c,p),)).scalar_one()
     if exists is None:
-        if kind == 'payload_rotation':
-            raise TransitionFailure('missing_payload_successor', p.operation_id)
+        if kind in _GENERATION_ROTATIONS:
+            raise TransitionFailure('missing_'+kind.removesuffix('_rotation')+'_successor', p.operation_id)
         if pin.phase != 'PREPARED': raise TransitionFailure('restored_or_missing_transition',p.operation_id)
         return None
     row=c.exec_driver_sql(f'SELECT plan_digest, state FROM {_journal(c,p)} WHERE operation_id=%s',(p.operation_id,)).one_or_none()
-    if row is None and kind == 'payload_rotation':
-        raise TransitionFailure('missing_payload_successor', p.operation_id)
+    if row is None and kind in _GENERATION_ROTATIONS:
+        raise TransitionFailure('missing_'+kind.removesuffix('_rotation')+'_successor', p.operation_id)
     if row is None or row[0] != p.digest: raise TransitionFailure('journal_identity_mismatch',p.operation_id)
     state=row[1]
     if state.get('phase') == 'SUPERSEDED':
         raise TransitionFailure('deployment_superseded', p.operation_id)
-    if kind in ('rewrap', 'payload_rotation'):
-        proof_key = 'payload_rotation_plan_digest' if kind == 'payload_rotation' else 'rewrap_plan_digest'
+    if kind in ('rewrap',)+_GENERATION_ROTATIONS:
+        proof_key = kind+'_plan_digest'
         if (state.get('phase') not in ('PENDING', 'ACTIVE')
                 or state.get(proof_key) != p.document[proof_key]):
-            raise TransitionFailure('payload_rotation_state_changed' if kind == 'payload_rotation'
-                                    else 'rewrap_state_changed', p.operation_id)
-        if kind=='payload_rotation':
+            raise TransitionFailure(kind+'_state_changed', p.operation_id)
+        if kind in _GENERATION_ROTATIONS:
             try:
-                if (set(state)!={'phase','models','payload_rotation_plan_digest','cutover_measurements'}
+                if (set(state)!={'phase','models',proof_key,'cutover_measurements'}
                         or type(state['models']) is not dict
-                        or set(state['models'])!=set(p.document['payload_rotation_observations'])):
+                        or set(state['models'])!=set(p.document[kind+'_observations'])):
                     raise ValueError
-                for table,observed in p.document['payload_rotation_observations'].items():
+                for table,observed in p.document[kind+'_observations'].items():
                     item=state['models'][table]
                     if (set(item)!={'rows','chunks','scope','active_schema','guard'}
                             or type(item['rows']) is not int or item['rows']!=observed['rows']
@@ -600,7 +614,7 @@ def _state(c,p,pin,*,allow_aborted=False):
                         or any(type(value) is not int or value<0 for value in metrics.values())):
                     raise ValueError
             except (ValueError,TypeError,KeyError,AttributeError):
-                raise TransitionFailure('payload_rotation_state_changed',p.operation_id) from None
+                raise TransitionFailure(kind+'_state_changed',p.operation_id) from None
         _check_predecessors(c, p)
     if state['phase']=='ABORTED':
         if allow_aborted and pin.phase=='PREPARED': return state
@@ -973,9 +987,9 @@ def _activate(c,p,state,pin,keys):
     if p.document['kind'] == 'rewrap':
         from cryptalis.rotation import _verify_rewrap_target
         _verify_rewrap_target(c, p, keys)
-    elif p.document['kind'] == 'payload_rotation':
-        from cryptalis.rotation import _verify_payload_target
-        _verify_payload_target(c, p, keys)
+    elif p.document['kind'] in _GENERATION_ROTATIONS:
+        from cryptalis._rotation_activation import verify_target
+        verify_target(c, p, keys)
     for model in p.document['lock']['models']:
         if _guard_facts(c,p,model)!=state['models'][model['table_id']]['guard']: raise TransitionFailure('writer_fence_changed',p.operation_id)
     _drop_guards(c,p)
@@ -999,11 +1013,11 @@ def apply(p,engine,*,keys,pin,approval,chunk_size=1000,until='PENDING'):
     _admit(p, pin)
     if p.document['kind'] == 'rewrap' and (until != 'ACTIVE' or pin.phase not in ('ACTIVATING', 'ACTIVE')):
         raise TransitionFailure('rewrap_executor_required', p.operation_id)
-    if p.document['kind'] == 'payload_rotation' and (until != 'ACTIVE' or pin.phase not in ('ACTIVATING', 'ACTIVE')):
-        raise TransitionFailure('payload_rotation_executor_required', p.operation_id)
+    if p.document['kind'] in _GENERATION_ROTATIONS and (until != 'ACTIVE' or pin.phase not in ('ACTIVATING', 'ACTIVE')):
+        raise TransitionFailure(p.document['kind']+'_executor_required', p.operation_id)
     with _executor(p,engine,pin,approval) as c:
         state=_state(c,p,pin); c.commit()
-        if state is not None and state['phase'] == 'ACTIVE' and p.document['kind'] in ('rewrap', 'payload_rotation') and pin.phase == 'ACTIVATING':
+        if state is not None and state['phase'] == 'ACTIVE' and p.document['kind'] in ('rewrap',)+_GENERATION_ROTATIONS and pin.phase == 'ACTIVATING':
             # A journal phase cannot replace the host's publication evidence.
             with c.begin():
                 _lock_tables(c,p,verification=True)
@@ -1012,11 +1026,11 @@ def apply(p,engine,*,keys,pin,approval,chunk_size=1000,until='PENDING'):
                     from cryptalis.rotation import _verify_rewrap_target
                     _verify_rewrap_target(c,p,keys)
                 else:
-                    from cryptalis.rotation import _verify_payload_target
-                    _verify_payload_target(c,p,keys)
+                    from cryptalis._rotation_activation import verify_target
+                    verify_target(c,p,keys)
         if state is None:
-            if p.document['kind'] == 'payload_rotation':
-                raise TransitionFailure('missing_payload_successor', p.operation_id)
+            if p.document['kind'] in _GENERATION_ROTATIONS:
+                raise TransitionFailure('missing_'+p.document['kind'].removesuffix('_rotation')+'_successor', p.operation_id)
             with c.begin(): state=_expand(c,p)
         while PHASES.index(state['phase'])<PHASES.index(until):
             with c.begin():

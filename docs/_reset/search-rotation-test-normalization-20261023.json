@@ -1,0 +1,9 @@
+{
+  "scope": "Remove only one trailing blank line from the recovery test after the full regression; product source is unchanged",
+  "file": "tests/test_search_rotation_recovery.py",
+  "full_receipt": "docs/_reset/search-rotation-full-20261023.json",
+  "before_sha256": "c43804c7a610e98ee2259f75d5479bbc27aedea3068ca473d65dc27b64b5bf05",
+  "after_sha256": "eb20c28d0769b700c95c6f13c729d1abb8b394bba5dbb16b6fdd49536b81ff85",
+  "ast_with_locations_identical": true,
+  "ast_sha256": "025e4e157d7948b09d0cc04456108ce620b4a23f9131a7eb2d2c7dad9269d5e6"
+}

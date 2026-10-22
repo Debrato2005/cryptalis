@@ -3,11 +3,101 @@
 **IMPLEMENTED:** research prototype with a product manifest compiler, CF1 text primitives, a local development provider,
 bounded sync/async SQLAlchemy storage/search, a PostgreSQL maintenance protection transition, an in-place
 decrypt-back/removal path for that transition format, and an approved fresh-cluster protected-backup
-recovery and adoption path.
+recovery and adoption path. Root rewrap and payload/search generation rotation
+share bounded maintenance and publication mechanics.
 Separate runtime-role verification is complete for the local cell.
 No PostgreSQL/provider/runtime cell, production key provider, independent review, or release is qualified.
 VERIFIED below refers only to the named checks and their exact revisions.
 All other contract and promotion requirements are SPECIFIED. All seven full gates remain UNKNOWN.
+
+## Search-key rotation and backup checkpoint: 2026-10-23
+
+**IMPLEMENTED, bounded native verification:** search rotation now has planning,
+encrypted staging, status, source-only cancellation, deterministic sealing and
+atomic cutover through the shared publication engine. P uses
+`cryptalis.search-rotation/v1`. Sealed activation A uses
+`cryptalis.transition/v4`, with exact target observations, policy digests,
+batch limits and source-to-P-to-A ancestry. Current code retains v1/v2/v3 artifact reading. Older host readers must upgrade
+before v4 publication.
+
+The target retains exact source wrappers and root material. Each selected
+search policy adds one independent root above every retained search generation.
+Payload selection stays unchanged. Searchable frames receive new terms and
+fresh authenticated nonces. Storage-only frames and search-less tenant policies
+remain exact. The adapter admits retained search readers only under an exact
+bound deployment policy and pins one active query namespace. It never queries
+multiple generations with OR.
+
+The two generation workflows share encrypted shadows, atomic cursor commits,
+guards, paired verification and publication mechanics. Their policy and header
+checks remain explicit. Native public UPDATE maintains equality and unique
+indexes inside the terminal transaction. A target uniqueness conflict rolls
+back the entire switch. Host copy-rate and WAL estimates must include index
+maintenance. Bounded preparation does not bound the full-table terminal copy,
+memory overhead, storage capacity, pause or WAL.
+
+**VERIFIED:** 92 focused cases pass in 70.64 seconds. They include 32 search
+crypto controls with independent frame composition, 13 retained-reader controls,
+12 native search lifecycle cases, three actual lost-COMMIT/SIGKILL recovery
+cases and 32 existing payload cases. The search cases cover TEXT/VARCHAR,
+multiple tables/tenants, exact storage-only bytes, Unicode/NULL, equality/IN,
+uniqueness, latest-value removal, target outage cancellation, authentic target
+resealing, late proof/counter/ancestor drift, post-UPDATE/guard-drop rollback,
+an injected target HMAC collision with native SQLSTATE `23505`, and a
+search/payload/rewrap/search chain. A fresh process publishes the same saved
+artifacts after SIGKILL. Native conflict and recovery tests preserve committed
+source or target bytes and recorded progress.
+
+Search TEXT and VARCHAR fresh-cluster profiles each pass one export and
+**29 restore cases**. A protected edit after publication differs from A's sealed
+snapshot and survives recovery. A separate KDF/HMAC decoder authenticates the
+generation-two search term under the unchanged payload root. The existing
+`cryptalis.restore/v1` binding admits the backup, current edits and native removal.
+A valid old search-generation frame remains refused despite retained keys.
+Original protection and root-rewrap profiles pass 23 and 26 restore cases,
+respectively, with one rotation-only skip each. The payload/VARCHAR profile
+passes 29 cases. Each also passes its own export on the same product source.
+
+**VERIFIED, Python 3.12.3 / SQLAlchemy 2.1.3 local cell:** full regression passes
+**1,869 tests and 18 subtests**, with three separate-environment skips, in
+505.01 seconds. The wrapper counts subtests with passed cases. The 48 existing
+warnings concern SQLAlchemy DISTINCT ON deprecation. All start/end Python hashes
+match. The SQLAlchemy 2.0.51 cell and pinned Smolink application were not rerun
+for this slice.
+
+After the full run, one trailing blank line was removed from the recovery test.
+Its AST and source locations remain identical. The three native lost-COMMIT
+and SIGKILL controls pass again in 20.35 seconds at the final test hashes.
+All product bytes still match the full and release receipts.
+
+The wheel and sdist build reproducibly offline. A disposable installed wheel
+matches all 36 packaged files and starts its CLI. Initial extraction errors
+and a test-clock defect remain in the failed receipts. The corrected focused
+run above reruns every affected control.
+
+All three rotation workflows now have bounded local product paths. Rotation
+on adopted targets, production custody/retirement, authenticated host authority,
+online migration and independent review remain open. All seven full gates
+remain UNKNOWN. Search rotation deletes no retained keys and establishes no
+unlinkability or cryptographic-erasure guarantee.
+
+Next operator work adds Doctor and aligns ordinary ACTIVE status with
+deployment privilege admission. Status remains a metadata observation and
+reports cryptographic verification as `NOT_PERFORMED`.
+
+Evidence: [first extraction failures](_reset/search-foundation-first-20261023.json),
+[corrected extraction and clock failures](_reset/search-foundation-corrected-20261023.json),
+[native lifecycle and recovery](_reset/search-rotation-native-first-20261023.json),
+[full regression](_reset/search-rotation-full-20261023.json),
+[test-only normalization](_reset/search-rotation-test-normalization-20261023.json),
+[final recovery controls](_reset/search-rotation-final-recovery-20261023.json),
+[TEXT search recovery](_reset/fresh-cluster-restore-20261023-10.json),
+[VARCHAR search recovery](_reset/fresh-cluster-restore-20261023-11.json),
+[older payload recovery](_reset/fresh-cluster-restore-20261023-12.json),
+[older rewrap recovery](_reset/fresh-cluster-restore-20261023-13.json),
+[original protection recovery](_reset/fresh-cluster-restore-20261023-14.json),
+[reproducible archives](_reset/search-rotation-release-20261023.json), and
+[installed wheel](_reset/search-rotation-installed-20261023.json).
 
 ## Reverse runtime admission checkpoint: 2026-10-23
 
@@ -50,12 +140,9 @@ The wheel and sdist build reproducibly offline. The installed wheel matches all
 restored targets remain SPECIFIED. Production custody, authenticated authority,
 independent review and all seven full gates remain unqualified or UNKNOWN.
 
-The next rotation slice must admit retained search readers under the exact
-deployment policy while preserving one active query namespace. Searchable
-frames need authenticated resealing with fresh nonces when their search
-generation changes. Existing payload custody and storage-only frames can stay
-unchanged. Native uniqueness, publication and backup recovery need separate
-verification. This workflow remains SPECIFIED.
+At this reverse checkpoint, search rotation remained SPECIFIED. The later
+[search checkpoint](#search-key-rotation-and-backup-checkpoint-2026-10-23) above
+adds bounded native preparation, publication and backup evidence.
 
 Evidence: [native failures](_reset/reverse-runtime-red-20261023.json),
 [phase-aware controls](_reset/reverse-runtime-first-20261023.json),

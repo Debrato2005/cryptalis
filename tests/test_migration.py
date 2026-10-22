@@ -49,7 +49,8 @@ def keys(tenant):
     return Keyring(KeyPolicy(DOMAIN, tenant, wrappers, 1, 1), {PROVIDER: provider})
 
 
-def independent_open(body, descriptor, tenant, record, payload_context=None, *, field_id=FIELD_ID, payload_root=None):
+def independent_open(body, descriptor, tenant, record, payload_context=None, *, field_id=FIELD_ID,
+                     payload_root=None, search_root=None):
     """Separate HKDF/HMAC/framing path; same qualified AEAD primitive only."""
     if body is None:
         return None
@@ -58,7 +59,10 @@ def independent_open(body, descriptor, tenant, record, payload_context=None, *, 
     def derive(purpose, info):
         context = next(w.context for w in keys(tenant).policy.wrappers if w.context.purpose == purpose)
         if purpose=='payload' and payload_context is not None: context=payload_context
-        root = (payload_root if purpose=='payload' and payload_root is not None else
+        if purpose=='search' and search_root is not None:
+            context=KeyContext(DOMAIN,tenant,'search',uuid5(DOMAIN,f'search-worker:{tenant}:2'),2)
+        root = (search_root if purpose=='search' and search_root is not None else
+                payload_root if purpose=='payload' and payload_root is not None else
                 PublicFixtureProvider().unwrap(WrappedRoot(PROVIDER, context, b'PUBLIC TEST WRAPPER'), context))
         salt = hashlib.sha256(pack(b'CF1/root', DOMAIN.bytes, tenant.bytes, context.root_id.bytes, context.generation.to_bytes(4, 'big'))).digest()
         prk = hmac.digest(salt, root, 'sha256')
@@ -66,7 +70,7 @@ def independent_open(body, descriptor, tenant, record, payload_context=None, *, 
     equality = descriptor['representation'] == 'cf1-packed-equality/v1'
     assert body[:6] == bytes.fromhex('434631000101' if equality else '434631000100')
     assert int.from_bytes(body[6:10],'big')==(payload_context.generation if payload_context else 1)
-    assert body[10:14] == bytes.fromhex('00000001' if equality else '00000000')
+    assert int.from_bytes(body[10:14],'big') == ((2 if search_root is not None else 1) if equality else 0)
     size = 46 if equality else 14
     header = body[:size]
     key = derive('payload', pack(b'CF1/payload-key', field_id.bytes, record.bytes))

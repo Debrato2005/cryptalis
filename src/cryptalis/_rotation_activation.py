@@ -1,4 +1,4 @@
-"""Host-sealed payload activation and atomic public-frame cutover.
+"""Host-sealed generation activation and atomic public-frame cutover.
 
 P pins the original source. A pins actual target ciphertext, before source
 replacement. The database journal cannot supply either artifact's authority.
@@ -8,7 +8,7 @@ import time
 from uuid import UUID
 
 from cryptalis import migration as m, rotation as r
-from cryptalis import _payload_transition as s
+from cryptalis import _rotation_transition as s
 
 
 _BASE = ('format','kind','operation_id','target_id','target','runtime_role',
@@ -17,7 +17,8 @@ _BASE = ('format','kind','operation_id','target_id','target','runtime_role',
 
 def _costs(p,copy,copy_wal):
     costs=p.document['estimates']
-    return m._payload_activation_estimates(costs['rows'],costs['backfill_rows_per_second'],
+    estimate=m._payload_activation_estimates if p.purpose=='payload' else m._search_activation_estimates
+    return estimate(costs['rows'],costs['backfill_rows_per_second'],
                                           costs['verify_rows_per_second'],copy,copy_wal)
 
 
@@ -28,23 +29,24 @@ def _activation(p,observations,copy,copy_wal):
     ancestors=source_document.get('predecessors',[])+[
         {'operation_id':str(source.operation_id),'plan_digest':source.digest},
         {'operation_id':str(p.operation_id),'plan_digest':p.digest}]
-    document.update(format='cryptalis.transition/v3',kind='payload_rotation',
+    document.update(format='cryptalis.transition/v3' if p.purpose=='payload' else 'cryptalis.transition/v4',
+        kind=p.purpose+'_rotation',
         operation_id=p.document['successor_operation_id'],predecessors=ancestors,
         key_policies={tenant:item['target'] for tenant,item in p.document['key_policies'].items()},
         scopes=[{'table_id':model['table_id'],'estimated_rows':observations[model['table_id']]['rows']}
                 for model in source_document['lock']['models']],
-        estimates=_costs(p,copy,copy_wal),payload_rotation_plan_digest=p.digest,
-        payload_rotation_observations=observations,payload_batch_limits=p.document['batch_limits'])
+        estimates=_costs(p,copy,copy_wal),**{p.purpose+'_rotation_plan_digest':p.digest,
+        p.purpose+'_rotation_observations':observations,p.purpose+'_batch_limits':p.document['batch_limits']})
     return m.MigrationPlan(m._canonical(document))
 
 
 def _binding(p,a):
-    if type(p) is not r.PayloadRotationPlan or type(a) is not m.MigrationPlan:
-        raise m.TransitionFailure('payload_activation_binding_mismatch')
+    if type(p) not in (r.PayloadRotationPlan,r.SearchRotationPlan) or type(a) is not m.MigrationPlan:
+        raise m.TransitionFailure('rotation_activation_binding_mismatch')
     d=a.document
     try:
-        if d['kind']!='payload_rotation':raise ValueError
-        observed=d['payload_rotation_observations']
+        if d['kind']!=p.purpose+'_rotation':raise ValueError
+        observed=d[p.purpose+'_rotation_observations']
         for table,item in p.document['models'].items():
             if (observed[table]['rows'],observed[table]['membership'])!=(item['rows'],item['membership']):
                 raise ValueError
@@ -52,7 +54,7 @@ def _binding(p,a):
                              d['estimates']['copy_wal_bytes_per_row'])
         if expected.artifact!=a.artifact:raise ValueError
     except (KeyError,ValueError,TypeError,m.TransitionFailure):
-        raise m.TransitionFailure('payload_activation_binding_mismatch',p.operation_id) from None
+        raise m.TransitionFailure(f'{p.purpose}_activation_binding_mismatch',p.operation_id) from None
 
 
 def _leases(prepared,operation):
@@ -69,10 +71,10 @@ def verify_target(c,a,keys):
     """Authenticate current exact-generation bytes against immutable host A."""
     _pending_inventory(c,a)
     prepared={UUID(tenant):m._ring(keys,UUID(tenant),a).prepare() for tenant in a.document['key_policies']}
-    observed=r._observe_active(c,a,keys,prepared=prepared,batch_limits=a.document['payload_batch_limits'])
+    observed=r._observe_active(c,a,keys,prepared=prepared,batch_limits=a.document[a.document['kind'].removesuffix('_rotation')+'_batch_limits'])
     observed={table:{key:item[key] for key in ('rows','membership','frames')} for table,item in observed.items()}
-    if observed!=a.document['payload_rotation_observations']:
-        raise m.TransitionFailure('payload_activation_target_changed',a.operation_id)
+    if observed!=a.document[a.document['kind']+'_observations']:
+        raise m.TransitionFailure(a.document['kind'].removesuffix('_rotation')+'_activation_target_changed',a.operation_id)
     return prepared
 
 
@@ -85,7 +87,7 @@ def seal(p,engine,*,keys,target_keys,pin,approval,copy_rows_per_second,copy_wal_
             m._lock_tables(c,op,verification=True)
             state=s._state(c,p,op,pin)
             if state is None or state['phase']!='BACKFILLED':
-                raise m.TransitionFailure('payload_sealing_requires_backfilled',p.operation_id)
+                raise m.TransitionFailure(f'{p.purpose}_sealing_requires_backfilled',p.operation_id)
             s._inspect(c,p,op,state)
             prepared=s._prepare(p,keys,target_keys)
             s._observe_source(c,p,keys,{t:pair[0] for t,pair in prepared.items()})
@@ -102,12 +104,12 @@ def _copy(c,p,a):
     for model in p.source.document['lock']['models']:
         assignments=','.join(m._quote(c,f['column'])+'='+m._quote(c,s._shadow(f)) for f in model['fields'])
         copied=c.exec_driver_sql(f'UPDATE {m._table(c,model)} SET '+assignments)
-        if copied.rowcount!=a.document['payload_rotation_observations'][model['table_id']]['rows']:
-            raise m.TransitionFailure('payload_copy_membership_changed',a.operation_id)
+        if copied.rowcount!=a.document[a.document['kind']+'_observations'][model['table_id']]['rows']:
+            raise m.TransitionFailure(f'{p.purpose}_copy_membership_changed',a.operation_id)
     elapsed=time.perf_counter_ns()-started
     wal=c.exec_driver_sql('SELECT pg_catalog.pg_wal_lsn_diff(pg_catalog.pg_current_wal_insert_lsn(),'
                          '%s::pg_catalog.pg_lsn)::bigint',(start,)).scalar_one()
-    if elapsed<0 or wal<0:raise m.TransitionFailure('payload_copy_measurement_failed',a.operation_id)
+    if elapsed<0 or wal<0:raise m.TransitionFailure(f'{p.purpose}_copy_measurement_failed',a.operation_id)
     return {'copy_wall_ns':elapsed,'copy_wal_bytes_cluster_delta':wal}
 
 
@@ -126,7 +128,8 @@ def _switch(c,p,a,state,observed):
         models[model['table_id']]=dict(rows=item['rows'],chunks=state['models'][model['table_id']]['chunks'],
             scope={'count':item['rows'],'membership':item['membership']},
             active_schema=m._facts(c,model),guard=m._check_guard(c,a,model))
-    pending=dict(phase='PENDING',models=models,payload_rotation_plan_digest=p.digest,cutover_measurements=metrics)
+    pending=dict(phase='PENDING',models=models,cutover_measurements=metrics,
+                 **{p.purpose+'_rotation_plan_digest':p.digest})
     source=p.source
     source_pin=m.DeploymentPin(source.target_id,source.operation_id,source.digest,'ACTIVE')
     source_state=m._state(c,source,source_pin)
@@ -160,7 +163,7 @@ def switch(p,a,engine,*,keys,target_keys,pin,approval):
     _binding(p,a)
     m._admit(a,pin)
     if pin.phase not in ('PREPARED','PENDING'):
-        raise m.TransitionFailure('payload_switch_requires_prepared_or_pending_pin',a.operation_id)
+        raise m.TransitionFailure(f'{p.purpose}_switch_requires_prepared_or_pending_pin',a.operation_id)
     with m._executor(a,engine,pin,approval) as c:
         with c.begin():
             m._lock_tables(c,a,verification=True)
@@ -174,13 +177,13 @@ def switch(p,a,engine,*,keys,target_keys,pin,approval):
                 op=s._operation(p)
                 state=s._state(c,p,op)
                 if state is None or state['phase']!='BACKFILLED':
-                    raise m.TransitionFailure('payload_switch_requires_backfilled',a.operation_id)
+                    raise m.TransitionFailure(f'{p.purpose}_switch_requires_backfilled',a.operation_id)
                 s._inspect(c,p,op,state)
                 prepared=s._prepare(p,keys,target_keys)
                 s._observe_source(c,p,keys,{t:pair[0] for t,pair in prepared.items()})
                 observed=s._verify_prefix(c,p,state,prepared)
-                if observed!=a.document['payload_rotation_observations']:
-                    raise m.TransitionFailure('payload_activation_target_changed',a.operation_id)
+                if observed!=a.document[a.document['kind']+'_observations']:
+                    raise m.TransitionFailure(a.document['kind'].removesuffix('_rotation')+'_activation_target_changed',a.operation_id)
                 state=_switch(c,p,a,state,observed)
             target=verify_target(c,a,target_keys)
             _leases(target,a.operation_id)

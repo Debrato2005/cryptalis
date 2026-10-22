@@ -305,3 +305,38 @@ journal, inspect the native schema without either former runtime role check.
 An existing journal cannot use that exception. Preserve native metadata and later application edits after retirement. Privilege observations do not authenticate the
 host, freeze later administrative grants or prove credential deletion. See
 [status](status.md#reverse-runtime-admission-checkpoint-2026-10-23).
+
+## Search-generation preparation and sealed activation: 2026-10-23
+
+**IMPLEMENTED, bounded native verification:** use the existing writer-paused preparation and publication
+protocol for search-key rotation. Keep payload selection and every retained
+wrapper/root unchanged. Each selected search policy adds exactly one independent
+root above all retained search generations. A search-less policy remains exact.
+Storage-only frames remain byte-identical. Searchable frames require a fresh
+OS nonce and authenticated resealing because CF1 binds the search header.
+The cryptographic construction and CF1 format remain unchanged.
+
+Preparation P uses `cryptalis.search-rotation/v1`. Sealing emits immutable
+activation A as `cryptalis.transition/v4`, with `kind: search_rotation`.
+A binds `search_rotation_plan_digest`, `search_rotation_observations` and
+`search_batch_limits`. Deploy a v4-capable host reader before publication.
+Retain v1 protection, v2 rewrap and v3 payload artifact readers.
+
+Share the concrete encrypted-shadow, cursor, guard, copy and publication
+mechanics across the two generation workflows. Keep their policy and header
+checks explicit. Paired verification requires exact text, NULL, type, identity
+and selected generations. It recomputes target search terms under the new root.
+Source-to-P-to-A lineage and public-frame replacement commit atomically.
+Post-copy and ACTIVATING retries require A's actual target frame hashes.
+A genuine ACTIVE pin permits later ordinary edits.
+
+Keep one active query namespace. Admit retained search readers only under an
+exact bound deployment policy. Never query multiple generations with OR.
+Native public UPDATE maintains expression and unique indexes inside the
+terminal transaction. Native conflicts roll back the entire switch.
+Host copy-rate and WAL estimates must include this index work.
+
+Restore uses the existing approved binding and selected-generation checks.
+Rotation on adopted targets remains outside this contract. Rotation deletes no
+retained keys and supplies no unlinkability or cryptographic-erasure claim.
+Production custody, authority and independent review remain unqualified.

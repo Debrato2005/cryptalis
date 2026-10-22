@@ -128,6 +128,8 @@ def main():
     profiles.add_argument('--rewrap', action='store_true', help='Qualify backup recovery after root rewrap and publication.')
     profiles.add_argument('--payload-rotation', action='store_true',
                           help='Qualify backup recovery after payload rotation and a later protected edit.')
+    profiles.add_argument('--search-rotation', action='store_true',
+                          help='Qualify backup recovery after search rotation and a later protected edit.')
     args = parser.parse_args()
     workdir = args.workdir or Path(tempfile.mkdtemp(prefix='cryptalis-fresh-'))
     workdir.mkdir(parents=True, exist_ok=True)
@@ -135,34 +137,40 @@ def main():
     restore_receipt = receipt_path(f'fresh-cluster-restore-{DATE}.json')
 
     profile = ('; root-rewrap profile' if args.rewrap else
-               '; payload-rotation profile' if args.payload_rotation else '')
+               '; payload-rotation profile' if args.payload_rotation else
+               '; search-rotation profile' if args.search_rotation else '')
     export = run_pytest(export_receipt, 'Fresh-cluster source export; primary cluster' + profile,
                         'tests/test_fresh_cluster_export.py',
                         {'CRYPTALIS_FRESH_CLUSTER_DIR': str(workdir),
                          'CRYPTALIS_FRESH_SOURCE_VARCHAR': '1' if args.varchar else '0',
                          'CRYPTALIS_FRESH_SOURCE_REWRAP': '1' if args.rewrap else '0',
-                         'CRYPTALIS_FRESH_SOURCE_PAYLOAD_ROTATION': '1' if args.payload_rotation else '0'})
+                         'CRYPTALIS_FRESH_SOURCE_PAYLOAD_ROTATION': '1' if args.payload_rotation else '0',
+                         'CRYPTALIS_FRESH_SOURCE_SEARCH_ROTATION': '1' if args.search_rotation else '0'})
     manifest = json.loads((workdir / 'restore-manifest.json').read_text())
     if manifest.get('rewrapped') is not args.rewrap:
         raise SystemExit('FreshCluster.ProfileMismatch: export did not match the requested root-rewrap profile.')
     if manifest.get('payload_rotated') is not args.payload_rotation:
         raise SystemExit('FreshCluster.ProfileMismatch: export did not match the requested payload-rotation profile.')
+    if manifest.get('search_rotated') is not args.search_rotation:
+        raise SystemExit('FreshCluster.ProfileMismatch: export did not match the requested search-rotation profile.')
     if args.rewrap:
         plan = json.loads(base64.b64decode(manifest['plan'], validate=True))
         if (plan.get('format') != 'cryptalis.transition/v2' or plan.get('kind') != 'rewrap'
                 or type(plan.get('predecessors')) is not list or not plan['predecessors']):
             raise SystemExit('FreshCluster.ProfileMismatch: root-rewrap successor evidence is missing.')
-    if args.payload_rotation:
+    if args.payload_rotation or args.search_rotation:
+        purpose = 'payload' if args.payload_rotation else 'search'
         plan = json.loads(base64.b64decode(manifest['plan'], validate=True))
         predecessors = plan.get('predecessors')
-        preparation_digest = plan.get('payload_rotation_plan_digest')
-        if (plan.get('format') != 'cryptalis.transition/v3' or plan.get('kind') != 'payload_rotation'
+        preparation_digest = plan.get(purpose + '_rotation_plan_digest')
+        if (plan.get('format') != ('cryptalis.transition/v3' if args.payload_rotation else 'cryptalis.transition/v4')
+                or plan.get('kind') != purpose + '_rotation'
                 or type(predecessors) is not list or len(predecessors) < 2
                 or any(type(item) is not dict for item in predecessors)
                 or type(preparation_digest) is not str or len(preparation_digest) != 64
                 or any(character not in '0123456789abcdef' for character in preparation_digest)
                 or predecessors[-1].get('plan_digest') != preparation_digest):
-            raise SystemExit('FreshCluster.ProfileMismatch: sealed payload successor lineage is missing.')
+            raise SystemExit(f'FreshCluster.ProfileMismatch: sealed {purpose} successor lineage is missing.')
     plain_database = manifest['database'] + '_plain'
     cluster, port, password = start_cluster(workdir)
     try:
@@ -174,7 +182,8 @@ def main():
                               'CRYPTALIS_FRESH_PLAIN_DATABASE': plain_database,
                               'CRYPTALIS_FRESH_PLAINTEXT_ROLE': credentials['plaintext'][0],
                               'CRYPTALIS_FRESH_SOURCE_REWRAP': '1' if args.rewrap else '0',
-                              'CRYPTALIS_FRESH_SOURCE_PAYLOAD_ROTATION': '1' if args.payload_rotation else '0'})
+                              'CRYPTALIS_FRESH_SOURCE_PAYLOAD_ROTATION': '1' if args.payload_rotation else '0',
+                              'CRYPTALIS_FRESH_SOURCE_SEARCH_ROTATION': '1' if args.search_rotation else '0'})
     finally:
         stop_cluster(cluster)
     print('workdir', workdir)

@@ -237,20 +237,20 @@ remains an external qualification requirement.
 
 Restore adoption checks exact source identity, ACTIVE progress, reciprocal
 ancestry, effective runtime privileges, and protected-column grants before
-malformed-frame probes or provider work. For a payload successor, A's proof
+malformed-frame probes or provider work. For a payload or search successor, A's proof
 digest and recorded progress must also match its immutable contract. Missing
 or forged source/P ancestors cannot authorize adoption. Protected-column grant
 drift raises `source_metadata_changed`, even if catalog and journal edits agree.
 Later restored connection checks repeat privilege and metadata admission.
 
-An ACTIVE payload backup can contain legitimate edits after A's publication.
+An ACTIVE payload or search backup can contain legitimate edits after publication.
 Adoption authenticates current frames under A's exact selected policy and
 generation. It does not compare those frames with A's original sealing hashes.
 A valid older-generation frame still fails, although its root remains retained.
 The original source policy cannot replace A's target policy. Existing
 `cryptalis.restore/v1` bindings support this path without a new restore format.
-Payload rotation on an adopted restored target remains unsupported. Search
-rotation remains unimplemented. All seven full gates remain UNKNOWN.
+Payload and search rotation on adopted restored targets remain unsupported.
+All seven full gates remain UNKNOWN.
 
 ## Cryptographic format
 
@@ -438,6 +438,38 @@ They exclude later DDL, verification, commit, and publication. Other cluster
 writes can contribute WAL. These metrics establish no capacity bound, isolated
 WAL cost, deployment authority, or fresh cryptographic proof. Adopted restored
 targets remain unsupported for payload rotation. All seven full gates remain UNKNOWN.
+
+**IMPLEMENTED, bounded native verification:** search rotation retains every exact
+source wrapper and root material. It adds one independent search root above all
+retained search generations. The selected payload generation and root stay unchanged.
+Policies with no selected search generation stay unchanged. Searchable CF1 frames receive fresh
+nonces, new authenticated search metadata, and terms under the target generation.
+Storage-only frames retain their exact bytes. This introduces no new CF1 format.
+
+One exact host-pinned policy selects the active search wrapper. Retained roots
+serve readers without adding an application query namespace. Mixed-generation
+OR queries and cross-generation uniqueness gaps remain unadmitted. This boundary
+must survive later payload and rewrap successors. Search rotation does not erase
+old search leakage or authorize retirement of retained roots.
+
+The search P/A protocol binds source observations to P and actual randomized
+target frames to A. It uses `cryptalis.search-rotation/v1` preparation and a
+`cryptalis.transition/v4` activation with `kind: search_rotation`. Paired proof,
+server-side copy, native expression/unique-index maintenance, reciprocal ancestry,
+and guard exchange precede publication. Journal hashes cannot replace A's target
+proof. An ACTIVATING retry must check that proof even if the journal claims
+ACTIVE. A genuine ACTIVE pin permits later edits.
+
+Copy measurements must include all native index maintenance. The atomic terminal
+write is not a bounded preparation chunk. Storage capacity and writer-pause
+bounds remain unqualified. The existing restore-binding format supports the
+bounded search-backup profile. An independent generation-2 search/HMAC decoder
+and the product reader recover current values after publication edits. A valid
+old-generation frame and the original source policy fail adoption. Later adopted
+edits survive decrypt-back and removal. Rotation on adopted restored targets
+remains unsupported. External custody, current host authority, and source fencing
+remain unqualified. [Status](status.md) owns executable evidence.
+All seven full gates remain UNKNOWN.
 
 Sync and async preparation publish keys only after every required root passes checks.
 Cancellation rejects late provider material, including when a provider suppresses cancellation.

@@ -392,9 +392,10 @@ class _Attachment:
                 raise PolicyMismatch()
         if any(binding.descriptor.equality for binding in self.bindings):
             roots = [wrapper for wrapper in ring.policy.wrappers if wrapper.context.purpose == "search"]
-            if len(roots) != 1 or roots[0].context.generation != ring.policy.search_generation:
+            selected = [root for root in roots if root.context.generation == ring.policy.search_generation]
+            if len(selected) != 1 or (self.deployment is None and len(roots) != 1):
                 raise PolicyMismatch()
-            root = roots[0]
+            root = selected[0]
             pin = (root.provider_id, root.context, sha256(root.sealed).digest())
             if self.search_pins.setdefault(tenant, pin) != pin:
                 raise PolicyMismatch()
