@@ -13,10 +13,9 @@ statistics after this operation.
 Known limits, made explicit in removal approval:
 - Physical column order changes. The restored column occupies the payload
   slot. Positional ``SELECT *`` readers must adjust.
-- The transition lock does not record comments, statistics targets, storage,
-  compression settings, column grants or column options. Protection planning and
-  switches, and reverse planning, refuse a protected column that carries them,
-  extended statistics that reference it, and sequences it owns.
+- Legacy locks without source_metadata refuse protected-column metadata.
+  Current locks capture supported column metadata and protected extended
+  statistics for restoration. Owned sequences remain outside admission.
 """
 from contextlib import contextmanager
 from dataclasses import dataclass

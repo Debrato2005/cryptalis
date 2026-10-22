@@ -175,6 +175,9 @@ Paused protection and reverse operations also derive the writer fence from the
 host plan before committing progress. Replacing the function body or enabling
 definer security cannot become authorized through a matching journal snapshot.
 This check precedes backfill, verification, switching, abort and plaintext publication.
+Paused schema inspection also compares protection shadows with the source lock,
+and reverse staging with the host-pinned protected snapshot and native source types.
+Matching catalog and journal edits cannot authorize a different staged schema.
 Restore adoption applies the same contract before accepting its explicit CHECK
 restatements. This binds recorded catalog facts, not the bodies of external
 functions, domain definitions, collation implementations, or index storage options.

@@ -9,6 +9,53 @@ No PostgreSQL/provider/runtime cell, production key provider, independent review
 VERIFIED below refers only to the named checks and their exact revisions.
 All other contract and promotion requirements are SPECIFIED. All seven full gates remain UNKNOWN.
 
+## Host-bound staged schema: 2026-10-22
+
+**IMPLEMENTED:** paused protection and reverse operations now compare staged
+catalog facts with host artifacts as well as their journal snapshots.
+The validated plan kind selects the transformation. No new artifact format,
+publication authority, key policy, or plaintext fallback is introduced.
+
+Protection retains the native columns, constraints, indexes, and dependencies
+from the source lock. It adds the declared nullable bytea shadows and checks
+their CF1 frame constraints and equality indexes against the physical shadow names.
+Reverse inspection uses the protected catalog snapshot in the host-pinned
+reverse plan, captured after source admission. It adds only the declared nullable
+plaintext staging columns, with native type limits and collation from the source lock.
+Logical comparison permits different physical column slots.
+
+**VERIFIED:** 24 initial native controls reproduced false acceptance.
+The correction passes 175 focused tests. The attacks cover extra columns,
+native type and constraint changes, missing indexes, shadow and staging defaults,
+nullability and type changes, weaker frame checks, changed equality expressions,
+index ordering and uniqueness, and a reverse VARCHAR(64) stage changed to VARCHAR(63).
+The valid writer fence remains unchanged while each test forges the matching
+journal schema. Status, backfill, verification, and abort refuse the change.
+Journal state, counters, catalog, guard, and row values remain unchanged on refusal.
+
+The [full native suite](_reset/paused-schema-full-sa21-20261022.json) passes
+**1,543 tests and 18 subtests**, with three separate-environment skips and
+48 existing SQLAlchemy warnings. All 96 Python files retain their start/end
+hashes. The wrapper records 278.15 seconds; the local dependency cell is unchanged.
+Both fresh-cluster paths pass one export and ten restore cases. The pinned
+Smolink lifecycle passes in its existing alternate Python 3.13 / SQLAlchemy 2.0.51 cell.
+The wheel and sdist build reproducibly. The installed-wheel check matches 32 files
+against the wheel and starts the CLI.
+
+The reverse baseline is a host-pinned snapshot, not database authority.
+Nested contents of arbitrary host-authored snapshots are not fully schema-validated.
+Malformed inputs still produce typed, sanitized failures.
+The check covers recorded catalog facts. It does not establish value verification,
+unchanged external function bodies, freshness, or host writer exclusion.
+All seven production gates remain UNKNOWN.
+
+Evidence: [initial controls](_reset/paused-schema-red-20261022.json),
+[focused checks](_reset/paused-schema-focused-20261022.json),
+[Smolink](_reset/paused-schema-smolink-sa20-20261022.json),
+[VARCHAR restore](_reset/fresh-cluster-restore-20261022-20.json),
+[text restore](_reset/fresh-cluster-restore-20261022-21.json), and
+[installed wheel](_reset/paused-schema-release-installed-20261022.json).
+
 ## Host-bound paused writer fence: 2026-10-22
 
 **IMPLEMENTED:** every paused protection and reverse inspection now checks the
@@ -47,9 +94,9 @@ All 95 Python files retain their start/end hashes. The local dependency cell
 is unchanged. Independent release and provider qualification remain UNKNOWN.
 
 This check does not establish host writer exclusion or protect against an
-authorized owner changing the database after inspection. Other staged schema
-checks still use the recorded journal snapshot. Binding those facts
-to the host contract remains open. All seven production gates remain UNKNOWN.
+authorized owner changing the database after inspection. Staged schema admission
+is separate; the later [staged schema slice](#host-bound-staged-schema-2026-10-22)
+adds that host check. All seven production gates remain UNKNOWN.
 
 Evidence: [initial controls](_reset/paused-guard-red-20261022.json),
 [first integration run](_reset/paused-guard-focused-20261022.json), and

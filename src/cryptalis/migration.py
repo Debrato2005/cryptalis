@@ -567,9 +567,24 @@ def _expand(c,p):
 def _inspect_paused(c,p,state):
     for model in p.document['lock']['models']:
         observed=state['models'][model['table_id']]
-        if _check_guard(c,p,model)!=observed['guard']:
+        facts = _facts(c, model)
+        if facts != observed['schema']:
+            raise TransitionFailure('transition_schema_changed', p.operation_id)
+        if p.document['kind'] == 'protect':
+            guard = _protected_contract(c, p, model, facts, paused=True, staging=True)
+        else:
+            from cryptalis.deprotection import _staging
+            expected = deepcopy(p.document['active_schemas'][model['table_id']])
+            expected['relation']['user_triggers'] = True
+            for field in model['fields']:
+                native = next(column for column in model['source_schema']['columns']
+                              if column['name'] == field['column'])
+                expected['columns'].append({**native, 'name': _staging(field), 'nullable': True})
+            if _metadata_diff(expected, facts):
+                raise TransitionFailure('transition_schema_changed', p.operation_id)
+            guard = _check_guard(c, p, model)
+        if guard!=observed['guard']:
             raise TransitionFailure('writer_fence_changed',p.operation_id)
-        if _facts(c,model)!=observed['schema']: raise TransitionFailure('transition_schema_changed',p.operation_id)
 
 
 def _backfill_chunk(c,p,state,keys,chunk_size):
@@ -651,20 +666,26 @@ def _switch(c,p,state,keys):
     state['phase']='PENDING'; _save(c,p,state)
 
 
-def _protected_contract(c, p, model, facts, *, paused=False, admitted=None):
+def _protected_contract(c, p, model, facts, *, paused=False, admitted=None, staging=False):
     """Bind recorded catalog shape and generated storage to the host lock."""
     from cryptalis._sqlalchemy_search import validate_frame_storage, validate_search_storage
     expected = deepcopy(model['source_schema'])
     expected['relation']['user_triggers'] = paused
     observed = deepcopy(facts)
-    replaced_constraints = {item['name'] for f in model['fields'] for item in f['original']['constraints']}
-    replaced_indexes = {item['name'] for f in model['fields'] for item in f['original']['indexes']}
-    expected['constraints'] = [item for item in expected['constraints']
-                               if not (item['outgoing'] and item['name'] in replaced_constraints)]
-    expected['indexes'] = [item for item in expected['indexes']
-                           if item['constraint_name'] not in replaced_constraints and item['name'] not in replaced_indexes]
+    failure = 'transition_schema_changed' if staging else 'active_schema_mismatch'
+    if not staging:
+        replaced_constraints = {item['name'] for f in model['fields'] for item in f['original']['constraints']}
+        replaced_indexes = {item['name'] for f in model['fields'] for item in f['original']['indexes']}
+        expected['constraints'] = [item for item in expected['constraints']
+                                   if not (item['outgoing'] and item['name'] in replaced_constraints)]
+        expected['indexes'] = [item for item in expected['indexes']
+                               if item['constraint_name'] not in replaced_constraints and item['name'] not in replaced_indexes]
     for field in model['fields']:
         column = next(item for item in expected['columns'] if item['name'] == field['column'])
+        if staging:
+            column = {**column, 'name': field['payload_column'], 'nullable': True}
+            expected['columns'].append(column)
+            field = {**field, 'column': field['payload_column']}
         column.update(type='bytea', type_schema='pg_catalog', typmod='-1', default_digest=None,
                       collation=None, collation_name=None, collation_schema=None, deterministic=None, provider=None)
         name = field['payload_column'] + '_frame'
@@ -673,7 +694,7 @@ def _protected_contract(c, p, model, facts, *, paused=False, admitted=None):
                               outgoing=True, incoming=False, schema=model['schema'], table=model['table'],
                               columns=[field['column']], referenced_columns=[])
         if frame is None or {k: v for k, v in frame.items() if k != 'definition_digest'} != expected_frame:
-            raise TransitionFailure('active_schema_mismatch', p.operation_id)
+            raise TransitionFailure(failure, p.operation_id)
         observed['constraints'].remove(frame)
         try:
             expression = (admitted or {}).get(name)
@@ -696,11 +717,11 @@ def _protected_contract(c, p, model, facts, *, paused=False, admitted=None):
             else:
                 validate_frame_storage(c, model, field, admitted=expression)
         except ValueError:
-            raise TransitionFailure('active_schema_mismatch', p.operation_id) from None
+            raise TransitionFailure(failure, p.operation_id) from None
     if _metadata_diff(expected, observed):
-        raise TransitionFailure('active_schema_mismatch', p.operation_id)
+        raise TransitionFailure(failure, p.operation_id)
     if paused:
-        _check_guard(c, p, model)
+        return _check_guard(c, p, model)
 
 
 def _active_schema(c,p,state):
