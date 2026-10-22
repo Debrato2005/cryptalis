@@ -325,6 +325,10 @@ def _executor(p, engine, pin, approval, consent):
 
 
 def _state(c, p, pin, *, allow_aborted=False):
+    if c.exec_driver_sql('SELECT pg_catalog.to_regclass(%s)', (m._journal(c, p),)).scalar_one() is None:
+        if pin.phase == 'REMOVED':
+            return None
+        raise m.TransitionFailure('restored_or_missing_reverse_transition', p.operation_id)
     row = c.exec_driver_sql(
         f'SELECT plan_digest, state FROM {m._journal(c, p)} WHERE operation_id=%s', (p.operation_id,)).one_or_none()
     if row is None:
@@ -750,6 +754,9 @@ def _assert_removed(c, p):
         raise m.TransitionFailure('retained_cryptalis_objects', p.operation_id)
     for model in p.document['lock']['models']:
         differences = _metadata_diff(model['source_schema'], m._facts(c, model))
+        metadata = model.get('source_metadata')
+        if metadata is not None and source_metadata(c, model['schema'], model['table'], model['fields']) != metadata:
+            differences.append('source_metadata')
         if differences:
             raise m.TransitionFailure('metadata_not_restored:' + ','.join(differences), p.operation_id)
 

@@ -448,6 +448,53 @@ def test_source_metadata_is_preserved_through_decrypt_back():
             assert d._metadata_diff(model['source_schema'], current) == []
 
 
+@pytest.mark.parametrize('when', ['before_removal', 'after_removal'])
+@pytest.mark.parametrize('drift', ['comment', 'statistics', 'grant'])
+def test_removal_refuses_captured_metadata_drift(when, drift):
+    with application() as app:
+        run(app)
+        publish(app)
+        plan = proposal(app)
+        reverse(app, plan)
+        pure, _ = consent(plan, 'PLAINTEXT_ACTIVATING')
+        d.apply(plan, app.owner, keys=keys, pin=app_pin(plan, 'PLAINTEXT_ACTIVATING'),
+                approval=app.approval, consent=pure, until='PLAINTEXT_ACTIVE')
+        removal = d.RemovalApproval(plan.target_id, plan.operation_id, plan.digest,
+                                    'native application proof', 'retained backup proof', True)
+
+        def remove(phase='REMOVING'):
+            return d.remove(plan, app.owner, pin=app_pin(plan, phase), approval=app.approval,
+                            removal=removal, consent=pure)
+
+        if when == 'after_removal':
+            assert remove().phase == 'REMOVED'
+            assert remove('REMOVED').phase == 'REMOVED'
+        with app.owner.begin() as connection:
+            table = f'"{app.schema}".customer'
+            statements = {
+                'comment': f"COMMENT ON COLUMN {table}.name IS 'late metadata change'",
+                'statistics': f'ALTER TABLE {table} ALTER COLUMN name SET STATISTICS 500',
+                'grant': f'GRANT SELECT (name) ON {table} TO PUBLIC',
+            }
+            connection.exec_driver_sql(statements[drift])
+        if when == 'before_removal':
+            with pytest.raises(app.m.TransitionFailure, match='metadata_not_restored:source_metadata'):
+                remove()
+            with app.owner.connect() as connection:
+                journal = f'"{plan.document["journal_schema"]}"."_cryptalis_journal"'
+                assert connection.exec_driver_sql('SELECT pg_catalog.to_regclass(%s)',
+                                                   (journal,)).scalar_one() is not None
+                assert connection.exec_driver_sql(
+                    f'SELECT state->>\'phase\' FROM {journal} WHERE operation_id=%s',
+                    (plan.operation_id,)).scalar_one() == 'PLAINTEXT_ACTIVE'
+        else:
+            with pytest.raises(app.m.TransitionFailure, match='metadata_not_restored:source_metadata'):
+                d.check_removed(plan, app.owner, pin=app_pin(plan, 'REMOVED'))
+            with pytest.raises(app.m.TransitionFailure, match='metadata_not_restored:source_metadata'):
+                remove('REMOVED')
+        assert native_rows(app) == app.source
+
+
 def test_plan_and_removal_refuse_unsafe_inputs():
     with application() as app:
         run(app)

@@ -16,12 +16,48 @@ import psycopg
 import pytest
 
 from cryptalis.sqlalchemy import attach
+from test_deprotection import catalog_metadata, column_acl
 from test_migration import application, keys, publish, run, TENANT
 
 if 'CRYPTALIS_FRESH_CLUSTER_DIR' not in os.environ:
     pytest.skip('run through scripts/fresh_cluster_qualification.py', allow_module_level=True)
 
 EDITED_ID, ADDED_ID, DELETED_ID = UUID(int=101), UUID(int=999), UUID(int=106)
+
+
+def source_metadata_fixture(connection, schema, role):
+    table = f'"{schema}".customer'
+    connection.exec_driver_sql(f"COMMENT ON TABLE {table} IS 'table comment'")
+    connection.exec_driver_sql(f"COMMENT ON COLUMN {table}.label IS 'plain column comment'")
+    connection.exec_driver_sql(f"COMMENT ON COLUMN {table}.name IS 'protected column comment'")
+    quoted_role = connection.dialect.identifier_preparer.quote(role)
+    connection.exec_driver_sql(f'GRANT SELECT (name) ON {table} TO {quoted_role} WITH GRANT OPTION')
+    connection.exec_driver_sql(f'ALTER TABLE {table} ALTER COLUMN name SET STATISTICS 500')
+    connection.exec_driver_sql(f'ALTER TABLE {table} ALTER COLUMN name SET STORAGE EXTERNAL')
+    connection.exec_driver_sql(f'ALTER TABLE {table} ALTER COLUMN name SET COMPRESSION pglz')
+    connection.exec_driver_sql(f'ALTER TABLE {table} ALTER COLUMN name SET (n_distinct=10)')
+    connection.exec_driver_sql(f"COMMENT ON CONSTRAINT customer_pkey ON {table} IS 'primary key comment'")
+    connection.exec_driver_sql(f"COMMENT ON INDEX \"{schema}\".native_name IS 'index comment'")
+    connection.exec_driver_sql(f'ALTER INDEX "{schema}".native_name SET (fillfactor=70)')
+    connection.exec_driver_sql(f'CREATE STATISTICS "{schema}".name_stats (ndistinct, dependencies) '
+                               f'ON name, label FROM {table}')
+    connection.exec_driver_sql(f'ALTER STATISTICS "{schema}".name_stats SET STATISTICS 700')
+    connection.exec_driver_sql(f"COMMENT ON STATISTICS \"{schema}\".name_stats IS 'protected statistics comment'")
+
+
+def assert_source_metadata(app, role):
+    """Native catalog oracle, independent of compiler capture/restore helpers."""
+    table, columns, index, constraint, statistics = catalog_metadata(app)
+    assert table == 'table comment'
+    assert columns['label'][0] == 'plain column comment'
+    comment, target, storage, _, compression, options = columns['name']
+    assert (comment, target, storage, compression, options) == (
+        'protected column comment', 500, 'e', 'p', '{n_distinct=10}')
+    assert column_acl(app, 'name') == {(role, 'SELECT', True)}
+    assert index == ('{fillfactor=70}', 'index comment')
+    assert constraint == 'primary key comment'
+    assert statistics[:3] == (['d', 'f'], 700, 'protected statistics comment')
+    assert sorted(statistics[3]) == ['label', 'name']
 
 
 def environment(variable, database=None):
@@ -53,7 +89,8 @@ def attached_edits(app):
 
 def test_export_fresh_cluster_source():
     workdir = Path(os.environ['CRYPTALIS_FRESH_CLUSTER_DIR'])
-    with application() as app:
+    with application(setup=source_metadata_fixture) as app:
+        assert_source_metadata(app, app.role)
         parsed = psycopg.conninfo.conninfo_to_dict(os.environ['CRYPTALIS_TEST_DATABASE_URL'])
         runtime = psycopg.conninfo.conninfo_to_dict(os.environ['CRYPTALIS_TEST_RUNTIME_DATABASE_URL'])
         dump(workdir / 'plain.sql', app.schema, environment('CRYPTALIS_TEST_DATABASE_URL'))

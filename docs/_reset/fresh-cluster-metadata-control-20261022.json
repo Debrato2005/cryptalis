@@ -1,0 +1,18 @@
+{
+  "scope": "Expected negative control before terminal removal metadata correction; synthetic disposable-cluster fixture",
+  "plugin": "\"\"\"Disposable qualification control: remove a restored protected-column comment.\"\"\"\nimport importlib\n\n\ndef pytest_configure(config):\n    reverse = importlib.import_module('cryptalis.deprotection')\n    migration = importlib.import_module('cryptalis.migration')\n    original = reverse._restore_metadata\n\n    def lose_comment(connection, plan, model):\n        original(connection, plan, model)\n        for name in model.get('source_metadata', {}).get('columns', {}):\n            column = migration._quote(connection, name)\n            table = migration._table(connection, model)\n            connection.exec_driver_sql(f'COMMENT ON COLUMN {table}.{column} IS NULL')\n    reverse._restore_metadata = lose_comment\n",
+  "plugin_sha256": "91fa2e44c07d63ef7a5e11f8b1c38ab9032b02fadaf86e9ffd5d35b05756cc00",
+  "command": "PYTHONPATH=/tmp PYTEST_PLUGINS=cryptalis_metadata_mutation .venv/bin/python scripts/fresh_cluster_qualification.py",
+  "reproduction": "Write the recorded plugin to /tmp/cryptalis_metadata_mutation.py. The orchestrator uses the mandatory wrapper for both stages and stops its disposable cluster.",
+  "source_export_receipt": "fresh-cluster-export-20261022-3.json",
+  "restore_receipt": "fresh-cluster-restore-20261022-3.json",
+  "expected_failure": "tests/test_fresh_cluster_restore.py::test_restored_cluster_completes_adopted_lifecycle",
+  "native_assertion_failure": "At index 0 diff: None != 'protected column comment'",
+  "orchestrator_exit": 1,
+  "restore_counts": {
+    "passed": 6,
+    "failed": 1
+  },
+  "interpretation": "The source fixture and other restore checks pass; the final native metadata oracle detects the deliberately removed comment. Old product removal reported success before this assertion.",
+  "gates": "UNKNOWN"
+}

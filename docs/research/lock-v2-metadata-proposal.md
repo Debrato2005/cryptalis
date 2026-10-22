@@ -128,8 +128,10 @@ therefore has no source metadata until reverse restores it. Adoption reads `lock
 reverse after adoption applies the captured metadata with the same rules.
 
 The first implementation phase covers in-place reverse. The adoption reader accepts v2,
-and reverse after adoption shares the restore code. A dedicated fresh-cluster case with
-captured metadata is still required before that path is qualified.
+and reverse after adoption shares the restore code. A dedicated fresh-cluster case
+with captured metadata now passes on the local PostgreSQL 16 cell. Native catalog assertions cover plaintext backup restoration
+and adopted protected-backup recovery through removal. [Status](../status.md)
+records the exact revision and limits.
 
 ## Test status
 
@@ -150,7 +152,10 @@ Slice A evidence is in `tests/test_protection_compiler.py`,
 - Compatibility: v1 locks remain readable. The v1 path has no metadata to restore.
 - Missing role and invalid ACL text paths are implemented but not executed because the
   least-privilege owner cannot create roles or a malformed lock.
-- A dedicated fresh-cluster case with captured metadata remains a separate phase.
+- The dedicated fresh-cluster metadata phase now exercises column attributes and grants,
+  comments, index options, and extended statistics with native catalog assertions.
+- Terminal removal checks now compare captured metadata and refuse late drift.
+  Failed retirement preserves the journal. Valid terminal retries inspect actual state.
 
 ## Implementation slices after approval
 

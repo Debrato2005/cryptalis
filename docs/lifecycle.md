@@ -207,11 +207,15 @@ Pre-switch abort removes only reverse-owned staging and guards. Removal requires
 `_cryptalis` relations or functions in inventoried schemas, and the recorded retirable
 aborted rows. A repeated terminal request asserts the recorded state and does not invent a
 new success.
+Journal retirement and later removal checks also compare the native catalog with
+lock v2 `source_metadata`. Drift raises `metadata_not_restored:source_metadata`;
+a failed retirement rolls back the journal drop. A terminal retry inspects journal
+existence before it checks the package-free state.
 
 **VERIFIED, local PostgreSQL 16.15 cell:** seven lifecycle cases pass on SQLAlchemy 2.1.3
 and 2.0.51. Full suites report **1,299 passed** on 2.1.3 and **1,271 passed, 28 skipped**
-on 2.0.51 ([2.1.3 receipt](../_reset/reverse-full-sa21-20261019.json),
-[2.0.51 receipt](../_reset/reverse-full-sa20-20261019.json)).
+on 2.0.51 ([2.1.3 receipt](_reset/reverse-full-sa21-20261019.json),
+[2.0.51 receipt](_reset/reverse-full-sa20-20261019.json)).
 The cases cover edited and deleted rows, a row added while protected, wrong custody,
 corrupt frames, disabled guards, lost replies, abort, metadata restoration, and unsafe
 plan/removal refusals. Counts are not gate evidence.
@@ -224,7 +228,7 @@ protected column. Fresh-cluster
 restore, a real package-free application run, retained-backup reader proof, and the
 retained-native alternative remain UNKNOWN.
 Layout comparison and the decision not to promote retained-native are recorded in
-[the 2026-10-19 evaluation](../_reset/layout-evaluation-20261019.md).
+[the 2026-10-19 evaluation](_reset/layout-evaluation-20261019.md).
 
 ### Restored protected-backup adoption: 2026-10-19
 
@@ -265,11 +269,11 @@ schema drift, definition-only frame drift, and journal-state drift on the restor
 it restores the adopted facts and completes the adopted lifecycle: attach,
 ORM read, exact search, modify, add, delete, reverse to plaintext under the binding,
 removal, schema-fact equality, native `psycopg` readback, and journal absence. Receipts:
-[export](../_reset/fresh-cluster-export-20261019-3.json),
-[adoption](../_reset/fresh-cluster-restore-20261019-3.json). The full suites report
+[export](_reset/fresh-cluster-export-20261019-3.json),
+[adoption](_reset/fresh-cluster-restore-20261019-3.json). The full suites report
 **1,302 passed, 2 skipped** on SQLAlchemy 2.1.3
-([receipt](../_reset/restore-full-sa21-20261019.json)) and **1,274 passed, 30 skipped** on
-2.0.51 ([receipt](../_reset/restore-full-sa20-20261019.json)).
+([receipt](_reset/restore-full-sa21-20261019.json)) and **1,274 passed, 30 skipped** on
+2.0.51 ([receipt](_reset/restore-full-sa20-20261019.json)).
 
 **Limits:** the host asserts source fencing and quarantine; this package does not
 authenticate either and has no cryptographic evidence of source isolation. Adoption

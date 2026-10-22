@@ -9,6 +9,49 @@ No PostgreSQL/provider/runtime cell, production key provider, independent review
 VERIFIED below refers only to the named checks and their exact revisions.
 All other contract and promotion requirements are SPECIFIED. All seven full gates remain UNKNOWN.
 
+## Removal metadata and restored backups: 2026-10-22
+
+**IMPLEMENTED:** removal now compares the current native catalog with lock v2
+`source_metadata`, as well as the structural schema. A changed captured comment,
+statistics target, or column grant raises `metadata_not_restored:source_metadata`.
+The failed removal transaction retains the journal and its `PLAINTEXT_ACTIVE` state.
+`check_removed` and repeated terminal removal requests use the same comparison.
+A terminal retry first checks whether the retired journal exists, then checks the
+actual package-free state. It does not query a deleted table or recreate a journal.
+Lock v1 retains its existing boundary because it carries no `source_metadata`.
+
+**VERIFIED, local PostgreSQL 16 cell:** six regressions first failed because drift
+passed silently. The first correction exposed three terminal retries that queried the
+missing journal. After both corrections, all 22 focused lifecycle, independent
+application, and restore cases pass ([receipt](_reset/removal-metadata-green-20261022-2.json)). Native reads retain every current value.
+
+The fresh-cluster scenario now seeds comments, a column grant with grant option,
+statistics target, storage, compression, column options, index options, and extended
+statistics. Native catalog assertions check both plaintext backup restoration and
+adopted protected-backup recovery through decrypt-back and removal.
+One export and seven restore cases pass on a new isolated cluster
+([export](_reset/fresh-cluster-export-20261022-4.json),
+[restore](_reset/fresh-cluster-restore-20261022-4.json)).
+
+The full current-revision suite reports **1,322 passed, 2 skipped, 18 subtests passed**
+in 175.32 seconds, with 48 existing SQLAlchemy deprecation warnings
+([receipt](_reset/removal-metadata-full-sa21-20261022.json)). The skipped fresh-cluster
+modules pass separately through the orchestrator above. The local runtime uses
+Python 3.12.3, SQLAlchemy 2.1.3, psycopg 3.3.6, and cryptography 50.0.2.
+No SQLAlchemy 2.0.51 rerun occurred.
+The standalone release suite passes eleven test groups. The
+[rebuilt artifact receipt](_reset/removal-metadata-release-20261022.json) records
+matching repeat builds, archive inspection, SBOM export, and 32 installed-file
+comparisons with isolated CLI startup. Installation still uses `--no-deps`.
+
+A temporary pytest mutation removed the protected-column comment after restoration.
+Before the fix, removal reported success and the native assertion found the missing
+comment. That [expected failure](_reset/fresh-cluster-metadata-control-20261022.json) remains
+recorded separately from positive evidence.
+The mutation changed no product file. Qualification uses public synthetic roots.
+No external provider, authenticated host fencing, or independent review is qualified.
+All seven full gates remain UNKNOWN.
+
 ## Sandbox access recovery: 2026-10-22
 
 The user authorized repair of the execution blockers and resumption of engineering.

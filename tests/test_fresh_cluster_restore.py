@@ -15,11 +15,12 @@ import json
 import os
 from pathlib import Path
 import subprocess
+from types import SimpleNamespace
 import uuid
 
 import psycopg
 import pytest
-from sqlalchemy import Column, Index, MetaData, Table, Text, Uuid, select
+from sqlalchemy import Column, Index, MetaData, Table, Text, Uuid, create_engine, select
 from sqlalchemy.orm import registry
 
 import cryptalis.migration as m
@@ -28,6 +29,7 @@ from cryptalis.crypto.cf1 import FieldDescriptor, open_text
 from cryptalis.manifest.compiler import _canonical
 from cryptalis.sqlalchemy import PolicyMismatch, attach
 from test_migration import engine, independent_open, keys, TENANT
+from test_fresh_cluster_export import assert_source_metadata
 
 d = importlib.import_module('cryptalis.deprotection')
 
@@ -101,6 +103,14 @@ def test_plaintext_backup_restores_natively():
         'CRYPTALIS_TEST_DATABASE_URL', f'SELECT id, tenant_id, name FROM "{SCHEMA}".customer ORDER BY id',
         PLAIN_DATABASE)}
     assert observed == MANIFEST['source']
+    # The plaintext dump is restored into the orchestrator's second database.
+    values = environment('CRYPTALIS_TEST_DATABASE_URL', PLAIN_DATABASE)
+    plaintext = create_engine('postgresql+psycopg://', hide_parameters=True,
+                              creator=lambda: psycopg.connect(**values))
+    try:
+        assert_source_metadata(SimpleNamespace(owner=plaintext, schema=SCHEMA), MANIFEST['runtime_role'])
+    finally:
+        plaintext.dispose()
 
 
 def test_protected_backup_recovers_values_with_retained_keys():
@@ -320,6 +330,7 @@ def test_restored_cluster_completes_adopted_lifecycle():
                              'AND table_name=%s AND column_name=%s', (SCHEMA, 'customer', 'name')).fetchone()[0]
         assert observed == expected
         assert kind == 'text'
+        assert_source_metadata(SimpleNamespace(owner=owner, schema=SCHEMA), MANIFEST['runtime_role'])
         with psycopg.connect(**environment('CRYPTALIS_TEST_DATABASE_URL')) as c:
             assert c.execute('SELECT pg_catalog.to_regclass(%s)',
                              (f'{MANIFEST["journal_schema"]}.{m.JOURNAL}',)).fetchone()[0] is None
