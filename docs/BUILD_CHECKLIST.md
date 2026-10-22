@@ -31,11 +31,12 @@ No objective is complete until its acceptance evidence and applicable gate pass.
   archive members. The installed-artifact correction compares the current wheel with
   installed files and imports verified source under an isolated bytecode cache.
   Scoped approved execution outside the sandbox restores both private-role probes
-  and Git writes. The current full suite passes 1,322 tests, with 2 fresh-cluster
-  modules skipped and 18 subtests passed; [receipt](_reset/removal-metadata-full-sa21-20261022.json).
-  One export and seven restore cases also pass on a new cluster with captured metadata.
+  and Git writes. The current full suite passes 1,351 tests, with 2 fresh-cluster
+  modules skipped and 18 subtests passed; [receipt](_reset/status-full-sa21-20261022.json).
+  One export and seven restore cases also pass on a new cluster with captured metadata
+  and read-only status through the approved restore binding.
 - Implemented scope: text storage, exact equality, `IN`, tenant-scoped uniqueness,
-  sync/async attachment, maintenance protection transition, in-place decrypt-back and
+  sync/async attachment, maintenance protection transition, read-only transition status, in-place decrypt-back and
   additive removal for that transition format, an independent application lifecycle with
   package-free restart, a fresh-cluster protected-backup recovery harness with approved
   restore adoption, CF1 primitives, and a local development provider.
@@ -71,7 +72,7 @@ Requirement text is abbreviated. The full definitions remain in the research
 | OBJ-LIFE-07 | Three separate rotation workflows | PARTIAL | Internal rewrap candidate and bounded payload-batch preparation, verified 2026-10-19 | Active-policy publication, rotation executor, search reindex, recovery proofs |
 | OBJ-LIFE-08 | Production KMS with outage/revocation/cost evidence | BLOCKED | Local development provider only | Authorized provider account and independent review |
 | OBJ-LIFE-09 | Install, upgrade, decommission, clean uninstall | PARTIAL | Importable package; approved in-database removal retires reverse-owned objects after decrypt-back; a package-free restarted application process performs native CRUD | Versioned upgrade/removal, external application evidence |
-| OBJ-DX-01 | Minimal model/query changes; one manifest and one attach | IMPLEMENTED | `compile_protection`, `attach`, CLI inspection | Unify status/plan/apply/remove entry points |
+| OBJ-DX-01 | Minimal model/query changes; one manifest and one attach | IMPLEMENTED | `compile_protection`, `attach`, CLI inspection, read-only protection-transition `status` | Unify plan/apply/remove entry points; complete status coverage |
 | OBJ-DX-02 | Read-only `cryptalis doctor` with explicit UNKNOWN results | PARTIAL | Bounded database/declaration diagnostics | Implement the full doctor and provider/role coverage |
 | OBJ-DX-03 | Real FastAPI/SQLModel app plus a second independent app | PARTIAL | Synthetic Smolink demo; in-repo independent three-model application (real FK, two tenants, zero-row protected table) completes the full lifecycle and a package-free restart; no web framework or external app | Run a pinned real application; add a second app |
 | OBJ-DX-04 | Normal ORM identity, loading, sessions, pooling, async | PARTIAL | Bounded sync/async adapter and search tests | Broader ORM/framework coverage |
@@ -89,6 +90,7 @@ Requirement text is abbreviated. The full definitions remain in the research
 
 | Date | Research reference | Mechanism | Product files | Evidence | Status |
 |---|---|---|---|---|---|
+| 2026-10-22 | Local operational-status slice | Read-only repeatable-read snapshot, committed progress, host pin comparison, safe CLI inputs and diagnostics | `src/cryptalis/migration.py`; `src/cryptalis/cli.py`; status and fresh-cluster tests | RED: missing API/command and malformed plan boundaries. GREEN: 1,351 full tests plus 18 subtests, one export and seven restore cases, eleven release groups and 32 installed-file comparisons; [full](_reset/status-full-sa21-20261022.json), [restore](_reset/fresh-cluster-restore-20261022-5.json), [release](_reset/status-release-20261022.json) | VERIFIED, bounded local cell; no data verification or provider admission; all gates UNKNOWN |
 | 2026-10-22 | Native metadata backup/recovery and terminal removal | Lock v2 catalog comparison before journal retirement and during terminal checks; safe missing-journal inspection; native backup metadata assertions | `src/cryptalis/deprotection.py`; `tests/test_deprotection.py`; fresh-cluster qualification modules | RED: 6 drift cases, then 3 terminal retries. GREEN: 22 focused, 1,322 full plus 18 subtests, 1 export and 7 restore; [full](_reset/removal-metadata-full-sa21-20261022.json), [fresh cluster](_reset/fresh-cluster-restore-20261022-4.json), [negative control](_reset/fresh-cluster-metadata-control-20261022.json) | VERIFIED, bounded local cell; all gates UNKNOWN |
 | 2026-10-22 | Installed-artifact identity audit | Compare installed bytes with the current wheel, refuse stale package files, isolate bytecode caches, and suppress raw child failure output | `scripts/release_check.py`; `scripts/test_release_check.py` | RED: 4 accepted artifact mutations, stale bytecode execution, and startup diagnostic exposure. GREEN: 11 test groups and actual offline uv install, 32 matched files, isolated CLI; [receipt](_reset/release-install-binding-20261022.json). No dependency or PostgreSQL qualification | VERIFIED, offline local cell; all gates UNKNOWN |
 | 2026-10-22 | Local artifact-integrity audit | Complete wheel RECORD coverage and strict wheel/sdist member inspection | `scripts/release_check.py`; `scripts/test_release_check.py` | RED: 25 failures and 4 errors. Review RED: 7 further failures. GREEN: 10 test groups, valid controls, matching offline repeat builds, SBOM; [receipt](_reset/release-integrity-20261022.json). PostgreSQL preflight failed, exit 2; full suite unrun | VERIFIED, offline local cell; all gates UNKNOWN |

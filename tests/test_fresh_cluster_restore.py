@@ -280,6 +280,9 @@ def test_restored_cluster_completes_adopted_lifecycle():
     mapping, Customer = customer_mapping()
     binding = r.plan(source, owner, pin=pin, keys=keys, approval=approval())
     assert m.check_deployment(source, owner, pin=pin, restore=binding) is None
+    observed_status = m.status(source, owner, pin=pin, restore=binding)
+    assert observed_status.phase == 'ACTIVE' and observed_status.runtime_metadata_matches
+    assert observed_status.verification == 'NOT_PERFORMED'
     with runtime.connect() as c:
         assert m.check_attachment(c, source.lock_bytes, (source, pin, binding)) is None
     sessions = attach(mapping, runtime, lock=source.lock_bytes, keys=keys, deployment=(source, pin, binding))

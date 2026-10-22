@@ -260,7 +260,12 @@ Generic CHECK/FK/default/collation preservation remains UNKNOWN. [Lifecycle](../
 
 ## Public surface
 
-All commands below are **SPECIFIED**, not implemented package commands.
+The table defines the **SPECIFIED** final command surface.
+A bounded `status` command now reports protection-transition progress and metadata.
+Other commands below remain unimplemented package commands.
+Full status coverage of keys, retained obligations, reverse transitions, and rotation
+remains SPECIFIED. The migration walkthrough defines the implemented subset.
+See [committed progress](../walkthrough-migration.md#inspect-committed-progress).
 
 | Command | Purpose |
 |---|---|

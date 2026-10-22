@@ -107,7 +107,7 @@ def _parser() -> argparse.ArgumentParser:
     parser = _ArgumentParser(
         prog="cryptalis",
         allow_abbrev=False,
-        description="Inspect Cryptalis Protection Manifests.",
+        description="Inspect Cryptalis artifacts and transition progress.",
     )
     commands = parser.add_subparsers(dest="command", required=True)
     manifest = commands.add_parser(
@@ -157,13 +157,22 @@ def _parser() -> argparse.ArgumentParser:
         help="Write one machine-readable JSON object.",
     )
     history.set_defaults(handler=_inspect_history_command)
+    status = commands.add_parser('status', help='Inspect one protection transition without changes.',
+                                 allow_abbrev=False)
+    status.add_argument('plan', type=Path, help='Original protection plan artifact.')
+    status.add_argument('--pin', type=Path, required=True, help='Current host-controlled deployment pin.')
+    status.add_argument('--database-url-file', type=Path, required=True,
+                        help='Private file with the PostgreSQL connection URL or conninfo.')
+    status.add_argument('--restore-binding', type=Path, help='Approved restored-target binding, when applicable.')
+    status.add_argument('--json', action='store_true', dest='machine_json', help='Write one JSON object.')
+    status.set_defaults(handler=_status_command)
     return parser
 
 
 def _io_failure(
     error: OSError,
     stage: Literal["open", "stat", "read", "close"],
-    input_role: Literal["child", "parent", "history"],
+    input_role: str,
     operation: str = "manifest.inspect",
 ) -> _CommandFailure:
     invalid_path = (
@@ -172,10 +181,10 @@ def _io_failure(
         stage != "close" and error.errno in (errno.EACCES, errno.EPERM)
     )
     reasons = {
-        "open": f"Cannot open the {input_role} manifest file.",
-        "stat": f"The {input_role} manifest file metadata is unavailable.",
-        "read": f"Cannot read the {input_role} manifest file.",
-        "close": f"Cannot close the {input_role} manifest file.",
+        "open": f"Cannot open the {input_role} input file.",
+        "stat": f"The {input_role} input file metadata is unavailable.",
+        "read": f"Cannot read the {input_role} input file.",
+        "close": f"Cannot close the {input_role} input file.",
     }
     return _CommandFailure(
         reasons[stage],
@@ -192,9 +201,9 @@ def _io_failure(
     )
 
 
-def _read_manifest(
+def _read_local_file(
     path: Path,
-    input_role: Literal["child", "parent", "history"],
+    input_role: str,
     *,
     max_bytes: int = MAX_DOCUMENT_BYTES,
     operation: str = "manifest.inspect",
@@ -208,7 +217,7 @@ def _read_manifest(
         raise _io_failure(error, "open", input_role, operation) from error
     except ValueError as error:
         raise _CommandFailure(
-            f"The {input_role} manifest path is invalid.",
+            f"The {input_role} input path is invalid.",
             stage="open",
             input_role=input_role,
             cause="InvalidPath",
@@ -220,7 +229,7 @@ def _read_manifest(
     try:
         if not stat.S_ISREG(os.fstat(descriptor).st_mode):
             raise _CommandFailure(
-                f"The {input_role} manifest input must be a regular file.",
+                f"The {input_role} input must be a regular file.",
                 stage="stat",
                 input_role=input_role,
                 cause="NotRegularFile",
@@ -410,11 +419,11 @@ def _write_error(failure: _CommandFailure, machine_json: bool) -> None:
 
 
 def _inspect_command(arguments: argparse.Namespace) -> int:
-    raw = _read_manifest(arguments.path, "child")
+    raw = _read_local_file(arguments.path, "child")
     parent_raw = (
         None
         if arguments.parent is None
-        else _read_manifest(arguments.parent, "parent")
+        else _read_local_file(arguments.parent, "parent")
     )
     result = _result(raw, parent_raw)
     _write_result(result, arguments.machine_json)
@@ -436,7 +445,7 @@ def _inspect_history_command(arguments: argparse.Namespace) -> int:
     remaining = _MAX_HISTORY_BYTES
     for path in arguments.paths:
         # The sentinel byte detects overflow without reading another full file.
-        raw = _read_manifest(
+        raw = _read_local_file(
             path,
             "history",
             max_bytes=min(MAX_DOCUMENT_BYTES, remaining),
@@ -477,6 +486,87 @@ def _inspect_history_command(arguments: argparse.Namespace) -> int:
     }
     _write_result(result, arguments.machine_json)
     return 0
+
+
+def _status_command(arguments: argparse.Namespace) -> int:
+    # Runtime dependencies stay lazy: manifest inspection and CLI help remain
+    # usable without database or cryptographic imports.
+    try:
+        import psycopg
+        from sqlalchemy import create_engine
+        from cryptalis.migration import DeploymentPin, MigrationPlan, TransitionFailure, status
+        from cryptalis.manifest.parser import decode_manifest_json
+        from cryptalis.restore import RestoreBinding
+        from uuid import UUID
+    except ImportError:
+        raise _CommandFailure('Install the declared runtime dependencies before database inspection.',
+            family='Transition', code='DependenciesUnavailable', operation='transition.status',
+            stage='load_runtime', cause='ImportError', exit_code=4) from None
+
+    try:
+        def read(path, role, limit=MAX_DOCUMENT_BYTES):
+            raw = _read_local_file(path, role, max_bytes=limit, operation='transition.status')
+            if len(raw) > limit:
+                raise ValueError('input bound')
+            return raw
+        plan = MigrationPlan(read(arguments.plan, 'plan'))
+        pin_document = decode_manifest_json(read(arguments.pin, 'pin', 65536))
+        if set(pin_document) != {'target_id', 'operation_id', 'plan_digest', 'phase'}:
+            raise ValueError('pin members')
+        pin = DeploymentPin(UUID(pin_document['target_id']), UUID(pin_document['operation_id']),
+                            pin_document['plan_digest'], pin_document['phase'])
+        binding = None if arguments.restore_binding is None else RestoreBinding(
+            read(arguments.restore_binding, 'restore_binding'))
+        connection_info = read(arguments.database_url_file, 'database', 65536).decode('utf-8').strip()
+        if not connection_info or '\x00' in connection_info:
+            raise ValueError('invalid connection input')
+        connection_info = connection_info.replace('postgresql+psycopg://', 'postgresql://', 1)
+    except _CommandFailure as failure:
+        failure.error['family'] = 'Transition'
+        raise
+    except (ValueError, TypeError, KeyError, AttributeError, TransitionFailure):
+        raise _CommandFailure('Supply a valid plan, pin, private connection file, and optional restore binding.',
+            family='Transition', code='InvalidInput', operation='transition.status',
+            stage='inputs', cause='InvalidInput') from None
+
+    engine = None
+    try:
+        engine = create_engine('postgresql+psycopg://', echo=False, hide_parameters=True,
+            creator=lambda: psycopg.connect(connection_info, connect_timeout=5))
+        observed = status(plan, engine, pin=pin, restore=binding)
+    except TransitionFailure as error:
+        operational = error.code in ('operation_failed_requires_inspection',
+            'database_effect_requires_inspection', 'connection_cleanup_requires_inspection')
+        denied = error.code in ('external_policy_mismatch', 'wrong_database_target',
+            'restore_binding_mismatch', 'invalid_plan')
+        raise _CommandFailure('Status is unavailable. Inspect this operation and the current external policy.',
+            family='Transition', code=error.code, operation='transition.status',
+            stage='database_inspection', cause=error.sqlstate or 'InspectionFailed',
+            exit_code=4 if operational else 2 if denied else 3) from None
+    finally:
+        if engine is not None:
+            primary = sys.exception()
+            try:
+                engine.dispose()
+            except Exception as error:
+                failure = _CommandFailure('Status connection cleanup failed. Inspect the database session.',
+                    family='Transition', code='CleanupUnavailable', operation='transition.status',
+                    stage='connection_cleanup', cause=type(error).__name__, exit_code=4)
+                if isinstance(primary, _CommandFailure):
+                    failure.error['related_error'] = primary.error
+                raise failure from None
+    result = {
+        'scope': 'protection_transition', 'operation_id': str(observed.operation_id),
+        'phase': observed.phase, 'external_phase': observed.external_phase,
+        'committed_rows': observed.committed_rows, 'committed_chunks': observed.committed_chunks,
+        'runtime_metadata_matches': observed.runtime_metadata_matches,
+        'verification': observed.verification, 'authority': 'HOST_SUPPLIED_PIN',
+        'effects': 'NONE', 'remedy': observed.remedy,
+    }
+    output = json.dumps(result, sort_keys=True, separators=(',', ':')) if arguments.machine_json else '\n'.join(
+        f'{key}: {str(value).lower() if type(value) is bool else value}' for key, value in result.items())
+    _write_output(output + '\n', sys.stdout, 'stdout')
+    return 0 if observed.runtime_metadata_matches else 3
 
 
 def main(argv: Sequence[str] | None = None) -> int:

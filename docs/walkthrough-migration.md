@@ -54,7 +54,45 @@ sessions = attach(Base.registry, runtime_engine, lock=p.lock_bytes,
 
 Startup rejects stale pins, schema mismatches, owner credentials, and unplanned tenant key policies.
 `apply`, `verify` and `abort` require maintenance approval before connection or locks.
-Read-only `plan`, `check_deployment` and supplied-connection `check_attachment` are exempt.
+Read-only `plan`, `status`, `check_deployment`, and supplied-connection `check_attachment` are exempt.
 Before switch, `abort` restores native writes and retains the journal; it cannot undo cutover.
 Run tests through `scripts/test_postgres.py`; it reloads both private files and probes both roles.
 One operation per schema is admitted; later journal reuse is unfinished. [Evidence](status.md) records tests, costs, and limits.
+
+## Inspect committed progress
+
+Save the exact plan artifact and current pin through the trusted host process.
+Keep the authenticated current pin outside database snapshots.
+The pin JSON has exactly four members: `target_id`, `operation_id`, `plan_digest`,
+and `phase`. The two IDs are nonzero UUID strings. The digest identifies the exact
+plan bytes. The phase describes current external deployment policy.
+Copying fields from a journal does not authenticate that policy.
+
+Use a private regular file for the connection string. The command reads that file
+and does not select credentials from inherited Cryptalis test variables.
+Plan and restore-binding files each have a 16 MiB limit.
+Pin and connection files each have a 64 KiB limit.
+
+The output reports `scope: protection_transition`, committed counts, both phases,
+and `runtime_metadata_matches`. It always reports `verification: NOT_PERFORMED`,
+`authority: HOST_SUPPLIED_PIN`, and `effects: NONE`.
+Exit 0 means ACTIVE metadata matches the supplied ACTIVE pin.
+Exit 2 means invalid or denied input. Exit 3 means incomplete or uncertain state.
+Exit 4 means an operational, cleanup, or output failure.
+The command never advances a transition or publishes policy.
+
+For an approved restored target, add `--restore-binding binding.json`.
+The binding supplies target and restored-state evidence. The source plan and
+current external pin still supply their original identities.
+The command does not replace recovery approval or fresh data verification.
+
+```bash
+cryptalis status plan.json --pin current-pin.json --database-url-file /private/connection.txt --json
+```
+
+```python
+from cryptalis.migration import status
+
+observed = status(p, owner_engine, pin=active_pin)
+assert observed.verification == "NOT_PERFORMED"
+```

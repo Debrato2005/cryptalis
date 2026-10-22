@@ -21,7 +21,7 @@ from cryptalis.crypto.keys import CryptoFailure, Keyring
 from cryptalis.manifest.compiler import (compile_protection, _schema_facts, _canonical, _previous_lock,
                                           unrecorded_column_metadata, protected_extended_statistics,
                                           protected_owned_sequences, source_metadata)
-from cryptalis.manifest.parser import decode_manifest_json
+from cryptalis.manifest.parser import ManifestInvalid, decode_manifest_json
 
 JOURNAL = '_cryptalis_journal'
 PHASES = ('PREPARED', 'EXPANDED', 'BACKFILLED', 'VERIFIED', 'PENDING', 'ACTIVE')
@@ -59,12 +59,29 @@ class MaintenanceApproval:
 class MigrationPlan:
     artifact: bytes
     def __post_init__(self):
-        doc = decode_manifest_json(self.artifact)
-        if (doc.get('format') != 'cryptalis.transition/v1' or _canonical(doc) != self.artifact
-                or doc.get('kind') != 'protect'):
-            raise TransitionFailure('invalid_plan')
-        for name in ('operation_id', 'target_id'):
-            if UUID(doc[name]).int == 0: raise TransitionFailure('invalid_plan')
+        try:
+            doc = decode_manifest_json(self.artifact)
+            if (set(doc) != {'format', 'kind', 'operation_id', 'target_id', 'target',
+                            'runtime_role', 'journal_schema', 'lock', 'source_lock_digest',
+                            'key_policies', 'scopes', 'estimates'}
+                    or doc['format'] != 'cryptalis.transition/v1' or doc['kind'] != 'protect'
+                    or _canonical(doc) != self.artifact):
+                raise ValueError
+            for name in ('operation_id', 'target_id'):
+                if UUID(doc[name]).int == 0: raise ValueError
+            target = doc['target']
+            if (not isinstance(target, list) or len(target) != 5
+                    or any(not isinstance(target[i], str) or not target[i] for i in (0, 1, 4))
+                    or target[2] is not None and not isinstance(target[2], str)
+                    or target[3] is not None and (type(target[3]) is not int or not 1 <= target[3] <= 65535)):
+                raise ValueError
+            if any(not isinstance(doc[name], str) or not doc[name] for name in ('runtime_role', 'journal_schema')):
+                raise ValueError
+            if (any(not isinstance(doc[name], dict) for name in ('lock', 'key_policies', 'estimates'))
+                    or not isinstance(doc['scopes'], list)):
+                raise ValueError
+        except (ManifestInvalid, ValueError, TypeError, KeyError, AttributeError):
+            raise TransitionFailure('invalid_plan') from None
     def __str__(self):
         costs = self.document['estimates']
         rates = (f'backfill {costs["backfill_rows_per_second"]:g} rows/s; '
@@ -93,6 +110,18 @@ class Progress:
     phase: str
     committed_rows: int
     committed_chunks: int
+    remedy: str
+
+
+@dataclass(frozen=True)
+class TransitionStatus:
+    operation_id: UUID
+    phase: str
+    external_phase: str
+    committed_rows: int
+    committed_chunks: int
+    runtime_metadata_matches: bool
+    verification: str
     remedy: str
 
 
@@ -659,6 +688,54 @@ def check_deployment(p,engine,*,pin,restore=None):
     """
     _admit(p,pin)
     with _connection(engine,p.operation_id) as c: _check_connection(p,c,pin,binding=restore)
+
+
+def status(p, engine, *, pin, restore=None):
+    """Observe one committed journal/schema snapshot without keys or effects.
+
+    The supplied external pin remains host authority. Recorded progress is not
+    fresh cryptographic verification, provider qualification, or writer exclusion.
+    """
+    _admit(p, pin)
+    target = p.document['target']
+    if restore is not None:
+        from cryptalis.restore import _identity
+        target = _identity(p, restore)
+    with _connection(engine, p.operation_id) as c:
+        c.exec_driver_sql('SET TRANSACTION ISOLATION LEVEL REPEATABLE READ, READ ONLY')
+        if _target(c)[:-1] != target[:-1]:
+            raise TransitionFailure('wrong_database_target', p.operation_id)
+        state = _state(c, p, pin, allow_aborted=True)
+        phase = 'PREPARED' if state is None else state['phase']
+        if restore is not None:
+            if phase != 'ACTIVE':
+                raise TransitionFailure('restored_state_not_active', p.operation_id)
+            from cryptalis.restore import _current, _check_schema
+            _current(p, restore, c, state)
+            _check_schema(c, p, state, restore)
+        elif phase in ('PREPARED', 'ABORTED'):
+            for model in p.document['lock']['models']:
+                if _facts(c, model) != model['source_schema']:
+                    raise TransitionFailure('source_schema_changed', p.operation_id)
+                _check_source_metadata(c, p, model)
+        elif phase in ('PENDING', 'ACTIVE'):
+            _active_schema(c, p, state)
+            if phase == 'PENDING':
+                for model in p.document['lock']['models']:
+                    if _guard_facts(c, p, model) != state['models'][model['table_id']]['guard']:
+                        raise TransitionFailure('writer_fence_changed', p.operation_id)
+        else:
+            _inspect_paused(c, p, state)
+        progress = Progress(p.operation_id, phase, 0, 0, '') if state is None else _progress(p, state)
+        matched = phase == 'ACTIVE' and pin.phase == 'ACTIVE'
+        remedy = ('Metadata matches the supplied active pin. Check keys and host writer policy before admission.'
+                  if matched else 'Inspect this operation and the current external policy before resume.')
+        if phase == 'PENDING' or (phase == 'ACTIVE' and not matched):
+            remedy = 'Publish the exact current deployment pin; keep writers stopped.'
+        elif phase == 'ABORTED':
+            remedy = 'This operation was aborted. Compile a new plan before applying protection.'
+        return TransitionStatus(p.operation_id, phase, pin.phase, progress.committed_rows,
+                                progress.committed_chunks, matched, 'NOT_PERFORMED', remedy)
 
 
 def abort(p,engine,*,pin,approval):

@@ -9,6 +9,57 @@ No PostgreSQL/provider/runtime cell, production key provider, independent review
 VERIFIED below refers only to the named checks and their exact revisions.
 All other contract and promotion requirements are SPECIFIED. All seven full gates remain UNKNOWN.
 
+## Read-only protection status: 2026-10-22
+
+**IMPLEMENTED:** `cryptalis status PLAN --pin PIN --database-url-file PRIVATE_FILE`
+reports one committed protection-transition snapshot. The Python API is
+`cryptalis.migration.status(plan, engine, pin=pin, restore=binding)`.
+The optional restore binding refers to an approved adopted backup.
+
+The command checks the planned target, supplied external pin, journal identity,
+and phase-specific schema or maintenance fence. It reports the committed phase,
+row and chunk counts, external phase, metadata match, and a safe next action.
+It uses a PostgreSQL read-only repeatable-read transaction. It needs no keys,
+maintenance approval, or executor advisory lock. Concurrent executor progress
+appears on the next request, rather than partway through the current snapshot.
+
+`verification: NOT_PERFORMED` means that this request does not authenticate data,
+check providers, or qualify host writer exclusion. An ACTIVE metadata match is
+not production admission. Pin provenance remains the host's responsibility.
+This command covers protection transitions. Reverse transitions, rotation,
+retained-key obligations, and the full Doctor remain open.
+
+Plan admission rejects missing or unknown top-level members, invalid identities,
+and malformed basic containers before connection. Private inputs use bounded
+regular-file reads. Diagnostics omit connection details and input values.
+
+**VERIFIED, local PostgreSQL 16 cell:** the full suite passes **1,351 tests and
+18 subtests**, with two fresh-cluster modules skipped and 48 existing SQLAlchemy
+warnings. The [full receipt](_reset/status-full-sa21-20261022.json) records source and test hashes.
+The run took 191.19 seconds. The current cell uses Python 3.12.3,
+SQLAlchemy 2.1.3, psycopg 3.3.6, and cryptography 50.0.2.
+No SQLAlchemy 2.0.51 rerun occurred.
+
+The regressions cover all seven protection phases, one stable snapshot during
+another executor's commit, enforced read-only writes, and inspection without the
+executor lock. CLI tests cover private malformed inputs, wrong credentials,
+text and JSON results, and actual output failure.
+The [plan-shape negative control](_reset/status-plan-shape-red-20261022-2.json) recorded five failures and two passing refusals.
+An earlier draft used an incorrect expected diagnostic code. Its separate RED
+[receipt](_reset/status-plan-shape-red-20261022.json) remains historical test-development evidence.
+
+One [export](_reset/fresh-cluster-export-20261022-5.json) and seven
+[restore cases](_reset/fresh-cluster-restore-20261022-5.json) pass on a new PostgreSQL 16 cluster.
+The adopted protected backup reports ACTIVE metadata through the new status API
+before its native metadata checks, decrypt-back, and removal.
+The standalone release suite passes eleven test groups. Repeat builds match,
+[archive inspection and SBOM export](_reset/status-release-20261022.json) pass, and the installed wheel matches all
+32 checked files. Installation uses `--no-deps`. Isolated CLI help passes.
+Without runtime dependencies, the installed status command reports
+`DependenciesUnavailable` with exit 4 and no traceback.
+No production provider, authenticated host fencing, independent security review,
+or release qualification is complete. All seven full gates remain UNKNOWN.
+
 ## Removal metadata and restored backups: 2026-10-22
 
 **IMPLEMENTED:** removal now compares the current native catalog with lock v2

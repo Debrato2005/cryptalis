@@ -129,16 +129,21 @@ Maintenance needs operator-controlled writer exclusion and evidence that existin
 
 ## Current commands
 
-**IMPLEMENTED:** research utilities only.
+**IMPLEMENTED:** structural artifact inspection, synthetic crypto utilities, and
+bounded read-only protection-transition status.
+The status command observes an existing plan and host-supplied pin.
+It does not apply protection. See the migration walkthrough for inputs and exit codes.
+The specified `init`, `plan`, `apply`, `rollback`, `keys rotate`, and `remove`
+commands remain unimplemented package commands.
+The full operational status contract also remains incomplete.
 
 ```bash
 .venv/bin/python -m cryptalis manifest inspect examples/manifests/genesis.json --json
 .venv/bin/python examples/demo_smolink_crypto.py --json
+.venv/bin/python -m cryptalis status plan.json --pin current-pin.json --database-url-file /private/connection.txt --json
 ```
 
-These commands inspect structural records or synthetic data. They do not attach database protection.
-The specified `init`, `plan`, `apply`, `status`, `rollback`, `keys rotate`, and `remove` commands are not package capabilities.
-[Spikes](spikes/revamp/README.md) contain isolated functional experiments with explicit limits.
+[Migration walkthrough](docs/walkthrough-migration.md#inspect-committed-progress) defines status inputs and limits.
 
 ## Read next
 
