@@ -213,6 +213,28 @@ access is SELECT only. Unsafe privileges raise `unsafe_runtime_role`. Owner
 drift raises `maintenance_requires_table_owner`. These checks do not establish
 coverage of unknown writers or authenticate deployment policy.
 
+**IMPLEMENTED, bounded reverse admission:** reverse planning checks the source
+and declared plaintext runtime roles before key work. Reverse execution and
+read-only status repeat the effective-privilege checks for the role selected
+by the current host pin. Pre-publication pins require the source runtime.
+PLAINTEXT_ACTIVATING, PLAINTEXT_ACTIVE, REMOVING, and REMOVED select the declared
+plaintext runtime while the journal exists. A mutable journal phase never
+selects a different role or authorizes weaker admission.
+
+Unsafe source privileges raise `unsafe_runtime_role`. Unsafe selected plaintext
+privileges raise `unsafe_plaintext_runtime_role`. The same owner, administrative,
+CREATE, table, and journal mutation restrictions apply to either selected role.
+Only a REMOVED request with an actually absent journal skips both role checks.
+It still requires the package-free native schema and captured metadata checks.
+Terminal retries preserve later native edits and do not restore retired runtime
+privilege boundaries. Keyless status still reports `NOT_PERFORMED`.
+
+These checks observe current effective grants. They do not freeze later
+administrative changes or authenticate host publication. The native retirement
+control changes schema privileges and preserves later native edits after
+journal retirement. It does not execute DROP ROLE. Actual role retirement
+remains an external qualification requirement.
+
 Restore adoption checks exact source identity, ACTIVE progress, reciprocal
 ancestry, effective runtime privileges, and protected-column grants before
 malformed-frame probes or provider work. For a payload successor, A's proof

@@ -392,6 +392,37 @@ retained-native alternative remained UNKNOWN.
 Layout comparison and the decision not to promote retained-native are recorded in
 [the 2026-10-19 evaluation](_reset/layout-evaluation-20261019.md).
 
+### Reverse privilege admission: 2026-10-23
+
+**IMPLEMENTED, bounded:** reverse planning checks source and plaintext runtime
+safety before key work. Reverse apply, abort, removal, and status share
+phase-aware admission. The current external host pin selects the required role:
+
+| Host pin | Required runtime safety while the journal exists |
+|---|---|
+| PREPARED, EXPANDED, BACKFILLED, VERIFIED, PLAINTEXT_PENDING | Protected source runtime |
+| PLAINTEXT_ACTIVATING, PLAINTEXT_ACTIVE, REMOVING, REMOVED | Declared plaintext runtime |
+
+The host's PLAINTEXT_ACTIVATING pin asserts publication of the plaintext policy.
+The former protected role no longer supplies runtime admission at that boundary.
+A forged journal phase
+cannot select the plaintext role while the host still supplies a pre-publication
+pin. Source privilege failures raise `unsafe_runtime_role`. Plaintext privilege
+failures raise `unsafe_plaintext_runtime_role`. The shared checks cover effective
+privileges and planned ownership, rather than only role attributes at plan time.
+
+An admitted ABORTED retry remains idempotent and checks source runtime safety.
+It needs no keys and replays no data. A REMOVED request first checks actual
+journal existence. Only an absent journal permits both role checks to be skipped.
+Terminal removal, status, and removal inspection then check native schema,
+captured metadata, and absence of Cryptalis objects. They preserve ordinary
+edits after removal and do not reimpose retired runtime privilege boundaries.
+A missing journal under an earlier pin remains a failure.
+
+[Status](status.md) owns current receipts and test totals. These bounded checks
+supply no authenticated host-policy provenance or complete writer exclusion.
+All seven full gates remain UNKNOWN.
+
 ### Restored protected-backup adoption: 2026-10-19
 
 **VERIFIED, isolated PostgreSQL 16.15 cluster:** a protected `pg_dump` of one schema

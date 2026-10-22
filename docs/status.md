@@ -9,6 +9,62 @@ No PostgreSQL/provider/runtime cell, production key provider, independent review
 VERIFIED below refers only to the named checks and their exact revisions.
 All other contract and promotion requirements are SPECIFIED. All seven full gates remain UNKNOWN.
 
+## Reverse runtime admission checkpoint: 2026-10-23
+
+**IMPLEMENTED, bounded native verification:** decrypt-back rechecks effective
+runtime privileges before staging, resume, publication and journal retirement.
+Read-only reverse status uses the same admission. Plaintext-role planning now
+uses the shared privilege predicate before provider work, while preserving
+`unsafe_plaintext_runtime_role` for unsafe plaintext credentials.
+
+The trusted host pin selects the runtime boundary. PREPARED, EXPANDED,
+BACKFILLED, VERIFIED and PLAINTEXT_PENDING require the source protected runtime.
+PLAINTEXT_ACTIVATING, PLAINTEXT_ACTIVE and REMOVING require the declared plaintext
+runtime. A mutable journal phase cannot select a different role. An actually
+absent journal with REMOVED skips both role checks and retains native metadata
+inspection. The old protected runtime can retire after plaintext publication.
+Checks observe effective privileges. They do not freeze later administrative
+changes or authenticate publication, writer fencing or credential retirement.
+
+**VERIFIED:** the initial native controls expose **19 failures** and retain one
+passing removal retry. After the fix, all **20 cases pass** in 11.34 seconds.
+They cover unsafe journal-column and schema grants across every admitted host
+phase, initial plaintext planning, forged journal phase selection, unchanged
+rows/progress on refusal and preserved native edits after removal. Terminal
+retries succeed after the former runtime restrictions change. These tests do
+not delete the shared roles or prove a production credential-retirement process.
+
+**VERIFIED, Python 3.12.3 / SQLAlchemy 2.1.3 local cell:** full regression passes
+**1,809 tests and 18 subtests**, with three separate-environment skips, in
+473.95 seconds. The wrapper counts subtests with passed cases. The 48 existing
+warnings concern SQLAlchemy DISTINCT ON deprecation. All start/end Python hashes
+match.
+
+TEXT and VARCHAR payload backups each pass one export and **28 restore cases**
+on new PostgreSQL 16 clusters at the final Python hashes. The adopted paths
+retain independent generation-two decoding, later edits, decrypt-back, native
+metadata and package removal under the stricter runtime admission.
+
+The wheel and sdist build reproducibly offline. The installed wheel matches all
+35 packaged files and starts its CLI. Search reindex and rotation on adopted
+restored targets remain SPECIFIED. Production custody, authenticated authority,
+independent review and all seven full gates remain unqualified or UNKNOWN.
+
+The next rotation slice must admit retained search readers under the exact
+deployment policy while preserving one active query namespace. Searchable
+frames need authenticated resealing with fresh nonces when their search
+generation changes. Existing payload custody and storage-only frames can stay
+unchanged. Native uniqueness, publication and backup recovery need separate
+verification. This workflow remains SPECIFIED.
+
+Evidence: [native failures](_reset/reverse-runtime-red-20261023.json),
+[phase-aware controls](_reset/reverse-runtime-first-20261023.json),
+[full regression](_reset/reverse-runtime-full-20261023.json),
+[TEXT recovery](_reset/fresh-cluster-restore-20261023-8.json),
+[VARCHAR recovery](_reset/fresh-cluster-restore-20261023-9.json),
+[reproducible archives](_reset/reverse-runtime-release-20261023.json), and
+[installed wheel](_reset/reverse-runtime-installed-20261023.json).
+
 ## Payload-backup recovery and runtime admission checkpoint: 2026-10-23
 
 **IMPLEMENTED, bounded native verification:** the fresh-cluster harness accepts

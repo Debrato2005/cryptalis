@@ -190,6 +190,16 @@ def _grounded(source, plaintext_runtime_role, rates, temporary_bytes_per_row, wa
         raise m.TransitionFailure('missing_measured_storage_or_wal_costs')
 
 
+def _runtime_safety(c, p, role, *, plaintext=False):
+    try:
+        m._runtime_safety(c,role,p.document['target'][-1],p.document['lock']['models'],
+                          journal=m._journal(c,p),operation_id=p.operation_id)
+    except m.TransitionFailure as exc:
+        if plaintext and exc.code=='unsafe_runtime_role':
+            raise m.TransitionFailure('unsafe_plaintext_runtime_role',p.operation_id) from None
+        raise
+
+
 def plan(source, engine, *, source_pin, keys, plaintext_runtime_role, backfill_rows_per_second,
          verify_rows_per_second, temporary_bytes_per_row, wal_bytes_per_row, restore=None):
     """Read-only reverse proposal. No decrypt, staging, or implicit consent.
@@ -228,13 +238,7 @@ def plan(source, engine, *, source_pin, keys, plaintext_runtime_role, backfill_r
                 raise m.TransitionFailure('maintenance_requires_table_owner', source.operation_id)
             m._refuse_unrecorded_metadata(c, source, model)
         retired = _inventory(c, source, source, own=None)
-        role = c.exec_driver_sql(
-            'SELECT rolsuper, rolcreaterole, rolcreatedb, rolbypassrls, rolreplication, '
-            'pg_catalog.pg_has_role(rolname,current_user,\'MEMBER\') FROM pg_catalog.pg_roles WHERE rolname=%s',
-            (plaintext_runtime_role,)).one_or_none()
-        if role is None or any(role) or plaintext_runtime_role in (
-                source.document['runtime_role'], source.document['target'][-1]):
-            raise m.TransitionFailure('unsafe_plaintext_runtime_role', source.operation_id)
+        _runtime_safety(c,source,plaintext_runtime_role,plaintext=True)
         for model in source.document['lock']['models']:
             facts = m._facts(c, model)
             schemas[model['table_id']] = facts
@@ -336,6 +340,10 @@ def _state(c, p, pin, *, allow_aborted=False):
         if pin.phase == 'REMOVED':
             return None
         raise m.TransitionFailure('restored_or_missing_reverse_transition', p.operation_id)
+    # The host pin selects the runtime boundary. Journal edits cannot change it.
+    plaintext=pin.phase in ('PLAINTEXT_ACTIVATING','PLAINTEXT_ACTIVE','REMOVING','REMOVED')
+    role=p.document['plaintext_runtime_role' if plaintext else 'runtime_role']
+    _runtime_safety(c,p,role,plaintext=plaintext)
     row = c.exec_driver_sql(
         f'SELECT plan_digest, state FROM {m._journal(c, p)} WHERE operation_id=%s', (p.operation_id,)).one_or_none()
     if row is None:

@@ -290,3 +290,18 @@ obligations, but refuse an old-generation frame under the selected new policy.
 Fresh-cluster backup recovery does not admit rotation on an adopted target.
 Search reindex, qualified production providers and all seven full gates remain
 open or UNKNOWN. See the [recorded evidence](status.md#payload-backup-recovery-and-runtime-admission-checkpoint-2026-10-23).
+
+## Reverse publication selects the runtime boundary: 2026-10-23
+
+**IMPLEMENTED, bounded:** repeat the shared effective-privilege check during
+reverse execution and status. Select the role from the trusted host pin.
+Prepublication pins through PLAINTEXT_PENDING require the source runtime.
+PLAINTEXT_ACTIVATING, PLAINTEXT_ACTIVE and REMOVING require the declared plaintext
+runtime. Database progress cannot change that selection. Plaintext planning
+checks the selected role before provider access.
+
+Preserve package-free terminal retries. When REMOVED matches an actually absent
+journal, inspect the native schema without either former runtime role check.
+An existing journal cannot use that exception. Preserve native metadata and later application edits after retirement. Privilege observations do not authenticate the
+host, freeze later administrative grants or prove credential deletion. See
+[status](status.md#reverse-runtime-admission-checkpoint-2026-10-23).

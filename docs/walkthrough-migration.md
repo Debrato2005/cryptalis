@@ -130,6 +130,25 @@ and UNKNOWN in text. The native schema and captured metadata must still match.
 An absent journal under an earlier pin fails explicitly.
 The command requires no keys or plaintext/removal approval because it makes no transition.
 
+Reverse planning requires a distinct plaintext runtime role with the same safe
+effective privileges as the protected runtime. It checks both roles before key
+work. Keep the protected role safe through PLAINTEXT_PENDING. After the host
+publishes plaintext and supplies PLAINTEXT_ACTIVATING, keep the declared
+plaintext role safe through journal retirement. Reverse execution and keyless
+status select the role from that host pin. A journal phase cannot change it.
+
+Repair `unsafe_runtime_role` failures in the protected role. Repair
+`unsafe_plaintext_runtime_role` failures in the selected plaintext role.
+These failures deny staging or resume without advancing plaintext progress.
+An admitted ABORTED retry remains idempotent and needs no keys.
+
+With the authenticated REMOVED pin and an actually absent journal, terminal
+remove, status, and removal inspection check native metadata and object absence.
+They do not require either former runtime privilege boundary. Later ordinary
+native edits remain intact. If the journal still exists, REMOVED does not bypass
+plaintext-role safety or establish completed removal. Status continues to
+report `NOT_PERFORMED`, rather than fresh value verification.
+
 ## Change root-wrapping custody
 
 This bounded API changes wrapping custody while retaining the same payload and
