@@ -7,6 +7,17 @@ All seven gates remain UNKNOWN. Use the authorized disposable PostgreSQL 16 cell
 2. Declare tenancy, protected fields, query leakage, writers, and searchable value domains.
 3. Use owner maintenance and restricted runtime roles. Approve measured costs and pause.
 
+Use distinct owner and runtime roles. Initial planning, ACTIVE and restored
+connection checks, and the shared maintenance executor reject unsafe effective privileges.
+The runtime cannot create objects in the database or declared schemas, assume
+the owner, or hold administrative role attributes. It cannot hold TRIGGER or
+TRUNCATE privileges on protected tables. Tables and journal retain the planned
+owner. Runtime CRUD on protected data remains admitted through the attachment.
+The journal permits runtime SELECT only. Table-level mutation grants and
+column-level INSERT, UPDATE, or REFERENCES grants cause `unsafe_runtime_role`.
+Protected-column grant drift during restore causes `source_metadata_changed`.
+Correct the role or grant configuration before retry.
+
 ```python
 from cryptalis.migration import plan, apply, MaintenanceApproval
 from cryptalis.sqlalchemy import attach
@@ -409,6 +420,54 @@ reconstruction of a commit or cancellation through P.
 
 Preparation, sealing, and cutover on adopted restored targets remain unsupported.
 All seven full gates remain UNKNOWN. See [status](status.md) for current evidence.
+
+## Recover a payload-rotation backup
+
+Retain exact A, its current ACTIVE pin, the target policy with its retained
+roots, and the required readers outside the database backup. Restore into
+quarantine and fence the source through the trusted host process. Use existing
+`restore.plan` with explicit `RestoreApproval`, then attach with `(A, pin, binding)`.
+No new restore-binding format is required.
+
+```python
+from cryptalis.restore import RestoreApproval, plan as plan_restore
+
+restore_approval = RestoreApproval(
+    restore_host, restore_intent, quarantine_evidence, source_fenced=True)
+binding = plan_restore(activation, restored_owner_engine,
+    pin=current_activation_active_pin, keys=target_keys, approval=restore_approval)
+sessions = attach(Base.registry, restored_runtime_engine,
+    lock=activation.lock_bytes, keys=target_keys,
+    deployment=(activation, current_activation_active_pin, binding))
+```
+
+Adoption checks source identity, ACTIVE progress, reciprocal ancestors,
+effective runtime privileges, and protected-column grants before probes or
+provider work. Missing source/P rows, forged links, and inconsistent A proof
+fields fail admission. A valid backup can include ordinary edits after A's
+publication. Adoption authenticates its current selected-generation frames.
+It does not require the backup to equal A's original sealing hashes. A valid
+older-generation frame and the original source policy remain refused.
+
+The native fresh-cluster harness has a separate payload profile:
+
+```bash
+.venv/bin/python scripts/fresh_cluster_qualification.py --payload-rotation
+.venv/bin/python scripts/fresh_cluster_qualification.py --payload-rotation --varchar
+```
+
+Select either `--payload-rotation` or `--rewrap`. The options are mutually
+exclusive fixture profiles. `--varchar` selects native VARCHAR(64). The harness
+uses the approved disposable PostgreSQL 16 targets and `scripts/test_postgres.py`.
+The payload fixture exports a backup after publication and a later protected
+edit. It checks retained-policy recovery, independent generation-2 decoding,
+valid generation-1 substitution refusal, adopted edits, decrypt-back/removal,
+and native metadata restoration. See [status](status.md) for current receipts.
+
+These controls do not qualify external custody, authenticated publication, or
+source fencing. Rotating payload keys on an adopted restored target remains
+unsupported. Search rotation remains unimplemented. All seven full gates
+remain UNKNOWN.
 
 ## Measured throughput
 

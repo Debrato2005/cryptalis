@@ -359,6 +359,44 @@ def _target(c):
     return list(c.exec_driver_sql('SELECT current_database(), (SELECT oid::text FROM pg_catalog.pg_database WHERE datname=current_database()), inet_server_addr()::text, inet_server_port(), current_user').one())
 
 
+def _runtime_safety(c, runtime_role, owner, models, journal=None, operation_id=None):
+    """Check effective runtime privileges before keys or schema admission."""
+    role = c.exec_driver_sql(
+        'SELECT rolsuper, rolcreaterole, rolcreatedb, rolbypassrls, rolreplication, '
+        "pg_catalog.pg_has_role(rolname,%s,'MEMBER'), "
+        "pg_catalog.has_database_privilege(rolname,current_database(),'CREATE') "
+        'FROM pg_catalog.pg_roles WHERE rolname=%s', (owner, runtime_role)).one_or_none()
+    if role is None or runtime_role == owner or any(role):
+        raise TransitionFailure('unsafe_runtime_role', operation_id)
+    models = tuple(models)
+    for schema in sorted({model['schema'] for model in models}):
+        if c.exec_driver_sql("SELECT pg_catalog.has_schema_privilege(%s,%s,'CREATE')",
+                             (runtime_role, schema)).scalar_one():
+            raise TransitionFailure('unsafe_runtime_role', operation_id)
+    for model in models:
+        relation = c.exec_driver_sql(
+            'SELECT pg_catalog.pg_get_userbyid(relowner), '
+            "pg_catalog.has_table_privilege(%s,oid,'TRIGGER,TRUNCATE') "
+            'FROM pg_catalog.pg_class WHERE oid=pg_catalog.to_regclass(%s)',
+            (runtime_role, _table(c, model))).one_or_none()
+        if relation is None or relation[0] != owner:
+            raise TransitionFailure('maintenance_requires_table_owner', operation_id)
+        if relation[1]:
+            raise TransitionFailure('unsafe_runtime_role', operation_id)
+    if journal is not None:
+        relation = c.exec_driver_sql(
+            'SELECT pg_catalog.pg_get_userbyid(relowner), '
+            "pg_catalog.has_table_privilege(%s,oid,'INSERT,UPDATE,DELETE,TRUNCATE,REFERENCES,TRIGGER'), "
+            "pg_catalog.has_any_column_privilege(%s,oid,'INSERT,UPDATE,REFERENCES') "
+            'FROM pg_catalog.pg_class WHERE oid=pg_catalog.to_regclass(%s)',
+            (runtime_role, runtime_role, journal)).one_or_none()
+        if relation is not None:
+            if relation[0] != owner:
+                raise TransitionFailure('maintenance_requires_table_owner', operation_id)
+            if any(relation[1:]):
+                raise TransitionFailure('unsafe_runtime_role', operation_id)
+
+
 def _policy(ring):
     if not isinstance(ring, Keyring): raise TransitionFailure('missing_key_policy')
     p = ring.policy
@@ -398,12 +436,9 @@ def plan(manifest, mapping, engine, *, writers, search_reviews=(), keys, runtime
     policies, scopes, rows, plaintext_bytes = {}, [], 0, 0
     with _connection(engine) as c:
         target = _target(c)
-        role = c.exec_driver_sql('SELECT rolsuper, rolcreaterole, rolcreatedb, rolbypassrls, rolreplication, pg_catalog.pg_has_role(rolname,current_user,\'MEMBER\') FROM pg_catalog.pg_roles WHERE rolname=%s',(runtime_role,)).one_or_none()
-        if role is None or any(role) or runtime_role == target[-1]: raise TransitionFailure('unsafe_runtime_role')
+        _runtime_safety(c, runtime_role, target[-1], lock['models'])
         for model in lock['models']:
             if _facts(c,model) != model['source_schema']: raise TransitionFailure('stale_plan_schema')
-            ownership=c.exec_driver_sql('SELECT pg_catalog.pg_get_userbyid(relowner) FROM pg_catalog.pg_class WHERE oid=pg_catalog.to_regclass(%s)',(_table(c,model),)).scalar_one()
-            if ownership != target[-1]: raise TransitionFailure('maintenance_requires_table_owner')
             tenant = _quote(c,model['tenancy']['column']) if 'column' in model['tenancy'] else None
             tenants=c.exec_driver_sql(f'SELECT DISTINCT {tenant} FROM {_table(c,model)}').scalars().all() if tenant else [UUID(model['table_id'])]
             for t in tenants:
@@ -515,6 +550,8 @@ def _maintenance_executor(p,engine,approval):
     lock=int.from_bytes(hashlib.sha256(_canonical([(m['schema'],m['table']) for m in p.document['lock']['models']])).digest()[:8],'big',signed=True)
     with _connection(engine,p.operation_id,exclusive=True) as c:
         if _target(c) != p.document['target']: raise TransitionFailure('wrong_database_target',p.operation_id)
+        _runtime_safety(c,p.document['runtime_role'],p.document['target'][-1],p.document['lock']['models'],
+                        journal=_journal(c,p),operation_id=p.operation_id)
         c.exec_driver_sql("SET lock_timeout = '5s'")
         c.exec_driver_sql('SET synchronous_commit = on')
         acquired=c.exec_driver_sql('SELECT pg_catalog.pg_try_advisory_lock(%s)',(lock,)).scalar_one()
@@ -1106,6 +1143,8 @@ def _check_connection(p,c,pin,*,binding=None):
     if _target(c)[:-1]!=target[:-1] or pin.phase!='ACTIVE' or state is None or state['phase']!='ACTIVE':
         raise TransitionFailure('deployment_not_current',p.operation_id)
     if binding is None:
+        _runtime_safety(c, p.document['runtime_role'], target[-1], p.document['lock']['models'],
+                        journal=_journal(c, p), operation_id=p.operation_id)
         _active_schema(c,p,state)
     else:
         from cryptalis.restore import _check_schema

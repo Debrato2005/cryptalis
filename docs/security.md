@@ -195,6 +195,41 @@ functions, domain definitions, collation implementations, or index storage optio
 Status needs no keys and does not establish key custody or deployment-wide writer exclusion.
 After journal retirement, progress counters are unavailable rather than zero.
 
+**IMPLEMENTED, shared privilege admission:** initial protection planning checks
+runtime safety before key work. ACTIVE connection checks, restored deployment
+checks, and the shared maintenance executor repeat the same effective-privilege checks.
+The runtime must differ from the owner and cannot hold superuser, role-creation,
+database-creation, RLS-bypass, replication, or owner-membership authority.
+Effective CREATE on the current database or any declared schema is refused.
+Protected tables must retain their planned owner. Runtime TRIGGER and TRUNCATE
+privileges on those tables are refused.
+
+The journal must retain the planned owner. Runtime table-level INSERT, UPDATE,
+DELETE, TRUNCATE, REFERENCES, and TRIGGER privileges are refused. Column-level
+INSERT, UPDATE, and REFERENCES privileges are also refused. Native privilege
+functions include inherited and PUBLIC grants. Ordinary protected-data CRUD
+remains admitted through the declared writer boundary. The runtime journal
+access is SELECT only. Unsafe privileges raise `unsafe_runtime_role`. Owner
+drift raises `maintenance_requires_table_owner`. These checks do not establish
+coverage of unknown writers or authenticate deployment policy.
+
+Restore adoption checks exact source identity, ACTIVE progress, reciprocal
+ancestry, effective runtime privileges, and protected-column grants before
+malformed-frame probes or provider work. For a payload successor, A's proof
+digest and recorded progress must also match its immutable contract. Missing
+or forged source/P ancestors cannot authorize adoption. Protected-column grant
+drift raises `source_metadata_changed`, even if catalog and journal edits agree.
+Later restored connection checks repeat privilege and metadata admission.
+
+An ACTIVE payload backup can contain legitimate edits after A's publication.
+Adoption authenticates current frames under A's exact selected policy and
+generation. It does not compare those frames with A's original sealing hashes.
+A valid older-generation frame still fails, although its root remains retained.
+The original source policy cannot replace A's target policy. Existing
+`cryptalis.restore/v1` bindings support this path without a new restore format.
+Payload rotation on an adopted restored target remains unsupported. Search
+rotation remains unimplemented. All seven full gates remain UNKNOWN.
+
 ## Cryptographic format
 
 The selected candidate profile uses library AES-256-GCM-SIV, HKDF-SHA-256, and full HMAC-SHA-256 terms.

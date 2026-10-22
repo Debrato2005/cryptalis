@@ -267,3 +267,26 @@ ACTIVATING repeats bounded target authentication against A, including a journal
 claim of ACTIVE. A genuine ACTIVE pin permits later edits. The sealed target
 snapshot does not become an immutable-data requirement for ordinary operation
 or subsequent current-value decrypt-back/removal.
+
+## Restored payload generations and privilege admission: 2026-10-23
+
+**IMPLEMENTED, bounded:** adopt a backup of published payload activation A through
+the existing restore binding. Require A's exact source/preparation ancestry,
+strict progress shape, current schema and selected generation before admission.
+Authenticate the backup's current rows under its retained policy. Do not compare
+ordinary postpublication edits against A's historical cutover frame digest.
+The host must authorize restore, quarantine and writer exclusion separately.
+
+Check effective runtime privileges and protected-column metadata before effectful
+schema probes or provider access. Reject journal writes through table or column
+grants. Reject database/schema CREATE and protected-table TRIGGER/TRUNCATE.
+Apply the shared role check during initial planning, active admission, adopted
+binding admission and shared maintenance execution. Later grant changes require
+a new admission check. These observations do not enforce every external writer
+boundary or replace host credential control.
+
+Keep the restore binding format unchanged. Retain old keys for approved recovery
+obligations, but refuse an old-generation frame under the selected new policy.
+Fresh-cluster backup recovery does not admit rotation on an adopted target.
+Search reindex, qualified production providers and all seven full gates remain
+open or UNKNOWN. See the [recorded evidence](status.md#payload-backup-recovery-and-runtime-admission-checkpoint-2026-10-23).

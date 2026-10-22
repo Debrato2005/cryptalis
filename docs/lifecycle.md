@@ -53,6 +53,18 @@ The deployment operator stops known workers/jobs and excludes unsupported writer
 The runtime principal cannot change schema, operation metadata, or lifecycle privileges.
 Unknown writer coverage blocks apply. An empty connection snapshot alone does not prove that excluded writers cannot reconnect.
 
+Initial planning, ACTIVE connection checks, restored connection checks, and
+the shared maintenance executor check effective runtime privileges. Runtime role
+attributes and owner membership must exclude administrative authority. Effective
+CREATE on the database or declared schemas is refused. Protected tables and
+the journal must retain the planned owner. Runtime TRIGGER/TRUNCATE privileges
+on protected tables are refused. The journal permits runtime SELECT only.
+Runtime table-level mutation privileges and column-level INSERT, UPDATE, or
+REFERENCES privileges on the journal cause refusal. Ordinary protected-data
+CRUD remains admitted through the declared writer boundary.
+`unsafe_runtime_role` reports privilege failures. Owner drift reports
+`maintenance_requires_table_owner`. These checks do not replace writer exclusion.
+
 One PostgreSQL journal stores the immutable operation ID/plan digest, target binding, source/desired lock, phase, and chunk outcomes.
 Chunk data and its completion marker commit in one transaction.
 A session advisory lock serializes cooperating executors. It is not external writer exclusion or fencing of provider calls.
@@ -280,7 +292,8 @@ See [status](status.md#active-root-rewrap-checkpoint-2026-10-23).
 
 ## Restore and authority loss
 
-These are deployment requirements. Only a local policy model ran; no authenticated restore test passed.
+The host supplies current-policy provenance, source fencing, and quarantine.
+Local backup/adoption tests below do not authenticate those external controls.
 A restore starts in quarantine with production writers stopped.
 The operator inspects trusted schema, target identity, current deployment policy, key wrappers, formats, and backup lineage.
 A restored operation journal is progress evidence, not current authority.
@@ -357,6 +370,10 @@ lock v2 `source_metadata`. Drift raises `metadata_not_restored:source_metadata`;
 a failed retirement rolls back the journal drop. A terminal retry inspects journal
 existence before it checks the package-free state.
 
+The original reverse checkpoint used a transition/v1 source. Current reverse
+admission also accepts root-rewrap v2 and payload-rotation v3 successors with
+their exact validated ancestor chains.
+
 **VERIFIED, local PostgreSQL 16.15 cell:** seven lifecycle cases pass on SQLAlchemy 2.1.3
 and 2.0.51. Full suites report **1,299 passed** on 2.1.3 and **1,271 passed, 28 skipped**
 on 2.0.51 ([2.1.3 receipt](_reset/reverse-full-sa21-20261019.json),
@@ -369,9 +386,9 @@ plan/removal refusals. Counts are not gate evidence.
 captures and restores protected-column comments, statistics targets, storage,
 compression, options, column grants, constraint and index comments, and extended
 statistics. Protection refuses expression extended statistics and sequences owned by a
-protected column. Fresh-cluster
+protected column. At that checkpoint, fresh-cluster
 restore, a real package-free application run, retained-backup reader proof, and the
-retained-native alternative remain UNKNOWN.
+retained-native alternative remained UNKNOWN.
 Layout comparison and the decision not to promote retained-native are recorded in
 [the 2026-10-19 evaluation](_reset/layout-evaluation-20261019.md).
 
@@ -385,8 +402,9 @@ A restored journal remains progress evidence, never restore authority by itself.
 
 `cryptalis.restore/v1` (`src/cryptalis/restore.py`) adds the approved bring-up contract.
 A host `RestoreApproval` asserts the restore intent, the quarantine, and a fenced source
-(`source_fenced`). Adoption runs read-only as the owner: it authenticates every retained
-frame with the retained keys, verifies the target facts and environment, compares the
+(`source_fenced`). Adoption runs as the owner without durable database changes.
+It authenticates every retained frame with the retained keys, verifies the target
+facts and environment, compares the
 restored schema to the source lock, and issues a `RestoreBinding`. The binding records the
 source plan identity and original target facts, the restored target facts and environment,
 the restored source journal state digest, the retained custody set, and each restated
@@ -429,6 +447,37 @@ refuses a restated constraint without a retained frame row,
 and it admits two exact forms rather than general SQL equivalence. The probes cover only
 the named malformed frames. Physical column order and
 owned-sequence capture remain.
+
+### Payload-rotation backup adoption: 2026-10-23
+
+**IMPLEMENTED, bounded native profile:** a protected backup can use the ACTIVE
+payload successor A and contain a later application edit. Adoption reuses
+`cryptalis.restore/v1` and the existing `RestoreBinding`. It authenticates
+current frames under A's exact target policy and selected generation. It does
+not freeze ordinary ACTIVE backups to A's original sealed frame observations.
+A valid source-generation frame fails even when retained roots can decrypt it.
+The original source policy also fails target-policy admission.
+
+Before any malformed-frame probe or provider call, adoption checks the source
+identity, ACTIVE progress, exact reciprocal source-to-P-to-A chain, runtime
+privileges, and protected-column grants. A's proof digest and recorded counters
+must match its immutable contract. Missing ancestors, forged successor links,
+wrong proof digests, unsafe privileges, and journal-column write grants cause
+refusal. Column-grant drift raises `source_metadata_changed`. Current restored
+connections repeat privilege and metadata checks after adoption.
+
+The fixture verifies generation-2 decoding through both the product reader and
+an independent decoder. It also exercises current-value reads/search, edits,
+decrypt-back, and journal retirement. The profile preserves the source metadata
+checks. Its evidence does not authorize root deletion or retained-backup loss.
+The walkthrough lists the profile commands. [Status](status.md) owns current
+receipts and test totals.
+
+Backup adoption after payload rotation differs from rotation on an adopted
+target. Payload preparation, sealing, and cutover on an adopted target remain
+unsupported. Search rotation remains unimplemented. Host publication provenance,
+source fencing, and provider custody remain external qualification boundaries.
+All seven full gates remain UNKNOWN.
 
 ### Independent application exit: 2026-10-19
 

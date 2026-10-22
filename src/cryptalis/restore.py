@@ -186,6 +186,8 @@ def _current(source, binding, c, state):
         raise m.TransitionFailure('restore_target_mismatch', source.operation_id)
     if m._hash(state) != binding.document['journal_state_digest']:
         raise m.TransitionFailure('restored_state_changed', source.operation_id)
+    m._runtime_safety(c,source.document['runtime_role'],source.document['target'][-1],
+                      source.document['lock']['models'],journal=m._journal(c,source),operation_id=source.operation_id)
     return target
 
 
@@ -224,6 +226,7 @@ def _schema_evidence(c, source, state):
     restatements = []
     for model in source.document['lock']['models']:
         start = len(restatements)
+        m._refuse_unrecorded_metadata(c,source,model)
         observed = m._facts(c, model)
         recorded = state['models'][model['table_id']]['active_schema']
         if (observed['relation'] != recorded['relation']
@@ -415,14 +418,11 @@ def plan(source, engine, *, pin, keys, approval):
         target = m._target(c)
         if target[:-1] == source.document['target'][:-1]:
             raise m.TransitionFailure('restore_source_is_current', source.operation_id)
+        state=m._state(c,source,pin)
+        d._inventory(c,source,source,own=None)
+        m._runtime_safety(c,source.document['runtime_role'],source.document['target'][-1],
+                          source.document['lock']['models'],journal=m._journal(c,source),operation_id=source.operation_id)
         restatements = _probe_frame_checks(c, source, _schema_evidence(c, source, state))
-        for model in source.document['lock']['models']:
-            ownership = c.exec_driver_sql(
-                'SELECT pg_catalog.pg_get_userbyid(relowner) FROM pg_catalog.pg_class '
-                'WHERE oid=pg_catalog.to_regclass(%s)', (m._table(c, model),)).scalar_one()
-            if ownership != source.document['target'][-1]:
-                raise m.TransitionFailure('maintenance_requires_table_owner', source.operation_id)
-        d._inventory(c, source, source, own=None)
         custody = _scan(c, source, keys)
         system_identifier = None
         try:

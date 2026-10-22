@@ -11,6 +11,7 @@ exact search, protected modifications, decrypt-back, and approved removal.
 import base64
 from dataclasses import replace
 import importlib
+import hashlib
 import json
 import os
 from pathlib import Path
@@ -41,8 +42,14 @@ WORKDIR = Path(os.environ['CRYPTALIS_FRESH_CLUSTER_DIR'])
 MANIFEST = json.loads((WORKDIR / 'restore-manifest.json').read_text())
 if MANIFEST.get('rewrapped') is not (os.environ.get('CRYPTALIS_FRESH_SOURCE_REWRAP') == '1'):
     pytest.fail('restore manifest does not match the requested root-rewrap profile')
+if MANIFEST.get('payload_rotated') is not (os.environ.get('CRYPTALIS_FRESH_SOURCE_PAYLOAD_ROTATION') == '1'):
+    pytest.fail('restore manifest does not match the requested payload-rotation profile')
+if MANIFEST.get('rewrapped') and MANIFEST.get('payload_rotated'):
+    pytest.fail('restore manifest contains incompatible rotation profiles')
 if MANIFEST.get('rewrapped'):
     from rewrap_worker import target_keys as keys
+if MANIFEST.get('payload_rotated'):
+    from payload_rotation_worker import target_keys as keys
 SCHEMA = MANIFEST['schema']
 PLAIN_DATABASE = os.environ['CRYPTALIS_FRESH_PLAIN_DATABASE']
 
@@ -75,6 +82,11 @@ def artifacts():
         assert source.document['format'] == 'cryptalis.transition/v2'
         assert source.document['kind'] == 'rewrap'
         assert source.document['predecessors']
+    if MANIFEST['payload_rotated']:
+        document=source.document
+        assert document['format']=='cryptalis.transition/v3' and document['kind']=='payload_rotation'
+        assert len(document['predecessors'])>=2
+        assert document['predecessors'][-1]['plan_digest']==document['payload_rotation_plan_digest']
     pin = m.DeploymentPin(uuid.UUID(MANIFEST['pin']['target_id']), uuid.UUID(MANIFEST['pin']['operation_id']),
                           MANIFEST['pin']['plan_digest'], MANIFEST['pin']['phase'])
     return source, pin
@@ -148,8 +160,15 @@ def test_protected_backup_recovers_values_with_retained_keys():
                  for identity, tenant, frame in restored}
     assert recovered == MANIFEST['expected']
     assert MANIFEST['deleted_id'] not in recovered and MANIFEST['added_id'] in recovered
+    independent_options={}
+    if MANIFEST['payload_rotated']:
+        from cryptalis.crypto import KeyContext
+        from test_migration import DOMAIN
+        independent_options=dict(
+            payload_context=KeyContext(DOMAIN,TENANT,'payload',uuid.uuid5(DOMAIN,f'payload-worker:{TENANT}:2'),2),
+            payload_root=hashlib.sha256(b'PUBLIC PAYLOAD WORKER ROOT'+TENANT.bytes+(2).to_bytes(4,'big')).digest())
     independent = {str(identity): [str(tenant), independent_open(None if frame is None else bytes(frame),
-                                                                 MANIFEST['descriptor'], tenant, identity)]
+                                                                 MANIFEST['descriptor'], tenant, identity,**independent_options)]
                    for identity, tenant, frame in restored}
     assert independent == MANIFEST['expected']
 
@@ -193,7 +212,7 @@ def test_restore_adoption_requires_explicit_fenced_approval():
             r.plan(source, owner, pin=replace(pin, phase='PENDING'), keys=keys, approval=approval())
         with pytest.raises(m.TransitionFailure, match='external_policy_mismatch'):
             r.plan(source, owner, pin=replace(pin, plan_digest='0' * 64), keys=keys, approval=approval())
-        if MANIFEST['rewrapped']:
+        if MANIFEST['rewrapped'] or MANIFEST['payload_rotated']:
             with pytest.raises(m.TransitionFailure, match='key_policy_changed'):
                 r.plan(source, owner, pin=pin, keys=original_keys, approval=approval())
     finally:
@@ -326,7 +345,7 @@ def test_restored_target_refuses_post_adoption_drift():
     with owner.begin() as c:
         c.exec_driver_sql(f"""UPDATE {journal} SET state = state || '{{"drift": true}}'::jsonb""")
     try:
-        with pytest.raises(m.TransitionFailure, match='restored_state_changed'):
+        with pytest.raises(m.TransitionFailure, match='payload_rotation_state_changed' if MANIFEST['payload_rotated'] else 'restored_state_changed'):
             m.check_deployment(source, owner, pin=pin, restore=binding)
         with pytest.raises(PolicyMismatch):
             attach(mapping, runtime, lock=source.lock_bytes, keys=keys, deployment=(source, pin, binding))
@@ -452,6 +471,123 @@ def test_previously_adopted_weaker_bounds_cannot_admit_deployment(old_bound, new
                 _replace_frame_policy(owner, table, frame, definition)
         finally:
             owner.dispose()
+
+
+AUTHORITY_FAULTS=['own_digest']
+if MANIFEST['rewrapped'] or MANIFEST['payload_rotated']:
+    AUTHORITY_FAULTS+=['missing_ancestor','wrong_successor','own_proof']
+if MANIFEST['payload_rotated']:AUTHORITY_FAULTS+=['counter_type']
+
+
+@pytest.mark.parametrize('fault',AUTHORITY_FAULTS)
+def test_restore_authority_refusal_precedes_probes_and_providers(fault,monkeypatch):
+    source,pin=artifacts()
+    owner=engine('CRYPTALIS_TEST_DATABASE_URL')
+    journal=f'"{MANIFEST["journal_schema"]}"."_cryptalis_journal"'
+    identity=source.operation_id
+    if fault in ('missing_ancestor','wrong_successor'):
+        identity=uuid.UUID(source.document['predecessors'][-1]['operation_id'])
+    with owner.connect() as c:
+        saved=c.exec_driver_sql(f'SELECT plan_digest,state FROM {journal} WHERE operation_id=%s',(identity,)).one()
+    calls=[]
+    def forbidden(*args,**kwargs):
+        calls.append(True)
+        raise AssertionError('authority refusal must precede probes and provider work')
+    monkeypatch.setattr(r,'_probe_frame_checks',forbidden)
+    try:
+        with owner.begin() as c:
+            changed=json.loads(json.dumps(saved[1]))
+            if fault=='missing_ancestor':c.exec_driver_sql(f'DELETE FROM {journal} WHERE operation_id=%s',(identity,))
+            elif fault=='own_digest':
+                c.exec_driver_sql(f'UPDATE {journal} SET plan_digest=%s WHERE operation_id=%s',('0'*64,identity))
+            else:
+                if fault=='wrong_successor':changed['superseded_by']['plan_digest']='0'*64
+                if fault=='own_proof':changed['payload_rotation_plan_digest' if MANIFEST['payload_rotated'] else 'rewrap_plan_digest']='0'*64
+                if fault=='counter_type':next(iter(changed['models'].values()))['rows']=True
+                c.exec_driver_sql(f'UPDATE {journal} SET state=%s::jsonb WHERE operation_id=%s',(json.dumps(changed),identity))
+        code=('restored_journal_mismatch' if fault=='own_digest' else
+              'predecessor_chain_changed' if fault in ('missing_ancestor','wrong_successor') else
+              'payload_rotation_state_changed' if MANIFEST['payload_rotated'] else 'rewrap_state_changed')
+        with pytest.raises(m.TransitionFailure,match=code):
+            r.plan(source,owner,pin=pin,keys=forbidden,approval=approval())
+        assert calls==[]
+    finally:
+        with owner.begin() as c:
+            c.exec_driver_sql(f'DELETE FROM {journal} WHERE operation_id=%s',(identity,))
+            c.exec_driver_sql(f'INSERT INTO {journal} VALUES (%s,%s,%s::jsonb)',(identity,saved[0],json.dumps(saved[1])))
+        owner.dispose()
+
+
+@pytest.mark.parametrize('privilege',['journal_update','journal_column_update','schema_create','database_create','public_column_acl'])
+def test_restore_rejects_unsafe_privileges_before_effectful_verification(privilege,monkeypatch):
+    source,pin=artifacts()
+    owner=engine('CRYPTALIS_TEST_DATABASE_URL')
+    quote=owner.dialect.identifier_preparer.quote_identifier
+    role=quote(MANIFEST['runtime_role'])
+    journal=f'{quote(MANIFEST["journal_schema"])}.{quote(m.JOURNAL)}'
+    table=f'{quote(SCHEMA)}.customer'
+    grant,revoke={
+        'journal_update':(f'GRANT UPDATE ON {journal} TO {role}',f'REVOKE UPDATE ON {journal} FROM {role}'),
+        'journal_column_update':(f'GRANT UPDATE (state) ON {journal} TO {role}',f'REVOKE UPDATE (state) ON {journal} FROM {role}'),
+        'schema_create':(f'GRANT CREATE ON SCHEMA {quote(SCHEMA)} TO {role}',f'REVOKE CREATE ON SCHEMA {quote(SCHEMA)} FROM {role}'),
+        'database_create':(f'GRANT CREATE ON DATABASE {quote(MANIFEST["database"])} TO {role}',f'REVOKE CREATE ON DATABASE {quote(MANIFEST["database"])} FROM {role}'),
+        'public_column_acl':(f'GRANT SELECT (name) ON {table} TO PUBLIC',f'REVOKE SELECT (name) ON {table} FROM PUBLIC'),
+    }[privilege]
+    calls=[]
+    def forbidden(*args,**kwargs):
+        calls.append(True)
+        raise AssertionError('unsafe privilege refusal must precede probes and provider work')
+    monkeypatch.setattr(r,'_probe_frame_checks',forbidden)
+    try:
+        with owner.begin() as c:c.exec_driver_sql(grant)
+        with pytest.raises(m.TransitionFailure,match='unsafe_runtime|source_metadata_changed'):
+            r.plan(source,owner,pin=pin,keys=forbidden,approval=approval())
+        assert calls==[]
+    finally:
+        with owner.begin() as c:c.exec_driver_sql(revoke)
+        owner.dispose()
+
+
+@pytest.mark.parametrize('privilege',['journal_column_update','public_column_acl'])
+def test_adopted_attachment_refuses_later_privilege_drift(privilege):
+    source,pin=artifacts()
+    owner=engine('CRYPTALIS_TEST_DATABASE_URL')
+    binding=r.plan(source,owner,pin=pin,keys=keys,approval=approval())
+    quote=owner.dialect.identifier_preparer.quote_identifier
+    if privilege=='journal_column_update':
+        table=f'{quote(MANIFEST["journal_schema"])}.{quote(m.JOURNAL)}'
+        grant=f'GRANT UPDATE (state) ON {table} TO {quote(MANIFEST["runtime_role"])}'
+        revoke=f'REVOKE UPDATE (state) ON {table} FROM {quote(MANIFEST["runtime_role"])}'
+    else:
+        grant=f'GRANT SELECT (name) ON {quote(SCHEMA)}.customer TO PUBLIC'
+        revoke=f'REVOKE SELECT (name) ON {quote(SCHEMA)}.customer FROM PUBLIC'
+    try:
+        with owner.begin() as c:c.exec_driver_sql(grant)
+        with pytest.raises(m.TransitionFailure,match='unsafe_runtime|source_metadata_changed'):
+            m.check_deployment(source,owner,pin=pin,restore=binding)
+    finally:
+        with owner.begin() as c:c.exec_driver_sql(revoke)
+        owner.dispose()
+
+
+@pytest.mark.skipif(not MANIFEST['payload_rotated'],reason='requires a retained pre-rotation generation')
+def test_valid_old_generation_frame_cannot_enter_a_payload_rotated_restore():
+    source,pin=artifacts()
+    fixture=MANIFEST['pre_rotation_frame']
+    identity=uuid.UUID(fixture['record_id'])
+    retained=base64.b64decode(fixture['frame'])
+    assert independent_open(retained,MANIFEST['descriptor'],TENANT,identity)=='edited while protected'
+    owner=engine('CRYPTALIS_TEST_DATABASE_URL')
+    table=f'"{SCHEMA}".customer'
+    with owner.connect() as c:
+        current=c.exec_driver_sql(f'SELECT name FROM {table} WHERE id=%s',(identity,)).scalar_one()
+    try:
+        with owner.begin() as c:c.exec_driver_sql(f'UPDATE {table} SET name=%s WHERE id=%s',(retained,identity))
+        with pytest.raises(m.TransitionFailure,match='generation_mismatch'):
+            r.plan(source,owner,pin=pin,keys=keys,approval=approval())
+    finally:
+        with owner.begin() as c:c.exec_driver_sql(f'UPDATE {table} SET name=%s WHERE id=%s',(current,identity))
+        owner.dispose()
 
 
 def test_restored_cluster_completes_adopted_lifecycle():

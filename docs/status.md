@@ -9,6 +9,55 @@ No PostgreSQL/provider/runtime cell, production key provider, independent review
 VERIFIED below refers only to the named checks and their exact revisions.
 All other contract and promotion requirements are SPECIFIED. All seven full gates remain UNKNOWN.
 
+## Payload-backup recovery and runtime admission checkpoint: 2026-10-23
+
+**IMPLEMENTED, bounded native verification:** the fresh-cluster harness accepts
+`--payload-rotation`, with optional `--varchar`. It exports a published activation
+plan A, its retained source/preparation ancestry and current protected data.
+An attached application edits data after publication and before the dump.
+Recovery preserves that edit, even though its frame differs from A's sealed
+cutover snapshot. Existing `cryptalis.restore/v1` approval, fencing and binding
+remain required. A database journal supplies no external authorization.
+
+Restore admission now checks the host-pinned plan, exact predecessor chain,
+strict journal state and inventory before behavioral schema probes or key work.
+It also checks effective runtime privileges and protected-column metadata first.
+The shared role check rejects owner membership, dangerous role attributes,
+database/schema CREATE, protected-table TRIGGER/TRUNCATE and journal writes,
+including column grants. Initial protection planning, active admission, adopted
+binding admission and the shared maintenance executor use this check.
+
+The initial recovery controls exposed ten failures. After the fixes, TEXT and
+VARCHAR payload profiles each pass one export and **28 restore cases** on new
+PostgreSQL 16 clusters. A separate decoder derives generation-two fixture keys
+and authenticates current CF1 payloads and search terms. A valid generation-one
+frame still fails adoption under the selected generation-two policy, even with
+retained old keys. Other controls cover altered ancestry/proofs, unsafe grants,
+late binding drift, attached search/edits, decrypt-back and native removal.
+The older rewrap/VARCHAR profile passes one export and **26 restore cases**.
+Its payload-only case is explicitly skipped. Seven ordinary native cases also
+refuse unsafe privileges before provider work or database changes.
+
+**VERIFIED, Python 3.12.3 / SQLAlchemy 2.1.3 local cell:** full regression passes
+**1,789 tests and 18 subtests**, with three separate-environment skips, in
+456.88 seconds. The 48 existing warnings concern SQLAlchemy DISTINCT ON
+deprecation. All start/end Python hashes match.
+
+The wheel and sdist build reproducibly without network access. A disposable
+installed wheel matches all 35 packaged files and starts its CLI.
+Search reindex and rotation on adopted restored targets remain SPECIFIED.
+Production custody, authenticated host authority and independent security review
+remain unqualified. All seven full gates remain UNKNOWN.
+
+Evidence: [initial failures](_reset/fresh-cluster-restore-20261023-3.json),
+[TEXT recovery](_reset/fresh-cluster-restore-20261023-6.json),
+[VARCHAR recovery](_reset/fresh-cluster-restore-20261023-5.json),
+[older rewrap recovery](_reset/fresh-cluster-restore-20261023-7.json),
+[shared role controls](_reset/restore-runtime-focused-20261023.json),
+[full regression](_reset/restore-runtime-full-20261023.json),
+[reproducible archives](_reset/restore-runtime-release-20261023.json), and
+[installed wheel](_reset/restore-runtime-installed-20261023.json).
+
 ## Sealed payload cutover checkpoint: 2026-10-23
 
 **IMPLEMENTED, bounded native verification:** `rotation.seal_payload_rotation`
@@ -63,10 +112,10 @@ whole call. These are one synthetic sample and cluster-wide observations, not
 isolated operation attribution, throughput, capacity or pause guarantees.
 
 Search reindex and rotation on adopted restored targets remain SPECIFIED.
-The next restore check adds payload-rotated backups and postpublication edits to
-the existing fresh-cluster harness, with independent generation-two decoding.
-Fresh-cluster payload-backup qualification, production provider/authority evidence
-and independent security review remain open. All seven full gates remain UNKNOWN.
+At this cutover checkpoint, fresh-cluster payload backups remained unqualified.
+The later [recovery checkpoint](#payload-backup-recovery-and-runtime-admission-checkpoint-2026-10-23)
+adds that bounded evidence. Production provider/authority evidence and independent
+security review remain open. All seven full gates remain UNKNOWN.
 
 Evidence: [missing APIs](_reset/payload-cutover-red-20261023.json),
 [first native run](_reset/payload-cutover-first-20261023.json),

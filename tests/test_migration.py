@@ -49,7 +49,7 @@ def keys(tenant):
     return Keyring(KeyPolicy(DOMAIN, tenant, wrappers, 1, 1), {PROVIDER: provider})
 
 
-def independent_open(body, descriptor, tenant, record, payload_context=None, *, field_id=FIELD_ID):
+def independent_open(body, descriptor, tenant, record, payload_context=None, *, field_id=FIELD_ID, payload_root=None):
     """Separate HKDF/HMAC/framing path; same qualified AEAD primitive only."""
     if body is None:
         return None
@@ -58,7 +58,8 @@ def independent_open(body, descriptor, tenant, record, payload_context=None, *, 
     def derive(purpose, info):
         context = next(w.context for w in keys(tenant).policy.wrappers if w.context.purpose == purpose)
         if purpose=='payload' and payload_context is not None: context=payload_context
-        root = PublicFixtureProvider().unwrap(WrappedRoot(PROVIDER, context, b'PUBLIC TEST WRAPPER'), context)
+        root = (payload_root if purpose=='payload' and payload_root is not None else
+                PublicFixtureProvider().unwrap(WrappedRoot(PROVIDER, context, b'PUBLIC TEST WRAPPER'), context))
         salt = hashlib.sha256(pack(b'CF1/root', DOMAIN.bytes, tenant.bytes, context.root_id.bytes, context.generation.to_bytes(4, 'big'))).digest()
         prk = hmac.digest(salt, root, 'sha256')
         return hmac.digest(prk, info + b'\x01', 'sha256')
