@@ -33,12 +33,12 @@ No objective is complete until its acceptance evidence and applicable gate pass.
   archive members. The installed-artifact correction compares the current wheel with
   installed files and imports verified source under an isolated bytecode cache.
   Scoped approved execution outside the sandbox restores both private-role probes
-  and Git writes. The current full suite passes 1,447 tests, with 3 separate-environment
-  tests skipped and 18 subtests passed; [receipt](_reset/reverse-status-full-sa21-20261022-2.json).
+  and Git writes. The current full suite passes 1,459 tests, with 3 separate-environment
+  tests skipped and 18 subtests passed; [receipt](_reset/evidence-stability-full-sa21-20261022.json).
   Each source type, historical text and native VARCHAR, passes one export and seven
   restore cases on a new cluster with metadata and approved status inspection;
-  current [VARCHAR](_reset/fresh-cluster-restore-20261022-12.json) and
-  [text](_reset/fresh-cluster-restore-20261022-13.json) receipts match the reverse-status slice.
+  current [VARCHAR](_reset/fresh-cluster-restore-20261022-14.json) and
+  [text](_reset/fresh-cluster-restore-20261022-15.json) receipts report matching start/end Python hashes.
 - Implemented scope: native text and VARCHAR storage, exact equality, `IN`, tenant-scoped uniqueness,
   sync/async attachment, maintenance protection transition, read-only transition status, in-place decrypt-back and
   additive removal for that transition format, an independent application lifecycle and
@@ -94,6 +94,7 @@ Requirement text is abbreviated. The full definitions remain in the research
 
 | Date | Research reference | Mechanism | Product files | Evidence | Status |
 |---|---|---|---|---|---|
+| 2026-10-22 | Verification source stability | Capture starting Python hashes and Git revision; compare final bytes; refuse success on changes while retaining the original pytest outcome | `scripts/test_postgres.py`, `tests/test_postgres_evidence.py` | Eight RED controls; 12 source-gate controls, ten real CLI tests, 1,459 full tests plus 18 subtests, pinned Smolink and both fresh-cluster paths pass; [focused](_reset/evidence-stability-final-focused-20261022.json) | VERIFIED for two-observation source admission; no full execution attestation; all gates UNKNOWN |
 | 2026-10-22 | Reverse operational status | Read-only snapshot of decrypt-back phases, source identity, counters, native metadata and terminal removal; existing CLI dispatches by artifact format | `deprotection.py`, `migration.py`, `cli.py`; native status/CLI and fresh-cluster tests | 81 focused, 41 adversarial, seven final metadata controls, and 1,447 full tests plus 18 subtests pass; [focused](_reset/reverse-status-green-20261022.json), [adversarial](_reset/reverse-status-adversarial-20261022.json); removed counters remain unavailable | VERIFIED for named local checks; no key/value/provider verification or deployment authority; full gates UNKNOWN |
 | 2026-10-22 | Pinned Smolink lifecycle and adoption corrections | Canonical catalog deparsing with restored caller settings and preserved SQLSTATE; invalidate warmed mapper flush caches at attachment | Compiler, adapter, native regressions, and pinned external app/workload tests | RED: native search-path and DML cache controls; initial full run found eight read-only route assertions. GREEN: 154 focused, 1,405 full plus 18 subtests, and the original app lifecycle on two Python 3.13 SQLAlchemy cells; [SA 2.0](_reset/smolink-final-sa20-20261022.json), [SA 2.1](_reset/smolink-final-sa21-20261022.json) | VERIFIED for storage-only Url.destination and the named alternate cells; all full gates UNKNOWN |
 | 2026-10-22 | Native VARCHAR type admission | Lock v3 and pg-varchar/v1; native character limits, pending/refresh and failure-state parity; exact query binds; native type restoration; strict reader and transform admission | Compiler, adapter, search and reverse modules; native VARCHAR and fresh-cluster tests | RED: 27 initial cases; reader, rollback-state and hidden-transform controls. GREEN: 179 focused plus 18 subtests, 1,402 full plus 18 subtests, each text/VARCHAR fresh-cluster path passes one export and seven restore cases; [full](_reset/varchar-full-sa21-20261022.json), [VARCHAR restore](_reset/fresh-cluster-restore-20261022-8.json), [release](_reset/varchar-release-20261022.json) | VERIFIED, bounded local cell; external-app adoption remains open; all gates UNKNOWN |

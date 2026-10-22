@@ -9,6 +9,58 @@ No PostgreSQL/provider/runtime cell, production key provider, independent review
 VERIFIED below refers only to the named checks and their exact revisions.
 All other contract and promotion requirements are SPECIFIED. All seven full gates remain UNKNOWN.
 
+## Verification source stability: 2026-10-22
+
+**IMPLEMENTED:** the PostgreSQL test wrapper now captures Python source hashes
+before pytest and compares them with a second snapshot after pytest.
+It resolves the checkout from its own file and runs pytest in that checkout.
+The starting revision and source hashes identify the input bundle.
+Previously, the receipt recorded only the final files.
+A source edit during tests could therefore describe bytes that the run did not load.
+
+Different start/end bytes, added files, or removed files force wrapper exit 4.
+This check also applies when no receipt is requested.
+The receipt retains the original `pytest_exit_code`, the wrapper `exit_code`,
+starting `source_test_sha256`, and a `source_stability` result with changed paths.
+`source_after_sha256` records only changed paths. A removed file has a null hash.
+Unchanged sources preserve the original pytest exit code.
+Unreadable source produces an explicit failure without raw filesystem diagnostics.
+Both private credential files still reload and both database roles still probe first.
+No failed database probe is retried.
+
+**VERIFIED:** eight initial controls failed. The corrected focused run passes
+12 wrapper controls and ten real reverse-status CLI tests.
+The wrapper controls use disposable source trees and controlled inner pytest results.
+They check successful and failed pytest outcomes, no-receipt runs, additions,
+removals, and equal-size edits that retain the original modification time.
+These controlled outcomes do not establish application correctness.
+The following real CLI cases also pass, which checks fixture environment cleanup.
+
+The snapshot covers Python files under `src/cryptalis`, `tests`, and `scripts`.
+It compares two observations. It does not detect an edit that is restored between them.
+Keep the checkout stable during verification. Dependencies, interpreter state,
+configuration, and human review remain separate evidence boundaries.
+Historical receipts remain immutable and predate this stability check.
+All seven production gates remain UNKNOWN.
+
+Evidence: [RED controls](_reset/evidence-stability-red-20261022.json) and [focused verification](_reset/evidence-stability-final-focused-20261022.json).
+
+The [pinned Smolink rerun](_reset/evidence-stability-smolink-sa20-20261022.json)
+also passes after the shared plaintext-metadata correction. It retains the
+alternate Python 3.13 / SQLAlchemy 2.0.51 scope and the unchanged 38-file app snapshot.
+Both [VARCHAR](_reset/fresh-cluster-restore-20261022-14.json) and
+[text](_reset/fresh-cluster-restore-20261022-15.json) fresh-cluster paths pass
+one export and seven restore cases. Each new receipt records unchanged start/end
+source hashes. The existing product release bytes remain unchanged by this
+wrapper-only slice. No dependency or provider qualification is added.
+
+The [full native run](_reset/evidence-stability-full-sa21-20261022.json) passes
+**1,459 tests and 18 subtests**, with three separate-environment skips and
+48 existing SQLAlchemy warnings. The wrapper records 238.73 seconds.
+Its receipt reports identical start/end hashes for all 93 Python files,
+`pytest_exit_code: 0`, and `exit_code: 0`. The exact local dependency cell
+remains Python 3.12.3, SQLAlchemy 2.1.3, psycopg 3.3.6, and cryptography 50.0.2.
+
 ## Read-only reverse status: 2026-10-22
 
 **IMPLEMENTED:** `cryptalis status` now accepts a `cryptalis.reverse/v1` plan.

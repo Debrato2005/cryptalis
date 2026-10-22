@@ -118,6 +118,13 @@ Approved read/storage targets remain targets until measured. Write-throughput an
 Count actual business-query, model, writer, deployment, and operator changes. Do not infer zero-cost adoption from one attach call.
 No project test suite runs during a documentation-only pass unless a non-documentation file changed.
 
+The PostgreSQL wrapper records Python source hashes before pytest and compares
+them after pytest. Keep `src/cryptalis`, `tests`, and `scripts` stable during a run.
+Different start/end files force wrapper exit 4, even without a receipt option.
+Receipts retain the original pytest exit code and the changed source paths.
+Review those changes before a new run. Do not overwrite the failed receipt.
+This check compares two snapshots and does not detect an intervening edit that is restored.
+
 ### Pinned external application check
 
 `tests/test_smolink_application.py` extracts Smolink revision

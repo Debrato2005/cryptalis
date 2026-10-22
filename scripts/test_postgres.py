@@ -19,6 +19,13 @@ from psycopg.conninfo import conninfo_to_dict, make_conninfo
 
 VARIABLES = ("CRYPTALIS_TEST_DATABASE_URL", "CRYPTALIS_TEST_RUNTIME_DATABASE_URL")
 FILES = (".cryptalis-test-url", ".cryptalis-test-runtime-url")
+ROOT = Path(__file__).resolve().parents[1]
+
+
+def source_hashes():
+    files = sorted(path for directory in ('src/cryptalis', 'tests', 'scripts')
+                   for path in (ROOT / directory).rglob('*.py'))
+    return {str(path.relative_to(ROOT)): hashlib.sha256(path.read_bytes()).hexdigest() for path in files}
 
 
 def load_urls():
@@ -98,22 +105,40 @@ def main():
     pytest_args = args.pytest_args
     if pytest_args[:1] == ["--"]:
         pytest_args = pytest_args[1:]
-    started = time.perf_counter()
-    code = int(pytest.main(pytest_args, plugins=[results]))
-    elapsed = time.perf_counter() - started
+    os.chdir(ROOT)
+    try:
+        hashes = source_hashes()
+    except OSError as error:
+        print('Verification.SourceUnavailable', type(error).__name__, flush=True)
+        return 4
+    base = None
     if args.receipt or args.receipt_dir:
-        files = sorted(Path("src/cryptalis").rglob("*.py")) + sorted(Path("tests").rglob("*.py")) + sorted(Path("scripts").rglob("*.py"))
-        hashes = {str(path): hashlib.sha256(path.read_bytes()).hexdigest() for path in files}
-        revision = hashlib.sha256(json.dumps(hashes, sort_keys=True).encode()).hexdigest()
         base = subprocess.run(["git", "rev-parse", "HEAD"],
                               cwd=Path(__file__).resolve().parents[1], capture_output=True, text=True, check=True).stdout.strip()
+    started = time.perf_counter()
+    pytest_code = int(pytest.main(pytest_args, plugins=[results]))
+    elapsed = time.perf_counter() - started
+    try:
+        after = source_hashes()
+    except OSError as error:
+        print('Verification.SourceUnavailable', type(error).__name__, flush=True)
+        return 4
+    changed = sorted(path for path in hashes.keys() | after.keys() if hashes.get(path) != after.get(path))
+    code = 4 if changed else pytest_code
+    if changed:
+        print('Verification.SourceChanged: review the changes, then run the wrapper again.', flush=True)
+    if args.receipt or args.receipt_dir:
+        revision = hashlib.sha256(json.dumps(hashes, sort_keys=True).encode()).hexdigest()
         receipt = {
             "scope": args.scope,
             "base_revision": base,
             "fixing_revision": "worktree-" + revision[:16],
             "source_test_sha256": hashes,
+            "source_stability": {"unchanged": not changed, "changed_paths": changed},
+            "source_after_sha256": {path: after.get(path) for path in changed},
             "preflight": {"select_1_each": "passed", "sha256_prefixes": fingerprints(urls)},
             "pytest_args": pytest_args, "counts": results.counts, "exit_code": code,
+            "pytest_exit_code": pytest_code,
             "modules": results.modules, "elapsed_seconds": elapsed,
             "gates": {name: "UNKNOWN" for name in (
                 "G-ADAPTER", "G-CRYPTO", "G-QUERY", "G-LIFECYCLE", "G-PROVIDER", "G-POLICY", "G-RELEASE")},
