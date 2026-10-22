@@ -21,7 +21,6 @@ from contextlib import contextmanager
 from dataclasses import dataclass
 import hashlib
 import json
-import math
 import re
 import time
 from uuid import UUID, uuid4
@@ -104,7 +103,7 @@ class DeprotectionPlan:
                 retired.add(identity)
             for name in ('backfill_rows_per_second', 'verify_rows_per_second'):
                 value = document['estimates'][name]
-                if type(value) not in (int, float) or not math.isfinite(value) or value <= 0:
+                if not m._finite_number(value) or value <= 0:
                     raise ValueError
             if document['restore'] is not None:
                 from cryptalis.restore import RestoreBinding
@@ -184,7 +183,7 @@ def _grounded(source, plaintext_runtime_role, rates, temporary_bytes_per_row, wa
     if type(plaintext_runtime_role) is not str or not plaintext_runtime_role \
             or plaintext_runtime_role == source.document['runtime_role']:
         raise m.TransitionFailure('distinct_plaintext_runtime_role_required')
-    if any(type(rate) not in (int, float) or not math.isfinite(rate) or rate <= 0 for rate in rates):
+    if any(not m._finite_number(rate) or rate <= 0 for rate in rates):
         raise m.TransitionFailure('missing_measured_rates')
     if any(type(cost) is not int or not 1 <= cost < 2 ** 53
            for cost in (temporary_bytes_per_row, wal_bytes_per_row)):
@@ -255,7 +254,7 @@ def plan(source, engine, *, source_pin, keys, plaintext_runtime_role, backfill_r
                 + f'),0) FROM {m._table(c, model)}').scalar_one()
             rows_total += count
             plaintext_bytes += size
-    pause_seconds = math.ceil(rows_total / backfill_rows_per_second + rows_total / verify_rows_per_second)
+    pause_seconds = m._estimate_seconds(rows_total, backfill_rows_per_second, verify_rows_per_second)
     estimates = {'rows': rows_total, 'ciphertext_bytes': plaintext_bytes,
                  'temporary_bytes_estimate': rows_total * temporary_bytes_per_row,
                  'wal_bytes_estimate': rows_total * wal_bytes_per_row,

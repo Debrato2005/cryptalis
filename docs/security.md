@@ -182,6 +182,9 @@ Host artifact construction also checks compiler lock structure, required estimat
 and reverse catalog snapshot structure before connection. This prevents empty
 model inventories from making metadata inspection vacuous. Structural validity
 does not authenticate a host artifact or replace live catalog and policy checks.
+Direct Python rate and maintenance inputs also use safe numeric admission.
+Duration estimates must fit the canonical integer range. Numeric overflow returns
+a typed failure without a substitute estimate or partial transition effects.
 Restore adoption applies the same contract before accepting its explicit CHECK
 restatements. Only known PostgreSQL 16 forms of the declared frame check can pass.
 Malformed-frame probes supplement exact text admission. They do not establish SQL

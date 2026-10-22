@@ -80,6 +80,20 @@ class MaintenanceApproval:
     approved_pause_seconds: float
 
 
+def _finite_number(value):
+    try:
+        return type(value) in (int, float) and math.isfinite(value)
+    except OverflowError:
+        return False
+
+
+def _estimate_seconds(rows, *rates):
+    seconds = sum(rows / rate for rate in rates)
+    if not math.isfinite(seconds) or not 0 <= seconds < 2 ** 53:
+        raise TransitionFailure('unrepresentable_pause_estimate')
+    return math.ceil(seconds)
+
+
 def _validate_estimates(costs):
     for name in ('rows', 'writer_pause_seconds_estimate'):
         if type(costs[name]) is not int or costs[name] < 0:
@@ -90,7 +104,7 @@ def _validate_estimates(costs):
     if any(name in costs for name in rates):
         for name in rates:
             value = costs[name]
-            if type(value) not in (int, float) or not math.isfinite(value) or value <= 0:
+            if not _finite_number(value) or value <= 0:
                 raise ValueError
 
 
@@ -277,7 +291,7 @@ def plan(manifest, mapping, engine, *, writers, search_reviews=(), keys, runtime
     if not isinstance(target_id, UUID) or not target_id.int or not isinstance(runtime_role,str) or not runtime_role:
         raise TransitionFailure('invalid_target_or_runtime_role')
     rates = (backfill_rows_per_second, verify_rows_per_second)
-    if any(type(r) not in (int,float) or not math.isfinite(r) or r <= 0 for r in rates):
+    if any(not _finite_number(r) or r <= 0 for r in rates):
         raise TransitionFailure('missing_measured_rates')
     proposal = compile_protection(manifest, mapping, engine, writers=writers, search_reviews=search_reviews)
     if any(type(cost) is not int or not 1<=cost<2**53 for cost in (temporary_bytes_per_row,wal_bytes_per_row)):
@@ -310,10 +324,10 @@ def plan(manifest, mapping, engine, *, writers, search_reviews=(), keys, runtime
             raise TransitionFailure('existing_transition_requires_inspection')
     estimates={'rows':rows,'plaintext_bytes':plaintext_bytes,'temporary_bytes_estimate':rows*temporary_bytes_per_row,
         'wal_bytes_estimate':rows*wal_bytes_per_row,'provider_unwraps_per_cold_preparation':sum(len((keys(UUID(t)) if callable(keys) else keys).policy.wrappers) for t in policies),
-        'backfill_seconds_estimate':math.ceil(rows/rates[0]), 'verify_seconds_estimate':math.ceil(rows/rates[1]),
+        'backfill_seconds_estimate':_estimate_seconds(rows, rates[0]), 'verify_seconds_estimate':_estimate_seconds(rows, rates[1]),
         'backfill_rows_per_second':rates[0], 'verify_rows_per_second':rates[1],
-        'writer_pause_seconds_estimate':math.ceil(rows/rates[0]+rows/rates[1]),
-        'checkpoint_extra_verify_seconds_estimate':math.ceil(rows/rates[1]),
+        'writer_pause_seconds_estimate':_estimate_seconds(rows, *rates),
+        'checkpoint_extra_verify_seconds_estimate':_estimate_seconds(rows, rates[1]),
         'cost_basis':'Host-supplied per-row staging observations/estimates; not bounds or qualification.',
         'limits':'Host rate estimates exclude lock drain, DDL, index build, publication delay and capacity guarantees.'}
     return MigrationPlan(_canonical({'format':'cryptalis.transition/v1','kind':'protect','operation_id':str(uuid4()),
@@ -332,7 +346,7 @@ def _approve_maintenance(p,approval):
     if not isinstance(approval,MaintenanceApproval):
         raise TransitionFailure('maintenance_approval_required',p.operation_id)
     if (not isinstance(approval.writer_exclusion,str) or not approval.writer_exclusion.strip() or
-            type(approval.approved_pause_seconds) not in (int,float) or not math.isfinite(approval.approved_pause_seconds) or
+            not _finite_number(approval.approved_pause_seconds) or
             approval.approved_pause_seconds < p.document['estimates']['writer_pause_seconds_estimate']):
         raise TransitionFailure('writer_exclusion_or_pause_not_approved',p.operation_id)
 

@@ -9,6 +9,39 @@ No PostgreSQL/provider/runtime cell, production key provider, independent review
 VERIFIED below refers only to the named checks and their exact revisions.
 All other contract and promotion requirements are SPECIFIED. All seven full gates remain UNKNOWN.
 
+## Numeric API admission: 2026-10-22
+
+**IMPLEMENTED:** protection and reverse planners share safe numeric input and
+duration checks. Integers that overflow float conversion fail as invalid measured
+rates or invalid maintenance approval. A positive finite rate that produces an
+infinite or unrepresentable duration fails with `unrepresentable_pause_estimate`.
+Estimated seconds must fit the canonical integer range before artifact creation.
+
+The change preserves fractional rates and separate backfill, verification, and
+combined pause estimates. It adds no rate floor or substitute estimate.
+An invalid maintenance approval fails before a transition starts.
+
+**VERIFIED, initial controls:** ten native public API cases reproduced raw
+`OverflowError`. They cover both rate fields in both planners, minimum positive
+float rates, huge integer rates, and huge maintenance pauses in both executors.
+Catalog facts, rows, journal inventory, schema relations, and function definitions
+stay unchanged during these failures. Twelve existing rate controls pass.
+
+**VERIFIED, corrected controls:** all 119 focused native tests pass in 63.15 seconds.
+They include the ten refusals, fractional-rate artifact reload and both complete
+transitions, artifact admission, crash/resume, protection, and reverse controls.
+All 97 Python files retain their start/end hashes. The wheel and sdist build
+reproducibly; the installed-wheel check matches 32 files and starts the CLI.
+
+The full suite and fresh-cluster checks were not repeated for this input-only
+change. Their evidence in the next section belongs to the preceding restore-policy
+revision.
+All seven production gates remain UNKNOWN.
+
+Evidence: [initial controls](_reset/numeric-admission-red-20261022.json),
+[corrected controls](_reset/numeric-admission-focused-20261022.json), and
+[installed wheel](_reset/numeric-admission-release-installed-20261022.json).
+
 ## Restore frame policy admission: 2026-10-22
 
 **IMPLEMENTED:** restore adoption accepts two exact PostgreSQL 16 forms of the
