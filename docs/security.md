@@ -317,6 +317,16 @@ unchanged search generation, bounded rows/bytes, and unique records. It performs
 provider, policy, or schema change. A caller must integrate any result into a separately
 approved journaled lifecycle before a database switch.
 
+**IMPLEMENTED, read-only planning:** `rotation.plan_payload_rotation` checks
+complete source custody, including retained roots and deleted tenants. Its target
+retains every exact source wrapper and adds one new independent payload root.
+The selected generation exceeds all retained payload generations. Search custody
+does not change. The snapshot authenticates current source frames under both
+reader sets and records frame/membership digests, public contexts and estimates.
+It stores no plaintext digest, wrapper bytes or root material. Provider preparation
+can have provider-side audit/cost effects. No payload staging or deployment
+publication follows from a successful plan. Lease expiry remains `KeyUnavailable`.
+
 Sync and async preparation publish keys only after every required root passes checks.
 Cancellation rejects late provider material, including when a provider suppresses cancellation.
 Inherited providers, keyrings, and prepared keys refuse use after fork.

@@ -169,3 +169,38 @@ A retry after an uncertain commit inspects the terminal marker and current
 source authority. It cannot reapply snapshot data or resurrect a source that
 a later operation superseded. Ordinary source edits after cancellation remain
 valid. Keep retained policies and backup dependencies until explicit retirement.
+
+## Payload-rotation preparation and activation: 2026-10-23
+
+**SPECIFIED:** use two immutable host artifacts. A preparation proposal P pins
+the current source plan, ACTIVE pin, source frame/membership observations, exact
+retained policies, batch limits and measured costs. P reserves a distinct
+successor operation ID. It supplies no application deployment authority.
+
+The target retains every exact source wrapper and reader root. It adds exactly
+one independent payload root with a generation above all retained payload
+generations. The selected search generation and wrapper remain unchanged.
+Rewrap and search rotation remain separate workflows. No normal rotation deletes
+retained roots or backup dependencies.
+
+The staged executor will commit fresh target ciphertext and chunk progress
+together in operation-owned shadows. Original public frames remain intact.
+Before destructive switch, sealing must authenticate both exact active
+generations, compare exact decoded values/NULLs and unchanged search headers,
+and compare original frames/membership against P. Sealing returns an immutable
+activation plan A with observed target frame digests. Repeated sealing of the
+same committed bytes must produce identical A, without new nonces or timestamps.
+The host must persist A before switch and publication.
+
+The final switch must repeat paired verification under maintenance locks.
+Source SUPERSEDED to P, P SUPERSEDED to A, and A PENDING commit together.
+A's flat predecessor list includes both source and preparation identities.
+Its target digests supply publication verification, including an ACTIVATING
+retry when the database journal already claims ACTIVE. Journal hashes cannot
+replace host-pinned observations. A genuine ACTIVE pin permits later edits.
+
+Preparation planning and staged execution remain separate evidence boundaries.
+Row limits alone do not bound logical memory. Scan length metadata before frame
+retrieval and bound the aggregate source/target/decoded-text budget across all
+fields and tenants. Python, driver, database and provider overhead remain outside
+this logical bound. Estimates require host measurements and qualify no capacity.

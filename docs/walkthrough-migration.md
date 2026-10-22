@@ -201,6 +201,41 @@ The existing fresh-cluster harness has separate root-rewrap profiles:
 These use approved disposable PostgreSQL 16 targets through `scripts/test_postgres.py`.
 They do not qualify a production provider or host publication service.
 
+## Plan payload-key rotation
+
+Prepare the inactive target policy through the trusted host process. Retain every
+exact source wrapper and add one independent payload root above all retained
+payload generations. Keep search custody unchanged. Retain backup dependencies.
+
+```python
+from cryptalis.rotation import plan_payload_rotation
+
+proposal = plan_payload_rotation(source_plan, owner_engine,
+    source_pin=current_source_active_pin, keys=source_keys, target_keys=target_keys,
+    backfill_rows_per_second=measured_backfill_rate,
+    verify_rows_per_second=measured_verify_rate,
+    temporary_bytes_per_row=measured_temporary_cost,
+    wal_bytes_per_row=measured_wal_cost,
+    max_batch_rows=1000, max_batch_bytes=64 * 1024 * 1024)
+print(proposal)
+costs = proposal.document["estimates"]  # Review temporary storage, WAL and provider estimates.
+```
+
+This call authenticates a read-only snapshot. Current source writers remain
+admitted. The artifact pins source frames and membership, public root contexts,
+operation identities, logical limits and cost estimates. It contains no roots,
+wrapped bytes or plaintext digest. Provider preparation can incur external costs.
+The estimate includes backfill and three verification passes. Lock drain, DDL,
+index build, publication and capacity guarantees remain outside the estimate.
+
+The logical byte budget includes source/target frames, decoded UTF-8 and native
+identities across all fields. It excludes Python, driver, database and provider
+overhead. A single oversized row fails before frame retrieval.
+
+Payload staging, sealed activation, cutover and abort remain unimplemented.
+This preparation artifact cannot enter `migration.apply` or authorize publication.
+Use [status](status.md) for the exact implemented boundary.
+
 ## Measured throughput
 
 Use positive finite integer or floating-point observations for measured rows per second.

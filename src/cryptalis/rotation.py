@@ -1,7 +1,7 @@
-"""Root-rewrap planning and maintenance cutover through the existing lifecycle.
+"""Rotation planning and root-rewrap cutover through the existing lifecycle.
 
 The host retains both wrapped policies outside the database. This artifact
-records their identities, not their wrapped bytes or unwrapped roots. Native
+records their identities, not their wrapped bytes or unwrapped roots.
 The host publishes the successor plan separately from the database cutover.
 """
 from dataclasses import asdict, dataclass
@@ -13,9 +13,11 @@ from uuid import UUID, uuid4
 from cryptalis import migration as m
 from cryptalis.crypto.cf1 import FieldDescriptor, open_text
 from cryptalis.crypto.keys import KeyContext, Keyring, KeyUnavailable
+from cryptalis.crypto._payload_rotation import MAX_BATCH_BYTES, MAX_BATCH_ROWS
 
 
 FORMAT = 'cryptalis.rewrap/v1'
+PAYLOAD_FORMAT = 'cryptalis.payload-rotation/v1'
 
 
 def _uuid(value, *, nonzero=True):
@@ -41,42 +43,66 @@ def _contexts(policy):
                  generation=w.context.generation) for w in policy.wrappers]
 
 
+def _read_proposal(artifact, format, kind, *, extra=(), sizes=()):
+    d = m._decode_transition_json(artifact)
+    if (set(d) != {'format', 'kind', 'operation_id', 'source_plan', 'source_pin',
+                    'required_readers', 'journal_state_digest', 'models', 'key_policies', 'estimates'} | set(extra)
+            or d['format'] != format or d['kind'] != kind or m._canonical(d) != artifact):
+        raise ValueError
+    source = m.MigrationPlan(m._canonical(d['source_plan']))
+    if _uuid(d['operation_id']) == source.operation_id:
+        raise ValueError
+    pin = d['source_pin']
+    if set(pin) != {'target_id', 'operation_id', 'plan_digest', 'phase'}:
+        raise ValueError
+    m._admit(source, m.DeploymentPin(_uuid(pin['target_id']), _uuid(pin['operation_id']),
+                                    pin['plan_digest'], pin['phase']))
+    if pin['phase'] != 'ACTIVE' or d['required_readers'] != source.document['lock']['required_readers']:
+        raise ValueError
+    _digest(d['journal_state_digest'])
+    if set(d['models']) != {model['table_id'] for model in source.document['lock']['models']}:
+        raise ValueError
+    total = 0
+    for observed in d['models'].values():
+        if set(observed) != {'rows', 'membership', 'frames', 'schema'} | set(sizes):
+            raise ValueError
+        for name in ('rows',) + tuple(sizes):
+            _counter(observed[name])
+        total += observed['rows']
+        for name in ('membership', 'frames', 'schema'):
+            _digest(observed[name])
+    if set(d['key_policies']) != set(source.document['key_policies']):
+        raise ValueError
+    return d, source, total
+
+
+def _read_contexts(contexts, domain, tenant):
+    if type(contexts) is not list or not 1 <= len(contexts) <= 32:
+        raise ValueError
+    parsed, identities, roots = set(), set(), set()
+    for context in contexts:
+        if set(context) != {'domain_id', 'tenant_id', 'purpose', 'root_id', 'generation'}:
+            raise ValueError
+        item = KeyContext(_uuid(context['domain_id']), _uuid(context['tenant_id'], nonzero=False),
+                          context['purpose'], _uuid(context['root_id']), context['generation'])
+        identity = (item.purpose, item.generation)
+        if (type(context['generation']) is not int or (item.domain_id, item.tenant_id) != (domain, tenant)
+                or identity in identities or item.root_id in roots):
+            raise ValueError
+        parsed.add(item)
+        identities.add(identity)
+        roots.add(item.root_id)
+    return parsed
+
+
 @dataclass(frozen=True, repr=False)
 class RewrapPlan:
     artifact: bytes
 
     def __post_init__(self):
         try:
-            d = m._decode_transition_json(self.artifact)
-            if (set(d) != {'format', 'kind', 'operation_id', 'source_plan', 'source_pin',
-                           'required_readers', 'journal_state_digest', 'models', 'key_policies', 'estimates'}
-                    or d['format'] != FORMAT or d['kind'] != 'rewrap'
-                    or m._canonical(d) != self.artifact):
-                raise ValueError
-            source = m.MigrationPlan(m._canonical(d['source_plan']))
-            if _uuid(d['operation_id']) == source.operation_id:
-                raise ValueError
-            pin = d['source_pin']
-            if set(pin) != {'target_id', 'operation_id', 'plan_digest', 'phase'}:
-                raise ValueError
-            m._admit(source, m.DeploymentPin(_uuid(pin['target_id']), _uuid(pin['operation_id']),
-                                            pin['plan_digest'], pin['phase']))
-            if pin['phase'] != 'ACTIVE' or d['required_readers'] != source.document['lock']['required_readers']:
-                raise ValueError
-            _digest(d['journal_state_digest'])
-            if set(d['models']) != {model['table_id'] for model in source.document['lock']['models']}:
-                raise ValueError
-            total = 0
-            for observed in d['models'].values():
-                if set(observed) != {'rows', 'membership', 'frames', 'schema'}:
-                    raise ValueError
-                _counter(observed['rows'])
-                total += observed['rows']
-                for name in ('membership', 'frames', 'schema'):
-                    _digest(observed[name])
+            d, source, total = _read_proposal(self.artifact, FORMAT, 'rewrap')
             policies = d['key_policies']
-            if set(policies) != set(source.document['key_policies']):
-                raise ValueError
             domain = _uuid(source.document['lock']['domain_id'])
             for tenant, policy in policies.items():
                 tenant_id = _uuid(tenant, nonzero=False)
@@ -86,21 +112,8 @@ class RewrapPlan:
                 _digest(policy['target'])
                 if policy['source'] != source.document['key_policies'][tenant] or policy['source'] == policy['target']:
                     raise ValueError
-                contexts = policy['contexts']
-                if type(contexts) is not list or not 1 <= len(contexts) <= 32:
-                    raise ValueError
-                identities, roots = set(), set()
-                for context in contexts:
-                    if set(context) != {'domain_id', 'tenant_id', 'purpose', 'root_id', 'generation'}:
-                        raise ValueError
-                    parsed = KeyContext(_uuid(context['domain_id']), _uuid(context['tenant_id'], nonzero=False),
-                                        context['purpose'], _uuid(context['root_id']), context['generation'])
-                    identity = (parsed.purpose, parsed.generation)
-                    if ((parsed.domain_id, parsed.tenant_id) != (domain, tenant_id)
-                            or identity in identities or parsed.root_id in roots):
-                        raise ValueError
-                    identities.add(identity)
-                    roots.add(parsed.root_id)
+                contexts = _read_contexts(policy['contexts'], domain, tenant_id)
+                identities = {(context.purpose, context.generation) for context in contexts}
                 for purpose, generation in (('payload', policy['payload_generation']),
                                             ('search', policy['search_generation'])):
                     if purpose == 'search' and generation is None:
@@ -155,6 +168,228 @@ class RewrapPlan:
     __repr__ = __str__
 
 
+def _payload_shape(old, new, old_generation, new_generation, search_generation):
+    added = new - old
+    if (not old <= new or len(added) != 1 or type(old_generation) is not int
+            or type(new_generation) is not int or ('payload', old_generation) not in {
+                (context.purpose, context.generation) for context in old}):
+        raise ValueError
+    root = next(iter(added))
+    if (root.purpose != 'payload' or root.generation != new_generation
+            or new_generation <= max(context.generation for context in old if context.purpose == 'payload')):
+        raise ValueError
+    if search_generation is not None and (type(search_generation) is not int
+            or ('search', search_generation) not in {(c.purpose,c.generation) for c in old}):
+        raise ValueError
+
+
+def _payload_inputs(backfill, verify, temporary, wal, limits):
+    if any(not m._finite_number(rate) or rate <= 0 for rate in (backfill, verify)):
+        raise m.TransitionFailure('missing_measured_rates')
+    if any(type(cost) is not int or not 1 <= cost < 2**53 for cost in (temporary, wal)):
+        raise m.TransitionFailure('missing_measured_storage_or_wal_costs')
+    if (set(limits) != {'max_rows', 'max_bytes'} or type(limits['max_rows']) is not int
+            or not 1 <= limits['max_rows'] <= MAX_BATCH_ROWS or type(limits['max_bytes']) is not int
+            or not 1 <= limits['max_bytes'] <= MAX_BATCH_BYTES):
+        raise m.TransitionFailure('invalid_payload_batch_bound')
+
+
+def _payload_estimates(models, policies, backfill, verify, temporary, wal):
+    rows = sum(model['rows'] for model in models.values())
+    frame_bytes = sum(model['frame_bytes'] for model in models.values())
+    costs = dict(rows=rows, source_frame_bytes=frame_bytes, staging_payload_bytes=frame_bytes,
+        logical_bytes=sum(model['logical_bytes'] for model in models.values()),
+        backfill_rows_per_second=backfill, verify_rows_per_second=verify,
+        backfill_seconds_estimate=m._estimate_seconds(rows, backfill),
+        verify_seconds_estimate=m._estimate_seconds(rows, verify), required_verify_passes=3,
+        writer_pause_seconds_estimate=m._estimate_seconds(rows, backfill, verify, verify, verify),
+        temporary_bytes_per_row=temporary, temporary_bytes_estimate=rows*temporary,
+        wal_bytes_per_row=wal, wal_bytes_estimate=rows*wal,
+        provider_unwraps_per_cold_preparation=sum(len(p['source_contexts'])+len(p['target_contexts'])
+                                                for p in policies.values()),
+        limits='Host-measured estimates exclude DDL, index build, locks, publication and capacity guarantees. '
+               'Logical bytes exclude Python, driver, database and provider overhead.')
+    for name, value in costs.items():
+        if name not in ('backfill_rows_per_second', 'verify_rows_per_second', 'limits'):
+            try:
+                _counter(value)
+            except ValueError:
+                raise m.TransitionFailure('unrepresentable_payload_cost_estimate') from None
+    return costs
+
+
+@dataclass(frozen=True, repr=False)
+class PayloadRotationPlan:
+    """Inactive source-pinned preparation artifact. It cannot activate a policy."""
+    artifact: bytes
+
+    def __post_init__(self):
+        try:
+            sizes = ('frame_bytes','logical_bytes','largest_row_logical_bytes')
+            d, source, _ = _read_proposal(self.artifact, PAYLOAD_FORMAT, 'payload_rotation',
+                extra=('successor_operation_id','batch_limits'), sizes=sizes)
+            identities = {source.operation_id, _uuid(d['operation_id'])} | {
+                UUID(p['operation_id']) for p in source.document.get('predecessors', [])}
+            if (len(identities) != len(source.document.get('predecessors', [])) + 2
+                    or _uuid(d['successor_operation_id']) in identities):
+                raise ValueError
+            domain = _uuid(source.document['lock']['domain_id'])
+            for tenant, policy in d['key_policies'].items():
+                if set(policy) != {'source','target','source_contexts','target_contexts',
+                                  'source_payload_generation','target_payload_generation','search_generation'}:
+                    raise ValueError
+                _digest(policy['source']); _digest(policy['target'])
+                if policy['source'] != source.document['key_policies'][tenant] or policy['target'] == policy['source']:
+                    raise ValueError
+                tenant_id = _uuid(tenant, nonzero=False)
+                old = _read_contexts(policy['source_contexts'],domain,tenant_id)
+                new = _read_contexts(policy['target_contexts'],domain,tenant_id)
+                _payload_shape(old,new,policy['source_payload_generation'],policy['target_payload_generation'],
+                               policy['search_generation'])
+            costs, limits = d['estimates'], d['batch_limits']
+            for name, value in costs.items():
+                if name not in ('backfill_rows_per_second','verify_rows_per_second','limits'):
+                    _counter(value)
+            _payload_inputs(costs['backfill_rows_per_second'],costs['verify_rows_per_second'],
+                            costs['temporary_bytes_per_row'],costs['wal_bytes_per_row'],limits)
+            for observed in d['models'].values():
+                rows, total, largest = observed['rows'], observed['logical_bytes'], observed['largest_row_logical_bytes']
+                if (largest > limits['max_bytes'] or (not rows and any(observed[k] for k in sizes))
+                        or (rows and not 0 < largest <= total <= rows*largest)
+                        or observed['frame_bytes'] > total):
+                    raise ValueError
+            if costs != _payload_estimates(d['models'],d['key_policies'],costs['backfill_rows_per_second'],
+                    costs['verify_rows_per_second'],costs['temporary_bytes_per_row'],costs['wal_bytes_per_row']):
+                raise ValueError
+        except Exception:
+            raise m.TransitionFailure('invalid_payload_rotation_plan') from None
+
+    @property
+    def document(self): return json.loads(self.artifact)
+    @property
+    def digest(self): return hashlib.sha256(self.artifact).hexdigest()
+    @property
+    def operation_id(self): return UUID(self.document['operation_id'])
+    @property
+    def source(self): return m.MigrationPlan(m._canonical(self.document['source_plan']))
+
+    def __str__(self):
+        d = self.document
+        return (f'Inactive payload-rotation preparation: {d["estimates"]["rows"]} rows; estimated writer pause '
+                f'{d["estimates"]["writer_pause_seconds_estimate"]} s. No database or policy changes. '
+                + d['estimates']['limits'])
+    __repr__ = __str__
+
+
+def _same_payload_roots(source, target):
+    a, b = source.policy, target.policy
+    try:
+        if ((a.domain_id,a.tenant_id,a.search_generation) != (b.domain_id,b.tenant_id,b.search_generation)
+                or not set(a.wrappers) <= set(b.wrappers)):
+            raise ValueError
+        _payload_shape({w.context for w in a.wrappers},{w.context for w in b.wrappers},
+                       a.payload_generation,b.payload_generation,a.search_generation)
+        for wrapper in a.wrappers:
+            context = wrapper.context
+            old = source._resolve(context.domain_id,context.tenant_id,context.purpose,context.generation)
+            new = target._resolve(context.domain_id,context.tenant_id,context.purpose,context.generation)
+            if old.context != new.context or not compare_digest(old.root,new.root):
+                raise ValueError
+        target._resolve(b.domain_id,b.tenant_id,'payload',b.payload_generation)
+    except KeyUnavailable:
+        raise
+    except ValueError:
+        raise m.TransitionFailure('payload_rotation_policy_changed') from None
+
+
+def _prepare_payload(source, keys, target_keys):
+    policies, prepared = {}, {}
+    for tenant in source.document['key_policies']:
+        identity = UUID(tenant)
+        old = m._ring(keys,identity,source)
+        try:
+            new = target_keys(identity) if callable(target_keys) else target_keys
+        except Exception:
+            raise KeyUnavailable() from None
+        if not isinstance(new,Keyring):
+            raise m.TransitionFailure('missing_target_key_policy',source.operation_id)
+        pair = old.prepare(), new.prepare()
+        _same_payload_roots(*pair)
+        prepared[identity] = pair
+        policies[tenant] = dict(source=m._policy(old),target=m._policy(new),
+            source_contexts=_contexts(old.policy),target_contexts=_contexts(new.policy),
+            source_payload_generation=old.policy.payload_generation,
+            target_payload_generation=new.policy.payload_generation,search_generation=old.policy.search_generation)
+    return policies, prepared
+
+
+def _payload_stream(c, model, after, limits):
+    """Read lengths first. Retrieve only the prefix within the WHOLE-row budget."""
+    identity_bytes = 16 + (8 if model['record']['codec'] == 'int64-be/v1' else 16)
+    terms = [str(identity_bytes*len(model['fields']))]
+    for field in model['fields']:
+        column = m._quote(c,field['column'])
+        terms.append(f'CASE WHEN {column} IS NULL THEN 0 ELSE '
+                     f'3*pg_catalog.octet_length({column})::bigint-{74 if field["queries"] else 42} END')
+    record = m._quote(c,model['record']['column'])
+    params = ()
+    where = ''
+    if after is not None:
+        where = f' WHERE {record}>%s'
+        params = (UUID(after) if model['record']['codec'] == 'uuid16/v1' else int(after),)
+    sizes = c.exec_driver_sql('SELECT '+ '+'.join(terms) + f' FROM {m._table(c,model)}{where} '
+                             f'ORDER BY {record} LIMIT %s',params+(limits['max_rows'],)).all()
+    count, total = 0, 0
+    for size, in sizes:
+        if size > limits['max_bytes'] and not count:
+            raise m.TransitionFailure('payload_row_exceeds_byte_budget')
+        if total+size > limits['max_bytes']:
+            break
+        count += 1
+        total += size
+    return m._stream(c,model,after=after,limit=count) if count else []
+
+
+def plan_payload_rotation(source, engine, *, source_pin, keys, target_keys,
+        backfill_rows_per_second, verify_rows_per_second, temporary_bytes_per_row, wal_bytes_per_row,
+        max_batch_rows=1000, max_batch_bytes=64*1024*1024):
+    """Pin source observations and exact retained custody in a read-only snapshot.
+
+    This proposal does not stage frames, publish policy or authorize cutover.
+    Future sealing must pin the actual verified randomized target ciphertext.
+    """
+    m._admit(source,source_pin)
+    if source_pin.phase != 'ACTIVE':
+        raise m.TransitionFailure('source_pin_must_be_active',source.operation_id)
+    limits = dict(max_rows=max_batch_rows,max_bytes=max_batch_bytes)
+    _payload_inputs(backfill_rows_per_second,verify_rows_per_second,temporary_bytes_per_row,wal_bytes_per_row,limits)
+    with m._connection(engine,source.operation_id) as c:
+        c.exec_driver_sql('SET TRANSACTION ISOLATION LEVEL REPEATABLE READ, READ ONLY')
+        m._check_connection(source,c,source_pin)
+        from cryptalis.deprotection import _inventory
+        _inventory(c,source,source,own=None)
+        state = m._state(c,source,source_pin)
+        policies, prepared = _prepare_payload(source,keys,target_keys)
+        models = _observe_active(c,source,keys,prepared={t:p[0] for t,p in prepared.items()},
+                                 peers={t:p[1] for t,p in prepared.items()},batch_limits=limits)
+        for model in source.document['lock']['models']:
+            models[model['table_id']]['schema'] = m._hash(m._facts(c,model))
+    try:
+        pin = asdict(source_pin)
+        pin.update(target_id=str(source_pin.target_id),operation_id=str(source_pin.operation_id))
+        costs = _payload_estimates(models,policies,backfill_rows_per_second,verify_rows_per_second,
+                                  temporary_bytes_per_row,wal_bytes_per_row)
+        proposal = PayloadRotationPlan(m._canonical(dict(format=PAYLOAD_FORMAT,kind='payload_rotation',
+            operation_id=str(uuid4()),successor_operation_id=str(uuid4()),source_plan=source.document,source_pin=pin,
+            required_readers=source.document['lock']['required_readers'],journal_state_digest=m._hash(state),
+            models=models,key_policies=policies,batch_limits=limits,estimates=costs)))
+        for pair in prepared.values():
+            _same_payload_roots(*pair)
+    except Exception as exc:
+        raise m._safe_failure(exc,source.operation_id,()) from None
+    return proposal
+
+
 def _same_roots(source, target):
     a, b = source.policy, target.policy
     if ((a.domain_id, a.tenant_id, a.payload_generation, a.search_generation)
@@ -194,7 +429,7 @@ def _prepare_rewrap(source, keys, target_keys, expected=None):
     return policies, prepared
 
 
-def _observe_active(c, source, keys, *, prepared=None, peers=None):
+def _observe_active(c, source, keys, *, prepared=None, peers=None, batch_limits=None):
     """Authenticate all active frames, including empty-scope key admission."""
     if prepared is None:
         prepared = {UUID(tenant): m._ring(keys, UUID(tenant), source).prepare()
@@ -205,7 +440,9 @@ def _observe_active(c, source, keys, *, prepared=None, peers=None):
                        for f in model['fields']]
         membership, frames = hashlib.sha256(), hashlib.sha256()
         count, cursor = 0, None
-        while rows := m._stream(c, model, after=cursor):
+        frame_bytes, logical_bytes, largest = 0, 0, 0
+        while rows := (m._stream(c,model,after=cursor) if batch_limits is None
+                       else _payload_stream(c,model,cursor,batch_limits)):
             for row in rows:
                 scoped = 'column' in model['tenancy']
                 tenant = row[1] if scoped else UUID(model['table_id'])
@@ -215,6 +452,7 @@ def _observe_active(c, source, keys, *, prepared=None, peers=None):
                 identity = [str(row[0]), str(tenant)]
                 membership.update(m._canonical(identity))
                 frame_digests = []
+                row_bytes = 0
                 for index, field in enumerate(model['fields']):
                     raw = row[(2 if scoped else 1) + index]
                     frame = bytes(raw) if raw is not None else None
@@ -226,11 +464,22 @@ def _observe_active(c, source, keys, *, prepared=None, peers=None):
                     for material in materials:
                         open_text(frame, descriptors[index], tenant, row[0], material)
                     frame_digests.append(hashlib.sha256(frame).hexdigest() if frame is not None else None)
+                    if batch_limits is not None:
+                        identity_bytes = 16 + (8 if model['record']['codec'] == 'int64-be/v1' else 16)
+                        row_bytes += identity_bytes
+                        if frame is not None:
+                            frame_bytes += len(frame)
+                            row_bytes += 3*len(frame) - (74 if field['queries'] else 42)
                 frames.update(m._canonical(identity + [frame_digests]))
+                logical_bytes += row_bytes
+                largest = max(largest,row_bytes)
                 count += 1
             cursor = str(rows[-1][0])
         models[model['table_id']] = {'rows': count, 'membership': membership.hexdigest(),
                                     'frames': frames.hexdigest()}
+        if batch_limits is not None:
+            models[model['table_id']].update(frame_bytes=frame_bytes,logical_bytes=logical_bytes,
+                                            largest_row_logical_bytes=largest)
     for materials in (prepared, peers or {}):
         for admitted in materials.values():
             for wrapper in admitted.policy.wrappers:

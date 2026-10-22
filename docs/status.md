@@ -9,6 +9,72 @@ No PostgreSQL/provider/runtime cell, production key provider, independent review
 VERIFIED below refers only to the named checks and their exact revisions.
 All other contract and promotion requirements are SPECIFIED. All seven full gates remain UNKNOWN.
 
+## Payload-rotation planning checkpoint: 2026-10-23
+
+**IMPLEMENTED, bounded native verification:** `plan_payload_rotation` emits an
+inactive source-pinned `PayloadRotationPlan`. It checks current deployment,
+schema and journal inventory in one read-only repeatable-read snapshot. The
+target retains every exact source wrapper/root and adds one independent payload
+root above all retained payload generations. Search custody remains unchanged.
+Historical readers and tenants with no current rows remain necessary.
+
+The artifact records source frame/membership/schema observations, public contexts,
+policy digests, distinct preparation/successor IDs, aggregate batch limits and
+host-measured backfill/verification/storage/WAL estimates. It contains no wrapper
+bytes, root material or plaintext digest. The length probe uses bigint arithmetic
+and admits only the complete-row prefix within the aggregate logical budget
+before retrieving frames. Python, driver, database and provider overhead remain
+outside that budget. This establishes no capacity or RSS bound.
+
+**VERIFIED:** 163 focused native cases pass in 68.45 seconds across new planning,
+root-rewrap planning/execution/cancellation, and the independent payload-batch
+controls. They include real multi-field/multi-tenant budgets, historical/deleted
+tenant readers, exact retained-wrapper refusal, fresh payload generation,
+snapshot stability under a concurrent commit, safe artifact/input admission and
+cleanup-time expiry. The shared offline rewrap protocol also passes five groups
+with synthetic artifacts. That offline run establishes no PostgreSQL behavior.
+
+**VERIFIED, Python 3.12.3 / SQLAlchemy 2.1.3 local cell:** full regression passes
+**1,719 tests and 18 subtests**, with three separate-environment skips, in
+367.59 seconds. The wrapper counts subtests with passed cases. The 48 existing
+warnings concern SQLAlchemy DISTINCT ON deprecation. All start/end Python hashes
+match. This run includes the root-rewrap cancellation API from the preceding
+checkpoint as well as the new planner. The separate fresh-cluster and pinned
+Smolink harnesses were not rerun for this read-only slice.
+
+Initial controls found the missing API. The first implementation passes 84 cases.
+Review then reproduces three boolean estimate-counter acceptances and a lease
+expiry mislabeled as a policy change. Explicit supplied-counter validation and
+preserved `KeyUnavailable` classification close those defects. Full regression
+also covers current-value edits, text/VARCHAR, provider/data/inventory failures,
+RNG failure and unrepresentable estimates. Afterward, a test-only strengthening
+supplies a matching preparation pin to the application executor. Its native
+control passes and refuses preparation as publication authority before connection.
+Product source is unchanged from the full run.
+
+The wheel and sdist build reproducibly without network access. The installed-wheel
+check matches all 33 packaged files, starts its CLI under a fresh bytecode cache,
+and inspects the genesis manifest. Dependency installation remains outside this
+check. Current release source hashes match the artifact receipt.
+
+Payload staged execution, paired sealing, final cutover and cancellation remain
+SPECIFIED. The preparation cannot enter the application publication executor.
+The [two-artifact decision](decisions.md#payload-rotation-preparation-and-activation-2026-10-23)
+requires actual verified target observations in a separate immutable activation
+artifact before destructive switch. No journal result hash supplies authority.
+Search rotation, adopted-restore rotation, production custody and independent
+review remain open. All seven production gates remain UNKNOWN.
+
+Evidence: [initial controls](_reset/payload-plan-red-20261023.json),
+[first implementation](_reset/payload-plan-first-20261023.json),
+[counter review](_reset/payload-plan-review-red-20261023.json),
+[lease control](_reset/payload-plan-lease-red-20261023.json),
+[focused native run](_reset/payload-plan-focused-20261023.json),
+[full regression](_reset/payload-plan-full-20261023.json),
+[final publication refusal](_reset/payload-plan-final-admission-20261023.json),
+[offline protocol](_reset/payload-plan-offline-20261023.json), and
+[installed wheel](_reset/payload-plan-installed-wheel-20261023.json).
+
 ## Pending rewrap cancellation checkpoint: 2026-10-23
 
 **IMPLEMENTED, bounded native verification:** `rotation.abort_rewrap` cancels

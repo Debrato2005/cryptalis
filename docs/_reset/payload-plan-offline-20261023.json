@@ -1,0 +1,26 @@
+{
+  "scope": "Shared offline rewrap protocol; synthetic structural inputs only",
+  "command": ".venv/bin/python scripts/test_rewrap_protocol.py",
+  "exit_code": 0,
+  "counts": {
+    "unittest_groups": 5
+  },
+  "base_revision": "7b5327d7750318dcebf2e303753c35b7e41ef8e5",
+  "source_sha256_at_receipt": {
+    "src/cryptalis/rotation.py": "493ff8bd117cfe1eaf7fc9785fa383a72e68d6b09f7fc1f8c3567825f3888800",
+    "src/cryptalis/migration.py": "c9842f8e6c07530c9dcbeb9e2b2d2737e3021f137029edbb559b8a7ad0261ccb",
+    "scripts/test_rewrap_protocol.py": "6473ef6db5adba2499fc676251f10c5b6dda5cd4e766f6160eaa4a1e4eba57c6"
+  },
+  "log_sha256": "29f1cf0ec1170c2f849ba8b6221d37f181235267b0491594b471835a1d85ac9a",
+  "source_stability": "Not measured by this standalone invocation",
+  "boundary": "No PostgreSQL, provider custody, publication or production gate evidence",
+  "gates": {
+    "G-ADAPTER": "UNKNOWN",
+    "G-CRYPTO": "UNKNOWN",
+    "G-QUERY": "UNKNOWN",
+    "G-LIFECYCLE": "UNKNOWN",
+    "G-PROVIDER": "UNKNOWN",
+    "G-POLICY": "UNKNOWN",
+    "G-RELEASE": "UNKNOWN"
+  }
+}

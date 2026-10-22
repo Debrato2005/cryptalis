@@ -127,6 +127,23 @@ The integrated checkpoint records the original application's narrow rollback/rem
 | Provider/KEK change | Rewrap exact roots and verify unwrap/context under the new provider. Payload/search bytes stay unchanged |
 | Format/codec upgrade | Deploy required readers first, transform, verify, then switch writers. Retire old readers only after dependency review |
 
+**IMPLEMENTED, read-only preparation:** `rotation.plan_payload_rotation` emits an
+inactive `PayloadRotationPlan` for a current ACTIVE protection plan. It authenticates
+source frames in a repeatable-read snapshot and requires exact retained source
+wrappers/roots, one new independent monotonic payload root, and unchanged search
+custody. Historical readers and tenants with no remaining rows remain required.
+The proposal records source observations, schema/policy digests, reserved operation
+identities, logical batch limits and host-measured cost estimates. It stores no
+root, wrapper bytes or plaintext digest. It changes neither data nor authority.
+
+The length scan bounds the aggregate logical source/target/decoded-text budget
+across each complete row before frame retrieval. This is not a Python RSS,
+database memory, driver buffering, provider or capacity bound.
+The payload staging executor, paired sealing, activation and abort remain
+SPECIFIED. The two-artifact protocol in
+[decisions](decisions.md#payload-rotation-preparation-and-activation-2026-10-23)
+keeps source proof separate from actual randomized target observations.
+
 Keep exactly one active application writer representation during maintenance cutover.
 No partial-generation OR query or cross-generation uniqueness gap is silently admitted.
 Native KMS KEK material rotation is different from root rewrap, payload rotation, or search reindex.

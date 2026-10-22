@@ -260,7 +260,10 @@ An internal candidate-preparation API resolves, rewraps, and verifies every admi
 The bounded root-rewrap executor records an immutable transition/v2 successor through
 the shared maintenance and activation machinery. Host publication remains separate.
 A separate internal batch API reseals current frames between payload generations and preserves search headers.
-Payload-rotation and search-reindex executors remain SPECIFIED.
+Read-only payload planning pins exact retained custody, source observations,
+aggregate logical batch limits and measured costs. It reserves distinct preparation
+and successor identities. The staged executor, sealed activation artifact and
+search-reindex executor remain SPECIFIED.
 See [lifecycle](../lifecycle.md#changes-and-rotation) for recovery and publication boundaries.
 [Security](../security.md#cryptographic-format) owns framing, commitments, keys, and failure rules.
 Generic CHECK/FK/default/collation preservation remains UNKNOWN. [Lifecycle](../lifecycle.md) states the verifier's actual checks.
