@@ -183,7 +183,11 @@ and reverse catalog snapshot structure before connection. This prevents empty
 model inventories from making metadata inspection vacuous. Structural validity
 does not authenticate a host artifact or replace live catalog and policy checks.
 Restore adoption applies the same contract before accepting its explicit CHECK
-restatements. This binds recorded catalog facts, not the bodies of external
+restatements. Only known PostgreSQL 16 forms of the declared frame check can pass.
+Malformed-frame probes supplement exact text admission. They do not establish SQL
+equivalence. Protected deployment admission and reverse execution check recorded
+restatements against the source fields and policy, including bindings embedded in reverse
+plans. This binds recorded catalog facts, not the bodies of external
 functions, domain definitions, collation implementations, or index storage options.
 Status needs no keys and does not establish key custody or deployment-wide writer exclusion.
 After journal retirement, progress counters are unavailable rather than zero.

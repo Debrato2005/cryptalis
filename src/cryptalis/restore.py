@@ -12,10 +12,11 @@ retained frame with the retained key policy, and issues a binding that records:
 - every schema definition restatement that a logical dump and restore caused.
 
 A logical dump and restore can restate a compiler frame ``CHECK`` with a
-different boolean grouping. Adoption accepts that restatement only when every
-other schema fact is structurally equal and the restored constraint rejects
-crafted malformed frames by savepoint probes. Every other definition change is
-refused with ``restored_definition_restatement_unsupported``.
+different boolean grouping. Adoption accepts only known PG16 forms of the
+declared frame policy, with every other schema fact structurally equal. The
+restored constraint must also reject malformed frames by savepoint probes.
+Every other definition change is refused with
+``restored_definition_restatement_unsupported``.
 
 The binding changes the evaluated deployment target only. The source plan,
 pin, and journal stay unchanged. Journal rows remain progress and recovery
@@ -30,7 +31,9 @@ import hashlib
 import json
 from uuid import UUID
 
+from sqlalchemy.dialects import postgresql
 
+from cryptalis._sqlalchemy_search import _frame_expressions
 from cryptalis import migration as m
 from cryptalis.crypto import CryptoFailure
 from cryptalis.crypto.cf1 import FieldDescriptor, open_text
@@ -166,6 +169,13 @@ def _identity(source, binding):
             or binding.source_operation_id != source.operation_id
             or binding.source_target != source.document['target']):
         raise m.TransitionFailure('restore_binding_mismatch', source.operation_id)
+    fields = {(model['table_id'], field['payload_column'] + '_frame'): field
+              for model in source.document['lock']['models'] for field in model['fields']}
+    quote = postgresql.dialect().identifier_preparer.quote
+    for item in binding.document['restatements']:
+        field = fields.get((item['model'], item['name']))
+        if field is None or _frame_expression(item['definition']) not in _frame_expressions(field, quote):
+            raise m.TransitionFailure('restored_definition_restatement_unsupported', source.operation_id)
     return binding.target
 
 
@@ -209,7 +219,7 @@ def _schema_evidence(c, source, state):
 
     Column ordinal numbers are physical slots; a logical restore compacts
     them. Only frame ``CHECK`` constraints may differ in their textual
-    definition, and only after probe verification.
+    definition, and only within the known PG16 policy forms with probe evidence.
     """
     restatements = []
     for model in source.document['lock']['models']:
@@ -221,23 +231,32 @@ def _schema_evidence(c, source, state):
                 or _strip_attnum(observed['columns']) != _strip_attnum(recorded['columns'])):
             raise m.TransitionFailure('restored_schema_mismatch', source.operation_id)
         for kind in ('constraints', 'indexes'):
-            observed_items = {item['name']: item for item in observed[kind]}
-            recorded_items = {item['name']: item for item in recorded[kind]}
+            def identity(item):
+                return (item['schema'], item['table'], item['name']) if kind == 'constraints' else item['name']
+            observed_items = {identity(item): item for item in observed[kind]}
+            recorded_items = {identity(item): item for item in recorded[kind]}
             if set(observed_items) != set(recorded_items):
                 raise m.TransitionFailure('restored_schema_mismatch', source.operation_id)
-            for name in sorted(observed_items):
-                live, saved = dict(observed_items[name]), dict(recorded_items[name])
+            for key in sorted(observed_items):
+                live, saved = dict(observed_items[key]), dict(recorded_items[key])
+                name = live['name']
                 live_digest, saved_digest = live.pop('definition_digest'), saved.pop('definition_digest')
                 if live != saved:
                     raise m.TransitionFailure('restored_schema_mismatch', source.operation_id)
                 if live_digest == saved_digest:
                     continue
-                if kind == 'constraints' and name.startswith('_cryptalis_') and name.endswith('_frame'):
+                field = next((field for field in model['fields']
+                              if field['payload_column'] + '_frame' == name), None)
+                if (kind == 'constraints' and field is not None
+                        and key == (model['schema'], model['table'], name)):
                     with _catalog_path(c):
                         definition = c.exec_driver_sql(
                             'SELECT pg_catalog.pg_get_constraintdef(c.oid) FROM pg_catalog.pg_constraint c '
                             'WHERE c.conrelid=pg_catalog.to_regclass(%s) AND c.conname=%s',
                             (m._table(c, model), name)).scalar_one()
+                    if _frame_expression(definition) not in _frame_expressions(
+                            field, c.dialect.identifier_preparer.quote):
+                        raise m.TransitionFailure('restored_definition_restatement_unsupported', source.operation_id)
                     restatements.append({'model': model['table_id'], 'kind': kind, 'name': name,
                                          'recorded_digest': saved_digest, 'observed_digest': live_digest,
                                          'definition': definition})
@@ -272,8 +291,8 @@ def _attempt_rejection(c, source, table, column, record_column, identity, expres
 def _probe_frame_checks(c, source, restatements):
     """Verify each restated frame CHECK rejects crafted malformed frames.
 
-    The probes write only inside savepoints and roll them back. They qualify
-    the restored constraint behavior, not its definition text.
+    The probes write only inside savepoints and roll them back. They supplement
+    exact policy admission and do not establish general SQL equivalence.
     """
     for restatement in restatements:
         model = next(model for model in source.document['lock']['models']
@@ -304,7 +323,12 @@ def _probe_frame_checks(c, source, restatements):
 
 def _check_schema(c, source, state, binding):
     """Later operations must observe the same structure the adoption approved."""
-    observed = _schema_evidence(c, source, state)
+    try:
+        observed = _schema_evidence(c, source, state)
+    except m.TransitionFailure as exc:
+        if exc.code == 'restored_definition_restatement_unsupported':
+            raise m.TransitionFailure('restored_schema_changed', source.operation_id) from None
+        raise
     recorded = binding.document['restatements']
     if (sorted(map(_restatement_key, observed)) != sorted(map(_restatement_key, recorded))):
         raise m.TransitionFailure('restored_schema_changed', source.operation_id)

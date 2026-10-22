@@ -128,7 +128,8 @@ def validate_search_storage(connection, model, field, *, admitted=None):
 
     ``admitted`` is an inspected restatement from an adopted
     ``cryptalis.restore/v1`` binding. The live definition must equal the
-    adopted text exactly; adoption qualified that text with savepoint probes.
+    adopted text exactly and belong to the declared policy's known PG16 forms.
+    Adoption also checks malformed frames with savepoint probes.
     """
     with _catalog_path(connection):
         _validate_search_storage(connection, model, field)
@@ -171,23 +172,34 @@ def validate_frame_storage(connection, model, field, *, admitted=None):
         _validate_frame_storage(connection, model, field, admitted=admitted)
 
 
+def _frame_expressions(field, quote):
+    """Known PG16 forms of one declared CF1 policy, including dump/restore."""
+    column = quote(field['column'])
+    overhead = 74 if field['queries'] else 42
+    magic = '434631000101' if field['queries'] else '434631000100'
+    comparison = '<>' if field['queries'] else '='
+    terms = [f'(octet_length({column}) >= {overhead})',
+             f'(octet_length({column}) <= {16777216 + overhead})',
+             f"(\"substring\"({column}, 1, 6) = decode('{magic}'::text, 'hex'::text))",
+             f"(\"substring\"({column}, 7, 4) <> decode('00000000'::text, 'hex'::text))",
+             f"(\"substring\"({column}, 11, 4) {comparison} decode('00000000'::text, 'hex'::text))"]
+    nested = f'({terms[0]} AND {terms[1]}) AND ' + ' AND '.join(terms[2:])
+    flattened = ' AND '.join(terms)
+    return tuple(f'(({column} IS NULL) OR ({body}))' for body in (nested, flattened))
+
+
 def _validate_frame_storage(connection, model, field, *, admitted=None):
     quote = connection.dialect.identifier_preparer.quote
     target = connection.dialect.identifier_preparer.quote_identifier(model['schema']) + '.' + connection.dialect.identifier_preparer.quote_identifier(model['table'])
-    column = quote(field['column'])
     suffix = field['field_id'].replace('-', '')
     check = connection.exec_driver_sql("""
         SELECT convalidated, connoinherit, pg_catalog.pg_get_expr(conbin, conrelid)
         FROM pg_catalog.pg_constraint WHERE conrelid=pg_catalog.to_regclass(%s)
         AND conname=%s AND contype='c'
         """, (target, "_cryptalis_" + suffix + "_frame")).one_or_none()
-    overhead = 74 if field['queries'] else 42
-    magic = '434631000101' if field['queries'] else '434631000100'
-    comparison = '<>' if field['queries'] else '='
-    expected_check = (admitted if admitted is not None else
-                      f"(({column} IS NULL) OR (((octet_length({column}) >= {overhead}) AND (octet_length({column}) <= {16777216 + overhead})) "
-                      f"AND (\"substring\"({column}, 1, 6) = decode('{magic}'::text, 'hex'::text)) "
-                      f"AND (\"substring\"({column}, 7, 4) <> decode('00000000'::text, 'hex'::text)) "
-                      f"AND (\"substring\"({column}, 11, 4) {comparison} decode('00000000'::text, 'hex'::text))))")
+    forms = _frame_expressions(field, quote)
+    if admitted is not None and admitted not in forms:
+        raise ValueError('Unqualified framing check')
+    expected_check = forms[0] if admitted is None else admitted
     if check is None or tuple(check) != (True, False, expected_check):
         raise ValueError("Unqualified framing check")

@@ -248,10 +248,11 @@ the restored source journal state digest, the retained custody set, and each res
 compiler frame `CHECK`.
 
 A logical dump and restore can restate a frame `CHECK` with different boolean grouping.
-Adoption accepts only frame `CHECK` restatements, and only when every other schema fact is
-structurally equal and savepoint probes prove that the restored constraint still rejects
-crafted malformed frames: a truncated frame, a zeroed frame-id byte, a zeroed payload
-length field, and the same payload probe on a query field. The probes write and roll back
+Adoption accepts only the known PostgreSQL 16 nested and flattened forms of the declared
+frame `CHECK`. Length bounds, header bytes, generation checks, and identifier quoting must
+match. Every other schema fact must remain structurally equal. Savepoint probes also
+check rejection of a truncated frame, a changed magic byte, a zero payload generation,
+and a zero search generation on a query field. The probes write and roll back
 inside savepoints and accept only SQLSTATE 23514. A restated frame without a retained row,
 a failed probe, or any other definition change is refused with
 `restored_constraint_probe_failed` or `restored_definition_restatement_unsupported`.
@@ -261,7 +262,9 @@ so a stale, cloned, tampered, or drifted copy is refused with a typed failure.
 Attachment accepts `(plan, pin, binding)`. The binding changes the evaluated target only:
 the source plan, pin, and journal are unchanged, and a binding never authorizes a different
 source. Reverse `plan(..., restore=binding)` records the binding in the reverse artifact and
-re-checks the binding identity against the source pin.
+re-checks the binding identity against the source pin. Protected deployment admission and
+reverse execution also check each recorded restatement against the source field and known
+forms. An older binding cannot authorize weaker bounds because its finite probes passed.
 
 **Evidence:** the qualification module refuses missing or unfenced approval, the current
 source, tampered bindings, and corrupt frames; it then refuses post-adoption structural
@@ -278,7 +281,8 @@ removal, schema-fact equality, native `psycopg` readback, and journal absence. R
 **Limits:** the host asserts source fencing and quarantine; this package does not
 authenticate either and has no cryptographic evidence of source isolation. Adoption
 refuses a restated constraint without a retained frame row,
-and it qualifies restated text behaviorally, not textually. Physical column order and
+and it admits two exact forms rather than general SQL equivalence. The probes cover only
+the named malformed frames. Physical column order and
 owned-sequence capture remain.
 
 ### Independent application exit: 2026-10-19

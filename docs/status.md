@@ -9,6 +9,54 @@ No PostgreSQL/provider/runtime cell, production key provider, independent review
 VERIFIED below refers only to the named checks and their exact revisions.
 All other contract and promotion requirements are SPECIFIED. All seven full gates remain UNKNOWN.
 
+## Restore frame policy admission: 2026-10-22
+
+**IMPLEMENTED:** restore adoption accepts two exact PostgreSQL 16 forms of the
+declared CF1 frame check. Both forms use the same length bounds, header bytes,
+generation rules, and quoted column. The shared storage check refuses any other
+admitted expression. Malformed-frame probes remain additional evidence.
+They cannot establish general SQL equivalence.
+
+Binding identity checks also compare every recorded restatement with its source
+field and known forms. This applies when a reverse plan embeds a restore binding.
+An older binding with weaker bounds cannot supply policy authority.
+Constraint comparison uses schema, table, and name so an incoming foreign key
+cannot hide a declared frame CHECK with the same name.
+
+**VERIFIED, initial fault reproduction:** the native isolated-cluster run passes
+ten existing controls and reproduces four false acceptances. Lowering the minimum
+frame length by one or raising the maximum by one still passed the finite probes.
+Adoption issued a binding, and a matching older binding passed deployment checks.
+The source journal and retained values stayed unchanged in these controls.
+The same run records the exact flattened PostgreSQL expression used by the fix.
+
+Evidence: [initial export](_reset/fresh-cluster-export-20261022-26.json) and
+[initial restore controls](_reset/fresh-cluster-restore-20261022-26.json).
+
+**VERIFIED, corrected local controls:** 172 native storage and lifecycle tests pass.
+Both text and VARCHAR fresh-cluster paths pass one export and 15 restore cases.
+These include the four refusals, the valid same-name foreign key, and the full
+adopted attach/search/edit/decrypt-back/removal path. The native restored expression
+matches the known flattened form exactly. Journal and row snapshots stay unchanged
+on refusal. The pinned Smolink lifecycle also passes in its existing alternate
+Python 3.13 / SQLAlchemy 2.0.51 cell.
+
+The wheel and sdist build reproducibly. The installed-wheel check matches 32 files
+and starts the CLI. No new dependency, artifact format, provider, or publication
+authority is introduced.
+
+The [full native suite](_reset/frame-policy-full-sa21-20261022.json) passes
+**1,567 tests and 18 subtests**, with three separate-environment skips and
+48 existing SQLAlchemy warnings. All 97 Python files retain their start/end
+hashes. The wrapper records 279.31 seconds in the unchanged local dependency cell.
+All seven production gates remain UNKNOWN.
+
+Evidence: [focused controls](_reset/frame-policy-focused-20261022.json),
+[text restore](_reset/fresh-cluster-restore-20261022-27.json),
+[VARCHAR restore](_reset/fresh-cluster-restore-20261022-28.json),
+[Smolink](_reset/frame-policy-smolink-sa20-20261022.json), and
+[installed wheel](_reset/frame-policy-release-installed-20261022.json).
+
 ## Host plan input admission: 2026-10-22
 
 **IMPLEMENTED:** protection artifacts now pass compiler lock admission before

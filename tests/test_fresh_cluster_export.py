@@ -18,7 +18,7 @@ from sqlalchemy import String
 
 from cryptalis.sqlalchemy import attach
 from test_deprotection import catalog_metadata, column_acl
-from test_migration import application, keys, publish, run, TENANT
+from test_migration import application, keys, publish, run, TENANT, FIELD_ID
 
 if 'CRYPTALIS_FRESH_CLUSTER_DIR' not in os.environ:
     pytest.skip('run through scripts/fresh_cluster_qualification.py', allow_module_level=True)
@@ -28,6 +28,9 @@ EDITED_ID, ADDED_ID, DELETED_ID = UUID(int=101), UUID(int=999), UUID(int=106)
 
 def source_metadata_fixture(connection, schema, role):
     table = f'"{schema}".customer'
+    frame = '_cryptalis_' + FIELD_ID.hex + '_frame'
+    connection.exec_driver_sql(f'CREATE TABLE "{schema}".z_frame_reference '
+                               f'(customer_id uuid CONSTRAINT "{frame}" REFERENCES {table}(id))')
     connection.exec_driver_sql(f"COMMENT ON TABLE {table} IS 'table comment'")
     connection.exec_driver_sql(f"COMMENT ON COLUMN {table}.label IS 'plain column comment'")
     connection.exec_driver_sql(f"COMMENT ON COLUMN {table}.name IS 'protected column comment'")

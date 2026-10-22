@@ -329,6 +329,119 @@ def test_restored_target_refuses_post_adoption_drift():
         mapping.dispose()
 
 
+def _frame_policy_snapshot(owner, source):
+    model = source.document['lock']['models'][0]
+    field = model['fields'][0]
+    frame = field['payload_column'] + '_frame'
+    with owner.connect() as c:
+        table = m._table(c, model)
+        journal = m._journal(c, source)
+        with r._catalog_path(c):
+            definition, expression = c.exec_driver_sql(
+                'SELECT pg_catalog.pg_get_constraintdef(oid), '
+                'pg_catalog.pg_get_expr(conbin,conrelid) FROM pg_catalog.pg_constraint '
+                'WHERE conrelid=pg_catalog.to_regclass(%s) AND conname=%s',
+                (table, frame)).one()
+        recorded = c.exec_driver_sql(f'SELECT plan_digest,state FROM {journal} WHERE operation_id=%s',
+                                     (source.operation_id,)).one()
+        values = c.exec_driver_sql(f'SELECT * FROM {table} ORDER BY id').all()
+    return table, frame, definition, (tuple(recorded), values), expression
+
+
+def _replace_frame_policy(owner, table, frame, definition):
+    with owner.begin() as c:
+        c.exec_driver_sql(f'ALTER TABLE {table} DROP CONSTRAINT "{frame}"')
+        c.exec_driver_sql(f'ALTER TABLE {table} ADD CONSTRAINT "{frame}" {definition}')
+
+
+def test_restored_frame_expression_and_same_named_incoming_fk_remain_admitted():
+    from cryptalis._sqlalchemy_search import _frame_expressions
+    source, pin = artifacts()
+    owner = engine('CRYPTALIS_TEST_DATABASE_URL')
+    try:
+        model = source.document['lock']['models'][0]
+        field = model['fields'][0]
+        table, frame, definition, _, expression = _frame_policy_snapshot(owner, source)
+        canonical, flattened = _frame_expressions(field, owner.dialect.identifier_preparer.quote)
+        assert expression == flattened, expression
+        assert expression != canonical
+        with owner.connect() as c:
+            identities = c.exec_driver_sql(
+                'SELECT t.relname, co.contype FROM pg_catalog.pg_constraint co '
+                'JOIN pg_catalog.pg_class t ON t.oid=co.conrelid '
+                'WHERE co.conname=%s AND (co.conrelid=pg_catalog.to_regclass(%s) '
+                'OR co.confrelid=pg_catalog.to_regclass(%s)) ORDER BY t.relname',
+                (frame, table, table)).all()
+        assert [tuple(row) for row in identities] == [('customer', 'c'), ('z_frame_reference', 'f')]
+        binding = r.plan(source, owner, pin=pin, keys=keys, approval=approval())
+        restatements = [item for item in binding.document['restatements']
+                        if item['model'] == model['table_id'] and item['name'] == frame]
+        assert len(restatements) == 1
+        assert restatements[0]['definition'] == definition
+        assert m.check_deployment(source, owner, pin=pin, restore=binding) is None
+    finally:
+        owner.dispose()
+
+
+@pytest.mark.parametrize('old_bound,new_bound', [('>= 74', '>= 73'),
+                                               ('<= 16777290', '<= 16777291')])
+def test_restore_adoption_refuses_weaker_bounds_with_original_journal(old_bound, new_bound):
+    source, pin = artifacts()
+    owner = engine('CRYPTALIS_TEST_DATABASE_URL')
+    changed = False
+    try:
+        # Establish valid admission before changing only the framing policy.
+        assert r.plan(source, owner, pin=pin, keys=keys, approval=approval()).source_plan_digest == source.digest
+        table, frame, definition, before, _ = _frame_policy_snapshot(owner, source)
+        weaker = definition.replace(old_bound, new_bound)
+        assert weaker != definition
+        _replace_frame_policy(owner, table, frame, weaker)
+        changed = True
+        assert _frame_policy_snapshot(owner, source)[3] == before
+        with pytest.raises(m.TransitionFailure):
+            r.plan(source, owner, pin=pin, keys=keys, approval=approval())
+        assert _frame_policy_snapshot(owner, source)[3] == before
+    finally:
+        try:
+            if changed:
+                _replace_frame_policy(owner, table, frame, definition)
+        finally:
+            owner.dispose()
+
+
+@pytest.mark.parametrize('old_bound,new_bound', [('>= 74', '>= 73'),
+                                               ('<= 16777290', '<= 16777291')])
+def test_previously_adopted_weaker_bounds_cannot_admit_deployment(old_bound, new_bound):
+    source, pin = artifacts()
+    owner = engine('CRYPTALIS_TEST_DATABASE_URL')
+    changed = False
+    try:
+        binding = r.plan(source, owner, pin=pin, keys=keys, approval=approval())
+        table, frame, definition, before, _ = _frame_policy_snapshot(owner, source)
+        weaker = definition.replace(old_bound, new_bound)
+        assert weaker != definition
+        document = binding.document
+        item = next(item for item in document['restatements'] if item['name'] == frame)
+        item['definition'] = weaker
+        item['observed_digest'] = m._hash(weaker)
+        # This models an old binding that finite malformed-frame probes could
+        # issue. Its source journal and host approval remain unchanged.
+        assert item['probe'] == 'rejected-malformed-frames'
+        _replace_frame_policy(owner, table, frame, weaker)
+        changed = True
+        assert _frame_policy_snapshot(owner, source)[3] == before
+        with pytest.raises(m.TransitionFailure):
+            previous = r.RestoreBinding(_canonical(document))
+            m.check_deployment(source, owner, pin=pin, restore=previous)
+        assert _frame_policy_snapshot(owner, source)[3] == before
+    finally:
+        try:
+            if changed:
+                _replace_frame_policy(owner, table, frame, definition)
+        finally:
+            owner.dispose()
+
+
 def test_restored_cluster_completes_adopted_lifecycle():
     source, pin = artifacts()
     owner, runtime = engine('CRYPTALIS_TEST_DATABASE_URL'), engine('CRYPTALIS_TEST_RUNTIME_DATABASE_URL')
