@@ -87,6 +87,11 @@ def _check_unicode(value: object) -> None:
 
 def decode_manifest_json(raw: bytes) -> dict[str, object]:
     """Decode bounded UTF-8 JSON; semantic manifest schema checks are separate."""
+    return _decode_json(raw, parse_float=_reject_non_integer)
+
+
+def _decode_json(raw: bytes, *, parse_float) -> dict[str, object]:
+    """Share structural bounds without changing the manifest number contract."""
     if not isinstance(raw, bytes):
         raise ManifestInvalid("Manifest input must be bytes")
     if len(raw) > MAX_DOCUMENT_BYTES:
@@ -99,7 +104,7 @@ def decode_manifest_json(raw: bytes) -> dict[str, object]:
             raw.decode("utf-8"),
             object_pairs_hook=_unique_object,
             parse_int=_parse_counter,
-            parse_float=_reject_non_integer,
+            parse_float=parse_float,
             parse_constant=_reject_non_integer,
         )
     except (UnicodeDecodeError, json.JSONDecodeError):

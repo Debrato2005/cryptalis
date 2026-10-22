@@ -96,3 +96,12 @@ from cryptalis.migration import status
 observed = status(p, owner_engine, pin=active_pin)
 assert observed.verification == "NOT_PERFORMED"
 ```
+
+## Measured throughput
+
+Use positive finite integer or floating-point observations for measured rows per second.
+The saved plan retains the supplied rates, including a rate below one row per second.
+Pause estimates round the calculated time to whole seconds.
+Protection and reverse plan readers accept these rate fields after artifact reload.
+Other numeric fields retain their integer-only format.
+These estimates are planning observations, not pause limits or deployment qualification.

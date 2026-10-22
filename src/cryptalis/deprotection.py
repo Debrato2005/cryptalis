@@ -34,7 +34,6 @@ from sqlalchemy.exc import SQLAlchemyError
 from cryptalis import migration as m
 from cryptalis.crypto.cf1 import FieldDescriptor, open_text
 from cryptalis.manifest.compiler import _canonical, _previous_lock, source_metadata
-from cryptalis.manifest.parser import decode_manifest_json
 
 FORMAT = 'cryptalis.reverse/v1'
 PHASES = ('PREPARED', 'EXPANDED', 'BACKFILLED', 'VERIFIED',
@@ -48,7 +47,7 @@ class DeprotectionPlan:
 
     def __post_init__(self):
         try:
-            document = decode_manifest_json(self.artifact)
+            document = m._decode_transition_json(self.artifact)
             if (document.get('format') != FORMAT or document.get('kind') != 'deprotect'
                     or _canonical(document) != self.artifact):
                 raise ValueError

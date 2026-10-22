@@ -9,6 +9,52 @@ No PostgreSQL/provider/runtime cell, production key provider, independent review
 VERIFIED below refers only to the named checks and their exact revisions.
 All other contract and promotion requirements are SPECIFIED. All seven full gates remain UNKNOWN.
 
+## Fractional measured rates: 2026-10-22
+
+**IMPLEMENTED:** protection and reverse plans now reload their own decimal rate
+observations. Previously, both planners accepted finite floating-point inputs,
+but their artifact reader rejected every decimal JSON number.
+Even a measured rate of `1000.0` could not pass that reader.
+
+The transition reader shares the existing structural JSON limits.
+It admits positive finite decimals only in `estimates.backfill_rows_per_second`
+and `estimates.verify_rows_per_second`. A reverse artifact also admits those
+same paths inside its embedded `source_plan`. Counters, target facts, locks,
+and cryptographic policy keep their integer-only number contract.
+Manifest inspection also keeps its integer-only contract.
+The fix preserves the bytes and formats that the planners already emit.
+It does not introduce a new rate encoding or change cryptographic formats.
+
+**VERIFIED, local PostgreSQL 16 cell:** three lifecycle regressions first failed
+([negative control](_reset/transition-rates-red-20261022.json)).
+The corrected cases reload integer, integral-float, and fractional protection
+plans, then protect and decrypt-back through a fractional reverse plan.
+Independent native reads retain all seven current values in each case.
+Negative controls refuse floating counters, target ports, lock facts, zero and
+negative rates, NaN, infinity, and an overflowing exponent.
+The [focused parser, status CLI, and transition run](_reset/transition-rates-green-20261022-2.json) passes 157 tests.
+
+Throughput rates remain host observations. Pause estimates exclude drain, DDL,
+index builds, publication delays, and capacity guarantees.
+No production provider, authenticated deployment authority, or independent review
+is qualified. All seven full gates remain UNKNOWN.
+
+The full current-revision suite passes **1,363 tests and 18 subtests**, with two
+fresh-cluster modules skipped and 48 existing SQLAlchemy warnings.
+
+The [full receipt](_reset/transition-rates-full-sa21-20261022.json) records current source and test hashes.
+The run took 178.81 seconds on Python 3.12.3, SQLAlchemy 2.1.3, psycopg 3.3.6,
+and cryptography 50.0.2. No SQLAlchemy 2.0.51 rerun occurred.
+
+One [export](_reset/fresh-cluster-export-20261022-6.json) and seven
+[restore cases](_reset/fresh-cluster-restore-20261022-6.json) pass separately on a new PostgreSQL 16 cluster.
+These cases retain the historical integer-rate artifact path through restore adoption,
+status, decrypt-back, and package-free removal.
+
+The [repeat release builds](_reset/transition-rates-release-20261022.json) match. Archive checks, SBOM export, isolated CLI startup,
+and all 32 installed-file comparisons pass. Installation uses `--no-deps`.
+This evidence does not qualify runtime dependencies or a production deployment.
+
 ## Read-only protection status: 2026-10-22
 
 **IMPLEMENTED:** `cryptalis status PLAN --pin PIN --database-url-file PRIVATE_FILE`

@@ -21,10 +21,32 @@ from cryptalis.crypto.keys import CryptoFailure, Keyring
 from cryptalis.manifest.compiler import (compile_protection, _schema_facts, _canonical, _previous_lock,
                                           unrecorded_column_metadata, protected_extended_statistics,
                                           protected_owned_sequences, source_metadata)
-from cryptalis.manifest.parser import ManifestInvalid, decode_manifest_json
+from cryptalis.manifest.parser import ManifestInvalid, _decode_json
 
 JOURNAL = '_cryptalis_journal'
 PHASES = ('PREPARED', 'EXPANDED', 'BACKFILLED', 'VERIFIED', 'PENDING', 'ACTIVE')
+
+
+def _decode_transition_json(raw):
+    """Permit finite positive decimals only at measured throughput paths."""
+    document = _decode_json(raw, parse_float=float)
+    rate_paths = {prefix + ('estimates', name)
+                  for prefix in ((), ('source_plan',))
+                  for name in ('backfill_rows_per_second', 'verify_rows_per_second')}
+
+    def check(value, path):
+        if type(value) is float:
+            if path not in rate_paths or not math.isfinite(value) or value <= 0:
+                raise ManifestInvalid('Only measured transition rates permit finite positive decimals')
+        elif isinstance(value, dict):
+            for key, child in value.items():
+                check(child, path + (key,))
+        elif isinstance(value, list):
+            for i, child in enumerate(value):
+                check(child, path + (i,))
+
+    check(document, ())
+    return document
 
 
 class TransitionFailure(RuntimeError):
@@ -60,7 +82,7 @@ class MigrationPlan:
     artifact: bytes
     def __post_init__(self):
         try:
-            doc = decode_manifest_json(self.artifact)
+            doc = _decode_transition_json(self.artifact)
             if (set(doc) != {'format', 'kind', 'operation_id', 'target_id', 'target',
                             'runtime_role', 'journal_schema', 'lock', 'source_lock_digest',
                             'key_policies', 'scopes', 'estimates'}
