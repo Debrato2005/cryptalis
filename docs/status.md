@@ -9,6 +9,66 @@ No PostgreSQL/provider/runtime cell, production key provider, independent review
 VERIFIED below refers only to the named checks and their exact revisions.
 All other contract and promotion requirements are SPECIFIED. All seven full gates remain UNKNOWN.
 
+## Pending rewrap cancellation checkpoint: 2026-10-23
+
+**IMPLEMENTED, bounded native verification:** `rotation.abort_rewrap` cancels
+an exact PENDING successor under the republished source ACTIVE pin. The source
+pin supplies host authority. The deterministic successor selects shared executor
+locks, target/owner checks and the current verification estimate. Cancellation
+does not repeat historical protection work or require target-provider access.
+
+Under maintenance locks, cancellation checks exact source/successor digests and
+lineage, original source state, source policy and retained roots, current frames,
+membership, schema and guards. Source ACTIVE, guard removal and a retained
+ABORTED successor marker commit together. A terminal retry checks current source
+authority and leaves later application edits intact. A later operation that
+supersedes the source prevents an old retry from reviving it.
+Use the source plan and its current pin for read-only status. The canceled
+successor cannot activate. Generic protection abort remains a pre-switch operation.
+
+**VERIFIED:** all 18 initial cancellation cases pass. The expanded native run
+passes **177 cases** in 118.36 seconds across cancellation, cutover/planning,
+protection, reverse/removal and multi-table protection. Controls cover target
+outage, source outage, wrong keys/pins/approval, digest/link/guard/schema/frame
+and membership tampering, unknown operations, current pause admission, wrong
+native target before key access, and transaction rollback after guard removal.
+An actual proxy loses the terminal cancellation COMMIT reply. Inspection and
+retry retain the committed terminal state. A process dies after committed
+cancellation; an independent process reloads disk artifacts and resumes without
+target custody. Frame bytes and equality-index identity remain unchanged.
+A second rewrap can be canceled after application edits, then decrypt-back and
+approved removal recover the latest native values.
+
+After one additional multi-table/multi-tenant control, all **52 cancellation and
+cutover cases** pass in 38.39 seconds. The control rejects writes on both paused
+tables, then releases their shared guard function atomically. It preserves all
+three protected fields and independently decodes their public-fixture frames.
+Attached source-policy reads match both tenant datasets after cancellation.
+Product source is unchanged from the expanded run. The final receipt retains
+matching Python hashes.
+
+Initial controls failed because the API was absent. Review found a conservative
+pause refusal against historical protection estimates. Cancellation now uses the
+successor estimate after separate source-authority admission. One expanded
+invocation named a nonexistent test module and ran no tests. The corrected run
+above passes with matching start/end Python hashes.
+
+The updated wheel and sdist build reproducibly without network access. The
+installed-wheel check matches all 33 packaged files and starts its CLI under a
+fresh bytecode cache. Dependency installation remains outside that check.
+The full 1,647-test suite and text/VARCHAR fresh-cluster drills below precede
+this additive cancellation API. They were not repeated for this slice.
+Adopted-restore rewrap/cancellation, payload rotation, search reindex, production
+provider/host authority qualification and independent review remain open.
+All seven production gates remain UNKNOWN.
+
+Evidence: [initial controls](_reset/rewrap-abort-red-20261023.json),
+[first implementation](_reset/rewrap-abort-first-20261023.json),
+[invalid test path](_reset/rewrap-abort-focused-20261023.json),
+[expanded native run](_reset/rewrap-abort-focused-corrected-20261023.json),
+[final cancellation/cutover run](_reset/rewrap-abort-final-20261023.json), and
+[installed wheel](_reset/rewrap-abort-installed-wheel-20261023.json).
+
 ## Active root-rewrap checkpoint: 2026-10-23
 
 **IMPLEMENTED, bounded native verification:** a rewrap proposal now derives a
@@ -63,9 +123,10 @@ installed-wheel check matches all 33 packaged files, imports verified source
 under a fresh bytecode cache, starts the CLI and inspects the genesis manifest.
 Installation used `--no-deps` and does not qualify dependency installation.
 
-Pre-publication rewrap abort, rewrap on an adopted restored target, payload
+At this checkpoint, pre-publication rewrap abort, rewrap on an adopted restored target, payload
 rotation, search reindex, production provider qualification and independent
-review remain open. Host writer exclusion and publication remain operator
+review remained open. The later cancellation checkpoint above closes the bounded
+pending-abort gap. Host writer exclusion and publication remain operator
 assertions. The rotation build slice is incomplete. All seven gates remain UNKNOWN.
 
 Evidence: [initial acceptance](_reset/rewrap-execution-red-20261023.json),

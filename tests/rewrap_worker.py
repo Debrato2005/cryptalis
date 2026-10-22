@@ -52,7 +52,7 @@ def _execute(argv):
     connection_engine = None
     try:
         proposal_path, pin_path, approval_path, action, pause = argv
-        if action not in ('pending', 'activate') or pause not in ('pause', 'exit'):
+        if action not in ('pending', 'activate', 'abort') or pause not in ('pause', 'exit'):
             raise ValueError
         proposal = r.RewrapPlan(Path(proposal_path).read_bytes())
         successor = proposal.activation_plan
@@ -64,7 +64,14 @@ def _execute(argv):
         if action == 'activate' and pin.phase != 'ACTIVATING':
             raise m.TransitionFailure('matching_external_publication_required', successor.operation_id)
         connection_engine = engine('CRYPTALIS_TEST_DATABASE_URL')
-        if action == 'pending':
+        if action == 'abort':
+            result = r.abort_rewrap(proposal, connection_engine, keys=keys, pin=pin, approval=approval)
+            observed = m.status(proposal.source, connection_engine, pin=pin)
+            if result.phase != 'ABORTED' or observed.phase != 'ACTIVE':
+                raise m.TransitionFailure('worker_expected_aborted', successor.operation_id)
+            output = {'source_phase': observed.phase, 'phase': result.phase,
+                      'operation_id': str(successor.operation_id), 'digest': successor.digest}
+        elif action == 'pending':
             result = r.apply_rewrap(proposal, connection_engine, keys=keys,
                                     target_keys=target_keys, pin=pin, approval=approval)
             if result.phase != 'PENDING':

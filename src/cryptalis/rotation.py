@@ -343,3 +343,69 @@ def apply_rewrap(proposal, engine, *, keys, target_keys, pin, approval):
                                   (successor.operation_id, successor.digest, json.dumps(state)))
                 m._active_schema(c, successor, state)
         return m._progress(successor, state)
+
+
+def abort_rewrap(proposal, engine, *, keys, pin, approval):
+    """Cancel a PENDING successor under the republished source ACTIVE pin.
+
+    Keep writers stopped until this operation commits. Target custody is not
+    required. A terminal retry inspects current source authority without
+    restoring snapshot data or authenticating obsolete frame observations.
+    """
+    if type(proposal) is not RewrapPlan:
+        raise m.TransitionFailure('invalid_rewrap_plan')
+    source, successor = proposal.source, proposal.activation_plan
+    m._admit(source, pin)
+    if pin.phase != 'ACTIVE':
+        raise m.TransitionFailure('source_pin_must_be_active', source.operation_id)
+    expected_source = {'operation_id': str(source.operation_id), 'plan_digest': source.digest}
+    # Source ACTIVE is the external authority admitted above. This internal pin
+    # selects the immutable successor identity and its measured maintenance cost.
+    pending = m.DeploymentPin(successor.target_id, successor.operation_id, successor.digest, 'PREPARED')
+    with m._executor(successor, engine, pending, approval) as c:
+        with c.begin():
+            m._lock_tables(c, successor, verification=True)
+            row = c.exec_driver_sql(f'SELECT plan_digest,state FROM {m._journal(c,successor)} '
+                                    'WHERE operation_id=%s', (successor.operation_id,)).one_or_none()
+            original = c.exec_driver_sql(f'SELECT plan_digest,state FROM {m._journal(c,source)} '
+                                         'WHERE operation_id=%s', (source.operation_id,)).one_or_none()
+            if row is None or row[0] != successor.digest or original is None or original[0] != source.digest:
+                raise m.TransitionFailure('journal_identity_mismatch', successor.operation_id)
+            state, source_state = row[1], original[1]
+            if (type(state) is not dict or type(source_state) is not dict
+                    or state.get('rewrap_plan_digest') != proposal.digest):
+                raise m.TransitionFailure('rewrap_state_changed', successor.operation_id)
+            from cryptalis.deprotection import _inventory
+            if state.get('phase') == 'ABORTED':
+                if (state.get('aborted_to') != expected_source
+                        or m._hash(source_state) != proposal.document['journal_state_digest']):
+                    raise m.TransitionFailure('rewrap_abort_source_changed', successor.operation_id)
+                m._check_connection(source, c, pin)
+                _inventory(c, source, source, own=successor.operation_id)
+            else:
+                if state.get('phase') != 'PENDING':
+                    raise m.TransitionFailure('rewrap_abort_requires_pending', successor.operation_id)
+                m._state(c, successor, pending)
+                m._active_schema(c, successor, state)
+                for model in successor.document['lock']['models']:
+                    if m._check_guard(c, successor, model) != state['models'][model['table_id']]['guard']:
+                        raise m.TransitionFailure('writer_fence_changed', successor.operation_id)
+                restored = dict(source_state, phase='ACTIVE')
+                restored.pop('superseded_by', None)
+                if m._hash(restored) != proposal.document['journal_state_digest']:
+                    raise m.TransitionFailure('rewrap_abort_source_changed', successor.operation_id)
+                if _observe_active(c, source, keys) != successor.document['rewrap_observations']:
+                    raise m.TransitionFailure('rewrap_source_changed', successor.operation_id)
+                # This update is uncommitted. Any inventory, DDL or frame failure
+                # rolls back the source marker together with the successor fence.
+                m._save(c, source, restored)
+                _inventory(c, source, source, own=successor.operation_id)
+                m._lock_tables(c, successor)
+                m._drop_guards(c, successor)
+                for model in source.document['lock']['models']:
+                    if m._hash(m._facts(c, model)) != proposal.document['models'][model['table_id']]['schema']:
+                        raise m.TransitionFailure('rewrap_abort_schema_changed', successor.operation_id)
+                m._check_connection(source, c, pin)
+                state.update(phase='ABORTED', aborted_to=expected_source)
+                m._save(c, successor, state)
+        return m._progress(successor, state)

@@ -303,6 +303,10 @@ outside PostgreSQL. Shared activation authenticates target frames against the
 host artifact before removing writer guards. A journal claim supplies no current
 deployment authority. This establishes no production custody, stronger revocation,
 key deletion, or automatic retained-backup retirement.
+Pending cancellation requires the republished source ACTIVE pin and authenticates
+source policy, retained roots, frames, schema and lineage before guard removal.
+The target provider need not remain available. A terminal retry inspects current
+source authority and cannot revive a source superseded by a later operation.
 See [lifecycle](lifecycle.md#changes-and-rotation) and [status](status.md#active-root-rewrap-checkpoint-2026-10-23).
 **IMPLEMENTED, internal batch only:** `prepare_payload_rotation_batch(rows, field, tenant,
 source=..., target=...)` decodes each current frame under the exact source payload

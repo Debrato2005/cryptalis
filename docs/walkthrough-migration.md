@@ -169,8 +169,25 @@ After an uncertain commit, inspect the saved successor with `migration.status`.
 Resume `apply_rewrap` with the same proposal and a matching PREPARED or PENDING pin.
 Resume publication acknowledgement with the matching ACTIVATING pin.
 Keep the host pin consistent with the actual publication phase.
-Pre-publication rewrap abort and rewrap on an adopted restored target remain unsupported.
-Keep writers stopped and inspect or resume the pending operation.
+To cancel a PENDING rewrap, keep writers stopped and republish the exact source
+ACTIVE pin through the trusted host process. A saved stale pin alone supplies
+no current authority. Then use the original proposal and source keys:
+
+```python
+from cryptalis.rotation import abort_rewrap
+
+aborted = abort_rewrap(proposal, owner_engine, keys=source_keys,
+    pin=republished_source_active_pin, approval=approval)
+assert aborted.phase == "ABORTED"
+```
+
+Cancellation needs no target-provider call. It authenticates source policy and
+current data before atomically restoring the source journal and removing guards.
+The successor remains ABORTED and cannot activate. Inspect the source plan with
+`migration.status` and its current ACTIVE pin. A terminal cancellation retry
+inspects source authority without restoring old data or repeating a stale scan.
+An ACTIVE successor requires a new rewrap, rather than cancellation.
+Rewrap and cancellation on an adopted restored target remain unsupported.
 Retain predecessor artifacts and both custody policies for retained backups.
 Successful cutover does not authorize key deletion or establish stronger revocation.
 

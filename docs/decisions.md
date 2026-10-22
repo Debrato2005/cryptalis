@@ -144,3 +144,28 @@ old wrappers remain separate recovery dependencies. No wrapper/key deletion,
 automatic backup retirement, new authority service or stronger revocation
 guarantee follows from this format. Production providers, authenticated host
 publication and independent review remain UNKNOWN.
+
+## Pending root-rewrap cancellation: 2026-10-23
+
+**IMPLEMENTED, bounded native verification:** cancellation uses the original
+proposal and the exact source ACTIVE pin, republished by the trusted host while
+writers remain stopped. A successor pin cannot authorize source writers.
+The target provider can remain unavailable because cancellation changes no roots
+or frames. The source policy and retained readers must still authenticate data.
+
+Use the shared executor and maintenance approval. Under table locks, require the
+exact PENDING successor, source SUPERSEDED link, original source state digest,
+schema, guard, and proposal frame/membership observations. Restore the original
+source ACTIVE state and remove only successor guards in one transaction.
+Retain the successor as ABORTED with exact proposal and source linkage.
+An already-ACTIVE successor requires a new rewrap, rather than cancellation.
+An adopted restored target remains outside this cancellation contract.
+Admit the caller's source ACTIVE pin separately. The deterministic successor
+selects the shared executor identity and current verification cost. Its internal
+PREPARED pin supplies no host publication authority. Historical protection work
+does not repeat and supplies no cancellation pause estimate.
+
+A retry after an uncertain commit inspects the terminal marker and current
+source authority. It cannot reapply snapshot data or resurrect a source that
+a later operation superseded. Ordinary source edits after cancellation remain
+valid. Keep retained policies and backup dependencies until explicit retirement.

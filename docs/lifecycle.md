@@ -164,8 +164,17 @@ adoption, latest-value decrypt-back/removal and native metadata checks.
 Adoption refuses the original custody policy even though the root material matches.
 The process and provider fixtures use public synthetic roots. They establish
 no external custody or authenticated deployment authority.
-Rewrap on an adopted restored target and a pre-publication rewrap abort remain
-unimplemented. Keep writers stopped and inspect/resume pending publication.
+`abort_rewrap` cancels a PENDING successor only after the host republishes the
+exact source ACTIVE pin. It rechecks original source state, source keys,
+membership, frames, schema and guards under maintenance locks. Source ACTIVE,
+guard removal and the terminal ABORTED successor marker commit together.
+Target custody can remain unavailable. An uncertain retry inspects that marker
+and current source authority without replaying snapshot data. After ordinary
+source edits, repeat cancellation leaves those edits intact. A later operation
+that supersedes the source prevents an old cancellation from reviving it.
+Inspect current progress with the original source plan and current source pin.
+An ACTIVE successor requires a new rewrap rather than cancellation.
+Rewrap and cancellation on an adopted restored target remain unimplemented.
 After activation, a new rewrap can change custody again without rewriting data.
 All three rotation workflows and the full lifecycle gate remain incomplete.
 See [status](status.md#active-root-rewrap-checkpoint-2026-10-23).
