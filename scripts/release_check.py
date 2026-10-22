@@ -8,15 +8,18 @@ an already installed wheel in a clean interpreter. It does not publish.
 import argparse
 import base64
 import csv
+from email.parser import BytesParser
 import hashlib
 import io
 import json
 from pathlib import Path
 import shutil
+import stat
 import subprocess
 import sys
 import tarfile
 import tempfile
+import tomllib
 import zipfile
 
 
@@ -32,7 +35,9 @@ NETWORK_TERMS = ("import socket", "import subprocess", "import urllib", "import 
 def run(args, cwd=ROOT):
     result = subprocess.run(args, cwd=cwd, capture_output=True, text=True)
     if result.returncode != 0:
-        raise SystemExit(f"command failed: {' '.join(args)}\n{result.stderr.strip()}")
+        # Installer indexes and interpreter startup hooks can print credentials.
+        # Keep the tool and status observable without relaying raw diagnostics.
+        raise SystemExit(f"Release.CommandFailed: {Path(args[0]).name}; exit {result.returncode}")
     return result.stdout
 
 
@@ -46,8 +51,13 @@ def artifacts(directory):
 
 
 def check_names(names):
+    if len(names) != len(set(names)):
+        raise SystemExit("duplicate archive member")
     for name in names:
-        normalized = name.replace("\\", "/")
+        normalized = name.rstrip("/")
+        if (not normalized or "\\" in name or ":" in normalized.split("/")[0]
+                or any(part in ("", ".", "..") for part in normalized.split("/"))):
+            raise SystemExit(f"unsafe archive member: {name}")
         if any(part in normalized for part in FORBIDDEN_PARTS):
             raise SystemExit(f"forbidden archive member: {name}")
         if normalized.startswith(FORBIDDEN_PREFIXES):
@@ -60,27 +70,54 @@ def inspect_wheel(path):
     with zipfile.ZipFile(path) as archive:
         names = archive.namelist()
         check_names(names)
-        record = next(name for name in names if name.endswith(".dist-info/RECORD"))
+        for member in archive.infolist():
+            kind = stat.S_IFMT(member.external_attr >> 16)
+            if kind not in (0, stat.S_IFREG, stat.S_IFDIR):
+                raise SystemExit(f"unsafe wheel member type: {member.filename}")
+            if ((member.is_dir() and (member.file_size or kind == stat.S_IFREG))
+                    or (not member.is_dir() and kind == stat.S_IFDIR)):
+                raise SystemExit(f"invalid wheel directory entry: {member.filename}")
+        records = [name for name in names if name.endswith(".dist-info/RECORD")]
+        if len(records) != 1:
+            raise SystemExit("wheel must contain exactly one RECORD")
+        record = records[0]
         rows = list(csv.reader(io.StringIO(archive.read(record).decode("utf-8"))))
+        if any(len(row) != 3 for row in rows):
+            raise SystemExit("wheel RECORD rows must have three columns")
+        recorded = [row[0] for row in rows]
+        files = {member.filename for member in archive.infolist() if not member.is_dir()}
+        if len(recorded) != len(set(recorded)) or set(recorded) != files:
+            raise SystemExit("wheel RECORD must list every file exactly once")
         for name, hash_value, size in rows:
-            if not hash_value:
+            if name == record:
+                if hash_value or size:
+                    raise SystemExit("wheel RECORD cannot hash or size itself")
                 continue
-            algorithm, encoded = hash_value.split("=", 1)
-            if algorithm != "sha256":
-                raise SystemExit(f"unsupported RECORD hash: {hash_value}")
+            if not hash_value.startswith("sha256="):
+                raise SystemExit(f"wheel RECORD requires a SHA-256 hash: {name}")
+            encoded = hash_value.removeprefix("sha256=")
+            content = archive.read(name)
             expected = base64.urlsafe_b64encode(
-                hashlib.sha256(archive.read(name)).digest()).rstrip(b"=").decode("ascii")
+                hashlib.sha256(content).digest()).rstrip(b"=").decode("ascii")
             if encoded != expected:
                 raise SystemExit(f"wheel RECORD hash mismatch: {name}")
-            if size and int(size) != len(archive.read(name)):
+            if size != str(len(content)):
                 raise SystemExit(f"wheel RECORD size mismatch: {name}")
-        metadata = next(name for name in names if name.endswith(".dist-info/METADATA"))
-        entry = next(name for name in names if name.endswith(".dist-info/entry_points.txt"))
+        project = tomllib.loads((ROOT / "pyproject.toml").read_text())["project"]
+        info = f'{project["name"].replace("-", "_")}-{project["version"]}.dist-info'
+        info_roots = {part for name in names for part in name.split("/") if part.endswith(".dist-info")}
+        required = {f"{info}/{name}" for name in (
+            "RECORD", "METADATA", "WHEEL", "entry_points.txt", "licenses/LICENSE")}
+        if info_roots != {info} or not required <= files:
+            raise SystemExit("wheel distribution metadata is missing or mismatched")
+        metadata, entry = f"{info}/METADATA", f"{info}/entry_points.txt"
+        declared = BytesParser().parsebytes(archive.read(metadata))
+        if (declared.get_all("Name") != [project["name"]]
+                or declared.get_all("Version") != [project["version"]]):
+            raise SystemExit("wheel project name or version does not match pyproject.toml")
         package = [name for name in names if name.startswith("cryptalis/") and name.endswith(".py")]
         if not package:
             raise SystemExit("wheel contains no cryptalis package modules")
-        if not any(name.endswith("/licenses/LICENSE") for name in names):
-            raise SystemExit("wheel does not contain the license file")
         if ENTRY_POINT not in archive.read(entry).decode("utf-8"):
             raise SystemExit("wheel entry point is missing")
         return {"members": len(names), "modules": len(package),
@@ -91,11 +128,26 @@ def inspect_sdist(path):
     with tarfile.open(path, "r:gz") as archive:
         names = archive.getnames()
         check_names(names)
-        package = [name for name in names if "/src/cryptalis/" in name and name.endswith(".py")]
+        roots = {name.split("/", 1)[0] for name in names}
+        if len(roots) != 1:
+            raise SystemExit("sdist must contain exactly one root directory")
+        files = []
+        for member in archive.getmembers():
+            if not (member.isfile() or member.isdir()):
+                raise SystemExit(f"unsafe sdist member type: {member.name}")
+            relative = member.name.partition("/")[2]
+            if not relative:
+                if member.isdir():
+                    continue
+                raise SystemExit("sdist files must be inside the root directory")
+            check_names([relative])
+            if member.isfile():
+                files.append(relative)
+        package = [name for name in files if name.startswith("src/cryptalis/") and name.endswith(".py")]
         if not package:
             raise SystemExit("sdist contains no cryptalis package modules")
         required = ("pyproject.toml", "README.md", "LICENSE")
-        if not all(any(name.endswith("/" + item) for name in names) for item in required):
+        if not set(required) <= set(files):
             raise SystemExit("sdist is missing project metadata")
         return {"members": len(names), "modules": len(package)}
 
@@ -117,7 +169,8 @@ def build(directory):
 
 def source_hashes():
     paths = [ROOT / "pyproject.toml", ROOT / "LICENSE", ROOT / "README.md",
-             ROOT / "scripts" / "release_check.py"]
+             ROOT / "scripts" / "release_check.py",
+             ROOT / "scripts" / "test_release_check.py"]
     paths += sorted((ROOT / "src").rglob("*.py"))
     return {str(path.relative_to(ROOT)): digest(path) for path in paths}
 
@@ -131,6 +184,46 @@ def copied(first, output):
         shutil.copy2(path, target)
         written.append(target)
     return written
+
+
+def inspect_install(python, wheel, cwd):
+    # Compare installed bytes with the inspected wheel, rather than trusting the
+    # installed RECORD or an unrelated working package of the same version.
+    probe = '''import hashlib, importlib.metadata, json, pathlib, sys, zipfile
+root, wheel = (pathlib.Path(value).resolve() for value in sys.argv[1:])
+distribution = importlib.metadata.distribution("cryptalis")
+site = pathlib.Path(distribution.locate_file("")).resolve()
+if sys.prefix == sys.base_prefix or pathlib.Path(sys.prefix).resolve() not in site.parents:
+    raise SystemExit("installed package must reside in the selected virtual environment")
+with zipfile.ZipFile(wheel) as archive:
+    expected = {name for name in archive.namelist() if not name.endswith("/")
+                and not name.endswith(".dist-info/RECORD")}
+    for name in expected:
+        installed = pathlib.Path(distribution.locate_file(name))
+        if (not installed.is_file() or installed.is_symlink()
+                or site not in installed.resolve().parents
+                or hashlib.sha256(installed.read_bytes()).digest()
+                != hashlib.sha256(archive.read(name)).digest()):
+            raise SystemExit("installed artifact differs from wheel: " + name)
+    package_files = {str(path.relative_to(site)) for path in (site / "cryptalis").rglob("*")
+                     if path.is_file() and "__pycache__" not in path.parts}
+    if package_files != {name for name in expected if name.startswith("cryptalis/")}:
+        raise SystemExit("installed package contains unrecorded files")
+import cryptalis
+package = pathlib.Path(cryptalis.__file__).resolve()
+if root in package.parents or package != (site / "cryptalis/__init__.py").resolve():
+    raise SystemExit("imported package does not match the installed wheel")
+print(json.dumps({"package": str(package), "verified_files": len(expected)}))
+'''
+    # A preexisting unchecked-hash .pyc can override byte-identical source. Use
+    # a fresh cache for both checks so imports compile the verified source.
+    with tempfile.TemporaryDirectory(prefix="verified-source-", dir=cwd) as cache:
+        interpreter = [str(python), "-I", "-X", f"pycache_prefix={cache}"]
+        installed = json.loads(run(interpreter + ["-c", probe, str(ROOT), str(wheel)], cwd=cwd))
+        help_text = run(interpreter + ["-m", "cryptalis", "--help"], cwd=cwd)
+    if "usage: cryptalis" not in help_text:
+        raise SystemExit("installed CLI did not start")
+    return dict(installed, cli="passed", wheel_sha256=digest(wheel))
 
 
 def main():
@@ -172,17 +265,7 @@ def main():
         clean = "NOT MEASURED"
         if args.python:
             python = args.python.expanduser().absolute()
-            probe = (
-                "import pathlib, cryptalis, runpy, sys\n"
-                "root = pathlib.Path(sys.argv[1]).resolve()\n"
-                "package = pathlib.Path(cryptalis.__file__).resolve()\n"
-                "assert root not in package.parents and package.parent != root\n"
-                "print(package)\n")
-            installed = run([str(python), "-c", probe, str(ROOT)], cwd=base)
-            help_text = run([str(python), "-m", "cryptalis", "--help"], cwd=base)
-            if "usage: cryptalis" not in help_text:
-                raise SystemExit("installed CLI did not start")
-            clean = {"package": installed.strip(), "cli": "passed"}
+            clean = inspect_install(python, wheel, base)
         hashes = source_hashes()
         working = hashlib.sha256(json.dumps(hashes, sort_keys=True).encode()).hexdigest()
         receipt = {

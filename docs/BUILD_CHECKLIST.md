@@ -25,7 +25,13 @@ No objective is complete until its acceptance evidence and applicable gate pass.
   SQLAlchemy 2.1.3 and 2.0.51 profiles, psycopg 3.3.6, cryptography 50.0.2.
 - Release artifacts: reproducible wheel and sdist, verified `RECORD`, license
   metadata, and a CycloneDX 1.5 SBOM pass on the local cell. Provenance,
-  signing, publication identity, and independent rebuild remain UNKNOWN.
+  signing, publication identity, and independent rebuild remain UNKNOWN. The
+  2026-10-22 correction verifies complete wheel RECORD coverage and refuses unsafe
+  archive members. The installed-artifact correction compares the current wheel with
+  installed files and imports verified source under an isolated bytecode cache.
+  Scoped approved execution outside the sandbox restores both private-role probes
+  and Git writes. The current full suite passes 1,316 tests, with 2 fresh-cluster
+  modules skipped and 18 subtests passed; [receipt](_reset/resumed-full-sa21-20261022.json).
 - Implemented scope: text storage, exact equality, `IN`, tenant-scoped uniqueness,
   sync/async attachment, maintenance protection transition, in-place decrypt-back and
   additive removal for that transition format, an independent application lifecycle with
@@ -81,6 +87,8 @@ Requirement text is abbreviated. The full definitions remain in the research
 
 | Date | Research reference | Mechanism | Product files | Evidence | Status |
 |---|---|---|---|---|---|
+| 2026-10-22 | Installed-artifact identity audit | Compare installed bytes with the current wheel, refuse stale package files, isolate bytecode caches, and suppress raw child failure output | `scripts/release_check.py`; `scripts/test_release_check.py` | RED: 4 accepted artifact mutations, stale bytecode execution, and startup diagnostic exposure. GREEN: 11 test groups and actual offline uv install, 32 matched files, isolated CLI; [receipt](_reset/release-install-binding-20261022.json). No dependency or PostgreSQL qualification | VERIFIED, offline local cell; all gates UNKNOWN |
+| 2026-10-22 | Local artifact-integrity audit | Complete wheel RECORD coverage and strict wheel/sdist member inspection | `scripts/release_check.py`; `scripts/test_release_check.py` | RED: 25 failures and 4 errors. Review RED: 7 further failures. GREEN: 10 test groups, valid controls, matching offline repeat builds, SBOM; [receipt](_reset/release-integrity-20261022.json). PostgreSQL preflight failed, exit 2; full suite unrun | VERIFIED, offline local cell; all gates UNKNOWN |
 | 2026-10-21 | Local release-artifact slice | Reproducible wheel/sdist build, wheel `RECORD` verification, archive-member inspection, MIT license metadata, CycloneDX 1.5 SBOM, clean-venv import and CLI smoke | `pyproject.toml`; `scripts/release_check.py` | GREEN: two builds matched; wheel and sdist hashes recorded; clean venv imported the installed package and started the CLI; [receipt](_reset/release-check-20261021.json) | VERIFIED, local cell; G-RELEASE UNKNOWN |
 | 2026-10-19 | `debgh-workspace/cryptalis-research-lab` branch `accel/integration-s20-20261014`, commit `15cf040`; `candidate/src/cryptalis/deprotection.py` (retained-native) | Reverse lifecycle evaluated; product implements an in-place `cryptalis.reverse/v1` variant for the admitted transition format, with journal/pin/approval checks, verified chunked backfill, transactional switch, and approved removal | `src/cryptalis/deprotection.py`; `tests/test_deprotection.py` | GREEN: 7 focused and 1,299 full SA2.1; 7 focused and 1,271 passed + 28 skipped full SA2.0 | VERIFIED, bounded, local cell |
 | 2026-10-19 | `debgh-workspace/cryptalis-research-lab` branch `accel/integration-s20-20261014`, commit `15cf040`; `candidate/src/cryptalis/crypto/_payload_rotation.py`; test `test_payload_rotation_preparation.py` (native staging oracle omitted; product uses the in-place layout) | Inactive bounded payload-generation transform with exact source decode, target reseal, identity/header preservation, and lease recheck | `src/cryptalis/crypto/_payload_rotation.py`; `tests/test_payload_rotation_preparation.py` | GREEN: 40 focused SA2.1, 1,292 full SA2.1, 90 focused SA2.0 | VERIFIED, internal, local cell |

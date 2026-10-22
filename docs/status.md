@@ -9,6 +9,90 @@ No PostgreSQL/provider/runtime cell, production key provider, independent review
 VERIFIED below refers only to the named checks and their exact revisions.
 All other contract and promotion requirements are SPECIFIED. All seven full gates remain UNKNOWN.
 
+## Sandbox access recovery: 2026-10-22
+
+The user authorized repair of the execution blockers and resumption of engineering.
+Read-only inspection found correct filesystem ownership and readable credential files.
+The sandbox mounted `.git` read-only and denied TCP socket creation with errno 1.
+These observations identify execution restrictions, not a PostgreSQL authentication failure.
+
+**VERIFIED:** approved execution outside the sandbox creates and removes a temporary
+file in `.git`. The required `scripts/test_postgres.py --preflight-only` then passes
+both fresh private-role probes. Credentials, database configuration, host permissions,
+and sandbox policy remain unchanged. Ordinary repository reads still use the sandbox.
+Required database tests and Git writes use scoped approved execution.
+
+**VERIFIED, Python 3.12.3, SQLAlchemy 2.1.3, psycopg 3.3.6, cryptography 50.0.2:**
+the full wrapper run reports **1,316 passed, 2 skipped, 18 subtests passed** in
+188.95 seconds. The 48 warnings concern deprecated SQLAlchemy DISTINCT ON syntax.
+The two skipped modules require the separate fresh-cluster orchestrator.
+The [receipt](_reset/resumed-full-sa21-20261022.json) records current source hashes.
+The standalone release suite also passes all eleven test groups.
+
+The earlier failure receipts remain immutable historical evidence. Their blocked status
+does not describe the successful approved execution path. Production provider selection,
+deployment authority, and independent reviews remain external prerequisites.
+All seven full gates remain UNKNOWN.
+
+## Installed artifact identity: 2026-10-22
+
+**IMPLEMENTED:** `scripts/release_check.py --python PATH` compares installed file bytes
+with the wheel from the current build. It checks every original wheel file except installer-rewritten `RECORD`.
+It rejects extra package files and requires the selected virtual environment.
+It also checks the imported package origin. Isolated Python subprocesses use
+a fresh bytecode cache, so preexisting unchecked bytecode cannot replace verified source.
+The [receipt](_reset/release-install-binding-20261022.json) records the wheel hash and the number of compared files.
+
+**VERIFIED, offline local cell:** the standalone release suite passes eleven test groups.
+Four mutations previously passed incorrectly: changed module bytes, metadata, license,
+and an extra package module. The corrected checker refuses all four.
+A review probe showed that unchecked stale bytecode could execute despite matching
+source. The corrected checker ignores that bytecode and executes the verified source.
+An actual offline uv installation uses a new Python 3.13.12 environment.
+It passes all 32 file comparisons and the isolated CLI help check. Installation used `--no-deps`.
+This verifies package identity and the standard-library CLI, not runtime dependencies.
+
+A startup-hook negative control exposed raw child diagnostics on failure.
+Failures now report `Release.CommandFailed`, the tool name, and its exit status.
+The injected private marker stays absent from the checker output.
+Two builds also match, and archive inspection and SBOM export pass.
+
+**Limits:** this check trusts the interpreter, installer, and host filesystem.
+It does not sandbox Python startup hooks or prove dependency safety.
+No production runtime, independent rebuild, or publication authority is qualified.
+This checkpoint originally lacked PostgreSQL and Git access.
+The sandbox recovery above supplies the later full-suite evidence and Git write path.
+All seven full gates remain UNKNOWN.
+
+## Release archive integrity correction: 2026-10-22
+
+**IMPLEMENTED:** the release checker requires each wheel file exactly once in `RECORD`.
+Every file except `RECORD` requires its SHA-256 hash and exact size.
+Duplicate archive members, noncanonical paths, links, and special files are refused.
+Wheel metadata must match the project name and version in `pyproject.toml`.
+Directory entries must be empty and agree with their declared type.
+The sdist checker applies exclusions below its single root directory and requires
+project metadata at that root. These checks inspect archives without extraction.
+The checker targets Cryptalis's unsigned artifacts, not every permitted wheel variant.
+
+**VERIFIED, offline local cell:** the standalone command
+`.venv/bin/python scripts/test_release_check.py` passes ten test groups.
+Before the correction, the same tests reported 25 failing cases and four errors.
+Review exposed seven further failures for directory payloads and distribution metadata.
+The valid archive controls pass, including an empty wheel directory.
+Two offline builds produce identical wheel and sdist hashes, and both archives pass
+the corrected inspector. The SBOM export also passes. The [receipt](_reset/release-integrity-20261022.json) records source
+and test hashes, artifact hashes, commands, and verification limits.
+
+**BLOCKED:** `.venv/bin/python scripts/test_postgres.py --preflight-only` returns
+`OperationalError`, exit 2. The run does not retry or substitute a database.
+The full pytest suite remains unrun because its admission hook requires that preflight.
+No database-dependent implementation changes or capability claims follow.
+At this checkpoint, the optional clean-install probe lacked installed-artifact identity.
+The installed-artifact correction above closes that gap with its own evidence.
+Independent rebuild, publication, provider qualification, and human review remain open.
+All seven full gates remain UNKNOWN.
+
 ## Lock v2 metadata capture and restore: 2026-10-21
 
 **IMPLEMENTED:** new protection plans emit `cryptalis.lock/v2`. Each model records
