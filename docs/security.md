@@ -171,6 +171,10 @@ Protected ACTIVE and PENDING inspection derives its catalog contract from the
 host-supplied source lock and declared CF1 transformation. Matching edits to
 the live catalog and journal do not authorize extra columns, changed native
 definitions, weaker frame checks or indexes, or a rewritten pending writer fence.
+Paused protection and reverse operations also derive the writer fence from the
+host plan before committing progress. Replacing the function body or enabling
+definer security cannot become authorized through a matching journal snapshot.
+This check precedes backfill, verification, switching, abort and plaintext publication.
 Restore adoption applies the same contract before accepting its explicit CHECK
 restatements. This binds recorded catalog facts, not the bodies of external
 functions, domain definitions, collation implementations, or index storage options.

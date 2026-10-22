@@ -452,6 +452,17 @@ def _guard_facts(c,p,model):
     return list(row)+[[list(item) for item in inventory]]
 
 
+def _check_guard(c, p, model):
+    """The host plan defines the writer fence; the journal records continuity."""
+    guard = _guard_facts(c, p, model)
+    trigger, function = _guard_names(p, model)
+    expected = ['A', 62, True, 0, model['schema'], function, False,
+                ['search_path=pg_catalog'], _guard_body(p), p.document['target'][-1]]
+    if guard is None or guard[:10] != expected or len(guard[10]) != 1 or guard[10][0][0] != trigger:
+        raise TransitionFailure('writer_fence_changed', p.operation_id)
+    return guard
+
+
 def _lock_tables(c,p,*,verification=False):
     # EXCLUSIVE excludes even locking readers and privileged writers, while
     # plain SELECT retains ACCESS SHARE. DDL upgrades to ACCESS EXCLUSIVE.
@@ -556,7 +567,7 @@ def _expand(c,p):
 def _inspect_paused(c,p,state):
     for model in p.document['lock']['models']:
         observed=state['models'][model['table_id']]
-        if _guard_facts(c,p,model)!=observed['guard'] or not observed['guard'] or observed['guard'][0]!='A':
+        if _check_guard(c,p,model)!=observed['guard']:
             raise TransitionFailure('writer_fence_changed',p.operation_id)
         if _facts(c,model)!=observed['schema']: raise TransitionFailure('transition_schema_changed',p.operation_id)
 
@@ -689,12 +700,7 @@ def _protected_contract(c, p, model, facts, *, paused=False, admitted=None):
     if _metadata_diff(expected, observed):
         raise TransitionFailure('active_schema_mismatch', p.operation_id)
     if paused:
-        guard = _guard_facts(c, p, model)
-        trigger, function = _guard_names(p, model)
-        expected_guard = ['A', 62, True, 0, model['schema'], function, False,
-                          ['search_path=pg_catalog'], _guard_body(p), p.document['target'][-1]]
-        if guard is None or guard[:10] != expected_guard or len(guard[10]) != 1 or guard[10][0][0] != trigger:
-            raise TransitionFailure('writer_fence_changed', p.operation_id)
+        _check_guard(c, p, model)
 
 
 def _active_schema(c,p,state):

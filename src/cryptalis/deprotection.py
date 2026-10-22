@@ -612,8 +612,8 @@ def _switch(c, p, state, keys):
 def _inspect_plaintext(c, p, state, *, expect_guards):
     for model in p.document['lock']['models']:
         observed = state['models'][model['table_id']]
-        guard = m._guard_facts(c, p, model)
-        if ((expect_guards and (not guard or guard[0] != 'A' or guard != observed['guard']))
+        guard = m._check_guard(c, p, model) if expect_guards else m._guard_facts(c, p, model)
+        if ((expect_guards and guard != observed['guard'])
                 or (not expect_guards and guard is not None)):
             raise m.TransitionFailure('writer_fence_changed', p.operation_id)
         facts = m._facts(c, model)

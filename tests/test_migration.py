@@ -290,45 +290,35 @@ def test_sigkill_then_independent_process_resume(phase,tmp_path):
 def test_sigkill_inside_chunk_rolls_back_data_and_marker(tmp_path):
     with application() as app:
         run(app,'EXPANDED')
-        with app.owner.begin() as c:
-            # Real PostgreSQL delay keeps the SECOND chunk in flight. Trigger
-            # installation is intentional test-only failure injection.
-            c.exec_driver_sql(f'CREATE FUNCTION "{app.schema}".test_sleep() RETURNS trigger LANGUAGE plpgsql AS $$BEGIN IF NEW.id=\'00000000-0000-0000-0000-000000000066\'::uuid THEN PERFORM pg_sleep(1); END IF; RETURN NEW; END$$')
-            c.exec_driver_sql(f'CREATE TRIGGER test_sleep BEFORE UPDATE ON "{app.schema}".customer FOR EACH ROW EXECUTE FUNCTION "{app.schema}".test_sleep()')
-            # Account for this known test trigger in the observed schema only;
-            # an unrecorded trigger is separately rejected by schema admission.
-            from cryptalis.migration import _facts, _guard_facts
-            state=c.exec_driver_sql(f'SELECT state FROM "{app.schema}"._cryptalis_journal').scalar_one()
-            state['models'][str(TABLE_ID)]['schema']=_facts(c,app.plan.document['lock']['models'][0])
-            state['models'][str(TABLE_ID)]['guard']=_guard_facts(c,app.plan,app.plan.document['lock']['models'][0])
-            c.exec_driver_sql(f'UPDATE "{app.schema}"._cryptalis_journal SET state=%s::jsonb',(json.dumps(state),))
-        process=child(app,tmp_path)
-        try:
-            deadline=time.monotonic()+10
-            while True:
-                with app.owner.connect() as c:
-                    asleep=c.exec_driver_sql("SELECT count(*) FROM pg_catalog.pg_stat_activity WHERE usename=current_user AND wait_event='PgSleep' AND query LIKE %s",(f'UPDATE "{app.schema}"."customer"%',)).scalar_one()
-                if asleep: break
-                assert time.monotonic()<deadline,'executor did not reach injected PostgreSQL wait'
-                time.sleep(.02)
-            os.kill(process.pid,signal.SIGKILL); process.wait(timeout=10)
-            committed_before=frames(app)
-            with app.owner.begin() as c:
-                c.exec_driver_sql(f'LOCK TABLE "{app.schema}".customer IN ACCESS EXCLUSIVE MODE')
-                state=c.exec_driver_sql(f'SELECT state FROM "{app.schema}"._cryptalis_journal').scalar_one()
-                assert state['models'][str(TABLE_ID)]['rows']==2
-                assert c.exec_driver_sql(f'SELECT count(*) FROM "{app.schema}".customer WHERE "_cryptalis_{FIELD_ID.hex}" IS NOT NULL').scalar_one()==1
-                c.exec_driver_sql(f'DROP TRIGGER test_sleep ON "{app.schema}".customer')
-                c.exec_driver_sql(f'DROP FUNCTION "{app.schema}".test_sleep()')
-                state['models'][str(TABLE_ID)]['schema']=_facts(c,app.plan.document['lock']['models'][0])
-                state['models'][str(TABLE_ID)]['guard']=_guard_facts(c,app.plan,app.plan.document['lock']['models'][0])
-                c.exec_driver_sql(f'UPDATE "{app.schema}"._cryptalis_journal SET state=%s::jsonb',(json.dumps(state),))
-            resumed=child(app,tmp_path); stdout,stderr=resumed.communicate(timeout=20)
-            assert resumed.returncode==0,stderr
-            assert stdout.strip()=='PENDING'
-            assert frames(app,True)[UUID(int=101)]==committed_before[UUID(int=101)]
-        finally:
-            if process.poll() is None: process.kill(); process.wait(timeout=10)
+        with app.owner.connect() as blocker:
+            # The second chunk updates row 102, then waits on row 103. The
+            # native row lock leaves the admitted schema and fence unchanged.
+            blocker.exec_driver_sql(f'SELECT id FROM "{app.schema}".customer WHERE id=%s FOR UPDATE', (UUID(int=103),))
+            process=child(app,tmp_path)
+            try:
+                deadline=time.monotonic()+10
+                while True:
+                    with app.owner.connect() as c:
+                        waiting=c.exec_driver_sql("SELECT count(*) FROM pg_catalog.pg_stat_activity WHERE usename=current_user AND wait_event_type='Lock' AND query LIKE %s",(f'UPDATE "{app.schema}"."customer"%',)).scalar_one()
+                    if waiting: break
+                    assert time.monotonic()<deadline,'executor did not reach the PostgreSQL row lock'
+                    time.sleep(.02)
+                os.kill(process.pid,signal.SIGKILL); process.wait(timeout=10)
+                blocker.rollback()
+                committed_before=frames(app)
+                with app.owner.begin() as c:
+                    c.exec_driver_sql("SET LOCAL lock_timeout='5s'")
+                    c.exec_driver_sql(f'LOCK TABLE "{app.schema}".customer IN ACCESS EXCLUSIVE MODE')
+                    state=c.exec_driver_sql(f'SELECT state FROM "{app.schema}"._cryptalis_journal').scalar_one()
+                    assert state['models'][str(TABLE_ID)]['rows']==2
+                    assert c.exec_driver_sql(f'SELECT count(*) FROM "{app.schema}".customer WHERE "_cryptalis_{FIELD_ID.hex}" IS NOT NULL').scalar_one()==1
+                resumed=child(app,tmp_path); stdout,stderr=resumed.communicate(timeout=20)
+                assert resumed.returncode==0,stderr
+                assert stdout.strip()=='PENDING'
+                assert frames(app,True)[UUID(int=101)]==committed_before[UUID(int=101)]
+            finally:
+                if process.poll() is None: process.kill(); process.wait(timeout=10)
+                blocker.rollback()
 
 
 @pytest.mark.parametrize('phase',['EXPANDED','BACKFILLED','VERIFIED','PENDING'])
@@ -613,17 +603,16 @@ def test_abort_before_switch_preserves_native_values_and_runtime_writes():
 def test_missing_chunk_marker_write_rolls_back_actual_row_changes():
     with application() as app:
         run(app,'EXPANDED')
-        from cryptalis.migration import _facts, _guard_facts
         with app.owner.begin() as c:
-            c.exec_driver_sql(f'CREATE FUNCTION "{app.schema}".test_lose_marker() RETURNS trigger LANGUAGE plpgsql AS $$BEGIN DELETE FROM "{app.schema}"._cryptalis_journal; RETURN NEW; END$$')
-            c.exec_driver_sql(f'CREATE TRIGGER test_lose_marker BEFORE UPDATE ON "{app.schema}".customer FOR EACH ROW EXECUTE FUNCTION "{app.schema}".test_lose_marker()')
-            state=c.exec_driver_sql(f'SELECT state FROM "{app.schema}"._cryptalis_journal').scalar_one()
-            state['models'][str(TABLE_ID)]['schema']=_facts(c,app.plan.document['lock']['models'][0])
-            state['models'][str(TABLE_ID)]['guard']=_guard_facts(c,app.plan,app.plan.document['lock']['models'][0])
-            c.exec_driver_sql(f'UPDATE "{app.schema}"._cryptalis_journal SET state=%s::jsonb',(json.dumps(state),))
-        with pytest.raises(app.m.TransitionFailure): run(app)
+            c.exec_driver_sql(f'CREATE FUNCTION "{app.schema}".test_lose_marker() RETURNS trigger LANGUAGE plpgsql AS $$BEGIN RETURN NULL; END$$')
+            c.exec_driver_sql(f'CREATE TRIGGER test_lose_marker BEFORE UPDATE ON "{app.schema}"._cryptalis_journal FOR EACH ROW EXECUTE FUNCTION "{app.schema}".test_lose_marker()')
+        with pytest.raises(app.m.TransitionFailure, match='journal_marker_write_failed'): run(app)
         with app.owner.connect() as c:
             assert c.exec_driver_sql(f'SELECT count(*) FROM "{app.schema}"._cryptalis_journal').scalar_one()==1
+            state=c.exec_driver_sql(f'SELECT state FROM "{app.schema}"._cryptalis_journal').scalar_one()
+            assert state['phase']=='EXPANDED'
+            assert state['models'][str(TABLE_ID)]['rows']==0
+            assert state['models'][str(TABLE_ID)]['chunks']==0
             assert c.exec_driver_sql(f'SELECT count(*) FROM "{app.schema}".customer WHERE "_cryptalis_{FIELD_ID.hex}" IS NOT NULL').scalar_one()==0
 
 

@@ -9,6 +9,56 @@ No PostgreSQL/provider/runtime cell, production key provider, independent review
 VERIFIED below refers only to the named checks and their exact revisions.
 All other contract and promotion requirements are SPECIFIED. All seven full gates remain UNKNOWN.
 
+## Host-bound paused writer fence: 2026-10-22
+
+**IMPLEMENTED:** every paused protection and reverse inspection now checks the
+writer fence against the host plan. The shared check also runs before plaintext
+publication. It requires the operation's expected function body, invoker security,
+owner, search path, enabled statement trigger, and absence of extra user triggers.
+The journal's guard snapshot remains an additional continuity check.
+It cannot authorize a different function or trigger inventory.
+
+**VERIFIED:** 18 initial controls reproduced false acceptance. Two protection
+resumes committed PENDING before the previous final check detected the change.
+The correction moves admission before backfill, verification, switch, abort,
+status, and plaintext publication. All 22 adversarial cases now pass.
+Each case first observes SQLSTATE `55000` from the restricted runtime login.
+It then replaces the guard body or enables `SECURITY DEFINER` and forges the
+matching journal snapshot. The damaged guard admits an actual UPDATE.
+The probe write rolls back. The refused operation preserves journal state,
+counters, catalog, guard, and row values, including staging columns.
+
+Two revised fault controls also pass. A native row lock stops the second chunk
+after its first update; the test kills the worker and checks rollback before
+an independent process resumes. A journal trigger suppresses the marker update;
+the typed `journal_marker_write_failed` failure leaves zero committed rows,
+chunks, and frames. These controls replace application-trigger injections that
+the stricter fence admission now refuses.
+
+The pinned Smolink lifecycle passes in its existing alternate Python 3.13 /
+SQLAlchemy 2.0.51 cell. Both fresh-cluster paths pass one export and ten restore
+cases. The wheel and sdist build reproducibly; the installed-wheel check matches
+32 files against the wheel and starts the CLI.
+
+The [full native suite](_reset/paused-guard-full-sa21-20261022.json) passes
+**1,519 tests and 18 subtests**, with three separate-environment skips and
+48 existing SQLAlchemy warnings. The wrapper records 255.69 seconds.
+All 95 Python files retain their start/end hashes. The local dependency cell
+is unchanged. Independent release and provider qualification remain UNKNOWN.
+
+This check does not establish host writer exclusion or protect against an
+authorized owner changing the database after inspection. Other staged schema
+checks still use the recorded journal snapshot. Binding those facts
+to the host contract remains open. All seven production gates remain UNKNOWN.
+
+Evidence: [initial controls](_reset/paused-guard-red-20261022.json),
+[first integration run](_reset/paused-guard-focused-20261022.json), and
+[24 final controls](_reset/paused-guard-final-focused-20261022.json).
+Further evidence: [Smolink](_reset/paused-guard-smolink-sa20-20261022.json),
+[VARCHAR restore](_reset/fresh-cluster-restore-20261022-18.json),
+[text restore](_reset/fresh-cluster-restore-20261022-19.json), and
+[installed wheel](_reset/paused-guard-release-installed-20261022.json).
+
 ## Host-bound protected schema: 2026-10-22
 
 **IMPLEMENTED:** protection status, deployment checks, attachment, activation,

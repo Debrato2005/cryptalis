@@ -33,12 +33,12 @@ No objective is complete until its acceptance evidence and applicable gate pass.
   archive members. The installed-artifact correction compares the current wheel with
   installed files and imports verified source under an isolated bytecode cache.
   Scoped approved execution outside the sandbox restores both private-role probes
-  and Git writes. The current full suite passes 1,497 tests, with 3 separate-environment
-  tests skipped and 18 subtests passed; [receipt](_reset/active-contract-full-sa21-20261022.json).
+  and Git writes. The current full suite passes 1,519 tests, with 3 separate-environment
+  tests skipped and 18 subtests passed; [receipt](_reset/paused-guard-full-sa21-20261022.json).
   Each source type, historical text and native VARCHAR, passes one export and ten
   restore cases on a new cluster with metadata and approved status inspection;
-  current [VARCHAR](_reset/fresh-cluster-restore-20261022-16.json) and
-  [text](_reset/fresh-cluster-restore-20261022-17.json) receipts report matching start/end Python hashes.
+  current [VARCHAR](_reset/fresh-cluster-restore-20261022-18.json) and
+  [text](_reset/fresh-cluster-restore-20261022-19.json) receipts report matching start/end Python hashes.
 - Implemented scope: native text and VARCHAR storage, exact equality, `IN`, tenant-scoped uniqueness,
   sync/async attachment, maintenance protection transition, read-only transition status, in-place decrypt-back and
   additive removal for that transition format, an independent application lifecycle and
@@ -94,6 +94,7 @@ Requirement text is abbreviated. The full definitions remain in the research
 
 | Date | Research reference | Mechanism | Product files | Evidence | Status |
 |---|---|---|---|---|---|
+| 2026-10-22 | Host-bound paused writer fence | Share the host-derived guard check across protection and reverse paused operations and plaintext publication; retain journal continuity checks | Migration, reverse, native guard controls and revised crash/marker fault tests | 18 initial failures; 22 adversarial cases, two native fault controls, and 1,519 full tests plus 18 subtests pass; pinned Smolink and both fresh-cluster paths pass; [full](_reset/paused-guard-full-sa21-20261022.json) | VERIFIED for guard admission before progress; other staged schema authority remains open; all gates UNKNOWN |
 | 2026-10-22 | Host-bound protected catalog | Derive the protected catalog from the source lock; inspect generated frame checks, equality indexes and pending guards; retain explicit restore restatement admission | Compiler, migration, search, reverse and restore modules; native adversarial and fresh-cluster tests | 14 initial false acceptances; 89 lifecycle, 219 expanded and 1,497 full tests plus 18 subtests pass; pinned Smolink passes; each text/VARCHAR fresh cluster passes one export and ten restore cases; [full](_reset/active-contract-full-sa21-20261022.json) | VERIFIED for recorded catalog facts and declared CF1 objects; no key/value or transitive function evidence; all gates UNKNOWN |
 | 2026-10-22 | Verification source stability | Capture starting Python hashes and Git revision; compare final bytes; refuse success on changes while retaining the original pytest outcome | `scripts/test_postgres.py`, `tests/test_postgres_evidence.py` | Eight RED controls; 12 source-gate controls, ten real CLI tests, 1,459 full tests plus 18 subtests, pinned Smolink and both fresh-cluster paths pass; [focused](_reset/evidence-stability-final-focused-20261022.json) | VERIFIED for two-observation source admission; no full execution attestation; all gates UNKNOWN |
 | 2026-10-22 | Reverse operational status | Read-only snapshot of decrypt-back phases, source identity, counters, native metadata and terminal removal; existing CLI dispatches by artifact format | `deprotection.py`, `migration.py`, `cli.py`; native status/CLI and fresh-cluster tests | 81 focused, 41 adversarial, seven final metadata controls, and 1,447 full tests plus 18 subtests pass; [focused](_reset/reverse-status-green-20261022.json), [adversarial](_reset/reverse-status-adversarial-20261022.json); removed counters remain unavailable | VERIFIED for named local checks; no key/value/provider verification or deployment authority; full gates UNKNOWN |
