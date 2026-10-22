@@ -22,7 +22,7 @@ Reuse PostgreSQL, SQLAlchemy, library crypto, providers, and the existing deploy
 |---|---|
 | Behavior | Inspect one manifest, mapping, schema, and writer inventory. Emit a deterministic lock and semantic plan without database effects |
 | Dependencies | Approved stack and [scope](architecture/README.md#approved-scope). A native PostgreSQL application oracle with app-assigned keys and explicit tenancy |
-| Invariants | Text only. Stable typed identities. No guessed tenancy, silent equivalence change, removed constraint, or plan-time write |
+| Invariants | Text family only. Stable typed identities. No guessed tenancy, silent equivalence change, removed constraint, or plan-time write |
 | Tests | Inspect real PostgreSQL mappings for UUID/app-assigned IDs, tenant-column and explicit single-tenant tables, NULL/empty text, deterministic collation and scoped uniqueness. Compare plan facts with native schema |
 | Failure cases | Serial/identity/database-default keys, non-text types, small-domain searchable fields, missing tenancy/leakage acceptance, unknown writers, unsupported constraints, malformed or ambiguous declarations |
 | Definition of done | Freeze exact manifest/lock syntax and typed context descriptors. PostgreSQL acceptance/refusal cases pass. Plan explains every incompatibility plainly and leaves schema/data unchanged |

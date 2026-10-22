@@ -33,7 +33,7 @@ from sqlalchemy.exc import SQLAlchemyError
 
 from cryptalis import migration as m
 from cryptalis.crypto.cf1 import FieldDescriptor, open_text
-from cryptalis.manifest.compiler import _canonical, _previous_lock, source_metadata
+from cryptalis.manifest.compiler import _canonical, _native_text_length, _previous_lock, source_metadata
 
 FORMAT = 'cryptalis.reverse/v1'
 PHASES = ('PREPARED', 'EXPANDED', 'BACKFILLED', 'VERIFIED',
@@ -425,7 +425,9 @@ def _expand(c, p):
             if native['collation_name']:
                 collate = (' COLLATE ' + m._quote(c, native['collation_schema'])
                            + '.' + m._quote(c, native['collation_name']))
-            c.exec_driver_sql(f'ALTER TABLE {table} ADD COLUMN {m._quote(c, _staging(field))} text{collate}')
+            limit = _native_text_length(native)
+            native_type = 'pg_catalog.text' if native['type'] == 'text' else 'pg_catalog.varchar' + (f'({limit})' if limit is not None else '')
+            c.exec_driver_sql(f'ALTER TABLE {table} ADD COLUMN {m._quote(c, _staging(field))} {native_type}{collate}')
         models[model['table_id']] = {'scope': m._scope(c, model), 'cursor': None, 'rows': 0, 'chunks': 0,
                                      'schema': m._facts(c, model), 'guard': m._guard_facts(c, p, model)}
     state = {'phase': 'EXPANDED', 'models': models,

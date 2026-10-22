@@ -31,7 +31,7 @@ SUPPORTED selects design scope, not current product support.
 | Contract | Approved choice |
 |---|---|
 | Stack | Python 3.12+, SQLAlchemy 2.x, psycopg 3 sync and async, PostgreSQL 16 |
-| Protected type | Text only. Every other protected type is UNSUPPORTED BY DESIGN until admission |
+| Protected type | Native text and VARCHAR, with matching standard Text or String mappings. Other protected types remain UNSUPPORTED BY DESIGN until admission |
 | Capabilities | SUPPORTED: storage-only, equality/IN with simple negative forms, tenant-scoped uniqueness |
 | Tenancy | Every protected table declares a tenant column or declares itself single-tenant. The compiler never guesses tenant ownership |
 | Primary keys | Application-generated UUID, Snowflake-style, or another app-assigned ID. Reject serial, identity, and database-default-generated keys at plan time |
@@ -207,7 +207,9 @@ Queries permit `equality` and `unique`. An empty list means storage-only. Equali
 Unique implies equality and requires both leakage acknowledgments. `protect` must be true.
 Removal uses a semantic diff and a later verified transition.
 
-The lock schema is `cryptalis.lock/v2`. New plans emit v2; readers accept v1 and v2.
+Text-only plans emit `cryptalis.lock/v2`. Plans with native VARCHAR emit `cryptalis.lock/v3`
+and require `pg-varchar/v1`. Readers accept v1, v2, and v3.
+The [VARCHAR decision](../decisions.md#native-varchar-text-admission-2026-10-22) defines assignment and reader boundaries.
 Its exact top-level members are
 `schema`, `profile`, `domain_id`, `database`, `declaration`, `models`, `writer_inventory`, `search_reviews`, `ddl`, and `required_readers`.
 The declaration is canonical. Models contain `model`, `table_id`, `schema`, `table`, `record`, `tenancy`, `fields`, `source_schema`, and `source_metadata`.

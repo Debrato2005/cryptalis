@@ -20,7 +20,7 @@ import uuid
 
 import psycopg
 import pytest
-from sqlalchemy import Column, Index, MetaData, Table, Text, Uuid, create_engine, select
+from sqlalchemy import Column, Index, MetaData, String, Table, Text, Uuid, create_engine, select
 from sqlalchemy.orm import registry
 
 import cryptalis.migration as m
@@ -71,10 +71,15 @@ def artifacts():
     return source, pin
 
 
+def source_value_type():
+    return (String(MANIFEST['native_limit'], collation='C') if MANIFEST.get('native_type') == 'varchar'
+            else Text(collation='C'))
+
+
 def customer_mapping():
     mapping = registry(metadata=MetaData(schema=SCHEMA))
     table = Table('customer', mapping.metadata, Column('id', Uuid, primary_key=True, autoincrement=False),
-                  Column('tenant_id', Uuid, nullable=False), Column('name', Text(collation='C')),
+                  Column('tenant_id', Uuid, nullable=False), Column('name', source_value_type()),
                   Column('label', Text))
     Index('native_name', table.c.tenant_id, table.c.name, unique=True)
     class Customer: pass
@@ -148,7 +153,7 @@ def test_restored_journal_cannot_override_current_authority():
     owner, runtime = engine('CRYPTALIS_TEST_DATABASE_URL'), engine('CRYPTALIS_TEST_RUNTIME_DATABASE_URL')
     mapping = registry(metadata=MetaData(schema=SCHEMA))
     table = Table('customer', mapping.metadata, Column('id', Uuid, primary_key=True, autoincrement=False),
-                  Column('tenant_id', Uuid, nullable=False), Column('name', Text(collation='C')),
+                  Column('tenant_id', Uuid, nullable=False), Column('name', source_value_type()),
                   Column('label', Text))
     class Customer: pass
     mapping.map_imperatively(Customer, table)
@@ -329,10 +334,11 @@ def test_restored_cluster_completes_adopted_lifecycle():
         with psycopg.connect(**environment('CRYPTALIS_TEST_RUNTIME_DATABASE_URL')) as c:
             observed = {str(identity): [str(tenant), value] for identity, tenant, value in c.execute(
                 f'SELECT id, tenant_id, name FROM "{SCHEMA}".customer')}
-            kind = c.execute('SELECT data_type FROM information_schema.columns WHERE table_schema=%s '
-                             'AND table_name=%s AND column_name=%s', (SCHEMA, 'customer', 'name')).fetchone()[0]
+            kind, limit = c.execute('SELECT data_type, character_maximum_length FROM information_schema.columns WHERE table_schema=%s '
+                             'AND table_name=%s AND column_name=%s', (SCHEMA, 'customer', 'name')).fetchone()
         assert observed == expected
-        assert kind == 'text'
+        assert kind == ('character varying' if MANIFEST.get('native_type') == 'varchar' else 'text')
+        assert limit == MANIFEST.get('native_limit')
         assert_source_metadata(SimpleNamespace(owner=owner, schema=SCHEMA), MANIFEST['runtime_role'])
         with psycopg.connect(**environment('CRYPTALIS_TEST_DATABASE_URL')) as c:
             assert c.execute('SELECT pg_catalog.to_regclass(%s)',

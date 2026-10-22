@@ -14,6 +14,7 @@ from uuid import UUID
 
 import psycopg
 import pytest
+from sqlalchemy import String
 
 from cryptalis.sqlalchemy import attach
 from test_deprotection import catalog_metadata, column_acl
@@ -89,7 +90,9 @@ def attached_edits(app):
 
 def test_export_fresh_cluster_source():
     workdir = Path(os.environ['CRYPTALIS_FRESH_CLUSTER_DIR'])
-    with application(setup=source_metadata_fixture) as app:
+    varchar = os.environ.get('CRYPTALIS_FRESH_SOURCE_VARCHAR') == '1'
+    with application(setup=source_metadata_fixture,
+                     value_type=String(64, collation='C') if varchar else None) as app:
         assert_source_metadata(app, app.role)
         parsed = psycopg.conninfo.conninfo_to_dict(os.environ['CRYPTALIS_TEST_DATABASE_URL'])
         runtime = psycopg.conninfo.conninfo_to_dict(os.environ['CRYPTALIS_TEST_RUNTIME_DATABASE_URL'])
@@ -105,6 +108,7 @@ def test_export_fresh_cluster_source():
         expected[str(ADDED_ID)] = [str(TENANT), 'added while protected']
         del expected[str(DELETED_ID)]
         manifest = {
+            'native_type': 'varchar' if varchar else 'text', 'native_limit': 64 if varchar else None,
             'database': parsed['dbname'], 'owner_role': parsed['user'], 'runtime_role': runtime['user'],
             'schema': app.schema, 'column': field['column'], 'field_id': field['field_id'],
             'descriptor': field['descriptor'], 'descriptor_digest': field['descriptor_digest'],

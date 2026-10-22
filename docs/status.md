@@ -9,6 +9,71 @@ No PostgreSQL/provider/runtime cell, production key provider, independent review
 VERIFIED below refers only to the named checks and their exact revisions.
 All other contract and promotion requirements are SPECIFIED. All seven full gates remain UNKNOWN.
 
+## Native VARCHAR support: 2026-10-22
+
+**IMPLEMENTED:** the text family now includes native PostgreSQL `varchar(n)` and
+unbounded `varchar`, with matching standard SQLAlchemy `String` or `VARCHAR` mappings.
+Native `text` keeps its existing `Text` mapping contract.
+The compiler rejects mismatched lengths, custom types, domains, and dialect variants.
+
+Plans with a protected VARCHAR field emit `cryptalis.lock/v3` and require
+`pg-varchar/v1`. Text-only plans still emit v2. Readers retain v1/v2 support.
+The source schema records the native typmod. No field-source member or CF1 byte
+format changes. Attachment now validates the full compiler lock before connection,
+including standalone targets without a transition journal.
+
+Protected writes preserve PostgreSQL character counts and excess-ASCII-space rules.
+They encrypt the exact stored value after assignment coercion.
+Pending ORM attributes retain their assigned value until refresh or expiration.
+Equality query values receive no assignment coercion.
+An overlength non-space value raises `VarcharLengthExceeded`, with SQLSTATE `22001`.
+The error occurs during binding, before cursor execution. The failed session requires
+rollback, as the native PostgreSQL flush does. Diagnostics omit the supplied value.
+Authenticated plaintext beyond the declared character limit raises `RepresentationMismatch`.
+
+Reverse staging uses the captured native type and typmod. Removal checks native
+schema and metadata after journal retirement. The test restarts an isolated process
+that imports no Cryptalis module, then completes native insert, update, read, and delete.
+A fresh-cluster mode repeats backup, adoption, status, decrypt-back, and removal
+with a VARCHAR source. The default mode retains historical text coverage.
+
+The native oracle covers Unicode, composed/decomposed text, NULL, empty values,
+ASCII and non-ASCII whitespace, trailing-space uniqueness conflicts, pending state,
+refresh, exact typed query binds, async writes, and post-removal length enforcement.
+Adversarial controls reject reader downgrades, missing reader dependencies, invalid
+typmods, transformed mappings, transformed query binds, and overlength authenticated frames.
+SQL parameter capture contains no protected input marker.
+
+The [focused run](_reset/varchar-final-focused-20261022.json) passes 179 tests and 18 subtests.
+This is local type and lifecycle evidence. It does not prove Smolink adoption,
+a production provider, host writer exclusion, or independent security review.
+All seven full gates remain UNKNOWN.
+
+The [full suite](_reset/varchar-full-sa21-20261022.json) passes **1,402 tests and 18 subtests**, with two fresh-cluster
+modules skipped and 48 existing SQLAlchemy warnings. The run took 186.02 seconds.
+The local cell uses Python 3.12.3, SQLAlchemy 2.1.3, psycopg 3.3.6, and
+cryptography 50.0.2. No SQLAlchemy 2.0.51 rerun occurred.
+
+The separate orchestrator passes one export and seven restore tests for each
+source type: [historical text](_reset/fresh-cluster-restore-20261022-9.json)
+and [native VARCHAR(64)](_reset/fresh-cluster-restore-20261022-8.json).
+Both paths preserve captured metadata through approved adoption and removal.
+The VARCHAR path also checks the restored native character limit.
+The [repeat release builds](_reset/varchar-release-20261022.json) match. Archive checks, SBOM export, isolated CLI startup,
+and all 32 installed-file comparisons pass. Installation uses `--no-deps`.
+
+Review exposed three admission gaps: standalone reader fences, failed-flush state,
+and hidden dialect transformations. Negative controls first reproduced each gap.
+The corrected tests pass. Earlier intermediate failures also included test-fixture
+errors: a non-admitted index shape, an extraneous storage-only review, a duplicate
+native restart value, and incorrect context-manager use for prepared keys.
+The logging control now rejects its incomplete lock before connecting.
+These changes strengthen admission. Valid connection paths retain real PostgreSQL coverage.
+
+This slice removes the native VARCHAR type blocker. A pinned external application
+still needs its own lifecycle and deployment evidence.
+All seven full gates remain UNKNOWN.
+
 ## Source retrieval workflow: 2026-10-22
 
 The repository instructions now define the reusable retrieval fallback.

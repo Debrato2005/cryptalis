@@ -9,7 +9,7 @@ import json
 from dataclasses import asdict, dataclass
 from uuid import UUID, uuid4
 
-from sqlalchemy import BigInteger, Column, Table, Text, UUID as SQLUUID, Uuid
+from sqlalchemy import BigInteger, Column, String, Table, Text, UUID as SQLUUID, Uuid
 from sqlalchemy import UniqueConstraint, text
 from sqlalchemy.dialects import postgresql
 from sqlalchemy.engine import Engine
@@ -106,6 +106,37 @@ def _canonical(document: object) -> bytes:
     if len(raw) > MAX_DOCUMENT_BYTES:
         raise ManifestInvalid("Compiler artifact exceeds 16 MiB")
     return raw
+
+
+def _native_text_length(column):
+    """Read an admitted native text type and its character limit."""
+    if column['type_schema'] != 'pg_catalog':
+        raise ValueError
+    if column['type'] == 'text' and column['typmod'] == '-1':
+        return None
+    if column['type'] == 'varchar':
+        if column['typmod'] == '-1':
+            return None
+        typmod = column['typmod']
+        if isinstance(typmod, str) and typmod.isascii() and typmod.isdecimal():
+            length = int(typmod) - 4
+            if 1 <= length <= 10485760 and typmod == str(length + 4):
+                return length
+    raise ValueError
+
+
+def _text_mapping_matches(column, native):
+    if getattr(column.type, '_variant_mapping', None):
+        return False
+    try:
+        length = _native_text_length(native)
+    except (ValueError, KeyError, TypeError):
+        return False
+    if native['type'] == 'text':
+        return type(column.type) in (Text, postgresql.TEXT)
+    return (type(column.type) in (String, postgresql.VARCHAR)
+            and (column.type.length is None if length is None else
+                 type(column.type.length) is int and column.type.length == length))
 
 
 def _digest(document: object) -> str:
@@ -506,9 +537,8 @@ def _compile_model(model, mapper, facts, issues, schema):
         used_columns.add(column.name)
         if column is pk_column or column.name == tenant_name:
             refuse("context_field", field.name, "Keep primary-key and tenant context columns unprotected.")
-        if (type(column.type) not in (Text, postgresql.TEXT) or actual["type"] != "text"
-                or actual["type_schema"] != "pg_catalog" or actual["typmod"] != "-1"):
-            refuse("unsupported_type", field.name, "Use native PostgreSQL text and a standard SQLAlchemy Text mapping.")
+        if not _text_mapping_matches(column, actual):
+            refuse("unsupported_type", field.name, "Match native PostgreSQL text or VARCHAR with a standard Text or String mapping and the same length.")
         if column.nullable != actual["nullable"]:
             refuse("mapping_mismatch", field.name, "Match mapped and database nullability before planning.")
         if (_server_generation(column, actual) or column.default is not None
@@ -616,7 +646,7 @@ def _previous_lock(raw, current, engine):
     """Reject inconsistent compiler artifacts before computing a semantic diff."""
     old = decode_manifest_json(raw)
     try:
-        if (old.keys() != current.keys() or old["schema"] not in ("cryptalis.lock/v1", "cryptalis.lock/v2")
+        if (old.keys() != current.keys() or old["schema"] not in ("cryptalis.lock/v1", "cryptalis.lock/v2", "cryptalis.lock/v3")
                 or old["profile"] != "cf1" or old["domain_id"] != current["domain_id"]
                 or old["database"] != {"major": 16, "encoding": "UTF8"}):
             raise ValueError
@@ -647,7 +677,7 @@ def _previous_lock(raw, current, engine):
                 tenant_codec = "uuid16/v1"
             if model["source_schema"].keys() != {"relation", "columns", "constraints", "indexes", "dependencies"}:
                 raise ValueError
-            if old["schema"] == "cryptalis.lock/v2":
+            if old["schema"] in ("cryptalis.lock/v2", "cryptalis.lock/v3"):
                 metadata = model["source_metadata"]
                 if set(metadata) != {"columns", "constraints", "indexes", "extended_statistics"}:
                     raise ValueError
@@ -688,7 +718,7 @@ def _previous_lock(raw, current, engine):
                         raise ValueError
             if any(not isinstance(model["source_schema"][key], list) for key in ("columns", "constraints", "indexes", "dependencies")):
                 raise ValueError
-            _validate_prior_source(model)
+            _validate_prior_source(model, varchar=old['schema'] == 'cryptalis.lock/v3')
         inventory = old["writer_inventory"]
         if inventory.keys() != {"complete", "evidence_kind", "writers"} or inventory["evidence_kind"] != "host_assertion":
             raise ValueError
@@ -698,7 +728,12 @@ def _previous_lock(raw, current, engine):
         host, domain_reviews = _host_evidence(declaration, writers, reviews, errors)
         if errors or inventory != host or domain_reviews != old["search_reviews"] or old["ddl"] != _ddl(old, engine):
             raise ValueError
-        readers = sorted({"cf1/v1", "utf8-exact/v1"} | {m["record"]["codec"] for m in old["models"]} | {"uuid16/v1" for m in old["models"] if "column" in m["tenancy"]})
+        varchar = any(f['source']['type'] == 'varchar' for model in old['models'] for f in model['fields'])
+        if varchar != (old['schema'] == 'cryptalis.lock/v3'):
+            raise ValueError
+        readers = sorted({"cf1/v1", "utf8-exact/v1"} | {m["record"]["codec"] for m in old["models"]}
+                         | {"uuid16/v1" for m in old["models"] if "column" in m["tenancy"]}
+                         | ({'pg-varchar/v1'} if varchar else set()))
         if old["required_readers"] != readers:
             raise ValueError
     except (KeyError, TypeError, ValueError, AttributeError):
@@ -706,7 +741,7 @@ def _previous_lock(raw, current, engine):
     return old
 
 
-def _validate_prior_source(model):
+def _validate_prior_source(model, *, varchar=False):
     """Check a prior snapshot's shape and admitted facts without trusting its hash."""
     def require(condition):
         if not condition:
@@ -765,10 +800,11 @@ def _validate_prior_source(model):
     require(len({f["column"] for f in model["fields"]}) == len(model["fields"]))
     for field in model["fields"]:
         source = columns.get(field["column"])
-        require(source is not None and source["type"] == "text" and source["type_schema"] == "pg_catalog" and source["typmod"] == "-1")
+        require(source is not None and (source['type'] == 'text' or varchar and source['type'] == 'varchar'))
+        _native_text_length(source)
         require(field["column"] not in (pk["name"], tenant_name))
         require(not any(source[k] for k in ("identity", "generated", "default_digest")))
-        require(field["source"] == {"type": "text", "nullable": source["nullable"], "collation": source["collation"]})
+        require(field["source"] == {"type": source['type'], "nullable": source["nullable"], "collation": source["collation"]})
         if field["queries"]:
             require(source["collation"] == "pg_catalog.C" and source["deterministic"] is True and source["provider"] == "c")
         affected = [i for i in facts["indexes"] if field["column"] in i["columns"] + i["dependency_columns"]]
@@ -924,14 +960,16 @@ def compile_protection(raw: bytes, mapping: Registry, engine: Engine, *,
         raise InspectionUnavailable(sqlstate) from None
     if issues:
         raise PlanningRejected(issues)
-    document = {"schema": "cryptalis.lock/v2", "profile": "cf1",
+    varchar = any(f['source']['type'] == 'varchar' for model in models for f in model['fields'])
+    document = {"schema": "cryptalis.lock/v3" if varchar else "cryptalis.lock/v2", "profile": "cf1",
                 "domain_id": str(declaration.domain_id), "database": {"major": 16, "encoding": "UTF8"},
                 "declaration": json.loads(declaration.canonical_bytes()), "models": models,
                 "writer_inventory": host, "search_reviews": reviews}
     document["ddl"] = _ddl(document, engine)
     document["required_readers"] = sorted({"cf1/v1", "utf8-exact/v1"}
         | {m["record"]["codec"] for m in models}
-        | {"uuid16/v1" for m in models if "column" in m["tenancy"]})
+        | {"uuid16/v1" for m in models if "column" in m["tenancy"]}
+        | ({'pg-varchar/v1'} if varchar else set()))
     previous = None
     if previous_lock is not None:
         previous = _previous_lock(previous_lock, document, engine)

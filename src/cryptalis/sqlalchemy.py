@@ -14,6 +14,7 @@ from uuid import UUID
 from sqlalchemy import BigInteger, LargeBinary, Text, Uuid, event, func, inspect, type_coerce
 from sqlalchemy.engine import Engine
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, AsyncSessionTransaction
+from sqlalchemy.exc import DontWrapMixin
 from sqlalchemy.orm import Session, registry
 from sqlalchemy.orm.attributes import NO_VALUE
 from sqlalchemy.sql import operators, visitors
@@ -26,6 +27,9 @@ from sqlalchemy.types import JSON, NullType, TypeDecorator
 from ._sqlalchemy_guard import install_guard
 from ._sqlalchemy_search import rewrite_search, search_shape, validate_search_storage
 from .crypto import CryptoFailure, AuthenticationFailed, FieldDescriptor, Keyring, KeyUnavailable, MAX_TEXT_BYTES, open_text, seal_text
+from .crypto.cf1 import _encode
+from .crypto.keys import InvalidText, RepresentationMismatch
+from .manifest.compiler import _native_text_length, _previous_lock, _text_mapping_matches
 from .manifest.parser import decode_manifest_json
 
 
@@ -44,6 +48,21 @@ class UnsafeEngineLogging(PolicyMismatch):
     remedy = "Create the runtime engine with echo=False and hide_parameters=True. Keep those settings for the attached engine and review host logging separately."
 
 
+class VarcharLengthExceeded(InvalidText, DontWrapMixin):
+    stage = 'PostgreSQL VARCHAR assignment'
+    sqlstate = '22001'
+    remedy = 'Use a value within the declared VARCHAR character limit. Roll back before retry.'
+
+
+def _varchar_assignment(value, limit):
+    if limit is not None and type(value) is str and len(value) > limit:
+        _encode(value)
+        if value[limit:].strip(' '):
+            raise VarcharLengthExceeded()
+        return value[:limit]
+    return value
+
+
 @dataclass(frozen=True)
 class _Binding:
     column: object
@@ -54,6 +73,7 @@ class _Binding:
     tenant: object | None
     tenant_attribute: str | None
     model: type
+    max_characters: int | None = None
 
 
 @dataclass(frozen=True)
@@ -61,6 +81,7 @@ class _Sealed:
     body: bytes | None = field(repr=False)
     permit: object = field(repr=False)
     binding: _Binding = field(repr=False)
+    failure: CryptoFailure | None = field(default=None, repr=False)
 
 
 @dataclass
@@ -132,7 +153,10 @@ class _ReadText(TypeDecorator):
             raise
         except Exception:
             raise AuthenticationFailed() from None
-        return open_text(payload, descriptor, tenant, record, self.keys)
+        plain = open_text(payload, descriptor, tenant, record, self.keys)
+        if plain is not None and self.binding.max_characters is not None and len(plain) > self.binding.max_characters:
+            raise RepresentationMismatch()
+        return plain
 
 
 class _Payload(TypeDecorator):
@@ -150,6 +174,8 @@ class _Payload(TypeDecorator):
         if (not isinstance(value, _Sealed) or operation is None or value.permit is not operation or
                 value.binding is not self.binding or not operation.flushing):
             raise UnsupportedProtectedOperation()
+        if value.failure is not None:
+            raise value.failure
         return value.body
 
     def process_result_value(self, value, dialect):
@@ -423,7 +449,8 @@ class _Attachment:
             for field in model["fields"]:
                 column = table.c[field["column"]]
                 actual = columns[field["column"]]
-                if (not isinstance(actual["type"], LargeBinary) or not isinstance(column.type, Text) or
+                source = next(c for c in model['source_schema']['columns'] if c['name'] == field['column'])
+                if (not isinstance(actual["type"], LargeBinary) or not _text_mapping_matches(column, source) or
                         actual["nullable"] != field["source"]["nullable"] or column.nullable != actual["nullable"] or
                         column.default is not None or column.server_default is not None or column.onupdate is not None or
                         column.server_onupdate is not None or actual.get("default") is not None or actual.get("computed") is not None):
@@ -448,7 +475,8 @@ class _Attachment:
                     raise PolicyMismatch()
                 binding = _Binding(column, mapper.get_property_by_column(column).key, descriptor,
                                    record, mapper.get_property_by_column(record).key, tenant,
-                                   mapper.get_property_by_column(tenant).key if tenant is not None else None, mapper.class_)
+                                   mapper.get_property_by_column(tenant).key if tenant is not None else None,
+                                   mapper.class_, _native_text_length(source))
                 self.bindings.append(binding)
             self.models[mapper.class_] = tuple(b for b in self.bindings if b.model is mapper.class_)
 
@@ -625,8 +653,15 @@ class _Attachment:
                     value = None if state.pending and binding.column.nullable else NO_VALUE
                 if value is NO_VALUE:
                     raise UnsupportedProtectedOperation()
-                body = seal_text(value, binding.descriptor, tenant, record, operation.keys)
-                operation.prepared[(binding.column.table.schema, binding.column.table.name, record, binding.column.key)] = (value, _Sealed(body, operation, binding))
+                try:
+                    stored = _varchar_assignment(value, binding.max_characters)
+                except VarcharLengthExceeded as failure:
+                    # Bind processing occurs inside the native flush transaction.
+                    sealed = _Sealed(None, operation, binding, failure)
+                else:
+                    body = seal_text(stored, binding.descriptor, tenant, record, operation.keys)
+                    sealed = _Sealed(body, operation, binding)
+                operation.prepared[(binding.column.table.schema, binding.column.table.name, record, binding.column.key)] = (value, sealed)
 
     def before_execute(self, connection, statement, multiparams, params, execution_options):
         operation = self._check()
@@ -792,11 +827,12 @@ def attach(mapping: registry, engine: Engine | AsyncEngine, *, lock: bytes, keys
     try:
         document = decode_manifest_json(lock)
         if (not isinstance(mapping, registry) or not isinstance(engine, (Engine, AsyncEngine)) or
-                document["schema"] not in ("cryptalis.lock/v1", "cryptalis.lock/v2") or document["profile"] != "cf1"):
+                document["schema"] not in ("cryptalis.lock/v1", "cryptalis.lock/v2", "cryptalis.lock/v3") or document["profile"] != "cf1"):
             raise PolicyMismatch()
         native_engine = engine.sync_engine if isinstance(engine, AsyncEngine) else engine
         if native_engine.echo or not native_engine.hide_parameters:
             raise UnsafeEngineLogging()
+        _previous_lock(lock, document, native_engine)
         owner = _Attachment(mapping, engine, document, keys, deployment)
     except CryptoFailure:
         raise

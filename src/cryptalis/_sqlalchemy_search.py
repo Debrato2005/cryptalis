@@ -1,6 +1,6 @@
 """Bounded equality admission, deferred terms, and native index validation."""
 
-from sqlalchemy import LargeBinary, String, Text, Unicode, UnicodeText, Uuid, and_, or_, bindparam, func, literal, literal_column, type_coerce
+from sqlalchemy import LargeBinary, String, Text, TEXT, Unicode, UnicodeText, Uuid, VARCHAR, and_, or_, bindparam, func, literal, literal_column, type_coerce
 from sqlalchemy.sql import operators, visitors
 from sqlalchemy.sql.elements import BinaryExpression, BindParameter, ColumnClause, Null
 from sqlalchemy.types import NullType, TypeDecorator
@@ -21,7 +21,9 @@ class _SearchValue(TypeDecorator):
 
 
 def ordinary_bind(owner, value):
-    return (type(value.type) in (String, Text, Unicode, UnicodeText, NullType) or
+    if getattr(value.type, '_variant_mapping', None):
+        return False
+    return (type(value.type) in (String, Text, TEXT, Unicode, UnicodeText, VARCHAR, NullType) or
             any(type(value.type) is type(binding.column.type) for binding in owner.bindings))
 
 

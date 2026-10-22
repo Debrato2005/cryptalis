@@ -122,6 +122,7 @@ def stop_cluster(cluster):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--workdir', type=Path, default=None)
+    parser.add_argument('--varchar', action='store_true', help='Qualify a native VARCHAR(64) source and lock v3.')
     args = parser.parse_args()
     workdir = args.workdir or Path(tempfile.mkdtemp(prefix='cryptalis-fresh-'))
     workdir.mkdir(parents=True, exist_ok=True)
@@ -130,7 +131,8 @@ def main():
 
     export = run_pytest(export_receipt, 'Fresh-cluster source export; primary cluster',
                         'tests/test_fresh_cluster_export.py',
-                        {'CRYPTALIS_FRESH_CLUSTER_DIR': str(workdir)})
+                        {'CRYPTALIS_FRESH_CLUSTER_DIR': str(workdir),
+                         'CRYPTALIS_FRESH_SOURCE_VARCHAR': '1' if args.varchar else '0'})
     manifest = json.loads((workdir / 'restore-manifest.json').read_text())
     plain_database = manifest['database'] + '_plain'
     cluster, port, password = start_cluster(workdir)

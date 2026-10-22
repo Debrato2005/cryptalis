@@ -8,6 +8,8 @@ No runtime compatibility cell, production key provider, or independent review is
 The [slice 3 walkthrough](docs/walkthrough-sqlalchemy.md) gives the implemented API and its limits.
 The [search walkthrough](docs/walkthrough-search.md) covers slice 4 and its native-index mechanism.
 The [migration walkthrough](docs/walkthrough-migration.md) covers slice 5: plan, atomic backfill, full verification, and publication-gated switch.
+Native `String(n)`/VARCHAR mappings now retain their character limits through protection and decrypt-back.
+The [VARCHAR walkthrough](docs/walkthrough-migration.md#native-varchar-mappings) states the tested rules and remaining limits.
 
 **SPECIFIED:** Cryptalis adds application-side protection to a Python 3.12+, SQLAlchemy 2.x, psycopg 3, PostgreSQL 16 backend.
 One manifest selects protected text fields. One attachment handles admitted writes, reads, and expressions.

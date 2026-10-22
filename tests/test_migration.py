@@ -84,21 +84,23 @@ def engine(variable):
 
 
 @contextmanager
-def application(rows=7, unique=True, setup=None):
+def application(rows=7, unique=True, setup=None, value_type=None, queries=None):
     owner, runtime = engine('CRYPTALIS_TEST_DATABASE_URL'), engine('CRYPTALIS_TEST_RUNTIME_DATABASE_URL')
     schema = 'cryptalis_migration_' + uuid4().hex
     mapping = registry(metadata=MetaData(schema=schema))
     table = Table('customer', mapping.metadata, Column('id', Uuid, primary_key=True, autoincrement=False),
-                  Column('tenant_id', Uuid, nullable=False), Column('name', Text(collation='C')),
+                  Column('tenant_id', Uuid, nullable=False),
+                  Column('name', value_type if value_type is not None else Text(collation='C')),
                   Column('label', Text))
-    Index('native_name', table.c.tenant_id, table.c.name, unique=unique)
+    queries = list(queries) if queries is not None else (['equality', 'unique'] if unique else ['equality'])
+    if queries:
+        Index('native_name', *((table.c.tenant_id, table.c.name) if unique else (table.c.name,)), unique=unique)
     class Customer: pass
     mapping.map_imperatively(Customer, table)
     declaration = {'schema':'cryptalis.protection/v1','profile':'cf1','domain_id':str(DOMAIN),
         'models':[{'model':'Customer','table_id':str(TABLE_ID),'tenancy':{'column':'tenant_id'},
             'fields':[{'name':'name','field_id':str(FIELD_ID),'protect':True,
-                'queries':['equality','unique'] if unique else ['equality'],
-                'accept_leakage':['equality','unique'] if unique else ['equality']}]}]}
+                'queries':queries, 'accept_leakage':queries}]}]}
     with psycopg.connect(os.environ['CRYPTALIS_TEST_RUNTIME_DATABASE_URL']) as c:
         role = c.execute('select current_user').fetchone()[0]
     try:
@@ -117,7 +119,7 @@ def application(rows=7, unique=True, setup=None):
         m = importlib.import_module('cryptalis.migration')
         proposal = m.plan(json.dumps(declaration).encode(), mapping, owner,
             writers=WriterInventory(True,(Writer(TABLE_ID,'app','sqlalchemy',evidence='owned synthetic application'),)),
-            search_reviews=(SearchReview(FIELD_ID,False,'synthetic unbounded names'),),
+            search_reviews=(SearchReview(FIELD_ID,False,'synthetic unbounded names'),) if queries else (),
             keys=keys, runtime_role=role, target_id=uuid4(),
             backfill_rows_per_second=1000, verify_rows_per_second=1000,
             temporary_bytes_per_row=700, wal_bytes_per_row=2000)

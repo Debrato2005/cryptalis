@@ -11,7 +11,7 @@ These decisions are final. Scope-only D blockers are resolved. No decision suppl
 | Decision | Approved contract | Resolution/evidence limit |
 |---|---|---|
 | 1. Stack | Python 3.12+, SQLAlchemy 2.x, psycopg 3 sync/async, PostgreSQL 16 | Scope D resolved. Exact cell tests remain required |
-| 2. First protected type | Text only. Every other type is UNSUPPORTED BY DESIGN until admission | Type-scope D resolved. Text/ID descriptors and collation evidence remain required |
+| 2. First protected type | Text first. The 2026-10-22 VARCHAR admission extends the text family. Other types remain UNSUPPORTED BY DESIGN until admission | Type-scope D resolved. Text/ID descriptors and collation evidence remain required |
 | 3. Capabilities | SUPPORTED: storage-only, equality, IN, tenant-scoped uniqueness | Capability/grammar scope D resolved. Every other operation rejects until admission |
 | 4. Tenancy | Each protected table declares a tenant column or declares itself single-tenant | Tenant-scope D resolved. Missing tenancy blocks plan |
 | 5. Primary keys | Require application-generated UUID, Snowflake-style, or other app-assigned ID. Reject serial/identity/database-default keys at plan time with a plain explanation | Identity-scope D resolved. Historical sequence-preallocating spikes do not implement this contract |
@@ -79,3 +79,38 @@ A security reviewer reviews provider identity/cache, writer bypass, deployment p
 A database/SQLAlchemy reviewer reviews admitted grammar, constraints, async state, interruption, verification, and package-free exit.
 Any advanced admission adds review of its exact representation and leakage attacks.
 AI council criticism and vendor documents do not replace these reviews. No independent review is available.
+
+## Native VARCHAR text admission: 2026-10-22
+
+**IMPLEMENTED, bounded:** admit PostgreSQL `text` and native
+`varchar`, with or without a character limit, as the text family.
+Keep custom types, domains, `char`/`bpchar`, and non-text values unadmitted.
+This extends the approved text scope without a new cryptographic construction,
+search representation, leakage profile, or source of deployment authority.
+
+Emit `cryptalis.lock/v3` when a protected field uses native `varchar`.
+Require `pg-varchar/v1` in that lock's reader list. Preserve v1/v2 reading and
+v2 emission for text-only declarations. The complete source schema already
+records each native typmod. Keep the field-source member shape unchanged.
+A v3 reader must check the native type, typmod, and mapped length together.
+Restore the same native type and typmod during decrypt-back.
+
+Apply native VARCHAR assignment rules before payload encryption.
+Preserve character counts, accepted excess ASCII spaces, and exact stored values.
+Preserve pending ORM attributes until native refresh or expiration changes them.
+Do not apply assignment coercion to equality query values.
+An overlength non-space value raises a safe typed error before protected SQL.
+The error carries SQLSTATE `22001`. Callers must roll back before retry.
+Read-time validation must refuse an authenticated value beyond its native limit.
+
+Keep CF1, `utf8-exact/v1`, and `identity/v1` unchanged.
+The codec encrypts the exact value after native assignment coercion.
+The existing 16 MiB codec limit still applies. Search still requires qualified
+exact C equivalence and explicit leakage acceptance.
+
+The native oracle must cover Unicode character counts, trailing spaces, overlength
+errors, unchanged pending state, refresh, equality/IN, scoped uniqueness, async
+writes, decrypt-back, native metadata, and package-free restart.
+Do not claim external-application adoption from these type tests alone.
+
+Source: [PostgreSQL 16 character types](https://www.postgresql.org/docs/16/datatype-character.html).

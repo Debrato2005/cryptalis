@@ -101,14 +101,14 @@ class AttachmentEnginePreflightTests(unittest.TestCase):
     def test_async_unsafe_settings_fail_before_connection_or_keys(self):
         self.assert_unsafe_settings(True)
 
-    def test_accepted_settings_continue_to_existing_admission(self):
+    def test_safe_logging_still_refuses_incomplete_lock_before_connection(self):
         for asynchronous in (False, True):
             for echo in (False, None):
                 with self.subTest(asynchronous=asynchronous, echo=echo):
                     failure, attempts = self.exercise(
                         asynchronous, {"echo": echo, "hide_parameters": True},
                     )
-                    self.assertEqual(attempts, ["connect"])
+                    self.assertEqual(attempts, [])
                     self.assertIs(type(failure), adapter.PolicyMismatch)
 
     def test_malformed_lock_keeps_existing_policy_failure(self):

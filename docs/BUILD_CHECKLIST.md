@@ -31,17 +31,17 @@ No objective is complete until its acceptance evidence and applicable gate pass.
   archive members. The installed-artifact correction compares the current wheel with
   installed files and imports verified source under an isolated bytecode cache.
   Scoped approved execution outside the sandbox restores both private-role probes
-  and Git writes. The current full suite passes 1,363 tests, with 2 fresh-cluster
-  modules skipped and 18 subtests passed; [receipt](_reset/transition-rates-full-sa21-20261022.json).
-  One export and seven restore cases also pass on a new cluster with captured metadata
-  and read-only status through the approved restore binding.
-- Implemented scope: text storage, exact equality, `IN`, tenant-scoped uniqueness,
+  and Git writes. The current full suite passes 1,402 tests, with 2 fresh-cluster
+  modules skipped and 18 subtests passed; [receipt](_reset/varchar-full-sa21-20261022.json).
+  Each source type, historical text and native VARCHAR, passes one export and seven
+  restore cases on a new cluster with metadata and approved status inspection.
+- Implemented scope: native text and VARCHAR storage, exact equality, `IN`, tenant-scoped uniqueness,
   sync/async attachment, maintenance protection transition, read-only transition status, in-place decrypt-back and
   additive removal for that transition format, an independent application lifecycle with
   package-free restart, a fresh-cluster protected-backup recovery harness with approved
   restore adoption, CF1 primitives, and a local development provider.
 - All seven qualification gates remain UNKNOWN.
-- Every protected type other than text, every advanced predicate, online migration,
+- Every protected type outside the text family, every advanced predicate, online migration,
   complete rotation, production KMS, and independent review remain open.
 
 ## Objective ledger
@@ -90,6 +90,7 @@ Requirement text is abbreviated. The full definitions remain in the research
 
 | Date | Research reference | Mechanism | Product files | Evidence | Status |
 |---|---|---|---|---|---|
+| 2026-10-22 | Native VARCHAR type admission | Lock v3 and pg-varchar/v1; native character limits, pending/refresh and failure-state parity; exact query binds; native type restoration; strict reader and transform admission | Compiler, adapter, search and reverse modules; native VARCHAR and fresh-cluster tests | RED: 27 initial cases; reader, rollback-state and hidden-transform controls. GREEN: 179 focused plus 18 subtests, 1,402 full plus 18 subtests, each text/VARCHAR fresh-cluster path passes one export and seven restore cases; [full](_reset/varchar-full-sa21-20261022.json), [VARCHAR restore](_reset/fresh-cluster-restore-20261022-8.json), [release](_reset/varchar-release-20261022.json) | VERIFIED, bounded local cell; external-app adoption remains open; all gates UNKNOWN |
 | 2026-10-22 | Fractional measured-rate artifact correction | Share bounded JSON structure checks; admit decimals only at measured throughput paths, including embedded source plans | `src/cryptalis/manifest/parser.py`; `src/cryptalis/migration.py`; `src/cryptalis/deprotection.py`; `tests/test_transition_rates.py` | RED: 3 lifecycle failures. GREEN: 157 focused, 1,363 full tests plus 18 subtests, one export and seven restore cases, repeat release builds and 32 installed-file comparisons; [full](_reset/transition-rates-full-sa21-20261022.json), [restore](_reset/fresh-cluster-restore-20261022-6.json), [release](_reset/transition-rates-release-20261022.json) | VERIFIED, bounded local cell; all gates UNKNOWN |
 | 2026-10-22 | Local operational-status slice | Read-only repeatable-read snapshot, committed progress, host pin comparison, safe CLI inputs and diagnostics | `src/cryptalis/migration.py`; `src/cryptalis/cli.py`; status and fresh-cluster tests | RED: missing API/command and malformed plan boundaries. GREEN: 1,351 full tests plus 18 subtests, one export and seven restore cases, eleven release groups and 32 installed-file comparisons; [full](_reset/status-full-sa21-20261022.json), [restore](_reset/fresh-cluster-restore-20261022-5.json), [release](_reset/status-release-20261022.json) | VERIFIED, bounded local cell; no data verification or provider admission; all gates UNKNOWN |
 | 2026-10-22 | Native metadata backup/recovery and terminal removal | Lock v2 catalog comparison before journal retirement and during terminal checks; safe missing-journal inspection; native backup metadata assertions | `src/cryptalis/deprotection.py`; `tests/test_deprotection.py`; fresh-cluster qualification modules | RED: 6 drift cases, then 3 terminal retries. GREEN: 22 focused, 1,322 full plus 18 subtests, 1 export and 7 restore; [full](_reset/removal-metadata-full-sa21-20261022.json), [fresh cluster](_reset/fresh-cluster-restore-20261022-4.json), [negative control](_reset/fresh-cluster-metadata-control-20261022.json) | VERIFIED, bounded local cell; all gates UNKNOWN |

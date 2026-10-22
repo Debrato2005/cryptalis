@@ -15,7 +15,8 @@ All normative sections here are SPECIFIED. Recorded-cost sections are VERIFIED o
 ## Supported stack
 
 Python 3.12+, SQLAlchemy 2.x, psycopg 3 sync and async, PostgreSQL 16.
-Every protected value is text. Other protected types and PostgreSQL majors are UNSUPPORTED BY DESIGN until admission.
+The text family includes native PostgreSQL text and VARCHAR, with matching standard mappings.
+Other protected types and PostgreSQL majors are UNSUPPORTED BY DESIGN until admission.
 The compiler inspects exact text equivalence, nullability, stable application-generated IDs, tenant declarations, and constraint scopes.
 Every protected table declares its tenant column or declares itself single-tenant.
 Serial, identity, and database-default-generated primary keys fail at plan time with a plain explanation.
@@ -76,6 +77,11 @@ Nondeterministic collations, citext, bpchar padding, locale-sensitive operators,
 The compiler rejects a constraint or mapping it cannot preserve exactly. Generic CHECK/FK/default/collation preservation is UNKNOWN.
 [Lifecycle](lifecycle.md#integrated-lifecycle-checkpoint-2026-10-07) bounds the current verifier's source-index and scoped-uniqueness evidence.
 A searchable small domain fails planning because enumeration can label equality classes. No arbitrary size threshold substitutes for leakage evidence.
+
+Native VARCHAR preserves its character limit and assignment semantics through protection and decrypt-back.
+Typed length failures require rollback, as the native ORM flush does.
+Custom type decorators and dialect variants remain unadmitted for protected mappings and query binds.
+See [native VARCHAR mappings](walkthrough-migration.md#native-varchar-mappings).
 
 ## Portable DDL
 

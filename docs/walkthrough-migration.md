@@ -3,7 +3,7 @@
 **IMPLEMENTED research prototype.** No production provider or independent review exists.
 All seven gates remain UNKNOWN. Use the authorized disposable PostgreSQL 16 cell.
 
-1. Keep the original application mapping as `Text`. Assign primary keys in the application.
+1. Keep the native text mapping as `Text`, `String(n)`, or `VARCHAR(n)`. Assign primary keys in the application.
 2. Declare tenancy, protected fields, query leakage, writers, and searchable value domains.
 3. Use owner maintenance and restricted runtime roles. Approve measured costs and pause.
 
@@ -105,3 +105,27 @@ Pause estimates round the calculated time to whole seconds.
 Protection and reverse plan readers accept these rate fields after artifact reload.
 Other numeric fields retain their integer-only format.
 These estimates are planning observations, not pause limits or deployment qualification.
+
+## Native VARCHAR mappings
+
+Keep a native VARCHAR field mapped as `String(n)` or `VARCHAR(n)`.
+Match the database character limit exactly. Use `String()` for unbounded VARCHAR.
+Use standard `Text` for native PostgreSQL text. Custom type decorators, domains,
+fixed-width `char`/`bpchar`, and dialect variants remain unadmitted.
+Searchable fields still require exact C equivalence and explicit leakage acceptance.
+Storage-only VARCHAR fields can retain their native default collation.
+The existing 16 MiB text-codec limit still applies.
+
+VARCHAR assignment counts characters, rather than UTF-8 bytes.
+When only excess ASCII spaces exceed the limit, the stored value loses those spaces.
+A query value keeps its exact characters. Length validation never truncates query terms.
+`VarcharLengthExceeded` carries SQLSTATE `22001` and requires session rollback.
+It occurs before protected SQL sends any parameter to PostgreSQL.
+
+Plans with VARCHAR require the v3 lock reader and `pg-varchar/v1`.
+Historical text-only plans retain their existing readers and CF1 framing.
+Decrypt-back restores the original native type and character limit.
+Existing active text deployments do not receive an automatic type upgrade.
+
+Sources: [PostgreSQL 16 character types](https://www.postgresql.org/docs/16/datatype-character.html)
+and [SQLAlchemy 2.1 exception extensions](https://docs.sqlalchemy.org/en/21/core/exceptions.html#sqlalchemy.exc.DontWrapMixin).
