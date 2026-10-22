@@ -244,3 +244,26 @@ exact reciprocal lineage against A. Original source frames no longer supply a
 retry comparison. Missing A with partially superseded source or P is an
 inconsistent state, not permission to reconstruct a commit. Preparation resume
 and cancellation must reject the switched P.
+
+Activation uses `cryptalis.transition/v3` with `kind: payload_rotation`.
+Its exact fields include `payload_rotation_plan_digest`,
+`payload_rotation_observations`, `payload_batch_limits`, and the flat predecessor
+list. Scopes match the observed model identities and row counts. Construct
+scope order from the source lock, independent of JSON object key order.
+Sealing verifies and serializes these observations. It does not create a
+cryptographic signature or replace trusted host persistence and current authority.
+
+A requires measured native copy throughput and copy WAL bytes per row. Its
+terminal estimate counts one source pass, both sides of paired verification,
+one post-copy target pass, one publication pass, and the atomic copy. Preparation,
+sealing, DDL, lock drain, provider overhead and capacity guarantees stay outside
+that estimate. The journal records copy wall nanoseconds and the cluster-wide
+WAL delta around the native UPDATE loop. Those diagnostic observations cannot
+supply host authority or isolated operation cost.
+
+Before payload publication, validate the exact predecessor chain, journal
+progress shape, table owner, public metadata and complete journal inventory.
+ACTIVATING repeats bounded target authentication against A, including a journal
+claim of ACTIVE. A genuine ACTIVE pin permits later edits. The sealed target
+snapshot does not become an immutable-data requirement for ordinary operation
+or subsequent current-value decrypt-back/removal.

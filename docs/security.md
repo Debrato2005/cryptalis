@@ -330,8 +330,8 @@ or publication. Lease expiry remains `KeyUnavailable`.
 
 **IMPLEMENTED, encrypted staging:** `rotation.apply_payload_rotation` uses the
 existing CF1 batch transform under maintenance guards and table locks. The
-source frames and original journal remain unchanged. P owns separate shadows
-and progress. The executor checks the schema against P and exact guard facts.
+source frames and original journal remain unchanged during preparation. P owns
+separate shadows and progress. The executor checks the schema against P and exact guard facts.
 It checks cursor membership, shadow lengths, NULL presence, and the empty suffix
 before fetching a committed prefix. It authenticates exact source and target
 generations, values, and search headers. Retained roots cannot make an unchanged
@@ -348,9 +348,39 @@ Cancellation requires the host to republish the exact source ACTIVE pin.
 Source-only authentication precedes removal of exact shadows and guards.
 Cleanup and the ABORTED marker share one transaction. The target provider need
 not remain available. A terminal retry preserves later source edits without
-restoring snapshots. Adopted restored targets remain unsupported. Payload
-sealing, cutover, and publication remain SPECIFIED. All seven full gates remain
-UNKNOWN.
+restoring snapshots.
+
+**IMPLEMENTED, sealed target proof:** sealing authenticates the unchanged
+source against P and the actual staged target before it emits immutable A.
+A binds P's digest and exact ancestry, target ciphertext observations, and
+batch limits. P reserves A's ID without its digest. Neither a staging cursor
+nor mutable journal hashes can replace those host-pinned observations.
+Sealing requires BACKFILLED, maintenance approval, and measured copy costs.
+It holds maintenance locks but makes no database data, schema, or journal change.
+Provider audit/cost effects remain possible. Sealing creates no cryptographic
+signature and cannot replace trusted host persistence or current authority.
+Persist A before destructive switch.
+
+Cutover repeats source/target proof under locks and copies ciphertext into the
+existing public columns. It preserves their identities, constraints, expression
+indexes, grants, and metadata. Source-to-P-to-A supersession, guard exchange,
+and a post-copy target check share one transaction. Search headers and roots
+remain unchanged. No search reindex occurs. The final full-table write is not
+a bounded preparation chunk. A's estimate counts that copy and five
+authentication passes, including both sides of the paired comparison.
+
+PENDING recovery checks exact target observations and reciprocal ancestry
+against saved A. Original source bytes no longer support retry comparison.
+Preparation and cancellation refuse a superseded P. Shared activation requires
+an independently current ACTIVATING or ACTIVE pin. An ACTIVATING retry checks
+A's target proof even when the journal claims ACTIVE. A genuine ACTIVE pin
+permits subsequent edits and latest-value decrypt-back/removal.
+
+Recorded copy wall time and cluster-wide WAL deltas are diagnostic observations.
+They exclude later DDL, verification, commit, and publication. Other cluster
+writes can contribute WAL. These metrics establish no capacity bound, isolated
+WAL cost, deployment authority, or fresh cryptographic proof. Adopted restored
+targets remain unsupported for payload rotation. All seven full gates remain UNKNOWN.
 
 Sync and async preparation publish keys only after every required root passes checks.
 Cancellation rejects late provider material, including when a provider suppresses cancellation.

@@ -264,17 +264,42 @@ Read-only payload planning produces preparation proposal P. It pins exact retain
 aggregate logical batch limits and measured costs. It reserves distinct preparation
 and successor identities. Payload preparation also has bounded apply, status,
 and abort APIs. The shared maintenance executor stages ciphertext and commits
-chunk progress under P's separate operation identity. Original source frames
-and journal remain unchanged. Resume authenticates committed ciphertext.
+chunk progress under P's separate operation identity. During preparation, source
+frames and journal remain unchanged. Resume authenticates committed ciphertext.
 BACKFILLED retries repeat full source and target authentication. Keyless status
 reports `NOT_PERFORMED`. Cancellation uses the republished source ACTIVE pin
 and needs no target custody. The logical byte budget spans all fields in each
-batch and is not a process memory bound. Preparation on adopted restored targets
-remains unsupported. Sealing the activation artifact, payload cutover,
-activation, and search reindex remain SPECIFIED. All seven full gates remain UNKNOWN.
+batch and is not a process memory bound.
+
+`seal_payload_rotation` authenticates BACKFILLED shadows and returns deterministic
+activation artifact A from their actual ciphertext observations. A is a
+`cryptalis.transition/v3` MigrationPlan with `kind: payload_rotation`. It binds
+P's digest, source-to-P ancestry, target observations, logical limits, and
+measured terminal copy costs. P reserves A's ID but does not embed A's digest.
+Sealing holds maintenance locks and changes no database data, schema, or journal.
+Provider audit/cost effects remain possible. Persist A outside the database
+before cutover.
+
+`switch_payload_rotation` repeats paired proof and updates the existing public
+columns from their shadows. Column identities, indexes, constraints, grants,
+and metadata remain intact. Source-to-P-to-A supersession and guard exchange
+commit with a fresh target check. This terminal full-table write uses one
+transaction, beyond the bounded preparation chunks. A estimates its copy plus
+five authentication passes. Recorded copy time and cluster-wide WAL deltas are
+diagnostic observations, not isolated costs, capacity bounds, or host authority.
+
+A PENDING retry authenticates only current target frames against A because
+original source frames no longer exist. P resume and cancellation refuse
+SUPERSEDED. Shared `migration.apply` requires ACTIVATING or ACTIVE authority
+for A. ACTIVATING repeats target proof even if the journal claims ACTIVE.
+A genuine ACTIVE pin permits later edits and latest-value removal. Keyless
+status remains `NOT_PERFORMED`. Search reindex remains SPECIFIED. Payload
+rotation on adopted restored targets remains unsupported. All seven full gates
+remain UNKNOWN.
 See [lifecycle](../lifecycle.md#changes-and-rotation) for recovery and publication boundaries.
 [Security](../security.md#cryptographic-format) owns framing, commitments, keys, and failure rules.
-Generic CHECK/FK/default/collation preservation remains UNKNOWN. [Lifecycle](../lifecycle.md) states the verifier's actual checks.
+Generic CHECK/FK/default/collation preservation across other schema transforms
+remains UNKNOWN. [Lifecycle](../lifecycle.md) states the verifier's actual checks.
 
 ## Public surface
 

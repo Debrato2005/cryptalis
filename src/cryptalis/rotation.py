@@ -149,6 +149,8 @@ class RewrapPlan:
         document = source.document
         ancestors = document.get('predecessors', [])
         ancestors.append({'operation_id': str(source.operation_id), 'plan_digest': source.digest})
+        for name in ('payload_rotation_plan_digest','payload_rotation_observations','payload_batch_limits'):
+            document.pop(name,None)
         document.update(format='cryptalis.transition/v2', kind='rewrap',
             operation_id=str(self.operation_id), predecessors=ancestors, rewrap_plan_digest=self.digest,
             key_policies={tenant: item['target'] for tenant, item in d['key_policies'].items()},
@@ -407,6 +409,25 @@ def abort_payload_rotation(proposal,engine,*,keys,source_pin,approval):
     """Discard only P's staging under the republished source ACTIVE pin."""
     from cryptalis._payload_transition import abort
     return abort(proposal,engine,keys=keys,source_pin=source_pin,approval=approval)
+
+
+def seal_payload_rotation(proposal,engine,*,keys,target_keys,pin,approval,
+                          copy_rows_per_second,copy_wal_bytes_per_row):
+    """Seal actual paired target observations without changing data or authority."""
+    from cryptalis._payload_activation import seal
+    return seal(proposal,engine,keys=keys,target_keys=target_keys,pin=pin,approval=approval,
+                copy_rows_per_second=copy_rows_per_second,copy_wal_bytes_per_row=copy_wal_bytes_per_row)
+
+
+def switch_payload_rotation(proposal,activation,engine,*,keys,target_keys,pin,approval):
+    """Copy verified shadows and commit source-to-preparation-to-activation lineage."""
+    from cryptalis._payload_activation import switch
+    return switch(proposal,activation,engine,keys=keys,target_keys=target_keys,pin=pin,approval=approval)
+
+
+def _verify_payload_target(c,activation,keys):
+    from cryptalis._payload_activation import verify_target
+    return verify_target(c,activation,keys)
 
 
 def _same_roots(source, target):

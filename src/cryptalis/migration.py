@@ -21,6 +21,7 @@ from sqlalchemy.dialects import postgresql
 
 from cryptalis.crypto.cf1 import FieldDescriptor, seal_text, open_text
 from cryptalis.crypto.keys import CryptoFailure, Keyring
+from cryptalis.crypto._payload_rotation import MAX_BATCH_BYTES, MAX_BATCH_ROWS
 from cryptalis.manifest.compiler import (compile_protection, _schema_facts, _canonical, _previous_lock,
                                           unrecorded_column_metadata, protected_extended_statistics,
                                           protected_owned_sequences, source_metadata, _metadata_diff)
@@ -36,6 +37,10 @@ def _decode_transition_json(raw):
     rate_paths = {prefix + ('estimates', name)
                   for prefix in ((), ('source_plan',))
                   for name in ('backfill_rows_per_second', 'verify_rows_per_second')}
+    for prefix, owner in (((),document),(('source_plan',),document.get('source_plan') if type(document) is dict else None)):
+        if (type(owner) is dict and owner.get('format')=='cryptalis.transition/v3'
+                and owner.get('kind')=='payload_rotation'):
+            rate_paths.add(prefix+('estimates','copy_rows_per_second'))
 
     def check(value, path):
         if type(value) is float:
@@ -108,6 +113,27 @@ def _validate_estimates(costs):
                 raise ValueError
 
 
+def _payload_activation_estimates(rows, backfill, verify, copy, copy_wal):
+    """Estimate terminal copy and five verification passes from host measurements."""
+    if type(rows) is not int or not 0 <= rows < 2**53:
+        raise TransitionFailure('invalid_payload_activation_estimates')
+    if any(not _finite_number(rate) or rate <= 0 for rate in (backfill, verify, copy)):
+        raise TransitionFailure('missing_measured_rates')
+    if type(copy_wal) is not int or not 1 <= copy_wal < 2**53:
+        raise TransitionFailure('missing_measured_storage_or_wal_costs')
+    wal = rows * copy_wal
+    if wal >= 2**53:
+        raise TransitionFailure('unrepresentable_copy_wal_estimate')
+    return dict(rows=rows, backfill_rows_per_second=backfill, verify_rows_per_second=verify,
+        copy_rows_per_second=copy, copy_wal_bytes_per_row=copy_wal, copy_wal_bytes_estimate=wal,
+        required_verify_passes=5,
+        writer_pause_seconds_estimate=_estimate_seconds(rows, copy, verify, verify, verify, verify, verify),
+        limits='Estimates cover terminal copy, one source pass, one paired source/target pass, '
+               'one post-copy target pass and one publication target pass. They exclude prior staging '
+               'and sealing, lock drain, DDL, '
+               'index work, capacity guarantees and provider overhead. Copy WAL is a host estimate, not a bound.')
+
+
 @dataclass(frozen=True)
 class MigrationPlan:
     artifact: bytes
@@ -118,10 +144,15 @@ class MigrationPlan:
                             'runtime_role', 'journal_schema', 'lock', 'source_lock_digest',
                             'key_policies', 'scopes', 'estimates'}
             rewrap = doc.get('format') == 'cryptalis.transition/v2' and doc.get('kind') == 'rewrap'
-            if rewrap:
-                members |= {'predecessors', 'rewrap_plan_digest', 'rewrap_observations'}
+            payload = doc.get('format') == 'cryptalis.transition/v3' and doc.get('kind') == 'payload_rotation'
+            if rewrap or payload:
+                proof_key = 'payload_rotation_plan_digest' if payload else 'rewrap_plan_digest'
+                observations_key = 'payload_rotation_observations' if payload else 'rewrap_observations'
+                members |= {'predecessors', proof_key, observations_key}
+                if payload:
+                    members.add('payload_batch_limits')
                 ancestors = doc['predecessors']
-                if type(ancestors) is not list or not ancestors:
+                if type(ancestors) is not list or len(ancestors) < (2 if payload else 1):
                     raise ValueError
                 seen = {str(UUID(doc['operation_id']))}
                 for item in ancestors:
@@ -134,8 +165,10 @@ class MigrationPlan:
                     if (type(item['plan_digest']) is not str or len(item['plan_digest']) != 64
                             or any(c not in '0123456789abcdef' for c in item['plan_digest'])):
                         raise ValueError
-                if (type(doc['rewrap_plan_digest']) is not str or len(doc['rewrap_plan_digest']) != 64
-                        or any(c not in '0123456789abcdef' for c in doc['rewrap_plan_digest'])):
+                if (type(doc[proof_key]) is not str or len(doc[proof_key]) != 64
+                        or any(c not in '0123456789abcdef' for c in doc[proof_key])):
+                    raise ValueError
+                if payload and ancestors[-1]['plan_digest'] != doc[proof_key]:
                     raise ValueError
             elif doc.get('format') != 'cryptalis.transition/v1' or doc.get('kind') != 'protect':
                 raise ValueError
@@ -157,8 +190,8 @@ class MigrationPlan:
             # Compiler validation needs identifier quoting, never a connection.
             _previous_lock(_canonical(doc['lock']), doc['lock'], SimpleNamespace(dialect=postgresql.dialect()))
             _validate_estimates(doc['estimates'])
-            if rewrap:
-                observed = doc['rewrap_observations']
+            if rewrap or payload:
+                observed = doc[observations_key]
                 if set(observed) != {model['table_id'] for model in doc['lock']['models']}:
                     raise ValueError
                 for item in observed.values():
@@ -171,13 +204,40 @@ class MigrationPlan:
                             raise ValueError
                 if sum(item['rows'] for item in observed.values()) != doc['estimates']['rows']:
                     raise ValueError
-        except (ManifestInvalid, ValueError, TypeError, KeyError, AttributeError):
+            if payload:
+                limits, costs = doc['payload_batch_limits'], doc['estimates']
+                scopes={}
+                for item in doc['scopes']:
+                    if (type(item) is not dict or set(item)!={'table_id','estimated_rows'}
+                            or type(item['table_id']) is not str or item['table_id'] in scopes
+                            or type(item['estimated_rows']) is not int):
+                        raise ValueError
+                    scopes[item['table_id']]=item['estimated_rows']
+                if scopes!={table:item['rows'] for table,item in observed.items()}:
+                    raise ValueError
+                if (type(limits) is not dict or set(limits) != {'max_rows', 'max_bytes'}
+                        or type(limits['max_rows']) is not int or not 1 <= limits['max_rows'] <= MAX_BATCH_ROWS
+                        or type(limits['max_bytes']) is not int or not 1 <= limits['max_bytes'] <= MAX_BATCH_BYTES):
+                    raise ValueError
+                for name, value in costs.items():
+                    if name not in ('backfill_rows_per_second', 'verify_rows_per_second',
+                                    'copy_rows_per_second', 'limits'):
+                        if type(value) is not int or not 0 <= value < 2**53:
+                            raise ValueError
+                if costs != _payload_activation_estimates(costs['rows'], costs['backfill_rows_per_second'],
+                        costs['verify_rows_per_second'], costs['copy_rows_per_second'], costs['copy_wal_bytes_per_row']):
+                    raise ValueError
+        except (ManifestInvalid, ValueError, TypeError, KeyError, AttributeError, TransitionFailure):
             raise TransitionFailure('invalid_plan') from None
     def __str__(self):
         costs = self.document['estimates']
         if self.document['kind'] == 'rewrap':
             return (f'Estimated root-rewrap verification pause: {costs["writer_pause_seconds_estimate"]} s '
                     f'for {costs["rows"]} rows. Payload and search bytes stay unchanged. ' + costs['limits'])
+        if self.document['kind'] == 'payload_rotation':
+            return (f'Estimated payload-rotation copy and verification pause: {costs["writer_pause_seconds_estimate"]} s '
+                    f'for {costs["rows"]} rows. Atomic copy WAL estimate: {costs["copy_wal_bytes_estimate"]} bytes. '
+                    + costs['limits'])
         rates = (f'backfill {costs["backfill_rows_per_second"]:g} rows/s; '
                  f'verify {costs["verify_rows_per_second"]:g} rows/s'
                  if 'backfill_rows_per_second' in costs and 'verify_rows_per_second' in costs
@@ -464,19 +524,46 @@ def _maintenance_executor(p,engine,approval):
 
 
 def _state(c,p,pin,*,allow_aborted=False):
+    kind = p.document['kind']
     exists=c.exec_driver_sql('SELECT pg_catalog.to_regclass(%s)',(_journal(c,p),)).scalar_one()
     if exists is None:
+        if kind == 'payload_rotation':
+            raise TransitionFailure('missing_payload_successor', p.operation_id)
         if pin.phase != 'PREPARED': raise TransitionFailure('restored_or_missing_transition',p.operation_id)
         return None
     row=c.exec_driver_sql(f'SELECT plan_digest, state FROM {_journal(c,p)} WHERE operation_id=%s',(p.operation_id,)).one_or_none()
+    if row is None and kind == 'payload_rotation':
+        raise TransitionFailure('missing_payload_successor', p.operation_id)
     if row is None or row[0] != p.digest: raise TransitionFailure('journal_identity_mismatch',p.operation_id)
     state=row[1]
     if state.get('phase') == 'SUPERSEDED':
         raise TransitionFailure('deployment_superseded', p.operation_id)
-    if p.document['kind'] == 'rewrap':
+    if kind in ('rewrap', 'payload_rotation'):
+        proof_key = 'payload_rotation_plan_digest' if kind == 'payload_rotation' else 'rewrap_plan_digest'
         if (state.get('phase') not in ('PENDING', 'ACTIVE')
-                or state.get('rewrap_plan_digest') != p.document['rewrap_plan_digest']):
-            raise TransitionFailure('rewrap_state_changed', p.operation_id)
+                or state.get(proof_key) != p.document[proof_key]):
+            raise TransitionFailure('payload_rotation_state_changed' if kind == 'payload_rotation'
+                                    else 'rewrap_state_changed', p.operation_id)
+        if kind=='payload_rotation':
+            try:
+                if (set(state)!={'phase','models','payload_rotation_plan_digest','cutover_measurements'}
+                        or type(state['models']) is not dict
+                        or set(state['models'])!=set(p.document['payload_rotation_observations'])):
+                    raise ValueError
+                for table,observed in p.document['payload_rotation_observations'].items():
+                    item=state['models'][table]
+                    if (set(item)!={'rows','chunks','scope','active_schema','guard'}
+                            or type(item['rows']) is not int or item['rows']!=observed['rows']
+                            or type(item['chunks']) is not int or not 0<=item['chunks']<=item['rows']
+                            or item['scope']!={'count':observed['rows'],'membership':observed['membership']}
+                            or type(item['scope']['count']) is not int):
+                        raise ValueError
+                metrics=state['cutover_measurements']
+                if (type(metrics) is not dict or set(metrics)!={'copy_wall_ns','copy_wal_bytes_cluster_delta'}
+                        or any(type(value) is not int or value<0 for value in metrics.values())):
+                    raise ValueError
+            except (ValueError,TypeError,KeyError,AttributeError):
+                raise TransitionFailure('payload_rotation_state_changed',p.operation_id) from None
         _check_predecessors(c, p)
     if state['phase']=='ABORTED':
         if allow_aborted and pin.phase=='PREPARED': return state
@@ -849,6 +936,9 @@ def _activate(c,p,state,pin,keys):
     if p.document['kind'] == 'rewrap':
         from cryptalis.rotation import _verify_rewrap_target
         _verify_rewrap_target(c, p, keys)
+    elif p.document['kind'] == 'payload_rotation':
+        from cryptalis.rotation import _verify_payload_target
+        _verify_payload_target(c, p, keys)
     for model in p.document['lock']['models']:
         if _guard_facts(c,p,model)!=state['models'][model['table_id']]['guard']: raise TransitionFailure('writer_fence_changed',p.operation_id)
     _drop_guards(c,p)
@@ -872,16 +962,24 @@ def apply(p,engine,*,keys,pin,approval,chunk_size=1000,until='PENDING'):
     _admit(p, pin)
     if p.document['kind'] == 'rewrap' and (until != 'ACTIVE' or pin.phase not in ('ACTIVATING', 'ACTIVE')):
         raise TransitionFailure('rewrap_executor_required', p.operation_id)
+    if p.document['kind'] == 'payload_rotation' and (until != 'ACTIVE' or pin.phase not in ('ACTIVATING', 'ACTIVE')):
+        raise TransitionFailure('payload_rotation_executor_required', p.operation_id)
     with _executor(p,engine,pin,approval) as c:
         state=_state(c,p,pin); c.commit()
-        if state is not None and state['phase'] == 'ACTIVE' and p.document['kind'] == 'rewrap' and pin.phase == 'ACTIVATING':
+        if state is not None and state['phase'] == 'ACTIVE' and p.document['kind'] in ('rewrap', 'payload_rotation') and pin.phase == 'ACTIVATING':
             # A journal phase cannot replace the host's publication evidence.
-            from cryptalis.rotation import _verify_rewrap_target
             with c.begin():
                 _lock_tables(c,p,verification=True)
                 _active_schema(c,p,state)
-                _verify_rewrap_target(c,p,keys)
+                if p.document['kind'] == 'rewrap':
+                    from cryptalis.rotation import _verify_rewrap_target
+                    _verify_rewrap_target(c,p,keys)
+                else:
+                    from cryptalis.rotation import _verify_payload_target
+                    _verify_payload_target(c,p,keys)
         if state is None:
+            if p.document['kind'] == 'payload_rotation':
+                raise TransitionFailure('missing_payload_successor', p.operation_id)
             with c.begin(): state=_expand(c,p)
         while PHASES.index(state['phase'])<PHASES.index(until):
             with c.begin():

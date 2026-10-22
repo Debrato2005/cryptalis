@@ -294,8 +294,120 @@ Keep the saved proposal and policies. An absent marker alone does not establish
 rollback. Adopted restored targets remain unsupported.
 
 The byte budget is a logical bound across complete rows and fields, not a
-process resident-memory limit. Payload sealing, cutover, and activation remain
-SPECIFIED. P cannot enter `migration.apply` or authorize publication.
+process resident-memory limit. P cannot enter `migration.apply` or authorize
+publication.
+
+## Seal and publish payload-key rotation
+
+Complete preparation before sealing. Use the current preparation pin and both
+saved policies. Supply measured native copy throughput and WAL bytes per row:
+
+```python
+from dataclasses import replace
+from cryptalis.rotation import seal_payload_rotation, switch_payload_rotation
+
+backfilled = apply_payload_rotation(proposal, owner_engine,
+    keys=source_keys, target_keys=target_keys, pin=preparation_pin, approval=approval)
+assert backfilled.phase == "BACKFILLED"
+activation = seal_payload_rotation(proposal, owner_engine,
+    keys=source_keys, target_keys=target_keys, pin=preparation_pin, approval=approval,
+    copy_rows_per_second=measured_copy_rate,
+    copy_wal_bytes_per_row=measured_copy_wal_cost)
+print(activation)
+```
+
+Sealing holds maintenance locks, authenticates P's source, and compares all staged
+target values, generations, NULLs, and search headers. It makes no database
+changes. Provider preparation can incur audit/cost effects. Repeated sealing
+with identical staged bytes and costs produces identical A. A binds P and
+actual target ciphertext observations. P reserves A's operation ID without
+embedding its digest. Deploy a transition/v3-capable reader before publication.
+
+Persist exact P and A outside the database through the trusted host process.
+Review A's costs and approve the terminal write pause separately. Keep writers
+stopped. The following pin records the reviewed A identity. Pin provenance and
+current publication authority still come from the trusted host process.
+
+```python
+activation_pin = migration.DeploymentPin(
+    activation.target_id, activation.operation_id, activation.digest, "PREPARED")
+activation_approval = migration.MaintenanceApproval(
+    writer_exclusion_evidence, approved_activation_pause_seconds)
+pending = switch_payload_rotation(proposal, activation, owner_engine,
+    keys=source_keys, target_keys=target_keys, pin=activation_pin,
+    approval=activation_approval)
+assert pending.phase == "PENDING"
+```
+
+The switch repeats paired verification against P and A. A server-side UPDATE
+copies the exact target ciphertext into existing public columns. It preserves
+column identities, constraints, expression indexes, grants, and metadata.
+It removes P's shadows and exchanges P's guards for A's guards. Source
+SUPERSEDED to P, P SUPERSEDED to A, and A PENDING commit together. A fresh
+bounded target pass checks copied frames against A before commit. No search
+reindex occurs. P preparation and cancellation now refuse SUPERSEDED.
+
+A estimates one atomic copy plus five authentication passes. These comprise
+one source pass, both sides of the paired source/target comparison, one
+post-copy target pass, and one publication target pass. Prior staging and
+sealing, lock drain, DDL, provider overhead, and capacity guarantees remain
+outside the estimate. The final full-table write uses one transaction.
+Preparation chunk limits do not bound that write, its WAL, or process memory.
+
+The owner can inspect recorded copy measurements from the exact A journal row:
+
+```python
+from sqlalchemy import text
+
+quote = owner_engine.dialect.identifier_preparer.quote_identifier
+journal = f"{quote(activation.document['journal_schema'])}.{quote('_cryptalis_journal')}"
+statement = text(f"SELECT state -> 'cutover_measurements' FROM {journal} "
+                 "WHERE operation_id = :operation_id AND plan_digest = :plan_digest")
+with owner_engine.connect() as connection:
+    measurements = connection.execute(statement, {
+        "operation_id": activation.operation_id,
+        "plan_digest": activation.digest,
+    }).scalar_one()
+print(measurements)
+```
+
+`copy_wall_ns` measures native wall time around the copy loop.
+`copy_wal_bytes_cluster_delta` records the cluster-wide WAL change around that
+loop. Other cluster transactions can contribute WAL. This window excludes
+later DDL, verification, commit, and publication. These observations establish
+no total pause, isolated WAL cost, capacity bound, or external authority.
+`migration.status(activation, ..., pin=current_activation_pin)` reports
+`NOT_PERFORMED`. It supplies no fresh cryptographic proof.
+
+Publish exact A and its target policies through the trusted host process.
+Use the independently current ACTIVATING pin to acknowledge publication.
+Restart application workers with fresh runtime engines and mapping state before
+attaching A:
+
+```python
+migration.apply(activation, owner_engine, keys=target_keys,
+    pin=replace(activation_pin, phase="ACTIVATING"),
+    approval=activation_approval, until="ACTIVE")
+active_pin = replace(activation_pin, phase="ACTIVE")
+sessions = attach(Base.registry, runtime_engine, lock=activation.lock_bytes,
+    keys=target_keys, deployment=(activation, active_pin))
+```
+
+Generic `migration.apply` accepts A only for ACTIVE publication with an
+ACTIVATING or ACTIVE pin. It never expands a missing payload successor.
+ACTIVATING checks target frames against A even if the journal already claims
+ACTIVE. A genuine ACTIVE pin permits later application edits. Decrypt-back
+and removal preserve those latest values.
+
+After an uncertain switch, wait until the original transaction is terminal.
+Inspect the exact saved P, A, and current host pin. A PENDING retry of
+`switch_payload_rotation` authenticates target frames and reciprocal ancestry
+against A. It does not compare the replaced source frames or call the separate
+source resolver. Target custody still requires all retained roots. Missing A
+with partially superseded ancestors is inconsistent. It cannot authorize
+reconstruction of a commit or cancellation through P.
+
+Preparation, sealing, and cutover on adopted restored targets remain unsupported.
 All seven full gates remain UNKNOWN. See [status](status.md) for current evidence.
 
 ## Measured throughput
@@ -303,8 +415,9 @@ All seven full gates remain UNKNOWN. See [status](status.md) for current evidenc
 Use positive finite integer or floating-point observations for measured rows per second.
 The saved plan retains the supplied rates, including a rate below one row per second.
 Pause estimates round the calculated time to whole seconds.
-Protection and reverse plan readers accept these rate fields after artifact reload.
-Other numeric fields retain their integer-only format.
+Protection, reverse, and payload-activation plan readers accept their measured
+rate fields after artifact reload. Payload activation also accepts measured
+`copy_rows_per_second`. Other numeric fields retain their integer-only format.
 These estimates are planning observations, not pause limits or deployment qualification.
 
 ## Native VARCHAR mappings

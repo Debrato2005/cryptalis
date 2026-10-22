@@ -1,0 +1,13 @@
+{
+  "format": "cryptalis.payload-copy-observation/v1",
+  "rows": 7,
+  "recorded_copy": {
+    "copy_wall_ns": 3704223,
+    "copy_wal_bytes_cluster_delta": 2056
+  },
+  "outer_call_wall_ns": 114093259,
+  "outer_call_wal_bytes_cluster_delta": 13640,
+  "limits": "Synthetic seven-row local fixture. WAL is cluster-wide. No scale or capacity claim.",
+  "native_receipt": "payload-cutover-final-native-20261023.json",
+  "native_receipt_sha256": "396e0e96a1fdfb9a283d5f1577b0296b807dbb1ad6800662cbee012c119c8a10"
+}

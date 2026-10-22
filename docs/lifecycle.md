@@ -2,8 +2,9 @@
 
 **SPECIFIED:** lifecycle contract. **IMPLEMENTED:** bounded product protection transition with plan/apply/verify and pre-switch abort,
 plus an in-place decrypt-back and additive-removal path.
-Root rewrap has a bounded product cutover. Payload preparation can stage and verify encrypted chunks, inspect progress, and cancel preparation.
-Payload cutover, search rotation, and online transition remain unimplemented product slices. [Status](status.md) states the evidence and remaining limits.
+Root rewrap and payload-key rotation have bounded product cutover and shared publication paths.
+Payload preparation stages and verifies encrypted chunks, inspects progress, and supports cancellation before switch.
+Search rotation and online transition remain unimplemented product slices. [Status](status.md) states the evidence and remaining limits.
 The protection engine verifies and switches in one transaction; saved verification checkpoints require a fresh pass on resume.
 Plain reads continue during verification. Writes and locking reads wait; schema DDL can pause all access.
 VERIFIED paragraphs below describe recorded receipts, not current product qualification. All other requirements remain SPECIFIED.
@@ -143,8 +144,8 @@ database memory, driver buffering, provider or capacity bound.
 
 **IMPLEMENTED, staged preparation:** `rotation.apply_payload_rotation` uses P's
 own operation pin, maintenance approval, journal row, guards, and ciphertext
-shadows. P supplies no application deployment authority. The original public
-frames and source journal stay unchanged. The executor checks exact source
+shadows. P supplies no application deployment authority. During preparation,
+the original public frames and source journal stay unchanged. The executor checks exact source
 authority, retained custody, and schema before expansion. Each chunk holds
 write-excluding table locks across length probes, frame reads, shadow updates,
 and the cursor commit. Shadow updates and progress commit together.
@@ -165,12 +166,65 @@ data, exact shadows, and guards before atomic cleanup and an ABORTED marker.
 Target custody is unnecessary. A terminal retry preserves later source edits
 and cannot revive a source that a later operation superseded.
 
-Sealing activation artifact A, payload cutover, and activation remain SPECIFIED.
-The two-artifact protocol in
-[decisions](decisions.md#payload-rotation-preparation-and-activation-2026-10-23)
-keeps source proof separate from actual randomized target observations.
-Preparation on an adopted restored target remains unsupported.
-All seven full gates remain UNKNOWN.
+**IMPLEMENTED, sealed activation:** `rotation.seal_payload_rotation` requires
+BACKFILLED and measured `copy_rows_per_second` and `copy_wal_bytes_per_row`.
+Under maintenance locks, it authenticates source frames against P and compares
+exact source/target generations, values, NULLs, and unchanged search headers.
+It returns activation artifact A from the actual staged ciphertext observations.
+It changes no database data, schema, or journal. Provider preparation can incur
+audit/cost effects. The same staged bytes and costs produce identical A.
+
+A is a `cryptalis.transition/v3` MigrationPlan with `kind: payload_rotation`.
+It binds P's digest, target frame/membership observations, batch limits, and
+exact source-to-P ancestry. P reserves A's operation ID without embedding A's
+digest. This avoids a circular artifact identity. Persist exact P and A outside
+the database before switch. P never supplies publication authority.
+
+**IMPLEMENTED, atomic cutover:** `rotation.switch_payload_rotation` requires
+A's PREPARED or PENDING pin and maintenance approval. It repeats source proof
+against P and paired verification against A before replacing public ciphertext.
+A server-side UPDATE copies verified shadows into the existing public columns.
+Public column identities, constraints, expression indexes, grants, and metadata
+remain intact. Search roots and authenticated search headers do not change.
+This operation requires no search reindex.
+
+The transaction removes P's shadows, exchanges its guards for A's guards,
+and records source SUPERSEDED to P, P SUPERSEDED to A, and A PENDING.
+A fresh bounded target pass checks copied frames against A before commit.
+Preparation resume and cancellation refuse the switched P.
+
+After an uncertain switch, inspect the original transaction and exact artifacts.
+A PENDING retry authenticates current target frames and reciprocal ancestry
+against A. Original source frames no longer exist for comparison. It does not
+call the separate source resolver. Target custody still requires retained roots.
+Missing A with partially superseded ancestors is inconsistent and cannot
+justify reconstruction of a commit.
+
+Publish exact A and its target policies through the trusted host process.
+Shared `migration.apply(A, ..., until="ACTIVE")` admits only ACTIVATING or ACTIVE
+pins and never expands a missing payload successor. ACTIVATING authenticates
+current target frames against A, even when the journal already claims ACTIVE.
+A genuine ACTIVE pin permits later ordinary edits. Decrypt-back and removal
+use those latest values, rather than the original source snapshot.
+
+A estimates the atomic copy plus five authentication passes: one source pass,
+a paired source/target pass, one post-copy target pass, and one publication
+pass. The paired pass counts twice. Prior preparation and sealing, lock drain,
+DDL, provider overhead, and capacity guarantees remain outside that estimate.
+The terminal full-table write uses one transaction. Preparation chunk limits
+do not bound that write or its WAL.
+
+A's journal records `cutover_measurements.copy_wall_ns` and
+`copy_wal_bytes_cluster_delta` around the native copy loop. These observations
+exclude later DDL, verification, commit, and publication. The WAL delta can
+include other cluster transactions. These values supply neither total pause,
+isolated WAL, a capacity bound, nor host authority. Keyless status still reports
+`NOT_PERFORMED` and supplies no fresh cryptographic proof.
+
+The [two-artifact decision](decisions.md#payload-rotation-preparation-and-activation-2026-10-23)
+defines the preparation and activation boundary. Preparation, sealing, and
+cutover on an adopted restored target remain unsupported. All seven full gates
+remain UNKNOWN.
 
 Keep exactly one active application writer representation during maintenance cutover.
 No partial-generation OR query or cross-generation uniqueness gap is silently admitted.
@@ -221,7 +275,7 @@ Inspect current progress with the original source plan and current source pin.
 An ACTIVE successor requires a new rewrap rather than cancellation.
 Rewrap and cancellation on an adopted restored target remain unimplemented.
 After activation, a new rewrap can change custody again without rewriting data.
-All three rotation workflows and the full lifecycle gate remain incomplete.
+Search rotation remains unimplemented. The full lifecycle gate remains UNKNOWN.
 See [status](status.md#active-root-rewrap-checkpoint-2026-10-23).
 
 ## Restore and authority loss

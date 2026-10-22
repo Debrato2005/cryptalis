@@ -74,6 +74,8 @@ def _state(c,p,op,pin=None):
         return None
     if row[0]!=p.digest:raise m.TransitionFailure('journal_identity_mismatch',p.operation_id)
     state=row[1]
+    if type(state) is dict and state.get('phase')=='SUPERSEDED':
+        raise m.TransitionFailure('payload_preparation_superseded',p.operation_id)
     source=p.source
     try:
         if (type(state) is not dict or state.get('phase') not in ('EXPANDED','BACKFILLED','ABORTED')

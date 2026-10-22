@@ -9,6 +9,74 @@ No PostgreSQL/provider/runtime cell, production key provider, independent review
 VERIFIED below refers only to the named checks and their exact revisions.
 All other contract and promotion requirements are SPECIFIED. All seven full gates remain UNKNOWN.
 
+## Sealed payload cutover checkpoint: 2026-10-23
+
+**IMPLEMENTED, bounded native verification:** `rotation.seal_payload_rotation`
+authenticates a complete BACKFILLED preparation P against its original source
+and actual target frames. It returns a deterministic immutable transition/v3
+activation plan A without changing database data or authority. A pins target
+frame/membership observations, target policies, validated scan limits, explicit
+copy/WAL estimates and the exact source/preparation ancestor chain. The host must
+persist A before `rotation.switch_payload_rotation`.
+
+Cutover repeats source and paired target authentication under maintenance locks.
+It compares the target observations to host-pinned A, copies ciphertext into the
+existing public columns, removes P's shadows and exchanges its guards for A's.
+Source SUPERSEDED to P, P SUPERSEDED to A and A PENDING commit atomically. The
+public columns keep their physical identities, constraints, grants and equality
+indexes. A bounded post-copy pass authenticates the installed target against A.
+A PENDING retry uses target custody and A's exact lineage. It does not replay the
+retired original source. Switched preparation cannot resume or cancel.
+
+Shared `migration.apply` admits A only for ACTIVATING/ACTIVE publication. An
+ACTIVATING retry repeats target verification even when the journal claims ACTIVE.
+A genuine ACTIVE pin permits later application edits. Publication also checks
+current owner, metadata, inventory and strict progress shape before provider work.
+Native controls preserve current edits through decrypt-back and package removal,
+including a payload/rewrap/payload chain with five exact ancestors.
+
+**VERIFIED:** 37 final native cases pass in 51.77 seconds. They cover text/VARCHAR,
+multiple tables and tenants, storage-only fields, exact Unicode/NULL values,
+equality/IN/uniqueness, deterministic sealing, scope ordering across artifact
+reload, authentic target reseal after sealing, forged ACTIVE journals, late ACL
+or inventory drift, malformed artifacts and journal counters, missing ancestry,
+rollback after native public UPDATE and guard removal, real cutover/publication
+COMMIT reply loss, SIGKILL and fresh-process disk-artifact publication. The initial
+17 cases and expanded 33-case run also pass after the missing-API red controls.
+
+**VERIFIED, Python 3.12.3 / SQLAlchemy 2.1.3 local cell:** full regression passes
+**1,782 tests and 18 subtests**, with three separate-environment skips, in
+450.53 seconds. The wrapper counts subtests with passed cases. The 48 existing
+warnings concern SQLAlchemy DISTINCT ON deprecation. All start/end Python hashes
+match. Fresh-cluster and pinned Smolink harnesses were not rerun for this cutover
+slice.
+
+The wheel and sdist build reproducibly without network access. The installed wheel matches all 35 packaged
+files and starts its CLI. Dependency installation remains outside that check.
+
+The final server copy is one complete-table write in an atomic terminal
+transaction. It has no committed chunk bound. Host estimates include five
+verification passes and the copy. A seven-row local observation records 3.70 ms
+inside the native copy and 114.09 ms for the whole switch call. The cluster WAL
+counter advances 2,056 bytes during the copy interval and 13,640 bytes across the
+whole call. These are one synthetic sample and cluster-wide observations, not
+isolated operation attribution, throughput, capacity or pause guarantees.
+
+Search reindex and rotation on adopted restored targets remain SPECIFIED.
+The next restore check adds payload-rotated backups and postpublication edits to
+the existing fresh-cluster harness, with independent generation-two decoding.
+Fresh-cluster payload-backup qualification, production provider/authority evidence
+and independent security review remain open. All seven full gates remain UNKNOWN.
+
+Evidence: [missing APIs](_reset/payload-cutover-red-20261023.json),
+[first native run](_reset/payload-cutover-first-20261023.json),
+[expanded recovery](_reset/payload-cutover-expanded-20261023.json),
+[final native controls](_reset/payload-cutover-final-native-20261023.json),
+[full regression](_reset/payload-cutover-full-20261023.json),
+[copy observation](_reset/payload-cutover-copy-observation-20261023.json),
+[reproducible archives](_reset/payload-cutover-release-20261023.json), and
+[installed wheel](_reset/payload-cutover-installed-wheel-20261023.json).
+
 ## Payload staging and cancellation checkpoint: 2026-10-23
 
 **IMPLEMENTED, bounded native verification:** `rotation.apply_payload_rotation`
@@ -62,9 +130,9 @@ The initial red run reports the missing execution APIs. The first 13 native
 controls pass before the expanded recovery cases. Review found no additional
 concrete bypass. That review supplies no independent security qualification.
 
-Sealing the actual target observations into immutable activation artifact A,
-final paired verification and cutover, and application publication remain
-SPECIFIED. P cannot enter `migration.apply`. The
+At this staging checkpoint, sealing A, final cutover and publication remain
+SPECIFIED. The later [sealed cutover checkpoint](#sealed-payload-cutover-checkpoint-2026-10-23)
+adds these operations. P cannot enter `migration.apply`. The
 [two-artifact decision](decisions.md#payload-rotation-preparation-and-activation-2026-10-23)
 requires host persistence of A before the destructive switch. A journal marker
 cannot replace that authority. Search rotation, restored-target rotation,
