@@ -33,7 +33,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from cryptalis import migration as m
 from cryptalis.manifest.compiler import _metadata_diff
 from cryptalis.crypto.cf1 import FieldDescriptor, open_text
-from cryptalis.manifest.compiler import _canonical, _native_text_length, _previous_lock, source_metadata
+from cryptalis.manifest.compiler import _canonical, _native_text_length, _previous_lock, source_metadata, _validate_catalog_facts
 
 FORMAT = 'cryptalis.reverse/v1'
 PHASES = ('PREPARED', 'EXPANDED', 'BACKFILLED', 'VERIFIED',
@@ -78,8 +78,14 @@ class DeprotectionPlan:
                     or not document['plaintext_runtime_role']
                     or document['plaintext_runtime_role'] == document['runtime_role']):
                 raise ValueError
-            if set(document['active_schemas']) != {model['table_id'] for model in document['lock']['models']}:
+            if (not isinstance(document['active_schemas'], dict)
+                    or set(document['active_schemas']) != {model['table_id'] for model in document['lock']['models']}):
                 raise ValueError
+            for model in document['lock']['models']:
+                columns = _validate_catalog_facts(document['active_schemas'][model['table_id']])
+                if set(columns) != {column['name'] for column in model['source_schema']['columns']}:
+                    raise ValueError
+            m._validate_estimates(document['estimates'])
             if not isinstance(document['key_policies'], dict) or any(
                     type(value) is not str or len(value) != 64
                     or any(ch not in '0123456789abcdef' for ch in value)

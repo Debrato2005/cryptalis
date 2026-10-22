@@ -9,6 +9,65 @@ No PostgreSQL/provider/runtime cell, production key provider, independent review
 VERIFIED below refers only to the named checks and their exact revisions.
 All other contract and promotion requirements are SPECIFIED. All seven full gates remain UNKNOWN.
 
+## Host plan input admission: 2026-10-22
+
+**IMPLEMENTED:** protection artifacts now pass compiler lock admission before
+use. This check uses PostgreSQL identifier quoting without opening a connection.
+Compiler root, model, and field members use explicit canonical sets.
+Required row and pause estimates must be nonnegative integers; booleans are refused.
+Display limits must be nonempty text. Measured rates, when present, must form
+a complete positive finite pair. Historical protection artifacts may omit both rates.
+
+Reverse artifacts require a mapping of table IDs to catalog snapshots.
+They reuse the compiler's catalog structure checks for relation, columns,
+constraints, indexes, and dependencies. Recorded column names must match the
+source model. Estimate checks also run before reverse maintenance admission.
+Live catalog and host-policy checks remain separate.
+
+**VERIFIED:** the initial run reproduced 14 failures and passed two controls.
+The first corrected run passes 138 tests. The final focused run passes 64,
+including 24 plan-admission controls. Empty compiler locks and model inventories,
+malformed catalog containers and scalar types, missing estimates, unknown compiler
+members, and invalid pause values now fail during artifact construction.
+Valid v1/v2 artifacts with no measured rates retain their bytes, legacy display,
+and public PREPARED status. Ordinary valid protection and reverse reloads also pass.
+
+The first full run passed 1,564 tests and 18 subtests, with three failures in
+VARCHAR controls that expected rejection during apply. They now expect constructor
+rejection and retain their original native PREPARED-state check.
+That correction changes tests only. All 64 VARCHAR and admission checks pass.
+
+The [final full native suite](_reset/plan-admission-full-final-sa21-20261022.json)
+passes **1,567 tests and 18 subtests**, with three separate-environment skips
+and 48 existing SQLAlchemy warnings. All 97 Python files retain their start/end
+hashes. The wrapper records 319.37 seconds in the unchanged local dependency cell.
+
+An initial native control demonstrated vacuous ACTIVE metadata acceptance with
+an empty model inventory, a matching changed host pin, and a changed journal digest.
+This required coordinated malformed host input; it was not a database-only bypass.
+The constructor now rejects that artifact before the journal can change.
+CLI controls use an unreachable database address and receive exit 2,
+`InvalidInput`, at the input stage. No private marker or traceback appears.
+Previously those calls attempted connection and returned operational exit 4.
+
+The final pinned Smolink lifecycle passes in its existing alternate Python 3.13 /
+SQLAlchemy 2.0.51 cell. Both final fresh-cluster paths pass one export and ten
+restore cases. The reproducible wheel and sdist retain the current product bytes;
+the installed-wheel check matches 32 files and starts the CLI.
+
+This admission check validates artifact structure and selected compiler invariants.
+It does not authenticate the host, validate values, qualify providers, or establish
+writer exclusion. All seven production gates remain UNKNOWN.
+
+Evidence: [initial controls](_reset/plan-admission-red-20261022.json),
+[first focused run](_reset/plan-admission-focused-20261022.json), and
+[final controls](_reset/plan-admission-final-focused-20261022.json).
+Further evidence: [VARCHAR controls](_reset/plan-admission-varchar-final-20261022.json),
+[Smolink](_reset/plan-admission-final-smolink-sa20-20261022.json),
+[VARCHAR restore](_reset/fresh-cluster-restore-20261022-24.json),
+[text restore](_reset/fresh-cluster-restore-20261022-25.json), and
+[installed wheel](_reset/plan-admission-release-installed-20261022.json).
+
 ## Host-bound staged schema: 2026-10-22
 
 **IMPLEMENTED:** paused protection and reverse operations now compare staged
@@ -43,8 +102,8 @@ The wheel and sdist build reproducibly. The installed-wheel check matches 32 fil
 against the wheel and starts the CLI.
 
 The reverse baseline is a host-pinned snapshot, not database authority.
-Nested contents of arbitrary host-authored snapshots are not fully schema-validated.
-Malformed inputs still produce typed, sanitized failures.
+The later [input admission slice](#host-plan-input-admission-2026-10-22) adds
+shared catalog structure checks. Structural validity does not establish live semantics.
 The check covers recorded catalog facts. It does not establish value verification,
 unchanged external function bodies, freshness, or host writer exclusion.
 All seven production gates remain UNKNOWN.

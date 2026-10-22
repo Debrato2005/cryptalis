@@ -691,7 +691,7 @@ def _previous_lock(raw, current, engine):
     """Reject inconsistent compiler artifacts before computing a semantic diff."""
     old = decode_manifest_json(raw)
     try:
-        if (old.keys() != current.keys() or old["schema"] not in ("cryptalis.lock/v1", "cryptalis.lock/v2", "cryptalis.lock/v3")
+        if (old.keys() != set('schema profile domain_id database declaration models writer_inventory search_reviews required_readers ddl'.split()) or old["schema"] not in ("cryptalis.lock/v1", "cryptalis.lock/v2", "cryptalis.lock/v3")
                 or old["profile"] != "cf1" or old["domain_id"] != current["domain_id"]
                 or old["database"] != {"major": 16, "encoding": "UTF8"}):
             raise ValueError
@@ -702,7 +702,7 @@ def _previous_lock(raw, current, engine):
             raise ValueError
         seen = set()
         for model, declared in zip(old["models"], declaration.models, strict=True):
-            expected = set(current["models"][0].keys())
+            expected = set('model table_id schema table record tenancy fields source_schema source_metadata'.split())
             if old["schema"] == "cryptalis.lock/v1":
                 expected.discard("source_metadata")
             if model.keys() != expected or model["table_id"] != str(declared.table_id) or model["model"] != declared.model:
@@ -746,7 +746,7 @@ def _previous_lock(raw, current, engine):
             if not isinstance(model["fields"], list) or len(model["fields"]) != len(declared.fields):
                 raise ValueError
             for field, intent in zip(model["fields"], declared.fields, strict=True):
-                if field.keys() != current["models"][0]["fields"][0].keys() or field["field_id"] != str(intent.field_id) or field["name"] != intent.name:
+                if field.keys() != set('name column field_id queries representation payload_column unique_indexes original source descriptor descriptor_digest'.split()) or field["field_id"] != str(intent.field_id) or field["name"] != intent.name:
                     raise ValueError
                 if field["queries"] != list(intent.queries) or not isinstance(field["column"], str):
                     raise ValueError
@@ -786,8 +786,8 @@ def _previous_lock(raw, current, engine):
     return old
 
 
-def _validate_prior_source(model, *, varchar=False):
-    """Check a prior snapshot's shape and admitted facts without trusting its hash."""
+def _validate_catalog_facts(facts):
+    """Validate recorded catalog structure, separately from field admission."""
     def require(condition):
         if not condition:
             raise ValueError
@@ -804,11 +804,10 @@ def _validate_prior_source(model, *, varchar=False):
                 require(isinstance(item, list) and all(isinstance(v, str) or v is None for v in item))
             else:
                 require(isinstance(item, str))
-    facts = model["source_schema"]
+    require(isinstance(facts, dict) and facts.keys() == {'relation', 'columns', 'constraints', 'indexes', 'dependencies'})
+    require(all(isinstance(facts[key], list) for key in ('columns', 'constraints', 'indexes', 'dependencies')))
     members(facts["relation"], "relkind relpersistence relrowsecurity relforcerowsecurity relhasrules inherited user_triggers",
             bool_keys=("relrowsecurity", "relforcerowsecurity", "relhasrules", "inherited", "user_triggers"))
-    require(facts["relation"]["relkind"] == "r" and facts["relation"]["relpersistence"] == "p")
-    require(not any(facts["relation"][k] for k in ("relrowsecurity", "relforcerowsecurity", "relhasrules", "inherited", "user_triggers")))
     columns = {}
     for column in facts["columns"]:
         members(column, "attnum name type type_schema typmod nullable identity generated collation_name collation_schema deterministic provider default_digest collation",
@@ -831,6 +830,18 @@ def _validate_prior_source(model, *, varchar=False):
         require(index["total_columns"] == len(index["columns"]) and index["key_columns"] <= index["total_columns"])
     for dep in facts["dependencies"]:
         members(dep, "column kind", optional_keys=("column",))
+    return columns
+
+
+def _validate_prior_source(model, *, varchar=False):
+    """Check a prior snapshot's shape and admitted facts without trusting its hash."""
+    def require(condition):
+        if not condition:
+            raise ValueError
+    facts = model['source_schema']
+    columns = _validate_catalog_facts(facts)
+    require(facts["relation"]["relkind"] == "r" and facts["relation"]["relpersistence"] == "p")
+    require(not any(facts["relation"][k] for k in ("relrowsecurity", "relforcerowsecurity", "relhasrules", "inherited", "user_triggers")))
     pk = columns.get(model["record"]["column"])
     require(pk is not None and not pk["nullable"] and pk["type_schema"] == "pg_catalog")
     require(pk["type"] == {"uuid16/v1": "uuid", "int64-be/v1": "int8"}[model["record"]["codec"]])

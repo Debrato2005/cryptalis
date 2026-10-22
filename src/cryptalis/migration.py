@@ -11,11 +11,13 @@ import hashlib
 import json
 import math
 import time
+from types import SimpleNamespace
 from uuid import UUID, uuid4
 from psycopg import sql
 
 from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.dialects import postgresql
 
 from cryptalis.crypto.cf1 import FieldDescriptor, seal_text, open_text
 from cryptalis.crypto.keys import CryptoFailure, Keyring
@@ -78,6 +80,20 @@ class MaintenanceApproval:
     approved_pause_seconds: float
 
 
+def _validate_estimates(costs):
+    for name in ('rows', 'writer_pause_seconds_estimate'):
+        if type(costs[name]) is not int or costs[name] < 0:
+            raise ValueError
+    if not isinstance(costs['limits'], str) or not costs['limits']:
+        raise ValueError
+    rates = ('backfill_rows_per_second', 'verify_rows_per_second')
+    if any(name in costs for name in rates):
+        for name in rates:
+            value = costs[name]
+            if type(value) not in (int, float) or not math.isfinite(value) or value <= 0:
+                raise ValueError
+
+
 @dataclass(frozen=True)
 class MigrationPlan:
     artifact: bytes
@@ -103,6 +119,9 @@ class MigrationPlan:
             if (any(not isinstance(doc[name], dict) for name in ('lock', 'key_policies', 'estimates'))
                     or not isinstance(doc['scopes'], list)):
                 raise ValueError
+            # Compiler validation needs identifier quoting, never a connection.
+            _previous_lock(_canonical(doc['lock']), doc['lock'], SimpleNamespace(dialect=postgresql.dialect()))
+            _validate_estimates(doc['estimates'])
         except (ManifestInvalid, ValueError, TypeError, KeyError, AttributeError):
             raise TransitionFailure('invalid_plan') from None
     def __str__(self):

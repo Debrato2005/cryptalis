@@ -33,12 +33,12 @@ No objective is complete until its acceptance evidence and applicable gate pass.
   archive members. The installed-artifact correction compares the current wheel with
   installed files and imports verified source under an isolated bytecode cache.
   Scoped approved execution outside the sandbox restores both private-role probes
-  and Git writes. The current full suite passes 1,543 tests, with 3 separate-environment
-  tests skipped and 18 subtests passed; [receipt](_reset/paused-schema-full-sa21-20261022.json).
+  and Git writes. The current full suite passes 1,567 tests, with 3 separate-environment
+  tests skipped and 18 subtests passed; [receipt](_reset/plan-admission-full-final-sa21-20261022.json).
   Each source type, historical text and native VARCHAR, passes one export and ten
   restore cases on a new cluster with metadata and approved status inspection;
-  current [VARCHAR](_reset/fresh-cluster-restore-20261022-20.json) and
-  [text](_reset/fresh-cluster-restore-20261022-21.json) receipts report matching start/end Python hashes.
+  current [VARCHAR](_reset/fresh-cluster-restore-20261022-24.json) and
+  [text](_reset/fresh-cluster-restore-20261022-25.json) receipts report matching start/end Python hashes.
 - Implemented scope: native text and VARCHAR storage, exact equality, `IN`, tenant-scoped uniqueness,
   sync/async attachment, maintenance protection transition, read-only transition status, in-place decrypt-back and
   additive removal for that transition format, an independent application lifecycle and
@@ -94,6 +94,7 @@ Requirement text is abbreviated. The full definitions remain in the research
 
 | Date | Research reference | Mechanism | Product files | Evidence | Status |
 |---|---|---|---|---|---|
+| 2026-10-22 | Host artifact input admission | Reuse offline compiler lock and catalog structure checks; require safe estimate values and reverse snapshot maps before connection | Compiler, migration, reverse and native plan/CLI controls | 14 initial failures; 138 first focused and 64 final focused tests pass, including 24 admission controls and legacy v1/v2 artifacts; 1,567 full tests and 18 subtests pass; [full](_reset/plan-admission-full-final-sa21-20261022.json), [focused](_reset/plan-admission-final-focused-20261022.json) | VERIFIED for named structural checks and input diagnosis; no host authentication or live semantic claim; all gates UNKNOWN |
 | 2026-10-22 | Host-bound staged catalog | Derive protection shadows from the source lock and reverse staging from the host-pinned protected snapshot plus native source types; retain journal continuity | Migration, reverse metadata documentation, native staged-schema controls | 24 initial false acceptances; 175 focused and 1,543 full tests plus 18 subtests pass; pinned Smolink and both fresh-cluster paths pass; [full](_reset/paused-schema-full-sa21-20261022.json) | VERIFIED for recorded catalog facts before paused progress; no freshness or value-verification claim; all gates UNKNOWN |
 | 2026-10-22 | Host-bound paused writer fence | Share the host-derived guard check across protection and reverse paused operations and plaintext publication; retain journal continuity checks | Migration, reverse, native guard controls and revised crash/marker fault tests | 18 initial failures; 22 adversarial cases, two native fault controls, and 1,519 full tests plus 18 subtests pass; pinned Smolink and both fresh-cluster paths pass; [full](_reset/paused-guard-full-sa21-20261022.json) | VERIFIED for guard admission before progress; staged catalog admission is a separate later slice; all gates UNKNOWN |
 | 2026-10-22 | Host-bound protected catalog | Derive the protected catalog from the source lock; inspect generated frame checks, equality indexes and pending guards; retain explicit restore restatement admission | Compiler, migration, search, reverse and restore modules; native adversarial and fresh-cluster tests | 14 initial false acceptances; 89 lifecycle, 219 expanded and 1,497 full tests plus 18 subtests pass; pinned Smolink passes; each text/VARCHAR fresh cluster passes one export and ten restore cases; [full](_reset/active-contract-full-sa21-20261022.json) | VERIFIED for recorded catalog facts and declared CF1 objects; no key/value or transitive function evidence; all gates UNKNOWN |

@@ -263,10 +263,8 @@ def test_varchar_reader_fences_refuse_inconsistent_locks_before_effects(damage):
             column = next(c for c in lock['models'][0]['source_schema']['columns'] if c['name'] == 'name')
             column['typmod'] = '4'
         raw = json.dumps(document, ensure_ascii=False, sort_keys=True, separators=(',', ':')).encode()
-        plan = app.m.MigrationPlan(raw)
-        pin = replace(app.pin, plan_digest=plan.digest)
-        with pytest.raises(app.m.TransitionFailure, match='invalid_compiler_lock'):
-            app.m.apply(plan, app.owner, pin=pin, approval=app.approval, keys=keys)
+        with pytest.raises(app.m.TransitionFailure, match='invalid_plan'):
+            app.m.MigrationPlan(raw)
         assert app.m.status(app.plan, app.owner, pin=app.pin).phase == 'PREPARED'
 
 

@@ -178,6 +178,10 @@ This check precedes backfill, verification, switching, abort and plaintext publi
 Paused schema inspection also compares protection shadows with the source lock,
 and reverse staging with the host-pinned protected snapshot and native source types.
 Matching catalog and journal edits cannot authorize a different staged schema.
+Host artifact construction also checks compiler lock structure, required estimates,
+and reverse catalog snapshot structure before connection. This prevents empty
+model inventories from making metadata inspection vacuous. Structural validity
+does not authenticate a host artifact or replace live catalog and policy checks.
 Restore adoption applies the same contract before accepting its explicit CHECK
 restatements. This binds recorded catalog facts, not the bodies of external
 functions, domain definitions, collation implementations, or index storage options.
