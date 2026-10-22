@@ -492,6 +492,10 @@ class _Attachment:
             binding.column.table.schema = model["schema"]
             binding.column.type = _Payload(binding, self)
         self.fingerprint = self._fingerprint()
+        for model in self.models:
+            # ORM flush uses a mapper cache that engine.clear_compiled_cache()
+            # does not clear. Native statements can retain plaintext processors.
+            inspect(model).base_mapper._compiled_cache.clear()
         engine.clear_compiled_cache()
         install_guard(engine, UnsupportedProtectedOperation, self.before_execute, self.check_cursor)
         native_compiler = engine.dialect.statement_compiler

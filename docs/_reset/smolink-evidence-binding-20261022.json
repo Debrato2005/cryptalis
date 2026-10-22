@@ -1,0 +1,22 @@
+{
+  "format": "cryptalis.evidence-normalization/v1",
+  "scope": "Exact EOF-only difference between executed source bundle and final worktree; no behavioral rerun claim",
+  "path": "tests/smolink_workload.py",
+  "previous_sha256": "b153b22de120936b18b28328e4b0326a57304d94e04cf0bfec3a32784f66d66e",
+  "current_sha256": "a8f8811a67af94104f5f422e78b612fcfa1434d32617e343cd81e547c4be5e35",
+  "change": "Remove one trailing LF byte after the final newline",
+  "old_equals_current_plus_lf": true,
+  "python_ast_without_locations_identical": true,
+  "remaining_89_source_test_files_match": true,
+  "receipts": [
+    "smolink-readonly-green-20261022.json",
+    "smolink-full-sa21-20261022-2.json",
+    "smolink-final-sa20-20261022.json",
+    "smolink-final-sa21-20261022.json",
+    "fresh-cluster-export-20261022-10.json",
+    "fresh-cluster-restore-20261022-10.json",
+    "fresh-cluster-export-20261022-11.json",
+    "fresh-cluster-restore-20261022-11.json"
+  ],
+  "gates": "all seven UNKNOWN"
+}

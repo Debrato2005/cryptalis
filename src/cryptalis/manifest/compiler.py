@@ -148,6 +148,26 @@ def _rows(connection, sql, **params):
 
 
 def _schema_facts(connection, schema: str, table: str):
+    # PostgreSQL deparsers qualify names through the current search path.
+    # Match the compiler's canonical view, then restore the caller's setting.
+    previous = connection.exec_driver_sql("SELECT pg_catalog.current_setting('search_path')").scalar_one()
+    if previous == "pg_catalog":
+        return _catalog_schema_facts(connection, schema, table)
+    connection.exec_driver_sql("SELECT pg_catalog.set_config('search_path', 'pg_catalog', true)")
+    failed_sql = False
+    try:
+        return _catalog_schema_facts(connection, schema, table)
+    except (SQLAlchemyError, PsycopgError):
+        # The caller must roll back a database failure. That rollback also
+        # restores SET LOCAL; another query could mask the primary SQLSTATE.
+        failed_sql = True
+        raise
+    finally:
+        if not failed_sql:
+            connection.exec_driver_sql("SELECT pg_catalog.set_config('search_path', %s, true)", (previous,))
+
+
+def _catalog_schema_facts(connection, schema: str, table: str):
     relations = _rows(connection, """
         SELECT t.oid, t.relkind, t.relpersistence, t.relrowsecurity, t.relforcerowsecurity,
                t.relhasrules,

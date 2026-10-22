@@ -117,3 +117,28 @@ Measure provider cold/warm/outage, migration rows/s, WAL/temp space, and total w
 Approved read/storage targets remain targets until measured. Write-throughput and pause budgets remain D.
 Count actual business-query, model, writer, deployment, and operator changes. Do not infer zero-cost adoption from one attach call.
 No project test suite runs during a documentation-only pass unless a non-documentation file changed.
+
+### Pinned external application check
+
+`tests/test_smolink_application.py` extracts Smolink revision
+`498d24bae999ed53ad85e1c1f1a09ea7fa151aa4` from a local checkout with Git.
+It never imports the checkout's working files or settings file.
+It checks source hashes and import origins before recording adoption evidence.
+
+Use a separate Python 3.13 interpreter with Smolink's dependencies and Cryptalis.
+Install no package into the application checkout for this test.
+Supply an available `redis-server` executable. The test starts a disposable server
+on a private Unix socket. PostgreSQL access still uses both fresh private files
+through the mandatory wrapper.
+
+```bash
+CRYPTALIS_SMOLINK_CHECKOUT=/path/to/smolink \
+  /path/to/python3.13 scripts/test_postgres.py -- tests/test_smolink_application.py -q
+```
+
+An explicit opt-in fails if its interpreter, packages, source revision, or services
+are unavailable. Without the opt-in, the ordinary suite skips this external test.
+The [status record](status.md#pinned-smolink-adoption-2026-10-22) names the two tested
+dependency cells and their limits. The workload protects only `Url.destination`.
+HTTP covers URL creation and refusal cases. Repository and ORM calls cover other CRUD operations.
+The host replaces the session dependency and supplies protection policy and maintenance authority.

@@ -56,6 +56,11 @@ The real adoption cost is a manifest, one attach call, typed statements replacin
 The host supplies its authenticated tenant scope, writer inventory, external provider configuration, and current deployment policy.
 Cryptalis does not replace authentication or authorization.
 
+A [pinned Smolink workload](docs/status.md#pinned-smolink-adoption-2026-10-22)
+protects `Url.destination` through the original FastAPI app without source or query edits.
+It also checks decrypt-back and a fresh process that denies Cryptalis imports.
+This bounded storage-only result does not qualify the complete app or a production cell.
+
 ```python
 # SPECIFIED API example. It is not importable from the current package.
 sessions = attach(Base.registry, engine, manifest="cryptalis.json", keys=provider)

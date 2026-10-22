@@ -101,6 +101,44 @@ def compile_app(app, doc=None, **kwargs):
                               search_reviews=kwargs.pop("search_reviews", reviews()), **kwargs)
 
 
+def test_catalog_snapshot_is_independent_of_caller_search_path(app):
+    from cryptalis.manifest.compiler import _schema_facts
+    engine, _, _, schema = app
+    with engine.begin() as c:
+        c.exec_driver_sql(f'CREATE TABLE "{schema}".child (id uuid PRIMARY KEY, '
+                          f'parent uuid REFERENCES "{schema}".customer(id))')
+    with engine.connect() as c:
+        c.exec_driver_sql('SET LOCAL search_path = pg_catalog')
+        expected = _schema_facts(c, schema, 'customer')
+        path = f'"{schema}", pg_catalog'
+        c.exec_driver_sql('SELECT pg_catalog.set_config(%s,%s,true)', ('search_path', path))
+        observed = _schema_facts(c, schema, 'customer')
+        assert c.exec_driver_sql('SHOW search_path').scalar_one() == path
+        assert observed == expected
+        c.exec_driver_sql(f'ALTER TABLE "{schema}".child DROP CONSTRAINT child_parent_fkey')
+        assert _schema_facts(c, schema, 'customer') != expected
+
+
+def test_failed_catalog_snapshot_preserves_primary_sqlstate(app):
+    from cryptalis.manifest.compiler import _schema_facts
+    from sqlalchemy.exc import DBAPIError
+    engine, _, _, schema = app
+    def interrupt(c, cursor, statement, parameters, context, many):
+        if 'SELECT t.oid, t.relkind' in statement:
+            c.exec_driver_sql('SELECT 1/0')
+    with engine.connect() as c:
+        original = c.exec_driver_sql('SHOW search_path').scalar_one()
+        event.listen(c, 'before_cursor_execute', interrupt)
+        try:
+            with pytest.raises(DBAPIError) as failed:
+                _schema_facts(c, schema, 'customer')
+            assert failed.value.orig.sqlstate == '22012'
+        finally:
+            event.remove(c, 'before_cursor_execute', interrupt)
+            c.rollback()
+        assert c.exec_driver_sql('SHOW search_path').scalar_one() == original
+
+
 def snapshot(app):
     engine, _, Customer, schema = app
     with engine.connect() as c:

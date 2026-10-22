@@ -9,6 +9,82 @@ No PostgreSQL/provider/runtime cell, production key provider, independent review
 VERIFIED below refers only to the named checks and their exact revisions.
 All other contract and promotion requirements are SPECIFIED. All seven full gates remain UNKNOWN.
 
+## Pinned Smolink adoption: 2026-10-22
+
+**VERIFIED, bounded:** Smolink revision `498d24bae999ed53ad85e1c1f1a09ea7fa151aa4`
+completes a native, protected, and post-removal workload on PostgreSQL 16.
+The test extracts 38 Python files with local Git. It checks their hashes and
+import origins. It changes no application source, model declaration, or query.
+The original FastAPI app supplies the URL endpoint, authentication dependency,
+service, repositories, Snowflake IDs, and response validation.
+HTTP checks cover URL creation, duplicates, invalid authentication, invalid
+aliases, expired URLs, invalid input, and real Redis rate-limit refusal.
+Repository and ORM calls cover reads, current-value updates, deletion, and refresh.
+
+Only `Url.destination` is protected. The profile uses storage-only VARCHAR(2048)
+and an explicit single-tenant declaration. `owner_id` remains application data.
+The test does not infer authorization or tenant scope from that foreign key.
+Protected cursor parameters contain no destination marker. Native database
+reads find CF1 frames. Decrypt-back retains the latest destination and restores
+the native character limit. A fresh process runs the original app again with
+all Cryptalis imports denied.
+
+Adoption requires a manifest, key resolver, writer inventory, maintenance
+approval, deployment pins, and a replacement session dependency.
+The test also uses a private schema through connection settings, public test
+settings, a seeded verified user, and disposable Redis through a Unix socket.
+No external key custody or deployment-wide writer exclusion is established.
+Email search, password-hash protection, other endpoints, the complete application
+suite, a second external app, and packaged Python 3.13 installation remain open.
+
+The run exposed two product defects. Catalog definition digests depended on
+the caller's search path. Catalog reads now use the compiler's canonical
+`pg_catalog` path and restore the caller's setting. Database failures retain
+their primary SQLSTATE and require rollback. A real division-by-zero control
+checks the original error and the restored path after rollback.
+Attachment also clears each protected mapper's flush cache. The engine cache
+alone did not remove INSERT and UPDATE processors compiled before attachment.
+Both native and external controls first failed, then passed after this change.
+The first full run found eight read-only route assertions. Canonical reads now
+use SELECT-based setting functions, so those strict assertions remain unchanged.
+The mapper cache is a private SQLAlchemy dependency. Keep its regression when
+upgrading SQLAlchemy.
+
+Two external cells pass: Python 3.13.12 with FastAPI 0.139.0 and SQLAlchemy
+2.0.51 or 2.1.3. Both use greenlet 3.5.3, psycopg 3.3.6 in Python mode, and
+cryptography 50.0.2. SQLAlchemy 2.1.3 uses its Python implementation.
+The tests reuse existing packages and compatible cached modules without installation.
+These cells differ from the pinned release dependencies. It is compatibility
+evidence, not release qualification. All seven full gates remain UNKNOWN.
+
+The [focused correction run](_reset/smolink-readonly-green-20261022.json) passes 154 tests.
+The pinned app passes separately with [SQLAlchemy 2.0.51](_reset/smolink-final-sa20-20261022.json)
+and [SQLAlchemy 2.1.3](_reset/smolink-final-sa21-20261022.json).
+The source and cost records are [SA 2.0](_reset/smolink-application-final-sa20-20261022.json)
+and [SA 2.1](_reset/smolink-application-final-sa21-20261022.json).
+These receipts include all 38 source hashes and exact runtime versions.
+
+The [full pinned-dependency run](_reset/smolink-full-sa21-20261022-3.json) passes
+**1,405 tests and 18 subtests**, with three skips and 48 existing SQLAlchemy warnings.
+The final wrapper receipt records 208.23 seconds. The skips cover the two fresh-cluster modules and
+the external app, which has its own interpreter and receipts above.
+The [release check](_reset/smolink-release-installed-20261022.json) passes matching
+repeat builds, archive and SBOM checks, 32 installed-file comparisons, and isolated
+CLI startup. Installation uses `--no-deps`; it does not qualify runtime dependencies.
+The first build attempt could not write the default uv cache. The existing cache
+under `/tmp` permits an offline run without a permission change.
+
+Each source type also passes one export and seven restore/adoption/removal tests
+on a new PostgreSQL 16 cluster: [VARCHAR](_reset/fresh-cluster-restore-20261022-10.json)
+and [historical text](_reset/fresh-cluster-restore-20261022-11.json).
+The [normalization record](_reset/smolink-evidence-binding-20261022.json) binds these
+runs to the final helper file. The only later difference removes one trailing
+blank line. Its Python syntax tree is identical, and all other 89 source/test
+hashes match. The historical receipts remain unchanged.
+A sandbox approval-review timeout prevented the first command from starting.
+The permitted retry passed both private-role probes and completed the harness.
+No failed database probe was retried, and no host permission policy changed.
+
 ## Native VARCHAR support: 2026-10-22
 
 **IMPLEMENTED:** the text family now includes native PostgreSQL `varchar(n)` and

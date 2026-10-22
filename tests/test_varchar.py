@@ -100,6 +100,28 @@ def test_varchar_matches_native_assignment_pending_state_refresh_and_search(leng
             native_mapping.dispose()
 
 
+def test_attachment_recompiles_warmed_native_flush_statements():
+    with application(rows=1, value_type=String(12), queries=[]) as app:
+        from sqlalchemy.orm import Session
+        with Session(app.runtime) as s:
+            row = s.get(app.Customer, UUID(int=100))
+            row.name = 'before'
+            s.commit()
+        run(app)
+        publish(app)
+        factory = attach(app.mapping, app.runtime, lock=app.plan.lock_bytes,
+                         keys=keys, deployment=(app.plan, app.pin))
+        with factory(tenant_id=TENANT) as s:
+            row = s.get(app.Customer, UUID(int=100))
+            row.name = 'after'
+            s.commit()
+            s.add(app.Customer(id=UUID(int=901), tenant_id=TENANT, name='new', label='same shape'))
+            s.commit()
+        with factory(tenant_id=TENANT) as s:
+            assert s.get(app.Customer, UUID(int=100)).name == 'after'
+            assert s.get(app.Customer, UUID(int=901)).name == 'new'
+
+
 def test_varchar_coercion_retains_native_scoped_uniqueness():
     with application(value_type=String(12, collation='C')) as app:
         with app.owner.begin() as c:
