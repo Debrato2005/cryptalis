@@ -260,10 +260,18 @@ An internal candidate-preparation API resolves, rewraps, and verifies every admi
 The bounded root-rewrap executor records an immutable transition/v2 successor through
 the shared maintenance and activation machinery. Host publication remains separate.
 A separate internal batch API reseals current frames between payload generations and preserves search headers.
-Read-only payload planning pins exact retained custody, source observations,
+Read-only payload planning produces preparation proposal P. It pins exact retained custody, source observations,
 aggregate logical batch limits and measured costs. It reserves distinct preparation
-and successor identities. The staged executor, sealed activation artifact and
-search-reindex executor remain SPECIFIED.
+and successor identities. Payload preparation also has bounded apply, status,
+and abort APIs. The shared maintenance executor stages ciphertext and commits
+chunk progress under P's separate operation identity. Original source frames
+and journal remain unchanged. Resume authenticates committed ciphertext.
+BACKFILLED retries repeat full source and target authentication. Keyless status
+reports `NOT_PERFORMED`. Cancellation uses the republished source ACTIVE pin
+and needs no target custody. The logical byte budget spans all fields in each
+batch and is not a process memory bound. Preparation on adopted restored targets
+remains unsupported. Sealing the activation artifact, payload cutover,
+activation, and search reindex remain SPECIFIED. All seven full gates remain UNKNOWN.
 See [lifecycle](../lifecycle.md#changes-and-rotation) for recovery and publication boundaries.
 [Security](../security.md#cryptographic-format) owns framing, commitments, keys, and failure rules.
 Generic CHECK/FK/default/collation preservation remains UNKNOWN. [Lifecycle](../lifecycle.md) states the verifier's actual checks.

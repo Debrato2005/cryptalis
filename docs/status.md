@@ -9,6 +9,75 @@ No PostgreSQL/provider/runtime cell, production key provider, independent review
 VERIFIED below refers only to the named checks and their exact revisions.
 All other contract and promotion requirements are SPECIFIED. All seven full gates remain UNKNOWN.
 
+## Payload staging and cancellation checkpoint: 2026-10-23
+
+**IMPLEMENTED, bounded native verification:** `rotation.apply_payload_rotation`
+stages encrypted payloads under the immutable preparation artifact P. The source
+public frames, equality indexes and source ACTIVE journal remain intact. The
+executor checks source authority, schema, journal inventory, retained custody and
+both policies before expansion. Exact P guards and nullable bytea shadows commit
+together. Existing source attachments reject the changed maintenance schema.
+Keep all application workers stopped during preparation.
+
+Each chunk holds write-excluding table locks across its length probe, reads,
+shadow writes and progress marker. Complete rows obey P's aggregate logical byte
+budget. Python, driver, database and provider overhead remain outside that budget.
+This establishes no RSS or capacity bound. Resume authenticates the committed
+prefix and preserves its randomized frames. It rejects copied source-generation
+frames, unauthentic target frames, inconsistent cursors and altered guards or schema.
+BACKFILLED requires a complete source/target value, NULL, generation and search-header
+check. Every BACKFILLED retry repeats authentication. `max_chunks` can stop after
+the last data chunk while phase remains EXPANDED. A later call performs the final
+verification and records BACKFILLED.
+
+`status_payload_rotation` reads recorded progress without keys. It reports
+`NOT_PERFORMED` and no runtime metadata match. It supplies no data-verification or
+publication authority. `abort_payload_rotation` requires the external source ACTIVE
+pin. It authenticates the source, removes only P's exact shadows and guards, and
+records P as ABORTED in one transaction. It needs no target provider. Terminal
+retries preserve later source edits and reject a superseded source. Adopted restore
+is outside this implementation.
+
+**VERIFIED:** 26 native execution/recovery cases pass in 30.54 seconds. Controls
+cover text/VARCHAR, multiple tables and tenants, equality and storage-only fields,
+NULL and exact Unicode values, source edits after planning, prior rewrap lineage,
+provider outage, invalid authority, tampering, cancellation before expansion and
+after full backfill, process death after a committed chunk, and fresh-process
+artifact reload. Real proxies discard committed chunk and cancellation replies.
+Injected failures after native shadow UPDATE and guard DROP preserve the previous
+committed state and writer fence. Resume preserves committed prefix nonces and
+source bytes/index identity.
+
+**VERIFIED, Python 3.12.3 / SQLAlchemy 2.1.3 local cell:** full regression passes
+**1,745 tests and 18 subtests**, with three separate-environment skips, in
+386.13 seconds. The wrapper counts subtests with passed cases. The 48 existing
+warnings concern SQLAlchemy DISTINCT ON deprecation. All start/end Python hashes
+match. The separate fresh-cluster and pinned Smolink harnesses were not rerun for
+this preparation slice.
+
+The wheel and sdist build reproducibly without network access. The installed-wheel check matches all 34
+packaged files and starts its CLI under a fresh bytecode cache. Dependency
+installation remains outside that check. Receipt source hashes match the worktree.
+The initial red run reports the missing execution APIs. The first 13 native
+controls pass before the expanded recovery cases. Review found no additional
+concrete bypass. That review supplies no independent security qualification.
+
+Sealing the actual target observations into immutable activation artifact A,
+final paired verification and cutover, and application publication remain
+SPECIFIED. P cannot enter `migration.apply`. The
+[two-artifact decision](decisions.md#payload-rotation-preparation-and-activation-2026-10-23)
+requires host persistence of A before the destructive switch. A journal marker
+cannot replace that authority. Search rotation, restored-target rotation,
+production custody and independent review remain open. All seven full gates
+remain UNKNOWN.
+
+Evidence: [initial controls](_reset/payload-stage-red-20261023.json),
+[first implementation](_reset/payload-stage-first-20261023.json),
+[expanded native recovery](_reset/payload-stage-recovery-20261023.json),
+[full regression](_reset/payload-stage-full-20261023.json),
+[reproducible release](_reset/payload-stage-release-20261023.json), and
+[installed wheel](_reset/payload-stage-installed-wheel-20261023.json).
+
 ## Payload-rotation planning checkpoint: 2026-10-23
 
 **IMPLEMENTED, bounded native verification:** `plan_payload_rotation` emits an
@@ -57,8 +126,9 @@ check matches all 33 packaged files, starts its CLI under a fresh bytecode cache
 and inspects the genesis manifest. Dependency installation remains outside this
 check. Current release source hashes match the artifact receipt.
 
-Payload staged execution, paired sealing, final cutover and cancellation remain
-SPECIFIED. The preparation cannot enter the application publication executor.
+At this planning checkpoint, staged execution, paired sealing, final cutover and
+cancellation remain SPECIFIED. The later [staging checkpoint](#payload-staging-and-cancellation-checkpoint-2026-10-23)
+adds preparation and cancellation. The preparation cannot enter the application publication executor.
 The [two-artifact decision](decisions.md#payload-rotation-preparation-and-activation-2026-10-23)
 requires actual verified target observations in a separate immutable activation
 artifact before destructive switch. No journal result hash supplies authority.

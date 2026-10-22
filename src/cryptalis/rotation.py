@@ -323,7 +323,7 @@ def _prepare_payload(source, keys, target_keys):
     return policies, prepared
 
 
-def _payload_stream(c, model, after, limits):
+def _payload_stream(c, model, after, limits, *, payloads=False):
     """Read lengths first. Retrieve only the prefix within the WHOLE-row budget."""
     identity_bytes = 16 + (8 if model['record']['codec'] == 'int64-be/v1' else 16)
     terms = [str(identity_bytes*len(model['fields']))]
@@ -347,7 +347,7 @@ def _payload_stream(c, model, after, limits):
             break
         count += 1
         total += size
-    return m._stream(c,model,after=after,limit=count) if count else []
+    return m._stream(c,model,after=after,limit=count,payloads=payloads) if count else []
 
 
 def plan_payload_rotation(source, engine, *, source_pin, keys, target_keys,
@@ -388,6 +388,25 @@ def plan_payload_rotation(source, engine, *, source_pin, keys, target_keys,
     except Exception as exc:
         raise m._safe_failure(exc,source.operation_id,()) from None
     return proposal
+
+
+def apply_payload_rotation(proposal,engine,*,keys,target_keys,pin,approval,until='BACKFILLED',max_chunks=None):
+    """Stage encrypted chunks under P. This operation cannot publish or switch."""
+    from cryptalis._payload_transition import apply
+    return apply(proposal,engine,keys=keys,target_keys=target_keys,pin=pin,approval=approval,
+                 until=until,max_chunks=max_chunks)
+
+
+def status_payload_rotation(proposal,engine,*,pin):
+    """Read recorded preparation progress. No value verification or effects."""
+    from cryptalis._payload_transition import status
+    return status(proposal,engine,pin=pin)
+
+
+def abort_payload_rotation(proposal,engine,*,keys,source_pin,approval):
+    """Discard only P's staging under the republished source ACTIVE pin."""
+    from cryptalis._payload_transition import abort
+    return abort(proposal,engine,keys=keys,source_pin=source_pin,approval=approval)
 
 
 def _same_roots(source, target):

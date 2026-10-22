@@ -317,15 +317,40 @@ unchanged search generation, bounded rows/bytes, and unique records. It performs
 provider, policy, or schema change. A caller must integrate any result into a separately
 approved journaled lifecycle before a database switch.
 
-**IMPLEMENTED, read-only planning:** `rotation.plan_payload_rotation` checks
-complete source custody, including retained roots and deleted tenants. Its target
+**IMPLEMENTED, read-only planning:** `rotation.plan_payload_rotation` produces
+preparation proposal P and checks complete source custody, including retained
+roots and deleted tenants. Its target
 retains every exact source wrapper and adds one new independent payload root.
 The selected generation exceeds all retained payload generations. Search custody
 does not change. The snapshot authenticates current source frames under both
 reader sets and records frame/membership digests, public contexts and estimates.
 It stores no plaintext digest, wrapper bytes or root material. Provider preparation
-can have provider-side audit/cost effects. No payload staging or deployment
-publication follows from a successful plan. Lease expiry remains `KeyUnavailable`.
+can have provider-side audit/cost effects. A successful plan performs no staging
+or publication. Lease expiry remains `KeyUnavailable`.
+
+**IMPLEMENTED, encrypted staging:** `rotation.apply_payload_rotation` uses the
+existing CF1 batch transform under maintenance guards and table locks. The
+source frames and original journal remain unchanged. P owns separate shadows
+and progress. The executor checks the schema against P and exact guard facts.
+It checks cursor membership, shadow lengths, NULL presence, and the empty suffix
+before fetching a committed prefix. It authenticates exact source and target
+generations, values, and search headers. Retained roots cannot make an unchanged
+source frame pass as a rotated target.
+
+BACKFILLED retries repeat full authentication against P's source observations.
+Keyless status reports `NOT_PERFORMED`, not cryptographic verification. Chunk
+ciphertext and its cursor commit atomically. The executor preserves completed
+ciphertext on resume. Row and aggregate byte limits bound logical inputs across
+fields. They do not bound process resident memory, driver buffering, database
+memory, or provider overhead.
+
+Cancellation requires the host to republish the exact source ACTIVE pin.
+Source-only authentication precedes removal of exact shadows and guards.
+Cleanup and the ABORTED marker share one transaction. The target provider need
+not remain available. A terminal retry preserves later source edits without
+restoring snapshots. Adopted restored targets remain unsupported. Payload
+sealing, cutover, and publication remain SPECIFIED. All seven full gates remain
+UNKNOWN.
 
 Sync and async preparation publish keys only after every required root passes checks.
 Cancellation rejects late provider material, including when a provider suppresses cancellation.

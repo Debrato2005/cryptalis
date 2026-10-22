@@ -440,6 +440,13 @@ def _connection(engine,operation_id=None,*,exclusive=False):
 @contextmanager
 def _executor(p,engine,pin,approval):
     _admit(p,pin)
+    with _maintenance_executor(p,engine,approval) as c:
+        yield c
+
+
+@contextmanager
+def _maintenance_executor(p,engine,approval):
+    """Shared SQL mechanics after the caller admits its typed operation/pin."""
     _approve_maintenance(p,approval)
     try:
         _previous_lock(p.lock_bytes,p.document['lock'],engine)

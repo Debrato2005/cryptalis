@@ -2,7 +2,8 @@
 
 **SPECIFIED:** lifecycle contract. **IMPLEMENTED:** bounded product protection transition with plan/apply/verify and pre-switch abort,
 plus an in-place decrypt-back and additive-removal path.
-Root rewrap has a bounded product cutover. Payload/search rotation and online transition remain unimplemented product slices. [Status](status.md) states the evidence and remaining limits.
+Root rewrap has a bounded product cutover. Payload preparation can stage and verify encrypted chunks, inspect progress, and cancel preparation.
+Payload cutover, search rotation, and online transition remain unimplemented product slices. [Status](status.md) states the evidence and remaining limits.
 The protection engine verifies and switches in one transaction; saved verification checkpoints require a fresh pass on resume.
 Plain reads continue during verification. Writes and locking reads wait; schema DDL can pause all access.
 VERIFIED paragraphs below describe recorded receipts, not current product qualification. All other requirements remain SPECIFIED.
@@ -128,7 +129,7 @@ The integrated checkpoint records the original application's narrow rollback/rem
 | Format/codec upgrade | Deploy required readers first, transform, verify, then switch writers. Retire old readers only after dependency review |
 
 **IMPLEMENTED, read-only preparation:** `rotation.plan_payload_rotation` emits an
-inactive `PayloadRotationPlan` for a current ACTIVE protection plan. It authenticates
+inactive `PayloadRotationPlan` (P) for a current ACTIVE protection plan. It authenticates
 source frames in a repeatable-read snapshot and requires exact retained source
 wrappers/roots, one new independent monotonic payload root, and unchanged search
 custody. Historical readers and tenants with no remaining rows remain required.
@@ -139,10 +140,37 @@ root, wrapper bytes or plaintext digest. It changes neither data nor authority.
 The length scan bounds the aggregate logical source/target/decoded-text budget
 across each complete row before frame retrieval. This is not a Python RSS,
 database memory, driver buffering, provider or capacity bound.
-The payload staging executor, paired sealing, activation and abort remain
-SPECIFIED. The two-artifact protocol in
+
+**IMPLEMENTED, staged preparation:** `rotation.apply_payload_rotation` uses P's
+own operation pin, maintenance approval, journal row, guards, and ciphertext
+shadows. P supplies no application deployment authority. The original public
+frames and source journal stay unchanged. The executor checks exact source
+authority, retained custody, and schema before expansion. Each chunk holds
+write-excluding table locks across length probes, frame reads, shadow updates,
+and the cursor commit. Shadow updates and progress commit together.
+
+Resume authenticates the committed prefix and reuses its ciphertext bytes.
+Before BACKFILLED, the executor compares every source and target value, exact
+generations, NULLs, search headers, and source observations from P. An invocation
+that finds BACKFILLED repeats full authentication. Journal counters cannot replace
+that check. A `max_chunks` limit can leave EXPANDED after the last data chunk.
+Resume the same operation to complete terminal verification.
+
+`rotation.status_payload_rotation` reports recorded progress without keys or
+effects. Its verification is `NOT_PERFORMED`. Staging changes the schema, so
+ordinary attachment cannot treat the source as an unchanged ACTIVE deployment.
+Writers must remain stopped. `rotation.abort_payload_rotation` requires the
+republished source ACTIVE pin and source custody. It checks unchanged source
+data, exact shadows, and guards before atomic cleanup and an ABORTED marker.
+Target custody is unnecessary. A terminal retry preserves later source edits
+and cannot revive a source that a later operation superseded.
+
+Sealing activation artifact A, payload cutover, and activation remain SPECIFIED.
+The two-artifact protocol in
 [decisions](decisions.md#payload-rotation-preparation-and-activation-2026-10-23)
 keeps source proof separate from actual randomized target observations.
+Preparation on an adopted restored target remains unsupported.
+All seven full gates remain UNKNOWN.
 
 Keep exactly one active application writer representation during maintenance cutover.
 No partial-generation OR query or cross-generation uniqueness gap is silently admitted.

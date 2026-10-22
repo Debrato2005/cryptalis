@@ -232,9 +232,71 @@ The logical byte budget includes source/target frames, decoded UTF-8 and native
 identities across all fields. It excludes Python, driver, database and provider
 overhead. A single oversized row fails before frame retrieval.
 
-Payload staging, sealed activation, cutover and abort remain unimplemented.
-This preparation artifact cannot enter `migration.apply` or authorize publication.
-Use [status](status.md) for the exact implemented boundary.
+## Stage or cancel payload-key rotation
+
+Save the exact proposal P through the trusted host process.
+Stop known writers and exclude owner or DDL writers before expansion.
+Keep source and target policies available for resumable preparation.
+Use P's operation ID and digest for its preparation pin.
+This pin does not select an application deployment.
+
+```python
+from cryptalis import migration
+from cryptalis.rotation import (
+    apply_payload_rotation, status_payload_rotation, abort_payload_rotation,
+)
+
+preparation_pin = migration.DeploymentPin(
+    source_plan.target_id, proposal.operation_id, proposal.digest, "PREPARED")
+approval = migration.MaintenanceApproval(
+    writer_exclusion_evidence, approved_pause_seconds)
+
+progress = apply_payload_rotation(proposal, owner_engine,
+    keys=source_keys, target_keys=target_keys, pin=preparation_pin,
+    approval=approval, max_chunks=1)
+observed = status_payload_rotation(proposal, owner_engine, pin=preparation_pin)
+assert observed.verification == "NOT_PERFORMED"
+```
+
+The executor keeps public source frames and their original journal unchanged.
+It adds separate ciphertext shadows, guards, and a journal row for P.
+It holds write-excluding locks across size probes, frame reads, updates, and each
+cursor commit. Each completed chunk retains its ciphertext on resume.
+The source schema now contains staging objects. Ordinary attachment therefore
+cannot admit it as an unchanged ACTIVE schema. Keep writers stopped.
+
+Resume with the same proposal, policies, and current preparation pin.
+Without `max_chunks`, the default call continues to BACKFILLED.
+A bounded call can report EXPANDED after its last data chunk.
+Another call performs the terminal check. BACKFILLED requires full source and
+target authentication, exact generations, equal values and NULLs, unchanged
+search headers, and source observations that match P. BACKFILLED retries repeat
+this check. Status reports recorded progress without data verification.
+
+To cancel, keep writers stopped and republish the source ACTIVE pin through the
+trusted host process. Then use source keys only:
+
+```python
+aborted = abort_payload_rotation(proposal, owner_engine, keys=source_keys,
+    source_pin=republished_source_active_pin, approval=approval)
+assert aborted.phase == "ABORTED"
+```
+
+Cancellation authenticates the source and checks exact shadows and guards.
+It removes only those objects and commits P's ABORTED marker atomically.
+The target provider can remain unavailable. Terminal cancellation retries
+preserve later source edits. A later operation that supersedes the source
+prevents an old cancellation from reviving it.
+
+After an uncertain commit, inspect the original operation through
+`status_payload_rotation`. Resume only after the original transaction is terminal.
+Keep the saved proposal and policies. An absent marker alone does not establish
+rollback. Adopted restored targets remain unsupported.
+
+The byte budget is a logical bound across complete rows and fields, not a
+process resident-memory limit. Payload sealing, cutover, and activation remain
+SPECIFIED. P cannot enter `migration.apply` or authorize publication.
+All seven full gates remain UNKNOWN. See [status](status.md) for current evidence.
 
 ## Measured throughput
 

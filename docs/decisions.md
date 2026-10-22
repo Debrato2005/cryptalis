@@ -204,3 +204,43 @@ Row limits alone do not bound logical memory. Scan length metadata before frame
 retrieval and bound the aggregate source/target/decoded-text budget across all
 fields and tenants. Python, driver, database and provider overhead remain outside
 this logical bound. Estimates require host measurements and qualify no capacity.
+
+Payload preparation uses EXPANDED and BACKFILLED progress under P's unchanged
+identity. Each chunk holds write-excluding locks across length probes, frame
+reads, shadow writes and the journal commit. No chunk overwrites an already
+populated unprocessed shadow. Resume authenticates the committed prefix and
+preserves its ciphertext and nonces. BACKFILLED requires a complete paired
+source/target pass on every successful return, including a terminal retry.
+An unkeyed status call reports recorded progress and NOT_PERFORMED verification.
+
+Derive each shadow from the original field's reserved payload name plus
+`_rotation`. It is nullable bytea without defaults, constraints or indexes during
+preparation. Existing shadow names cause refusal. Validate the exact guard and
+shadow definitions, remove only those facts from catalog observations, and bind
+the remaining source facts to P's host-pinned schema digest. Source journal
+identity and original state remain unchanged until the final switch.
+Ordinary source attachment refuses the changed staging schema. Keep workers
+stopped until cancellation or completed publication.
+
+Pre-switch cancellation needs the republished source ACTIVE pin and source keys.
+It authenticates the source against P, removes only P's shadows and guards, and
+records P ABORTED atomically. Target custody can remain unavailable. Repeated
+cancellation inspects the terminal marker and current source authority without
+replaying old data. A later source supersession prevents an old cancellation
+from reviving it. Restored-target preparation remains outside this contract.
+
+The initial final-switch implementation must preserve the existing public
+columns, their constraints, native expression indexes, grants and metadata.
+Use a server-side ciphertext UPDATE from the verified shadows under final
+maintenance locks, then remove the shadows and exchange P's guards for A's
+guards in the same transaction. Verify the copied target observations against
+A before commit. This choice requires another complete-table write in the
+terminal transaction. Measure and report its WAL and pause cost. Bounded
+preparation chunks do not make that terminal write a bounded committed chunk.
+A future column swap needs separate metadata-preservation evidence.
+
+If A already records PENDING, retry must authenticate the current target and
+exact reciprocal lineage against A. Original source frames no longer supply a
+retry comparison. Missing A with partially superseded source or P is an
+inconsistent state, not permission to reconstruct a commit. Preparation resume
+and cancellation must reject the switched P.
