@@ -6,6 +6,7 @@ Writer and value-domain evidence comes from the trusted host, not the database.
 
 import hashlib
 import json
+from contextlib import contextmanager
 from dataclasses import asdict, dataclass
 from uuid import UUID, uuid4
 
@@ -147,16 +148,18 @@ def _rows(connection, sql, **params):
     return [dict(row) for row in connection.execute(text(sql), params).mappings()]
 
 
-def _schema_facts(connection, schema: str, table: str):
+@contextmanager
+def _catalog_path(connection):
     # PostgreSQL deparsers qualify names through the current search path.
     # Match the compiler's canonical view, then restore the caller's setting.
     previous = connection.exec_driver_sql("SELECT pg_catalog.current_setting('search_path')").scalar_one()
     if previous == "pg_catalog":
-        return _catalog_schema_facts(connection, schema, table)
+        yield
+        return
     connection.exec_driver_sql("SELECT pg_catalog.set_config('search_path', 'pg_catalog', true)")
     failed_sql = False
     try:
-        return _catalog_schema_facts(connection, schema, table)
+        yield
     except (SQLAlchemyError, PsycopgError):
         # The caller must roll back a database failure. That rollback also
         # restores SET LOCAL; another query could mask the primary SQLSTATE.
@@ -165,6 +168,28 @@ def _schema_facts(connection, schema: str, table: str):
     finally:
         if not failed_sql:
             connection.exec_driver_sql("SELECT pg_catalog.set_config('search_path', %s, true)", (previous,))
+
+
+def _schema_facts(connection, schema: str, table: str):
+    with _catalog_path(connection):
+        return _catalog_schema_facts(connection, schema, table)
+
+
+def _metadata_diff(original, current):
+    """Compare logical catalog facts; restored column slots may differ."""
+    differences = []
+    if original['relation'] != current['relation']:
+        differences.append('relation')
+    for kind in ('columns', 'constraints', 'indexes'):
+        expected = sorted(({k: v for k, v in item.items() if k != 'attnum'}
+                           for item in original[kind]), key=_canonical)
+        observed = sorted(({k: v for k, v in item.items() if k != 'attnum'}
+                           for item in current[kind]), key=_canonical)
+        if expected != observed:
+            differences.append(kind)
+    if original['dependencies'] != current['dependencies']:
+        differences.append('dependencies')
+    return differences
 
 
 def _catalog_schema_facts(connection, schema: str, table: str):

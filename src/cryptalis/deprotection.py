@@ -32,6 +32,7 @@ from psycopg import sql
 from sqlalchemy.exc import SQLAlchemyError
 
 from cryptalis import migration as m
+from cryptalis.manifest.compiler import _metadata_diff
 from cryptalis.crypto.cf1 import FieldDescriptor, open_text
 from cryptalis.manifest.compiler import _canonical, _native_text_length, _previous_lock, source_metadata
 
@@ -386,11 +387,7 @@ def _guard(c, p, model, functions):
         return functions[model['schema']]
     _, function = m._guard_names(p, model)
     name = m._quote(c, model['schema']) + '.' + m._quote(c, function)
-    owner = p.document['target'][-1].replace("'", "''")
-    body = (f"BEGIN IF CURRENT_USER <> '{owner}' THEN RAISE EXCEPTION USING ERRCODE='55000', "
-            "MESSAGE='Cryptalis maintenance: writers paused; retry only after matching deployment publication'; "
-            "END IF; RETURN NULL; END")
-    literal = sql.Literal(body).as_string(c.connection.driver_connection)
+    literal = sql.Literal(m._guard_body(p)).as_string(c.connection.driver_connection)
     try:
         c.exec_driver_sql(f'CREATE FUNCTION {name}() RETURNS trigger LANGUAGE plpgsql SET search_path = pg_catalog AS {literal}')
     except SQLAlchemyError as exc:
@@ -721,30 +718,6 @@ def abort(p, engine, *, pin, approval, consent):
             state['phase'] = 'ABORTED'
             m._save(c, p, state)
         return _progress(p, state)
-
-
-def _metadata_diff(original, current):
-    differences = []
-    if original['relation'] != current['relation']:
-        differences.append('relation')
-    originals = {column['name']: column for column in original['columns']}
-    currents = {column['name']: column for column in current['columns']}
-    if set(originals) != set(currents):
-        differences.append('columns')
-    else:
-        for name, column in originals.items():
-            expected = {key: value for key, value in column.items() if key != 'attnum'}
-            observed = {key: value for key, value in currents[name].items() if key != 'attnum'}
-            if expected != observed:
-                differences.append('column:' + name)
-    for kind in ('constraints', 'indexes'):
-        expected = sorted((item['name'], item['definition_digest']) for item in original[kind])
-        observed = sorted((item['name'], item['definition_digest']) for item in current[kind])
-        if expected != observed:
-            differences.append(kind)
-    if original['dependencies'] != current['dependencies']:
-        differences.append('dependencies')
-    return differences
 
 
 def _assert_removed(c, p):

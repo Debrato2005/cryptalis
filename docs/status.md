@@ -9,6 +9,63 @@ No PostgreSQL/provider/runtime cell, production key provider, independent review
 VERIFIED below refers only to the named checks and their exact revisions.
 All other contract and promotion requirements are SPECIFIED. All seven full gates remain UNKNOWN.
 
+## Host-bound protected schema: 2026-10-22
+
+**IMPLEMENTED:** protection status, deployment checks, attachment, activation,
+and reverse planning now check the live protected catalog against the host's
+source lock and the declared CF1 transformation. A database journal can no
+longer redefine that contract by recording the same unauthorized schema change.
+No new authority artifact or format is introduced.
+
+The shared check retains unchanged native columns, constraints, indexes,
+and dependencies from the lock. It verifies protected bytea columns, validated
+frame checks for storage and search, and the declared equality index expression,
+uniqueness, flags, opclasses, collation, and sort options.
+PENDING also requires the host-derived pause function, enabled trigger,
+and absence of extra user triggers. Native constraints with equal names on
+different tables remain distinct. Logical column slots may change on restore.
+
+Restore adoption uses the same host check. A changed live frame check that
+matches a forged journal receives no automatic exception. Existing explicit
+CHECK restatements still require the adoption probes and exact binding match.
+Catalog deparsing uses a shared temporary search path and restores the caller's
+setting. A SQL failure retains its original error for caller rollback.
+
+**VERIFIED:** the initial 14 native controls reproduced false acceptance.
+The corrected lifecycle run passes 89 tests. The expanded run passes 219 tests,
+including 38 host-contract controls for altered native metadata, weakened frame
+checks, changed equality expressions, ordering and uniqueness, rewritten or
+disabled pause functions, and additional triggers. Each attack changes the
+catalog and its journal snapshot together.
+
+The pinned Smolink lifecycle also passes in its existing alternate Python 3.13 /
+SQLAlchemy 2.0.51 cell. Both fresh-cluster paths pass one export and ten restore
+cases, including three new pre-adoption forgery controls. Existing retained-frame
+reads, admitted CHECK restatements, decrypt-back, metadata restoration, removal,
+and native writes pass on each new cluster.
+
+The [full native suite](_reset/active-contract-full-sa21-20261022.json) passes
+**1,497 tests and 18 subtests**, with three separate-environment skips and
+48 existing SQLAlchemy warnings. All 94 Python files retain their start/end
+hashes; the wrapper records 248.70 seconds. The local dependency cell is unchanged.
+The wheel and sdist build reproducibly. The installed-wheel check verifies
+32 files against the wheel and starts the CLI. These are local release checks;
+signing, publication, and independent rebuild remain UNKNOWN.
+
+This check binds the catalog properties recorded by the source lock and the
+declared CF1 storage objects. It does not prove unchanged bodies of external
+functions, domain definitions, or collation implementations. Generated index
+tablespaces and storage options are outside this check. Status still performs
+no key or value verification. Writer exclusion, freshness, provider qualification,
+and independent review remain separate requirements. All seven gates remain UNKNOWN.
+
+Evidence: [initial controls](_reset/active-contract-red-20261022.json),
+[focused checks](_reset/active-contract-adversarial-20261022.json),
+[Smolink](_reset/active-contract-smolink-sa20-20261022.json),
+[VARCHAR restore](_reset/fresh-cluster-restore-20261022-16.json),
+[text restore](_reset/fresh-cluster-restore-20261022-17.json), and
+[installed wheel](_reset/active-contract-release-installed-20261022.json).
+
 ## Verification source stability: 2026-10-22
 
 **IMPLEMENTED:** the PostgreSQL test wrapper now captures Python source hashes

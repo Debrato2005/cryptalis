@@ -5,6 +5,7 @@ A database journal is progress evidence, never authority after restore. No
 production provider or publication procedure is supplied by this module.
 """
 from contextlib import contextmanager
+from copy import deepcopy
 from dataclasses import dataclass
 import hashlib
 import json
@@ -20,7 +21,7 @@ from cryptalis.crypto.cf1 import FieldDescriptor, seal_text, open_text
 from cryptalis.crypto.keys import CryptoFailure, Keyring
 from cryptalis.manifest.compiler import (compile_protection, _schema_facts, _canonical, _previous_lock,
                                           unrecorded_column_metadata, protected_extended_statistics,
-                                          protected_owned_sequences, source_metadata)
+                                          protected_owned_sequences, source_metadata, _metadata_diff)
 from cryptalis.manifest.parser import ManifestInvalid, _decode_json
 
 JOURNAL = '_cryptalis_journal'
@@ -417,6 +418,11 @@ def _guard_names(p,model):
     return '_cryptalis_'+suffix+'_pause', '_cryptalis_'+suffix+'_guard'
 
 
+def _guard_body(p):
+    owner = p.document['target'][-1].replace("'", "''")
+    return f"BEGIN IF CURRENT_USER <> '{owner}' THEN RAISE EXCEPTION USING ERRCODE='55000', MESSAGE='Cryptalis maintenance: writers paused; retry only after matching deployment publication'; END IF; RETURN NULL; END"
+
+
 def _drop_guards(c,p):
     functions=set()
     for model in p.document['lock']['models']:
@@ -521,9 +527,7 @@ def _expand(c,p):
         fn=_quote(c,model['schema'])+'.'+_quote(c,function)
         # SECURITY INVOKER. Runtime cannot become the table owner. Operator must
         # separately exclude every writer with owner/DDL credentials.
-        owner=p.document['target'][-1].replace("'","''")
-        body=f"BEGIN IF CURRENT_USER <> '{owner}' THEN RAISE EXCEPTION USING ERRCODE='55000', MESSAGE='Cryptalis maintenance: writers paused; retry only after matching deployment publication'; END IF; RETURN NULL; END"
-        literal=sql.Literal(body).as_string(c.connection.driver_connection)
+        literal=sql.Literal(_guard_body(p)).as_string(c.connection.driver_connection)
         if fn not in functions:
             try:
                 c.exec_driver_sql(f'CREATE FUNCTION {fn}() RETURNS trigger LANGUAGE plpgsql SET search_path = pg_catalog AS {literal}')
@@ -636,10 +640,69 @@ def _switch(c,p,state,keys):
     state['phase']='PENDING'; _save(c,p,state)
 
 
+def _protected_contract(c, p, model, facts, *, paused=False, admitted=None):
+    """Bind recorded catalog shape and generated storage to the host lock."""
+    from cryptalis._sqlalchemy_search import validate_frame_storage, validate_search_storage
+    expected = deepcopy(model['source_schema'])
+    expected['relation']['user_triggers'] = paused
+    observed = deepcopy(facts)
+    replaced_constraints = {item['name'] for f in model['fields'] for item in f['original']['constraints']}
+    replaced_indexes = {item['name'] for f in model['fields'] for item in f['original']['indexes']}
+    expected['constraints'] = [item for item in expected['constraints']
+                               if not (item['outgoing'] and item['name'] in replaced_constraints)]
+    expected['indexes'] = [item for item in expected['indexes']
+                           if item['constraint_name'] not in replaced_constraints and item['name'] not in replaced_indexes]
+    for field in model['fields']:
+        column = next(item for item in expected['columns'] if item['name'] == field['column'])
+        column.update(type='bytea', type_schema='pg_catalog', typmod='-1', default_digest=None,
+                      collation=None, collation_name=None, collation_schema=None, deterministic=None, provider=None)
+        name = field['payload_column'] + '_frame'
+        frame = next((item for item in observed['constraints'] if item['outgoing'] and item['name'] == name), None)
+        expected_frame = dict(name=name, kind='c', deferrable=False, deferred=False, validated=True,
+                              outgoing=True, incoming=False, schema=model['schema'], table=model['table'],
+                              columns=[field['column']], referenced_columns=[])
+        if frame is None or {k: v for k, v in frame.items() if k != 'definition_digest'} != expected_frame:
+            raise TransitionFailure('active_schema_mismatch', p.operation_id)
+        observed['constraints'].remove(frame)
+        try:
+            expression = (admitted or {}).get(name)
+            if field['queries']:
+                index_name = field['payload_column'] + '_eq'
+                index = next((item for item in observed['indexes'] if item['name'] == index_name), None)
+                scoped = 'column' in model['tenancy']
+                tenant = [model['tenancy']['column']] if scoped else []
+                expected_index = dict(name=index_name, primary=False, unique='unique' in field['queries'],
+                    exclusion=False, nulls_not_distinct=False, immediate=True, valid=True, ready=True,
+                    live=True, replica_identity=False, total_columns=1 + len(tenant), key_columns=1 + len(tenant),
+                    method='btree', partial=False, expression=True, columns=tenant + [None],
+                    dependency_columns=sorted(tenant + [field['column']]),
+                    opclasses=(['pg_catalog.uuid_ops'] if scoped else []) + ['pg_catalog.bytea_ops'],
+                    collations=[None] * (1 + len(tenant)), constraint_name=None)
+                if index is None or {k: v for k, v in index.items() if k != 'definition_digest'} != expected_index:
+                    raise ValueError
+                observed['indexes'].remove(index)
+                validate_search_storage(c, model, field, admitted=expression)
+            else:
+                validate_frame_storage(c, model, field, admitted=expression)
+        except ValueError:
+            raise TransitionFailure('active_schema_mismatch', p.operation_id) from None
+    if _metadata_diff(expected, observed):
+        raise TransitionFailure('active_schema_mismatch', p.operation_id)
+    if paused:
+        guard = _guard_facts(c, p, model)
+        trigger, function = _guard_names(p, model)
+        expected_guard = ['A', 62, True, 0, model['schema'], function, False,
+                          ['search_path=pg_catalog'], _guard_body(p), p.document['target'][-1]]
+        if guard is None or guard[:10] != expected_guard or len(guard[10]) != 1 or guard[10][0][0] != trigger:
+            raise TransitionFailure('writer_fence_changed', p.operation_id)
+
+
 def _active_schema(c,p,state):
     for model in p.document['lock']['models']:
-        if _facts(c,model)!=state['models'][model['table_id']]['active_schema']:
+        facts = _facts(c, model)
+        if facts!=state['models'][model['table_id']]['active_schema']:
             raise TransitionFailure('active_schema_mismatch',p.operation_id)
+        _protected_contract(c, p, model, facts, paused=state['phase'] == 'PENDING')
 
 
 def _activate(c,p,state,pin):

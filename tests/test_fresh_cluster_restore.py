@@ -188,6 +188,56 @@ def test_restore_adoption_requires_explicit_fenced_approval():
         owner.dispose()
 
 
+@pytest.mark.parametrize('drift', ['extra_column', 'unprotected_check', 'weakened_frame'])
+def test_restore_adoption_refuses_schema_and_journal_forged_together(drift):
+    source, pin = artifacts()
+    owner = engine('CRYPTALIS_TEST_DATABASE_URL')
+    model = source.document['lock']['models'][0]
+    table = f'"{SCHEMA}".customer'
+    journal = f'"{MANIFEST["journal_schema"]}"."_cryptalis_journal"'
+    frame = model['fields'][0]['payload_column'] + '_frame'
+    changed = False
+    try:
+        with owner.begin() as c:
+            state = c.exec_driver_sql(f'SELECT state FROM {journal} WHERE operation_id=%s',
+                                      (source.operation_id,)).scalar_one()
+            original_state = json.dumps(state)
+            if drift == 'extra_column':
+                c.exec_driver_sql(f'ALTER TABLE {table} ADD COLUMN unplanned_plaintext text')
+            elif drift == 'unprotected_check':
+                c.exec_driver_sql(f'ALTER TABLE {table} ADD CONSTRAINT unplanned_rule CHECK (label IS NOT NULL)')
+            else:
+                definition = c.exec_driver_sql(
+                    'SELECT pg_catalog.pg_get_constraintdef(oid) FROM pg_catalog.pg_constraint '
+                    'WHERE conrelid=pg_catalog.to_regclass(%s) AND conname=%s',
+                    (table, frame)).scalar_one()
+                weakened = definition.replace('>= 74', '>= 73')
+                assert weakened != definition
+                c.exec_driver_sql(f'ALTER TABLE {table} DROP CONSTRAINT "{frame}"')
+                c.exec_driver_sql(f'ALTER TABLE {table} ADD CONSTRAINT "{frame}" {weakened}')
+            state['models'][model['table_id']]['active_schema'] = m._facts(c, model)
+            c.exec_driver_sql(f'UPDATE {journal} SET state=%s::jsonb WHERE operation_id=%s',
+                              (json.dumps(state), source.operation_id))
+        changed = True
+        with pytest.raises(m.TransitionFailure, match='active_schema_mismatch'):
+            r.plan(source, owner, pin=pin, keys=keys, approval=approval())
+    finally:
+        try:
+            if changed:
+                with owner.begin() as c:
+                    if drift == 'extra_column':
+                        c.exec_driver_sql(f'ALTER TABLE {table} DROP COLUMN unplanned_plaintext')
+                    elif drift == 'unprotected_check':
+                        c.exec_driver_sql(f'ALTER TABLE {table} DROP CONSTRAINT unplanned_rule')
+                    else:
+                        c.exec_driver_sql(f'ALTER TABLE {table} DROP CONSTRAINT "{frame}"')
+                        c.exec_driver_sql(f'ALTER TABLE {table} ADD CONSTRAINT "{frame}" {definition}')
+                    c.exec_driver_sql(f'UPDATE {journal} SET state=%s::jsonb WHERE operation_id=%s',
+                                      (original_state, source.operation_id))
+        finally:
+            owner.dispose()
+
+
 def test_restored_target_refuses_corrupt_frames_and_tampered_bindings():
     source, pin = artifacts()
     owner, runtime = engine('CRYPTALIS_TEST_DATABASE_URL'), engine('CRYPTALIS_TEST_RUNTIME_DATABASE_URL')

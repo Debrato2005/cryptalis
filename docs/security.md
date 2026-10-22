@@ -167,6 +167,13 @@ A deployment with no independent current authorization cannot claim restore-resi
 Operational status treats journal counters as recorded progress, not current value verification.
 Reverse plaintext inspection also compares native metadata with the host-supplied original lock.
 A changed journal snapshot cannot redefine that native contract.
+Protected ACTIVE and PENDING inspection derives its catalog contract from the
+host-supplied source lock and declared CF1 transformation. Matching edits to
+the live catalog and journal do not authorize extra columns, changed native
+definitions, weaker frame checks or indexes, or a rewritten pending writer fence.
+Restore adoption applies the same contract before accepting its explicit CHECK
+restatements. This binds recorded catalog facts, not the bodies of external
+functions, domain definitions, collation implementations, or index storage options.
 Status needs no keys and does not establish key custody or deployment-wide writer exclusion.
 After journal retirement, progress counters are unavailable rather than zero.
 

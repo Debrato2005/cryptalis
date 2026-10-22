@@ -6,6 +6,7 @@ from sqlalchemy.sql.elements import BinaryExpression, BindParameter, ColumnClaus
 from sqlalchemy.types import NullType, TypeDecorator
 
 from .crypto.cf1 import equality_term
+from .manifest.compiler import _catalog_path
 
 
 class _SearchValue(TypeDecorator):
@@ -129,9 +130,12 @@ def validate_search_storage(connection, model, field, *, admitted=None):
     ``cryptalis.restore/v1`` binding. The live definition must equal the
     adopted text exactly; adoption qualified that text with savepoint probes.
     """
-    # Catalog deparsing must qualify functions from every untrusted schema.
-    # The attachment connection rolls this transaction-local setting back.
-    connection.exec_driver_sql("SET LOCAL search_path = pg_catalog")
+    with _catalog_path(connection):
+        _validate_search_storage(connection, model, field)
+        _validate_frame_storage(connection, model, field, admitted=admitted)
+
+
+def _validate_search_storage(connection, model, field):
     quote = connection.dialect.identifier_preparer.quote
     target = connection.dialect.identifier_preparer.quote_identifier(model["schema"]) + "." + connection.dialect.identifier_preparer.quote_identifier(model["table"])
     column = quote(field["column"])
@@ -145,7 +149,8 @@ def validate_search_storage(connection, model, field, *, admitted=None):
                      LEFT JOIN pg_catalog.pg_attribute a ON a.attrelid=i.indrelid AND a.attnum=k.attnum ORDER BY n),
                ARRAY(SELECT n.nspname || '.' || o.opcname FROM unnest(i.indclass) WITH ORDINALITY k(op,n)
                      JOIN pg_catalog.pg_opclass o ON o.oid=k.op JOIN pg_catalog.pg_namespace n ON n.oid=o.opcnamespace ORDER BY k.n),
-               ARRAY(SELECT c FROM unnest(i.indcollation) c)
+               ARRAY(SELECT c FROM unnest(i.indcollation) c),
+               ARRAY(SELECT o FROM unnest(i.indoption) o)
         FROM pg_catalog.pg_index i JOIN pg_catalog.pg_class ix ON ix.oid=i.indexrelid
         JOIN pg_catalog.pg_am am ON am.oid=ix.relam
         WHERE i.indrelid=pg_catalog.to_regclass(%s) AND ix.relname=%s
@@ -155,18 +160,34 @@ def validate_search_storage(connection, model, field, *, admitted=None):
     columns = [model["tenancy"]["column"], None] if scoped else [None]
     opclasses = ["pg_catalog.uuid_ops", "pg_catalog.bytea_ops"] if scoped else ["pg_catalog.bytea_ops"]
     expected = ("unique" in field["queries"], True, True, True, True, False, True, "btree", count, count,
-                f'"substring"({column}, 15, 32)', columns, opclasses, [0] * count)
+                f'"substring"({column}, 15, 32)', columns, opclasses, [0] * count, [0] * count)
     if index is None or tuple(index) != expected:
         raise ValueError("Unqualified search index")
+
+
+def validate_frame_storage(connection, model, field, *, admitted=None):
+    """Inspect the exact declared CF1 check, including storage-only fields."""
+    with _catalog_path(connection):
+        _validate_frame_storage(connection, model, field, admitted=admitted)
+
+
+def _validate_frame_storage(connection, model, field, *, admitted=None):
+    quote = connection.dialect.identifier_preparer.quote
+    target = connection.dialect.identifier_preparer.quote_identifier(model['schema']) + '.' + connection.dialect.identifier_preparer.quote_identifier(model['table'])
+    column = quote(field['column'])
+    suffix = field['field_id'].replace('-', '')
     check = connection.exec_driver_sql("""
         SELECT convalidated, connoinherit, pg_catalog.pg_get_expr(conbin, conrelid)
         FROM pg_catalog.pg_constraint WHERE conrelid=pg_catalog.to_regclass(%s)
         AND conname=%s AND contype='c'
         """, (target, "_cryptalis_" + suffix + "_frame")).one_or_none()
+    overhead = 74 if field['queries'] else 42
+    magic = '434631000101' if field['queries'] else '434631000100'
+    comparison = '<>' if field['queries'] else '='
     expected_check = (admitted if admitted is not None else
-                      f"(({column} IS NULL) OR (((octet_length({column}) >= 74) AND (octet_length({column}) <= 16777290)) "
-                      f"AND (\"substring\"({column}, 1, 6) = decode('434631000101'::text, 'hex'::text)) "
+                      f"(({column} IS NULL) OR (((octet_length({column}) >= {overhead}) AND (octet_length({column}) <= {16777216 + overhead})) "
+                      f"AND (\"substring\"({column}, 1, 6) = decode('{magic}'::text, 'hex'::text)) "
                       f"AND (\"substring\"({column}, 7, 4) <> decode('00000000'::text, 'hex'::text)) "
-                      f"AND (\"substring\"({column}, 11, 4) <> decode('00000000'::text, 'hex'::text))))")
+                      f"AND (\"substring\"({column}, 11, 4) {comparison} decode('00000000'::text, 'hex'::text))))")
     if check is None or tuple(check) != (True, False, expected_check):
         raise ValueError("Unqualified framing check")

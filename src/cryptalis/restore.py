@@ -34,7 +34,7 @@ from uuid import UUID
 from cryptalis import migration as m
 from cryptalis.crypto import CryptoFailure
 from cryptalis.crypto.cf1 import FieldDescriptor, open_text
-from cryptalis.manifest.compiler import _canonical
+from cryptalis.manifest.compiler import _canonical, _catalog_path
 from cryptalis.manifest.parser import decode_manifest_json
 
 FORMAT = 'cryptalis.restore/v1'
@@ -213,6 +213,7 @@ def _schema_evidence(c, source, state):
     """
     restatements = []
     for model in source.document['lock']['models']:
+        start = len(restatements)
         observed = m._facts(c, model)
         recorded = state['models'][model['table_id']]['active_schema']
         if (observed['relation'] != recorded['relation']
@@ -232,16 +233,19 @@ def _schema_evidence(c, source, state):
                 if live_digest == saved_digest:
                     continue
                 if kind == 'constraints' and name.startswith('_cryptalis_') and name.endswith('_frame'):
-                    definition = c.exec_driver_sql(
-                        'SELECT pg_catalog.pg_get_constraintdef(c.oid) FROM pg_catalog.pg_constraint c '
-                        'WHERE c.conrelid=pg_catalog.to_regclass(%s) AND c.conname=%s',
-                        (m._table(c, model), name)).scalar_one()
+                    with _catalog_path(c):
+                        definition = c.exec_driver_sql(
+                            'SELECT pg_catalog.pg_get_constraintdef(c.oid) FROM pg_catalog.pg_constraint c '
+                            'WHERE c.conrelid=pg_catalog.to_regclass(%s) AND c.conname=%s',
+                            (m._table(c, model), name)).scalar_one()
                     restatements.append({'model': model['table_id'], 'kind': kind, 'name': name,
                                          'recorded_digest': saved_digest, 'observed_digest': live_digest,
                                          'definition': definition})
                     continue
                 raise m.TransitionFailure('restored_definition_restatement_unsupported',
                                           source.operation_id)
+        admitted = {item['name']: _frame_expression(item['definition']) for item in restatements[start:]}
+        m._protected_contract(c, source, model, observed, admitted=admitted)
     return restatements
 
 
