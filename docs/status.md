@@ -9,6 +9,107 @@ No PostgreSQL/provider/runtime cell, production key provider, independent review
 VERIFIED below refers only to the named checks and their exact revisions.
 All other contract and promotion requirements are SPECIFIED. All seven full gates remain UNKNOWN.
 
+## Development environment recovery: 2026-10-23
+
+**VERIFIED:** the default sandbox denies IPv4 socket creation with errno 1 and
+mounts `.git` read-only. Both private test files are present, parse correctly,
+and have mode `0600`. The user authorized environment repair and supported
+scoped execution approval. That path passes a temporary Git write/read/delete
+check and both private-role PostgreSQL probes. No credential, service, database,
+ownership, mount, or sandbox-policy change was needed. The failed operation
+was not repeated under the unchanged execution boundary.
+
+`scripts/test_postgres.py --development-preflight` now diagnoses Git writes,
+dependencies, tools, private test-file provenance, socket creation, PostgreSQL
+16, same-target role separation, and observed privileges. It uses read-only
+database transactions, runs no pytest test, and never prints connection values
+or raw exceptions. Runtime must lack database CREATE, cannot assume the owner,
+and cannot own application schemas or relations. PostgreSQL tool discovery checks
+actual major versions. Missing separate-harness tools remain UNKNOWN.
+Target authorization remains UNKNOWN: file provenance and successful probes
+cannot establish that an operator authorized a database as disposable.
+
+**VERIFIED:** the [default-sandbox diagnostic](_reset/development-preflight-sandbox-final-20261023.json)
+reports Git and socket failures as `authorized_alternative`, before database access.
+The [approved diagnostic](_reset/development-preflight-approved-final-20261023.json)
+reports all observed prerequisites PASS. Other diagnostics classify automatically
+repairable tool discovery, external prerequisites, and implementation defects.
+The [engineering procedure](../ENGINEERING_PLAYBOOK.md#development-environment-checks)
+states the invocation and approval boundary.
+
+Initial controls found the missing diagnostic mode. A first combined run then
+found that in-process CLI tests cleared the outer runner's admitted URLs.
+The tests now restore those environment values. A later controlled CREATE
+observation exposed a false acceptance. The final gate rejects it without any
+native grant change. Failed controls remain separate from successful evidence.
+
+**VERIFIED, local Python 3.12.3 / SQLAlchemy 2.1.3 cell:** the full suite passes
+**1,620 tests and 18 subtests**, with three separate-environment skips, in
+314.88 seconds. Its wrapper count includes the 18 subtests. The 48 existing
+warnings concern SQLAlchemy DISTINCT ON deprecation. After the final
+diagnostic-only CREATE guard and tool-discovery classification, **76 focused
+checks pass** in 17.24 seconds, including native rewrap/provider and source-evidence
+regression. Both runs retain matching start/end Python hashes.
+The full suite was not repeated after that final diagnostic-only change.
+Fresh-cluster and pinned Smolink harnesses were not rerun in this step.
+
+Git integrity checks pass. Existing dangling objects were left untouched.
+The planner and offline-test files retain their original checkpoint hashes.
+The native planner tests changed only to use the documented `KeyUnavailable`
+diagnostic. The original branch, HEAD ancestry, prior commits and receipts remain
+preserved. Ordinary reads still use the default sandbox. Required Git writes
+and PostgreSQL verification use the scoped approved execution path.
+All seven production gates remain UNKNOWN.
+
+Evidence: [initial mode controls](_reset/development-preflight-red-20261023.json),
+[test-isolation failure](_reset/development-preflight-focused-20261023.json),
+[runtime CREATE control](_reset/development-runtime-create-red-20261023.json),
+[full suite](_reset/environment-rewrap-full-20261023.json), and
+[final focused run](_reset/development-preflight-final-20261023.json).
+
+## Inactive rewrap planning checkpoint: 2026-10-23
+
+**IMPLEMENTED, VERIFIED in the named local cell:** `cryptalis.rotation.plan_rewrap`
+creates an inactive `RewrapPlan` for an ACTIVE protection plan. It inspects the
+host pin, native target, journal and protected schema in one read-only
+repeatable-read transaction. It compares exact source and target roots,
+including historical readers and tenants with no remaining rows, then
+authenticates current frames under both policies. The artifact contains policy,
+membership, frame and schema digests, public contexts, required readers and a
+host-measured verification estimate. It contains no root or wrapper bytes.
+
+Planning changes neither database state nor current publication authority.
+Current writers can continue. Observations describe one snapshot and cannot
+authorize a later switch. Execution must recheck current data and host policy
+under maintenance. Structural artifact validation does not authenticate host
+inputs or reconstruct root identities from an opaque source-policy digest.
+
+**VERIFIED:** all 35 native planner cases pass within the 55-case planner/provider
+run and the later full and focused suites above. Cases cover ordinary application
+edits, concurrent commits during the snapshot, retained roots, deleted tenants,
+missing/wrong roots, pin/journal/schema/frame mutations, malformed artifacts,
+invalid rates, cleanup-time expiry and random-ID failure. Refusals preserve
+native source state and suppress private provider/error markers.
+The first native run found seven diagnostic-spelling mismatches in the tests.
+The tests now expect the existing security-contract code `KeyUnavailable`.
+
+Five standalone offline protocol groups also pass. The local wheel installs
+without network access into a disposable Python environment, matches all 33
+installed files against the archive, starts the CLI with a fresh bytecode cache,
+and inspects the supplied genesis manifest. Repeat builds match.
+Installation used `--no-deps` and does not qualify dependency installation.
+
+Earlier default-sandbox probes stopped before pytest. Their blocker is resolved
+through the approved path above. The original collection-only and offline
+receipts remain historical evidence. No active rewrap executor, publication,
+retained-backup artifact update, payload rotation or search reindex exists.
+The rotation build slice remains incomplete. All seven full gates remain UNKNOWN.
+
+Evidence: [first native run](_reset/rewrap-plan-native-first-20261023.json),
+[planner/provider run](_reset/rewrap-plan-native-green-20261023.json),
+[offline checkpoint](_reset/rewrap-plan-offline-final-20261023.json), and
+[installed artifact](_reset/rewrap-plan-installed-wheel-20261023.json).
+
 ## Numeric API admission: 2026-10-22
 
 **IMPLEMENTED:** protection and reverse planners share safe numeric input and

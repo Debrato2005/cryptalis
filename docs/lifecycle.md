@@ -2,7 +2,7 @@
 
 **SPECIFIED:** lifecycle contract. **IMPLEMENTED:** bounded product protection transition with plan/apply/verify and pre-switch abort,
 plus an in-place decrypt-back and additive-removal path.
-Rotation, online transition, retained-backup recovery and package uninstall remain unimplemented product slices. [Status](status.md) states the evidence limits.
+Active rotation and online transition remain unimplemented product slices. [Status](status.md) states the bounded recovery/removal evidence and remaining limits.
 The protection engine verifies and switches in one transaction; saved verification checkpoints require a fresh pass on resume.
 Plain reads continue during verification. Writes and locking reads wait; schema DDL can pause all access.
 VERIFIED paragraphs below describe recorded receipts, not current product qualification. All other requirements remain SPECIFIED.
@@ -132,6 +132,19 @@ No partial-generation OR query or cross-generation uniqueness gap is silently ad
 Native KMS KEK material rotation is different from root rewrap, payload rotation, or search reindex.
 Rewrap alone does not cure a leaked payload/search root.
 No normal rotation automatically deletes historical keys or makes copied old ciphertext safe after compromise.
+
+**IMPLEMENTED, verified in the named local cell:** `cryptalis.rotation.plan_rewrap`
+proposes an inactive root rewrap from an ACTIVE protection plan. It leaves the
+database and deployment pin unchanged. It compares exact retained source and
+target roots and authenticates current frames in a read-only repeatable-read
+snapshot. Its protocol records digests and public contexts, not secret roots or
+wrapped bytes. The host retains both complete policies outside the database.
+These observations are not maintenance approval or current publication authority.
+A later executor must recheck current rows, policy and retained dependencies.
+Offline protocol and 35 native planner controls pass after scoped execution
+restores database access. No active rotation operation or
+new removal guarantee follows from this planner. See the
+[checkpoint](status.md#inactive-rewrap-planning-checkpoint-2026-10-23).
 
 ## Restore and authority loss
 

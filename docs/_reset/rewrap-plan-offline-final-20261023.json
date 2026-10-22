@@ -1,0 +1,46 @@
+{
+  "scope": "Offline rewrap protocol controls only; synthetic catalog, no database execution or custody qualification",
+  "base_revision": "9cc3f890beb243a3c26860bee414731ca2a5d1ca",
+  "source_sha256": {
+    "src/cryptalis/rotation.py": "e855539d2139b7e6371392fd15c5d3dcea45d986879d82ff9e3c7b3da68563db",
+    "scripts/test_rewrap_protocol.py": "6473ef6db5adba2499fc676251f10c5b6dda5cd4e766f6160eaa4a1e4eba57c6",
+    "tests/test_rewrap_plan.py": "00c9eefeae002d1afd021c9749282ca4ebd4c6f792ea00006d068f64717241d2"
+  },
+  "source_stability": {
+    "unchanged": true
+  },
+  "command": ".venv/bin/python scripts/test_rewrap_protocol.py",
+  "exit_code": 0,
+  "output": "test_both_current_and_historical_roots_must_match (__main__.RewrapProtocolTests.test_both_current_and_historical_roots_must_match) ... ok\ntest_expired_prepared_material_cannot_admit_rewrap (__main__.RewrapProtocolTests.test_expired_prepared_material_cannot_admit_rewrap) ... ok\ntest_invalid_rate_is_rejected_before_connection_or_key_access (__main__.RewrapProtocolTests.test_invalid_rate_is_rejected_before_connection_or_key_access) ... ok\ntest_malformed_protocol_inputs_fail_closed (__main__.RewrapProtocolTests.test_malformed_protocol_inputs_fail_closed) ... ok\ntest_valid_fractional_rate_reload_and_safe_display (__main__.RewrapProtocolTests.test_valid_fractional_rate_reload_and_safe_display) ... ok\n\n----------------------------------------------------------------------\nRan 5 tests in 0.029s\n\nOK\n",
+  "elapsed_seconds": 0.365895572998852,
+  "versions": {
+    "python": "3.12.3",
+    "SQLAlchemy": "2.1.3",
+    "psycopg": "3.3.6",
+    "cryptography": "50.0.2"
+  },
+  "native_verification": {
+    "status": "BLOCKED",
+    "preflight": "OperationalError",
+    "fingerprints": [
+      "05362d31",
+      "ff897c9a"
+    ],
+    "pytest_executed": false,
+    "retry": false
+  },
+  "review": [
+    "Final lease checks follow connection cleanup and artifact validation.",
+    "Artifact construction and random identity failures use safe typed failures. Native controls added but unrun.",
+    "Unrun native expiry control preserves monotonic_ns for safe error construction."
+  ],
+  "gates": {
+    "G-ADAPTER": "UNKNOWN",
+    "G-CRYPTO": "UNKNOWN",
+    "G-QUERY": "UNKNOWN",
+    "G-LIFECYCLE": "UNKNOWN",
+    "G-PROVIDER": "UNKNOWN",
+    "G-POLICY": "UNKNOWN",
+    "G-RELEASE": "UNKNOWN"
+  }
+}

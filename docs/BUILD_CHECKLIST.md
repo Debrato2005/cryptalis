@@ -21,6 +21,21 @@ No objective is complete until its acceptance evidence and applicable gate pass.
 
 ## Current boundary
 
+- Rewrap planning checkpoint, 2026-10-23: 35 native planner cases pass within
+  the 55-case planner/provider run and later full/focused suites. Five offline
+  protocol groups pass. Active rotation remains incomplete. No active-policy
+  or database publication exists. See
+  [status](status.md#inactive-rewrap-planning-checkpoint-2026-10-23).
+  A later offline check installs the local wheel into a disposable environment,
+  matches 33 installed files against the archive, and starts its CLI. Dependencies
+  were not installed or qualified by this check; see the
+  [installed-wheel receipt](_reset/rewrap-plan-installed-wheel-20261023.json).
+- Development checks diagnose the default read-only Git mount and denied sockets.
+  Scoped approved execution restores Git writes and both fresh PostgreSQL probes.
+  Full regression passes 1,620 tests plus 18 subtests, with three separate-environment
+  skips. A final diagnostic-only guard then passes 76 focused checks. The full
+  suite predates that final guard. See
+  [status](status.md#development-environment-recovery-2026-10-23).
 - Current lifecycle evidence: local PostgreSQL 16, Python 3.12.3, SQLAlchemy 2.1.3,
   psycopg 3.3.6, cryptography 50.0.2. The full and fresh-cluster receipts below
   bind source hashes. The full SQLAlchemy 2.0.51 profile was not rerun.
@@ -33,7 +48,7 @@ No objective is complete until its acceptance evidence and applicable gate pass.
   archive members. The installed-artifact correction compares the current wheel with
   installed files and imports verified source under an isolated bytecode cache.
   Scoped approved execution outside the sandbox restores both private-role probes
-  and Git writes. The latest full suite, before numeric API admission, passes 1,567 tests, with 3 separate-environment
+  and Git writes. An earlier full suite, before numeric API admission, passes 1,567 tests, with 3 separate-environment
   tests skipped and 18 subtests passed; [receipt](_reset/frame-policy-full-sa21-20261022.json).
   Each source type, historical text and native VARCHAR, passes one export and 15
   restore cases on a new cluster with metadata and approved status inspection;
@@ -73,7 +88,7 @@ Requirement text is abbreviated. The full definitions remain in the research
 | OBJ-LIFE-04 | Parallel/adaptive migration without lost or duplicate work | SPECIFIED | None | Depends on OBJ-LIFE-03 |
 | OBJ-LIFE-05 | Decrypt-back current edits; preserve schema behavior; package-free exit | VERIFIED, bounded | `deprotection.py` implements `cryptalis.reverse/v1`: staged plaintext, verified backfill, transactional switch, recorded constraint/index/collation restoration, guarded activation, approved removal, and terminal-state assertions; seven lifecycle cases pass on both profiles; an independent three-model application completes protect/search/modify/decrypt-back/remove and a package-free restarted process performs native CRUD; the same reverse completes on an adopted restored cluster with the binding; lock v2 captures and restores protected-column comments, statistics targets, storage, compression, options, column grants, constraint/index comments and extended statistics; grants are applied to the ciphertext column at protection; owned sequences remain refused; native catalogs now verify captured metadata through fresh-cluster restore and adopted removal; terminal removal refuses late metadata drift and retains the journal on failed retirement | Broader external application scope, physical column order, owned-sequence restore, retained-native |
 | OBJ-LIFE-06 | Rollback, restore, stale pin refusal, RPO/RTO, disaster drills | PARTIAL | Older-snapshot and stale-pin refusals; reverse abort, pin/state ordering, corrupt-frame and disabled-guard refusals; isolated-cluster plaintext and protected restore with frame recovery and loud authority refusal; `cryptalis.restore/v1` adoption issues a binding after approval, frame authentication, schema comparison, and behavioral probes; the adopted cluster then attaches, reverses, and removes; local provider outage/revocation/lease drills keep the committed prefix and fail closed | Host-authenticated fencing/quarantine, RPO/RTO measurement |
-| OBJ-LIFE-07 | Three separate rotation workflows | PARTIAL | Internal rewrap candidate and bounded payload-batch preparation, verified 2026-10-19 | Active-policy publication, rotation executor, search reindex, recovery proofs |
+| OBJ-LIFE-07 | Three separate rotation workflows | PARTIAL | Internal rewrap candidate and bounded payload-batch preparation; inactive native rewrap planning verified 2026-10-23 | Active-policy publication, rotation executor, search reindex, recovery proofs |
 | OBJ-LIFE-08 | Production KMS with outage/revocation/cost evidence | BLOCKED | Local development provider only | Authorized provider account and independent review |
 | OBJ-LIFE-09 | Install, upgrade, decommission, clean uninstall | PARTIAL | Importable package; approved in-database removal retires reverse-owned objects after decrypt-back; a package-free restarted application process performs native CRUD | Versioned upgrade/removal and broader external application evidence |
 | OBJ-DX-01 | Minimal model/query changes; one manifest and one attach | IMPLEMENTED | `compile_protection`, `attach`, CLI inspection, read-only protection and reverse `status` | Unify plan/apply/remove entry points; complete status coverage |
@@ -94,6 +109,8 @@ Requirement text is abbreviated. The full definitions remain in the research
 
 | Date | Research reference | Mechanism | Product files | Evidence | Status |
 |---|---|---|---|---|---|
+| 2026-10-23 | Scoped environment recovery and development diagnosis | Existing wrapper diagnoses Git/socket restrictions, private test provenance, tools, PG16 and restricted roles; supported approval supplies the required execution path | `scripts/test_postgres.py`; native diagnostic and source-evidence controls | Full suite: 1,620 tests plus 18 subtests, three skips; after final diagnostic guard: 76 focused checks; [full](_reset/environment-rewrap-full-20261023.json), [final](_reset/development-preflight-final-20261023.json) | VERIFIED in local cell; no service/credential/mount/policy changes; target authorization and all gates UNKNOWN |
+| 2026-10-23 | Inactive root-rewrap admission | Read-only snapshot proposal with exact retained-root comparison, frame authentication and digest-only observations | `src/cryptalis/rotation.py`; standalone protocol and native controls | 35 native planner cases within 55 planner/provider checks; later full/focused regression above; five offline protocol groups; [native](_reset/rewrap-plan-native-green-20261023.json) | VERIFIED for named read-only observations; active rotation and all gates remain incomplete or UNKNOWN |
 | 2026-10-22 | Typed numeric API admission | Share finite-number and representable-duration checks across protection, reverse and maintenance approval | Migration, reverse and native rate controls | Ten initial raw overflows; 119 focused native tests pass, including fractional rates and full transitions; reproducible artifacts and 32-file installed-wheel check pass; [focused](_reset/numeric-admission-focused-20261022.json) | VERIFIED for public numeric admission and unchanged native effects; earlier full/fresh runs are separate evidence; all gates UNKNOWN |
 | 2026-10-22 | Exact restored frame policy | Admit only known PG16 forms of declared CF1 checks; bind older restatements to source fields; compare constraint identities by schema, table and name | Search storage, restore binding and fresh-cluster fixtures | Four initial false acceptances; 172 focused controls pass; text and VARCHAR each pass one export and 15 restore cases, including a same-name incoming FK; pinned Smolink and 1,567 full tests plus 18 subtests pass; [full](_reset/frame-policy-full-sa21-20261022.json), [restore](_reset/fresh-cluster-restore-20261022-27.json) | VERIFIED for named local controls and exact policy forms; general SQL equivalence is not admitted; all gates UNKNOWN |
 | 2026-10-22 | Host artifact input admission | Reuse offline compiler lock and catalog structure checks; require safe estimate values and reverse snapshot maps before connection | Compiler, migration, reverse and native plan/CLI controls | 14 initial failures; 138 first focused and 64 final focused tests pass, including 24 admission controls and legacy v1/v2 artifacts; 1,567 full tests and 18 subtests pass; [full](_reset/plan-admission-full-final-sa21-20261022.json), [focused](_reset/plan-admission-final-focused-20261022.json) | VERIFIED for named structural checks and input diagnosis; no host authentication or live semantic claim; all gates UNKNOWN |

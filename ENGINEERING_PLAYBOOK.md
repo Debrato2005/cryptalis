@@ -7,6 +7,40 @@ Read README/architecture, security/lifecycle, compatibility/status, approved dec
 Use the [repository reading path](AGENTS.md#deterministic-reading-path) before implementation.
 Use SPECIFIED / IMPLEMENTED / VERIFIED with exact evidence scope. Do not describe spike code as product code.
 
+## Development environment checks
+
+Run the existing wrapper in diagnostic mode before a long verification run:
+
+```bash
+.venv/bin/python scripts/test_postgres.py --development-preflight
+```
+
+This mode checks Python dependencies, Git worktree and metadata writes, build
+tools, PostgreSQL tool versions, private test-file provenance, socket creation,
+and read-only PostgreSQL 16 and role observations. It runs no pytest test.
+It creates and removes temporary files for the write checks. It performs no
+database DDL or credential, service, ownership, or policy change.
+The operator must still authorize the configured target as disposable.
+`target_authorization` therefore remains UNKNOWN even when prerequisites pass.
+
+Results identify automatically repairable tool discovery, an authorized
+alternative, an external prerequisite, or an implementation defect.
+A read-only Git mount or denied socket creation can
+require the tool's supported scoped execution approval. Use that path only
+with session authorization. Do not remount, change ownership, or weaken sandbox
+policy. A corrected execution boundary does not require a new database target.
+After correcting the cause, use the approved wrapper for fresh private-role
+probes and tests. Stop on a failed probe. Do not repeat an unchanged operation
+or substitute a database.
+
+Executable discovery can use the existing PostgreSQL 16 binary-directory
+fallback and the user's local uv executable. Include the selected uv directory
+in PATH for release commands. A missing fresh-cluster tool stays UNKNOWN and
+does not qualify that separate harness. Git write probes do not prove future
+commits or concurrent operations will succeed. The runtime role must lack
+database CREATE and cannot assume the migration owner or own application schemas
+or relations.
+
 ## Manual workflow
 
 The human builder normally types each executable file.
