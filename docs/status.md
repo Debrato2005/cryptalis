@@ -9,6 +9,21 @@ No PostgreSQL/provider/runtime cell, production key provider, independent review
 VERIFIED below refers only to the named checks and their exact revisions.
 All other contract and promotion requirements are SPECIFIED. All seven full gates remain UNKNOWN.
 
+## Source retrieval workflow: 2026-10-22
+
+The repository instructions now define the reusable retrieval fallback.
+Use local Git and files for product source, Firecrawl for external research,
+and Playwright only when ordinary HTTP cannot retrieve the required rendered content.
+Every Firecrawl scrape supplies its required `objective` with the URL.
+A failed valid call switches retrieval method without an unchanged retry.
+
+**VERIFIED:** the corrected call retrieved the official PostgreSQL 16 character-type
+page with status 200, the expected final URL and title, and relevant body passages.
+The earlier missing-objective response remains a failed retrieval.
+This workflow change does not establish a product runtime capability.
+No database suite ran for this documentation-only checkpoint.
+New prose lint scores 0.66 per 100 words.
+
 ## Fractional measured rates: 2026-10-22
 
 **IMPLEMENTED:** protection and reverse plans now reload their own decimal rate

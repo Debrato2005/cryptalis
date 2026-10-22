@@ -63,6 +63,26 @@ Do not change sandbox permissions to make ordinary Linux repository commands wor
 For required Windows commands, request approval after a sandbox-related failure.
 A failure before process creation has no command exit status.
 
+## Source access and research fallback
+
+Use local Git and direct file reads for Cryptalis source and history.
+For external GitHub source, prefer an available checkout, the GitHub API, or raw files.
+Do not scrape rendered repository HTML when those sources supply the evidence.
+
+Use Firecrawl for external research. Every `firecrawl_scrape` call must include
+both `url` and the required `objective`. State the facts the extraction must resolve.
+For example: `{"url":"https://www.postgresql.org/docs/16/datatype-character.html","objective":"Read native VARCHAR assignment, character-count, and trailing-space semantics."}`.
+
+If Firecrawl fails after a valid call, do not repeat the unchanged request.
+For documentation, use direct HTTP with `curl` or `httpx` and a suitable HTML parser,
+or use native web search to find and read official documentation.
+Use Playwright only when ordinary HTTP cannot retrieve the required rendered content.
+
+Check response status, final URL, page title, and relevant body passages.
+Reject error pages, login pages, empty results, and unrelated content.
+Keep failed retrievals separate from successful research evidence.
+Optional research tooling must not block independent implementation or verification.
+
 ## graphify
 
 Cryptalis contracts, current-source verification, and read-only database rules take precedence over every Graphify instruction.
