@@ -157,9 +157,9 @@ def _parser() -> argparse.ArgumentParser:
         help="Write one machine-readable JSON object.",
     )
     history.set_defaults(handler=_inspect_history_command)
-    status = commands.add_parser('status', help='Inspect one protection transition without changes.',
+    status = commands.add_parser('status', help='Inspect one protection or reverse transition without changes.',
                                  allow_abbrev=False)
-    status.add_argument('plan', type=Path, help='Original protection plan artifact.')
+    status.add_argument('plan', type=Path, help='Original protection or reverse plan artifact.')
     status.add_argument('--pin', type=Path, required=True, help='Current host-controlled deployment pin.')
     status.add_argument('--database-url-file', type=Path, required=True,
                         help='Private file with the PostgreSQL connection URL or conninfo.')
@@ -494,7 +494,8 @@ def _status_command(arguments: argparse.Namespace) -> int:
     try:
         import psycopg
         from sqlalchemy import create_engine
-        from cryptalis.migration import DeploymentPin, MigrationPlan, TransitionFailure, status
+        from cryptalis.migration import DeploymentPin, MigrationPlan, TransitionFailure, status, _decode_transition_json
+        from cryptalis.deprotection import DeprotectionPlan, status as reverse_status
         from cryptalis.manifest.parser import decode_manifest_json
         from cryptalis.restore import RestoreBinding
         from uuid import UUID
@@ -509,7 +510,9 @@ def _status_command(arguments: argparse.Namespace) -> int:
             if len(raw) > limit:
                 raise ValueError('input bound')
             return raw
-        plan = MigrationPlan(read(arguments.plan, 'plan'))
+        raw_plan = read(arguments.plan, 'plan')
+        reverse = _decode_transition_json(raw_plan).get('format') == 'cryptalis.reverse/v1'
+        plan = DeprotectionPlan(raw_plan) if reverse else MigrationPlan(raw_plan)
         pin_document = decode_manifest_json(read(arguments.pin, 'pin', 65536))
         if set(pin_document) != {'target_id', 'operation_id', 'plan_digest', 'phase'}:
             raise ValueError('pin members')
@@ -517,6 +520,11 @@ def _status_command(arguments: argparse.Namespace) -> int:
                             pin_document['plan_digest'], pin_document['phase'])
         binding = None if arguments.restore_binding is None else RestoreBinding(
             read(arguments.restore_binding, 'restore_binding'))
+        if reverse:
+            from cryptalis.deprotection import _pin
+            _pin(plan, pin)
+            if binding is not None and binding.document != plan.document['restore']:
+                raise ValueError('reverse restore identity')
         connection_info = read(arguments.database_url_file, 'database', 65536).decode('utf-8').strip()
         if not connection_info or '\x00' in connection_info:
             raise ValueError('invalid connection input')
@@ -533,12 +541,12 @@ def _status_command(arguments: argparse.Namespace) -> int:
     try:
         engine = create_engine('postgresql+psycopg://', echo=False, hide_parameters=True,
             creator=lambda: psycopg.connect(connection_info, connect_timeout=5))
-        observed = status(plan, engine, pin=pin, restore=binding)
+        observed = reverse_status(plan, engine, pin=pin) if reverse else status(plan, engine, pin=pin, restore=binding)
     except TransitionFailure as error:
         operational = error.code in ('operation_failed_requires_inspection',
             'database_effect_requires_inspection', 'connection_cleanup_requires_inspection')
         denied = error.code in ('external_policy_mismatch', 'wrong_database_target',
-            'restore_binding_mismatch', 'invalid_plan')
+            'restore_binding_mismatch', 'invalid_plan', 'invalid_reverse_plan', 'external_reverse_policy_mismatch')
         raise _CommandFailure('Status is unavailable. Inspect this operation and the current external policy.',
             family='Transition', code=error.code, operation='transition.status',
             stage='database_inspection', cause=error.sqlstate or 'InspectionFailed',
@@ -556,15 +564,17 @@ def _status_command(arguments: argparse.Namespace) -> int:
                     failure.error['related_error'] = primary.error
                 raise failure from None
     result = {
-        'scope': 'protection_transition', 'operation_id': str(observed.operation_id),
+        'scope': 'reverse_transition' if reverse else 'protection_transition', 'operation_id': str(observed.operation_id),
         'phase': observed.phase, 'external_phase': observed.external_phase,
         'committed_rows': observed.committed_rows, 'committed_chunks': observed.committed_chunks,
         'runtime_metadata_matches': observed.runtime_metadata_matches,
         'verification': observed.verification, 'authority': 'HOST_SUPPLIED_PIN',
         'effects': 'NONE', 'remedy': observed.remedy,
     }
+    if reverse:
+        result['source_operation_id'] = str(plan.source.operation_id)
     output = json.dumps(result, sort_keys=True, separators=(',', ':')) if arguments.machine_json else '\n'.join(
-        f'{key}: {str(value).lower() if type(value) is bool else value}' for key, value in result.items())
+        f'{key}: {str(value).lower() if type(value) is bool else "UNKNOWN" if value is None else value}' for key, value in result.items())
     _write_output(output + '\n', sys.stdout, 'stdout')
     return 0 if observed.runtime_metadata_matches else 3
 

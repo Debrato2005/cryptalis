@@ -140,8 +140,8 @@ class TransitionStatus:
     operation_id: UUID
     phase: str
     external_phase: str
-    committed_rows: int
-    committed_chunks: int
+    committed_rows: int | None
+    committed_chunks: int | None
     runtime_metadata_matches: bool
     verification: str
     remedy: str

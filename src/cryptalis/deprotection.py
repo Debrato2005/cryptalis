@@ -615,11 +615,20 @@ def _switch(c, p, state, keys):
 def _inspect_plaintext(c, p, state, *, expect_guards):
     for model in p.document['lock']['models']:
         observed = state['models'][model['table_id']]
-        guarded = m._guard_facts(c, p, model) is not None
-        if guarded is not expect_guards:
+        guard = m._guard_facts(c, p, model)
+        if ((expect_guards and (not guard or guard[0] != 'A' or guard != observed['guard']))
+                or (not expect_guards and guard is not None)):
             raise m.TransitionFailure('writer_fence_changed', p.operation_id)
-        if m._facts(c, model) != observed['plaintext_schema']:
+        facts = m._facts(c, model)
+        expected = model['source_schema']
+        if expect_guards:
+            expected = {**expected, 'relation': {**expected['relation'], 'user_triggers': True}}
+        # A database journal cannot redefine the host-supplied native contract.
+        if facts != observed['plaintext_schema'] or _metadata_diff(expected, facts):
             raise m.TransitionFailure('plaintext_schema_mismatch', p.operation_id)
+        metadata = model.get('source_metadata')
+        if metadata is not None and source_metadata(c, model['schema'], model['table'], model['fields']) != metadata:
+            raise m.TransitionFailure('metadata_not_restored:source_metadata', p.operation_id)
 
 
 def _activate(c, p, state, pin):
@@ -800,3 +809,71 @@ def check_removed(p, engine, *, pin):
         if m._target(c)[:-1] != target[:-1]:
             raise m.TransitionFailure('wrong_database_target', p.operation_id)
         _assert_removed(c, p)
+
+
+def status(p, engine, *, pin):
+    """Read one committed reverse snapshot without keys or maintenance effects.
+
+    The supplied pin is host authority. Metadata checks do not verify current
+    values, key custody, retained backups, or deployment-wide writer exclusion.
+    Retired journals have no available progress counters.
+    """
+    _pin(p, pin)
+    try:
+        _previous_lock(p.lock_bytes, p.document['lock'], engine)
+    except ValueError:
+        raise m.TransitionFailure('invalid_compiler_lock', p.operation_id) from None
+    target = p.document['target'] if p.document['restore'] is None else p.document['restore']['target']
+    with m._connection(engine, p.operation_id) as c:
+        c.exec_driver_sql('SET TRANSACTION ISOLATION LEVEL REPEATABLE READ, READ ONLY')
+        if m._target(c)[:-1] != target[:-1]:
+            raise m.TransitionFailure('wrong_database_target', p.operation_id)
+        state = _state(c, p, pin, allow_aborted=True)
+        if state is None and pin.phase == 'REMOVED':
+            _assert_removed(c, p)
+            return m.TransitionStatus(p.operation_id, 'REMOVED', pin.phase, None, None, True,
+                'NOT_PERFORMED', 'Native metadata matches the supplied removed pin. Check retained recovery obligations.')
+        retired = _inventory(c, p, p.source, own=p.operation_id)
+        if retired != p.document['retirable_aborted']:
+            raise m.TransitionFailure('unreviewed_journal_operations', p.operation_id)
+        phase = 'PREPARED' if state is None else state['phase']
+        rows = chunks = 0
+        if state is not None:
+            models = state.get('models')
+            if type(models) is not dict or set(models) != set(p.document['active_schemas']):
+                raise m.TransitionFailure('invalid_reverse_progress', p.operation_id)
+            for progress in models.values():
+                if (type(progress) is not dict or type(progress.get('rows')) is not int
+                        or type(progress.get('chunks')) is not int
+                        or type(progress.get('scope')) is not dict
+                        or type(progress['scope'].get('count')) is not int
+                        or not 0 <= progress['rows'] <= progress['scope']['count'] < 2 ** 53
+                        or not 0 <= progress['chunks'] <= progress['rows']):
+                    raise m.TransitionFailure('invalid_reverse_progress', p.operation_id)
+                rows += progress['rows']
+                chunks += progress['chunks']
+            if rows >= 2 ** 53 or chunks >= 2 ** 53:
+                raise m.TransitionFailure('invalid_reverse_progress', p.operation_id)
+        if phase in ('PREPARED', 'ABORTED'):
+            source = p.source
+            source_pin = m.DeploymentPin(source.target_id, source.operation_id, source.digest, 'ACTIVE')
+            binding = None
+            if p.document['restore'] is not None:
+                from cryptalis.restore import RestoreBinding
+                binding = RestoreBinding(_canonical(p.document['restore']))
+            m._check_connection(source, c, source_pin, binding=binding)
+            for model in p.document['lock']['models']:
+                if m._facts(c, model) != p.document['active_schemas'][model['table_id']]:
+                    raise m.TransitionFailure('active_schema_mismatch', p.operation_id)
+        elif phase in ('PLAINTEXT_PENDING', 'PLAINTEXT_ACTIVE'):
+            _inspect_plaintext(c, p, state, expect_guards=phase == 'PLAINTEXT_PENDING')
+        else:
+            m._inspect_paused(c, p, state)
+        matched = phase == pin.phase == 'PLAINTEXT_ACTIVE'
+        remedy = ('Native metadata matches the supplied plaintext pin. Check host writer policy before admission.'
+                  if matched else 'Keep writers stopped; inspect this operation and the current external policy before resume.')
+        if phase == 'PLAINTEXT_PENDING':
+            remedy = 'Publish the exact plaintext publication pin; keep writers stopped.'
+        elif phase == 'ABORTED':
+            remedy = 'This reverse was aborted. Inspect the source protection before compiling a new reverse plan.'
+        return m.TransitionStatus(p.operation_id, phase, pin.phase, rows, chunks, matched, 'NOT_PERFORMED', remedy)

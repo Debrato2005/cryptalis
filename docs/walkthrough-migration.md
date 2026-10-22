@@ -97,6 +97,26 @@ observed = status(p, owner_engine, pin=active_pin)
 assert observed.verification == "NOT_PERFORMED"
 ```
 
+### Inspect decrypt-back and removal
+
+Use the exact reverse plan and current reverse pin with the same command:
+
+```bash
+cryptalis status reverse-plan.json --pin reverse-pin.json --database-url-file /private/connection.txt --json
+```
+
+The Python API is `cryptalis.deprotection.status(reverse_plan, engine, pin=reverse_pin)`.
+Output uses `scope: reverse_transition` and adds `source_operation_id`.
+Exit 0 means native metadata matches the supplied `PLAINTEXT_ACTIVE` or `REMOVED` pin.
+It does not establish fresh value verification, key availability, or deployment admission.
+
+The reverse artifact already records its approved restore binding, when applicable.
+An optional `--restore-binding` must match that recorded binding exactly.
+After journal retirement, `committed_rows` and `committed_chunks` are null in JSON
+and UNKNOWN in text. The native schema and captured metadata must still match.
+An absent journal under an earlier pin fails explicitly.
+The command requires no keys or plaintext/removal approval because it makes no transition.
+
 ## Measured throughput
 
 Use positive finite integer or floating-point observations for measured rows per second.

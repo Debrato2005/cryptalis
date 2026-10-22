@@ -9,6 +9,79 @@ No PostgreSQL/provider/runtime cell, production key provider, independent review
 VERIFIED below refers only to the named checks and their exact revisions.
 All other contract and promotion requirements are SPECIFIED. All seven full gates remain UNKNOWN.
 
+## Read-only reverse status: 2026-10-22
+
+**IMPLEMENTED:** `cryptalis status` now accepts a `cryptalis.reverse/v1` plan.
+The Python API is `cryptalis.deprotection.status(plan, engine, pin=pin)`.
+The existing protection status behavior remains available.
+Reverse output uses `scope: reverse_transition` and includes the source operation ID.
+
+The API reads one PostgreSQL read-only, repeatable-read snapshot.
+It checks the target, supplied reverse pin, source journal identity, operation
+inventory, phase, committed counters, schema, and writer fence.
+Before the plaintext switch, it checks the protected source or paused schema.
+After that switch, it checks native plaintext metadata and captured column metadata.
+The restored-target path uses the binding already embedded in the reverse plan.
+An additional CLI binding must match that embedded binding exactly.
+
+The output retains `verification: NOT_PERFORMED`, `authority: HOST_SUPPLIED_PIN`,
+and `effects: NONE`. No key resolver or maintenance consent is required.
+Status neither decrypts data nor changes publication policy.
+Exit 0 requires metadata that matches the supplied `PLAINTEXT_ACTIVE` or `REMOVED` pin.
+Other phases remain incomplete. Existing input, uncertainty, and operational exit
+classes remain 2, 3, and 4.
+
+After removal, the journal is absent. Status reports null counters in JSON
+and UNKNOWN counters in text. It does not substitute zero or a plan estimate.
+It checks the native schema and captured metadata before reporting REMOVED.
+A missing journal under an earlier pin remains an explicit failure.
+A false removed pin over protected tables also fails.
+
+**VERIFIED, local PostgreSQL 16:** the focused status, CLI, protection, and reverse
+run passes 81 tests. The additional adversarial run passes 41 tests.
+The native controls cover all reverse phases, aborted work, terminal removal,
+concurrent commits, malformed progress, source/pin mismatch, schema and comment
+drift, disabled guards, and safe connection, cleanup, and output failures.
+A real write attempt receives SQLSTATE 25006 in the status transaction.
+The snapshot test sees the old committed prefix while another executor advances.
+The next status call sees the new committed prefix.
+
+The RED controls first showed the missing API and CLI rejection of reverse plans.
+An initial test listener intercepted executor setup. The corrected listener
+isolates the status transaction. Missing evidence never becomes a successful status.
+A later negative control changed both the plaintext schema and its journal copy.
+It first produced a false match. Shared plaintext inspection now compares the
+native schema with the original host lock, checks the exact enabled guard,
+and checks captured metadata. Status, activation, and removal use that same check.
+Three removal regressions exposed a changed error code. The correction preserves
+`metadata_not_restored:source_metadata` and the existing journal-retention behavior.
+No fresh value verification, retained-backup disposition, key/provider qualification,
+or deployment-wide writer exclusion follows from metadata inspection.
+All seven full gates remain UNKNOWN.
+
+Evidence: [focused](_reset/reverse-status-green-20261022.json), [adversarial](_reset/reverse-status-adversarial-20261022.json), and [CLI RED](_reset/reverse-status-cli-red-20261022.json).
+The [final metadata controls](_reset/reverse-status-metadata-final-20261022.json) pass seven cases,
+including the [forged-journal negative control](_reset/reverse-status-journal-red-20261022.json).
+Fresh PostgreSQL 16 clusters each pass one export and seven restore cases:
+[VARCHAR](_reset/fresh-cluster-restore-20261022-12.json) and
+[historical text](_reset/fresh-cluster-restore-20261022-13.json).
+Those runs observe reverse PREPARED, PLAINTEXT_PENDING, PLAINTEXT_ACTIVE, and
+REMOVED through the embedded adoption binding.
+The [final release check](_reset/reverse-status-release-installed-final-20261022.json)
+passes repeat-build identity, archive and SBOM checks, 32 installed-file comparisons,
+and isolated CLI startup. Installation uses `--no-deps`; runtime dependency
+qualification remains separate.
+
+
+The [final full suite](_reset/reverse-status-full-sa21-20261022-2.json) passes
+**1,447 tests and 18 subtests**, with three separate-environment skips and
+48 existing SQLAlchemy warnings. The wrapper records 244.89 seconds.
+All 92 source/test hashes match the final worktree. The exact local cell uses
+Python 3.12.3, SQLAlchemy 2.1.3, psycopg 3.3.6, and cryptography 50.0.2.
+The skipped external-app and fresh-cluster modules retain their separate evidence.
+The external Smolink suite was not rerun for this status slice.
+No production provider, host publication system, or independent review is qualified.
+
 ## Pinned Smolink adoption: 2026-10-22
 
 **VERIFIED, bounded:** Smolink revision `498d24bae999ed53ad85e1c1f1a09ea7fa151aa4`

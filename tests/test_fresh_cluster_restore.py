@@ -316,17 +316,23 @@ def test_restored_cluster_completes_adopted_lifecycle():
                                   'fresh-cluster retained backup recovery')
     maintenance = m.MaintenanceApproval('fresh-cluster qualification stopped and excluded writers', 3600)
     try:
+        assert d.status(proposal, owner, pin=reverse_pin).phase == 'PREPARED'
         assert d.apply(proposal, owner, keys=keys, pin=reverse_pin, approval=maintenance,
                        consent=consent, chunk_size=2).phase == 'PLAINTEXT_PENDING'
+        assert d.status(proposal, owner, pin=reverse_pin).phase == 'PLAINTEXT_PENDING'
         assert d.apply(proposal, owner, keys=keys, pin=replace(reverse_pin, phase='PLAINTEXT_ACTIVATING'),
                        approval=maintenance, consent=consent, chunk_size=2,
                        until='PLAINTEXT_ACTIVE').phase == 'PLAINTEXT_ACTIVE'
+        assert d.status(proposal, owner, pin=replace(reverse_pin, phase='PLAINTEXT_ACTIVE')).runtime_metadata_matches
         removal = d.RemovalApproval(proposal.target_id, proposal.operation_id, proposal.digest,
                                     'fresh-cluster package-free psycopg workload',
                                     'fresh-cluster retained backup recovery', True)
         assert d.remove(proposal, owner, pin=replace(reverse_pin, phase='REMOVING'),
                         approval=maintenance, removal=removal, consent=consent).phase == 'REMOVED'
         assert d.check_removed(proposal, owner, pin=replace(reverse_pin, phase='REMOVED')) is None
+        removed_status = d.status(proposal, owner, pin=replace(reverse_pin, phase='REMOVED'))
+        assert removed_status.phase == 'REMOVED' and removed_status.runtime_metadata_matches
+        assert removed_status.committed_rows is removed_status.committed_chunks is None
         expected = dict(MANIFEST['expected'])
         expected[str(uuid.UUID(int=101))] = [str(TENANT), 'edited on restored copy']
         expected[str(uuid.UUID(int=1000))] = [str(TENANT), 'added on restored copy']

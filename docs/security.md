@@ -164,6 +164,12 @@ Its integrity comes from the existing trusted deployment system. It is not a sig
 Current subject denial remains in the host's existing authoritative authorization system when required across database restore.
 A deployment with no independent current authorization cannot claim restore-resistant subject revocation.
 
+Operational status treats journal counters as recorded progress, not current value verification.
+Reverse plaintext inspection also compares native metadata with the host-supplied original lock.
+A changed journal snapshot cannot redefine that native contract.
+Status needs no keys and does not establish key custody or deployment-wide writer exclusion.
+After journal retirement, progress counters are unavailable rather than zero.
+
 ## Cryptographic format
 
 The selected candidate profile uses library AES-256-GCM-SIV, HKDF-SHA-256, and full HMAC-SHA-256 terms.
