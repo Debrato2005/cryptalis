@@ -114,11 +114,32 @@ class MigrationPlan:
     def __post_init__(self):
         try:
             doc = _decode_transition_json(self.artifact)
-            if (set(doc) != {'format', 'kind', 'operation_id', 'target_id', 'target',
+            members = {'format', 'kind', 'operation_id', 'target_id', 'target',
                             'runtime_role', 'journal_schema', 'lock', 'source_lock_digest',
                             'key_policies', 'scopes', 'estimates'}
-                    or doc['format'] != 'cryptalis.transition/v1' or doc['kind'] != 'protect'
-                    or _canonical(doc) != self.artifact):
+            rewrap = doc.get('format') == 'cryptalis.transition/v2' and doc.get('kind') == 'rewrap'
+            if rewrap:
+                members |= {'predecessors', 'rewrap_plan_digest', 'rewrap_observations'}
+                ancestors = doc['predecessors']
+                if type(ancestors) is not list or not ancestors:
+                    raise ValueError
+                seen = {str(UUID(doc['operation_id']))}
+                for item in ancestors:
+                    if set(item) != {'operation_id', 'plan_digest'}:
+                        raise ValueError
+                    identity = UUID(item['operation_id'])
+                    if not identity.int or str(identity) != item['operation_id'] or str(identity) in seen:
+                        raise ValueError
+                    seen.add(str(identity))
+                    if (type(item['plan_digest']) is not str or len(item['plan_digest']) != 64
+                            or any(c not in '0123456789abcdef' for c in item['plan_digest'])):
+                        raise ValueError
+                if (type(doc['rewrap_plan_digest']) is not str or len(doc['rewrap_plan_digest']) != 64
+                        or any(c not in '0123456789abcdef' for c in doc['rewrap_plan_digest'])):
+                    raise ValueError
+            elif doc.get('format') != 'cryptalis.transition/v1' or doc.get('kind') != 'protect':
+                raise ValueError
+            if set(doc) != members or _canonical(doc) != self.artifact:
                 raise ValueError
             for name in ('operation_id', 'target_id'):
                 if UUID(doc[name]).int == 0: raise ValueError
@@ -136,10 +157,27 @@ class MigrationPlan:
             # Compiler validation needs identifier quoting, never a connection.
             _previous_lock(_canonical(doc['lock']), doc['lock'], SimpleNamespace(dialect=postgresql.dialect()))
             _validate_estimates(doc['estimates'])
+            if rewrap:
+                observed = doc['rewrap_observations']
+                if set(observed) != {model['table_id'] for model in doc['lock']['models']}:
+                    raise ValueError
+                for item in observed.values():
+                    if (set(item) != {'rows', 'membership', 'frames'} or type(item['rows']) is not int
+                            or not 0 <= item['rows'] < 2**53):
+                        raise ValueError
+                    for key in ('membership', 'frames'):
+                        if (type(item[key]) is not str or len(item[key]) != 64
+                                or any(c not in '0123456789abcdef' for c in item[key])):
+                            raise ValueError
+                if sum(item['rows'] for item in observed.values()) != doc['estimates']['rows']:
+                    raise ValueError
         except (ManifestInvalid, ValueError, TypeError, KeyError, AttributeError):
             raise TransitionFailure('invalid_plan') from None
     def __str__(self):
         costs = self.document['estimates']
+        if self.document['kind'] == 'rewrap':
+            return (f'Estimated root-rewrap verification pause: {costs["writer_pause_seconds_estimate"]} s '
+                    f'for {costs["rows"]} rows. Payload and search bytes stay unchanged. ' + costs['limits'])
         rates = (f'backfill {costs["backfill_rows_per_second"]:g} rows/s; '
                  f'verify {costs["verify_rows_per_second"]:g} rows/s'
                  if 'backfill_rows_per_second' in costs and 'verify_rows_per_second' in costs
@@ -426,6 +464,13 @@ def _state(c,p,pin,*,allow_aborted=False):
     row=c.exec_driver_sql(f'SELECT plan_digest, state FROM {_journal(c,p)} WHERE operation_id=%s',(p.operation_id,)).one_or_none()
     if row is None or row[0] != p.digest: raise TransitionFailure('journal_identity_mismatch',p.operation_id)
     state=row[1]
+    if state.get('phase') == 'SUPERSEDED':
+        raise TransitionFailure('deployment_superseded', p.operation_id)
+    if p.document['kind'] == 'rewrap':
+        if (state.get('phase') not in ('PENDING', 'ACTIVE')
+                or state.get('rewrap_plan_digest') != p.document['rewrap_plan_digest']):
+            raise TransitionFailure('rewrap_state_changed', p.operation_id)
+        _check_predecessors(c, p)
     if state['phase']=='ABORTED':
         if allow_aborted and pin.phase=='PREPARED': return state
         raise TransitionFailure('operation_aborted',p.operation_id)
@@ -435,6 +480,25 @@ def _state(c,p,pin,*,allow_aborted=False):
     if state['phase']=='ACTIVE' and pin.phase not in ('ACTIVE','ACTIVATING'):
         raise TransitionFailure('external_policy_behind_database',p.operation_id)
     return state
+
+
+def _check_predecessors(c, p):
+    """The immutable host artifact defines the exact prior-operation chain."""
+    ancestors = p.document.get('predecessors', [])
+    if not ancestors:
+        return set()
+    rows = c.exec_driver_sql(
+        f'SELECT operation_id, plan_digest, state FROM {_journal(c,p)} WHERE operation_id=ANY(%s::uuid[])',
+        ([UUID(item['operation_id']) for item in ancestors],)).all()
+    observed = {str(operation): (digest, state) for operation, digest, state in rows}
+    chain = ancestors + [{'operation_id': str(p.operation_id), 'plan_digest': p.digest}]
+    for index, item in enumerate(ancestors):
+        entry = observed.get(item['operation_id'])
+        if (entry is None or entry[0] != item['plan_digest'] or type(entry[1]) is not dict
+                or entry[1].get('phase') != 'SUPERSEDED'
+                or entry[1].get('superseded_by') != chain[index + 1]):
+            raise TransitionFailure('predecessor_chain_changed', p.operation_id)
+    return {UUID(item['operation_id']) for item in ancestors}
 
 
 def _save(c,p,state):
@@ -557,15 +621,8 @@ def _frame_check(c,f):
     return f"{col} IS NULL OR (pg_catalog.octet_length({col}) BETWEEN {overhead} AND {16777216+overhead} AND pg_catalog.substring({col},1,6)=pg_catalog.decode('{magic}','hex') AND pg_catalog.substring({col},7,4)<>pg_catalog.decode('00000000','hex') AND pg_catalog.substring({col},11,4){op}pg_catalog.decode('00000000','hex'))"
 
 
-def _expand(c,p):
-    _lock_tables(c,p)
-    for model in p.document['lock']['models']:
-        if _facts(c,model)!=model['source_schema']: raise TransitionFailure('source_schema_changed',p.operation_id)
-        _check_source_metadata(c,p,model)
-    c.exec_driver_sql(f'CREATE TABLE {_journal(c,p)} (operation_id uuid PRIMARY KEY, plan_digest text NOT NULL, state jsonb NOT NULL)')
-    c.exec_driver_sql(f'REVOKE ALL ON {_journal(c,p)} FROM PUBLIC')
-    c.exec_driver_sql(f'GRANT SELECT ON {_journal(c,p)} TO {_quote(c,p.document["runtime_role"])}')
-    models={}; functions=set()
+def _install_guards(c,p):
+    functions = set()
     for model in p.document['lock']['models']:
         table=_table(c,model); trigger,function=_guard_names(p,model)
         fn=_quote(c,model['schema'])+'.'+_quote(c,function)
@@ -583,6 +640,20 @@ def _expand(c,p):
             functions.add(fn)
         c.exec_driver_sql(f'CREATE TRIGGER {_quote(c,trigger)} BEFORE INSERT OR UPDATE OR DELETE OR TRUNCATE ON {table} FOR EACH STATEMENT EXECUTE FUNCTION {fn}()')
         c.exec_driver_sql(f'ALTER TABLE {table} ENABLE ALWAYS TRIGGER {_quote(c,trigger)}')
+
+
+def _expand(c,p):
+    _lock_tables(c,p)
+    for model in p.document['lock']['models']:
+        if _facts(c,model)!=model['source_schema']: raise TransitionFailure('source_schema_changed',p.operation_id)
+        _check_source_metadata(c,p,model)
+    c.exec_driver_sql(f'CREATE TABLE {_journal(c,p)} (operation_id uuid PRIMARY KEY, plan_digest text NOT NULL, state jsonb NOT NULL)')
+    c.exec_driver_sql(f'REVOKE ALL ON {_journal(c,p)} FROM PUBLIC')
+    c.exec_driver_sql(f'GRANT SELECT ON {_journal(c,p)} TO {_quote(c,p.document["runtime_role"])}')
+    _install_guards(c, p)
+    models={}
+    for model in p.document['lock']['models']:
+        table = _table(c, model)
         for f in model['fields']:
             c.exec_driver_sql(f'ALTER TABLE {table} ADD COLUMN {_quote(c,f["payload_column"])} bytea')
             if f['queries']:
@@ -765,9 +836,12 @@ def _active_schema(c,p,state):
         _protected_contract(c, p, model, facts, paused=state['phase'] == 'PENDING')
 
 
-def _activate(c,p,state,pin):
+def _activate(c,p,state,pin,keys):
     if pin.phase!='ACTIVATING': raise TransitionFailure('matching_external_publication_required',p.operation_id)
     _lock_tables(c,p); _active_schema(c,p,state)
+    if p.document['kind'] == 'rewrap':
+        from cryptalis.rotation import _verify_rewrap_target
+        _verify_rewrap_target(c, p, keys)
     for model in p.document['lock']['models']:
         if _guard_facts(c,p,model)!=state['models'][model['table_id']]['guard']: raise TransitionFailure('writer_fence_changed',p.operation_id)
     _drop_guards(c,p)
@@ -788,8 +862,18 @@ def apply(p,engine,*,keys,pin,approval,chunk_size=1000,until='PENDING'):
     external publication. ACTIVE requires the host's independently current pin.
     """
     if type(chunk_size) is not int or not 1<=chunk_size<=5000 or until not in PHASES[1:]: raise TransitionFailure('invalid_apply_bound')
+    _admit(p, pin)
+    if p.document['kind'] == 'rewrap' and (until != 'ACTIVE' or pin.phase not in ('ACTIVATING', 'ACTIVE')):
+        raise TransitionFailure('rewrap_executor_required', p.operation_id)
     with _executor(p,engine,pin,approval) as c:
         state=_state(c,p,pin); c.commit()
+        if state is not None and state['phase'] == 'ACTIVE' and p.document['kind'] == 'rewrap' and pin.phase == 'ACTIVATING':
+            # A journal phase cannot replace the host's publication evidence.
+            from cryptalis.rotation import _verify_rewrap_target
+            with c.begin():
+                _lock_tables(c,p,verification=True)
+                _active_schema(c,p,state)
+                _verify_rewrap_target(c,p,keys)
         if state is None:
             with c.begin(): state=_expand(c,p)
         while PHASES.index(state['phase'])<PHASES.index(until):
@@ -802,7 +886,7 @@ def apply(p,engine,*,keys,pin,approval,chunk_size=1000,until='PENDING'):
                         _lock_tables(c,p,verification=True); state['verification']=_verify(c,p,state,keys)
                         state['phase']='VERIFIED'; _save(c,p,state)
                 elif state['phase']=='VERIFIED': _switch(c,p,state,keys)
-                elif state['phase']=='PENDING': _activate(c,p,state,pin)
+                elif state['phase']=='PENDING': _activate(c,p,state,pin,keys)
         with c.begin():
             if state['phase'] in ('PENDING','ACTIVE'): _active_schema(c,p,state)
             else: _inspect_paused(c,p,state)

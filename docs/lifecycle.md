@@ -2,7 +2,7 @@
 
 **SPECIFIED:** lifecycle contract. **IMPLEMENTED:** bounded product protection transition with plan/apply/verify and pre-switch abort,
 plus an in-place decrypt-back and additive-removal path.
-Active rotation and online transition remain unimplemented product slices. [Status](status.md) states the bounded recovery/removal evidence and remaining limits.
+Root rewrap has a bounded product cutover. Payload/search rotation and online transition remain unimplemented product slices. [Status](status.md) states the evidence and remaining limits.
 The protection engine verifies and switches in one transaction; saved verification checkpoints require a fresh pass on resume.
 Plain reads continue during verification. Writes and locking reads wait; schema DDL can pause all access.
 VERIFIED paragraphs below describe recorded receipts, not current product qualification. All other requirements remain SPECIFIED.
@@ -140,11 +140,35 @@ target roots and authenticates current frames in a read-only repeatable-read
 snapshot. Its protocol records digests and public contexts, not secret roots or
 wrapped bytes. The host retains both complete policies outside the database.
 These observations are not maintenance approval or current publication authority.
-A later executor must recheck current rows, policy and retained dependencies.
-Offline protocol and 35 native planner controls pass after scoped execution
-restores database access. No active rotation operation or
-new removal guarantee follows from this planner. See the
-[checkpoint](status.md#inactive-rewrap-planning-checkpoint-2026-10-23).
+
+**IMPLEMENTED, bounded native evidence:** `apply_rewrap` rechecks the immutable
+proposal under the existing maintenance executor and table locks. It authenticates
+all current frames under both custody sets and preserves every frame byte.
+The same transaction installs the existing writer guard, records the successor
+as PENDING and marks its exact predecessor SUPERSEDED. A changed source requires
+a new plan. A committed retry inspects and retains the original successor.
+
+The host publishes `proposal.activation_plan` separately. Use the existing
+`migration.apply` with its ACTIVATING pin to verify target frames against host
+observations and remove the guard. A journal ACTIVE claim cannot replace that
+verification. Normal ACTIVE operation permits later application edits.
+Old deployment pins fail. Exact predecessor links remain necessary for runtime,
+restore and reverse/removal admission. Repeated rewraps use a flat trusted chain.
+
+The transition/v2 reader requirement and retained artifacts are defined in
+[decisions](decisions.md#root-rewrap-successor-artifacts-2026-10-23).
+The native controls include repeated custody changes, latest-value decrypt-back,
+removal, a lost terminal COMMIT reply and independent process restart from disk.
+Rewrapped text and VARCHAR backups also complete fresh-cluster recovery, approved
+adoption, latest-value decrypt-back/removal and native metadata checks.
+Adoption refuses the original custody policy even though the root material matches.
+The process and provider fixtures use public synthetic roots. They establish
+no external custody or authenticated deployment authority.
+Rewrap on an adopted restored target and a pre-publication rewrap abort remain
+unimplemented. Keep writers stopped and inspect/resume pending publication.
+After activation, a new rewrap can change custody again without rewriting data.
+All three rotation workflows and the full lifecycle gate remain incomplete.
+See [status](status.md#active-root-rewrap-checkpoint-2026-10-23).
 
 ## Restore and authority loss
 

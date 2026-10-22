@@ -9,6 +9,75 @@ No PostgreSQL/provider/runtime cell, production key provider, independent review
 VERIFIED below refers only to the named checks and their exact revisions.
 All other contract and promotion requirements are SPECIFIED. All seven full gates remain UNKNOWN.
 
+## Active root-rewrap checkpoint: 2026-10-23
+
+**IMPLEMENTED, bounded native verification:** a rewrap proposal now derives a
+deterministic `cryptalis.transition/v2` successor plan. `apply_rewrap` uses the
+existing maintenance executor, locks and writer guards. It rechecks current
+source policy, schema, journal and complete source/target frame observations.
+One transaction preserves payload/search bytes, creates a successor PENDING row
+and marks the old immutable operation SUPERSEDED. No key or wrapper bytes enter
+PostgreSQL. Both complete policies remain host-owned recovery artifacts.
+
+The host publishes the successor separately. Existing `migration.apply` with
+an ACTIVATING pin authenticates the target and compares host-pinned observations
+before dropping guards. An already-ACTIVE journal claim also undergoes that check
+on an ACTIVATING retry. True ACTIVE pins allow later ordinary application edits.
+Runtime and reverse/removal admit only the exact host-pinned predecessor chain.
+Known ancestors are removed only through the existing approved removal path.
+
+**VERIFIED so far:** 165 focused lifecycle cases pass. The expanded native
+recovery/planner run passes 60 cases, including unchanged frames, native search
+and edits, two custody changes followed by latest-value decrypt-back/removal,
+wrong policy/pin/approval, altered source/journal, malformed successor artifacts,
+predecessor tampering, and false journal ACTIVE claims. An actual local transport
+proxy discards a terminal COMMIT reply. Inspection then resumes the same pending
+operation without changing frames. A process is killed after committed pending
+progress; an independently started process reloads disk artifacts and public
+fixture keys, inspects, resumes and activates. Frame bytes and equality-index
+OID/relfilenode remain unchanged in that restart control.
+
+The first execution run found a callable-only test helper. Review controls then
+reproduced a journal-claim bypass and raw invalid-input errors. Admission now
+precedes dispatch, and publication retry verifies host observations.
+The source review found no additional concrete defect in that pass. AI review
+supplies no independent security qualification.
+
+**VERIFIED, local Python 3.12.3 / SQLAlchemy 2.1.3 cell:** full regression passes
+**1,647 tests and 18 subtests**, with three separate-environment skips, in
+300.23 seconds. The wrapper counts subtests with passed cases. The 48 existing
+warnings concern SQLAlchemy DISTINCT ON deprecation. All start/end Python hashes match.
+
+After that run, fresh-cluster profile checks gained explicit manifest/successor
+admission and a negative original-policy adoption control. Product source did
+not change. Each rewrapped source type, text and VARCHAR, then passes one export
+and 15 restore cases on a new PostgreSQL 16 cluster. These cover retained-frame
+recovery, exact target-policy admission, stale authority refusal, approved adoption,
+latest-value decrypt-back/removal, and native metadata. The original public-root
+oracle remains independent of the target-policy factory. Profile labels alone
+cannot satisfy successor admission. Both runs retain matching Python hashes.
+The separate pinned Smolink harness was not rerun for this slice.
+
+The wheel and sdist build reproducibly without network access. The disposable
+installed-wheel check matches all 33 packaged files, imports verified source
+under a fresh bytecode cache, starts the CLI and inspects the genesis manifest.
+Installation used `--no-deps` and does not qualify dependency installation.
+
+Pre-publication rewrap abort, rewrap on an adopted restored target, payload
+rotation, search reindex, production provider qualification and independent
+review remain open. Host writer exclusion and publication remain operator
+assertions. The rotation build slice is incomplete. All seven gates remain UNKNOWN.
+
+Evidence: [initial acceptance](_reset/rewrap-execution-red-20261023.json),
+[first implementation](_reset/rewrap-execution-first-20261023.json),
+[review controls](_reset/rewrap-execution-review-red-20261023.json),
+[focused lifecycle](_reset/rewrap-execution-focused-20261023.json), and
+[process/transport recovery](_reset/rewrap-execution-recovery-20261023.json),
+[full regression](_reset/rewrap-execution-full-20261023.json),
+[text backup recovery](_reset/fresh-cluster-restore-20261023.json),
+[VARCHAR backup recovery](_reset/fresh-cluster-restore-20261023-2.json), and
+[installed wheel](_reset/rewrap-execution-installed-wheel-20261023.json).
+
 ## Development environment recovery: 2026-10-23
 
 **VERIFIED:** the default sandbox denies IPv4 socket creation with errno 1 and
@@ -101,8 +170,10 @@ Installation used `--no-deps` and does not qualify dependency installation.
 
 Earlier default-sandbox probes stopped before pytest. Their blocker is resolved
 through the approved path above. The original collection-only and offline
-receipts remain historical evidence. No active rewrap executor, publication,
-retained-backup artifact update, payload rotation or search reindex exists.
+receipts remain historical evidence. This checkpoint covered inactive planning.
+The [later execution checkpoint](#active-root-rewrap-checkpoint-2026-10-23)
+adds successor cutover and shared activation. Payload rotation and search reindex
+remain unimplemented.
 The rotation build slice remains incomplete. All seven full gates remain UNKNOWN.
 
 Evidence: [first native run](_reset/rewrap-plan-native-first-20261023.json),

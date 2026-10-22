@@ -114,3 +114,33 @@ writes, decrypt-back, native metadata, and package-free restart.
 Do not claim external-application adoption from these type tests alone.
 
 Source: [PostgreSQL 16 character types](https://www.postgresql.org/docs/16/datatype-character.html).
+
+## Root-rewrap successor artifacts: 2026-10-23
+
+**IMPLEMENTED, bounded:** root custody changes use `cryptalis.transition/v2`
+with `kind: rewrap`. Existing v1 protection plans remain readable. The successor
+keeps the same compiled lock and CF1 context, but receives a new immutable
+operation ID and digest. Its host artifact records the rewrap proposal digest,
+expected frame/membership observations and a flat ordered predecessor list.
+CF1, key generations, search representations and leakage remain unchanged.
+
+Use the existing maintenance executor, advisory lock, table locks and writer
+guard implementation. Full source/target authentication, a successor PENDING
+row and predecessor SUPERSEDED marker commit together. The old row retains its
+original operation ID and plan digest. It names its exact successor.
+The host publishes the successor independently. Existing activation verifies
+target data against host observations before removing the guard. An ACTIVATING
+retry also checks those observations when a journal already claims ACTIVE.
+An ACTIVE pin permits later ordinary edits and metadata inspection.
+
+Runtime and reverse/removal admission validate each predecessor's exact digest,
+SUPERSEDED phase and reciprocal successor link. An arbitrary SUPERSEDED row is
+not admitted. Known ancestors remain in the journal until approved removal.
+Do not recursively embed complete predecessor plans or rewrite their identities.
+
+Deploy a transition/v2-capable host reader before successor publication.
+Older transition readers fail format admission. Ciphertext readers and retained
+old wrappers remain separate recovery dependencies. No wrapper/key deletion,
+automatic backup retirement, new authority service or stronger revocation
+guarantee follows from this format. Production providers, authenticated host
+publication and independent review remain UNKNOWN.

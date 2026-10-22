@@ -11,6 +11,7 @@ temporary HOME and never appear in output.
 Usage: .venv/bin/python scripts/fresh_cluster_qualification.py [--workdir PATH]
 """
 import argparse
+import base64
 import datetime
 import json
 import os
@@ -123,27 +124,38 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--workdir', type=Path, default=None)
     parser.add_argument('--varchar', action='store_true', help='Qualify a native VARCHAR(64) source and lock v3.')
+    parser.add_argument('--rewrap', action='store_true', help='Qualify backup recovery after root rewrap and publication.')
     args = parser.parse_args()
     workdir = args.workdir or Path(tempfile.mkdtemp(prefix='cryptalis-fresh-'))
     workdir.mkdir(parents=True, exist_ok=True)
     export_receipt = receipt_path(f'fresh-cluster-export-{DATE}.json')
     restore_receipt = receipt_path(f'fresh-cluster-restore-{DATE}.json')
 
-    export = run_pytest(export_receipt, 'Fresh-cluster source export; primary cluster',
+    profile = '; root-rewrap profile' if args.rewrap else ''
+    export = run_pytest(export_receipt, 'Fresh-cluster source export; primary cluster' + profile,
                         'tests/test_fresh_cluster_export.py',
                         {'CRYPTALIS_FRESH_CLUSTER_DIR': str(workdir),
-                         'CRYPTALIS_FRESH_SOURCE_VARCHAR': '1' if args.varchar else '0'})
+                         'CRYPTALIS_FRESH_SOURCE_VARCHAR': '1' if args.varchar else '0',
+                         'CRYPTALIS_FRESH_SOURCE_REWRAP': '1' if args.rewrap else '0'})
     manifest = json.loads((workdir / 'restore-manifest.json').read_text())
+    if manifest.get('rewrapped') is not args.rewrap:
+        raise SystemExit('FreshCluster.ProfileMismatch: export did not match the requested root-rewrap profile.')
+    if args.rewrap:
+        plan = json.loads(base64.b64decode(manifest['plan'], validate=True))
+        if (plan.get('format') != 'cryptalis.transition/v2' or plan.get('kind') != 'rewrap'
+                or type(plan.get('predecessors')) is not list or not plan['predecessors']):
+            raise SystemExit('FreshCluster.ProfileMismatch: root-rewrap successor evidence is missing.')
     plain_database = manifest['database'] + '_plain'
     cluster, port, password = start_cluster(workdir)
     try:
         credentials = provision(port, password, manifest, plain_database)
         home = write_home(workdir, port, manifest, credentials)
-        restore = run_pytest(restore_receipt, 'Fresh-cluster protected-backup recovery and adoption; isolated cluster',
+        restore = run_pytest(restore_receipt, 'Fresh-cluster protected-backup recovery and adoption; isolated cluster' + profile,
                              'tests/test_fresh_cluster_restore.py',
                              {'HOME': str(home), 'CRYPTALIS_FRESH_CLUSTER_DIR': str(workdir),
                               'CRYPTALIS_FRESH_PLAIN_DATABASE': plain_database,
-                              'CRYPTALIS_FRESH_PLAINTEXT_ROLE': credentials['plaintext'][0]})
+                              'CRYPTALIS_FRESH_PLAINTEXT_ROLE': credentials['plaintext'][0],
+                              'CRYPTALIS_FRESH_SOURCE_REWRAP': '1' if args.rewrap else '0'})
     finally:
         stop_cluster(cluster)
     print('workdir', workdir)

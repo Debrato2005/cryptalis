@@ -41,7 +41,7 @@ Strong locks retry three 100 ms attempts with 50 ms gaps; exhaustion reports `ta
 Switch drops the original column and renames the ciphertext shadow. There is no live plaintext rollback mirror.
 **Plaintext-at-rest remains possible:** dropped-column bytes can remain in heap tuples, WAL, snapshots, and backups.
 `DROP COLUMN` is not erasure ([PostgreSQL 16](https://www.postgresql.org/docs/16/sql-altertable.html)). Retain recovery dependencies until explicit finalization.
-Decrypt-back from current data belongs to slice 6 and is not implemented by this slice.
+The separate decrypt-back path restores current values. See [lifecycle](lifecycle.md#deprotect-and-remove).
 
 Publish the exact artifact through the trusted host deployment tool while writers stay stopped.
 Supply its `ACTIVATING` pin to `apply(..., until="ACTIVE")` to acknowledge publication and remove the fence.
@@ -57,7 +57,9 @@ Startup rejects stale pins, schema mismatches, owner credentials, and unplanned 
 Read-only `plan`, `status`, `check_deployment`, and supplied-connection `check_attachment` are exempt.
 Before switch, `abort` restores native writes and retains the journal; it cannot undo cutover.
 Run tests through `scripts/test_postgres.py`; it reloads both private files and probes both roles.
-One operation per schema is admitted; later journal reuse is unfinished. [Evidence](status.md) records tests, costs, and limits.
+Protection admits one initial operation per schema. Root rewrap adds an exact
+successor chain. General journal reuse remains unfinished.
+[Evidence](status.md) records tests, costs, and limits.
 
 ## Inspect committed progress
 
@@ -116,6 +118,71 @@ After journal retirement, `committed_rows` and `committed_chunks` are null in JS
 and UNKNOWN in text. The native schema and captured metadata must still match.
 An absent journal under an earlier pin fails explicitly.
 The command requires no keys or plaintext/removal approval because it makes no transition.
+
+## Change root-wrapping custody
+
+This bounded API changes wrapping custody while retaining the same payload and
+search roots. Payload-key rotation and search reindex remain separate work.
+The host prepares an inactive target key policy and retains both complete policies
+for recovery. A local fixture provider supplies test evidence only.
+
+Use the current ACTIVE source plan, its authenticated pin, and both key factories.
+Measure verification throughput before setting the pause approval.
+
+```python
+from dataclasses import replace
+from cryptalis import migration
+from cryptalis.rotation import plan_rewrap, apply_rewrap
+
+proposal = plan_rewrap(source_plan, owner_engine, source_pin=source_pin,
+    keys=source_keys, target_keys=target_keys,
+    verify_rows_per_second=measured_verify_rate)
+successor = proposal.activation_plan
+prepared = migration.DeploymentPin(successor.target_id, successor.operation_id,
+    successor.digest, "PREPARED")
+approval = migration.MaintenanceApproval(writer_exclusion_evidence,
+    approved_pause_seconds)
+
+apply_rewrap(proposal, owner_engine, keys=source_keys,
+    target_keys=target_keys, pin=prepared, approval=approval)
+```
+
+Save the proposal and successor artifact through the trusted host process.
+Deploy the transition/v2 reader before publication.
+Stop and drain all writers before execution.
+The transaction rechecks both policies and every frame, installs writer guards,
+records the successor as PENDING, and marks the source SUPERSEDED.
+It preserves payload bytes, search bytes, and existing indexes.
+
+Publish the exact successor artifact and target wrapped policies outside PostgreSQL.
+Keep writers stopped until activation succeeds.
+Then acknowledge that publication through the shared executor:
+
+```python
+migration.apply(successor, owner_engine, keys=target_keys,
+    pin=replace(prepared, phase="ACTIVATING"), approval=approval, until="ACTIVE")
+active_pin = replace(prepared, phase="ACTIVE")
+# Attach fresh application workers with target_keys and (successor, active_pin).
+```
+
+After an uncertain commit, inspect the saved successor with `migration.status`.
+Resume `apply_rewrap` with the same proposal and a matching PREPARED or PENDING pin.
+Resume publication acknowledgement with the matching ACTIVATING pin.
+Keep the host pin consistent with the actual publication phase.
+Pre-publication rewrap abort and rewrap on an adopted restored target remain unsupported.
+Keep writers stopped and inspect or resume the pending operation.
+Retain predecessor artifacts and both custody policies for retained backups.
+Successful cutover does not authorize key deletion or establish stronger revocation.
+
+The existing fresh-cluster harness has separate root-rewrap profiles:
+
+```bash
+.venv/bin/python scripts/fresh_cluster_qualification.py --rewrap
+.venv/bin/python scripts/fresh_cluster_qualification.py --rewrap --varchar
+```
+
+These use approved disposable PostgreSQL 16 targets through `scripts/test_postgres.py`.
+They do not qualify a production provider or host publication service.
 
 ## Measured throughput
 

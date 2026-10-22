@@ -21,10 +21,20 @@ No objective is complete until its acceptance evidence and applicable gate pass.
 
 ## Current boundary
 
+- Root-rewrap cutover now uses a transition/v2 successor through the existing
+  executor and publication path. Native recovery controls preserve frames and
+  equality-index identity, reject stale authority, and exercise two custody
+  changes followed by latest-value decrypt-back/removal. Payload/search rotation,
+  adopted-restore rewrap and pending rewrap abort remain open. See
+  [status](status.md#active-root-rewrap-checkpoint-2026-10-23).
+  Full regression passes 1,647 tests and 18 subtests, with three separate-environment
+  skips. After harness-only profile admission changes, each rewrapped text/VARCHAR
+  backup passes one export and 15 restore cases on a new PostgreSQL 16 cluster.
+  The installed wheel matches all 33 packaged files and starts its CLI.
 - Rewrap planning checkpoint, 2026-10-23: 35 native planner cases pass within
   the 55-case planner/provider run and later full/focused suites. Five offline
-  protocol groups pass. Active rotation remains incomplete. No active-policy
-  or database publication exists. See
+  protocol groups pass. That earlier checkpoint covered inactive planning.
+  The execution checkpoint above adds successor cutover and shared activation. See
   [status](status.md#inactive-rewrap-planning-checkpoint-2026-10-23).
   A later offline check installs the local wheel into a disposable environment,
   matches 33 installed files against the archive, and starts its CLI. Dependencies
@@ -88,7 +98,7 @@ Requirement text is abbreviated. The full definitions remain in the research
 | OBJ-LIFE-04 | Parallel/adaptive migration without lost or duplicate work | SPECIFIED | None | Depends on OBJ-LIFE-03 |
 | OBJ-LIFE-05 | Decrypt-back current edits; preserve schema behavior; package-free exit | VERIFIED, bounded | `deprotection.py` implements `cryptalis.reverse/v1`: staged plaintext, verified backfill, transactional switch, recorded constraint/index/collation restoration, guarded activation, approved removal, and terminal-state assertions; seven lifecycle cases pass on both profiles; an independent three-model application completes protect/search/modify/decrypt-back/remove and a package-free restarted process performs native CRUD; the same reverse completes on an adopted restored cluster with the binding; lock v2 captures and restores protected-column comments, statistics targets, storage, compression, options, column grants, constraint/index comments and extended statistics; grants are applied to the ciphertext column at protection; owned sequences remain refused; native catalogs now verify captured metadata through fresh-cluster restore and adopted removal; terminal removal refuses late metadata drift and retains the journal on failed retirement | Broader external application scope, physical column order, owned-sequence restore, retained-native |
 | OBJ-LIFE-06 | Rollback, restore, stale pin refusal, RPO/RTO, disaster drills | PARTIAL | Older-snapshot and stale-pin refusals; reverse abort, pin/state ordering, corrupt-frame and disabled-guard refusals; isolated-cluster plaintext and protected restore with frame recovery and loud authority refusal; `cryptalis.restore/v1` adoption issues a binding after approval, frame authentication, schema comparison, and behavioral probes; the adopted cluster then attaches, reverses, and removes; local provider outage/revocation/lease drills keep the committed prefix and fail closed | Host-authenticated fencing/quarantine, RPO/RTO measurement |
-| OBJ-LIFE-07 | Three separate rotation workflows | PARTIAL | Internal rewrap candidate and bounded payload-batch preparation; inactive native rewrap planning verified 2026-10-23 | Active-policy publication, rotation executor, search reindex, recovery proofs |
+| OBJ-LIFE-07 | Three separate rotation workflows | PARTIAL | Root-rewrap successor cutover and shared activation, byte preservation, exact lineage, pending retry, process/COMMIT recovery and repeated-rewrap decrypt-back/removal; bounded payload-batch preparation | Payload-key rotation, search reindex, rewrap abort and adopted-restore rewrap, external provider/authority qualification |
 | OBJ-LIFE-08 | Production KMS with outage/revocation/cost evidence | BLOCKED | Local development provider only | Authorized provider account and independent review |
 | OBJ-LIFE-09 | Install, upgrade, decommission, clean uninstall | PARTIAL | Importable package; approved in-database removal retires reverse-owned objects after decrypt-back; a package-free restarted application process performs native CRUD | Versioned upgrade/removal and broader external application evidence |
 | OBJ-DX-01 | Minimal model/query changes; one manifest and one attach | IMPLEMENTED | `compile_protection`, `attach`, CLI inspection, read-only protection and reverse `status` | Unify plan/apply/remove entry points; complete status coverage |
@@ -109,6 +119,7 @@ Requirement text is abbreviated. The full definitions remain in the research
 
 | Date | Research reference | Mechanism | Product files | Evidence | Status |
 |---|---|---|---|---|---|
+| 2026-10-23 | Native root-custody cutover | Immutable transition/v2 successor, shared executor/guards/activation, exact predecessor admission | Migration, rotation, reverse inventory and native recovery worker | 165 focused lifecycle cases; 60 expanded recovery/planner cases including terminal COMMIT-reply loss and fresh-process activation; full regression 1,647 plus 18 subtests; rewrapped text/VARCHAR each pass one export and 15 fresh-cluster restore cases; [full](_reset/rewrap-execution-full-20261023.json), [recovery](_reset/rewrap-execution-recovery-20261023.json), [backup](_reset/fresh-cluster-restore-20261023-2.json) | VERIFIED for named local controls; complete rotation and all seven gates remain incomplete or UNKNOWN |
 | 2026-10-23 | Scoped environment recovery and development diagnosis | Existing wrapper diagnoses Git/socket restrictions, private test provenance, tools, PG16 and restricted roles; supported approval supplies the required execution path | `scripts/test_postgres.py`; native diagnostic and source-evidence controls | Full suite: 1,620 tests plus 18 subtests, three skips; after final diagnostic guard: 76 focused checks; [full](_reset/environment-rewrap-full-20261023.json), [final](_reset/development-preflight-final-20261023.json) | VERIFIED in local cell; no service/credential/mount/policy changes; target authorization and all gates UNKNOWN |
 | 2026-10-23 | Inactive root-rewrap admission | Read-only snapshot proposal with exact retained-root comparison, frame authentication and digest-only observations | `src/cryptalis/rotation.py`; standalone protocol and native controls | 35 native planner cases within 55 planner/provider checks; later full/focused regression above; five offline protocol groups; [native](_reset/rewrap-plan-native-green-20261023.json) | VERIFIED for named read-only observations; active rotation and all gates remain incomplete or UNKNOWN |
 | 2026-10-22 | Typed numeric API admission | Share finite-number and representable-duration checks across protection, reverse and maintenance approval | Migration, reverse and native rate controls | Ten initial raw overflows; 119 focused native tests pass, including fractional rates and full transitions; reproducible artifacts and 32-file installed-wheel check pass; [focused](_reset/numeric-admission-focused-20261022.json) | VERIFIED for public numeric admission and unchanged native effects; earlier full/fresh runs are separate evidence; all gates UNKNOWN |

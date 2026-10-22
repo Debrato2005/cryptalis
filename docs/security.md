@@ -295,7 +295,15 @@ unwraps and compares it, and returns an inactive policy with the same contexts a
 generations. It does not publish, persist, or change the source policy. Invalid target
 identity, provider faults, wrong roots/contexts/providers, identity drift, and source
 expiry return `KeyUnavailable` without a partial candidate. Interruption propagates.
-No rotation executor, active-policy publication, or retained-artifact update exists.
+The bounded `rotation.plan_rewrap` and `rotation.apply_rewrap` APIs add a
+maintenance workflow around independently prepared source and target policies.
+They authenticate exact roots and current frames before a byte-preserving
+successor cutover. The host retains both policies and publishes the successor
+outside PostgreSQL. Shared activation authenticates target frames against the
+host artifact before removing writer guards. A journal claim supplies no current
+deployment authority. This establishes no production custody, stronger revocation,
+key deletion, or automatic retained-backup retirement.
+See [lifecycle](lifecycle.md#changes-and-rotation) and [status](status.md#active-root-rewrap-checkpoint-2026-10-23).
 **IMPLEMENTED, internal batch only:** `prepare_payload_rotation_batch(rows, field, tenant,
 source=..., target=...)` decodes each current frame under the exact source payload
 generation, reseals the same exact text under the target generation, preserves record

@@ -29,6 +29,7 @@ from cryptalis.crypto.cf1 import FieldDescriptor, open_text
 from cryptalis.manifest.compiler import _canonical
 from cryptalis.sqlalchemy import PolicyMismatch, attach
 from test_migration import engine, independent_open, keys, TENANT
+from test_migration import keys as original_keys
 from test_fresh_cluster_export import assert_source_metadata
 
 d = importlib.import_module('cryptalis.deprotection')
@@ -38,6 +39,10 @@ if 'CRYPTALIS_FRESH_CLUSTER_DIR' not in os.environ:
 
 WORKDIR = Path(os.environ['CRYPTALIS_FRESH_CLUSTER_DIR'])
 MANIFEST = json.loads((WORKDIR / 'restore-manifest.json').read_text())
+if MANIFEST.get('rewrapped') is not (os.environ.get('CRYPTALIS_FRESH_SOURCE_REWRAP') == '1'):
+    pytest.fail('restore manifest does not match the requested root-rewrap profile')
+if MANIFEST.get('rewrapped'):
+    from rewrap_worker import target_keys as keys
 SCHEMA = MANIFEST['schema']
 PLAIN_DATABASE = os.environ['CRYPTALIS_FRESH_PLAIN_DATABASE']
 
@@ -66,6 +71,10 @@ def rows(variable, statement, database=None):
 
 def artifacts():
     source = m.MigrationPlan(base64.b64decode(MANIFEST['plan']))
+    if MANIFEST['rewrapped']:
+        assert source.document['format'] == 'cryptalis.transition/v2'
+        assert source.document['kind'] == 'rewrap'
+        assert source.document['predecessors']
     pin = m.DeploymentPin(uuid.UUID(MANIFEST['pin']['target_id']), uuid.UUID(MANIFEST['pin']['operation_id']),
                           MANIFEST['pin']['plan_digest'], MANIFEST['pin']['phase'])
     return source, pin
@@ -184,6 +193,9 @@ def test_restore_adoption_requires_explicit_fenced_approval():
             r.plan(source, owner, pin=replace(pin, phase='PENDING'), keys=keys, approval=approval())
         with pytest.raises(m.TransitionFailure, match='external_policy_mismatch'):
             r.plan(source, owner, pin=replace(pin, plan_digest='0' * 64), keys=keys, approval=approval())
+        if MANIFEST['rewrapped']:
+            with pytest.raises(m.TransitionFailure, match='key_policy_changed'):
+                r.plan(source, owner, pin=pin, keys=original_keys, approval=approval())
     finally:
         owner.dispose()
 

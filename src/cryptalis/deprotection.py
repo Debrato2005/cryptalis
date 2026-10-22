@@ -277,11 +277,14 @@ def plan(source, engine, *, source_pin, keys, plaintext_runtime_role, backfill_r
 
 def _inventory(c, p, source, own):
     """Validate every journal row before any reverse or removal step."""
+    ancestors = m._check_predecessors(c, source)
     rows = c.exec_driver_sql(
         f'SELECT operation_id, plan_digest, state FROM {m._journal(c, p)} ORDER BY operation_id').all()
     source_seen = False
     retired = []
     for operation, digest, state in rows:
+        if operation in ancestors:
+            continue
         if operation == own:
             continue
         if operation == source.operation_id:

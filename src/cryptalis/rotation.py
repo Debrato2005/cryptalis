@@ -1,8 +1,8 @@
-"""Inactive root-rewrap admission. No database or deployment publication.
+"""Root-rewrap planning and maintenance cutover through the existing lifecycle.
 
 The host retains both wrapped policies outside the database. This artifact
 records their identities, not their wrapped bytes or unwrapped roots. Native
-execution and publication require a separate verified lifecycle operation.
+The host publishes the successor plan separately from the database cutover.
 """
 from dataclasses import asdict, dataclass
 import hashlib
@@ -126,6 +126,26 @@ class RewrapPlan:
     def digest(self): return hashlib.sha256(self.artifact).hexdigest()
     @property
     def operation_id(self): return UUID(self.document['operation_id'])
+    @property
+    def source(self): return m.MigrationPlan(m._canonical(self.document['source_plan']))
+    @property
+    def activation_plan(self):
+        """Deterministic successor artifact. This property grants no authority."""
+        d = self.document
+        source = self.source
+        document = source.document
+        ancestors = document.get('predecessors', [])
+        ancestors.append({'operation_id': str(source.operation_id), 'plan_digest': source.digest})
+        document.update(format='cryptalis.transition/v2', kind='rewrap',
+            operation_id=str(self.operation_id), predecessors=ancestors, rewrap_plan_digest=self.digest,
+            key_policies={tenant: item['target'] for tenant, item in d['key_policies'].items()},
+            rewrap_observations={table: {key: value for key, value in item.items() if key != 'schema'}
+                                 for table, item in d['models'].items()},
+            scopes=[{'table_id': table, 'estimated_rows': item['rows']} for table, item in d['models'].items()],
+            estimates={'rows': d['estimates']['rows'],
+                       'writer_pause_seconds_estimate': d['estimates']['verify_seconds_estimate'],
+                       'limits': d['estimates']['limits']})
+        return m.MigrationPlan(m._canonical(document))
 
     def __str__(self):
         costs = self.document['estimates']
@@ -149,6 +169,81 @@ def _same_roots(source, target):
             raise KeyUnavailable()
 
 
+def _prepare_rewrap(source, keys, target_keys, expected=None):
+    policies, prepared = {}, {}
+    for tenant_text in source.document['key_policies']:
+        tenant = UUID(tenant_text)
+        old = m._ring(keys, tenant, source)
+        try:
+            new = target_keys(tenant) if callable(target_keys) else target_keys
+        except Exception:
+            raise KeyUnavailable() from None
+        if not isinstance(new, Keyring):
+            raise m.TransitionFailure('missing_target_key_policy', source.operation_id)
+        if m._policy(old) == m._policy(new):
+            raise m.TransitionFailure('rewrap_policy_unchanged', source.operation_id)
+        pair = old.prepare(), new.prepare()
+        _same_roots(*pair)
+        prepared[tenant] = pair
+        policies[tenant_text] = {'source': m._policy(old), 'target': m._policy(new),
+                                'contexts': _contexts(old.policy),
+                                'payload_generation': old.policy.payload_generation,
+                                'search_generation': old.policy.search_generation}
+    if expected is not None and policies != expected:
+        raise m.TransitionFailure('rewrap_key_policy_changed', source.operation_id)
+    return policies, prepared
+
+
+def _observe_active(c, source, keys, *, prepared=None, peers=None):
+    """Authenticate all active frames, including empty-scope key admission."""
+    if prepared is None:
+        prepared = {UUID(tenant): m._ring(keys, UUID(tenant), source).prepare()
+                    for tenant in source.document['key_policies']}
+    models = {}
+    for model in source.document['lock']['models']:
+        descriptors = [FieldDescriptor.from_compiled(f['descriptor'], f['descriptor_digest'])
+                       for f in model['fields']]
+        membership, frames = hashlib.sha256(), hashlib.sha256()
+        count, cursor = 0, None
+        while rows := m._stream(c, model, after=cursor):
+            for row in rows:
+                scoped = 'column' in model['tenancy']
+                tenant = row[1] if scoped else UUID(model['table_id'])
+                if tenant not in prepared:
+                    raise m.TransitionFailure('key_policy_changed', source.operation_id)
+                materials = (prepared[tenant],) if peers is None else (prepared[tenant], peers[tenant])
+                identity = [str(row[0]), str(tenant)]
+                membership.update(m._canonical(identity))
+                frame_digests = []
+                for index, field in enumerate(model['fields']):
+                    raw = row[(2 if scoped else 1) + index]
+                    frame = bytes(raw) if raw is not None else None
+                    if frame is not None and (
+                            int.from_bytes(frame[6:10], 'big') != materials[0].policy.payload_generation
+                            or int.from_bytes(frame[10:14], 'big') != (
+                                materials[0].policy.search_generation if field['queries'] else 0)):
+                        raise m.TransitionFailure('generation_mismatch', source.operation_id)
+                    for material in materials:
+                        open_text(frame, descriptors[index], tenant, row[0], material)
+                    frame_digests.append(hashlib.sha256(frame).hexdigest() if frame is not None else None)
+                frames.update(m._canonical(identity + [frame_digests]))
+                count += 1
+            cursor = str(rows[-1][0])
+        models[model['table_id']] = {'rows': count, 'membership': membership.hexdigest(),
+                                    'frames': frames.hexdigest()}
+    for materials in (prepared, peers or {}):
+        for admitted in materials.values():
+            for wrapper in admitted.policy.wrappers:
+                context = wrapper.context
+                admitted._resolve(context.domain_id, context.tenant_id, context.purpose, context.generation)
+    return models
+
+
+def _verify_rewrap_target(c, p, keys):
+    if _observe_active(c, p, keys) != p.document['rewrap_observations']:
+        raise m.TransitionFailure('rewrap_source_changed', p.operation_id)
+
+
 def plan_rewrap(source, engine, *, source_pin, keys, target_keys, verify_rows_per_second):
     """Authenticate unchanged roots and current frames in one read-only snapshot.
 
@@ -161,61 +256,15 @@ def plan_rewrap(source, engine, *, source_pin, keys, target_keys, verify_rows_pe
         raise m.TransitionFailure('source_pin_must_be_active', source.operation_id)
     if not m._finite_number(verify_rows_per_second) or verify_rows_per_second <= 0:
         raise m.TransitionFailure('missing_measured_rates')
-    policies, prepared, models = {}, {}, {}
     with m._connection(engine, source.operation_id) as c:
         c.exec_driver_sql('SET TRANSACTION ISOLATION LEVEL REPEATABLE READ, READ ONLY')
         m._check_connection(source, c, source_pin)
         state = m._state(c, source, source_pin)
-        # Include retained tenants even when their last current row was deleted.
-        for tenant_text in source.document['key_policies']:
-            tenant = UUID(tenant_text)
-            old = m._ring(keys, tenant, source)
-            try:
-                new = target_keys(tenant) if callable(target_keys) else target_keys
-            except Exception:
-                raise KeyUnavailable() from None
-            if not isinstance(new, Keyring):
-                raise m.TransitionFailure('missing_target_key_policy', source.operation_id)
-            if m._policy(old) == m._policy(new):
-                raise m.TransitionFailure('rewrap_policy_unchanged', source.operation_id)
-            pair = old.prepare(), new.prepare()
-            _same_roots(*pair)
-            prepared[tenant] = pair
-            policies[tenant_text] = {'source': m._policy(old), 'target': m._policy(new),
-                                    'contexts': _contexts(old.policy),
-                                    'payload_generation': old.policy.payload_generation,
-                                    'search_generation': old.policy.search_generation}
+        policies, prepared = _prepare_rewrap(source, keys, target_keys)
+        models = _observe_active(c, source, keys, prepared={t: pair[0] for t,pair in prepared.items()},
+                                 peers={t: pair[1] for t,pair in prepared.items()})
         for model in source.document['lock']['models']:
-            descriptors = [FieldDescriptor.from_compiled(f['descriptor'], f['descriptor_digest'])
-                           for f in model['fields']]
-            membership, frames = hashlib.sha256(), hashlib.sha256()
-            count, cursor = 0, None
-            while rows := m._stream(c, model, after=cursor):
-                for row in rows:
-                    scoped = 'column' in model['tenancy']
-                    tenant = row[1] if scoped else UUID(model['table_id'])
-                    if tenant not in prepared:
-                        raise m.TransitionFailure('key_policy_changed', source.operation_id)
-                    pair = prepared[tenant]
-                    identity = [str(row[0]), str(tenant)]
-                    membership.update(m._canonical(identity))
-                    frame_digests = []
-                    for index, field in enumerate(model['fields']):
-                        raw = row[(2 if scoped else 1) + index]
-                        frame = bytes(raw) if raw is not None else None
-                        if frame is not None and (
-                                int.from_bytes(frame[6:10], 'big') != pair[0].policy.payload_generation
-                                or int.from_bytes(frame[10:14], 'big') != (
-                                    pair[0].policy.search_generation if field['queries'] else 0)):
-                            raise m.TransitionFailure('generation_mismatch', source.operation_id)
-                        for material in pair:
-                            open_text(frame, descriptors[index], tenant, row[0], material)
-                        frame_digests.append(hashlib.sha256(frame).hexdigest() if frame is not None else None)
-                    frames.update(m._canonical(identity + [frame_digests]))
-                    count += 1
-                cursor = str(rows[-1][0])
-            models[model['table_id']] = {'rows': count, 'membership': membership.hexdigest(),
-                                        'frames': frames.hexdigest(), 'schema': m._hash(m._facts(c, model))}
+            models[model['table_id']]['schema'] = m._hash(m._facts(c, model))
     try:
         rows = sum(model['rows'] for model in models.values())
         pin = asdict(source_pin)
@@ -234,3 +283,63 @@ def plan_rewrap(source, engine, *, source_pin, keys, target_keys, verify_rows_pe
     except Exception as exc:
         raise m._safe_failure(exc, source.operation_id, ()) from None
     return proposal
+
+
+def apply_rewrap(proposal, engine, *, keys, target_keys, pin, approval):
+    """Atomically fence writers and record a verified successor as PENDING.
+
+    Keep writers stopped. Publish ``proposal.activation_plan`` through the host,
+    then use the existing migration apply operation with its ACTIVATING pin.
+    A retry inspects the same immutable successor, rather than creating another.
+    """
+    if type(proposal) is not RewrapPlan:
+        raise m.TransitionFailure('invalid_rewrap_plan')
+    successor = proposal.activation_plan
+    if type(pin) is not m.DeploymentPin or pin.phase not in ('PREPARED', 'PENDING'):
+        raise m.TransitionFailure('rewrap_prepublication_pin_required', proposal.operation_id)
+    source = proposal.source
+    d = proposal.document
+    source_pin = m.DeploymentPin(UUID(d['source_pin']['target_id']), UUID(d['source_pin']['operation_id']),
+                                 d['source_pin']['plan_digest'], 'ACTIVE')
+    with m._executor(successor, engine, pin, approval) as c:
+        with c.begin():
+            m._lock_tables(c, successor, verification=True)
+            row = c.exec_driver_sql(f'SELECT plan_digest, state FROM {m._journal(c,successor)} WHERE operation_id=%s',
+                                    (successor.operation_id,)).one_or_none()
+            if row is not None:
+                state = m._state(c, successor, pin)
+                m._active_schema(c, successor, state)
+            else:
+                if pin.phase != 'PREPARED':
+                    raise m.TransitionFailure('missing_rewrap_operation', proposal.operation_id)
+                m._check_connection(source, c, source_pin)
+                from cryptalis.deprotection import _inventory
+                _inventory(c, source, source, own=None)
+                source_state = m._state(c, source, source_pin)
+                if m._hash(source_state) != d['journal_state_digest']:
+                    raise m.TransitionFailure('rewrap_source_changed', proposal.operation_id)
+                for model in source.document['lock']['models']:
+                    if m._hash(m._facts(c, model)) != d['models'][model['table_id']]['schema']:
+                        raise m.TransitionFailure('rewrap_source_changed', proposal.operation_id)
+            _, prepared = _prepare_rewrap(source, keys, target_keys, d['key_policies'])
+            observed = _observe_active(c, source, keys,
+                prepared={t: pair[0] for t,pair in prepared.items()}, peers={t: pair[1] for t,pair in prepared.items()})
+            if observed != successor.document['rewrap_observations']:
+                raise m.TransitionFailure('rewrap_source_changed', proposal.operation_id)
+            if row is None:
+                m._lock_tables(c, successor)
+                m._install_guards(c, successor)
+                models = {}
+                for model in successor.document['lock']['models']:
+                    item = observed[model['table_id']]
+                    models[model['table_id']] = {'rows': item['rows'], 'chunks': 0,
+                        'scope': {'count': item['rows'], 'membership': item['membership']},
+                        'active_schema': m._facts(c, model), 'guard': m._check_guard(c, successor, model)}
+                state = {'phase': 'PENDING', 'models': models, 'rewrap_plan_digest': proposal.digest}
+                source_state.update(phase='SUPERSEDED', superseded_by={
+                    'operation_id': str(successor.operation_id), 'plan_digest': successor.digest})
+                m._save(c, source, source_state)
+                c.exec_driver_sql(f'INSERT INTO {m._journal(c,successor)} VALUES (%s,%s,%s::jsonb)',
+                                  (successor.operation_id, successor.digest, json.dumps(state)))
+                m._active_schema(c, successor, state)
+        return m._progress(successor, state)

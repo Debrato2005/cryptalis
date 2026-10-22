@@ -256,7 +256,12 @@ Separate/generated terms are compiler output for admitted tenant-scoped constrai
 No custom extension, type, or operator class is required.
 Payload and companion commit in the same transaction. Search roots remain independent of payload roots.
 Payload rotation need not reindex. Search-key changes require complete reindex and authenticated-header resealing with fresh nonces.
-An internal candidate-preparation API resolves, rewraps, and verifies every admitted root without publishing a policy. A separate internal batch API reseals current frames between payload generations and preserves search headers. Publication and rotation executors remain SPECIFIED.
+An internal candidate-preparation API resolves, rewraps, and verifies every admitted root without publishing a policy.
+The bounded root-rewrap executor records an immutable transition/v2 successor through
+the shared maintenance and activation machinery. Host publication remains separate.
+A separate internal batch API reseals current frames between payload generations and preserves search headers.
+Payload-rotation and search-reindex executors remain SPECIFIED.
+See [lifecycle](../lifecycle.md#changes-and-rotation) for recovery and publication boundaries.
 [Security](../security.md#cryptographic-format) owns framing, commitments, keys, and failure rules.
 Generic CHECK/FK/default/collation preservation remains UNKNOWN. [Lifecycle](../lifecycle.md) states the verifier's actual checks.
 

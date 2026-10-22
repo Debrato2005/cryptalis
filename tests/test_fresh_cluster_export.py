@@ -6,6 +6,7 @@ manifest of expected values and retained artifacts. It never writes
 credentials.
 """
 import base64
+from dataclasses import replace
 import json
 import os
 from pathlib import Path
@@ -16,9 +17,11 @@ import psycopg
 import pytest
 from sqlalchemy import String
 
+from cryptalis import migration as m, rotation as r
 from cryptalis.sqlalchemy import attach
 from test_deprotection import catalog_metadata, column_acl
-from test_migration import application, keys, publish, run, TENANT, FIELD_ID
+from test_migration import application, frames, keys, publish, run, TENANT, FIELD_ID
+from rewrap_worker import target_keys
 
 if 'CRYPTALIS_FRESH_CLUSTER_DIR' not in os.environ:
     pytest.skip('run through scripts/fresh_cluster_qualification.py', allow_module_level=True)
@@ -94,6 +97,7 @@ def attached_edits(app):
 def test_export_fresh_cluster_source():
     workdir = Path(os.environ['CRYPTALIS_FRESH_CLUSTER_DIR'])
     varchar = os.environ.get('CRYPTALIS_FRESH_SOURCE_VARCHAR') == '1'
+    rewrapped = os.environ.get('CRYPTALIS_FRESH_SOURCE_REWRAP') == '1'
     with application(setup=source_metadata_fixture,
                      value_type=String(64, collation='C') if varchar else None) as app:
         assert_source_metadata(app, app.role)
@@ -103,6 +107,20 @@ def test_export_fresh_cluster_source():
         run(app)
         publish(app)
         attached_edits(app)
+        if rewrapped:
+            before = frames(app, True)
+            proposal = r.plan_rewrap(app.plan, app.owner, source_pin=app.pin,
+                                     keys=keys, target_keys=target_keys,
+                                     verify_rows_per_second=1000)
+            successor = proposal.activation_plan
+            pin = m.DeploymentPin(successor.target_id, successor.operation_id, successor.digest, 'PREPARED')
+            assert r.apply_rewrap(proposal, app.owner, keys=keys, target_keys=target_keys,
+                                   pin=pin, approval=app.approval).phase == 'PENDING'
+            app.plan, app.pin = successor, replace(pin, phase='ACTIVATING')
+            assert m.apply(app.plan, app.owner, keys=target_keys, pin=app.pin,
+                           approval=app.approval, until='ACTIVE').phase == 'ACTIVE'
+            app.pin = replace(app.pin, phase='ACTIVE')
+            assert frames(app, True) == before
         dump(workdir / 'protected.sql', app.schema, environment('CRYPTALIS_TEST_DATABASE_URL'))
         model = app.plan.document['lock']['models'][0]
         field = model['fields'][0]
@@ -111,6 +129,7 @@ def test_export_fresh_cluster_source():
         expected[str(ADDED_ID)] = [str(TENANT), 'added while protected']
         del expected[str(DELETED_ID)]
         manifest = {
+            'rewrapped': rewrapped,
             'native_type': 'varchar' if varchar else 'text', 'native_limit': 64 if varchar else None,
             'database': parsed['dbname'], 'owner_role': parsed['user'], 'runtime_role': runtime['user'],
             'schema': app.schema, 'column': field['column'], 'field_id': field['field_id'],
