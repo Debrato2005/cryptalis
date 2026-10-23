@@ -435,6 +435,9 @@ def _plan_generation_rotation(source, engine, *, purpose, source_pin, keys, targ
     m._admit(source,source_pin)
     if source_pin.phase != 'ACTIVE':
         raise m.TransitionFailure('source_pin_must_be_active',source.operation_id)
+    if purpose=='search' and not any(
+            f['queries'] for model in source.document['lock']['models'] for f in model['fields']):
+        raise m.TransitionFailure('search_rotation_requires_searchable_fields',source.operation_id)
     limits = dict(max_rows=max_batch_rows,max_bytes=max_batch_bytes)
     _payload_inputs(backfill_rows_per_second,verify_rows_per_second,temporary_bytes_per_row,wal_bytes_per_row,limits)
     with m._connection(engine,source.operation_id) as c:
@@ -477,8 +480,6 @@ def plan_payload_rotation(source,engine,*,source_pin,keys,target_keys,
 def plan_search_rotation(source,engine,*,source_pin,keys,target_keys,
         backfill_rows_per_second,verify_rows_per_second,temporary_bytes_per_row,wal_bytes_per_row,
         max_batch_rows=1000,max_batch_bytes=64*1024*1024):
-    if not any(f['queries'] for model in source.document['lock']['models'] for f in model['fields']):
-        raise m.TransitionFailure('search_rotation_requires_searchable_fields',source.operation_id)
     return _plan_generation_rotation(source,engine,purpose='search',source_pin=source_pin,keys=keys,
         target_keys=target_keys,backfill_rows_per_second=backfill_rows_per_second,
         verify_rows_per_second=verify_rows_per_second,temporary_bytes_per_row=temporary_bytes_per_row,

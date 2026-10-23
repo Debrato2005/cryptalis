@@ -78,6 +78,21 @@ activation frame proofs. The host still authenticates deployment publication.
 owns command inputs and results. [Status](status.md) owns executable evidence.
 All seven full gates remain UNKNOWN.
 
+## Rotation preparation diagnostics: 2026-10-23
+
+Reuse the existing payload/search P status APIs in `cryptalis status` through
+exact artifact-format dispatch. Keep P separate from publication artifact A.
+Recorded progress remains keyless, read-only, and `NOT_PERFORMED`; it never
+returns application deployment admission. Repeat shared runtime privilege
+checks in every recorded phase. Refuse P restore bindings before reading
+them or connecting. This adds no artifact format or lifecycle state machine.
+
+Admit the source plan and pin before search-planner field inspection.
+Missing preparation and activation failures use the actual payload/search
+purpose. [The walkthrough](walkthrough-migration.md#inspect-rotation-preparation)
+owns diagnostic codes and command behavior. [Status](status.md) owns evidence.
+All seven full gates remain UNKNOWN.
+
 ## Complexity budget
 
 | Retained mechanism | Essential reason | Mature dependency | User exposure | Deciding test / removal |

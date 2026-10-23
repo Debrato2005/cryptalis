@@ -137,7 +137,8 @@ Maintenance needs operator-controlled writer exclusion and evidence that existin
 ## Current commands
 
 **IMPLEMENTED:** structural artifact inspection, synthetic crypto utilities,
-bounded read-only protection/reverse status, and active-deployment Doctor.
+bounded read-only protection, rotation-preparation and reverse status, and
+active-deployment Doctor.
 The status command observes an existing plan and host-supplied pin.
 Doctor checks current runtime identity, effective privileges, target, lineage,
 and schema against an immutable migration plan and supplied ACTIVE pin.
@@ -157,6 +158,7 @@ The full operational status contract also remains incomplete.
 ```
 
 [Migration walkthrough](docs/walkthrough-migration.md#inspect-committed-progress) defines status inputs and limits.
+[Preparation status](docs/walkthrough-migration.md#inspect-rotation-preparation) uses the same command with the immutable payload or search proposal P.
 [Doctor diagnosis](docs/walkthrough-migration.md#diagnose-an-active-deployment) defines its separate scope and UNKNOWN results.
 
 ## Read next

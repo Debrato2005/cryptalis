@@ -162,6 +162,47 @@ observed = status(p, owner_engine, pin=active_pin)
 assert observed.verification == "NOT_PERFORMED"
 ```
 
+### Inspect rotation preparation
+
+**IMPLEMENTED, bounded:** the same command accepts preparation proposal P in
+either exact format: `cryptalis.payload-rotation/v1` or
+`cryptalis.search-rotation/v1`. It calls the existing
+`rotation.status_payload_rotation` or `rotation.status_search_rotation` API.
+
+```bash
+cryptalis status payload-preparation.json --pin preparation-pin.json --database-url-file /private/connection.txt --json
+cryptalis status search-preparation.json --pin preparation-pin.json --database-url-file /private/connection.txt --json
+```
+
+Supply the pin for that exact P: its operation ID and digest identify P, and
+its target ID identifies the source target. The admitted external phases are
+PREPARED, EXPANDED, and BACKFILLED. This preparation pin does not authorize
+application publication. Recorded phases are PREPARED, EXPANDED, BACKFILLED,
+or ABORTED. No P row exists yet in PREPARED. Cutover to the sealed successor
+supersedes P; inspect the successor artifact after cutover.
+
+Output uses `scope: payload_rotation_preparation` or
+`scope: search_rotation_preparation`, with P's `operation_id` and its
+`source_operation_id`. Every admitted recorded phase returns exit 3,
+`runtime_metadata_matches: false`, and `verification: NOT_PERFORMED`.
+`effects: NONE` and `authority: HOST_SUPPLIED_PIN` remain explicit.
+BACKFILLED reports recorded progress, not fresh frame authentication or
+deployment admission. ABORTED reports the retained committed counters.
+
+Inspection uses one read-only, repeatable-read transaction. It checks the
+source runtime's effective privileges in every recorded phase. It uses no
+keys and acquires no maintenance table or advisory locks. It does not stage,
+seal, switch, publish, or cancel an operation.
+
+A wrong P identity or unsupported external phase fails before connection
+with `payload_operation_pin_mismatch` or `search_operation_pin_mismatch`
+and exit 2. An EXPANDED or BACKFILLED pin with no P journal row fails with
+`missing_payload_operation` or `missing_search_operation` and exit 3.
+The command refuses `--restore-binding` for P before reading the binding or
+connecting. Rotation on adopted targets remains unsupported. Doctor also
+refuses preparation artifacts. The common input limits and safe operational
+failure handling apply. [Status](status.md) owns evidence and remaining gaps.
+
 ### Inspect decrypt-back and removal
 
 Use the exact reverse plan and current reverse pin with the same command:

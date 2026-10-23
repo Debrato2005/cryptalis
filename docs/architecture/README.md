@@ -310,12 +310,14 @@ remains UNKNOWN. [Lifecycle](../lifecycle.md) states the verifier's actual check
 ## Public surface
 
 The table defines the **SPECIFIED** final command surface.
-A bounded `status` command now reports protection and reverse progress and metadata.
+A bounded `status` command reports protection, payload/search preparation, and
+reverse progress and metadata. Preparation status uses the existing typed P
+status APIs and never supplies application publication authority.
 A bounded `doctor` checks an existing ACTIVE deployment through the declared
 runtime connection. It repeats shared attachment admission in a read-only
 snapshot. Unobserved boundaries and its aggregate result remain UNKNOWN.
 Other commands below remain unimplemented package commands.
-Full status coverage of keys, retained obligations, and rotation
+Full status coverage of keys and retained obligations
 remains SPECIFIED. The migration walkthrough defines the implemented subset.
 See [committed progress](../walkthrough-migration.md#inspect-committed-progress).
 

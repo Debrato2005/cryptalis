@@ -70,7 +70,7 @@ def _state(c,p,op,pin=None):
                           (p.operation_id,)).one_or_none()
     if row is None:
         if pin is not None and pin.phase!='PREPARED':
-            raise m.TransitionFailure('missing_payload_operation',p.operation_id)
+            raise m.TransitionFailure(f'missing_{p.purpose}_operation',p.operation_id)
         _source_current(c,p,op,own=None)
         return None
     if row[0]!=p.digest:raise m.TransitionFailure('journal_identity_mismatch',p.operation_id)
@@ -337,13 +337,16 @@ def apply(p,engine,*,keys,target_keys,pin,approval,until,max_chunks):
 def status(p,engine,*,pin):
     _pin(p,pin)
     op=_operation(p)
+    source=p.source
     with m._connection(engine,p.operation_id) as c:
         c.exec_driver_sql('SET TRANSACTION ISOLATION LEVEL REPEATABLE READ, READ ONLY')
-        if m._target(c)[:-1]!=p.source.document['target'][:-1]:
+        if m._target(c)[:-1]!=source.document['target'][:-1]:
             raise m.TransitionFailure('wrong_database_target',p.operation_id)
+        m._runtime_safety(c,source.document['runtime_role'],source.document['target'][-1],
+                          source.document['lock']['models'],journal=m._journal(c,op),operation_id=p.operation_id)
         state=_state(c,p,op,pin)
         if state is None or state['phase']=='ABORTED':
-            m._check_connection(p.source,c,m.DeploymentPin(p.source.target_id,p.source.operation_id,p.source.digest,'ACTIVE'))
+            m._check_connection(source,c,m.DeploymentPin(source.target_id,source.operation_id,source.digest,'ACTIVE'))
         else:_inspect(c,p,op,state)
         progress=m.Progress(p.operation_id,'PREPARED',0,0,'') if state is None else m._progress(op,state)
         return m.TransitionStatus(p.operation_id,progress.phase,pin.phase,progress.committed_rows,

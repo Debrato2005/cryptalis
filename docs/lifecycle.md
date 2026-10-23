@@ -54,7 +54,8 @@ The runtime principal cannot change schema, operation metadata, or lifecycle pri
 Unknown writer coverage blocks apply. An empty connection snapshot alone does not prove that excluded writers cannot reconnect.
 
 Initial planning, ACTIVE connection checks, restored connection checks,
-ACTIVE/PENDING status, Doctor, and the shared maintenance executor check
+ACTIVE/PENDING status, payload/search preparation status, Doctor, and the
+shared maintenance executor check
 effective runtime privileges. Runtime role
 attributes and owner membership must exclude administrative authority. Effective
 CREATE on the database or declared schemas is refused. Protected tables and
@@ -65,6 +66,13 @@ REFERENCES privileges on the journal cause refusal. Ordinary protected-data
 CRUD remains admitted through the declared writer boundary.
 `unsafe_runtime_role` reports privilege failures. Owner drift reports
 `maintenance_requires_table_owner`. These checks do not replace writer exclusion.
+
+Preparation status checks runtime safety even before P has a journal row and
+after cancellation. Its keyless snapshot reports recorded progress, with no
+publication authority or fresh value verification. The same `cryptalis status`
+command accepts payload and search P artifacts. See
+[preparation inspection](walkthrough-migration.md#inspect-rotation-preparation)
+for pins, output, refusal codes, and exit behavior.
 
 One PostgreSQL journal stores the immutable operation ID/plan digest, target binding, source/desired lock, phase, and chunk outcomes.
 Chunk data and its completion marker commit in one transaction.

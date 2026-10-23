@@ -173,7 +173,7 @@ def switch(p,a,engine,*,keys,target_keys,pin,approval):
                 state=m._state(c,a,pin)
                 m._active_schema(c,a,state)
             else:
-                if pin.phase!='PREPARED':raise m.TransitionFailure('missing_payload_activation',a.operation_id)
+                if pin.phase!='PREPARED':raise m.TransitionFailure(f'missing_{p.purpose}_activation',a.operation_id)
                 op=s._operation(p)
                 state=s._state(c,p,op)
                 if state is None or state['phase']!='BACKFILLED':

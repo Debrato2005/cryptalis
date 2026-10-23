@@ -10,6 +10,59 @@ No PostgreSQL/provider/runtime cell, production key provider, independent review
 VERIFIED below refers only to the named checks and their exact revisions.
 All other contract and promotion requirements are SPECIFIED. All seven full gates remain UNKNOWN.
 
+## Rotation preparation status checkpoint: 2026-10-23
+
+**IMPLEMENTED, bounded native verification:** `cryptalis status` now reads
+payload and search preparation artifacts through their existing typed public
+status APIs. It reports PREPARED, EXPANDED, BACKFILLED or ABORTED progress,
+the source operation and its own operation, and the supplied preparation pin.
+The scopes are `payload_rotation_preparation` and `search_rotation_preparation`.
+Every preparation result keeps `runtime_metadata_matches: false`,
+`verification: NOT_PERFORMED`, `effects: NONE` and exit 3. Recorded preparation
+does not authorize an active application deployment.
+
+Both Python and CLI preparation status repeat effective runtime privilege
+admission before observing progress. Inspection uses a read-only repeatable
+snapshot, without provider work or maintenance locks. An invalid preparation
+pin fails before connection. A supplied restore binding is refused before its
+file is read. Doctor continues to refuse preparation artifacts. This change
+adds no adopted-target rotation support or publication authority.
+
+Search planning now admits source types before reading source fields. Invalid
+sources raise `external_policy_mismatch`, without connection or key work.
+Missing search preparation and activation rows now use `missing_search_operation`
+and `missing_search_activation`. Existing payload error codes remain unchanged.
+Refusals retain source values, staged ciphertext, progress and native catalogs.
+
+**VERIFIED:** the initial native run retains 23 failures and three passing
+payload controls. The affected CLI, manifest inspection, Doctor, source/pin
+admission, runtime privilege and generation workflows pass **369 cases** in
+178.30 seconds. New cases cover both purposes and all four recorded phases,
+exact public-API counters, unsafe grants and recovery after REVOKE, invalid
+authority before connection, missing forward-pinned operations, no-key and
+read-only paths, wrong credentials, typed invalid source and missing activation.
+
+The eight phase/purpose cases pass again in 7.59 seconds with actual runtime
+credentials after strengthening that single test function. The final run's
+127 Python source/test/script hashes match at start, end and final inspection.
+All product bytes still match the 369-case regression and release receipts.
+The wheel and sdist build reproducibly offline. All 36 installed files match the wheel, and
+installed CLI startup plus rotation-status help pass.
+The previous full regression and fresh-cluster profiles below remain
+revision-bound. They were not rerun for this interface and diagnostic change.
+Provider custody, host authority, frame freshness and the complete operational
+status contract remain unqualified. All seven full gates remain UNKNOWN.
+
+Next implementation work targets ordinary ORM bulk inserts. Establish native
+TEXT/VARCHAR batch, identity, tenant, error and transaction behavior before
+admitting the new write route. Broader DML and RETURNING remain product gaps.
+
+Evidence: [initial native failures](_reset/rotation-status-red-20261023.json),
+[affected regression](_reset/rotation-status-regression-20261023.json),
+[actual runtime credentials](_reset/rotation-status-runtime-20261023.json),
+[final reproducible archives](_reset/rotation-status-release-final-20261023.json), and
+[final installed wheel](_reset/rotation-status-installed-final-20261023.json).
+
 ## Doctor and runtime status checkpoint: 2026-10-23
 
 **IMPLEMENTED, bounded native verification:** `cryptalis doctor` inspects an
@@ -67,9 +120,9 @@ The command does not scan pre-adoption applications, qualify providers,
 authenticate host policy, prove freshness or observe all query/write routes.
 All seven full gates remain UNKNOWN.
 
-Next operator work exposes payload/search preparation status through the CLI
-and corrects two typed search-rotation diagnostics. Pre-adoption application
-scanning and provider diagnostics remain product gaps.
+The later [preparation status checkpoint](#rotation-preparation-status-checkpoint-2026-10-23)
+adds both preparation formats and purpose-correct search diagnostics.
+Pre-adoption application scanning and provider diagnostics remain product gaps.
 
 Evidence: [initial Doctor failures](_reset/doctor-native-red-20261023.json),
 [direct status failures](_reset/doctor-status-privilege-red-20261023.json),
@@ -78,7 +131,7 @@ Evidence: [initial Doctor failures](_reset/doctor-native-red-20261023.json),
 [final cleanup diagnostics](_reset/doctor-cleanup-final-20261023.json),
 [TEXT adopted recovery](_reset/fresh-cluster-restore-20261023-15.json),
 [VARCHAR adopted recovery](_reset/fresh-cluster-restore-20261023-16.json),
-[reproducible archives](_reset/doctor-release-20261023.json), and
+[reproducible archives](_reset/doctor-release-20261023.json),
 [installed wheel](_reset/doctor-installed-20261023.json), and
 [full regression](_reset/doctor-full-20261023.json).
 

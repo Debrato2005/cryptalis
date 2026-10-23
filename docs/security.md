@@ -197,8 +197,8 @@ After journal retirement, progress counters are unavailable rather than zero.
 
 **IMPLEMENTED, shared privilege admission:** initial protection planning checks
 runtime safety before key work. ACTIVE connection checks, restored deployment
-checks, ACTIVE/PENDING status, Doctor, and the shared maintenance executor
-repeat the same effective-privilege checks.
+checks, ACTIVE/PENDING status, payload/search preparation status, Doctor, and
+the shared maintenance executor repeat the same effective-privilege checks.
 The runtime must differ from the owner and cannot hold superuser, role-creation,
 database-creation, RLS-bypass, replication, or owner-membership authority.
 Effective CREATE on the current database or any declared schema is refused.
@@ -213,6 +213,17 @@ remains admitted through the declared writer boundary. The runtime journal
 access is SELECT only. Unsafe privileges raise `unsafe_runtime_role`. Owner
 drift raises `maintenance_requires_table_owner`. These checks do not establish
 coverage of unknown writers or authenticate deployment policy.
+
+Payload/search preparation status repeats these checks in every recorded
+phase, including PREPARED before its journal row exists and ABORTED after
+cancellation. It admits the exact P identity before connection and reports
+`runtime_metadata_matches: false` with `verification: NOT_PERFORMED`.
+Recorded BACKFILLED progress does not authenticate current frames or admit
+an application deployment. It needs no keys or maintenance locks and makes
+no writes. Adopted-target rotation remains unsupported; the CLI refuses a
+P restore-binding option before reading that binding or connecting.
+[The walkthrough](walkthrough-migration.md#inspect-rotation-preparation)
+owns the full operator contract.
 
 **IMPLEMENTED, bounded Doctor:** `migration.diagnose_deployment` and
 `cryptalis doctor` inspect an existing ACTIVE deployment without keys.

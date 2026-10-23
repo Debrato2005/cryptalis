@@ -30,8 +30,14 @@ No objective is complete until its acceptance evidence and applicable gate pass.
   Read-only Doctor repeats runtime attachment admission in one snapshot and
   reports six unobserved boundaries plus its aggregate result UNKNOWN.
   ACTIVE/PENDING status repeats effective privilege admission.
-  See the [current checkpoint](status.md#doctor-and-runtime-status-checkpoint-2026-10-23).
-- The Doctor checkpoint passes 88 focused cases plus two final cleanup controls.
+  CLI status also reads payload/search preparation with its own pin and source
+  identity. Every recorded preparation keeps `runtime_metadata_matches: false`, NOT_PERFORMED and
+  exit 3. Preparation status repeats effective privilege admission.
+  See the [current checkpoint](status.md#rotation-preparation-status-checkpoint-2026-10-23).
+- The preparation-status checkpoint passes 369 affected CLI and rotation cases.
+  Eight phase/purpose cases pass again with actual runtime credentials.
+  Reproducible archives and all 36 installed package files pass, including CLI.
+  The earlier Doctor checkpoint passes 88 focused cases plus two final cleanup controls.
   Search TEXT/VARCHAR backups each pass one export and 30 restore cases,
   including Doctor on an adopted runtime. Reproducible archives and all 36
   installed package files pass, including CLI startup and Doctor help.
@@ -85,7 +91,7 @@ Requirement text is abbreviated. The full definitions remain in the research
 | OBJ-LIFE-07 | Three separate rotation workflows | PARTIAL | Root-rewrap successor cutover and shared activation, byte preservation, exact lineage, pending retry/cancellation, process/COMMIT recovery and repeated-rewrap decrypt-back/removal; source-pinned payload planning, durable shadows, source-only cancellation, immutable sealed target proof, atomic cutover/shared publication, mixed custody lineage/current-value removal and native process/COMMIT recovery; fresh-cluster TEXT/VARCHAR payload-backup adoption after later edits, independent selected-generation decoding and old-generation refusal; sealed search reindex, one active namespace with retained readers, native uniqueness/rollback, mixed search/payload/rewrap/search lineage and fresh-cluster search backups | Rotation on adopted restored targets, adopted-restore rewrap/cancellation, external provider/authority qualification |
 | OBJ-LIFE-08 | Production KMS with outage/revocation/cost evidence | BLOCKED | Local development provider only | Authorized provider account and independent review |
 | OBJ-LIFE-09 | Install, upgrade, decommission, clean uninstall | PARTIAL | Importable package; approved in-database removal retires reverse-owned objects after decrypt-back; a package-free restarted application process performs native CRUD | Versioned upgrade/removal and broader external application evidence |
-| OBJ-DX-01 | Minimal model/query changes; one manifest and one attach | IMPLEMENTED | `compile_protection`, `attach`, CLI inspection, bounded ACTIVE Doctor, read-only protection and reverse `status` | Unify plan/apply/remove entry points; complete status coverage |
+| OBJ-DX-01 | Minimal model/query changes; one manifest and one attach | IMPLEMENTED | `compile_protection`, `attach`, CLI inspection, bounded ACTIVE Doctor, read-only protection, payload/search preparation and reverse `status` | Unify plan/apply/remove entry points; complete operational status coverage |
 | OBJ-DX-02 | Read-only `cryptalis doctor` with explicit UNKNOWN results | PARTIAL | ACTIVE runtime Doctor and shared Python diagnostic use one read-only repeatable snapshot for exact plan/pin/restore, runtime identity, target, lineage, effective privileges and schema; six unobserved boundaries and aggregate UNKNOWN; native refusal, no-key, cleanup and output evidence | Pre-adoption manifest/schema scan, query/write route inventory, key/provider diagnostics and operational prerequisites |
 | OBJ-DX-03 | Real FastAPI/SQLModel app plus a second independent app | PARTIAL | Pinned Smolink revision 498d24b runs its original FastAPI app, HTTP URL creation and refusal cases, real Redis, repository/ORM CRUD, protect/decrypt-back/remove, and a fresh import-denied process; 38 original Python source hashes match, with zero source/model/query edits; only Url.destination is protected; the in-repo three-model application retains its separate evidence | Broader protected fields and application suite, exact packaged Python 3.13 cell, SQLModel integration, and a second external app |
 | OBJ-DX-04 | Normal ORM identity, loading, sessions, pooling, async | PARTIAL | Bounded sync/async adapter and search tests | Broader ORM/framework coverage |
