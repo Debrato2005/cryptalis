@@ -107,6 +107,11 @@ Do not write a new distributed CAS or automatic policy service merely to hide ma
 Default chunk size is a measured tuning parameter, not a security guarantee.
 Protection, decrypt-back and restored-frame scans use the [bounded row lease retry](security.md#implemented-cf1-primitives-and-local-custody)
 before SQL or progress effects. Other lifecycle routes retain separate expiry limits.
+Payload/search staging and paired-frame verification also share one retry
+budget per row across pure crypto steps. They check both pinned policies and
+the retained-root relationship before fresh admission. Source-only and
+activation-target observations and outer return checks still stop on expiry.
+The [rotation lease checkpoint](status.md#rotation-row-lease-recovery-checkpoint-2026-10-23) owns the executed boundary.
 The executor resumes committed chunks without regenerating their ciphertext.
 Counters/cursors alone do not prove membership coverage. Full terminal verification is mandatory.
 Verification mutants must include wrong payload, missing row, stale companion, duplicate normalization, and invalid index.

@@ -10,6 +10,32 @@ No PostgreSQL/provider/runtime cell, production key provider, independent review
 VERIFIED below refers only to the named checks and their exact revisions.
 All other contract and promotion requirements are SPECIFIED. All seven full gates remain UNKNOWN.
 
+## Rotation row lease recovery checkpoint: 2026-10-23
+
+**IMPLEMENTED, bounded verification:** payload/search staging and paired-frame
+verification share one expiry retry per row. The retry checks both exact pinned
+policies before fresh preparation and verifies the retained-root relationship.
+It retries only a failed pure crypto step. The singleton staging transform also
+includes its internal lease checks. No generic provider or policy fault retries.
+SQL, progress and digest effects follow complete successful work.
+
+Verification releases source frames before target decoding. The existing
+three-frame logical budget remains unchanged. Source-only observations, activation
+target observations and outer executor/return lease checks retain terminal expiry.
+Their unchanged final behavior has source review, without new expiry-injection evidence.
+This checkpoint does not claim automatic recovery throughout every rotation phase.
+
+All 20 new controls pass inside each **83-case** primary and alternate regression.
+The cells use Python 3.12.3 / SQLAlchemy 2.1.3 and Python 3.13.12 / SQLAlchemy 2.0.51.
+Both receipts match the same 141 Python files. Native controls force actual
+post-AEAD source/target expiry, policy drift, provider outage and second expiry.
+They check source/shadow/journal rollback and explicit healthy resume. The original
+RED run retains 20 failures. All seven production gates remain UNKNOWN.
+
+Evidence: [original RED controls](_reset/rotation-lease-red-lifecycle-20261023.json),
+[primary regression](_reset/rotation-lease-green-lifecycle-20261023.json), and
+[alternate regression](_reset/rotation-lease-alternate-lifecycle-20261023.json).
+
 ## Identity variant planning checkpoint: 2026-10-23
 
 **IMPLEMENTED, planning boundary:** identity codec admission rejects mappings
@@ -150,7 +176,7 @@ and 18 subtests**, with three separate-environment skips and 48 existing warning
 The wrapper records 594.06 seconds. Its 137 Python hashes stay stable and
 match the final worktree, as do the million-row and app wrapper hashes.
 The earlier focused receipts differ only at the later profiler fixture revision.
-Rotation retains separate lease limits. The later restore checkpoint extends its scan boundary.
+Later restore and rotation checkpoints extend their stated scan/staging boundaries.
 All seven full gates remain UNKNOWN.
 
 

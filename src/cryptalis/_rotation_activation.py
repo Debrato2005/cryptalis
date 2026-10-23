@@ -91,7 +91,7 @@ def seal(p,engine,*,keys,target_keys,pin,approval,copy_rows_per_second,copy_wal_
             s._inspect(c,p,op,state)
             prepared=s._prepare(p,keys,target_keys)
             s._observe_source(c,p,keys,{t:pair[0] for t,pair in prepared.items()})
-            observed=s._verify_prefix(c,p,state,prepared)
+            observed=s._verify_prefix(c,p,state,prepared,keys=keys,target_keys=target_keys)
             a=_activation(p,observed,copy_rows_per_second,copy_wal_bytes_per_row)
     _leases({t:pair[0] for t,pair in prepared.items()},p.operation_id)
     _leases({t:pair[1] for t,pair in prepared.items()},p.operation_id)
@@ -181,7 +181,7 @@ def switch(p,a,engine,*,keys,target_keys,pin,approval):
                 s._inspect(c,p,op,state)
                 prepared=s._prepare(p,keys,target_keys)
                 s._observe_source(c,p,keys,{t:pair[0] for t,pair in prepared.items()})
-                observed=s._verify_prefix(c,p,state,prepared)
+                observed=s._verify_prefix(c,p,state,prepared,keys=keys,target_keys=target_keys)
                 if observed!=a.document[a.document['kind']+'_observations']:
                     raise m.TransitionFailure(a.document['kind'].removesuffix('_rotation')+'_activation_target_changed',a.operation_id)
                 state=_switch(c,p,a,state,observed)

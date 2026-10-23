@@ -11,6 +11,7 @@ from types import SimpleNamespace
 from uuid import UUID
 
 from cryptalis import migration as m, rotation as r
+from cryptalis.crypto import Keyring, KeyUnavailable
 from cryptalis.crypto.cf1 import FieldDescriptor, open_text
 from cryptalis.crypto._payload_rotation import prepare_payload_rotation_batch
 from cryptalis.crypto._search_rotation import prepare_search_rotation_batch
@@ -136,6 +137,35 @@ def _prepare(p,keys,target_keys):
     return prepared
 
 
+def _row_crypto(p,keys,target_keys,prepared,tenant):
+    """Share one exact-expiry retry across this row's pure crypto steps."""
+    retried=False
+    def run(operation):
+        nonlocal retried
+        try:
+            return operation(*prepared[tenant])
+        except KeyUnavailable as failure:
+            if retried or not failure._lease_expired:
+                raise
+        # Leave the exception scope before retry: its traceback can retain
+        # decoded frame buffers that must not overlap the next attempt.
+        retried=True
+        source=m._ring(keys,tenant,p.source)
+        try:
+            target=target_keys(tenant) if callable(target_keys) else target_keys
+        except Exception:
+            raise KeyUnavailable() from None
+        if not isinstance(target,Keyring):
+            raise m.TransitionFailure('missing_target_key_policy',p.operation_id)
+        if m._policy(target)!=p.document['key_policies'][str(tenant)]['target']:
+            raise m.TransitionFailure(f'{p.purpose}_rotation_policy_changed',p.operation_id)
+        pair=source.prepare(),target.prepare()
+        (r._same_payload_roots if p.purpose=='payload' else r._same_search_roots)(*pair)
+        prepared[tenant]=pair
+        return operation(*pair)
+    return run
+
+
 def _observe_source(c,p,keys,prepared=None):
     if prepared is None:
         prepared={UUID(tenant):m._ring(keys,UUID(tenant),p.source).prepare()
@@ -197,7 +227,7 @@ def _generation(frame,field,material,p):
         raise m.TransitionFailure('generation_mismatch',p.operation_id)
 
 
-def _verify_prefix(c,p,state,prepared):
+def _verify_prefix(c,p,state,prepared,*,keys,target_keys):
     """Authenticate exactly the committed prefix without retaining two raw/decoded pairs.
 
     Release each raw source reference before decoding the target. Its replacement
@@ -224,7 +254,7 @@ def _verify_prefix(c,p,state,prepared):
                 record=row[0]
                 scoped='column' in model['tenancy']
                 tenant=row[1] if scoped else UUID(model['table_id'])
-                source,target=prepared[tenant]
+                crypto=_row_crypto(p,keys,target_keys,prepared,tenant)
                 offset=2 if scoped else 1
                 pairs=[(None if row[offset+2*i] is None else bytes(row[offset+2*i]),
                         None if row[offset+2*i+1] is None else bytes(row[offset+2*i+1]))
@@ -234,13 +264,14 @@ def _verify_prefix(c,p,state,prepared):
                 for index,field in enumerate(model['fields']):
                     old,new=pairs[index]
                     pairs[index]=None
+                    source,target=prepared[tenant]
                     _generation(old,field,source,p);_generation(new,field,target,p)
                     header=None if old is None else (old[:6]+old[10:46 if field['queries'] else 14]
                         if p.purpose=='payload' else old[:10])
                     storage=None if old is None or p.purpose=='payload' or field['queries'] else hashlib.sha256(old).digest()
-                    value=open_text(old,descriptors[index],tenant,record,source)
+                    value=crypto(lambda source,target: open_text(old,descriptors[index],tenant,record,source))
                     old=None
-                    actual=open_text(new,descriptors[index],tenant,record,target)
+                    actual=crypto(lambda source,target: open_text(new,descriptors[index],tenant,record,target))
                     if (type(value)!=type(actual) or value!=actual or
                             (new is not None and header!=(new[:6]+new[10:46 if field['queries'] else 14]
                                 if p.purpose=='payload' else new[:10]))
@@ -257,7 +288,7 @@ def _verify_prefix(c,p,state,prepared):
     return observations
 
 
-def _chunk(c,p,op,state,prepared):
+def _chunk(c,p,op,state,prepared,*,keys,target_keys):
     for model in p.source.document['lock']['models']:
         progress=state['models'][model['table_id']]
         rows=r._payload_stream(c,model,progress['cursor'],p.document['batch_limits'])
@@ -272,19 +303,19 @@ def _chunk(c,p,op,state,prepared):
         scoped='column' in model['tenancy']
         offset=2 if scoped else 1
         output={row[0]:[] for row in rows}
-        for index,field in enumerate(model['fields']):
-            descriptor=FieldDescriptor.from_compiled(field['descriptor'],field['descriptor_digest'])
-            groups={}
-            for row in rows:
-                tenant=row[1] if scoped else UUID(model['table_id'])
+        descriptors=[FieldDescriptor.from_compiled(field['descriptor'],field['descriptor_digest'])
+                     for field in model['fields']]
+        transform=prepare_payload_rotation_batch if p.purpose=='payload' else prepare_search_rotation_batch
+        for row in rows:
+            tenant=row[1] if scoped else UUID(model['table_id'])
+            crypto=_row_crypto(p,keys,target_keys,prepared,tenant)
+            for index,descriptor in enumerate(descriptors):
                 raw=row[offset+index]
-                groups.setdefault(tenant,[]).append((row[0],None if raw is None else bytes(raw)))
-            for tenant,group in groups.items():
-                transform=prepare_payload_rotation_batch if p.purpose=='payload' else prepare_search_rotation_batch
-                for identity,frame in transform(tuple(group),descriptor,tenant,
-                        source=prepared[tenant][0],target=prepared[tenant][1],
-                        max_rows=p.document['batch_limits']['max_rows'],max_bytes=p.document['batch_limits']['max_bytes']):
-                    output[identity].append(frame)
+                frame=None if raw is None else bytes(raw)
+                transformed=crypto(lambda source,target: transform(((row[0],frame),),descriptor,tenant,
+                    source=source,target=target,max_rows=p.document['batch_limits']['max_rows'],
+                    max_bytes=p.document['batch_limits']['max_bytes']))
+                output[row[0]].append(transformed[0][1])
         statement=f'UPDATE {m._table(c,model)} SET '+','.join(
             m._quote(c,_shadow(f))+'=%s' for f in model['fields'])+f' WHERE {record}=%s'
         result=c.exec_driver_sql(statement,[tuple(output[row[0]])+(row[0],) for row in rows])
@@ -312,7 +343,7 @@ def apply(p,engine,*,keys,target_keys,pin,approval,until,max_chunks):
             else:
                 _inspect(c,p,op,state)
                 _observe_source(c,p,keys,{t:pair[0] for t,pair in prepared.items()})
-                _verify_prefix(c,p,state,prepared)
+                _verify_prefix(c,p,state,prepared,keys=keys,target_keys=target_keys)
         chunks=0
         if until=='BACKFILLED':
             while state['phase']!='BACKFILLED':
@@ -320,9 +351,9 @@ def apply(p,engine,*,keys,target_keys,pin,approval,until,max_chunks):
                     m._lock_tables(c,op,verification=True)
                     state=_state(c,p,op,pin);_inspect(c,p,op,state)
                     prepared=_prepare(p,keys,target_keys)
-                    if not _chunk(c,p,op,state,prepared):
+                    if not _chunk(c,p,op,state,prepared,keys=keys,target_keys=target_keys):
                         _observe_source(c,p,keys,{t:pair[0] for t,pair in prepared.items()})
-                        _verify_prefix(c,p,state,prepared)
+                        _verify_prefix(c,p,state,prepared,keys=keys,target_keys=target_keys)
                         state['phase']='BACKFILLED';m._save(c,op,state)
                 chunks+=1
                 if max_chunks is not None and chunks>=max_chunks:break

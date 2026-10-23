@@ -467,7 +467,13 @@ change only after the complete row succeeds. A provider failure, changed
 policy, or second expiry stops the operation. This retry does not extend a
 lease or refresh keys inside frame processing. Restored-frame scans retain
 `KeyUnavailable` for custody failures and finish before effectful CHECK probes.
-ORM operations and rotation retain their separate expiry rules.
+ORM operations retain their separate expiry rules. Payload/search staging and
+paired-frame verification separately share one retry budget across a row's
+pure crypto steps. Fresh admission checks both exact pinned policies and the
+retained-root relationship before replacing prepared material. This preserves
+the three-frame logical budget by releasing source frames before target decoding.
+Source-only and activation-target observations, plus outer executor/return lease
+checks, still stop on expiry. No generic provider or policy fault retries.
 
 `create_root(provider, context)` uses independent operating-system randomness.
 Wrapped roots carry exact provider identity, domain, tenant, purpose, root identity, and generation.

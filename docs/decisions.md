@@ -58,6 +58,14 @@ Their absolute guarantees are also removed: immediate arbitrary-worker denial, a
 whole-result publication, subject cryptographic erasure, and hostile-database completeness/freshness.
 A removed mechanism cannot retain its old guarantee through wording alone.
 
+## Bounded rotation row recovery: 2026-10-23
+
+Admit one exact-expiry retry across a row's pure payload/search crypto steps.
+Check both pinned policies and retained roots before fresh admission. Keep
+the three-frame logical budget and withhold effects until successful work.
+Preserve terminal expiry in source-only observations and outer return checks.
+Do not change generation policy, public APIs, activation artifacts or publication.
+
 ## Exact native identity codecs: 2026-10-23
 
 Reject dialect-specific variants on record and tenant identity mappings during

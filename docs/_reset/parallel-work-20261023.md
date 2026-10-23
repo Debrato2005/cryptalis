@@ -12,12 +12,13 @@ policies, a guarded SQLAlchemy adapter, and PostgreSQL maintenance transitions.
 Host deployment authority remains outside restored database state.
 Protection/decrypt-back have one expiry-specific local row retry before SQL,
 progress or digest changes. Frame processors never fetch provider keys.
-Restored-frame scans now share that retry. Rotation retains separate limits.
+Restored-frame scans now share that retry. Payload/search pure row steps have
+a separate policy-checked retry. Their source observations and final checks remain terminal.
 
 | Owner | Worktree | Write scope | Current slice | State |
 |---|---|---|---|---|
 | ORM specialist | `/tmp/cryptalis-parallel-orm-20261023` | `sqlalchemy.py`, new bulk UPDATE tests and receipts | Scoped TEXT dictionary UPDATE | Native and protected controls pass; independent grammar review continues |
-| Lifecycle specialist | `/tmp/cryptalis-parallel-lifecycle-20261023` | Restore and CLI tests, then rotation lease inspection | Restore recovery and safe CLI remedies | Restore integrated with nine focused checks and two genuine fresh clusters. CLI integrated with seven focused checks. Rotation work follows |
+| Lifecycle specialist | `/tmp/cryptalis-parallel-lifecycle-20261023` | Restore and CLI tests, then rotation lease inspection | Restore recovery and safe CLI remedies | Restore integrated with nine focused checks and two genuine fresh clusters. CLI integrated with seven focused checks. Rotation83 passes on both cells. Unchanged-app qualification follows |
 | KMS specialist | `/tmp/cryptalis-parallel-kms-20261023` | Independent ORM review after completed KMS adapter | Bulk UPDATE grammar review | KMS protocol, actual SDK and package checks pass. Live custody UNKNOWN |
 | Lead | `/home/debrato/Projects/cryptalis` | Shared contracts, ledgers and integration history | KMS, restore and CLI integration | Active. No CLI ownership overlap |
 
