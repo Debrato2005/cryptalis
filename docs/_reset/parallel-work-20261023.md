@@ -167,3 +167,36 @@ release scope. A pinned competitor matrix records source-backed mechanisms and
 limits. The lifecycle owner now connects the real Smolink application journey
 to the existing fresh-cluster restore harness. The lead owns pre-adoption Doctor
 integration. All seven production gates remain UNKNOWN.
+
+## Verified application recovery and local SDK checkpoint
+
+The pre-adoption Doctor now shares the read-only manifest compiler. Both pinned
+applications run it before protection. Schema compatibility can pass, while
+provider access and unobserved operational checks remain UNKNOWN.
+
+The real Smolink journey exposed search-path-dependent writer-fence observations.
+Canonical catalog rendering fixes that resume failure. Disabled and replica-only
+fences still refuse. Older paused journals can retain noncanonical observations;
+this change does not rewrite them.
+
+The unchanged application completes committed BACKFILLED interruption, resume,
+root rewrap, payload rotation, normal HTTP/Redis CRUD and a current protected dump.
+A genuine fresh PostgreSQL 16 cluster restores it, adopts host authority and runs
+the original application again. A later edit survives decrypt-back, removal and
+a restart that denies Cryptalis imports. Physical column order remains a gap.
+
+The installed wheel repeats both application journeys in Python 3.13 with exact
+runtime pins. All 36 modules and 40 installed files match. The separate AWS SDK
+profile also passes the original SQLModel lifecycle with deterministic local
+Stubber responses. It covers expired-provider failure before SQL, rollback and
+retry, authentication refusal and recovery. It supplies no live AWS custody or
+rotation evidence.
+
+Receipts use the `doctor-recovery-` prefix, plus fresh-cluster export 22/23 and
+restore 21/22. The affected guard suite passes 77 cases. Historical failures and
+the earlier full-suite boundary remain separate. All 34 objective states remain
+unchanged, and all seven production gates remain UNKNOWN.
+
+Next independent journeys extend original SQLModel email queries under an
+explicit fixture domain and connect the same local SDK boundary to asynchronous
+Smolink operations. Native collation admission must be verified before expansion.

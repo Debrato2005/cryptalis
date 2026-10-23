@@ -318,6 +318,19 @@ native SQL compilation and unchanged configuration. Do not wrap or replace
 native transactions. These controls confer no data permit. Other write routes
 and the seven production gates retain their separate evidence requirements.
 
+## Manifest preflight and canonical recovery observations: 2026-10-23
+
+Expose pre-adoption manifest/schema diagnostics through the existing read-only
+compiler. Report actionable schema failures without application rows or keys.
+A compatible schema can pass its named check, while aggregate and unobserved
+security/operational checks remain UNKNOWN. Keep the existing ACTIVE Doctor and
+CLI contracts separate. Do not duplicate the compiler or add an authority.
+
+Read guard facts under the compiler's existing canonical catalog context.
+Retain exact comparisons and fail-closed drift handling. Older paused records
+that do not match canonical facts still refuse. This slice admits no automatic
+journal upgrade. Preserve crypto formats, lifecycle authority and native transactions.
+
 ## Bounded Doctor diagnosis: 2026-10-23
 
 The current product mandate requires a useful `cryptalis doctor`. Add a thin

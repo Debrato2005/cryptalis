@@ -105,9 +105,33 @@ def test_unchanged_template_user_crud_protects_and_restarts_without_cryptalis(tm
             'models': [{'model': 'User', 'table_id': str(TABLE), 'tenancy': {'single_tenant': True},
                         'fields': [{'name': 'full_name', 'field_id': str(FIELD), 'protect': True,
                                     'queries': [], 'accept_leakage': []}]}]}
+        from cryptalis.doctor import preflight
+        inventory = WriterInventory(True, (Writer(TABLE, 'app', 'sqlalchemy',
+            evidence='pinned unchanged official template CRUD; isolated profile'),))
+        report = preflight(json.dumps(declaration).encode(), mapping, owner, writers=inventory)
+        assert report['scope'] == 'pre_adoption' and report['effects'] == 'NONE'
+        assert report['status'] == 'UNKNOWN' and report['checks']['manifest_schema'] == 'PASS'
+        assert report['checks']['provider_keys'] == 'UNKNOWN'
+        assert report['checks']['query_routes'] == 'UNKNOWN'
+        invalid = json.loads(json.dumps(declaration))
+        invalid['models'][0]['tenancy'] = {'column': 'missing_tenant_column'}
+        refused = preflight(json.dumps(invalid).encode(), mapping, owner, writers=inventory)
+        assert refused['status'] == 'FAIL' and refused['issues']
+        assert all(issue['code'] and issue['location'] and issue['remedy'] for issue in refused['issues'])
+        assert refused['checks']['provider_keys'] == 'UNKNOWN'
+        from sqlalchemy.exc import OperationalError
+        def unavailable():
+            raise OperationalError('PRIVATE_DOCTOR_STATEMENT', {},
+                                   psycopg.OperationalError('PRIVATE_DOCTOR_CONNECTION'))
+        with monkeypatch.context() as outage:
+            outage.setattr(owner, 'connect', unavailable)
+            unavailable_report = preflight(json.dumps(declaration).encode(), mapping, owner, writers=inventory)
+        assert unavailable_report['status'] == 'UNKNOWN'
+        assert unavailable_report['checks']['manifest_schema'] == 'UNKNOWN'
+        assert unavailable_report['issues'][0]['code'] == 'inspection_unavailable'
+        assert 'PRIVATE_DOCTOR' not in json.dumps(unavailable_report)
         proposal = m.plan(json.dumps(declaration).encode(), mapping, owner,
-            writers=WriterInventory(True, (Writer(TABLE, 'app', 'sqlalchemy',
-                evidence='pinned unchanged official template CRUD; isolated profile'),)),
+            writers=inventory,
             keys=keys, runtime_role=role, target_id=uuid4(), backfill_rows_per_second=1000,
             verify_rows_per_second=1000, temporary_bytes_per_row=3000, wal_bytes_per_row=6000)
         approval = m.MaintenanceApproval('disposable app stopped; inventoried writers excluded', 3600)

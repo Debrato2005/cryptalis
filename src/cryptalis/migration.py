@@ -24,7 +24,7 @@ from cryptalis.crypto.keys import CryptoFailure, Keyring, KeyUnavailable
 from cryptalis.crypto._payload_rotation import MAX_BATCH_BYTES, MAX_BATCH_ROWS
 from cryptalis.manifest.compiler import (compile_protection, _schema_facts, _canonical, _previous_lock,
                                           unrecorded_column_metadata, protected_extended_statistics,
-                                          protected_owned_sequences, source_metadata, _metadata_diff)
+                                          protected_owned_sequences, source_metadata, _metadata_diff, _catalog_path)
 from cryptalis.manifest.parser import ManifestInvalid, _decode_json
 
 JOURNAL = '_cryptalis_journal'
@@ -691,22 +691,23 @@ def _drop_guards(c,p):
 
 
 def _guard_facts(c,p,model):
-    trigger,function=_guard_names(p,model)
-    row=c.exec_driver_sql('''SELECT g.tgenabled, g.tgtype, g.tgqual IS NULL, g.tgnargs,
-        n.nspname, f.proname, f.prosecdef, f.proconfig, f.prosrc, pg_catalog.pg_get_userbyid(f.proowner)
-        FROM pg_catalog.pg_trigger g JOIN pg_catalog.pg_proc f ON f.oid=g.tgfoid
-        JOIN pg_catalog.pg_namespace n ON n.oid=f.pronamespace
-        WHERE g.tgrelid=pg_catalog.to_regclass(%s) AND g.tgname=%s''',(_table(c,model),trigger)).one_or_none()
-    if row is None: return None
-    inventory=c.exec_driver_sql('''SELECT g.tgname, g.tgenabled,
-        pg_catalog.pg_get_triggerdef(g.oid), f.prosrc, f.prosecdef, f.proconfig,
-        pg_catalog.pg_get_userbyid(f.proowner)
-        FROM pg_catalog.pg_trigger g JOIN pg_catalog.pg_proc f ON f.oid=g.tgfoid
-        WHERE g.tgrelid=pg_catalog.to_regclass(%s) AND NOT g.tgisinternal
-        ORDER BY g.tgname''',(_table(c,model),)).all()
-    # The compiler's boolean user_triggers flag cannot distinguish our guard
-    # from a subsequently added callback. Bind every non-internal trigger.
-    return list(row)+[[list(item) for item in inventory]]
+    with _catalog_path(c):
+        trigger,function=_guard_names(p,model)
+        row=c.exec_driver_sql('''SELECT g.tgenabled, g.tgtype, g.tgqual IS NULL, g.tgnargs,
+            n.nspname, f.proname, f.prosecdef, f.proconfig, f.prosrc, pg_catalog.pg_get_userbyid(f.proowner)
+            FROM pg_catalog.pg_trigger g JOIN pg_catalog.pg_proc f ON f.oid=g.tgfoid
+            JOIN pg_catalog.pg_namespace n ON n.oid=f.pronamespace
+            WHERE g.tgrelid=pg_catalog.to_regclass(%s) AND g.tgname=%s''',(_table(c,model),trigger)).one_or_none()
+        if row is None: return None
+        inventory=c.exec_driver_sql('''SELECT g.tgname, g.tgenabled,
+            pg_catalog.pg_get_triggerdef(g.oid), f.prosrc, f.prosecdef, f.proconfig,
+            pg_catalog.pg_get_userbyid(f.proowner)
+            FROM pg_catalog.pg_trigger g JOIN pg_catalog.pg_proc f ON f.oid=g.tgfoid
+            WHERE g.tgrelid=pg_catalog.to_regclass(%s) AND NOT g.tgisinternal
+            ORDER BY g.tgname''',(_table(c,model),)).all()
+        # The compiler's boolean user_triggers flag cannot distinguish our guard
+        # from a subsequently added callback. Bind every non-internal trigger.
+        return list(row)+[[list(item) for item in inventory]]
 
 
 def _check_guard(c, p, model):

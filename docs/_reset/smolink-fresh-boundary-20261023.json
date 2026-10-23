@@ -1,0 +1,119 @@
+{
+  "scope": "Pinned original Smolink URL app current backup through actual fresh PostgreSQL16 restore and package-free restart; deterministic public key fixture; no production qualification",
+  "base_revision": "b915383",
+  "source_sha256": {
+    "src/cryptalis/migration.py": "0845192e21a2d4551336c24b51fd448bda72b88dad5102ad8dbe9e84f6f88bfc",
+    "scripts/fresh_cluster_qualification.py": "625ef9f63da65fedfe803c5d8a839bef84a83c0547895d733002186e3858eed8",
+    "tests/smolink_workload.py": "62b3fc68d7112c9cecbc4d4c261e85547f3099c76774f008350389d4593a1c39",
+    "tests/test_smolink_application.py": "edab0341e1bca890ecd8a69942494722dcc0800796362204e82d3892644e202d",
+    "tests/smolink_fresh_cluster.py": "deb3004bc5e60eddf642a55cf637684ec3d89484b4c4d12a241027cd8d2d54c0",
+    "tests/test_smolink_fresh_cluster.py": "46519d8077d53d97799dc8a1a3dc5e1d428f2ee3ba2121b9f205bed0aa54f4ea",
+    "tests/test_migration_guard_search_path.py": "ff733a261a1c902a3dad4bc4dda385588143abbf2b56da40a3142ef0137965e9"
+  },
+  "receipts": {
+    "fresh-cluster-export-20261023-19.json": {
+      "sha256": "155234b7d43d7b81cb73ce913beb2abb1a37f5ae543b4170c0f682507770990a",
+      "counts": {
+        "failed": 1
+      },
+      "exit_code": 1,
+      "source_stability": {
+        "unchanged": true,
+        "changed_paths": []
+      },
+      "fixing_revision": "worktree-5b77edd6b25f1929",
+      "elapsed_seconds": 3.175136981997639
+    },
+    "fresh-cluster-export-20261023-20.json": {
+      "sha256": "91119af43fce8bce41f2cb14332005648c0e482ce63814c4a585f6e33c96ada5",
+      "counts": {
+        "passed": 1
+      },
+      "exit_code": 0,
+      "source_stability": {
+        "unchanged": true,
+        "changed_paths": []
+      },
+      "fixing_revision": "worktree-4144e20e3c19a5c9",
+      "elapsed_seconds": 3.6745857970090583
+    },
+    "fresh-cluster-restore-20261023-19.json": {
+      "sha256": "c86f520c709df003b8c76f1bffcfe9755f867e1c20878055f6284036b805aee5",
+      "counts": {
+        "failed": 1
+      },
+      "exit_code": 1,
+      "source_stability": {
+        "unchanged": true,
+        "changed_paths": []
+      },
+      "fixing_revision": "worktree-4144e20e3c19a5c9",
+      "elapsed_seconds": 3.20138450601371
+    },
+    "fresh-cluster-export-20261023-21.json": {
+      "sha256": "21370c4a3ba80273dc3dba07220527559b1e92242df2ac2009450ff0943a0078",
+      "counts": {
+        "passed": 1
+      },
+      "exit_code": 0,
+      "source_stability": {
+        "unchanged": true,
+        "changed_paths": []
+      },
+      "fixing_revision": "worktree-bef0c722ee5b9952",
+      "elapsed_seconds": 4.648678197991103
+    },
+    "fresh-cluster-restore-20261023-20.json": {
+      "sha256": "d6497934680a9ea221b3abbdd0c93e109e5376ed9572eea3fca0973cbf9d3caf",
+      "counts": {
+        "passed": 1
+      },
+      "exit_code": 0,
+      "source_stability": {
+        "unchanged": true,
+        "changed_paths": []
+      },
+      "fixing_revision": "worktree-bef0c722ee5b9952",
+      "elapsed_seconds": 5.696526076993905
+    },
+    "smolink-guard-context-green-20261023.json": {
+      "sha256": "ec08543ed536dfccbafd1292c884d1bc0611f497372080166543712c7c1e5ddd",
+      "counts": {
+        "passed": 77
+      },
+      "exit_code": 0,
+      "source_stability": {
+        "unchanged": true,
+        "changed_paths": []
+      },
+      "fixing_revision": "worktree-4144e20e3c19a5c9",
+      "elapsed_seconds": 70.56492282899853
+    }
+  },
+  "journey_receipt_sha256": "50d1c547510bee0afeafbb930cce45fb75f3f8a04dd835e24cb314f07b7627e7",
+  "artifact_sha256": {
+    "plain.sql": "b9c95a83abc299bb03e985f0cdc88596ccc76e6a8eebe27990c2acd554680148",
+    "protected.sql": "24521e0fe53e1cb4e077880a9d05960bf75d4231a98c8f7fd82a871161207ae0",
+    "restore-manifest.json": "7376d30fae37088d1f53ece1edf53a72ffca36f588dc7d611113ac0cba036dea",
+    "source-plan.json": "272089fc98c00800e12630b6c0cfa1f0fef024ddae5525507ee993c8af307fe9",
+    "rewrap-plan.json": "fb6de899c29ba8baa901f76e33ced1b4cd15ed5da4d87b3eef0411da40a4a85d",
+    "payload-plan.json": "9a751ec2378ae36b342da880bc7b1a2f121f3a046cde2d4b8514302ff73860e1",
+    "activation-plan.json": "fcaca83e8a29b5cd0dde7278ebda291d0620b3dee2a6a8fbdde08b3bfc092830"
+  },
+  "retained_fixture_artifact_directory": "/tmp/cryptalis-smolink-fresh-final-20261023",
+  "application_source_files_verified_unchanged": 38,
+  "native_semantics": "named column attributes/constraints/indexes; physical column ordinal positions excluded by existing lifecycle contract",
+  "reproduced_defect": "pg_get_triggerdef depended on worker/application search_path; unchanged paused writer fence incorrectly refused after real SIGKILL",
+  "fix": "Reuse existing compiler._catalog_path around migration._guard_facts; retain full trigger inventory and exact safety checks",
+  "failed_evidence": {
+    "fresh-cluster-export-20261023-19.json": "Actual writer_fence_changed after committed checkpoint and SIGKILL, before product fix",
+    "fresh-cluster-restore-20261023-19.json": "Fixture initially compared physical column order; latest CRUD/decrypt/remove had succeeded; corrected to existing named-column semantic contract"
+  },
+  "limits": [
+    "Old paused journals written by older code under a visible application schema may still contain noncanonical trigger definitions; no journal rewriting added",
+    "Pre-adoption Doctor awaits separate root API integration; this journey executes active restored-deployment Doctor",
+    "URL destination stays storage-only; public short_code and protected record-ID reads; no newly qualified encrypted search or search rotation",
+    "Authentication endpoints and external AWS custody are not qualified; seven gates remain UNKNOWN"
+  ],
+  "gate": "UNKNOWN"
+}

@@ -33,7 +33,7 @@ from cryptalis.manifest.compiler import Writer, WriterInventory
 from cryptalis.sqlalchemy import attach
 from test_deprotection import least_privilege_role
 from test_migration import DOMAIN, keys
-from smolink_workload import PUBLIC_SECRET, USER_ID, workflow
+from smolink_workload import PUBLIC_SECRET, USER_ID, workflow, restart_without_cryptalis
 
 
 REVISION = '498d24bae999ed53ad85e1c1f1a09ea7fa151aa4'
@@ -105,6 +105,7 @@ def test_pinned_smolink_url_router_protects_and_restarts_without_cryptalis(tmp_p
     backend, hashes = snapshot(checkout, tmp_path)
     monkeypatch.syspath_prepend(str(backend))
     monkeypatch.chdir(tmp_path)  # BaseSettings must not load a checkout's .env.
+    export_dir = os.environ.get('CRYPTALIS_SMOLINK_FRESH_EXPORT')
     schema = 'smolink_adoption_' + uuid4().hex
     owner = native_engine('CRYPTALIS_TEST_DATABASE_URL', schema)
     runtime = None
@@ -137,18 +138,34 @@ def test_pinned_smolink_url_router_protects_and_restarts_without_cryptalis(tmp_p
                 baseline = await workflow(api, plain, 'native-baseline')
                 # Real Redis rate limiting remains active across the router calls.
                 await get_redis_client().flushdb()
+                from cryptalis.doctor import preflight
+                inventory = WriterInventory(True, (Writer(TABLE, 'pinned Smolink URL router', 'sqlalchemy',
+                    evidence='single disposable process; original URL service and repository'),))
+                report = preflight(json.dumps(declaration()).encode(), Base.registry, owner, writers=inventory)
+                assert report['checks']['manifest_schema'] == 'PASS'
+                assert report['status'] == report['checks']['provider_keys'] == 'UNKNOWN'
+                assert report['effects'] == 'NONE'
+                if export_dir:
+                    from smolink_fresh_cluster import export_plain
+                    export_plain(owner, schema, Path(export_dir))
                 proposal = m.plan(json.dumps(declaration()).encode(), Base.registry, owner,
-                    writers=WriterInventory(True, (Writer(TABLE, 'pinned Smolink URL router', 'sqlalchemy',
-                        evidence='single disposable process; original URL service and repository'),)),
+                    writers=inventory,
                     keys=keys, runtime_role=role, target_id=uuid4(), backfill_rows_per_second=1000,
                     verify_rows_per_second=1000, temporary_bytes_per_row=3000, wal_bytes_per_row=6000)
                 pin = m.DeploymentPin(proposal.target_id, proposal.operation_id, proposal.digest, 'PREPARED')
                 approval = m.MaintenanceApproval('disposable Smolink stopped; only test owner and runtime exist', 3600)
+                if export_dir:
+                    from smolink_fresh_cluster import interrupt_and_resume
+                    interrupt_and_resume(proposal, owner, pin, approval, Path(export_dir))
                 assert m.apply(proposal, owner, keys=keys, pin=pin, approval=approval).phase == 'PENDING'
                 assert m.apply(proposal, owner, keys=keys, pin=replace(pin, phase='ACTIVATING'),
                                approval=approval, until='ACTIVE').phase == 'ACTIVE'
                 pin = replace(pin, phase='ACTIVE')
-                attached = await attach(Base.registry, runtime, lock=proposal.lock_bytes, keys=keys,
+                current_keys = keys
+                if export_dir:
+                    from smolink_fresh_cluster import rotate
+                    proposal, pin, current_keys = rotate(proposal, owner, pin, approval, Path(export_dir))
+                attached = await attach(Base.registry, runtime, lock=proposal.lock_bytes, keys=current_keys,
                                         deployment=(proposal, pin))
                 protected = lambda: attached(tenant_id=TABLE, expire_on_commit=False)
                 cursor_parameters = []
@@ -163,6 +180,12 @@ def test_pinned_smolink_url_router_protects_and_restarts_without_cryptalis(tmp_p
                 with owner.connect() as connection:
                     rows = connection.exec_driver_sql('SELECT destination FROM urls').scalars().all()
                     assert rows and all(bytes(value).startswith(bytes.fromhex('43463100')) for value in rows)
+                if export_dir:
+                    from smolink_fresh_cluster import export_protected
+                    assert hashes == {str(p.relative_to(backend)): hashlib.sha256(p.read_bytes()).hexdigest()
+                                      for p in sorted(backend.rglob('*.py'))}
+                    export_protected(owner, schema, proposal, pin, current, baseline, hashes, Path(export_dir))
+                    return current
                 plaintext_role = least_privilege_role(SimpleNamespace(owner=owner, role=role))
                 reverse = d.plan(proposal, owner, source_pin=pin, keys=keys,
                     plaintext_runtime_role=plaintext_role, backfill_rows_per_second=1000,
@@ -209,44 +232,9 @@ def test_pinned_smolink_url_router_protects_and_restarts_without_cryptalis(tmp_p
                                       for f in traceback.extract_tb(error.__traceback__)]}
                 (tmp_path / 'safe-failure.json').write_text(json.dumps(failure))
                 raise
-            # A fresh interpreter executes this file's workload helper and original
-            # application modules, with every Cryptalis import explicitly denied.
-            child = subprocess.run([sys.executable, '-I', '-c', '''
-import asyncio, importlib.abc, json, os, runpy, sys
-class DenyCryptalis(importlib.abc.MetaPathFinder):
-    def find_spec(self, fullname, path=None, target=None):
-        if fullname == 'cryptalis' or fullname.startswith('cryptalis.'):
-            raise ImportError('Cryptalis import denied after removal')
-sys.meta_path.insert(0, DenyCryptalis())
-sys.path[:0] = json.loads(os.environ['SMOLINK_CHILD_PATHS'])
-import psycopg
-from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
-from app.main import app as api
-from app.core.redis import get_redis_client
-for name, module in tuple(sys.modules.items()):
-    if name == 'app' or name.startswith('app.'):
-        origin = getattr(module, '__file__', None)
-        if origin:
-            assert __import__('pathlib').Path(origin).is_relative_to(os.environ['SMOLINK_BACKEND'])
-namespace = runpy.run_path(os.environ['SMOLINK_WORKLOAD_HELPER'])
-async def main():
-    engine = create_async_engine('postgresql+psycopg://', hide_parameters=True,
-        async_creator=lambda: psycopg.AsyncConnection.connect(os.environ['CRYPTALIS_TEST_RUNTIME_DATABASE_URL'],
-            options='-csearch_path=' + os.environ['SMOLINK_SCHEMA']))
-    try:
-        await namespace['workflow'](api, async_sessionmaker(engine, expire_on_commit=False),
-            'package-free', retained=json.loads(os.environ['SMOLINK_CURRENT']))
-    finally:
-        await get_redis_client().aclose()
-        await engine.dispose()
-asyncio.run(main())
-assert not any(n == 'cryptalis' or n.startswith('cryptalis.') for n in sys.modules)
-print(json.dumps({'native_router_crud': 'passed', 'cryptalis_imported': False}))
-'''], env=dict(os.environ, SMOLINK_CHILD_PATHS=json.dumps(sys.path), SMOLINK_SCHEMA=schema, SMOLINK_BACKEND=str(backend),
-                SMOLINK_CURRENT=json.dumps(current), SMOLINK_WORKLOAD_HELPER=str(Path(__file__).with_name('smolink_workload.py').resolve())),
-                capture_output=True, text=True, timeout=60)
-            assert child.returncode == 0, 'package-free Smolink router restart failed; diagnostics suppressed'
-            assert json.loads(child.stdout) == {'native_router_crud': 'passed', 'cryptalis_imported': False}
+            if export_dir:
+                return
+            restart_without_cryptalis(backend, schema, current)
             assert hashes == {str(p.relative_to(backend)): hashlib.sha256(p.read_bytes()).hexdigest()
                               for p in sorted(backend.rglob('*.py'))}
             for name, module in tuple(sys.modules.items()):

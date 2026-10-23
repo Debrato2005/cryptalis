@@ -21,6 +21,13 @@ Correct the role or grant configuration before retry.
 ```python
 from cryptalis.migration import plan, apply, MaintenanceApproval
 from cryptalis.sqlalchemy import attach
+from cryptalis.doctor import preflight
+
+report = preflight(manifest_bytes, Base.registry, owner_engine,
+    writers=writer_inventory, search_reviews=domain_reviews)
+print(report)
+if report["checks"]["manifest_schema"] != "PASS":
+    raise SystemExit("Resolve the Doctor issues before planning protection.")
 
 p = plan(manifest_bytes, Base.registry, owner_engine,
     writers=writer_inventory, search_reviews=domain_reviews,
@@ -33,6 +40,14 @@ approval = MaintenanceApproval(writer_exclusion_evidence, approved_pause_seconds
 options = dict(keys=tenant_keyrings, pin=prepared_pin, approval=approval)
 apply(p, owner_engine, **options)  # Switch database; return PENDING.
 ```
+
+The Python pre-adoption Doctor reuses the compiler's read-only catalog inspection.
+It reads no application values and resolves no keys. Known declaration or schema
+incompatibilities return FAIL with issue codes, locations and remedies.
+Unavailable inspection returns UNKNOWN. Schema compatibility can pass while the
+overall report and uninspected provider, query and operational checks remain UNKNOWN.
+The report supplies no deployment authority. The CLI `doctor` command below
+retains its separate ACTIVE-deployment scope.
 
 `plan` changes no schema or data. It rejects incompatible keys, types, tenancy, and search domains.
 Save `p.artifact` and the authenticated current pin outside restore; bind target, operation, digest, and phase. The host supplies pin provenance.

@@ -21,6 +21,78 @@ and [competitive capability matrix](research/capability-matrix.md) govern priori
 Progress follows complete real-application journeys and resolved production requirements.
 All seven production gates remain UNKNOWN.
 
+## Manifest-first application recovery checkpoint: 2026-10-23
+
+**VERIFIED, bounded application journeys:** pinned unchanged Smolink now completes
+manifest preflight, protection, real process interruption and fresh-cluster recovery.
+The source journey kills its worker after committed BACKFILLED progress, resumes
+the same plan, then completes root rewrap and payload rotation. Normal protected
+HTTP/ORM CRUD uses real Redis before the current database dump.
+
+A genuine fresh PostgreSQL 16 cluster restores that backup and completes
+host-bound adoption and ACTIVE Doctor. The original application makes a later
+edit, decrypts the latest values, removes Cryptalis and restarts with Cryptalis
+imports denied. All 38 pinned application Python files stay unchanged.
+Named column attributes, constraints and indexes retain their recorded semantics.
+Physical column order remains a separate gap. The storage-only `Url.destination`
+profile supplies no new encrypted equality, uniqueness or search-rotation evidence.
+
+The pinned SQLModel template also completes preflight before protection, normal
+CRUD, latest-value decrypt-back, removal and a package-free child. Its six pinned
+source/license records stay unchanged. Preflight controls cover compatible schema,
+invalid tenancy with actionable remedies and a deterministic database outage
+that suppresses private exception details.
+
+`cryptalis.doctor.preflight` reuses read-only `compile_protection`. It reads no
+application rows and requests no keys. Compatible schema produces
+`manifest_schema: PASS`, while overall status and unobserved checks remain UNKNOWN.
+Schema refusals return FAIL with codes, locations and remedies. Database
+inspection failures retain UNKNOWN. The existing CLI Doctor remains ACTIVE-only.
+This helper does not qualify provider access, application query routes or deployment.
+
+Guard observation uses the compiler's existing canonical catalog path, so
+legitimate search-path rendering differences no longer change captured facts.
+Actual fence changes still refuse. Older paused journals that captured a
+noncanonical definition can still refuse. This slice admits no automatic
+upgrade or universal resume behavior for those journals. Cryptographic formats,
+readers and deployment pins stay unchanged.
+
+Three integrated application runs share 168 stable current Python hashes and
+pass both role probes: source export, fresh-cluster recovery and the SQLModel
+Doctor/lifecycle profile each pass once. The separate affected guard regression
+passes 77 cases. Earlier export and fixture-order failures remain recorded.
+The missing-Doctor-module RED and fixture-environment skip remain separate.
+The full primary suite retains its earlier revision boundary.
+
+The actual installed wheel repeats both application journeys in a new Python
+3.13 environment with exact runtime pins and SQLModel 0.0.48. Smolink source
+export passes once in 3.91 seconds, genuine fresh-cluster recovery in 4.77 seconds,
+and the SQLModel Doctor/lifecycle profile in 1.80 seconds. All 168 Python hashes
+remain stable. All 36 product modules, 40 installed files and the 38/6 pinned
+application records match before and after these runs. No source Cryptalis path
+supplies the package. The release check verifies repeat archives, CLI and 41
+current source hashes. No new full-suite or production result follows.
+Authentication endpoints, external key custody and broader application coverage
+remain unqualified. All seven production gates remain UNKNOWN.
+
+Evidence: [integrated source export](_reset/fresh-cluster-export-20261023-22.json),
+[integrated genuine recovery](_reset/fresh-cluster-restore-20261023-21.json),
+[integrated SQLModel Doctor journey](_reset/doctor-recovery-sqlmodel-integration-20261023.json),
+[current release](_reset/doctor-recovery-release-20261023.json),
+[installed-wheel environment](_reset/doctor-recovery-wheel-py313-install-20261023.json),
+[installed-wheel boundary](_reset/doctor-recovery-wheel-py313-boundary-20261023.json),
+[installed Smolink export](_reset/fresh-cluster-export-20261023-23.json),
+[installed fresh-cluster recovery](_reset/fresh-cluster-restore-20261023-22.json),
+[installed SQLModel wrapper](_reset/doctor-recovery-wheel-py313-sqlmodel-wrapper-20261023.json),
+[installed SQLModel application](_reset/doctor-recovery-wheel-py313-sqlmodel-application-20261023.json),
+[specialist journey](_reset/smolink-fresh-journey-20261023.json),
+[specialist boundary](_reset/smolink-fresh-boundary-20261023.json),
+[guard regression](_reset/smolink-guard-context-green-20261023.json),
+[original fence failure](_reset/fresh-cluster-export-20261023-19.json),
+[intermediate fixture failure](_reset/fresh-cluster-restore-20261023-19.json),
+[Doctor RED](_reset/pre-adoption-doctor-app-red-20261023.json), and
+[separate environment skip](_reset/pre-adoption-doctor-app-setup-skipped-20261023.json).
+
 ## Optional SQLModel template checkpoint: 2026-10-23
 
 **IMPLEMENTED, bounded verification:** `cryptalis.sqlmodel.attach` adds an
@@ -665,6 +737,16 @@ run and lead integration pass. No adapter correction was needed for that error.
 Reproducible wheel and source archives, the SBOM, all 37 installed files and
 CLI startup pass. The installed wheel SHA-256 is
 `876a5e15666387050cd32079dea9410fa6d8db6d19ab7f5b980ab8d18cd136be`.
+
+The current installed 36-module wheel passes one original SQLModel application
+journey in **2.28 seconds**, with 169 stable Python files. Python 3.13 uses the
+exact runtime pins and SQLModel 0.0.48. Local boto3/botocore Stubber responses
+exercise original CRUD. Exact-expiry provider outage refuses before SQL.
+Rollback and retry pass. Healthy expiry, wrong-root/tag authentication refusal
+and recovery, latest-value decrypt-back/removal and package-free restart pass.
+This local application profile supplies no live AWS, IAM, custody or rotation
+qualification.
+
 Production custody, IAM, workload identity, live transport/logging, provider
 revocation/deletion and all seven full gates remain UNKNOWN.
 
@@ -676,7 +758,10 @@ Evidence: [official references and context](_reset/aws-kms-research-20261023.jso
 [corrected SDK profile](_reset/aws-kms-sdk-profile-green-20261023.json), and
 [lead SDK integration](_reset/aws-kms-sdk-integration-20261023.json),
 [reproducible archives and SBOM](_reset/aws-kms-release-20261023.json), and
-[installed wheel](_reset/aws-kms-installed-20261023.json).
+[installed wheel](_reset/aws-kms-installed-20261023.json),
+[current installed application wrapper](_reset/doctor-recovery-kms-application-wrapper-20261023.json),
+[local application transport](_reset/doctor-recovery-kms-application-transport-20261023.json), and
+[original application lifecycle](_reset/doctor-recovery-kms-application-lifecycle-20261023.json).
 
 ## Bounded row lease recovery checkpoint: 2026-10-23
 

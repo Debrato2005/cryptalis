@@ -76,3 +76,50 @@ async def workflow(api, factory, alias, *, retained=None):
         else:
             raise AssertionError('original Redis rate limiter did not refuse excess requests')
     return retained
+
+
+def restart_without_cryptalis(backend, schema, current):
+    """Run the original application in a fresh interpreter that denies Cryptalis."""
+    import json
+    import os
+    from pathlib import Path
+    import subprocess
+    import sys
+    child = subprocess.run([sys.executable, '-I', '-c', '''
+
+import asyncio, importlib.abc, json, os, runpy, sys
+class DenyCryptalis(importlib.abc.MetaPathFinder):
+    def find_spec(self, fullname, path=None, target=None):
+        if fullname == 'cryptalis' or fullname.startswith('cryptalis.'):
+            raise ImportError('Cryptalis import denied after removal')
+sys.meta_path.insert(0, DenyCryptalis())
+sys.path[:0] = json.loads(os.environ['SMOLINK_CHILD_PATHS'])
+import psycopg
+from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
+from app.main import app as api
+from app.core.redis import get_redis_client
+for name, module in tuple(sys.modules.items()):
+    if name == 'app' or name.startswith('app.'):
+        origin = getattr(module, '__file__', None)
+        if origin:
+            assert __import__('pathlib').Path(origin).is_relative_to(os.environ['SMOLINK_BACKEND'])
+namespace = runpy.run_path(os.environ['SMOLINK_WORKLOAD_HELPER'])
+async def main():
+    engine = create_async_engine('postgresql+psycopg://', hide_parameters=True,
+        async_creator=lambda: psycopg.AsyncConnection.connect(os.environ['CRYPTALIS_TEST_RUNTIME_DATABASE_URL'],
+            options='-csearch_path=' + os.environ['SMOLINK_SCHEMA']))
+    try:
+        await namespace['workflow'](api, async_sessionmaker(engine, expire_on_commit=False),
+            'package-free', retained=json.loads(os.environ['SMOLINK_CURRENT']))
+    finally:
+        await get_redis_client().aclose()
+        await engine.dispose()
+asyncio.run(main())
+assert not any(n == 'cryptalis' or n.startswith('cryptalis.') for n in sys.modules)
+print(json.dumps({'native_router_crud': 'passed', 'cryptalis_imported': False}))
+
+'''], env=dict(os.environ, SMOLINK_CHILD_PATHS=json.dumps(sys.path),
+        SMOLINK_SCHEMA=schema, SMOLINK_BACKEND=str(backend), SMOLINK_CURRENT=json.dumps(current),
+        SMOLINK_WORKLOAD_HELPER=str(Path(__file__).resolve())), capture_output=True, text=True, timeout=60)
+    assert child.returncode == 0, 'package-free Smolink router restart failed; diagnostics suppressed'
+    assert json.loads(child.stdout) == {'native_router_crud': 'passed', 'cryptalis_imported': False}

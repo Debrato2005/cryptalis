@@ -314,6 +314,13 @@ functions, domain definitions, collation implementations, or index storage optio
 Status needs no keys and does not establish key custody or deployment-wide writer exclusion.
 After journal retirement, progress counters are unavailable rather than zero.
 
+Migration guard observations use canonical catalog rendering under
+`pg_catalog`, then restore the caller's search path. Equivalent observations
+across worker sessions no longer depend on visible application schemas.
+Actual trigger, function, owner and configuration changes still refuse.
+Older paused journals can retain noncanonical observations and still refuse.
+This change does not rewrite journal evidence or authorize recovery of those records.
+
 **IMPLEMENTED, shared privilege admission:** initial protection planning checks
 runtime safety before key work. ACTIVE connection checks, restored deployment
 checks, ACTIVE/PENDING status, payload/search preparation status, Doctor, and
@@ -344,7 +351,15 @@ P restore-binding option before reading that binding or connecting.
 [The walkthrough](walkthrough-migration.md#inspect-rotation-preparation)
 owns the full operator contract.
 
-**IMPLEMENTED, bounded Doctor:** `migration.diagnose_deployment` and
+**IMPLEMENTED, bounded pre-adoption Doctor:** `cryptalis.doctor.preflight`
+reuses the existing read-only compiler catalog inspection. It accepts no keys
+and reads no application values. Known declaration/schema refusals return
+actionable issues. Inspection failure remains UNKNOWN with safe diagnostics.
+Schema compatibility alone can pass. Provider access, query routes, writer
+exclusion, runtime deployment, host authority and recovery capacity stay UNKNOWN.
+The report returns no deployment artifact or apply authority.
+
+**IMPLEMENTED, bounded ACTIVE Doctor:** `migration.diagnose_deployment` and
 `cryptalis doctor` inspect an existing ACTIVE deployment without keys.
 The immutable migration plan, exact ACTIVE pin, and optional matching restore
 binding pass admission before connection. A read-only, repeatable-read snapshot
