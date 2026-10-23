@@ -58,6 +58,16 @@ Their absolute guarantees are also removed: immediate arbitrary-worker denial, a
 whole-result publication, subject cryptographic erasure, and hostile-database completeness/freshness.
 A removed mechanism cannot retain its old guarantee through wording alone.
 
+## Scoped mapped TEXT bulk UPDATE: 2026-10-23
+
+Admit mapped dictionary UPDATE with one direct tenant-column equality, typed
+application IDs and `synchronize_session=False`. Preserve native grouping,
+result and transaction behavior. Refuse VARCHAR, single-tenant, Core, RETURNING,
+extra predicates, dynamic defaults, read-only properties and SQL-producing types.
+Use ordered input proofs and final exact scope/record/frame checks. Extend
+shared identity admission to attachment and pre-resolver configuration checks.
+The [compatibility owner](compatibility.md#full-capability-matrix) defines the route.
+
 ## Bounded rotation row recovery: 2026-10-23
 
 Admit one exact-expiry retry across a row's pure payload/search crypto steps.

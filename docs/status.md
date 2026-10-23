@@ -10,6 +10,45 @@ No PostgreSQL/provider/runtime cell, production key provider, independent review
 VERIFIED below refers only to the named checks and their exact revisions.
 All other contract and promotion requirements are SPECIFIED. All seven full gates remain UNKNOWN.
 
+## Scoped mapped bulk UPDATE checkpoint: 2026-10-23
+
+**IMPLEMENTED, bounded verification:** attached sync/async sessions admit mapped
+TEXT dictionary UPDATE with one explicit tenant equality and
+`synchronize_session=False`. Inputs require a nonempty list of dictionaries
+with typed application IDs. Protected fields can be omitted, NULL or exact text.
+Public Python bind processors retain native behavior. The route preserves
+contiguous groups, repeated IDs, zero matches, autoflush, savepoints, errors,
+identity-map behavior and the native empty Result.
+
+The route refuses Core, RETURNING, embedded values, extra predicates, tenant
+assignments, version counters, dynamic defaults, read-only mapper properties,
+SQL-producing type hooks and type variants. VARCHAR and single-tenant bulk
+UPDATE remain unadmitted. It adds no rowcount promise. Exact owned-column
+lineage, ordered input proofs, scope/ID binds, sealed bytes and final driver
+snapshots bind every emitted group to its prepared inputs.
+
+Attachment also requires exact native row-context types and flags. Repeated
+configuration checks refuse changed identities before host key resolution.
+Native bulk and flush INSERT controls demonstrate SQL-transformed UUID values
+before protection, then refuse the changed mapping under the original valid plan.
+These shared checks cover initial attachment and later metadata changes.
+A late public type change refuses with rollback and unchanged rows. The same
+factory has no recovery promise after native DML type caches capture that change.
+
+The primary and alternate affected runs each pass **143 cases** on the same
+141-file source bundle. The primary uses Python 3.12.3 / SQLAlchemy 2.1.3.
+the alternate uses Python 3.13.12 / SQLAlchemy 2.0.51 with pure psycopg.
+The original 12-case native oracle and intermediate failure receipts remain
+separate. Review controls exposed read-only property handling and hidden SQL
+type transformations before final admission. All seven full gates remain UNKNOWN.
+
+Evidence: [native oracle](_reset/bulk-update-native-first-20261023.json),
+[initial protected RED](_reset/orm-bulk-update-red-20261023.json),
+[read-only property RED](_reset/orm-bulk-update-readonly-red-20261023.json),
+[SQL hook RED](_reset/orm-bulk-update-sql-hooks-red-20261023.json),
+[final primary regression](_reset/orm-bulk-update-ready-primary-20261023.json), and
+[final alternate regression](_reset/orm-bulk-update-ready-alternate-20261023.json).
+
 ## Rotation row lease recovery checkpoint: 2026-10-23
 
 **IMPLEMENTED, bounded verification:** payload/search staging and paired-frame

@@ -52,6 +52,18 @@ during `execute()`, so later iteration can read already authenticated plaintext.
 An expired lease refuses at actual key use without a provider refresh.
 Roll back after a result failure. SQL can succeed before result authentication.
 
+The scoped mapped bulk UPDATE route keeps an ordered immutable input ledger.
+Owned physical column lineage binds the explicit tenant and generated record
+predicates. Each native group must consume the corresponding inputs before
+execution. Exact prepared frames, typed scope/record binds and final driver
+snapshots then protect dispatch. Read-only properties and SQL-producing bind
+types refuse before key preparation. Public Python bind processors remain native.
+
+Attachment requires exact native identity types and flags without dialect
+variants or SQL-producing type hooks. Configuration admission repeats before
+host key resolution and driver dispatch. This applies to existing flush and
+INSERT routes as well as the bounded UPDATE route.
+
 The native bulk page hook validates processed input against the admitted batch.
 Each page must retain its original frozen input slice before the hook freezes
 the native generated SQL/parameters. Earlier callbacks cannot change a later

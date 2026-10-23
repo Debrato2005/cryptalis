@@ -48,6 +48,7 @@ Rollback/removal transforms current data through decrypt-back until explicit fin
 | Text storage/read/write, entity/scalar projection, SQL NULL | SUPPORTED | Randomized authenticated payload. Preserve exact str, empty text, NULL, native ORM state, and expected row/tenant context |
 | Mapped dictionary INSERT without RETURNING | SUPPORTED | Attached sync/async `Session.execute(insert(Model), list[dict])`, explicit typed IDs and tenant scope, copied attribute dictionaries, native NULL/grouping, autoflush, uniqueness and transaction behavior. Other bulk routes remain unadmitted |
 | Mapped dictionary INSERT with one protected scalar RETURNING | SUPPORTED | Exactly one direct protected mapped column. Preserve native Row/scalar keys/types, grouping, paging, parameter-order requests and empty identity map. Authenticate against exact prepared input. Tuple/entity, label/expression/alias, loader-option and caller return_defaults forms remain unadmitted |
+| Scoped mapped dictionary UPDATE | SUPPORTED | Attached sync/async TEXT targets, explicit tenant-column equality, typed IDs, nonempty list of dictionaries and synchronize_session=False. Preserve native omission/NULL, grouping, repeated IDs, zero matches and transactions. VARCHAR, single-tenant, Core and RETURNING routes remain unadmitted |
 | Equality `==` and `IN` | SUPPORTED | Declared full tenant/domain-bound HMAC term. Preserve typed binds and native NULL/empty-list truth tables |
 | Simple negative equality `!=`, `NOT IN`, and NULL presence | SUPPORTED | Reuse the authenticated term for values and a SQL NULL check for storage-only fields. Preserve native three-valued truth, NULL elements, empty lists, and outer-join NULL extension. General Boolean NOT remains unadmitted |
 | Tenant-scoped uniqueness | SUPPORTED | Full term plus tenant scope in a race-safe native unique index. Explicit single-tenant declaration supplies its one scope |
@@ -63,11 +64,21 @@ Rollback/removal transforms current data through decrypt-back until explicit fin
 | Opaque raw SQL/COPY protected writes and unknown external writers | UNSUPPORTED BY DESIGN | Reject guarded routes. Plan blocks protection unless the deployment excludes separate routes |
 | Research range/prefix arrays, order candidates, scoped aggregate helpers, internal binary projections | INTERNAL ONLY | Experiments and adapter machinery, not public query capabilities |
 
+For mapped bulk UPDATE, use `update(Model).where(Model.tenant_id == tenant)`
+with `execution_options={"synchronize_session": False}` and typed IDs in each
+input dictionary. The single predicate must be direct typed tenant equality.
+The adapter rejects extra predicates, embedded values, version counters,
+dynamic defaults, read-only mapped properties, SQL-producing type hooks and
+type variants. Ordinary Python public-field bind processors remain native.
+The ordered input ledger authenticates each emitted group and complete consumption.
+The [bulk UPDATE checkpoint](status.md#scoped-mapped-bulk-update-checkpoint-2026-10-23) owns exact evidence and limits.
+
 Plaintext fields retain native query semantics, including ranges, order, aggregates, and joins through unprotected keys.
 Tenant-scoped uniqueness uses PostgreSQL's original qualified NULL behavior. Unqualified partial/compound or NULLS NOT DISTINCT variants must reject at plan time.
 
-Protection planning requires native row-context codecs without dialect-specific
-type variants. The real native SQL transformation controls and 105-case planning
+Protection planning and attachment require native row-context codecs without
+dialect-specific type variants. Attachment repeats configuration admission before
+host key resolution and SQL, including changes to identity flags or type hooks. The real native SQL transformation controls and 105-case planning
 regression are recorded in the [identity planning checkpoint](status.md#identity-variant-planning-checkpoint-2026-10-23).
 
 ## Query semantics
