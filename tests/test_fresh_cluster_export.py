@@ -20,6 +20,7 @@ from sqlalchemy.orm import registry
 
 from cryptalis import migration as m, rotation as r
 from cryptalis.sqlalchemy import attach
+from cryptalis.manifest.compiler import Writer, WriterInventory, SearchReview
 from test_deprotection import catalog_metadata, column_acl
 from test_migration import application, engine, frames, keys, publish, run, TENANT, FIELD_ID
 from rewrap_worker import target_keys
@@ -123,6 +124,7 @@ def published_sessions(app, varchar, key_factory):
 def test_export_fresh_cluster_source():
     workdir = Path(os.environ['CRYPTALIS_FRESH_CLUSTER_DIR'])
     varchar = os.environ.get('CRYPTALIS_FRESH_SOURCE_VARCHAR') == '1'
+    adopted_search = os.environ.get('CRYPTALIS_FRESH_ADOPTED_SEARCH') == '1'
     rewrapped = os.environ.get('CRYPTALIS_FRESH_SOURCE_REWRAP') == '1'
     payload_rotated = os.environ.get('CRYPTALIS_FRESH_SOURCE_PAYLOAD_ROTATION') == '1'
     search_rotated = os.environ.get('CRYPTALIS_FRESH_SOURCE_SEARCH_ROTATION') == '1'
@@ -131,6 +133,20 @@ def test_export_fresh_cluster_source():
         pytest.fail('FreshCluster.ProfileMismatch: select one rotation profile.')
     with application(setup=source_metadata_fixture,
                      value_type=String(64, collation='C') if varchar else None) as app:
+        if adopted_search:
+            declaration = app.plan.document['lock']['declaration']
+            model = declaration['models'][0]
+            model['fields'].append({'name':'label','field_id':str(UUID(int=19503)),
+                                   'protect':True,'queries':[],'accept_leakage':[]})
+            app.plan = m.plan(json.dumps(declaration).encode(), app.mapping, app.owner,
+                writers=WriterInventory(True, (Writer(UUID(model['table_id']), 'mixed synthetic export',
+                    'sqlalchemy', evidence='same mapped source with storage-only label'),)),
+                search_reviews=(SearchReview(UUID(next(field for field in model['fields'] if field['name'] == 'name')['field_id']), False,
+                                             'synthetic unbounded names'),),
+                keys=keys, runtime_role=app.role, target_id=app.plan.target_id,
+                backfill_rows_per_second=1000, verify_rows_per_second=1000,
+                temporary_bytes_per_row=1024, wal_bytes_per_row=2048)
+            app.pin = m.DeploymentPin(app.plan.target_id, app.plan.operation_id, app.plan.digest, 'PREPARED')
         assert_source_metadata(app, app.role)
         parsed = psycopg.conninfo.conninfo_to_dict(os.environ['CRYPTALIS_TEST_DATABASE_URL'])
         runtime = psycopg.conninfo.conninfo_to_dict(os.environ['CRYPTALIS_TEST_RUNTIME_DATABASE_URL'])
@@ -195,12 +211,15 @@ def test_export_fresh_cluster_source():
             assert index_identity(app) == index_before
         dump(workdir / 'protected.sql', app.schema, environment('CRYPTALIS_TEST_DATABASE_URL'))
         model = app.plan.document['lock']['models'][0]
-        field = model['fields'][0]
+        field = next(field for field in model['fields'] if field['column'] == 'name')
         expected = {str(identity): [str(tenant), value] for identity, (tenant, value) in app.source.items()}
         expected[str(EDITED_ID)] = [str(TENANT), 'edited while protected']
         expected[str(ADDED_ID)] = [str(TENANT), later_value if payload_rotated or search_rotated else 'added while protected']
         del expected[str(DELETED_ID)]
         manifest = {
+            'adopted_search': adopted_search,
+            'storage_expected': ({identity: ('fresh' if UUID(identity) == ADDED_ID else 'label-' + str(UUID(identity).int))
+                                  for identity in expected} if adopted_search else None),
             'rewrapped': rewrapped,
             'payload_rotated': payload_rotated,
             'search_rotated': search_rotated,

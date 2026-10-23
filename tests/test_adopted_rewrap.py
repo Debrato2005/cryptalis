@@ -350,16 +350,6 @@ def current_edit(app, active, key_resolver, value, binding=None):
 def test_repeated_rewrap_backup_and_new_adoption_extend_flat_lineage(adopted, tmp_path):
     app = adopted
     first = publish_rewrap(app, proposal(app), fresh.keys, target_keys)
-    class ClosedEngine:
-        def connect(self): pytest.fail('unsupported generation rotation connected')
-    def forbidden(tenant): pytest.fail('unsupported generation rotation prepared keys')
-    stable = snapshot(app)
-    for prepare in (rotation.plan_search_rotation,):
-        with pytest.raises(m.TransitionFailure, match='adopted_generation_rotation_unsupported'):
-            prepare(first, ClosedEngine(), source_pin=pin(first, 'ACTIVE'), keys=forbidden,
-                target_keys=forbidden, backfill_rows_per_second=1000, verify_rows_per_second=1000,
-                temporary_bytes_per_row=700, wal_bytes_per_row=700)
-    assert snapshot(app) == stable
     current_edit(app, first, target_keys, 'latest before second rewrap')
     before = frame_bytes(app)
     next_plan = rotation.plan_rewrap(first, app.owner, source_pin=pin(first, 'ACTIVE'), keys=target_keys,

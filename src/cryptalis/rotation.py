@@ -260,8 +260,6 @@ class _GenerationRotationPlan:
             purpose=self.purpose
             d, source, _ = _read_proposal(self.artifact, self.format, purpose+'_rotation',
                 extra=('successor_operation_id','batch_limits'), sizes=sizes)
-            if purpose=='search' and source.document.get('restore_lineage'):
-                raise ValueError
             identities = {source.operation_id, _uuid(d['operation_id'])} | {
                 UUID(p['operation_id']) for p in source.document.get('predecessors', [])}
             if (len(identities) != len(source.document.get('predecessors', [])) + 2
@@ -462,8 +460,6 @@ def _plan_generation_rotation(source, engine, *, purpose, source_pin, keys, targ
     Sealing pins the actual verified randomized target ciphertext.
     """
     m._admit(source,source_pin)
-    if purpose=='search' and source.document.get('restore_lineage'):
-        raise m.TransitionFailure('adopted_generation_rotation_unsupported',source.operation_id)
     if source_pin.phase != 'ACTIVE':
         raise m.TransitionFailure('source_pin_must_be_active',source.operation_id)
     if purpose=='search' and not any(

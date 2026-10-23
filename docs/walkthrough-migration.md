@@ -279,7 +279,8 @@ and exit 2. An EXPANDED or BACKFILLED pin with no P journal row fails with
 `missing_payload_operation` or `missing_search_operation` and exit 3.
 The command refuses `--restore-binding` for P before reading the binding or
 connecting. A lineage-bearing payload proposal already embeds its source; it does
-not accept a separate restore binding. Search rotation with lineage remains refused. Doctor also
+not accept a separate restore binding. Search rotation with lineage requires the
+[published-source route](#rotate-search-keys-after-adopted-lineage). Doctor also
 refuses preparation artifacts. The common input limits and safe operational
 failure handling apply. [Status](status.md) owns evidence and remaining gaps.
 
@@ -674,8 +675,8 @@ and [installed TEXT wheel](_reset/fresh-cluster-restore-20261024-14.json) also p
 The installed Smolink [source](_reset/fresh-cluster-export-20261024-17.json)
 and [fresh-target](_reset/fresh-cluster-restore-20261024-16.json) stages repeat
 the original application journey. [Status](status.md#payload-rotation-after-adopted-lineage-2026-10-24)
-records the full regression and exact artifact boundaries. Search rotation with lineage remains
-refused. External custody, authenticated host publication and all seven gates
+records the full regression and exact artifact boundaries. Later search rotation
+uses the [lineage-bearing route](#rotate-search-keys-after-adopted-lineage). External custody, authenticated host publication and all seven gates
 remain unqualified or UNKNOWN. The [lifecycle](lifecycle.md#payload-rotation-after-adopted-lineage-2026-10-24)
 and [format decision](decisions.md#adopted-target-payload-rotation-2026-10-24) own the contract.
 
@@ -794,10 +795,34 @@ decrypt-back/removal, and native metadata checks. [Status](status.md) records
 which profiles completed and preserves the exact receipts.
 
 This evidence does not qualify external custody, authenticated publication, or
-source fencing. Search rotation with adopted lineage remains refused.
+source fencing. Later search rotation uses the
+[published lineage-bearing route](#rotate-search-keys-after-adopted-lineage).
 The separate [payload route](#rotate-payload-keys-after-adopted-lineage) requires
 a published lineage-bearing successor.
 All seven full gates remain UNKNOWN.
+
+## Rotate search keys after adopted lineage
+
+Use the current ACTIVE v5/v6/v7 successor and its own pin in the search workflow
+above. Preparation stays `cryptalis.search-rotation/v1`. Sealing adds the unchanged
+flat restore lineage to all v4 proof members and emits `cryptalis.transition/v7`.
+Keep the same source-only cancellation, atomic switch and separate publication
+steps. Deploy compatible readers before publication. A historical binding cannot
+replace the successor pin. Direct restore-binding generation planning remains refused.
+
+```bash
+.venv/bin/python scripts/fresh_cluster_qualification.py --adopted-search
+.venv/bin/python scripts/fresh_cluster_qualification.py --adopted-search --varchar
+```
+
+These profiles use approved disposable PostgreSQL 16 targets through
+`scripts/test_postgres.py`. All 11 native mixed-field controls pass.
+Source VARCHAR, affected-suite and ordinary installed application checks also pass.
+The installed TEXT wheel also passes all 11. [Status](status.md#search-rotation-after-adopted-lineage-2026-10-24)
+records receipts and limits. The [lifecycle](lifecycle.md#search-rotation-after-adopted-lineage-2026-10-24)
+and [format decision](decisions.md#adopted-target-search-rotation-2026-10-24) own
+the contract. This adds no crypto, index, journal or authority format and grants
+no key-retirement permission. All seven production gates remain UNKNOWN.
 
 ## Measured throughput
 

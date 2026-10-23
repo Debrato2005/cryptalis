@@ -40,7 +40,7 @@ def _decode_transition_json(raw):
     for prefix, owner in (((),document),(('source_plan',),document.get('source_plan') if type(document) is dict else None)):
         if (type(owner) is dict and (owner.get('format'),owner.get('kind')) in (
                     ('cryptalis.transition/v3','payload_rotation'),('cryptalis.transition/v4','search_rotation'),
-                    ('cryptalis.transition/v6','payload_rotation'))):
+                    ('cryptalis.transition/v6','payload_rotation'),('cryptalis.transition/v7','search_rotation'))):
             rate_paths.add(prefix+('estimates','copy_rows_per_second'))
 
     def check(value, path):
@@ -158,13 +158,13 @@ class MigrationPlan:
                             'key_policies', 'scopes', 'estimates'}
             rewrap = doc.get('format') in ('cryptalis.transition/v2', 'cryptalis.transition/v5') and doc.get('kind') == 'rewrap'
             payload = doc.get('format') in ('cryptalis.transition/v3', 'cryptalis.transition/v6') and doc.get('kind') == 'payload_rotation'
-            search = doc.get('format') == 'cryptalis.transition/v4' and doc.get('kind') == 'search_rotation'
+            search = doc.get('format') in ('cryptalis.transition/v4', 'cryptalis.transition/v7') and doc.get('kind') == 'search_rotation'
             rotating=payload or search
             if rewrap or rotating:
                 proof_key = doc['kind']+'_plan_digest'
                 observations_key = doc['kind']+'_observations'
                 members |= {'predecessors', proof_key, observations_key}
-                if doc['format'] in ('cryptalis.transition/v5', 'cryptalis.transition/v6'):
+                if doc['format'] in ('cryptalis.transition/v5', 'cryptalis.transition/v6', 'cryptalis.transition/v7'):
                     members.add('restore_lineage')
                 if rotating:
                     members.add(('payload' if payload else 'search')+'_batch_limits')
@@ -206,7 +206,7 @@ class MigrationPlan:
                 raise ValueError
             # Compiler validation needs identifier quoting, never a connection.
             _previous_lock(_canonical(doc['lock']), doc['lock'], SimpleNamespace(dialect=postgresql.dialect()))
-            if doc['format'] in ('cryptalis.transition/v5', 'cryptalis.transition/v6'):
+            if doc['format'] in ('cryptalis.transition/v5', 'cryptalis.transition/v6', 'cryptalis.transition/v7'):
                 from cryptalis.restore import _validate_lineage
                 _validate_lineage(doc)
             _validate_estimates(doc['estimates'])

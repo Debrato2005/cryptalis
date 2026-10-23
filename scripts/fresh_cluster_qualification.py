@@ -131,6 +131,8 @@ def main():
                           help='Qualify Boolean storage after payload rotation on a fresh cluster.')
     profiles.add_argument('--smolink', action='store_true',
                           help='Qualify the pinned Smolink URL lifecycle on a fresh cluster.')
+    profiles.add_argument('--adopted-search', action='store_true',
+                          help='Qualify search rotation after adoption with a retained storage-only field.')
     profiles.add_argument('--adopted-payload', action='store_true',
                           help='Qualify payload rotation after adopted-target rewrap.')
     profiles.add_argument('--adopted-rewrap', action='store_true',
@@ -145,7 +147,7 @@ def main():
         parser.error('--boolean uses the typed Boolean fixture and its restore lifecycle.')
     if args.smolink and (args.varchar or args.restore_lease):
         parser.error('--smolink uses the original application VARCHAR schema and lifecycle.')
-    if args.restore_lease and (args.adopted_payload or args.adopted_rewrap or args.rewrap or args.payload_rotation or args.search_rotation):
+    if args.restore_lease and (args.adopted_search or args.adopted_payload or args.adopted_rewrap or args.rewrap or args.payload_rotation or args.search_rotation):
         parser.error('--restore-lease supports the original TEXT/VARCHAR fixture only.')
     workdir = args.workdir or Path(tempfile.mkdtemp(prefix='cryptalis-fresh-'))
     workdir.mkdir(parents=True, exist_ok=True)
@@ -154,6 +156,7 @@ def main():
 
     profile = ('; Boolean storage after payload rotation' if args.boolean else
                '; pinned Smolink root-rewrap and payload-rotation application profile' if args.smolink else
+               '; adopted-target search-rotation mixed-field profile' if args.adopted_search else
                '; adopted-target payload-rotation profile' if args.adopted_payload else
                '; adopted-target root-rewrap profile' if args.adopted_rewrap else
                '; root-rewrap profile' if args.rewrap else
@@ -167,11 +170,14 @@ def main():
                          else 'tests/test_fresh_cluster_export.py'),
                         {'CRYPTALIS_SMOLINK_FRESH_EXPORT': str(workdir) if args.smolink else '',
                          'CRYPTALIS_FRESH_CLUSTER_DIR': str(workdir),
+                         'CRYPTALIS_FRESH_ADOPTED_SEARCH': '1' if args.adopted_search else '0',
                          'CRYPTALIS_FRESH_SOURCE_VARCHAR': '1' if args.varchar else '0',
                          'CRYPTALIS_FRESH_SOURCE_REWRAP': '1' if args.rewrap else '0',
                          'CRYPTALIS_FRESH_SOURCE_PAYLOAD_ROTATION': '1' if args.payload_rotation else '0',
                          'CRYPTALIS_FRESH_SOURCE_SEARCH_ROTATION': '1' if args.search_rotation else '0'})
     manifest = json.loads((workdir / 'restore-manifest.json').read_text())
+    if manifest.get('adopted_search', False) is not args.adopted_search:
+        raise SystemExit('FreshCluster.ProfileMismatch: adopted-search export did not match the requested profile.')
     if args.boolean:
         if manifest.get('application_profile') != 'boolean-storage':
             raise SystemExit('FreshCluster.ProfileMismatch: Boolean storage export is missing.')
@@ -215,6 +221,7 @@ def main():
         restore = run_pytest(restore_receipt, 'Fresh-cluster protected-backup recovery and adoption; isolated cluster' + profile,
                              ('tests/test_fresh_boolean_restore.py' if args.boolean else
                               'tests/test_smolink_fresh_cluster.py' if args.smolink
+                              else 'tests/test_adopted_search.py' if args.adopted_search
                               else 'tests/test_adopted_payload.py' if args.adopted_payload
                               else 'tests/test_adopted_rewrap.py' if args.adopted_rewrap
                               else 'tests/test_restore_lease_fresh.py' if args.restore_lease

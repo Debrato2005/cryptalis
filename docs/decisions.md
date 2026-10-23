@@ -545,7 +545,8 @@ binding cannot authorize the successor as its original source.
 
 Repeated rewrap carries flat lineage without recursive source artifacts.
 The [payload extension](#adopted-target-payload-rotation-2026-10-24) defines the
-separate v5/v6 payload route. Search rotation with lineage still refuses before effects.
+separate v5/v6 payload route. The [search extension](#adopted-target-search-rotation-2026-10-24)
+defines search rotation with inherited lineage.
 Host custody, restore approval, source fencing and publication remain external
 assertions. No cryptographic format, key deletion or authority relaxation follows.
 **VERIFIED, bounded native profile:** one
@@ -711,9 +712,9 @@ lineage. Fractional native copy rates must round-trip in v6 and embedded v6
 sources without changing their artifact identities.
 
 Readers that cannot admit the embedded source or v6 activation must refuse
-before effects and publication. Deploy compatible readers first. Search rotation
-with lineage and direct payload planning from an explicit restore binding remain
-refused. CF1, retained-reader requirements, root retirement, maintenance approval,
+before effects and publication. Deploy compatible readers first.
+[Search rotation with lineage](#adopted-target-search-rotation-2026-10-24) uses its
+separate successor format. Direct restore-binding generation planning remains refused. CF1, retained-reader requirements, root retirement, maintenance approval,
 host fencing and publication authority do not change. All seven production gates
 remain UNKNOWN. See the [lifecycle contract](lifecycle.md#payload-rotation-after-adopted-lineage-2026-10-24).
 Native TEXT/VARCHAR and installed TEXT profiles verify this path. The unchanged
@@ -742,8 +743,9 @@ Keep the restore binding format unchanged. Retain old keys for approved recovery
 obligations, but refuse an old-generation frame under the selected new policy.
 Fresh-cluster backup recovery alone does not admit a new generation rotation.
 The [adopted-lineage extension](#adopted-target-payload-rotation-2026-10-24) defines
-payload rotation after a published v5/v6 successor. Search rotation with lineage
-and direct payload planning from a restore binding remain refused.
+payload rotation after a published v5/v6 successor. The
+[search extension](#adopted-target-search-rotation-2026-10-24) defines its separate route.
+Direct restore-binding generation planning remains refused.
 Search reindex, qualified production providers and all seven full gates remain
 open or UNKNOWN. See the [recorded evidence](status.md#payload-backup-recovery-and-runtime-admission-checkpoint-2026-10-23).
 
@@ -772,7 +774,7 @@ Storage-only frames remain byte-identical. Searchable frames require a fresh
 OS nonce and authenticated resealing because CF1 binds the search header.
 The cryptographic construction and CF1 format remain unchanged.
 
-Preparation P uses `cryptalis.search-rotation/v1`. Sealing emits immutable
+Preparation P uses `cryptalis.search-rotation/v1`. Without restore lineage, sealing emits immutable
 activation A as `cryptalis.transition/v4`, with `kind: search_rotation`.
 A binds `search_rotation_plan_digest`, `search_rotation_observations` and
 `search_batch_limits`. Deploy a v4-capable host reader before publication.
@@ -793,11 +795,46 @@ terminal transaction. Native conflicts roll back the entire switch.
 Host copy-rate and WAL estimates must include this index work.
 
 Restore uses the existing approved binding and selected-generation checks.
-Search rotation with adopted lineage remains refused. The
+Search rotation with adopted lineage follows the
+[search extension](#adopted-target-search-rotation-2026-10-24). The
 [payload extension](#adopted-target-payload-rotation-2026-10-24) defines the separate
 lineage-bearing payload route. Rotation deletes no
 retained keys and supplies no unlinkability or cryptographic-erasure claim.
 Production custody, authority and independent review remain unqualified.
+
+## Adopted-target search rotation: 2026-10-24
+
+**IMPLEMENTED, bounded source and installed verification:** search rotation uses the current ACTIVE
+v5/v6/v7 successor. Require validated restore lineage and its own host pin.
+The `cryptalis.search-rotation/v1` preparation proposal keeps its complete embedded
+source and existing members. Do not add an explicit restore argument.
+
+Activation uses `cryptalis.transition/v7` with `kind: search_rotation`. Retain
+every v4 search proof, observation, batch limit, scope, policy and cost requirement.
+Add the source's unchanged, nonempty flat `restore_lineage`. Keep inherited
+predecessors, then append the exact source and preparation identities.
+Without lineage, search activation remains v4.
+
+Reuse existing pure lineage rules for ordered source/digest ancestors,
+distinct adoption identities, continuous targets and unchanged owners.
+Require exact recognized frame CHECK definitions with rejection probes.
+Historical bindings cannot supply current policy or publication authority.
+Existing source-only cancellation, terminal current-authority checks, atomic
+switch and separate successor publication remain required.
+
+Searchable frames receive new terms and authenticated headers. Storage-only
+bytes and selected payload generation stay unchanged. Keep one active query
+namespace and the existing index representation, native uniqueness and rollback.
+
+Rewrap of v7 produces rewrap/v2 and a v5 successor. Payload rotation of v7
+produces v6. Both preserve lineage. Fractional copy rates must round-trip in
+direct and embedded v7 sources. Deploy compatible readers before publication.
+Unsupported readers must refuse before effects. CF1, journal formats, host
+authority and retained-key obligations do not change. All seven gates remain UNKNOWN.
+See the [lifecycle contract](lifecycle.md#search-rotation-after-adopted-lineage-2026-10-24).
+Source TEXT/VARCHAR and installed TEXT controls verify this boundary.
+[Status](status.md#search-rotation-after-adopted-lineage-2026-10-24) owns exact
+receipts, affected regressions and application qualification limits.
 
 ## Native UUID lookup inputs: 2026-10-24
 

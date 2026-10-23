@@ -373,7 +373,8 @@ Recorded BACKFILLED progress does not authenticate current frames or admit
 an application deployment. It needs no keys or maintenance locks and makes
 no writes. The CLI refuses a P restore-binding option before reading that binding
 or connecting. A lineage-bearing payload proposal already embeds its source.
-Search rotation with lineage remains refused.
+Search rotation with lineage requires a
+[published successor](lifecycle.md#search-rotation-after-adopted-lineage-2026-10-24).
 [The walkthrough](walkthrough-migration.md#inspect-rotation-preparation)
 owns the full operator contract.
 
@@ -447,7 +448,8 @@ The original source policy cannot replace A's target policy. Existing
 `cryptalis.restore/v1` bindings support this path without a new restore format.
 Payload rotation after a published lineage-bearing successor follows the
 [adopted-lineage contract](lifecycle.md#payload-rotation-after-adopted-lineage-2026-10-24).
-Search rotation with lineage and direct payload planning from a restore binding remain refused.
+Search rotation with lineage follows its [successor contract](lifecycle.md#search-rotation-after-adopted-lineage-2026-10-24).
+Direct restore-binding generation planning remains refused.
 All seven full gates remain UNKNOWN.
 
 ## Cryptographic format
@@ -654,11 +656,19 @@ The [12 native fresh-target controls](_reset/fresh-cluster-restore-20261024-11.j
 pass, as do the source VARCHAR and installed TEXT profiles. The final installed
 Smolink journey and full regression retain their exact
 [status boundaries](status.md#payload-rotation-after-adopted-lineage-2026-10-24).
-Search rotation with lineage and direct payload planning from an
-explicit restore binding remain refused. Deploy readers that admit the embedded
+Search rotation with lineage follows its [successor contract](lifecycle.md#search-rotation-after-adopted-lineage-2026-10-24).
+Direct restore-binding generation planning remains refused. Deploy readers that admit the embedded
 source and v6 before publication. CF1, host approval/fencing, retained-reader
 obligations and key-retirement permissions do not change. All seven production
 gates remain UNKNOWN. See the [format decision](decisions.md#adopted-target-payload-rotation-2026-10-24).
+
+Adopted search rotation uses the current lineage-bearing source and its own pin.
+Search-rotation/v1 retains the embedded source; v7 retains every v4 search proof
+and the admitted restore lineage. All 11 native mixed-field controls pass, including refusal and recovery paths.
+Source TEXT/VARCHAR, installed TEXT, affected and ordinary installed application
+checks pass within their recorded boundaries. See the
+[current boundary](status.md#search-rotation-after-adopted-lineage-2026-10-24).
+The crypto, index representation, journal and host-authority contracts do not change.
 
 **IMPLEMENTED, internal batch only:** `prepare_payload_rotation_batch(rows, field, tenant,
 source=..., target=...)` decodes each current frame under the exact source payload
@@ -762,8 +772,8 @@ bounds remain unqualified. The existing restore-binding format supports the
 bounded search-backup profile. An independent generation-2 search/HMAC decoder
 and the product reader recover current values after publication edits. A valid
 old-generation frame and the original source policy fail adoption. Later adopted
-edits survive decrypt-back and removal. Search rotation with adopted lineage
-remains refused. The separate [payload route](lifecycle.md#payload-rotation-after-adopted-lineage-2026-10-24)
+edits survive decrypt-back and removal. Later search rotation follows the
+[adopted-lineage contract](lifecycle.md#search-rotation-after-adopted-lineage-2026-10-24). The separate [payload route](lifecycle.md#payload-rotation-after-adopted-lineage-2026-10-24)
 requires a published lineage-bearing successor. External custody, current host authority, and source fencing
 remain unqualified. [Status](status.md) owns executable evidence.
 All seven full gates remain UNKNOWN.

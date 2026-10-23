@@ -326,7 +326,8 @@ Payload and companion commit in the same transaction. Search roots remain indepe
 Payload rotation need not reindex. Search-key changes require complete reindex and authenticated-header resealing with fresh nonces.
 An internal candidate-preparation API resolves, rewraps, and verifies every admitted root without publishing a policy.
 The bounded root-rewrap executor records an immutable transition/v2 successor through
-the shared maintenance and activation machinery. Host publication remains separate.
+the shared maintenance and activation machinery. Adopted targets use transition/v5
+with flat restore lineage. Host publication remains separate.
 A separate internal batch API reseals current frames between payload generations and preserves search headers.
 Read-only payload planning produces preparation proposal P. It pins exact retained custody, source observations,
 aggregate logical batch limits and measured costs. It reserves distinct preparation
@@ -341,7 +342,8 @@ batch and is not a process memory bound.
 
 `seal_payload_rotation` authenticates BACKFILLED shadows and returns deterministic
 activation artifact A from their actual ciphertext observations. A is a
-`cryptalis.transition/v3` MigrationPlan with `kind: payload_rotation`. It binds
+`cryptalis.transition/v3` MigrationPlan with `kind: payload_rotation`; inherited
+restore lineage uses transition/v6. It binds
 P's digest, source-to-P ancestry, target observations, logical limits, and
 measured terminal copy costs. P reserves A's ID but does not embed A's digest.
 Sealing holds maintenance locks and changes no database data, schema, or journal.
@@ -364,12 +366,15 @@ A genuine ACTIVE pin permits later edits and latest-value removal. Keyless
 status remains `NOT_PERFORMED`. Search rotation uses the same staging and
 publication engines, with separate policy and frame checks. Its preparation
 artifact uses `cryptalis.search-rotation/v1`; activation uses
-`cryptalis.transition/v4`. It retains source roots, selects one new search
-generation, preserves payload selection, and replaces terms under fresh
+`cryptalis.transition/v4`; inherited restore lineage uses transition/v7.
+It retains source roots, selects one new search generation, preserves payload
+selection, and replaces terms under fresh
 authenticated nonces. Native UPDATE maintains equality/unique indexes atomically.
-Storage-only frames remain exact. Generation rotation on adopted restored
-targets remains unsupported. All seven full gates
-remain UNKNOWN.
+Storage-only frames remain exact. Generation rotation on an adopted target starts
+from its published lineage-bearing successor and its own ACTIVE pin. Direct
+generation planning with an explicit restore binding remains unadmitted. The
+[current status](../status.md#search-rotation-after-adopted-lineage-2026-10-24)
+records the exact verification boundary. All seven full gates remain UNKNOWN.
 See [lifecycle](../lifecycle.md#changes-and-rotation) for recovery and publication boundaries.
 [Security](../security.md#cryptographic-format) owns framing, commitments, keys, and failure rules.
 Generic CHECK/FK/default/collation preservation across other schema transforms

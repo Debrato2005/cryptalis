@@ -284,8 +284,8 @@ its own pin before ordinary writers resume.
 Later payload rotation can retain the same lineage. Ordinary rewrap of v6
 produces rewrap/v2 and a v5 successor. Fractional copy rates must survive both
 direct and embedded-source artifact round-trips. No-lineage payload activation
-remains v3. Search rotation with lineage and payload planning directly from an
-explicit restore binding remain refused. This adds no key-retirement permission,
+remains v3. [Search rotation with lineage](#search-rotation-after-adopted-lineage-2026-10-24)
+uses its separate successor format. Direct restore-binding generation planning remains refused. This adds no key-retirement permission,
 host authority service or cryptographic format. All seven production gates remain UNKNOWN.
 See the [format decision](decisions.md#adopted-target-payload-rotation-2026-10-24).
 Native TEXT/VARCHAR and installed TEXT controls, plus the unchanged installed
@@ -297,7 +297,7 @@ owns the exact receipts, full regression and remaining limits.
 **IMPLEMENTED, bounded native verification:** search rotation uses the same two-artifact
 preparation, sealing, cutover, and publication protocol as payload rotation.
 `rotation.plan_search_rotation` returns P as `cryptalis.search-rotation/v1`.
-P supplies no application deployment authority. The activation artifact A is a
+P supplies no application deployment authority. Without restore lineage, activation artifact A is a
 `cryptalis.transition/v4` MigrationPlan with `kind: search_rotation`. Its exact
 proof fields are `search_rotation_plan_digest`, `search_rotation_observations`,
 and `search_batch_limits`.
@@ -331,7 +331,8 @@ Shared `migration.apply` accepts A only for ACTIVE publication with an
 ACTIVATING or ACTIVE pin. ACTIVATING repeats A's target proof even if the
 journal claims ACTIVE. A genuine ACTIVE pin permits later application edits
 and latest-value decrypt-back/removal. The existing restore-binding format remains
-the selected recovery contract. Search rotation with adopted lineage stays refused.
+the selected recovery contract. Search rotation with adopted lineage follows
+the [search extension](#search-rotation-after-adopted-lineage-2026-10-24).
 The [payload extension](#payload-rotation-after-adopted-lineage-2026-10-24)
 defines the separate lineage-bearing payload route.
 
@@ -346,6 +347,33 @@ paired proof, cancellation, lost COMMIT replies, and SIGKILL with fresh-process
 recovery. The text backup profile also completes adoption and latest-value
 removal. [Status](status.md) owns current receipts and verification boundaries.
 All seven full gates remain UNKNOWN.
+
+### Search rotation after adopted lineage: 2026-10-24
+
+**IMPLEMENTED, bounded source and installed verification:** use the current ACTIVE v5/v6/v7 source, its
+own pin and retained policies. Preparation keeps `cryptalis.search-rotation/v1`.
+Seal a `cryptalis.transition/v7` search_rotation successor with every v4 proof
+member, unchanged flat restore lineage and inherited predecessors followed by
+source and preparation.
+
+Use the existing staging, resume, cancellation, cutover and publication steps.
+Before switch, cancellation requires source custody, its current ACTIVE pin and
+maintenance approval. Target custody can remain unavailable. Terminal retries
+preserve later edits and cannot revive a superseded source. PENDING recovery
+authenticates the successor and reciprocal ancestry. Publish under its own pin.
+
+Retain exact frame/probe, owner and target-chain admission. Keep one selected
+search namespace and native index/uniqueness semantics. Later rewrap returns to
+v5. Later payload rotation produces v6. Both retain lineage and embedded
+fractional-rate identities. Direct restore-binding planning remains refused.
+
+Compatible readers must precede publication. Crypto, journal and authority
+contracts stay unchanged. No key-retirement permission follows.
+All seven production gates remain UNKNOWN. See the
+[format decision](decisions.md#adopted-target-search-rotation-2026-10-24).
+Source TEXT/VARCHAR and installed TEXT controls verify this boundary.
+[Status](status.md#search-rotation-after-adopted-lineage-2026-10-24) records exact
+receipts and the separate ordinary application regressions.
 
 Keep exactly one active application writer representation during maintenance cutover.
 No partial-generation OR query or cross-generation uniqueness gap is silently admitted.
@@ -423,8 +451,8 @@ atomically. A terminal retry preserves later application edits and cannot
 revive a source that another operation superseded. Cancellation cannot republish
 the old binding as successor authority. An ACTIVE successor needs a new rewrap.
 The [payload extension](#payload-rotation-after-adopted-lineage-2026-10-24)
-defines rotation from an ACTIVE lineage-bearing successor. Search rotation with
-lineage still refuses. The host retains
+defines rotation from an ACTIVE lineage-bearing successor. The
+[search extension](#search-rotation-after-adopted-lineage-2026-10-24) supplies its separate route. The host retains
 custody policies, fenced-source evidence and restore approval.
 
 **VERIFIED, bounded native profile:** one
@@ -658,7 +686,8 @@ receipts and test totals.
 Backup adoption after payload rotation differs from rotation on an adopted
 target. The [adopted-lineage extension](#payload-rotation-after-adopted-lineage-2026-10-24)
 requires a published v5/v6 successor. Direct payload planning from a restore
-binding and search rotation with lineage remain refused. Host publication provenance,
+binding remains refused. [Search rotation with lineage](#search-rotation-after-adopted-lineage-2026-10-24)
+uses a published successor. Host publication provenance,
 source fencing, and provider custody remain external qualification boundaries.
 All seven full gates remain UNKNOWN.
 
@@ -682,8 +711,9 @@ application reads, searches, edits, decrypts current values, and removes eligibl
 journal/storage objects. Native metadata checks preserve the source contract.
 The harness also accepts `--varchar`. [Status](status.md) owns each profile's
 receipts and qualification boundary. This evidence does not qualify production
-custody, host publication, or source fencing. Payload/search rotation on an adopted target
-remains unsupported. All seven full gates remain UNKNOWN.
+custody, host publication, or source fencing. Later generation rotation requires
+a [published lineage-bearing successor](#search-rotation-after-adopted-lineage-2026-10-24),
+rather than direct restore-binding planning. All seven full gates remain UNKNOWN.
 
 ### Independent application exit: 2026-10-19
 

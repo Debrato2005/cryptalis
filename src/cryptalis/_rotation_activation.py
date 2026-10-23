@@ -37,8 +37,8 @@ def _activation(p,observations,copy,copy_wal):
                 for model in source_document['lock']['models']],
         estimates=_costs(p,copy,copy_wal),**{p.purpose+'_rotation_plan_digest':p.digest,
         p.purpose+'_rotation_observations':observations,p.purpose+'_batch_limits':p.document['batch_limits']})
-    if p.purpose=='payload' and source_document.get('restore_lineage'):
-        document.update(format='cryptalis.transition/v6',
+    if source_document.get('restore_lineage'):
+        document.update(format='cryptalis.transition/v6' if p.purpose=='payload' else 'cryptalis.transition/v7',
                         restore_lineage=source_document['restore_lineage'])
     return m.MigrationPlan(m._canonical(document))
 

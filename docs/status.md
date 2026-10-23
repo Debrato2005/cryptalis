@@ -21,6 +21,66 @@ and [competitive capability matrix](research/capability-matrix.md) govern priori
 Progress follows complete real-application journeys and resolved production requirements.
 All seven production gates remain UNKNOWN.
 
+## Search rotation after adopted lineage: 2026-10-24
+
+**VERIFIED, bounded native and installed-wheel profiles:** search rotation now accepts an ACTIVE
+lineage-bearing successor. Its unchanged search-rotation/v1 proposal embeds the
+source. Transition/v7 retains every v4 search proof and the flat restore lineage.
+The genuine fresh-target workflow passes committed-prefix resume,
+target-only PENDING retry, equality/IN/NULL, native uniqueness/rollback and a
+two-transaction winner. Searchable terms change while storage-only label bytes,
+payload selection and native index identities remain unchanged. Later rewrap to
+v5, payload rotation to v6 and latest-value package-free exit also pass.
+
+The [expanded source export](_reset/fresh-cluster-export-20261024-21.json) passes
+one test in 1.06 seconds. All [11 fresh-target controls](_reset/fresh-cluster-restore-20261024-20.json)
+pass in 30.42 seconds with 196 stable Python hashes. They include five fault
+controls, native collision rollback, SIGKILL with fresh-process status/resume,
+and a lost actual cutover COMMIT reply with target-only retry. Direct v7-to-v6
+and v7-to-v5-to-v6 paths pass. Older installed readers refuse before database access.
+
+The [source VARCHAR profile](_reset/fresh-cluster-restore-20261024-21.json) passes
+the same 11 controls in 28.59 seconds. The [source affected suite](_reset/adopted-search-source-affected-20261024.json)
+passes 496 tests in 268.01 seconds. The [installed affected suite](_reset/adopted-search-installed-affected-20261024.json)
+passes 68 in 58.10 seconds with one existing Starlette warning. All 196 Python
+hashes remain stable and match the current source.
+The installed [searchable SQLModel](_reset/adopted-search-installed-searchable-application-20261024.json)
+and [original HTTP/JWT/SMTP](_reset/adopted-search-installed-http-application-20261024.json)
+receipts preserve six and 26 pinned files respectively. These are ordinary
+application regressions; they do not verify search rotation after SQLModel adoption.
+
+The final [installed TEXT search profile](_reset/fresh-cluster-restore-20261024-22.json)
+passes all 11 controls in 29.56 seconds after its [source export](_reset/fresh-cluster-export-20261024-23.json).
+The same wheel passes [17 adopted root-rewrap controls](_reset/fresh-cluster-restore-20261024-23.json)
+in 24.40 seconds. Both retain 196 stable Python hashes.
+
+The same installed wheel repeats the unchanged Smolink journey: its
+[source stage](_reset/fresh-cluster-export-20261024-25.json) passes one test in
+3.36 seconds and its [fresh-target stage](_reset/fresh-cluster-restore-20261024-24.json)
+passes one in 4.02 seconds. The [application receipt](_reset/adopted-search-installed-smolink-application-20261024.json)
+preserves all 38 pinned files and verifies adopted root/payload rotation,
+ASGI/JWT/ORM and real Redis work, latest-value removal and an import-denied restart.
+Url.destination remains storage-only. This repeats root/payload compatibility;
+it supplies no adopted-search application evidence.
+
+The [initial source export](_reset/fresh-cluster-export-20261024-20.json) passes
+one test in 0.73 seconds; the [fresh-target workflow](_reset/fresh-cluster-restore-20261024-19.json)
+passes one in 3.05 seconds. Both retain 196 stable Python hashes.
+The [previous installed wheel](_reset/fresh-cluster-restore-20261024-18.json)
+reproduces `adopted_generation_rotation_unsupported`. The earlier
+[fixture index-assertion failure](_reset/fresh-cluster-restore-20261024-17.json)
+remains recorded. The earlier 2,430-test
+full regression belongs to the payload checkpoint below.
+
+The [artifact check](_reset/adopted-search-release-final-20261024.json) verifies
+repeatable archives, metadata, RECORD, SBOM, clean installed files and CLI.
+The [final boundary](_reset/adopted-search-final-boundary-20261024.json) binds
+these runs, both installed environments, application sources and seven canonical docs.
+It does not establish an installed adopted-application journey. Direct
+restore-binding generation planning, external custody and host authority remain
+unadmitted or unqualified. All seven production gates remain UNKNOWN. See the
+[format decision](decisions.md#adopted-target-search-rotation-2026-10-24).
+
 ## Payload rotation after adopted lineage: 2026-10-24
 
 **VERIFIED, bounded local source and installed-wheel profiles:** payload rotation can now start from
@@ -78,7 +138,9 @@ The [final boundary](_reset/adopted-payload-final-boundary-20261024.json) binds
 these receipts to the current product and installed artifacts.
 Smolink protection remains limited to Url.destination storage under explicit
 single tenancy. Browser and server deployment remain unqualified.
-Adopted search rotation and direct payload planning with a restore binding remain
+At this checkpoint, adopted search rotation remained unadmitted. The later
+[search extension](#search-rotation-after-adopted-lineage-2026-10-24) records its
+bounded native and installed verification. Direct restore-binding generation planning remains
 unadmitted. Host authority, provider qualification and all seven gates remain UNKNOWN.
 See the [format decision](decisions.md#adopted-target-payload-rotation-2026-10-24).
 
