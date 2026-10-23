@@ -141,6 +141,14 @@ The six-gate grouping and conservative unadmitted grammar assumptions are record
 | Write throughput | Undecided (D). No approved number |
 | Maintenance pause | Undecided (D). No approved number |
 
+**VERIFIED, current bounded projection cell:** the
+[pinned 10,000-row checkpoint](status.md#current-pinned-performance-checkpoint-2026-10-23)
+measures warm synchronous TEXT with unique 53-byte names and public local keys.
+Added p95 is 1.6294 ms for a point scalar, 2.0107 ms for equality tuples and
+2.5330 ms for IN-20 tuples. Isolated column/index storage is 1.5248× native.
+These meet the local targets in that cell. They do not qualify entity paths,
+million-row scale, remote providers or deployment performance.
+
 **VERIFIED, recorded earlier revision only:** [million-row CF1 receipt](../spikes/revamp/results/gate-performance.json), warm PostgreSQL 16.15 and memory-only local keys.
 These observations predate the latest DISTINCT change and do not measure the current adapter.
 

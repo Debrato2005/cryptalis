@@ -114,7 +114,7 @@ Broaden checks when failures, new changes or unresolved risks justify them.
 Record commands, versions, environment, outcomes, scope and limits.
 Do not label an unrun or unavailable check successful.
 Keep test calls, subtests, phase errors, and collection skips separate in evidence.
-Use the PostgreSQL wrapper's [receipt fields](docs/build-guide.md#acceptance-evidence)
+Use the PostgreSQL wrapper's [receipt fields](docs/build-guide.md#receipt-outcome-fields)
 for report counts. Raw outcomes and pytest terminal categories have different meanings.
 
 ## Review and evidence

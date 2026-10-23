@@ -125,6 +125,28 @@ Receipts retain the original pytest exit code and the changed source paths.
 Review those changes before a new run. Do not overwrite the failed receipt.
 This check compares two snapshots and does not detect an intervening edit that is restored.
 
+### Optional current performance profile
+
+`tests/profile_current_application.py` runs only when explicitly selected.
+It compares native and pinned ACTIVE applications through their runtime roles.
+It measures 10,000 rows, 100 paired samples per workload and isolated column/index storage.
+Choose new absolute receipt paths. Existing receipts remain immutable.
+
+```bash
+CRYPTALIS_PERFORMANCE_RECEIPT=/tmp/cryptalis-performance-new.json \
+  .venv/bin/python scripts/test_postgres.py \
+  --receipt /tmp/cryptalis-performance-wrapper-new.json \
+  -- -q -s tests/profile_current_application.py
+```
+
+The profile writes raw samples and target PASS/FAIL before any target assertion.
+An observed target miss fails this explicit run. The seven production gates stay UNKNOWN.
+The receipt states its scalar/tuple, warm synchronous TEXT and public-key limits.
+Historical profiler helpers supply calculations only. Do not run their direct CLI
+as a substitute for the mandatory wrapper or the current lifecycle/pin path.
+
+### Receipt outcome fields
+
 Receipts also record `pytest_report_counts`. It separates ordinary `test_calls`,
 `subtest_calls`, `setup`, `teardown`, and failed/skipped `collection` reports.
 Each bucket counts final raw pytest outcomes. `selected_items` counts collected

@@ -21,6 +21,13 @@ No objective is complete until its acceptance evidence and applicable gate pass.
 
 ## Current boundary
 
+- A current pinned 10,000-row profile meets local added-p95 targets for point
+  scalar, equality tuple and IN-20 tuple reads: 1.6294, 2.0107 and 2.5330 ms.
+  Isolated name-column/equality-index storage measures 1.5248× native for
+  unique 53-byte names. Both 136-file receipts stay stable. This warm synchronous
+  TEXT cell uses public fixture keys and does not qualify entity, million-row,
+  remote-provider or deployment performance. See the
+  [current performance checkpoint](status.md#current-pinned-performance-checkpoint-2026-10-23).
 - Mapped bulk INSERT now returns one direct protected scalar through native
   Row/scalar results and page handling. Exact prepared-input proofs reject
   changed frames, NULL presence or row context. Current/future page mutation,
@@ -138,10 +145,10 @@ Requirement text is abbreviated. The full definitions remain in the research
 | OBJ-DX-03 | Real FastAPI/SQLModel app plus a second independent app | PARTIAL | Pinned Smolink revision 498d24b runs its original FastAPI app, HTTP URL creation and refusal cases, real Redis, repository/ORM CRUD, protect/decrypt-back/remove, and a fresh import-denied process; 38 original Python source hashes match, with zero source/model/query edits; only Url.destination is protected; the in-repo three-model application retains its separate evidence | Broader protected fields and application suite, exact packaged Python 3.13 cell, SQLModel integration, and a second external app |
 | OBJ-DX-04 | Normal ORM identity, loading, sessions, pooling, async | PARTIAL | Bounded sync/async adapter and search tests | Broader ORM/framework coverage |
 | OBJ-DX-05 | Complete quickstart, threat model, leakage, recovery docs | PARTIAL | README, architecture, security, lifecycle, walkthroughs | Keep docs tied to admitted APIs and evidence |
-| OBJ-PERF-01 | Continuous native vs protected latency/resource measurements | PARTIAL | Slice 3/4 profiles and million-row receipts | Cold/concurrent/tail/WAL/provider measurements |
+| OBJ-PERF-01 | Continuous native vs protected latency/resource measurements | PARTIAL | Current pinned 10k-row scalar/tuple profile with matched runtime roles, full migration/ACTIVE attach, raw paired samples and isolated storage; historical entity/million-row receipts retain prior source boundaries | Current entity/scale, cold/concurrent/tail/WAL/provider measurements |
 | OBJ-PERF-02 | Profile-guided optimization without security loss | PARTIAL | Membership projection correction on 2026-10-09 | Continue profiling; no unverified speed claims |
 | OBJ-PERF-03 | Multithreading/multiprocessing/async at 1/4/16/saturation | SPECIFIED | Single-worker maintenance path | Define and run isolation/backpressure/cancellation tests |
-| OBJ-PERF-04 | Added p95 targets and growth path | PARTIAL | Earliest profiles missed targets; later searches passed local targets | Re-measure current revision; write/pause budgets undecided |
+| OBJ-PERF-04 | Added p95 targets and growth path | PARTIAL | Current pinned 10k-row warm scalar/tuple reads meet local 3ms/8ms targets; isolated column plus equality index measures 1.5248x for 53-byte names | Entity/scale/remote-provider/concurrent qualification; write/pause budgets undecided |
 | OBJ-OPS-01 | Reproducible wheel/sdist, SBOM, provenance, reviewers | PARTIAL | `pyproject.toml`, `uv.lock`, `scripts/release_check.py`; [2026-10-21 receipt](_reset/release-check-20261021.json) shows identical repeat-build hashes, verified wheel `RECORD`, license metadata, CycloneDX 1.5 SBOM, and clean-venv import/CLI | Independent rebuild, signed provenance, vulnerability scan, publication identity, upgrade/uninstall matrix, independent review |
 | OBJ-OPS-02 | Recoverable source/evidence and traceability | PARTIAL | Git history and `docs/_reset` receipts | Durable archive and fresh restore |
 | OBJ-RESEARCH-01 | Source-backed comparative research with repeatable evidence | ONGOING | Research repository provenance; source-access and fallback rules in `AGENTS.md` | Preserve failed alternatives and provenance links |

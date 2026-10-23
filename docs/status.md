@@ -10,6 +10,42 @@ No PostgreSQL/provider/runtime cell, production key provider, independent review
 VERIFIED below refers only to the named checks and their exact revisions.
 All other contract and promotion requirements are SPECIFIED. All seven full gates remain UNKNOWN.
 
+## Current pinned performance checkpoint: 2026-10-23
+
+**VERIFIED, bounded local measurement:** an explicit wrapper-run profile compares
+two identical 10,000-row applications with unique 53-byte names.
+Both seed and query through the separate runtime role. The protected path
+replans seeded data, completes the product protection/ACTIVE publication path,
+and attaches with its deployment pin. Timings retain every product guard and
+include native execution plus complete scalar/tuple materialization.
+The primary cell is Python 3.12.3 / SQLAlchemy 2.1.3 / psycopg 3.3.6 /
+cryptography 50.0.2 / PostgreSQL 16.15 on the recorded local WSL2 host.
+
+Each workload discards ten warmup pairs, then measures 100 pairs with alternating
+native/attached order. Added p95 means attached p95 minus native p95.
+Raw samples retain exact values. These are projection costs, not entity-path costs.
+
+| Workload | Native p95 ms | Protected p95 ms | Added p95 ms | Local target |
+|---|---:|---:|---:|---|
+| Point name scalar | 0.3841 | 2.0135 | 1.6294 | PASS, at most 3 ms |
+| Equality `(id, name)` | 0.3319 | 2.3426 | 2.0107 | PASS, at most 3 ms |
+| IN-20 `(id, name)`, native ID order | 0.5291 | 3.0620 | 2.5330 | PASS, at most 8 ms |
+
+The isolated name column plus equality index measures **1.5248× native**,
+within the 2× target for this distribution. Whole relation sizes remain context
+in the receipt. They are outside that isolated denominator.
+The wrapper passes one explicit profile case. Both receipts retain stable
+136-file Python hashes. Product bytes match the preceding full regression and wheel.
+
+This is one warm synchronous TEXT observation with in-process public fixture keys.
+Shared-host load remains uncontrolled. Million-row/entity costs, remote/cold
+providers, async/VARCHAR, concurrent load, throughput and maintenance pauses remain unmeasured here.
+The historical million-row receipts keep their earlier source and query-shape boundaries.
+All seven full gates remain UNKNOWN.
+
+Evidence: [raw samples, cell, lifecycle and storage](_reset/performance-current-20261023.json)
+and [mandatory wrapper receipt](_reset/performance-current-wrapper-20261023.json).
+
 ## Mapped protected scalar RETURNING checkpoint: 2026-10-23
 
 **IMPLEMENTED, bounded native verification:** attached sync/async mapped bulk
@@ -85,7 +121,7 @@ It separates final ordinary calls, subtest calls, setup, teardown and
 failed/skipped collection reports. It also records selected item count.
 The wrapper retains report references until session finish because pytest can
 change a parent outcome after a failed subtest. No product or crypto behavior changes.
-The [build guide](build-guide.md#acceptance-evidence) owns each field's meaning.
+The [build guide](build-guide.md#receipt-outcome-fields) owns each field's meaning.
 
 **VERIFIED:** real isolated pytest subprocesses cover ordinary tests and
 pytest/unittest subtests. They also cover skips, phase errors, collection
