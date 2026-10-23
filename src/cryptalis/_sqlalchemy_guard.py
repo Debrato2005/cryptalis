@@ -49,6 +49,7 @@ class _Cursor:
         self._raw, self._connection, self._error = raw, connection, error
         self._pending = None
         self._completed = None
+        self._native_page = None
 
     def __getattr__(self, name):
         if name in ("description", "rowcount", "arraysize", "fetchone", "fetchmany", "fetchall", "close", "closed", "statusmessage"):
@@ -118,7 +119,7 @@ class _Connection:
         raise self._error()
 
 
-def install_guard(engine, error, before_execute, check_cursor, listener_error):
+def install_guard(engine, error, before_execute, check_cursor, listener_error, prepare_many):
     """Install only after target validation and draining idle native handles."""
     event.listen(engine, "before_execute", before_execute, retval=True)
 
@@ -153,12 +154,55 @@ def install_guard(engine, error, before_execute, check_cursor, listener_error):
     # actual guarded execution before SQLAlchemy reports ORM/result success.
     event.listen(engine, 'after_cursor_execute', completed)
 
+    native_many = engine.dialect._deliver_insertmanyvalues_batches
+
+    def many(connection, cursor, statement, parameters, generic_setinputsizes, context):
+        scoped = prepare_many(context, parameters)
+        if type(scoped) is not bool:
+            raise listener_error()
+        delegate = native_many(connection, cursor, statement, parameters, generic_setinputsizes, context)
+        if not scoped:
+            yield from delegate
+            return
+        try:
+            if (type(cursor) is not _Cursor or cursor._native_page is not None or
+                    type(parameters) not in (list, tuple) or not parameters):
+                raise listener_error()
+            original = tuple(values(row) for row in parameters)
+            offset = 0
+            for page in delegate:
+                if type(page.batch) not in (list, tuple):
+                    raise listener_error()
+                size = len(page.batch)
+                if (cursor._native_page is not None or type(page.current_batch_size) is not int or
+                        size <= 0 or page.current_batch_size != size or offset + size > len(original) or
+                        tuple(values(row) for row in page.batch) != original[offset:offset + size] or
+                        type(page.replaced_statement) is not str):
+                    raise listener_error()
+                cursor._native_page = context, page.replaced_statement, values(page.replaced_parameters)
+                offset += size
+                yield page
+                if cursor._native_page is not None:
+                    raise listener_error()
+            if offset != len(original):
+                raise listener_error()
+        finally:
+            if type(cursor) is _Cursor:
+                cursor._native_page = None
+            delegate.close()
+
+    engine.dialect._deliver_insertmanyvalues_batches = many
+
     def final(cursor, statement, parameters, context):
         expected, cursor._pending = cursor._pending, None
+        page, cursor._native_page = cursor._native_page, None
+        sent = values(parameters)
         if (expected is None or expected[0] is not context or not first(context) or type(statement) is not str or
-                expected[1] != statement or expected[2] != values(parameters)):
+                expected[1] != statement or expected[2] != sent):
             raise listener_error()
-        check_cursor(context, statement, parameters)
+        if page is not None and (page[0] is not context or page[1] != statement or page[2] != sent):
+            raise listener_error()
+        check_cursor(context, statement, parameters, native_page=page is not None)
 
     def wrap(raw, entry):
         entry.dbapi_connection = _Connection(raw, error)

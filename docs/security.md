@@ -40,6 +40,25 @@ driver parameters after SQLAlchemy cursor events, including exact payload
 bytes, identity and tenant, against the admitted batch. Late parameter or SQL
 replacement refuses before driver dispatch. This boundary does not make
 arbitrary host plugins trustworthy or qualify other write routes.
+For one protected scalar RETURNING, the processor also requires a real input
+identity and exact prepared ciphertext or NULL for that native group.
+SELECT's outer-join NULL-identity rule does not apply to inserted rows.
+A valid fresh frame for the same context still refuses if this operation did
+not prepare it. This stronger write-result check does not establish general
+read freshness or completeness.
+
+Native supplemental RETURNING can authenticate
+during `execute()`, so later iteration can read already authenticated plaintext.
+An expired lease refuses at actual key use without a provider refresh.
+Roll back after a result failure. SQL can succeed before result authentication.
+
+The native bulk page hook validates processed input against the admitted batch.
+Each page must retain its original frozen input slice before the hook freezes
+the native generated SQL/parameters. Earlier callbacks cannot change a later
+page's binary data and get a new permit for that change.
+The permit belongs to one cursor/context and one dispatch, then clears.
+No SQL parser, replacement compiler, result assembly or cryptographic format is added.
+
 Typed native savepoint controls carry no data permit. Their final SQL must
 match native compilation, with empty parameters and unchanged configuration.
 

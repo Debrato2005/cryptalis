@@ -56,7 +56,30 @@ The native bulk Result returns no rows and adds no objects to the identity map.
 `render_nulls=True` retains native explicit-NULL grouping.
 Rollback and nested savepoint cleanup retain native behavior.
 
-RETURNING, upserts, Core INSERT, statement-embedded values, INSERT SELECT,
+Request one direct protected mapped column when the caller needs inserted values:
+
+```python
+with sessions(tenant_id=authenticated_tenant) as session:
+    result = session.execute(
+        insert(Customer).returning(Customer.note, sort_by_parameter_order=True),
+        [{"id": first_uuid, "tenant_id": authenticated_tenant, "note": "first"},
+         {"id": second_uuid, "tenant_id": authenticated_tenant, "note": None}],
+        execution_options={"render_nulls": True},
+    )
+    inserted_notes = result.scalars().all()
+    session.commit()
+```
+
+The native Result also supports one-column Rows and retains its mapped result key.
+It adds no objects to the identity map. Explicit parameter-order requests retain
+native ordering. Without that request, input order has no promise.
+Native processing can authenticate during `execute()`. Later iteration can read
+plaintext that already passed authentication, even after its key lease expires.
+Any later key use must pass its lease check. Roll back after a result failure before retry.
+The INSERT can succeed before result authentication.
+
+Tuple/entity RETURNING, labels, expressions, aliases, loader options,
+caller `return_defaults()`, upserts, Core INSERT, statement-embedded values, INSERT SELECT,
 SQL expressions in rows and the legacy bulk methods remain unadmitted.
 A used callable, context-sensitive, SQL or server default also refuses.
 An explicit value can bypass an unused default. Protected field defaults remain

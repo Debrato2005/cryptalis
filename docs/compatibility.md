@@ -47,6 +47,7 @@ Rollback/removal transforms current data through decrypt-back until explicit fin
 |---|---|---|
 | Text storage/read/write, entity/scalar projection, SQL NULL | SUPPORTED | Randomized authenticated payload. Preserve exact str, empty text, NULL, native ORM state, and expected row/tenant context |
 | Mapped dictionary INSERT without RETURNING | SUPPORTED | Attached sync/async `Session.execute(insert(Model), list[dict])`, explicit typed IDs and tenant scope, copied attribute dictionaries, native NULL/grouping, autoflush, uniqueness and transaction behavior. Other bulk routes remain unadmitted |
+| Mapped dictionary INSERT with one protected scalar RETURNING | SUPPORTED | Exactly one direct protected mapped column. Preserve native Row/scalar keys/types, grouping, paging, parameter-order requests and empty identity map. Authenticate against exact prepared input. Tuple/entity, label/expression/alias, loader-option and caller return_defaults forms remain unadmitted |
 | Equality `==` and `IN` | SUPPORTED | Declared full tenant/domain-bound HMAC term. Preserve typed binds and native NULL/empty-list truth tables |
 | Simple negative equality `!=`, `NOT IN`, and NULL presence | SUPPORTED | Reuse the authenticated term for values and a SQL NULL check for storage-only fields. Preserve native three-valued truth, NULL elements, empty lists, and outer-join NULL extension. General Boolean NOT remains unadmitted |
 | Tenant-scoped uniqueness | SUPPORTED | Full term plus tenant scope in a race-safe native unique index. Explicit single-tenant declaration supplies its one scope |
@@ -84,7 +85,10 @@ Register unchanged engine-instance cursor observers after attachment.
 Preexisting, class-level and connection-local cursor hooks refuse. Changes to
 captured SQL, binary bytes or typed primitive/identity binds also refuse before
 the driver. Native ORM RETURNING pages for unprotected server defaults retain
-their native results. This adds no mapped bulk RETURNING admission.
+their native results. The bounded protected scalar route also validates native
+page inputs and freezes each exact generated page before cursor callbacks.
+It preserves native ordering without an input-order promise unless requested.
+Its result proof does not establish hostile-database result completeness or ordering.
 
 Native VARCHAR preserves its character limit and assignment semantics through protection and decrypt-back.
 Typed length failures require rollback, as the native ORM flush does.

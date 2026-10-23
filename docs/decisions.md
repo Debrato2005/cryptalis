@@ -58,6 +58,41 @@ Their absolute guarantees are also removed: immediate arbitrary-worker denial, a
 whole-result publication, subject cryptographic erasure, and hostile-database completeness/freshness.
 A removed mechanism cannot retain its old guarantee through wording alone.
 
+## Mapped protected scalar RETURNING: 2026-10-23
+
+Extend mapped dictionary INSERT with exactly one direct protected mapped column
+in `returning()`. Preserve native one-column Row/scalar results, parameter-order
+requests, grouping, paging and transaction behavior. Tuple/entity results,
+labels, expressions, aliased columns and loader options need separate admission.
+Caller `return_defaults()` remains refused. Admit only the native derived
+primary-key/defaults forms associated with the validated scalar request.
+Resolve owned column lineage because ordinary ORM annotations can retain native types.
+
+Capture each native group's immutable record-to-prepared-frame expectations
+during compilation. Allow distinct prepared frames for duplicate input IDs so
+an earlier result does not replace a later native uniqueness failure.
+Require the returned tenant, real record identity and exact prepared frame or
+NULL before plaintext release. Keep SELECT outer-join NULL extension separate.
+Processors retain prepared keys and immutable expectations, without the operation
+or session. Lease checks occur at actual cryptographic use.
+
+Reuse the installed dialect's native insertmanyvalues generator. Validate its
+processed input against the admitted batch before paging. Compare each page's
+input rows with the original frozen slice before accepting its SQL/parameters.
+This prevents an earlier callback from changing a future page unnoticed.
+Consume one exact page permit on its cursor/context at final driver dispatch.
+Keep the shared first-capture and completed-dispatch checks.
+
+Do not parse generated parameter suffixes, compile replacement SQL, assemble a
+replacement Result or change CF1. The private dialect hook needs native evidence
+in each selected compatibility cell. [Status](status.md) owns that evidence.
+
+Native supplemental RETURNING can decrypt during `execute()`.
+Later iteration can therefore read plaintext that already passed authentication.
+Expired keys must fail before a later cryptographic use, without provider refresh.
+Result failure can follow successful uncommitted SQL. Require rollback before retry.
+This adds no hostile-database completeness, ordering or general freshness guarantee.
+
 ## Shared driver event boundary: 2026-10-23
 
 Extend final driver admission to ordinary flush and protected read paths.
@@ -99,7 +134,9 @@ field, typed identity, tenant and operation. Match final driver values against
 the admitted batch after cursor events. No new cryptographic format, provider
 authority, query representation or transaction state machine is introduced.
 
-Keep RETURNING, embedded values, SQL row expressions, Core INSERT, upserts,
+The later [scalar RETURNING decision](#mapped-protected-scalar-returning-2026-10-23)
+supersedes the original blanket RETURNING refusal.
+Keep other RETURNING shapes, embedded values, SQL row expressions, Core INSERT, upserts,
 INSERT SELECT, legacy bulk methods and used context-sensitive defaults outside
 this admission. Explicit values can bypass unused defaults.
 

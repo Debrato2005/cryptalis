@@ -107,7 +107,20 @@ supplied protected value, including repeated dictionary references. Copy caller
 dictionaries and retain native ORM grouping, NULL omission, autoflush and errors.
 At final driver dispatch, match the actual SQL, identity, tenant and ciphertext
 against the admitted batch. Compiled parameters alone do not establish what the
-driver receives. No RETURNING, embedded statement values, Core INSERT, upsert,
+driver receives.
+
+Exactly one direct protected mapped column can use RETURNING.
+Its native Row/scalar result keeps grouping, page handling and parameter-order requests.
+Each returned scalar must match the tenant, real input identity and exact
+prepared frame or NULL. Immutable expectations come from that native group.
+They survive operation cleanup without retaining the operation or session.
+
+The dialect's native page generator supplies SQL and processed parameters.
+Validate full processed input first, then each page's rows against the original
+frozen slice. An exact one-shot page snapshot precedes cursor callbacks and
+final dispatch. Reuse native result processing and sentinel ordering.
+The private page hook needs evidence for each selected SQLAlchemy cell.
+No tuple/entity RETURNING, embedded statement values, Core INSERT, upsert,
 INSERT SELECT or row SQL expression is admitted by this route.
 
 Stock SQLAlchemy SAVEPOINT, ROLLBACK TO and RELEASE clauses need no data permit.
@@ -154,7 +167,8 @@ Attachment returns a factory called as `sessions(tenant_id=tenant_uuid)`. Await 
 The compiler lock must be trusted by the host. Physical protected columns must already be `bytea`.
 This call does not perform a schema/data transition. Attach before application sessions or model use.
 The engine must use PostgreSQL/psycopg, `echo=False`, and `hide_parameters=True`. Attachment refuses unsafe logging settings before it opens a connection or resolves a key, and it requires no checked-out connections at activation.
-Ordinary ORM flush writes, mapped dictionary INSERT without RETURNING, direct
+Ordinary ORM flush writes, mapped dictionary INSERT with optional single protected
+scalar RETURNING, direct
 projections and declared equality/IN are implemented. Simple negative equality,
 `NOT IN`, and NULL presence are admitted with native truth. Core writes, other
 bulk routes and unadmitted grammar reject.

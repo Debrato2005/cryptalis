@@ -10,6 +10,73 @@ No PostgreSQL/provider/runtime cell, production key provider, independent review
 VERIFIED below refers only to the named checks and their exact revisions.
 All other contract and promotion requirements are SPECIFIED. All seven full gates remain UNKNOWN.
 
+## Mapped protected scalar RETURNING checkpoint: 2026-10-23
+
+**IMPLEMENTED, bounded native verification:** attached sync/async mapped bulk
+INSERT admits exactly one direct protected mapped column in `returning()`.
+Native one-column Rows/scalars keep mapped keys, Python types, NULL/grouping,
+paging, explicit parameter-order requests and an empty identity map.
+Caller dictionaries stay unchanged. The driver observer sees the public
+Unicode marker before protection. The same observer sees no plaintext marker afterward.
+
+Tuple/entity results, labels, expressions, aliases, loader options and caller
+`return_defaults()` remain refused. No format or provider contract changes.
+
+Each returned scalar must match its input tenant, real record identity and
+exact prepared ciphertext or NULL. Immutable expectations come from each native
+group and survive operation cleanup. Native supplemental RETURNING authenticates
+during `execute()` in the exercised cells. Lease expiry before that use refuses.
+Later iteration retains plaintext that already passed authentication without
+new provider work. Outstanding Results survive later session operations.
+SELECT outer-join NULL behavior remains separate.
+
+The native insertmanyvalues generator retains SQL construction, parameter
+association, fetches and sentinel ordering. The guard validates full processed
+input, then compares every page's rows with the original frozen slice.
+It binds exact generated SQL/parameters to one cursor/context and dispatch.
+Current-page and future-page mutation controls refuse before the altered page
+reaches raw psycopg. The shared first-capture/completion checks remain active.
+
+**VERIFIED:** the initial eight native baselines pass, then protected execution
+fails at the original RETURNING refusal. Intermediate receipts retain admission
+failures and fixture errors. Ordinary ORM annotations retain native types even
+in fresh mappings. Owned column lineage now drives admission, as for SELECT.
+Both native derived defaults forms pass. Test reads now use admitted explicit
+primary-key IN, and refusal counters exclude the factory's tenant-policy check.
+The first combined run passes 91 cases with one obsolete RETURNING refusal
+expectation. That control now checks an unadmitted public-ID result instead.
+The next run passes **100 cases**. The wrapper records 33.55 seconds.
+Controls include current/future page tampering, returned-frame/identity/NULL substitution, leases, duplicate-ID
+precedence, savepoint recovery and renamed/signed single-tenant fields.
+
+The final alternate Python 3.13.12 / SQLAlchemy 2.0.51 / psycopg-Python cell
+passes **103 cases**. The wrapper records 34.72 seconds.
+It adds TEXT/VARCHAR current-value removal
+after RETURNING insertion and a later ORM edit, plus unchanged pinned Smolink.
+All 38 app source hashes match with no model/query changes. Its real Redis,
+runtime application and import-denied package-free removal checks pass.
+All final 135 Python hashes stay stable and match the worktree.
+The full primary regression passes **2,018 tests and 18 subtests**.
+The wrapper records 624.76 seconds, with three separate-environment skips and
+48 existing DISTINCT warnings.
+Its 135 Python hashes also stay stable and match the final worktree.
+Reproducible offline archives, SBOM and all 36 installed package files pass,
+including CLI startup. Fresh-cluster/full-alternate profiles retain their prior
+revision boundaries. All seven full gates remain UNKNOWN.
+
+Evidence: [initial native controls](_reset/bulk-returning-red-20261023.json),
+[first integration](_reset/bulk-returning-green-20261023.json),
+[native annotation admission](_reset/bulk-returning-native-green-20261023.json),
+[derived-form admission](_reset/bulk-returning-lineage-green-20261023.json),
+[native read fixtures](_reset/bulk-returning-derived-green-20261023.json),
+[driver/result controls](_reset/bulk-returning-boundary-20261023.json),
+[native recovery and identity controls](_reset/bulk-returning-recovery-20261023.json),
+[full primary regression](_reset/bulk-returning-full-20261023.json),
+[final alternate regression](_reset/bulk-returning-sa20-20261023.json),
+[final app evidence](_reset/bulk-returning-smolink-app-20261023.json),
+[reproducible archives](_reset/bulk-returning-release-20261023.json), and
+[installed wheel](_reset/bulk-returning-installed-20261023.json).
+
 ## Test receipt checkpoint: 2026-10-23
 
 **IMPLEMENTED, bounded verification:** the PostgreSQL wrapper adds

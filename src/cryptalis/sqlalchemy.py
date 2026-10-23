@@ -9,6 +9,7 @@ from dataclasses import dataclass, field
 from functools import wraps
 from hashlib import sha256
 import json
+from types import MappingProxyType
 from uuid import UUID
 
 from sqlalchemy import BigInteger, LargeBinary, String, Text, Uuid, cast, event, func, inspect, literal, select, type_coerce
@@ -104,6 +105,7 @@ class _Operation:
     session: object
     flushing: bool = False
     bulk_insert: object = field(default=None, repr=False)
+    bulk_returning: object = field(default=None, repr=False)
     bulk_seals: dict = field(default_factory=dict, repr=False)
     bulk_batch: tuple = field(default=(), repr=False)
     prepared: dict = field(default_factory=dict, repr=False)
@@ -139,6 +141,17 @@ class _ReadText(TypeDecorator):
         self.keys = operation.keys
         self.tenant = operation.tenant
         self.points = tuple(value for column, value in operation.points if column.compare(record_column))
+        self.returning_frames = None
+        if operation.bulk_returning is binding:
+            if not operation.bulk_batch:
+                raise UnsupportedProtectedOperation()
+            frames = {}
+            for row in operation.bulk_batch:
+                sealed = row.get(binding.column.key)
+                body = sealed.body if sealed is not None else None
+                frames.setdefault(row[binding.record.key], set()).add(body)
+            self.returning_frames = MappingProxyType({record: frozenset(bodies)
+                                                      for record, bodies in frames.items()})
 
     def process_result_value(self, value, dialect):
         if type(value) is not list or len(value) != 3:
@@ -146,6 +159,8 @@ class _ReadText(TypeDecorator):
         payload, record, tenant = value
         descriptor = self.binding.descriptor
         if record is None:
+            if self.returning_frames is not None:
+                raise AuthenticationFailed()
             valid_null_scope = (tenant is None if descriptor.tenant_codec == "uuid16/v1" else
                                 tenant == str(descriptor.table_id) == str(self.tenant))
             if payload is not None or not valid_null_scope:
@@ -165,6 +180,9 @@ class _ReadText(TypeDecorator):
                 if type(payload) is not str or len(payload) > 2 * (MAX_TEXT_BYTES + 74):
                     raise AuthenticationFailed()
                 payload = bytes.fromhex(payload)
+            if self.returning_frames is not None and (
+                    record not in self.returning_frames or payload not in self.returning_frames[record]):
+                raise AuthenticationFailed()
         except CryptoFailure:
             raise
         except Exception:
@@ -520,7 +538,8 @@ class _Attachment:
             # does not clear. Native statements can retain plaintext processors.
             inspect(model).base_mapper._compiled_cache.clear()
         engine.clear_compiled_cache()
-        install_guard(engine, UnsupportedProtectedOperation, self.before_execute, self.check_cursor, UnsafeDriverEvent)
+        install_guard(engine, UnsupportedProtectedOperation, self.before_execute, self.check_cursor,
+                      UnsafeDriverEvent, self.prepare_many)
         native_compiler = engine.dialect.statement_compiler
         class StorageCompiler(native_compiler):
             def get_select_precolumns(compiler, select, **kw):
@@ -559,6 +578,25 @@ class _Attachment:
             raise UnsupportedProtectedOperation()
         return operation
 
+    def returning_binding(self, statement, bulk):
+        if not statement._returning:
+            return None
+        if (len(statement._returning) != 1 or statement._with_options or
+                type(statement._sort_by_parameter_order) is not bool):
+            raise UnsupportedProtectedOperation()
+        return self.returning_column(statement._returning[0], bulk)
+
+    def returning_column(self, column, bulk):
+        if not isinstance(column, ColumnClause) or column.is_literal or column.table is not bulk:
+            raise UnsupportedProtectedOperation()
+        # ORM annotations can retain native types. Resolve the owned physical
+        # column by lineage, as for SELECT; native compilation deannotates it.
+        bindings = [binding for binding in self.bindings if binding.column.table is bulk and
+                    column.shares_lineage(binding.column)]
+        if len(bindings) != 1:
+            raise UnsupportedProtectedOperation()
+        return bindings[0]
+
     def admit(self, statement, flushing=False, bulk=None):
         if flushing and isinstance(statement, (Insert, Update, Delete)):
             return
@@ -566,11 +604,32 @@ class _Attachment:
             if (statement.table.name != bulk.name or statement.table.schema != bulk.schema or
                     not all(column.key in statement.table.c and
                             statement.table.c[column.key].shares_lineage(column) for column in bulk.c) or
-                    statement._values or statement._multi_values or statement._returning or
-                    statement._return_defaults or statement._post_values_clause is not None or
+                    statement._values or statement._multi_values or
+                    statement._post_values_clause is not None or
                     statement.select is not None or statement._prefixes or statement._hints or
                     statement._independent_ctes or statement.dialect_kwargs):
                 raise UnsupportedProtectedOperation()
+            operation = _operation.get()
+            current = operation is not None and operation.owner is self and operation.bulk_insert is bulk
+            if statement._return_defaults:
+                binding = operation.bulk_returning if current else None
+                primary = inspect(binding.model).primary_key if binding is not None else ()
+                defaults = statement._return_defaults_columns or ()
+                supplemental = statement._supplemental_returning or ()
+                if (binding is None or len(defaults) != len(primary) or
+                        any(not isinstance(left, ColumnClause) or left.is_literal or left.table is not bulk or
+                            not left.shares_lineage(right) for left, right in zip(defaults, primary)) or
+                        statement._with_options or type(statement._sort_by_parameter_order) is not bool):
+                    raise UnsupportedProtectedOperation()
+                if statement._returning:
+                    if supplemental or self.returning_binding(statement, bulk) is not binding:
+                        raise UnsupportedProtectedOperation()
+                elif len(supplemental) != 1 or self.returning_column(supplemental[0], bulk) is not binding:
+                    raise UnsupportedProtectedOperation()
+            else:
+                binding = self.returning_binding(statement, bulk)
+                if current and binding is not operation.bulk_returning:
+                    raise UnsupportedProtectedOperation()
             return
         if not isinstance(statement, Select):
             raise UnsupportedProtectedOperation()
@@ -747,7 +806,17 @@ class _Attachment:
             return statement, changed if multiparams else [], {} if multiparams else changed[0]
         return statement, multiparams, params
 
-    def check_cursor(self, context, statement, parameters):
+    def prepare_many(self, context, parameters):
+        operation = self._check()
+        if operation.bulk_insert is None or operation.bulk_returning is None:
+            return False
+        if context.compiled is None:
+            raise UnsupportedProtectedOperation()
+        self.admit(context.compiled.statement, bulk=operation.bulk_insert)
+        self.check_bulk_parameters(operation, context, parameters)
+        return True
+
+    def check_cursor(self, context, statement, parameters, native_page=False):
         if context.compiled is None:
             raise UnsupportedProtectedOperation()
         if type(context.compiled.statement) in _SAVEPOINT_CONTROLS:
@@ -759,35 +828,43 @@ class _Attachment:
         operation = self._check()
         self.admit(context.compiled.statement, operation.flushing, operation.bulk_insert)
         if operation.bulk_insert is not None and isinstance(context.compiled.statement, Insert):
-            self.check_bulk_rows(operation, context.compiled_parameters)
-            groups = context.compiled_parameters
-            actual = parameters if context.executemany else [parameters]
-            if (statement != str(context.compiled) or len(groups) != len(actual) or
-                    len(groups) != len(operation.bulk_batch)):
-                raise UnsupportedProtectedOperation()
-            bindings = [b for b in self.bindings if b.column.table is operation.bulk_insert]
-            first = bindings[0]
-            columns = [first.record] + ([first.tenant] if first.tenant is not None else [])
-            binary = context.dialect.dbapi.Binary
-            for group, sent, admitted in zip(groups, actual, operation.bulk_batch):
-                if type(sent) is not dict or set(sent) != set(group):
+            if native_page:
+                if operation.bulk_returning is None:
                     raise UnsupportedProtectedOperation()
-                for column in columns:
-                    value = admitted[column.key]
-                    if (type(sent[column.key]) is not type(value) or sent[column.key] != value or
-                            group[column.key] != value):
-                        raise UnsupportedProtectedOperation()
-                for binding in bindings:
-                    key = binding.column.key
-                    if (key in group) != (key in admitted):
-                        raise UnsupportedProtectedOperation()
-                    if key not in group:
-                        continue
-                    sealed = admitted[key]
-                    value = sent[key]
-                    if group[key] is not sealed or (value is not None if sealed.body is None else
-                            type(value) is not binary or type(value.obj) is not bytes or value.obj != sealed.body):
-                        raise UnsupportedProtectedOperation()
+                return
+            if statement != str(context.compiled):
+                raise UnsupportedProtectedOperation()
+            actual = parameters if context.executemany else [parameters]
+            self.check_bulk_parameters(operation, context, actual)
+
+    def check_bulk_parameters(self, operation, context, actual):
+        self.check_bulk_rows(operation, context.compiled_parameters)
+        groups = context.compiled_parameters
+        if len(groups) != len(actual) or len(groups) != len(operation.bulk_batch):
+            raise UnsupportedProtectedOperation()
+        bindings = [b for b in self.bindings if b.column.table is operation.bulk_insert]
+        first = bindings[0]
+        columns = [first.record] + ([first.tenant] if first.tenant is not None else [])
+        binary = context.dialect.dbapi.Binary
+        for group, sent, admitted in zip(groups, actual, operation.bulk_batch):
+            if type(sent) is not dict or set(sent) != set(group):
+                raise UnsupportedProtectedOperation()
+            for column in columns:
+                value = admitted[column.key]
+                if (type(sent[column.key]) is not type(value) or sent[column.key] != value or
+                        group[column.key] != value):
+                    raise UnsupportedProtectedOperation()
+            for binding in bindings:
+                key = binding.column.key
+                if (key in group) != (key in admitted):
+                    raise UnsupportedProtectedOperation()
+                if key not in group:
+                    continue
+                sealed = admitted[key]
+                value = sent[key]
+                if group[key] is not sealed or (value is not None if sealed.body is None else
+                        type(value) is not binary or type(value.obj) is not bytes or value.obj != sealed.body):
+                    raise UnsupportedProtectedOperation()
 
     def check_bulk_rows(self, operation, groups):
         bindings = [b for b in self.bindings if b.column.table is operation.bulk_insert]
@@ -876,7 +953,10 @@ def _bulk_insert(state):
     bindings = owner.models[mapper.class_]
     first = bindings[0]
     table = first.column.table
+    if statement._return_defaults:
+        raise UnsupportedProtectedOperation()
     owner.admit(statement, bulk=table)
+    returning = owner.returning_binding(statement, table)
     options = state.execution_options
     if (set(options) - {'render_nulls', 'autoflush', 'dml_strategy', 'prebuffer_rows',
                        '_sa_orm_insert_options', '_result_disable_adapt_to_context'} or
@@ -908,7 +988,8 @@ def _bulk_insert(state):
                             column.default is not None and not column.default.is_scalar):
                 raise UnsupportedProtectedOperation()
         rows.append(row)
-    operation = _Operation(owner, session._keys(), session._tenant, session, bulk_insert=table)
+    operation = _Operation(owner, session._keys(), session._tenant, session,
+                           bulk_insert=table, bulk_returning=returning)
     failed_index = None
     for index, row in enumerate(rows):
         record = row[first.record_attribute]

@@ -21,6 +21,17 @@ No objective is complete until its acceptance evidence and applicable gate pass.
 
 ## Current boundary
 
+- Mapped bulk INSERT now returns one direct protected scalar through native
+  Row/scalar results and page handling. Exact prepared-input proofs reject
+  changed frames, NULL presence or row context. Current/future page mutation,
+  lease use, native error precedence, savepoint recovery and typed identity
+  controls pass. The affected primary run passes 100 cases.
+  The final alternate cell passes 103 cases, including TEXT/VARCHAR current-value
+  removal and unchanged Smolink. Final 135-file hashes stay stable.
+  The full primary regression passes 2,018 tests and 18 subtests, with three
+  separate-environment skips and 48 existing warnings at that final bundle.
+  Reproducible archives and all 36 installed files pass. See the
+  [scalar RETURNING checkpoint](status.md#mapped-protected-scalar-returning-checkpoint-2026-10-23).
 - The wrapper now records ordinary calls, subtests, setup, teardown and
   failed/skipped collection outcomes separately. Historical counters retain
   their original meaning. The focused reporter/preflight run passes 24 cases.
@@ -111,7 +122,7 @@ Requirement text is abbreviated. The full definitions remain in the research
 | OBJ-QUERY-01 | Exact equality, `IN`, scoped uniqueness, NULL logic, races | VERIFIED, bounded | `_sqlalchemy_search.py`, slice 4 receipt; native concurrency tests | Keep grammar reconciliation current |
 | OBJ-QUERY-02 | Ordinary SQL correctness: NULL predicates, aliases, joins, projections | PARTIAL | Native sync/async controls; textual reference admission and simple negative/NULL predicates added 2026-10-19 | Continue finite native-oracle matrix; general Boolean NOT and protected joins remain unadmitted |
 | OBJ-QUERY-03 | Ordering, ranges, prefix/text search, aggregates, other types | SPECIFIED | Loud refusal only | Research and admit each profile separately |
-| OBJ-QUERY-04 | INSERT/UPDATE/DELETE, bulk, RETURNING, triggers, cascades, savepoints | PARTIAL | ORM flush writes and attached sync/async mapped dictionary INSERT without RETURNING; native NULL/grouping, typed context, errors and savepoints; final bulk driver bytes checked | Qualify RETURNING, broader DML, used defaults and each trigger/cascade effect separately |
+| OBJ-QUERY-04 | INSERT/UPDATE/DELETE, bulk, RETURNING, triggers, cascades, savepoints | PARTIAL | ORM flush writes and attached sync/async mapped dictionary INSERT, with optional single protected scalar RETURNING; native NULL/grouping, typed context, errors and savepoints; exact driver/page/input-result checks | Qualify tuple/entity RETURNING, broader DML, used defaults and each trigger/cascade effect separately |
 | OBJ-QUERY-05 | Versioned compatibility corpus and read-only scanner | PARTIAL | Native-vs-attached tests and receipts | Build a real pre-adoption scanner; reconcile current revisions |
 | OBJ-LIFE-01 | Deterministic plan/apply/verify with diagnostics | VERIFIED, bounded | `migration.py` plan/apply/verify; compiler inspection maps SQLAlchemy and direct psycopg errors to safe SQLSTATE; slice 5 receipts | Broader schema and failure boundaries |
 | OBJ-LIFE-02 | Resumable, atomic, byte-bounded backfill with verification | VERIFIED, bounded | Journal, advisory lock, chunks, crash/resume tests | Exact memory/WAL bounds remain host inputs |
