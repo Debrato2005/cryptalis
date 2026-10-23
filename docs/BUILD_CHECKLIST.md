@@ -21,6 +21,14 @@ No objective is complete until its acceptance evidence and applicable gate pass.
 
 ## Current boundary
 
+- The wrapper now records ordinary calls, subtests, setup, teardown and
+  failed/skipped collection outcomes separately. Historical counters retain
+  their original meaning. The focused reporter/preflight run passes 24 cases.
+  The alternate cell also passes 24 cases. The full primary run passes
+  1,978 tests and 18 subtests, with three separate-environment skips and
+  48 existing warnings. All 132 Python hashes stay stable and match the worktree.
+  This full run includes the final shared-driver buffer fix.
+  See the [receipt checkpoint](status.md#test-receipt-checkpoint-2026-10-23).
 - Implemented scope includes native text/VARCHAR storage, equality/IN,
   tenant uniqueness, sync/async attachment, maintenance protection,
   decrypt-back/removal, and separate root-rewrap, payload and search rotation.

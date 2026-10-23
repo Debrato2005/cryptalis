@@ -10,6 +10,42 @@ No PostgreSQL/provider/runtime cell, production key provider, independent review
 VERIFIED below refers only to the named checks and their exact revisions.
 All other contract and promotion requirements are SPECIFIED. All seven full gates remain UNKNOWN.
 
+## Test receipt checkpoint: 2026-10-23
+
+**IMPLEMENTED, bounded verification:** the PostgreSQL wrapper adds
+`pytest_report_counts` without changing historical `counts` or `modules`.
+It separates final ordinary calls, subtest calls, setup, teardown and
+failed/skipped collection reports. It also records selected item count.
+The wrapper retains report references until session finish because pytest can
+change a parent outcome after a failed subtest. No product or crypto behavior changes.
+The [build guide](build-guide.md#acceptance-evidence) owns each field's meaning.
+
+**VERIFIED:** real isolated pytest subprocesses cover ordinary tests and
+pytest/unittest subtests. They also cover skips, phase errors, collection
+failure, expected failures and non-strict unexpected passes.
+The initial repository control fails all three cases on the missing field.
+The corrected focused wrapper run passes **24 cases** in 2.69 seconds,
+including source-stability and development-preflight regressions.
+A mistaken test path produced no tests and exit 4. Its receipt remains separate.
+The alternate Python 3.13 cell passes the same 24 cases in 3.08 seconds.
+
+The full primary regression passes **1,978 tests and 18 subtests** in
+552.20 seconds, with three separate-environment skips and 48 existing DISTINCT warnings.
+The new receipt separates 1,978 passed/one skipped ordinary call, 18 passed
+subtests and two collection skips. It records 1,979 selected items.
+All 132 Python source hashes stay unchanged and match the worktree.
+This full run also covers the shared driver's final exact-buffer fix below.
+
+Other pytest versions and external report plugins remain unverified.
+These counters do not qualify a production gate. Product package bytes retain
+the preceding reproducible archive evidence. No new wheel build was needed.
+
+Evidence: [initial missing-field failures](_reset/report-counts-red-20261023.json),
+[invalid test path](_reset/report-counts-green-20261023.json),
+[focused reporter/preflight regression](_reset/report-counts-focused-20261023.json),
+[alternate reporter/preflight regression](_reset/report-counts-sa20-20261023.json), and
+[full primary regression](_reset/report-counts-full-20261023.json).
+
 ## Shared driver event checkpoint: 2026-10-23
 
 **IMPLEMENTED, bounded native verification:** the shared guard captures each

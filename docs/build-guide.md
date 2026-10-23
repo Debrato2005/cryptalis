@@ -125,6 +125,19 @@ Receipts retain the original pytest exit code and the changed source paths.
 Review those changes before a new run. Do not overwrite the failed receipt.
 This check compares two snapshots and does not detect an intervening edit that is restored.
 
+Receipts also record `pytest_report_counts`. It separates ordinary `test_calls`,
+`subtest_calls`, `setup`, `teardown`, and failed/skipped `collection` reports.
+Each bucket counts final raw pytest outcomes. `selected_items` counts collected
+items after selection, including items whose setup prevents a call.
+Keep these buckets separate. Their sum is not a test count.
+
+Expected failures retain raw skipped outcomes. Non-strict unexpected passes
+retain raw passed outcomes. These fields do not reproduce terminal categories.
+The legacy `counts` and `modules` retain their original call/error aggregation,
+which includes subtest calls and omits collection/setup skips.
+The counter checks run with pytest 9.1.1 and its built-in pytest/unittest subtests.
+Other versions and external report plugins remain unverified.
+
 ### Pinned external application check
 
 `tests/test_smolink_application.py` extracts Smolink revision

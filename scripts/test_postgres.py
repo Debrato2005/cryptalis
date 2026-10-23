@@ -222,15 +222,50 @@ def development_preflight():
 
 class Results:
     def __init__(self):
+        from _pytest.reports import TestReport
+        try:
+            from _pytest.subtests import SubtestReport
+        except ImportError:
+            SubtestReport = ()
+        self._test_report_type = TestReport
+        self._subtest_report_type = SubtestReport
+        self._reports = []
+        self._collection_reports = []
         self.counts = {}
         self.modules = {}
+        self.pytest_report_counts = {}
 
     def pytest_runtest_logreport(self, report):
+        if isinstance(report, self._test_report_type):
+            self._reports.append(report)
         if report.when == "call" or report.failed:
             key = report.outcome if report.when == "call" else "errors"
             self.counts[key] = self.counts.get(key, 0) + 1
             counts = self.modules.setdefault(report.nodeid.split("::", 1)[0], {})
             counts[key] = counts.get(key, 0) + 1
+
+    def pytest_collectreport(self, report):
+        if report.skipped or report.failed:
+            self._collection_reports.append(report)
+
+    def pytest_sessionfinish(self, session, exitstatus):
+        # Reporting hooks can change a parent outcome after a subtest fails.
+        # Keep report references and partition their final raw outcomes here.
+        counts = {name: {} for name in (
+            'test_calls', 'subtest_calls', 'setup', 'teardown', 'collection')}
+        counts['selected_items'] = len(session.items)
+        for report in self._reports:
+            if report.when == 'call':
+                category = ('subtest_calls' if isinstance(report, self._subtest_report_type)
+                            else 'test_calls')
+            else:
+                category = report.when
+            bucket = counts[category]
+            bucket[report.outcome] = bucket.get(report.outcome, 0) + 1
+        for report in self._collection_reports:
+            bucket = counts['collection']
+            bucket[report.outcome] = bucket.get(report.outcome, 0) + 1
+        self.pytest_report_counts = counts
 
 
 def main():
@@ -314,6 +349,7 @@ def main():
             "source_after_sha256": {path: after.get(path) for path in changed},
             "preflight": {"select_1_each": "passed", "sha256_prefixes": fingerprints(urls)},
             "pytest_args": pytest_args, "counts": results.counts, "exit_code": code,
+            "pytest_report_counts": results.pytest_report_counts,
             "pytest_exit_code": pytest_code,
             "modules": results.modules, "elapsed_seconds": elapsed,
             "gates": {name: "UNKNOWN" for name in (
