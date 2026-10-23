@@ -678,10 +678,12 @@ class _Attachment:
                             not set(field["queries"]) <= {"equality", "unique"}):
                         raise PolicyMismatch()
                     admitted = None
-                    if self.deployment is not None and len(self.deployment) == 3:
-                        from cryptalis.restore import _frame_expression, admitted_frame
-                        item = admitted_frame(self.deployment[2], model, field)
-                        admitted = _frame_expression(item['definition']) if item is not None else None
+                    if self.deployment is not None:
+                        from cryptalis.restore import frame_admissions
+                        deployment_plan = self.deployment[0]
+                        restore = self.deployment[2] if len(self.deployment) == 3 else None
+                        admitted = frame_admissions(deployment_plan.document, model, restore).get(
+                            field['payload_column'] + '_frame')
                     validate_search_storage(connection, model, field, admitted=admitted)
                 descriptor = FieldDescriptor.from_compiled(field["descriptor"], field["descriptor_digest"])
                 if (str(descriptor.domain_id), str(descriptor.table_id), str(descriptor.field_id)) != (

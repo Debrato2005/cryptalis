@@ -21,6 +21,57 @@ and [competitive capability matrix](research/capability-matrix.md) govern priori
 Progress follows complete real-application journeys and resolved production requirements.
 All seven production gates remain UNKNOWN.
 
+## Adopted-target root rewrap: 2026-10-24
+
+**VERIFIED, bounded local PostgreSQL 16 profiles:** root rewrap now accepts the
+original ACTIVE plan, pin and explicit restore binding after genuine database
+restore and adoption. Rewrap/v2 records that binding. The transition/v5 successor
+uses the adopted target and retains flat, ordered restore lineage. Repeated
+rewrap preserves that lineage and the existing CF1 frames and search index.
+Ordinary rewrap/v1 and transition/v2 artifacts retain their formats.
+
+The [expanded source run](_reset/fresh-cluster-restore-20261024-4.json) passes
+17 controls in 25.17 seconds, after the [source export](_reset/fresh-cluster-export-20261024-5.json).
+The [native VARCHAR profile](_reset/fresh-cluster-restore-20261024-5.json) passes
+the same 17 in 24.59 seconds. The [actual installed wheel](_reset/fresh-cluster-restore-20261024-6.json)
+passes all 17 TEXT controls in 25.10 seconds on Python 3.13.12.
+Controls cover missing probes, wrong binding/pin/target/custody, wrong roots,
+unselected generations, authentication failure, PENDING retries and cancellation.
+Failed cancellation after the actual guard drop rolls back its source-state
+change and fence removal. SIGKILL and lost actual COMMIT replies recover from
+the same disk artifacts. Terminal cancellation retries preserve later edits,
+including a source-only fresh process without target custody.
+
+The complete chain performs repeated rewrap, another real pg_dump/restore into
+a distinct database, new adoption with inherited CHECK forms, another rewrap,
+current-value edits, decrypt-back and removal. A fresh import-denied process
+then reads the latest values and performs native search and CRUD.
+
+The [previous installed wheel](_reset/fresh-cluster-restore-20261024.json)
+reproduces the missing API in three controls. The [expanded RED](_reset/fresh-cluster-restore-20261024-3.json)
+records 15 passes and two failures. One exposes inconsistent custody metadata
+that now refuses against the original source policies before provider work.
+The other records a test fixture reusing an attached engine; the fixture now
+uses a fresh engine. The earlier adapter variable failure is also
+[retained](_reset/fresh-cluster-export-20261024-2.json).
+
+The [full primary regression](_reset/adopted-rewrap-full-primary-20261024.json)
+passes 2,430 tests plus 18 subtests in 729.16 seconds. Eleven skips and 48 existing
+deprecation warnings remain. All 194 Python hashes stay unchanged across the
+full run and the final fresh-target runs. The
+[actual installed affected suite](_reset/adopted-rewrap-installed-affected-20261024.json)
+passes 103 controls in 71.84 seconds, including root-rewrap/restore controls,
+tenant pool isolation and the unchanged SQLModel HTTP/JWT/SMTP journey through
+current-value removal and an import-denied restart. One existing application
+deprecation warning remains. The [final boundary](_reset/adopted-rewrap-final-boundary-20261024.json)
+binds these receipts, unchanged cryptographic modules, packaged sources and docs.
+The [artifact check](_reset/adopted-rewrap-release-final-20261024.json) verifies
+repeatable wheel/sdist builds, metadata, RECORD, SBOM, 40 installed files and
+isolated CLI execution. Host custody, fencing, quarantine and publication remain
+external assertions. Payload/search rotation on adopted lineage refuses before
+database or key effects. These workflows and all seven production gates remain
+open. See the [format decision](decisions.md#adopted-target-root-rewrap-2026-10-24).
+
 ## Bounded session pool isolation: 2026-10-24
 
 **VERIFIED, local correctness profile:** independent sync Sessions and async

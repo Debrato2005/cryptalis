@@ -371,7 +371,7 @@ cancellation. It admits the exact P identity before connection and reports
 `runtime_metadata_matches: false` with `verification: NOT_PERFORMED`.
 Recorded BACKFILLED progress does not authenticate current frames or admit
 an application deployment. It needs no keys or maintenance locks and makes
-no writes. Adopted-target rotation remains unsupported; the CLI refuses a
+no writes. Adopted-target payload/search rotation remains unsupported; the CLI refuses a
 P restore-binding option before reading that binding or connecting.
 [The walkthrough](walkthrough-migration.md#inspect-rotation-preparation)
 owns the full operator contract.
@@ -624,6 +624,20 @@ source policy, retained roots, frames, schema and lineage before guard removal.
 The target provider need not remain available. A terminal retry inspects current
 source authority and cannot revive a source superseded by a later operation.
 See [lifecycle](lifecycle.md#changes-and-rotation) and [status](status.md#active-root-rewrap-checkpoint-2026-10-23).
+
+Adopted-target root rewrap retains the explicit original binding in rewrap/v2
+and flat inherited restore lineage in transition/v5. Binding identity, original
+source custody and recognized frame CHECK/probe admission precede provider work.
+Historical bindings retain schema evidence, not successor publication authority.
+The successor requires its own current host pin. Cancellation restores the exact
+adopted source state under its republished source pin and original binding.
+It needs no target provider and cannot replay old data on a terminal retry.
+The [17-control source profile](_reset/fresh-cluster-restore-20261024-4.json)
+supplies no new cryptographic or host authority. See the
+[lifecycle contract](lifecycle.md#adopted-target-root-rewrap-2026-10-24),
+[format decision](decisions.md#adopted-target-root-rewrap-2026-10-24) and
+[current evidence](status.md#adopted-target-root-rewrap-2026-10-24).
+
 **IMPLEMENTED, internal batch only:** `prepare_payload_rotation_batch(rows, field, tenant,
 source=..., target=...)` decodes each current frame under the exact source payload
 generation, reseals the same exact text under the target generation, preserves record
@@ -725,7 +739,7 @@ bounds remain unqualified. The existing restore-binding format supports the
 bounded search-backup profile. An independent generation-2 search/HMAC decoder
 and the product reader recover current values after publication edits. A valid
 old-generation frame and the original source policy fail adoption. Later adopted
-edits survive decrypt-back and removal. Rotation on adopted restored targets
+edits survive decrypt-back and removal. Payload/search rotation on adopted restored targets
 remains unsupported. External custody, current host authority, and source fencing
 remain unqualified. [Status](status.md) owns executable evidence.
 All seven full gates remain UNKNOWN.

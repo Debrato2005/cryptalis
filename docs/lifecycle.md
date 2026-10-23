@@ -299,7 +299,7 @@ Shared `migration.apply` accepts A only for ACTIVE publication with an
 ACTIVATING or ACTIVE pin. ACTIVATING repeats A's target proof even if the
 journal claims ACTIVE. A genuine ACTIVE pin permits later application edits
 and latest-value decrypt-back/removal. The existing restore-binding format remains
-the selected recovery contract. Rotation on an adopted target stays unsupported.
+the selected recovery contract. Payload/search rotation on an adopted target stays unsupported.
 
 Measured `copy_rows_per_second` and `copy_wal_bytes_per_row` must include native
 maintenance of every affected expression and unique index. The terminal copy
@@ -360,10 +360,44 @@ source edits, repeat cancellation leaves those edits intact. A later operation
 that supersedes the source prevents an old cancellation from reviving it.
 Inspect current progress with the original source plan and current source pin.
 An ACTIVE successor requires a new rewrap rather than cancellation.
-Rewrap and cancellation on an adopted restored target remain unimplemented.
+The [adopted-target extension](#adopted-target-root-rewrap-2026-10-24) defines
+the separate rewrap and cancellation path for an adopted copy.
 After activation, a new rewrap can change custody again without rewriting data.
 The full lifecycle gate remains UNKNOWN.
 See [status](status.md#active-root-rewrap-checkpoint-2026-10-23).
+
+### Adopted-target root rewrap: 2026-10-24
+
+Supply `restore=binding` to `plan_rewrap` for the first rewrap on an adopted
+copy. Preserve that exact binding in rewrap/v2. A source with inherited v5
+lineage can use `restore=None`. The v5 successor records the effective target,
+complete flat adoption lineage and ordinary ordered predecessors. Shared
+schema checks retain each admitted restored CHECK through later operations
+and backups. Newer recorded definitions take precedence for the same field.
+
+Before first execution, validate the original source, binding and current
+adopted journal state. Check every custody entry against the original source
+policy map before effects. Inherited bindings remain historical records after
+custody changes. Once the successor is PENDING, retry against that successor.
+The superseded source cannot pass its former ACTIVE-state check.
+Publish the successor with its own current pin. Its inherited binding records
+history and cannot substitute for successor publication authority.
+
+Cancel only under the republished original source ACTIVE pin and its original
+binding. Restore its exact original journal state and remove successor guards
+atomically. A terminal retry preserves later application edits and cannot
+revive a source that another operation superseded. Cancellation cannot republish
+the old binding as successor authority. An ACTIVE successor needs a new rewrap.
+Payload/search rotation on adopted v5 targets still refuses. The host retains
+custody policies, fenced-source evidence and restore approval.
+
+**VERIFIED, bounded native profile:** one
+[source export](_reset/fresh-cluster-export-20261024-5.json) and
+[17 fresh-target controls](_reset/fresh-cluster-restore-20261024-4.json) pass.
+The [earlier expanded failures](_reset/fresh-cluster-restore-20261024-3.json)
+remain recorded. Full-suite and installed-application results retain their
+separate verification boundaries. See the
+[adopted-target format decision](decisions.md#adopted-target-root-rewrap-2026-10-24).
 
 ## Restore and authority loss
 
@@ -611,7 +645,7 @@ application reads, searches, edits, decrypts current values, and removes eligibl
 journal/storage objects. Native metadata checks preserve the source contract.
 The harness also accepts `--varchar`. [Status](status.md) owns each profile's
 receipts and qualification boundary. This evidence does not qualify production
-custody, host publication, or source fencing. Rotation on an adopted target
+custody, host publication, or source fencing. Payload/search rotation on an adopted target
 remains unsupported. All seven full gates remain UNKNOWN.
 
 ### Independent application exit: 2026-10-19

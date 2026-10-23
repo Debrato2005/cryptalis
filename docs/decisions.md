@@ -486,6 +486,8 @@ keeps the same compiled lock and CF1 context, but receives a new immutable
 operation ID and digest. Its host artifact records the rewrap proposal digest,
 expected frame/membership observations and a flat ordered predecessor list.
 CF1, key generations, search representations and leakage remain unchanged.
+The [adopted-target extension](#adopted-target-root-rewrap-2026-10-24) adds
+rewrap/v2 and transition/v5 without changing this ordinary path.
 
 Use the existing maintenance executor, advisory lock, table locks and writer
 guard implementation. Full source/target authentication, a successor PENDING
@@ -508,6 +510,49 @@ automatic backup retirement, new authority service or stronger revocation
 guarantee follows from this format. Production providers, authenticated host
 publication and independent review remain UNKNOWN.
 
+## Adopted-target root rewrap: 2026-10-24
+
+Use `cryptalis.rewrap/v2` when an explicit restore binding or inherited v5
+lineage supplies the adopted target. Keep the previous proposal fields and add
+`restore`: a complete `cryptalis.restore/v1` document or JSON `null` for inherited lineage.
+Ordinary rewrap/v1 proposals and transition/v2 successors keep their existing contract.
+
+The successor uses `cryptalis.transition/v5`, `kind: rewrap` and a nonempty,
+flat `restore_lineage` list of complete restore/v1 documents. Keep the flat
+predecessor list. Each binding's source operation/digest must occur once among
+predecessors, in increasing ancestor order. Adoption identities must be distinct.
+Each later binding starts at the previous binding's target. All owner principals
+stay unchanged. The latest binding target equals the successor target.
+
+Validate bindings before provider or maintenance effects. Every restated frame
+CHECK must match its compiled field's exact recognized PostgreSQL 16 form and
+carry `probe: rejected-malformed-frames`. Shared schema admission merges these
+immutable definitions in order. The newest definition wins, then the optional
+current binding takes precedence. Later backup adoption retains inherited forms,
+even without a new restatement. Historical custody/state observations do not
+become current authority.
+For an explicit binding, every recorded custody tenant and policy digest must
+match the original source's key-policy map before provider or maintenance effects.
+The binding can record a subset of that map. Historical inherited bindings do
+not need to match the successor's later rewrapped policy.
+
+The first execution validates the original source and explicit binding. A PENDING
+retry validates its immutable successor and reciprocal predecessors. It does not
+reuse the superseded source's former ACTIVE state digest. Cancellation restores
+the exact original source state under its ACTIVE pin and original binding.
+Terminal retries inspect current authority and preserve later edits. An old
+binding cannot authorize the successor as its original source.
+
+Repeated rewrap carries flat lineage without recursive source artifacts.
+Payload/search rotation on v5 refuses before effects until separately implemented.
+Host custody, restore approval, source fencing and publication remain external
+assertions. No cryptographic format, key deletion or authority relaxation follows.
+**VERIFIED, bounded native profile:** one
+[source export](_reset/fresh-cluster-export-20261024-5.json) and
+[17 fresh-target controls](_reset/fresh-cluster-restore-20261024-4.json) pass.
+The [earlier expanded run](_reset/fresh-cluster-restore-20261024-3.json) retains
+15 passes and two failures. All seven production gates remain UNKNOWN.
+
 ## Pending root-rewrap cancellation: 2026-10-23
 
 **IMPLEMENTED, bounded native verification:** cancellation uses the original
@@ -522,7 +567,8 @@ schema, guard, and proposal frame/membership observations. Restore the original
 source ACTIVE state and remove only successor guards in one transaction.
 Retain the successor as ABORTED with exact proposal and source linkage.
 An already-ACTIVE successor requires a new rewrap, rather than cancellation.
-An adopted restored target remains outside this cancellation contract.
+The original contract excluded adopted restored targets. The
+[extension](#adopted-target-root-rewrap-2026-10-24) adds their bounded cancellation path.
 Admit the caller's source ACTIVE pin separately. The deterministic successor
 selects the shared executor identity and current verification cost. Its internal
 PREPARED pin supplies no host publication authority. Historical protection work
@@ -650,7 +696,7 @@ boundary or replace host credential control.
 
 Keep the restore binding format unchanged. Retain old keys for approved recovery
 obligations, but refuse an old-generation frame under the selected new policy.
-Fresh-cluster backup recovery does not admit rotation on an adopted target.
+Fresh-cluster backup recovery does not admit payload/search rotation on an adopted target.
 Search reindex, qualified production providers and all seven full gates remain
 open or UNKNOWN. See the [recorded evidence](status.md#payload-backup-recovery-and-runtime-admission-checkpoint-2026-10-23).
 
@@ -700,7 +746,7 @@ terminal transaction. Native conflicts roll back the entire switch.
 Host copy-rate and WAL estimates must include this index work.
 
 Restore uses the existing approved binding and selected-generation checks.
-Rotation on adopted targets remains outside this contract. Rotation deletes no
+Payload/search rotation on adopted targets remains outside this contract. Rotation deletes no
 retained keys and supplies no unlinkability or cryptographic-erasure claim.
 Production custody, authority and independent review remain unqualified.
 

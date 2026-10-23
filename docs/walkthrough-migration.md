@@ -278,7 +278,7 @@ with `payload_operation_pin_mismatch` or `search_operation_pin_mismatch`
 and exit 2. An EXPANDED or BACKFILLED pin with no P journal row fails with
 `missing_payload_operation` or `missing_search_operation` and exit 3.
 The command refuses `--restore-binding` for P before reading the binding or
-connecting. Rotation on adopted targets remains unsupported. Doctor also
+connecting. Payload/search rotation on adopted targets remains unsupported. Doctor also
 refuses preparation artifacts. The common input limits and safe operational
 failure handling apply. [Status](status.md) owns evidence and remaining gaps.
 
@@ -350,7 +350,7 @@ apply_rewrap(proposal, owner_engine, keys=source_keys,
 ```
 
 Save the proposal and successor artifact through the trusted host process.
-Deploy the transition/v2 reader before publication.
+Deploy the reader for transition/v2 ordinary successors or transition/v5 adopted successors before publication.
 Stop and drain all writers before execution.
 The transaction rechecks both policies and every frame, installs writer guards,
 records the successor as PENDING, and marks the source SUPERSEDED.
@@ -389,15 +389,40 @@ The successor remains ABORTED and cannot activate. Inspect the source plan with
 `migration.status` and its current ACTIVE pin. A terminal cancellation retry
 inspects source authority without restoring old data or repeating a stale scan.
 An ACTIVE successor requires a new rewrap, rather than cancellation.
-Rewrap and cancellation on an adopted restored target remain unsupported.
 Retain predecessor artifacts and both custody policies for retained backups.
 Successful cutover does not authorize key deletion or establish stronger revocation.
+
+For the first root rewrap after adoption, pass the exact `restore=binding` to
+`plan_rewrap` above. The saved rewrap/v2 proposal retains that binding.
+Publish its transition/v5 successor with its own current pin and target policies.
+Attach fresh workers with `(successor, active_pin)`. The old source binding cannot
+replace successor authority.
+
+For a later rewrap from a published v5 source, omit `restore` or pass `restore=None`.
+The source artifact carries the inherited lineage. Keep the same publication steps.
+A PENDING retry uses the saved successor, not the superseded source's former ACTIVE digest.
+
+To cancel, republish the original source ACTIVE pin and use the original proposal.
+That proposal retains the original restore binding. Supply source keys only.
+Cancellation restores the exact original adopted source journal and removes
+successor guards atomically. It needs no target provider. Terminal retries
+preserve later edits and cannot revive a superseded source.
+
+The [17 fresh-target source controls](_reset/fresh-cluster-restore-20261024-4.json)
+pass. Source VARCHAR and installed-wheel TEXT profiles also pass 17 each.
+Status records the full primary and installed application regression boundaries.
+The [lifecycle](lifecycle.md#adopted-target-root-rewrap-2026-10-24) and
+[format decision](decisions.md#adopted-target-root-rewrap-2026-10-24) own the
+full contract. [Status](status.md#adopted-target-root-rewrap-2026-10-24)
+owns exact evidence and limits.
 
 The existing fresh-cluster harness has separate root-rewrap profiles:
 
 ```bash
 .venv/bin/python scripts/fresh_cluster_qualification.py --rewrap
 .venv/bin/python scripts/fresh_cluster_qualification.py --rewrap --varchar
+.venv/bin/python scripts/fresh_cluster_qualification.py --adopted-rewrap
+.venv/bin/python scripts/fresh_cluster_qualification.py --adopted-rewrap --varchar
 ```
 
 These use approved disposable PostgreSQL 16 targets through `scripts/test_postgres.py`.
@@ -728,7 +753,7 @@ decrypt-back/removal, and native metadata checks. [Status](status.md) records
 which profiles completed and preserves the exact receipts.
 
 This evidence does not qualify external custody, authenticated publication, or
-source fencing. Rotation on an adopted restored target remains unsupported.
+source fencing. Payload/search rotation on an adopted restored target remains unsupported.
 All seven full gates remain UNKNOWN.
 
 ## Measured throughput

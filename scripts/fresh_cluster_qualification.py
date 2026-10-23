@@ -131,6 +131,8 @@ def main():
                           help='Qualify Boolean storage after payload rotation on a fresh cluster.')
     profiles.add_argument('--smolink', action='store_true',
                           help='Qualify the pinned Smolink URL lifecycle on a fresh cluster.')
+    profiles.add_argument('--adopted-rewrap', action='store_true',
+                          help='Qualify root rewrap after explicit fresh-target adoption.')
     profiles.add_argument('--rewrap', action='store_true', help='Qualify backup recovery after root rewrap and publication.')
     profiles.add_argument('--payload-rotation', action='store_true',
                           help='Qualify backup recovery after payload rotation and a later protected edit.')
@@ -141,7 +143,7 @@ def main():
         parser.error('--boolean uses the typed Boolean fixture and its restore lifecycle.')
     if args.smolink and (args.varchar or args.restore_lease):
         parser.error('--smolink uses the original application VARCHAR schema and lifecycle.')
-    if args.restore_lease and (args.rewrap or args.payload_rotation or args.search_rotation):
+    if args.restore_lease and (args.adopted_rewrap or args.rewrap or args.payload_rotation or args.search_rotation):
         parser.error('--restore-lease supports the original TEXT/VARCHAR fixture only.')
     workdir = args.workdir or Path(tempfile.mkdtemp(prefix='cryptalis-fresh-'))
     workdir.mkdir(parents=True, exist_ok=True)
@@ -150,6 +152,7 @@ def main():
 
     profile = ('; Boolean storage after payload rotation' if args.boolean else
                '; pinned Smolink root-rewrap and payload-rotation application profile' if args.smolink else
+               '; adopted-target root-rewrap profile' if args.adopted_rewrap else
                '; root-rewrap profile' if args.rewrap else
                '; payload-rotation profile' if args.payload_rotation else
                '; search-rotation profile' if args.search_rotation else '')
@@ -209,6 +212,7 @@ def main():
         restore = run_pytest(restore_receipt, 'Fresh-cluster protected-backup recovery and adoption; isolated cluster' + profile,
                              ('tests/test_fresh_boolean_restore.py' if args.boolean else
                               'tests/test_smolink_fresh_cluster.py' if args.smolink
+                              else 'tests/test_adopted_rewrap.py' if args.adopted_rewrap
                               else 'tests/test_restore_lease_fresh.py' if args.restore_lease
                               else 'tests/test_fresh_cluster_restore.py'),
                              {'HOME': str(home), 'CRYPTALIS_FRESH_CLUSTER_DIR': str(workdir),

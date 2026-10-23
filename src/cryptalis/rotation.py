@@ -17,6 +17,7 @@ from cryptalis.crypto._payload_rotation import MAX_BATCH_BYTES, MAX_BATCH_ROWS
 
 
 FORMAT = 'cryptalis.rewrap/v1'
+ADOPTED_FORMAT = 'cryptalis.rewrap/v2'
 PAYLOAD_FORMAT = 'cryptalis.payload-rotation/v1'
 SEARCH_FORMAT = 'cryptalis.search-rotation/v1'
 
@@ -102,7 +103,18 @@ class RewrapPlan:
 
     def __post_init__(self):
         try:
-            d, source, total = _read_proposal(self.artifact, FORMAT, 'rewrap')
+            adopted = m._decode_transition_json(self.artifact).get('format') == ADOPTED_FORMAT
+            d, source, total = _read_proposal(self.artifact,
+                ADOPTED_FORMAT if adopted else FORMAT, 'rewrap', extra=('restore',) if adopted else ())
+            binding = self.restore_binding
+            if adopted != bool(binding is not None or source.document.get('restore_lineage')):
+                raise ValueError
+            if binding is not None:
+                from cryptalis.restore import _identity
+                _identity(source, binding)
+                if (binding.target[-1] != source.document['target'][-1]
+                        or d['journal_state_digest'] != binding.document['journal_state_digest']):
+                    raise ValueError
             policies = d['key_policies']
             domain = _uuid(source.document['lock']['domain_id'])
             for tenant, policy in policies.items():
@@ -131,6 +143,8 @@ class RewrapPlan:
                     or costs['verify_seconds_estimate'] != m._estimate_seconds(total, rate)
                     or type(costs['limits']) is not str or not costs['limits']):
                 raise ValueError
+            if adopted:
+                _ = self.activation_plan
         except Exception:
             raise m.TransitionFailure('invalid_rewrap_plan') from None
 
@@ -143,17 +157,30 @@ class RewrapPlan:
     @property
     def source(self): return m.MigrationPlan(m._canonical(self.document['source_plan']))
     @property
+    def restore_binding(self):
+        document = self.document.get('restore')
+        if document is None:
+            return None
+        from cryptalis.restore import RestoreBinding
+        return RestoreBinding(m._canonical(document))
+    @property
     def activation_plan(self):
         """Deterministic successor artifact. This property grants no authority."""
         d = self.document
         source = self.source
         document = source.document
+        lineage = document.get('restore_lineage', [])
+        if d.get('restore') is not None:
+            lineage.append(d['restore'])
+            document['target'] = d['restore']['target']
+        if lineage:
+            document['restore_lineage'] = lineage
         ancestors = document.get('predecessors', [])
         ancestors.append({'operation_id': str(source.operation_id), 'plan_digest': source.digest})
         for name in ('payload_rotation_plan_digest','payload_rotation_observations','payload_batch_limits',
                      'search_rotation_plan_digest','search_rotation_observations','search_batch_limits'):
             document.pop(name,None)
-        document.update(format='cryptalis.transition/v2', kind='rewrap',
+        document.update(format='cryptalis.transition/v5' if lineage else 'cryptalis.transition/v2', kind='rewrap',
             operation_id=str(self.operation_id), predecessors=ancestors, rewrap_plan_digest=self.digest,
             key_policies={tenant: item['target'] for tenant, item in d['key_policies'].items()},
             rewrap_observations={table: {key: value for key, value in item.items() if key != 'schema'}
@@ -233,6 +260,8 @@ class _GenerationRotationPlan:
             purpose=self.purpose
             d, source, _ = _read_proposal(self.artifact, self.format, purpose+'_rotation',
                 extra=('successor_operation_id','batch_limits'), sizes=sizes)
+            if source.document.get('restore_lineage'):
+                raise ValueError
             identities = {source.operation_id, _uuid(d['operation_id'])} | {
                 UUID(p['operation_id']) for p in source.document.get('predecessors', [])}
             if (len(identities) != len(source.document.get('predecessors', [])) + 2
@@ -433,6 +462,8 @@ def _plan_generation_rotation(source, engine, *, purpose, source_pin, keys, targ
     Sealing pins the actual verified randomized target ciphertext.
     """
     m._admit(source,source_pin)
+    if source.document.get('restore_lineage'):
+        raise m.TransitionFailure('adopted_generation_rotation_unsupported',source.operation_id)
     if source_pin.phase != 'ACTIVE':
         raise m.TransitionFailure('source_pin_must_be_active',source.operation_id)
     if purpose=='search' and not any(
@@ -681,7 +712,7 @@ def _verify_rewrap_target(c, p, keys):
         raise m.TransitionFailure('rewrap_source_changed', p.operation_id)
 
 
-def plan_rewrap(source, engine, *, source_pin, keys, target_keys, verify_rows_per_second):
+def plan_rewrap(source, engine, *, source_pin, keys, target_keys, verify_rows_per_second, restore=None):
     """Authenticate unchanged roots and current frames in one read-only snapshot.
 
     The snapshot does not stop writers or authorize a future switch. Rewrap
@@ -691,11 +722,17 @@ def plan_rewrap(source, engine, *, source_pin, keys, target_keys, verify_rows_pe
     m._admit(source, source_pin)
     if source_pin.phase != 'ACTIVE':
         raise m.TransitionFailure('source_pin_must_be_active', source.operation_id)
+    if restore is not None:
+        from cryptalis.restore import _identity, _validate_binding_frames
+        _identity(source, restore)
+        _validate_binding_frames(source.document, restore)
+        if restore.target[-1] != source.document['target'][-1]:
+            raise m.TransitionFailure('maintenance_requires_planned_owner', source.operation_id)
     if not m._finite_number(verify_rows_per_second) or verify_rows_per_second <= 0:
         raise m.TransitionFailure('missing_measured_rates')
     with m._connection(engine, source.operation_id) as c:
         c.exec_driver_sql('SET TRANSACTION ISOLATION LEVEL REPEATABLE READ, READ ONLY')
-        m._check_connection(source, c, source_pin)
+        m._check_connection(source, c, source_pin, binding=restore)
         state = m._state(c, source, source_pin)
         policies, prepared = _prepare_rewrap(source, keys, target_keys)
         models = _observe_active(c, source, keys, prepared={t: pair[0] for t,pair in prepared.items()},
@@ -706,14 +743,18 @@ def plan_rewrap(source, engine, *, source_pin, keys, target_keys, verify_rows_pe
         rows = sum(model['rows'] for model in models.values())
         pin = asdict(source_pin)
         pin.update(target_id=str(source_pin.target_id), operation_id=str(source_pin.operation_id))
-        proposal = RewrapPlan(m._canonical({
-            'format': FORMAT, 'kind': 'rewrap', 'operation_id': str(uuid4()),
+        adopted = restore is not None or bool(source.document.get('restore_lineage'))
+        document = {
+            'format': ADOPTED_FORMAT if adopted else FORMAT, 'kind': 'rewrap', 'operation_id': str(uuid4()),
             'source_plan': source.document, 'source_pin': pin,
             'required_readers': source.document['lock']['required_readers'],
             'journal_state_digest': m._hash(state), 'models': models, 'key_policies': policies,
             'estimates': {'rows': rows, 'verify_rows_per_second': verify_rows_per_second,
                           'verify_seconds_estimate': m._estimate_seconds(rows, verify_rows_per_second),
-                          'limits': 'Host-measured scan estimate. Provider, DDL and publication costs are excluded.'}}))
+                          'limits': 'Host-measured scan estimate. Provider, DDL and publication costs are excluded.'}}
+        if adopted:
+            document['restore'] = restore.document if restore is not None else None
+        proposal = RewrapPlan(m._canonical(document))
         # Cleanup and artifact validation can consume a short remaining lease.
         for pair in prepared.values():
             _same_roots(*pair)
@@ -736,6 +777,7 @@ def apply_rewrap(proposal, engine, *, keys, target_keys, pin, approval):
         raise m.TransitionFailure('rewrap_prepublication_pin_required', proposal.operation_id)
     source = proposal.source
     d = proposal.document
+    binding = proposal.restore_binding
     source_pin = m.DeploymentPin(UUID(d['source_pin']['target_id']), UUID(d['source_pin']['operation_id']),
                                  d['source_pin']['plan_digest'], 'ACTIVE')
     with m._executor(successor, engine, pin, approval) as c:
@@ -749,7 +791,7 @@ def apply_rewrap(proposal, engine, *, keys, target_keys, pin, approval):
             else:
                 if pin.phase != 'PREPARED':
                     raise m.TransitionFailure('missing_rewrap_operation', proposal.operation_id)
-                m._check_connection(source, c, source_pin)
+                m._check_connection(source, c, source_pin, binding=binding)
                 from cryptalis.deprotection import _inventory
                 _inventory(c, source, source, own=None)
                 source_state = m._state(c, source, source_pin)
@@ -792,6 +834,7 @@ def abort_rewrap(proposal, engine, *, keys, pin, approval):
     if type(proposal) is not RewrapPlan:
         raise m.TransitionFailure('invalid_rewrap_plan')
     source, successor = proposal.source, proposal.activation_plan
+    binding = proposal.restore_binding
     m._admit(source, pin)
     if pin.phase != 'ACTIVE':
         raise m.TransitionFailure('source_pin_must_be_active', source.operation_id)
@@ -817,7 +860,7 @@ def abort_rewrap(proposal, engine, *, keys, pin, approval):
                 if (state.get('aborted_to') != expected_source
                         or m._hash(source_state) != proposal.document['journal_state_digest']):
                     raise m.TransitionFailure('rewrap_abort_source_changed', successor.operation_id)
-                m._check_connection(source, c, pin)
+                m._check_connection(source, c, pin, binding=binding)
                 _inventory(c, source, source, own=successor.operation_id)
             else:
                 if state.get('phase') != 'PENDING':
@@ -842,7 +885,7 @@ def abort_rewrap(proposal, engine, *, keys, pin, approval):
                 for model in source.document['lock']['models']:
                     if m._hash(m._facts(c, model)) != proposal.document['models'][model['table_id']]['schema']:
                         raise m.TransitionFailure('rewrap_abort_schema_changed', successor.operation_id)
-                m._check_connection(source, c, pin)
+                m._check_connection(source, c, pin, binding=binding)
                 state.update(phase='ABORTED', aborted_to=expected_source)
                 m._save(c, successor, state)
         return m._progress(successor, state)

@@ -25,6 +25,15 @@ No objective is complete until its acceptance evidence and applicable gate pass.
 
 ## Current boundary
 
+- Root rewrap after genuine restore/adoption passes 17 controls each for local
+  PostgreSQL 16 source TEXT/VARCHAR and installed-wheel TEXT profiles.
+  Versioned proposals and successors preserve flat restore lineage,
+  ciphertext and search indexes. Cancellation, process/COMMIT recovery, a
+  second database adoption and latest-value package-free removal pass. The full
+  primary run passes 2,430 tests plus 18 subtests. The actual installed wheel
+  passes 103 affected/application controls. See the
+  [adopted rewrap checkpoint](status.md#adopted-target-root-rewrap-2026-10-24).
+
 - Separate Sessions match native behavior with 1/4/16 scheduled sync/async workers.
   A four-connection pool records checkout peaks of 1/4/4 and returns all connections.
   Cancellation on a one-connection pool rolls back the writer and releases a queued
@@ -269,7 +278,7 @@ No objective is complete until its acceptance evidence and applicable gate pass.
 - The import ledger and dated status checkpoints preserve earlier evidence.
   Reproducibility includes wheel RECORD, license metadata and an SBOM.
   Signing, publication identity and independent rebuild remain UNKNOWN.
-  Other non-text types, advanced predicates, online migration, adopted-target rotation,
+  Other non-text types, advanced predicates, online migration, adopted-target payload/search rotation,
   production custody/retirement, authenticated host authority and independent
   review remain open. All seven qualification gates remain UNKNOWN.
 
@@ -299,7 +308,7 @@ Requirement text is abbreviated. The full definitions remain in the research
 | OBJ-LIFE-04 | Parallel/adaptive migration without lost or duplicate work | SPECIFIED | None | Depends on OBJ-LIFE-03 |
 | OBJ-LIFE-05 | Decrypt-back current edits; preserve schema behavior; package-free exit | VERIFIED, bounded | `deprotection.py` implements `cryptalis.reverse/v1`: staged plaintext, verified backfill, transactional switch, recorded constraint/index/collation restoration, guarded activation, approved removal, and terminal-state assertions; seven lifecycle cases pass on both profiles; an independent three-model application completes protect/search/modify/decrypt-back/remove and a package-free restarted process performs native CRUD; the same reverse completes on an adopted restored cluster with the binding; lock v2 captures and restores protected-column comments, statistics targets, storage, compression, options, column grants, constraint/index comments and extended statistics; grants are applied to the ciphertext column at protection; owned sequences remain refused; native catalogs now verify captured metadata through fresh-cluster restore and adopted removal; terminal removal refuses late metadata drift and retains the journal on failed retirement | Broader external application scope, physical column order, owned-sequence restore, retained-native |
 | OBJ-LIFE-06 | Rollback, restore, stale pin refusal, RPO/RTO, disaster drills | PARTIAL | Older-snapshot and stale-pin refusals; reverse abort, pin/state ordering, corrupt-frame and disabled-guard refusals; isolated-cluster plaintext and protected restore with frame recovery and loud authority refusal; `cryptalis.restore/v1` adoption issues a binding after approval, frame authentication, schema comparison, and behavioral probes; the adopted cluster then attaches, reverses, and removes; local provider outage/revocation/lease drills keep the committed prefix and fail closed; restored-frame expiry recovery passes exact-policy, no-effects refusal and genuine fresh-cluster TEXT/VARCHAR controls; pinned unchanged Smolink now passes committed-process interruption/resume, root rewrap, payload rotation, genuine fresh-cluster adoption and latest-value package-free exit | Host-authenticated fencing/quarantine, RPO/RTO measurement |
-| OBJ-LIFE-07 | Three separate rotation workflows | PARTIAL | Payload/search pure row-step expiry recovery passes 20 new native controls inside both 83-case cells; source-only observations and outer lease checks remain terminal. Root-rewrap successor cutover and shared activation, byte preservation, exact lineage, pending retry/cancellation, process/COMMIT recovery and repeated-rewrap decrypt-back/removal; source-pinned payload planning, durable shadows, source-only cancellation, immutable sealed target proof, atomic cutover/shared publication, mixed custody lineage/current-value removal and native process/COMMIT recovery; fresh-cluster TEXT/VARCHAR payload-backup adoption after later edits, independent selected-generation decoding and old-generation refusal; sealed search reindex, one active namespace with retained readers, native uniqueness/rollback, mixed search/payload/rewrap/search lineage and fresh-cluster search backups | Rotation on adopted restored targets, adopted-restore rewrap/cancellation, external provider/authority qualification |
+| OBJ-LIFE-07 | Three separate rotation workflows | PARTIAL | Payload/search pure row-step expiry recovery passes 20 new native controls inside both 83-case cells; source-only observations and outer lease checks remain terminal. Root-rewrap after adopted restore now passes 17 genuine fresh-target controls, including cancellation, actual process/COMMIT recovery and a second database adoption; successor cutover and shared activation, byte preservation, exact lineage, pending retry/cancellation, process/COMMIT recovery and repeated-rewrap decrypt-back/removal; source-pinned payload planning, durable shadows, source-only cancellation, immutable sealed target proof, atomic cutover/shared publication, mixed custody lineage/current-value removal and native process/COMMIT recovery; fresh-cluster TEXT/VARCHAR payload-backup adoption after later edits, independent selected-generation decoding and old-generation refusal; sealed search reindex, one active namespace with retained readers, native uniqueness/rollback, mixed search/payload/rewrap/search lineage and fresh-cluster search backups | Payload/search rotation on adopted restored targets, external provider/authority qualification |
 | OBJ-LIFE-08 | Production KMS with outage/revocation/cost evidence | BLOCKED | Local development provider plus optional exact-context AWS KMS SDK bridge. 86 protocol/CF1 checks and 12 isolated actual-SDK cases. current installed-wheel original SQLModel application passes local SDK outage, authentication refusal and recovery. unchanged asynchronous Smolink also passes local SDK expiry/outage/authentication recovery and latest-value package-free exit; no live AWS qualification | Authorized provider account and independent review |
 | OBJ-LIFE-09 | Install, upgrade, decommission, clean uninstall | PARTIAL | Importable package; approved in-database removal retires reverse-owned objects after decrypt-back; a package-free restarted application process performs native CRUD | Versioned upgrade/removal and broader external application evidence |
 | OBJ-DX-01 | Minimal model/query changes; one manifest and one attach | IMPLEMENTED | `compile_protection`, `attach`, CLI inspection, bounded ACTIVE Doctor, read-only protection, payload/search preparation and reverse `status` | Unify plan/apply/remove entry points; complete operational status coverage |
@@ -372,8 +381,9 @@ recovery and the final full regression. No production gate passes.
 
 ## Next critical path
 
-1. Run the same lifecycle through a pinned external application, then repeat it on a
-   fresh PostgreSQL cluster.
+1. Extend the recorded pinned Smolink fresh-cluster journey with adopted-target
+   root rewrap and cancellation. Then implement payload/search rotation on adopted
+   lineage, with current-value recovery and independent application evidence.
 2. Close the remaining reverse-lifecycle metadata and recovery gaps (physical column
    order, retained-native, owned sequences). Lock v2 now captures and restores comments,
    statistics targets, storage, compression, options, column grants, constraint and

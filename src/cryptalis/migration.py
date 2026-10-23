@@ -155,7 +155,7 @@ class MigrationPlan:
             members = {'format', 'kind', 'operation_id', 'target_id', 'target',
                             'runtime_role', 'journal_schema', 'lock', 'source_lock_digest',
                             'key_policies', 'scopes', 'estimates'}
-            rewrap = doc.get('format') == 'cryptalis.transition/v2' and doc.get('kind') == 'rewrap'
+            rewrap = doc.get('format') in ('cryptalis.transition/v2', 'cryptalis.transition/v5') and doc.get('kind') == 'rewrap'
             payload = doc.get('format') == 'cryptalis.transition/v3' and doc.get('kind') == 'payload_rotation'
             search = doc.get('format') == 'cryptalis.transition/v4' and doc.get('kind') == 'search_rotation'
             rotating=payload or search
@@ -163,6 +163,8 @@ class MigrationPlan:
                 proof_key = doc['kind']+'_plan_digest'
                 observations_key = doc['kind']+'_observations'
                 members |= {'predecessors', proof_key, observations_key}
+                if doc['format'] == 'cryptalis.transition/v5':
+                    members.add('restore_lineage')
                 if rotating:
                     members.add(('payload' if payload else 'search')+'_batch_limits')
                 ancestors = doc['predecessors']
@@ -203,6 +205,9 @@ class MigrationPlan:
                 raise ValueError
             # Compiler validation needs identifier quoting, never a connection.
             _previous_lock(_canonical(doc['lock']), doc['lock'], SimpleNamespace(dialect=postgresql.dialect()))
+            if doc['format'] == 'cryptalis.transition/v5':
+                from cryptalis.restore import _validate_lineage
+                _validate_lineage(doc)
             _validate_estimates(doc['estimates'])
             if rewrap or rotating:
                 observed = doc[observations_key]
@@ -943,6 +948,10 @@ def _switch(c,p,state,keys):
 def _protected_contract(c, p, model, facts, *, paused=False, admitted=None, staging=False):
     """Bind recorded catalog shape and generated storage to the host lock."""
     from cryptalis._sqlalchemy_search import validate_frame_storage, validate_search_storage
+    from cryptalis.restore import frame_admissions
+    inherited = frame_admissions(p.document, model)
+    inherited.update(admitted or {})
+    admitted = inherited
     expected = deepcopy(model['source_schema'])
     expected['relation']['user_triggers'] = paused
     observed = deepcopy(facts)

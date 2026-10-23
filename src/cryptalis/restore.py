@@ -167,7 +167,9 @@ def _identity(source, binding):
         raise m.TransitionFailure('restore_binding_required', source.operation_id)
     if (binding.source_plan_digest != source.digest
             or binding.source_operation_id != source.operation_id
-            or binding.source_target != source.document['target']):
+            or binding.source_target != source.document['target']
+            or any(source.document['key_policies'].get(tenant) != policy
+                   for tenant, policy in binding.document['custody'].items())):
         raise m.TransitionFailure('restore_binding_mismatch', source.operation_id)
     fields = {(model['table_id'], field['payload_column'] + '_frame'): field
               for model in source.document['lock']['models'] for field in model['fields']}
@@ -214,6 +216,57 @@ def admitted_frame(binding, model, field):
         if item['model'] == model['table_id'] and item['name'] == name:
             return item
     return None
+
+
+def _validate_binding_frames(document, binding):
+    """Require exact known frame checks and their recorded rejection probes."""
+    fields = {(model['table_id'], field['payload_column'] + '_frame'): field
+              for model in document['lock']['models'] for field in model['fields']}
+    quote = postgresql.dialect().identifier_preparer.quote
+    for item in binding.document['restatements']:
+        field = fields.get((item['model'], item['name']))
+        if (field is None or item.get('probe') != 'rejected-malformed-frames'
+                or _frame_expression(item['definition']) not in _frame_expressions(field, quote)):
+            raise m.TransitionFailure('invalid_restore_lineage')
+
+
+def _validate_lineage(document):
+    """Validate flat adopted-target authority carried by a successor artifact."""
+    try:
+        lineage = document['restore_lineage']
+        if (document['format'] != 'cryptalis.transition/v5' or document['kind'] != 'rewrap'
+                or type(lineage) is not list or not lineage):
+            raise ValueError
+        ancestors = {(item['operation_id'], item['plan_digest']): index
+                     for index, item in enumerate(document['predecessors'])}
+        previous, position, identities = None, -1, set()
+        for raw in lineage:
+            binding = RestoreBinding(_canonical(raw))
+            index = ancestors.get((str(binding.source_operation_id), binding.source_plan_digest))
+            if (index is None or index <= position or binding.adoption_id in identities
+                    or binding.source_target[-1] != document['target'][-1]
+                    or binding.target[-1] != document['target'][-1]
+                    or previous is not None and binding.source_target != previous):
+                raise ValueError
+            _validate_binding_frames(document, binding)
+            previous, position = binding.target, index
+            identities.add(binding.adoption_id)
+        if previous != document['target']:
+            raise ValueError
+    except (ValueError, TypeError, KeyError, AttributeError, m.TransitionFailure):
+        raise m.TransitionFailure('invalid_restore_lineage') from None
+
+
+def frame_admissions(document, model, binding=None):
+    """Return exact frame expressions from already admitted host artifacts."""
+    records = list(document.get('restore_lineage', ()))
+    if binding is not None:
+        if type(binding) is not RestoreBinding:
+            raise m.TransitionFailure('restore_binding_required')
+        records.append(binding.document)
+    return {item['name']: _frame_expression(item['definition'])
+            for record in records for item in record['restatements']
+            if item['model'] == model['table_id']}
 
 
 def _schema_evidence(c, source, state):
