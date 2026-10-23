@@ -21,6 +21,12 @@ No objective is complete until its acceptance evidence and applicable gate pass.
 
 ## Current boundary
 
+- Finite SELECT type admission now rejects the confirmed hidden SQL/compiler
+  routes while preserving tested Python bind/result codecs. All 12 final
+  primary controls and all 274 alternate affected checks pass. Full combined
+  follow-up remains required. See the
+  [SELECT checkpoint](status.md#finite-select-type-admission-checkpoint-2026-10-23).
+
 - The combined checkpoint's full run reports 2,167 passed and two failures,
   with 18 passed subtests, four skips and 149 stable hashes. The corrected
   early-refusal test and unchanged CLI timeout control pass in isolation.
@@ -178,7 +184,7 @@ Requirement text is abbreviated. The full definitions remain in the research
 |---|---|---|---|---|
 | OBJ-SEC-01 | Encrypt before PostgreSQL; prove at SQL/driver boundaries | VERIFIED, bounded | `crypto/cf1.py`, `sqlalchemy.py`; slice 2/3 receipts in `docs/_reset`; real runtime-role tests | Broader writer/auth/provider boundaries; independent review |
 | OBJ-SEC-02 | Bind tenant, field, row, generation; reject malformed/swapped frames | VERIFIED, bounded | CF1 AAD, descriptor binding, sync/async tamper tests | Collision assumptions and composition review |
-| OBJ-SEC-03 | Authorization, result lineage, tenant isolation, parameterization | PARTIAL | Tenant-scoped sessions, requested-point checks, typed errors | Host authorization is external; audit remaining ORM routes |
+| OBJ-SEC-03 | Authorization, result lineage, tenant isolation, parameterization | PARTIAL | Tenant-scoped sessions, requested-point checks, typed errors | Host authorization is external; finite SELECT type hooks now refuse; audit remaining ORM routes |
 | OBJ-SEC-04 | Detect plaintext bypass through ORM, bulk, SQL, COPY, jobs, logs | PARTIAL | Guarded attachment rejects raw SQL/COPY/opaque writes and unsafe engine logging before connect/key access; writer inventory at plan; effective runtime privilege refusal before restore probes/keys, repeated at planning, active admission, Doctor, ACTIVE/PENDING status, shared maintenance and host-phase-selected reverse execution | Complete route inventory; identity variants now refuse during planning; deployment enforcement is unverified |
 | OBJ-SEC-05 | Isolate keys; bound nonces, leases, cache lifetime, fork safety | VERIFIED, bounded | `crypto/keys.py` strict policy, cache expiry, fork refusal; local provider outage/revocation/lease drills pass on both SQLAlchemy cells | Remote cancellation, usage limits, production custody |
 | OBJ-SEC-06 | Reduce equality/frequency/access leakage with documented trade-offs | SPECIFIED | Equality leakage is declared; no stronger profile admitted | Threat-model and benchmark a lower-leakage profile; six-gate admission |

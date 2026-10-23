@@ -10,6 +10,40 @@ No PostgreSQL/provider/runtime cell, production key provider, independent review
 VERIFIED below refers only to the named checks and their exact revisions.
 All other contract and promotion requirements are SPECIFIED. All seven full gates remain UNKNOWN.
 
+## Finite SELECT type admission checkpoint: 2026-10-23
+
+**IMPLEMENTED, bounded verification:** attached SELECT checks every typed AST
+node before generated-node exceptions, including nested statements and compiled
+forms. Native controls first exposed public type hooks that returned CF1 hex
+or changed a matching predicate. The original RED retains three failures and
+one safe-codec pass.
+
+Admission now refuses SQL bind/output hooks, dialect variants, dynamic type
+implementations, user-defined SQL type spelling and literal-execution binds.
+Current compiler dispatch must be an actual bound method with exact native
+function identity and the correct bound type object. Decorator and container
+inner types also pass these checks. Only the exact owned physical payload type
+may use its internal output hook. That exception waives no other check.
+Tested ordinary Python bind/result processors and native Boolean/Enum values
+retain their native behavior.
+
+All **12 controls** pass on the final primary integration source. The final
+alternate affected run passes **274 checks** on Python 3.13.12 / SQLAlchemy 2.0.51.
+Earlier primary evidence records 272 passes and the already corrected assertion
+that expected configuration rejection later. Two final primary delta controls
+also pass. Earlier receipts stay separate from the final-source evidence.
+These checks cover SELECT admission. Public write-type hooks and hostile Python
+execution have separate boundaries. Full combined follow-up remains required.
+All seven production gates remain UNKNOWN.
+
+Evidence: [initial native RED](_reset/select-type-hooks-red-20261023.json),
+[earlier primary controls](_reset/select-type-hooks-green-20261023.json),
+[earlier affected failure](_reset/select-type-hooks-affected-20261023.json),
+[final primary delta controls](_reset/select-type-hooks-dispatch-mapping-20261023.json),
+[final primary integration](_reset/select-type-hooks-integration-20261023.json),
+[final alternate regression](_reset/select-type-hooks-sa20-20261023.json), and
+[exact admission and evidence boundary](_reset/select-type-hooks-boundary-20261023.json).
+
 ## Combined integration checkpoint: 2026-10-23
 
 **IMPLEMENTED, bounded checks:** the full regression is incomplete.

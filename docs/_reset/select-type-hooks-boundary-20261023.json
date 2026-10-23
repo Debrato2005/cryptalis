@@ -1,0 +1,68 @@
+{
+  "schema": "cryptalis.select-type-admission/v1",
+  "base_revision": "351789e",
+  "scope": "Finite SELECT type admission. No production qualification or general hostile-Python sandbox.",
+  "runtime_cells": {
+    "primary": {
+      "python": "3.12.3",
+      "sqlalchemy": "2.1.3",
+      "psycopg": "3.3.6",
+      "cryptography": "50.0.2",
+      "greenlet": "3.5.6"
+    },
+    "alternate": {
+      "python": "3.13.12",
+      "sqlalchemy": "2.0.51",
+      "psycopg": "3.3.6",
+      "cryptography": "50.0.2",
+      "greenlet": "3.5.3",
+      "product_module": "/tmp/cryptalis-parallel-kms-20261023/src/cryptalis/sqlalchemy.py"
+    }
+  },
+  "native_failures_observed": [
+    "Public mapped and query-level column_expression returned a public string containing raw protected CF1 hex instead of the native plaintext result.",
+    "A hidden public bind_expression changed a native matching predicate to no match."
+  ],
+  "admission": [
+    "Every typed node in the original and final compiled SELECT AST is checked before generated-node exemptions.",
+    "The current compiler dispatch must be an actual Python bound method with the dtype as its bound object, match the class original function, and belong to captured native SQLAlchemy sqltypes/PostgreSQL function identities.",
+    "Dialect variants, SQL bind/output hooks, dynamic type implementation hooks, UserDefinedType and literal_execute binds refuse. TypeDecorator, ARRAY and TupleType inner types are checked.",
+    "Only the exact owned physical Payload object may use its internal column_expression hook. All other type checks still apply. Copied internal types and custom internal type renderers receive no blanket permission.",
+    "Ordinary Python bind/result processors and native Boolean/Enum values retain observed native behavior."
+  ],
+  "receipts": [
+    {
+      "file": "select-type-hooks-red-20261023.json",
+      "boundary": "Initial four controls on pre-fix source; three confirmed failures, one safe-codec pass.",
+      "failed": 3,
+      "passed": 1
+    },
+    {
+      "file": "select-type-hooks-green-20261023.json",
+      "boundary": "Eleven new controls passed before the final actual-bound-method refinement.",
+      "passed": 11
+    },
+    {
+      "file": "select-type-hooks-affected-20261023.json",
+      "boundary": "Prior source: 272 passed; one baseline test expected PolicyMismatch after the newly earlier factory refusal. The failed assertion scope is preserved.",
+      "passed": 272,
+      "failed": 1
+    },
+    {
+      "file": "select-type-hooks-dispatch-mapping-20261023.json",
+      "boundary": "Current source: native callable-proxy spoof and corrected mapping-scope test passed. The correction preserves zero driver calls and healthy restored mapping.",
+      "passed": 2
+    },
+    {
+      "file": "select-type-hooks-sa20-20261023.json",
+      "boundary": "Current source: all 274 affected alternate checks passed, including all 12 new controls.",
+      "passed": 274
+    }
+  ],
+  "limits": [
+    "Prior primary receipts are pre-refinement evidence, not a fresh 274-case current-primary pass.",
+    "No full suite, release archive, installed wheel, whole-backend benchmark, live external provider, or independent human security audit was rerun for this isolated slice.",
+    "Arbitrary hostile Python execution or mutation of trusted library modules remains outside the claim.",
+    "All seven production qualification gates remain UNKNOWN."
+  ]
+}

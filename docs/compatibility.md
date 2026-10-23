@@ -73,7 +73,15 @@ type variants. Ordinary Python public-field bind processors remain native.
 The ordered input ledger authenticates each emitted group and complete consumption.
 The [bulk UPDATE checkpoint](status.md#scoped-mapped-bulk-update-checkpoint-2026-10-23) owns exact evidence and limits.
 
-Plaintext fields retain native query semantics, including ranges, order, aggregates, and joins through unprotected keys.
+Admitted plaintext fields retain native query semantics, including ranges, order,
+aggregates, and joins through unprotected keys. SELECT type admission refuses
+SQL-producing custom type hooks, dialect variants, custom SQL type rendering,
+user-defined SQL type spelling and literal-execution binds. Ordinary Python
+bind/result processors remain admitted under the finite native type contract.
+Native dispatch identity and exact owned payload-type identity constrain the
+internal output hook. Nested decorator, ARRAY and tuple types receive the same
+checks. These SELECT checks do not extend admission for public write-type hooks.
+The [SELECT type checkpoint](status.md#finite-select-type-admission-checkpoint-2026-10-23) owns native refusal and compatibility evidence.
 Tenant-scoped uniqueness uses PostgreSQL's original qualified NULL behavior. Unqualified partial/compound or NULLS NOT DISTINCT variants must reject at plan time.
 
 Protection planning and attachment require native row-context codecs without

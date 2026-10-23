@@ -44,3 +44,8 @@ Unchanged Smolink passes one lifecycle check with 38 matching app hashes.
 Reproducible packages and all 37 installed files pass.
 The SELECT type-hook correction is isolated. Nine native DELETE oracle cases
 pass without product admission.
+
+SELECT correction: final primary integration passes all 12 controls. The alternate
+affected bundle passes 274 checks. Scoped DELETE implementation follows in a
+new isolated branch from the verified SELECT source. Full combined follow-up
+will run after the next coordinated integration checkpoint.

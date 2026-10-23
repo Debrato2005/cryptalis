@@ -9,21 +9,23 @@ from dataclasses import dataclass, field
 from functools import wraps
 from hashlib import sha256
 import json
-from types import MappingProxyType
+from types import MappingProxyType, MethodType
 from uuid import UUID
 
-from sqlalchemy import BigInteger, LargeBinary, String, Text, Uuid, UUID as SQLUUID, cast, event, func, inspect, literal, select, type_coerce
+from sqlalchemy import BigInteger, Boolean, Enum, LargeBinary, String, Text, Uuid, UUID as SQLUUID, cast, event, func, inspect, literal, select, type_coerce
 from sqlalchemy.engine import Engine
+from sqlalchemy.dialects import postgresql as _postgresql_types
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, AsyncSessionTransaction
 from sqlalchemy.exc import DBAPIError, DontWrapMixin
 from sqlalchemy.orm import Session, registry
 from sqlalchemy.orm.attributes import NO_VALUE
 from sqlalchemy.sql import operators, visitors
+from sqlalchemy.sql import sqltypes as _native_types
 from sqlalchemy.sql.elements import BinaryExpression, BindParameter, BooleanClauseList, Cast, ClauseElement, ColumnClause, Grouping, Label, SavepointClause, RollbackToSavepointClause, ReleaseSavepointClause, TextClause, TypeCoerce, UnaryExpression
 from sqlalchemy.sql.functions import FunctionElement
 from sqlalchemy.sql.selectable import Alias, CTE, FromClause, Select, Join, Subquery
 from sqlalchemy.sql.dml import Insert, Update, Delete
-from sqlalchemy.types import JSON, NullType, TypeDecorator, TypeEngine
+from sqlalchemy.types import JSON, NullType, TypeDecorator, TypeEngine, UserDefinedType
 
 from ._sqlalchemy_guard import install_guard
 from ._sqlalchemy_search import rewrite_search, search_shape, validate_search_storage
@@ -32,6 +34,15 @@ from .crypto.cf1 import _encode
 from .crypto.keys import InvalidText, RepresentationMismatch
 from .manifest.compiler import _native_text_length, _previous_lock, _text_mapping_matches
 from .manifest.parser import decode_manifest_json
+
+
+_NATIVE_TYPE_DISPATCH = frozenset(
+    dtype._original_compiler_dispatch
+    for namespace in (vars(_native_types), vars(_postgresql_types))
+    for dtype in namespace.values()
+    if isinstance(dtype, type) and issubclass(dtype, TypeEngine)
+    and hasattr(dtype, '_original_compiler_dispatch')
+)
 
 
 class UnsupportedProtectedOperation(CryptoFailure):
@@ -622,15 +633,35 @@ class _Attachment:
             raise PolicyMismatch() from None
 
     @staticmethod
-    def bind_type(dtype):
-        # Identity binds and finite mapped UPDATEs exclude SQL-producing type hooks.
+    def select_dispatch(dtype):
+        original = getattr(type(dtype), '_original_compiler_dispatch', None)
+        dispatch = dtype._compiler_dispatch
+        if (type(dispatch) is not MethodType or dispatch.__self__ is not dtype or
+                dispatch.__func__ is not original or original not in _NATIVE_TYPE_DISPATCH):
+            raise UnsupportedProtectedOperation()
+
+    @classmethod
+    def bind_type(cls, dtype, *, selecting=False, column_expression=None):
+        # The SELECT path also checks native output hooks and SQL type text.
+        adapt = (TypeEngine.adapt, Uuid.adapt, Boolean.adapt, Enum.adapt) if selecting else (TypeEngine.adapt, Uuid.adapt)
         seen = set()
         while True:
+            if selecting:
+                cls.select_dispatch(dtype)
             if (id(dtype) in seen or dtype._variant_mapping or dtype._has_bind_expression or
+                    selecting and (dtype._has_column_expression and dtype is not column_expression or
+                                   isinstance(dtype, UserDefinedType)) or
                     type(dtype).dialect_impl is not TypeEngine.dialect_impl or
-                    type(dtype).adapt not in (TypeEngine.adapt, Uuid.adapt)):
+                    type(dtype).adapt not in adapt):
                 raise UnsupportedProtectedOperation()
             seen.add(id(dtype))
+            if selecting and isinstance(dtype, _native_types.ARRAY):
+                dtype = dtype.item_type
+                continue
+            if selecting and isinstance(dtype, _native_types.TupleType):
+                for item in dtype.types:
+                    cls.bind_type(item, selecting=True)
+                return
             if not isinstance(dtype, TypeDecorator):
                 return
             if (type(dtype).load_dialect_impl is not TypeDecorator.load_dialect_impl or
@@ -638,6 +669,31 @@ class _Attachment:
                     type(dtype).copy is not TypeDecorator.copy):
                 raise UnsupportedProtectedOperation()
             dtype = dtype.impl_instance
+
+    def select_types(self, statement):
+        try:
+            for node in visitors.iterate(statement):
+                if isinstance(node, BindParameter) and node.literal_execute:
+                    raise UnsupportedProtectedOperation()
+                dtype = getattr(node, 'type', None)
+                if dtype is None:
+                    continue
+                self.select_dispatch(dtype)
+                column_expression = None
+                if type(dtype) is _Payload:
+                    # Only the owned physical type can generate its authenticated
+                    # projection. A copy can inherit owner/binding fields while
+                    # carrying an unadmitted dialect variant.
+                    if (dtype.owner is not self or not any(
+                            binding is dtype.binding and binding.column.type is dtype
+                            for binding in self.bindings)):
+                        raise UnsupportedProtectedOperation()
+                    column_expression = dtype
+                self.bind_type(dtype, selecting=True, column_expression=column_expression)
+        except CryptoFailure:
+            raise
+        except Exception:
+            raise UnsupportedProtectedOperation() from None
 
     def update_context(self, statement, table, tenant, *, generated):
         if (not isinstance(statement, Update) or statement.table.name != table.name or
@@ -729,6 +785,7 @@ class _Attachment:
             return
         if not isinstance(statement, Select):
             raise UnsupportedProtectedOperation()
+        self.select_types(statement)
         safe_count_stars = set()
         for node in visitors.iterate(statement):
             operation = _operation.get()

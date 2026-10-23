@@ -58,6 +58,16 @@ Their absolute guarantees are also removed: immediate arbitrary-worker denial, a
 whole-result publication, subject cryptographic erasure, and hostile-database completeness/freshness.
 A removed mechanism cannot retain its old guarantee through wording alone.
 
+## Finite SELECT type compilation: 2026-10-23
+
+Admit SELECT types through exact native compiler dispatch and explicit hook
+checks before generated-node exceptions. Reject variants, user-defined type
+spelling, literal-execution binds and SQL-producing type customizations. Recurse
+through decorator and container types. Permit only the exact owned physical
+payload output hook, while retaining every other check. Preserve ordinary
+Python bind/result processors and tested native types. Keep public write-type
+admission and hostile host execution outside this SELECT-specific decision.
+
 ## Preserve early configuration refusal: 2026-10-23
 
 Mapping admission must refuse changed configuration before host key resolution.

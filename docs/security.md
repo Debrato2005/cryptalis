@@ -64,6 +64,17 @@ variants or SQL-producing type hooks. Configuration admission repeats before
 host key resolution and driver dispatch. This applies to existing flush and
 INSERT routes as well as the bounded UPDATE route.
 
+SELECT admission checks typed AST nodes before generated-node exceptions and
+repeats admission on the compiled statement. It refuses SQL-producing type
+hooks, variants, dynamic implementations, user-defined type spelling and
+literal-execution binds. Compiler dispatch must retain exact native function
+identity on an actual correctly bound method. Decorator and container inner
+types receive the same checks. Only the exact owned physical payload type may
+use its internal output hook, with every other type check still active.
+These controls preserve tested Python bind/result codecs and native Boolean/Enum
+behavior. They do not establish a universal public write-type policy or a
+hostile-Python sandbox.
+
 The native bulk page hook validates processed input against the admitted batch.
 Each page must retain its original frozen input slice before the hook freezes
 the native generated SQL/parameters. Earlier callbacks cannot change a later
