@@ -10,6 +10,34 @@ No PostgreSQL/provider/runtime cell, production key provider, independent review
 VERIFIED below refers only to the named checks and their exact revisions.
 All other contract and promotion requirements are SPECIFIED. All seven full gates remain UNKNOWN.
 
+## Artifact dependency metadata checkpoint: 2026-10-23
+
+**IMPLEMENTED, bounded offline verification:** the release checker compares wheel
+`Requires-Python` with the project Python constraint through `packaging.specifiers.SpecifierSet`.
+It compares the `Requires-Dist` multiset with project dependencies through
+`packaging.requirements.Requirement`. Standard parsing accepts equivalent spelling and ordering.
+The multiset retains duplicates. Missing, malformed or changed declarations refuse.
+`packaging>=26.3` is an explicit development dependency. The lock refresh changes
+no runtime pins. Runtime product source and cryptographic contracts stay unchanged.
+
+The RED records nine failed subtests and one failed test, with two passing tests.
+The first GREEN records 13 passes, 54 passed subtests and one installed-check
+failure because the development dependency left the lock stale. The final suite
+passes **14 tests and 60 subtests** in 3.53 seconds. All four recorded file hashes
+stay unchanged during that run.
+
+Current repeat-build archives, SBOM, 37 installed-file comparisons and CLI startup
+pass. Wheel metadata declares Python `>=3.12` and the four exact runtime requirements,
+including the psycopg binary extra. The wheel hash remains unchanged.
+These checks cover artifact metadata and exact installed bytes. Installed dependency
+resolution and production qualification remain UNKNOWN. Database suites were not
+repeated for this tooling slice. All seven production gates remain UNKNOWN.
+
+Evidence: [RED](_reset/artifact-dependency-metadata-red-20261023.json),
+[first GREEN failure](_reset/artifact-dependency-metadata-green-20261023.json),
+[final GREEN](_reset/artifact-dependency-metadata-green2-20261023.json), and
+[current release](_reset/artifact-dependency-metadata-release-20261023.json).
+
 ## Defensive projection and DELETE integration checkpoint: 2026-10-23
 
 **VERIFIED, local combined source:** the serial PostgreSQL 16 primary regression

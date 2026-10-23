@@ -1,0 +1,25 @@
+{
+  "scope": "Offline wheel Python/dependency metadata integrity; local artifact fixtures, no database or runtime crypto changes",
+  "phase": "green",
+  "base_revision": "57e41e8762a8eda0e9cc2d4c2c494663cf5b35f7",
+  "command": [
+    "/home/debrato/Projects/cryptalis/.venv/bin/python",
+    "-m",
+    "pytest",
+    "-q",
+    "scripts/test_release_check.py"
+  ],
+  "python": "3.12.3",
+  "source_sha256": {
+    "scripts/release_check.py": "d5f0e9e343461ea7b152127c9cba4a19fda5574f55e6441338acec638646247e",
+    "scripts/test_release_check.py": "23354edb21d0963837b20c12661d4f2e1ffa792dfd18b4a3ec0619586e230559",
+    "pyproject.toml": "027855692691af7008ab2d213e151421ea1c50a9883d25ddf3d1ce5e9e448d91",
+    "uv.lock": "344e1cafd4c1fe93b3545756b683c2b14da68f442e0596f3f00d461c4fec6e5a"
+  },
+  "source_unchanged": true,
+  "exit_code": 1,
+  "elapsed_seconds": 0.5756114219984738,
+  "terminal_stdout": ".............F     [100%]\n=================================== FAILURES ===================================\n___ InstalledArtifactTests.test_clean_install_is_bound_to_the_current_wheel ____\n\nself = <test_release_check.InstalledArtifactTests testMethod=test_clean_install_is_bound_to_the_current_wheel>\n\n    def test_clean_install_is_bound_to_the_current_wheel(self):\n        with tempfile.TemporaryDirectory(prefix=\"cryptalis-install-test-\") as temporary:\n            base = Path(temporary)\n            environment = dict(os.environ, UV_OFFLINE=\"true\", UV_CACHE_DIR=str(base / \"cache\"))\n            built = subprocess.run([\"uv\", \"build\", \"--offline\", \"--out-dir\", str(base / \"built\")],\n                                   cwd=ROOT, env=environment, capture_output=True, text=True)\n            self.assertEqual(built.returncode, 0, built.stderr)\n            wheel = next((base / \"built\").glob(\"*.whl\"))\n            target = base / \"venv\"\n            venv.EnvBuilder(with_pip=False).create(target)\n            python = target / \"bin/python\"\n            located = subprocess.run([str(python), \"-I\", \"-c\",\n                                      'import sysconfig; print(sysconfig.get_path(\"purelib\"))'],\n                                     check=True, capture_output=True, text=True)\n            site = Path(located.stdout.strip())\n            with zipfile.ZipFile(wheel) as archive:\n                archive.extractall(site)\n    \n            def check():\n                return subprocess.run([sys.executable, str(ROOT / \"scripts/release_check.py\"),\n                                       \"--output\", str(base / \"result\"), \"--python\", str(python)],\n                                      cwd=base, env=environment, capture_output=True, text=True)\n    \n            control = check()\n>           self.assertEqual(control.returncode, 0, control.stderr)\nE           AssertionError: 1 != 0 : Release.CommandFailed: uv; exit 1\n\nscripts/test_release_check.py:278: AssertionError\n=========================== short test summary info ============================\nFAILED scripts/test_release_check.py::InstalledArtifactTests::test_clean_install_is_bound_to_the_current_wheel\n1 failed, 13 passed, 54 subtests passed in 0.43s\n",
+  "terminal_stderr": "",
+  "gate": "UNKNOWN"
+}

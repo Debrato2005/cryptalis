@@ -7,6 +7,7 @@ an already installed wheel in a clean interpreter. It does not publish.
 """
 import argparse
 import base64
+from collections import Counter
 import csv
 from email.parser import BytesParser
 import hashlib
@@ -21,6 +22,9 @@ import tarfile
 import tempfile
 import tomllib
 import zipfile
+
+from packaging.requirements import InvalidRequirement, Requirement
+from packaging.specifiers import InvalidSpecifier, SpecifierSet
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -115,13 +119,26 @@ def inspect_wheel(path):
         if (declared.get_all("Name") != [project["name"]]
                 or declared.get_all("Version") != [project["version"]]):
             raise SystemExit("wheel project name or version does not match pyproject.toml")
+        python = declared.get_all("Requires-Python", [])
+        if len(python) != 1:
+            raise SystemExit("wheel must declare one Python requirement")
+        try:
+            if SpecifierSet(python[0]) != SpecifierSet(project["requires-python"]):
+                raise SystemExit("wheel Python requirement does not match pyproject.toml")
+            dependencies = Counter(Requirement(value) for value in declared.get_all("Requires-Dist", []))
+            if dependencies != Counter(Requirement(value) for value in project["dependencies"]):
+                raise SystemExit("wheel dependencies do not match pyproject.toml")
+        except (InvalidRequirement, InvalidSpecifier):
+            raise SystemExit("wheel or project dependency metadata is invalid") from None
         package = [name for name in names if name.startswith("cryptalis/") and name.endswith(".py")]
         if not package:
             raise SystemExit("wheel contains no cryptalis package modules")
         if ENTRY_POINT not in archive.read(entry).decode("utf-8"):
             raise SystemExit("wheel entry point is missing")
         return {"members": len(names), "modules": len(package),
-                "metadata": metadata, "record": record}
+                "metadata": metadata, "record": record,
+                "requires_python": str(SpecifierSet(python[0])),
+                "requires_dist": sorted(str(value) for value in dependencies.elements())}
 
 
 def inspect_sdist(path):

@@ -14,6 +14,7 @@ import subprocess
 import sys
 import tarfile
 import tempfile
+import tomllib
 import unittest
 import warnings
 import venv
@@ -28,9 +29,13 @@ MODULE = "cryptalis/__init__.py"
 
 
 def wheel_files():
+    project = tomllib.loads((ROOT / "pyproject.toml").read_text())["project"]
+    metadata = ("Metadata-Version: 2.4\nName: cryptalis\nVersion: 0.1.0\n"
+                + "Requires-Python: " + project["requires-python"] + "\n"
+                + "".join("Requires-Dist: " + dependency + "\n" for dependency in project["dependencies"]))
     return {
         MODULE: b'"""Artifact fixture."""\n',
-        INFO + "/METADATA": b"Metadata-Version: 2.4\nName: cryptalis\nVersion: 0.1.0\n",
+        INFO + "/METADATA": metadata.encode(),
         INFO + "/WHEEL": b"Wheel-Version: 1.0\nRoot-Is-Purelib: true\nTag: py3-none-any\n",
         INFO + "/entry_points.txt": b"[console_scripts]\ncryptalis = cryptalis.cli:main\n",
         INFO + "/licenses/LICENSE": b"MIT\n",
@@ -84,6 +89,48 @@ class ArtifactIntegrityTests(unittest.TestCase):
         self.assertEqual(inspect_wheel(self.wheel)["modules"], 1)
         write_sdist(self.sdist)
         self.assertEqual(inspect_sdist(self.sdist)["modules"], 1)
+
+    def test_wheel_python_metadata_matches_project(self):
+        project = tomllib.loads((ROOT / "pyproject.toml").read_text())["project"]
+        expected = "Requires-Python: " + project["requires-python"] + "\n"
+        for replacement in ("", "Requires-Python: >=3.13\n", expected * 2,
+                            "Requires-Python: invalid\n"):
+            with self.subTest(replacement=replacement):
+                files = wheel_files()
+                files[INFO + "/METADATA"] = files[INFO + "/METADATA"].replace(
+                    expected.encode(), replacement.encode())
+                write_wheel(self.wheel, files, record_rows(files))
+                with self.assertRaises(SystemExit):
+                    inspect_wheel(self.wheel)
+
+    def test_wheel_dependency_metadata_matches_project(self):
+        project = tomllib.loads((ROOT / "pyproject.toml").read_text())["project"]
+        expected = "Requires-Dist: " + project["dependencies"][0] + "\n"
+        for replacement in ("", "Requires-Dist: cryptography==1\n", expected * 2,
+                            expected.rstrip() + "; python_version < '3'\n",
+                            "Requires-Dist: invalid !!!\n"):
+            with self.subTest(replacement=replacement):
+                files = wheel_files()
+                files[INFO + "/METADATA"] = files[INFO + "/METADATA"].replace(
+                    expected.encode(), replacement.encode())
+                write_wheel(self.wheel, files, record_rows(files))
+                with self.assertRaises(SystemExit):
+                    inspect_wheel(self.wheel)
+
+    def test_wheel_equivalent_dependency_metadata_keeps_extras(self):
+        files = wheel_files()
+        metadata = files[INFO + "/METADATA"].decode()
+        headers = metadata.splitlines()
+        dependencies = [line for line in headers if line.startswith("Requires-Dist:")]
+        metadata = "\n".join(line for line in headers if not line.startswith("Requires-Dist:")) + "\n"
+        metadata += "\n".join(line.upper() for line in reversed(dependencies)) + "\n"
+        files[INFO + "/METADATA"] = metadata.encode()
+        write_wheel(self.wheel, files, record_rows(files))
+        self.assertEqual(inspect_wheel(self.wheel)["modules"], 1)
+        files[INFO + "/METADATA"] = metadata.replace("[BINARY]", "").encode()
+        write_wheel(self.wheel, files, record_rows(files))
+        with self.assertRaises(SystemExit):
+            inspect_wheel(self.wheel)
 
     def test_record_cannot_omit_or_repeat_archive_files(self):
         files = wheel_files()

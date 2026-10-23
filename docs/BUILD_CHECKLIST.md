@@ -21,6 +21,11 @@ No objective is complete until its acceptance evidence and applicable gate pass.
 
 ## Current boundary
 
+- Wheel Python/dependency metadata now matches project declarations through standard
+  packaging parsers, with duplicate-sensitive dependency comparison. The final
+  suite passes 14 tests and 60 subtests. See the
+  [metadata checkpoint](status.md#artifact-dependency-metadata-checkpoint-2026-10-23).
+
 - The combined defensive source passes 2,250 tests and 18 subtests, with four
   skips, 48 existing warnings and 154 stable Python hashes. Current release,
   unchanged Smolink, all six 10k read targets and isolated storage pass separately.
@@ -229,7 +234,7 @@ Requirement text is abbreviated. The full definitions remain in the research
 | OBJ-PERF-02 | Profile-guided optimization without security loss | PARTIAL | Membership projection correction on 2026-10-09 | Continue profiling; no unverified speed claims |
 | OBJ-PERF-03 | Multithreading/multiprocessing/async at 1/4/16/saturation | SPECIFIED | Single-worker maintenance path | Define and run isolation/backpressure/cancellation tests |
 | OBJ-PERF-04 | Added p95 targets and growth path | PARTIAL | Revision-pinned 10k/100k/1m warm scalar/tuple and full-entity reads meet local 3ms/8ms targets; isolated column plus equality index measures 1.5248x/1.5296x/1.4372x for 53-byte names | Larger scale/remote-provider/concurrent qualification; write/pause budgets undecided |
-| OBJ-OPS-01 | Reproducible wheel/sdist, SBOM, provenance, reviewers | PARTIAL | `pyproject.toml`, `uv.lock`, `scripts/release_check.py`; [2026-10-21 receipt](_reset/release-check-20261021.json) shows identical repeat-build hashes, verified wheel `RECORD`, license metadata, CycloneDX 1.5 SBOM, and clean-venv import/CLI; the [combined defensive source receipt](_reset/defensive-projection-delete-release-20261023.json) binds 33 wheel modules and 37 installed-file checks to its 38-file source bundle | Independent rebuild, signed provenance, vulnerability scan, publication identity, upgrade/uninstall matrix, independent review |
+| OBJ-OPS-01 | Reproducible wheel/sdist, SBOM, provenance, reviewers | PARTIAL | `pyproject.toml`, `uv.lock`, `scripts/release_check.py`; [2026-10-21 receipt](_reset/release-check-20261021.json) shows identical repeat-build hashes, verified wheel `RECORD`, license metadata, CycloneDX 1.5 SBOM, and clean-venv import/CLI; the [combined defensive source receipt](_reset/defensive-projection-delete-release-20261023.json) binds 33 wheel modules and 37 installed-file checks to its 38-file source bundle; [dependency metadata controls](_reset/artifact-dependency-metadata-green2-20261023.json) compare wheel Python/dependency declarations with project metadata through standard parsers | Independent rebuild, signed provenance, vulnerability scan, publication identity, upgrade/uninstall matrix, independent review |
 | OBJ-OPS-02 | Recoverable source/evidence and traceability | PARTIAL | Git history and `docs/_reset` receipts | Durable archive and fresh restore |
 | OBJ-RESEARCH-01 | Source-backed comparative research with repeatable evidence | ONGOING | Research repository provenance; source-access and fallback rules in `AGENTS.md` | Preserve failed alternatives and provenance links |
 | OBJ-RESEARCH-02 | One coherent working candidate that passes all gates | PARTIAL | Implemented scope above | Continue integration; all seven gates UNKNOWN |

@@ -58,6 +58,14 @@ Their absolute guarantees are also removed: immediate arbitrary-worker denial, a
 whole-result publication, subject cryptographic erasure, and hostile-database completeness/freshness.
 A removed mechanism cannot retain its old guarantee through wording alone.
 
+## Wheel dependency metadata consistency: 2026-10-23
+
+Compare wheel Python and dependency declarations with `pyproject.toml` through
+standard packaging parsers. Accept normalized equivalent requirements and preserve
+multiplicity with a multiset. Refuse missing, malformed or changed declarations.
+Keep the parser in development dependencies. Metadata consistency establishes
+no installed dependency resolution or production qualification.
+
 ## Expanded SELECT admission and finite DELETE: 2026-10-23
 
 Expand selected entity/table columns and all descendants before SELECT admission.
