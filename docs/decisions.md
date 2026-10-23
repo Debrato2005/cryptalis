@@ -58,6 +58,26 @@ Their absolute guarantees are also removed: immediate arbitrary-worker denial, a
 whole-result publication, subject cryptographic erasure, and hostile-database completeness/freshness.
 A removed mechanism cannot retain its old guarantee through wording alone.
 
+## Expanded SELECT admission and finite DELETE: 2026-10-23
+
+Expand selected entity/table columns and all descendants before SELECT admission.
+Use the same node snapshot for type, operation and owned-lineage checks.
+Protected outputs must retain the existing authenticated decryption path.
+Preserve admitted public expressions and Python codecs. Reject unsupported
+protected expressions before key resolution or SELECT execution.
+
+Admit mapped DELETE through `execute()` only with exact typed tenant/record
+equalities and `synchronize_session=False`. Reject RETURNING, external parameters,
+Core DELETE, custom AST classes and unsupported predicates or options. Bind
+compiled and final driver parameters to the original tenant/record authority.
+Preserve native results and transaction behavior. Claim no stored-frame
+authentication for a DELETE that returns no protected value.
+
+Check native AST classes and compiler dispatch for ordinary ORM flush DELETE
+before its existing admission exception. Preserve native single/batch flush,
+state and transaction behavior without imposing the scoped route's predicate
+shape. Refuse unsupported custom nodes before driver execution.
+
 ## Finite SELECT type compilation: 2026-10-23
 
 Admit SELECT types through exact native compiler dispatch and explicit hook

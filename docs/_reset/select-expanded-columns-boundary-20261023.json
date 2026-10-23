@@ -1,0 +1,109 @@
+{
+  "scope": "Local defensive repair for expanded entity/table SELECT type and owned column-lineage admission",
+  "base_revision": "5b3362ba2c020600cdb64b9e55dae2d0133a4fb6",
+  "source_sha256": "4663b46966b26cc59c3b4b1647732f306f2ae6f5ee1a9dcc38547acc2de7b529",
+  "test_sha256": "ededc20ba2046654763fe594541155a799c88f181818f73b5a4d566d0d8f2767",
+  "change": "Snapshot native traversal, add each visited SELECT selected_columns, apply existing type and owned-lineage rules. Exact physical payload permission and authenticated result processor remain unchanged.",
+  "controls": {
+    "public_column_expression_refusals": [
+      "entity",
+      "table"
+    ],
+    "native_parity": [
+      "entity with protected Unicode and Python public bind/result codecs",
+      "table with protected Unicode and Python public bind/result codecs",
+      "public nested scalar SELECT with authenticated outer point and Python codecs"
+    ],
+    "lineage_refusal": "Expanded separately constructed same-named physical table, using the existing non-owned protected-column rule"
+  },
+  "primary_evidence_boundary": "First affected run passed279 and failed1 new nested fixture. The nested primary-key predicate is outside existing unconditional-point grammar and failed in unchanged _points. Only the test changed to an admitted public-label nested predicate; its focused primary rerun passed1. Do not describe this as one current full primary280 PASS run.",
+  "alternate_evidence_boundary": "Current complete affected bundle passed280 on Python3.13 and SQLAlchemy2.0. Product source hash matches every primary receipt; final test hash matches corrected primary receipt.",
+  "runtime_profiles": {
+    "primary": {
+      "python": "3.12.3",
+      "sqlalchemy": "2.1.3",
+      "psycopg": "3.3.6",
+      "cryptography": "50.0.2",
+      "greenlet": "3.5.6"
+    },
+    "alternate": {
+      "python": "3.13.12",
+      "sqlalchemy": "2.0.51",
+      "psycopg": "3.3.6",
+      "psycopg_impl": "python",
+      "cryptography": "50.0.2",
+      "greenlet": "3.5.3"
+    }
+  },
+  "preflight": "Each run reloaded both private URLs and passed both mandatory SELECT1 probes. No URLs or credentials are recorded here.",
+  "independent_review": "Lifecycle author reviewed the source read-only. This agent review does not replace independent human security review.",
+  "receipts": {
+    "select-entity-type-hooks-red-20261023.json": {
+      "sha256": "5a7e85791becfd79ede18a85b2670327e07ea037bd3d940127696198c7d08059",
+      "counts": {
+        "failed": 2
+      },
+      "elapsed_seconds": 1.4631156059986097,
+      "source_stability": {
+        "unchanged": true,
+        "changed_paths": []
+      },
+      "source_sha256": "9ff65e3e6ae2accb1a3dc45810954b28b367bc818271f918f70c210d7c5ee0ad",
+      "test_sha256": "f984f1887711d40c2e85ab8df06990c8c2054422d8a2f2ecff36b329c8483281"
+    },
+    "select-expanded-columns-primary-20261023.json": {
+      "sha256": "52ae314386fab12a7d1dddf921ae5cc85b6e1cb9d0059baf0b74a9b3f67ed891",
+      "counts": {
+        "passed": 279,
+        "failed": 1
+      },
+      "elapsed_seconds": 82.56612637400394,
+      "source_stability": {
+        "unchanged": true,
+        "changed_paths": []
+      },
+      "source_sha256": "4663b46966b26cc59c3b4b1647732f306f2ae6f5ee1a9dcc38547acc2de7b529",
+      "test_sha256": "938388aa314ccce284a265e465e30f5818774b1bfa0a9d2392b2fd66e8fc51d5"
+    },
+    "select-expanded-columns-nested-primary-20261023.json": {
+      "sha256": "a31a2a510fec9360441592a21b22df18bba7c03aa1bdcb94b211b76136732443",
+      "counts": {
+        "passed": 1
+      },
+      "elapsed_seconds": 0.8224232619977556,
+      "source_stability": {
+        "unchanged": true,
+        "changed_paths": []
+      },
+      "source_sha256": "4663b46966b26cc59c3b4b1647732f306f2ae6f5ee1a9dcc38547acc2de7b529",
+      "test_sha256": "ededc20ba2046654763fe594541155a799c88f181818f73b5a4d566d0d8f2767"
+    },
+    "select-expanded-columns-alternate-20261023.json": {
+      "sha256": "371b9502d7ed6e5052bf160b39129bccffc899868ebdf3c3598bae5de11a1e0b",
+      "counts": {
+        "passed": 280
+      },
+      "elapsed_seconds": 88.37151286398876,
+      "source_stability": {
+        "unchanged": true,
+        "changed_paths": []
+      },
+      "source_sha256": "4663b46966b26cc59c3b4b1647732f306f2ae6f5ee1a9dcc38547acc2de7b529",
+      "test_sha256": "ededc20ba2046654763fe594541155a799c88f181818f73b5a4d566d0d8f2767"
+    }
+  },
+  "gates": {
+    "G-ADAPTER": "UNKNOWN",
+    "G-CRYPTO": "UNKNOWN",
+    "G-QUERY": "UNKNOWN",
+    "G-LIFECYCLE": "UNKNOWN",
+    "G-PROVIDER": "UNKNOWN",
+    "G-POLICY": "UNKNOWN",
+    "G-RELEASE": "UNKNOWN"
+  },
+  "limits": [
+    "No external testing",
+    "No new custom AST or UPDATE investigation",
+    "No full product suite or production qualification claim"
+  ]
+}

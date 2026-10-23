@@ -17,10 +17,10 @@ a separate policy-checked retry. Their source observations and final checks rema
 
 | Owner | Worktree | Write scope | Current slice | State |
 |---|---|---|---|---|
-| ORM specialist | `/tmp/cryptalis-parallel-orm-20261023` | `sqlalchemy.py`, new bulk UPDATE tests and receipts | Scoped TEXT dictionary UPDATE | Integrated after 143 primary/143 alternate passes; shared identity checks included |
-| Lifecycle specialist | `/tmp/cryptalis-parallel-lifecycle-20261023` | Restore and CLI tests, then rotation lease inspection | Restore recovery and safe CLI remedies | Restore integrated with nine focused checks and two genuine fresh clusters. CLI integrated with seven focused checks. Rotation passes 83 checks on both cells. Unchanged-app qualification follows |
-| KMS specialist | `/tmp/cryptalis-parallel-kms-20261023` | Independent ORM review after completed KMS adapter | Bulk UPDATE grammar review | KMS integrated. Separate SELECT type-hook controls reproduce three failures; new slice queued |
-| Lead | `/home/debrato/Projects/cryptalis` | Shared contracts, ledgers and integration history | KMS, restore and CLI integration | Active. No CLI ownership overlap |
+| Lifecycle specialist | `/tmp/cryptalis-parallel-lifecycle-20261023` | DELETE source, tests and receipts | Scoped mapped and native flush DELETE | Verified changes integrated. Offline package inspection follows |
+| SELECT specialist | `/tmp/cryptalis-parallel-kms-20261023` | SELECT admission, tests and receipts | Expanded projection descendants | Verified changes integrated. Source ownership complete |
+| Documentation specialist | Main worktree | Status, checklist and decisions | Defensive checkpoint evidence | Final full result pending |
+| Lead | `/home/debrato/Projects/cryptalis` | Security, compatibility, integration and brief | Serial combined PostgreSQL regression | Current committed base `5b3362b`. Integrated Python source frozen |
 
 Use the existing project interpreter with `PYTHONPATH` set to the worktree's
 `src` directory. Verify the imported module path. Run all database tests through
@@ -31,8 +31,9 @@ remain independent. Fixtures use unique disposable schemas.
 
 The lead grants at most two concurrent focused database jobs. Full suites and
 benchmarks use one coordinated slot. Do not duplicate expensive full suites.
-Send interface changes before edits that affect another owner. Only the lead
-edits authoritative documents or integration history. Each ready change needs
+Send interface changes before edits that affect another owner. The assigned
+document owner or lead edits authoritative documents. The lead owns integration
+history. Each ready change needs
 source review, failure controls, affected regression, documentation and a local
 integration commit. No push, history rewrite or external qualification claim.
 
@@ -53,3 +54,39 @@ will run after the next coordinated integration checkpoint.
 Current `3a21096` 10k profile passes all six latency targets and 1.52483×
 isolated storage. All 150 Python hashes stay stable. The quiet sampling interval
 ended before the scoped DELETE RED jobs started.
+## Defensive integration in progress
+
+The user limits this continuation to authorized local defensive work. The team
+respects the previous content restriction. No new external security testing or
+restricted operation forms part of this slice.
+
+SELECT checks now expand entity/table columns and their descendants once.
+Existing type, lineage and protected-expression rules use that same snapshot.
+The final specialist runs pass 284 primary and 284 alternate checks.
+The protected-value processor and cryptographic formats remain unchanged.
+
+Scoped mapped DELETE fixes typed tenant/record authority before provider calls.
+Ordinary ORM flush DELETE also checks native compiler nodes before execution.
+Four benign equivalent-subclass controls reproduce the missing refusal first.
+Final focused runs pass 65 primary and 65 alternate checks. The earlier alternate
+VARCHAR child failure and isolated driver-only interpreter correction stay separate.
+
+The lead integrates `c10033c`, `7d90268`, `ae03b45`, `15c5fa5`, `93c4e11`
+and `b09b17c`. The combined primary suite runs alone against native PostgreSQL.
+Python source stays frozen until its wrapper ends. Documentation and offline
+package inspection can proceed. All seven production gates remain UNKNOWN.
+## Verified defensive integration
+
+The serial primary regression passes 2,250 tests plus 18 subtests. Four checks
+skip, and 48 existing deprecation warnings remain. All 154 Python hashes stay
+unchanged. The earlier CLI timeout does not recur. Its original cause remains
+UNKNOWN, and all timeouts stay unchanged.
+
+The pinned Smolink lifecycle passes with 38 unchanged application files, real
+Redis and a package-free restart. Reproducible archives, SBOM, installed files
+and CLI startup pass. The current 10,000-row matched profile passes all six
+latency targets. Storage measures 1.52483× native, below the 2× target. This local warm TEXT cell
+does not qualify deployment performance. All seven production gates remain UNKNOWN.
+
+The receipts use the `defensive-projection-delete-` prefix in this directory.
+They bind the exact source hashes before the local integration commit.

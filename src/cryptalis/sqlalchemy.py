@@ -12,7 +12,7 @@ import json
 from types import MappingProxyType, MethodType
 from uuid import UUID
 
-from sqlalchemy import BigInteger, Boolean, Enum, LargeBinary, String, Text, Uuid, UUID as SQLUUID, cast, event, func, inspect, literal, select, type_coerce
+from sqlalchemy import BigInteger, Boolean, Column, Enum, LargeBinary, String, Table, Text, Uuid, UUID as SQLUUID, cast, event, func, inspect, literal, select, type_coerce
 from sqlalchemy.engine import Engine
 from sqlalchemy.dialects import postgresql as _postgresql_types
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, AsyncSessionTransaction
@@ -20,6 +20,7 @@ from sqlalchemy.exc import DBAPIError, DontWrapMixin
 from sqlalchemy.orm import Session, registry
 from sqlalchemy.orm.attributes import NO_VALUE
 from sqlalchemy.sql import operators, visitors
+from sqlalchemy.sql.annotation import Annotated, annotated_classes
 from sqlalchemy.sql import sqltypes as _native_types
 from sqlalchemy.sql.elements import BinaryExpression, BindParameter, BooleanClauseList, Cast, ClauseElement, ColumnClause, Grouping, Label, SavepointClause, RollbackToSavepointClause, ReleaseSavepointClause, TextClause, TypeCoerce, UnaryExpression
 from sqlalchemy.sql.functions import FunctionElement
@@ -117,6 +118,7 @@ class _Operation:
     flushing: bool = False
     bulk_insert: object = field(default=None, repr=False)
     bulk_update: object = field(default=None, repr=False)
+    scoped_delete: object = field(default=None, repr=False)
     bulk_returning: object = field(default=None, repr=False)
     bulk_seals: dict = field(default_factory=dict, repr=False)
     bulk_batch: tuple = field(default=(), repr=False)
@@ -147,6 +149,30 @@ class _Operation:
 
 _operation = ContextVar("cryptalis_sqlalchemy_operation", default=None)
 _SAVEPOINT_CONTROLS = (SavepointClause, RollbackToSavepointClause, ReleaseSavepointClause)
+
+
+@dataclass(frozen=True)
+class _DeletePermit:
+    table: object
+    record: object
+    scope: object
+    identity: object
+    tenant: UUID
+
+
+def _delete_node(node, native):
+    dispatch = getattr(node, '_compiler_dispatch', None)
+    if type(dispatch) is not MethodType or dispatch.__self__ is not node:
+        raise UnsupportedProtectedOperation()
+    if type(node) is annotated_classes.get(native):
+        if dispatch.__func__ is not Annotated._compiler_dispatch:
+            raise UnsupportedProtectedOperation()
+        node = Annotated._deannotate(node)
+        dispatch = node._compiler_dispatch
+    if (type(node) is not native or type(dispatch) is not MethodType or dispatch.__self__ is not node or
+            dispatch.__func__ is not native._original_compiler_dispatch or
+            native._compiler_dispatch is not native._original_compiler_dispatch):
+        raise UnsupportedProtectedOperation()
 
 
 class _ReadText(TypeDecorator):
@@ -672,7 +698,16 @@ class _Attachment:
 
     def select_types(self, statement):
         try:
-            for node in visitors.iterate(statement):
+            nodes = list(visitors.iterate(statement))
+            seen = {id(node) for node in nodes}
+            for node in nodes:
+                if isinstance(node, Select):
+                    for column in node.selected_columns:
+                        for child in visitors.iterate(column):
+                            if id(child) not in seen:
+                                seen.add(id(child))
+                                nodes.append(child)
+            for node in nodes:
                 if isinstance(node, BindParameter) and node.literal_execute:
                     raise UnsupportedProtectedOperation()
                 dtype = getattr(node, 'type', None)
@@ -690,10 +725,88 @@ class _Attachment:
                         raise UnsupportedProtectedOperation()
                     column_expression = dtype
                 self.bind_type(dtype, selecting=True, column_expression=column_expression)
+            return tuple(nodes)
         except CryptoFailure:
             raise
         except Exception:
             raise UnsupportedProtectedOperation() from None
+
+    def delete_context(self, statement, tenant, expected=None):
+        _delete_node(statement, Delete)
+        if type(tenant) is not UUID:
+            raise UnsupportedProtectedOperation()
+        if expected is None:
+            mapper = statement._propagate_attrs.get('plugin_subject')
+            if (mapper is None or getattr(mapper, 'class_', None) not in self.models or
+                    mapper is not inspect(mapper.class_) or mapper.inherits is not None or
+                    mapper.version_id_col is not None):
+                raise UnsupportedProtectedOperation()
+            first = self.models[mapper.class_][0]
+            table = first.column.table
+            if mapper.local_table is not table or len(mapper.primary_key) != 1 or mapper.primary_key[0] is not first.record:
+                raise UnsupportedProtectedOperation()
+        else:
+            table = expected.table
+            first = next(binding for binding in self.bindings if binding.column.table is table)
+        if (not isinstance(statement, Delete) or first.tenant is None or
+                statement.table.name != table.name or statement.table.schema != table.schema or
+                not all(column.key in statement.table.c and statement.table.c[column.key].shares_lineage(column)
+                        for column in table.c) or statement._returning or statement._return_defaults or
+                statement._with_options or statement._prefixes or statement._hints or
+                statement._independent_ctes or statement.dialect_kwargs):
+            raise UnsupportedProtectedOperation()
+        _delete_node(table, Table)
+        _delete_node(statement.table, Table)
+        for column in (first.record, first.tenant):
+            self.identity_type(column.type, uuid_only=column is first.tenant)
+            self.bind_type(column.type, selecting=True)
+        clauses, pending = [], [statement.whereclause]
+        while pending:
+            clause = pending.pop()
+            if isinstance(clause, BooleanClauseList) and clause.operator is operators.and_:
+                _delete_node(clause, BooleanClauseList)
+                pending.extend(reversed(clause.clauses))
+            else:
+                clauses.append(clause)
+        if len(clauses) != 2:
+            raise UnsupportedProtectedOperation()
+        scope = record = None
+        for clause in clauses:
+            _delete_node(clause, BinaryExpression)
+            if not isinstance(clause, BinaryExpression) or clause.operator is not operators.eq:
+                raise UnsupportedProtectedOperation()
+            left, right = clause.left, clause.right
+            if isinstance(left, BindParameter):
+                left, right = right, left
+            if (not isinstance(left, ColumnClause) or left.table is not table or left.is_literal or
+                    not isinstance(right, BindParameter) or right.required or right.callable is not None or
+                    right.expanding or right.literal_execute or type(right.type) is not type(left.type)):
+                raise UnsupportedProtectedOperation()
+            _delete_node(left, Column)
+            _delete_node(right, BindParameter)
+            self.bind_type(right.type, selecting=True)
+            if left.shares_lineage(first.tenant) and scope is None:
+                if type(right.value) is not UUID or right.value != tenant:
+                    raise UnsupportedProtectedOperation()
+                scope = right
+            elif left.shares_lineage(first.record) and record is None:
+                if first.descriptor.record_codec == 'uuid16/v1' and type(right.value) is not UUID:
+                    raise UnsupportedProtectedOperation()
+                first.descriptor._record(tenant, right.value)
+                record = right
+            else:
+                raise UnsupportedProtectedOperation()
+        if scope is None or record is None or scope.key == record.key:
+            raise UnsupportedProtectedOperation()
+        identity = UUID(bytes=record.value.bytes) if type(record.value) is UUID else record.value
+        permit = _DeletePermit(table, first.record, first.tenant, identity, UUID(bytes=tenant.bytes))
+        if expected is not None:
+            if (permit.table is not expected.table or permit.record is not expected.record or
+                    permit.scope is not expected.scope or type(permit.identity) is not type(expected.identity) or
+                    permit.identity != expected.identity or permit.tenant != expected.tenant):
+                raise UnsupportedProtectedOperation()
+            permit = expected
+        return permit, scope, record
 
     def update_context(self, statement, table, tenant, *, generated):
         if (not isinstance(statement, Update) or statement.table.name != table.name or
@@ -745,6 +858,20 @@ class _Attachment:
 
     def admit(self, statement, flushing=False, bulk=None):
         if flushing and isinstance(statement, (Insert, Update, Delete)):
+            if isinstance(statement, Delete):
+                for node in visitors.iterate(statement):
+                    for native in (Delete, Table, Column, BooleanClauseList, BinaryExpression, BindParameter):
+                        if isinstance(node, native):
+                            _delete_node(node, native)
+                            break
+                    else:
+                        raise UnsupportedProtectedOperation()
+            return
+        if isinstance(statement, Delete):
+            operation = self._check()
+            if operation.scoped_delete is None:
+                raise UnsupportedProtectedOperation()
+            self.delete_context(statement, operation.tenant, operation.scoped_delete)
             return
         if bulk is not None and isinstance(statement, Update):
             operation = self._check()
@@ -785,9 +912,9 @@ class _Attachment:
             return
         if not isinstance(statement, Select):
             raise UnsupportedProtectedOperation()
-        self.select_types(statement)
+        nodes = self.select_types(statement)
         safe_count_stars = set()
-        for node in visitors.iterate(statement):
+        for node in nodes:
             operation = _operation.get()
             generated = operation is not None and operation.owner is self and operation.generated(node)
             if generated:
@@ -796,7 +923,7 @@ class _Attachment:
                 arguments = list(node.clauses)
                 if len(arguments) == 1 and isinstance(arguments[0], ColumnClause) and arguments[0].name == "*":
                     safe_count_stars.add(id(arguments[0]))
-        for node in visitors.iterate(statement):
+        for node in nodes:
             if isinstance(node, TextClause):
                 raise UnsupportedProtectedOperation()
             if isinstance(node, Join) and self.protected(node.onclause):
@@ -925,6 +1052,10 @@ class _Attachment:
         if execution_options.get("schema_translate_map"):
             raise PolicyMismatch()
         self.admit(statement, operation.flushing, operation.bulk_table)
+        if operation.scoped_delete is not None and isinstance(statement, Delete):
+            if multiparams or params:
+                raise UnsupportedProtectedOperation()
+            return statement, multiparams, params
         if operation.bulk_update is not None and isinstance(statement, Update):
             groups = multiparams if multiparams else [params]
             _, record_bind = self.update_context(statement, operation.bulk_update, operation.tenant, generated=True)
@@ -996,6 +1127,21 @@ class _Attachment:
             return
         operation = self._check()
         self.admit(context.compiled.statement, operation.flushing, operation.bulk_table)
+        if operation.scoped_delete is not None and isinstance(context.compiled.statement, Delete):
+            permit, scope, record = self.delete_context(context.compiled.statement, operation.tenant,
+                                                       operation.scoped_delete)
+            names = [context.compiled.bind_names.get(bind) for bind in (scope, record)]
+            if (context.executemany or statement != str(context.compiled) or any(type(name) is not str for name in names) or
+                    names[0] == names[1] or len(context.compiled.bind_names) != 2 or
+                    len(context.compiled_parameters) != 1):
+                raise UnsupportedProtectedOperation()
+            expected = dict(zip(names, (permit.tenant, permit.identity)))
+            for group in (context.compiled_parameters[0], parameters):
+                if (type(group) is not dict or set(group) != set(expected) or
+                        any(type(group[name]) is not type(value) or group[name] != value
+                            for name, value in expected.items())):
+                    raise UnsupportedProtectedOperation()
+            return
         if operation.bulk_update is not None and isinstance(context.compiled.statement, Update):
             if statement != str(context.compiled):
                 raise UnsupportedProtectedOperation()
@@ -1108,6 +1254,16 @@ class _Session(Session):
             return self._prepared
         return self._owner.prepare(self._tenant)
 
+    def scalar(self, statement, *args, **kwargs):
+        if isinstance(statement, Delete):
+            raise UnsupportedProtectedOperation()
+        return super().scalar(statement, *args, **kwargs)
+
+    def scalars(self, statement, *args, **kwargs):
+        if isinstance(statement, Delete):
+            raise UnsupportedProtectedOperation()
+        return super().scalars(statement, *args, **kwargs)
+
     def flush(self, objects=None):
         if not (self.new or self.dirty or self.deleted):
             return super().flush(objects)
@@ -1136,6 +1292,8 @@ def _execute(state):
         return _bulk_insert(state)
     if isinstance(state.statement, Update):
         return _bulk_update(state)
+    if isinstance(state.statement, Delete):
+        return _scoped_delete(state)
     session._owner.admit(state.statement)
     parameters = state.parameters if isinstance(state.parameters, dict) else {}
     protected_read = any(session._owner.protected(c) for c in state.statement.selected_columns)
@@ -1149,6 +1307,40 @@ def _execute(state):
     token = _operation.set(operation)
     try:
         state.statement = rewrite_search(session._owner, state.statement, operation)
+        return state.invoke_statement()
+    finally:
+        _operation.reset(token)
+
+
+def _scoped_delete(state):
+    session, statement = state.session, state.statement
+    owner, mapper = session._owner, state.bind_mapper
+    if (not state.is_orm_statement or mapper is None or mapper.class_ not in owner.models or
+            mapper is not statement._propagate_attrs.get('plugin_subject') or
+            state.parameters is not None or set(state.bind_arguments) - {'clause', 'mapper'}):
+        raise UnsupportedProtectedOperation()
+    owner._check_configuration()
+    tenant = session._tenant
+    permit, _, _ = owner.delete_context(statement, tenant)
+    options = state.execution_options
+    if (set(options) - {'synchronize_session', 'autoflush', 'prebuffer_rows', 'dml_strategy',
+                       '_sa_orm_update_options', '_result_disable_adapt_to_context'} or
+            options.get('synchronize_session') is not False or
+            any(type(options[name]) is not bool for name in ('autoflush', 'prebuffer_rows') if name in options) or
+            options.get('dml_strategy', 'auto') not in ('auto', 'orm')):
+        raise UnsupportedProtectedOperation()
+    native = options.get('_sa_orm_update_options')
+    if (native is None or native._subject_mapper is not mapper or native._dml_strategy != 'orm' or
+            native._synchronize_session is not False):
+        raise UnsupportedProtectedOperation()
+    material = session._keys()
+    if session._tenant != permit.tenant:
+        raise UnsupportedProtectedOperation()
+    owner.delete_context(statement, permit.tenant, permit)
+    operation = _Operation(owner, material, permit.tenant, session, scoped_delete=permit)
+    state.update_execution_options(compiled_cache=None)
+    token = _operation.set(operation)
+    try:
         return state.invoke_statement()
     finally:
         _operation.reset(token)
@@ -1364,8 +1556,23 @@ def _async_method(name):
     native = getattr(AsyncSession, name)
     @wraps(native)
     async def method(self, *args, **kwargs):
-        await self._prepare()
-        return await native(self, *args, **kwargs)
+        statement = args[0] if args else kwargs.get('statement')
+        permit = None
+        if isinstance(statement, Delete):
+            if name != 'execute':
+                raise UnsupportedProtectedOperation()
+            session = self.sync_session
+            session._owner._check_configuration()
+            permit, _, _ = session._owner.delete_context(statement, session._tenant)
+        try:
+            await self._prepare()
+            if permit is not None:
+                if session._tenant != permit.tenant:
+                    raise UnsupportedProtectedOperation()
+                session._owner.delete_context(statement, permit.tenant, permit)
+            return await native(self, *args, **kwargs)
+        finally:
+            permit = None
     return method
 
 
@@ -1390,7 +1597,9 @@ def attach(mapping: registry, engine: Engine | AsyncEngine, *, lock: bytes, keys
 
     Schema transition is not performed. The host authenticates the lock and the
     tenant passed to the returned factory. ORM flush and bounded mapped
-    dictionary INSERT and tenant-scoped TEXT UPDATE writes are admitted.
+    dictionary INSERT, tenant-scoped TEXT UPDATE, and single-record tenant-scoped
+    DELETE writes are admitted. Mapped DELETE requires execute() with explicit
+    tenant/record equality and synchronize_session=False, without RETURNING.
 
     ``deployment`` is ``(plan, pin)`` or ``(plan, pin, restore_binding)``. The
     third element is an adopted ``cryptalis.restore/v1`` binding when the

@@ -10,6 +10,140 @@ No PostgreSQL/provider/runtime cell, production key provider, independent review
 VERIFIED below refers only to the named checks and their exact revisions.
 All other contract and promotion requirements are SPECIFIED. All seven full gates remain UNKNOWN.
 
+## Defensive projection and DELETE integration checkpoint: 2026-10-23
+
+**VERIFIED, local combined source:** the serial PostgreSQL 16 primary regression
+passes **2,250 tests and 18 subtests**, with four skips and 48 existing deprecation warnings.
+The skips comprise one test and three collection skips. The run takes 758.81
+seconds. All 154 Python hashes stay unchanged. Both mandatory role probes pass.
+This checkpoint combines expanded SELECT descendant admission, authenticated
+output regressions, finite mapped DELETE and native-node checks for ordinary
+ORM flush DELETE. The receipts bind the combined worktree based on `5b3362b`.
+
+The earlier wrong-password CLI timeout does not recur. Product and test timeouts
+stay unchanged. The original timeout's cause remains UNKNOWN. The earlier
+`351789e` failed checkpoint remains below, with its original evidence.
+See the [full primary receipt](_reset/defensive-projection-delete-full-20261023.json).
+
+The current release check passes repeat-build wheel/sdist hashes, archive
+inspection, SBOM, all 37 installed-file comparisons and CLI startup. All 33 wheel
+modules match the recorded 38-file source bundle. The wheel SHA-256 is
+`75821785bbb1fdab70b56265c1d4b91df1237f979c753076ddf3a182bd4cd1b7`.
+See the [release receipt](_reset/defensive-projection-delete-release-20261023.json).
+
+Pinned Smolink revision `498d24b` passes one separate lifecycle check with real
+Redis. All 38 application files stay unchanged. Native/protected URL operations,
+current-value removal and a package-free child pass. Only `Url.destination` is
+protected. Authentication endpoints and deployed startup remain unqualified.
+See the [application observations](_reset/defensive-projection-delete-smolink-app-20261023.json)
+and [mandatory wrapper](_reset/defensive-projection-delete-smolink-wrapper-20261023.json).
+
+The current 10,000-row native-matched profile passes all six latency targets
+and the isolated storage target. Each workload uses 100 paired samples after
+ten warmup pairs. Native and attached values match. Other database jobs stop
+during sampling. The product completes protection, verification and pinned
+ACTIVE attachment.
+
+| Workload | Scalar/tuple added p95, ms | Entity added p95, ms | Budget, ms |
+|---|---:|---:|---:|
+| Point | 2.2091 | 1.7067 | 3 |
+| Equality | 2.3908 | 2.1547 | 3 |
+| IN-20 | 2.9629 | 3.2268 | 8 |
+
+Isolated name-column/equality-index storage measures **1.52483× native**.
+This warm synchronous TEXT/public-key cell does not qualify larger datasets,
+async traffic, concurrent traffic, writes or remote custody. Shared-host load
+remains uncontrolled. The application and profile runs retain the same 154-file
+source bundle. All seven production gates remain UNKNOWN.
+See the [matched profile](_reset/defensive-projection-delete-performance-20261023.json)
+and [mandatory wrapper](_reset/defensive-projection-delete-performance-wrapper-20261023.json).
+
+## Expanded SELECT projection checkpoint: 2026-10-23
+
+**IMPLEMENTED, bounded verification:** SELECT admission expands full entity and
+table projections before applying existing type, operation and owned-lineage
+rules. One shared snapshot includes each selected column and its descendants.
+The type check and both general admission checks use that snapshot.
+
+Two native PostgreSQL controls first reproduced a public output hook that
+returned CF1 frame hex through an unrelated public attribute. Both attached
+entity/table projections now refuse before key resolution or SELECT execution.
+A benign mapped `length(protected_field)` control also exposed different admission
+for direct and entity projections. Both now refuse. Direct/entity
+`length(public_field)` retains the native value.
+
+Ten projection controls cover those refusals, separately constructed table
+lineage, ordinary entity/table reads, a public nested SELECT, protected Unicode
+and safe Python codecs. The existing authenticated result processor and exact
+owned payload exception stay unchanged. No new query grammar or cryptographic
+format results from this repair.
+
+The final affected suites each pass **284 checks** with 151 stable Python hashes.
+The primary uses Python 3.12.3 / SQLAlchemy 2.1.3. The alternate uses Python 3.13.12 /
+SQLAlchemy 2.0.51 with pure psycopg. Both runs reload the private URLs and pass
+both mandatory role probes.
+
+Earlier evidence stays visible: the original entity/table RED has two failures.
+The first expansion regression has 279 passes and one invalid nested fixture
+failure. Its corrected focused control passes once, and its alternate passes
+280 checks. The later mapped-expression RED has three passes and one missing
+refusal. The final 284-case runs supersede those earlier source boundaries.
+The [combined checkpoint](#defensive-projection-and-delete-integration-checkpoint-2026-10-23) passes the full primary regression.
+All seven production gates remain UNKNOWN.
+
+Evidence: [entity/table RED](_reset/select-entity-type-hooks-red-20261023.json),
+[initial expansion boundary](_reset/select-expanded-columns-boundary-20261023.json),
+[mapped-expression RED](_reset/select-expanded-expression-red-20261023.json),
+[final primary regression](_reset/select-expanded-expression-primary-20261023.json),
+[final alternate regression](_reset/select-expanded-expression-alternate-20261023.json), and
+[exact final boundary](_reset/select-expanded-expression-boundary-20261023.json).
+
+## Mapped DELETE admission checkpoint: 2026-10-23
+
+**IMPLEMENTED, bounded verification:** sync/async mapped `execute()` admits one
+record DELETE with exact tenant and application-record equalities. It requires
+`synchronize_session=False`, no RETURNING and no external parameters. The route
+supports tenant-column TEXT/VARCHAR mappings and UUID/int64 application IDs.
+Core DELETE, scalar entry points and broader predicates remain unadmitted.
+
+Exact native AST classes and compiler dispatch must pass before key resolution.
+Original tenant/record authority stays fixed across provider callbacks, compiled
+binds and final driver arguments. Native controls cover row counts, zero matches,
+identity-map behavior, autoflush, foreign-key failure, savepoints and rollback.
+This route authenticates no stored frame because it returns no protected value.
+
+Ordinary ORM flush DELETE also checks native nodes before its existing early
+return. Four benign single/batch TEXT/VARCHAR controls replace a DELETE with an
+equivalent subclass that inherits the native compiler. The corrected RED records
+four missing refusals. The guard now refuses before DELETE execution and leaves
+rows unchanged. Removing the hook restores native flush and rollback behavior.
+The guard adds no scoped tenant-predicate requirement to ordinary ORM flush.
+
+The scoped route passes **55 integrated checks**. Its earlier primary affected
+run passes 258 existing checks. The final flush-guard bundle passes **65 checks**
+in each primary and alternate cell, including scoped/native DELETE and existing
+sync/async ORM state controls. All runs keep their recorded source hashes stable.
+
+The earlier alternate affected run records 312 passes and one VARCHAR restart
+failure. Its isolated child lacked psycopg. A test-only interpreter option now
+permits a disposable Python 3.13 child with psycopg and no Cryptalis. The default
+interpreter and `-I` remain unchanged. The single failed control then passes.
+This does not replace the original 312-pass/one-failure receipt with a full pass.
+The [combined checkpoint](#defensive-projection-and-delete-integration-checkpoint-2026-10-23) passes the full primary regression.
+All seven production gates remain UNKNOWN.
+
+Evidence: [native oracle](_reset/scoped-delete-native-lifecycle-20261023.json),
+[scoped controls](_reset/scoped-delete-green2-lifecycle-20261023.json),
+[scoped integration](_reset/scoped-delete-integration-20261023.json),
+[existing primary regression](_reset/scoped-delete-primary-existing-lifecycle-20261023.json),
+[earlier alternate failure](_reset/scoped-delete-alternate-lifecycle-20261023.json),
+[isolated native child](_reset/scoped-delete-alternate-varchar-child-environment-lifecycle-20261023.json),
+[corrected restart control](_reset/scoped-delete-alternate-varchar-restart-lifecycle-20261023.json),
+[initial flush RED](_reset/flush-delete-dispatch-red-lifecycle-20261023.json),
+[corrected flush RED](_reset/flush-delete-dispatch-red2-lifecycle-20261023.json),
+[final primary flush bundle](_reset/flush-delete-dispatch-primary-lifecycle-20261023.json), and
+[final alternate flush bundle](_reset/flush-delete-dispatch-alternate-lifecycle-20261023.json).
+
 ## Post-admission 10k profile checkpoint: 2026-10-23
 
 **VERIFIED, local profile only:** committed `3a21096` passes the existing

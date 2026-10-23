@@ -21,23 +21,35 @@ No objective is complete until its acceptance evidence and applicable gate pass.
 
 ## Current boundary
 
-- The post-admission 10k profile at `3a21096` passes all six latency targets
+- The combined defensive source passes 2,250 tests and 18 subtests, with four
+  skips, 48 existing warnings and 154 stable Python hashes. Current release,
+  unchanged Smolink, all six 10k read targets and isolated storage pass separately.
+  All seven production gates remain UNKNOWN. See the
+  [combined defensive checkpoint](status.md#defensive-projection-and-delete-integration-checkpoint-2026-10-23).
+
+- The earlier post-admission 10k profile at `3a21096` passes all six latency targets
   and 1.52483× isolated storage, with 150 stable Python hashes. This is warm
   synchronous TEXT evidence with public fixture keys. See the
-  [current 10k checkpoint](status.md#post-admission-10k-profile-checkpoint-2026-10-23).
+  [earlier 10k checkpoint](status.md#post-admission-10k-profile-checkpoint-2026-10-23).
 
-- Finite SELECT type admission now rejects the confirmed hidden SQL/compiler
-  routes while preserving tested Python bind/result codecs. All 12 final
-  primary controls and all 274 alternate affected checks pass. Full combined
-  follow-up remains required. See the
-  [SELECT checkpoint](status.md#finite-select-type-admission-checkpoint-2026-10-23).
+- Expanded entity/table SELECT admission now applies type, operation and owned-lineage
+  rules to selected columns and descendants. Both final affected cells pass 284
+  checks. Earlier native frame-exposure and benign mapped-expression failures stay
+  recorded. See the
+  [expanded SELECT checkpoint](status.md#expanded-select-projection-checkpoint-2026-10-23).
 
-- The combined checkpoint's full run reports 2,167 passed and two failures,
-  with 18 passed subtests, four skips and 149 stable hashes. The corrected
-  early-refusal test and unchanged CLI timeout control pass in isolation.
-  The timeout cause stays UNKNOWN; full follow-up remains required. Unchanged
-  Smolink and reproducible/installed-package checks pass. See the
-  [combined checkpoint](status.md#combined-integration-checkpoint-2026-10-23).
+- Finite mapped DELETE preserves native results and transactions under exact
+  tenant/record authority. Ordinary flush DELETE also refuses custom AST nodes.
+  The scoped integration passes 55 checks. Both final flush bundles pass 65.
+  The earlier alternate restart failure and its isolated correction stay separate.
+  See the [DELETE checkpoint](status.md#mapped-delete-admission-checkpoint-2026-10-23).
+
+- Historical checkpoint `351789e` reports 2,167 passes and two failures,
+  with 18 passed subtests, four skips and 149 stable hashes. Its corrected
+  early-refusal and unchanged CLI timeout controls pass in isolation.
+  The original timeout cause stays UNKNOWN. The later combined defensive
+  checkpoint supplies the full follow-up. See the
+  [earlier combined checkpoint](status.md#combined-integration-checkpoint-2026-10-23).
 
 - Scoped TEXT dictionary UPDATE now preserves native groups, NULL/omission,
   repeated IDs, zero matches and transactions under exact tenant/record proofs.
@@ -189,15 +201,15 @@ Requirement text is abbreviated. The full definitions remain in the research
 |---|---|---|---|---|
 | OBJ-SEC-01 | Encrypt before PostgreSQL; prove at SQL/driver boundaries | VERIFIED, bounded | `crypto/cf1.py`, `sqlalchemy.py`; slice 2/3 receipts in `docs/_reset`; real runtime-role tests | Broader writer/auth/provider boundaries; independent review |
 | OBJ-SEC-02 | Bind tenant, field, row, generation; reject malformed/swapped frames | VERIFIED, bounded | CF1 AAD, descriptor binding, sync/async tamper tests | Collision assumptions and composition review |
-| OBJ-SEC-03 | Authorization, result lineage, tenant isolation, parameterization | PARTIAL | Tenant-scoped sessions, requested-point checks, typed errors | Host authorization is external; finite SELECT type hooks now refuse; audit remaining ORM routes |
+| OBJ-SEC-03 | Authorization, result lineage, tenant isolation, parameterization | PARTIAL | Tenant-scoped sessions, requested-point checks, typed errors; expanded entity/table SELECT type, operation and owned-lineage admission; finite mapped DELETE binds compiled/final parameters to original tenant/record authority | Host authorization is external; audit remaining ORM routes |
 | OBJ-SEC-04 | Detect plaintext bypass through ORM, bulk, SQL, COPY, jobs, logs | PARTIAL | Guarded attachment rejects raw SQL/COPY/opaque writes and unsafe engine logging before connect/key access; writer inventory at plan; effective runtime privilege refusal before restore probes/keys, repeated at planning, active admission, Doctor, ACTIVE/PENDING status, shared maintenance and host-phase-selected reverse execution | Complete route inventory; identity variants now refuse during planning; deployment enforcement is unverified |
 | OBJ-SEC-05 | Isolate keys; bound nonces, leases, cache lifetime, fork safety | VERIFIED, bounded | `crypto/keys.py` strict policy, cache expiry, fork refusal; local provider outage/revocation/lease drills pass on both SQLAlchemy cells | Remote cancellation, usage limits, production custody |
 | OBJ-SEC-06 | Reduce equality/frequency/access leakage with documented trade-offs | SPECIFIED | Equality leakage is declared; no stronger profile admitted | Threat-model and benchmark a lower-leakage profile; six-gate admission |
 | OBJ-SEC-07 | Independent red-team, crypto, adapter, provider, supply-chain review | BLOCKED | None | Assign independent reviewers; do not self-certify |
 | OBJ-QUERY-01 | Exact equality, `IN`, scoped uniqueness, NULL logic, races | VERIFIED, bounded | `_sqlalchemy_search.py`, slice 4 receipt; native concurrency tests | Keep grammar reconciliation current |
-| OBJ-QUERY-02 | Ordinary SQL correctness: NULL predicates, aliases, joins, projections | PARTIAL | Native sync/async controls; textual reference admission and simple negative/NULL predicates added 2026-10-19 | Continue finite native-oracle matrix; general Boolean NOT and protected joins remain unadmitted |
+| OBJ-QUERY-02 | Ordinary SQL correctness: NULL predicates, aliases, joins, projections | PARTIAL | Native sync/async controls; textual reference admission and simple negative/NULL predicates; expanded entity/table/descendant admission preserves authenticated outputs and safe public expressions; both final affected cells pass 284 checks | Continue finite native-oracle matrix; general Boolean NOT and protected joins remain unadmitted |
 | OBJ-QUERY-03 | Ordering, ranges, prefix/text search, aggregates, other types | SPECIFIED | Loud refusal only | Research and admit each profile separately |
-| OBJ-QUERY-04 | INSERT/UPDATE/DELETE, bulk, RETURNING, triggers, cascades, savepoints | PARTIAL | Scoped tenant-column TEXT dictionary UPDATE with native transaction/group semantics and exact ordered input proofs; ORM flush writes and attached sync/async mapped dictionary INSERT, with optional single protected scalar RETURNING; native NULL/grouping, typed context, errors and savepoints; exact driver/page/input-result checks | Qualify tuple/entity RETURNING, broader DML, used defaults and each trigger/cascade effect separately |
+| OBJ-QUERY-04 | INSERT/UPDATE/DELETE, bulk, RETURNING, triggers, cascades, savepoints | PARTIAL | Scoped tenant-column TEXT dictionary UPDATE with native transaction/group semantics and exact ordered input proofs; ORM flush writes and attached sync/async mapped dictionary INSERT, with optional single protected scalar RETURNING; native NULL/grouping, typed context, errors and savepoints; exact driver/page/input-result checks; finite mapped TEXT/VARCHAR tenant/record DELETE with native results and transactions; custom DELETE AST refusal also covers ordinary flush; 55 scoped integration checks and both 65-case flush bundles pass | Qualify tuple/entity RETURNING, broader DML, used defaults and each trigger/cascade effect separately |
 | OBJ-QUERY-05 | Versioned compatibility corpus and read-only scanner | PARTIAL | Native-vs-attached tests and receipts | Build a real pre-adoption scanner; reconcile current revisions |
 | OBJ-LIFE-01 | Deterministic plan/apply/verify with diagnostics | VERIFIED, bounded | `migration.py` plan/apply/verify; compiler inspection maps SQLAlchemy and direct psycopg errors to safe SQLSTATE; slice 5 receipts; read-only Doctor/status failure controls preserve operation identity, safe known remedies and UNKNOWN observations | Broader schema and failure boundaries |
 | OBJ-LIFE-02 | Resumable, atomic, byte-bounded backfill with verification | VERIFIED, bounded | Journal, advisory lock, chunks, crash/resume tests; one expiry-specific local row retry with policy checks and atomic failure controls in protection/decrypt-back | Exact memory/WAL bounds remain host inputs |
@@ -213,11 +225,11 @@ Requirement text is abbreviated. The full definitions remain in the research
 | OBJ-DX-03 | Real FastAPI/SQLModel app plus a second independent app | PARTIAL | Pinned Smolink revision 498d24b runs its original FastAPI app, HTTP URL creation and refusal cases, real Redis, repository/ORM CRUD, protect/decrypt-back/remove, and a fresh import-denied process; 38 original Python source hashes match, with zero source/model/query edits; only Url.destination is protected; the in-repo three-model application retains its separate evidence | Broader protected fields and application suite, exact packaged Python 3.13 cell, SQLModel integration, and a second external app |
 | OBJ-DX-04 | Normal ORM identity, loading, sessions, pooling, async | PARTIAL | Bounded sync/async adapter and search tests | Broader ORM/framework coverage |
 | OBJ-DX-05 | Complete quickstart, threat model, leakage, recovery docs | PARTIAL | README, architecture, security, lifecycle, walkthroughs | Keep docs tied to admitted APIs and evidence |
-| OBJ-PERF-01 | Continuous native vs protected latency/resource measurements | PARTIAL | Current pinned 10k/100k/1m scalar/tuple and full-entity profiles with matched runtime roles, full migration/ACTIVE attach, raw paired samples, isolated storage and 100k/1m process CPU/RSS; historical million-row receipts retain prior source boundaries | Larger scale, cold/concurrent/tail/WAL/provider measurements |
+| OBJ-PERF-01 | Continuous native vs protected latency/resource measurements | PARTIAL | Revision-pinned 10k/100k/1m scalar/tuple and full-entity profiles with matched runtime roles, full migration/ACTIVE attach, raw paired samples, isolated storage and 100k/1m process CPU/RSS; historical million-row receipts retain prior source boundaries | Larger scale, cold/concurrent/tail/WAL/provider measurements |
 | OBJ-PERF-02 | Profile-guided optimization without security loss | PARTIAL | Membership projection correction on 2026-10-09 | Continue profiling; no unverified speed claims |
 | OBJ-PERF-03 | Multithreading/multiprocessing/async at 1/4/16/saturation | SPECIFIED | Single-worker maintenance path | Define and run isolation/backpressure/cancellation tests |
-| OBJ-PERF-04 | Added p95 targets and growth path | PARTIAL | Current pinned 10k/100k/1m warm scalar/tuple and full-entity reads meet local 3ms/8ms targets; isolated column plus equality index measures 1.5248x/1.5296x/1.4372x for 53-byte names | Larger scale/remote-provider/concurrent qualification; write/pause budgets undecided |
-| OBJ-OPS-01 | Reproducible wheel/sdist, SBOM, provenance, reviewers | PARTIAL | `pyproject.toml`, `uv.lock`, `scripts/release_check.py`; [2026-10-21 receipt](_reset/release-check-20261021.json) shows identical repeat-build hashes, verified wheel `RECORD`, license metadata, CycloneDX 1.5 SBOM, and clean-venv import/CLI | Independent rebuild, signed provenance, vulnerability scan, publication identity, upgrade/uninstall matrix, independent review |
+| OBJ-PERF-04 | Added p95 targets and growth path | PARTIAL | Revision-pinned 10k/100k/1m warm scalar/tuple and full-entity reads meet local 3ms/8ms targets; isolated column plus equality index measures 1.5248x/1.5296x/1.4372x for 53-byte names | Larger scale/remote-provider/concurrent qualification; write/pause budgets undecided |
+| OBJ-OPS-01 | Reproducible wheel/sdist, SBOM, provenance, reviewers | PARTIAL | `pyproject.toml`, `uv.lock`, `scripts/release_check.py`; [2026-10-21 receipt](_reset/release-check-20261021.json) shows identical repeat-build hashes, verified wheel `RECORD`, license metadata, CycloneDX 1.5 SBOM, and clean-venv import/CLI; the [combined defensive source receipt](_reset/defensive-projection-delete-release-20261023.json) binds 33 wheel modules and 37 installed-file checks to its 38-file source bundle | Independent rebuild, signed provenance, vulnerability scan, publication identity, upgrade/uninstall matrix, independent review |
 | OBJ-OPS-02 | Recoverable source/evidence and traceability | PARTIAL | Git history and `docs/_reset` receipts | Durable archive and fresh restore |
 | OBJ-RESEARCH-01 | Source-backed comparative research with repeatable evidence | ONGOING | Research repository provenance; source-access and fallback rules in `AGENTS.md` | Preserve failed alternatives and provenance links |
 | OBJ-RESEARCH-02 | One coherent working candidate that passes all gates | PARTIAL | Implemented scope above | Continue integration; all seven gates UNKNOWN |

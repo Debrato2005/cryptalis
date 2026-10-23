@@ -77,6 +77,20 @@ These controls preserve tested Python bind/result codecs and native Boolean/Enum
 behavior. They do not establish a universal public write-type policy or a
 hostile-Python sandbox.
 
+SELECT admission expands entity and table projections before it checks types
+and expressions. The same node snapshot includes each selected column and its
+descendants. Existing lineage and protected-expression rules apply to that
+snapshot. A public output hook cannot select stored CF1 bytes through a hidden
+expanded column. Protected outputs retain the existing authenticated processor.
+Public computed expressions retain native behavior within the admitted grammar.
+
+The scoped mapped DELETE route freezes the original typed tenant and record
+before provider callbacks. Native AST identity, compiled binds and actual driver
+arguments must retain that authority. Ordinary ORM flush DELETE also requires
+native compiler nodes. Unsupported custom nodes refuse before execution.
+DELETE returns no protected value and makes no stored-frame authentication claim.
+Native rollback, savepoint, foreign-key and identity-map behavior remain required.
+
 The native bulk page hook validates processed input against the admitted batch.
 Each page must retain its original frozen input slice before the hook freezes
 the native generated SQL/parameters. Earlier callbacks cannot change a later

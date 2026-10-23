@@ -1,0 +1,29 @@
+{
+  "cryptalis_imported": false,
+  "cryptalis_installed": false,
+  "dependency_setup": {
+    "destination": "/tmp/cryptalis-native-restart-py313-20261023",
+    "existing_application_environments_modified": false,
+    "official_index": "https://pypi.org/simple",
+    "offline_attempt": "failed: cached psycopg unresolved; original cache lock initially read-only",
+    "requested": "psycopg==3.3.6"
+  },
+  "external_gates": "UNKNOWN",
+  "installed_distributions": [
+    "psycopg==3.3.6"
+  ],
+  "interpreter": "/tmp/cryptalis-native-restart-py313-20261023/bin/python",
+  "isolated": true,
+  "libpq_version": 160015,
+  "original_alternate_interpreter": "/home/debrato/Projects/smolink/backend/.venv/bin/python",
+  "original_alternate_isolated_psycopg_spec": null,
+  "preserved_failure_receipt": "docs/_reset/scoped-delete-alternate-lifecycle-20261023.json",
+  "preserved_failure_receipt_sha256": "484930dbfd728eb1edb488112670457f69ded69cceb868bdbfe17e6a9fce9026",
+  "psycopg_implementation": "python",
+  "psycopg_origin": "/tmp/cryptalis-native-restart-py313-20261023/lib/python3.13/site-packages/psycopg/__init__.py",
+  "psycopg_version": "3.3.6",
+  "python_version": "3.13.12",
+  "scope": "Disposable isolated Python 3.13 native restart driver environment; no database operation in this record; no production qualification",
+  "test_interpreter_override": "CRYPTALIS_NATIVE_RESTART_PYTHON; defaults to sys.executable; -I retained",
+  "test_source_sha256": "539a06d47f4c1125f8780b719f8fbd44f548177ab8329174f6bea954229b1ca7"
+}

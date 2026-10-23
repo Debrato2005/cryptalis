@@ -182,7 +182,7 @@ def test_varchar_decrypt_back_and_removal_restore_type_limit_and_metadata():
                                   ('abcdefghijklm', UUID(int=101)))
         assert error.value.orig.sqlstate == '22001'
         assert d.check_removed(plan, app.owner, pin=replace(pin, phase='REMOVED')) is None
-        result = subprocess.run([sys.executable, '-I', '-c', '''
+        result = subprocess.run([os.environ.get('CRYPTALIS_NATIVE_RESTART_PYTHON', sys.executable), '-I', '-c', '''
 import json, os, sys
 from uuid import uuid4
 import psycopg

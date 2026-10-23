@@ -1,0 +1,94 @@
+{
+  "scope": "Defensive requirement follow-up: expanded mapped expressions use existing SELECT descendant type, owned-lineage and protected-operation rules",
+  "base_revision": "c10033c753ce1cf2c974cabbefb32198edc87762",
+  "source_sha256": "020790a9b469314d4ee78f61d80fe9ad323f6a696b5778d8e7c360218ad85ed0",
+  "test_sha256": "49fa1598227889c6cfcd27daada4643ce33c798fb0be4c62bb40e990867a5054",
+  "change": "The native visitor snapshot expands each SELECT selected column and its descendants with identity deduplication. Type admission returns this snapshot; both existing generic admission loops reuse it. The existing lineage check supplies one policy. Exact owned Payload permission and authenticated result processing remain unchanged.",
+  "benign_controls": {
+    "negative": "Existing length(protected field) refusal must match direct projection and full-entity column_property projection before provider resolution or SELECT dispatch.",
+    "positive": "length(public field) retains the native value in direct and entity projections.",
+    "new_cases": 4,
+    "current_projection_cases": 10
+  },
+  "red_evidence": "On unchanged c10033c source, the direct protected expression and public direct/entity cases passed. The entity protected expression failed because it did not refuse. Preserve this 3-pass/1-fail receipt as historical evidence.",
+  "green_evidence": "Current final affected suites each passed284 on the same source/test hashes. No primary test correction or fixture failure occurred in these final runs.",
+  "runtime_profiles": {
+    "primary": {
+      "python": "3.12.3",
+      "sqlalchemy": "2.1.3",
+      "psycopg": "3.3.6",
+      "cryptography": "50.0.2",
+      "greenlet": "3.5.6"
+    },
+    "alternate": {
+      "python": "3.13.12",
+      "sqlalchemy": "2.0.51",
+      "psycopg": "3.3.6",
+      "psycopg_impl": "python",
+      "cryptography": "50.0.2",
+      "greenlet": "3.5.3"
+    }
+  },
+  "preflight": "Every run reloaded both private URL files and passed both mandatory SELECT1 probes. No credential or URL is recorded here.",
+  "independent_review": "Lifecycle author reviewed the exact descendant correction read-only. Agent review does not replace independent human security review.",
+  "receipts": {
+    "select-expanded-expression-red-20261023.json": {
+      "sha256": "ccc9f80af21b7631e20fb1f3a84e1daa8eb95944ce7b898fba626bd8d7ed089d",
+      "counts": {
+        "passed": 3,
+        "failed": 1
+      },
+      "elapsed_seconds": 2.388642614998389,
+      "source_stability": {
+        "unchanged": true,
+        "changed_paths": []
+      },
+      "python_files": 151,
+      "source_sha256": "4663b46966b26cc59c3b4b1647732f306f2ae6f5ee1a9dcc38547acc2de7b529",
+      "test_sha256": "49fa1598227889c6cfcd27daada4643ce33c798fb0be4c62bb40e990867a5054"
+    },
+    "select-expanded-expression-primary-20261023.json": {
+      "sha256": "72caf4faba6607d2e97442b65dcb7b04b932b6cdb6396736f03fd26685a2b8c9",
+      "counts": {
+        "passed": 284
+      },
+      "elapsed_seconds": 74.09124347299803,
+      "source_stability": {
+        "unchanged": true,
+        "changed_paths": []
+      },
+      "python_files": 151,
+      "source_sha256": "020790a9b469314d4ee78f61d80fe9ad323f6a696b5778d8e7c360218ad85ed0",
+      "test_sha256": "49fa1598227889c6cfcd27daada4643ce33c798fb0be4c62bb40e990867a5054"
+    },
+    "select-expanded-expression-alternate-20261023.json": {
+      "sha256": "49422807aff6e181443b21688c861df06175ec6883ee8673e9631007b1b332e2",
+      "counts": {
+        "passed": 284
+      },
+      "elapsed_seconds": 89.28283670199744,
+      "source_stability": {
+        "unchanged": true,
+        "changed_paths": []
+      },
+      "python_files": 151,
+      "source_sha256": "020790a9b469314d4ee78f61d80fe9ad323f6a696b5778d8e7c360218ad85ed0",
+      "test_sha256": "49fa1598227889c6cfcd27daada4643ce33c798fb0be4c62bb40e990867a5054"
+    }
+  },
+  "gates": {
+    "G-ADAPTER": "UNKNOWN",
+    "G-CRYPTO": "UNKNOWN",
+    "G-QUERY": "UNKNOWN",
+    "G-LIFECYCLE": "UNKNOWN",
+    "G-PROVIDER": "UNKNOWN",
+    "G-POLICY": "UNKNOWN",
+    "G-RELEASE": "UNKNOWN"
+  },
+  "limits": [
+    "Local PostgreSQL only",
+    "No new query grammar, parser, cryptographic format or authenticated result processor",
+    "No unrelated attack research or external testing",
+    "No full product suite or production qualification claim"
+  ]
+}

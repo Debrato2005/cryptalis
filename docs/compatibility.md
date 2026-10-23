@@ -49,6 +49,7 @@ Rollback/removal transforms current data through decrypt-back until explicit fin
 | Mapped dictionary INSERT without RETURNING | SUPPORTED | Attached sync/async `Session.execute(insert(Model), list[dict])`, explicit typed IDs and tenant scope, copied attribute dictionaries, native NULL/grouping, autoflush, uniqueness and transaction behavior. Other bulk routes remain unadmitted |
 | Mapped dictionary INSERT with one protected scalar RETURNING | SUPPORTED | Exactly one direct protected mapped column. Preserve native Row/scalar keys/types, grouping, paging, parameter-order requests and empty identity map. Authenticate against exact prepared input. Tuple/entity, label/expression/alias, loader-option and caller return_defaults forms remain unadmitted |
 | Scoped mapped dictionary UPDATE | SUPPORTED | Attached sync/async TEXT targets, explicit tenant-column equality, typed IDs, nonempty list of dictionaries and synchronize_session=False. Preserve native omission/NULL, grouping, repeated IDs, zero matches and transactions. VARCHAR, single-tenant, Core and RETURNING routes remain unadmitted |
+| Scoped mapped single-record DELETE | SUPPORTED | Attached sync/async execute, exact typed tenant and application-record equalities, no external parameters or RETURNING, and synchronize_session=False. Preserve native row counts and transactions. Unsupported custom AST classes refuse before execution |
 | Equality `==` and `IN` | SUPPORTED | Declared full tenant/domain-bound HMAC term. Preserve typed binds and native NULL/empty-list truth tables |
 | Simple negative equality `!=`, `NOT IN`, and NULL presence | SUPPORTED | Reuse the authenticated term for values and a SQL NULL check for storage-only fields. Preserve native three-valued truth, NULL elements, empty lists, and outer-join NULL extension. General Boolean NOT remains unadmitted |
 | Tenant-scoped uniqueness | SUPPORTED | Full term plus tenant scope in a race-safe native unique index. Explicit single-tenant declaration supplies its one scope |
@@ -81,8 +82,24 @@ bind/result processors remain admitted under the finite native type contract.
 Native dispatch identity and exact owned payload-type identity constrain the
 internal output hook. Nested decorator, ARRAY and tuple types receive the same
 checks. These SELECT checks do not extend admission for public write-type hooks.
-The [SELECT type checkpoint](status.md#finite-select-type-admission-checkpoint-2026-10-23) owns native refusal and compatibility evidence.
+Entity and table projections expand into the same admitted node snapshot.
+Each selected column and its descendants receive the existing type, lineage
+and protected-expression checks. Protected outputs retain authenticated decryption.
+The [expanded SELECT checkpoint](status.md#expanded-select-projection-checkpoint-2026-10-23)
+owns current projection evidence. The earlier
+[SELECT type checkpoint](status.md#finite-select-type-admission-checkpoint-2026-10-23)
+owns its recorded native refusal and compatibility evidence.
 Tenant-scoped uniqueness uses PostgreSQL's original qualified NULL behavior. Unqualified partial/compound or NULLS NOT DISTINCT variants must reject at plan time.
+
+For scoped mapped DELETE, use `delete(Model)` with exact typed tenant and record
+equalities and `execution_options={"synchronize_session": False}`. The route
+admits one application-assigned UUID or int64 record on a tenant-column table.
+It returns native row counts. Core DELETE, external parameter dictionaries,
+RETURNING, inheritance, version counters and other predicate shapes refuse.
+Ordinary ORM flush DELETE retains its existing native lifecycle contract.
+Both routes require native compiler nodes. Custom AST classes refuse before SQL.
+The [DELETE checkpoint](status.md#mapped-delete-admission-checkpoint-2026-10-23)
+owns the exact native controls and remaining limits.
 
 Protection planning and attachment require native row-context codecs without
 dialect-specific type variants. Attachment repeats configuration admission before
