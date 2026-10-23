@@ -57,7 +57,9 @@ Owned physical column lineage binds the explicit tenant and generated record
 predicates. Each native group must consume the corresponding inputs before
 execution. Exact prepared frames, typed scope/record binds and final driver
 snapshots then protect dispatch. Read-only properties and SQL-producing bind
-types refuse before key preparation. Public Python bind processors remain native.
+types refuse before SQL. In synchronous execution, these refusals precede key
+preparation. Async execution retains its existing preparation order. Public Python
+bind processors remain native.
 
 Attachment requires exact native identity types and flags without dialect
 variants or SQL-producing type hooks. Configuration admission repeats before

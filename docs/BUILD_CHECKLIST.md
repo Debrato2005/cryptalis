@@ -21,6 +21,11 @@ No objective is complete until its acceptance evidence and applicable gate pass.
 
 ## Current boundary
 
+- The post-admission 10k profile at `3a21096` passes all six latency targets
+  and 1.52483× isolated storage, with 150 stable Python hashes. This is warm
+  synchronous TEXT evidence with public fixture keys. See the
+  [current 10k checkpoint](status.md#post-admission-10k-profile-checkpoint-2026-10-23).
+
 - Finite SELECT type admission now rejects the confirmed hidden SQL/compiler
   routes while preserving tested Python bind/result codecs. All 12 final
   primary controls and all 274 alternate affected checks pass. Full combined

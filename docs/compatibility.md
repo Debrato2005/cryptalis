@@ -154,6 +154,15 @@ The six-gate grouping and conservative unadmitted grammar assumptions are record
 
 ## Performance targets and recorded costs
 
+**VERIFIED, current 10k observation at `3a21096`:** after shared identity and
+SELECT type admission, all six added-p95 targets pass. Scalar/tuple point,
+equality and IN-20 measure 1.5218, 2.2998 and 3.7486 ms. Entity values measure
+1.4839, 2.0060 and 2.9876 ms. Isolated storage measures 1.52483× native.
+The 100-pair warm synchronous TEXT profile keeps 150 Python hashes stable.
+The [post-admission checkpoint](status.md#post-admission-10k-profile-checkpoint-2026-10-23) owns exact scope, process observations and receipts.
+Older scale observations below retain their original revision boundaries.
+
+
 **SPECIFIED targets; local observations do not qualify a deployment:**
 
 | Workload | Approved target |

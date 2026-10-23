@@ -10,6 +10,32 @@ No PostgreSQL/provider/runtime cell, production key provider, independent review
 VERIFIED below refers only to the named checks and their exact revisions.
 All other contract and promotion requirements are SPECIFIED. All seven full gates remain UNKNOWN.
 
+## Post-admission 10k profile checkpoint: 2026-10-23
+
+**VERIFIED, local profile only:** committed `3a21096` passes the existing
+10,000-row native-matched profile after shared identity and SELECT type checks.
+All six latency targets and the isolated storage target pass. Each workload
+uses 100 paired samples after ten warmup pairs. Native and attached results match.
+The product completes protection, verification and pinned ACTIVE attachment.
+
+| Workload | Scalar/tuple added p95, ms | Entity added p95, ms | Budget, ms |
+|---|---:|---:|---:|
+| Point | 1.5218 | 1.4839 | 3 |
+| Equality | 2.2998 | 2.0060 | 3 |
+| IN-20 | 3.7486 | 2.9876 | 8 |
+
+Isolated name-column/equality-index storage measures **1.52483× native**.
+All 150 recorded Python hashes stay unchanged. The test passes in 4.82 seconds.
+Process CPU measures 3.175 seconds, elapsed time 4.608 seconds and lifetime peak
+RSS 94,004 KiB. These include fixture work and imports, with no server-resource
+or streaming-memory claim. The team holds other database jobs during sampling.
+Shared-host load remains uncontrolled. This warm synchronous TEXT/public-key cell
+does not qualify larger datasets, async traffic, writes or remote custody.
+All seven production gates remain UNKNOWN. Full combined follow-up remains required.
+
+Evidence: [matched observations](_reset/select-type-performance-20261023.json) and
+[mandatory wrapper](_reset/select-type-performance-wrapper-20261023.json).
+
 ## Finite SELECT type admission checkpoint: 2026-10-23
 
 **IMPLEMENTED, bounded verification:** attached SELECT checks every typed AST

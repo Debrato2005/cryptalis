@@ -49,3 +49,7 @@ SELECT correction: final primary integration passes all 12 controls. The alterna
 affected bundle passes 274 checks. Scoped DELETE implementation follows in a
 new isolated branch from the verified SELECT source. Full combined follow-up
 will run after the next coordinated integration checkpoint.
+
+Current `3a21096` 10k profile passes all six latency targets and 1.52483×
+isolated storage. All 150 Python hashes stay stable. The quiet sampling interval
+ended before the scoped DELETE RED jobs started.
