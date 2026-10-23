@@ -105,7 +105,7 @@ Use the existing deployment tool to publish the exact planned policy artifact.
 Do not write a new distributed CAS or automatic policy service merely to hide maintenance downtime.
 
 Default chunk size is a measured tuning parameter, not a security guarantee.
-Protection and decrypt-back use the [bounded row lease retry](security.md#implemented-cf1-primitives-and-local-custody)
+Protection, decrypt-back and restored-frame scans use the [bounded row lease retry](security.md#implemented-cf1-primitives-and-local-custody)
 before SQL or progress effects. Other lifecycle routes retain separate expiry limits.
 The executor resumes committed chunks without regenerating their ciphertext.
 Counters/cursors alone do not prove membership coverage. Full terminal verification is mandatory.
@@ -504,6 +504,12 @@ restored schema to the source lock, and issues a `RestoreBinding`. The binding r
 source plan identity and original target facts, the restored target facts and environment,
 the restored source journal state digest, the retained custody set, and each restated
 compiler frame `CHECK`.
+
+Restored-frame authentication retries one unfinished row after actual lease expiry,
+with an exact retained-policy check and fresh key preparation. A second expiry,
+provider fault or changed policy stops adoption with `KeyUnavailable`. Schema
+inspection precedes authentication. Effectful savepoint probes follow it.
+The [restore lease checkpoint](status.md#restored-frame-lease-recovery-checkpoint-2026-10-23) records native and fresh-cluster controls.
 
 A logical dump and restore can restate a frame `CHECK` with different boolean grouping.
 Adoption accepts only the known PostgreSQL 16 nested and flattened forms of the declared

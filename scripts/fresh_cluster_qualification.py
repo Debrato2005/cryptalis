@@ -124,6 +124,8 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--workdir', type=Path, default=None)
     parser.add_argument('--varchar', action='store_true', help='Qualify a native VARCHAR(64) source and lock v3.')
+    parser.add_argument('--restore-lease', action='store_true',
+                        help='Run focused restored-target key lease and no-effects controls.')
     profiles = parser.add_mutually_exclusive_group()
     profiles.add_argument('--rewrap', action='store_true', help='Qualify backup recovery after root rewrap and publication.')
     profiles.add_argument('--payload-rotation', action='store_true',
@@ -131,6 +133,8 @@ def main():
     profiles.add_argument('--search-rotation', action='store_true',
                           help='Qualify backup recovery after search rotation and a later protected edit.')
     args = parser.parse_args()
+    if args.restore_lease and (args.rewrap or args.payload_rotation or args.search_rotation):
+        parser.error('--restore-lease supports the original TEXT/VARCHAR fixture only.')
     workdir = args.workdir or Path(tempfile.mkdtemp(prefix='cryptalis-fresh-'))
     workdir.mkdir(parents=True, exist_ok=True)
     export_receipt = receipt_path(f'fresh-cluster-export-{DATE}.json')
@@ -139,6 +143,8 @@ def main():
     profile = ('; root-rewrap profile' if args.rewrap else
                '; payload-rotation profile' if args.payload_rotation else
                '; search-rotation profile' if args.search_rotation else '')
+    if args.restore_lease:
+        profile += '; restored-target lease controls'
     export = run_pytest(export_receipt, 'Fresh-cluster source export; primary cluster' + profile,
                         'tests/test_fresh_cluster_export.py',
                         {'CRYPTALIS_FRESH_CLUSTER_DIR': str(workdir),
@@ -177,7 +183,8 @@ def main():
         credentials = provision(port, password, manifest, plain_database)
         home = write_home(workdir, port, manifest, credentials)
         restore = run_pytest(restore_receipt, 'Fresh-cluster protected-backup recovery and adoption; isolated cluster' + profile,
-                             'tests/test_fresh_cluster_restore.py',
+                             ('tests/test_restore_lease_fresh.py' if args.restore_lease
+                              else 'tests/test_fresh_cluster_restore.py'),
                              {'HOME': str(home), 'CRYPTALIS_FRESH_CLUSTER_DIR': str(workdir),
                               'CRYPTALIS_FRESH_PLAIN_DATABASE': plain_database,
                               'CRYPTALIS_FRESH_PLAINTEXT_ROLE': credentials['plaintext'][0],

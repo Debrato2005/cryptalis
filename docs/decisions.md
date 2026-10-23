@@ -58,6 +58,14 @@ Their absolute guarantees are also removed: immediate arbitrary-worker denial, a
 whole-result publication, subject cryptographic erasure, and hostile-database completeness/freshness.
 A removed mechanism cannot retain its old guarantee through wording alone.
 
+## Restored-frame expiry recovery: 2026-10-23
+
+Extend the existing local row retry to restored-frame authentication. Keep
+exact retained-policy admission, the one-retry limit and custody failure codes.
+Run effectful CHECK probes only after every retained frame authenticates.
+Do not change restore approval, target identity, binding format or host authority.
+The [lifecycle owner](lifecycle.md#restored-protected-backup-adoption-2026-10-19) defines adoption.
+
 ## Optional external SDK bridge: 2026-10-23
 
 Add an optional AWS KMS implementation of the existing provider protocol.

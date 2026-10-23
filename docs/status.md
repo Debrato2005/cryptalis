@@ -10,6 +10,37 @@ No PostgreSQL/provider/runtime cell, production key provider, independent review
 VERIFIED below refers only to the named checks and their exact revisions.
 All other contract and promotion requirements are SPECIFIED. All seven full gates remain UNKNOWN.
 
+## Restored-frame lease recovery checkpoint: 2026-10-23
+
+**IMPLEMENTED, bounded verification:** restored-frame scans retry one unfinished
+row after actual key expiry. Fresh admission checks the exact retained policy.
+Provider failure, changed policy and repeated expiry remain `KeyUnavailable`.
+Authentication and generation faults retain their existing typed failures.
+No binding or probe write precedes complete frame authentication.
+Host approval, target identity, schema and runtime-role checks retain their order.
+
+The lead integration passes nine scan/admission checks. Separate genuine fresh
+PostgreSQL clusters pass ten public restore controls for TEXT and ten for VARCHAR.
+Each profile first exports a protected backup through the normal product path.
+Controls cover post-AEAD expiry recovery, deployment admission, provider and
+policy refusal, repeated expiry, corrupt frames, generations and authority order.
+All 139 recorded Python hashes match the integrated files. No durable rows,
+journal state or catalogs change on failed adoption.
+
+The original RED receipt retains four failures and three passes. The first
+implementation run also failed because fixture bookkeeping passed prepared keys
+to a keyring policy helper. The corrected run passes. Both failures remain
+separate from successful evidence. All seven production gates remain UNKNOWN.
+
+Evidence: [original RED controls](_reset/restore-lease-red-lifecycle-20261023.json),
+[first implementation failure](_reset/restore-lease-green-lifecycle-20261023.json),
+[corrected scan checks](_reset/restore-lease-green2-lifecycle-20261023.json),
+[lead integration](_reset/restore-lease-integration-20261023.json),
+[TEXT export](_reset/fresh-cluster-export-20261023-17.json),
+[TEXT restore](_reset/fresh-cluster-restore-20261023-17.json),
+[VARCHAR export](_reset/fresh-cluster-export-20261023-18.json), and
+[VARCHAR restore](_reset/fresh-cluster-restore-20261023-18.json).
+
 ## Optional AWS KMS SDK adapter checkpoint: 2026-10-23
 
 **IMPLEMENTED, bounded verification:** a caller-supplied synchronous KMS client
@@ -80,7 +111,8 @@ and 18 subtests**, with three separate-environment skips and 48 existing warning
 The wrapper records 594.06 seconds. Its 137 Python hashes stay stable and
 match the final worktree, as do the million-row and app wrapper hashes.
 The earlier focused receipts differ only at the later profiler fixture revision.
-Rotation and restore retain separate lease limits. All seven full gates remain UNKNOWN.
+Rotation retains separate lease limits. The later restore checkpoint extends its scan boundary.
+All seven full gates remain UNKNOWN.
 
 
 Evidence: [initial million-row failure](_reset/performance-million-current-wrapper-20261023.json),

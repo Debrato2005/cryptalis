@@ -35,7 +35,7 @@ from sqlalchemy.dialects import postgresql
 
 from cryptalis._sqlalchemy_search import _frame_expressions
 from cryptalis import migration as m
-from cryptalis.crypto import CryptoFailure
+from cryptalis.crypto import CryptoFailure, KeyUnavailable
 from cryptalis.crypto.cf1 import FieldDescriptor, open_text
 from cryptalis.manifest.compiler import _canonical, _catalog_path
 from cryptalis.manifest.parser import decode_manifest_json
@@ -340,6 +340,7 @@ def _check_schema(c, source, state, binding):
 def _scan(c, source, keys):
     """Authenticate every retained active frame; return the observed custody set."""
     custody = {}
+    policies = source.document['key_policies']
     for model in source.document['lock']['models']:
         descriptors = tuple(FieldDescriptor.from_compiled(f['descriptor'], f['descriptor_digest'])
                             for f in model['fields'])
@@ -364,28 +365,32 @@ def _scan(c, source, keys):
             material = {}
             for row in rows:
                 tenant = row[1] if 'column' in model['tenancy'] else UUID(model['table_id'])
-                if tenant not in material:
-                    ring = m._ring(keys, tenant, source)
-                    material[tenant] = ring.prepare()
-                    custody[str(tenant)] = m._policy(ring)
                 offset = 2 if 'column' in model['tenancy'] else 1
-                for i, f in enumerate(model['fields']):
-                    frame = row[offset + i]
-                    frame = bytes(frame) if frame is not None else None
-                    admitted = material[tenant].policy
-                    try:
-                        if frame is not None and (
-                                int.from_bytes(frame[6:10], 'big') != admitted.payload_generation
-                                or int.from_bytes(frame[10:14], 'big') != (
-                                    admitted.search_generation if f['queries'] else 0)):
-                            raise m.TransitionFailure('generation_mismatch', source.operation_id)
-                        value = open_text(frame, descriptors[i], tenant, row[0], material[tenant])
-                    except CryptoFailure:
-                        raise m.TransitionFailure('restored_frame_verification_failed',
-                                                  source.operation_id) from None
-                    if value is not None and type(value) is not str:
-                        raise m.TransitionFailure('restored_frame_verification_failed',
-                                                  source.operation_id)
+
+                def authenticate(prepared):
+                    for i, f in enumerate(model['fields']):
+                        frame = row[offset + i]
+                        frame = bytes(frame) if frame is not None else None
+                        admitted = prepared.policy
+                        try:
+                            if frame is not None and (
+                                    int.from_bytes(frame[6:10], 'big') != admitted.payload_generation
+                                    or int.from_bytes(frame[10:14], 'big') != (
+                                        admitted.search_generation if f['queries'] else 0)):
+                                raise m.TransitionFailure('generation_mismatch', source.operation_id)
+                            value = open_text(frame, descriptors[i], tenant, row[0], prepared)
+                        except KeyUnavailable:
+                            raise
+                        except CryptoFailure:
+                            raise m.TransitionFailure('restored_frame_verification_failed',
+                                                      source.operation_id) from None
+                        if value is not None and type(value) is not str:
+                            raise m.TransitionFailure('restored_frame_verification_failed',
+                                                      source.operation_id)
+
+                m._with_row_keys(keys, tenant, source, material, authenticate)
+                # _with_row_keys admitted this exact policy before preparing.
+                custody[str(tenant)] = policies[str(tenant)]
             cursor = str(rows[-1][0])
     return custody
 
@@ -422,8 +427,9 @@ def plan(source, engine, *, pin, keys, approval):
         d._inventory(c,source,source,own=None)
         m._runtime_safety(c,source.document['runtime_role'],source.document['target'][-1],
                           source.document['lock']['models'],journal=m._journal(c,source),operation_id=source.operation_id)
-        restatements = _probe_frame_checks(c, source, _schema_evidence(c, source, state))
+        restatements = _schema_evidence(c, source, state)
         custody = _scan(c, source, keys)
+        restatements = _probe_frame_checks(c, source, restatements)
         system_identifier = None
         try:
             with c.begin_nested():
