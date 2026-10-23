@@ -1,0 +1,168 @@
+{
+  "format": "cryptalis.searchable-adoption-boundary/v1",
+  "base_revision": "d74cf02",
+  "receipts": {
+    "docs/_reset/fresh-cluster-export-20261024-27.json": {
+      "sha256": "c168d5b14bf919ef517d5334875711b01d6f37bdeb954350dab43cfde7cde1fd",
+      "counts": {
+        "passed": 1
+      },
+      "pytest_report_counts": {
+        "test_calls": {
+          "passed": 1
+        },
+        "subtest_calls": {},
+        "setup": {
+          "passed": 1
+        },
+        "teardown": {
+          "passed": 1
+        },
+        "collection": {},
+        "selected_items": 1
+      },
+      "elapsed_seconds": 1.5780589299974963,
+      "source_files": 198,
+      "fixing_revision": "worktree-db25cd0acaedb150"
+    },
+    "docs/_reset/fresh-cluster-restore-20261024-26.json": {
+      "sha256": "e02ce2dcf0bd373ccc88d6239e3fa7e03794ccfa10d443291cb8829826075698",
+      "counts": {
+        "passed": 1
+      },
+      "pytest_report_counts": {
+        "test_calls": {
+          "passed": 1
+        },
+        "subtest_calls": {},
+        "setup": {
+          "passed": 1
+        },
+        "teardown": {
+          "passed": 1
+        },
+        "collection": {},
+        "selected_items": 1
+      },
+      "elapsed_seconds": 2.326030502008507,
+      "source_files": 198,
+      "fixing_revision": "worktree-db25cd0acaedb150"
+    },
+    "docs/_reset/fresh-cluster-export-20261024-28.json": {
+      "sha256": "f61a0236bc7b70b130a23f268dd5bca75a8e1795cfc2cae0a819a584e2026fa0",
+      "counts": {
+        "passed": 1
+      },
+      "pytest_report_counts": {
+        "test_calls": {
+          "passed": 1
+        },
+        "subtest_calls": {},
+        "setup": {
+          "passed": 1
+        },
+        "teardown": {
+          "passed": 1
+        },
+        "collection": {},
+        "selected_items": 1
+      },
+      "elapsed_seconds": 1.776675362008973,
+      "source_files": 198,
+      "fixing_revision": "worktree-db25cd0acaedb150"
+    },
+    "docs/_reset/fresh-cluster-restore-20261024-27.json": {
+      "sha256": "2ec65f3aedeef5866904526ec25af3bc63a20693308e02a7c4dbe296ecf8ebb4",
+      "counts": {
+        "passed": 1
+      },
+      "pytest_report_counts": {
+        "test_calls": {
+          "passed": 1
+        },
+        "subtest_calls": {},
+        "setup": {
+          "passed": 1
+        },
+        "teardown": {
+          "passed": 1
+        },
+        "collection": {},
+        "selected_items": 1
+      },
+      "elapsed_seconds": 2.6900858790031634,
+      "source_files": 198,
+      "fixing_revision": "worktree-db25cd0acaedb150"
+    }
+  },
+  "applications": {
+    "source": {
+      "path": "docs/_reset/searchable-adoption-source-application-20261024.json",
+      "sha256": "5e3e0bb7ad47c56b82a67bee1f898005ae4b4b38afde2b6a2557eaeeeba058de",
+      "unchanged_source_files": 6,
+      "controls": {
+        "equality": true,
+        "IN": true,
+        "empty_IN": true,
+        "NULL": "no NULL email; IN NULL ignored",
+        "Unicode": true,
+        "unique_sqlstate": "23505",
+        "rollback": true,
+        "concurrent_unique_sqlstate": "23505",
+        "latest_email_edit": true
+      }
+    },
+    "installed": {
+      "path": "docs/_reset/searchable-adoption-installed-application-20261024.json",
+      "sha256": "be70d199ead40a3e1ad81a19fbc911f40904f9bb31fa7066bdd7e22c9e981ed7",
+      "unchanged_source_files": 6,
+      "controls": {
+        "equality": true,
+        "IN": true,
+        "empty_IN": true,
+        "NULL": "no NULL email; IN NULL ignored",
+        "Unicode": true,
+        "unique_sqlstate": "23505",
+        "rollback": true,
+        "concurrent_unique_sqlstate": "23505",
+        "latest_email_edit": true
+      }
+    }
+  },
+  "reused_product": {
+    "revision": "d74cf02",
+    "unchanged_python_modules": 36,
+    "wheel_sha256": "2df0715a9d4eb22bc9fb58abfa1ad570f734e8ed58df7558cb50755906bb8b82",
+    "installed_files": 40,
+    "package": "/tmp/cryptalis-adopted-search-py313-20261024/lib/python3.13/site-packages/cryptalis/__init__.py"
+  },
+  "runtime": {
+    "python": "3.13.12",
+    "sqlmodel": "0.0.48",
+    "SQLAlchemy": "2.1.3",
+    "psycopg": "3.3.6",
+    "cryptography": "50.0.2",
+    "greenlet": "3.5.6"
+  },
+  "prior_affected": {
+    "path": "docs/_reset/adopted-search-source-affected-20261024.json",
+    "sha256": "dfe03d2ffa44be645526c6b1254cd0ded5bd66abb2bbff74e587a16a2a4cf314",
+    "changed_python_files": [
+      "scripts/fresh_cluster_qualification.py"
+    ],
+    "scope": "Product unchanged; first application integration profile and harness added"
+  },
+  "document_sha256": {
+    "docs/status.md": "83e42b80f6ab9e20983ac9eaaa70c45fbcc84f6ab2947a4f70d199287f9fdfef",
+    "docs/BUILD_CHECKLIST.md": "cb2ed97078db6e45f0c33469ee7294e2917289339d476a59a273c0531d21690e",
+    "docs/decisions.md": "638cd133d61a79d8b1ee3a1f4e10a5b9c6aa2374a07ff74961156b73970db8a1",
+    "docs/walkthrough-migration.md": "0da0bb0f286debb87ddcba0ba5e0f35779bd7d3c923083111686eccfa39cb15e"
+  },
+  "initial_source": {
+    "receipt": "docs/_reset/fresh-cluster-restore-20261024-25.json",
+    "scope": "Initial passing profile before explicit SQLModel-version guard; retained separately"
+  },
+  "scope": "Local PostgreSQL 16; original pinned six-file SQLModel CRUD; explicit single-tenant fixture email equality/IN/unique; genuine restore/adoption, v5 root, v7 search, latest-value exit; no HTTP/browser/deployment or production email-domain qualification",
+  "objectives": "All 34 states unchanged",
+  "gates": "All seven UNKNOWN"
+}

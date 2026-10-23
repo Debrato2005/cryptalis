@@ -129,6 +129,8 @@ def main():
     profiles = parser.add_mutually_exclusive_group()
     profiles.add_argument('--boolean', action='store_true',
                           help='Qualify Boolean storage after payload rotation on a fresh cluster.')
+    profiles.add_argument('--sqlmodel-searchable', action='store_true',
+                          help='Qualify the pinned original searchable SQLModel app on a fresh cluster.')
     profiles.add_argument('--smolink', action='store_true',
                           help='Qualify the pinned Smolink URL lifecycle on a fresh cluster.')
     profiles.add_argument('--adopted-search', action='store_true',
@@ -145,6 +147,8 @@ def main():
     args = parser.parse_args()
     if args.boolean and (args.varchar or args.restore_lease):
         parser.error('--boolean uses the typed Boolean fixture and its restore lifecycle.')
+    if args.sqlmodel_searchable and (args.varchar or args.restore_lease):
+        parser.error('--sqlmodel-searchable uses the original application schema and lifecycle.')
     if args.smolink and (args.varchar or args.restore_lease):
         parser.error('--smolink uses the original application VARCHAR schema and lifecycle.')
     if args.restore_lease and (args.adopted_search or args.adopted_payload or args.adopted_rewrap or args.rewrap or args.payload_rotation or args.search_rotation):
@@ -155,6 +159,7 @@ def main():
     restore_receipt = receipt_path(f'fresh-cluster-restore-{DATE}.json')
 
     profile = ('; Boolean storage after payload rotation' if args.boolean else
+               '; pinned searchable SQLModel app adoption and search-rotation profile' if args.sqlmodel_searchable else
                '; pinned Smolink root-rewrap and payload-rotation application profile' if args.smolink else
                '; adopted-target search-rotation mixed-field profile' if args.adopted_search else
                '; adopted-target payload-rotation profile' if args.adopted_payload else
@@ -165,7 +170,8 @@ def main():
     if args.restore_lease:
         profile += '; restored-target lease controls'
     export = run_pytest(export_receipt, 'Fresh-cluster source export; primary cluster' + profile,
-                        ('tests/test_fresh_boolean_export.py' if args.boolean else
+                        ('tests/test_sqlmodel_searchable_export.py' if args.sqlmodel_searchable else
+                         'tests/test_fresh_boolean_export.py' if args.boolean else
                          'tests/test_smolink_application.py' if args.smolink
                          else 'tests/test_fresh_cluster_export.py'),
                         {'CRYPTALIS_SMOLINK_FRESH_EXPORT': str(workdir) if args.smolink else '',
@@ -185,6 +191,9 @@ def main():
         if (plan.get('kind') != 'payload_rotation' or plan.get('format') != 'cryptalis.transition/v3'
                 or plan.get('lock', {}).get('schema') != 'cryptalis.lock/v4'):
             raise SystemExit('FreshCluster.ProfileMismatch: Boolean payload successor is missing.')
+    elif args.sqlmodel_searchable:
+        if manifest.get('application_profile') != 'sqlmodel-searchable':
+            raise SystemExit('FreshCluster.ProfileMismatch: pinned searchable SQLModel export is missing.')
     elif args.smolink:
         if manifest.get('application_profile') != 'smolink':
             raise SystemExit('FreshCluster.ProfileMismatch: pinned Smolink export is missing.')
@@ -219,7 +228,8 @@ def main():
         credentials = provision(port, password, manifest, plain_database)
         home = write_home(workdir, port, manifest, credentials)
         restore = run_pytest(restore_receipt, 'Fresh-cluster protected-backup recovery and adoption; isolated cluster' + profile,
-                             ('tests/test_fresh_boolean_restore.py' if args.boolean else
+                             ('tests/test_sqlmodel_searchable_restore.py' if args.sqlmodel_searchable else
+                              'tests/test_fresh_boolean_restore.py' if args.boolean else
                               'tests/test_smolink_fresh_cluster.py' if args.smolink
                               else 'tests/test_adopted_search.py' if args.adopted_search
                               else 'tests/test_adopted_payload.py' if args.adopted_payload

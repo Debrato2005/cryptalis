@@ -824,6 +824,21 @@ and [format decision](decisions.md#adopted-target-search-rotation-2026-10-24) ow
 the contract. This adds no crypto, index, journal or authority format and grants
 no key-retirement permission. All seven production gates remain UNKNOWN.
 
+The separate original SQLModel searchable-application profile uses its pinned
+schema, genuine backup adoption and root v5 before search v7:
+
+```bash
+.venv/bin/python scripts/fresh_cluster_qualification.py --sqlmodel-searchable
+```
+
+The original email CRUD/search controls, later edits and latest-value
+removal/import-denied restart pass in source and installed-wheel runs.
+User.full_name storage bytes and native index identities stay exact through
+search rotation. Fixture-only single-tenant email admission remains required.
+This profile does not add HTTP/JWT/SMTP, browser or deployment qualification.
+See the [application checkpoint](status.md#original-searchable-sqlmodel-adoption-2026-10-24)
+for exact receipts and the unchanged product boundary.
+
 ## Measured throughput
 
 Use positive finite integer or floating-point observations for measured rows per second.

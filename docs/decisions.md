@@ -835,6 +835,10 @@ See the [lifecycle contract](lifecycle.md#search-rotation-after-adopted-lineage-
 Source TEXT/VARCHAR and installed TEXT controls verify this boundary.
 [Status](status.md#search-rotation-after-adopted-lineage-2026-10-24) owns exact
 receipts, affected regressions and application qualification limits.
+The unchanged six-file SQLModel [adoption journey](status.md#original-searchable-sqlmodel-adoption-2026-10-24)
+adds bounded source and installed-wheel application evidence for this existing
+contract. Its fixture-only email domain and explicit single tenancy do not
+qualify production email populations or change leakage admission.
 
 ## Native UUID lookup inputs: 2026-10-24
 

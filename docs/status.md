@@ -21,6 +21,42 @@ and [competitive capability matrix](research/capability-matrix.md) govern priori
 Progress follows complete real-application journeys and resolved production requirements.
 All seven production gates remain UNKNOWN.
 
+## Original searchable SQLModel adoption: 2026-10-24
+
+**VERIFIED, bounded source and installed-wheel journey:** the pinned SQLModel
+template retains six captured files without model or query edits. After a genuine
+PostgreSQL 16 backup restore, the journey adopts the target, publishes root
+rewrap v5, then search rotation v7. Original CRUD passes email equality,
+IN/empty IN, ignored IN NULL, Unicode, native 23505 rollback and a two-transaction
+unique winner. Later email edits survive removal and an import-denied native restart.
+
+User.full_name storage frames and all native index identities remain exact
+through search rotation. The final native catalog matches its original state.
+An unadopted source and the stale original binding after successor publication
+both refuse. The [source application receipt](_reset/searchable-adoption-source-application-20261024.json)
+and [installed application receipt](_reset/searchable-adoption-installed-application-20261024.json)
+retain the six pinned files.
+
+The final [source export](_reset/fresh-cluster-export-20261024-28.json) and
+[fresh-target run](_reset/fresh-cluster-restore-20261024-27.json) each pass one
+test in 1.52 and 2.45 seconds. The installed [export](_reset/fresh-cluster-export-20261024-27.json)
+and [fresh-target](_reset/fresh-cluster-restore-20261024-26.json) stages each
+pass one in 1.37 and 2.11 seconds. All 198 Python hashes remain stable and match
+current files. The [initial source receipt](_reset/searchable-adoption-initial-source-application-20261024.json)
+precedes the explicit SQLModel 0.0.48 fixture guard and remains historical.
+
+All 36 product modules and 40 installed files retain the exact earlier wheel
+bytes. Earlier full regression and build evidence keep their recorded boundaries.
+This test-only slice adds no product behavior or full-suite run. The
+[final boundary](_reset/searchable-adoption-final-boundary-20261024.json) binds
+the current tests, unchanged artifact and application receipts.
+
+The profile accepts fixture-only email equality/uniqueness leakage in explicit
+single tenancy. Production email-domain admission and external custody remain
+UNKNOWN. The HTTP/JWT/SMTP profile keeps its separate boundary. Browser and
+deployment qualification remain open. Direct restore-binding generation planning
+stays unadmitted. All seven production gates remain UNKNOWN.
+
 ## Search rotation after adopted lineage: 2026-10-24
 
 **VERIFIED, bounded native and installed-wheel profiles:** search rotation now accepts an ACTIVE
@@ -48,6 +84,8 @@ The installed [searchable SQLModel](_reset/adopted-search-installed-searchable-a
 and [original HTTP/JWT/SMTP](_reset/adopted-search-installed-http-application-20261024.json)
 receipts preserve six and 26 pinned files respectively. These are ordinary
 application regressions; they do not verify search rotation after SQLModel adoption.
+The later [original searchable journey](#original-searchable-sqlmodel-adoption-2026-10-24)
+supplies that separate bounded application evidence.
 
 The final [installed TEXT search profile](_reset/fresh-cluster-restore-20261024-22.json)
 passes all 11 controls in 29.56 seconds after its [source export](_reset/fresh-cluster-export-20261024-23.json).
