@@ -11,6 +11,7 @@ import json
 import os
 from pathlib import Path
 import platform
+import resource
 import subprocess
 import sys
 import sysconfig
@@ -33,7 +34,7 @@ from test_migration import application, keys, FIELD_ID, TABLE_ID, TENANT
 
 
 ROOT = Path(__file__).resolve().parents[1]
-ROWS, SAMPLES, WARMUPS = 10_000, 100, 10
+DEFAULT_ROWS, SAMPLES, WARMUPS = 10_000, 100, 10
 GATES = ('G-ADAPTER', 'G-CRYPTO', 'G-QUERY', 'G-LIFECYCLE',
          'G-PROVIDER', 'G-POLICY', 'G-RELEASE')
 
@@ -47,7 +48,7 @@ def source_hashes():
 def seed(app, values):
     # Both applications enter through ordinary native runtime ORM writes.
     with Session(app.runtime) as session:
-        for lower in range(0, ROWS, 1000):
+        for lower in range(0, len(values), 1000):
             session.execute(insert(app.Customer), values[lower:lower + 1000])
             session.commit()
 
@@ -85,13 +86,13 @@ def cell(app):
             'application_uses_planned_runtime_role': True, 'owner_and_runtime_roles_separate': True}
 
 
-def analyze_and_storage(app, index_name):
+def analyze_and_storage(app, index_name, expected_rows):
     with app.owner.begin() as connection:
         quote = connection.dialect.identifier_preparer.quote_identifier
         table = f'{quote(app.schema)}.{quote(app.table.name)}'
         connection.exec_driver_sql(f'ANALYZE {table}')
         count = connection.exec_driver_sql(f'SELECT count(*) FROM {table}').scalar_one()
-    assert count == ROWS
+    assert count == expected_rows
     result = storage(SimpleNamespace(owner_engine=app.owner, schema=app.schema,
                                      name_index_name=index_name))
     assert result['name_column_bytes'] > 0 and result['name_equality_index_bytes'] > 0
@@ -113,10 +114,10 @@ def statements(app):
     return result
 
 
-def inputs(workload, sample):
+def inputs(workload, sample, row_count):
     base = workload.split('_', 1)[0]
-    rank = (sample * 7919 + 13) % ROWS
-    ranks = ([(rank + delta * 977) % ROWS for delta in range(20)] if base == 'in20' else [rank])
+    rank = (sample * 7919 + 13) % row_count
+    ranks = ([(rank + delta * 977) % row_count for delta in range(20)] if base == 'in20' else [rank])
     assert len(set(ranks)) == (20 if base == 'in20' else 1)
     parameters = ({'point': identity(rank)} if base == 'point' else
                   {'value': name(rank)} if base == 'equality' else
@@ -146,13 +147,20 @@ def test_current_matched_application_profile(record_property):
     output = Path(requested)
     if not output.is_absolute() or output.exists() or not output.parent.is_dir():
         pytest.fail('The performance receipt needs a new absolute path in an existing directory.')
+    try:
+        row_count = int(os.environ.get('CRYPTALIS_PERFORMANCE_ROWS', str(DEFAULT_ROWS)))
+    except ValueError:
+        pytest.fail('CRYPTALIS_PERFORMANCE_ROWS must be an integer.', pytrace=False)
+    if row_count not in (10_000, 100_000, 1_000_000):
+        pytest.fail('Use CRYPTALIS_PERFORMANCE_ROWS=10000, 100000 or 1000000.', pytrace=False)
+    profile_started, cpu_started = time.perf_counter(), time.process_time()
     before_hashes = source_hashes()
     revision = subprocess.run(['git', 'rev-parse', 'HEAD'], cwd=ROOT, check=True,
                               capture_output=True, text=True).stdout.strip()
     values = [dict(id=identity(rank), tenant_id=TENANT, name=name(rank), label=label(rank))
-              for rank in range(ROWS)]
-    assert len({row['id'] for row in values}) == ROWS
-    assert len({row['name'] for row in values}) == ROWS
+              for rank in range(row_count)]
+    assert len({row['id'] for row in values}) == row_count
+    assert len({row['name'] for row in values}) == row_count
     assert all(type(row['id']) is UUID and len(row['name'].encode('utf8')) == 53 for row in values)
     seed_digest = hashlib.sha256(json.dumps(
         [dict(row, id=str(row['id']), tenant_id=str(row['tenant_id'])) for row in values],
@@ -170,7 +178,7 @@ def test_current_matched_application_profile(record_property):
         assert native_indexes == ['native_name']
         field = protected.plan.document['lock']['models'][0]['fields'][0]
         for app, index in ((native, native_indexes[0]), (protected, field['payload_column'] + '_eq')):
-            storage_results.append(analyze_and_storage(app, index))
+            storage_results.append(analyze_and_storage(app, index, row_count))
         sessions = [stack.enter_context(Session(native.runtime)),
                     stack.enter_context(factory(tenant_id=TENANT))]
         queries = [statements(app) for app in (native, protected)]
@@ -178,7 +186,7 @@ def test_current_matched_application_profile(record_property):
                                  ('point_entities', 3), ('equality_entities', 3), ('in20_entities', 8)):
             timings = [[], []]
             for sample in range(WARMUPS + SAMPLES):
-                parameters, expected = inputs(workload, sample)
+                parameters, expected = inputs(workload, sample, row_count)
                 observed = [None, None]
                 for path in ((0, 1) if sample % 2 == 0 else (1, 0)):
                     started = time.perf_counter_ns()
@@ -237,7 +245,7 @@ def test_current_matched_application_profile(record_property):
                      cryptography=cryptography.__version__,
                      perf_counter={'implementation': time.get_clock_info('perf_counter').implementation,
                                    'resolution_seconds': time.get_clock_info('perf_counter').resolution}),
-        'data': {'rows_each': ROWS, 'name_utf8_bytes': 53, 'tenants': 1,
+        'data': {'rows_each': row_count, 'name_utf8_bytes': 53, 'tenants': 1,
                  'distribution': 'Unique deterministic synthetic identifiers; identical explicit UUIDs and native constraints.',
                  'seed_sha256': seed_digest, 'tenant_name_uniqueness_preserved': True,
                  'native_and_attached_results_equal': True},
@@ -247,10 +255,17 @@ def test_current_matched_application_profile(record_property):
                      'materialization': 'Scalar/tuple projections plus full ORM entities converted to (id,tenant_id,name,label); IN20 ordered by native ID.',
                      'added_p95': 'Attached p95 minus native p95; targets use unrounded values.'},
         'active_deployment': active_plan, 'whole_path': measurements,
+        'profile_process': {
+            'cpu_seconds_including_fixture_setup_and_cleanup': time.process_time() - cpu_started,
+            'elapsed_seconds_including_fixture_setup_and_cleanup': time.perf_counter() - profile_started,
+            'process_peak_rss': resource.getrusage(resource.RUSAGE_SELF).ru_maxrss,
+            'process_peak_rss_unit': 'KiB' if sys.platform.startswith('linux') else 'platform_native_units',
+            'peak_rss_scope': 'Process lifetime peak, including earlier pytest imports; not database-server memory.',
+        },
         'storage_native_attached': storage_results, 'targets': targets,
         'gates': {gate: 'UNKNOWN' for gate in GATES},
         'limits': ['Single local host; uncontrolled shared-host load; only 100 measured pairs.',
-                   '10,000 rows do not qualify the earlier million-row scale.',
+                   'Only the recorded row count is measured; this does not qualify larger datasets.',
                    'Warm in-process public fixture provider; no custody, cold or remote provider claim.',
                    'No async, VARCHAR, concurrent load, write-throughput or maintenance-pause qualification.',
                    'Migration uses existing fixture rate/storage/WAL assumptions; those are not measurements from this profile.',

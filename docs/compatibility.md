@@ -152,6 +152,10 @@ The subsequent full-entity extension measures 1.2622/2.6119/2.8613 ms added p95
 for point/equality/IN-20 on the same 10,000-row distribution.
 Those entity paths also meet the local targets. Their separate raw samples
 and exact source boundaries appear in the same checkpoint.
+The later 100,000-row run also meets all six local read targets.
+Entity added p95 is 1.2667/1.7083/2.5670 ms for point/equality/IN-20,
+with isolated storage at 1.5296× native. Its process resource observations
+exclude database-server CPU and memory.
 
 **VERIFIED, recorded earlier revision only:** [million-row CF1 receipt](../spikes/revamp/results/gate-performance.json), warm PostgreSQL 16.15 and memory-only local keys.
 These observations predate the latest DISTINCT change and do not measure the current adapter.

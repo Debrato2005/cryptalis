@@ -45,7 +45,16 @@ Added entity p95 measures **1.2622 ms point**, **2.6119 ms equality**, and
 Both subsequent receipts retain stable 136-file hashes at the extended profiler.
 Their raw projection measurements remain separate from the initial table.
 
-This is one warm synchronous TEXT observation with in-process public fixture keys.
+A bounded row-count option now admits 10,000, 100,000 or 1,000,000 rows.
+The **100,000-row** run passes all six workload targets and exact result checks.
+Added entity p95 measures **1.2667 ms point**, **1.7083 ms equality**, and
+**2.5670 ms IN-20**. Isolated storage measures **1.5296× native**.
+The process uses 11.96 CPU seconds over 18.03 elapsed seconds, including setup
+and cleanup. Its lifetime peak RSS is 182.5 MiB, including pytest imports.
+These resource observations exclude PostgreSQL server CPU and memory.
+Both 136-file receipts stay stable at the configurable profiler revision.
+
+These are warm synchronous TEXT observations with in-process public fixture keys.
 Shared-host load remains uncontrolled. Million-row costs, remote/cold
 providers, async/VARCHAR, concurrent load, throughput and maintenance pauses remain unmeasured here.
 The historical million-row receipts keep their earlier source and query-shape boundaries.
@@ -54,7 +63,9 @@ All seven full gates remain UNKNOWN.
 Evidence: [raw samples, cell, lifecycle and storage](_reset/performance-current-20261023.json)
 and [mandatory wrapper receipt](_reset/performance-current-wrapper-20261023.json),
 then [full-entity samples](_reset/performance-entities-20261023.json)
-and [full-entity wrapper receipt](_reset/performance-entities-wrapper-20261023.json).
+and [full-entity wrapper receipt](_reset/performance-entities-wrapper-20261023.json),
+then [100,000-row samples and resources](_reset/performance-100k-20261023.json)
+and [100,000-row wrapper receipt](_reset/performance-100k-wrapper-20261023.json).
 
 ## Mapped protected scalar RETURNING checkpoint: 2026-10-23
 

@@ -129,7 +129,8 @@ This check compares two snapshots and does not detect an intervening edit that i
 
 `tests/profile_current_application.py` runs only when explicitly selected.
 It compares native and pinned ACTIVE applications through their runtime roles.
-It measures 10,000 rows, 100 paired samples per workload and isolated column/index storage.
+It defaults to 10,000 rows, with 100 paired samples per workload and isolated column/index storage.
+`CRYPTALIS_PERFORMANCE_ROWS` also accepts 100000 or 1000000 for separate scale observations.
 Choose new absolute receipt paths. Existing receipts remain immutable.
 
 ```bash
@@ -142,6 +143,8 @@ CRYPTALIS_PERFORMANCE_RECEIPT=/tmp/cryptalis-performance-new.json \
 The profile writes raw samples and target PASS/FAIL before any target assertion.
 An observed target miss fails this explicit run. The seven production gates stay UNKNOWN.
 The receipt states its scalar/tuple/entity, warm synchronous TEXT and public-key limits.
+Process CPU and peak RSS include setup/cleanup and pytest imports.
+They do not measure database-server resources.
 Historical profiler helpers supply calculations only. Do not run their direct CLI
 as a substitute for the mandatory wrapper or the current lifecycle/pin path.
 
