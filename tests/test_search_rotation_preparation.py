@@ -247,7 +247,7 @@ def test_fork_or_expiry_cannot_release_a_completed_batch(which, fault, monkeypat
             target = replace(target, _pid=-1)
     else:
         module = importlib.import_module('cryptalis.crypto._search_rotation')
-        actual = module.seal_text
+        actual = module.seal_value
         calls = []
         def expire_after_second(*args, **kwargs):
             result = actual(*args, **kwargs)
@@ -255,7 +255,7 @@ def test_fork_or_expiry_cannot_release_a_completed_batch(which, fault, monkeypat
             if len(calls) == 2:
                 now[0] = 110.0
             return result
-        monkeypatch.setattr(module, 'seal_text', expire_after_second)
+        monkeypatch.setattr(module, 'seal_value', expire_after_second)
     before = rows
     with pytest.raises(KeyUnavailable):
         prepare(rows, f.field, TENANT, source, target)

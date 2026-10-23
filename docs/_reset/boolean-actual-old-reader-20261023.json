@@ -1,0 +1,8 @@
+{
+  "scope": "Actual prior installed c2d3185 wheel reader against current lockv4; no database/key use",
+  "reader_package": "/tmp/cryptalis-searchable-doctor-wheel-py313-20261023/lib/python3.13/site-packages/cryptalis/__init__.py",
+  "prior_wheel_sha256": "3f89885a25c11915b0a61d92dd3300a82229c7cfceb5371542b6116889c5067d",
+  "lock_sha256": "d5b1ecf617de6eaac1fec2594452b3c03c96b7db6df9f844307ee7d517458019",
+  "result": "refused before database or key access",
+  "gate": "UNKNOWN"
+}

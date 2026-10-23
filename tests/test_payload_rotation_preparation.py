@@ -190,14 +190,14 @@ def test_inherited_or_expired_material_cannot_return_a_partial_batch(which, fail
         else: target = replace(target, _pid=-1)
     else:
         module = importlib.import_module('cryptalis.crypto._payload_rotation')
-        actual = module.seal_text
+        actual = module.seal_value
         calls = []
         def expire(*args, **kwargs):
             result = actual(*args, **kwargs)
             calls.append(1)
             if len(calls) == 1: now[0] = 110.0
             return result
-        monkeypatch.setattr(module, 'seal_text', expire)
+        monkeypatch.setattr(module, 'seal_value', expire)
     before = rows
     with pytest.raises(KeyUnavailable):
         prepare(rows, f.field, f.tenant, source, target)
@@ -221,7 +221,7 @@ def test_expiry_after_final_seal_cannot_return_the_completed_batch(which, row_co
                   UUID(int=i), source)) for i in range(1, row_count + 1))
     before = rows
     module = importlib.import_module('cryptalis.crypto._payload_rotation')
-    actual = module.seal_text
+    actual = module.seal_value
     completed = []
     def expire_after_success(*args, **kwargs):
         result = actual(*args, **kwargs)
@@ -229,7 +229,7 @@ def test_expiry_after_final_seal_cannot_return_the_completed_batch(which, row_co
         if len(completed) == row_count:
             now[0] = 110.0
         return result
-    monkeypatch.setattr(module, 'seal_text', expire_after_success)
+    monkeypatch.setattr(module, 'seal_value', expire_after_success)
     with pytest.raises(KeyUnavailable):
         prepare(rows, f.field, f.tenant, source, target)
     assert completed == [True] * row_count
@@ -246,7 +246,7 @@ def test_pid_change_after_final_seal_cannot_return_the_completed_batch(row_count
                   UUID(int=i), source)) for i in range(1, row_count + 1))
     before = rows
     module = importlib.import_module('cryptalis.crypto._payload_rotation')
-    actual = module.seal_text
+    actual = module.seal_value
     completed = []
     real_pid = os.getpid()
     def change_pid_after_success(*args, **kwargs):
@@ -255,7 +255,7 @@ def test_pid_change_after_final_seal_cannot_return_the_completed_batch(row_count
         if len(completed) == row_count:
             monkeypatch.setattr(key_module, 'os', SimpleNamespace(getpid=lambda: real_pid + 1))
         return result
-    monkeypatch.setattr(module, 'seal_text', change_pid_after_success)
+    monkeypatch.setattr(module, 'seal_value', change_pid_after_success)
     with pytest.raises(KeyUnavailable):
         prepare(rows, f.field, f.tenant, source, target)
     assert completed == [True] * row_count
@@ -274,6 +274,6 @@ def test_invalid_batch_shape_and_limits_refuse_before_transformation(bad, monkey
     elif bad == 'byte_limit': bounds['max_bytes'] = 1024 ** 3 + 1
     else: target = source
     module = importlib.import_module('cryptalis.crypto._payload_rotation')
-    monkeypatch.setattr(module, 'open_text', lambda *a, **k: pytest.fail('Invalid batch reached source transformation'))
+    monkeypatch.setattr(module, 'open_value', lambda *a, **k: pytest.fail('Invalid batch reached source transformation'))
     with pytest.raises(InvalidContext):
         prepare(rows, f.field, f.tenant, source, target, **bounds)

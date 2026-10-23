@@ -7,7 +7,7 @@ from uuid import UUID
 
 import pytest
 from psycopg import sql
-from sqlalchemy import Column, Index, Table, Text, Uuid, event, select
+from sqlalchemy import Boolean, Column, Index, Table, Text, Uuid, event, select
 from sqlalchemy.exc import DBAPIError
 from sqlalchemy.orm import sessionmaker
 
@@ -21,11 +21,12 @@ NOTE_FIELD = UUID(int=804)
 
 
 @contextmanager
-def multiple_tables():
+def multiple_tables(*, boolean_note=False):
     with application() as app:
         table = Table('other_customer', app.mapping.metadata,
             Column('id', Uuid, primary_key=True, autoincrement=False),
-            Column('tenant_id', Uuid, nullable=False), Column('name', Text(collation='C')), Column('note', Text))
+            Column('tenant_id', Uuid, nullable=False), Column('name', Text(collation='C')),
+            Column('note', Boolean if boolean_note else Text))
         Index('other_native_name', table.c.tenant_id, table.c.name, unique=True)
         class OtherCustomer: pass
         app.mapping.map_imperatively(OtherCustomer, table)
@@ -40,6 +41,8 @@ def multiple_tables():
         extras = {UUID(int=901): (OTHER_TENANT, '雪😀'), UUID(int=902): (OTHER_TENANT, '')}
         app.notes = {k: None if k==UUID(int=103) else '' if k==UUID(int=104) else 'notes:' + str(k)
                      for k in app.other_source.keys() | extras.keys()}
+        if boolean_note:
+            app.notes = {k: None if value is None else k.int % 2 == 0 for k, value in app.notes.items()}
         with sessionmaker(app.runtime)() as session:
             session.add_all(OtherCustomer(id=k, tenant_id=t, name=v, note=app.notes[k]) for k,(t,v) in app.other_source.items())
             for model in (app.Customer, OtherCustomer):

@@ -89,13 +89,15 @@ def engine(variable):
 
 
 @contextmanager
-def application(rows=7, unique=True, setup=None, value_type=None, queries=None):
+def application(rows=7, unique=True, setup=None, value_type=None, queries=None,
+                value_default=None, protected_values=None, value_nullable=True):
     owner, runtime = engine('CRYPTALIS_TEST_DATABASE_URL'), engine('CRYPTALIS_TEST_RUNTIME_DATABASE_URL')
     schema = 'cryptalis_migration_' + uuid4().hex
     mapping = registry(metadata=MetaData(schema=schema))
     table = Table('customer', mapping.metadata, Column('id', Uuid, primary_key=True, autoincrement=False),
                   Column('tenant_id', Uuid, nullable=False),
-                  Column('name', value_type if value_type is not None else Text(collation='C')),
+                  Column('name', value_type if value_type is not None else Text(collation='C'),
+                         default=value_default, nullable=value_nullable),
                   Column('label', Text))
     queries = list(queries) if queries is not None else (['equality', 'unique'] if unique else ['equality'])
     if queries:
@@ -118,6 +120,9 @@ def application(rows=7, unique=True, setup=None, value_type=None, queries=None):
         if setup is not None:
             with owner.begin() as c: setup(c, schema, role)
         source = {UUID(int=i+100): (TENANT, [None, '', '雪😀', 'e\u0301', 'é', 'exact', 'trailing '][i % 7] if i < 7 else f'user-{i}@example.invalid') for i in range(rows)}
+        if protected_values is not None:
+            source = {identity: (tenant, protected_values[index % len(protected_values)])
+                      for index, (identity, (tenant, _)) in enumerate(source.items())}
         with sessionmaker(runtime)() as s:
             s.add_all(Customer(id=k, tenant_id=t, name=v, label=f'label-{k.int}') for k,(t,v) in source.items())
             s.commit()

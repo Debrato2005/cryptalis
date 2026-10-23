@@ -60,7 +60,7 @@ The [query grammar](../compatibility.md#query-semantics) bounds this promise. Th
 |---|---|
 | Compiler | Validate manifest/mapping/schema. Generate stable identities, representations, DDL, query rules, and semantic diff |
 | SQLAlchemy adapter | Prepare row context, encrypt writes, rewrite admitted expressions, authenticate reads, reject unsupported paths |
-| Crypto/provider boundary | Encode text, use library AEAD/HKDF/HMAC, resolve exact admitted keys, wrap/unwrap roots |
+| Crypto/provider boundary | Encode typed values, use library AEAD/HKDF/HMAC, resolve exact admitted keys, wrap/unwrap roots |
 | Transition executor | Expand, backfill, verify, switch, contract under a maintenance write pause |
 
 CLI commands compose these four responsibilities. Startup, plan, apply, and status reuse the same checks.
@@ -72,14 +72,14 @@ These dependencies do not supply host business authorization. No additional auth
 
 ```text
 Write: ordinary attributes → app-assigned row identity + tenant context
-       → text validation/encoding → local admitted keys
+       → typed value validation/encoding → local admitted keys
        → randomized authenticated payload + declared equality term
        → atomic INSERT/UPDATE without protected plaintext binds
        → normal PostgreSQL transaction outcome
 
 Read: entity/scalar SELECT → payload + expected row/tenant context
       → exact-generation local key → bounded framing/authentication
-      → text decode + required term recomputation → ordinary Python value
+      → typed decode + required term recomputation → ordinary Python value
 
 Search: admitted SQLAlchemy expression → typed deferred binds
         → tenant/domain-bound equality terms → native indexed predicate
@@ -219,7 +219,8 @@ The public manifest uses bounded JSON. Its field-intent declaration is independe
 | `tenancy` | Exactly `{"column": "attribute_name"}` or `{"single_tenant": true}` per protected table |
 | Mapping facts | Text codec, deterministic exact collation, nullability, application-assigned PK, tenant scope, constraint scope, and writer inventory |
 
-Range bounds, prefix limits, shared-join domains, arbitrary normalizers, and non-text codecs are not admitted manifest capabilities.
+Range bounds, prefix limits, shared-join domains and arbitrary normalizers remain unadmitted.
+Boolean storage uses a pinned value codec. Other non-text codecs remain unadmitted.
 The compiler rejects unsupported types, server-generated keys, small-domain searchable fields, missing tenant scope, and unsupported writers at plan time.
 Searchable small domains remain unsafe because enumeration can label their equality classes. No invented cardinality threshold supplies evidence.
 The planner does not infer every application query. Attached staging tests expose query-level incompatibilities.
@@ -266,12 +267,17 @@ Unique implies equality and requires both leakage acknowledgments. `protect` mus
 Removal uses a semantic diff and a later verified transition.
 
 Text-only plans emit `cryptalis.lock/v2`. Plans with native VARCHAR emit `cryptalis.lock/v3`
-and require `pg-varchar/v1`. Readers accept v1, v2, and v3.
+and require `pg-varchar/v1`. A plan with Boolean storage emits `cryptalis.lock/v4`
+and requires `boolean-u8/v1`. Mixed fields retain each required reader.
+Current readers accept v1 through v4. Older readers refuse v4 before use.
 The [VARCHAR decision](../decisions.md#native-varchar-text-admission-2026-10-22) defines assignment and reader boundaries.
 Its exact top-level members are
 `schema`, `profile`, `domain_id`, `database`, `declaration`, `models`, `writer_inventory`, `search_reviews`, `ddl`, and `required_readers`.
 The declaration is canonical. Models contain `model`, `table_id`, `schema`, `table`, `record`, `tenancy`, `fields`, `source_schema`, and `source_metadata`.
 Fields contain `name`, `column`, `field_id`, `queries`, `representation`, `payload_column`, `unique_indexes`, `original`, `source`, `descriptor`, and `descriptor_digest`.
+Boolean fields also contain `application_default`: absent-default NULL or a literal Boolean.
+The compiler and attachment compare this fact with the current native mapping.
+Server, callable and on-update protected defaults remain refused.
 
 The source schema stores inspected relation, column, constraint, index, and dependency facts.
 `source_metadata` stores protected-column attributes (comment, statistics target,
@@ -282,7 +288,7 @@ manifest integer grammar is non-negative and bounded.
 Catalog type modifiers use strings because PostgreSQL uses negative sentinels.
 Unrelated SQL definitions use SHA-256 fingerprints of their canonical JSON string values.
 Original admitted unique constraints and indexes retain their exact definitions for later restoration.
-The lock contains no database connection string or application values.
+The lock contains no database connection string or row values. Boolean client defaults are policy facts.
 `ddl.expand` contains additive proposals. `ddl.requires_before_switch` names prerequisites that remain unimplemented.
 Reader requirements describe the intended readers. They do not claim those readers exist.
 
@@ -293,6 +299,10 @@ The normalizer is `identity/v1`. The null policy is `sql-null/v1`. Composed and 
 
 Descriptor digests exclude SQL names. They bind the domain, table, field, record codec, tenant codec, text codec, normalizer, null policy, and representation.
 The representation is `cf1-storage/v1` or `cf1-packed-equality/v1`. The descriptor schema is `cryptalis.context/v1`.
+Boolean storage uses `cryptalis.context/v2` with `value_codec: boolean-u8/v1`
+instead of `text_codec`. False encodes as byte 00. True encodes as byte 01.
+The descriptor digest binds the value type in the shared authenticated path.
+SQL NULL stays SQL NULL. Boolean equality terms remain unadmitted.
 For equality, the stable field UUID identifies the search domain. Crypto implementation and independent vectors belong to slice 2.
 
 `WriterInventory` requires `complete=True` and a nonempty inventory for each protected table.

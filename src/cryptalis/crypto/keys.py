@@ -44,6 +44,11 @@ class InvalidText(CryptoFailure):
     remedy = "Supply strict UTF-8 text without NUL, at most 16 MiB encoded, or SQL NULL."
 
 
+class InvalidValue(CryptoFailure):
+    stage = "value encoding"
+    remedy = "Supply a Boolean value or SQL NULL under the pinned Boolean descriptor."
+
+
 class InvalidFrame(CryptoFailure):
     stage = "frame validation"
     remedy = "Restore the complete CF1 frame from a trusted source; do not retry altered data."

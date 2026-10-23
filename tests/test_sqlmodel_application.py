@@ -69,7 +69,7 @@ def test_unchanged_template_user_crud_protects_and_restarts_without_cryptalis(tm
     run_application(tmp_path, monkeypatch)
 
 
-def run_application(tmp_path, monkeypatch, *, searchable_email=False):
+def run_application(tmp_path, monkeypatch, *, searchable_email=False, boolean_storage=False):
     source = os.environ.get('CRYPTALIS_SQLMODEL_APP_SOURCE')
     if not source:
         pytest.skip('set CRYPTALIS_SQLMODEL_APP_SOURCE to the pinned official source snapshot')
@@ -105,6 +105,8 @@ def run_application(tmp_path, monkeypatch, *, searchable_email=False):
             connection.exec_driver_sql(f'GRANT SELECT,INSERT,UPDATE,DELETE ON ALL TABLES IN SCHEMA "{schema}" TO {q(role)}')
         native = lambda: Session(runtime, expire_on_commit=False)
         baseline = workload.workflow(native, uuid4().hex if searchable_email else 'native')
+        if boolean_storage:
+            baseline = workload.boolean_controls(native, baseline, uuid4().hex if searchable_email else 'native')
         if searchable_email:
             from profile_sqlmodel_searchable_application import search_controls, native_catalog
             baseline, native_search = search_controls(native, baseline)
@@ -114,6 +116,9 @@ def run_application(tmp_path, monkeypatch, *, searchable_email=False):
                         'fields': [{'name': 'full_name', 'field_id': str(FIELD), 'protect': True,
                                     'queries': [], 'accept_leakage': []}]}]}
         reviews = ()
+        if boolean_storage:
+            declaration['models'][0]['fields'].append({'name': 'is_active', 'field_id': str(UUID(int=1904)),
+                'protect': True, 'queries': [], 'accept_leakage': []})
         if searchable_email:
             email_field = UUID(int=1903)
             declaration['models'][0]['fields'].append({'name': 'email', 'field_id': str(email_field),
@@ -168,6 +173,10 @@ def run_application(tmp_path, monkeypatch, *, searchable_email=False):
         try:
             current = workload.workflow(lambda: attached(tenant_id=TABLE, expire_on_commit=False),
                 uuid4().hex if searchable_email else 'protected', baseline)
+            if boolean_storage:
+                current = workload.boolean_controls(
+                    lambda: attached(tenant_id=TABLE, expire_on_commit=False), current,
+                    uuid4().hex if searchable_email else 'protected')
             if searchable_email:
                 current, protected_search = search_controls(
                     lambda: attached(tenant_id=TABLE, expire_on_commit=False), current)
@@ -188,6 +197,10 @@ def run_application(tmp_path, monkeypatch, *, searchable_email=False):
             with owner.connect() as connection:
                 email_frames = connection.exec_driver_sql('SELECT email FROM "user"').scalars().all()
                 assert len(email_frames) == 2 and all(bytes(value).startswith(b'CF1\0') for value in email_frames)
+        if boolean_storage:
+            with owner.connect() as connection:
+                boolean_frames = connection.exec_driver_sql('SELECT is_active FROM "user"').scalars().all()
+                assert len(boolean_frames) == 2 and all(len(bytes(value)) == 43 for value in boolean_frames)
         reverse = d.plan(proposal, owner, source_pin=active, keys=keys,
             plaintext_runtime_role=least_privilege_role(SimpleNamespace(owner=owner, role=role)),
             backfill_rows_per_second=1000, verify_rows_per_second=1000,
@@ -210,6 +223,9 @@ def run_application(tmp_path, monkeypatch, *, searchable_email=False):
                 "WHERE table_schema=%s AND table_name='user' AND column_name='full_name'", (schema,)).scalar_one() == 255
         if searchable_email:
             assert native_catalog(owner) == source_catalog
+        if boolean_storage:
+            with owner.connect() as connection:
+                assert connection.exec_driver_sql('SELECT is_active FROM "user"').scalars().all() == [False, False]
         child = subprocess.run([sys.executable, '-B', '-I', '-c', '''
 import importlib.abc, json, os, runpy, sys
 class DenyCryptalis(importlib.abc.MetaPathFinder):
@@ -226,13 +242,16 @@ engine = create_engine('postgresql+psycopg://', hide_parameters=True,
     creator=lambda: psycopg.connect(os.environ['CRYPTALIS_TEST_RUNTIME_DATABASE_URL'],
         options='-csearch_path=' + os.environ['SQLMODEL_SCHEMA']))
 try:
-    namespace['workflow'](lambda: Session(engine, expire_on_commit=False), os.environ['SQLMODEL_CHILD_PHASE'],
-                          json.loads(os.environ['SQLMODEL_CURRENT']))
+    current = namespace['workflow'](lambda: Session(engine, expire_on_commit=False), os.environ['SQLMODEL_CHILD_PHASE'],
+                                   json.loads(os.environ['SQLMODEL_CURRENT']))
+    if os.environ['SQLMODEL_BOOLEAN_STORAGE'] == '1':
+        namespace['boolean_controls'](lambda: Session(engine, expire_on_commit=False), current, os.environ['SQLMODEL_CHILD_PHASE'])
 finally:
     engine.dispose()
 assert not any(n == 'cryptalis' or n.startswith('cryptalis.') for n in sys.modules)
 print(json.dumps({'native_crud': 'passed', 'cryptalis_imported': False}))
 '''], env=dict(os.environ, SQLMODEL_CHILD_PATHS=json.dumps(sys.path), SQLMODEL_SCHEMA=schema,
+            SQLMODEL_BOOLEAN_STORAGE='1' if boolean_storage else '0',
             SQLMODEL_CURRENT=json.dumps(current),
             SQLMODEL_CHILD_PHASE=uuid4().hex if searchable_email else 'package-free', SQLMODEL_WORKLOAD_HELPER=str(
                 Path(__file__).with_name('sqlmodel_template_workload.py').resolve())),
@@ -243,10 +262,15 @@ print(json.dumps({'native_crud': 'passed', 'cryptalis_imported': False}))
                           for relative in SOURCES}
         evidence = os.environ.get('CRYPTALIS_SQLMODEL_APP_RECEIPT')
         if evidence:
-            with Path(evidence).open('x') as stream:
+            evidence = Path(evidence)
+            if boolean_storage and searchable_email:
+                evidence = evidence.with_name(evidence.stem + '-searchable' + evidence.suffix)
+            with evidence.open('x') as stream:
                 json.dump({'application_revision': REVISION, 'application_release': '0.10.0',
                     'application_source_sha256': hashes, 'model_changes': [], 'query_changes': [],
-                    'protected_fields': ['User.full_name', 'User.email'] if searchable_email else ['User.full_name'],
+                    'protected_fields': ['User.full_name'] + (['User.email'] if searchable_email else [])
+                        + (['User.is_active'] if boolean_storage else []),
+                    'boolean_storage': 'native/protected/latest False/package-free CRUD' if boolean_storage else 'not selected',
                     'profile': 'fixture-only email equality/IN/unique; explicit single tenant' if searchable_email else 'storage-only; explicit single tenant',
                     'crud': 'unchanged native/protected/package-free create/get/update/delete; real password hashing',
                     'application_boundary': 'CRUD modules only; HTTP endpoints/startup/authentication not qualified',

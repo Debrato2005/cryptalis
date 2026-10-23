@@ -1,0 +1,65 @@
+{
+  "default": false,
+  "observations": [
+    {
+      "label": "omitted",
+      "before": null,
+      "pending": false,
+      "pending_type": "bool",
+      "refreshed": false
+    },
+    {
+      "label": "none",
+      "before": null,
+      "pending": false,
+      "pending_type": "bool",
+      "refreshed": false
+    },
+    {
+      "label": "false",
+      "before": false,
+      "pending": false,
+      "pending_type": "bool",
+      "refreshed": false
+    },
+    {
+      "label": "true",
+      "before": true,
+      "pending": true,
+      "pending_type": "bool",
+      "refreshed": true
+    },
+    {
+      "label": "zero",
+      "before": 0,
+      "pending": 0,
+      "pending_type": "int",
+      "refreshed": false
+    },
+    {
+      "label": "one",
+      "before": 1,
+      "pending": 1,
+      "pending_type": "int",
+      "refreshed": true
+    },
+    {
+      "label": "zero_float",
+      "before": 0.0,
+      "pending": 0.0,
+      "pending_type": "float",
+      "refreshed": false
+    },
+    {
+      "label": "one_float",
+      "before": 1.0,
+      "pending": 1.0,
+      "pending_type": "float",
+      "refreshed": true
+    }
+  ],
+  "invalid_python_values": "2, string true and floats0.5/2.0 refuse in native bind processing",
+  "dictionary_insert": "omitted/None uses scalar default; render_nulls=True explicitNone gives23502",
+  "update": "explicitNone gives23502 and rollback retains current flag",
+  "gate": "UNKNOWN"
+}

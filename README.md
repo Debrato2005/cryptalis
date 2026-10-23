@@ -12,7 +12,7 @@ Native `String(n)`/VARCHAR mappings now retain their character limits through pr
 The [VARCHAR walkthrough](docs/walkthrough-migration.md#native-varchar-mappings) states the tested rules and remaining limits.
 
 **SPECIFIED:** Cryptalis adds application-side protection to a Python 3.12+, SQLAlchemy 2.x, psycopg 3, PostgreSQL 16 backend.
-One manifest selects protected text fields. One attachment handles admitted writes, reads, and expressions.
+One manifest selects protected fields. One attachment handles admitted writes, reads, and expressions.
 One transition executor handles protection, verification, decrypt-back, removal, and three separate rotation operations.
 SUPPORTED below selects design scope. It does not mean implemented, verified, or released support.
 

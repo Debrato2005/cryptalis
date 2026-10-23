@@ -11,7 +11,7 @@ import json
 from uuid import UUID, uuid4
 
 from cryptalis import migration as m
-from cryptalis.crypto.cf1 import FieldDescriptor, open_text
+from cryptalis.crypto.cf1 import FieldDescriptor, open_value
 from cryptalis.crypto.keys import KeyContext, Keyring, KeyUnavailable
 from cryptalis.crypto._payload_rotation import MAX_BATCH_BYTES, MAX_BATCH_ROWS
 
@@ -650,7 +650,7 @@ def _observe_active(c, source, keys, *, prepared=None, peers=None, batch_limits=
                                 materials[0].policy.search_generation if field['queries'] else 0)):
                         raise m.TransitionFailure('generation_mismatch', source.operation_id)
                     for material in materials:
-                        open_text(frame, descriptors[index], tenant, row[0], material)
+                        open_value(frame, descriptors[index], tenant, row[0], material)
                     frame_digests.append(hashlib.sha256(frame).hexdigest() if frame is not None else None)
                     if batch_limits is not None:
                         identity_bytes = 16 + (8 if model['record']['codec'] == 'int64-be/v1' else 16)

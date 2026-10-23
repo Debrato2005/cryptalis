@@ -127,6 +127,8 @@ def main():
     parser.add_argument('--restore-lease', action='store_true',
                         help='Run focused restored-target key lease and no-effects controls.')
     profiles = parser.add_mutually_exclusive_group()
+    profiles.add_argument('--boolean', action='store_true',
+                          help='Qualify Boolean storage after payload rotation on a fresh cluster.')
     profiles.add_argument('--smolink', action='store_true',
                           help='Qualify the pinned Smolink URL lifecycle on a fresh cluster.')
     profiles.add_argument('--rewrap', action='store_true', help='Qualify backup recovery after root rewrap and publication.')
@@ -135,6 +137,8 @@ def main():
     profiles.add_argument('--search-rotation', action='store_true',
                           help='Qualify backup recovery after search rotation and a later protected edit.')
     args = parser.parse_args()
+    if args.boolean and (args.varchar or args.restore_lease):
+        parser.error('--boolean uses the typed Boolean fixture and its restore lifecycle.')
     if args.smolink and (args.varchar or args.restore_lease):
         parser.error('--smolink uses the original application VARCHAR schema and lifecycle.')
     if args.restore_lease and (args.rewrap or args.payload_rotation or args.search_rotation):
@@ -144,14 +148,16 @@ def main():
     export_receipt = receipt_path(f'fresh-cluster-export-{DATE}.json')
     restore_receipt = receipt_path(f'fresh-cluster-restore-{DATE}.json')
 
-    profile = ('; pinned Smolink root-rewrap and payload-rotation application profile' if args.smolink else
+    profile = ('; Boolean storage after payload rotation' if args.boolean else
+               '; pinned Smolink root-rewrap and payload-rotation application profile' if args.smolink else
                '; root-rewrap profile' if args.rewrap else
                '; payload-rotation profile' if args.payload_rotation else
                '; search-rotation profile' if args.search_rotation else '')
     if args.restore_lease:
         profile += '; restored-target lease controls'
     export = run_pytest(export_receipt, 'Fresh-cluster source export; primary cluster' + profile,
-                        ('tests/test_smolink_application.py' if args.smolink
+                        ('tests/test_fresh_boolean_export.py' if args.boolean else
+                         'tests/test_smolink_application.py' if args.smolink
                          else 'tests/test_fresh_cluster_export.py'),
                         {'CRYPTALIS_SMOLINK_FRESH_EXPORT': str(workdir) if args.smolink else '',
                          'CRYPTALIS_FRESH_CLUSTER_DIR': str(workdir),
@@ -160,7 +166,14 @@ def main():
                          'CRYPTALIS_FRESH_SOURCE_PAYLOAD_ROTATION': '1' if args.payload_rotation else '0',
                          'CRYPTALIS_FRESH_SOURCE_SEARCH_ROTATION': '1' if args.search_rotation else '0'})
     manifest = json.loads((workdir / 'restore-manifest.json').read_text())
-    if args.smolink:
+    if args.boolean:
+        if manifest.get('application_profile') != 'boolean-storage':
+            raise SystemExit('FreshCluster.ProfileMismatch: Boolean storage export is missing.')
+        plan = json.loads(base64.b64decode(manifest['plan'], validate=True))
+        if (plan.get('kind') != 'payload_rotation' or plan.get('format') != 'cryptalis.transition/v3'
+                or plan.get('lock', {}).get('schema') != 'cryptalis.lock/v4'):
+            raise SystemExit('FreshCluster.ProfileMismatch: Boolean payload successor is missing.')
+    elif args.smolink:
         if manifest.get('application_profile') != 'smolink':
             raise SystemExit('FreshCluster.ProfileMismatch: pinned Smolink export is missing.')
     else:
@@ -194,7 +207,8 @@ def main():
         credentials = provision(port, password, manifest, plain_database)
         home = write_home(workdir, port, manifest, credentials)
         restore = run_pytest(restore_receipt, 'Fresh-cluster protected-backup recovery and adoption; isolated cluster' + profile,
-                             ('tests/test_smolink_fresh_cluster.py' if args.smolink
+                             ('tests/test_fresh_boolean_restore.py' if args.boolean else
+                              'tests/test_smolink_fresh_cluster.py' if args.smolink
                               else 'tests/test_restore_lease_fresh.py' if args.restore_lease
                               else 'tests/test_fresh_cluster_restore.py'),
                              {'HOME': str(home), 'CRYPTALIS_FRESH_CLUSTER_DIR': str(workdir),

@@ -12,7 +12,7 @@ from uuid import UUID
 
 from cryptalis import migration as m, rotation as r
 from cryptalis.crypto import Keyring, KeyUnavailable
-from cryptalis.crypto.cf1 import FieldDescriptor, open_text
+from cryptalis.crypto.cf1 import FieldDescriptor, open_value
 from cryptalis.crypto._payload_rotation import prepare_payload_rotation_batch
 from cryptalis.crypto._search_rotation import prepare_search_rotation_batch
 
@@ -269,9 +269,9 @@ def _verify_prefix(c,p,state,prepared,*,keys,target_keys):
                     header=None if old is None else (old[:6]+old[10:46 if field['queries'] else 14]
                         if p.purpose=='payload' else old[:10])
                     storage=None if old is None or p.purpose=='payload' or field['queries'] else hashlib.sha256(old).digest()
-                    value=crypto(lambda source,target: open_text(old,descriptors[index],tenant,record,source))
+                    value=crypto(lambda source,target: open_value(old,descriptors[index],tenant,record,source))
                     old=None
-                    actual=crypto(lambda source,target: open_text(new,descriptors[index],tenant,record,target))
+                    actual=crypto(lambda source,target: open_value(new,descriptors[index],tenant,record,target))
                     if (type(value)!=type(actual) or value!=actual or
                             (new is not None and header!=(new[:6]+new[10:46 if field['queries'] else 14]
                                 if p.purpose=='payload' else new[:10]))

@@ -31,7 +31,7 @@ from sqlalchemy.exc import SQLAlchemyError
 
 from cryptalis import migration as m
 from cryptalis.manifest.compiler import _metadata_diff
-from cryptalis.crypto.cf1 import FieldDescriptor, open_text
+from cryptalis.crypto.cf1 import FieldDescriptor, open_value
 from cryptalis.manifest.compiler import _canonical, _native_text_length, _previous_lock, source_metadata, _validate_catalog_facts
 
 FORMAT = 'cryptalis.reverse/v1'
@@ -437,8 +437,11 @@ def _expand(c, p):
             if native['collation_name']:
                 collate = (' COLLATE ' + m._quote(c, native['collation_schema'])
                            + '.' + m._quote(c, native['collation_name']))
-            limit = _native_text_length(native)
-            native_type = 'pg_catalog.text' if native['type'] == 'text' else 'pg_catalog.varchar' + (f'({limit})' if limit is not None else '')
+            if native['type'] == 'bool':
+                native_type = 'pg_catalog.bool'
+            else:
+                limit = _native_text_length(native)
+                native_type = 'pg_catalog.text' if native['type'] == 'text' else 'pg_catalog.varchar' + (f'({limit})' if limit is not None else '')
             c.exec_driver_sql(f'ALTER TABLE {table} ADD COLUMN {m._quote(c, _staging(field))} {native_type}{collate}')
         models[model['table_id']] = {'scope': m._scope(c, model), 'cursor': None, 'rows': 0, 'chunks': 0,
                                      'schema': m._facts(c, model), 'guard': m._guard_facts(c, p, model)}
@@ -466,7 +469,7 @@ def _backfill_chunk(c, p, state, keys, chunk_size):
             tenant = row[1] if scoped else UUID(model['table_id'])
             offset = 2 if scoped else 1
             values = m._with_row_keys(keys, tenant, source, material, lambda prepared:
-                [open_text(row[offset + index], descriptor, tenant, row[0], prepared)
+                [open_value(row[offset + index], descriptor, tenant, row[0], prepared)
                  for index, descriptor in enumerate(descriptors)])
             updates.append(tuple(values) + (row[0],))
         statement = (f'UPDATE {m._table(c, model)} SET '
@@ -508,7 +511,7 @@ def _verify(c, p, state, keys):
                     for index, descriptor in enumerate(descriptors):
                         raw = row[offset + index]
                         frame = bytes(raw) if raw is not None else None
-                        value = open_text(frame, descriptor, tenant, row[0], prepared)
+                        value = open_value(frame, descriptor, tenant, row[0], prepared)
                         staged = row[offset + len(descriptors) + index]
                         if value != staged:
                             raise m.TransitionFailure('value_verification_failed', p.operation_id)

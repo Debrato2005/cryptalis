@@ -14,6 +14,8 @@ def workflow(factory, phase, retained=None):
             old = crud.get_user_by_email(session=session, email=retained['email'])
             assert old is not None and str(old.id) == retained['id']
             assert old.full_name == retained['full_name']
+            if 'is_active' in retained:
+                assert old.is_active is retained['is_active']
         email = phase + '@example.com'
         row = crud.create_user(session=session, user_create=UserCreate(
             email=email, password='PUBLIC disposable password 2026', full_name='private-name-' + phase))
@@ -34,3 +36,27 @@ def workflow(factory, phase, retained=None):
         session.commit()
         assert crud.get_user_by_email(session=session, email='deleted-' + email) is None
         return {'id': str(row.id), 'email': email, 'full_name': name}
+
+
+def boolean_controls(factory, retained, phase):
+    with factory() as session:
+        row = crud.get_user_by_email(session=session, email=retained['email'])
+        assert row is not None
+        created = crud.create_user(session=session, user_create=UserCreate(
+            email='boolean-default-' + phase + '@example.com',
+            password='PUBLIC disposable password 2026'))
+        assert created.is_active is True
+        assert session.exec(select(User.is_active).where(User.id == created.id)).one() is True
+        crud.update_user(session=session, db_user=created, user_in=UserUpdate(is_active=False))
+        session.refresh(created)
+        assert created.is_active is False
+        session.delete(created)
+        session.commit()
+        crud.update_user(session=session, db_user=row, user_in=UserUpdate(is_active=True))
+        session.refresh(row)
+        assert row.is_active is True
+        crud.update_user(session=session, db_user=row, user_in=UserUpdate(is_active=False))
+        session.refresh(row)
+        assert row.is_active is False
+        assert tuple(session.exec(select(User.id, User.is_active).where(User.id == row.id)).one()) == (row.id, False)
+        return dict(retained, is_active=False)

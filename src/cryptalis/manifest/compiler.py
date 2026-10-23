@@ -10,7 +10,7 @@ from contextlib import contextmanager
 from dataclasses import asdict, dataclass
 from uuid import UUID, uuid4
 
-from sqlalchemy import BigInteger, Column, String, Table, Text, UUID as SQLUUID, Uuid
+from sqlalchemy import BigInteger, Boolean, Column, String, Table, Text, UUID as SQLUUID, Uuid
 from sqlalchemy import UniqueConstraint, text
 from sqlalchemy.dialects import postgresql
 from sqlalchemy.engine import Engine
@@ -141,6 +141,41 @@ def _text_mapping_matches(column, native):
     return (type(dtype) in (String, postgresql.VARCHAR)
             and (dtype.length is None if length is None else
                  type(dtype.length) is int and dtype.length == length))
+
+
+def _boolean_mapping_matches(column, native):
+    return (type(column.type) in (Boolean, postgresql.BOOLEAN)
+            and getattr(column.type.bind_processor, '__func__', None) is Boolean.bind_processor
+            and getattr(column.type._strict_as_bool, '__func__', None) is Boolean._strict_as_bool
+            and not getattr(column.type, '_variant_mapping', None)
+            and native['type_schema'] == 'pg_catalog' and native['type'] == 'bool'
+            and native['typmod'] == '-1'
+            and all(native[key] is None for key in
+                    ('collation', 'collation_name', 'collation_schema', 'deterministic', 'provider')))
+
+
+def _boolean_default(column):
+    if column.default is None:
+        return None
+    if column.default.is_scalar and type(column.default.arg) is bool:
+        return column.default.arg
+    raise ValueError
+
+
+def _value_mapping_matches(column, native):
+    return _text_mapping_matches(column, native) or _boolean_mapping_matches(column, native)
+
+
+def _value_codec(source):
+    return 'boolean-u8/v1' if source['type'] == 'bool' else 'utf8-exact/v1'
+
+
+def _required_readers(models):
+    return sorted({'cf1/v1'} | {_value_codec(f['source']) for m in models for f in m['fields']}
+                  | {m['record']['codec'] for m in models}
+                  | {'uuid16/v1' for m in models if 'column' in m['tenancy']}
+                  | ({'pg-varchar/v1'} if any(f['source']['type'] == 'varchar'
+                     for m in models for f in m['fields']) else set()))
 
 
 def _digest(document: object) -> str:
@@ -592,13 +627,24 @@ def _compile_model(model, mapper, facts, issues, schema):
         used_columns.add(column.name)
         if column is pk_column or column.name == tenant_name:
             refuse("context_field", field.name, "Keep primary-key and tenant context columns unprotected.")
-        if not _text_mapping_matches(column, actual):
-            refuse("unsupported_type", field.name, "Match native PostgreSQL text or VARCHAR with a standard Text or String mapping and the same length.")
+        boolean = actual['type'] == 'bool'
+        if not _value_mapping_matches(column, actual):
+            refuse("unsupported_type", field.name, "Match an admitted native type with its standard mapping and the same length.")
         if column.nullable != actual["nullable"]:
             refuse("mapping_mismatch", field.name, "Match mapped and database nullability before planning.")
-        if (_server_generation(column, actual) or column.default is not None
+        application_default = None
+        try:
+            if boolean:
+                application_default = _boolean_default(column)
+            elif column.default is not None:
+                raise ValueError
+        except ValueError:
+            refuse("protected_default", field.name, "Use a literal Boolean client default or assign values through admitted writes.")
+        if (_server_generation(column, actual)
                 or column.onupdate is not None):
             refuse("protected_default", field.name, "Remove protected defaults and generated values. Assign values through admitted writes.")
+        if boolean and field.queries:
+            refuse("unsupported_query", field.name, "Use storage-only protection for the Boolean value domain.")
         # Native deterministic default equality is byte-exact, like native C.
         # Names outside pg_catalog do not inherit either qualified identity.
         mapped_collation = getattr(column.type, "collation", None)
@@ -647,7 +693,8 @@ def _compile_model(model, mapper, facts, issues, schema):
             refuse("missing_uniqueness", field.name, "Create and qualify the native tenant-scoped unique constraint before protection.")
         representation = "cf1-packed-equality/v1" if field.queries else "cf1-storage/v1"
         descriptor = _descriptor(None, str(model.table_id), str(field.field_id), record_codec,
-                                 "uuid16/v1" if model.tenant_column is not None else "single-tenant-uuid/v1", representation)
+                                 "uuid16/v1" if model.tenant_column is not None else "single-tenant-uuid/v1", representation,
+                                 _value_codec(actual))
         payload = "_cryptalis_" + field.field_id.hex
         if payload in columns:
             refuse("generated_name_collision", field.name, "Resolve the generated payload-column name collision before planning.")
@@ -666,6 +713,8 @@ def _compile_model(model, mapper, facts, issues, schema):
                        },
                        "source": {"type": actual["type"], "nullable": actual["nullable"], "collation": actual["collation"]},
                        "descriptor": descriptor})
+        if boolean:
+            fields[-1]['application_default'] = application_default
     for item in facts["constraints"] + facts["indexes"]:
         del item["definition"]
     return {"model": model.model, "table_id": str(model.table_id),
@@ -674,11 +723,19 @@ def _compile_model(model, mapper, facts, issues, schema):
             "tenancy": tenancy, "fields": fields, "source_schema": facts}
 
 
-def _descriptor(domain_id, table_id, field_id, record_codec, tenant_codec, representation):
-    return {"schema": "cryptalis.context/v1", "domain_id": domain_id,
+def _descriptor(domain_id, table_id, field_id, record_codec, tenant_codec, representation,
+                value_codec='utf8-exact/v1'):
+    descriptor = {"schema": "cryptalis.context/v1", "domain_id": domain_id,
             "table_id": table_id, "field_id": field_id, "text_codec": "utf8-exact/v1",
             "normalizer": "identity/v1", "null_policy": "sql-null/v1",
             "record_codec": record_codec, "tenant_codec": tenant_codec, "representation": representation}
+    if value_codec == 'boolean-u8/v1':
+        descriptor['schema'] = 'cryptalis.context/v2'
+        del descriptor['text_codec']
+        descriptor['value_codec'] = value_codec
+    elif value_codec != 'utf8-exact/v1':
+        raise ValueError
+    return descriptor
 
 
 def _ddl(document, engine):
@@ -704,7 +761,7 @@ def _previous_lock(raw, current, engine):
     """Reject inconsistent compiler artifacts before computing a semantic diff."""
     old = decode_manifest_json(raw)
     try:
-        if (old.keys() != set('schema profile domain_id database declaration models writer_inventory search_reviews required_readers ddl'.split()) or old["schema"] not in ("cryptalis.lock/v1", "cryptalis.lock/v2", "cryptalis.lock/v3")
+        if (old.keys() != set('schema profile domain_id database declaration models writer_inventory search_reviews required_readers ddl'.split()) or old["schema"] not in ("cryptalis.lock/v1", "cryptalis.lock/v2", "cryptalis.lock/v3", "cryptalis.lock/v4")
                 or old["profile"] != "cf1" or old["domain_id"] != current["domain_id"]
                 or old["database"] != {"major": 16, "encoding": "UTF8"}):
             raise ValueError
@@ -735,7 +792,7 @@ def _previous_lock(raw, current, engine):
                 tenant_codec = "uuid16/v1"
             if model["source_schema"].keys() != {"relation", "columns", "constraints", "indexes", "dependencies"}:
                 raise ValueError
-            if old["schema"] in ("cryptalis.lock/v2", "cryptalis.lock/v3"):
+            if old["schema"] != "cryptalis.lock/v1":
                 metadata = model["source_metadata"]
                 if set(metadata) != {"columns", "constraints", "indexes", "extended_statistics"}:
                     raise ValueError
@@ -759,12 +816,20 @@ def _previous_lock(raw, current, engine):
             if not isinstance(model["fields"], list) or len(model["fields"]) != len(declared.fields):
                 raise ValueError
             for field, intent in zip(model["fields"], declared.fields, strict=True):
-                if field.keys() != set('name column field_id queries representation payload_column unique_indexes original source descriptor descriptor_digest'.split()) or field["field_id"] != str(intent.field_id) or field["name"] != intent.name:
+                boolean = field['source']['type'] == 'bool'
+                members = set('name column field_id queries representation payload_column unique_indexes original source descriptor descriptor_digest'.split())
+                if boolean:
+                    members.add('application_default')
+                    if (old['schema'] != 'cryptalis.lock/v4' or intent.queries
+                            or field['application_default'] is not None and type(field['application_default']) is not bool):
+                        raise ValueError
+                if field.keys() != members or field["field_id"] != str(intent.field_id) or field["name"] != intent.name:
                     raise ValueError
                 if field["queries"] != list(intent.queries) or not isinstance(field["column"], str):
                     raise ValueError
                 representation = "cf1-packed-equality/v1" if intent.queries else "cf1-storage/v1"
-                expected = _descriptor(old["domain_id"], model["table_id"], field["field_id"], model["record"]["codec"], tenant_codec, representation)
+                expected = _descriptor(old["domain_id"], model["table_id"], field["field_id"], model["record"]["codec"], tenant_codec, representation,
+                                       _value_codec(field['source']))
                 if (field["descriptor"] != expected or field["descriptor_digest"] != _digest(expected)
                         or field["representation"] != representation
                         or field["payload_column"] != "_cryptalis_" + intent.field_id.hex):
@@ -776,7 +841,8 @@ def _previous_lock(raw, current, engine):
                         raise ValueError
             if any(not isinstance(model["source_schema"][key], list) for key in ("columns", "constraints", "indexes", "dependencies")):
                 raise ValueError
-            _validate_prior_source(model, varchar=old['schema'] == 'cryptalis.lock/v3')
+            _validate_prior_source(model, varchar=old['schema'] in ('cryptalis.lock/v3', 'cryptalis.lock/v4'),
+                                   boolean=old['schema'] == 'cryptalis.lock/v4')
         inventory = old["writer_inventory"]
         if inventory.keys() != {"complete", "evidence_kind", "writers"} or inventory["evidence_kind"] != "host_assertion":
             raise ValueError
@@ -787,12 +853,10 @@ def _previous_lock(raw, current, engine):
         if errors or inventory != host or domain_reviews != old["search_reviews"] or old["ddl"] != _ddl(old, engine):
             raise ValueError
         varchar = any(f['source']['type'] == 'varchar' for model in old['models'] for f in model['fields'])
-        if varchar != (old['schema'] == 'cryptalis.lock/v3'):
+        boolean = any(f['source']['type'] == 'bool' for model in old['models'] for f in model['fields'])
+        if boolean != (old['schema'] == 'cryptalis.lock/v4') or (not boolean and varchar != (old['schema'] == 'cryptalis.lock/v3')):
             raise ValueError
-        readers = sorted({"cf1/v1", "utf8-exact/v1"} | {m["record"]["codec"] for m in old["models"]}
-                         | {"uuid16/v1" for m in old["models"] if "column" in m["tenancy"]}
-                         | ({'pg-varchar/v1'} if varchar else set()))
-        if old["required_readers"] != readers:
+        if old["required_readers"] != _required_readers(old['models']):
             raise ValueError
     except (KeyError, TypeError, ValueError, AttributeError):
         raise ManifestInvalid("Previous lock has an invalid compiler structure or inconsistent context") from None
@@ -846,7 +910,7 @@ def _validate_catalog_facts(facts):
     return columns
 
 
-def _validate_prior_source(model, *, varchar=False):
+def _validate_prior_source(model, *, varchar=False, boolean=False):
     """Check a prior snapshot's shape and admitted facts without trusting its hash."""
     def require(condition):
         if not condition:
@@ -869,8 +933,13 @@ def _validate_prior_source(model, *, varchar=False):
     require(len({f["column"] for f in model["fields"]}) == len(model["fields"]))
     for field in model["fields"]:
         source = columns.get(field["column"])
-        require(source is not None and (source['type'] == 'text' or varchar and source['type'] == 'varchar'))
-        _native_text_length(source)
+        require(source is not None)
+        if boolean and source['type'] == 'bool':
+            require(_boolean_mapping_matches(Column('value', Boolean()), source))
+            require(not field['queries'])
+        else:
+            require(source['type'] == 'text' or varchar and source['type'] == 'varchar')
+            _native_text_length(source)
         require(field["column"] not in (pk["name"], tenant_name))
         require(not any(source[k] for k in ("identity", "generated", "default_digest")))
         require(field["source"] == {"type": source['type'], "nullable": source["nullable"], "collation": source["collation"]})
@@ -1030,15 +1099,13 @@ def compile_protection(raw: bytes, mapping: Registry, engine: Engine, *,
     if issues:
         raise PlanningRejected(issues)
     varchar = any(f['source']['type'] == 'varchar' for model in models for f in model['fields'])
-    document = {"schema": "cryptalis.lock/v3" if varchar else "cryptalis.lock/v2", "profile": "cf1",
+    boolean = any(f['source']['type'] == 'bool' for model in models for f in model['fields'])
+    document = {"schema": "cryptalis.lock/v4" if boolean else "cryptalis.lock/v3" if varchar else "cryptalis.lock/v2", "profile": "cf1",
                 "domain_id": str(declaration.domain_id), "database": {"major": 16, "encoding": "UTF8"},
                 "declaration": json.loads(declaration.canonical_bytes()), "models": models,
                 "writer_inventory": host, "search_reviews": reviews}
     document["ddl"] = _ddl(document, engine)
-    document["required_readers"] = sorted({"cf1/v1", "utf8-exact/v1"}
-        | {m["record"]["codec"] for m in models}
-        | {"uuid16/v1" for m in models if "column" in m["tenancy"]}
-        | ({'pg-varchar/v1'} if varchar else set()))
+    document["required_readers"] = _required_readers(models)
     previous = None
     if previous_lock is not None:
         previous = _previous_lock(previous_lock, document, engine)

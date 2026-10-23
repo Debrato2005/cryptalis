@@ -27,10 +27,10 @@ class CryptoClock:
         resolve = sys._getframe(1)
         crypto = resolve.f_back
         if (self.remaining and resolve.f_code.co_name == '_resolve' and crypto is not None
-                and crypto.f_code.co_name in ('seal_text', 'open_text')
+                and crypto.f_code.co_name in ('seal_value', 'open_value')
                 and crypto.f_locals.get('record') == UUID(int=101)
                 and resolve.f_locals.get('purpose') == 'payload'
-                and ('sealed' in crypto.f_locals if crypto.f_code.co_name == 'seal_text'
+                and ('sealed' in crypto.f_locals if crypto.f_code.co_name == 'seal_value'
                      else 'encoded' in crypto.f_locals)):
             # The real AEAD call completed; only its final lease check sees expiry.
             self.now += 2

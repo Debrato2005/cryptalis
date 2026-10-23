@@ -11,6 +11,12 @@ VERIFIED paragraphs below describe recorded receipts, not current product qualif
 Every protection change uses expand → backfill → verify → switch → contract.
 Rollback, deprotect, search changes, and key transformations reuse this path.
 
+Boolean storage uses this same lifecycle with typed value authentication.
+The [Boolean checkpoint](status.md#boolean-storage-checkpoint-2026-10-23) records mixed
+text/search/Boolean rotations and fresh-cluster backup recovery after payload rotation.
+Decrypt-back restores native Boolean columns and the latest values.
+These local checks leave production custody, publication authority and all seven gates UNKNOWN.
+
 **VERIFIED, recorded earlier lab:** the service lab passes 27 listed checks over 1,000 synthetic rows. It observes a blocked concurrent writer,
 a process exit after a committed chunk, inspected idempotent resume, full verification mutants, CF1 companion transport,
 payload/search rotation, and current-data decrypt-back. An isolated ordinary application then reads and updates the recovered data with Cryptalis/lab-reader imports blocked.

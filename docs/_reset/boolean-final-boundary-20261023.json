@@ -1,0 +1,130 @@
+{
+  "scope": "Final Boolean storage checkpoint; current product source, full primary, actual installed wheel and fresh PostgreSQL16 recovery; all production gates UNKNOWN",
+  "receipts": {
+    "boolean-full-primary-final-20261023.json": {
+      "sha256": "07c3fc2af9ccad3cb191e06bf64d2b09f9df76d1ef42f4ac5f4d14250ff232b0",
+      "counts": {
+        "test_calls": {
+          "passed": 2361,
+          "skipped": 1
+        },
+        "subtest_calls": {
+          "passed": 18
+        },
+        "setup": {
+          "passed": 2362
+        },
+        "teardown": {
+          "passed": 2362
+        },
+        "collection": {
+          "skipped": 8
+        },
+        "selected_items": 2362
+      },
+      "source_files": 182,
+      "preflight": {
+        "select_1_each": "passed",
+        "sha256_prefixes": [
+          "05362d31",
+          "ff897c9a"
+        ]
+      }
+    },
+    "boolean-installed-wrapper-20261023.json": {
+      "sha256": "f1f2861ca90b79a30004b8507830103b037abf2ef4c1cce5606b6c1e94ccc870",
+      "counts": {
+        "test_calls": {
+          "passed": 41
+        },
+        "subtest_calls": {},
+        "setup": {
+          "passed": 41
+        },
+        "teardown": {
+          "passed": 41
+        },
+        "collection": {},
+        "selected_items": 41
+      },
+      "source_files": 182,
+      "preflight": {
+        "select_1_each": "passed",
+        "sha256_prefixes": [
+          "05362d31",
+          "ff897c9a"
+        ]
+      }
+    },
+    "fresh-cluster-export-20261023-26.json": {
+      "sha256": "8f4f8e04bf80bcc34abfbcbc3c71b1a6115befc7e5744294d728cfbc2c1d6d57",
+      "counts": {
+        "test_calls": {
+          "passed": 1
+        },
+        "subtest_calls": {},
+        "setup": {
+          "passed": 1
+        },
+        "teardown": {
+          "passed": 1
+        },
+        "collection": {},
+        "selected_items": 1
+      },
+      "source_files": 182,
+      "preflight": {
+        "select_1_each": "passed",
+        "sha256_prefixes": [
+          "05362d31",
+          "ff897c9a"
+        ]
+      }
+    },
+    "fresh-cluster-restore-20261023-25.json": {
+      "sha256": "c9ea7497eac1e85db2570446573afd1b9381589bbea767682fee1bcf003ed402",
+      "counts": {
+        "test_calls": {
+          "passed": 1
+        },
+        "subtest_calls": {},
+        "setup": {
+          "passed": 1
+        },
+        "teardown": {
+          "passed": 1
+        },
+        "collection": {},
+        "selected_items": 1
+      },
+      "source_files": 182,
+      "preflight": {
+        "select_1_each": "passed",
+        "sha256_prefixes": [
+          "58d5a134",
+          "1c0c5a2d"
+        ]
+      }
+    }
+  },
+  "wheel_sha256": "675d394e827accb9c8dd3ba6dfed289b1f3ce4ee522f1b84be6fb286b6f86ab2",
+  "modules_verified": 36,
+  "installed_module_changes": [],
+  "release_receipt": "boolean-release-installed-20261023.json",
+  "old_reader_receipt": "boolean-actual-old-reader-20261023.json",
+  "independent_vectors": "RFC8452/POLYVAL/OpenSSL reference generator verifies frozen Boolean vectors; existing text fixture byte-identical",
+  "text_vectors_sha256": "24c918629ac10d7fb739fd02a946ecdbbcf1de4102bb353cf069cc095a3b286e",
+  "fresh_journey": {
+    "source_plan_digest": "e1ab4c468dbeffed2ee0539fc72c3c4e9d3b5079a63cac83054d37bc65e6623f",
+    "restore_adoption_id": "9c0a773f-b841-4669-93de-4a48657b32cd",
+    "profile": "Boolean storage, payload rotation, fresh PostgreSQL16 adoption, latest False removal",
+    "tampered_frame": "refused before adoption",
+    "package_free_restart": "passed",
+    "gates": "all seven UNKNOWN"
+  },
+  "failures_preserved": [
+    "boolean-full-primary-20261023.json",
+    "fresh-cluster-restore-20261023-23.json"
+  ],
+  "remaining": "Other practical types, advanced queries, external custody/authority, independent human review and production qualification remain incomplete"
+}

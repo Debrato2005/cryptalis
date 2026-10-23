@@ -2,7 +2,7 @@
 from hmac import compare_digest
 
 from ._payload_rotation import MAX_BATCH_BYTES, MAX_BATCH_ROWS, _validate_rows
-from .cf1 import FieldDescriptor, open_text, seal_text
+from .cf1 import FieldDescriptor, open_value, seal_value
 from .keys import InvalidContext, KeyUnavailable, PreparedKeys, RepresentationMismatch
 
 
@@ -68,8 +68,8 @@ def prepare_search_rotation_batch(rows,field,tenant,*,source,target,
                 int.from_bytes(frame[6:10],'big')!=source.policy.payload_generation or
                 int.from_bytes(frame[10:14],'big')!=(source.policy.search_generation if field.equality else 0)):
             raise RepresentationMismatch()
-        value=open_text(frame,field,tenant,record,source)
-        transformed=seal_text(value,field,tenant,record,target) if field.equality else frame
+        value=open_value(frame,field,tenant,record,source)
+        transformed=seal_value(value,field,tenant,record,target) if field.equality else frame
         if frame is None:
             if transformed is not None:raise RepresentationMismatch()
         elif (type(transformed) is not bytes or len(transformed)!=len(frame)

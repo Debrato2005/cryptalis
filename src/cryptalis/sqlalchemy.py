@@ -31,10 +31,10 @@ from sqlalchemy.types import JSON, NullType, TypeDecorator, TypeEngine, UserDefi
 from ._sqlalchemy_guard import install_guard
 from ._sqlmodel_types import autostring_impl
 from ._sqlalchemy_search import rewrite_search, search_shape, validate_search_storage
-from .crypto import CryptoFailure, AuthenticationFailed, FieldDescriptor, Keyring, KeyUnavailable, MAX_TEXT_BYTES, open_text, seal_text
+from .crypto import CryptoFailure, AuthenticationFailed, FieldDescriptor, Keyring, KeyUnavailable, MAX_TEXT_BYTES, open_value, seal_value
 from .crypto.cf1 import _encode
 from .crypto.keys import InvalidText, RepresentationMismatch
-from .manifest.compiler import _native_text_length, _previous_lock, _text_mapping_matches
+from .manifest.compiler import _boolean_default, _native_text_length, _previous_lock, _value_mapping_matches
 from .manifest.parser import decode_manifest_json
 
 
@@ -127,6 +127,17 @@ class _Binding:
     tenant_attribute: str | None
     model: type
     max_characters: int | None = None
+    boolean_processor: object = field(default=None, repr=False)
+    application_default: bool | None = None
+
+
+def _assignment(value, binding):
+    if binding.boolean_processor is not None:
+        try:
+            return binding.boolean_processor(value)
+        except (TypeError, ValueError) as failure:
+            raise type(failure)('Invalid native Boolean assignment. Roll back before retry.') from None
+    return _varchar_assignment(value, binding.max_characters)
 
 
 @dataclass(frozen=True)
@@ -134,7 +145,7 @@ class _Sealed:
     body: bytes | None = field(repr=False)
     permit: object = field(repr=False)
     binding: _Binding = field(repr=False)
-    failure: CryptoFailure | None = field(default=None, repr=False)
+    failure: Exception | None = field(default=None, repr=False)
     record: object = field(default=None, repr=False)
     tenant: object = field(default=None, repr=False)
 
@@ -262,7 +273,7 @@ class _ReadText(TypeDecorator):
             raise
         except Exception:
             raise AuthenticationFailed() from None
-        plain = open_text(payload, descriptor, tenant, record, self.keys)
+        plain = open_value(payload, descriptor, tenant, record, self.keys)
         if plain is not None and self.binding.max_characters is not None and len(plain) > self.binding.max_characters:
             raise RepresentationMismatch()
         return plain
@@ -570,9 +581,15 @@ class _Attachment:
                 column = table.c[field["column"]]
                 actual = columns[field["column"]]
                 source = next(c for c in model['source_schema']['columns'] if c['name'] == field['column'])
-                if (not isinstance(actual["type"], LargeBinary) or not _text_mapping_matches(column, source) or
+                boolean = source['type'] == 'bool'
+                try:
+                    default_matches = (_boolean_default(column) is field['application_default'] if boolean
+                                       else column.default is None)
+                except ValueError:
+                    raise PolicyMismatch() from None
+                if (not isinstance(actual["type"], LargeBinary) or not _value_mapping_matches(column, source) or
                         actual["nullable"] != field["source"]["nullable"] or column.nullable != actual["nullable"] or
-                        column.default is not None or column.server_default is not None or column.onupdate is not None or
+                        not default_matches or column.server_default is not None or column.onupdate is not None or
                         column.server_onupdate is not None or actual.get("default") is not None or actual.get("computed") is not None):
                     raise PolicyMismatch()
                 if field["queries"]:
@@ -596,7 +613,9 @@ class _Attachment:
                 binding = _Binding(column, mapper.get_property_by_column(column).key, descriptor,
                                    record, mapper.get_property_by_column(record).key, tenant,
                                    mapper.get_property_by_column(tenant).key if tenant is not None else None,
-                                   mapper.class_, _native_text_length(source))
+                                   mapper.class_, None if boolean else _native_text_length(source),
+                                   column.type.bind_processor(connection.dialect) if boolean else None,
+                                   field.get('application_default'))
                 self.bindings.append(binding)
             self.models[mapper.class_] = tuple(b for b in self.bindings if b.model is mapper.class_)
 
@@ -644,6 +663,8 @@ class _Attachment:
                 self.identity_type(binding.record.type)
                 if binding.tenant is not None:
                     self.identity_type(binding.tenant.type, uuid_only=True)
+                if binding.boolean_processor is not None and _boolean_default(binding.column) is not binding.application_default:
+                    raise PolicyMismatch()
             return tuple((b.column.table.schema, b.column.table.name, column(b.column), column(b.record), column(b.tenant),
                           inspect(b.model).primary_key, inspect(b.model).get_property_by_column(b.column).key,
                           b.column.type.binding, b.column.type.owner) for b in self.bindings)
@@ -704,7 +725,7 @@ class _Attachment:
     @classmethod
     def bind_type(cls, dtype, *, selecting=False, column_expression=None):
         # The SELECT path also checks native output hooks and SQL type text.
-        adapt = (TypeEngine.adapt, Uuid.adapt, Boolean.adapt, Enum.adapt) if selecting else (TypeEngine.adapt, Uuid.adapt)
+        adapt = (TypeEngine.adapt, Uuid.adapt, Boolean.adapt, Enum.adapt) if selecting else (TypeEngine.adapt, Uuid.adapt, Boolean.adapt)
         seen = set()
         while True:
             try:
@@ -1078,17 +1099,23 @@ class _Attachment:
                 if state.persistent and not attribute.history.has_changes():
                     continue
                 value = attribute.loaded_value
+                if (state.pending and binding.application_default is not None
+                        and (value is NO_VALUE or value is None)):
+                    value = binding.application_default
+                    setattr(obj, binding.attribute, value)
                 if value is NO_VALUE:
-                    value = None if state.pending and binding.column.nullable else NO_VALUE
+                    value = None if state.pending and (binding.column.nullable or binding.boolean_processor is not None) else NO_VALUE
                 if value is NO_VALUE:
                     raise UnsupportedProtectedOperation()
                 try:
-                    stored = _varchar_assignment(value, binding.max_characters)
-                except VarcharLengthExceeded as failure:
+                    stored = _assignment(value, binding)
+                except (VarcharLengthExceeded, TypeError, ValueError) as failure:
+                    if binding.boolean_processor is None and not isinstance(failure, VarcharLengthExceeded):
+                        raise
                     # Bind processing occurs inside the native flush transaction.
                     sealed = _Sealed(None, operation, binding, failure)
                 else:
-                    body = seal_text(stored, binding.descriptor, tenant, record, operation.keys)
+                    body = seal_value(stored, binding.descriptor, tenant, record, operation.keys)
                     sealed = _Sealed(body, operation, binding)
                 operation.prepared[(binding.column.table.schema, binding.column.table.name, record, binding.column.key)] = (value, sealed)
 
@@ -1499,16 +1526,20 @@ def _bulk_insert(state):
         operation.rows[(table.schema, table.name, record)] = tenant
         for binding in bindings:
             if binding.attribute not in row or row[binding.attribute] is None and not render_nulls:
-                continue  # Preserve native NULL omission and heterogeneous grouping.
+                if binding.application_default is None:
+                    continue  # Preserve native NULL omission and heterogeneous grouping.
+                row[binding.attribute] = binding.application_default
             value = row[binding.attribute]
             try:
-                stored = _varchar_assignment(value, binding.max_characters)
-            except VarcharLengthExceeded as failure:
-                if failed_index is None:
+                stored = _assignment(value, binding)
+            except (VarcharLengthExceeded, TypeError, ValueError) as failure:
+                if binding.boolean_processor is None and not isinstance(failure, VarcharLengthExceeded):
+                    raise
+                if type(failure) is VarcharLengthExceeded and failed_index is None:
                     failed_index = index
                 sealed = _Sealed(None, operation, binding, failure, record, tenant)
             else:
-                sealed = _Sealed(seal_text(stored, binding.descriptor, tenant, record, operation.keys),
+                sealed = _Sealed(seal_value(stored, binding.descriptor, tenant, record, operation.keys),
                                  operation, binding, record=record, tenant=tenant)
             operation.bulk_seals[id(sealed)] = sealed
             row[binding.attribute] = sealed
@@ -1635,11 +1666,14 @@ def _bulk_update(state):
         for binding in bindings:
             if binding.attribute in row:
                 try:
-                    stored = _varchar_assignment(row[binding.attribute], binding.max_characters)
-                except VarcharLengthExceeded as failure:
-                    sealed = _Sealed(_VARCHAR_UPDATE_INVALID, operation, binding, failure, record, tenant)
+                    stored = _assignment(row[binding.attribute], binding)
+                except (VarcharLengthExceeded, TypeError, ValueError) as failure:
+                    if binding.boolean_processor is None and not isinstance(failure, VarcharLengthExceeded):
+                        raise
+                    sealed = _Sealed(_VARCHAR_UPDATE_INVALID if type(failure) is VarcharLengthExceeded else None,
+                                     operation, binding, failure, record, tenant)
                 else:
-                    body = seal_text(stored, binding.descriptor, tenant, record, operation.keys)
+                    body = seal_value(stored, binding.descriptor, tenant, record, operation.keys)
                     sealed = _Sealed(body, operation, binding, record=record, tenant=tenant)
                 operation.bulk_seals[id(sealed)] = sealed
                 row[binding.attribute] = sealed
@@ -1773,7 +1807,7 @@ def attach(mapping: registry, engine: Engine | AsyncEngine, *, lock: bytes, keys
     try:
         document = decode_manifest_json(lock)
         if (not isinstance(mapping, registry) or not isinstance(engine, (Engine, AsyncEngine)) or
-                document["schema"] not in ("cryptalis.lock/v1", "cryptalis.lock/v2", "cryptalis.lock/v3") or document["profile"] != "cf1"):
+                document["schema"] not in ("cryptalis.lock/v1", "cryptalis.lock/v2", "cryptalis.lock/v3", "cryptalis.lock/v4") or document["profile"] != "cf1"):
             raise PolicyMismatch()
         native_engine = engine.sync_engine if isinstance(engine, AsyncEngine) else engine
         if native_engine.echo or not native_engine.hide_parameters:

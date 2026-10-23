@@ -1,0 +1,34 @@
+{
+  "application_revision": "d40de23896d27d15c17a7bf9649123fd167a0aa8",
+  "application_release": "0.10.0",
+  "application_source_sha256": {
+    "LICENSE": "0bd4e76cdd06ab24cce2de5e74f490920897f90a22ad35e8403ed006d4560f48",
+    "backend/pyproject.toml": "5c6bbcfb3fbdccbdc22d2828628ed4dc8352e13574899296cd9836ac9342c413",
+    "backend/app/models.py": "5cd49acda8771e6f9551f47a0d1e516bcce91d90841a1e9e0283a1ef2d6a7e94",
+    "backend/app/crud.py": "f69d79e858ee22cee7792494b0df0370afaed20439ed16bbf6f70767926254d1",
+    "backend/app/core/security.py": "0006fd18a2900107c6e06023c1b9ccf3960887e84cf664e1632307305c6c4ab7",
+    "backend/app/core/config.py": "668f895a04119a5aaa9890628a13add517e31f61856d228e03a471fa3eb62aa4"
+  },
+  "model_changes": [],
+  "query_changes": [],
+  "protected_fields": [
+    "User.full_name",
+    "User.email",
+    "User.is_active"
+  ],
+  "boolean_storage": "native/protected/latest False/package-free CRUD",
+  "profile": "fixture-only email equality/IN/unique; explicit single tenant",
+  "crud": "unchanged native/protected/package-free create/get/update/delete; real password hashing",
+  "application_boundary": "CRUD modules only; HTTP endpoints/startup/authentication not qualified",
+  "runtime": {
+    "sqlmodel": "0.0.48",
+    "pydantic": "2.14.1",
+    "SQLAlchemy": "2.1.3",
+    "greenlet": "3.5.6",
+    "psycopg": "3.3.6",
+    "cryptography": "50.0.2"
+  },
+  "python": "3.13.12",
+  "psycopg_impl": "binary",
+  "gates": "all seven UNKNOWN"
+}

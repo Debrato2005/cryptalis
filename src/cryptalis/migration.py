@@ -19,7 +19,7 @@ from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.dialects import postgresql
 
-from cryptalis.crypto.cf1 import FieldDescriptor, seal_text, open_text
+from cryptalis.crypto.cf1 import FieldDescriptor, seal_value, open_value
 from cryptalis.crypto.keys import CryptoFailure, Keyring, KeyUnavailable
 from cryptalis.crypto._payload_rotation import MAX_BATCH_BYTES, MAX_BATCH_ROWS
 from cryptalis.manifest.compiler import (compile_protection, _schema_facts, _canonical, _previous_lock,
@@ -479,7 +479,10 @@ def plan(manifest, mapping, engine, *, writers, search_reviews=(), keys, runtime
                     raise TransitionFailure('missing_search_policy')
                 policies[str(t)] = _policy(ring)
             count=c.exec_driver_sql(f'SELECT count(*) FROM {_table(c,model)}').scalar_one()
-            size=c.exec_driver_sql(f'SELECT coalesce(sum('+'+'.join(f'coalesce(octet_length({_quote(c,f["column"])}),0)' for f in model['fields'])+f'),0) FROM {_table(c,model)}').scalar_one()
+            sizes = [(f'CASE WHEN {_quote(c, f["column"])} IS NULL THEN 0 ELSE 1 END'
+                      if f['source']['type'] == 'bool' else
+                      f'coalesce(octet_length({_quote(c, f["column"])}),0)') for f in model['fields']]
+            size=c.exec_driver_sql(f'SELECT coalesce(sum('+ '+'.join(sizes)+f'),0) FROM {_table(c,model)}').scalar_one()
             scopes.append({'table_id':model['table_id'],'estimated_rows':count})
             rows+=count; plaintext_bytes+=size
         schema=lock['models'][0]['schema']
@@ -779,7 +782,8 @@ def _frame_check(c,f):
     col=_quote(c,f['payload_column']); eq=bool(f['queries']); overhead=74 if eq else 42
     magic='434631000101' if eq else '434631000100'
     op='<>' if eq else '='
-    return f"{col} IS NULL OR (pg_catalog.octet_length({col}) BETWEEN {overhead} AND {16777216+overhead} AND pg_catalog.substring({col},1,6)=pg_catalog.decode('{magic}','hex') AND pg_catalog.substring({col},7,4)<>pg_catalog.decode('00000000','hex') AND pg_catalog.substring({col},11,4){op}pg_catalog.decode('00000000','hex'))"
+    minimum, maximum = (43, 43) if f['source']['type'] == 'bool' else (overhead, 16777216+overhead)
+    return f"{col} IS NULL OR (pg_catalog.octet_length({col}) BETWEEN {minimum} AND {maximum} AND pg_catalog.substring({col},1,6)=pg_catalog.decode('{magic}','hex') AND pg_catalog.substring({col},7,4)<>pg_catalog.decode('00000000','hex') AND pg_catalog.substring({col},11,4){op}pg_catalog.decode('00000000','hex'))"
 
 
 def _install_guards(c,p):
@@ -865,7 +869,7 @@ def _backfill_chunk(c,p,state,keys,chunk_size):
         for row in rows:
             tenant=row[1] if scoped else UUID(model['table_id']); offset=2 if scoped else 1
             body=_with_row_keys(keys,tenant,p,material,lambda prepared:
-                [seal_text(row[offset+i],descriptor,tenant,row[0],prepared) for i,descriptor in enumerate(descriptors)])
+                [seal_value(row[offset+i],descriptor,tenant,row[0],prepared) for i,descriptor in enumerate(descriptors)])
             params.append(tuple(body)+(row[0],))
         statement=f'UPDATE {_table(c,model)} SET '+','.join(_quote(c,f['payload_column'])+'=%s' for f in model['fields'])+f' WHERE {_quote(c,model["record"]["column"])}=%s'
         c.exec_driver_sql(statement,params)
@@ -898,7 +902,7 @@ def _verify(c,p,state,keys):
                         admitted=prepared.policy
                         if frame is not None and (int.from_bytes(frame[6:10],'big')!=admitted.payload_generation or int.from_bytes(frame[10:14],'big')!=(admitted.search_generation if f['queries'] else 0)):
                             raise TransitionFailure('generation_mismatch',p.operation_id)
-                        value=open_text(frame,descriptors[i],tenant,row[0],prepared)
+                        value=open_value(frame,descriptors[i],tenant,row[0],prepared)
                         if type(value)!=type(source) or value!=source: raise TransitionFailure('value_verification_failed',p.operation_id)
                         frames.append(frame)
                     return frames

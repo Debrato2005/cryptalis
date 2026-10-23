@@ -1,4 +1,4 @@
-"""Bounded CF1 text frames with expected context and pre-admitted roots.
+"""Bounded CF1 typed values with expected context and pre-admitted roots.
 
 No provider call, algorithm fallback, normalization or plaintext fallback is
 allowed here. SQL NULL presence and same-context replay are outside AEAD.
@@ -17,7 +17,7 @@ from cryptography.hazmat.primitives.ciphers.aead import AESGCMSIV
 from cryptography.hazmat.primitives.kdf.hkdf import HKDF
 
 from .keys import (
-    AuthenticationFailed, CryptoBackendUnavailable, InvalidContext, InvalidFrame, InvalidText,
+    AuthenticationFailed, CryptoBackendUnavailable, InvalidContext, InvalidFrame, InvalidText, InvalidValue,
     KeyUnavailable, PreparedKeys, RepresentationMismatch, _identity, _native_uuid, tuple_bytes,
 )
 
@@ -36,6 +36,7 @@ class FieldDescriptor:
     tenant_codec: str
     representation: str
     digest: bytes
+    value_codec: str = "utf8-exact/v1"
 
     def __post_init__(self):
         for identity in (self.domain_id, self.table_id, self.field_id):
@@ -43,6 +44,8 @@ class FieldDescriptor:
         if (self.record_codec not in ("uuid16/v1", "int64-be/v1") or
                 self.tenant_codec not in ("uuid16/v1", "single-tenant-uuid/v1") or
                 self.representation not in ("cf1-storage/v1", "cf1-packed-equality/v1") or
+                self.value_codec not in ("utf8-exact/v1", "boolean-u8/v1") or
+                self.value_codec == "boolean-u8/v1" and self.representation != "cf1-storage/v1" or
                 type(self.digest) is not bytes or len(self.digest) != 32):
             raise InvalidContext()
 
@@ -50,12 +53,18 @@ class FieldDescriptor:
     def from_compiled(cls, document: dict, digest: str) -> "FieldDescriptor":
         """Consume one trusted compiler descriptor; a hash is not authenticity."""
         try:
-            if type(document) is not dict or set(document) != _DESCRIPTOR_MEMBERS:
+            if type(document) is not dict:
+                raise InvalidContext()
+            boolean = document.get("schema") == "cryptalis.context/v2"
+            members = (_DESCRIPTOR_MEMBERS - {"text_codec"}) | {"value_codec"} if boolean else _DESCRIPTOR_MEMBERS
+            if set(document) != members:
                 raise InvalidContext()
             if any(type(v) is not str or len(v) > 128 for v in document.values()):
                 raise InvalidContext()
-            if (document["schema"], document["text_codec"], document["normalizer"], document["null_policy"]) != (
-                    "cryptalis.context/v1", "utf8-exact/v1", "identity/v1", "sql-null/v1"):
+            codec = document["value_codec" if boolean else "text_codec"]
+            if (document["schema"], codec, document["normalizer"], document["null_policy"]) != (
+                    "cryptalis.context/v2" if boolean else "cryptalis.context/v1",
+                    "boolean-u8/v1" if boolean else "utf8-exact/v1", "identity/v1", "sql-null/v1"):
                 raise InvalidContext()
             canonical = json.dumps(document, ensure_ascii=False, sort_keys=True, separators=(",", ":"), allow_nan=False).encode("utf8")
             actual = hashlib.sha256(canonical).digest()
@@ -64,7 +73,7 @@ class FieldDescriptor:
             ids = tuple(UUID(document[name]) for name in ("domain_id", "table_id", "field_id"))
             if any(str(identity) != document[name] for identity, name in zip(ids, ("domain_id", "table_id", "field_id"))):
                 raise InvalidContext()
-            return cls(*ids, document["record_codec"], document["tenant_codec"], document["representation"], actual)
+            return cls(*ids, document["record_codec"], document["tenant_codec"], document["representation"], actual, codec)
         except Exception:
             raise InvalidContext() from None
 
@@ -142,15 +151,20 @@ def _aad(field, tenant, record, header):
                        record, field.digest, header)
 
 
-def seal_text(value: str | None, field: FieldDescriptor, tenant: UUID,
+def seal_value(value: str | bool | None, field: FieldDescriptor, tenant: UUID,
               record: UUID | int, keys: PreparedKeys) -> bytes | None:
-    """Seal exact text using active policy generations and a fresh OS nonce."""
+    """Seal the pinned value codec with active keys and a fresh OS nonce."""
     typed = _context(field, tenant, record, keys)
     payload_generation = keys.policy.payload_generation
     payload = keys._resolve(field.domain_id, tenant, "payload", payload_generation)
     if value is None:
         return None
-    encoded = _encode(value)
+    if field.value_codec == "boolean-u8/v1":
+        if type(value) is not bool:
+            raise InvalidValue()
+        encoded = b"\x01" if value else b"\x00"
+    else:
+        encoded = _encode(value)
     search_generation = 0
     term = b""
     if field.equality:
@@ -172,8 +186,8 @@ def seal_text(value: str | None, field: FieldDescriptor, tenant: UUID,
     return header + nonce + sealed
 
 
-def open_text(frame: bytes | None, field: FieldDescriptor, tenant: UUID,
-              record: UUID | int, keys: PreparedKeys) -> str | None:
+def open_value(frame: bytes | None, field: FieldDescriptor, tenant: UUID,
+               record: UUID | int, keys: PreparedKeys) -> str | bool | None:
     """Authenticate before decode or release. Header IDs cannot select custody."""
     typed = _context(field, tenant, record, keys)
     if frame is None:
@@ -204,13 +218,34 @@ def open_text(frame: bytes | None, field: FieldDescriptor, tenant: UUID,
         raise CryptoBackendUnavailable() from None
     if search is not None and not compare_digest(header[14:46], _term(encoded, field, search)):
         raise RepresentationMismatch()
-    try:
-        value = encoded.decode("utf8", errors="strict")
-    except UnicodeError:
-        raise InvalidText() from None
-    if "\x00" in value:
-        raise InvalidText()
+    if field.value_codec == "boolean-u8/v1":
+        if encoded not in (b"\x00", b"\x01"):
+            raise InvalidValue()
+        value = encoded == b"\x01"
+    else:
+        try:
+            value = encoded.decode("utf8", errors="strict")
+        except UnicodeError:
+            raise InvalidText() from None
+        if "\x00" in value:
+            raise InvalidText()
     keys._resolve(field.domain_id, tenant, "payload", payload_generation)
     if field.equality:
         keys._resolve(field.domain_id, tenant, "search", search_generation)
     return value
+
+
+def seal_text(value: str | None, field: FieldDescriptor, tenant: UUID,
+              record: UUID | int, keys: PreparedKeys) -> bytes | None:
+    """Retain the exact text contract through the shared authenticated codec."""
+    if not isinstance(field, FieldDescriptor) or field.value_codec != "utf8-exact/v1":
+        raise InvalidContext()
+    return seal_value(value, field, tenant, record, keys)
+
+
+def open_text(frame: bytes | None, field: FieldDescriptor, tenant: UUID,
+              record: UUID | int, keys: PreparedKeys) -> str | None:
+    """Authenticate and release only the existing exact text codec."""
+    if not isinstance(field, FieldDescriptor) or field.value_codec != "utf8-exact/v1":
+        raise InvalidContext()
+    return open_value(frame, field, tenant, record, keys)

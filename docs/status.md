@@ -1,6 +1,6 @@
 # Implementation status
 
-**IMPLEMENTED:** research prototype with a product manifest compiler, CF1 text primitives, a local development provider,
+**IMPLEMENTED:** research prototype with a product manifest compiler, CF1 typed storage primitives, a local development provider,
 bounded sync/async SQLAlchemy storage/search, a PostgreSQL maintenance protection transition, an in-place
 decrypt-back/removal path for that transition format, and an approved fresh-cluster protected-backup
 recovery and adoption path. Root rewrap and payload/search generation rotation
@@ -19,6 +19,48 @@ partial public release. Unadmitted SRS capabilities remain required work, and
 safe refusal does not complete them. The [approved direction](decisions.md#comprehensive-first-public-release-2026-10-23)
 and [competitive capability matrix](research/capability-matrix.md) govern prioritization.
 Progress follows complete real-application journeys and resolved production requirements.
+All seven production gates remain UNKNOWN.
+
+## Boolean storage checkpoint: 2026-10-23
+
+**IMPLEMENTED, bounded local verification:** native Boolean storage uses
+`cryptalis.context/v2`, `boolean-u8/v1` and lock/v4. False encodes as byte 00.
+True encodes as byte 01. SQL NULL stays SQL NULL. The shared CF1 path
+authenticates before decoding. Existing text vectors and descriptors stay unchanged.
+Boolean search remains unadmitted under the small-domain policy.
+
+The [164 focused controls](_reset/boolean-native-final-boundary-20261023.json)
+pass native sync/async values, literal client defaults, pending/refresh state,
+NULL failures and rollback, dictionary writes, authenticated projections and
+custom-converter refusal. Independent vectors cover both Boolean values,
+record codecs and tenant contexts. Invalid Boolean diagnostics redact supplied values.
+The unchanged SQLModel template passes [both profiles](_reset/boolean-sqlmodel-wrapper-final-20261023.json):
+storage-only and mixed searchable email. Both preserve defaults, latest False edits
+and a package-free restart.
+
+A mixed two-table, two-tenant fixture passes root rewrap, payload/search rotation,
+checkpoint resume and latest-value removal. Rewrap preserves roots, so retained keys
+can still decrypt unchanged frames. Old deployment authority refuses validation.
+The [fresh-cluster Boolean profile](_reset/fresh-cluster-restore-20261023-25.json) passes protected-backup recovery after payload
+rotation, tampered-frame refusal before adoption, a later False edit, removal and
+native reading with Cryptalis imports denied. The first restore attempt exposed
+a text-only decoded-type restriction. Restore now checks the descriptor's exact type.
+
+The first full primary run retains 40 failures, 2,321 passes and 18 passing subtests.
+All failures came from test clocks that still named the old text-only functions.
+The corrected clocks retain real post-AEAD expiry injection. All
+[43 affected lease controls](_reset/boolean-lease-hook-final-20261023.json) pass.
+The [final full regression](_reset/boolean-full-primary-final-20261023.json) passes
+2,361 tests plus 18 subtests in 745.62 seconds, with 9 skips and 48 existing
+deprecation warnings. No failed run is counted as a pass.
+
+Repeat wheel/sdist builds, metadata, RECORD, SBOM and installed-package CLI checks
+pass. The [installed artifact receipt](_reset/boolean-release-installed-20261023.json)
+checks 40 installed files. The [actual installed wheel](_reset/boolean-installed-wrapper-20261023.json)
+passes 41 controls in 18.06 seconds, including both original SQLModel profiles.
+All 36 product modules match the wheel and current source before/after. The
+[final boundary](_reset/boolean-final-boundary-20261023.json) binds the receipts and hashes.
+Other practical types, advanced queries and all 34 objectives remain required work.
 All seven production gates remain UNKNOWN.
 
 ## Local research workflow: 2026-10-23

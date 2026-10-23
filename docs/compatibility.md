@@ -23,6 +23,9 @@ All normative sections here are SPECIFIED. Recorded-cost sections are VERIFIED o
 
 Python 3.12+, SQLAlchemy 2.x, psycopg 3 sync and async, PostgreSQL 16.
 The text family includes native PostgreSQL text and VARCHAR, with matching standard mappings.
+Native Boolean storage has a separate pinned codec and standard Boolean mapping.
+Literal Boolean client defaults retain native INSERT omission/None behavior.
+UPDATE with None retains native nullability errors and rollback. Custom converters refuse admission.
 An explicit [SQLModel bridge](#optional-sqlmodel-bridge) admits one exact pinned
 AutoString mapping through its checked native String implementation.
 Other required protected types remain CURRENTLY UNADMITTED. PostgreSQL 16 is the selected first-release environment.
@@ -56,9 +59,10 @@ Rollback/removal transforms current data through decrypt-back until explicit fin
 | Protected-field operation | Classification | Contract or reason for rejection |
 |---|---|---|
 | Text storage/read/write, entity/scalar projection, SQL NULL | SUPPORTED | Randomized authenticated payload. Preserve exact str, empty text, NULL, native ORM state, and expected row/tenant context |
+| Boolean storage/read/write, entity/table/scalar projection, SQL NULL | SUPPORTED | Typed authenticated one-byte values, native Boolean input processing and literal client defaults. No Boolean equality term. [Bounded evidence](status.md#boolean-storage-checkpoint-2026-10-23) |
 | Mapped dictionary INSERT without RETURNING | SUPPORTED | Attached sync/async `Session.execute(insert(Model), list[dict])`, explicit typed IDs and tenant scope, copied attribute dictionaries, native NULL/grouping, autoflush, uniqueness and transaction behavior. Other bulk routes remain unadmitted |
 | Mapped dictionary INSERT with one protected scalar RETURNING | SUPPORTED | Exactly one direct protected mapped column. Preserve native Row/scalar keys/types, grouping, paging, parameter-order requests and empty identity map. Authenticate against exact prepared input. Tuple/entity, label/expression/alias, loader-option and caller return_defaults forms remain unadmitted |
-| Scoped mapped dictionary UPDATE | SUPPORTED | Attached sync/async TEXT and VARCHAR targets, explicit tenant-column equality, typed IDs, nonempty list of dictionaries and synchronize_session=False. Preserve native omission/NULL, grouping, repeated IDs, zero matches and transactions. Single-tenant, Core and RETURNING routes remain unadmitted |
+| Scoped mapped dictionary UPDATE | SUPPORTED | Attached sync/async TEXT, VARCHAR and Boolean targets, explicit tenant-column equality, typed IDs, nonempty list of dictionaries and synchronize_session=False. Preserve native omission/NULL, grouping, repeated IDs, zero matches and transactions. Single-tenant, Core and RETURNING routes remain unadmitted |
 | Scoped mapped single-record DELETE | SUPPORTED | Attached sync/async execute, exact typed tenant and application-record equalities, no external parameters or RETURNING, and synchronize_session=False. Preserve native row counts and transactions. Unsupported custom AST classes refuse before execution |
 | Equality `==` and `IN` | SUPPORTED | Declared full tenant/domain-bound HMAC term. Preserve typed binds and native NULL/empty-list truth tables |
 | Simple negative equality `!=`, `NOT IN`, and NULL presence | SUPPORTED | Reuse the authenticated term for values and a SQL NULL check for storage-only fields. Preserve native three-valued truth, NULL elements, empty lists, and outer-join NULL extension. General Boolean NOT remains unadmitted |
@@ -71,7 +75,7 @@ Rollback/removal transforms current data through decrypt-back until explicit fin
 | General DISTINCT, DISTINCT ON, GROUP BY, COUNT DISTINCT | CURRENTLY UNADMITTED | Randomized-payload comparison changes logical semantics. A spike's scoped aggregate rewrite does not admit this family |
 | Joins/FKs on protected fields | CURRENTLY UNADMITTED | No admitted shared search-domain or protected-FK contract |
 | Field-to-field equality, general Boolean NOT, other unadmitted functions/operators | CURRENTLY UNADMITTED | Approved scope does not independently admit these shapes |
-| Non-text protected values, JSON predicates, unqualified custom protected types | CURRENTLY UNADMITTED | Text is the only admitted protected type. The exact pinned SQLModel AutoString exception retains native String admission |
+| Other non-text protected values, JSON predicates, unqualified custom protected types | CURRENTLY UNADMITTED | Text and storage-only Boolean have bounded admission. The exact pinned SQLModel AutoString exception retains native String admission |
 | Opaque raw SQL/COPY protected writes and unknown external writers | UNSUPPORTED BY DESIGN | Reject guarded routes. Plan blocks protection unless the deployment excludes separate routes |
 | Research range/prefix arrays, order candidates, scoped aggregate helpers, internal binary projections | INTERNAL ONLY | Experiments and adapter machinery, not public query capabilities |
 

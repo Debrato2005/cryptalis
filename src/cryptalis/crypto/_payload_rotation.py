@@ -6,7 +6,7 @@ before any database switch. Historical readers and current authority are separat
 """
 from hmac import compare_digest
 
-from .cf1 import FieldDescriptor, MAX_TEXT_BYTES, open_text, seal_text
+from .cf1 import FieldDescriptor, MAX_TEXT_BYTES, open_value, seal_value
 from .keys import InvalidContext, InvalidFrame, KeyUnavailable, PreparedKeys, RepresentationMismatch
 
 
@@ -87,8 +87,8 @@ budget. Object/allocator/provider/driver overhead is outside that budget.
                 int.from_bytes(frame[6:10], 'big') != source.policy.payload_generation or
                 int.from_bytes(frame[10:14], 'big') != (source.policy.search_generation if field.equality else 0)):
             raise RepresentationMismatch()
-        value = open_text(frame, field, tenant, record, source)
-        transformed = seal_text(value, field, tenant, record, target)
+        value = open_value(frame, field, tenant, record, source)
+        transformed = seal_value(value, field, tenant, record, target)
         if frame is None:
             if transformed is not None:
                 raise RepresentationMismatch()

@@ -28,8 +28,8 @@ class RotationClock:
         crypto = resolve.f_back
         boundary = '_chunk' if self.phase == 'backfill' else '_verify_prefix'
         source_first = self.remaining == 2
-        operation = 'open_text' if source_first or self.phase == 'verify' else 'seal_text'
-        completed = 'encoded' if operation == 'open_text' else 'sealed'
+        operation = 'open_value' if source_first or self.phase == 'verify' else 'seal_value'
+        completed = 'encoded' if operation == 'open_value' else 'sealed'
         caller = crypto
         while caller is not None and caller.f_code.co_name != boundary:
             caller = caller.f_back

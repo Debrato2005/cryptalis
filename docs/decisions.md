@@ -37,7 +37,7 @@ No decision supplies executable qualification.
 | Decision | Approved contract | Resolution/evidence limit |
 |---|---|---|
 | 1. Stack | Python 3.12+, SQLAlchemy 2.x, psycopg 3 sync/async, PostgreSQL 16 | Scope D resolved. Exact cell tests remain required |
-| 2. First protected type | Text first. The 2026-10-22 VARCHAR admission extends the text family. Other types remain CURRENTLY UNADMITTED pending secure admission | Type-scope D resolved. Text/ID descriptors and collation evidence remain required |
+| 2. First protected type | Text first. VARCHAR extends the text family. Boolean has bounded storage admission. Other types remain CURRENTLY UNADMITTED pending secure admission | Type-scope D resolved. Text/ID descriptors and collation evidence remain required |
 | 3. Capabilities | SUPPORTED: storage-only, equality, IN, tenant-scoped uniqueness | Capability/grammar scope D resolved. Every other operation rejects until admission |
 | 4. Tenancy | Each protected table declares a tenant column or declares itself single-tenant | Tenant-scope D resolved. Missing tenancy blocks plan |
 | 5. Primary keys | Require application-generated UUID, Snowflake-style, or other app-assigned ID. Reject serial/identity/database-default keys at plan time with a plain explanation | Identity-scope D resolved. Historical sequence-preallocating spikes do not implement this contract |
@@ -317,6 +317,33 @@ Admit exact stock savepoint-control clauses separately, with empty parameters,
 native SQL compilation and unchanged configuration. Do not wrap or replace
 native transactions. These controls confer no data permit. Other write routes
 and the seven production gates retain their separate evidence requirements.
+
+## Boolean storage format extension: 2026-10-23
+
+**IMPLEMENTED, bounded local admission:** add authenticated Boolean storage
+for practical application flags without equality terms. Preserve every existing
+text descriptor and CF1 byte sequence. Use strict `cryptalis.context/v2` with
+`value_codec: boolean-u8/v1`, identity normalization, SQL NULL and storage-only
+representation. False encodes as byte 00; true as byte 01. Authenticate before
+accepting exactly one of these bytes. Keep the existing AEAD, KDF, nonce and
+row/tenant/field/generation composition; the descriptor digest binds the type.
+Use the shared authenticated CF1 implementation.
+
+Lock/v4 and `boolean-u8/v1` reject old readers before use.
+Native Boolean mappings and admitted literal Boolean application defaults need
+exact recorded facts and current mapping checks. Server/callable/on-update
+protected defaults remain refused. Preserve the native Boolean input processor,
+omission/None/default behavior, pending Python state, errors and rollback.
+Do not substitute Python truthiness or text/int casting for the native contract.
+
+Independent vectors, native differential controls, unchanged SQLModel journeys,
+mixed rotations and fresh-cluster latest-value removal have bounded evidence in
+the [Boolean checkpoint](status.md#boolean-storage-checkpoint-2026-10-23).
+The native processor accepts zero/one numeric inputs. The public codec accepts only Boolean or SQL NULL.
+Invalid native inputs retain exception classes and rollback, with redacted diagnostics.
+Boolean search remains unadmitted under
+the current small-domain policy. This does not complete other practical type,
+JSON, range or string-search requirements. All seven production gates remain UNKNOWN.
 
 ## Pre-adoption CLI host configuration: 2026-10-23
 

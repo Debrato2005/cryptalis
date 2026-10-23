@@ -25,6 +25,13 @@ No objective is complete until its acceptance evidence and applicable gate pass.
 
 ## Current boundary
 
+- Boolean storage has typed CF1 descriptors and native sync/async controls.
+  Both unchanged SQLModel profiles preserve defaults and latest False values.
+  Mixed rotations and a fresh-cluster restore/removal journey pass.
+  The first full run exposed outdated test clock names. All 43 affected
+  lease controls pass after correction. The final full run passes 2,361 tests
+  plus 18 subtests. The actual installed wheel passes 41 controls. See the [Boolean checkpoint](status.md#boolean-storage-checkpoint-2026-10-23).
+
 - The combined search/Doctor checkpoint passes 2,322 primary tests plus 18
   subtests, with 174 stable Python hashes. Installed-wheel checks pass the
   searchable app, 27 CLI controls and both local SDK application journeys.
@@ -241,7 +248,7 @@ No objective is complete until its acceptance evidence and applicable gate pass.
 - The import ledger and dated status checkpoints preserve earlier evidence.
   Reproducibility includes wheel RECORD, license metadata and an SBOM.
   Signing, publication identity and independent rebuild remain UNKNOWN.
-  Non-text types, advanced predicates, online migration, adopted-target rotation,
+  Other non-text types, advanced predicates, online migration, adopted-target rotation,
   production custody/retirement, authenticated host authority and independent
   review remain open. All seven qualification gates remain UNKNOWN.
 
@@ -262,7 +269,7 @@ Requirement text is abbreviated. The full definitions remain in the research
 | OBJ-SEC-07 | Independent red-team, crypto, adapter, provider, supply-chain review | BLOCKED | None | Assign independent reviewers; do not self-certify |
 | OBJ-QUERY-01 | Exact equality, `IN`, scoped uniqueness, NULL logic, races | VERIFIED, bounded | `_sqlalchemy_search.py`, slice 4 receipt; native concurrency tests | Keep grammar reconciliation current |
 | OBJ-QUERY-02 | Ordinary SQL correctness: NULL predicates, aliases, joins, projections | PARTIAL | Native sync/async controls; textual reference admission and simple negative/NULL predicates; expanded entity/table/descendant admission preserves authenticated outputs and safe public expressions; both final affected cells pass 284 checks | Continue finite native-oracle matrix; general Boolean NOT and protected joins remain unadmitted |
-| OBJ-QUERY-03 | Ordering, ranges, prefix/text search, aggregates, other types | SPECIFIED | Current unadmitted operations refuse safely. This does not complete the objective | Research secure practical profiles, including substring/fuzzy search and structured JSON, then prove independent E2E parity and applicable admission gates |
+| OBJ-QUERY-03 | Ordering, ranges, prefix/text search, aggregates, other types | PARTIAL | Boolean storage has bounded native, unchanged-application and lifecycle evidence. Advanced operations and other practical types remain unadmitted. Refusal does not complete the objective | Research secure practical profiles, including substring/fuzzy search and structured JSON, then prove independent E2E parity and applicable admission gates |
 | OBJ-QUERY-04 | INSERT/UPDATE/DELETE, bulk, RETURNING, triggers, cascades, savepoints | PARTIAL | Scoped tenant-column TEXT/VARCHAR dictionary UPDATE with native plan-sensitive VARCHAR assignment/errors, transaction/group semantics and exact ordered input proofs; ORM flush writes and attached sync/async mapped dictionary INSERT, with optional single protected scalar RETURNING; native NULL/grouping, typed context, errors and savepoints; exact driver/page/input-result checks; finite mapped TEXT/VARCHAR tenant/record DELETE with native results and transactions; custom DELETE AST refusal also covers ordinary flush; 55 scoped integration checks and both 65-case flush bundles pass | Qualify tuple/entity RETURNING, broader DML, used defaults and each trigger/cascade effect separately |
 | OBJ-QUERY-05 | Versioned compatibility corpus and read-only scanner | PARTIAL | Native-vs-attached tests and receipts | Build a real pre-adoption scanner; reconcile current revisions |
 | OBJ-LIFE-01 | Deterministic plan/apply/verify with diagnostics | VERIFIED, bounded | `migration.py` plan/apply/verify; compiler inspection maps SQLAlchemy and direct psycopg errors to safe SQLSTATE; slice 5 receipts; read-only Doctor/status failure controls preserve operation identity, safe known remedies and UNKNOWN observations | Broader schema and failure boundaries |
@@ -289,6 +296,11 @@ Requirement text is abbreviated. The full definitions remain in the research
 | OBJ-RESEARCH-02 | One coherent working candidate that passes all gates | PARTIAL | Implemented scope above | Continue integration; all seven gates UNKNOWN |
 
 ## Import ledger
+
+Boolean storage: typed descriptors and lock/v4 reuse CF1 and the common lifecycle.
+The [current checkpoint](status.md#boolean-storage-checkpoint-2026-10-23) records
+native controls, unchanged SQLModel journeys, mixed rotations, fresh-cluster
+recovery and the final full regression. No production gate passes.
 
 | Date | Research reference | Mechanism | Product files | Evidence | Status |
 |---|---|---|---|---|---|

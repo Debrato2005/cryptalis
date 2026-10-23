@@ -36,7 +36,7 @@ from sqlalchemy.dialects import postgresql
 from cryptalis._sqlalchemy_search import _frame_expressions
 from cryptalis import migration as m
 from cryptalis.crypto import CryptoFailure, KeyUnavailable
-from cryptalis.crypto.cf1 import FieldDescriptor, open_text
+from cryptalis.crypto.cf1 import FieldDescriptor, open_value
 from cryptalis.manifest.compiler import _canonical, _catalog_path
 from cryptalis.manifest.parser import decode_manifest_json
 
@@ -378,13 +378,14 @@ def _scan(c, source, keys):
                                     or int.from_bytes(frame[10:14], 'big') != (
                                         admitted.search_generation if f['queries'] else 0)):
                                 raise m.TransitionFailure('generation_mismatch', source.operation_id)
-                            value = open_text(frame, descriptors[i], tenant, row[0], prepared)
+                            value = open_value(frame, descriptors[i], tenant, row[0], prepared)
                         except KeyUnavailable:
                             raise
                         except CryptoFailure:
                             raise m.TransitionFailure('restored_frame_verification_failed',
                                                       source.operation_id) from None
-                        if value is not None and type(value) is not str:
+                        expected_type = bool if descriptors[i].value_codec == 'boolean-u8/v1' else str
+                        if value is not None and type(value) is not expected_type:
                             raise m.TransitionFailure('restored_frame_verification_failed',
                                                       source.operation_id)
 

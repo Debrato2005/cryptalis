@@ -181,10 +181,11 @@ def _frame_expressions(field, quote):
     """Known PG16 forms of one declared CF1 policy, including dump/restore."""
     column = quote(field['column'])
     overhead = 74 if field['queries'] else 42
+    minimum, maximum = (43, 43) if field['source']['type'] == 'bool' else (overhead, 16777216 + overhead)
     magic = '434631000101' if field['queries'] else '434631000100'
     comparison = '<>' if field['queries'] else '='
-    terms = [f'(octet_length({column}) >= {overhead})',
-             f'(octet_length({column}) <= {16777216 + overhead})',
+    terms = [f'(octet_length({column}) >= {minimum})',
+             f'(octet_length({column}) <= {maximum})',
              f"(\"substring\"({column}, 1, 6) = decode('{magic}'::text, 'hex'::text))",
              f"(\"substring\"({column}, 7, 4) <> decode('00000000'::text, 'hex'::text))",
              f"(\"substring\"({column}, 11, 4) {comparison} decode('00000000'::text, 'hex'::text))"]
