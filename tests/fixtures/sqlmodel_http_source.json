@@ -1,0 +1,32 @@
+{
+  "repository": "fastapi/full-stack-fastapi-template",
+  "revision": "d40de23896d27d15c17a7bf9649123fd167a0aa8",
+  "files": {
+    "LICENSE": "f11987b50cfa15ae4f99d4c559137458c87d7a69",
+    "backend/app/__init__.py": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+    "backend/app/api/__init__.py": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+    "backend/app/api/deps.py": "c2b83c841d77ed8272b666ff471cb6d7270f1f23",
+    "backend/app/api/main.py": "eac18c8e8fdfd6fab09498ffbe3b3949bba2af94",
+    "backend/app/api/routes/__init__.py": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+    "backend/app/api/routes/items.py": "2b2ce57772ddb761067d069e5ab0f243d384685d",
+    "backend/app/api/routes/login.py": "58441e37e98ef1397cf53f38b6159f989e8a3610",
+    "backend/app/api/routes/private.py": "9f33ef1900e809a6c629fce459d277b560afe8fd",
+    "backend/app/api/routes/users.py": "61727949c87280b553f2523e6b79e1abbd5765a8",
+    "backend/app/api/routes/utils.py": "fc093419b3aaaa600de9a00bb1c4ee0863ef5f48",
+    "backend/app/backend_pre_start.py": "c2f8e29ae160adc91f4bcbea2fc2d6900f7d7c2c",
+    "backend/app/core/__init__.py": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+    "backend/app/core/config.py": "650b9f791072476007183a5ce1b9665e5682f278",
+    "backend/app/core/db.py": "ba991fb36d59b154b54b18fc76292f92545c053c",
+    "backend/app/core/security.py": "1e49ebc1fef8e856cce20b506481c9a2a82e8631",
+    "backend/app/crud.py": "a8ceba64442f852707964418256022ea2aaf00b7",
+    "backend/app/email-templates/build/new_account.html": "344505033bcbf661c182f2766dcf6cd907b41543",
+    "backend/app/email-templates/build/reset_password.html": "4148a5b773d8fcb3f92d9da5b4d8091c63b81a73",
+    "backend/app/email-templates/build/test_email.html": "04d0d850927fc22896efa2cf23ecf25ccc207cd8",
+    "backend/app/initial_data.py": "d806c3d381c3bb2b36ab8eaad0b913e458df0e57",
+    "backend/app/main.py": "9a95801e7472e7df30fdb00555290bfbd5d8e639",
+    "backend/app/models.py": "b5132e0e2c61b9f11a3fd6598adb0fe978f2fa0b",
+    "backend/app/tests_pre_start.py": "0ce6045635346c0b082190720e091f83b90e3094",
+    "backend/app/utils.py": "ac029f634216be90516cbd2ede6cfe6170062392",
+    "backend/pyproject.toml": "3c876f11e0c79763713ca24424098e94bdea58d0"
+  }
+}

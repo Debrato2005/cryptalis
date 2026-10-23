@@ -20,15 +20,24 @@ Reuse PostgreSQL, SQLAlchemy, library crypto, providers, and the existing deploy
 
 ## Ordered build slices
 
+These slices retain the original text-first baseline. Current bounded type
+admission includes native text/VARCHAR and storage-only Boolean with standard
+mappings. Boolean uses `cryptalis.context/v2`, `boolean-u8/v1` and lock/v4.
+Its literal client defaults retain native omission/None behavior. Custom
+converters and Boolean search remain unadmitted. See the
+[Boolean checkpoint](status.md#boolean-storage-checkpoint-2026-10-23) and
+[type contract](compatibility.md#supported-stack).
+Other required types remain first-release work under the full SRS and all 34 objectives.
+
 ### 1. Manifest compiler
 
 | Item | Requirement |
 |---|---|
 | Behavior | Inspect one manifest, mapping, schema, and writer inventory. Emit a deterministic lock and semantic plan without database effects |
 | Dependencies | Approved stack and [scope](architecture/README.md#approved-scope). A native PostgreSQL application oracle with app-assigned keys and explicit tenancy |
-| Invariants | Text family only. Stable typed identities. No guessed tenancy, silent equivalence change, removed constraint, or plan-time write |
+| Invariants | Admit only the specified text family and bounded Boolean storage. Stable typed identities. No guessed tenancy, silent equivalence change, removed constraint, or plan-time write |
 | Tests | Inspect real PostgreSQL mappings for UUID/app-assigned IDs, tenant-column and explicit single-tenant tables, NULL/empty text, deterministic collation and scoped uniqueness. Compare plan facts with native schema |
-| Failure cases | Serial/identity/database-default keys, non-text types, small-domain searchable fields, missing tenancy/leakage acceptance, unknown writers, unsupported constraints, malformed or ambiguous declarations |
+| Failure cases | Serial/identity/database-default keys, unadmitted protected types, Boolean search and other small-domain searchable fields, missing tenancy/leakage acceptance, unknown writers, unsupported constraints, malformed or ambiguous declarations |
 | Definition of done | Freeze exact manifest/lock syntax and typed context descriptors. PostgreSQL acceptance/refusal cases pass. Plan explains every incompatibility plainly and leaves schema/data unchanged |
 
 ### 2. Crypto format, KeyProvider, and development provider

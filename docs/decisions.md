@@ -703,3 +703,55 @@ Restore uses the existing approved binding and selected-generation checks.
 Rotation on adopted targets remains outside this contract. Rotation deletes no
 retained keys and supplies no unlinkability or cryptographic-erasure claim.
 Production custody, authority and independent review remain unqualified.
+
+## Native UUID lookup inputs: 2026-10-24
+
+Preserve the original Session.get/get_one arguments, SQL binds and identity-map keys.
+For admitted UUID SELECT predicates, derive only the expected authenticated row UUID.
+Accept PostgreSQL ASCII UUID spellings with paired optional braces and optional hyphens between four-digit groups.
+The crypto context still uses the native 16-byte UUID.
+Text identity lookups retain native SQL execution and object reuse.
+
+The column and every matching bind require the qualified native Uuid contract.
+Both type flags must be true. Native input and result processor methods must remain unchanged.
+Existing callable, collision, SQL hook, dispatch and variant checks still apply.
+Malformed strings and integer inputs retain native UUID bind errors and rollback requirements.
+Their expected point authorizes no result, including an outer-join NULL.
+One malformed IN member invalidates the whole expected set.
+A genuine empty IN list retains native NULL-extension behavior.
+Other input types remain unadmitted. DML and tenant identities keep their typed-value rules.
+
+This changes input compatibility, not the record codec, CF1 framing, keys or search terms.
+The original application and JWT logic stay unchanged.
+The native oracle and original HTTP journey must pass before qualification.
+All seven production gates remain UNKNOWN.
+
+## Unprotected mapped DELETE: 2026-10-24
+
+**IMPLEMENTED, bounded admission:** an attached session can execute a finite
+native DELETE on an unprotected table in the same registry. The original
+FastAPI administrator route needs this operation to remove a user's Items
+before the protected User flush delete.
+
+Admission requires an exact mapped local table and native compiler dispatch.
+The table cannot share a protected physical address. Predicates admit direct
+equality with typed literal binds and AND composition. Core targets, caller
+RETURNING, fetch synchronization, custom AST nodes, functions and subqueries
+remain unadmitted. Default, auto, evaluate and False synchronization retain
+native ORM execution and transaction behavior.
+
+The request captures table and column metadata plus immutable predicate values
+before key resolution. Checks repeat after callbacks and at compiled and final
+driver dispatch. The existing driver guard remains active. A changed target,
+predicate, SQL string or bind raises a typed failure before execution.
+Protected scoped DELETE keeps its existing contract.
+
+Native identifier comparison uses text and quoting flags. A plain str and a
+quoted_name with quote=None emit the same SQL and remain equivalent.
+Effective annotated column/table metadata must match its original physical node.
+Deannotation alone does not establish physical ownership.
+
+This bounded path changes no cryptographic format, provider authority or tenant
+policy. It does not admit arbitrary public DML. Native PostgreSQL and unchanged
+HTTP application evidence belong to the status checkpoint. All seven production
+gates remain UNKNOWN.

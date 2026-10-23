@@ -46,7 +46,7 @@ Full-term query exactness assumes HMAC collision resistance and intact search re
 Payload authentication does not prove hostile-database completeness, freshness, or adversarial global uniqueness.
 
 Unsupported operations on protected fields fail. Users must inspect this list before protecting a field:
-comparisons/ranges, ORDER BY, LIKE/prefix/contains, regex, SUM/AVG/MIN/MAX, general DISTINCT, protected-field joins, and non-text types.
+comparisons/ranges, ORDER BY, LIKE/prefix/contains, regex, SUM/AVG/MIN/MAX, general DISTINCT, protected-field joins, and other unadmitted protected types.
 The recommended adoption path is manifest → plan → staging apply plus the attached application suite → qualified production apply → decrypt-back exit.
 Plan refuses server-generated keys, unsupported types, small-domain searchable fields, missing tenancy, and unsupported writers.
 Attach rejects unsupported queries. Application tests on staging expose query-level incompatibilities before production.
@@ -56,7 +56,7 @@ Rollback/removal transforms current data through decrypt-back until explicit fin
 
 ## Full capability matrix
 
-| Protected-field operation | Classification | Contract or reason for rejection |
+| Operation | Classification | Contract or reason for rejection |
 |---|---|---|
 | Text storage/read/write, entity/scalar projection, SQL NULL | SUPPORTED | Randomized authenticated payload. Preserve exact str, empty text, NULL, native ORM state, and expected row/tenant context |
 | Boolean storage/read/write, entity/table/scalar projection, SQL NULL | SUPPORTED | Typed authenticated one-byte values, native Boolean input processing and literal client defaults. No Boolean equality term. [Bounded evidence](status.md#boolean-storage-checkpoint-2026-10-23) |
@@ -64,6 +64,7 @@ Rollback/removal transforms current data through decrypt-back until explicit fin
 | Mapped dictionary INSERT with one protected scalar RETURNING | SUPPORTED | Exactly one direct protected mapped column. Preserve native Row/scalar keys/types, grouping, paging, parameter-order requests and empty identity map. Authenticate against exact prepared input. Tuple/entity, label/expression/alias, loader-option and caller return_defaults forms remain unadmitted |
 | Scoped mapped dictionary UPDATE | SUPPORTED | Attached sync/async TEXT, VARCHAR and Boolean targets, explicit tenant-column equality, typed IDs, nonempty list of dictionaries and synchronize_session=False. Preserve native omission/NULL, grouping, repeated IDs, zero matches and transactions. Single-tenant, Core and RETURNING routes remain unadmitted |
 | Scoped mapped single-record DELETE | SUPPORTED | Attached sync/async execute, exact typed tenant and application-record equalities, no external parameters or RETURNING, and synchronize_session=False. Preserve native row counts and transactions. Unsupported custom AST classes refuse before execution |
+| Unprotected-table mapped DELETE | SUPPORTED | One physical table mapped in the attached registry, with no protected fields. Native equality/AND predicates with fixed typed literals only. Default/auto/evaluate/False synchronization. No Core, RETURNING, fetch synchronization or custom AST |
 | Equality `==` and `IN` | SUPPORTED | Declared full tenant/domain-bound HMAC term. Preserve typed binds and native NULL/empty-list truth tables |
 | Simple negative equality `!=`, `NOT IN`, and NULL presence | SUPPORTED | Reuse the authenticated term for values and a SQL NULL check for storage-only fields. Preserve native three-valued truth, NULL elements, empty lists, and outer-join NULL extension. General Boolean NOT remains unadmitted |
 | Tenant-scoped uniqueness | SUPPORTED | Full term plus tenant scope in a race-safe native unique index. Explicit single-tenant declaration supplies its one scope |
@@ -98,6 +99,16 @@ bind/result processors remain admitted under the finite native type contract.
 Native dispatch identity and exact owned payload-type identity constrain the
 internal output hook. Nested decorator, ARRAY and tuple types receive the same
 checks. These SELECT checks do not extend admission for public write-type hooks.
+
+UUID primary-key SELECT lookup accepts the native PostgreSQL ASCII text forms
+under the exact `Uuid(as_uuid=True, native_uuid=True)` contract. This includes
+uppercase, optional braces and optional hyphens after each four hexadecimal
+digits. Normalization derives expected authenticated context only. SQL binds
+and ORM identity-map keys retain native behavior. Malformed text and integer
+inputs retain PostgreSQL 22P02/42846 errors and require rollback after failure.
+An invalid expected-point marker authorizes neither a frame nor an outer-join
+NULL result. This lookup admission does not admit string identities for writes.
+
 Entity and table projections expand into the same admitted node snapshot.
 Each selected column and its descendants receive the existing type, lineage
 and protected-expression checks. Protected outputs retain authenticated decryption.
@@ -116,6 +127,17 @@ Ordinary ORM flush DELETE retains its existing native lifecycle contract.
 Both routes require native compiler nodes. Custom AST classes refuse before SQL.
 The [DELETE checkpoint](status.md#mapped-delete-admission-checkpoint-2026-10-23)
 owns the exact native controls and remaining limits.
+
+A separate mapped DELETE route admits only unprotected tables in the same
+attached registry and metadata. Use direct column equality to fixed UUID, int,
+str or bytes values with matching admitted native types. AND can combine these
+predicates. Default, auto, evaluate and False synchronization retain native ORM
+behavior. Core DELETE, external parameter dictionaries, RETURNING, fetch,
+inheritance, version counters and other grammar refuse. The route captures
+physical table/mapper identities and ordered predicates before key resolution.
+It repeats admission afterward and checks native compiled SQL and exact driver
+binds. The protected scoped DELETE contract stays separate. These routes do
+not admit general public DML.
 
 Protection planning and attachment require native row-context codecs without
 dialect-specific type variants. Attachment repeats configuration admission before

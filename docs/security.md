@@ -109,12 +109,29 @@ snapshot. A public output hook cannot select stored CF1 bytes through a hidden
 expanded column. Protected outputs retain the existing authenticated processor.
 Public computed expressions retain native behavior within the admitted grammar.
 
+For UUID primary-key SELECT lookup, the adapter derives an expected UUID from
+admitted PostgreSQL text without replacing the caller's bind or identity-map
+key. The exception requires exact native Uuid flags and bound processor methods.
+Invalid native inputs retain their database errors and transaction failure.
+Their private marker cannot authorize any frame or outer-join NULL release.
+Existing tenant, row and authenticated-decryption checks remain active.
+
 The scoped mapped DELETE route freezes the original typed tenant and record
 before provider callbacks. Native AST identity, compiled binds and actual driver
 arguments must retain that authority. Ordinary ORM flush DELETE also requires
 native compiler nodes. Unsupported custom nodes refuse before execution.
 DELETE returns no protected value and makes no stored-frame authentication claim.
 Native rollback, savepoint, foreign-key and identity-map behavior remain required.
+
+Unprotected mapped DELETE admits one physical nonprotected table from the same
+registry. Exact native equality/AND nodes bind fixed typed literals. The adapter
+captures table/mapper identities and ordered predicates before provider callbacks.
+It repeats metadata and predicate admission afterward and at driver dispatch.
+Compiled SQL and actual bind values must match the captured request. Native
+ORM synchronization remains bounded to default/auto/evaluate/False. This
+permission does not admit Core DELETE, fetch synchronization, RETURNING or
+custom AST paths. It grants no authority over a protected table and does not
+replace the existing tenant-scoped protected DELETE checks.
 
 The native bulk page hook validates processed input against the admitted batch.
 Each page must retain its original frozen input slice before the hook freezes

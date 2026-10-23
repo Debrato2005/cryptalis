@@ -9,6 +9,7 @@ from dataclasses import dataclass, field
 from functools import wraps
 from hashlib import sha256
 import json
+import re
 from types import MappingProxyType, MethodType
 from uuid import UUID
 
@@ -161,6 +162,7 @@ class _Operation:
     bulk_update: object = field(default=None, repr=False)
     update_carrier: object = field(default=None, repr=False)
     scoped_delete: object = field(default=None, repr=False)
+    unprotected_delete: object = field(default=None, repr=False)
     bulk_returning: object = field(default=None, repr=False)
     bulk_seals: dict = field(default_factory=dict, repr=False)
     bulk_batch: tuple = field(default=(), repr=False)
@@ -202,6 +204,38 @@ class _DeletePermit:
     tenant: UUID
 
 
+@dataclass(frozen=True)
+class _UnprotectedDeletePermit:
+    mapper: object
+    table: object
+    predicates: tuple
+    configuration: tuple
+
+
+def _delete_name_state(value):
+    if value is None:
+        return None
+    if type(value) not in (str, quoted_name):
+        raise UnsupportedProtectedOperation()
+    quote = value.quote if type(value) is quoted_name else None
+    if quote is not None and type(quote) is not bool:
+        raise UnsupportedProtectedOperation()
+    return str.__str__(value), quote
+
+
+def _unprotected_column_state(column):
+    dtype = column.type
+    attributes = tuple((name, type(getattr(dtype, name, None)), getattr(dtype, name, None))
+        for name in ('as_uuid', 'native_uuid', 'length', 'collation', 'timezone', 'precision', 'scale'))
+    methods = []
+    for name in ('bind_processor', 'result_processor', 'literal_processor', 'dialect_impl', 'adapt'):
+        method = getattr(dtype, name)
+        methods.append((name, type(method), getattr(method, '__func__', method),
+                        getattr(method, '__self__', None)))
+    return (column, _delete_name_state(column.name), _delete_name_state(column.key),
+            dtype, attributes, tuple(methods), column.table)
+
+
 def _delete_node(node, native):
     dispatch = getattr(node, '_compiler_dispatch', None)
     if type(dispatch) is not MethodType or dispatch.__self__ is not node:
@@ -209,12 +243,45 @@ def _delete_node(node, native):
     if type(node) is annotated_classes.get(native):
         if dispatch.__func__ is not Annotated._compiler_dispatch:
             raise UnsupportedProtectedOperation()
-        node = Annotated._deannotate(node)
+        effective, node = node, Annotated._deannotate(node)
+        names = ('name', 'key', 'schema') if native is Table else ('name', 'key') if native is Column else ()
+        if any(_delete_name_state(getattr(effective, name)) != _delete_name_state(getattr(node, name))
+               for name in names):
+            raise UnsupportedProtectedOperation()
+        if native is Column and (effective.table is not node.table or effective.type is not node.type):
+            raise UnsupportedProtectedOperation()
         dispatch = node._compiler_dispatch
     if (type(node) is not native or type(dispatch) is not MethodType or dispatch.__self__ is not node or
             dispatch.__func__ is not native._original_compiler_dispatch or
             native._compiler_dispatch is not native._original_compiler_dispatch):
         raise UnsupportedProtectedOperation()
+    return node
+
+
+_INVALID_UUID_POINT = object()
+
+
+def _native_uuid_lookup_type(dtype):
+    if (type(dtype) is not Uuid or dtype.as_uuid is not True or dtype.native_uuid is not True
+            or dtype._variant_mapping):
+        return False
+    for name in ('bind_processor', 'result_processor'):
+        method = getattr(dtype, name)
+        if (type(method) is not MethodType or method.__self__ is not dtype or
+                method.__func__ is not getattr(Uuid, name)):
+            return False
+    return True
+
+
+def _uuid_expected_point(value):
+    # Match PostgreSQL's ASCII input grammar before deriving authenticated context.
+    # The original bind value and ORM identity key must stay unchanged.
+    if type(value) is not str or not 32 <= len(value) <= 41:
+        return _INVALID_UUID_POINT
+    body = value[1:-1] if value.startswith('{') and value.endswith('}') else value
+    if re.fullmatch(r'[0-9a-fA-F]{4}(?:-?[0-9a-fA-F]{4}){7}', body) is None:
+        return _INVALID_UUID_POINT
+    return UUID(hex=body.replace('-', ''))
 
 
 class _ReadText(TypeDecorator):
@@ -240,6 +307,8 @@ class _ReadText(TypeDecorator):
                                                       for record, bodies in frames.items()})
 
     def process_result_value(self, value, dialect):
+        if any(point is _INVALID_UUID_POINT for point in self.points):
+            raise AuthenticationFailed()
         if type(value) is not list or len(value) != 3:
             raise AuthenticationFailed()
         payload, record, tenant = value
@@ -377,9 +446,21 @@ def _points(statement, parameters):
         if not isinstance(values, (list, tuple)):
             raise UnsupportedProtectedOperation()
         expected_type = UUID if type(column.type) is Uuid else int
-        if any(item is not None and type(item) is not expected_type for item in values):
-            raise UnsupportedProtectedOperation()
-        return frozenset(item for item in values if item is not None) if bind.expanding else value
+        expected = []
+        for item in values:
+            if item is None or type(item) is expected_type:
+                expected.append(item)
+            elif (isinstance(statement, Select) and expected_type is UUID and type(item) in (str, int)
+                    and _native_uuid_lookup_type(column.type)
+                    and all(_native_uuid_lookup_type(other.type) for other in inputs[bind.key].values())):
+                expected.append(_uuid_expected_point(item))
+            else:
+                raise UnsupportedProtectedOperation()
+        # An invalid native UUID input cannot authorize even an outer-join NULL.
+        # PostgreSQL retains its own input error and transaction behavior.
+        if any(item is _INVALID_UUID_POINT for item in expected):
+            return _INVALID_UUID_POINT
+        return frozenset(item for item in expected if item is not None) if bind.expanding else expected[0]
 
     def visit(expression):
         expression = ungroup(expression)
@@ -794,6 +875,87 @@ class _Attachment:
         except Exception:
             raise UnsupportedProtectedOperation() from None
 
+    def unprotected_delete_context(self, statement, expected=None):
+        _delete_node(statement, Delete)
+        mapper = expected.mapper if expected is not None else statement._propagate_attrs.get('plugin_subject')
+        if (mapper is None or mapper not in self.mapping.mappers or mapper is not inspect(mapper.class_) or
+                mapper.class_ in self.models or mapper.inherits is not None or mapper.version_id_col is not None):
+            raise UnsupportedProtectedOperation()
+        table = mapper.local_table
+        if (mapper.persist_selectable is not table or type(table) is not Table or
+                table.metadata is not self.mapping.metadata or table.metadata.tables.get(table.key) is not table or
+                any(table.name == model['table'] and table.schema in (None, model['schema'])
+                    for model in self.document['models']) or
+                _delete_node(statement.table, Table) is not table or
+                statement._returning or statement._return_defaults or statement._with_options or
+                statement._prefixes or statement._hints or statement._independent_ctes or statement.dialect_kwargs):
+            raise UnsupportedProtectedOperation()
+        _delete_node(table, Table)
+        for column in table.c:
+            if column.table is not table:
+                raise UnsupportedProtectedOperation()
+            _delete_node(column, Column)
+            self.bind_type(column.type, selecting=True)
+        # Keep the ordinary DELETE compiler and ORM evaluator inside one finite
+        # single-table grammar. Every AST node must use native dispatch.
+        for node in visitors.iterate(statement):
+            for native in (Delete, Table, Column, BooleanClauseList, BinaryExpression, BindParameter):
+                if isinstance(node, native):
+                    _delete_node(node, native)
+                    break
+            else:
+                raise UnsupportedProtectedOperation()
+        clauses, pending = [], [statement.whereclause]
+        while pending:
+            clause = pending.pop()
+            if isinstance(clause, BooleanClauseList) and clause.operator is operators.and_:
+                pending.extend(reversed(clause.clauses))
+            else:
+                clauses.append(clause)
+        predicates, binds, names = [], [], set()
+        for clause in clauses:
+            if not isinstance(clause, BinaryExpression) or clause.operator is not operators.eq:
+                raise UnsupportedProtectedOperation()
+            left, right = clause.left, clause.right
+            if isinstance(left, BindParameter):
+                left, right = right, left
+            if (not isinstance(left, Column) or not isinstance(right, BindParameter) or
+                    left.is_literal or _delete_node(left, Column) is not table.c.get(left.key) or
+                    right.required or right.callable is not None or right.expanding or right.literal_execute or
+                    type(right.type) is not type(left.type) or right.key in names):
+                raise UnsupportedProtectedOperation()
+            self.bind_type(right.type, selecting=True)
+            dtype = type(left.type)
+            primitive = (UUID if dtype is Uuid else int if dtype in (BigInteger, _native_types.Integer)
+                         else str if dtype in (String, Text) else bytes if dtype is LargeBinary else None)
+            if primitive is None or type(right.value) is not primitive:
+                raise UnsupportedProtectedOperation()
+            if dtype is Uuid:
+                self.identity_type(left.type, uuid_only=True)
+                self.identity_type(right.type, uuid_only=True)
+            value = UUID(bytes=right.value.bytes) if primitive is UUID else right.value
+            predicates.append((table.c[left.key], value))
+            binds.append(right)
+            names.add(right.key)
+        if not predicates:
+            raise UnsupportedProtectedOperation()
+        configuration = (_delete_name_state(table.schema), _delete_name_state(table.name), _delete_name_state(table.key),
+                         tuple(_unprotected_column_state(column) for column in table.c))
+        permit = _UnprotectedDeletePermit(mapper, table, tuple(predicates), configuration)
+        if expected is not None:
+            if (permit.mapper is not expected.mapper or permit.table is not expected.table or
+                    configuration[:3] != expected.configuration[:3] or
+                    len(configuration[3]) != len(expected.configuration[3]) or
+                    any(current[0] is not old[0] or current[3] is not old[3] or current[6] is not old[6] or
+                        current[1:3] != old[1:3] or current[4:6] != old[4:6]
+                        for current, old in zip(configuration[3], expected.configuration[3])) or
+                    len(permit.predicates) != len(expected.predicates) or
+                    any(column is not old_column or type(value) is not type(old_value) or value != old_value
+                        for (column, value), (old_column, old_value) in zip(permit.predicates, expected.predicates))):
+                raise UnsupportedProtectedOperation()
+            permit = expected
+        return permit, tuple(binds)
+
     def delete_context(self, statement, tenant, expected=None):
         _delete_node(statement, Delete)
         if type(tenant) is not UUID:
@@ -938,6 +1100,9 @@ class _Attachment:
             return
         if isinstance(statement, Delete):
             operation = self._check()
+            if operation.unprotected_delete is not None:
+                self.unprotected_delete_context(statement, operation.unprotected_delete)
+                return
             if operation.scoped_delete is None:
                 raise UnsupportedProtectedOperation()
             self.delete_context(statement, operation.tenant, operation.scoped_delete)
@@ -1129,6 +1294,10 @@ class _Attachment:
         if execution_options.get("schema_translate_map"):
             raise PolicyMismatch()
         self.admit(statement, operation.flushing, operation.bulk_table)
+        if operation.unprotected_delete is not None and isinstance(statement, Delete):
+            if multiparams or params:
+                raise UnsupportedProtectedOperation()
+            return statement, multiparams, params
         if operation.scoped_delete is not None and isinstance(statement, Delete):
             if multiparams or params:
                 raise UnsupportedProtectedOperation()
@@ -1229,6 +1398,20 @@ class _Attachment:
             return
         operation = self._check()
         self.admit(context.compiled.statement, operation.flushing, operation.bulk_table)
+        if operation.unprotected_delete is not None and isinstance(context.compiled.statement, Delete):
+            permit, binds = self.unprotected_delete_context(context.compiled.statement, operation.unprotected_delete)
+            names = [context.compiled.bind_names.get(bind) for bind in binds]
+            if (context.executemany or statement != str(context.compiled) or
+                    any(type(name) is not str for name in names) or len(set(names)) != len(names) or
+                    len(context.compiled.bind_names) != len(names) or len(context.compiled_parameters) != 1):
+                raise UnsupportedProtectedOperation()
+            expected = {name: value for name, (_, value) in zip(names, permit.predicates)}
+            for group in (context.compiled_parameters[0], parameters):
+                if (type(group) is not dict or set(group) != set(expected) or
+                        any(type(group[name]) is not type(value) or group[name] != value
+                            for name, value in expected.items())):
+                    raise UnsupportedProtectedOperation()
+            return
         if operation.scoped_delete is not None and isinstance(context.compiled.statement, Delete):
             permit, scope, record = self.delete_context(context.compiled.statement, operation.tenant,
                                                        operation.scoped_delete)
@@ -1419,6 +1602,9 @@ def _execute(state):
     if isinstance(state.statement, Update):
         return _bulk_update(state)
     if isinstance(state.statement, Delete):
+        mapper = state.bind_mapper
+        if mapper is not None and mapper.class_ not in session._owner.models:
+            return _unprotected_delete(state)
         return _scoped_delete(state)
     session._owner.admit(state.statement)
     parameters = state.parameters if isinstance(state.parameters, dict) else {}
@@ -1433,6 +1619,43 @@ def _execute(state):
     token = _operation.set(operation)
     try:
         state.statement = rewrite_search(session._owner, state.statement, operation)
+        return state.invoke_statement()
+    finally:
+        _operation.reset(token)
+
+
+def _unprotected_delete(state):
+    session, statement = state.session, state.statement
+    owner, mapper = session._owner, state.bind_mapper
+    if (not state.is_orm_statement or mapper is None or
+            mapper is not statement._propagate_attrs.get('plugin_subject') or
+            state.parameters is not None or set(state.bind_arguments) - {'clause', 'mapper'}):
+        raise UnsupportedProtectedOperation()
+    owner._check_configuration()
+    permit, _ = owner.unprotected_delete_context(statement)
+    options = state.execution_options
+    synchronization = options.get('synchronize_session', 'auto')
+    if (set(options) - {'synchronize_session', 'autoflush', 'prebuffer_rows', 'dml_strategy',
+                       '_sa_orm_update_options', '_result_disable_adapt_to_context'} or
+            not (synchronization is False or type(synchronization) is str and
+                 synchronization in ('auto', 'evaluate')) or
+            any(type(options[name]) is not bool for name in ('autoflush', 'prebuffer_rows') if name in options) or
+            options.get('dml_strategy', 'auto') not in ('auto', 'orm')):
+        raise UnsupportedProtectedOperation()
+    native = options.get('_sa_orm_update_options')
+    if (native is None or native._subject_mapper is not mapper or native._dml_strategy != 'orm' or
+            not (native._synchronize_session is False or type(native._synchronize_session) is str and
+                 native._synchronize_session in ('auto', 'evaluate'))):
+        raise UnsupportedProtectedOperation()
+    tenant = session._tenant
+    material = session._keys()
+    if session._tenant != tenant:
+        raise UnsupportedProtectedOperation()
+    owner.unprotected_delete_context(statement, permit)
+    operation = _Operation(owner, material, tenant, session, unprotected_delete=permit)
+    state.update_execution_options(compiled_cache=None)
+    token = _operation.set(operation)
+    try:
         return state.invoke_statement()
     finally:
         _operation.reset(token)
@@ -1742,13 +1965,18 @@ def _async_method(name):
     @wraps(native)
     async def method(self, *args, **kwargs):
         statement = args[0] if args else kwargs.get('statement')
-        permit = request = None
+        permit = request = delete_tenant = None
         if isinstance(statement, Delete):
             if name != 'execute':
                 raise UnsupportedProtectedOperation()
             session = self.sync_session
             session._owner._check_configuration()
-            permit, _, _ = session._owner.delete_context(statement, session._tenant)
+            delete_tenant = session._tenant
+            mapper = statement._propagate_attrs.get('plugin_subject')
+            if mapper is not None and mapper.class_ not in session._owner.models:
+                permit, _ = session._owner.unprotected_delete_context(statement)
+            else:
+                permit, _, _ = session._owner.delete_context(statement, session._tenant)
         if isinstance(statement, Update):
             if name != 'execute':
                 raise UnsupportedProtectedOperation()
@@ -1760,16 +1988,21 @@ def _async_method(name):
         try:
             await self._prepare()
             if permit is not None:
-                if session._tenant != permit.tenant:
+                if session._tenant != delete_tenant:
                     raise UnsupportedProtectedOperation()
-                session._owner.delete_context(statement, permit.tenant, permit)
+                if isinstance(permit, _UnprotectedDeletePermit):
+                    session._owner.unprotected_delete_context(statement, permit)
+                else:
+                    if session._tenant != permit.tenant:
+                        raise UnsupportedProtectedOperation()
+                    session._owner.delete_context(statement, permit.tenant, permit)
             if request is not None:
                 current = _capture_update(session._owner, request.mapper, statement, parameters, session._tenant)
                 if not _same_update_request(request, current):
                     raise UnsupportedProtectedOperation()
             return await native(self, *args, **kwargs)
         finally:
-            permit = request = None
+            permit = request = delete_tenant = None
     return method
 
 

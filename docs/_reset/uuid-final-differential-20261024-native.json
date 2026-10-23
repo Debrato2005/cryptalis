@@ -1,0 +1,1380 @@
+{
+  "scope": "Native/attached PostgreSQL16 SQLAlchemy Uuid(as_uuid=True) Session identity differential oracle",
+  "fixture": "public application-assigned UUID primary key",
+  "protected": false,
+  "observations": {
+    "accepted": [
+      {
+        "method": "get",
+        "value": "uuid",
+        "carrier": "scalar",
+        "cold_statements": 1,
+        "repeated_statements": 0,
+        "uuid_identity_cache_hit": true
+      },
+      {
+        "method": "get",
+        "value": "uuid",
+        "carrier": "mapping",
+        "cold_statements": 1,
+        "repeated_statements": 0,
+        "uuid_identity_cache_hit": true
+      },
+      {
+        "method": "get",
+        "value": "uuid",
+        "carrier": "list",
+        "cold_statements": 1,
+        "repeated_statements": 0,
+        "uuid_identity_cache_hit": true
+      },
+      {
+        "method": "get",
+        "value": "uuid",
+        "carrier": "tuple",
+        "cold_statements": 1,
+        "repeated_statements": 0,
+        "uuid_identity_cache_hit": true
+      },
+      {
+        "method": "get",
+        "value": "canonical",
+        "carrier": "scalar",
+        "cold_statements": 1,
+        "repeated_statements": 1,
+        "uuid_identity_cache_hit": true
+      },
+      {
+        "method": "get",
+        "value": "canonical",
+        "carrier": "mapping",
+        "cold_statements": 1,
+        "repeated_statements": 1,
+        "uuid_identity_cache_hit": true
+      },
+      {
+        "method": "get",
+        "value": "canonical",
+        "carrier": "list",
+        "cold_statements": 1,
+        "repeated_statements": 1,
+        "uuid_identity_cache_hit": true
+      },
+      {
+        "method": "get",
+        "value": "canonical",
+        "carrier": "tuple",
+        "cold_statements": 1,
+        "repeated_statements": 1,
+        "uuid_identity_cache_hit": true
+      },
+      {
+        "method": "get",
+        "value": "upper",
+        "carrier": "scalar",
+        "cold_statements": 1,
+        "repeated_statements": 1,
+        "uuid_identity_cache_hit": true
+      },
+      {
+        "method": "get",
+        "value": "upper",
+        "carrier": "mapping",
+        "cold_statements": 1,
+        "repeated_statements": 1,
+        "uuid_identity_cache_hit": true
+      },
+      {
+        "method": "get",
+        "value": "upper",
+        "carrier": "list",
+        "cold_statements": 1,
+        "repeated_statements": 1,
+        "uuid_identity_cache_hit": true
+      },
+      {
+        "method": "get",
+        "value": "upper",
+        "carrier": "tuple",
+        "cold_statements": 1,
+        "repeated_statements": 1,
+        "uuid_identity_cache_hit": true
+      },
+      {
+        "method": "get",
+        "value": "braces",
+        "carrier": "scalar",
+        "cold_statements": 1,
+        "repeated_statements": 1,
+        "uuid_identity_cache_hit": true
+      },
+      {
+        "method": "get",
+        "value": "braces",
+        "carrier": "mapping",
+        "cold_statements": 1,
+        "repeated_statements": 1,
+        "uuid_identity_cache_hit": true
+      },
+      {
+        "method": "get",
+        "value": "braces",
+        "carrier": "list",
+        "cold_statements": 1,
+        "repeated_statements": 1,
+        "uuid_identity_cache_hit": true
+      },
+      {
+        "method": "get",
+        "value": "braces",
+        "carrier": "tuple",
+        "cold_statements": 1,
+        "repeated_statements": 1,
+        "uuid_identity_cache_hit": true
+      },
+      {
+        "method": "get",
+        "value": "hyphenless",
+        "carrier": "scalar",
+        "cold_statements": 1,
+        "repeated_statements": 1,
+        "uuid_identity_cache_hit": true
+      },
+      {
+        "method": "get",
+        "value": "hyphenless",
+        "carrier": "mapping",
+        "cold_statements": 1,
+        "repeated_statements": 1,
+        "uuid_identity_cache_hit": true
+      },
+      {
+        "method": "get",
+        "value": "hyphenless",
+        "carrier": "list",
+        "cold_statements": 1,
+        "repeated_statements": 1,
+        "uuid_identity_cache_hit": true
+      },
+      {
+        "method": "get",
+        "value": "hyphenless",
+        "carrier": "tuple",
+        "cold_statements": 1,
+        "repeated_statements": 1,
+        "uuid_identity_cache_hit": true
+      },
+      {
+        "method": "get",
+        "value": "per_four",
+        "carrier": "scalar",
+        "cold_statements": 1,
+        "repeated_statements": 1,
+        "uuid_identity_cache_hit": true
+      },
+      {
+        "method": "get",
+        "value": "per_four",
+        "carrier": "mapping",
+        "cold_statements": 1,
+        "repeated_statements": 1,
+        "uuid_identity_cache_hit": true
+      },
+      {
+        "method": "get",
+        "value": "per_four",
+        "carrier": "list",
+        "cold_statements": 1,
+        "repeated_statements": 1,
+        "uuid_identity_cache_hit": true
+      },
+      {
+        "method": "get",
+        "value": "per_four",
+        "carrier": "tuple",
+        "cold_statements": 1,
+        "repeated_statements": 1,
+        "uuid_identity_cache_hit": true
+      },
+      {
+        "method": "get",
+        "value": "max_braced",
+        "carrier": "scalar",
+        "cold_statements": 1,
+        "repeated_statements": 1,
+        "uuid_identity_cache_hit": true
+      },
+      {
+        "method": "get",
+        "value": "max_braced",
+        "carrier": "mapping",
+        "cold_statements": 1,
+        "repeated_statements": 1,
+        "uuid_identity_cache_hit": true
+      },
+      {
+        "method": "get",
+        "value": "max_braced",
+        "carrier": "list",
+        "cold_statements": 1,
+        "repeated_statements": 1,
+        "uuid_identity_cache_hit": true
+      },
+      {
+        "method": "get",
+        "value": "max_braced",
+        "carrier": "tuple",
+        "cold_statements": 1,
+        "repeated_statements": 1,
+        "uuid_identity_cache_hit": true
+      },
+      {
+        "method": "get",
+        "value": "mixed_hyphens",
+        "carrier": "scalar",
+        "cold_statements": 1,
+        "repeated_statements": 1,
+        "uuid_identity_cache_hit": true
+      },
+      {
+        "method": "get",
+        "value": "mixed_hyphens",
+        "carrier": "mapping",
+        "cold_statements": 1,
+        "repeated_statements": 1,
+        "uuid_identity_cache_hit": true
+      },
+      {
+        "method": "get",
+        "value": "mixed_hyphens",
+        "carrier": "list",
+        "cold_statements": 1,
+        "repeated_statements": 1,
+        "uuid_identity_cache_hit": true
+      },
+      {
+        "method": "get",
+        "value": "mixed_hyphens",
+        "carrier": "tuple",
+        "cold_statements": 1,
+        "repeated_statements": 1,
+        "uuid_identity_cache_hit": true
+      },
+      {
+        "method": "get_one",
+        "value": "uuid",
+        "carrier": "scalar",
+        "cold_statements": 1,
+        "repeated_statements": 0,
+        "uuid_identity_cache_hit": true
+      },
+      {
+        "method": "get_one",
+        "value": "uuid",
+        "carrier": "mapping",
+        "cold_statements": 1,
+        "repeated_statements": 0,
+        "uuid_identity_cache_hit": true
+      },
+      {
+        "method": "get_one",
+        "value": "uuid",
+        "carrier": "list",
+        "cold_statements": 1,
+        "repeated_statements": 0,
+        "uuid_identity_cache_hit": true
+      },
+      {
+        "method": "get_one",
+        "value": "uuid",
+        "carrier": "tuple",
+        "cold_statements": 1,
+        "repeated_statements": 0,
+        "uuid_identity_cache_hit": true
+      },
+      {
+        "method": "get_one",
+        "value": "canonical",
+        "carrier": "scalar",
+        "cold_statements": 1,
+        "repeated_statements": 1,
+        "uuid_identity_cache_hit": true
+      },
+      {
+        "method": "get_one",
+        "value": "canonical",
+        "carrier": "mapping",
+        "cold_statements": 1,
+        "repeated_statements": 1,
+        "uuid_identity_cache_hit": true
+      },
+      {
+        "method": "get_one",
+        "value": "canonical",
+        "carrier": "list",
+        "cold_statements": 1,
+        "repeated_statements": 1,
+        "uuid_identity_cache_hit": true
+      },
+      {
+        "method": "get_one",
+        "value": "canonical",
+        "carrier": "tuple",
+        "cold_statements": 1,
+        "repeated_statements": 1,
+        "uuid_identity_cache_hit": true
+      },
+      {
+        "method": "get_one",
+        "value": "upper",
+        "carrier": "scalar",
+        "cold_statements": 1,
+        "repeated_statements": 1,
+        "uuid_identity_cache_hit": true
+      },
+      {
+        "method": "get_one",
+        "value": "upper",
+        "carrier": "mapping",
+        "cold_statements": 1,
+        "repeated_statements": 1,
+        "uuid_identity_cache_hit": true
+      },
+      {
+        "method": "get_one",
+        "value": "upper",
+        "carrier": "list",
+        "cold_statements": 1,
+        "repeated_statements": 1,
+        "uuid_identity_cache_hit": true
+      },
+      {
+        "method": "get_one",
+        "value": "upper",
+        "carrier": "tuple",
+        "cold_statements": 1,
+        "repeated_statements": 1,
+        "uuid_identity_cache_hit": true
+      },
+      {
+        "method": "get_one",
+        "value": "braces",
+        "carrier": "scalar",
+        "cold_statements": 1,
+        "repeated_statements": 1,
+        "uuid_identity_cache_hit": true
+      },
+      {
+        "method": "get_one",
+        "value": "braces",
+        "carrier": "mapping",
+        "cold_statements": 1,
+        "repeated_statements": 1,
+        "uuid_identity_cache_hit": true
+      },
+      {
+        "method": "get_one",
+        "value": "braces",
+        "carrier": "list",
+        "cold_statements": 1,
+        "repeated_statements": 1,
+        "uuid_identity_cache_hit": true
+      },
+      {
+        "method": "get_one",
+        "value": "braces",
+        "carrier": "tuple",
+        "cold_statements": 1,
+        "repeated_statements": 1,
+        "uuid_identity_cache_hit": true
+      },
+      {
+        "method": "get_one",
+        "value": "hyphenless",
+        "carrier": "scalar",
+        "cold_statements": 1,
+        "repeated_statements": 1,
+        "uuid_identity_cache_hit": true
+      },
+      {
+        "method": "get_one",
+        "value": "hyphenless",
+        "carrier": "mapping",
+        "cold_statements": 1,
+        "repeated_statements": 1,
+        "uuid_identity_cache_hit": true
+      },
+      {
+        "method": "get_one",
+        "value": "hyphenless",
+        "carrier": "list",
+        "cold_statements": 1,
+        "repeated_statements": 1,
+        "uuid_identity_cache_hit": true
+      },
+      {
+        "method": "get_one",
+        "value": "hyphenless",
+        "carrier": "tuple",
+        "cold_statements": 1,
+        "repeated_statements": 1,
+        "uuid_identity_cache_hit": true
+      },
+      {
+        "method": "get_one",
+        "value": "per_four",
+        "carrier": "scalar",
+        "cold_statements": 1,
+        "repeated_statements": 1,
+        "uuid_identity_cache_hit": true
+      },
+      {
+        "method": "get_one",
+        "value": "per_four",
+        "carrier": "mapping",
+        "cold_statements": 1,
+        "repeated_statements": 1,
+        "uuid_identity_cache_hit": true
+      },
+      {
+        "method": "get_one",
+        "value": "per_four",
+        "carrier": "list",
+        "cold_statements": 1,
+        "repeated_statements": 1,
+        "uuid_identity_cache_hit": true
+      },
+      {
+        "method": "get_one",
+        "value": "per_four",
+        "carrier": "tuple",
+        "cold_statements": 1,
+        "repeated_statements": 1,
+        "uuid_identity_cache_hit": true
+      },
+      {
+        "method": "get_one",
+        "value": "max_braced",
+        "carrier": "scalar",
+        "cold_statements": 1,
+        "repeated_statements": 1,
+        "uuid_identity_cache_hit": true
+      },
+      {
+        "method": "get_one",
+        "value": "max_braced",
+        "carrier": "mapping",
+        "cold_statements": 1,
+        "repeated_statements": 1,
+        "uuid_identity_cache_hit": true
+      },
+      {
+        "method": "get_one",
+        "value": "max_braced",
+        "carrier": "list",
+        "cold_statements": 1,
+        "repeated_statements": 1,
+        "uuid_identity_cache_hit": true
+      },
+      {
+        "method": "get_one",
+        "value": "max_braced",
+        "carrier": "tuple",
+        "cold_statements": 1,
+        "repeated_statements": 1,
+        "uuid_identity_cache_hit": true
+      },
+      {
+        "method": "get_one",
+        "value": "mixed_hyphens",
+        "carrier": "scalar",
+        "cold_statements": 1,
+        "repeated_statements": 1,
+        "uuid_identity_cache_hit": true
+      },
+      {
+        "method": "get_one",
+        "value": "mixed_hyphens",
+        "carrier": "mapping",
+        "cold_statements": 1,
+        "repeated_statements": 1,
+        "uuid_identity_cache_hit": true
+      },
+      {
+        "method": "get_one",
+        "value": "mixed_hyphens",
+        "carrier": "list",
+        "cold_statements": 1,
+        "repeated_statements": 1,
+        "uuid_identity_cache_hit": true
+      },
+      {
+        "method": "get_one",
+        "value": "mixed_hyphens",
+        "carrier": "tuple",
+        "cold_statements": 1,
+        "repeated_statements": 1,
+        "uuid_identity_cache_hit": true
+      }
+    ],
+    "invalid": [
+      {
+        "method": "get",
+        "value": "malformed",
+        "carrier": "scalar",
+        "failure": "DataError",
+        "sqlstate": "22P02",
+        "session_active_after_error": true,
+        "transaction_aborted": true,
+        "rollback_recovered": true
+      },
+      {
+        "method": "get",
+        "value": "malformed",
+        "carrier": "mapping",
+        "failure": "DataError",
+        "sqlstate": "22P02",
+        "session_active_after_error": true,
+        "transaction_aborted": true,
+        "rollback_recovered": true
+      },
+      {
+        "method": "get",
+        "value": "malformed",
+        "carrier": "list",
+        "failure": "DataError",
+        "sqlstate": "22P02",
+        "session_active_after_error": true,
+        "transaction_aborted": true,
+        "rollback_recovered": true
+      },
+      {
+        "method": "get",
+        "value": "malformed",
+        "carrier": "tuple",
+        "failure": "DataError",
+        "sqlstate": "22P02",
+        "session_active_after_error": true,
+        "transaction_aborted": true,
+        "rollback_recovered": true
+      },
+      {
+        "method": "get",
+        "value": "truncated",
+        "carrier": "scalar",
+        "failure": "DataError",
+        "sqlstate": "22P02",
+        "session_active_after_error": true,
+        "transaction_aborted": true,
+        "rollback_recovered": true
+      },
+      {
+        "method": "get",
+        "value": "truncated",
+        "carrier": "mapping",
+        "failure": "DataError",
+        "sqlstate": "22P02",
+        "session_active_after_error": true,
+        "transaction_aborted": true,
+        "rollback_recovered": true
+      },
+      {
+        "method": "get",
+        "value": "truncated",
+        "carrier": "list",
+        "failure": "DataError",
+        "sqlstate": "22P02",
+        "session_active_after_error": true,
+        "transaction_aborted": true,
+        "rollback_recovered": true
+      },
+      {
+        "method": "get",
+        "value": "truncated",
+        "carrier": "tuple",
+        "failure": "DataError",
+        "sqlstate": "22P02",
+        "session_active_after_error": true,
+        "transaction_aborted": true,
+        "rollback_recovered": true
+      },
+      {
+        "method": "get",
+        "value": "urn",
+        "carrier": "scalar",
+        "failure": "DataError",
+        "sqlstate": "22P02",
+        "session_active_after_error": true,
+        "transaction_aborted": true,
+        "rollback_recovered": true
+      },
+      {
+        "method": "get",
+        "value": "urn",
+        "carrier": "mapping",
+        "failure": "DataError",
+        "sqlstate": "22P02",
+        "session_active_after_error": true,
+        "transaction_aborted": true,
+        "rollback_recovered": true
+      },
+      {
+        "method": "get",
+        "value": "urn",
+        "carrier": "list",
+        "failure": "DataError",
+        "sqlstate": "22P02",
+        "session_active_after_error": true,
+        "transaction_aborted": true,
+        "rollback_recovered": true
+      },
+      {
+        "method": "get",
+        "value": "urn",
+        "carrier": "tuple",
+        "failure": "DataError",
+        "sqlstate": "22P02",
+        "session_active_after_error": true,
+        "transaction_aborted": true,
+        "rollback_recovered": true
+      },
+      {
+        "method": "get",
+        "value": "leading_space",
+        "carrier": "scalar",
+        "failure": "DataError",
+        "sqlstate": "22P02",
+        "session_active_after_error": true,
+        "transaction_aborted": true,
+        "rollback_recovered": true
+      },
+      {
+        "method": "get",
+        "value": "leading_space",
+        "carrier": "mapping",
+        "failure": "DataError",
+        "sqlstate": "22P02",
+        "session_active_after_error": true,
+        "transaction_aborted": true,
+        "rollback_recovered": true
+      },
+      {
+        "method": "get",
+        "value": "leading_space",
+        "carrier": "list",
+        "failure": "DataError",
+        "sqlstate": "22P02",
+        "session_active_after_error": true,
+        "transaction_aborted": true,
+        "rollback_recovered": true
+      },
+      {
+        "method": "get",
+        "value": "leading_space",
+        "carrier": "tuple",
+        "failure": "DataError",
+        "sqlstate": "22P02",
+        "session_active_after_error": true,
+        "transaction_aborted": true,
+        "rollback_recovered": true
+      },
+      {
+        "method": "get",
+        "value": "trailing_space",
+        "carrier": "scalar",
+        "failure": "DataError",
+        "sqlstate": "22P02",
+        "session_active_after_error": true,
+        "transaction_aborted": true,
+        "rollback_recovered": true
+      },
+      {
+        "method": "get",
+        "value": "trailing_space",
+        "carrier": "mapping",
+        "failure": "DataError",
+        "sqlstate": "22P02",
+        "session_active_after_error": true,
+        "transaction_aborted": true,
+        "rollback_recovered": true
+      },
+      {
+        "method": "get",
+        "value": "trailing_space",
+        "carrier": "list",
+        "failure": "DataError",
+        "sqlstate": "22P02",
+        "session_active_after_error": true,
+        "transaction_aborted": true,
+        "rollback_recovered": true
+      },
+      {
+        "method": "get",
+        "value": "trailing_space",
+        "carrier": "tuple",
+        "failure": "DataError",
+        "sqlstate": "22P02",
+        "session_active_after_error": true,
+        "transaction_aborted": true,
+        "rollback_recovered": true
+      },
+      {
+        "method": "get",
+        "value": "empty",
+        "carrier": "scalar",
+        "failure": "DataError",
+        "sqlstate": "22P02",
+        "session_active_after_error": true,
+        "transaction_aborted": true,
+        "rollback_recovered": true
+      },
+      {
+        "method": "get",
+        "value": "empty",
+        "carrier": "mapping",
+        "failure": "DataError",
+        "sqlstate": "22P02",
+        "session_active_after_error": true,
+        "transaction_aborted": true,
+        "rollback_recovered": true
+      },
+      {
+        "method": "get",
+        "value": "empty",
+        "carrier": "list",
+        "failure": "DataError",
+        "sqlstate": "22P02",
+        "session_active_after_error": true,
+        "transaction_aborted": true,
+        "rollback_recovered": true
+      },
+      {
+        "method": "get",
+        "value": "empty",
+        "carrier": "tuple",
+        "failure": "DataError",
+        "sqlstate": "22P02",
+        "session_active_after_error": true,
+        "transaction_aborted": true,
+        "rollback_recovered": true
+      },
+      {
+        "method": "get",
+        "value": "non_ascii",
+        "carrier": "scalar",
+        "failure": "DataError",
+        "sqlstate": "22P02",
+        "session_active_after_error": true,
+        "transaction_aborted": true,
+        "rollback_recovered": true
+      },
+      {
+        "method": "get",
+        "value": "non_ascii",
+        "carrier": "mapping",
+        "failure": "DataError",
+        "sqlstate": "22P02",
+        "session_active_after_error": true,
+        "transaction_aborted": true,
+        "rollback_recovered": true
+      },
+      {
+        "method": "get",
+        "value": "non_ascii",
+        "carrier": "list",
+        "failure": "DataError",
+        "sqlstate": "22P02",
+        "session_active_after_error": true,
+        "transaction_aborted": true,
+        "rollback_recovered": true
+      },
+      {
+        "method": "get",
+        "value": "non_ascii",
+        "carrier": "tuple",
+        "failure": "DataError",
+        "sqlstate": "22P02",
+        "session_active_after_error": true,
+        "transaction_aborted": true,
+        "rollback_recovered": true
+      },
+      {
+        "method": "get",
+        "value": "non_hex",
+        "carrier": "scalar",
+        "failure": "DataError",
+        "sqlstate": "22P02",
+        "session_active_after_error": true,
+        "transaction_aborted": true,
+        "rollback_recovered": true
+      },
+      {
+        "method": "get",
+        "value": "non_hex",
+        "carrier": "mapping",
+        "failure": "DataError",
+        "sqlstate": "22P02",
+        "session_active_after_error": true,
+        "transaction_aborted": true,
+        "rollback_recovered": true
+      },
+      {
+        "method": "get",
+        "value": "non_hex",
+        "carrier": "list",
+        "failure": "DataError",
+        "sqlstate": "22P02",
+        "session_active_after_error": true,
+        "transaction_aborted": true,
+        "rollback_recovered": true
+      },
+      {
+        "method": "get",
+        "value": "non_hex",
+        "carrier": "tuple",
+        "failure": "DataError",
+        "sqlstate": "22P02",
+        "session_active_after_error": true,
+        "transaction_aborted": true,
+        "rollback_recovered": true
+      },
+      {
+        "method": "get",
+        "value": "integer",
+        "carrier": "scalar",
+        "failure": "ProgrammingError",
+        "sqlstate": "42846",
+        "session_active_after_error": true,
+        "transaction_aborted": true,
+        "rollback_recovered": true
+      },
+      {
+        "method": "get",
+        "value": "integer",
+        "carrier": "mapping",
+        "failure": "ProgrammingError",
+        "sqlstate": "42846",
+        "session_active_after_error": true,
+        "transaction_aborted": true,
+        "rollback_recovered": true
+      },
+      {
+        "method": "get",
+        "value": "integer",
+        "carrier": "list",
+        "failure": "ProgrammingError",
+        "sqlstate": "42846",
+        "session_active_after_error": true,
+        "transaction_aborted": true,
+        "rollback_recovered": true
+      },
+      {
+        "method": "get",
+        "value": "integer",
+        "carrier": "tuple",
+        "failure": "ProgrammingError",
+        "sqlstate": "42846",
+        "session_active_after_error": true,
+        "transaction_aborted": true,
+        "rollback_recovered": true
+      },
+      {
+        "method": "get_one",
+        "value": "malformed",
+        "carrier": "scalar",
+        "failure": "DataError",
+        "sqlstate": "22P02",
+        "session_active_after_error": true,
+        "transaction_aborted": true,
+        "rollback_recovered": true
+      },
+      {
+        "method": "get_one",
+        "value": "malformed",
+        "carrier": "mapping",
+        "failure": "DataError",
+        "sqlstate": "22P02",
+        "session_active_after_error": true,
+        "transaction_aborted": true,
+        "rollback_recovered": true
+      },
+      {
+        "method": "get_one",
+        "value": "malformed",
+        "carrier": "list",
+        "failure": "DataError",
+        "sqlstate": "22P02",
+        "session_active_after_error": true,
+        "transaction_aborted": true,
+        "rollback_recovered": true
+      },
+      {
+        "method": "get_one",
+        "value": "malformed",
+        "carrier": "tuple",
+        "failure": "DataError",
+        "sqlstate": "22P02",
+        "session_active_after_error": true,
+        "transaction_aborted": true,
+        "rollback_recovered": true
+      },
+      {
+        "method": "get_one",
+        "value": "truncated",
+        "carrier": "scalar",
+        "failure": "DataError",
+        "sqlstate": "22P02",
+        "session_active_after_error": true,
+        "transaction_aborted": true,
+        "rollback_recovered": true
+      },
+      {
+        "method": "get_one",
+        "value": "truncated",
+        "carrier": "mapping",
+        "failure": "DataError",
+        "sqlstate": "22P02",
+        "session_active_after_error": true,
+        "transaction_aborted": true,
+        "rollback_recovered": true
+      },
+      {
+        "method": "get_one",
+        "value": "truncated",
+        "carrier": "list",
+        "failure": "DataError",
+        "sqlstate": "22P02",
+        "session_active_after_error": true,
+        "transaction_aborted": true,
+        "rollback_recovered": true
+      },
+      {
+        "method": "get_one",
+        "value": "truncated",
+        "carrier": "tuple",
+        "failure": "DataError",
+        "sqlstate": "22P02",
+        "session_active_after_error": true,
+        "transaction_aborted": true,
+        "rollback_recovered": true
+      },
+      {
+        "method": "get_one",
+        "value": "urn",
+        "carrier": "scalar",
+        "failure": "DataError",
+        "sqlstate": "22P02",
+        "session_active_after_error": true,
+        "transaction_aborted": true,
+        "rollback_recovered": true
+      },
+      {
+        "method": "get_one",
+        "value": "urn",
+        "carrier": "mapping",
+        "failure": "DataError",
+        "sqlstate": "22P02",
+        "session_active_after_error": true,
+        "transaction_aborted": true,
+        "rollback_recovered": true
+      },
+      {
+        "method": "get_one",
+        "value": "urn",
+        "carrier": "list",
+        "failure": "DataError",
+        "sqlstate": "22P02",
+        "session_active_after_error": true,
+        "transaction_aborted": true,
+        "rollback_recovered": true
+      },
+      {
+        "method": "get_one",
+        "value": "urn",
+        "carrier": "tuple",
+        "failure": "DataError",
+        "sqlstate": "22P02",
+        "session_active_after_error": true,
+        "transaction_aborted": true,
+        "rollback_recovered": true
+      },
+      {
+        "method": "get_one",
+        "value": "leading_space",
+        "carrier": "scalar",
+        "failure": "DataError",
+        "sqlstate": "22P02",
+        "session_active_after_error": true,
+        "transaction_aborted": true,
+        "rollback_recovered": true
+      },
+      {
+        "method": "get_one",
+        "value": "leading_space",
+        "carrier": "mapping",
+        "failure": "DataError",
+        "sqlstate": "22P02",
+        "session_active_after_error": true,
+        "transaction_aborted": true,
+        "rollback_recovered": true
+      },
+      {
+        "method": "get_one",
+        "value": "leading_space",
+        "carrier": "list",
+        "failure": "DataError",
+        "sqlstate": "22P02",
+        "session_active_after_error": true,
+        "transaction_aborted": true,
+        "rollback_recovered": true
+      },
+      {
+        "method": "get_one",
+        "value": "leading_space",
+        "carrier": "tuple",
+        "failure": "DataError",
+        "sqlstate": "22P02",
+        "session_active_after_error": true,
+        "transaction_aborted": true,
+        "rollback_recovered": true
+      },
+      {
+        "method": "get_one",
+        "value": "trailing_space",
+        "carrier": "scalar",
+        "failure": "DataError",
+        "sqlstate": "22P02",
+        "session_active_after_error": true,
+        "transaction_aborted": true,
+        "rollback_recovered": true
+      },
+      {
+        "method": "get_one",
+        "value": "trailing_space",
+        "carrier": "mapping",
+        "failure": "DataError",
+        "sqlstate": "22P02",
+        "session_active_after_error": true,
+        "transaction_aborted": true,
+        "rollback_recovered": true
+      },
+      {
+        "method": "get_one",
+        "value": "trailing_space",
+        "carrier": "list",
+        "failure": "DataError",
+        "sqlstate": "22P02",
+        "session_active_after_error": true,
+        "transaction_aborted": true,
+        "rollback_recovered": true
+      },
+      {
+        "method": "get_one",
+        "value": "trailing_space",
+        "carrier": "tuple",
+        "failure": "DataError",
+        "sqlstate": "22P02",
+        "session_active_after_error": true,
+        "transaction_aborted": true,
+        "rollback_recovered": true
+      },
+      {
+        "method": "get_one",
+        "value": "empty",
+        "carrier": "scalar",
+        "failure": "DataError",
+        "sqlstate": "22P02",
+        "session_active_after_error": true,
+        "transaction_aborted": true,
+        "rollback_recovered": true
+      },
+      {
+        "method": "get_one",
+        "value": "empty",
+        "carrier": "mapping",
+        "failure": "DataError",
+        "sqlstate": "22P02",
+        "session_active_after_error": true,
+        "transaction_aborted": true,
+        "rollback_recovered": true
+      },
+      {
+        "method": "get_one",
+        "value": "empty",
+        "carrier": "list",
+        "failure": "DataError",
+        "sqlstate": "22P02",
+        "session_active_after_error": true,
+        "transaction_aborted": true,
+        "rollback_recovered": true
+      },
+      {
+        "method": "get_one",
+        "value": "empty",
+        "carrier": "tuple",
+        "failure": "DataError",
+        "sqlstate": "22P02",
+        "session_active_after_error": true,
+        "transaction_aborted": true,
+        "rollback_recovered": true
+      },
+      {
+        "method": "get_one",
+        "value": "non_ascii",
+        "carrier": "scalar",
+        "failure": "DataError",
+        "sqlstate": "22P02",
+        "session_active_after_error": true,
+        "transaction_aborted": true,
+        "rollback_recovered": true
+      },
+      {
+        "method": "get_one",
+        "value": "non_ascii",
+        "carrier": "mapping",
+        "failure": "DataError",
+        "sqlstate": "22P02",
+        "session_active_after_error": true,
+        "transaction_aborted": true,
+        "rollback_recovered": true
+      },
+      {
+        "method": "get_one",
+        "value": "non_ascii",
+        "carrier": "list",
+        "failure": "DataError",
+        "sqlstate": "22P02",
+        "session_active_after_error": true,
+        "transaction_aborted": true,
+        "rollback_recovered": true
+      },
+      {
+        "method": "get_one",
+        "value": "non_ascii",
+        "carrier": "tuple",
+        "failure": "DataError",
+        "sqlstate": "22P02",
+        "session_active_after_error": true,
+        "transaction_aborted": true,
+        "rollback_recovered": true
+      },
+      {
+        "method": "get_one",
+        "value": "non_hex",
+        "carrier": "scalar",
+        "failure": "DataError",
+        "sqlstate": "22P02",
+        "session_active_after_error": true,
+        "transaction_aborted": true,
+        "rollback_recovered": true
+      },
+      {
+        "method": "get_one",
+        "value": "non_hex",
+        "carrier": "mapping",
+        "failure": "DataError",
+        "sqlstate": "22P02",
+        "session_active_after_error": true,
+        "transaction_aborted": true,
+        "rollback_recovered": true
+      },
+      {
+        "method": "get_one",
+        "value": "non_hex",
+        "carrier": "list",
+        "failure": "DataError",
+        "sqlstate": "22P02",
+        "session_active_after_error": true,
+        "transaction_aborted": true,
+        "rollback_recovered": true
+      },
+      {
+        "method": "get_one",
+        "value": "non_hex",
+        "carrier": "tuple",
+        "failure": "DataError",
+        "sqlstate": "22P02",
+        "session_active_after_error": true,
+        "transaction_aborted": true,
+        "rollback_recovered": true
+      },
+      {
+        "method": "get_one",
+        "value": "integer",
+        "carrier": "scalar",
+        "failure": "ProgrammingError",
+        "sqlstate": "42846",
+        "session_active_after_error": true,
+        "transaction_aborted": true,
+        "rollback_recovered": true
+      },
+      {
+        "method": "get_one",
+        "value": "integer",
+        "carrier": "mapping",
+        "failure": "ProgrammingError",
+        "sqlstate": "42846",
+        "session_active_after_error": true,
+        "transaction_aborted": true,
+        "rollback_recovered": true
+      },
+      {
+        "method": "get_one",
+        "value": "integer",
+        "carrier": "list",
+        "failure": "ProgrammingError",
+        "sqlstate": "42846",
+        "session_active_after_error": true,
+        "transaction_aborted": true,
+        "rollback_recovered": true
+      },
+      {
+        "method": "get_one",
+        "value": "integer",
+        "carrier": "tuple",
+        "failure": "ProgrammingError",
+        "sqlstate": "42846",
+        "session_active_after_error": true,
+        "transaction_aborted": true,
+        "rollback_recovered": true
+      }
+    ],
+    "missing": [
+      {
+        "value": "uuid",
+        "carrier": "scalar",
+        "get": "None",
+        "get_one": "NoResultFound",
+        "transaction_usable": true
+      },
+      {
+        "value": "uuid",
+        "carrier": "mapping",
+        "get": "None",
+        "get_one": "NoResultFound",
+        "transaction_usable": true
+      },
+      {
+        "value": "uuid",
+        "carrier": "list",
+        "get": "None",
+        "get_one": "NoResultFound",
+        "transaction_usable": true
+      },
+      {
+        "value": "uuid",
+        "carrier": "tuple",
+        "get": "None",
+        "get_one": "NoResultFound",
+        "transaction_usable": true
+      },
+      {
+        "value": "canonical",
+        "carrier": "scalar",
+        "get": "None",
+        "get_one": "NoResultFound",
+        "transaction_usable": true
+      },
+      {
+        "value": "canonical",
+        "carrier": "mapping",
+        "get": "None",
+        "get_one": "NoResultFound",
+        "transaction_usable": true
+      },
+      {
+        "value": "canonical",
+        "carrier": "list",
+        "get": "None",
+        "get_one": "NoResultFound",
+        "transaction_usable": true
+      },
+      {
+        "value": "canonical",
+        "carrier": "tuple",
+        "get": "None",
+        "get_one": "NoResultFound",
+        "transaction_usable": true
+      }
+    ],
+    "invalid_carriers": [
+      {
+        "method": "get",
+        "value": "empty_list",
+        "failure": "InvalidRequestError",
+        "before_sql": true,
+        "transaction_usable": true
+      },
+      {
+        "method": "get",
+        "value": "empty_tuple",
+        "failure": "InvalidRequestError",
+        "before_sql": true,
+        "transaction_usable": true
+      },
+      {
+        "method": "get",
+        "value": "empty_dict",
+        "failure": "InvalidRequestError",
+        "before_sql": true,
+        "transaction_usable": true
+      },
+      {
+        "method": "get",
+        "value": "wrong_dict_key",
+        "failure": "InvalidRequestError",
+        "before_sql": true,
+        "transaction_usable": true
+      },
+      {
+        "method": "get",
+        "value": "two_values",
+        "failure": "InvalidRequestError",
+        "before_sql": true,
+        "transaction_usable": true
+      },
+      {
+        "method": "get_one",
+        "value": "empty_list",
+        "failure": "InvalidRequestError",
+        "before_sql": true,
+        "transaction_usable": true
+      },
+      {
+        "method": "get_one",
+        "value": "empty_tuple",
+        "failure": "InvalidRequestError",
+        "before_sql": true,
+        "transaction_usable": true
+      },
+      {
+        "method": "get_one",
+        "value": "empty_dict",
+        "failure": "InvalidRequestError",
+        "before_sql": true,
+        "transaction_usable": true
+      },
+      {
+        "method": "get_one",
+        "value": "wrong_dict_key",
+        "failure": "InvalidRequestError",
+        "before_sql": true,
+        "transaction_usable": true
+      },
+      {
+        "method": "get_one",
+        "value": "two_values",
+        "failure": "InvalidRequestError",
+        "before_sql": true,
+        "transaction_usable": true
+      }
+    ],
+    "IN": [
+      "valid aliases return one native row",
+      "empty list returns no row",
+      "one invalid member gives22P02; aborted transaction requires rollback"
+    ]
+  },
+  "private_values_recorded": false,
+  "gate": "UNKNOWN"
+}

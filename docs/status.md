@@ -21,6 +21,73 @@ and [competitive capability matrix](research/capability-matrix.md) govern priori
 Progress follows complete real-application journeys and resolved production requirements.
 All seven production gates remain UNKNOWN.
 
+## Original SQLModel HTTP journey: 2026-10-24
+
+**IMPLEMENTED, bounded local verification:** the unchanged pinned FastAPI
+full-stack template 0.10.0 now passes its original HTTP authentication and
+user/item routes with encrypted User.email, full_name and is_active. All
+26 captured application, template, license and dependency files retain their
+pinned hashes. The fixture accepts email equality/uniqueness leakage for opaque
+UUID128 addresses in explicit single tenancy. This does not qualify real email
+populations or broader deployment policies.
+
+The first authenticated request exposed UUID text rejection in Session.get.
+Expected-context normalization now preserves the original SQL bind and ORM
+identity key. Native and attached sync/async checks preserve alternate UUID
+spellings, cache hits, malformed-input SQLSTATEs and rollback. Invalid points
+cannot authorize authenticated output or outer-join NULLs. A second failure in
+the original administrator route exposed refusal of unprotected Item DELETE.
+The new finite mapped DELETE path retains native synchronization, row counts
+and transactions. It freezes physical metadata and predicates before callbacks
+and repeats checks through final driver dispatch. Custom AST and protected-table
+aliases still refuse before SQL.
+
+The [120 focused controls](_reset/http-uuid-delete-physical-final-20261024.json)
+pass in 24.43 seconds. The [original HTTP journey](_reset/sqlmodel-http-complete-journey-physical-final-20261024.json)
+passes in 6.10 seconds. It covers signup, real password/JWT authentication,
+account state, ownership and administrator refusals, current-value updates and
+item cleanup. Both native and attached phases deliver four real MIME messages
+to localhost SMTP. The delivered reset token changes the password through the
+original route. Invalid and expired tokens refuse. Deprotection and removal
+preserve current credentials and inactive False values. A fresh process runs
+the original HTTP journey with Cryptalis imports denied.
+
+A later compiler check reproduced three metadata faults after initial admission.
+An annotated column could change its effective name or table while deannotation
+still identified the original column. A direct column.table change also escaped
+the snapshot. The [native RED](_reset/unprotected-delete-annotated-metadata-red-20261024.json) retains all three failures. The [stopped full run](_reset/sqlmodel-http-full-primary-20261024.json)
+records 1,137 passes and 18 passing subtests with exit 2. It is incomplete
+verification. Effective annotated metadata and original table ownership now
+receive explicit checks before deannotation can establish authority.
+
+The [application receipt](_reset/sqlmodel-http-journey-application-physical-final-20261024.json)
+records the source hashes, runtime versions, route controls and removal result.
+The [UUID failure](_reset/sqlmodel-http-auth-red-20261023.json) and
+[Item DELETE failure](_reset/sqlmodel-http-full-journey-first-20261024.json)
+remain evidence. TestClient ASGI and local SMTP do not qualify a browser,
+external mail delivery, HTML escaping, application startup or deployment.
+All seven production gates remain UNKNOWN.
+
+The [final full primary regression](_reset/sqlmodel-http-full-primary-final-20261024.json)
+passes 2,422 tests plus 18 subtests in 727.17 seconds. Ten skips and 48 existing
+deprecation warnings remain. All 191 Python hashes stay unchanged. The first
+stricter metadata check also refused six existing DELETE controls. The
+[retained failure](_reset/http-uuid-delete-annotated-final-20261024.json) led to
+native identifier equivalence checks, which pass with the final affected suite.
+
+Repeat wheel/sdist builds, metadata, RECORD, SBOM and installed CLI checks pass.
+The [actual installed wheel](_reset/sqlmodel-http-installed-wrapper-20261024.json)
+passes 134 controls in 43.80 seconds, including the full original HTTP/local
+SMTP journey and existing SQLModel profiles. All 36 product modules match
+current source. All 40 installed files match the wheel before and after.
+The wheel SHA-256 is
+`b76f3d67305af12eb15b65a45d6d1bdb5bb2bf54601544914d30528748f63956`.
+The [installed environment](_reset/sqlmodel-http-installed-environment-20261024.json)
+uses Python 3.13.12, binary psycopg and exact core pins. The primary source
+suite uses Python 3.12.3 and the same exact core dependency pins. The [final boundary](_reset/sqlmodel-http-final-boundary-20261024.json)
+binds source, artifacts, receipts and verification limits. All seven production
+gates remain UNKNOWN.
+
 ## Boolean storage checkpoint: 2026-10-23
 
 **IMPLEMENTED, bounded local verification:** native Boolean storage uses
