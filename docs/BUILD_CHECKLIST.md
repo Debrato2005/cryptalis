@@ -21,6 +21,13 @@ No objective is complete until its acceptance evidence and applicable gate pass.
 
 ## Current boundary
 
+- Protection and decrypt-back now retry one unfinished row after key lease
+  expiry, before SQL, progress or digest effects. Four previous-product controls
+  fail; all 16 new controls pass. Existing primary checks pass 111 cases and
+  the alternate cell passes 127. Provider failure, changed policy and a second
+  expiry still stop the operation. The full primary run passes 2,034 tests
+  and 18 subtests, with three skips, 48 existing warnings and 137 stable hashes.
+  See the [lease checkpoint](status.md#bounded-row-lease-recovery-checkpoint-2026-10-23).
 - A current pinned 10,000-row profile meets local added-p95 targets for point
   scalar, equality tuple and IN-20 tuple reads: 1.6294, 2.0107 and 2.5330 ms.
   Isolated name-column/equality-index storage measures 1.5248× native for
@@ -31,7 +38,11 @@ No objective is complete until its acceptance evidence and applicable gate pass.
   point/equality/IN-20. Its separate receipts keep stable 136-file hashes.
   A separate 100k-row run also meets all six targets. Entity added p95 measures
   1.2667/1.7083/2.5670 ms and isolated storage measures 1.5296× native.
-  Process CPU/elapsed/peak RSS are recorded separately from server resources.
+  The later prepared million-row run completes the full product transition.
+  It meets all six read targets, with entity added p95 at
+  2.4646/2.1569/2.5735 ms and isolated storage at 1.4372× native.
+  Final 137-file hashes stay stable. Process CPU/elapsed/peak RSS are recorded
+  separately from server resources.
   See the
   [current performance checkpoint](status.md#current-pinned-performance-checkpoint-2026-10-23).
 - Mapped bulk INSERT now returns one direct protected scalar through native
@@ -138,7 +149,7 @@ Requirement text is abbreviated. The full definitions remain in the research
 | OBJ-QUERY-04 | INSERT/UPDATE/DELETE, bulk, RETURNING, triggers, cascades, savepoints | PARTIAL | ORM flush writes and attached sync/async mapped dictionary INSERT, with optional single protected scalar RETURNING; native NULL/grouping, typed context, errors and savepoints; exact driver/page/input-result checks | Qualify tuple/entity RETURNING, broader DML, used defaults and each trigger/cascade effect separately |
 | OBJ-QUERY-05 | Versioned compatibility corpus and read-only scanner | PARTIAL | Native-vs-attached tests and receipts | Build a real pre-adoption scanner; reconcile current revisions |
 | OBJ-LIFE-01 | Deterministic plan/apply/verify with diagnostics | VERIFIED, bounded | `migration.py` plan/apply/verify; compiler inspection maps SQLAlchemy and direct psycopg errors to safe SQLSTATE; slice 5 receipts | Broader schema and failure boundaries |
-| OBJ-LIFE-02 | Resumable, atomic, byte-bounded backfill with verification | VERIFIED, bounded | Journal, advisory lock, chunks, crash/resume tests | Exact memory/WAL bounds remain host inputs |
+| OBJ-LIFE-02 | Resumable, atomic, byte-bounded backfill with verification | VERIFIED, bounded | Journal, advisory lock, chunks, crash/resume tests; one expiry-specific local row retry with policy checks and atomic failure controls in protection/decrypt-back | Exact memory/WAL bounds remain host inputs |
 | OBJ-LIFE-03 | Near-zero-downtime migration with capture and catch-up | SPECIFIED | Maintenance pause fallback only | Design, review, and measure an online protocol |
 | OBJ-LIFE-04 | Parallel/adaptive migration without lost or duplicate work | SPECIFIED | None | Depends on OBJ-LIFE-03 |
 | OBJ-LIFE-05 | Decrypt-back current edits; preserve schema behavior; package-free exit | VERIFIED, bounded | `deprotection.py` implements `cryptalis.reverse/v1`: staged plaintext, verified backfill, transactional switch, recorded constraint/index/collation restoration, guarded activation, approved removal, and terminal-state assertions; seven lifecycle cases pass on both profiles; an independent three-model application completes protect/search/modify/decrypt-back/remove and a package-free restarted process performs native CRUD; the same reverse completes on an adopted restored cluster with the binding; lock v2 captures and restores protected-column comments, statistics targets, storage, compression, options, column grants, constraint/index comments and extended statistics; grants are applied to the ciphertext column at protection; owned sequences remain refused; native catalogs now verify captured metadata through fresh-cluster restore and adopted removal; terminal removal refuses late metadata drift and retains the journal on failed retirement | Broader external application scope, physical column order, owned-sequence restore, retained-native |
@@ -151,10 +162,10 @@ Requirement text is abbreviated. The full definitions remain in the research
 | OBJ-DX-03 | Real FastAPI/SQLModel app plus a second independent app | PARTIAL | Pinned Smolink revision 498d24b runs its original FastAPI app, HTTP URL creation and refusal cases, real Redis, repository/ORM CRUD, protect/decrypt-back/remove, and a fresh import-denied process; 38 original Python source hashes match, with zero source/model/query edits; only Url.destination is protected; the in-repo three-model application retains its separate evidence | Broader protected fields and application suite, exact packaged Python 3.13 cell, SQLModel integration, and a second external app |
 | OBJ-DX-04 | Normal ORM identity, loading, sessions, pooling, async | PARTIAL | Bounded sync/async adapter and search tests | Broader ORM/framework coverage |
 | OBJ-DX-05 | Complete quickstart, threat model, leakage, recovery docs | PARTIAL | README, architecture, security, lifecycle, walkthroughs | Keep docs tied to admitted APIs and evidence |
-| OBJ-PERF-01 | Continuous native vs protected latency/resource measurements | PARTIAL | Current pinned 10k/100k scalar/tuple and full-entity profiles with matched runtime roles, full migration/ACTIVE attach, raw paired samples, isolated storage and 100k process CPU/RSS; historical million-row receipts retain prior source boundaries | Larger scale, cold/concurrent/tail/WAL/provider measurements |
+| OBJ-PERF-01 | Continuous native vs protected latency/resource measurements | PARTIAL | Current pinned 10k/100k/1m scalar/tuple and full-entity profiles with matched runtime roles, full migration/ACTIVE attach, raw paired samples, isolated storage and 100k/1m process CPU/RSS; historical million-row receipts retain prior source boundaries | Larger scale, cold/concurrent/tail/WAL/provider measurements |
 | OBJ-PERF-02 | Profile-guided optimization without security loss | PARTIAL | Membership projection correction on 2026-10-09 | Continue profiling; no unverified speed claims |
 | OBJ-PERF-03 | Multithreading/multiprocessing/async at 1/4/16/saturation | SPECIFIED | Single-worker maintenance path | Define and run isolation/backpressure/cancellation tests |
-| OBJ-PERF-04 | Added p95 targets and growth path | PARTIAL | Current pinned 10k/100k warm scalar/tuple and full-entity reads meet local 3ms/8ms targets; isolated column plus equality index measures 1.5248x/1.5296x for 53-byte names | Larger scale/remote-provider/concurrent qualification; write/pause budgets undecided |
+| OBJ-PERF-04 | Added p95 targets and growth path | PARTIAL | Current pinned 10k/100k/1m warm scalar/tuple and full-entity reads meet local 3ms/8ms targets; isolated column plus equality index measures 1.5248x/1.5296x/1.4372x for 53-byte names | Larger scale/remote-provider/concurrent qualification; write/pause budgets undecided |
 | OBJ-OPS-01 | Reproducible wheel/sdist, SBOM, provenance, reviewers | PARTIAL | `pyproject.toml`, `uv.lock`, `scripts/release_check.py`; [2026-10-21 receipt](_reset/release-check-20261021.json) shows identical repeat-build hashes, verified wheel `RECORD`, license metadata, CycloneDX 1.5 SBOM, and clean-venv import/CLI | Independent rebuild, signed provenance, vulnerability scan, publication identity, upgrade/uninstall matrix, independent review |
 | OBJ-OPS-02 | Recoverable source/evidence and traceability | PARTIAL | Git history and `docs/_reset` receipts | Durable archive and fresh restore |
 | OBJ-RESEARCH-01 | Source-backed comparative research with repeatable evidence | ONGOING | Research repository provenance; source-access and fallback rules in `AGENTS.md` | Preserve failed alternatives and provenance links |

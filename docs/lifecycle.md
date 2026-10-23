@@ -105,6 +105,8 @@ Use the existing deployment tool to publish the exact planned policy artifact.
 Do not write a new distributed CAS or automatic policy service merely to hide maintenance downtime.
 
 Default chunk size is a measured tuning parameter, not a security guarantee.
+Protection and decrypt-back use the [bounded row lease retry](security.md#implemented-cf1-primitives-and-local-custody)
+before SQL or progress effects. Other lifecycle routes retain separate expiry limits.
 The executor resumes committed chunks without regenerating their ciphertext.
 Counters/cursors alone do not prove membership coverage. Full terminal verification is mandatory.
 Verification mutants must include wrong payload, missing row, stale companion, duplicate normalization, and invalid index.

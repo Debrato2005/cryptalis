@@ -53,6 +53,19 @@ def seed(app, values):
             session.commit()
 
 
+def prepare_seeded_fixture(app):
+    # Finish fixture maintenance before the product's bounded lock admission.
+    with app.owner.connect().execution_options(isolation_level='AUTOCOMMIT') as connection:
+        timeout = connection.exec_driver_sql('SHOW statement_timeout').scalar_one()
+        quote = connection.dialect.identifier_preparer.quote_identifier
+        table = f'{quote(app.schema)}.{quote(app.table.name)}'
+        try:
+            connection.exec_driver_sql("SELECT pg_catalog.set_config('statement_timeout','120s',false)")
+            connection.exec_driver_sql(f'VACUUM (ANALYZE) {table}')
+        finally:
+            connection.exec_driver_sql("SELECT pg_catalog.set_config('statement_timeout',%s,false)", (timeout,))
+
+
 def protect(app, rings):
     declaration = app.plan.document['lock']['declaration']
     app.plan = m.plan(json.dumps(declaration).encode(), app.mapping, app.owner,
@@ -173,6 +186,7 @@ def test_current_matched_application_profile(record_property):
         assert cells[0] == cells[1]
         for app in (native, protected):
             seed(app, values)
+            prepare_seeded_fixture(app)
         factory = protect(protected, rings)
         native_indexes = [index.name for index in native.table.indexes]
         assert native_indexes == ['native_name']
@@ -250,6 +264,7 @@ def test_current_matched_application_profile(record_property):
                  'seed_sha256': seed_digest, 'tenant_name_uniqueness_preserved': True,
                  'native_and_attached_results_equal': True},
         'sampling': {'paired_samples_each': SAMPLES, 'discarded_warmup_pairs_each': WARMUPS,
+                     'fixture_preparation': 'Named-table VACUUM (ANALYZE) after native seeding, before product planning; a separate 120-second fixture statement limit is restored afterward.',
                      'order': 'Alternating native/attached order in each pair.',
                      'transaction': 'One long-lived read transaction per path; no retained ORM identity-map objects between samples.',
                      'materialization': 'Scalar/tuple projections plus full ORM entities converted to (id,tenant_id,name,label); IN20 ordered by native ID.',

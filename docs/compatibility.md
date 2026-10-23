@@ -157,6 +157,14 @@ Entity added p95 is 1.2667/1.7083/2.5670 ms for point/equality/IN-20,
 with isolated storage at 1.5296× native. Its process resource observations
 exclude database-server CPU and memory.
 
+The subsequent prepared million-row profile completes the product transition
+and meets all six local targets. Entity added p95 is 2.4646/2.1569/2.5735 ms
+for point/equality/IN-20, with isolated storage at 1.4372× native.
+Its stable 137-file receipts include bounded row lease recovery and explicit
+fixture maintenance before planning. The [current checkpoint](status.md#current-pinned-performance-checkpoint-2026-10-23)
+owns raw evidence and process resource limits. Remote/concurrent/platform
+qualification and the historical page-query cause remain UNKNOWN.
+
 **VERIFIED, recorded earlier revision only:** [million-row CF1 receipt](../spikes/revamp/results/gate-performance.json), warm PostgreSQL 16.15 and memory-only local keys.
 These observations predate the latest DISTINCT change and do not measure the current adapter.
 

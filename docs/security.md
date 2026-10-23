@@ -423,6 +423,14 @@ The cache defaults to **60 seconds** and permits a maximum of **300 seconds**.
 Access does not extend expiry. Each crypto operation checks expiry before it returns a value.
 These operational limits are prototype safeguards. They are not reviewed cryptographic usage limits.
 
+Protection and decrypt-back can discard one unfinished row after actual key
+lease expiry. They then check the exact host policy, prepare fresh keys, and
+retry local row crypto once. SQL, durable progress, and verification digests
+change only after the complete row succeeds. A provider failure, changed
+policy, or second expiry stops the operation. This retry does not extend a
+lease or refresh keys inside frame processing. ORM operations, rotation, and
+restore retain their separate expiry rules.
+
 `create_root(provider, context)` uses independent operating-system randomness.
 Wrapped roots carry exact provider identity, domain, tenant, purpose, root identity, and generation.
 Provider payloads are opaque bytes with a **64 KiB** limit.

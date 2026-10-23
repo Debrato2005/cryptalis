@@ -140,10 +140,17 @@ CRYPTALIS_PERFORMANCE_RECEIPT=/tmp/cryptalis-performance-new.json \
   -- -q -s tests/profile_current_application.py
 ```
 
+After seeding, the profile runs named-table `VACUUM (ANALYZE)` on each owned
+fixture before product planning. This uses a separate 120-second statement
+limit and restores the previous setting. Product lease and lock limits stay unchanged.
+PostgreSQL requires [VACUUM outside a transaction block](https://www.postgresql.org/docs/16/sql-vacuum.html).
+
 The profile writes raw samples and target PASS/FAIL before any target assertion.
 An observed target miss fails this explicit run. The seven production gates stay UNKNOWN.
 The receipt states its scalar/tuple/entity, warm synchronous TEXT and public-key limits.
 Process CPU and peak RSS include setup/cleanup and pytest imports.
+The process retains the generated input list and creates temporary sets and
+seed serialization. Its peak is not a streaming-backfill or adapter memory bound.
 They do not measure database-server resources.
 Historical profiler helpers supply calculations only. Do not run their direct CLI
 as a substitute for the mandatory wrapper or the current lifecycle/pin path.

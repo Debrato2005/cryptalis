@@ -1,0 +1,52 @@
+{
+  "boundary": "Diagnostic replay of million-row failure before the fix; no successful million-row performance measurement.",
+  "base_revision": "3bd4467",
+  "wrapper_receipt": "performance-million-trace-wrapper-20261023.json",
+  "initial_wrapper_receipt": "performance-million-current-wrapper-20261023.json",
+  "origin": {
+    "type": "KeyUnavailable",
+    "locations": [
+      {
+        "file": "src/cryptalis/migration.py",
+        "line": 525,
+        "function": "_connection"
+      },
+      {
+        "file": "src/cryptalis/migration.py",
+        "line": 575,
+        "function": "_maintenance_executor"
+      },
+      {
+        "file": "src/cryptalis/migration.py",
+        "line": 554,
+        "function": "_executor"
+      },
+      {
+        "file": "src/cryptalis/migration.py",
+        "line": 1037,
+        "function": "apply"
+      },
+      {
+        "file": "src/cryptalis/migration.py",
+        "line": 852,
+        "function": "_backfill_chunk"
+      },
+      {
+        "file": "src/cryptalis/crypto/cf1.py",
+        "line": 169,
+        "function": "seal_text"
+      },
+      {
+        "file": "src/cryptalis/crypto/keys.py",
+        "line": 260,
+        "function": "_resolve"
+      }
+    ]
+  },
+  "diagnostic_plugin": {
+    "filename": "cryptalis_lease_trace.py",
+    "sha256": "1029cd30838eb5d9da05611474a21ffee02c4cab0883bed16d0ad93c5e8a2223",
+    "source": "\"\"\"Preserve only source locations for sanitized lifecycle failures.\"\"\"\nimport json\nfrom pathlib import Path\nimport traceback\n\n\ndef pytest_configure(config):\n    from cryptalis import migration\n    original = migration._safe_failure\n\n    def record(error, operation_id, cleanup_errors):\n        locations = [{'file': frame.filename, 'line': frame.lineno, 'function': frame.name}\n                     for frame in traceback.extract_tb(error.__traceback__)]\n        with Path('/tmp/cryptalis-million-lease-origin.jsonl').open('a') as output:\n            output.write(json.dumps({'type': type(error).__name__, 'locations': locations}) + '\\n')\n        return original(error, operation_id, cleanup_errors)\n\n    migration._safe_failure = record\n"
+  },
+  "interpretation": "Protection backfill crossed an existing lease during seal_text final payload check. The failed chunk transaction rolled back. No lease extension or successful performance claim follows."
+}

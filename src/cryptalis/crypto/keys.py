@@ -69,6 +69,10 @@ class KeyUnavailable(CryptoFailure):
     remedy = "Check the exact provider, wrapped roots and generation policy; prepare fresh keys in this process."
     retryable = True
 
+    def __init__(self, *, _lease_expired=False):
+        self._lease_expired = _lease_expired
+        super().__init__()
+
 
 def tuple_bytes(*parts: bytes) -> bytes:
     """CF1 length-prefixed tuple, with no implicit conversion."""
@@ -256,8 +260,10 @@ class PreparedKeys:
         if self._pid != os.getpid() or (domain, tenant) != (self.policy.domain_id, self.policy.tenant_id):
             raise KeyUnavailable()
         material = self._materials.get((purpose, generation))
-        if material is None or time.monotonic() >= material.expires:
+        if material is None:
             raise KeyUnavailable()
+        if time.monotonic() >= material.expires:
+            raise KeyUnavailable(_lease_expired=True)
         return material
 
 

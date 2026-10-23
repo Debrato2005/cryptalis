@@ -20,7 +20,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.dialects import postgresql
 
 from cryptalis.crypto.cf1 import FieldDescriptor, seal_text, open_text
-from cryptalis.crypto.keys import CryptoFailure, Keyring
+from cryptalis.crypto.keys import CryptoFailure, Keyring, KeyUnavailable
 from cryptalis.crypto._payload_rotation import MAX_BATCH_BYTES, MAX_BATCH_ROWS
 from cryptalis.manifest.compiler import (compile_protection, _schema_facts, _canonical, _previous_lock,
                                           unrecorded_column_metadata, protected_extended_statistics,
@@ -429,6 +429,21 @@ def _ring(keys, tenant, p):
             _policy(ring) != p.document['key_policies'].get(str(tenant))):
         raise TransitionFailure('key_policy_changed', p.operation_id)
     return ring
+
+
+def _with_row_keys(keys, tenant, p, material, operation):
+    """Retry local row crypto once after expiry, before SQL or progress effects."""
+    if tenant not in material:
+        material[tenant] = _ring(keys, tenant, p).prepare()
+    try:
+        return operation(material[tenant])
+    except KeyUnavailable as failure:
+        if not failure._lease_expired:
+            raise
+    # The expired attempt returned no row. Recheck host policy and reacquire
+    # expired roots; neither key access nor this retry extends a lease.
+    material[tenant] = _ring(keys, tenant, p).prepare()
+    return operation(material[tenant])
 
 
 def plan(manifest, mapping, engine, *, writers, search_reviews=(), keys, runtime_role,
@@ -848,8 +863,8 @@ def _backfill_chunk(c,p,state,keys,chunk_size):
         scoped='column' in model['tenancy']; material={}; params=[]
         for row in rows:
             tenant=row[1] if scoped else UUID(model['table_id']); offset=2 if scoped else 1
-            if tenant not in material: material[tenant]=_ring(keys,tenant,p).prepare()
-            body=[seal_text(row[offset+i],descriptor,tenant,row[0],material[tenant]) for i,descriptor in enumerate(descriptors)]
+            body=_with_row_keys(keys,tenant,p,material,lambda prepared:
+                [seal_text(row[offset+i],descriptor,tenant,row[0],prepared) for i,descriptor in enumerate(descriptors)])
             params.append(tuple(body)+(row[0],))
         statement=f'UPDATE {_table(c,model)} SET '+','.join(_quote(c,f['payload_column'])+'=%s' for f in model['fields'])+f' WHERE {_quote(c,model["record"]["column"])}=%s'
         c.exec_driver_sql(statement,params)
@@ -874,16 +889,21 @@ def _verify(c,p,state,keys):
             material={}
             for row in rows:
                 tenant=row[1] if 'column' in model['tenancy'] else UUID(model['table_id']); offset=2 if 'column' in model['tenancy'] else 1
-                if tenant not in material: material[tenant]=_ring(keys,tenant,p).prepare()
+                def verify(prepared):
+                    frames=[]
+                    for i,f in enumerate(model['fields']):
+                        source,frame=row[offset+2*i:offset+2*i+2]
+                        frame=bytes(frame) if frame is not None else None
+                        admitted=prepared.policy
+                        if frame is not None and (int.from_bytes(frame[6:10],'big')!=admitted.payload_generation or int.from_bytes(frame[10:14],'big')!=(admitted.search_generation if f['queries'] else 0)):
+                            raise TransitionFailure('generation_mismatch',p.operation_id)
+                        value=open_text(frame,descriptors[i],tenant,row[0],prepared)
+                        if type(value)!=type(source) or value!=source: raise TransitionFailure('value_verification_failed',p.operation_id)
+                        frames.append(frame)
+                    return frames
+                frames=_with_row_keys(keys,tenant,p,material,verify)
                 digest.update(_canonical([str(row[0]),str(tenant)]))
-                for i,f in enumerate(model['fields']):
-                    source,frame=row[offset+2*i:offset+2*i+2]
-                    frame=bytes(frame) if frame is not None else None
-                    admitted=material[tenant].policy
-                    if frame is not None and (int.from_bytes(frame[6:10],'big')!=admitted.payload_generation or int.from_bytes(frame[10:14],'big')!=(admitted.search_generation if f['queries'] else 0)):
-                        raise TransitionFailure('generation_mismatch',p.operation_id)
-                    value=open_text(frame,descriptors[i],tenant,row[0],material[tenant])
-                    if type(value)!=type(source) or value!=source: raise TransitionFailure('value_verification_failed',p.operation_id)
+                for frame in frames:
                     digest.update(b'\x00' if frame is None else b'\x01'+len(frame).to_bytes(4,'big')+frame)
             cursor=str(rows[-1][0])
         digests[model['table_id']]=digest.hexdigest()

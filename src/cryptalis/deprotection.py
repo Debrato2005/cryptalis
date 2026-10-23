@@ -465,10 +465,9 @@ def _backfill_chunk(c, p, state, keys, chunk_size):
         for row in rows:
             tenant = row[1] if scoped else UUID(model['table_id'])
             offset = 2 if scoped else 1
-            if tenant not in material:
-                material[tenant] = m._ring(keys, tenant, source).prepare()
-            values = [open_text(row[offset + index], descriptor, tenant, row[0], material[tenant])
-                      for index, descriptor in enumerate(descriptors)]
+            values = m._with_row_keys(keys, tenant, source, material, lambda prepared:
+                [open_text(row[offset + index], descriptor, tenant, row[0], prepared)
+                 for index, descriptor in enumerate(descriptors)])
             updates.append(tuple(values) + (row[0],))
         statement = (f'UPDATE {m._table(c, model)} SET '
                      + ','.join(m._quote(c, _staging(field)) + '=%s' for field in model['fields'])
@@ -504,16 +503,20 @@ def _verify(c, p, state, keys):
             for row in rows:
                 tenant = row[1] if scoped else UUID(model['table_id'])
                 offset = 2 if scoped else 1
-                if tenant not in material:
-                    material[tenant] = m._ring(keys, tenant, source).prepare()
+                def verify(prepared):
+                    frames = []
+                    for index, descriptor in enumerate(descriptors):
+                        raw = row[offset + index]
+                        frame = bytes(raw) if raw is not None else None
+                        value = open_text(frame, descriptor, tenant, row[0], prepared)
+                        staged = row[offset + len(descriptors) + index]
+                        if value != staged:
+                            raise m.TransitionFailure('value_verification_failed', p.operation_id)
+                        frames.append(frame)
+                    return frames
+                frames = m._with_row_keys(keys, tenant, source, material, verify)
                 digest.update(m._canonical([str(row[0]), str(tenant)]))
-                for index, descriptor in enumerate(descriptors):
-                    raw = row[offset + index]
-                    frame = bytes(raw) if raw is not None else None
-                    value = open_text(frame, descriptor, tenant, row[0], material[tenant])
-                    staged = row[offset + len(descriptors) + index]
-                    if value != staged:
-                        raise m.TransitionFailure('value_verification_failed', p.operation_id)
+                for frame in frames:
                     digest.update(b'\x00' if frame is None else b'\x01' + len(frame).to_bytes(4, 'big') + frame)
             cursor = str(rows[-1][0])
         digests[model['table_id']] = digest.hexdigest()

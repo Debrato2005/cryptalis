@@ -10,6 +10,61 @@ No PostgreSQL/provider/runtime cell, production key provider, independent review
 VERIFIED below refers only to the named checks and their exact revisions.
 All other contract and promotion requirements are SPECIFIED. All seven full gates remain UNKNOWN.
 
+## Bounded row lease recovery checkpoint: 2026-10-23
+
+**IMPLEMENTED, bounded verification:** protection and decrypt-back retry local
+row crypto once after actual lease expiry. They check the exact host policy
+before fresh admission. Failed row work changes no SQL, progress marker or
+verification digest. Provider failure, changed policy and repeated expiry
+still stop the operation. Public diagnostics remain `KeyUnavailable`.
+The [security contract](security.md#implemented-cf1-primitives-and-local-custody) owns the precise retry boundary.
+
+The initial million-row profile failed during protection. A diagnostic replay
+located expiry at the final payload check after real encryption in backfill.
+Both failed receipts remain separate from successful performance evidence.
+A later run stopped at bounded table-lock admission with SQLSTATE `55P03`.
+It produced no performance measurements. The explicit profiler now completes
+named-table `VACUUM (ANALYZE)` after seeding each disposable fixture, before
+product planning. Its separate 120-second statement limit is restored afterward.
+Product lease durations and lock limits stay unchanged.
+
+Four new success controls fail against the immutable preceding product source.
+The fix passes all 16 new PostgreSQL controls across protection/decrypt-back
+and backfill/verification. They force expiry after the real AEAD call, using
+an isolated key clock. They verify fresh admission, native rows, independent
+frame decoding and verification digests. Failed refresh, repeated expiry and
+policy changes retain exact rows and journal state before explicit healthy resume.
+The existing primary crypto/provider/lifecycle run passes 111 checks.
+The alternate Python 3.13.12 / SQLAlchemy 2.0.51 cell passes all 127 checks.
+One extra check passes for pinned unchanged Smolink, including real Redis and
+current-value removal with Cryptalis imports denied in a fresh process.
+All 38 app source hashes match, with no model/query changes.
+This storage/lifecycle boundary excludes authentication endpoint qualification.
+Reproducible archives, SBOM, all 36 installed files and CLI startup pass.
+The prepared million-row profile completes the product transition and all six
+native-matched read targets. The full primary regression passes **2,034 tests
+and 18 subtests**, with three separate-environment skips and 48 existing warnings.
+The wrapper records 594.06 seconds. Its 137 Python hashes stay stable and
+match the final worktree, as do the million-row and app wrapper hashes.
+The earlier focused receipts differ only at the later profiler fixture revision.
+Rotation and restore retain separate lease limits. All seven full gates remain UNKNOWN.
+
+
+Evidence: [initial million-row failure](_reset/performance-million-current-wrapper-20261023.json),
+[diagnostic replay](_reset/performance-million-trace-wrapper-20261023.json),
+[safe failure origin and diagnostic source](_reset/performance-million-lease-origin-20261023.json),
+[bounded lock refusal](_reset/performance-million-row-lease-wrapper-20261023.json),
+[previous-product RED control](_reset/row-lease-red-20261023.json),
+[control product hashes](_reset/row-lease-red-product-source-20261023.json),
+[new lease controls](_reset/row-lease-green-20261023.json),
+[existing primary checks](_reset/row-lease-existing-20261023.json),
+[alternate cell](_reset/row-lease-sa20-20261023.json),
+[unchanged app wrapper](_reset/row-lease-smolink-20261023.json),
+[app source and lifecycle evidence](_reset/row-lease-smolink-app-20261023.json),
+[reproducible archives](_reset/row-lease-release-20261023.json), and
+[installed wheel](_reset/row-lease-installed-20261023.json), and
+[full primary regression](_reset/row-lease-full-20261023.json).
+
 ## Current pinned performance checkpoint: 2026-10-23
 
 **VERIFIED, bounded local measurement:** an explicit wrapper-run profile compares
@@ -54,9 +109,29 @@ and cleanup. Its lifetime peak RSS is 182.5 MiB, including pytest imports.
 These resource observations exclude PostgreSQL server CPU and memory.
 Both 136-file receipts stay stable at the configurable profiler revision.
 
+The subsequent **1,000,000-row** run completes the full product protection,
+verification and ACTIVE attachment path. Both receipts retain stable 137-file
+hashes. All six read workloads match native results and meet local targets.
+This profiler revision includes the bounded row lease fix and explicit fixture
+maintenance before planning. It keeps the original product lease and lock limits.
+
+| Workload | Projection added p95 ms | Entity added p95 ms | Local maximum ms |
+|---|---:|---:|---:|
+| Point | 1.8239 | 2.4646 | 3 |
+| Equality | 1.8742 | 2.1569 | 3 |
+| IN-20 | 0.9442 | 2.5735 | 8 |
+
+Isolated storage measures **1.4372× native**. The process uses 110.78 CPU seconds
+over 172.69 elapsed seconds, including fixture maintenance and cleanup.
+Its lifetime peak RSS is 1,064.9 MiB, including pytest imports.
+This peak also includes the full generated input list, temporary identity/name
+sets and seed serialization. It does not bound streaming backfill or adapter memory.
+These observations exclude database-server CPU and memory.
+The earlier lease failures and lock refusal remain separate evidence.
+
 These are warm synchronous TEXT observations with in-process public fixture keys.
-Shared-host load remains uncontrolled. Million-row costs, remote/cold
-providers, async/VARCHAR, concurrent load, throughput and maintenance pauses remain unmeasured here.
+Shared-host load remains uncontrolled. Remote/cold providers, async/VARCHAR,
+concurrent load, throughput and maintenance pauses remain unmeasured here.
 The historical million-row receipts keep their earlier source and query-shape boundaries.
 All seven full gates remain UNKNOWN.
 
@@ -65,7 +140,12 @@ and [mandatory wrapper receipt](_reset/performance-current-wrapper-20261023.json
 then [full-entity samples](_reset/performance-entities-20261023.json)
 and [full-entity wrapper receipt](_reset/performance-entities-wrapper-20261023.json),
 then [100,000-row samples and resources](_reset/performance-100k-20261023.json)
-and [100,000-row wrapper receipt](_reset/performance-100k-wrapper-20261023.json).
+and [100,000-row wrapper receipt](_reset/performance-100k-wrapper-20261023.json),
+then [million-row samples and resources](_reset/performance-million-prepared-20261023.json)
+and [million-row wrapper receipt](_reset/performance-million-prepared-wrapper-20261023.json).
+The [fixture smoke samples](_reset/performance-row-lease-smoke-20261023.json)
+and [smoke wrapper](_reset/performance-row-lease-smoke-wrapper-20261023.json)
+retain the preceding small-fixture check.
 
 ## Mapped protected scalar RETURNING checkpoint: 2026-10-23
 
