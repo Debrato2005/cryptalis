@@ -1,0 +1,130 @@
+{
+  "scope": "DX03 bounded evidence: actual installed current wheel with exact project runtime pins under Python 3.13, followed by the existing pinned Smolink URL lifecycle",
+  "product_revision": "57e41e8762a8eda0e9cc2d4c2c494663cf5b35f7",
+  "wheel": "/tmp/cryptalis-dependency-metadata-release-20261023/cryptalis-0.1.0-py3-none-any.whl",
+  "wheel_sha256": "75821785bbb1fdab70b56265c1d4b91df1237f979c753076ddf3a182bd4cd1b7",
+  "disposable_environment": "/tmp/cryptalis-wheel-py313-exact-20261023",
+  "python": "3.13.12",
+  "exact_runtime_versions": {
+    "cryptalis": "0.1.0",
+    "cryptography": "50.0.2",
+    "greenlet": "3.5.6",
+    "sqlalchemy": "2.1.3",
+    "psycopg": "3.3.6",
+    "psycopg_binary": "3.3.6"
+  },
+  "psycopg_impl": "binary",
+  "product_modules_matching_wheel_and_current_source": 33,
+  "installed_wheel_members_unchanged_after_lifecycle": 37,
+  "record_note": "Wheel RECORD changes during normal installation; every other wheel file is byte-identical. Generated installer metadata is not a product source module.",
+  "import_boundary": "Cryptalis and every declared runtime dependency came from the disposable site. The existing Smolink site followed it only for application/test dependencies. No source Cryptalis path was included. Initial isolated and actual test-path origins are recorded.",
+  "runtime_and_application_dependencies": "Exact pins verified: cryptography 50.0.2, greenlet 3.5.6, SQLAlchemy 2.1.3, psycopg and psycopg-binary 3.3.6. FastAPI 0.139.0, httpx 0.28.1, Redis client 8.0.1 and pytest 9.1.1 came from read-only app fallback.",
+  "installation_boundary": "A new disposable environment was created from the existing Python 3.13 interpreter. One official-PyPI offline-cache attempt failed; the authorized official-PyPI normal dependency installation then succeeded with 9 distributions. Existing environments were not installation targets.",
+  "wrapper": {
+    "counts": {
+      "passed": 1
+    },
+    "elapsed_seconds": 4.162314656001399,
+    "python_files": 155,
+    "source_stability": {
+      "unchanged": true,
+      "changed_paths": []
+    },
+    "fresh_both_role_probes": "passed"
+  },
+  "application": {
+    "revision": "498d24bae999ed53ad85e1c1f1a09ea7fa151aa4",
+    "source_files": 38,
+    "source_changes": [],
+    "url_router": "native/protected/package-free HTTP creation and repository/ORM CRUD passed",
+    "redis": "real disposable server; original rate-limit dependency",
+    "runtime": {
+      "fastapi": "0.139.0",
+      "SQLAlchemy": "2.1.3",
+      "greenlet": "3.5.6",
+      "psycopg": "3.3.6",
+      "cryptography": "50.0.2"
+    },
+    "python": "3.13.12",
+    "psycopg_impl": "binary"
+  },
+  "postcheck": {
+    "installed_wheel_files_match": true,
+    "all_33_product_source_files_match": true,
+    "runtime_origins_and_versions_match": true,
+    "smolink_site_files_modified_since_pretest_capture": []
+  },
+  "receipt_sha256": {
+    "wheel-py313-exact-install-20261023.json": "04e66ab4ad4f2ca29b32256a4278c9e2731f6ff3fa188dd4660b1a4f86fc9d4b",
+    "wheel-py313-exact-smolink-application-20261023.json": "a79b063098ea03e9895b305bc4358a77cecc64bfb9a7df535524b1fc1d529c17",
+    "wheel-py313-exact-smolink-wrapper-20261023.json": "5f97019e524ae88cb768134bd37384d0c6c1afd00927fc792ac8914cdb3732cf"
+  },
+  "limits": [
+    "Pinned Smolink revision only; current checkout or arbitrary app compatibility is not qualified",
+    "URL workflow and storage-only explicit single-tenant protection; auth endpoints are not qualified",
+    "Application/test dependencies use the documented read-only site fallback",
+    "No external KMS custody, deployed throughput or production readiness qualification"
+  ],
+  "gates": {
+    "G-ADAPTER": "UNKNOWN",
+    "G-CRYPTO": "UNKNOWN",
+    "G-QUERY": "UNKNOWN",
+    "G-LIFECYCLE": "UNKNOWN",
+    "G-PROVIDER": "UNKNOWN",
+    "G-POLICY": "UNKNOWN",
+    "G-RELEASE": "UNKNOWN"
+  },
+  "runtime_path_verification": {
+    "python": "3.13.12",
+    "path_order": [
+      "/tmp/cryptalis-wheel-py313-exact-20261023/lib/python3.13/site-packages",
+      "/home/debrato/Projects/smolink/backend/.venv/lib/python3.13/site-packages"
+    ],
+    "runtime_and_application_origins": {
+      "cryptalis": {
+        "version": "0.1.0",
+        "origin": "/tmp/cryptalis-wheel-py313-exact-20261023/lib/python3.13/site-packages/cryptalis/__init__.py"
+      },
+      "cryptography": {
+        "version": "50.0.2",
+        "origin": "/tmp/cryptalis-wheel-py313-exact-20261023/lib/python3.13/site-packages/cryptography/__init__.py"
+      },
+      "greenlet": {
+        "version": "3.5.6",
+        "origin": "/tmp/cryptalis-wheel-py313-exact-20261023/lib/python3.13/site-packages/greenlet/__init__.py"
+      },
+      "sqlalchemy": {
+        "version": "2.1.3",
+        "origin": "/tmp/cryptalis-wheel-py313-exact-20261023/lib/python3.13/site-packages/sqlalchemy/__init__.py"
+      },
+      "psycopg": {
+        "version": "3.3.6",
+        "origin": "/tmp/cryptalis-wheel-py313-exact-20261023/lib/python3.13/site-packages/psycopg/__init__.py"
+      },
+      "pytest": {
+        "version": "9.1.1",
+        "origin": "/home/debrato/Projects/smolink/backend/.venv/lib/python3.13/site-packages/pytest/__init__.py"
+      },
+      "fastapi": {
+        "version": "0.139.0",
+        "origin": "/home/debrato/Projects/smolink/backend/.venv/lib/python3.13/site-packages/fastapi/__init__.py"
+      },
+      "httpx": {
+        "version": "0.28.1",
+        "origin": "/home/debrato/Projects/smolink/backend/.venv/lib/python3.13/site-packages/httpx/__init__.py"
+      },
+      "redis": {
+        "version": "8.0.1",
+        "origin": "/home/debrato/Projects/smolink/backend/.venv/lib/python3.13/site-packages/redis/__init__.py"
+      }
+    },
+    "psycopg_impl": "binary",
+    "cryptalis_source_path_present": false,
+    "bytecode_writes_disabled": true
+  },
+  "runtime_path_capture_sha256": "f91b9becacd22d2de644a781f84baee28a060a63511b2357e7203a64b03d0bc6",
+  "configured_package_index": "https://pypi.org/simple",
+  "package_install_configuration": "Normal wheel installation with --no-config; inherited alternate index overrides removed; cache under /tmp.",
+  "platform": "Linux",
+  "interpreter_source": "/home/debrato/Projects/smolink/backend/.venv/bin/python"
+}

@@ -21,6 +21,11 @@ No objective is complete until its acceptance evidence and applicable gate pass.
 
 ## Current boundary
 
+- The installed wheel passes the pinned Smolink URL lifecycle on Python 3.13.12
+  with exact runtime pins and binary psycopg. Product/runtime imports use the
+  new disposable site. App/test dependencies use a read-only fallback. See the
+  [installed Python 3.13 checkpoint](status.md#installed-wheel-python-313-checkpoint-2026-10-23).
+
 - The local fork regression holds the keyring mutex while sync/async preparation
   refuses inherited keys. Fresh child and retained parent keys still work.
   Product crypto stays unchanged. See the
@@ -232,7 +237,7 @@ Requirement text is abbreviated. The full definitions remain in the research
 | OBJ-LIFE-09 | Install, upgrade, decommission, clean uninstall | PARTIAL | Importable package; approved in-database removal retires reverse-owned objects after decrypt-back; a package-free restarted application process performs native CRUD | Versioned upgrade/removal and broader external application evidence |
 | OBJ-DX-01 | Minimal model/query changes; one manifest and one attach | IMPLEMENTED | `compile_protection`, `attach`, CLI inspection, bounded ACTIVE Doctor, read-only protection, payload/search preparation and reverse `status` | Unify plan/apply/remove entry points; complete operational status coverage |
 | OBJ-DX-02 | Read-only `cryptalis doctor` with explicit UNKNOWN results | PARTIAL | ACTIVE runtime Doctor and shared Python diagnostic use one read-only repeatable snapshot for exact plan/pin/restore, runtime identity, target, lineage, effective privileges and schema; six unobserved boundaries and aggregate UNKNOWN; native refusal, no-key, cleanup and output evidence | Pre-adoption manifest/schema scan, query/write route inventory, key/provider diagnostics and operational prerequisites |
-| OBJ-DX-03 | Real FastAPI/SQLModel app plus a second independent app | PARTIAL | Pinned Smolink revision 498d24b runs its original FastAPI app, HTTP URL creation and refusal cases, real Redis, repository/ORM CRUD, protect/decrypt-back/remove, and a fresh import-denied process; 38 original Python source hashes match, with zero source/model/query edits; only Url.destination is protected; the in-repo three-model application retains its separate evidence | Broader protected fields and application suite, exact packaged Python 3.13 cell, SQLModel integration, and a second external app |
+| OBJ-DX-03 | Real FastAPI/SQLModel app plus a second independent app | PARTIAL | 38 original Python files stay unchanged. Pinned Smolink 498d24b runs its original FastAPI app without source/model/query edits. HTTP URL creation/refusals, real Redis, ORM CRUD and protect/decrypt-back/remove pass. A fresh import-denied process passes native CRUD. Protection covers only Url.destination. Installed Python 3.13 uses exact runtime pins and binary psycopg, with a read-only app/test fallback. The three-model application retains separate evidence | Broader protected fields and application suite, SQLModel integration, and a second external app |
 | OBJ-DX-04 | Normal ORM identity, loading, sessions, pooling, async | PARTIAL | Bounded sync/async adapter and search tests | Broader ORM/framework coverage |
 | OBJ-DX-05 | Complete quickstart, threat model, leakage, recovery docs | PARTIAL | README, architecture, security, lifecycle, walkthroughs | Keep docs tied to admitted APIs and evidence |
 | OBJ-PERF-01 | Continuous native vs protected latency/resource measurements | PARTIAL | Revision-pinned 10k/100k/1m scalar/tuple and full-entity profiles with matched runtime roles, full migration/ACTIVE attach, raw paired samples, isolated storage and 100k/1m process CPU/RSS; historical million-row receipts retain prior source boundaries | Larger scale, cold/concurrent/tail/WAL/provider measurements |

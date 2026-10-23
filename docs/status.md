@@ -10,6 +10,33 @@ No PostgreSQL/provider/runtime cell, production key provider, independent review
 VERIFIED below refers only to the named checks and their exact revisions.
 All other contract and promotion requirements are SPECIFIED. All seven full gates remain UNKNOWN.
 
+## Installed wheel Python 3.13 checkpoint: 2026-10-23
+
+**VERIFIED, bounded local cell:** a disposable environment uses Python 3.13.12.
+A normal wheel installation supplies Cryptalis 0.1.0. Exact runtime pins:
+cryptography 50.0.2, greenlet 3.5.6, SQLAlchemy 2.1.3 and psycopg/binary 3.3.6.
+
+The binary driver is active. Product and runtime imports come from the new site.
+The read-only Smolink site follows it for application/test dependencies.
+Official PyPI supplies dependencies. Only the disposable environment receives nine
+distributions. Setup failures remain in the receipt.
+The wheel SHA-256 is `75821785bbb1fdab70b56265c1d4b91df1237f979c753076ddf3a182bd4cd1b7`.
+
+Pinned Smolink `498d24b` passes one URL lifecycle in 3.48 seconds. Native/protected operations,
+current-value removal and an import-denied child pass with real Redis.
+Its 38 application files stay unchanged.
+All 33 product modules match source `57e41e8`. All 37 checked wheel members
+match before and after the application run. The check excludes installer-rewritten RECORD.
+
+The wrapper retains 155 stable Python hashes. Protection covers only `Url.destination`.
+Authentication endpoints, deployed startup, SQLModel and a second external app remain unqualified.
+All seven production gates remain UNKNOWN.
+
+Evidence: [installation and setup outcomes](_reset/wheel-py313-exact-install-20261023.json),
+[application](_reset/wheel-py313-exact-smolink-application-20261023.json),
+[mandatory wrapper](_reset/wheel-py313-exact-smolink-wrapper-20261023.json), and
+[exact import and artifact boundary](_reset/wheel-py313-exact-boundary-20261023.json).
+
 ## Keyring held-mutex fork checkpoint: 2026-10-23
 
 **VERIFIED, local Linux / Python 3.12.3:** the parent holds the mutex across an actual POSIX fork.
