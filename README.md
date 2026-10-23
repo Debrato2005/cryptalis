@@ -16,6 +16,12 @@ One manifest selects protected text fields. One attachment handles admitted writ
 One transition executor handles protection, verification, decrypt-back, removal, and three separate rotation operations.
 SUPPORTED below selects design scope. It does not mean implemented, verified, or released support.
 
+Cryptalis targets one comprehensive, production-grade first public release across
+the full SRS and all 34 objectives. Internal development checkpoints do not reduce
+that scope or qualify a public release. Current admission stays limited and
+fail-closed. The [release direction](docs/decisions.md#comprehensive-first-public-release-2026-10-23)
+and [competitive capability matrix](docs/research/capability-matrix.md) guide the remaining work.
+
 ## Compatibility promise
 
 **SPECIFIED:** Cryptalis never silently changes what your backend returns.
@@ -29,12 +35,13 @@ Every protected table declares a tenant column or declares itself single-tenant.
 Primary keys must be application-generated, such as UUID, Snowflake-style, or another app-assigned ID.
 `plan` rejects serial, identity, and database-default-generated keys with a plain explanation.
 
-**UNSUPPORTED BY DESIGN:** comparisons and ranges, `ORDER BY`, `LIKE`/prefix/contains, regex,
-`SUM`/`AVG`/`MIN`/`MAX`, general `DISTINCT`, joins on protected fields, and every non-text protected type.
+**CURRENTLY UNADMITTED:** comparisons and ranges, `ORDER BY`, `LIKE`/prefix/contains, regex,
+`SUM`/`AVG`/`MIN`/`MAX`, general `DISTINCT`, protected joins, structured JSON and non-text protected types.
+These remain full-SRS engineering objectives. Their runtime refusal does not complete the feature.
 Other unadmitted operators also fail. Do not protect a field whose required queries use these operations.
 Queries on unprotected fields retain their native semantics.
-Range, order, prefix, and text-search work starts only after all seven build slices pass their PostgreSQL tests.
-Admission then requires all [six technical gates](docs/compatibility.md#capability-admission) and explicit leakage opt-in.
+The seven baseline slices retain their dependency and PostgreSQL evidence requirements.
+Each new capability needs all [six technical gates](docs/compatibility.md#capability-admission) and explicit leakage opt-in before admission.
 
 ## Intended adoption
 
@@ -122,7 +129,7 @@ The operator stops and drains known writers for maintenance. Immediate arbitrary
 
 ## Database prerequisites
 
-**SPECIFIED:** PostgreSQL 16 is the selected major. Other majors are **UNSUPPORTED BY DESIGN** until admission.
+**SPECIFIED:** PostgreSQL 16 is the selected first-release environment. Other majors remain outside that runtime contract until separate admission.
 Managed services on PostgreSQL 16 remain unqualified until their exact service cell passes the required suite.
 Research observations on 16.2 single-user and 16.15 service-mode PostgreSQL do not qualify a deployment.
 
@@ -169,4 +176,5 @@ The full operational status contract also remains incomplete.
 4. [Decisions](docs/decisions.md), then [build guide](docs/build-guide.md): approved choices and seven ordered slices.
 5. [Engineering playbook](ENGINEERING_PLAYBOOK.md): manual implementation, tests, and release.
 
+The [competitive capability matrix](docs/research/capability-matrix.md) tracks living parity, limitations and E2E acceptance gaps.
 [Prior art](docs/prior-art.md) contains dated primary-source comparisons.

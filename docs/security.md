@@ -93,6 +93,15 @@ These controls preserve tested Python bind/result codecs and native Boolean/Enum
 behavior. They do not establish a universal public write-type policy or a
 hostile-Python sandbox.
 
+The optional type exception checks exact SQLModel 0.0.48 AutoString before
+native String admission. It captures native hook identities and refuses changed
+hooks, subclasses, variants or implementations. Existing SELECT lineage,
+authenticated output, guarded writes and driver checks remain active.
+It adds no reader, ciphertext format, key provider trust or tenant authority.
+The ordinary Python and independent-connection trust boundaries remain unchanged.
+The [SQLModel compatibility contract](compatibility.md#optional-sqlmodel-bridge)
+defines its finite mapping and synchronous attachment scope.
+
 SELECT admission expands entity and table projections before it checks types
 and expressions. The same node snapshot includes each selected column and its
 descendants. Existing lineage and protected-expression rules apply to that

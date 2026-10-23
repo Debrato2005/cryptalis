@@ -24,7 +24,9 @@ import tomllib
 import zipfile
 
 from packaging.requirements import InvalidRequirement, Requirement
+from packaging.markers import Marker
 from packaging.specifiers import InvalidSpecifier, SpecifierSet
+from packaging.utils import InvalidName, canonicalize_name
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -126,9 +128,22 @@ def inspect_wheel(path):
             if SpecifierSet(python[0]) != SpecifierSet(project["requires-python"]):
                 raise SystemExit("wheel Python requirement does not match pyproject.toml")
             dependencies = Counter(Requirement(value) for value in declared.get_all("Requires-Dist", []))
-            if dependencies != Counter(Requirement(value) for value in project["dependencies"]):
+            expected = Counter(Requirement(value) for value in project["dependencies"])
+            extras = project.get("optional-dependencies", {})
+            provided = Counter(canonicalize_name(value, validate=True)
+                               for value in declared.get_all("Provides-Extra", []))
+            if provided != Counter(canonicalize_name(value, validate=True) for value in extras):
+                raise SystemExit("wheel extras do not match pyproject.toml")
+            for extra, values in extras.items():
+                condition = 'extra == "' + canonicalize_name(extra, validate=True) + '"'
+                for value in values:
+                    requirement = Requirement(value)
+                    requirement.marker = Marker(
+                        f"({requirement.marker}) and {condition}" if requirement.marker else condition)
+                    expected[requirement] += 1
+            if dependencies != expected:
                 raise SystemExit("wheel dependencies do not match pyproject.toml")
-        except (InvalidRequirement, InvalidSpecifier):
+        except (InvalidRequirement, InvalidSpecifier, InvalidName):
             raise SystemExit("wheel or project dependency metadata is invalid") from None
         package = [name for name in names if name.startswith("cryptalis/") and name.endswith(".py")]
         if not package:
@@ -138,6 +153,7 @@ def inspect_wheel(path):
         return {"members": len(names), "modules": len(package),
                 "metadata": metadata, "record": record,
                 "requires_python": str(SpecifierSet(python[0])),
+                "provides_extra": sorted(provided.elements()),
                 "requires_dist": sorted(str(value) for value in dependencies.elements())}
 
 

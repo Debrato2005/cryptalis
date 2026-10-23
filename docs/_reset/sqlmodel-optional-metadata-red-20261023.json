@@ -1,0 +1,20 @@
+{
+  "scope": "Actual built optional SQLModel wheel refused by previous base-only metadata inspector",
+  "command": [
+    "/home/debrato/.local/bin/uv",
+    "build",
+    "--offline",
+    "--out-dir",
+    "/tmp/cryptalis-sqlmodel-metadata-red-20261023"
+  ],
+  "build_exit_code": 0,
+  "inspection_refusal": "wheel dependencies do not match pyproject.toml",
+  "source_sha256": {
+    "pyproject.toml": "f22d6065eb3abaaef9c939f22a042c15391a3d8a0be6fe600cee92347dac61d1",
+    "uv.lock": "f863fd5cf5a8c608a9898c2626b3d7f2ee12ba0570652f5037558e9bde327df1",
+    "scripts/release_check.py": "d5f0e9e343461ea7b152127c9cba4a19fda5574f55e6441338acec638646247e"
+  },
+  "source_unchanged": true,
+  "elapsed_seconds": 0.08925737100071274,
+  "gate": "UNKNOWN"
+}

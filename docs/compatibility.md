@@ -7,16 +7,26 @@ VERIFIED means named evidence exercises the stated property on its recorded revi
 
 ## Support vocabulary
 
-Every capability is exactly one of **SUPPORTED**, **UNSUPPORTED BY DESIGN**, or **INTERNAL ONLY**.
-An unsupported capability remains rejected until admission changes its classification.
-A research mechanism or receipt is INTERNAL ONLY and cannot establish public support.
+Every capability has one current admission label: **SUPPORTED**, **CURRENTLY UNADMITTED**,
+**UNSUPPORTED BY DESIGN**, or **INTERNAL ONLY**. SUPPORTED selects admitted design scope,
+not production qualification. CURRENTLY UNADMITTED marks unfinished capabilities
+that the runtime must refuse. UNSUPPORTED BY DESIGN retains explicit safety
+and selected-runtime exclusions. INTERNAL ONLY covers research mechanisms that cannot establish support.
+Only the full SRS and 34 objectives define first-release requirements.
+An unadmitted label alone does not expand that set.
+The [comprehensive release direction](decisions.md#comprehensive-first-public-release-2026-10-23)
+retains the full SRS and all 34 objectives. Safe refusal does not complete a capability.
+The [competitive capability matrix](research/capability-matrix.md) tracks future parity and E2E acceptance.
 All normative sections here are SPECIFIED. Recorded-cost sections are VERIFIED only at their stated historical measurement scope.
 
 ## Supported stack
 
 Python 3.12+, SQLAlchemy 2.x, psycopg 3 sync and async, PostgreSQL 16.
 The text family includes native PostgreSQL text and VARCHAR, with matching standard mappings.
-Other protected types and PostgreSQL majors are UNSUPPORTED BY DESIGN until admission.
+An explicit [SQLModel bridge](#optional-sqlmodel-bridge) admits one exact pinned
+AutoString mapping through its checked native String implementation.
+Other required protected types remain CURRENTLY UNADMITTED. PostgreSQL 16 is the selected first-release environment.
+An admission label does not add PostgreSQL majors, every locale or custom host hooks to the SRS.
 The compiler inspects exact text equivalence, nullability, stable application-generated IDs, tenant declarations, and constraint scopes.
 Every protected table declares its tenant column or declares itself single-tenant.
 Serial, identity, and database-default-generated primary keys fail at plan time with a plain explanation.
@@ -53,15 +63,15 @@ Rollback/removal transforms current data through decrypt-back until explicit fin
 | Equality `==` and `IN` | SUPPORTED | Declared full tenant/domain-bound HMAC term. Preserve typed binds and native NULL/empty-list truth tables |
 | Simple negative equality `!=`, `NOT IN`, and NULL presence | SUPPORTED | Reuse the authenticated term for values and a SQL NULL check for storage-only fields. Preserve native three-valued truth, NULL elements, empty lists, and outer-join NULL extension. General Boolean NOT remains unadmitted |
 | Tenant-scoped uniqueness | SUPPORTED | Full term plus tenant scope in a race-safe native unique index. Explicit single-tenant declaration supplies its one scope |
-| Comparisons `<`, `<=`, `>`, `>=`, BETWEEN/ranges | UNSUPPORTED BY DESIGN | No admitted range representation |
-| ORDER BY and sorted pagination on protected values | UNSUPPORTED BY DESIGN | No admitted order representation. Ciphertext ordering is forbidden |
-| LIKE, ILIKE, prefix/startswith, contains, suffix | UNSUPPORTED BY DESIGN | No admitted pattern/text grammar or representation |
-| Regex, fuzzy/similarity, full text | UNSUPPORTED BY DESIGN | No admitted exact query or text-search contract |
-| SUM, AVG, MIN, MAX, arithmetic | UNSUPPORTED BY DESIGN | Selected payload/equality format does not implement these operations |
-| General DISTINCT, DISTINCT ON, GROUP BY, COUNT DISTINCT | UNSUPPORTED BY DESIGN | Randomized-payload comparison changes logical semantics. A spike's scoped aggregate rewrite does not admit this family |
-| Joins/FKs on protected fields | UNSUPPORTED BY DESIGN | No admitted shared search-domain or protected-FK contract |
-| Field-to-field equality, general Boolean NOT, other unadmitted functions/operators | UNSUPPORTED BY DESIGN | Approved scope does not independently admit these shapes |
-| Non-text protected values, JSON predicates, custom protected types | UNSUPPORTED BY DESIGN | Text is the only admitted protected type |
+| Comparisons `<`, `<=`, `>`, `>=`, BETWEEN/ranges | CURRENTLY UNADMITTED | No admitted range representation |
+| ORDER BY and sorted pagination on protected values | CURRENTLY UNADMITTED | No admitted order representation. Ciphertext ordering is forbidden |
+| LIKE, ILIKE, prefix/startswith, contains, suffix | CURRENTLY UNADMITTED | No admitted pattern/text grammar or representation |
+| Regex, fuzzy/similarity, full text | CURRENTLY UNADMITTED | No admitted exact query or text-search contract |
+| SUM, AVG, MIN, MAX, arithmetic | CURRENTLY UNADMITTED | Selected payload/equality format does not implement these operations |
+| General DISTINCT, DISTINCT ON, GROUP BY, COUNT DISTINCT | CURRENTLY UNADMITTED | Randomized-payload comparison changes logical semantics. A spike's scoped aggregate rewrite does not admit this family |
+| Joins/FKs on protected fields | CURRENTLY UNADMITTED | No admitted shared search-domain or protected-FK contract |
+| Field-to-field equality, general Boolean NOT, other unadmitted functions/operators | CURRENTLY UNADMITTED | Approved scope does not independently admit these shapes |
+| Non-text protected values, JSON predicates, unqualified custom protected types | CURRENTLY UNADMITTED | Text is the only admitted protected type. The exact pinned SQLModel AutoString exception retains native String admission |
 | Opaque raw SQL/COPY protected writes and unknown external writers | UNSUPPORTED BY DESIGN | Reject guarded routes. Plan blocks protection unless the deployment excludes separate routes |
 | Research range/prefix arrays, order candidates, scoped aggregate helpers, internal binary projections | INTERNAL ONLY | Experiments and adapter machinery, not public query capabilities |
 
@@ -117,7 +127,8 @@ NULL payloads remain SQL NULL. Empty strings encrypt normally. Reject PostgreSQL
 Strict UTF-8 never changes composed/decomposed text or silently casefolds it.
 
 Text equality requires inspected deterministic exact equivalence, such as a qualified `C` collation.
-Nondeterministic collations, citext, bpchar padding, locale-sensitive operators, custom types, and changed normalizers are UNSUPPORTED BY DESIGN until admission.
+Nondeterministic collations, citext, bpchar padding, locale-sensitive operators, custom types and changed normalizers remain outside the current text profile.
+Each required profile needs exact equivalence and separate admission. This does not require every locale or arbitrary host hook.
 The compiler rejects a constraint or mapping it cannot preserve exactly. Generic CHECK/FK/default/collation preservation is UNKNOWN.
 [Lifecycle](lifecycle.md#integrated-lifecycle-checkpoint-2026-10-07) bounds the current verifier's source-index and scoped-uniqueness evidence.
 A searchable small domain fails planning because enumeration can label equality classes. No arbitrary size threshold substitutes for leakage evidence.
@@ -146,8 +157,26 @@ constants to preserve this behavior. Known carrier length errors retain the
 typed `VarcharLengthExceeded` failure and SQLSTATE `22001`.
 The tested transaction abort and savepoint recovery remain native.
 Protected plaintext does not reach PostgreSQL for this check.
-Custom type decorators and dialect variants remain unadmitted for protected mappings and query binds.
+Other custom type decorators and dialect variants remain unadmitted for protected mappings and query binds.
 See [native VARCHAR mappings](walkthrough-migration.md#native-varchar-mappings).
+
+## Optional SQLModel bridge
+
+An explicit `cryptalis.sqlmodel.attach` bridge admits synchronous PostgreSQL
+sessions on SQLModel 0.0.48. It uses the same manifest, authenticated tenant
+scope, key policy and deployment pin. The returned session inherits native
+`Session.exec` and keeps native scalar, tuple and entity results.
+Missing dependencies, unsupported versions and async engines refuse before
+connection or key work. The ordinary SQLAlchemy attachment keeps its existing interface.
+
+Only the exact pinned AutoString type can normalize to its checked native String
+implementation. Its type, version, native method identities, flags, length,
+collation and dialect implementation must match the finite contract.
+Subclasses, changed SQL hooks, variants and changed implementations refuse.
+The native String and existing expression checks still apply after normalization.
+This exception admits no other custom protected type or query grammar.
+The [SQLModel checkpoint](status.md#optional-sqlmodel-template-checkpoint-2026-10-23)
+owns exact runtime and pinned application evidence.
 
 ## Portable DDL
 
@@ -171,7 +200,8 @@ The [slice 3 runtime checkpoint](status.md#restricted-runtime-role-completion-20
 
 ## Capability admission
 
-Only after all seven build slices pass their real PostgreSQL tests can range, order, prefix, or text-search work start.
+The seven baseline build slices must pass their real PostgreSQL tests before dependent product admission.
+Independent research and internal implementations do not establish admitted support.
 Every added type, operator, mapping, or platform must then pass all six technical gates:
 G-ADAPTER, G-CRYPTO, G-QUERY, G-LIFECYCLE, G-PROVIDER, and G-POLICY.
 [Status](status.md#missing-evidence-and-promotion-criteria) owns each gate's unchanged evidence requirements.
@@ -181,7 +211,13 @@ The six-gate grouping and conservative unadmitted grammar assumptions are record
 
 ## Performance targets and recorded costs
 
-**VERIFIED, current 10k observation at `3a21096`:** after shared identity and
+The latest SQLModel integration profile has an initial six-target latency failure
+and a passing unchanged-source follow-up. The cause remains UNKNOWN. The
+[current checkpoint](status.md#optional-sqlmodel-template-checkpoint-2026-10-23)
+retains both observations and the prior-revision comparison. Production performance
+qualification remains UNKNOWN.
+
+**VERIFIED, earlier 10k observation at `3a21096`:** after shared identity and
 SELECT type admission, all six added-p95 targets pass. Scalar/tuple point,
 equality and IN-20 measure 1.5218, 2.2998 and 3.7486 ms. Entity values measure
 1.4839, 2.0060 and 2.9876 ms. Isolated storage measures 1.52483× native.
@@ -329,7 +365,7 @@ No production cell is qualified. No production provider, authenticated deploymen
 |---|---|
 | Selected Python/SQLAlchemy/psycopg/PostgreSQL 16 sync and async | SUPPORTED design scope. Exact runtime/driver/OS cell remains UNKNOWN |
 | SQLite labs, single-user physical probes, old generated-ID adapter | INTERNAL ONLY evidence. Cannot qualify the selected contract |
-| PostgreSQL majors other than 16 | UNSUPPORTED BY DESIGN until admission |
+| PostgreSQL majors other than 16 | Outside the selected release runtime. Separate admission required |
 | PostgreSQL 16 managed services | SUPPORTED design scope. RDS/Aurora, Cloud SQL, Azure, Supabase, and Neon cells remain UNKNOWN |
 
 The selected equality index requires no extension. No provider extension allowance supplies missing qualification.

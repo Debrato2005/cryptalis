@@ -1,0 +1,44 @@
+{
+  "scope": "Optional SQLModel profile dependency inventory; separate from base-only release SBOM; no database or production qualification",
+  "format": "CycloneDX 1.5",
+  "command": [
+    "uv",
+    "export",
+    "--format",
+    "cyclonedx1.5",
+    "--all-extras",
+    "--no-dev",
+    "--locked",
+    "--output-file",
+    "/tmp/cryptalis-sqlmodel-release-20261023/sbom-sqlmodel.cdx.json"
+  ],
+  "environment": {
+    "UV_OFFLINE": "1",
+    "UV_CACHE_DIR": "/tmp/cryptalis-uv-cache"
+  },
+  "sbom": "/tmp/cryptalis-sqlmodel-release-20261023/sbom-sqlmodel.cdx.json",
+  "sbom_sha256": "2006a9e2084315fa93accca3a770bb449a502745710ccb30492244fafaba55fb",
+  "component_versions": {
+    "annotated-types": "0.8.0",
+    "cffi": "2.1.1",
+    "cryptalis": "0.1.0",
+    "cryptography": "50.0.2",
+    "greenlet": "3.5.6",
+    "psycopg": "3.3.6",
+    "psycopg-binary": "3.3.6",
+    "pycparser": "3.0",
+    "pydantic": "2.14.1",
+    "pydantic-core": "2.50.1",
+    "sqlalchemy": "2.1.3",
+    "sqlmodel": "0.0.48",
+    "typing-extensions": "4.16.0",
+    "typing-inspection": "0.4.4",
+    "tzdata": "2026.5"
+  },
+  "source_sha256": {
+    "pyproject.toml": "f22d6065eb3abaaef9c939f22a042c15391a3d8a0be6fe600cee92347dac61d1",
+    "uv.lock": "f863fd5cf5a8c608a9898c2626b3d7f2ee12ba0570652f5037558e9bde327df1"
+  },
+  "base_sbom_scope": "Default release_check.py SBOM covers base runtime only; this separate SBOM includes all declared optional extras",
+  "gate": "UNKNOWN"
+}

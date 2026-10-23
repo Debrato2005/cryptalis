@@ -26,19 +26,24 @@ No old internal API or experimental format constrains authorized implementation.
 ## Approved scope
 
 All contracts in the following sections are **SPECIFIED** unless a paragraph labels recorded evidence.
-SUPPORTED selects design scope, not current product support.
+SUPPORTED selects current admitted design scope, not production qualification.
+The first public release targets the full SRS and all 34 objectives under the
+[comprehensive release direction](../decisions.md#comprehensive-first-public-release-2026-10-23).
+The table below records current admission, not permanent product exclusions.
 
 | Contract | Approved choice |
 |---|---|
 | Stack | Python 3.12+, SQLAlchemy 2.x, psycopg 3 sync and async, PostgreSQL 16 |
-| Protected type | Native text and VARCHAR, with matching standard Text or String mappings. Other protected types remain UNSUPPORTED BY DESIGN until admission |
+| Protected type | Native text and VARCHAR, with matching standard Text or String mappings. Other protected types remain CURRENTLY UNADMITTED pending secure admission |
 | Capabilities | SUPPORTED: storage-only, equality/IN with simple negative forms, tenant-scoped uniqueness |
 | Tenancy | Every protected table declares a tenant column or declares itself single-tenant. The compiler never guesses tenant ownership |
 | Primary keys | Application-generated UUID, Snowflake-style, or another app-assigned ID. Reject serial, identity, and database-default-generated keys at plan time |
 
-Comparisons/ranges, ordering, LIKE/prefix/contains, regex, protected aggregates, general DISTINCT, and joins on protected fields are **UNSUPPORTED BY DESIGN**.
-Range, order, prefix, and text-search work starts only after all [seven build slices](../build-guide.md#ordered-build-slices) pass real PostgreSQL tests.
-The [six-gate admission rule](../compatibility.md#capability-admission) and leakage opt-in then control each addition.
+Comparisons/ranges, ordering, prefix/substring/fuzzy search, protected aggregates, JSON and other encrypted types remain **CURRENTLY UNADMITTED**.
+They remain engineering objectives. Safe refusal does not complete them.
+The [seven baseline slices](../build-guide.md#ordered-build-slices) retain their dependency requirements.
+The [six-gate admission rule](../compatibility.md#capability-admission) and leakage opt-in control each addition.
+Use the [competitive capability matrix](../research/capability-matrix.md) to select secure practical profiles.
 Research arrays, order encodings, internal transport, and diagnostic helpers are **INTERNAL ONLY**. They do not admit a public capability.
 
 ## Compatibility promise
@@ -166,6 +171,13 @@ Shape constraints cannot prove encryption to a database without keys. Full verif
 Attachment returns a factory called as `sessions(tenant_id=tenant_uuid)`. Await attachment for an AsyncEngine.
 The compiler lock must be trusted by the host. Physical protected columns must already be `bytea`.
 This call does not perform a schema/data transition. Attach before application sessions or model use.
+The optional `cryptalis.sqlmodel.attach` uses the same arguments for synchronous
+PostgreSQL sessions on SQLModel 0.0.48. It inherits native `Session.exec` and
+normalizes only the checked exact AutoString mapping to native String.
+The [compatibility contract](../compatibility.md#optional-sqlmodel-bridge)
+defines its refusals. The [checkpoint](../status.md#optional-sqlmodel-template-checkpoint-2026-10-23)
+owns its bounded runtime and application evidence.
+
 The engine must use PostgreSQL/psycopg, `echo=False`, and `hide_parameters=True`. Attachment refuses unsafe logging settings before it opens a connection or resolves a key, and it requires no checked-out connections at activation.
 Ordinary ORM flush writes, mapped dictionary INSERT with optional single protected
 scalar RETURNING, direct

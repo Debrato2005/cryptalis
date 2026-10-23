@@ -1,0 +1,51 @@
+"""Optional synchronous PostgreSQL bridge for SQLModel 0.0.48."""
+
+try:
+    from sqlmodel import Session as _NativeSession
+except ModuleNotFoundError as error:
+    if error.name != 'sqlmodel':
+        raise
+    _NativeSession = None
+
+from sqlalchemy.ext.asyncio import AsyncEngine
+
+from ._sqlmodel_types import _version
+from .sqlalchemy import (_Factory as _AlchemyFactory, _Session as _AlchemySession,
+                         UnsupportedProtectedOperation, attach as _attach)
+
+
+class SQLModelUnavailable(UnsupportedProtectedOperation):
+    stage = 'SQLModel dependency admission'
+    remedy = 'Install the optional SQLModel 0.0.48 dependency, then restart before attachment.'
+
+
+class SQLModelVersionUnsupported(UnsupportedProtectedOperation):
+    stage = 'SQLModel version admission'
+    remedy = 'Use SQLModel 0.0.48, then restart before attachment.'
+
+
+if _NativeSession is not None:
+    class _Session(_AlchemySession, _NativeSession):
+        pass
+else:
+    _Session = None
+
+
+class _Factory(_AlchemyFactory):
+    _sync_session = _Session
+
+
+def attach(mapping, engine, *, lock, keys, deployment=None):
+    """Attach with native SQLModel Session.exec scalar and tuple results.
+
+    The host supplies the same lock, key policy and tenant scope as for the
+    SQLAlchemy adapter. Async SQLModel attachment is not admitted.
+    """
+    if _NativeSession is None:
+        raise SQLModelUnavailable()
+    if _version != '0.0.48':
+        raise SQLModelVersionUnsupported()
+    if isinstance(engine, AsyncEngine):
+        raise UnsupportedProtectedOperation()
+    factory = _attach(mapping, engine, lock=lock, keys=keys, deployment=deployment)
+    return _Factory(factory._owner)

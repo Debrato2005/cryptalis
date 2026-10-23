@@ -29,6 +29,7 @@ from sqlalchemy.sql.dml import Insert, Update, Delete
 from sqlalchemy.types import JSON, NullType, TypeDecorator, TypeEngine, UserDefinedType
 
 from ._sqlalchemy_guard import install_guard
+from ._sqlmodel_types import autostring_impl
 from ._sqlalchemy_search import rewrite_search, search_shape, validate_search_storage
 from .crypto import CryptoFailure, AuthenticationFailed, FieldDescriptor, Keyring, KeyUnavailable, MAX_TEXT_BYTES, open_text, seal_text
 from .crypto.cf1 import _encode
@@ -706,6 +707,10 @@ class _Attachment:
         adapt = (TypeEngine.adapt, Uuid.adapt, Boolean.adapt, Enum.adapt) if selecting else (TypeEngine.adapt, Uuid.adapt)
         seen = set()
         while True:
+            try:
+                sqlmodel_impl = autostring_impl(dtype)
+            except (TypeError, ValueError):
+                raise UnsupportedProtectedOperation() from None
             if selecting:
                 cls.select_dispatch(dtype)
             if (id(dtype) in seen or dtype._variant_mapping or dtype._has_bind_expression or
@@ -715,6 +720,9 @@ class _Attachment:
                     type(dtype).adapt not in adapt):
                 raise UnsupportedProtectedOperation()
             seen.add(id(dtype))
+            if sqlmodel_impl is not None:
+                dtype = sqlmodel_impl
+                continue
             if selecting and isinstance(dtype, _native_types.ARRAY):
                 dtype = dtype.item_type
                 continue
@@ -1736,6 +1744,8 @@ for _name in ("execute", "scalar", "scalars", "stream", "stream_scalars", "get",
 
 
 class _Factory:
+    _sync_session = _Session
+
     def __init__(self, owner):
         self._owner = owner
 
@@ -1743,7 +1753,7 @@ class _Factory:
         if any(k in options for k in ("bind", "binds", "class_", "sync_session_class", "_owner", "_asynchronous")):
             raise UnsupportedProtectedOperation()
         self._owner._ring(tenant_id)
-        cls = _AsyncSession if isinstance(self._owner.engine, AsyncEngine) else _Session
+        cls = _AsyncSession if isinstance(self._owner.engine, AsyncEngine) else self._sync_session
         return cls(bind=self._owner.engine, _owner=self._owner, tenant_id=tenant_id, **options)
 
 

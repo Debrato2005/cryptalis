@@ -1,8 +1,12 @@
 # Implementation order
 
-**SPECIFIED:** implement exactly one slice per run, in the order below.
-Each slice needs meaningful tests on real service-mode PostgreSQL 16 before the next slice starts.
-Local test success advances build order only. It does not mark a full gate PASS or qualify production.
+**SPECIFIED:** target one comprehensive production-grade first public release for the full SRS and all 34 objectives.
+Use the seven baseline slices below as dependency steps, not the complete release scope.
+Prioritize complete application journeys and independent workstreams within available agent capacity.
+Keep meaningful service-mode PostgreSQL 16 evidence before dependent integration.
+Internal development checkpoints do not qualify a partial public release.
+Local test success does not mark a full gate PASS or qualify production.
+Use the [competitive capability matrix](research/capability-matrix.md) to select high-value work.
 The [manual workflow](../ENGINEERING_PLAYBOOK.md#manual-workflow) remains the default for source and tests.
 Do not describe spike code as product code. [Status](status.md) owns recorded evidence and revision limits.
 
@@ -106,10 +110,23 @@ Pause budgets remain D. Measurements and explicit operator approvals do not crea
 
 ## Acceptance evidence
 
-No range, order, prefix, or text-search implementation starts before all seven slices pass their real PostgreSQL tests.
-Each addition then enters through [six-gate admission](compatibility.md#capability-admission), explicit leakage acceptance, and exact native-query evidence.
+Baseline dependencies retain their real PostgreSQL requirements before dependent admission.
+Each addition enters through [six-gate admission](compatibility.md#capability-admission), explicit leakage acceptance, and exact native-query evidence.
+The full SRS and all 34 objectives remain release requirements. Safe refusal alone does not complete a feature.
 Research algorithms and physical arrays are INTERNAL ONLY.
 The full [release gate](../ENGINEERING_PLAYBOOK.md#release-gate) remains mandatory before production claims.
+
+Prioritize this complete journey in pinned independent applications before public release:
+
+1. Install Cryptalis and supply a manifest. Run Doctor for actionable compatibility findings. Plan and apply protection to existing data.
+2. Compare protected CRUD, search, uniqueness, tenancy and concurrency with the native baseline. Independently inspect stored data for protected plaintext.
+3. Exercise key expiry, wrong keys, corrupted frames and unsupported operations. Complete all rotations, interrupt/resume migration and restore a backup on a fresh cluster.
+4. Decrypt latest committed values and retire eligible generated database objects. Uninstall Cryptalis, restart the original application and compare native values, schema semantics and behavior.
+
+Preserve existing tests. Add focused lower-level checks for security invariants
+and deterministic failures that application E2E cannot establish. Run focused
+checks after changes, integrated E2E after meaningful milestones and broader
+regressions at release gates.
 
 Use the same backend, data, queries, constraints, driver, and result materialization for matched benchmarks.
 Record versions/revisions, selectivity, distributions, p50/p95/p99, throughput, CPU, memory, isolated storage/index sizes, and sustained writes.

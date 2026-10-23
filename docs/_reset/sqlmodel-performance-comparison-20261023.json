@@ -1,0 +1,142 @@
+{
+  "scope": "Controlled same-host current/prior/current comparison after one observed latency failure; no implementation or threshold change",
+  "receipts": {
+    "initial_current": {
+      "path": "sqlmodel-integration-performance-20261023.json",
+      "sha256": "c77645ee8f4af6cc86d2e27a4a198be2cceb8954b8f70adb9e3cda8bcd7eb0d1",
+      "targets": {
+        "equality": {
+          "added_p95_ms": 8.136366,
+          "maximum_added_p95_ms": 3,
+          "status": "FAIL"
+        },
+        "equality_entities": {
+          "added_p95_ms": 8.168702,
+          "maximum_added_p95_ms": 3,
+          "status": "FAIL"
+        },
+        "in20": {
+          "added_p95_ms": 8.527092,
+          "maximum_added_p95_ms": 8,
+          "status": "FAIL"
+        },
+        "in20_entities": {
+          "added_p95_ms": 22.948338,
+          "maximum_added_p95_ms": 8,
+          "status": "FAIL"
+        },
+        "isolated_storage": {
+          "maximum_ratio": 2,
+          "observed_ratio": 1.5248304624388875,
+          "status": "PASS"
+        },
+        "point": {
+          "added_p95_ms": 5.371139,
+          "maximum_added_p95_ms": 3,
+          "status": "FAIL"
+        },
+        "point_entities": {
+          "added_p95_ms": 5.852550000000001,
+          "maximum_added_p95_ms": 3,
+          "status": "FAIL"
+        }
+      }
+    },
+    "prior_commit": {
+      "path": "sqlmodel-performance-baseline-d3b748e-20261023.json",
+      "sha256": "32d01305a50e571f5688226b0f4234e74e035215258e905a353b90ea8c54bf87",
+      "targets": {
+        "equality": {
+          "added_p95_ms": 2.258384,
+          "maximum_added_p95_ms": 3,
+          "status": "PASS"
+        },
+        "equality_entities": {
+          "added_p95_ms": 2.1298939999999997,
+          "maximum_added_p95_ms": 3,
+          "status": "PASS"
+        },
+        "in20": {
+          "added_p95_ms": 2.3879520000000003,
+          "maximum_added_p95_ms": 8,
+          "status": "PASS"
+        },
+        "in20_entities": {
+          "added_p95_ms": 2.870415,
+          "maximum_added_p95_ms": 8,
+          "status": "PASS"
+        },
+        "isolated_storage": {
+          "maximum_ratio": 2,
+          "observed_ratio": 1.5248304624388875,
+          "status": "PASS"
+        },
+        "point": {
+          "added_p95_ms": 2.157377,
+          "maximum_added_p95_ms": 3,
+          "status": "PASS"
+        },
+        "point_entities": {
+          "added_p95_ms": 1.356803,
+          "maximum_added_p95_ms": 3,
+          "status": "PASS"
+        }
+      }
+    },
+    "current_after_prior": {
+      "path": "sqlmodel-performance-current-after-baseline-20261023.json",
+      "sha256": "ae6c926d6f6d298d494e28f8b856c460202244b46017c53b1c0156e8f99a59af",
+      "targets": {
+        "equality": {
+          "added_p95_ms": 2.066699,
+          "maximum_added_p95_ms": 3,
+          "status": "PASS"
+        },
+        "equality_entities": {
+          "added_p95_ms": 2.143422,
+          "maximum_added_p95_ms": 3,
+          "status": "PASS"
+        },
+        "in20": {
+          "added_p95_ms": 3.225997,
+          "maximum_added_p95_ms": 8,
+          "status": "PASS"
+        },
+        "in20_entities": {
+          "added_p95_ms": 2.9530320000000003,
+          "maximum_added_p95_ms": 8,
+          "status": "PASS"
+        },
+        "isolated_storage": {
+          "maximum_ratio": 2,
+          "observed_ratio": 1.5248304624388875,
+          "status": "PASS"
+        },
+        "point": {
+          "added_p95_ms": 1.3751280000000001,
+          "maximum_added_p95_ms": 3,
+          "status": "PASS"
+        },
+        "point_entities": {
+          "added_p95_ms": 1.479342,
+          "maximum_added_p95_ms": 3,
+          "status": "PASS"
+        }
+      }
+    }
+  },
+  "current_source_identical_between_runs": true,
+  "same_seed": true,
+  "identical_target_thresholds": true,
+  "conclusion": "Original current run failed latency targets; prior baseline and unchanged current follow-up passed. The code regression did not reproduce consistently. Original cause remains UNKNOWN. Host variation is an inference, not a measured cause.",
+  "production_performance_qualification": "UNKNOWN",
+  "gates": {
+    "G-ADAPTER": "UNKNOWN",
+    "G-CRYPTO": "UNKNOWN",
+    "G-LIFECYCLE": "UNKNOWN",
+    "G-POLICY": "UNKNOWN",
+    "G-PROVIDER": "UNKNOWN",
+    "G-QUERY": "UNKNOWN",
+    "G-RELEASE": "UNKNOWN"
+  }
+}

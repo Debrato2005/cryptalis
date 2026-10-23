@@ -17,10 +17,10 @@ a separate policy-checked retry. Their source observations and final checks rema
 
 | Owner | Worktree | Write scope | Current slice | State |
 |---|---|---|---|---|
-| Lifecycle specialist | `/tmp/cryptalis-parallel-lifecycle-20261023` | Independent package metadata review | Optional SQLModel extra | Current installed-wheel application verification complete |
-| Framework specialist | `/tmp/cryptalis-parallel-kms-20261023` | Optional SQLModel bridge, compiler normalization and tests | Second SQLModel application | Nine new controls pass. Existing affected regressions run separately |
-| Documentation specialist | Main worktree | Status, checklist and decisions | Verified checkpoint evidence | Wait for VARCHAR integration results |
-| Lead | `/home/debrato/Projects/cryptalis` | Security, compatibility, integration and brief | Integrate verified slices | Current commit `dd7266f`. VARCHAR UPDATE verification complete. Local commit follows |
+| Lifecycle specialist | `/tmp/cryptalis-parallel-lifecycle-20261023` | Current package and installed-wheel receipts | Optional SQLModel wheel | Offline checks pass. Database application test waits for full terminal |
+| Framework specialist | `/tmp/cryptalis-parallel-kms-20261023` | Optional SQLModel bridge, compiler normalization and tests | Second SQLModel application | Isolated commit `b915383` integrated. Ownership released |
+| Documentation specialist | Main worktree | Status, checklist and decisions | Verified checkpoint evidence | SQLModel specialist evidence recorded. Integration results pending |
+| Lead | `/home/debrato/Projects/cryptalis` | Security, compatibility, integration and brief | Integrate verified slices | Current commit `d3b748e`. Combined SQLModel source frozen during full regression |
 
 Use the existing project interpreter with `PYTHONPATH` set to the worktree's
 `src` directory. Verify the imported module path. Run all database tests through
@@ -123,3 +123,47 @@ Existing plain-SQLAlchemy regressions remain in progress. The optional package
 extra has offline artifact controls in a separate temporary directory.
 The documentation owner records terminal integration results. The lead owns
 integration history, security and compatibility. No main Python wrapper remains active.
+
+## Optional SQLModel integration in progress
+
+Commit `d3b748e` records the verified VARCHAR slice. The lead then integrates
+`b915383` without conflicts. The explicit optional synchronous bridge inherits
+native `Session.exec`. Only exact SQLModel 0.0.48 AutoString receives the checked
+native String exception. Missing dependencies, unsupported versions and async
+attachment refuse before connection or key work.
+
+The final specialist profile passes ten checks, including one unchanged pinned
+template CRUD lifecycle. The final older SQLAlchemy cell passes 54 checks with
+SQLModel absent. That cell proves typed missing-dependency refusal, not older
+SQLModel compatibility. The earlier 209-case bundle retains its earlier source
+boundary. Four application Python files, LICENSE and project metadata stay unchanged.
+
+The optional extra keeps all four base runtime pins and all 16 prior lock
+versions. Five optional dependencies join the lock. The actual built extra
+first reproduces the old metadata inspector refusal. The corrected inspector
+passes 15 offline tests plus 70 subtests. Its exact extra/requirement multisets
+also preserve an existing dependency marker.
+
+Current reproducible archives, base SBOM and installed-file checks pass.
+A separate all-extras SBOM records the optional lock inventory. It is not an
+inventory of normal pip resolution. The new Python 3.13 cell contains the actual
+wheel with its optional extra. All 35 modules and 39 installed files match.
+Its database application profile waits for the serial full suite to end.
+All main Python files stay frozen. All seven production gates remain UNKNOWN.
+
+The combined full suite now passes 2,282 tests plus 18 subtests, with six skips
+and 164 unchanged Python files. The actual installed wheel passes 14 controls,
+including unchanged template CRUD and ordinary SQLAlchemy sync/async behavior.
+All 39 installed files, 35 modules and six pinned application files stay unchanged.
+
+The first current 10,000-row profile fails all six latency targets. Its storage
+ratio passes at 1.52483. A serial prior-commit baseline passes, followed by an
+unchanged current-source pass. Seeds and thresholds match. The original failure
+remains evidence, and its cause stays UNKNOWN. No performance fix is claimed.
+
+The newest user direction requires one comprehensive, production-qualified first
+public release. All 34 objectives remain. Internal milestones do not reduce that
+release scope. A pinned competitor matrix records source-backed mechanisms and
+limits. The lifecycle owner now connects the real Smolink application journey
+to the existing fresh-cluster restore harness. The lead owns pre-adoption Doctor
+integration. All seven production gates remain UNKNOWN.

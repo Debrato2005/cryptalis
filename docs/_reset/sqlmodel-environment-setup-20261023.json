@@ -1,0 +1,82 @@
+{
+  "python": "3.13.12",
+  "environment": "/tmp/cryptalis-sqlmodel-py313-20261023",
+  "installed_versions": {
+    "PyJWT": "2.15.1",
+    "Pygments": "2.21.0",
+    "SQLAlchemy": "2.1.3",
+    "annotated-types": "0.8.0",
+    "argon2-cffi": "25.1.0",
+    "argon2-cffi-bindings": "26.1.0",
+    "bcrypt": "5.0.0",
+    "cffi": "2.1.1",
+    "cryptalis": "0.1.0",
+    "cryptography": "50.0.2",
+    "dnspython": "2.9.0",
+    "email-validator": "2.3.0",
+    "greenlet": "3.5.6",
+    "idna": "3.20",
+    "iniconfig": "2.3.1",
+    "packaging": "26.3",
+    "pluggy": "1.7.0",
+    "psycopg": "3.3.6",
+    "psycopg-binary": "3.3.6",
+    "pwdlib": "0.3.1",
+    "pycparser": "3.12",
+    "pydantic": "2.14.1",
+    "pydantic-settings": "2.16.1",
+    "pydantic_core": "2.50.1",
+    "pytest": "9.1.1",
+    "python-dotenv": "1.2.4",
+    "sqlmodel": "0.0.48",
+    "typing-inspection": "0.4.4",
+    "typing_extensions": "4.16.0"
+  },
+  "runtime_import_origins": {
+    "cryptalis": "/tmp/cryptalis-parallel-kms-20261023/src/cryptalis/__init__.py",
+    "sqlmodel": "/tmp/cryptalis-sqlmodel-py313-20261023/lib/python3.13/site-packages/sqlmodel/__init__.py",
+    "pydantic": "/tmp/cryptalis-sqlmodel-py313-20261023/lib/python3.13/site-packages/pydantic/__init__.py",
+    "sqlalchemy": "/tmp/cryptalis-sqlmodel-py313-20261023/lib/python3.13/site-packages/sqlalchemy/__init__.py",
+    "psycopg": "/tmp/cryptalis-sqlmodel-py313-20261023/lib/python3.13/site-packages/psycopg/__init__.py",
+    "cryptography": "/tmp/cryptalis-sqlmodel-py313-20261023/lib/python3.13/site-packages/cryptography/__init__.py",
+    "greenlet": "/tmp/cryptalis-sqlmodel-py313-20261023/lib/python3.13/site-packages/greenlet/__init__.py"
+  },
+  "installed_cryptalis_wheel": "setup runtime dependency source only; implementation profile imports isolated worktree/src",
+  "template_source_sha256": {
+    "LICENSE": "0bd4e76cdd06ab24cce2de5e74f490920897f90a22ad35e8403ed006d4560f48",
+    "backend/pyproject.toml": "5c6bbcfb3fbdccbdc22d2828628ed4dc8352e13574899296cd9836ac9342c413",
+    "backend/app/crud.py": "f69d79e858ee22cee7792494b0df0370afaed20439ed16bbf6f70767926254d1",
+    "backend/app/models.py": "5cd49acda8771e6f9551f47a0d1e516bcce91d90841a1e9e0283a1ef2d6a7e94",
+    "backend/app/core/security.py": "0006fd18a2900107c6e06023c1b9ccf3960887e84cf664e1632307305c6c4ab7",
+    "backend/app/core/config.py": "668f895a04119a5aaa9890628a13add517e31f61856d228e03a471fa3eb62aa4"
+  },
+  "attempts": [
+    {
+      "kind": "offline cache install",
+      "outcome": "cache miss for SQLModel; no packages installed"
+    },
+    {
+      "kind": "official PyPI normal dependency install",
+      "outcome": "succeeded; 29 distributions; exact runtime pins retained"
+    },
+    {
+      "kind": "direct pytest collection/pure check",
+      "outcome": "repository preflight guard refused both before tests/database; no bypass or retry"
+    },
+    {
+      "kind": "native SQLModel custom-registry fixture construction",
+      "outcome": "first direct table registry form unmapped; native base-registry form corrected before database tests"
+    },
+    {
+      "kind": "older cell interpreter alone",
+      "outcome": "Dependencies.Unavailable before either database probe; psycopg/cryptography absent; no pytest run"
+    },
+    {
+      "kind": "corrected read-only older dependency path",
+      "outcome": "reused existing isolated exact-wheel runtime site after read-only Smolink site; SQLAlchemy2.0.51 retained, SQLModel absent; no installation"
+    }
+  ],
+  "existing_environments_modified": false,
+  "postgres_tests_run": false,
+  "gates": "all seven UNKNOWN"
+}

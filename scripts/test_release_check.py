@@ -16,11 +16,14 @@ import tarfile
 import tempfile
 import tomllib
 import unittest
+from unittest.mock import patch
 import warnings
 import venv
 import zipfile
 
 from release_check import ROOT, inspect_sdist, inspect_wheel
+from packaging.markers import Marker
+from packaging.requirements import Requirement
 
 
 INFO = "cryptalis-0.1.0.dist-info"
@@ -28,11 +31,20 @@ RECORD = INFO + "/RECORD"
 MODULE = "cryptalis/__init__.py"
 
 
-def wheel_files():
+def wheel_files(include_optional=True):
     project = tomllib.loads((ROOT / "pyproject.toml").read_text())["project"]
     metadata = ("Metadata-Version: 2.4\nName: cryptalis\nVersion: 0.1.0\n"
                 + "Requires-Python: " + project["requires-python"] + "\n"
                 + "".join("Requires-Dist: " + dependency + "\n" for dependency in project["dependencies"]))
+    if include_optional:
+        for extra, dependencies in project.get("optional-dependencies", {}).items():
+            metadata += "Provides-Extra: " + extra + "\n"
+            for dependency in dependencies:
+                requirement = Requirement(dependency)
+                condition = f'extra == "{extra}"'
+                requirement.marker = Marker(
+                    f"({requirement.marker}) and {condition}" if requirement.marker else condition)
+                metadata += "Requires-Dist: " + str(requirement) + "\n"
     return {
         MODULE: b'"""Artifact fixture."""\n',
         INFO + "/METADATA": metadata.encode(),
@@ -123,7 +135,9 @@ class ArtifactIntegrityTests(unittest.TestCase):
         headers = metadata.splitlines()
         dependencies = [line for line in headers if line.startswith("Requires-Dist:")]
         metadata = "\n".join(line for line in headers if not line.startswith("Requires-Dist:")) + "\n"
-        metadata += "\n".join(line.upper() for line in reversed(dependencies)) + "\n"
+        metadata += "\n".join(
+            line.partition(";")[0].upper() + (";" + line.partition(";")[2] if ";" in line else "")
+            for line in reversed(dependencies)) + "\n"
         files[INFO + "/METADATA"] = metadata.encode()
         write_wheel(self.wheel, files, record_rows(files))
         self.assertEqual(inspect_wheel(self.wheel)["modules"], 1)
@@ -131,6 +145,52 @@ class ArtifactIntegrityTests(unittest.TestCase):
         write_wheel(self.wheel, files, record_rows(files))
         with self.assertRaises(SystemExit):
             inspect_wheel(self.wheel)
+
+    def test_wheel_optional_dependencies_match_the_declared_extra(self):
+        root = Path(self.temporary.name)
+        project = tomllib.loads((ROOT / "pyproject.toml").read_text())["project"]
+        (root / "pyproject.toml").write_text(
+            "[project]\n" + "".join(key + " = " + json.dumps(project[key]) + "\n"
+                                      for key in ("name", "version", "requires-python", "dependencies"))
+            + '\n[project.optional-dependencies]\nsqlmodel = ["sqlmodel==0.0.48"]\n')
+        files = wheel_files(include_optional=False)
+        metadata = files[INFO + "/METADATA"]
+        extra = b'Provides-Extra: sqlmodel\n'
+        dependency = b'Requires-Dist: sqlmodel==0.0.48; extra == "sqlmodel"\n'
+        with patch("release_check.ROOT", root):
+            for suffix in (extra + dependency,
+                           b'Provides-Extra: SQLMODEL\nRequires-Dist: SQLMODEL==0.0.48; extra == "SQLMODEL"\n'):
+                with self.subTest(valid=suffix):
+                    files[INFO + "/METADATA"] = metadata + suffix
+                    write_wheel(self.wheel, files, record_rows(files))
+                    self.assertEqual(inspect_wheel(self.wheel)["modules"], 1)
+            for suffix in (extra, dependency, extra * 2 + dependency,
+                           extra + dependency * 2,
+                           extra + dependency.replace(b"0.0.48", b"0.0.47"),
+                           extra + dependency.replace(b'sqlmodel"', b'other"'),
+                           extra + b'Requires-Dist: sqlmodel==0.0.48\n',
+                           extra + dependency + b'Provides-Extra: other\n'):
+                with self.subTest(invalid=suffix):
+                    files[INFO + "/METADATA"] = metadata + suffix
+                    write_wheel(self.wheel, files, record_rows(files))
+                    with self.assertRaises(SystemExit):
+                        inspect_wheel(self.wheel)
+
+        original = "sys_platform == 'win32' or python_version < '3.14'"
+        project_path = root / "pyproject.toml"
+        project_path.write_text(project_path.read_text().replace(
+            'sqlmodel==0.0.48', 'sqlmodel==0.0.48; ' + original))
+        conditional = (b'Requires-Dist: sqlmodel==0.0.48; '
+                       b'(sys_platform == "win32" or python_version < "3.14") '
+                       b'and extra == "sqlmodel"\n')
+        with patch("release_check.ROOT", root):
+            files[INFO + "/METADATA"] = metadata + extra + conditional
+            write_wheel(self.wheel, files, record_rows(files))
+            self.assertEqual(inspect_wheel(self.wheel)["modules"], 1)
+            files[INFO + "/METADATA"] = metadata + extra + dependency
+            write_wheel(self.wheel, files, record_rows(files))
+            with self.assertRaises(SystemExit):
+                inspect_wheel(self.wheel)
 
     def test_record_cannot_omit_or_repeat_archive_files(self):
         files = wheel_files()

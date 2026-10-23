@@ -1,0 +1,53 @@
+{
+  "repository": "fastapi/full-stack-fastapi-template",
+  "release": "0.10.0",
+  "revision": "d40de23896d27d15c17a7bf9649123fd167a0aa8",
+  "license": "MIT",
+  "files": [
+    {
+      "path": "backend/app/models.py",
+      "github_blob": "b5132e0e2c61b9f11a3fd6598adb0fe978f2fa0b",
+      "url": "https://github.com/fastapi/full-stack-fastapi-template/blob/d40de23896d27d15c17a7bf9649123fd167a0aa8/backend/app/models.py"
+    },
+    {
+      "path": "backend/app/crud.py",
+      "github_blob": "a8ceba64442f852707964418256022ea2aaf00b7",
+      "url": "https://github.com/fastapi/full-stack-fastapi-template/blob/d40de23896d27d15c17a7bf9649123fd167a0aa8/backend/app/crud.py"
+    },
+    {
+      "path": "backend/app/core/security.py",
+      "github_blob": "1e49ebc1fef8e856cce20b506481c9a2a82e8631",
+      "url": "https://github.com/fastapi/full-stack-fastapi-template/blob/d40de23896d27d15c17a7bf9649123fd167a0aa8/backend/app/core/security.py"
+    },
+    {
+      "path": "backend/app/core/config.py",
+      "github_blob": "650b9f791072476007183a5ce1b9665e5682f278",
+      "url": "https://github.com/fastapi/full-stack-fastapi-template/blob/d40de23896d27d15c17a7bf9649123fd167a0aa8/backend/app/core/config.py"
+    },
+    {
+      "path": "LICENSE",
+      "github_blob": "f11987b50cfa15ae4f99d4c559137458c87d7a69",
+      "url": "https://github.com/fastapi/full-stack-fastapi-template/blob/d40de23896d27d15c17a7bf9649123fd167a0aa8/LICENSE"
+    },
+    {
+      "path": "backend/pyproject.toml",
+      "github_blob": "3c876f11e0c79763713ca24424098e94bdea58d0",
+      "url": "https://github.com/fastapi/full-stack-fastapi-template/blob/0.10.0/backend/pyproject.toml"
+    }
+  ],
+  "downloaded_code_executed": true,
+  "downloaded_code_execution": "Local pinned unchanged CRUD/model/security/config modules exercised through native/protected/package-free PostgreSQL lifecycle; no external service calls.",
+  "sqlmodel": {
+    "version": "0.0.48",
+    "revision": "5ce1a472488734363b2ab36f8ce2bcc773e4593e",
+    "url": "https://github.com/fastapi/sqlmodel/blob/5ce1a472488734363b2ab36f8ce2bcc773e4593e/sqlmodel/sql/sqltypes.py",
+    "sqlalchemy_requirement": ">=2.0.14,<2.2.0"
+  },
+  "current_default_branch": {
+    "revision": "b1125d8839482cb7bbae603ddc6d0081bf87532e",
+    "python": ">=3.14,<4.0",
+    "qualified": false
+  },
+  "selected_template_python": ">=3.10,<4.0",
+  "boundary": "Only original models.py/crud.py and their original security.py/config.py imports; no HTTP/startup/authentication qualification, app edits, or production gate promotion."
+}

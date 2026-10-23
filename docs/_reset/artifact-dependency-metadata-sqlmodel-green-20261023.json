@@ -1,0 +1,25 @@
+{
+  "scope": "Offline wheel Python/dependency metadata integrity; local artifact fixtures, no database or runtime crypto changes",
+  "phase": "sqlmodel-green",
+  "base_revision": "d3b748e9eb732d0181be222d997edcf3a8f04595",
+  "command": [
+    "/home/debrato/Projects/cryptalis/.venv/bin/python",
+    "-m",
+    "pytest",
+    "-q",
+    "scripts/test_release_check.py"
+  ],
+  "python": "3.12.3",
+  "source_sha256": {
+    "scripts/release_check.py": "1d24ed0c55ab99eeab5e7bc29c668735414bb7997d84105c4f05dd0f9a745f99",
+    "scripts/test_release_check.py": "72dbcf4b1be8aeec94e8bdffe527922d9dfa6f83c6f418033432c40fff186bb7",
+    "pyproject.toml": "f22d6065eb3abaaef9c939f22a042c15391a3d8a0be6fe600cee92347dac61d1",
+    "uv.lock": "f863fd5cf5a8c608a9898c2626b3d7f2ee12ba0570652f5037558e9bde327df1"
+  },
+  "source_unchanged": true,
+  "exit_code": 0,
+  "elapsed_seconds": 4.131563157992787,
+  "terminal_stdout": "............. [ 86%]\n..                                                            [100%]\n15 passed, 70 subtests passed in 3.93s\n",
+  "terminal_stderr": "",
+  "gate": "UNKNOWN"
+}

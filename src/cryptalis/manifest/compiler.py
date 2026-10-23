@@ -21,6 +21,7 @@ from psycopg import Error as PsycopgError
 
 from cryptalis.manifest.declaration import parse_protection_declaration
 from cryptalis.manifest.parser import MAX_DOCUMENT_BYTES, ManifestInvalid, decode_manifest_json
+from cryptalis._sqlmodel_types import autostring_impl
 
 
 @dataclass(frozen=True)
@@ -127,17 +128,19 @@ def _native_text_length(column):
 
 
 def _text_mapping_matches(column, native):
-    if getattr(column.type, '_variant_mapping', None):
-        return False
     try:
+        dtype = autostring_impl(column.type)
+        dtype = column.type if dtype is None else dtype
+        if getattr(dtype, '_variant_mapping', None):
+            return False
         length = _native_text_length(native)
     except (ValueError, KeyError, TypeError):
         return False
     if native['type'] == 'text':
-        return type(column.type) in (Text, postgresql.TEXT)
-    return (type(column.type) in (String, postgresql.VARCHAR)
-            and (column.type.length is None if length is None else
-                 type(column.type.length) is int and column.type.length == length))
+        return type(dtype) in (Text, postgresql.TEXT)
+    return (type(dtype) in (String, postgresql.VARCHAR)
+            and (dtype.length is None if length is None else
+                 type(dtype.length) is int and dtype.length == length))
 
 
 def _digest(document: object) -> str:

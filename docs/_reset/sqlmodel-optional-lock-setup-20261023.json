@@ -1,0 +1,31 @@
+{
+  "scope": "Temporary optional SQLModel dependency lock setup after offline universal metadata cache miss",
+  "command": [
+    "/home/debrato/.local/bin/uv",
+    "--no-config",
+    "lock",
+    "--default-index",
+    "https://pypi.org/simple"
+  ],
+  "exit_code": 0,
+  "stdout": "",
+  "stderr": "Using CPython 3.13.12\nResolved 21 packages in 506ms\nAdded annotated-types v0.8.0\nAdded pydantic v2.14.1\nAdded pydantic-core v2.50.1\nAdded sqlmodel v0.0.48\nAdded typing-inspection v0.4.4\n",
+  "base_revision": "d3b748e9eb732d0181be222d997edcf3a8f04595",
+  "earlier_offline_attempt": {
+    "result": "universal metadata cache miss; dependency resolution refused before installation",
+    "network": false
+  },
+  "existing_package_versions_unchanged": true,
+  "existing_package_count": 16,
+  "added_packages": {
+    "annotated-types": "0.8.0",
+    "pydantic": "2.14.1",
+    "pydantic-core": "2.50.1",
+    "sqlmodel": "0.0.48",
+    "typing-inspection": "0.4.4"
+  },
+  "project_sha256": "f22d6065eb3abaaef9c939f22a042c15391a3d8a0be6fe600cee92347dac61d1",
+  "lock_sha256": "f863fd5cf5a8c608a9898c2626b3d7f2ee12ba0570652f5037558e9bde327df1",
+  "existing_environments_modified": false,
+  "gate": "UNKNOWN"
+}

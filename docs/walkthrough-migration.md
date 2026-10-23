@@ -73,6 +73,30 @@ Protection admits one initial operation per schema. Root rewrap adds an exact
 successor chain. General journal reuse remains unfinished.
 [Evidence](status.md) records tests, costs, and limits.
 
+## Use the optional SQLModel bridge
+
+Use the `sqlmodel` extra from a locally built wheel in an isolated application environment.
+Use the same SQLAlchemy registry for planning and attachment.
+The host still supplies the trusted lock, active deployment pin, key policy and authenticated tenant UUID.
+
+```python
+from cryptalis.sqlmodel import attach as attach_sqlmodel
+from sqlmodel import select
+
+sessions = attach_sqlmodel(mapping, runtime_engine, lock=p.lock_bytes,
+    keys=tenant_keyrings, deployment=(p, active_pin))
+with sessions(tenant_id=tenant_uuid) as session:
+    user = session.exec(select(User).where(User.id == record_id)).one()
+```
+
+The optional bridge supports SQLModel 0.0.48 with synchronous PostgreSQL only.
+It preserves native SQLModel validation, client defaults, NULL, refresh and
+`Session.exec` result shapes in the tested cell. Missing dependencies, other
+versions and async engines refuse before connection or key work.
+The [pinned template checkpoint](status.md#optional-sqlmodel-template-checkpoint-2026-10-23)
+covers unchanged CRUD modules for one storage-only field.
+HTTP routes, authentication, full startup and deployment remain outside that checkpoint.
+
 ## Diagnose an active deployment
 
 **IMPLEMENTED, bounded:** Doctor checks one existing active runtime deployment.

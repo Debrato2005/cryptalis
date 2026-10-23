@@ -10,6 +10,122 @@ No PostgreSQL/provider/runtime cell, production key provider, independent review
 VERIFIED below refers only to the named checks and their exact revisions.
 All other contract and promotion requirements are SPECIFIED. All seven full gates remain UNKNOWN.
 
+## Comprehensive public release direction: 2026-10-23
+
+**SPECIFIED:** the first public release must cover the full SRS and all 34
+objectives with production qualification. Current bounded implementations are
+internal development checkpoints. They do not establish a restricted beta or
+partial public release. Unadmitted SRS capabilities remain required work, and
+safe refusal does not complete them. The [approved direction](decisions.md#comprehensive-first-public-release-2026-10-23)
+and [competitive capability matrix](research/capability-matrix.md) govern prioritization.
+Progress follows complete real-application journeys and resolved production requirements.
+All seven production gates remain UNKNOWN.
+
+## Optional SQLModel template checkpoint: 2026-10-23
+
+**IMPLEMENTED, bounded verification:** `cryptalis.sqlmodel.attach` adds an
+optional synchronous PostgreSQL bridge for SQLModel 0.0.48. It reuses native
+`Session.exec` through the shared guarded Session. The SQLAlchemy entry point
+retains its existing Session behavior. Exact stock AutoString mappings normalize
+to their native String implementation. Changed hooks, variants and subclasses
+remain unadmitted. Top-level SQLModel absence, unsupported version tags and async
+attachment refuse with typed failures before database or key work.
+
+The pinned MIT official `full-stack-fastapi-template` 0.10.0 supplies unchanged
+models and CRUD at revision `d40de23896d27d15c17a7bf9649123fd167a0aa8`.
+Four original application Python files, upstream project metadata and LICENSE
+retain their hashes. Only `User.full_name` receives storage-only protection under
+explicit single tenancy. Native/protected create, get, update and delete retain
+defaults, NULL, Unicode and native scalar/tuple results. Protection, current-value
+decrypt-back, removal and a fresh process that denies Cryptalis imports also pass.
+
+The final specialist source passes **ten controls**, including nine bridge
+controls and one template lifecycle. Its Python 3.13.12 cell uses SQLModel
+0.0.48, Pydantic 2.14.1, SQLAlchemy 2.1.3 and binary psycopg. A separate
+SQLAlchemy 2.0.51 profile without SQLModel passes **54 controls**. Both runs
+share 163 stable Python hashes and 35 product modules.
+
+The earlier 209-case ordinary SQLAlchemy run predates the final typed optional
+follow-up. Its boundary and the original one-failure AutoString admission RED
+remain separate. The version-refusal control changes the reported tag on actual
+SQLModel 0.0.48. It does not establish an installed older-SQLModel cell.
+Setup failures remain separate from successful verification.
+
+**VERIFIED, local primary cell:** the serial full regression passes **2,282 tests
+and 18 subtests** in 861.43 seconds. Six skips comprise one test and five
+collection skips. Two collection skips cover the absent SQLModel modules.
+The primary environment has no SQLModel. All 164 Python hashes stay unchanged,
+and both role probes pass. See the [full receipt](_reset/sqlmodel-integration-full-20261023.json).
+
+The application-tested wheel passes repeat-build archives, exact optional metadata,
+35-module source comparison, 39 installed-file checks and CLI startup.
+Base and optional dependency SBOMs keep separate inventories. Its SHA-256 is
+`c35c9cf25c6db9f69fb8e6d10af07405bae0601485671a1d678f534d592ee57c`.
+See the [release receipt](_reset/sqlmodel-integration-release-20261023.json) and
+[optional SBOM](_reset/sqlmodel-optional-sbom-20261023.json).
+
+The final README refresh changes only wheel METADATA and RECORD.
+The final wheel SHA-256 is
+`9011200069060814c678734c2bccf955ec1aff9f9a45cc7bdfa3e963f4e9e5f0`.
+All 35 product modules remain byte-identical to the application-tested wheel.
+Identity and dependency headers stay unchanged. Repeat builds, all 40 current
+release hashes, 39 installed-file checks and isolated CLI startup pass.
+See the [final release](_reset/sqlmodel-strategy-release-20261023.json) and
+[artifact equivalence](_reset/sqlmodel-strategy-artifact-equivalence-20261023.json).
+
+A separate actual-wheel Python 3.13.12 cell with SQLModel 0.0.48 passes **14
+controls** in 127.29 seconds. Ten cover the bridge/template and four cover
+ordinary sync/async SQLAlchemy behavior with SQLModel installed. Exact base
+runtime pins and binary psycopg come from the new site. Application/test
+dependencies use a read-only fallback. All 39 checked wheel files, 35 product
+modules and six pinned application sources match before and after. Its wrapper
+retains 164 stable Python hashes. See the
+[installation](_reset/sqlmodel-wheel-py313-install-20261023.json),
+[application](_reset/sqlmodel-wheel-py313-application-20261023.json),
+[wrapper](_reset/sqlmodel-wheel-py313-wrapper-20261023.json), and
+[exact boundary](_reset/sqlmodel-wheel-py313-boundary-20261023.json).
+
+The current quiet 10k profile initially fails all six latency targets while
+isolated storage passes at 1.52483× native. A serial same-host comparison then
+passes on prior revision `d3b748e` and the unchanged current source. Both later
+runs meet all six latency targets and the storage target. Thresholds and
+source stay unchanged. The original failure remains valid evidence.
+
+| Workload | Initial added p95, ms | Unchanged follow-up, ms | Budget, ms |
+|---|---:|---:|---:|
+| Point scalar | 5.371 | 1.375 | 3 |
+| Equality tuple | 8.136 | 2.067 | 3 |
+| IN-20 tuple | 8.527 | 3.226 | 8 |
+| Point entity | 5.853 | 1.479 | 3 |
+| Equality entity | 8.169 | 2.143 | 3 |
+| IN-20 entity | 22.948 | 2.953 | 8 |
+
+The failure does not repeat in this sequence. Its cause remains UNKNOWN.
+Shared-host variation is a possible explanation, not an established cause.
+These warm synchronous TEXT/public-key observations do not qualify production
+or optional SQLModel performance. All current runs retain 164 stable hashes.
+See the [initial failure](_reset/sqlmodel-integration-performance-20261023.json)
+and [wrapper](_reset/sqlmodel-integration-performance-wrapper-20261023.json),
+[prior-revision control](_reset/sqlmodel-performance-baseline-d3b748e-20261023.json)
+and [wrapper](_reset/sqlmodel-performance-baseline-d3b748e-wrapper-20261023.json), and
+[unchanged current follow-up](_reset/sqlmodel-performance-current-after-baseline-20261023.json)
+and [wrapper](_reset/sqlmodel-performance-current-after-baseline-wrapper-20261023.json).
+
+This application scope covers synchronous PostgreSQL CRUD modules. HTTP endpoints,
+authentication, full application startup, deployment and async SQLModel remain
+unqualified. Original configuration/security imports do not qualify those surfaces.
+All seven production gates remain UNKNOWN.
+
+
+Evidence: [final source boundary](_reset/sqlmodel-bridge-boundary-20261023.json),
+[pinned source/license](_reset/sqlmodel-pinned-source-20261023.json),
+[original RED](_reset/sqlmodel-native-baseline-red-20261023.json),
+[final optional profile](_reset/sqlmodel-bridge-primary-final-20261023.json),
+[final absent-dependency profile](_reset/sqlmodel-plain-sqlalchemy-alternate-final-20261023.json),
+[earlier ordinary regression](_reset/sqlmodel-plain-sqlalchemy-primary-20261023.json),
+[template lifecycle](_reset/sqlmodel-template-application-final-20261023.json), and
+[setup outcomes](_reset/sqlmodel-environment-setup-20261023.json).
+
 ## Native VARCHAR mapped UPDATE checkpoint: 2026-10-23
 
 **IMPLEMENTED, bounded verification:** mapped dictionary UPDATE extends its
@@ -3207,16 +3323,17 @@ External writer exclusion and domain assertions remain unverified. All seven ful
 
 ## Approved scope and build order
 
-[Approved decisions](decisions.md#approved-scope-decisions-2026-10-08) resolve scope-only D items. They do not supply implementation evidence.
+The [comprehensive release direction](decisions.md#comprehensive-first-public-release-2026-10-23) retains the full SRS and all 34 objectives.
+The earlier [baseline decisions](decisions.md#approved-scope-decisions-2026-10-08) do not supply implementation evidence.
 Python 3.12+, SQLAlchemy 2.x, psycopg 3 sync/async, PostgreSQL 16 are the selected stack.
 SUPPORTED design scope: text storage, equality, IN, and tenant-scoped uniqueness.
 Each protected table declares a tenant column or declares itself single-tenant. Primary keys must be application-generated.
 Plan rejects serial, identity, and database-default-generated keys, unsupported types, small-domain searchable fields, missing tenancy, and unsupported writers.
-All other protected types/operators are UNSUPPORTED BY DESIGN until admission. Internal research helpers remain INTERNAL ONLY.
+Other full-SRS types/operators remain CURRENTLY UNADMITTED and unfinished. Internal research helpers remain INTERNAL ONLY.
 
-Implement one slice per run: compiler → crypto/KeyProvider/dev provider → sync/async SQLAlchemy → equality/IN/uniqueness
-→ plan/apply/verify → decrypt-back/remove → three rotation operations. Each slice needs real PostgreSQL 16 tests before the next.
-Range/order/prefix/text-search work starts only after all seven slices, then [six-gate admission](compatibility.md#capability-admission) and leakage opt-in.
+Baseline dependencies follow compiler → crypto/provider → SQLAlchemy → equality/search → protection → removal → rotation.
+Independent workstreams can proceed with real PostgreSQL evidence before dependent integration.
+New capabilities retain [six-gate admission](compatibility.md#capability-admission) and leakage opt-in.
 The [build guide](build-guide.md#ordered-build-slices) owns behavior, invariants, tests, failures, and definitions of done.
 
 ### Targets and known performance work
@@ -3325,7 +3442,7 @@ The recorded **612-passing-test** result and historical document/link/inventory 
 |---|---|---|
 | G-ADAPTER | UNKNOWN | Non-owning runtime principal and external writer exclusion are unqualified; approved app-assigned-ID/text/tenant mappings, complete admitted grammar, plan refusals and selected cell remain pending |
 | G-CRYPTO | UNKNOWN | Frozen independent admitted text/ID vectors, nonce/usage/fork bounds and independent human composition review remain pending |
-| G-QUERY | UNKNOWN | Complete admitted PostgreSQL 16 semantics, leakage evidence, read/storage target measurements and anomaly profiling remain pending. Write-throughput remains D; advanced queries remain out of scope until admission |
+| G-QUERY | UNKNOWN | Complete admitted PostgreSQL 16 semantics, leakage evidence, read/storage target measurements and anomaly profiling remain pending. Write-throughput remains D; advanced queries remain CURRENTLY UNADMITTED pending secure admission |
 | G-LIFECYCLE | UNKNOWN | Real deployment writer exclusion, independent fresh-process recovery/backup reader provenance, format upgrades, storage exhaustion and external provider transformations remain pending |
 | G-PROVIDER | UNKNOWN | The user has selected no production provider. Memory-only local functional evidence cannot qualify custody, native deletion or remote cancellation |
 | G-POLICY | UNKNOWN | The user has selected no deployment procedure. Authenticated publication/startup pin, stale workers, restore quarantine and restored-old-policy denial have no executable host evidence |

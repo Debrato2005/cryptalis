@@ -4,20 +4,46 @@
 It does not preserve old IDs as implementation obligations. Historical dispositions remain in [archived revamp evidence](research/revamp-evidence.md).
 [Status](status.md) owns IMPLEMENTED/VERIFIED claims. All seven full gates remain UNKNOWN.
 
+## Comprehensive first public release: 2026-10-23
+
+Target one comprehensive, production-grade first public release covering the full
+SRS and all 34 product objectives. Internal checkpoints and release candidates
+support engineering progress. A restricted beta, MVP or partial public product
+is not the release plan. This direction supersedes earlier permanent feature
+exclusions where they conflict with the full SRS.
+
+Current runtime admission remains narrow and fail-closed. Missing capability
+support is unfinished product work. Safe refusal does not complete its objective.
+Investigate secure practical alternatives when a competitor's approach conflicts
+with Cryptalis's threat model. Escalate an irreducible trade-off with evidence
+rather than silently remove the objective. Existing host-compromise limits and
+security invariants remain unchanged.
+
+Use the living [competitive capability matrix](research/capability-matrix.md) to
+choose high-value work and reuse dated source evidence. Prioritize independent
+real-application E2E journeys. Keep focused crypto, concurrency and deterministic
+failure checks where E2E cannot establish the invariant. Preserve existing tests
+and admission gates. Measure completed capabilities, real application journeys
+and resolved production requirements. Test totals, commits and slice counts do
+not establish completion. All seven production gates need their own evidence
+before the first public release.
+
 ## Approved scope decisions: 2026-10-08
 
-These decisions are final. Scope-only D blockers are resolved. No decision supplies executable qualification.
+These decisions record the baseline admission and dependency order. The later
+[comprehensive release direction](#comprehensive-first-public-release-2026-10-23) supersedes permanent feature exclusions.
+No decision supplies executable qualification.
 
 | Decision | Approved contract | Resolution/evidence limit |
 |---|---|---|
 | 1. Stack | Python 3.12+, SQLAlchemy 2.x, psycopg 3 sync/async, PostgreSQL 16 | Scope D resolved. Exact cell tests remain required |
-| 2. First protected type | Text first. The 2026-10-22 VARCHAR admission extends the text family. Other types remain UNSUPPORTED BY DESIGN until admission | Type-scope D resolved. Text/ID descriptors and collation evidence remain required |
+| 2. First protected type | Text first. The 2026-10-22 VARCHAR admission extends the text family. Other types remain CURRENTLY UNADMITTED pending secure admission | Type-scope D resolved. Text/ID descriptors and collation evidence remain required |
 | 3. Capabilities | SUPPORTED: storage-only, equality, IN, tenant-scoped uniqueness | Capability/grammar scope D resolved. Every other operation rejects until admission |
 | 4. Tenancy | Each protected table declares a tenant column or declares itself single-tenant | Tenant-scope D resolved. Missing tenancy blocks plan |
 | 5. Primary keys | Require application-generated UUID, Snowflake-style, or other app-assigned ID. Reject serial/identity/database-default keys at plan time with a plain explanation | Identity-scope D resolved. Historical sequence-preallocating spikes do not implement this contract |
 | 6. Targets | Added p95 ≤ 3 ms point/equality, ≤ 8 ms IN-20. Protected column with equality index ≤ 2× storage | Read/storage-budget D resolved as targets, not achievements. Write-throughput and pause budgets remain D |
 | 7. Authorities/review | No designated production key provider and no independent review. Local provider is functional evidence only | G-PROVIDER, G-POLICY, and review requirements remain UNKNOWN. No production publication/restore procedure is selected |
-| 8. Build order | Compiler → crypto/KeyProvider/dev provider → sync/async SQLAlchemy → equality/IN/uniqueness → plan/apply/verify → decrypt-back/remove → three rotation operations | One slice per run. Each requires real PostgreSQL tests before the next. Advanced work requires all seven slices, then six-gate admission and leakage opt-in |
+| 8. Build order | Compiler → crypto/KeyProvider/dev provider → sync/async SQLAlchemy → equality/IN/uniqueness → plan/apply/verify → decrypt-back/remove → three rotation operations | Baseline dependencies require real PostgreSQL tests. Independent workstreams can proceed within available capacity. New capabilities retain six-gate admission and leakage opt-in |
 | 9. Lock v2 metadata | Add `cryptalis.lock/v2` `source_metadata`; dual v1/v2 reader; new plans emit v2; in-place restore first, fresh cluster separate | Approved 2026-10-21. Column attributes, grants, comments, and extended statistics are captured and restored. Owned sequences stay refused |
 
 **VERIFIED, earlier revision only:** the million-row receipt records equality p95 about 6.5 ms versus 0.93 ms native and IN-20 about 16.1 ms versus 1.1 ms.
@@ -34,7 +60,7 @@ All choices below are SPECIFIED. Research mechanisms remain INTERNAL ONLY until 
 | Problem | Choice and reason | Rejected alternative | Failure/limit and deciding evidence |
 |---|---|---|---|
 | Small integration | One attachment through public SQLAlchemy hooks with native mapper/history/Result | Wire proxy, manual crypto calls, bootstrap remap, custom publication frames | Exact types/state, guarded writers, async behavior, app-assigned IDs and complete admitted grammar need G-ADAPTER evidence |
-| Query scope | Text storage, equality/IN, tenant-scoped uniqueness. Other operations are UNSUPPORTED BY DESIGN | Universal encrypted SQL or declaring research arrays supported | Exact semantics, leakage opt-in and measured targets. G-QUERY |
+| Query scope | Current admission: text storage, equality/IN and tenant-scoped uniqueness. Other full-SRS capabilities remain engineering objectives pending secure admission | Universal encrypted SQL or declaring research arrays supported | Exact semantics, leakage opt-in and measured targets. G-QUERY |
 | SQL storage | Built-in bytea packed term/expression index or admitted constraint-driven separate term | Mandatory custom type/extension | Complete compiler DDL and isolated column/index cost remain unproved. G-QUERY |
 | Payload primitive | Library AES-256-GCM-SIV with fresh random nonce and small HKDF/HMAC composition | Deterministic payload, new primitive, distributed nonce counter by default | CF1 vectors, usage bounds, portability and cross-key review. G-CRYPTO |
 | Key custody | Independent payload/search roots per tenant generation, mature external wrapping provider, bounded process cache | Per-field remote call or persisted raw-key cache | No production provider designated. Each provider qualifies separately. G-PROVIDER |
@@ -57,6 +83,21 @@ and its absolute guarantees remain removed.
 Their absolute guarantees are also removed: immediate arbitrary-worker denial, atomic multi-service lifecycle,
 whole-result publication, subject cryptographic erasure, and hostile-database completeness/freshness.
 A removed mechanism cannot retain its old guarantee through wording alone.
+
+## Optional exact SQLModel bridge: 2026-10-23
+
+Add an explicit optional SQLModel attachment for synchronous PostgreSQL only.
+Pin SQLModel 0.0.48 and retain the four base runtime pins. Normalize only its
+exact stock AutoString through shared native type admission. Reject changed
+hooks, subclasses, variants and other unsupported protected types.
+Reuse native `Session.exec` and existing SQLAlchemy transaction/result guards.
+Keep the ordinary SQLAlchemy attachment behavior unchanged.
+
+Reject top-level SQLModel absence, unsupported version tags and async SQLModel
+attachment before database or key work. Internal package import failures retain
+their native failure behavior. Keep CF1, readers, tenancy, key authority and
+leakage contracts unchanged. Pinned external CRUD evidence remains separate
+from full application, authentication, deployment and broader ORM qualification.
 
 ## Wheel dependency metadata consistency: 2026-10-23
 

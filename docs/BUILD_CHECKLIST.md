@@ -1,6 +1,6 @@
 # Product build checklist
 
-This file is the product engineering ledger. It tracks the 34 research objectives
+This file is the product engineering ledger. It tracks the 34 product objectives
 against the actual product source, tests, and evidence.
 [Status](status.md) owns current capability claims. [Architecture](architecture/README.md),
 [security](security.md), [lifecycle](lifecycle.md), and [compatibility](compatibility.md)
@@ -16,10 +16,21 @@ own their contracts. This file does not replace those owners.
 | UNKNOWN | Required evidence is absent. This is not a pass. |
 | BLOCKED | An external resource, decision, or approval is required. |
 
-First shipment is separate from final qualification. Partial progress stays visible.
+The first public release targets the full SRS and all 34 objectives with production qualification.
+Internal development checkpoints preserve partial progress without reducing that scope.
+Use the [competitive capability matrix](research/capability-matrix.md) and the
+[release direction](decisions.md#comprehensive-first-public-release-2026-10-23) to choose complete E2E work.
+Completed capabilities and real application journeys measure progress.
 No objective is complete until its acceptance evidence and applicable gate pass.
 
 ## Current boundary
+
+- Optional SQLModel 0.0.48 has bounded synchronous PostgreSQL bridge/template
+  evidence. The SQLModel-absent full primary run passes 2,282 tests and 18
+  subtests. The actual installed optional cell passes 14 controls. A current
+  performance failure and unchanged-source follow-up remain separate, with cause
+  UNKNOWN. See the
+  [SQLModel checkpoint](status.md#optional-sqlmodel-template-checkpoint-2026-10-23).
 
 - Native VARCHAR mapped dictionary UPDATE preserves the tested native assignment,
   error and zero-match behavior through a private per-group carrier. The combined
@@ -229,7 +240,7 @@ Requirement text is abbreviated. The full definitions remain in the research
 | OBJ-SEC-07 | Independent red-team, crypto, adapter, provider, supply-chain review | BLOCKED | None | Assign independent reviewers; do not self-certify |
 | OBJ-QUERY-01 | Exact equality, `IN`, scoped uniqueness, NULL logic, races | VERIFIED, bounded | `_sqlalchemy_search.py`, slice 4 receipt; native concurrency tests | Keep grammar reconciliation current |
 | OBJ-QUERY-02 | Ordinary SQL correctness: NULL predicates, aliases, joins, projections | PARTIAL | Native sync/async controls; textual reference admission and simple negative/NULL predicates; expanded entity/table/descendant admission preserves authenticated outputs and safe public expressions; both final affected cells pass 284 checks | Continue finite native-oracle matrix; general Boolean NOT and protected joins remain unadmitted |
-| OBJ-QUERY-03 | Ordering, ranges, prefix/text search, aggregates, other types | SPECIFIED | Loud refusal only | Research and admit each profile separately |
+| OBJ-QUERY-03 | Ordering, ranges, prefix/text search, aggregates, other types | SPECIFIED | Current unadmitted operations refuse safely. This does not complete the objective | Research secure practical profiles, including substring/fuzzy search and structured JSON, then prove independent E2E parity and applicable admission gates |
 | OBJ-QUERY-04 | INSERT/UPDATE/DELETE, bulk, RETURNING, triggers, cascades, savepoints | PARTIAL | Scoped tenant-column TEXT/VARCHAR dictionary UPDATE with native plan-sensitive VARCHAR assignment/errors, transaction/group semantics and exact ordered input proofs; ORM flush writes and attached sync/async mapped dictionary INSERT, with optional single protected scalar RETURNING; native NULL/grouping, typed context, errors and savepoints; exact driver/page/input-result checks; finite mapped TEXT/VARCHAR tenant/record DELETE with native results and transactions; custom DELETE AST refusal also covers ordinary flush; 55 scoped integration checks and both 65-case flush bundles pass | Qualify tuple/entity RETURNING, broader DML, used defaults and each trigger/cascade effect separately |
 | OBJ-QUERY-05 | Versioned compatibility corpus and read-only scanner | PARTIAL | Native-vs-attached tests and receipts | Build a real pre-adoption scanner; reconcile current revisions |
 | OBJ-LIFE-01 | Deterministic plan/apply/verify with diagnostics | VERIFIED, bounded | `migration.py` plan/apply/verify; compiler inspection maps SQLAlchemy and direct psycopg errors to safe SQLSTATE; slice 5 receipts; read-only Doctor/status failure controls preserve operation identity, safe known remedies and UNKNOWN observations | Broader schema and failure boundaries |
@@ -243,13 +254,13 @@ Requirement text is abbreviated. The full definitions remain in the research
 | OBJ-LIFE-09 | Install, upgrade, decommission, clean uninstall | PARTIAL | Importable package; approved in-database removal retires reverse-owned objects after decrypt-back; a package-free restarted application process performs native CRUD | Versioned upgrade/removal and broader external application evidence |
 | OBJ-DX-01 | Minimal model/query changes; one manifest and one attach | IMPLEMENTED | `compile_protection`, `attach`, CLI inspection, bounded ACTIVE Doctor, read-only protection, payload/search preparation and reverse `status` | Unify plan/apply/remove entry points; complete operational status coverage |
 | OBJ-DX-02 | Read-only `cryptalis doctor` with explicit UNKNOWN results | PARTIAL | ACTIVE runtime Doctor and shared Python diagnostic use one read-only repeatable snapshot for exact plan/pin/restore, runtime identity, target, lineage, effective privileges and schema; six unobserved boundaries and aggregate UNKNOWN; native refusal, no-key, cleanup and output evidence | Pre-adoption manifest/schema scan, query/write route inventory, key/provider diagnostics and operational prerequisites |
-| OBJ-DX-03 | Real FastAPI/SQLModel app plus a second independent app | PARTIAL | 38 original Python files stay unchanged. Pinned Smolink 498d24b runs its original FastAPI app without source/model/query edits. HTTP URL creation/refusals, real Redis, ORM CRUD and protect/decrypt-back/remove pass. A fresh import-denied process passes native CRUD. Protection covers only Url.destination. Installed Python 3.13 uses exact runtime pins and binary psycopg, with a read-only app/test fallback. The three-model application retains separate evidence | Broader protected fields and application suite, SQLModel integration, and a second external app |
+| OBJ-DX-03 | Real FastAPI/SQLModel app plus a second independent app | PARTIAL | 38 original Python files stay unchanged. Pinned Smolink 498d24b runs its original FastAPI app without source/model/query edits. HTTP URL creation/refusals, real Redis, ORM CRUD and protect/decrypt-back/remove pass. A fresh import-denied process passes native CRUD. Protection covers only Url.destination. Installed Python 3.13 uses exact runtime pins and binary psycopg, with a read-only app/test fallback. The three-model application retains separate evidence. The optional SQLModel 0.0.48 bridge passes pinned unchanged template 0.10.0 CRUD/protection/removal with User.full_name only. Native exec/AutoString controls and package-free restart pass in the [bounded SQLModel profile](status.md#optional-sqlmodel-template-checkpoint-2026-10-23) | Broader protected fields and application suite, broader SQLModel coverage, second-application HTTP/startup/authentication and deployment |
 | OBJ-DX-04 | Normal ORM identity, loading, sessions, pooling, async | PARTIAL | Bounded sync/async adapter and search tests | Broader ORM/framework coverage |
 | OBJ-DX-05 | Complete quickstart, threat model, leakage, recovery docs | PARTIAL | README, architecture, security, lifecycle, walkthroughs | Keep docs tied to admitted APIs and evidence |
 | OBJ-PERF-01 | Continuous native vs protected latency/resource measurements | PARTIAL | Revision-pinned 10k/100k/1m scalar/tuple and full-entity profiles with matched runtime roles, full migration/ACTIVE attach, raw paired samples, isolated storage and 100k/1m process CPU/RSS; historical million-row receipts retain prior source boundaries | Larger scale, cold/concurrent/tail/WAL/provider measurements |
 | OBJ-PERF-02 | Profile-guided optimization without security loss | PARTIAL | Membership projection correction on 2026-10-09 | Continue profiling; no unverified speed claims |
 | OBJ-PERF-03 | Multithreading/multiprocessing/async at 1/4/16/saturation | SPECIFIED | Single-worker maintenance path | Define and run isolation/backpressure/cancellation tests |
-| OBJ-PERF-04 | Added p95 targets and growth path | PARTIAL | Revision-pinned 10k/100k/1m warm scalar/tuple and full-entity reads meet local 3ms/8ms targets; isolated column plus equality index measures 1.5248x/1.5296x/1.4372x for 53-byte names | Larger scale/remote-provider/concurrent qualification; write/pause budgets undecided |
+| OBJ-PERF-04 | Added p95 targets and growth path | PARTIAL | Revision-pinned 10k/100k/1m warm scalar/tuple and full-entity reads meet local 3ms/8ms targets; isolated column plus equality index measures 1.5248x/1.5296x/1.4372x for 53-byte names | Current latency failure and unchanged-source follow-up need causal classification. Larger scale/remote-provider/concurrent qualification and write/pause budgets remain open |
 | OBJ-OPS-01 | Reproducible wheel/sdist, SBOM, provenance, reviewers | PARTIAL | `pyproject.toml`, `uv.lock`, `scripts/release_check.py`; [2026-10-21 receipt](_reset/release-check-20261021.json) shows identical repeat-build hashes, verified wheel `RECORD`, license metadata, CycloneDX 1.5 SBOM, and clean-venv import/CLI; the [combined defensive source receipt](_reset/defensive-projection-delete-release-20261023.json) binds 33 wheel modules and 37 installed-file checks to its 38-file source bundle; [dependency metadata controls](_reset/artifact-dependency-metadata-green2-20261023.json) compare wheel Python/dependency declarations with project metadata through standard parsers | Independent rebuild, signed provenance, vulnerability scan, publication identity, upgrade/uninstall matrix, independent review |
 | OBJ-OPS-02 | Recoverable source/evidence and traceability | PARTIAL | Git history and `docs/_reset` receipts | Durable archive and fresh restore |
 | OBJ-RESEARCH-01 | Source-backed comparative research with repeatable evidence | ONGOING | Research repository provenance; source-access and fallback rules in `AGENTS.md` | Preserve failed alternatives and provenance links |
@@ -313,8 +324,9 @@ Requirement text is abbreviated. The full definitions remain in the research
    statistics targets, storage, compression, options, column grants, constraint and
    index comments, and extended statistics. Owned sequences remain refused. See the [metadata research note](research/metadata-preservation-and-format-evolution.md)
    and the [lock v2 proposal](research/lock-v2-metadata-proposal.md).
-3. Continue correctness slices that protect the compatibility promise with native
-   PostgreSQL oracles; establish a second independent application baseline.
+3. Use the competitive matrix to select high-value missing capabilities and complete
+   independent application journeys. Preserve native PostgreSQL correctness oracles
+   and required focused security checks.
 4. Extend the fresh-cluster range with multi-table, fault, and provider-outage drills.
 5. Keep every external review and provider item explicitly UNKNOWN; review the
    [lab reconciliation](research/lab-reconciliation-2026-10-19.md) for refused-metadata
