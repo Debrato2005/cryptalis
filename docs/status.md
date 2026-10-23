@@ -10,6 +10,25 @@ No PostgreSQL/provider/runtime cell, production key provider, independent review
 VERIFIED below refers only to the named checks and their exact revisions.
 All other contract and promotion requirements are SPECIFIED. All seven full gates remain UNKNOWN.
 
+## Identity variant planning checkpoint: 2026-10-23
+
+**IMPLEMENTED, planning boundary:** identity codec admission rejects mappings
+with dialect-specific type variants. Exact native UUID or bigint types must
+represent the record and tenant context declared by the lock.
+
+Two native PostgreSQL controls first insert with a UUID SQL variant. The real
+stored record or tenant UUID differs from the supplied UUID. Each transaction
+rolls back before planning, and rows stay unchanged. The preceding compiler
+accepts both mappings, so both RED controls fail. The corrected compiler and
+existing compiler/VARCHAR regression pass **105 cases**.
+
+This checkpoint covers read-only protection planning. Attachment and later
+mapping mutation require their separate adapter controls. All seven production
+gates remain UNKNOWN.
+
+Evidence: [native RED controls](_reset/context-type-red-20261023.json) and
+[planning regression](_reset/context-type-green-20261023.json).
+
 ## Actionable inspection failures checkpoint: 2026-10-23
 
 **IMPLEMENTED, bounded verification:** Doctor and status inspection failures

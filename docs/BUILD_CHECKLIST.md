@@ -21,6 +21,11 @@ No objective is complete until its acceptance evidence and applicable gate pass.
 
 ## Current boundary
 
+- Planning rejects dialect-specific record/tenant type variants. Two native
+  controls reproduce SQL-transformed UUIDs before the refusal fix. The corrected
+  planning regression passes 105 cases. Attachment checks are separate. See the
+  [identity checkpoint](status.md#identity-variant-planning-checkpoint-2026-10-23).
+
 - Doctor/status inspection failures retain the public operation UUID and fixed
   remedies for known role/pin refusals. Seven new controls and the 128-case
   affected run pass, with read-only snapshots and private-value redaction.
@@ -155,7 +160,7 @@ Requirement text is abbreviated. The full definitions remain in the research
 | OBJ-SEC-01 | Encrypt before PostgreSQL; prove at SQL/driver boundaries | VERIFIED, bounded | `crypto/cf1.py`, `sqlalchemy.py`; slice 2/3 receipts in `docs/_reset`; real runtime-role tests | Broader writer/auth/provider boundaries; independent review |
 | OBJ-SEC-02 | Bind tenant, field, row, generation; reject malformed/swapped frames | VERIFIED, bounded | CF1 AAD, descriptor binding, sync/async tamper tests | Collision assumptions and composition review |
 | OBJ-SEC-03 | Authorization, result lineage, tenant isolation, parameterization | PARTIAL | Tenant-scoped sessions, requested-point checks, typed errors | Host authorization is external; audit remaining ORM routes |
-| OBJ-SEC-04 | Detect plaintext bypass through ORM, bulk, SQL, COPY, jobs, logs | PARTIAL | Guarded attachment rejects raw SQL/COPY/opaque writes and unsafe engine logging before connect/key access; writer inventory at plan; effective runtime privilege refusal before restore probes/keys, repeated at planning, active admission, Doctor, ACTIVE/PENDING status, shared maintenance and host-phase-selected reverse execution | Complete route inventory; deployment enforcement is unverified |
+| OBJ-SEC-04 | Detect plaintext bypass through ORM, bulk, SQL, COPY, jobs, logs | PARTIAL | Guarded attachment rejects raw SQL/COPY/opaque writes and unsafe engine logging before connect/key access; writer inventory at plan; effective runtime privilege refusal before restore probes/keys, repeated at planning, active admission, Doctor, ACTIVE/PENDING status, shared maintenance and host-phase-selected reverse execution | Complete route inventory; identity variants now refuse during planning; deployment enforcement is unverified |
 | OBJ-SEC-05 | Isolate keys; bound nonces, leases, cache lifetime, fork safety | VERIFIED, bounded | `crypto/keys.py` strict policy, cache expiry, fork refusal; local provider outage/revocation/lease drills pass on both SQLAlchemy cells | Remote cancellation, usage limits, production custody |
 | OBJ-SEC-06 | Reduce equality/frequency/access leakage with documented trade-offs | SPECIFIED | Equality leakage is declared; no stronger profile admitted | Threat-model and benchmark a lower-leakage profile; six-gate admission |
 | OBJ-SEC-07 | Independent red-team, crypto, adapter, provider, supply-chain review | BLOCKED | None | Assign independent reviewers; do not self-certify |

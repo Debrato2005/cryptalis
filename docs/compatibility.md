@@ -66,6 +66,10 @@ Rollback/removal transforms current data through decrypt-back until explicit fin
 Plaintext fields retain native query semantics, including ranges, order, aggregates, and joins through unprotected keys.
 Tenant-scoped uniqueness uses PostgreSQL's original qualified NULL behavior. Unqualified partial/compound or NULLS NOT DISTINCT variants must reject at plan time.
 
+Protection planning requires native row-context codecs without dialect-specific
+type variants. The real native SQL transformation controls and 105-case planning
+regression are recorded in the [identity planning checkpoint](status.md#identity-variant-planning-checkpoint-2026-10-23).
+
 ## Query semantics
 
 Compare every admitted shape with the same native PostgreSQL application.

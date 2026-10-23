@@ -464,7 +464,7 @@ def _metadata_issues(connection, schema, table, compiled, issues):
 
 
 def _id_codec(column, actual):
-    if actual["type_schema"] != "pg_catalog":
+    if getattr(column.type, "_variant_mapping", None) or actual["type_schema"] != "pg_catalog":
         return None
     if type(column.type) in (Uuid, SQLUUID, postgresql.UUID) and column.type.as_uuid:
         if getattr(column.type, "native_uuid", True) and actual["type"] == "uuid":

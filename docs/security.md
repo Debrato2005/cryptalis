@@ -447,6 +447,9 @@ A matching digest checks structure. It does not authenticate the deployment poli
 Seal and open take the descriptor, expected tenant and record, and prepared keys.
 They encode exact UTF-8 text without NUL and refuse encoded values above **16 MiB**.
 Empty text uses an authenticated frame. SQL NULL remains SQL NULL.
+Protection planning rejects dialect-specific type variants on record and tenant
+identity columns. A SQL-side identity transformation cannot preserve the declared
+row context codec merely because the top-level mapped type remains UUID or bigint.
 Nil UUIDs are valid native tenant and record values. Single-tenant context equals the stable table UUID.
 
 Each keyring pins one immutable policy for one domain and tenant.

@@ -58,6 +58,12 @@ Their absolute guarantees are also removed: immediate arbitrary-worker denial, a
 whole-result publication, subject cryptographic erasure, and hostile-database completeness/freshness.
 A removed mechanism cannot retain its old guarantee through wording alone.
 
+## Exact native identity codecs: 2026-10-23
+
+Reject dialect-specific variants on record and tenant identity mappings during
+planning. A matching top-level type cannot authorize SQL-side context changes.
+This narrows admission to the existing native codec contract. It adds no codec.
+
 ## Safe inspection remedies: 2026-10-23
 
 Reuse the current CLI failure envelope for the public plan operation UUID and
