@@ -666,7 +666,10 @@ Engine defaults use `echo=False` and `hide_parameters=True`. Attachment refuses 
 CLI exit 0 means complete requested scoped success. Invalid/denied input returns 2, incomplete state or an observed mismatch returns 3, and operational/output failure returns 4.
 Doctor can exit 0 while its six unobserved checks and aggregate result remain
 UNKNOWN. Its failure envelope includes `error.checks`; unavailable inspection
-keeps the runtime check UNKNOWN.
+keeps the runtime check UNKNOWN. Inspection and cleanup failures include the
+selected plan's public operation UUID. Known runtime-role and external-pin
+refusals include fixed safe remedies. Other inspection codes keep the generic
+reason. No remedy automatically changes grants, artifacts or host authority.
 Successful plan output is a proposal, not applied protection.
 Report existing effects if cleanup or output also fails. Nothing security-critical may fail silently.
 

@@ -17,7 +17,7 @@ Restored-frame scans now share that retry. Rotation retains separate limits.
 | Owner | Worktree | Write scope | Current slice | State |
 |---|---|---|---|---|
 | ORM specialist | `/tmp/cryptalis-parallel-orm-20261023` | `sqlalchemy.py`, new bulk UPDATE tests and receipts | Scoped TEXT dictionary UPDATE | Native and protected controls pass; independent grammar review continues |
-| Lifecycle specialist | `/tmp/cryptalis-parallel-lifecycle-20261023` | Restore and CLI tests, then rotation lease inspection | Restore recovery and safe CLI remedies | Restore integrated with nine focused checks and two genuine fresh clusters. CLI ready. Rotation work follows |
+| Lifecycle specialist | `/tmp/cryptalis-parallel-lifecycle-20261023` | Restore and CLI tests, then rotation lease inspection | Restore recovery and safe CLI remedies | Restore integrated with nine focused checks and two genuine fresh clusters. CLI integrated with seven focused checks. Rotation work follows |
 | KMS specialist | `/tmp/cryptalis-parallel-kms-20261023` | Independent ORM review after completed KMS adapter | Bulk UPDATE grammar review | KMS protocol, actual SDK and package checks pass. Live custody UNKNOWN |
 | Lead | `/home/debrato/Projects/cryptalis` | Shared contracts, ledgers and integration history | KMS, restore and CLI integration | Active. No CLI ownership overlap |
 

@@ -417,11 +417,16 @@ def _write_error(failure: _CommandFailure, machine_json: bool) -> None:
     output_context = (
         f" output_role={error['output_role']}" if "output_role" in error else ""
     )
+    inspection_context = (
+        f" operation_id={error['operation_id']}" if 'operation_id' in error else ''
+    )
+    if 'remedy' in error:
+        inspection_context += f" remedy={error['remedy']}"
     _write_output(
         f"cryptalis: {error['family']}.{error['code']}: {error['reason']} "
         f"operation={error['operation']} stage={error['stage']} "
         f"input_role={error['input_role']} cause={error['cause']} retryable=false "
-        f"correlation_id={error['correlation_id']}{output_context}{related_context}\n",
+        f"correlation_id={error['correlation_id']}{output_context}{inspection_context}{related_context}\n",
         sys.stderr,
         "stderr",
     )
@@ -601,10 +606,27 @@ def _status_command(arguments: argparse.Namespace) -> int:
             'payload_operation_pin_mismatch', 'search_operation_pin_mismatch',
             'restore_binding_mismatch', 'restore_binding_required', 'restored_definition_restatement_unsupported',
             'invalid_plan', 'invalid_reverse_plan', 'external_reverse_policy_mismatch')
-        failure = _CommandFailure('Inspection failed. Check this operation and the current external policy.',
+        reason, remedy = {
+            'attachment_requires_planned_runtime_role': (
+                'This inspection requires the runtime role declared in the plan.',
+                'Use a private connection file for the declared runtime role.'),
+            'unsafe_runtime_role': (
+                'The declared runtime role is missing or has unsafe privileges.',
+                'Restore the declared runtime role. Remove unsafe administrative or inherited rights, '
+                'database/schema CREATE, table TRIGGER/TRUNCATE, and journal mutation rights; '
+                'keep required application CRUD.'),
+            'external_policy_mismatch': (
+                'The supplied pin does not authorize this plan and phase.',
+                'Obtain the current pin from the host authority and check its plan identity, '
+                'digest, and permitted phase.'),
+        }.get(error.code, ('Inspection failed. Check this operation and the current external policy.', None))
+        failure = _CommandFailure(reason,
             family='Transition', code=error.code, operation=operation,
             stage='database_inspection', cause=error.sqlstate or 'InspectionFailed',
             exit_code=4 if operational else 2 if denied else 3)
+        failure.error['operation_id'] = str(plan.operation_id)
+        if remedy is not None:
+            failure.error['remedy'] = remedy
         if error.cleanup_errors:
             failure.error['cleanup_errors'] = [
                 {'stage': stage, 'cause': cause, 'sqlstate': sqlstate}
@@ -619,6 +641,7 @@ def _status_command(arguments: argparse.Namespace) -> int:
                 failure = _CommandFailure('Inspection connection cleanup failed. Inspect the database session.',
                     family='Transition', code='CleanupUnavailable', operation=operation,
                     stage='connection_cleanup', cause=type(error).__name__, exit_code=4)
+                failure.error['operation_id'] = str(plan.operation_id)
                 if isinstance(primary, _CommandFailure):
                     failure.error['related_error'] = primary.error
                 raise (_doctor_failure(failure) if doctor else failure) from None

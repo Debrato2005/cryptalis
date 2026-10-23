@@ -58,6 +58,13 @@ Their absolute guarantees are also removed: immediate arbitrary-worker denial, a
 whole-result publication, subject cryptographic erasure, and hostile-database completeness/freshness.
 A removed mechanism cannot retain its old guarantee through wording alone.
 
+## Safe inspection remedies: 2026-10-23
+
+Reuse the current CLI failure envelope for the public plan operation UUID and
+fixed remedies for known runtime-role and external-pin refusals. Preserve codes,
+exit classes and unknown observations. Keep all authority changes manual through
+the existing trusted host process. No diagnostic service or automatic repair is added.
+
 ## Restored-frame expiry recovery: 2026-10-23
 
 Extend the existing local row retry to restored-frame authentication. Keep

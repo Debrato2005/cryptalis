@@ -108,6 +108,15 @@ Failures use the standard stderr error envelope. `error.checks` reports a
 runtime deployment FAIL for an observed mismatch, or UNKNOWN when inspection
 could not finish. Diagnostics omit credentials and raw driver error text.
 
+Inspection failures include the selected plan's public `operation_id` in JSON
+and text output. Known role and pin failures also include `remedy`. Use the
+planned runtime role for `attachment_requires_planned_runtime_role`. For
+`unsafe_runtime_role`, remove the reported unsafe authority while retaining
+required application CRUD. For `external_policy_mismatch`, get the current pin
+from the trusted host authority. Do not edit artifacts to bypass that refusal.
+Other inspection codes retain the generic reason. Cleanup failures also include
+the operation UUID. These diagnostics do not prove that a remedy succeeded.
+
 The Python API returns `None` on success and raises `TransitionFailure` on refusal:
 
 ```python

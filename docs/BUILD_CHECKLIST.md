@@ -21,6 +21,11 @@ No objective is complete until its acceptance evidence and applicable gate pass.
 
 ## Current boundary
 
+- Doctor/status inspection failures retain the public operation UUID and fixed
+  remedies for known role/pin refusals. Seven new controls and the 128-case
+  affected run pass, with read-only snapshots and private-value redaction.
+  See the [diagnostic checkpoint](status.md#actionable-inspection-failures-checkpoint-2026-10-23).
+
 - Restored-frame scans retry actual expiry once with exact retained-policy
   checks. Nine integrated scan/admission checks and ten public restore controls
   on each genuine TEXT/VARCHAR fresh cluster pass. Failed custody remains
@@ -159,7 +164,7 @@ Requirement text is abbreviated. The full definitions remain in the research
 | OBJ-QUERY-03 | Ordering, ranges, prefix/text search, aggregates, other types | SPECIFIED | Loud refusal only | Research and admit each profile separately |
 | OBJ-QUERY-04 | INSERT/UPDATE/DELETE, bulk, RETURNING, triggers, cascades, savepoints | PARTIAL | ORM flush writes and attached sync/async mapped dictionary INSERT, with optional single protected scalar RETURNING; native NULL/grouping, typed context, errors and savepoints; exact driver/page/input-result checks | Qualify tuple/entity RETURNING, broader DML, used defaults and each trigger/cascade effect separately |
 | OBJ-QUERY-05 | Versioned compatibility corpus and read-only scanner | PARTIAL | Native-vs-attached tests and receipts | Build a real pre-adoption scanner; reconcile current revisions |
-| OBJ-LIFE-01 | Deterministic plan/apply/verify with diagnostics | VERIFIED, bounded | `migration.py` plan/apply/verify; compiler inspection maps SQLAlchemy and direct psycopg errors to safe SQLSTATE; slice 5 receipts | Broader schema and failure boundaries |
+| OBJ-LIFE-01 | Deterministic plan/apply/verify with diagnostics | VERIFIED, bounded | `migration.py` plan/apply/verify; compiler inspection maps SQLAlchemy and direct psycopg errors to safe SQLSTATE; slice 5 receipts; read-only Doctor/status failure controls preserve operation identity, safe known remedies and UNKNOWN observations | Broader schema and failure boundaries |
 | OBJ-LIFE-02 | Resumable, atomic, byte-bounded backfill with verification | VERIFIED, bounded | Journal, advisory lock, chunks, crash/resume tests; one expiry-specific local row retry with policy checks and atomic failure controls in protection/decrypt-back | Exact memory/WAL bounds remain host inputs |
 | OBJ-LIFE-03 | Near-zero-downtime migration with capture and catch-up | SPECIFIED | Maintenance pause fallback only | Design, review, and measure an online protocol |
 | OBJ-LIFE-04 | Parallel/adaptive migration without lost or duplicate work | SPECIFIED | None | Depends on OBJ-LIFE-03 |

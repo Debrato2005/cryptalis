@@ -10,6 +10,26 @@ No PostgreSQL/provider/runtime cell, production key provider, independent review
 VERIFIED below refers only to the named checks and their exact revisions.
 All other contract and promotion requirements are SPECIFIED. All seven full gates remain UNKNOWN.
 
+## Actionable inspection failures checkpoint: 2026-10-23
+
+**IMPLEMENTED, bounded verification:** Doctor and status inspection failures
+include the selected plan's public operation UUID. Known runtime-role and
+external-pin refusals give fixed reasons and bounded remedies. Other codes
+retain their generic reason. Cleanup failures also retain the operation UUID.
+The CLI omits private connection values and raw exception details.
+Existing codes, exit classes and UNKNOWN observations stay unchanged.
+
+Seven new native PostgreSQL controls pass through the lead integration.
+The specialist's affected regression passes 128 cases. JSON and text output
+retain safe context, and read-only snapshots show no database changes.
+The original RED receipt retains seven failures. Two initial expectations used
+a different connection-failure code and were corrected to the existing contract.
+All seven production gates remain UNKNOWN.
+
+Evidence: [original RED controls](_reset/inspection-diagnostics-red-lifecycle-20261023.json),
+[affected regression](_reset/inspection-diagnostics-green-lifecycle-20261023.json), and
+[lead integration](_reset/inspection-diagnostics-integration-20261023.json).
+
 ## Restored-frame lease recovery checkpoint: 2026-10-23
 
 **IMPLEMENTED, bounded verification:** restored-frame scans retry one unfinished
