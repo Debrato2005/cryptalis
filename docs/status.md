@@ -21,6 +21,38 @@ and [competitive capability matrix](research/capability-matrix.md) govern priori
 Progress follows complete real-application journeys and resolved production requirements.
 All seven production gates remain UNKNOWN.
 
+## Bounded session pool isolation: 2026-10-24
+
+**VERIFIED, local correctness profile:** independent sync Sessions and async
+tasks pass matching native/attached work at 1, 4 and 16 scheduled workers.
+They share a four-connection pool. Each worker owns its Sessions and row.
+Two tenant policies exist before the real protection plan and ACTIVE transition.
+Checks cover typed projections, refresh, explicit opposite-tenant zero matches,
+rollback, latest committed values and fresh-session reads. An independent decoder
+checks the stored frames against each expected tenant and record.
+
+Both modes record native/attached checkout peaks of 1, 4 and 4 for the three
+worker counts. This proves observed overlap up to four connections. It does
+not establish 16 simultaneous transactions or system saturation.
+
+A separate one-connection profile observes PostgreSQL PgSleep before canceling
+a writer with a flushed, uncommitted row. Another tenant already waits for the
+pool. It then commits the same primary key, reads its authenticated value and
+releases the connection. Both tenants retain healthy later reads and writes.
+This proves rollback and observed pooled recovery in that local cell.
+
+The [source run](_reset/session-isolation-native-first-20261024.json) passes
+13 controls in 5.81 seconds. The [actual installed wheel](_reset/session-isolation-installed-20261024.json)
+passes the same 13 in 6.05 seconds. Both retain 193 unchanged Python hashes.
+JUnit preserves the [source pool measurements](_reset/session-isolation-native-first-20261024.xml)
+and [installed measurements](_reset/session-isolation-installed-20261024.xml).
+Product bytes remain unchanged from 8a799fe. The [final boundary](_reset/session-isolation-final-boundary-v2-20261024.json)
+binds the existing wheel, packaged sources, installed files and new evidence.
+The earlier full regression remains evidence for its recorded revision. This
+slice runs affected controls only. Multiprocessing, saturation, latency/resource
+budgets, shared-Session safety and remote-provider cancellation remain unqualified.
+All seven production gates remain UNKNOWN.
+
 ## Original SQLModel HTTP journey: 2026-10-24
 
 **IMPLEMENTED, bounded local verification:** the unchanged pinned FastAPI
