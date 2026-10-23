@@ -21,6 +21,35 @@ and [competitive capability matrix](research/capability-matrix.md) govern priori
 Progress follows complete real-application journeys and resolved production requirements.
 All seven production gates remain UNKNOWN.
 
+## Smolink adopted-target rewrap journey: 2026-10-24
+
+**VERIFIED, bounded installed-wheel journey:** pinned Smolink retains all 38
+original application Python files. The source stage completes committed-process
+interruption/resume, root rewrap and payload rotation. After a genuine fresh
+PostgreSQL 16 restore and adoption, root-rewrap cancellation succeeds without a
+target provider. A new rewrap publishes its own transition/v5 successor. The
+original [async HTTP/ASGI and ORM workload](../tests/smolink_workload.py) checks
+valid/invalid access JWTs, validation, conflicts and Redis rate limits. A later
+edit survives decrypt-back, removal and an original application restart with
+Cryptalis imports denied.
+
+Cancellation and successful rewrap preserve exact payload bytes and every native
+index OID and relfilenode. All three retained contexts and selected payload
+generation 2 remain unchanged. The [source export](_reset/fresh-cluster-export-20261024-8.json)
+passes one test in 3.61 seconds; the [fresh-target run](_reset/fresh-cluster-restore-20261024-7.json)
+passes one in 3.37 seconds. Both retain 194 stable Python hashes. The
+[application receipt](_reset/smolink-adopted-journey-application-20261024.json)
+records the unchanged sources and complete journey. The
+[final boundary](_reset/smolink-adopted-final-boundary-20261024.json) binds both
+runs, all 40 installed files and the reused product/build evidence.
+
+This uses the actual installed wheel on Python 3.13.12 without a Cryptalis source
+fallback. Product bytes remain unchanged from fcbca39; the earlier full regression
+and build retain their recorded boundaries. Protection covers only Url.destination
+storage under explicit single tenancy, with public query routes and local fixture
+custody. Browser, server deployment, encrypted search and external provider
+qualification remain outside this profile. All seven production gates remain UNKNOWN.
+
 ## Adopted-target root rewrap: 2026-10-24
 
 **VERIFIED, bounded local PostgreSQL 16 profiles:** root rewrap now accepts the

@@ -1,0 +1,51 @@
+{
+  "format": "cryptalis.smolink-adopted-rewrap-boundary/v1",
+  "base_revision": "fcbca39",
+  "receipts": {
+    "docs/_reset/fresh-cluster-export-20261024-8.json": {
+      "sha256": "0a361b077d0fc39c5b7d86da6209c3729d5b8fc8f0f75cf27fe95bc48f1ad589",
+      "source_files": 194,
+      "fixing_revision": "worktree-5dce10557883954b",
+      "elapsed_seconds": 4.281421339997905,
+      "counts": {
+        "passed": 1
+      }
+    },
+    "docs/_reset/fresh-cluster-restore-20261024-7.json": {
+      "sha256": "611b1f3c4c6f692c187366c1362deedbf2bbec3f5fa85dbe532c585d326334a5",
+      "source_files": 194,
+      "fixing_revision": "worktree-5dce10557883954b",
+      "elapsed_seconds": 3.5880448629905004,
+      "counts": {
+        "passed": 1
+      }
+    }
+  },
+  "application_receipt_sha256": "51d348eb1623e5b67e95bf0a4f77f3938ca099e69cf18c106329ab34fd72b2b6",
+  "application_revision": "498d24bae999ed53ad85e1c1f1a09ea7fa151aa4",
+  "application_source_files": 38,
+  "wheel_sha256": "2bd687126a5de6e1e6cd4364c80ca59b3780c918cb350c89fd581b274ec13d5e",
+  "installed_verified_files": 40,
+  "installed_package": "/tmp/cryptalis-smolink-adopted-py313-20261024/lib/python3.13/site-packages/cryptalis/__init__.py",
+  "runtime": {
+    "python": "3.13.12",
+    "SQLAlchemy": "2.1.3",
+    "psycopg": "3.3.6",
+    "cryptography": "50.0.2",
+    "greenlet": "3.5.6",
+    "FastAPI": "0.139.0",
+    "redis": "8.0.1"
+  },
+  "reused_full_primary": {
+    "receipt": "docs/_reset/adopted-rewrap-full-primary-20261024.json",
+    "changed_python_files": [
+      "tests/test_smolink_fresh_cluster.py"
+    ],
+    "scope": "Product and packaged source unchanged; only affected E2E runs repeated"
+  },
+  "document_sha256": {
+    "docs/status.md": "89175af7a651bd7f44af79ef20da92032bd8c1dec6f35b8ce1deb2d834aeb3c6",
+    "docs/BUILD_CHECKLIST.md": "ec18822ef5e865df6ed19c43d95960a0ea9455a90ef56a4260e6ff16cd753021"
+  },
+  "gates": "All seven UNKNOWN"
+}
