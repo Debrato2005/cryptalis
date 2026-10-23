@@ -1,9 +1,37 @@
 """Guard the attached engine's public driver routes, including reconnects."""
 
 from contextvars import ContextVar
+from datetime import date, datetime, time, timedelta
+from decimal import Decimal
+from uuid import UUID
 from sqlalchemy import event
 
 _driver_permit = ContextVar("cryptalis_driver_permit", default=None)
+
+
+def _snapshot(value, binary):
+    if type(value) is binary:
+        if type(value.obj) not in (bytes, bytearray, memoryview):
+            raise TypeError()
+        return binary, memoryview(value.obj).tobytes()
+    if type(value) in (bytearray, memoryview):
+        return type(value), bytes(value)
+    if type(value) is dict:
+        if any(not isinstance(key, str) for key in value):
+            raise TypeError()
+        return dict, tuple((id(type(key)), str.__str__(key), _snapshot(item, binary), type(key))
+                           for key, item in value.items())
+    if type(value) in (list, tuple):
+        return type(value), tuple(_snapshot(item, binary) for item in value)
+    if type(value) is float:
+        return float, value.hex()
+    if type(value) is Decimal:
+        return Decimal, value.as_tuple()
+    if type(value) in (type(None), bool, int, str, bytes, UUID, date, datetime, time, timedelta):
+        return type(value), value
+    # Unknown native adapters are unprotected values. Retain their identity,
+    # including a reference that prevents object-ID reuse during dispatch.
+    return type(value), id(value), value
 
 
 class _Info:
@@ -19,6 +47,8 @@ class _Info:
 class _Cursor:
     def __init__(self, raw, connection, error):
         self._raw, self._connection, self._error = raw, connection, error
+        self._pending = None
+        self._completed = None
 
     def __getattr__(self, name):
         if name in ("description", "rowcount", "arraysize", "fetchone", "fetchmany", "fetchall", "close", "closed", "statusmessage"):
@@ -88,9 +118,47 @@ class _Connection:
         raise self._error()
 
 
-def install_guard(engine, error, before_execute, check_cursor):
+def install_guard(engine, error, before_execute, check_cursor, listener_error):
     """Install only after target validation and draining idle native handles."""
     event.listen(engine, "before_execute", before_execute, retval=True)
+
+    def first(context):
+        listeners = tuple(context.root_connection.dispatch.before_cursor_execute)
+        return listeners and listeners[0] is capture and listeners.count(capture) == 1
+
+    def values(parameters):
+        try:
+            return _snapshot(parameters, engine.dialect.dbapi.Binary) if parameters else ()
+        except (TypeError, ValueError, RecursionError):
+            raise listener_error() from None
+
+    def capture(connection, cursor, statement, parameters, context, executemany):
+        if not first(context) or type(cursor) is not _Cursor or type(statement) is not str:
+            raise listener_error()
+        cursor._completed = None
+        cursor._pending = context, statement, values(parameters)
+        return statement, parameters
+
+    # retval=True preserves this function's identity in effective dispatch.
+    # SQLAlchemy's insert=True does not prepend ConnectionEvents listeners.
+    event.listen(engine, 'before_cursor_execute', capture, retval=True)
+
+    def completed(connection, cursor, statement, parameters, context, executemany):
+        seen, cursor._completed = cursor._completed, None
+        pending, cursor._pending = cursor._pending, None
+        if seen is not context or pending is not None:
+            raise listener_error()
+
+    # Dialect callbacks can return True before our dispatch handler. Require
+    # actual guarded execution before SQLAlchemy reports ORM/result success.
+    event.listen(engine, 'after_cursor_execute', completed)
+
+    def final(cursor, statement, parameters, context):
+        expected, cursor._pending = cursor._pending, None
+        if (expected is None or expected[0] is not context or not first(context) or type(statement) is not str or
+                expected[1] != statement or expected[2] != values(parameters)):
+            raise listener_error()
+        check_cursor(context, statement, parameters)
 
     def wrap(raw, entry):
         entry.dbapi_connection = _Connection(raw, error)
@@ -98,28 +166,31 @@ def install_guard(engine, error, before_execute, check_cursor):
     event.listen(engine.pool, "connect", wrap)
 
     def execute(cursor, statement, parameters, context):
-        check_cursor(context, statement, parameters)
+        final(cursor, statement, parameters, context)
         token = _driver_permit.set(cursor)
         try:
             cursor.execute(statement, parameters)
+            cursor._completed = context
         finally:
             _driver_permit.reset(token)
         return True
 
     def executemany(cursor, statement, parameters, context):
-        check_cursor(context, statement, parameters)
+        final(cursor, statement, parameters, context)
         token = _driver_permit.set(cursor)
         try:
             cursor.executemany(statement, parameters)
+            cursor._completed = context
         finally:
             _driver_permit.reset(token)
         return True
 
     def no_parameters(cursor, statement, context):
-        check_cursor(context, statement, ())
+        final(cursor, statement, (), context)
         token = _driver_permit.set(cursor)
         try:
             cursor.execute(statement)
+            cursor._completed = context
         finally:
             _driver_permit.reset(token)
         return True

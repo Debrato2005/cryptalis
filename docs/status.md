@@ -10,6 +10,94 @@ No PostgreSQL/provider/runtime cell, production key provider, independent review
 VERIFIED below refers only to the named checks and their exact revisions.
 All other contract and promotion requirements are SPECIFIED. All seven full gates remain UNKNOWN.
 
+## Shared driver event checkpoint: 2026-10-23
+
+**IMPLEMENTED, bounded native verification:** the shared guard captures each
+native processed statement/parameter set at the first cursor event, then checks
+the actual values at dialect dispatch. It freezes native SQL, binary bytes,
+containers and typed primitive/identity values. It retains unknown unprotected
+driver adapters by object identity, without freezing their mutable internals.
+Capture consumption covers ordinary flush/read paths, sync/async dispatch and
+each native insertmanyvalues RETURNING page. The bulk route retains its
+independent sealed-batch checks. No crypto format, key authority or DML scope
+changes.
+
+Capture must be first and unique in effective Connection dispatch. Preattachment
+engine listeners refuse before connection. Effective Connection listeners
+refuse before the first catalog query. Later class/connection cursor hooks also
+refuse before data dispatch. Register unchanged engine-instance observers after
+attachment. Native `insert=True` does not reorder these Connection events.
+Changed SQL/values, unsafe order, missing capture and SQL string subclasses
+raise `UnsafeDriverEvent`. Named-key comparison freezes native text and type
+identity, without calling supplied equality overrides. No callback receives a
+driver permit. Independent clients, host authorization, earlier expression
+admission and custom adapter internals keep their separate trust limits.
+An after-cursor check requires actual guarded dispatch completion before native
+result/UOW success. A dialect callback cannot return `True` to silently skip
+an INSERT, including a class callback installed during a later cursor callback.
+Each page resets and consumes its own markers. Deliberate removal of Cryptalis
+callbacks is trusted-host guard tampering, outside this boundary.
+
+**VERIFIED:** the initial run retains 13 failures. Eleven expose cursor
+changes that reached the real driver or changed observable read behavior.
+Two reveal RETURNING fixture errors: the existing mapper cached default metadata
+before the test changed it. Fresh imperative mappings with eager defaults now
+establish the native five-row, three-page baseline without private cache edits.
+The first corrected primary run passes **59 cases** in 22.53 seconds, including
+all 44 bulk cases. Controls cover in-place plaintext/valid-frame substitution,
+identity and tenant mutation, ordinary UPDATE, point/equality query changes,
+SQL and spoofed-string replacement, connection-local hooks, preattachment
+refusal before connection/key work, native observer results, RETURNING page
+tampering, async failure/rollback and clean retry. Raw psycopg call collectors
+remain empty during each refused injection.
+
+The alternate Python 3.13.12 / SQLAlchemy 2.0.51 / psycopg-Python cell passes
+those cases plus the pinned unchanged Smolink lifecycle: **60 cases** in
+18.67 seconds. All 38 app source hashes match, with no model/query changes.
+Its import-denied current-value removal child also passes. The full primary
+regression was interrupted to add the completion control after source review.
+Its receipt retains 975 passed tests, 18 passed subtests, two collection skips
+and one real reattachment exception-class failure before interruption.
+`UnsafeDriverEvent` now retains the existing unsupported-operation category.
+The completion, reattachment, deprotection and bulk run passes **80 cases** in
+35.90 seconds. The final alternate cell passes **62 cases** in 28.53 seconds,
+including both dialect-skip controls and the unchanged Smolink lifecycle.
+The subsequent broad primary run passes **1,974 tests and 18 subtests** in
+586.08 seconds, with three separate-environment skips and 48 existing DISTINCT
+warnings. This run precedes the following narrow buffer-admission fix.
+
+A real PostgreSQL negative control then exposes a custom Binary buffer bypass:
+a bytearray subclass reports the original frame through `__bytes__`, while
+psycopg sends its different native buffer. The inserted row reached the driver
+without the required typed refusal. The guard now requires exact native buffer
+types and reads them through `memoryview`, without custom byte conversion.
+The final affected primary run passes **227 cases** in 58.70 seconds across
+the event, bulk, deprotection, adapter, search and runtime boundaries.
+The final alternate cell passes **63 cases** in 28.38 seconds, including the
+buffer control and unchanged Smolink lifecycle. Both final 131-file Python
+bundles match the current worktree. The broad run above remains bounded to its
+recorded pre-buffer-fix source. Fresh-cluster profiles and the full alternate
+cell were not rerun for this guard.
+Completed runs retain stable 131-file Python hashes. Reproducible final offline
+archives, SBOM and all 36 installed package files pass, including CLI startup.
+All seven full gates remain UNKNOWN.
+
+Evidence: [initial failures](_reset/driver-event-red-20261023.json),
+[primary guard and bulk regression](_reset/driver-event-green-20261023.json),
+[interrupted broad run](_reset/driver-event-full-20261023.json),
+[completion and deprotection controls](_reset/driver-event-completion-20261023.json),
+[broad primary run](_reset/driver-event-full-final-20261023.json),
+[native masked-buffer failure](_reset/driver-event-buffer-red-20261023.json),
+[final affected primary regression](_reset/driver-event-buffer-green-20261023.json),
+[alternate guard and app](_reset/driver-event-sa20-20261023.json),
+[app evidence](_reset/driver-event-smolink-app-20261023.json),
+[final alternate guard and app](_reset/driver-event-sa20-final-20261023.json),
+[final app evidence](_reset/driver-event-smolink-app-final-20261023.json),
+[final buffer/app alternate run](_reset/driver-event-sa20-buffer-20261023.json),
+[final buffer/app evidence](_reset/driver-event-smolink-app-buffer-20261023.json),
+[final reproducible archives](_reset/driver-event-release-buffer-20261023.json), and
+[final installed wheel](_reset/driver-event-installed-buffer-20261023.json).
+
 ## Mapped bulk INSERT checkpoint: 2026-10-23
 
 **IMPLEMENTED, bounded native verification:** attached sync/async sessions admit
@@ -93,8 +181,9 @@ Evidence: [native oracle](_reset/bulk-insert-native-oracle-20261023.json),
 [reproducible archives](_reset/bulk-insert-release-20261023.json), and
 [installed wheel](_reset/bulk-insert-installed-20261023.json).
 
-Next work targets actual driver mutation checks on the existing flush/read
-routes and exact receipt count reporting. Broader DML/RETURNING, used defaults,
+The later [shared guard checkpoint](#shared-driver-event-checkpoint-2026-10-23)
+extends cursor-event mutation checks to flush/read routes. Exact receipt count
+reporting remains open. Broader DML/RETURNING, used defaults,
 online lifecycle and external qualification remain separate product gaps.
 
 ## Rotation preparation status checkpoint: 2026-10-23

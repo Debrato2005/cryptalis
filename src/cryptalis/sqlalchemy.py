@@ -48,6 +48,11 @@ class UnsafeEngineLogging(PolicyMismatch):
     remedy = "Create the runtime engine with echo=False and hide_parameters=True. Keep those settings for the attached engine and review host logging separately."
 
 
+class UnsafeDriverEvent(UnsupportedProtectedOperation):
+    stage = 'driver event admission'
+    remedy = 'Attach before cursor listeners. Register engine observers after attachment. Remove class/connection cursor hooks and driver SQL/parameter changes. Roll back before retry.'
+
+
 class VarcharLengthExceeded(InvalidText, DontWrapMixin):
     stage = 'PostgreSQL VARCHAR assignment'
     sqlstate = '22001'
@@ -421,6 +426,8 @@ class _Attachment:
         return await self._ring(tenant).prepare_async()
 
     def validate(self, connection):
+        if tuple(connection.dispatch.before_cursor_execute):
+            raise UnsafeDriverEvent()
         from cryptalis.migration import check_attachment
         check_attachment(connection, json.dumps(self.document, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode(), self.deployment)
         if connection.dialect.name != "postgresql" or connection.dialect.driver != "psycopg":
@@ -498,6 +505,8 @@ class _Attachment:
         engine = self.engine.sync_engine if isinstance(self.engine, AsyncEngine) else self.engine
         if engine.echo or not engine.hide_parameters or engine.pool.checkedout():
             raise PolicyMismatch()
+        if tuple(engine.dispatch.before_cursor_execute):
+            raise UnsafeDriverEvent()
         self.mapping.configure()
         for binding in self.bindings:
             # Freeze physical schema resolution, including initially unqualified
@@ -511,7 +520,7 @@ class _Attachment:
             # does not clear. Native statements can retain plaintext processors.
             inspect(model).base_mapper._compiled_cache.clear()
         engine.clear_compiled_cache()
-        install_guard(engine, UnsupportedProtectedOperation, self.before_execute, self.check_cursor)
+        install_guard(engine, UnsupportedProtectedOperation, self.before_execute, self.check_cursor, UnsafeDriverEvent)
         native_compiler = engine.dialect.statement_compiler
         class StorageCompiler(native_compiler):
             def get_select_precolumns(compiler, select, **kw):
@@ -1016,7 +1025,8 @@ def attach(mapping: registry, engine: Engine | AsyncEngine, *, lock: bytes, keys
     """Attach an already protected target. Await this call for an AsyncEngine.
 
     Schema transition is not performed. The host authenticates the lock and the
-    tenant passed to the returned factory. Only ORM flush writes are admitted.
+    tenant passed to the returned factory. ORM flush and bounded mapped
+    dictionary INSERT writes are admitted.
 
     ``deployment`` is ``(plan, pin)`` or ``(plan, pin, restore_binding)``. The
     third element is an adopted ``cryptalis.restore/v1`` binding when the
@@ -1030,6 +1040,8 @@ def attach(mapping: registry, engine: Engine | AsyncEngine, *, lock: bytes, keys
         native_engine = engine.sync_engine if isinstance(engine, AsyncEngine) else engine
         if native_engine.echo or not native_engine.hide_parameters:
             raise UnsafeEngineLogging()
+        if tuple(native_engine.dispatch.before_cursor_execute):
+            raise UnsafeDriverEvent()
         _previous_lock(lock, document, native_engine)
         owner = _Attachment(mapping, engine, document, keys, deployment)
     except CryptoFailure:

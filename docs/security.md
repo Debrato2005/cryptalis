@@ -43,6 +43,33 @@ arbitrary host plugins trustworthy or qualify other write routes.
 Typed native savepoint controls carry no data permit. Their final SQL must
 match native compilation, with empty parameters and unchanged configuration.
 
+The shared native driver boundary now snapshots each statement before cursor
+callbacks and checks it after those callbacks. It freezes actual SQL text,
+binary bytes, native containers and ordinary typed primitive/identity binds.
+It consumes one capture per dispatch, including each native RETURNING page.
+An after-cursor check also requires completion by the guarded raw dispatch
+before SQLAlchemy constructs results or reports unit-of-work success. A dialect
+callback cannot return `True` to skip the guard and silently drop an INSERT.
+SQL and named-key comparison cannot invoke a supplied string subclass's
+equality override. Bulk INSERT also retains its independent sealed-batch checks.
+For psycopg Binary objects, accept only exact `bytes`, `bytearray` or
+`memoryview` buffers and read the buffer directly. A custom `__bytes__` method
+cannot report different bytes from the buffer that psycopg sends.
+
+The capture must be first and unique in effective Connection event order.
+Preexisting engine listeners refuse before connection. Effective Connection
+listeners refuse before catalog validation. Later class/connection callbacks
+also refuse before data dispatch. Engine-instance observers can register after
+attachment and retain native results when they leave SQL and values unchanged.
+No cursor callback receives a driver permit. A missing or changed capture
+raises `UnsafeDriverEvent`, without fallback.
+
+This check covers the cursor-event boundary. It does not authenticate arbitrary
+host code, mutable internals of unprotected custom driver adapters, independent
+clients or application authorization. Earlier expression/event admission,
+cryptographic frame checks and deployment writer policy remain separate.
+Deliberate removal of Cryptalis callbacks is trusted-host guard tampering.
+
 **VERIFIED, local restricted fixture owner:** native PostgreSQL comparisons verify ordinary values and ORM behavior.
 Sync and async interleaved two-tenant tests fail without the cache fix and pass after its restoration in an isolated copy.
 Four native controls pass in both runs. The proof leaves the original worktree unchanged.

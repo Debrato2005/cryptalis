@@ -115,6 +115,20 @@ Accept only their exact native compilation with empty parameters and unchanged
 attachment configuration. This adds no raw SQL or protected-write authority.
 Keep native transaction objects and cleanup behavior.
 
+The driver guard captures native SQL and processed parameters at the first
+cursor event, then consumes that capture at driver dispatch. Freeze binary
+buffers, ordinary containers and typed primitive/identity values. This includes
+each native insertmanyvalues page, without reimplementing its SQL or row order.
+Require one capture callback, first in the effective Connection dispatch.
+Require one matching raw-dispatch completion before native post-execution and
+ORM success. A dialect callback that skips the guard must fail explicitly.
+Refuse preexisting engine cursor listeners before connection and effective
+Connection listeners before attachment validation. Register engine-instance
+observers after attachment. Class/connection cursor listeners and changes to
+captured SQL or values remain unadmitted. No callback receives a driver permit.
+Unknown unprotected native adapters retain their original object identity.
+Their mutable internal state is not part of this snapshot guarantee.
+
 Async preparation awaits provider work outside synchronous events. Type/result processors use local admitted material only.
 Sync sessions use synchronous provider APIs. Ordinary SQLAlchemy restrictions on async implicit I/O still apply.
 Detached authenticated values remain ordinary application values, without a revocable plaintext wrapper.

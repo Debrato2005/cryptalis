@@ -14,6 +14,12 @@ Use the [product protection transition](walkthrough-migration.md) before attachm
 Use the [decrypt-back/removal contract](lifecycle.md#deprotect-and-remove) for the current protected transition format.
 Supply a trusted compiler lock, admitted tenant keyrings and an engine with parameter logging hidden.
 Attach before sessions or model use. Close existing connections first.
+Attach before cursor listeners. Register engine-instance observers after
+attachment. They must leave driver SQL and parameters unchanged.
+Class-level and connection-local cursor hooks are unadmitted because they can
+precede the guard. `UnsafeDriverEvent` reports invalid order or changed driver
+SQL/values. Remove the hook or move an unchanged observer to the engine after
+attachment. Roll back before retry. Do not use `insert=True` to reorder it.
 The host authenticates tenant scope and authorizes queries; attachment adds no tenant filter.
 Assign row IDs and declared tenant values before flush. A Python default does not replace assignment.
 

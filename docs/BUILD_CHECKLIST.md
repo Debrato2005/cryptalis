@@ -36,7 +36,19 @@ No objective is complete until its acceptance evidence and applicable gate pass.
   Attached mapped dictionary INSERT now preserves bounded native grouping,
   NULLs, explicit typed context, uniqueness and transaction/savepoint behavior.
   Its final driver guard checks actual payload bytes and row context.
-  See the [current checkpoint](status.md#mapped-bulk-insert-checkpoint-2026-10-23).
+  The shared guard now captures native flush/read and RETURNING-page driver
+  values before later cursor callbacks and checks them at final dispatch.
+  First/unique effective callback order is required. Cursor observers must
+  register on the engine after attachment and retain SQL and values.
+  See the [current checkpoint](status.md#shared-driver-event-checkpoint-2026-10-23).
+- The shared guard checkpoint passes 1,974 tests and 18 subtests in the broad
+  primary run, with three separate-environment skips and 48 existing warnings.
+  A subsequent exact-buffer fix passes 227 affected cases and 63 final
+  alternate cases including the unchanged Smolink lifecycle. These final runs
+  retain stable 131-file hashes. Reproducible archives and all 36 installed
+  package files pass. The broad run predates only that narrow buffer fix and
+  corrected attachment docstring. Fresh-cluster/full-alternate profiles retain
+  their earlier revision boundaries.
 - The bulk checkpoint passes the full primary regression: 1,953 tests and
   18 subtests, with three separate-environment skips and 48 existing warnings.
   Stronger final driver controls pass all 44 bulk cases at the final source

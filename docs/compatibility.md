@@ -79,6 +79,13 @@ The compiler rejects a constraint or mapping it cannot preserve exactly. Generic
 [Lifecycle](lifecycle.md#integrated-lifecycle-checkpoint-2026-10-07) bounds the current verifier's source-index and scoped-uniqueness evidence.
 A searchable small domain fails planning because enumeration can label equality classes. No arbitrary size threshold substitutes for leakage evidence.
 
+The attached driver boundary requires its capture callback first and unique.
+Register unchanged engine-instance cursor observers after attachment.
+Preexisting, class-level and connection-local cursor hooks refuse. Changes to
+captured SQL, binary bytes or typed primitive/identity binds also refuse before
+the driver. Native ORM RETURNING pages for unprotected server defaults retain
+their native results. This adds no mapped bulk RETURNING admission.
+
 Native VARCHAR preserves its character limit and assignment semantics through protection and decrypt-back.
 Typed length failures require rollback, as the native ORM flush does.
 For the bounded dictionary INSERT route, a length failure preserves native

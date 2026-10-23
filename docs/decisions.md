@@ -58,6 +58,38 @@ Their absolute guarantees are also removed: immediate arbitrary-worker denial, a
 whole-result publication, subject cryptographic erasure, and hostile-database completeness/freshness.
 A removed mechanism cannot retain its old guarantee through wording alone.
 
+## Shared driver event boundary: 2026-10-23
+
+Extend final driver admission to ordinary flush and protected read paths.
+Capture SQLAlchemy's native processed statement/parameters before cursor
+listeners, then compare at the guarded dialect dispatch. Snapshot each native
+insertmanyvalues page. Reuse its compilation, ordering, RETURNING and transaction
+mechanics instead of implementing another SQL compiler or batch association.
+Freeze SQL, binary buffers, containers and ordinary typed primitive/identity
+values. Keep unknown unprotected adapters by identity, without claiming to
+freeze their internal state.
+For psycopg Binary objects, require exact native buffer types and read the
+buffer directly. Custom `__bytes__` behavior cannot stand in for bytes that the
+driver actually sends.
+
+SQLAlchemy's inspected Connection event implementation does not forward
+`insert=True` as a prepend instruction. Check actual effective callback order
+at capture and dispatch. Require the capture first and exactly once. Refuse
+preexisting engine listeners before connection and effective Connection
+listeners before catalog validation. Only later engine-instance observers are
+admitted. Any captured SQL/value mutation, unsafe order or missing capture raises the typed
+`UnsafeDriverEvent`. No event callback receives a driver permit.
+After-cursor admission also requires a completion marker set only after the
+guarded raw execute succeeds. This prevents a preexisting or newly installed
+dialect callback from returning `True` and silently skipping an INSERT.
+Reset both markers for every native page. This retains harmless dialect
+observers without a separate dialect-listener policy.
+
+This strengthens the existing boundary without changing CF1, provider trust,
+search leakage, transaction objects or public DML scope. Separate clients,
+host authorization, custom adapter internals and external qualification keep
+their existing limits. [Status](status.md) owns executable evidence.
+
 ## Mapped dictionary INSERT: 2026-10-23
 
 Admit ordinary `Session.execute(insert(Model), list[dict])` through the existing
