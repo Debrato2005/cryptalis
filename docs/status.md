@@ -21,6 +21,17 @@ and [competitive capability matrix](research/capability-matrix.md) govern priori
 Progress follows complete real-application journeys and resolved production requirements.
 All seven production gates remain UNKNOWN.
 
+## Local research workflow: 2026-10-23
+
+The user-selected free research workflow now uses built-in source discovery,
+direct downloads and isolated local Crawl4AI 0.9.5 extraction. HTTP and browser
+retrievals of official PostgreSQL documentation pass status/title/passage checks.
+Both cached results work in the restricted sandbox. A local JavaScript fixture
+and three cache/Markdown controls pass. Paid services and LLM extraction are off.
+This changes development tooling only. Runtime dependencies and all production
+gates stay unchanged. See the [research setup](research/README.md#local-research-extraction)
+and [recorded evidence](_reset/local-research-extraction-20261023.json).
+
 ## Installed searchable application integration: 2026-10-23
 
 **VERIFIED, bounded installed package:** the actual current wheel passes the

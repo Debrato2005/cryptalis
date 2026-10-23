@@ -69,14 +69,17 @@ Use local Git and direct file reads for Cryptalis source and history.
 For external GitHub source, prefer an available checkout, the GitHub API, or raw files.
 Do not scrape rendered repository HTML when those sources supply the evidence.
 
-Use Firecrawl for external research. Every `firecrawl_scrape` call must include
-both `url` and the required `objective`. State the facts the extraction must resolve.
-For example: `{"url":"https://www.postgresql.org/docs/16/datatype-character.html","objective":"Read native VARCHAR assignment, character-count, and trailing-space semantics."}`.
+Use built-in web search to find public primary sources. Download files directly.
+Use local Crawl4AI for Markdown extraction when useful, with paid services and
+LLM extraction disabled. Cache results and retain source links, retrieval facts,
+license and attribution notices. The local research setup is documented in
+[the research index](docs/research/README.md#local-research-extraction).
+Use ordinary HTTP first. Use browser rendering only when the required content
+needs JavaScript. Do not bypass authentication, bot challenges or access controls.
 
-If Firecrawl fails after a valid call, do not repeat the unchanged request.
-For documentation, use direct HTTP with `curl` or `httpx` and a suitable HTML parser,
-or use native web search to find and read official documentation.
-Use Playwright only when ordinary HTTP cannot retrieve the required rendered content.
+Do not retry a failed research request unchanged. Use direct HTTP with `curl`
+or `httpx`, native web search, or the local extractor as applicable.
+Optional paid connectors are not required for this workflow.
 
 Check response status, final URL, page title, and relevant body passages.
 Reject error pages, login pages, empty results, and unrelated content.
