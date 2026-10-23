@@ -126,7 +126,16 @@ Preserve SQL UNKNOWN. Preserve NULL elements, empty `IN` lists, and `NOT IN` thr
 NULL payloads remain SQL NULL. Empty strings encrypt normally. Reject PostgreSQL-forbidden NUL text before SQL.
 Strict UTF-8 never changes composed/decomposed text or silently casefolds it.
 
-Text equality requires inspected deterministic exact equivalence, such as a qualified `C` collation.
+Text equality requires inspected deterministic exact equivalence. Current admission
+accepts exact `pg_catalog.C` with provider `c` and mapped `C`, or exact
+`pg_catalog.default` with provider `d` and an implicit mapped collation.
+Both must be deterministic. Each source index must use the same qualified
+collation as its column. This admits byte-exact equality and uniqueness only;
+it supplies no locale-sensitive ordering, normalization or pattern semantics.
+User-defined names and nondeterministic collations remain unadmitted.
+Existing readers reject new default-collation search locks before use.
+The [searchable application checkpoint](status.md#searchable-sqlmodel-application-checkpoint-2026-10-23)
+records the bounded native and unchanged-application evidence.
 Nondeterministic collations, citext, bpchar padding, locale-sensitive operators, custom types and changed normalizers remain outside the current text profile.
 Each required profile needs exact equivalence and separate admission. This does not require every locale or arbitrary host hook.
 The compiler rejects a constraint or mapping it cannot preserve exactly. Generic CHECK/FK/default/collation preservation is UNKNOWN.

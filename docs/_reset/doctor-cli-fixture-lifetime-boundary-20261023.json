@@ -1,0 +1,33 @@
+{
+  "scope": "Full-regression failure diagnosis and test-only correction",
+  "original_full_receipt": "searchable-doctor-integration-full-20261023.json",
+  "original_full_result": {
+    "passed": 2339,
+    "failed": 1,
+    "skipped": 1
+  },
+  "original_source_stability": {
+    "unchanged": true,
+    "changed_paths": []
+  },
+  "deterministic_red_receipt": "doctor-cli-fixture-lifetime-red-20261023.json",
+  "affected_green_receipt": "doctor-cli-fixture-lifetime-green-20261023.json",
+  "root_cause": "Trusted host fixture defined Customer only in factory local scope. SQLAlchemy registry weak references did not retain it through garbage collection. Compiler correctly reported model_resolution FAIL, then cleanup failure retained that observed FAIL.",
+  "correction": "Retain Customer in host module global scope, matching ordinary application model lifetime. Keep explicit gc.collect before real compiler in cleanup control. No product code change.",
+  "changed_paths_after_original_full": [
+    "tests/profile_sqlmodel_searchable_application.py",
+    "tests/test_doctor_preflight_cli.py"
+  ],
+  "changes": {
+    "tests/profile_sqlmodel_searchable_application.py": {
+      "before": "1728dbccb11b5cc14900a7ec82c9cf49a869a8e98980ec554f0bfcc2b4f76579",
+      "after": "915a2729d631ceaabf8cd7fc7f0d76a199ef85a127337df4175614bb232cc4b2"
+    },
+    "tests/test_doctor_preflight_cli.py": {
+      "before": "f5fff8a562b3c970aa1c2396cfb5200bdfd1914d805e60e4e98723726625972a",
+      "after": "fd937a70baf16ce5c98b612a0f5852c33497eab19dae7bb58710c6fecfc24dde"
+    }
+  },
+  "other_change": "Trim trailing blank line in new opt-in SQLModel profile; no behavior change.",
+  "gate": "UNKNOWN"
+}

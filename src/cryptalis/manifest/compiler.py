@@ -533,6 +533,13 @@ def _host_evidence(declaration, writers, search_reviews, issues):
             "writers": sorted(records, key=lambda w: (w["table_id"], w["name"]))}, sorted(domain_records, key=lambda r: r["field_id"])
 
 
+
+def _exact_search_collation(source):
+    """Only qualified native C or deterministic database-default equality."""
+    return (source["deterministic"] is True and
+            (source["collation"], source["provider"]) in
+            (("pg_catalog.C", "c"), ("pg_catalog.default", "d")))
+
 def _compile_model(model, mapper, facts, issues, schema):
     def refuse(code, location, remedy):
         issues.append(Issue(code, f"{model.model}.{location}" if location else model.model, remedy))
@@ -592,10 +599,13 @@ def _compile_model(model, mapper, facts, issues, schema):
         if (_server_generation(column, actual) or column.default is not None
                 or column.onupdate is not None):
             refuse("protected_default", field.name, "Remove protected defaults and generated values. Assign values through admitted writes.")
-        # Exact C identity matters. A user-defined collation called C is not this collation.
-        if field.queries and (actual["collation"] != "pg_catalog.C" or actual["deterministic"] is not True
-                or actual["provider"] != "c" or getattr(column.type, "collation", None) != "C"):
-            refuse("unsupported_collation", field.name, "Use explicit pg_catalog C text equivalence in the schema and mapping.")
+        # Native deterministic default equality is byte-exact, like native C.
+        # Names outside pg_catalog do not inherit either qualified identity.
+        mapped_collation = getattr(column.type, "collation", None)
+        if field.queries and (not _exact_search_collation(actual) or
+                mapped_collation != ("C" if actual["collation"] == "pg_catalog.C" else None)):
+            refuse("unsupported_collation", field.name,
+                   "Match explicit native C or implicit deterministic database-default text equivalence.")
         unique_indexes = []
         expected_scope = [column.name] if model.tenant_column is None else [tenant_name, column.name]
         for constraint in facts["constraints"]:
@@ -614,7 +624,7 @@ def _compile_model(model, mapper, facts, issues, schema):
                        and index["total_columns"] == index["key_columns"]
                        and not index["exclusion"] and not index["replica_identity"])
             expected_ops = ["pg_catalog.text_ops"] if model.tenant_column is None else ["pg_catalog.uuid_ops", "pg_catalog.text_ops"]
-            expected_collations = ["pg_catalog.C"] if model.tenant_column is None else [None, "pg_catalog.C"]
+            expected_collations = [actual["collation"]] if model.tenant_column is None else [None, actual["collation"]]
             if index["unique"]:
                 if (not base_ok or index["columns"] != expected_scope or index["nulls_not_distinct"]
                         or not index["immediate"] or index["opclasses"] != expected_ops
@@ -625,7 +635,7 @@ def _compile_model(model, mapper, facts, issues, schema):
                 if "unique" not in field.queries:
                     refuse("undeclared_uniqueness", field.name, "Declare unique and accept its leakage. Existing uniqueness cannot disappear.")
             elif (not base_ok or index["columns"] != [column.name]
-                  or index["opclasses"] != ["pg_catalog.text_ops"] or index["collations"] != ["pg_catalog.C"]
+                  or index["opclasses"] != ["pg_catalog.text_ops"] or index["collations"] != [actual["collation"]]
                   or "equality" not in field.queries):
                 refuse("unsupported_index", field.name, "Use an ordinary equality index, or exclude the field from this index.")
         for constraint in table.constraints:
@@ -865,7 +875,7 @@ def _validate_prior_source(model, *, varchar=False):
         require(not any(source[k] for k in ("identity", "generated", "default_digest")))
         require(field["source"] == {"type": source['type'], "nullable": source["nullable"], "collation": source["collation"]})
         if field["queries"]:
-            require(source["collation"] == "pg_catalog.C" and source["deterministic"] is True and source["provider"] == "c")
+            require(_exact_search_collation(source))
         affected = [i for i in facts["indexes"] if field["column"] in i["columns"] + i["dependency_columns"]]
         require(field["unique_indexes"] == [i["name"] for i in affected if i["unique"]])
         require(bool(field["unique_indexes"]) == ("unique" in field["queries"]))
@@ -882,9 +892,9 @@ def _validate_prior_source(model, *, varchar=False):
             require(index["total_columns"] == index["key_columns"])
             require(index["columns"] == (scope if index["unique"] else [field["column"]]))
             ops = (["pg_catalog.uuid_ops"] if tenant_name is not None else []) + ["pg_catalog.text_ops"]
-            collations = ([None] if tenant_name is not None else []) + ["pg_catalog.C"]
+            collations = ([None] if tenant_name is not None else []) + [source["collation"]]
             require(index["opclasses"] == (ops if index["unique"] else ["pg_catalog.text_ops"]))
-            require(index["collations"] == (collations if index["unique"] else ["pg_catalog.C"]))
+            require(index["collations"] == (collations if index["unique"] else [source["collation"]]))
         for key, items in (("constraints", facts["constraints"]), ("indexes", facts["indexes"])):
             originals = field["original"][key]
             candidates = {i["name"]: i for i in items if field["column"] in i["columns"]

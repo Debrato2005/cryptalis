@@ -152,6 +152,9 @@ and schema against an immutable migration plan and supplied ACTIVE pin.
 Use the declared runtime connection, rather than maintenance credentials.
 Neither command applies protection or authenticates stored frames.
 Doctor reports unobserved checks as UNKNOWN, even when its scoped check passes.
+Before migration, `doctor --pre-adoption` inspects the manifest and native schema
+through an explicit trusted host factory. Host-code effects remain UNKNOWN.
+See [pre-adoption diagnosis](docs/walkthrough-migration.md#diagnose-before-adoption).
 See the migration walkthrough for inputs and exit codes.
 The specified `init`, `plan`, `apply`, `rollback`, `keys rotate`, and `remove`
 commands remain unimplemented package commands.

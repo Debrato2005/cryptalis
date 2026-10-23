@@ -44,6 +44,21 @@ does not qualify every field, HTTP/authentication endpoint, async SQLModel, or
 the whole product journey below. Synthetic/native compatibility and rotation
 evidence must not be relabelled as complete external-application qualification.
 
+## Current integration evidence: 2026-10-23
+
+The [manifest-first recovery checkpoint](../status.md#manifest-first-application-recovery-checkpoint-2026-10-23)
+adds pre-adoption diagnosis and the unchanged Smolink interruption, rotation,
+fresh-cluster adoption and latest-value removal journey. The
+[searchable SQLModel checkpoint](../status.md#searchable-sqlmodel-application-checkpoint-2026-10-23)
+adds original email equality/IN and native uniqueness under explicit single
+tenancy, with fixture-only leakage review and unchanged implicit default
+collation. It supplies no production identity-domain or multi-tenant evidence.
+The [CLI checkpoint](../status.md#pre-adoption-cli-checkpoint-2026-10-23)
+reuses the read-only compiler while reporting trusted host-code effects UNKNOWN.
+Local SDK application profiles now cover synchronous and asynchronous operation;
+live external key custody remains unqualified. These are internal checkpoints.
+The earlier source boundary and all seven UNKNOWN production gates remain explicit.
+
 ## Capability and acceptance matrix
 
 Each row retains its objective IDs. “Needed” is proposed work requiring the

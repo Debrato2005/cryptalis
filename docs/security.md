@@ -191,6 +191,14 @@ Each comparison includes declared tenant scope. Native B-tree expression indexes
 Payload and term are one bytea value. Public framing checks refuse malformed shape; they cannot prove AEAD authenticity.
 Attachment checks exact index/check definitions under `pg_catalog` search-path resolution, including validity, keys and operator classes.
 Aliases retain physical-column lineage. Forged mappings, protected derived tables, joins and unadmitted grammar refuse before the driver.
+Exact text search admits inspected deterministic `pg_catalog.C`/provider `c`
+or implicit `pg_catalog.default`/provider `d`. Source and index collations must
+match their qualified identities. Byte-exact equality does not normalize case,
+Unicode or trailing spaces, and admits no ordering or pattern behavior.
+User-defined shadow names and nondeterministic collations still refuse.
+The existing exact AutoString recognizer also checks original SQLModel search
+binds; custom hooks, variants and unqualified types remain outside admission.
+
 Search binds use ordinary text codecs and explicit values. Custom codecs, callables, ambiguous unsupplied named defaults and generated parameter-name overrides refuse.
 These codec checks cover every placeholder sharing a search name, including plain fields. Protected ON conditions cannot reuse WHERE permits.
 Independent frozen vectors verify query terms; native PostgreSQL comparisons verify truth, result membership and uniqueness outcomes.
@@ -358,6 +366,12 @@ actionable issues. Inspection failure remains UNKNOWN with safe diagnostics.
 Schema compatibility alone can pass. Provider access, query routes, writer
 exclusion, runtime deployment, host authority and recovery capacity stay UNKNOWN.
 The report returns no deployment artifact or apply authority.
+The pre-adoption CLI accepts an explicit trusted host factory for the registry,
+writer inventory and search reviews. It owns the private connection and uses
+this same compiler. Host import/factory effects remain UNKNOWN; only compiler
+inspection is read-only. The CLI suppresses Python stream output while loading
+host configuration, but does not sandbox host Python or native descriptor writes.
+Known loader, schema, inspection and cleanup failures retain safe typed diagnostics.
 
 **IMPLEMENTED, bounded ACTIVE Doctor:** `migration.diagnose_deployment` and
 `cryptalis doctor` inspect an existing ACTIVE deployment without keys.

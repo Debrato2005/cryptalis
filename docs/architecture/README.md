@@ -371,9 +371,11 @@ The table defines the **SPECIFIED** final command surface.
 A bounded `status` command reports protection, payload/search preparation, and
 reverse progress and metadata. Preparation status uses the existing typed P
 status APIs and never supplies application publication authority.
-A bounded `doctor` checks an existing ACTIVE deployment through the declared
-runtime connection. It repeats shared attachment admission in a read-only
-snapshot. Unobserved boundaries and its aggregate result remain UNKNOWN.
+A bounded `doctor` checks either a pre-adoption manifest/schema or an existing
+ACTIVE deployment. Pre-adoption mode uses the same compiler and an explicit
+trusted host factory; host-code effects remain UNKNOWN. ACTIVE mode uses the
+declared runtime connection and repeats shared attachment admission in a
+read-only snapshot. Unobserved boundaries and aggregate results remain UNKNOWN.
 Other commands below remain unimplemented package commands.
 Full status coverage of keys and retained obligations
 remains SPECIFIED. The migration walkthrough defines the implemented subset.
@@ -385,7 +387,7 @@ See [committed progress](../walkthrough-migration.md#inspect-committed-progress)
 | `cryptalis plan` | Report incompatibilities, semantic diff, DDL, leakage, writers, estimates, and approvals. Refuse any incompatibility |
 | `cryptalis apply PLAN` | Run or resume the verified transition |
 | `cryptalis status` | Show representation, progress, failures, keys, and retained obligations |
-| `cryptalis doctor` | Inspect active runtime admission; report unobserved boundaries as UNKNOWN |
+| `cryptalis doctor` | Inspect pre-adoption schema or ACTIVE runtime admission; report unobserved boundaries as UNKNOWN |
 | `cryptalis rollback` | Transform current data to the previous compatible representation |
 | `cryptalis keys rotate` | Select rewrap, payload rotation, or search reindex through the same executor |
 | `cryptalis remove` | Decrypt-back, verify, test package-free operation, retire eligible generated objects |

@@ -46,8 +46,8 @@ It reads no application values and resolves no keys. Known declaration or schema
 incompatibilities return FAIL with issue codes, locations and remedies.
 Unavailable inspection returns UNKNOWN. Schema compatibility can pass while the
 overall report and uninspected provider, query and operational checks remain UNKNOWN.
-The report supplies no deployment authority. The CLI `doctor` command below
-retains its separate ACTIVE-deployment scope.
+The report supplies no deployment authority. The [pre-adoption CLI](#diagnose-before-adoption)
+uses this same compiler. ACTIVE diagnosis retains its separate deployment scope.
 
 `plan` changes no schema or data. It rejects incompatible keys, types, tenancy, and search domains.
 Save `p.artifact` and the authenticated current pin outside restore; bind target, operation, digest, and phase. The host supplies pin provenance.
@@ -111,6 +111,37 @@ versions and async engines refuse before connection or key work.
 The [pinned template checkpoint](status.md#optional-sqlmodel-template-checkpoint-2026-10-23)
 covers unchanged CRUD modules for one storage-only field.
 HTTP routes, authentication, full startup and deployment remain outside that checkpoint.
+
+## Diagnose before adoption
+
+**IMPLEMENTED, bounded:** supply the protection declaration, private inspection
+connection file and an explicit trusted host factory:
+
+```console
+cryptalis doctor --pre-adoption cryptalis.json --host-context myapp.cryptalis_config:context --database-url-file /private/owner-connection.txt --json
+```
+
+The host module must already be importable in the application's environment.
+Its synchronous zero-argument factory returns exactly
+`(Base.registry, writer_inventory, domain_reviews)`, where `writer_inventory`
+is a `WriterInventory` and `domain_reviews` is a tuple of `SearchReview` records.
+Use the same explicit declarations as planning. Supply no engine or keys through
+this tuple. The CLI owns its inspection connection and cleanup.
+Keep the mapped application classes alive, as ordinary module-level models.
+A registry uses weak references and cannot retain function-local model classes alone.
+
+Importing the module and calling its factory executes trusted application Python.
+The command does not sandbox that code or inspect its effects. It discards Python
+stdout/stderr during loading; native descriptor writes remain a host responsibility.
+The report states `host_configuration_effects: UNKNOWN` and scopes `effects: NONE`
+to `compiler_inspection`. Do not load an untrusted module.
+
+The compiler inspects a read-only repeatable-read snapshot without application
+values or keys. Exit 0 means the manifest/schema check passed. Overall status and
+unobserved provider, route and operational checks remain UNKNOWN. Schema refusal
+exits 3 with issue codes, locations and remedies. Unavailable inspection, loader,
+cleanup or output exits 4 with safe diagnostics. Invalid inputs exit 2.
+Mixed pre-adoption and ACTIVE inputs refuse before host loading or connection.
 
 ## Diagnose an active deployment
 
@@ -716,7 +747,9 @@ Keep a native VARCHAR field mapped as `String(n)` or `VARCHAR(n)`.
 Match the database character limit exactly. Use `String()` for unbounded VARCHAR.
 Use standard `Text` for native PostgreSQL text. Custom type decorators, domains,
 fixed-width `char`/`bpchar`, and dialect variants remain unadmitted.
-Searchable fields still require exact C equivalence and explicit leakage acceptance.
+Searchable fields require the admitted deterministic native C or implicit
+database-default equivalence and explicit leakage acceptance. Source indexes
+must use the same qualified collation. See [text admission](compatibility.md#query-semantics).
 Storage-only VARCHAR fields can retain their native default collation.
 The existing 16 MiB text-codec limit still applies.
 

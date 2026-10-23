@@ -1,0 +1,25 @@
+{
+  "scope": "Offline normalization refinement; native connect replaced before any network, no database probe/test retry",
+  "red": {
+    "cli_sha256": "b557944c0ba7db1303f1d52b096c6d0eb2b5c5470b0ffcccc6d6e6754ad07d40",
+    "checks": {
+      "equals_option_classification": "PASS",
+      "conninfo_literal_preserved": "FAIL",
+      "URL_prefix_normalized": "PASS"
+    }
+  },
+  "green": {
+    "checks": {
+      "equals_option_classification": "PASS",
+      "conninfo_literal_preserved": "PASS",
+      "URL_prefix_normalized": "PASS"
+    }
+  },
+  "extra_setup_attempt": "Direct pytest invocation refused by repository conftest with exit4; no test executed. Subsequent native suite used the mandatory wrapper after explicit user authorization.",
+  "source_sha256": {
+    "src/cryptalis/cli.py": "c369adfdebda0e7101fb11d7e3c93d5ac3552c1408032c3331fa6be5f72c54ff",
+    "tests/test_doctor_preflight_cli.py": "f5fff8a562b3c970aa1c2396cfb5200bdfd1914d805e60e4e98723726625972a"
+  },
+  "native_receipt": "doctor-pre-adoption-cli-first-20261023.json",
+  "gate": "UNKNOWN"
+}

@@ -1,0 +1,37 @@
+{
+  "scope": "Primary PostgreSQL16 source and local native oracle for deterministic database-default equality; no protected capability admission change yet",
+  "retrievals": [
+    {
+      "tool": "Firecrawl scrape",
+      "url": "https://www.postgresql.org/docs/16/collation.html",
+      "outcome": "Insufficient credits; request not run; not retried"
+    },
+    {
+      "tool": "official web open",
+      "url": "https://www.postgresql.org/docs/16/collation.html",
+      "title": "PostgreSQL: Documentation:16:24.2 Collation Support",
+      "outcome": "retrieved correct documentation body",
+      "support": "24.2.2.4 defines deterministic equality as identical byte sequences; bytewise tie-breaking; standard collations deterministic.24.2.2.1 identifies database-default behavior."
+    },
+    {
+      "tool": "official raw source web open",
+      "url": "https://raw.githubusercontent.com/postgres/postgres/REL_16_STABLE/src/backend/utils/adt/varlena.c",
+      "outcome": "retrieved source body",
+      "support": "texteq compares bytes for deterministic collation; varstr_cmp resolves locale ties by bytes; bttextcmp delegates to text_cmp."
+    },
+    {
+      "tool": "official raw source web open",
+      "url": "https://raw.githubusercontent.com/postgres/postgres/REL_16_STABLE/src/backend/utils/adt/pg_locale.c",
+      "outcome": "retrieved source body",
+      "support": "DEFAULT_COLLATION_OID selects default_locale for ICU or libc default path; current local oracle reports database provider c and C.UTF-8."
+    }
+  ],
+  "evidence_sha256": {
+    "docs/_reset/sqlmodel-search-admission-red-20261023.json": "78021b29cd7847c8aed8c50745fb795842de69a8e50ef1e31324d871765bb22c",
+    "docs/_reset/sqlmodel-default-collation-native-wrapper-20261023.json": "8de309d32efc1829f9c846da80e3b9d5a836503ca360773d7a17783380f5c7bd",
+    "docs/_reset/sqlmodel-default-collation-native-observations-20261023.json": "f244051172c0cb25ca6c1de014e3ded5db84afefe50be529857a0a212d13ef23"
+  },
+  "native_scope": "PG16 database-default provider d deterministictrue, database provider c/C.UTF-8; TEXT+VARCHAR255 byte distinctions, equality/IN NULL+empty list, unique duplicates23505/savepoints/distinctNULL; seqscan toggled",
+  "proposed_limit": "Only pg_catalog.default provider d deterministictrue with implicit mappingcollationNone, plus existing explicitpg_catalog.C. Exact source/index collation retained; named/userdefined/nondeterministic/range operations remain unadmitted.",
+  "gate": "UNKNOWN"
+}

@@ -1,0 +1,175 @@
+{
+  "scope": "Pinned original SQLModel template searchable email complete application journey; exact deterministic default collation admission; public opaque fixture identities only; no production qualification",
+  "base_revision": "5303581",
+  "source_sha256": {
+    "src/cryptalis/manifest/compiler.py": "a913fbe1bbb4ba1db07e1a1f244bf8030b346035558eb2dffbed366304d7b214",
+    "src/cryptalis/_sqlalchemy_search.py": "904351bc820d07af5794f8b0f376310db2522ef29e936f88545a3493925904d7",
+    "tests/test_sqlmodel_application.py": "88c78cbd3a4664c3103dc0776fa40fb7183d61657add1b1a7089f037f6113613",
+    "tests/profile_sqlmodel_searchable_application.py": "1728dbccb11b5cc14900a7ec82c9cf49a869a8e98980ec554f0bfcc2b4f76579",
+    "tests/test_default_collation.py": "c75ec6787ed6960d873d4169059e5997c18555e81ebfe1297d04e3aac7b8ee78"
+  },
+  "receipts": {
+    "sqlmodel-search-admission-red-20261023.json": {
+      "sha256": "78021b29cd7847c8aed8c50745fb795842de69a8e50ef1e31324d871765bb22c",
+      "counts": {
+        "failed": 1
+      },
+      "exit_code": 1,
+      "elapsed_seconds": 1.7948850510001648,
+      "source_stability": {
+        "unchanged": true,
+        "changed_paths": []
+      },
+      "fixing_revision": "worktree-ec1bc3973f00ef11",
+      "source_files": 170
+    },
+    "sqlmodel-default-collation-native-wrapper-20261023.json": {
+      "sha256": "8de309d32efc1829f9c846da80e3b9d5a836503ca360773d7a17783380f5c7bd",
+      "counts": {
+        "passed": 1
+      },
+      "exit_code": 0,
+      "elapsed_seconds": 0.8050998359976802,
+      "source_stability": {
+        "unchanged": true,
+        "changed_paths": []
+      },
+      "fixing_revision": "worktree-54ec867c690a181f",
+      "source_files": 170
+    },
+    "sqlmodel-default-collation-first-green-20261023.json": {
+      "sha256": "044c75e335d0d0cb6c18843b3d24977c6f82c05b260a8bd6ef8bbb521839fb3e",
+      "counts": {
+        "failed": 2,
+        "passed": 68
+      },
+      "exit_code": 1,
+      "elapsed_seconds": 4.876343914002064,
+      "source_stability": {
+        "unchanged": true,
+        "changed_paths": []
+      },
+      "fixing_revision": "worktree-f49ef4f81f43e261",
+      "source_files": 170
+    },
+    "sqlmodel-search-current-green-20261023.json": {
+      "sha256": "e72a73937e9d77ba6f5f344efd97fbf899c8c054994d7cbb6861adbd383a9a24",
+      "counts": {
+        "passed": 18
+      },
+      "exit_code": 0,
+      "elapsed_seconds": 4.3485390650021145,
+      "source_stability": {
+        "unchanged": true,
+        "changed_paths": []
+      },
+      "fixing_revision": "worktree-608c3d6bc46dd68d",
+      "source_files": 171
+    },
+    "sqlmodel-default-collation-plain-search-20261023.json": {
+      "sha256": "1efbf469a6a7d142bb3e38b84e0e951dbf2f9f2bffc3ca5926bebaa9f9845234",
+      "counts": {
+        "passed": 83
+      },
+      "exit_code": 0,
+      "elapsed_seconds": 12.784472755010938,
+      "source_stability": {
+        "unchanged": true,
+        "changed_paths": []
+      },
+      "fixing_revision": "worktree-608c3d6bc46dd68d",
+      "source_files": 171
+    },
+    "sqlmodel-search-storage-regression-wrapper-20261023.json": {
+      "sha256": "25d6515fb2b96b64a9eaded95bd5f3995f1f285b9c88857f2504db9a7bbf35c2",
+      "counts": {
+        "passed": 1
+      },
+      "exit_code": 0,
+      "elapsed_seconds": 2.104777500993805,
+      "source_stability": {
+        "unchanged": true,
+        "changed_paths": []
+      },
+      "fixing_revision": "worktree-608c3d6bc46dd68d",
+      "source_files": 171
+    },
+    "sqlmodel-search-final-wrapper-20261023.json": {
+      "sha256": "13c78fc12c1eab329333ec546868e9f7f6f44ec91b1034491dc3def6d128c4b5",
+      "counts": {
+        "passed": 1
+      },
+      "exit_code": 0,
+      "elapsed_seconds": 2.8614857729990035,
+      "source_stability": {
+        "unchanged": true,
+        "changed_paths": []
+      },
+      "fixing_revision": "worktree-3b62492b20b85ce0",
+      "source_files": 171
+    }
+  },
+  "application": {
+    "application_revision": "d40de23896d27d15c17a7bf9649123fd167a0aa8",
+    "application_release": "0.10.0",
+    "application_source_sha256": {
+      "LICENSE": "0bd4e76cdd06ab24cce2de5e74f490920897f90a22ad35e8403ed006d4560f48",
+      "backend/pyproject.toml": "5c6bbcfb3fbdccbdc22d2828628ed4dc8352e13574899296cd9836ac9342c413",
+      "backend/app/models.py": "5cd49acda8771e6f9551f47a0d1e516bcce91d90841a1e9e0283a1ef2d6a7e94",
+      "backend/app/crud.py": "f69d79e858ee22cee7792494b0df0370afaed20439ed16bbf6f70767926254d1",
+      "backend/app/core/security.py": "0006fd18a2900107c6e06023c1b9ccf3960887e84cf664e1632307305c6c4ab7",
+      "backend/app/core/config.py": "668f895a04119a5aaa9890628a13add517e31f61856d228e03a471fa3eb62aa4"
+    },
+    "model_changes": [],
+    "query_changes": [],
+    "protected_fields": [
+      "User.full_name",
+      "User.email"
+    ],
+    "profile": "fixture-only email equality/IN/unique; explicit single tenant",
+    "crud": "unchanged native/protected/package-free create/get/update/delete; real password hashing",
+    "application_boundary": "CRUD modules only; HTTP endpoints/startup/authentication not qualified",
+    "runtime": {
+      "sqlmodel": "0.0.48",
+      "pydantic": "2.14.1",
+      "SQLAlchemy": "2.1.3",
+      "greenlet": "3.5.6",
+      "psycopg": "3.3.6",
+      "cryptography": "50.0.2"
+    },
+    "python": "3.13.12",
+    "psycopg_impl": "binary",
+    "gates": "all seven UNKNOWN"
+  },
+  "native_schema": "Original implicit default collation, native VARCHAR255, native global unique email index and named constraints restored unchanged; no model/schema/source edits",
+  "query_and_failure_controls": [
+    "Original unchanged crud.get_user_by_email matches native baseline under encryption",
+    "Harness equality/IN inclNULL/emptyIN and valid Unicode email; native email NOTNULL retained",
+    "Exact duplicate23505 leaves inactiveSession untilrollback; healthy original CRUD recovers",
+    "Existing repository Barrier-before-commit pattern: two real sessions, onecommit and one23505; loserrollback/healthyread",
+    "Latestemail changes before decryptback remain available to Cryptalis-denied packagefreeoriginalCRUDchild",
+    "Wronghosttenant rejected; explicit singletenantTABLEcontext only; nativeglobalunique is not multi-tenant evidence",
+    "Driverparameters contain no protected email/name plaintext; outofband sourcefields areCF1"
+  ],
+  "defensive_controls": [
+    "Default-collected native TEXT/VARCHAR oracle, sourcecollation indexmapping mismatch refusals, shadowC/default identity and nondeterministic refusal",
+    "Serialized provider/determinism/shadow/index tampering refuses; legitimate defaultTEXT/VARCHAR plans reload",
+    "83 plainSQLAlchemy search/core cases run in Python3.12 with SQLModel absent",
+    "Existing SQLModel subclass/variant/hook/version controls unchanged;9 bridgecases passed"
+  ],
+  "old_reader_boundary": "Baseline5303581 compiler._validate_prior_source strictly requires pg_catalog.C/providerc/true and rejects newdefaultsearchlocks before use; no new cryptoformat/readerID or semantics changes to existingClocks",
+  "failed_evidence": {
+    "sqlmodel-search-admission-red-20261023.json": "Real original app rejected explicitC-only searchadmission before productchange",
+    "sqlmodel-default-collation-first-green-20261023.json": "68pass2fail: actual originalSQLModelAutoString searchbind refusal after successful protect; fixturecopyofpg_catalog.default forbidden; both corrected without app/model changes"
+  },
+  "primary_source_evidence_sha256": "d6678e4381c02568622971da66435206e657f90a6c1c36761e6d1be708393788",
+  "physical_plan_limit": "Native oracle toggles seqscan settings; actualphysicalscanpaths not asserted. Prior record_property physicalpath wording corrected in final default-collected control.",
+  "independent_agent_review": "KMS read-only compiler and exactAutoStringhelper review found no concreteblocker; no independenthumanreview claim",
+  "limits": [
+    "SearchReview is explicit public opaqueUUID128 fixturedomain assertion only; arbitraryproductionemaildomain review UNKNOWN",
+    "Application has no tenantcolumn: nativeglobaluniqueness in declaredsingletenantcontext; no multi-tenant application qualification",
+    "HTTPstartup/authentication endpoints, realexternalKMS custody and independenthumansecurityreview not qualified",
+    "This newsearchprofile does not itself exercise rotation/freshclusterrestore; existing separateSmolinkjourney evidence is not relabeled searchapp evidence"
+  ],
+  "gate": "UNKNOWN"
+}

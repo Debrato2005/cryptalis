@@ -22,7 +22,7 @@ from sqlmodel import Session
 
 import cryptalis.deprotection as d
 import cryptalis.migration as m
-from cryptalis.manifest.compiler import Writer, WriterInventory
+from cryptalis.manifest.compiler import Writer, WriterInventory, SearchReview
 from test_deprotection import least_privilege_role
 from test_migration import DOMAIN, keys
 
@@ -66,6 +66,10 @@ def settings(monkeypatch):
 
 
 def test_unchanged_template_user_crud_protects_and_restarts_without_cryptalis(tmp_path, monkeypatch):
+    run_application(tmp_path, monkeypatch)
+
+
+def run_application(tmp_path, monkeypatch, *, searchable_email=False):
     source = os.environ.get('CRYPTALIS_SQLMODEL_APP_SOURCE')
     if not source:
         pytest.skip('set CRYPTALIS_SQLMODEL_APP_SOURCE to the pinned official source snapshot')
@@ -100,22 +104,35 @@ def test_unchanged_template_user_crud_protects_and_restarts_without_cryptalis(tm
             connection.exec_driver_sql(f'GRANT USAGE ON SCHEMA "{schema}" TO {q(role)}')
             connection.exec_driver_sql(f'GRANT SELECT,INSERT,UPDATE,DELETE ON ALL TABLES IN SCHEMA "{schema}" TO {q(role)}')
         native = lambda: Session(runtime, expire_on_commit=False)
-        baseline = workload.workflow(native, 'native')
+        baseline = workload.workflow(native, uuid4().hex if searchable_email else 'native')
+        if searchable_email:
+            from profile_sqlmodel_searchable_application import search_controls, native_catalog
+            baseline, native_search = search_controls(native, baseline)
+            source_catalog = native_catalog(owner)
         declaration = {'schema': 'cryptalis.protection/v1', 'profile': 'cf1', 'domain_id': str(DOMAIN),
             'models': [{'model': 'User', 'table_id': str(TABLE), 'tenancy': {'single_tenant': True},
                         'fields': [{'name': 'full_name', 'field_id': str(FIELD), 'protect': True,
                                     'queries': [], 'accept_leakage': []}]}]}
+        reviews = ()
+        if searchable_email:
+            email_field = UUID(int=1903)
+            declaration['models'][0]['fields'].append({'name': 'email', 'field_id': str(email_field),
+                'protect': True, 'queries': ['equality', 'unique'], 'accept_leakage': ['equality', 'unique']})
+            reviews = (SearchReview(email_field, False,
+                'Qualification fixture only: independent opaque UUID128 local parts under example.com; '
+                'equality/frequency/query and uniqueness leakage accepted for public disposable identities. '
+                'This is not a review of arbitrary production email domains.'),)
         from cryptalis.doctor import preflight
         inventory = WriterInventory(True, (Writer(TABLE, 'app', 'sqlalchemy',
             evidence='pinned unchanged official template CRUD; isolated profile'),))
-        report = preflight(json.dumps(declaration).encode(), mapping, owner, writers=inventory)
+        report = preflight(json.dumps(declaration).encode(), mapping, owner, writers=inventory, search_reviews=reviews)
         assert report['scope'] == 'pre_adoption' and report['effects'] == 'NONE'
-        assert report['status'] == 'UNKNOWN' and report['checks']['manifest_schema'] == 'PASS'
+        assert report['status'] == 'UNKNOWN' and report['checks']['manifest_schema'] == 'PASS', report['issues']
         assert report['checks']['provider_keys'] == 'UNKNOWN'
         assert report['checks']['query_routes'] == 'UNKNOWN'
         invalid = json.loads(json.dumps(declaration))
         invalid['models'][0]['tenancy'] = {'column': 'missing_tenant_column'}
-        refused = preflight(json.dumps(invalid).encode(), mapping, owner, writers=inventory)
+        refused = preflight(json.dumps(invalid).encode(), mapping, owner, writers=inventory, search_reviews=reviews)
         assert refused['status'] == 'FAIL' and refused['issues']
         assert all(issue['code'] and issue['location'] and issue['remedy'] for issue in refused['issues'])
         assert refused['checks']['provider_keys'] == 'UNKNOWN'
@@ -125,15 +142,18 @@ def test_unchanged_template_user_crud_protects_and_restarts_without_cryptalis(tm
                                    psycopg.OperationalError('PRIVATE_DOCTOR_CONNECTION'))
         with monkeypatch.context() as outage:
             outage.setattr(owner, 'connect', unavailable)
-            unavailable_report = preflight(json.dumps(declaration).encode(), mapping, owner, writers=inventory)
+            unavailable_report = preflight(json.dumps(declaration).encode(), mapping, owner, writers=inventory, search_reviews=reviews)
         assert unavailable_report['status'] == 'UNKNOWN'
         assert unavailable_report['checks']['manifest_schema'] == 'UNKNOWN'
         assert unavailable_report['issues'][0]['code'] == 'inspection_unavailable'
         assert 'PRIVATE_DOCTOR' not in json.dumps(unavailable_report)
         proposal = m.plan(json.dumps(declaration).encode(), mapping, owner,
-            writers=inventory,
+            writers=inventory, search_reviews=reviews,
             keys=keys, runtime_role=role, target_id=uuid4(), backfill_rows_per_second=1000,
             verify_rows_per_second=1000, temporary_bytes_per_row=3000, wal_bytes_per_row=6000)
+        if searchable_email:
+            from test_default_collation import serialized_refusals
+            serialized_refusals(proposal)
         approval = m.MaintenanceApproval('disposable app stopped; inventoried writers excluded', 3600)
         def pin(phase):
             return m.DeploymentPin(proposal.target_id, proposal.operation_id, proposal.digest, phase)
@@ -146,13 +166,28 @@ def test_unchanged_template_user_crud_protects_and_restarts_without_cryptalis(tm
             observed.append(repr(values))
         event.listen(runtime, 'before_cursor_execute', capture)
         try:
-            current = workload.workflow(lambda: attached(tenant_id=TABLE, expire_on_commit=False), 'protected', baseline)
+            current = workload.workflow(lambda: attached(tenant_id=TABLE, expire_on_commit=False),
+                uuid4().hex if searchable_email else 'protected', baseline)
+            if searchable_email:
+                current, protected_search = search_controls(
+                    lambda: attached(tenant_id=TABLE, expire_on_commit=False), current)
+                assert native_search == protected_search
+                from cryptalis.sqlalchemy import PolicyMismatch
+                with pytest.raises(PolicyMismatch):
+                    with attached(tenant_id=uuid4()) as wrong_scope:
+                        wrong_scope.get(User, UUID(current['id']))
         finally:
             event.remove(runtime, 'before_cursor_execute', capture)
         assert 'private-name-' not in ''.join(observed)
+        if searchable_email:
+            assert '@example.com' not in ''.join(observed)
         with owner.connect() as connection:
             values = connection.exec_driver_sql('SELECT full_name FROM "user"').scalars().all()
             assert len(values) == 2 and all(bytes(value).startswith(b'CF1\0') for value in values)
+        if searchable_email:
+            with owner.connect() as connection:
+                email_frames = connection.exec_driver_sql('SELECT email FROM "user"').scalars().all()
+                assert len(email_frames) == 2 and all(bytes(value).startswith(b'CF1\0') for value in email_frames)
         reverse = d.plan(proposal, owner, source_pin=active, keys=keys,
             plaintext_runtime_role=least_privilege_role(SimpleNamespace(owner=owner, role=role)),
             backfill_rows_per_second=1000, verify_rows_per_second=1000,
@@ -173,6 +208,8 @@ def test_unchanged_template_user_crud_protects_and_restarts_without_cryptalis(tm
         with owner.connect() as connection:
             assert connection.exec_driver_sql("SELECT character_maximum_length FROM information_schema.columns "
                 "WHERE table_schema=%s AND table_name='user' AND column_name='full_name'", (schema,)).scalar_one() == 255
+        if searchable_email:
+            assert native_catalog(owner) == source_catalog
         child = subprocess.run([sys.executable, '-B', '-I', '-c', '''
 import importlib.abc, json, os, runpy, sys
 class DenyCryptalis(importlib.abc.MetaPathFinder):
@@ -189,14 +226,15 @@ engine = create_engine('postgresql+psycopg://', hide_parameters=True,
     creator=lambda: psycopg.connect(os.environ['CRYPTALIS_TEST_RUNTIME_DATABASE_URL'],
         options='-csearch_path=' + os.environ['SQLMODEL_SCHEMA']))
 try:
-    namespace['workflow'](lambda: Session(engine, expire_on_commit=False), 'package-free',
+    namespace['workflow'](lambda: Session(engine, expire_on_commit=False), os.environ['SQLMODEL_CHILD_PHASE'],
                           json.loads(os.environ['SQLMODEL_CURRENT']))
 finally:
     engine.dispose()
 assert not any(n == 'cryptalis' or n.startswith('cryptalis.') for n in sys.modules)
 print(json.dumps({'native_crud': 'passed', 'cryptalis_imported': False}))
 '''], env=dict(os.environ, SQLMODEL_CHILD_PATHS=json.dumps(sys.path), SQLMODEL_SCHEMA=schema,
-            SQLMODEL_CURRENT=json.dumps(current), SQLMODEL_WORKLOAD_HELPER=str(
+            SQLMODEL_CURRENT=json.dumps(current),
+            SQLMODEL_CHILD_PHASE=uuid4().hex if searchable_email else 'package-free', SQLMODEL_WORKLOAD_HELPER=str(
                 Path(__file__).with_name('sqlmodel_template_workload.py').resolve())),
             cwd=empty, capture_output=True, text=True, timeout=60)
         assert child.returncode == 0, 'package-free template CRUD failed; diagnostics suppressed'
@@ -208,7 +246,8 @@ print(json.dumps({'native_crud': 'passed', 'cryptalis_imported': False}))
             with Path(evidence).open('x') as stream:
                 json.dump({'application_revision': REVISION, 'application_release': '0.10.0',
                     'application_source_sha256': hashes, 'model_changes': [], 'query_changes': [],
-                    'protected_fields': ['User.full_name'], 'profile': 'storage-only; explicit single tenant',
+                    'protected_fields': ['User.full_name', 'User.email'] if searchable_email else ['User.full_name'],
+                    'profile': 'fixture-only email equality/IN/unique; explicit single tenant' if searchable_email else 'storage-only; explicit single tenant',
                     'crud': 'unchanged native/protected/package-free create/get/update/delete; real password hashing',
                     'application_boundary': 'CRUD modules only; HTTP endpoints/startup/authentication not qualified',
                     'runtime': {name: importlib.metadata.version(name) for name in (

@@ -1,0 +1,34 @@
+{
+  "scope": "Native PostgreSQL16 deterministic default collation oracle; no protected admission claim",
+  "collation_context": [
+    "default",
+    "d",
+    true,
+    "c",
+    "C.UTF-8",
+    "C.UTF-8"
+  ],
+  "types": [
+    "TEXT",
+    "VARCHAR255"
+  ],
+  "values": [
+    null,
+    "",
+    "\u00e9",
+    "e\u0301",
+    "a",
+    "A",
+    "a ",
+    "\u96ea\ud83d\ude00",
+    "\u00df",
+    "ss"
+  ],
+  "equality_and_in": "byte-exact for each native value; NULL and emptyIN preserved",
+  "uniqueness": "distinct Unicode/case/trailingspace retained; exact duplicates23505 inside savepoints; NULLs distinct",
+  "query_modes": [
+    "enable_seqscan on",
+    "enable_seqscan off"
+  ],
+  "gate": "UNKNOWN"
+}

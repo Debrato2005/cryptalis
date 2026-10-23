@@ -318,6 +318,30 @@ native SQL compilation and unchanged configuration. Do not wrap or replace
 native transactions. These controls confer no data permit. Other write routes
 and the seven production gates retain their separate evidence requirements.
 
+## Pre-adoption CLI host configuration: 2026-10-23
+
+Expose the existing Python preflight through one explicit trusted `module:factory`
+reference. Reuse bounded local inputs, CLI-owned inspection connection and the
+read-only compiler. The factory supplies only registry, writer inventory and
+search reviews; no automatic discovery, keys or alternative configuration engine.
+Keep ACTIVE plan/pin inputs separate. Admit modes before loading host code.
+Report host-code effects as UNKNOWN and scope no-effects claims to compiler
+inspection. Sanitize loader failures and suppress Python stream output without
+retaining it. Host imports remain trusted executable code, not a sandbox.
+
+## Deterministic database-default exact search: 2026-10-23
+
+Admit inspected `pg_catalog.default` with provider `d`, determinism and an
+implicit mapped collation for existing exact text equality/IN and uniqueness.
+Retain the native C branch and exact source/index collation identity.
+PostgreSQL 16 documentation/source and the native oracle establish deterministic
+byte equality; they do not admit locale-sensitive ordering or normalization.
+Preserve serialized source validation and old-reader refusal. Keep CF1 framing,
+authenticated text descriptors and full-width search terms unchanged.
+Reuse the existing pinned AutoString recognizer for original SQLModel search
+binds. Do not add a weaker type whitelist or modify application models/queries.
+Fixture email leakage review does not qualify arbitrary production identities.
+
 ## Manifest preflight and canonical recovery observations: 2026-10-23
 
 Expose pre-adoption manifest/schema diagnostics through the existing read-only

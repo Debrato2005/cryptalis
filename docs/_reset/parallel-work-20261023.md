@@ -200,3 +200,39 @@ unchanged, and all seven production gates remain UNKNOWN.
 Next independent journeys extend original SQLModel email queries under an
 explicit fixture domain and connect the same local SDK boundary to asynchronous
 Smolink operations. Native collation admission must be verified before expansion.
+
+## Search and pre-adoption CLI integration
+
+Checkpoint `5303581` commits the verified Doctor/recovery/installed-wheel journey.
+The next integrated slice adds original SQLModel email equality/IN and uniqueness
+under a fixture-only review. Exact deterministic database-default admission and
+the existing AutoString recognizer resolve two reproduced application failures.
+The native/source boundary and historical failures remain in the search receipts.
+
+The pre-adoption CLI accepts an explicit trusted host factory and reuses the
+compiler. Host effects remain UNKNOWN. Its 135-case focused native regression
+passes after the user explicitly authorizes a scoped same-target rerun following
+a stopped default-sandbox probe attempt. Four regular Python preflight controls
+and the separate asynchronous local SDK Smolink journey also pass.
+
+The integrated primary full regression now runs alone. All Python source is
+frozen until its wrapper ends. Documentation and offline artifact checks can
+continue. All 34 objective states and seven UNKNOWN gates remain unchanged.
+
+The first integrated full run ends with 2,321 passed tests plus 18 subtests and
+one new CLI cleanup-test failure. Deterministic collection reproduces loss of a
+function-local model through registry weak references. The fixture now keeps
+its model at module scope. The compiler correctly refused the missing model;
+no product fix is needed. All 48 affected Doctor controls pass.
+
+The current installed wheel passes the searchable application, 27 CLI controls
+outside the source tree, and both local SDK application journeys. All 36 modules,
+40 installed files and 174 Python hashes remain stable. The final serial primary
+regression runs alone after the fixture correction. No final PASS follows yet.
+
+The final serial primary regression passes 2,322 tests plus 18 subtests in
+754.32 seconds. Seven skips and 48 existing deprecation warnings remain.
+All 174 source hashes stay unchanged. Both fresh role probes pass.
+The SQLModel-absent primary and installed optional cells remain separate.
+The first failure and deterministic fixture diagnosis stay recorded.
+All seven production gates remain UNKNOWN.

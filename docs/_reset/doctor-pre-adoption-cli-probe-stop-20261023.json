@@ -1,0 +1,11 @@
+{
+  "scope": "Stopped native wrapper attempt before scoped rerun authorization",
+  "execution": "default sandbox",
+  "working_directory": "/tmp/cryptalis-doctor-pre-adoption-cli-20261023",
+  "command": "PYTHONPATH=src:tests /home/debrato/Projects/cryptalis/.venv/bin/python scripts/test_postgres.py --receipt /tmp/doctor-preflight-cli-red-20261023.json --scope [pre-adoption CLI RED] -- -q tests/test_doctor_preflight_cli.py",
+  "exit_code": 2,
+  "stdout": "OperationalError 05362d31 ff897c9a",
+  "pytest": "not started; probe failure precedes wrapper receipt creation",
+  "cause": "UNKNOWN; driver details were withheld",
+  "continuation": "stopped without retry or target substitution; user subsequently explicitly authorized scoped mandatory-wrapper rerun against the same private URL files and database"
+}

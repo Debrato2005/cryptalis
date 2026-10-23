@@ -1,0 +1,87 @@
+{
+  "scope": "Actual installed current-wheel application and pre-adoption CLI integration; all package files checked before/after",
+  "wheel_sha256": "3f89885a25c11915b0a61d92dd3300a82229c7cfceb5371542b6116889c5067d",
+  "modules_verified": 36,
+  "installed_files_verified": 40,
+  "installed_changes": [],
+  "current_product_source_changes": [],
+  "receipts": {
+    "searchable-doctor-wheel-application-wrapper-20261023.json": {
+      "sha256": "802b1685ec2639ca4611d8d70b57cd128670a6a0ee5f5df69f1fe3333a609df9",
+      "counts": {
+        "test_calls": {
+          "passed": 1
+        },
+        "subtest_calls": {},
+        "setup": {
+          "passed": 1
+        },
+        "teardown": {
+          "passed": 1
+        },
+        "collection": {},
+        "selected_items": 1
+      },
+      "source_files": 174,
+      "source_stability": {
+        "unchanged": true,
+        "changed_paths": []
+      },
+      "elapsed_seconds": 3.476708205998875
+    },
+    "searchable-doctor-wheel-cli-wrapper-20261023.json": {
+      "sha256": "e32a09a78ec46d4c4f942428903b4937557ce1ced485847d3179e9007c04ace7",
+      "counts": {
+        "test_calls": {
+          "passed": 27
+        },
+        "subtest_calls": {},
+        "setup": {
+          "passed": 27
+        },
+        "teardown": {
+          "passed": 27
+        },
+        "collection": {},
+        "selected_items": 27
+      },
+      "source_files": 174,
+      "source_stability": {
+        "unchanged": true,
+        "changed_paths": []
+      },
+      "elapsed_seconds": 19.46973442300805
+    },
+    "searchable-doctor-wheel-kms-applications-wrapper-20261023.json": {
+      "sha256": "23fe0bc4ef3f99304593b9c09de7f2cb3dc5c96035b02605a476e3e1e5344845",
+      "counts": {
+        "test_calls": {
+          "passed": 2
+        },
+        "subtest_calls": {},
+        "setup": {
+          "passed": 2
+        },
+        "teardown": {
+          "passed": 2
+        },
+        "collection": {},
+        "selected_items": 2
+      },
+      "source_files": 174,
+      "source_stability": {
+        "unchanged": true,
+        "changed_paths": []
+      },
+      "elapsed_seconds": 8.067748196001048
+    }
+  },
+  "cli_fixture_adapter": {
+    "path": "/tmp/cryptalis-installed-cli-check-20261023/installed_wheel_cli.py",
+    "sha256": "b8a8f2f3c18b50f8208a1d678e877fea4dcb18bd9d1f15c132661c7238e4633a",
+    "source": "\"\"\"Keep CLI subprocesses outside the source tree for installed-artifact checks.\"\"\"\nfrom pathlib import Path\nimport cryptalis\n\nSITE=Path('/tmp/cryptalis-searchable-doctor-wheel-py313-20261023/lib/python3.13/site-packages')\nassert Path(cryptalis.__file__).is_relative_to(SITE)\n\n\ndef pytest_collection_modifyitems(items):\n    for item in items:\n        module=item.module\n        if module.__name__ == 'test_doctor_preflight_cli':\n            # This only changes the fixture's child cwd/PYTHONPATH source root.\n            # The directory has no src tree. The child uses its installed wheel.\n            module.ROOT=Path('/tmp/cryptalis-installed-cli-check-20261023/empty')\n",
+    "effects": "Change only test helper child cwd/source-root to empty directory; preserve assertions, target connection and installed package; no source Cryptalis path"
+  },
+  "sdk_scope": "Native boto3/botocore Stubber, synthetic credentials, network/credential tripwires; no live AWS/IAM/custody or rotation claim",
+  "gates": "all seven UNKNOWN"
+}

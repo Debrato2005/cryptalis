@@ -6,7 +6,7 @@ This is a research prototype. All seven gates remain **UNKNOWN**. No production 
 Declare `queries: ["equality"]`, or `["equality", "unique"]`, in the manifest.
 Supply the matching `accept_leakage` entries and a host `SearchReview` for each field.
 Known small domains and absent reviews reject. This is host admission, not automatic classification.
-Use application-assigned IDs and an authenticated tenant UUID. Exact UTF-8 text uses the selected native C collation; no normalization occurs.
+Use application-assigned IDs and an authenticated tenant UUID. Exact UTF-8 text uses the admitted deterministic native C or implicit database-default collation; no normalization occurs.
 
 ```python
 from sqlalchemy import bindparam, select

@@ -166,15 +166,22 @@ def _parser() -> argparse.ArgumentParser:
     status.add_argument('--restore-binding', type=Path, help='Approved restored-target binding, when applicable.')
     status.add_argument('--json', action='store_true', dest='machine_json', help='Write one JSON object.')
     status.set_defaults(handler=_status_command)
-    doctor = commands.add_parser('doctor', help='Inspect active runtime admission without changes.',
-                                 allow_abbrev=False)
-    doctor.add_argument('plan', type=Path, help='Published protection or rotation activation artifact.')
-    doctor.add_argument('--pin', type=Path, required=True, help='Current host-controlled ACTIVE deployment pin.')
+    doctor = commands.add_parser('doctor', help='Inspect native schema or ACTIVE runtime admission.',
+        description='Compiler inspection is read-only. An explicit host context imports and calls trusted '
+                    'Python code; its effects remain UNKNOWN. This command does not sandbox host code.',
+        allow_abbrev=False)
+    modes = doctor.add_mutually_exclusive_group(required=True)
+    modes.add_argument('plan', type=Path, nargs='?', help='Published protection or rotation activation artifact.')
+    modes.add_argument('--pre-adoption', type=Path, metavar='MANIFEST', help='Inspect a native schema before adoption.')
+    doctor.add_argument('--host-context', metavar='MODULE:FACTORY',
+        help='Explicit trusted synchronous factory returning (registry, WriterInventory, tuple[SearchReview]). '
+             'Host Python effects remain UNKNOWN; no keys or engine belong in this tuple.')
+    doctor.add_argument('--pin', type=Path, help='Current host-controlled ACTIVE deployment pin.')
     doctor.add_argument('--database-url-file', type=Path, required=True,
                         help='Private file with the declared runtime PostgreSQL connection URL or conninfo.')
     doctor.add_argument('--restore-binding', type=Path, help='Approved restored-target binding, when applicable.')
     doctor.add_argument('--json', action='store_true', dest='machine_json', help='Write one JSON object.')
-    doctor.set_defaults(handler=_status_command)
+    doctor.set_defaults(handler=_doctor_command)
     return parser
 
 
@@ -523,6 +530,130 @@ def _doctor_failure(failure, *, observed=False):
     return failure
 
 
+def _preflight_failure(failure, report=None):
+    failure.error.update(report or {
+        'scope': 'pre_adoption', 'status': 'UNKNOWN',
+        'checks': {name: 'UNKNOWN' for name in (
+            'manifest_schema', 'provider_keys', 'query_routes', 'writer_exclusion',
+            'runtime_deployment', 'host_authority', 'recovery_capacity')},
+    })
+    failure.error.update(effects='NONE', effects_scope='compiler_inspection',
+                         host_configuration_effects='UNKNOWN')
+    return failure
+
+
+def _doctor_command(arguments):
+    if arguments.pre_adoption is None:
+        valid = arguments.host_context is None and arguments.pin is not None
+    else:
+        reference = (arguments.host_context or '').split(':')
+        valid = (arguments.pin is None and arguments.restore_binding is None and len(reference) == 2
+            and all(part.isidentifier() for part in reference[0].split('.'))
+            and reference[1].isidentifier())
+    if not valid:
+        raise _CommandFailure('Supply either an ACTIVE plan and pin, or a pre-adoption manifest and trusted host context.',
+            family='CLI', code='InvalidArguments', operation='cli', stage='arguments', cause='ArgumentError')
+    return _status_command(arguments) if arguments.pre_adoption is None else _preflight_command(arguments)
+
+
+def _preflight_command(arguments):
+    operation = 'deployment.preflight'
+    try:
+        import importlib
+        import inspect
+        from contextlib import redirect_stderr, redirect_stdout
+        from types import CoroutineType
+        import psycopg
+        from sqlalchemy import create_engine
+        from sqlalchemy.orm import registry as Registry
+        from cryptalis.doctor import preflight
+        from cryptalis.manifest.compiler import WriterInventory, SearchReview
+        from cryptalis.manifest.declaration import parse_protection_declaration
+    except ImportError:
+        raise _preflight_failure(_CommandFailure('Install the declared runtime dependencies before database inspection.',
+            family='Doctor', code='DependenciesUnavailable', operation=operation,
+            stage='load_runtime', cause='ImportError', exit_code=4)) from None
+    try:
+        raw = _read_local_file(arguments.pre_adoption, 'manifest', operation=operation)
+        parse_protection_declaration(raw)
+        connection_info = _read_local_file(arguments.database_url_file, 'database',
+            max_bytes=65536, operation=operation)
+        if len(connection_info) > 65536:
+            raise ValueError
+        connection_info = connection_info.decode('utf-8').strip()
+        if not connection_info or '\x00' in connection_info:
+            raise ValueError
+        if connection_info.startswith('postgresql+psycopg://'):
+            connection_info = 'postgresql://' + connection_info[len('postgresql+psycopg://'):]
+        psycopg.conninfo.conninfo_to_dict(connection_info)
+    except _CommandFailure as failure:
+        raise _preflight_failure(failure) from None
+    except (ManifestInvalid, ValueError, UnicodeError, psycopg.ProgrammingError):
+        raise _preflight_failure(_CommandFailure('Supply a valid protection declaration and private PostgreSQL connection file.',
+            family='Doctor', code='InvalidInput', operation=operation,
+            stage='inputs', cause='InvalidInput')) from None
+
+    module_name, factory_name = arguments.host_context.split(':')
+    try:
+        # Discard Python stream output without retaining private host configuration.
+        # Native descriptor writes remain outside this trusted-code boundary.
+        with open(os.devnull, 'w', encoding='utf-8') as discard, redirect_stdout(discard), redirect_stderr(discard):
+            factory = getattr(importlib.import_module(module_name), factory_name)
+            valid_factory = callable(factory) and not inspect.iscoroutinefunction(factory)
+            context = factory() if valid_factory else None
+    except BaseException:
+        # Host exception classes and messages can contain private configuration.
+        raise _preflight_failure(_CommandFailure('The trusted host context could not load. Check its module and synchronous factory.',
+            family='Doctor', code='HostContextUnavailable', operation=operation,
+            stage='host_context', cause='HostContextError', exit_code=4)) from None
+    if isinstance(context, CoroutineType):
+        context.close()
+    if (type(context) is not tuple or len(context) != 3 or not isinstance(context[0], Registry)
+            or not isinstance(context[1], WriterInventory) or type(context[2]) is not tuple
+            or any(not isinstance(review, SearchReview) for review in context[2])):
+        raise _preflight_failure(_CommandFailure('Return exactly (registry, WriterInventory, tuple[SearchReview]) without keys or an engine.',
+            family='Doctor', code='HostContextInvalid', operation=operation,
+            stage='host_context', cause='InvalidContext')) from None
+
+    engine = report = None
+    try:
+        engine = create_engine('postgresql+psycopg://', echo=False, hide_parameters=True,
+            creator=lambda: psycopg.connect(connection_info, connect_timeout=5))
+        report = preflight(raw, context[0], engine, writers=context[1], search_reviews=context[2])
+        report.update(effects_scope='compiler_inspection', host_configuration_effects='UNKNOWN')
+    except Exception:
+        raise _preflight_failure(_CommandFailure('Schema inspection is unavailable. Check the connection and trusted host configuration.',
+            family='Doctor', code='InspectionUnavailable', operation=operation,
+            stage='inspection', cause='InspectionError', exit_code=4)) from None
+    finally:
+        if engine is not None:
+            primary = sys.exception()
+            try:
+                engine.dispose()
+            except Exception:
+                failure = _preflight_failure(_CommandFailure('Inspection connection cleanup failed. Inspect the database session.',
+                    family='Doctor', code='CleanupUnavailable', operation=operation,
+                    stage='connection_cleanup', cause='CleanupError', exit_code=4))
+                if report is not None:
+                    failure.error['inspection'] = report
+                if isinstance(primary, _CommandFailure):
+                    failure.error['related_error'] = primary.error
+                raise failure from None
+    if report['checks']['manifest_schema'] != 'PASS':
+        incompatible = report['checks']['manifest_schema'] == 'FAIL'
+        raise _preflight_failure(_CommandFailure(
+            'Resolve the schema issues before planning protection.' if incompatible else
+            'Schema inspection is unavailable. Check the connection and retry inspection.',
+            family='Doctor', code='SchemaIncompatible' if incompatible else 'InspectionUnavailable',
+            operation=operation, stage='inspection', cause='SchemaAdmission' if incompatible else 'InspectionUnavailable',
+            exit_code=3 if incompatible else 4), report) from None
+    output = (json.dumps(report, sort_keys=True, separators=(',', ':')) if arguments.machine_json else
+        '\n'.join(f'{key}: {value}' for key, value in report.items() if key not in ('checks', 'issues'))
+        + '\n' + '\n'.join(f'{name}: {status}' for name, status in report['checks'].items()))
+    _write_output(output + '\n', sys.stdout, 'stdout')
+    return 0
+
+
 def _status_command(arguments: argparse.Namespace) -> int:
     # Runtime dependencies stay lazy: manifest inspection and CLI help remain
     # usable without database or cryptographic imports.
@@ -688,7 +819,10 @@ def main(argv: Sequence[str] | None = None) -> int:
         return handler(arguments)
     except _CommandFailure as failure:
         if tokens and tokens[0] == 'doctor' and 'checks' not in failure.error:
-            _doctor_failure(failure)
+            if any(token.split('=', 1)[0] in ('--pre-adoption', '--host-context') for token in tokens[:option_end]):
+                _preflight_failure(failure)
+            else:
+                _doctor_failure(failure)
         try:
             _write_error(failure, machine_json)
         except _CommandFailure as diagnostic_failure:

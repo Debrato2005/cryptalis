@@ -1,0 +1,44 @@
+{
+  "application_revision": "498d24bae999ed53ad85e1c1f1a09ea7fa151aa4",
+  "protected_field": "Url.destination",
+  "app_source_changes": [],
+  "provider": "existing AwsKmsKeyProvider through Keyring.prepare_async and native async attachment",
+  "transport": "native boto3/botocore Stubber local responses; synthetic credentials; no AWS network",
+  "tripwires": "existing SDK fixture denies credential discovery and HTTP send; positive transport refusal control",
+  "steps": [
+    "exact-expiry SDK outage refused before SQL; async rollback and original service retry passed",
+    "healthy exact-expiry async SDK preparation and original repository read passed",
+    "SDK-valid wrong root failed authentication; async rollback and healthy expiry recovery passed",
+    "corrupted tag refused; fixture ciphertext restored in finally; async repository recovered"
+  ],
+  "sdk_operations": [
+    "Encrypt",
+    "Decrypt",
+    "Decrypt",
+    "Decrypt",
+    "Decrypt",
+    "Decrypt",
+    "Decrypt"
+  ],
+  "async_sdk_dispatches": [
+    "Decrypt",
+    "Decrypt",
+    "Decrypt",
+    "Decrypt",
+    "Decrypt"
+  ],
+  "async_sdk_dispatch_off_event_loop_thread": true,
+  "lifecycle": "original native/protected URL HTTP and async repository CRUD, Redis rate limiting, latest-data decrypt-back/removal and fresh import-denied package-free restart passed",
+  "rotation": "not exercised by this profile; no new rotation claim",
+  "runtime": {
+    "boto3": "1.42.89",
+    "botocore": "1.42.97",
+    "fastapi": "0.139.0",
+    "SQLAlchemy": "2.1.3",
+    "psycopg": "3.3.6",
+    "cryptography": "50.0.2",
+    "greenlet": "3.5.6"
+  },
+  "custody": "NO live AWS/IAM/workload identity or independent security qualification",
+  "gates": "all seven UNKNOWN"
+}

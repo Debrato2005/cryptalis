@@ -21,6 +21,130 @@ and [competitive capability matrix](research/capability-matrix.md) govern priori
 Progress follows complete real-application journeys and resolved production requirements.
 All seven production gates remain UNKNOWN.
 
+## Installed searchable application integration: 2026-10-23
+
+**VERIFIED, bounded installed package:** the actual current wheel passes the
+unchanged searchable SQLModel application through latest-value removal and a
+package-free restart. Its native default-collation email search/uniqueness
+profile passes once in 2.93 seconds. The pre-adoption CLI passes all 27 controls
+in 19.12 seconds. A recorded fixture adapter keeps child processes outside the
+source tree so they load the installed package. Assertions and database targets
+stay unchanged.
+
+Both original application SDK profiles pass together in 7.39 seconds: synchronous
+SQLModel and asynchronous Smolink. Provider expiry/outage, authentication refusal,
+recovery and latest-value exit retain their local Stubber boundary. All 36 product
+modules and 40 installed files match before/after. All three wrappers retain 174
+stable current Python hashes and pass fresh owner/runtime probes.
+
+A new disposable Python 3.13.12 environment uses exact core runtime pins and
+SQLModel 0.0.48. Repeat wheel/sdist archives, metadata, RECORD and SBOM checks pass.
+The wheel SHA-256 is
+`3f89885a25c11915b0a61d92dd3300a82229c7cfceb5371542b6116889c5067d`.
+No source Cryptalis path supplies this package. External AWS custody, broader
+application coverage and all seven production gates remain UNKNOWN.
+
+The first combined primary full run records 2,321 passed tests, 18 passed
+subtests and one failed cleanup control. A function-local fixture model could be
+collected before inspection, so the correct schema report was FAIL rather than
+the fixture's expected PASS. Explicit garbage collection reproduces
+`model_resolution`. Retaining the model in the host module fixes the fixture;
+48 affected Doctor controls pass. Product modules remain byte-identical.
+The original full failure and deterministic RED remain evidence. The final
+serial primary regression passes 2,322 tests plus 18 subtests in 754.32 seconds.
+Seven skips and 48 existing deprecation warnings remain. Both fresh role probes
+pass and all 174 Python source hashes stay unchanged. The primary environment
+has no SQLModel; its optional application evidence remains separate.
+See the [final full receipt](_reset/searchable-doctor-integration-full-final-20261023.json).
+
+Evidence: [installed boundary](_reset/searchable-doctor-wheel-final-boundary-20261023.json),
+[installed environment](_reset/searchable-doctor-wheel-py313-install-20261023.json),
+[release archives](_reset/searchable-doctor-release-20261023.json),
+[original full result](_reset/searchable-doctor-integration-full-20261023.json),
+[fixture diagnosis](_reset/doctor-cli-fixture-lifetime-boundary-20261023.json),
+and [affected Doctor regression](_reset/doctor-cli-fixture-lifetime-green-20261023.json).
+
+## Pre-adoption CLI checkpoint: 2026-10-23
+
+**IMPLEMENTED, bounded verification:** `doctor --pre-adoption` accepts a manifest,
+private connection file and explicit trusted `module:factory`. The factory
+returns the registry, writer inventory and search-review tuple. The CLI reuses
+Python preflight, owns its engine and preserves the existing ACTIVE command.
+Compiler inspection is read-only. Host-code effects remain UNKNOWN.
+
+The focused native CLI bundle passes 135 cases. It covers native schema PASS,
+actionable schema refusal, safe SQLSTATE/UNKNOWN failure, cleanup/output failures,
+redacted host exceptions, mode/input admission before import and Python stream
+suppression. Conninfo normalization preserves literal connection values.
+Four separate regular-suite Python preflight controls also pass. No optional
+application environment is needed for these controls.
+
+The first default-sandbox wrapper attempt stopped at failed probes before tests
+or a wrapper receipt. Its cause remains UNKNOWN. No target was substituted.
+After explicit user authorization, the scoped same-target rerun passed both fresh
+probes and the 135-case bundle. The original offline parser RED remains separate.
+No production gate or deployment-wide route/provider claim follows.
+
+Evidence: [CLI regression](_reset/doctor-pre-adoption-cli-first-20261023.json),
+[boundary/refinement](_reset/doctor-pre-adoption-cli-boundary-20261023.json),
+[stopped attempt](_reset/doctor-pre-adoption-cli-probe-stop-20261023.json),
+[original RED](_reset/doctor-pre-adoption-cli-offline-red-20261023.json),
+and [regular Python checks](_reset/doctor-preflight-regular-suite-20261023.json).
+
+## Searchable SQLModel application checkpoint: 2026-10-23
+
+**VERIFIED, bounded source cells:** the unchanged official SQLModel template
+now protects both `User.full_name` and `User.email`. Its original
+`get_user_by_email` works through the native Session API. The journey compares
+native/protected equality, IN, empty IN, Unicode values, duplicate SQLSTATE
+`23505`, rollback and two-session uniqueness arbitration. A later email edit
+survives decrypt-back, removal and a fresh process that denies Cryptalis imports.
+All six pinned application source/license records stay unchanged.
+
+The original email column uses native VARCHAR and implicit default collation.
+The compiler now admits exact `pg_catalog.default`, provider `d`, with inspected
+determinism and an implicit mapping. It retains the existing exact native C
+branch. Index collation must match its source. Named shadow collations,
+nondeterministic collations, mismatched mappings/indexes and altered serialized
+facts still refuse. Existing readers reject these new default-collation search
+locks. CF1 bytes, descriptors and text normalization stay unchanged.
+
+Original SQLModel expressions can retain their pre-attachment AutoString bind.
+Search admission now reuses the existing exact pinned AutoString recognizer.
+Changed hooks, variants, versions and subclasses retain their refusal boundary.
+No new query grammar follows.
+
+The final application journey passes once after the concurrency control reuses
+the existing barrier pattern. The earlier 18-case application/bridge bundle
+and 83-case SQLModel-absent native/search bundle pass at their recorded source
+boundaries. The factored storage-only application also passes once.
+The admission RED and intermediate two failures remain recorded separately.
+Native oracle scan settings do not establish which physical scan path executed.
+
+Search review covers public opaque UUID fixture identities only. This is an
+explicit single-tenant application with a native global unique email index;
+it supplies no multi-tenant application qualification or production email-domain
+review. This profile does not exercise encrypted search rotation, HTTP startup,
+authentication endpoints or fresh-cluster recovery. No new full-suite or
+installed-wheel result follows. All seven production gates remain UNKNOWN.
+
+Evidence: [journey boundary](_reset/sqlmodel-search-boundary-20261023.json),
+[final application](_reset/sqlmodel-search-final-wrapper-20261023.json),
+[native/search regression](_reset/sqlmodel-default-collation-plain-search-20261023.json),
+[original storage journey](_reset/sqlmodel-search-storage-regression-wrapper-20261023.json),
+[primary-source/native evidence](_reset/sqlmodel-default-collation-primary-evidence-20261023.json),
+and [admission RED](_reset/sqlmodel-search-admission-red-20261023.json).
+
+The separate unchanged asynchronous Smolink application also passes a local
+AWS SDK journey. Exact-expiry outage refuses before SQL, rollback/retry succeeds,
+and wrong-root/tag authentication refusals recover. Five async SDK decrypt
+operations execute outside the event-loop thread. Original HTTP/Redis CRUD,
+latest-value exit and the import-denied child pass. Its 38 application files and
+170 Python source hashes remain stable. This uses deterministic local Stubber
+responses and supplies no live AWS, IAM, custody or rotation qualification.
+See the [async application receipt](_reset/aws-kms-smolink-wrapper-20261023.json)
+and [transport boundary](_reset/aws-kms-smolink-transport-20261023.json).
+
 ## Manifest-first application recovery checkpoint: 2026-10-23
 
 **VERIFIED, bounded application journeys:** pinned unchanged Smolink now completes

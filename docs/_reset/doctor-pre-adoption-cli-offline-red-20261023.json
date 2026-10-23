@@ -1,0 +1,7 @@
+{
+  "scope": "Offline real CLI invocation; no PostgreSQL connection attempted",
+  "stage": "RED",
+  "expected": "HostContextUnavailable exit4",
+  "actual": "existing parser rejects pre-adoption arguments with exit2",
+  "elapsed_seconds": 0.04038024500187021
+}

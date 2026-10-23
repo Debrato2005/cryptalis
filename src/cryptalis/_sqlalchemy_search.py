@@ -7,6 +7,7 @@ from sqlalchemy.types import NullType, TypeDecorator
 
 from .crypto.cf1 import equality_term
 from .manifest.compiler import _catalog_path
+from ._sqlmodel_types import autostring_impl
 
 
 class _SearchValue(TypeDecorator):
@@ -24,7 +25,11 @@ class _SearchValue(TypeDecorator):
 def ordinary_bind(owner, value):
     if getattr(value.type, '_variant_mapping', None):
         return False
-    return (type(value.type) in (String, Text, TEXT, Unicode, UnicodeText, VARCHAR, NullType) or
+    try:
+        optional_string = autostring_impl(value.type) is not None
+    except ValueError:
+        return False
+    return (optional_string or type(value.type) in (String, Text, TEXT, Unicode, UnicodeText, VARCHAR, NullType) or
             any(type(value.type) is type(binding.column.type) for binding in owner.bindings))
 
 
