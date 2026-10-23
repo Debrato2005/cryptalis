@@ -10,6 +10,39 @@ No PostgreSQL/provider/runtime cell, production key provider, independent review
 VERIFIED below refers only to the named checks and their exact revisions.
 All other contract and promotion requirements are SPECIFIED. All seven full gates remain UNKNOWN.
 
+## Optional AWS KMS SDK adapter checkpoint: 2026-10-23
+
+**IMPLEMENTED, bounded verification:** a caller-supplied synchronous KMS client
+wraps and unwraps roots under an exact full key ARN and fixed public context.
+Aliases, wrong response identity/algorithm, invalid material, inherited providers
+and relabeled context refuse. Async cancellation publishes no late cached key.
+The host supplies SDK credentials, endpoint, timeout, retry and logging settings.
+CF1 and the existing provider/key-policy interfaces stay unchanged.
+
+The specialist and lead integration each pass **86 checks**, including 36 new
+SDK-shaped protocol controls and 50 existing CF1/keyring/rewrap cases.
+An explicit isolated boto3 1.42.89 / botocore 1.42.97 profile passes **12 cases**.
+It verifies actual SDK model acceptance, serialized binary/context requests,
+modeled service errors, malformed replies and cancellation. Synthetic credentials
+and working transport/discovery tripwires prevent live AWS access.
+Its first run retains one serialization-observer ordering error; the corrected
+run and lead integration pass. No adapter correction was needed for that error.
+Reproducible wheel and source archives, the SBOM, all 37 installed files and
+CLI startup pass. The installed wheel SHA-256 is
+`876a5e15666387050cd32079dea9410fa6d8db6d19ab7f5b980ab8d18cd136be`.
+Production custody, IAM, workload identity, live transport/logging, provider
+revocation/deletion and all seven full gates remain UNKNOWN.
+
+Evidence: [official references and context](_reset/aws-kms-research-20261023.json),
+[specialist protocol checks](_reset/aws-kms-protocol-20261023.json),
+[lead protocol integration](_reset/aws-kms-integration-20261023.json),
+[isolated SDK versions and limits](_reset/aws-kms-sdk-environment-20261023.json),
+[initial SDK observer failure](_reset/aws-kms-sdk-profile-20261023.json),
+[corrected SDK profile](_reset/aws-kms-sdk-profile-green-20261023.json), and
+[lead SDK integration](_reset/aws-kms-sdk-integration-20261023.json),
+[reproducible archives and SBOM](_reset/aws-kms-release-20261023.json), and
+[installed wheel](_reset/aws-kms-installed-20261023.json).
+
 ## Bounded row lease recovery checkpoint: 2026-10-23
 
 **IMPLEMENTED, bounded verification:** protection and decrypt-back retry local
@@ -61,7 +94,7 @@ Evidence: [initial million-row failure](_reset/performance-million-current-wrapp
 [alternate cell](_reset/row-lease-sa20-20261023.json),
 [unchanged app wrapper](_reset/row-lease-smolink-20261023.json),
 [app source and lifecycle evidence](_reset/row-lease-smolink-app-20261023.json),
-[reproducible archives](_reset/row-lease-release-20261023.json), and
+[reproducible archives](_reset/row-lease-release-20261023.json),
 [installed wheel](_reset/row-lease-installed-20261023.json), and
 [full primary regression](_reset/row-lease-full-20261023.json).
 

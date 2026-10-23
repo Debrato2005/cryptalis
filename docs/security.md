@@ -404,6 +404,40 @@ Per-record key derivation limits repeated use of one payload key. It does not es
 No quantified security bound or approved key-retirement threshold exists yet.
 Independent review must settle those bounds before real-data admission. The former distributed quota service is not retained by assumption.
 
+### Optional AWS KMS SDK adapter
+
+**IMPLEMENTED, SDK boundary only:** `cryptalis.crypto.aws_kms.AwsKmsKeyProvider`
+implements the existing provider protocol without a mandatory SDK dependency.
+Construct it with `AwsKmsKeyProvider(client, provider_id=provider_uuid, key_arn=full_key_arn)`.
+
+The optional AWS KMS adapter accepts a caller-supplied synchronous SDK client,
+a provider UUID and one full key ARN. It sends the exact ARN and
+SYMMETRIC_DEFAULT on Encrypt and Decrypt. Aliases and bare key IDs refuse.
+Every response must match that ARN and algorithm. Plaintext roots must contain
+exactly 32 bytes. Provider ciphertext remains bounded opaque bytes.
+
+Its versioned encryption context binds provider, domain, tenant, purpose,
+root identity and generation. These are public metadata and can appear in
+CloudTrail. The host supplies credentials, endpoint, timeout and bounded SDK
+retry settings. The adapter performs no credential discovery or key administration.
+Async unwrap uses a worker thread. Cancellation prevents late keyring publication
+but cannot cancel an already dispatched SDK call. Inherited providers refuse
+after fork. Python bytes provide no verified zeroization guarantee.
+
+Protocol controls and existing CF1/keyring behavior pass through the mandatory
+wrapper. The caller-supplied client remains a trusted host boundary.
+These checks do not qualify live AWS custody, IAM, workload identity,
+endpoint, provider deletion or production operation. All seven gates remain UNKNOWN.
+
+The exact public encryption-context keys are `cryptalis:format`,
+`cryptalis:provider`, `cryptalis:domain`, `cryptalis:tenant`, `cryptalis:purpose`,
+`cryptalis:root` and `cryptalis:generation`. The format value is
+`CF1/aws-kms-wrap/v1`. Identities use canonical UUID text and generation uses
+unsigned decimal text. Wrappers remain provider-opaque bytes. CF1 frames and
+key-policy admission do not change.
+The [AWS encryption-context reference](https://docs.aws.amazon.com/kms/latest/developerguide/encrypt_context.html)
+explains service matching and logging. No caller-supplied context names are accepted.
+
 ### Implemented CF1 primitives and local custody
 
 `cryptalis.crypto` exports `FieldDescriptor`, `seal_text`, `open_text`, `KeyProvider`,

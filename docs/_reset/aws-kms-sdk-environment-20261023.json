@@ -1,0 +1,149 @@
+{
+  "schema": "cryptalis.aws-kms-sdk-environment/v1",
+  "target": "/tmp/cryptalis-aws-kms-sdk-20261023",
+  "verification": {
+    "initial_receipt": "aws-kms-sdk-profile-20261023.json",
+    "initial_result": "1 failed, 11 passed: Stubber first-priority wildcard handler bypassed the late serialization observer",
+    "corrected_receipt": "aws-kms-sdk-profile-green-20261023.json",
+    "corrected_result": "12 passed after registering the public-event observer before Stubber reactivation; product adapter unchanged",
+    "credential_discovery": "tripwire installed; explicit synthetic SDK credentials",
+    "http_transport": "tripwire positive control passed; no SDK transport send occurred",
+    "official_stubber_reference": {
+      "url": "https://docs.aws.amazon.com/botocore/latest/reference/stubber.html",
+      "status": 200,
+      "title": "Stubber Reference - botocore 1.43.118 documentation",
+      "scope": "Stubber validates modeled response fields and expected parameters, returns queued responses without reaching an endpoint; installed SDK versions are recorded separately"
+    }
+  },
+  "installation": {
+    "offline_attempt": {
+      "result": "FAILED",
+      "reason": "boto3 registry resolution unavailable in offline cache"
+    },
+    "online_attempt": {
+      "result": "SUCCEEDED",
+      "requirement": "boto3==1.42.89",
+      "installer": "uv pip install --target",
+      "repository_environment_changed": false
+    },
+    "registry_origin": "Default configured uv registry; origin not independently attested"
+  },
+  "packages": [
+    {
+      "name": "boto3",
+      "version": "1.42.89",
+      "home_page_metadata": "https://github.com/boto/boto3",
+      "requires_dist": [
+        "botocore (<1.43.0,>=1.42.89)",
+        "jmespath (<2.0.0,>=0.7.1)",
+        "s3transfer (<0.17.0,>=0.16.0)",
+        "botocore[crt] (<2.0a0,>=1.21.0) ; extra == 'crt'"
+      ],
+      "installed_metadata_sha256": {
+        "boto3-1.42.89.dist-info/INSTALLER": "e6184ce10e266134fdcfa401e8f1a95005bcd4f18d16b62b757323e2833fe9a9",
+        "boto3-1.42.89.dist-info/METADATA": "7845f2e5af89c12337f50cf2a8cf79071b1e93e733dd4451dfcef5ecf844b334",
+        "boto3-1.42.89.dist-info/RECORD": "4560223a13cc878d65f7cb27c64b499e6898f4fe03a544cbe5b9bd9138791ca7",
+        "boto3-1.42.89.dist-info/WHEEL": "195f5a3138703ffe28342b6f102d9e737a9462eb6059e033925ae8ff49b85894"
+      }
+    },
+    {
+      "name": "botocore",
+      "version": "1.42.97",
+      "home_page_metadata": "https://github.com/boto/botocore",
+      "requires_dist": [
+        "jmespath (<2.0.0,>=0.7.1)",
+        "python-dateutil (<3.0.0,>=2.1)",
+        "urllib3 (<1.27,>=1.25.4) ; python_version < \"3.10\"",
+        "urllib3 (!=2.2.0,<3,>=1.25.4) ; python_version >= \"3.10\"",
+        "awscrt (==0.31.2) ; extra == 'crt'"
+      ],
+      "installed_metadata_sha256": {
+        "botocore-1.42.97.dist-info/INSTALLER": "e6184ce10e266134fdcfa401e8f1a95005bcd4f18d16b62b757323e2833fe9a9",
+        "botocore-1.42.97.dist-info/METADATA": "65772f6be1be4642f9e37d9498726ebce6c2a1ee2726330cfc68ba72748347ae",
+        "botocore-1.42.97.dist-info/RECORD": "dafd26168b02a5ef9e166e274a360eff1e138a89fbec71f3406a19a4b0b68505",
+        "botocore-1.42.97.dist-info/WHEEL": "195f5a3138703ffe28342b6f102d9e737a9462eb6059e033925ae8ff49b85894"
+      }
+    },
+    {
+      "name": "jmespath",
+      "version": "1.1.0",
+      "home_page_metadata": "https://github.com/jmespath/jmespath.py",
+      "requires_dist": null,
+      "installed_metadata_sha256": {
+        "jmespath-1.1.0.dist-info/INSTALLER": "e6184ce10e266134fdcfa401e8f1a95005bcd4f18d16b62b757323e2833fe9a9",
+        "jmespath-1.1.0.dist-info/METADATA": "81181e9a312f1b87e5be7c8376c57b0e8c962ba524a25a313d43dc2e2d3984f3",
+        "jmespath-1.1.0.dist-info/RECORD": "fb92add825958ebb4da3726348b2144daa3ef5783e1d508d7e9a9d21fe53a291",
+        "jmespath-1.1.0.dist-info/WHEEL": "5b287efe76740c9628947367d7f84c6b894ceee0de743fd1195c1b9938f222d9"
+      }
+    },
+    {
+      "name": "python-dateutil",
+      "version": "2.9.0.post0",
+      "home_page_metadata": "https://github.com/dateutil/dateutil",
+      "requires_dist": [
+        "six >=1.5"
+      ],
+      "installed_metadata_sha256": {
+        "python_dateutil-2.9.0.post0.dist-info/INSTALLER": "e6184ce10e266134fdcfa401e8f1a95005bcd4f18d16b62b757323e2833fe9a9",
+        "python_dateutil-2.9.0.post0.dist-info/METADATA": "a9d436da322be808332f98d88325998e87cb693a678a9969feb4cfad729a6e93",
+        "python_dateutil-2.9.0.post0.dist-info/RECORD": "e15e868a50b9c4e71df17b31369843617780146ac5adb1bbfdcced0ebe501824",
+        "python_dateutil-2.9.0.post0.dist-info/WHEEL": "f86fedd281ae13b503d03ad2a55667ab584730157d0c3d97912e6fed7a664e79"
+      }
+    },
+    {
+      "name": "s3transfer",
+      "version": "0.16.1",
+      "home_page_metadata": "https://github.com/boto/s3transfer",
+      "requires_dist": [
+        "botocore (<2.0a.0,>=1.37.4)",
+        "botocore[crt] (<2.0a.0,>=1.37.4) ; extra == 'crt'"
+      ],
+      "installed_metadata_sha256": {
+        "s3transfer-0.16.1.dist-info/INSTALLER": "e6184ce10e266134fdcfa401e8f1a95005bcd4f18d16b62b757323e2833fe9a9",
+        "s3transfer-0.16.1.dist-info/METADATA": "d0c4312285ef38a92778dc2fcfedbaf038a18e04486b6bef58a352b5da21b8ab",
+        "s3transfer-0.16.1.dist-info/RECORD": "9c011938166b3d47dfa348c1c73baf89c992034476e56335fbd0f13c97fbb81d",
+        "s3transfer-0.16.1.dist-info/WHEEL": "195f5a3138703ffe28342b6f102d9e737a9462eb6059e033925ae8ff49b85894"
+      }
+    },
+    {
+      "name": "six",
+      "version": "1.17.0",
+      "home_page_metadata": "https://github.com/benjaminp/six",
+      "requires_dist": null,
+      "installed_metadata_sha256": {
+        "six-1.17.0.dist-info/INSTALLER": "e6184ce10e266134fdcfa401e8f1a95005bcd4f18d16b62b757323e2833fe9a9",
+        "six-1.17.0.dist-info/METADATA": "562042078c2752549f6d8a7c86dbc5dd708088a7be6d80672ec7b07100b72468",
+        "six-1.17.0.dist-info/RECORD": "d16e50f347969b1e1919fb0c88bac4b9c644f5305bcfcfb00f72b646dbd4065d",
+        "six-1.17.0.dist-info/WHEEL": "a7178d5f925db427b9f0f51260ff6ea6673b8dd44f82f4f41a6f646f5487955c"
+      }
+    },
+    {
+      "name": "urllib3",
+      "version": "2.8.0",
+      "home_page_metadata": null,
+      "requires_dist": [
+        "brotli>=1.2.0; (platform_python_implementation == 'CPython') and extra == 'brotli'",
+        "brotlicffi>=1.2.0.0; (platform_python_implementation != 'CPython') and extra == 'brotli'",
+        "h2<5,>=4; extra == 'h2'",
+        "pysocks!=1.5.7,<2.0,>=1.5.6; extra == 'socks'",
+        "backports-zstd>=1.0.0; (python_version < '3.14') and extra == 'zstd'"
+      ],
+      "installed_metadata_sha256": {
+        "urllib3-2.8.0.dist-info/INSTALLER": "e6184ce10e266134fdcfa401e8f1a95005bcd4f18d16b62b757323e2833fe9a9",
+        "urllib3-2.8.0.dist-info/METADATA": "10898c620e8007c030e07fa5622b68358a43010025dfbd78a1cb797699de2bb4",
+        "urllib3-2.8.0.dist-info/RECORD": "1753d325c8936a612ecdc947e686ade56b21f591fbb7518330cb0f2f7619c330",
+        "urllib3-2.8.0.dist-info/WHEEL": "ccec20e2307acd7da453dd7437e70c6b08e2bc3ead3bc3445af135da37b56d59"
+      }
+    }
+  ],
+  "kms_model_sha256": {
+    "endpoint-rule-set-1.json.gz": "bd78344658337a29c6bb2a69c37088d08b34cda8e0f0b75e473bf36f6c3cfd4b",
+    "examples-1.json": "4e06a14e5d6e058887231bfade6c7268273ee5cf7140aa1b5873e10e2a38c777",
+    "paginators-1.json": "a54a352c5ff6c465dfd7eb0cf3126269f4884b02fc9bcca050aadabee3be22fd",
+    "service-2.json.gz": "1c091a8a15f2e6c150c84a950684fc1cbd4db3b541cab8a19af62e6b3a8bae58"
+  },
+  "limits": [
+    "SDK transport and credentials are stubbed. No live AWS request or production custody evidence.",
+    "Distribution metadata and model hashes identify this local test environment; no artifact publication or provenance qualification."
+  ]
+}

@@ -58,6 +58,17 @@ Their absolute guarantees are also removed: immediate arbitrary-worker denial, a
 whole-result publication, subject cryptographic erasure, and hostile-database completeness/freshness.
 A removed mechanism cannot retain its old guarantee through wording alone.
 
+## Optional external SDK bridge: 2026-10-23
+
+Add an optional AWS KMS implementation of the existing provider protocol.
+The caller supplies a configured SDK client, a provider UUID and one full key
+ARN. Pin both requests and responses to that identity and SYMMETRIC_DEFAULT.
+Use fixed versioned public context for exact domain/tenant/root/generation binding.
+Do not discover credentials, select aliases, administer keys or add a mandatory
+SDK dependency. Keep CF1 and key policies unchanged.
+The [security owner](security.md#optional-aws-kms-sdk-adapter) defines the boundary.
+SDK tests do not designate or qualify a production provider. All seven gates remain UNKNOWN.
+
 ## Mapped protected scalar RETURNING: 2026-10-23
 
 Extend mapped dictionary INSERT with exactly one direct protected mapped column

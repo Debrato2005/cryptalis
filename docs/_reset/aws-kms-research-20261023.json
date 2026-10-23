@@ -1,0 +1,56 @@
+{
+  "schema": "cryptalis.aws-kms-protocol-research/v1",
+  "observed_at": "2026-10-23T07:51:47Z",
+  "scope": "Optional caller-supplied synchronous KMS SDK bridge. Protocol-double and existing CF1/keyring tests only.",
+  "official_sources": [
+    {
+      "url": "https://docs.aws.amazon.com/boto3/latest/reference/services/kms/client/encrypt.html",
+      "status": 200,
+      "title": "encrypt - Boto3 1.43.118 documentation"
+    },
+    {
+      "url": "https://docs.aws.amazon.com/boto3/latest/reference/services/kms/client/decrypt.html",
+      "status": 200,
+      "title": "decrypt - Boto3 1.43.118 documentation"
+    },
+    {
+      "url": "https://docs.aws.amazon.com/kms/latest/developerguide/encrypt_context.html",
+      "status": 200,
+      "title": "Encryption context - AWS Key Management Service"
+    }
+  ],
+  "findings": [
+    "Both boto3 operations accept KeyId, EncryptionContext and EncryptionAlgorithm. The adapter sends the exact deployment key ARN and SYMMETRIC_DEFAULT on every request.",
+    "Encrypt returns binary CiphertextBlob, key ARN and algorithm. Decrypt returns binary Plaintext, key ARN and algorithm. The adapter requires the exact pinned response identity and algorithm, with a 32-byte plaintext root.",
+    "KMS symmetric encryption context is authenticated and requires an exact case-sensitive match on decrypt. It is public metadata and may appear in CloudTrail.",
+    "The host supplies SDK installation, credentials, endpoint, timeout and bounded retry configuration. The adapter performs no discovery, retry, remote key administration or key-generation policy change.",
+    "Async unwrap moves the blocking SDK call to a thread. Cancellation rejects late material but cannot cancel already dispatched remote work. Inherited provider objects refuse use after fork."
+  ],
+  "encryption_context": {
+    "cryptalis:format": "CF1/aws-kms-wrap/v1",
+    "cryptalis:provider": "canonical provider UUID",
+    "cryptalis:domain": "canonical KeyContext.domain_id UUID",
+    "cryptalis:tenant": "canonical KeyContext.tenant_id UUID",
+    "cryptalis:purpose": "KeyContext.purpose, payload or search",
+    "cryptalis:root": "canonical KeyContext.root_id UUID",
+    "cryptalis:generation": "KeyContext.generation as unsigned decimal"
+  },
+  "verification": {
+    "receipt": "aws-kms-protocol-20261023.json",
+    "exit_code": 0,
+    "test_calls": {
+      "passed": 86
+    },
+    "new_protocol_double_cases": 36,
+    "existing_keyring_rewrap_cf1_cases": 50,
+    "database_preflight": "both configured disposable roles passed",
+    "database_ddl": "eight existing CF1 PostgreSQL persistence cases; new protocol tests have no database DDL"
+  },
+  "limits": [
+    "No boto3/botocore installation or actual SDK transport was exercised.",
+    "No live AWS account, workload identity, IAM policy, endpoint, network retries/timeouts, native audit log, concurrency limit, key disable/deletion or external custody was exercised.",
+    "No production provider is designated. All seven production qualification gates remain UNKNOWN.",
+    "Wrappers remain opaque provider bytes within the existing WrappedRoot contract; CF1 frames and KeyPolicy semantics are unchanged.",
+    "Python immutable bytes provide no verified zeroization guarantee. Caller-supplied SDK objects remain a trusted host boundary."
+  ]
+}
