@@ -512,7 +512,7 @@ publication and independent review remain UNKNOWN.
 
 ## Adopted-target root rewrap: 2026-10-24
 
-Use `cryptalis.rewrap/v2` when an explicit restore binding or inherited v5
+Use `cryptalis.rewrap/v2` when an explicit restore binding or inherited restore
 lineage supplies the adopted target. Keep the previous proposal fields and add
 `restore`: a complete `cryptalis.restore/v1` document or JSON `null` for inherited lineage.
 Ordinary rewrap/v1 proposals and transition/v2 successors keep their existing contract.
@@ -544,7 +544,8 @@ Terminal retries inspect current authority and preserve later edits. An old
 binding cannot authorize the successor as its original source.
 
 Repeated rewrap carries flat lineage without recursive source artifacts.
-Payload/search rotation on v5 refuses before effects until separately implemented.
+The [payload extension](#adopted-target-payload-rotation-2026-10-24) defines the
+separate v5/v6 payload route. Search rotation with lineage still refuses before effects.
 Host custody, restore approval, source fencing and publication remain external
 assertions. No cryptographic format, key deletion or authority relaxation follows.
 **VERIFIED, bounded native profile:** one
@@ -636,7 +637,9 @@ It authenticates the source against P, removes only P's shadows and guards, and
 records P ABORTED atomically. Target custody can remain unavailable. Repeated
 cancellation inspects the terminal marker and current source authority without
 replaying old data. A later source supersession prevents an old cancellation
-from reviving it. Restored-target preparation remains outside this contract.
+from reviving it. The [adopted-lineage extension](#adopted-target-payload-rotation-2026-10-24)
+defines preparation after a published lineage-bearing successor. Direct planning
+from an explicit restore binding remains refused.
 
 The initial final-switch implementation must preserve the existing public
 columns, their constraints, native expression indexes, grants and metadata.
@@ -654,7 +657,7 @@ retry comparison. Missing A with partially superseded source or P is an
 inconsistent state, not permission to reconstruct a commit. Preparation resume
 and cancellation must reject the switched P.
 
-Activation uses `cryptalis.transition/v3` with `kind: payload_rotation`.
+Without restore lineage, activation uses `cryptalis.transition/v3` with `kind: payload_rotation`.
 Its exact fields include `payload_rotation_plan_digest`,
 `payload_rotation_observations`, `payload_batch_limits`, and the flat predecessor
 list. Scopes match the observed model identities and row counts. Construct
@@ -677,6 +680,47 @@ claim of ACTIVE. A genuine ACTIVE pin permits later edits. The sealed target
 snapshot does not become an immutable-data requirement for ordinary operation
 or subsequent current-value decrypt-back/removal.
 
+## Adopted-target payload rotation: 2026-10-24
+
+**IMPLEMENTED, bounded verification:** payload rotation accepts a current ACTIVE
+v5 rewrap or v6 payload successor that already carries validated restore lineage.
+The preparation proposal keeps `cryptalis.payload-rotation/v1` and its complete
+embedded source. It adds no restore argument or publication authority.
+
+With inherited lineage, activation uses `cryptalis.transition/v6`,
+`kind: payload_rotation`. Keep every v3 payload proof, observation, batch limit,
+scope, policy and cost requirement. Add the source's nonempty, flat
+`restore_lineage` unchanged. The flat predecessor list retains all source
+ancestors, then the exact source and preparation identities. Payload activation
+without lineage remains v3.
+
+Apply the existing pure lineage admission before provider or maintenance effects.
+Require exact source/digest ancestor order, distinct adoption identities,
+continuous physical targets and unchanged owner principals. The latest binding
+target must equal the successor target. Restated frame CHECK definitions must
+match recognized compiled-field PostgreSQL 16 forms and carry the required
+`rejected-malformed-frames` probe. Historical binding custody remains history,
+rather than current policy or publication authority.
+
+Preparation, prefix-preserving resume, source-only cancellation, sealing,
+atomic cutover and separate host publication retain their existing rules.
+PENDING retries verify the successor and reciprocal ancestry. Genuine ACTIVE
+authority permits later edits and current-value removal. A later ordinary root
+rewrap of v6 uses rewrap/v2 and produces a v5 successor with the same restore
+lineage. Fractional native copy rates must round-trip in v6 and embedded v6
+sources without changing their artifact identities.
+
+Readers that cannot admit the embedded source or v6 activation must refuse
+before effects and publication. Deploy compatible readers first. Search rotation
+with lineage and direct payload planning from an explicit restore binding remain
+refused. CF1, retained-reader requirements, root retirement, maintenance approval,
+host fencing and publication authority do not change. All seven production gates
+remain UNKNOWN. See the [lifecycle contract](lifecycle.md#payload-rotation-after-adopted-lineage-2026-10-24).
+Native TEXT/VARCHAR and installed TEXT profiles verify this path. The unchanged
+Smolink application also verifies the final artifact through current-value exit.
+[Status](status.md#payload-rotation-after-adopted-lineage-2026-10-24) records exact
+counts, failed attempts and artifact boundaries.
+
 ## Restored payload generations and privilege admission: 2026-10-23
 
 **IMPLEMENTED, bounded:** adopt a backup of published payload activation A through
@@ -696,7 +740,10 @@ boundary or replace host credential control.
 
 Keep the restore binding format unchanged. Retain old keys for approved recovery
 obligations, but refuse an old-generation frame under the selected new policy.
-Fresh-cluster backup recovery does not admit payload/search rotation on an adopted target.
+Fresh-cluster backup recovery alone does not admit a new generation rotation.
+The [adopted-lineage extension](#adopted-target-payload-rotation-2026-10-24) defines
+payload rotation after a published v5/v6 successor. Search rotation with lineage
+and direct payload planning from a restore binding remain refused.
 Search reindex, qualified production providers and all seven full gates remain
 open or UNKNOWN. See the [recorded evidence](status.md#payload-backup-recovery-and-runtime-admission-checkpoint-2026-10-23).
 
@@ -746,7 +793,9 @@ terminal transaction. Native conflicts roll back the entire switch.
 Host copy-rate and WAL estimates must include this index work.
 
 Restore uses the existing approved binding and selected-generation checks.
-Payload/search rotation on adopted targets remains outside this contract. Rotation deletes no
+Search rotation with adopted lineage remains refused. The
+[payload extension](#adopted-target-payload-rotation-2026-10-24) defines the separate
+lineage-bearing payload route. Rotation deletes no
 retained keys and supplies no unlinkability or cryptographic-erasure claim.
 Production custody, authority and independent review remain unqualified.
 

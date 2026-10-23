@@ -21,6 +21,67 @@ and [competitive capability matrix](research/capability-matrix.md) govern priori
 Progress follows complete real-application journeys and resolved production requirements.
 All seven production gates remain UNKNOWN.
 
+## Payload rotation after adopted lineage: 2026-10-24
+
+**VERIFIED, bounded local source and installed-wheel profiles:** payload rotation can now start from
+an ACTIVE adopted rewrap successor. The existing payload-rotation/v1 proposal
+retains its complete source. A transition/v6 activation keeps the approved flat
+restore lineage and every existing payload proof. Ordinary v3 activation and CF1
+remain unchanged. A later root rewrap returns to v5 with the same lineage.
+Direct and embedded fractional copy-rate artifacts round-trip.
+
+The [source export](_reset/fresh-cluster-export-20261024-12.json) and
+[12 fresh-target controls](_reset/fresh-cluster-restore-20261024-11.json) pass;
+the latter takes 30.16 seconds. Checks cover one committed chunk and resume,
+source-only cancellation, terminal retry after later edits, prior canceled
+operations, stale pins/policies, provider outage, changed CHECK/fence, retained
+generation frames and resealed targets. SIGKILL and lost actual chunk/abort
+COMMIT replies recover through the same artifacts. Actual older installed
+readers refuse both proposal and activation before database access.
+
+The [source VARCHAR profile](_reset/fresh-cluster-restore-20261024-13.json)
+passes the same 12 controls in 29.77 seconds. The [actual installed TEXT wheel](_reset/fresh-cluster-restore-20261024-14.json)
+passes all 12 in 28.48 seconds. The installed wheel also passes the existing
+[17 adopted root-rewrap controls](_reset/fresh-cluster-restore-20261024-15.json)
+in 24.85 seconds.
+
+The [unchanged Smolink source journey](_reset/fresh-cluster-restore-20261024-12.json)
+passes in 4.20 seconds after its [source stage](_reset/fresh-cluster-export-20261024-13.json).
+After restore, canceled/new root rewrap and v5 publication, payload rotation
+advances generation 2 to 3 in v6. All three original wrapped contexts remain;
+one independent payload context is added. Original ASGI/JWT/ORM and real Redis
+work, later edits, removal and an import-denied restart pass. Physical index
+identities stay unchanged while payload bytes change.
+
+The final installed wheel repeats the original Smolink journey: its
+[source stage](_reset/fresh-cluster-export-20261024-17.json) passes one test in
+2.62 seconds and its [fresh-target stage](_reset/fresh-cluster-restore-20261024-16.json)
+passes one in 3.23 seconds. The [source application receipt](_reset/adopted-payload-smolink-source-application-20261024.json)
+and [installed application receipt](_reset/adopted-payload-smolink-installed-application-20261024.json)
+retain all 38 pinned application files without model or query changes.
+
+The [previous installed wheel](_reset/fresh-cluster-restore-20261024-8.json)
+reproduces the original refusal. The [expanded failed run](_reset/fresh-cluster-restore-20261024-10.json)
+retains 11 passes and one fixture recovery failure. Ordinary ENABLE had not
+restored the recorded ALWAYS trigger mode. That partial repair now receives an
+explicit refusal assertion before exact-mode recovery.
+
+The [full primary regression](_reset/adopted-payload-full-primary-20261024.json)
+passes 2,430 tests plus 18 subtests in 730.38 seconds. Twelve skips and 48 existing
+deprecation warnings remain. The [actual installed affected suite](_reset/adopted-payload-installed-affected-20261024.json)
+passes 126 controls in 86.62 seconds, including ordinary payload, lease,
+SQLModel HTTP/SMTP and tenant-pool checks. All 195 Python hashes remain unchanged
+across the listed runs.
+The [artifact check](_reset/adopted-payload-release-final-20261024.json) verifies
+repeatable archives, metadata, RECORD, SBOM, 40 installed files and isolated CLI.
+The [final boundary](_reset/adopted-payload-final-boundary-20261024.json) binds
+these receipts to the current product and installed artifacts.
+Smolink protection remains limited to Url.destination storage under explicit
+single tenancy. Browser and server deployment remain unqualified.
+Adopted search rotation and direct payload planning with a restore binding remain
+unadmitted. Host authority, provider qualification and all seven gates remain UNKNOWN.
+See the [format decision](decisions.md#adopted-target-payload-rotation-2026-10-24).
+
 ## Smolink adopted-target rewrap journey: 2026-10-24
 
 **VERIFIED, bounded installed-wheel journey:** pinned Smolink retains all 38
@@ -97,9 +158,12 @@ binds these receipts, unchanged cryptographic modules, packaged sources and docs
 The [artifact check](_reset/adopted-rewrap-release-final-20261024.json) verifies
 repeatable wheel/sdist builds, metadata, RECORD, SBOM, 40 installed files and
 isolated CLI execution. Host custody, fencing, quarantine and publication remain
-external assertions. Payload/search rotation on adopted lineage refuses before
-database or key effects. These workflows and all seven production gates remain
-open. See the [format decision](decisions.md#adopted-target-root-rewrap-2026-10-24).
+external assertions. At this root-rewrap checkpoint, payload/search rotation on
+adopted lineage refused before database or key effects. The later
+[payload extension](#payload-rotation-after-adopted-lineage-2026-10-24) supplies
+the separate verified payload path. Search rotation with lineage and all seven
+production gates remain open or UNKNOWN. See the
+[format decision](decisions.md#adopted-target-root-rewrap-2026-10-24).
 
 ## Bounded session pool isolation: 2026-10-24
 

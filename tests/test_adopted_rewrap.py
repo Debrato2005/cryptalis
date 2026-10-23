@@ -354,7 +354,7 @@ def test_repeated_rewrap_backup_and_new_adoption_extend_flat_lineage(adopted, tm
         def connect(self): pytest.fail('unsupported generation rotation connected')
     def forbidden(tenant): pytest.fail('unsupported generation rotation prepared keys')
     stable = snapshot(app)
-    for prepare in (rotation.plan_payload_rotation, rotation.plan_search_rotation):
+    for prepare in (rotation.plan_search_rotation,):
         with pytest.raises(m.TransitionFailure, match='adopted_generation_rotation_unsupported'):
             prepare(first, ClosedEngine(), source_pin=pin(first, 'ACTIVE'), keys=forbidden,
                 target_keys=forbidden, backfill_rows_per_second=1000, verify_rows_per_second=1000,

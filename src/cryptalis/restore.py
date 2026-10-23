@@ -234,7 +234,8 @@ def _validate_lineage(document):
     """Validate flat adopted-target authority carried by a successor artifact."""
     try:
         lineage = document['restore_lineage']
-        if (document['format'] != 'cryptalis.transition/v5' or document['kind'] != 'rewrap'
+        if ((document['format'], document['kind']) not in (
+                ('cryptalis.transition/v5', 'rewrap'), ('cryptalis.transition/v6', 'payload_rotation'))
                 or type(lineage) is not list or not lineage):
             raise ValueError
         ancestors = {(item['operation_id'], item['plan_digest']): index

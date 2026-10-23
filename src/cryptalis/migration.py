@@ -39,7 +39,8 @@ def _decode_transition_json(raw):
                   for name in ('backfill_rows_per_second', 'verify_rows_per_second')}
     for prefix, owner in (((),document),(('source_plan',),document.get('source_plan') if type(document) is dict else None)):
         if (type(owner) is dict and (owner.get('format'),owner.get('kind')) in (
-                    ('cryptalis.transition/v3','payload_rotation'),('cryptalis.transition/v4','search_rotation'))):
+                    ('cryptalis.transition/v3','payload_rotation'),('cryptalis.transition/v4','search_rotation'),
+                    ('cryptalis.transition/v6','payload_rotation'))):
             rate_paths.add(prefix+('estimates','copy_rows_per_second'))
 
     def check(value, path):
@@ -156,14 +157,14 @@ class MigrationPlan:
                             'runtime_role', 'journal_schema', 'lock', 'source_lock_digest',
                             'key_policies', 'scopes', 'estimates'}
             rewrap = doc.get('format') in ('cryptalis.transition/v2', 'cryptalis.transition/v5') and doc.get('kind') == 'rewrap'
-            payload = doc.get('format') == 'cryptalis.transition/v3' and doc.get('kind') == 'payload_rotation'
+            payload = doc.get('format') in ('cryptalis.transition/v3', 'cryptalis.transition/v6') and doc.get('kind') == 'payload_rotation'
             search = doc.get('format') == 'cryptalis.transition/v4' and doc.get('kind') == 'search_rotation'
             rotating=payload or search
             if rewrap or rotating:
                 proof_key = doc['kind']+'_plan_digest'
                 observations_key = doc['kind']+'_observations'
                 members |= {'predecessors', proof_key, observations_key}
-                if doc['format'] == 'cryptalis.transition/v5':
+                if doc['format'] in ('cryptalis.transition/v5', 'cryptalis.transition/v6'):
                     members.add('restore_lineage')
                 if rotating:
                     members.add(('payload' if payload else 'search')+'_batch_limits')
@@ -205,7 +206,7 @@ class MigrationPlan:
                 raise ValueError
             # Compiler validation needs identifier quoting, never a connection.
             _previous_lock(_canonical(doc['lock']), doc['lock'], SimpleNamespace(dialect=postgresql.dialect()))
-            if doc['format'] == 'cryptalis.transition/v5':
+            if doc['format'] in ('cryptalis.transition/v5', 'cryptalis.transition/v6'):
                 from cryptalis.restore import _validate_lineage
                 _validate_lineage(doc)
             _validate_estimates(doc['estimates'])

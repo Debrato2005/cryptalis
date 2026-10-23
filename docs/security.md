@@ -371,8 +371,9 @@ cancellation. It admits the exact P identity before connection and reports
 `runtime_metadata_matches: false` with `verification: NOT_PERFORMED`.
 Recorded BACKFILLED progress does not authenticate current frames or admit
 an application deployment. It needs no keys or maintenance locks and makes
-no writes. Adopted-target payload/search rotation remains unsupported; the CLI refuses a
-P restore-binding option before reading that binding or connecting.
+no writes. The CLI refuses a P restore-binding option before reading that binding
+or connecting. A lineage-bearing payload proposal already embeds its source.
+Search rotation with lineage remains refused.
 [The walkthrough](walkthrough-migration.md#inspect-rotation-preparation)
 owns the full operator contract.
 
@@ -444,7 +445,9 @@ generation. It does not compare those frames with A's original sealing hashes.
 A valid older-generation frame still fails, although its root remains retained.
 The original source policy cannot replace A's target policy. Existing
 `cryptalis.restore/v1` bindings support this path without a new restore format.
-Payload and search rotation on adopted restored targets remain unsupported.
+Payload rotation after a published lineage-bearing successor follows the
+[adopted-lineage contract](lifecycle.md#payload-rotation-after-adopted-lineage-2026-10-24).
+Search rotation with lineage and direct payload planning from a restore binding remain refused.
 All seven full gates remain UNKNOWN.
 
 ## Cryptographic format
@@ -638,6 +641,25 @@ supplies no new cryptographic or host authority. See the
 [format decision](decisions.md#adopted-target-root-rewrap-2026-10-24) and
 [current evidence](status.md#adopted-target-root-rewrap-2026-10-24).
 
+Payload rotation after adopted lineage starts from the current ACTIVE v5/v6
+successor and its own host pin. The unchanged `cryptalis.payload-rotation/v1` proposal embeds
+that source. Its `cryptalis.transition/v6` activation retains flat restore lineage and every v3 payload
+proof. Existing frame/probe, owner, target-chain and reciprocal-ancestor checks
+remain required. Historical bindings supply no current publication authority.
+Before switch, cancellation still requires source custody, the current source
+ACTIVE pin and maintenance approval. It needs no target provider. Terminal
+cancellation preserves later source edits and cannot revive a superseded source.
+
+The [12 native fresh-target controls](_reset/fresh-cluster-restore-20261024-11.json)
+pass, as do the source VARCHAR and installed TEXT profiles. The final installed
+Smolink journey and full regression retain their exact
+[status boundaries](status.md#payload-rotation-after-adopted-lineage-2026-10-24).
+Search rotation with lineage and direct payload planning from an
+explicit restore binding remain refused. Deploy readers that admit the embedded
+source and v6 before publication. CF1, host approval/fencing, retained-reader
+obligations and key-retirement permissions do not change. All seven production
+gates remain UNKNOWN. See the [format decision](decisions.md#adopted-target-payload-rotation-2026-10-24).
+
 **IMPLEMENTED, internal batch only:** `prepare_payload_rotation_batch(rows, field, tenant,
 source=..., target=...)` decodes each current frame under the exact source payload
 generation, reseals the same exact text under the target generation, preserves record
@@ -709,8 +731,9 @@ permits subsequent edits and latest-value decrypt-back/removal.
 Recorded copy wall time and cluster-wide WAL deltas are diagnostic observations.
 They exclude later DDL, verification, commit, and publication. Other cluster
 writes can contribute WAL. These metrics establish no capacity bound, isolated
-WAL cost, deployment authority, or fresh cryptographic proof. Adopted restored
-targets remain unsupported for payload rotation. All seven full gates remain UNKNOWN.
+WAL cost, deployment authority, or fresh cryptographic proof. Payload rotation
+after adopted lineage requires a published v5/v6 source; direct payload planning
+from an explicit restore binding remains refused. All seven full gates remain UNKNOWN.
 
 **IMPLEMENTED, bounded native verification:** search rotation retains every exact
 source wrapper and root material. It adds one independent search root above all
@@ -739,8 +762,9 @@ bounds remain unqualified. The existing restore-binding format supports the
 bounded search-backup profile. An independent generation-2 search/HMAC decoder
 and the product reader recover current values after publication edits. A valid
 old-generation frame and the original source policy fail adoption. Later adopted
-edits survive decrypt-back and removal. Payload/search rotation on adopted restored targets
-remains unsupported. External custody, current host authority, and source fencing
+edits survive decrypt-back and removal. Search rotation with adopted lineage
+remains refused. The separate [payload route](lifecycle.md#payload-rotation-after-adopted-lineage-2026-10-24)
+requires a published lineage-bearing successor. External custody, current host authority, and source fencing
 remain unqualified. [Status](status.md) owns executable evidence.
 All seven full gates remain UNKNOWN.
 

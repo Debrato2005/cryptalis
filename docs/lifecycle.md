@@ -208,7 +208,7 @@ It returns activation artifact A from the actual staged ciphertext observations.
 It changes no database data, schema, or journal. Provider preparation can incur
 audit/cost effects. The same staged bytes and costs produce identical A.
 
-A is a `cryptalis.transition/v3` MigrationPlan with `kind: payload_rotation`.
+Without restore lineage, A is a `cryptalis.transition/v3` MigrationPlan with `kind: payload_rotation`.
 It binds P's digest, target frame/membership observations, batch limits, and
 exact source-to-P ancestry. P reserves A's operation ID without embedding A's
 digest. This avoids a circular artifact identity. Persist exact P and A outside
@@ -256,9 +256,41 @@ isolated WAL, a capacity bound, nor host authority. Keyless status still reports
 `NOT_PERFORMED` and supplies no fresh cryptographic proof.
 
 The [two-artifact decision](decisions.md#payload-rotation-preparation-and-activation-2026-10-23)
-defines the preparation and activation boundary. Preparation, sealing, and
-cutover on an adopted restored target remain unsupported. All seven full gates
-remain UNKNOWN.
+defines the preparation and activation boundary. The
+[adopted-lineage extension](#payload-rotation-after-adopted-lineage-2026-10-24)
+defines the v5/v6 route below. Direct payload planning from an explicit restore
+binding remains refused. All seven full gates remain UNKNOWN.
+
+### Payload rotation after adopted lineage: 2026-10-24
+
+**IMPLEMENTED, bounded verification:** start from the current ACTIVE v5 or v6
+successor, its own pin and retained source policies. Do not pass the old restore
+binding as current authority. The existing payload preparation proposal embeds
+that complete source and keeps its v1 format.
+
+Use the existing preparation, cancellation, sealing, switch and publication
+steps. Before switch, cancellation needs source custody and the source ACTIVE
+pin; target custody can remain unavailable. Exact source admission, guards and
+shadow checks still apply. Terminal cancellation preserves later source edits
+and cannot revive a superseded source.
+
+Seal lineage-bearing activation as transition/v6 with all v3 payload proof
+members and the unchanged nonempty flat restore lineage. Keep inherited
+predecessors, then append source and preparation. Reuse exact frame-probe,
+ancestor-order, target-chain and owner checks before effects. A PENDING retry
+authenticates the current successor and reciprocal ancestry; publish it under
+its own pin before ordinary writers resume.
+
+Later payload rotation can retain the same lineage. Ordinary rewrap of v6
+produces rewrap/v2 and a v5 successor. Fractional copy rates must survive both
+direct and embedded-source artifact round-trips. No-lineage payload activation
+remains v3. Search rotation with lineage and payload planning directly from an
+explicit restore binding remain refused. This adds no key-retirement permission,
+host authority service or cryptographic format. All seven production gates remain UNKNOWN.
+See the [format decision](decisions.md#adopted-target-payload-rotation-2026-10-24).
+Native TEXT/VARCHAR and installed TEXT controls, plus the unchanged installed
+Smolink journey, verify this boundary. [Status](status.md#payload-rotation-after-adopted-lineage-2026-10-24)
+owns the exact receipts, full regression and remaining limits.
 
 ### Search-key rotation
 
@@ -299,7 +331,9 @@ Shared `migration.apply` accepts A only for ACTIVE publication with an
 ACTIVATING or ACTIVE pin. ACTIVATING repeats A's target proof even if the
 journal claims ACTIVE. A genuine ACTIVE pin permits later application edits
 and latest-value decrypt-back/removal. The existing restore-binding format remains
-the selected recovery contract. Payload/search rotation on an adopted target stays unsupported.
+the selected recovery contract. Search rotation with adopted lineage stays refused.
+The [payload extension](#payload-rotation-after-adopted-lineage-2026-10-24)
+defines the separate lineage-bearing payload route.
 
 Measured `copy_rows_per_second` and `copy_wal_bytes_per_row` must include native
 maintenance of every affected expression and unique index. The terminal copy
@@ -369,7 +403,7 @@ See [status](status.md#active-root-rewrap-checkpoint-2026-10-23).
 ### Adopted-target root rewrap: 2026-10-24
 
 Supply `restore=binding` to `plan_rewrap` for the first rewrap on an adopted
-copy. Preserve that exact binding in rewrap/v2. A source with inherited v5
+copy. Preserve that exact binding in rewrap/v2. A source with inherited restore
 lineage can use `restore=None`. The v5 successor records the effective target,
 complete flat adoption lineage and ordinary ordered predecessors. Shared
 schema checks retain each admitted restored CHECK through later operations
@@ -388,7 +422,9 @@ binding. Restore its exact original journal state and remove successor guards
 atomically. A terminal retry preserves later application edits and cannot
 revive a source that another operation superseded. Cancellation cannot republish
 the old binding as successor authority. An ACTIVE successor needs a new rewrap.
-Payload/search rotation on adopted v5 targets still refuses. The host retains
+The [payload extension](#payload-rotation-after-adopted-lineage-2026-10-24)
+defines rotation from an ACTIVE lineage-bearing successor. Search rotation with
+lineage still refuses. The host retains
 custody policies, fenced-source evidence and restore approval.
 
 **VERIFIED, bounded native profile:** one
@@ -620,8 +656,9 @@ The walkthrough lists the profile commands. [Status](status.md) owns current
 receipts and test totals.
 
 Backup adoption after payload rotation differs from rotation on an adopted
-target. Payload preparation, sealing, and cutover on an adopted target remain
-unsupported. Host publication provenance,
+target. The [adopted-lineage extension](#payload-rotation-after-adopted-lineage-2026-10-24)
+requires a published v5/v6 successor. Direct payload planning from a restore
+binding and search rotation with lineage remain refused. Host publication provenance,
 source fencing, and provider custody remain external qualification boundaries.
 All seven full gates remain UNKNOWN.
 

@@ -8,14 +8,14 @@ import os
 from pathlib import Path
 import subprocess
 from types import SimpleNamespace
-from uuid import UUID
+from uuid import UUID, uuid5
 
 import psycopg
 import pytest
 from sqlalchemy.ext.asyncio import create_async_engine
 
 from cryptalis import migration as m, deprotection as d, restore as recovery, rotation
-from cryptalis.crypto import Keyring
+from cryptalis.crypto import KeyContext, Keyring
 from cryptalis.crypto.keys import KeyUnavailable, WrappedRoot
 from rewrap_worker import PublicRewrapProvider
 from payload_rotation_worker import PublicPayloadProvider
@@ -33,6 +33,8 @@ if 'CRYPTALIS_FRESH_CLUSTER_DIR' not in os.environ:
 
 ADOPTED_PROVIDER = UUID(int=19501)
 ADOPTED_WRAPPER = b'PUBLIC SMOLINK ADOPTED REWRAP WRAPPER'
+ADOPTED_PAYLOAD_PROVIDER = UUID(int=19502)
+ADOPTED_PAYLOAD_WRAPPER = b'PUBLIC SMOLINK ADOPTED PAYLOAD3 WRAPPER'
 
 
 class PublicAdoptedProvider:
@@ -63,6 +65,36 @@ def adopted_keys(tenant):
     wrappers = tuple(WrappedRoot(provider.provider_id, item.context, ADOPTED_WRAPPER)
                      for item in source.policy.wrappers)
     return Keyring(replace(source.policy, wrappers=wrappers), {provider.provider_id: provider})
+
+
+def adopted_payload_context(tenant):
+    return KeyContext(rotated_keys(tenant).policy.domain_id, tenant, 'payload',
+                      uuid5(ADOPTED_PAYLOAD_PROVIDER, f'payload3:{tenant}'), 3)
+
+
+class PublicAdoptedPayloadProvider:
+    """Independent public generation-three root; retained roots use adopted custody."""
+    provider_id = ADOPTED_PAYLOAD_PROVIDER
+
+    def unwrap(self, wrapper, context):
+        if (not isinstance(context, KeyContext) or not isinstance(wrapper, WrappedRoot)
+                or context != adopted_payload_context(context.tenant_id)
+                or wrapper.provider_id != self.provider_id or wrapper.context != context
+                or wrapper.sealed != ADOPTED_PAYLOAD_WRAPPER):
+            raise KeyUnavailable()
+        return hashlib.sha256(b'PUBLIC SMOLINK ADOPTED PAYLOAD3 ROOT' + context.tenant_id.bytes
+                              + context.generation.to_bytes(4, 'big')).digest()
+
+    async def unwrap_async(self, wrapper, context):
+        return self.unwrap(wrapper, context)
+
+
+def adopted_payload_keys(tenant):
+    source = adopted_keys(tenant)
+    provider = PublicAdoptedPayloadProvider()
+    wrapper = WrappedRoot(provider.provider_id, adopted_payload_context(tenant), ADOPTED_PAYLOAD_WRAPPER)
+    return Keyring(replace(source.policy, wrappers=source.policy.wrappers + (wrapper,), payload_generation=3),
+                   {ADOPTED_PROVIDER: PublicAdoptedProvider(), provider.provider_id: provider})
 
 
 def protected_storage(owner):
@@ -173,9 +205,42 @@ def test_original_smolink_restores_current_values_and_removes_cryptalis(tmp_path
             source, pin = successor, operation_pin(successor, 'ACTIVE')
             assert m.check_deployment(source, owner, pin=pin) is None
 
+            payload_policy = adopted_payload_keys(TABLE).policy
+            assert target_policy.payload_generation == 2 and len(target_policy.wrappers) == 3
+            assert payload_policy.payload_generation == 3 and len(payload_policy.wrappers) == 4
+            assert payload_policy.wrappers[:-1] == target_policy.wrappers
+            assert payload_policy.wrappers[-1].context not in {item.context for item in target_policy.wrappers}
+            assert payload_policy.search_generation == target_policy.search_generation
+            adopted_payload = rotation.plan_payload_rotation(source, owner, source_pin=pin, keys=adopted_keys,
+                target_keys=adopted_payload_keys, backfill_rows_per_second=1000, verify_rows_per_second=1000,
+                temporary_bytes_per_row=3000, wal_bytes_per_row=6000)
+            prep_pin = m.DeploymentPin(source.target_id, adopted_payload.operation_id, adopted_payload.digest, 'PREPARED')
+            assert rotation.apply_payload_rotation(adopted_payload, owner, keys=adopted_keys,
+                target_keys=adopted_payload_keys, pin=prep_pin, approval=maintenance).phase == 'BACKFILLED'
+            assert protected_storage(owner) == before
+            payload_activation = rotation.seal_payload_rotation(adopted_payload, owner, keys=adopted_keys,
+                target_keys=adopted_payload_keys, pin=prep_pin, approval=maintenance,
+                copy_rows_per_second=1000, copy_wal_bytes_per_row=3000)
+            assert payload_activation.document['format'] == 'cryptalis.transition/v6'
+            assert payload_activation.document['kind'] == 'payload_rotation'
+            assert payload_activation.document['restore_lineage'] == successor.document['restore_lineage']
+            assert rotation.switch_payload_rotation(adopted_payload, payload_activation, owner, keys=adopted_keys,
+                target_keys=adopted_payload_keys, pin=operation_pin(payload_activation, 'PREPARED'),
+                approval=maintenance).phase == 'PENDING'
+            payload_frames, payload_indexes = protected_storage(owner)
+            assert payload_indexes == before[1] and payload_frames.keys() == before[0].keys()
+            assert all(int.from_bytes(body[6:10], 'big') == 3 and body[14:] != before[0][identity][14:]
+                       and body[10:14] == before[0][identity][10:14] for identity, body in payload_frames.items())
+            assert m.apply(payload_activation, owner, keys=adopted_payload_keys,
+                pin=operation_pin(payload_activation, 'ACTIVATING'), approval=maintenance,
+                until='ACTIVE').phase == 'ACTIVE'
+            assert protected_storage(owner) == (payload_frames, payload_indexes)
+            source, pin = payload_activation, operation_pin(payload_activation, 'ACTIVE')
+            assert m.check_deployment(source, owner, pin=pin) is None
+
             async def current_workload():
                 try:
-                    sessions = await attach(Base.registry, runtime, lock=source.lock_bytes, keys=adopted_keys,
+                    sessions = await attach(Base.registry, runtime, lock=source.lock_bytes, keys=adopted_payload_keys,
                                             deployment=(source, pin))
                     factory = lambda: sessions(tenant_id=TABLE, expire_on_commit=False)
                     async with factory() as session:
@@ -195,16 +260,16 @@ def test_original_smolink_restores_current_values_and_removes_cryptalis(tmp_path
                     await get_redis_client().aclose()
                     await runtime.dispose()
             current = asyncio.run(current_workload())
-            reverse = d.plan(source, owner, source_pin=pin, keys=adopted_keys,
+            reverse = d.plan(source, owner, source_pin=pin, keys=adopted_payload_keys,
                 plaintext_runtime_role=os.environ['CRYPTALIS_FRESH_PLAINTEXT_ROLE'],
                 backfill_rows_per_second=1000, verify_rows_per_second=1000,
                 temporary_bytes_per_row=3000, wal_bytes_per_row=6000)
             reverse_pin = m.DeploymentPin(reverse.target_id, reverse.operation_id, reverse.digest, 'PREPARED')
             consent = d.PlaintextApproval(reverse.target_id, reverse.operation_id, reverse.digest, True,
                                           'public fixture retained backup and latest restored application values')
-            assert d.apply(reverse, owner, keys=adopted_keys, pin=reverse_pin, approval=maintenance,
+            assert d.apply(reverse, owner, keys=adopted_payload_keys, pin=reverse_pin, approval=maintenance,
                            consent=consent).phase == 'PLAINTEXT_PENDING'
-            assert d.apply(reverse, owner, keys=adopted_keys, pin=replace(reverse_pin, phase='PLAINTEXT_ACTIVATING'),
+            assert d.apply(reverse, owner, keys=adopted_payload_keys, pin=replace(reverse_pin, phase='PLAINTEXT_ACTIVATING'),
                 approval=maintenance, consent=consent, until='PLAINTEXT_ACTIVE').phase == 'PLAINTEXT_ACTIVE'
             removal = d.RemovalApproval(reverse.target_id, reverse.operation_id, reverse.digest,
                 'original Smolink URL router restart with Cryptalis denied', 'public retained backup fixture', True)
@@ -222,14 +287,21 @@ def test_original_smolink_restores_current_values_and_removes_cryptalis(tmp_path
                               for p in sorted(backend.rglob('*.py'))}
             receipt = {'application_revision': manifest['application_revision'], 'application_source_sha256': hashes,
                 'model_changes': [], 'query_changes': [], 'interruption': manifest['interruption'],
-                'rotations': manifest['rotations'] + ['adopted_rewrap_cancel', 'adopted_rewrap'],
+                'rotations': manifest['rotations'] + ['adopted_rewrap_cancel', 'adopted_rewrap', 'adopted_payload_rotation'],
                 'source_plan_digest': original_source.digest, 'active_plan_digest': source.digest,
                 'adopted_rewrap': {'plan_digest': adopted_rewrap.digest,
                     'canceled_plan_digest': canceled.digest, 'frame_and_index_identity_preserved': True,
                     'retained_contexts': len(target_policy.wrappers), 'payload_generation': target_policy.payload_generation},
+                'adopted_payload': {'plan_digest': adopted_payload.digest,
+                    'activation_plan_digest': payload_activation.digest, 'source_plan_digest': successor.digest,
+                    'retained_contexts': len(payload_policy.wrappers), 'source_payload_generation': 2,
+                    'payload_generation': payload_policy.payload_generation, 'search_generation': payload_policy.search_generation,
+                    'frame_payload_bytes_changed': True, 'index_identity_preserved': True,
+                    'restore_lineage_preserved': True},
                 'restore_adoption_id': binding.document['adoption_id'], 'doctor_runtime_deployment': 'PASS',
                 'journey': 'native baseline; interrupted protect/resume; rewrap; payload rotation; original protected CRUD; '
                            'fresh-cluster restore/adoption; root-rewrap cancellation; new root rewrap/v5 publication; '
+                           'adopted payload generation 2 to 3/v6 publication; '
                            'original async CRUD and latest edit; decryptback/remove; Cryptalis-denied original restart',
                 'native_schema_constraints_indexes': 'matches pre-protection catalog',
                 'profile': 'Url.destination storage-only; public short_code and protected ID lookups; real Redis',

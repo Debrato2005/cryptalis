@@ -278,7 +278,8 @@ with `payload_operation_pin_mismatch` or `search_operation_pin_mismatch`
 and exit 2. An EXPANDED or BACKFILLED pin with no P journal row fails with
 `missing_payload_operation` or `missing_search_operation` and exit 3.
 The command refuses `--restore-binding` for P before reading the binding or
-connecting. Payload/search rotation on adopted targets remains unsupported. Doctor also
+connecting. A lineage-bearing payload proposal already embeds its source; it does
+not accept a separate restore binding. Search rotation with lineage remains refused. Doctor also
 refuses preparation artifacts. The common input limits and safe operational
 failure handling apply. [Status](status.md) owns evidence and remaining gaps.
 
@@ -398,7 +399,7 @@ Publish its transition/v5 successor with its own current pin and target policies
 Attach fresh workers with `(successor, active_pin)`. The old source binding cannot
 replace successor authority.
 
-For a later rewrap from a published v5 source, omit `restore` or pass `restore=None`.
+For a later rewrap from a published v5 or v6 source, omit `restore` or pass `restore=None`.
 The source artifact carries the inherited lineage. Keep the same publication steps.
 A PENDING retry uses the saved successor, not the superseded source's former ACTIVE digest.
 
@@ -518,7 +519,8 @@ prevents an old cancellation from reviving it.
 After an uncertain commit, inspect the original operation through
 `status_payload_rotation`. Resume only after the original transaction is terminal.
 Keep the saved proposal and policies. An absent marker alone does not establish
-rollback. Adopted restored targets remain unsupported.
+rollback. The [adopted-lineage route](#rotate-payload-keys-after-adopted-lineage)
+requires a published v5/v6 successor rather than a direct restore binding.
 
 The byte budget is a logical bound across complete rows and fields, not a
 process resident-memory limit. P cannot enter `migration.apply` or authorize
@@ -548,7 +550,9 @@ target values, generations, NULLs, and search headers. It makes no database
 changes. Provider preparation can incur audit/cost effects. Repeated sealing
 with identical staged bytes and costs produces identical A. A binds P and
 actual target ciphertext observations. P reserves A's operation ID without
-embedding its digest. Deploy a transition/v3-capable reader before publication.
+embedding its digest. Without restore lineage, deploy a transition/v3-capable
+reader before publication. The [adopted-lineage route](#rotate-payload-keys-after-adopted-lineage)
+requires v6-capable readers.
 
 Persist exact P and A outside the database through the trusted host process.
 Review A's costs and approve the terminal write pause separately. Keep writers
@@ -634,8 +638,46 @@ source resolver. Target custody still requires all retained roots. Missing A
 with partially superseded ancestors is inconsistent. It cannot authorize
 reconstruction of a commit or cancellation through P.
 
-Preparation, sealing, and cutover on adopted restored targets remain unsupported.
 All seven full gates remain UNKNOWN. See [status](status.md) for current evidence.
+
+## Rotate payload keys after adopted lineage
+
+Use the current ACTIVE v5 rewrap or v6 payload successor as `source_plan` in the
+payload workflow above. Supply that successor's own current pin and retained
+policies. Do not supply the earlier restore binding as current authority.
+Direct payload planning with `restore=binding` remains refused.
+
+The saved preparation remains `cryptalis.payload-rotation/v1` and embeds the
+complete source. Sealing produces transition/v6 with every v3 payload proof
+member, unchanged flat restore lineage and inherited ancestors followed by source
+and preparation. Deploy readers that admit both the embedded source and v6 before
+publication. Keep the same staging, source-only cancellation, switch and separate
+publication steps. Publish v6 with its own pin. Cancellation before switch needs
+no target provider; terminal retries preserve later edits and cannot revive a
+superseded source.
+
+The harness has a separate adopted-payload profile:
+
+```bash
+.venv/bin/python scripts/fresh_cluster_qualification.py --adopted-payload
+.venv/bin/python scripts/fresh_cluster_qualification.py --adopted-payload --varchar
+```
+
+It uses approved disposable PostgreSQL 16 targets through `scripts/test_postgres.py`.
+The [TEXT run](_reset/fresh-cluster-restore-20261024-11.json) passes 12 controls,
+including current-value publication, cancellation, refusal and recovery paths.
+The separate original Smolink [source](_reset/fresh-cluster-export-20261024-13.json)
+and [fresh-target](_reset/fresh-cluster-restore-20261024-12.json) stages pass through
+adopted rewrap, payload generation 2 to 3, ASGI/JWT/Redis work, latest-value removal
+and an import-denied restart. The [source VARCHAR profile](_reset/fresh-cluster-restore-20261024-13.json)
+and [installed TEXT wheel](_reset/fresh-cluster-restore-20261024-14.json) also pass 12 each.
+The installed Smolink [source](_reset/fresh-cluster-export-20261024-17.json)
+and [fresh-target](_reset/fresh-cluster-restore-20261024-16.json) stages repeat
+the original application journey. [Status](status.md#payload-rotation-after-adopted-lineage-2026-10-24)
+records the full regression and exact artifact boundaries. Search rotation with lineage remains
+refused. External custody, authenticated host publication and all seven gates
+remain unqualified or UNKNOWN. The [lifecycle](lifecycle.md#payload-rotation-after-adopted-lineage-2026-10-24)
+and [format decision](decisions.md#adopted-target-payload-rotation-2026-10-24) own the contract.
 
 ## Recover a payload-rotation backup
 
@@ -672,8 +714,7 @@ The native fresh-cluster harness has a separate payload profile:
 .venv/bin/python scripts/fresh_cluster_qualification.py --payload-rotation --varchar
 ```
 
-Select one of `--payload-rotation`, `--search-rotation`, or `--rewrap`.
-The options are mutually exclusive fixture profiles. `--varchar` selects native VARCHAR(64). The harness
+Select one fixture profile. The options are mutually exclusive. `--varchar` selects native VARCHAR(64). The harness
 uses the approved disposable PostgreSQL 16 targets and `scripts/test_postgres.py`.
 The payload fixture exports a backup after publication and a later protected
 edit. It checks retained-policy recovery, independent generation-2 decoding,
@@ -681,8 +722,9 @@ valid generation-1 substitution refusal, adopted edits, decrypt-back/removal,
 and native metadata restoration. See [status](status.md) for current receipts.
 
 These controls do not qualify external custody, authenticated publication, or
-source fencing. Rotating payload keys on an adopted restored target remains
-unsupported. All seven full gates remain UNKNOWN.
+source fencing. Rotation after adoption requires the separate
+[lineage-bearing route](#rotate-payload-keys-after-adopted-lineage).
+All seven full gates remain UNKNOWN.
 
 ## Search-key rotation contract
 
@@ -745,15 +787,16 @@ the original source policy fail admission.
 .venv/bin/python scripts/fresh_cluster_qualification.py --search-rotation --varchar
 ```
 
-Choose one of `--search-rotation`, `--payload-rotation`, or `--rewrap`.
-These fixture profiles are mutually exclusive. `--varchar` selects native
+Choose one fixture profile. The options are mutually exclusive. `--varchar` selects native
 VARCHAR(64). Both stages use the mandatory PostgreSQL credential wrapper.
 The text profile completes adoption, current reads/search, later edits,
 decrypt-back/removal, and native metadata checks. [Status](status.md) records
 which profiles completed and preserves the exact receipts.
 
 This evidence does not qualify external custody, authenticated publication, or
-source fencing. Payload/search rotation on an adopted restored target remains unsupported.
+source fencing. Search rotation with adopted lineage remains refused.
+The separate [payload route](#rotate-payload-keys-after-adopted-lineage) requires
+a published lineage-bearing successor.
 All seven full gates remain UNKNOWN.
 
 ## Measured throughput
