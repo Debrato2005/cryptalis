@@ -535,8 +535,8 @@ def test_changed_mapping_is_rejected_before_driver_execution(app):
         try:
             setattr(target, attribute, replacement)
             before = len(observed)
-            with sessions(tenant_id=TENANT) as session:
-                with pytest.raises(PolicyMismatch):
+            with pytest.raises(PolicyMismatch):
+                with sessions(tenant_id=TENANT) as session:
                     session.scalars(select(app.Customer)).all()
             assert len(observed) == before
         finally:

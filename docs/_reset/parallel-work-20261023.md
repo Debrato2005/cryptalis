@@ -17,9 +17,9 @@ a separate policy-checked retry. Their source observations and final checks rema
 
 | Owner | Worktree | Write scope | Current slice | State |
 |---|---|---|---|---|
-| ORM specialist | `/tmp/cryptalis-parallel-orm-20261023` | `sqlalchemy.py`, new bulk UPDATE tests and receipts | Scoped TEXT dictionary UPDATE | Integrated after143 primary/143 alternate passes; shared identity checks included |
-| Lifecycle specialist | `/tmp/cryptalis-parallel-lifecycle-20261023` | Restore and CLI tests, then rotation lease inspection | Restore recovery and safe CLI remedies | Restore integrated with nine focused checks and two genuine fresh clusters. CLI integrated with seven focused checks. Rotation83 passes on both cells. Unchanged-app qualification follows |
-| KMS specialist | `/tmp/cryptalis-parallel-kms-20261023` | Independent ORM review after completed KMS adapter | Bulk UPDATE grammar review | KMS integrated. Separate SELECT type-hook controls reproduce3 failures; new slice queued |
+| ORM specialist | `/tmp/cryptalis-parallel-orm-20261023` | `sqlalchemy.py`, new bulk UPDATE tests and receipts | Scoped TEXT dictionary UPDATE | Integrated after 143 primary/143 alternate passes; shared identity checks included |
+| Lifecycle specialist | `/tmp/cryptalis-parallel-lifecycle-20261023` | Restore and CLI tests, then rotation lease inspection | Restore recovery and safe CLI remedies | Restore integrated with nine focused checks and two genuine fresh clusters. CLI integrated with seven focused checks. Rotation passes 83 checks on both cells. Unchanged-app qualification follows |
+| KMS specialist | `/tmp/cryptalis-parallel-kms-20261023` | Independent ORM review after completed KMS adapter | Bulk UPDATE grammar review | KMS integrated. Separate SELECT type-hook controls reproduce three failures; new slice queued |
 | Lead | `/home/debrato/Projects/cryptalis` | Shared contracts, ledgers and integration history | KMS, restore and CLI integration | Active. No CLI ownership overlap |
 
 Use the existing project interpreter with `PYTHONPATH` set to the worktree's
@@ -35,3 +35,12 @@ Send interface changes before edits that affect another owner. Only the lead
 edits authoritative documents or integration history. Each ready change needs
 source review, failure controls, affected regression, documentation and a local
 integration commit. No push, history rewrite or external qualification claim.
+
+Combined checkpoint `351789e`: two failed, 2,167 passed plus 18 subtests,
+with 149 stable Python files.
+The early-refusal test scope is corrected; both focused failure controls pass.
+The separate CLI timeout cause remains UNKNOWN. Full follow-up is required.
+Unchanged Smolink passes one lifecycle check with 38 matching app hashes.
+Reproducible packages and all 37 installed files pass.
+The SELECT type-hook correction is isolated. Nine native DELETE oracle cases
+pass without product admission.

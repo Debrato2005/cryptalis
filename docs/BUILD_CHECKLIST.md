@@ -21,6 +21,13 @@ No objective is complete until its acceptance evidence and applicable gate pass.
 
 ## Current boundary
 
+- The combined checkpoint's full run reports 2,167 passed and two failures,
+  with 18 passed subtests, four skips and 149 stable hashes. The corrected
+  early-refusal test and unchanged CLI timeout control pass in isolation.
+  The timeout cause stays UNKNOWN; full follow-up remains required. Unchanged
+  Smolink and reproducible/installed-package checks pass. See the
+  [combined checkpoint](status.md#combined-integration-checkpoint-2026-10-23).
+
 - Scoped TEXT dictionary UPDATE now preserves native groups, NULL/omission,
   repeated IDs, zero matches and transactions under exact tenant/record proofs.
   Shared attachment checks also refuse identity variants before key resolution.

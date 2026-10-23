@@ -10,6 +10,42 @@ No PostgreSQL/provider/runtime cell, production key provider, independent review
 VERIFIED below refers only to the named checks and their exact revisions.
 All other contract and promotion requirements are SPECIFIED. All seven full gates remain UNKNOWN.
 
+## Combined integration checkpoint: 2026-10-23
+
+**IMPLEMENTED, bounded checks:** the full regression is incomplete.
+Checkpoint `351789e` combines KMS, restore, diagnostics, native identity admission, rotation
+row recovery and scoped bulk UPDATE. Its full primary run reports 2,167 passed,
+two failed, four skipped, 48 existing warnings and 18 passed subtests.
+All 149 Python hashes stay unchanged during the run.
+
+One failure expects configuration rejection only during execution. The new
+pre-key check correctly refuses session creation earlier. The corrected test
+accepts refusal at either boundary and retains zero-driver and healthy-restored
+mapping checks.
+
+The other failure is a wrong-password search-status CLI process
+that exceeds the test's 10-second limit. Both focused controls pass afterward.
+The CLI case takes 1.30 seconds. Product and test timeouts stay unchanged.
+The original timeout's cause remains UNKNOWN. A full follow-up remains required.
+
+Pinned unchanged Smolink passes its separate lifecycle check with real Redis,
+current-value removal and a package-free child that denies Cryptalis imports.
+All 38 application files match. This covers storage lifecycle, not authentication
+endpoints or deployed startup. Reproducible archives, SBOM, all 37 installed
+files and CLI startup pass. The installed wheel SHA-256 is
+`fe6856a8a501c6208920a82b2c1e8342435a1f0335dfb6b8aaf867ddfd1beea9`.
+
+These artifacts match the product source. The later assertion correction changes
+only test code. A separate SELECT type-hook repair remains outside this checkpoint.
+All seven production gates remain UNKNOWN.
+
+Evidence: [full run with two failures](_reset/parallel-integration-full-20261023.json),
+[focused failure controls](_reset/parallel-integration-failure-controls-20261023.json),
+[unchanged application](_reset/integrated-smolink-app-lifecycle-20261023.json),
+[application wrapper](_reset/integrated-smolink-wrapper-lifecycle-20261023.json),
+[reproducible archives](_reset/parallel-integration-release-20261023.json), and
+[installed wheel](_reset/parallel-integration-installed-20261023.json).
+
 ## Scoped mapped bulk UPDATE checkpoint: 2026-10-23
 
 **IMPLEMENTED, bounded verification:** attached sync/async sessions admit mapped

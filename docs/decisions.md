@@ -58,6 +58,14 @@ Their absolute guarantees are also removed: immediate arbitrary-worker denial, a
 whole-result publication, subject cryptographic erasure, and hostile-database completeness/freshness.
 A removed mechanism cannot retain its old guarantee through wording alone.
 
+## Preserve early configuration refusal: 2026-10-23
+
+Mapping admission must refuse changed configuration before host key resolution.
+The regression accepts rejection during session creation or execution and keeps
+zero-driver and healthy-restored assertions. Do not weaken this check to match
+the former later timing. Keep the separate CLI timeout failure and its UNKNOWN
+cause visible. Do not extend product or test timeouts without supporting evidence.
+
 ## Scoped mapped TEXT bulk UPDATE: 2026-10-23
 
 Admit mapped dictionary UPDATE with one direct tenant-column equality, typed
