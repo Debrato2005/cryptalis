@@ -34,6 +34,15 @@ Unprotected SELECTs retain native caching. The host must authenticate the lock a
 Guards reject unsupported grammar, opaque SQL, COPY, protocol handles, and unprepared writes on the attached engine.
 These guards do not constrain independent connections or a compromised application.
 
+The bounded mapped dictionary INSERT route binds each prepared frame to its
+admitted operation, field, typed row identity and tenant. It checks actual
+driver parameters after SQLAlchemy cursor events, including exact payload
+bytes, identity and tenant, against the admitted batch. Late parameter or SQL
+replacement refuses before driver dispatch. This boundary does not make
+arbitrary host plugins trustworthy or qualify other write routes.
+Typed native savepoint controls carry no data permit. Their final SQL must
+match native compilation, with empty parameters and unchanged configuration.
+
 **VERIFIED, local restricted fixture owner:** native PostgreSQL comparisons verify ordinary values and ORM behavior.
 Sync and async interleaved two-tenant tests fail without the cache fix and pass after its restoration in an isolated copy.
 Four native controls pass in both runs. The proof leaves the original worktree unchanged.

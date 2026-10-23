@@ -98,7 +98,7 @@ def install_guard(engine, error, before_execute, check_cursor):
     event.listen(engine.pool, "connect", wrap)
 
     def execute(cursor, statement, parameters, context):
-        check_cursor(context)
+        check_cursor(context, statement, parameters)
         token = _driver_permit.set(cursor)
         try:
             cursor.execute(statement, parameters)
@@ -107,7 +107,7 @@ def install_guard(engine, error, before_execute, check_cursor):
         return True
 
     def executemany(cursor, statement, parameters, context):
-        check_cursor(context)
+        check_cursor(context, statement, parameters)
         token = _driver_permit.set(cursor)
         try:
             cursor.executemany(statement, parameters)
@@ -116,7 +116,7 @@ def install_guard(engine, error, before_execute, check_cursor):
         return True
 
     def no_parameters(cursor, statement, context):
-        check_cursor(context)
+        check_cursor(context, statement, ())
         token = _driver_permit.set(cursor)
         try:
             cursor.execute(statement)

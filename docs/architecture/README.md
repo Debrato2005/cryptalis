@@ -100,6 +100,21 @@ The application supplies a stable identity before encryption. Never insert prote
 A late unprepared protected value must fail before SQL. Failed flush/rollback clears preparation.
 No row-to-parameter association may depend on an unqualified batch-order assumption.
 
+The bounded dictionary INSERT route uses `Session.execute(insert(Model), rows)`
+through the attached sync or async session. Every row supplies its typed stable
+identity and declared tenant. Prepare a separate authenticated frame for each
+supplied protected value, including repeated dictionary references. Copy caller
+dictionaries and retain native ORM grouping, NULL omission, autoflush and errors.
+At final driver dispatch, match the actual SQL, identity, tenant and ciphertext
+against the admitted batch. Compiled parameters alone do not establish what the
+driver receives. No RETURNING, embedded statement values, Core INSERT, upsert,
+INSERT SELECT or row SQL expression is admitted by this route.
+
+Stock SQLAlchemy SAVEPOINT, ROLLBACK TO and RELEASE clauses need no data permit.
+Accept only their exact native compilation with empty parameters and unchanged
+attachment configuration. This adds no raw SQL or protected-write authority.
+Keep native transaction objects and cleanup behavior.
+
 Async preparation awaits provider work outside synchronous events. Type/result processors use local admitted material only.
 Sync sessions use synchronous provider APIs. Ordinary SQLAlchemy restrictions on async implicit I/O still apply.
 Detached authenticated values remain ordinary application values, without a revocable plaintext wrapper.
@@ -125,7 +140,10 @@ Attachment returns a factory called as `sessions(tenant_id=tenant_uuid)`. Await 
 The compiler lock must be trusted by the host. Physical protected columns must already be `bytea`.
 This call does not perform a schema/data transition. Attach before application sessions or model use.
 The engine must use PostgreSQL/psycopg, `echo=False`, and `hide_parameters=True`. Attachment refuses unsafe logging settings before it opens a connection or resolves a key, and it requires no checked-out connections at activation.
-Ordinary ORM flush writes, direct projections and declared equality/IN are implemented. Simple negative equality, `NOT IN`, and NULL presence are admitted with native truth. Core/bulk writes and unadmitted grammar reject.
+Ordinary ORM flush writes, mapped dictionary INSERT without RETURNING, direct
+projections and declared equality/IN are implemented. Simple negative equality,
+`NOT IN`, and NULL presence are admitted with native truth. Core writes, other
+bulk routes and unadmitted grammar reject.
 Mapped text attributes remain ordinary `str` or NULL. Generated projections carry row and tenant context for authentication.
 Protected projections and predicates disable compilation caching because their processors retain prepared material and operation context.
 Unprotected projections retain native caching. Guards reject public raw-driver, opaque SQL, COPY, and unprepared-write routes.

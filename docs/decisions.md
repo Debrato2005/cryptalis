@@ -58,6 +58,35 @@ Their absolute guarantees are also removed: immediate arbitrary-worker denial, a
 whole-result publication, subject cryptographic erasure, and hostile-database completeness/freshness.
 A removed mechanism cannot retain its old guarantee through wording alone.
 
+## Mapped dictionary INSERT: 2026-10-23
+
+Admit ordinary `Session.execute(insert(Model), list[dict])` through the existing
+sync/async attachment. Reuse CF1 frames, native ORM dispatch and PostgreSQL
+constraints. Copy each row and bind every supplied protected value to its own
+field, typed identity, tenant and operation. Match final driver values against
+the admitted batch after cursor events. No new cryptographic format, provider
+authority, query representation or transaction state machine is introduced.
+
+Keep RETURNING, embedded values, SQL row expressions, Core INSERT, upserts,
+INSERT SELECT, legacy bulk methods and used context-sensitive defaults outside
+this admission. Explicit values can bypass unused defaults.
+
+VARCHAR validation precedes encryption. For a known invalid row, execute only
+its valid prefix first so an earlier native constraint error wins. Invoke the
+invalid row through the same native ORM path so autoflush retains precedence.
+After its owned bind failure, PostgreSQL 16's three-argument VARCHAR assignment
+function receives public constants and raises SQLSTATE 22001. This preserves
+native aborted-transaction/savepoint behavior without sending protected text.
+Any unavailable or unexpected carrier outcome raises a separate typed failure.
+The [PostgreSQL 16 implementation](https://raw.githubusercontent.com/postgres/postgres/REL_16_15/src/backend/utils/adt/varchar.c)
+defines this assignment coercion. The native oracle exercises its transaction
+behavior. A supplied invalid text value never becomes an error SQL parameter.
+
+Admit exact stock savepoint-control clauses separately, with empty parameters,
+native SQL compilation and unchanged configuration. Do not wrap or replace
+native transactions. These controls confer no data permit. Other write routes
+and the seven production gates retain their separate evidence requirements.
+
 ## Bounded Doctor diagnosis: 2026-10-23
 
 The current product mandate requires a useful `cryptalis doctor`. Add a thin

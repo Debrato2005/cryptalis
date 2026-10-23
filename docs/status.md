@@ -10,6 +10,93 @@ No PostgreSQL/provider/runtime cell, production key provider, independent review
 VERIFIED below refers only to the named checks and their exact revisions.
 All other contract and promotion requirements are SPECIFIED. All seven full gates remain UNKNOWN.
 
+## Mapped bulk INSERT checkpoint: 2026-10-23
+
+**IMPLEMENTED, bounded native verification:** attached sync/async sessions admit
+`Session.execute(insert(Model), list[dict])` without RETURNING. Each row supplies
+its stable typed identity and declared tenant. Single-tenant mappings use their
+declared table UUID. The route copies caller dictionaries, prepares distinct
+row/field-bound CF1 frames, and delegates grouping, dispatch and constraints to
+the native ORM. It adds no crypto format, representation or provider authority.
+
+Native checks cover heterogeneous rows, omitted/explicit NULL, `render_nulls`,
+exact Unicode and VARCHAR space truncation, uniqueness, empty identity maps,
+closed no-row Results, rollback and nested savepoint recovery. An earlier native
+row constraint retains precedence over a later VARCHAR length error. Failed
+pending ORM autoflush also retains precedence. A known bulk length failure
+uses public constants in PostgreSQL assignment coercion, then returns the typed
+failure with native Session activity and aborted-transaction behavior. Protected
+text never becomes an error-carrier parameter.
+
+The final bulk driver guard checks actual SQL, row identity, tenant and payload
+bytes against the admitted batch after cursor listeners. Compiled parameters
+alone cannot waive that check. Late context and payload replacements refuse
+before the real psycopg INSERT methods. This strengthened processed-value check
+is scoped to this bulk route. Exact stock savepoint-control clauses separately
+require native SQL, empty parameters and unchanged attachment configuration.
+They grant no data permit and retain native transaction objects and cleanup.
+
+RETURNING, Core INSERT, upserts, statement-embedded values, INSERT SELECT,
+SQL row expressions, legacy bulk methods and used callable/context/SQL/server
+defaults remain unadmitted. Explicit values can bypass unused defaults.
+Missing/cross-tenant context and unavailable/expired keys refuse without a
+partial prefix. Async preparation cancellation reaches no data SQL and permits
+a fresh retry. TEXT/VARCHAR single-tenant mappings with renamed attributes pass
+bulk insertion, latest ORM edit, decrypt-back and native current-value removal.
+Separate independent-process package-free evidence retains its earlier scope.
+
+**VERIFIED:** the first 26-case run retains 15 admission failures and
+11 passing controls. An intermediate implementation run retains 15 failures,
+including invalid test read shapes and the missing native savepoint route.
+After correcting those helpers and the guard, all 26 pass in 8.41 seconds.
+The expanded driver, cancellation, autoflush and removal run passes 38 cases
+in 14.82 seconds. Two subsequent multi-field UUID/signed-int64 cases pass in
+0.58 seconds, including nil UUID, zero and signed limits.
+
+The Python 3.12.3 / SQLAlchemy 2.1.3 full regression passes **1,953 tests and
+18 subtests** in 611.83 seconds, with three separate-environment skips and
+48 existing DISTINCT deprecation warnings. These are pytest terminal counts.
+The receipt's call-report aggregate includes subtests and excludes two
+collection skips. All 130 Python files remain stable during that run.
+The subsequent test-only change strengthens final-driver injection controls.
+All **44 bulk cases** pass in 13.26 seconds at the final 130-file bundle.
+They cover valid CF1 in same-type Binary substitution, in-place Binary mutation,
+coherent compiled/driver row substitution, actual SQL replacement, and a
+savepoint replacement that must not grant a data-write permit.
+
+The alternate Python 3.13.12 / SQLAlchemy 2.0.51 cell passes these 44 cases
+and the pinned unchanged Smolink lifecycle, **45 cases** in 22.91 seconds.
+It uses existing read-only installed dependency paths and psycopg 3.3.6's
+Python implementation. The initial bare interpreter lacked psycopg and stopped
+before database probes. No package was installed into Smolink. Its 38 original
+Python source hashes match. The HTTP/repository/ORM lifecycle, real disposable
+Redis, current-value removal and import-denied child pass at the recorded
+single protected `Url.destination` scope. The full alternate cell, complete
+external application suite and fresh-cluster backup profiles were not rerun.
+All product bytes match the full regression and release receipts. Both final
+cell receipts have stable 130-file hashes that match the final worktree.
+
+Reproducible offline wheel/sdist builds, SBOM inspection and all 36 installed
+package files pass, including CLI startup. Provider custody, independent review,
+other event-mutation routes and the seven full production gates remain UNKNOWN.
+
+Evidence: [native oracle](_reset/bulk-insert-native-oracle-20261023.json),
+[initial admission failures](_reset/bulk-insert-red-20261023.json),
+[intermediate failures](_reset/bulk-insert-first-20261023.json),
+[guarded native behavior](_reset/bulk-insert-guard-20261023.json),
+[adversarial and removal cases](_reset/bulk-insert-boundary-20261023.json),
+[multi-field context](_reset/bulk-insert-context-20261023.json),
+[full regression](_reset/bulk-insert-full-20261023.json),
+[final primary matrix](_reset/bulk-insert-final-20261023.json),
+[alternate matrix and application](_reset/bulk-insert-sa20-20261023.json),
+[pinned app evidence](_reset/bulk-insert-smolink-app-20261023.json),
+[reproducible archives](_reset/bulk-insert-release-20261023.json), and
+[installed wheel](_reset/bulk-insert-installed-20261023.json).
+
+Next work targets actual driver mutation checks on the existing flush/read
+routes and exact receipt count reporting. Broader DML/RETURNING, used defaults,
+online lifecycle and external qualification remain separate product gaps.
+
 ## Rotation preparation status checkpoint: 2026-10-23
 
 **IMPLEMENTED, bounded native verification:** `cryptalis status` now reads
@@ -53,9 +140,9 @@ revision-bound. They were not rerun for this interface and diagnostic change.
 Provider custody, host authority, frame freshness and the complete operational
 status contract remain unqualified. All seven full gates remain UNKNOWN.
 
-Next implementation work targets ordinary ORM bulk inserts. Establish native
-TEXT/VARCHAR batch, identity, tenant, error and transaction behavior before
-admitting the new write route. Broader DML and RETURNING remain product gaps.
+At this checkpoint, next work targeted ordinary ORM bulk inserts. The later
+[bulk checkpoint](#mapped-bulk-insert-checkpoint-2026-10-23) records that bounded
+admission. Broader DML and RETURNING remain product gaps.
 
 Evidence: [initial native failures](_reset/rotation-status-red-20261023.json),
 [affected regression](_reset/rotation-status-regression-20261023.json),

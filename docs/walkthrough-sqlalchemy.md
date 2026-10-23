@@ -11,7 +11,7 @@ Async key preparation runs before synchronous hooks. Protected SELECT caching is
 Unprotected SELECTs retain native caching.
 
 Use the [product protection transition](walkthrough-migration.md) before attachment.
-Decrypt-back and removal are not implemented. Test fixtures can transform empty disposable targets only.
+Use the [decrypt-back/removal contract](lifecycle.md#deprotect-and-remove) for the current protected transition format.
 Supply a trusted compiler lock, admitted tenant keyrings and an engine with parameter logging hidden.
 Attach before sessions or model use. Close existing connections first.
 The host authenticates tenant scope and authorizes queries; attachment adds no tenant filter.
@@ -20,7 +20,8 @@ Assign row IDs and declared tenant values before flush. A Python default does no
 ```python
 from cryptalis.sqlalchemy import attach
 
-sessions = attach(Base.registry, engine, lock=plan.lock_bytes, keys=tenant_keys.__getitem__)
+sessions = attach(Base.registry, engine, lock=plan.lock_bytes,
+                  keys=tenant_keys.__getitem__, deployment=(plan, active_pin))
 with sessions(tenant_id=authenticated_tenant) as session:
     session.add(Customer(id=app_assigned_uuid, tenant_id=authenticated_tenant, note="text"))
     session.commit()
@@ -28,7 +29,32 @@ with sessions(tenant_id=authenticated_tenant) as session:
 ```
 
 Storage-only locks reject protected search. [Equality/IN/uniqueness](walkthrough-search.md) require declared capabilities.
-Opaque SQL, COPY, protocol handles, Core/bulk writes and unsupported expressions reject.
+Opaque SQL, COPY, protocol handles, Core writes and unsupported expressions reject.
+The attached session admits ordinary mapped dictionary INSERT without RETURNING:
+
+```python
+from sqlalchemy import insert
+
+with sessions(tenant_id=authenticated_tenant) as session:
+    session.execute(insert(Customer), [
+        {"id": first_uuid, "tenant_id": authenticated_tenant, "note": "first"},
+        {"id": second_uuid, "tenant_id": authenticated_tenant, "note": None},
+    ])
+    session.commit()
+```
+
+Supply a nonempty list of ordinary dictionaries with mapped attribute names.
+Assign every ID and declared tenant explicitly. A single-tenant mapping uses
+its declared table UUID as the session scope. Caller dictionaries stay unchanged.
+The native bulk Result returns no rows and adds no objects to the identity map.
+`render_nulls=True` retains native explicit-NULL grouping.
+Rollback and nested savepoint cleanup retain native behavior.
+
+RETURNING, upserts, Core INSERT, statement-embedded values, INSERT SELECT,
+SQL expressions in rows and the legacy bulk methods remain unadmitted.
+A used callable, context-sensitive, SQL or server default also refuses.
+An explicit value can bypass an unused default. Protected field defaults remain
+unadmitted by attachment. Broader DML remains a product gap.
 Direct/grouped AND lookups and scalar primary-key IN capture explicit requested IDs.
 Callable defaults, tuple/transformed identities and ambiguous bind forms reject before SQL.
 Primary-key lookups in HAVING or JOIN ON also reject for protected reads.

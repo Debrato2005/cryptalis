@@ -11,14 +11,14 @@ from hashlib import sha256
 import json
 from uuid import UUID
 
-from sqlalchemy import BigInteger, LargeBinary, Text, Uuid, event, func, inspect, type_coerce
+from sqlalchemy import BigInteger, LargeBinary, String, Text, Uuid, cast, event, func, inspect, literal, select, type_coerce
 from sqlalchemy.engine import Engine
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, AsyncSessionTransaction
-from sqlalchemy.exc import DontWrapMixin
+from sqlalchemy.exc import DBAPIError, DontWrapMixin
 from sqlalchemy.orm import Session, registry
 from sqlalchemy.orm.attributes import NO_VALUE
 from sqlalchemy.sql import operators, visitors
-from sqlalchemy.sql.elements import BinaryExpression, BindParameter, BooleanClauseList, Cast, ColumnClause, Grouping, Label, TextClause, TypeCoerce, UnaryExpression
+from sqlalchemy.sql.elements import BinaryExpression, BindParameter, BooleanClauseList, Cast, ClauseElement, ColumnClause, Grouping, Label, SavepointClause, RollbackToSavepointClause, ReleaseSavepointClause, TextClause, TypeCoerce, UnaryExpression
 from sqlalchemy.sql.functions import FunctionElement
 from sqlalchemy.sql.selectable import Alias, CTE, FromClause, Select, Join, Subquery
 from sqlalchemy.sql.dml import Insert, Update, Delete
@@ -54,6 +54,11 @@ class VarcharLengthExceeded(InvalidText, DontWrapMixin):
     remedy = 'Use a value within the declared VARCHAR character limit. Roll back before retry.'
 
 
+class BulkVarcharFailureUnavailable(PolicyMismatch):
+    stage = 'bulk VARCHAR failure'
+    remedy = 'Check PostgreSQL 16 VARCHAR coercion access and transaction state. Roll back before retry.'
+
+
 def _varchar_assignment(value, limit):
     if limit is not None and type(value) is str and len(value) > limit:
         _encode(value)
@@ -82,6 +87,8 @@ class _Sealed:
     permit: object = field(repr=False)
     binding: _Binding = field(repr=False)
     failure: CryptoFailure | None = field(default=None, repr=False)
+    record: object = field(default=None, repr=False)
+    tenant: object = field(default=None, repr=False)
 
 
 @dataclass
@@ -91,6 +98,9 @@ class _Operation:
     tenant: UUID
     session: object
     flushing: bool = False
+    bulk_insert: object = field(default=None, repr=False)
+    bulk_seals: dict = field(default_factory=dict, repr=False)
+    bulk_batch: tuple = field(default=(), repr=False)
     prepared: dict = field(default_factory=dict, repr=False)
     rows: dict = field(default_factory=dict, repr=False)
     points: tuple = ()
@@ -111,6 +121,7 @@ class _Operation:
 
 
 _operation = ContextVar("cryptalis_sqlalchemy_operation", default=None)
+_SAVEPOINT_CONTROLS = (SavepointClause, RollbackToSavepointClause, ReleaseSavepointClause)
 
 
 class _ReadText(TypeDecorator):
@@ -172,7 +183,9 @@ class _Payload(TypeDecorator):
     def process_bind_param(self, value, dialect):
         operation = _operation.get()
         if (not isinstance(value, _Sealed) or operation is None or value.permit is not operation or
-                value.binding is not self.binding or not operation.flushing):
+                value.binding is not self.binding or not (operation.flushing or operation.bulk_insert is not None)):
+            raise UnsupportedProtectedOperation()
+        if operation.bulk_insert is not None and operation.bulk_seals.get(id(value)) is not value:
             raise UnsupportedProtectedOperation()
         if value.failure is not None:
             raise value.failure
@@ -524,18 +537,31 @@ class _Attachment:
         except Exception:
             raise PolicyMismatch() from None
 
-    def _check(self):
+    def _check_configuration(self):
         engine = self.engine.sync_engine if isinstance(self.engine, AsyncEngine) else self.engine
         if (self._fingerprint() != self.fingerprint or engine.echo or not engine.hide_parameters or
                 engine.get_execution_options().get("schema_translate_map")):
             raise PolicyMismatch()
+
+    def _check(self):
+        self._check_configuration()
         operation = _operation.get()
         if operation is None or operation.owner is not self:
             raise UnsupportedProtectedOperation()
         return operation
 
-    def admit(self, statement, flushing=False):
+    def admit(self, statement, flushing=False, bulk=None):
         if flushing and isinstance(statement, (Insert, Update, Delete)):
+            return
+        if bulk is not None and isinstance(statement, Insert):
+            if (statement.table.name != bulk.name or statement.table.schema != bulk.schema or
+                    not all(column.key in statement.table.c and
+                            statement.table.c[column.key].shares_lineage(column) for column in bulk.c) or
+                    statement._values or statement._multi_values or statement._returning or
+                    statement._return_defaults or statement._post_values_clause is not None or
+                    statement.select is not None or statement._prefixes or statement._hints or
+                    statement._independent_ctes or statement.dialect_kwargs):
+                raise UnsupportedProtectedOperation()
             return
         if not isinstance(statement, Select):
             raise UnsupportedProtectedOperation()
@@ -669,10 +695,20 @@ class _Attachment:
                 operation.prepared[(binding.column.table.schema, binding.column.table.name, record, binding.column.key)] = (value, sealed)
 
     def before_execute(self, connection, statement, multiparams, params, execution_options):
+        if type(statement) in _SAVEPOINT_CONTROLS:
+            self._check_configuration()
+            if multiparams or params or execution_options.get('schema_translate_map'):
+                raise UnsupportedProtectedOperation()
+            return statement, multiparams, params
         operation = self._check()
         if execution_options.get("schema_translate_map"):
             raise PolicyMismatch()
-        self.admit(statement, operation.flushing)
+        self.admit(statement, operation.flushing, operation.bulk_insert)
+        if operation.bulk_insert is not None and isinstance(statement, Insert):
+            groups = multiparams if multiparams else [params]
+            self.check_bulk_rows(operation, groups)
+            operation.bulk_batch = tuple(dict(group) for group in groups)
+            return statement, multiparams, params
         if isinstance(statement, (Insert, Update)):
             groups = multiparams if multiparams else [params]
             changed = []
@@ -702,11 +738,66 @@ class _Attachment:
             return statement, changed if multiparams else [], {} if multiparams else changed[0]
         return statement, multiparams, params
 
-    def check_cursor(self, context):
-        operation = self._check()
+    def check_cursor(self, context, statement, parameters):
         if context.compiled is None:
             raise UnsupportedProtectedOperation()
-        self.admit(context.compiled.statement, operation.flushing)
+        if type(context.compiled.statement) in _SAVEPOINT_CONTROLS:
+            self._check_configuration()
+            expected = str(context.compiled.statement.compile(dialect=context.dialect))
+            if statement != expected or parameters:
+                raise UnsupportedProtectedOperation()
+            return
+        operation = self._check()
+        self.admit(context.compiled.statement, operation.flushing, operation.bulk_insert)
+        if operation.bulk_insert is not None and isinstance(context.compiled.statement, Insert):
+            self.check_bulk_rows(operation, context.compiled_parameters)
+            groups = context.compiled_parameters
+            actual = parameters if context.executemany else [parameters]
+            if (statement != str(context.compiled) or len(groups) != len(actual) or
+                    len(groups) != len(operation.bulk_batch)):
+                raise UnsupportedProtectedOperation()
+            bindings = [b for b in self.bindings if b.column.table is operation.bulk_insert]
+            first = bindings[0]
+            columns = [first.record] + ([first.tenant] if first.tenant is not None else [])
+            binary = context.dialect.dbapi.Binary
+            for group, sent, admitted in zip(groups, actual, operation.bulk_batch):
+                if type(sent) is not dict or set(sent) != set(group):
+                    raise UnsupportedProtectedOperation()
+                for column in columns:
+                    value = admitted[column.key]
+                    if (type(sent[column.key]) is not type(value) or sent[column.key] != value or
+                            group[column.key] != value):
+                        raise UnsupportedProtectedOperation()
+                for binding in bindings:
+                    key = binding.column.key
+                    if (key in group) != (key in admitted):
+                        raise UnsupportedProtectedOperation()
+                    if key not in group:
+                        continue
+                    sealed = admitted[key]
+                    value = sent[key]
+                    if group[key] is not sealed or (value is not None if sealed.body is None else
+                            type(value) is not binary or type(value.obj) is not bytes or value.obj != sealed.body):
+                        raise UnsupportedProtectedOperation()
+
+    def check_bulk_rows(self, operation, groups):
+        bindings = [b for b in self.bindings if b.column.table is operation.bulk_insert]
+        first = bindings[0]
+        for group in groups:
+            record = group.get(first.record.key)
+            tenant = group.get(first.tenant.key) if first.tenant is not None else first.descriptor.table_id
+            first.descriptor._record(tenant, record)
+            if (tenant != operation.tenant or
+                    (first.column.table.schema, first.column.table.name, record) not in operation.rows):
+                raise UnsupportedProtectedOperation()
+            for binding in bindings:
+                if binding.column.key not in group:
+                    continue
+                value = group[binding.column.key]
+                if (not isinstance(value, _Sealed) or operation.bulk_seals.get(id(value)) is not value or
+                        value.permit is not operation or value.binding is not binding or
+                        value.record != record or value.tenant != tenant):
+                    raise UnsupportedProtectedOperation()
 
 
 class _Session(Session):
@@ -746,6 +837,8 @@ def _before_flush(session, context, instances):
 @event.listens_for(_Session, "do_orm_execute", retval=True)
 def _execute(state):
     session = state.session
+    if isinstance(state.statement, Insert):
+        return _bulk_insert(state)
     session._owner.admit(state.statement)
     parameters = state.parameters if isinstance(state.parameters, dict) else {}
     protected_read = any(session._owner.protected(c) for c in state.statement.selected_columns)
@@ -761,6 +854,106 @@ def _execute(state):
         state.statement = rewrite_search(session._owner, state.statement, operation)
         return state.invoke_statement()
     finally:
+        _operation.reset(token)
+
+
+def _bulk_insert(state):
+    session, statement = state.session, state.statement
+    owner, mapper = session._owner, state.bind_mapper
+    if (not state.is_orm_statement or mapper is None or mapper.class_ not in owner.models or
+            type(state.parameters) is not list or not state.parameters or
+            set(state.bind_arguments) - {'clause', 'mapper'}):
+        raise UnsupportedProtectedOperation()
+    bindings = owner.models[mapper.class_]
+    first = bindings[0]
+    table = first.column.table
+    owner.admit(statement, bulk=table)
+    options = state.execution_options
+    if (set(options) - {'render_nulls', 'autoflush', 'dml_strategy', 'prebuffer_rows',
+                       '_sa_orm_insert_options', '_result_disable_adapt_to_context'} or
+            any(type(options[name]) is not bool for name in
+                ('render_nulls', 'autoflush', 'prebuffer_rows') if name in options) or
+            options.get('dml_strategy', 'bulk') not in ('auto', 'bulk')):
+        raise UnsupportedProtectedOperation()
+    native = options.get('_sa_orm_insert_options')
+    if (native is None or native._subject_mapper is not mapper or native._dml_strategy != 'bulk'):
+        raise UnsupportedProtectedOperation()
+    render_nulls = options.get('render_nulls', False)
+    columns = {prop.key: prop.columns[0] for prop in mapper.column_attrs if len(prop.columns) == 1}
+    rows = []
+    for original in state.parameters:
+        if (type(original) is not dict or set(original) - columns.keys() or
+                any(hasattr(value, '__clause_element__') or isinstance(value, ClauseElement)
+                    for value in original.values())):
+            raise UnsupportedProtectedOperation()
+        row = dict(original)
+        record = row.get(first.record_attribute)
+        tenant = row.get(first.tenant_attribute) if first.tenant is not None else first.descriptor.table_id
+        first.descriptor._record(tenant, record)
+        if tenant != session._tenant:
+            raise AuthenticationFailed()
+        for attribute, column in columns.items():
+            omitted = attribute not in row or (row[attribute] is None and not render_nulls
+                                               and not column.type.should_evaluate_none)
+            if omitted and (column.server_default is not None or
+                            column.default is not None and not column.default.is_scalar):
+                raise UnsupportedProtectedOperation()
+        rows.append(row)
+    operation = _Operation(owner, session._keys(), session._tenant, session, bulk_insert=table)
+    failed_index = None
+    for index, row in enumerate(rows):
+        record = row[first.record_attribute]
+        tenant = row[first.tenant_attribute] if first.tenant is not None else first.descriptor.table_id
+        operation.rows[(table.schema, table.name, record)] = tenant
+        for binding in bindings:
+            if binding.attribute not in row or row[binding.attribute] is None and not render_nulls:
+                continue  # Preserve native NULL omission and heterogeneous grouping.
+            value = row[binding.attribute]
+            try:
+                stored = _varchar_assignment(value, binding.max_characters)
+            except VarcharLengthExceeded as failure:
+                if failed_index is None:
+                    failed_index = index
+                sealed = _Sealed(None, operation, binding, failure, record, tenant)
+            else:
+                sealed = _Sealed(seal_text(stored, binding.descriptor, tenant, record, operation.keys),
+                                 operation, binding, record=record, tenant=tenant)
+            operation.bulk_seals[id(sealed)] = sealed
+            row[binding.attribute] = sealed
+    original_parameters = state.parameters
+    state.update_execution_options(compiled_cache=None)
+    token = _operation.set(operation)
+    try:
+        if failed_index is not None:
+            # Preserve native constraint precedence before this known length
+            # error. An empty list would instead insert DEFAULT VALUES.
+            if failed_index:
+                state.parameters = rows[:failed_index]
+                state.invoke_statement()
+            state.parameters = [rows[failed_index]]
+            try:
+                state.invoke_statement()  # Includes native autoflush before binding.
+            except VarcharLengthExceeded as failure:
+                if not any(value.failure is failure for value in operation.bulk_seals.values()):
+                    raise
+                try:
+                    # PG16 assignment coercion, with public constants only.
+                    # Abort this transaction/savepoint without plaintext SQL.
+                    session.connection().execute(select(func.pg_catalog.varchar(
+                        cast(literal('xx'), String()), 5, False)))
+                except DBAPIError as error:
+                    if getattr(error.orig, 'sqlstate', None) != '22001':
+                        raise BulkVarcharFailureUnavailable() from None
+                    raise failure from None
+                raise BulkVarcharFailureUnavailable()
+            raise BulkVarcharFailureUnavailable()
+        state.parameters = rows
+        return state.invoke_statement()
+    finally:
+        state.parameters = original_parameters
+        operation.bulk_seals.clear()
+        operation.bulk_batch = ()
+        operation.rows.clear()
         _operation.reset(token)
 
 

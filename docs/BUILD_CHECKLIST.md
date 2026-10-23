@@ -33,7 +33,18 @@ No objective is complete until its acceptance evidence and applicable gate pass.
   CLI status also reads payload/search preparation with its own pin and source
   identity. Every recorded preparation keeps `runtime_metadata_matches: false`, NOT_PERFORMED and
   exit 3. Preparation status repeats effective privilege admission.
-  See the [current checkpoint](status.md#rotation-preparation-status-checkpoint-2026-10-23).
+  Attached mapped dictionary INSERT now preserves bounded native grouping,
+  NULLs, explicit typed context, uniqueness and transaction/savepoint behavior.
+  Its final driver guard checks actual payload bytes and row context.
+  See the [current checkpoint](status.md#mapped-bulk-insert-checkpoint-2026-10-23).
+- The bulk checkpoint passes the full primary regression: 1,953 tests and
+  18 subtests, with three separate-environment skips and 48 existing warnings.
+  Stronger final driver controls pass all 44 bulk cases at the final source
+  bundle. The alternate Python 3.13 / SQLAlchemy 2.0.51 cell passes those cases
+  plus the pinned unchanged Smolink lifecycle, 45 cases. Both final receipts
+  retain stable 130-file hashes. Reproducible archives and all 36 installed
+  package files pass. The full alternate cell and fresh-cluster profiles were
+  not rerun for this route.
 - The preparation-status checkpoint passes 369 affected CLI and rotation cases.
   Eight phase/purpose cases pass again with actual runtime credentials.
   Reproducible archives and all 36 installed package files pass, including CLI.
@@ -42,7 +53,7 @@ No objective is complete until its acceptance evidence and applicable gate pass.
   including Doctor on an adopted runtime. Reproducible archives and all 36
   installed package files pass, including CLI startup and Doctor help.
   Full regression passes 1,887 tests and 18 subtests, with three separate-environment
-  skips. All 125 Python source/test/script hashes match the final worktree.
+  skips. Its 125 Python hashes belong to that earlier checkpoint.
   The prior search checkpoint passes 92 focused cases, including independent crypto,
   native search/uniqueness/current-value removal, mixed rotation lineage,
   lost COMMIT replies and SIGKILL recovery. Search TEXT/VARCHAR backups each
@@ -51,9 +62,9 @@ No objective is complete until its acceptance evidence and applicable gate pass.
   1,869 tests and 18 subtests, with three separate-environment skips.
   Reproducible archives and all 36 installed package files pass, including CLI.
 - Current execution uses local PostgreSQL 16 and Python 3.12.3 with SQLAlchemy
-  2.1.3. The full SQLAlchemy 2.0.51 cell and pinned Smolink application were
-  not rerun for search rotation. Their [earlier evidence](status.md#pinned-smolink-adoption-2026-10-22)
-  remains revision-bound. Private-role probes and Git writes use scoped approved
+  2.1.3. The current bounded alternate/app rerun is recorded above. The earlier
+  full alternate and [external adoption evidence](status.md#pinned-smolink-adoption-2026-10-22)
+  retain their exact revision boundaries. Private-role probes and Git writes use scoped approved
   execution. Default sandbox restrictions remain in place.
 - The import ledger and dated status checkpoints preserve earlier evidence.
   Reproducibility includes wheel RECORD, license metadata and an SBOM.
@@ -80,7 +91,7 @@ Requirement text is abbreviated. The full definitions remain in the research
 | OBJ-QUERY-01 | Exact equality, `IN`, scoped uniqueness, NULL logic, races | VERIFIED, bounded | `_sqlalchemy_search.py`, slice 4 receipt; native concurrency tests | Keep grammar reconciliation current |
 | OBJ-QUERY-02 | Ordinary SQL correctness: NULL predicates, aliases, joins, projections | PARTIAL | Native sync/async controls; textual reference admission and simple negative/NULL predicates added 2026-10-19 | Continue finite native-oracle matrix; general Boolean NOT and protected joins remain unadmitted |
 | OBJ-QUERY-03 | Ordering, ranges, prefix/text search, aggregates, other types | SPECIFIED | Loud refusal only | Research and admit each profile separately |
-| OBJ-QUERY-04 | INSERT/UPDATE/DELETE, bulk, RETURNING, triggers, cascades, savepoints | PARTIAL | ORM flush writes, rollback, sync/async state; bulk routes reject | Qualify each broader DML effect separately |
+| OBJ-QUERY-04 | INSERT/UPDATE/DELETE, bulk, RETURNING, triggers, cascades, savepoints | PARTIAL | ORM flush writes and attached sync/async mapped dictionary INSERT without RETURNING; native NULL/grouping, typed context, errors and savepoints; final bulk driver bytes checked | Qualify RETURNING, broader DML, used defaults and each trigger/cascade effect separately |
 | OBJ-QUERY-05 | Versioned compatibility corpus and read-only scanner | PARTIAL | Native-vs-attached tests and receipts | Build a real pre-adoption scanner; reconcile current revisions |
 | OBJ-LIFE-01 | Deterministic plan/apply/verify with diagnostics | VERIFIED, bounded | `migration.py` plan/apply/verify; compiler inspection maps SQLAlchemy and direct psycopg errors to safe SQLSTATE; slice 5 receipts | Broader schema and failure boundaries |
 | OBJ-LIFE-02 | Resumable, atomic, byte-bounded backfill with verification | VERIFIED, bounded | Journal, advisory lock, chunks, crash/resume tests | Exact memory/WAL bounds remain host inputs |

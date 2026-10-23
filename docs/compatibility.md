@@ -46,6 +46,7 @@ Rollback/removal transforms current data through decrypt-back until explicit fin
 | Protected-field operation | Classification | Contract or reason for rejection |
 |---|---|---|
 | Text storage/read/write, entity/scalar projection, SQL NULL | SUPPORTED | Randomized authenticated payload. Preserve exact str, empty text, NULL, native ORM state, and expected row/tenant context |
+| Mapped dictionary INSERT without RETURNING | SUPPORTED | Attached sync/async `Session.execute(insert(Model), list[dict])`, explicit typed IDs and tenant scope, copied attribute dictionaries, native NULL/grouping, autoflush, uniqueness and transaction behavior. Other bulk routes remain unadmitted |
 | Equality `==` and `IN` | SUPPORTED | Declared full tenant/domain-bound HMAC term. Preserve typed binds and native NULL/empty-list truth tables |
 | Simple negative equality `!=`, `NOT IN`, and NULL presence | SUPPORTED | Reuse the authenticated term for values and a SQL NULL check for storage-only fields. Preserve native three-valued truth, NULL elements, empty lists, and outer-join NULL extension. General Boolean NOT remains unadmitted |
 | Tenant-scoped uniqueness | SUPPORTED | Full term plus tenant scope in a race-safe native unique index. Explicit single-tenant declaration supplies its one scope |
@@ -80,6 +81,10 @@ A searchable small domain fails planning because enumeration can label equality 
 
 Native VARCHAR preserves its character limit and assignment semantics through protection and decrypt-back.
 Typed length failures require rollback, as the native ORM flush does.
+For the bounded dictionary INSERT route, a length failure preserves native
+Session activity and PostgreSQL's aborted transaction or savepoint state.
+An earlier row constraint failure retains precedence. No protected plaintext
+reaches PostgreSQL to produce the length error.
 Custom type decorators and dialect variants remain unadmitted for protected mappings and query binds.
 See [native VARCHAR mappings](walkthrough-migration.md#native-varchar-mappings).
 
