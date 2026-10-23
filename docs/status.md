@@ -21,6 +21,93 @@ and [competitive capability matrix](research/capability-matrix.md) govern priori
 Progress follows complete real-application journeys and resolved production requirements.
 All seven production gates remain UNKNOWN.
 
+## Owned-sequence preservation and restore: 2026-10-24
+
+**VERIFIED, bounded revised source and installed profiles:** lock/v5 records ordinary persistent
+sequences automatically owned by protected columns. Forward and reverse switches
+preserve each sequence's OID, owner, configuration, comment and effective ACL,
+including grantor and grant option. They detach and reattach ownership inside
+the existing transaction. Checks repeat after native ALTER locking and before
+column replacement. Counter values remain native, including rollback gaps and
+unused cache reservations. Cryptalis never recreates or resets the sequence.
+
+The [focused source receipt](_reset/owned-sequences-source-focused-20261024.json)
+passes 81 controls: 18 native sequence cases and 63 compiler cases. At that
+checkpoint, all 201 recorded Python hashes stay stable and match its worktree. Exact admitted
+`_cryptalis_*` sequences survive removal. Unrecorded objects, changed identities
+and unsupported dependencies still refuse. Reverse planning and paused progress
+check the current mapped inventory before provider work or new effects.
+
+Sequence-bearing adoption uses restore/v2 with complete source-to-target OID
+mapping after exact logical catalog comparison. The [source export](_reset/fresh-cluster-export-20261024-37.json)
+passes one test in 1.01 seconds. The [fresh-target profile](_reset/fresh-cluster-restore-20261024-36.json)
+passes four in 7.32 seconds with the same 201 stable Python hashes at that checkpoint. It covers
+inherited root/payload lineage, current-value native exit, direct payload/search
+planning and a second adoption with two restore/v2 maps. The actual previous
+installed reader refuses v5 sources and restore/v2 bindings before database access.
+
+The [initial artifact check](_reset/owned-sequences-release-final-20261024.json) passes
+reproducible archives, metadata, SBOM, CLI and 40 installed-file checks.
+All 41 release-source hashes match its worktree at that checkpoint. Its wheel contains 36 product
+modules. Existing artifacts without owned sequences retain their earlier formats
+and bytes.
+
+The [first full source run](_reset/owned-sequences-source-full-20261024.json)
+reports 19 failed, 2,459 passed, 15 skipped and 116 passed subtests in
+845.50 seconds, with 49 warnings. All failures concern read-only statement
+assertions: sequence inspection starts with WITH, while these controls require
+SELECT or SET. The revised compiler query starts with SELECT and retains the
+assertions. The earlier focused,
+fresh-cluster and artifact receipts retain their exact source boundary. They
+do not qualify the revised query or a new installed wheel.
+
+The [revised source controls](_reset/owned-sequences-source-readonly-recovery-20261024.json)
+pass 201 tests in 97.72 seconds. They cover all five failed modules plus the
+18 native sequence and 63 compiler cases. The read-only assertions remain
+unchanged. All 201 Python hashes stay stable and match the revised worktree.
+The [revised artifact check](_reset/owned-sequences-release-revised-20261024.json)
+passes reproducible archives, CLI and 40 installed files against 41 current
+source hashes and 36 product modules. The initial candidate remains historical.
+
+The revised [source export](_reset/fresh-cluster-export-20261024-38.json) passes
+one test in 1.00 second. Its [fresh-target profile](_reset/fresh-cluster-restore-20261024-37.json)
+passes four in 9.84 seconds. The revised wheel passes
+[269 affected/application controls](_reset/owned-sequences-installed-affected-20261024.json)
+in 157.98 seconds with one known warning. The ordinary
+[searchable](_reset/owned-sequences-installed-searchable-application-20261024.json)
+and [HTTP/JWT/SMTP](_reset/owned-sequences-installed-http-application-20261024.json)
+application receipts preserve their separate six-file and 26-file boundaries.
+Its installed [export](_reset/fresh-cluster-export-20261024-39.json) passes
+one in 1.01 seconds and its [fresh-target profile](_reset/fresh-cluster-restore-20261024-38.json)
+passes four in 8.64 seconds. All runs retain the same 201 stable Python hashes.
+
+The original six-file SQLModel application also passes both installed adoption
+paths. Direct-generation [export](_reset/fresh-cluster-export-20261024-40.json)
+and [target](_reset/fresh-cluster-restore-20261024-39.json) stages pass one each
+in 1.29 and 2.34 seconds. Rewrap-first [export](_reset/fresh-cluster-export-20261024-41.json)
+and [target](_reset/fresh-cluster-restore-20261024-40.json) stages pass one each
+in 1.54 and 3.07 seconds. Their [direct](_reset/owned-sequences-installed-direct-adoption-application-20261024.json)
+and [legacy](_reset/owned-sequences-installed-legacy-adoption-application-20261024.json)
+application receipts retain original search controls, frame/index identities,
+native catalogs and latest-value package-free exit. These are ordinary application
+regressions, separate from the sequence-bearing four-case profile.
+
+The [revised full source regression](_reset/owned-sequences-source-full-revised-20261024.json)
+passes 2,478 tests and 116 subtests in 824.22 seconds, with 15 skips and
+49 known warnings. The skips comprise two test calls and 13 collection skips.
+All 201 Python hashes remain stable and match this worktree. This source run
+includes the pinned original SQLModel CRUD and HTTP profiles. Installed-wheel
+evidence retains its separate boundary. The
+[final boundary](_reset/owned-sequences-final-boundary-20261024.json) binds current
+receipts, artifacts, application evidence and seven canonical documents. It also
+retains earlier failed runs and the initial artifact as historical evidence.
+
+Existing generated-key and protected-default
+refusals remain unchanged. This checkpoint changes no CF1, tenant, key-policy or
+host-authority contract. All seven production gates remain UNKNOWN. See the
+[lifecycle contract](lifecycle.md#owned-sequence-preservation-and-restored-identity-2026-10-24)
+and [format decision](decisions.md#owned-sequence-metadata-and-restored-identity-2026-10-24).
+
 ## Direct restore-binding generation planning: 2026-10-24
 
 **VERIFIED, bounded source and installed-wheel profiles:** payload and search planners now
@@ -32,7 +119,7 @@ authority remain distinct from the evaluated physical target.
 
 The [expanded source export](_reset/fresh-cluster-export-20261024-31.json) passes
 one test in 1.07 seconds. All [19 fresh-target controls](_reset/fresh-cluster-restore-20261024-30.json)
-pass in 50.18 seconds with 199 stable Python hashes that match current files.
+pass in 50.18 seconds. At that checkpoint, 199 stable Python hashes match its files.
 Changed restored CHECKs and disabled staged guards refuse before provider
 resolution. Source-only cancellation, keyless CLI status, SIGKILL recovery and
 a lost actual cutover COMMIT reply pass. A second genuine backup/restore
@@ -41,8 +128,8 @@ adoption retains two flat bindings and rotates the other generation.
 The [source VARCHAR profile](_reset/fresh-cluster-restore-20261024-31.json)
 passes all 19 in 50.57 seconds. The [source affected suite](_reset/direct-generation-source-affected-20261024.json)
 passes 606 tests in 271.60 seconds. The [installed affected suite](_reset/direct-generation-installed-affected-20261024.json)
-passes 68 in 58.71 seconds with one existing Starlette warning. All 199 Python
-hashes stay stable and match the current files.
+passes 68 in 58.71 seconds with one existing Starlette warning. At that checkpoint,
+all 199 Python hashes stay stable and match its files.
 The ordinary [searchable SQLModel](_reset/direct-generation-installed-searchable-application-20261024.json)
 and [HTTP/JWT/SMTP](_reset/direct-generation-installed-http-application-20261024.json)
 receipts preserve six and 26 pinned files. These regressions do not qualify the
@@ -66,7 +153,7 @@ and [fresh-target](_reset/fresh-cluster-restore-20261024-35.json) each pass one
 in 1.27 and 2.51 seconds. Its [application receipt](_reset/direct-generation-legacy-installed-application-20261024.json)
 retains the original intermediate root rewrap. Email equality/IN/uniqueness
 remains fixture-only in explicit single tenancy. The ordinary HTTP/JWT/SMTP
-profile keeps its separate boundary. All 199 Python hashes remain stable.
+profile keeps its separate boundary. All 199 Python hashes remain stable at that checkpoint.
 
 The first [source export](_reset/fresh-cluster-export-20261024-30.json) passes
 one test in 1.12 seconds. Both [native positive cases](_reset/fresh-cluster-restore-20261024-29.json)
@@ -78,7 +165,7 @@ not establish a new full regression result.
 The [artifact check](_reset/direct-generation-release-final-20261024.json) verifies
 reproducible archives, metadata, RECORD, SBOM, 40 installed files and CLI.
 The [final boundary](_reset/direct-generation-final-boundary-20261024.json) binds
-the recorded runs, application receipts and seven canonical docs. Production
+the runs, application receipts and seven canonical docs recorded at that checkpoint. Production
 email populations, browser and deployment qualification remain open or UNKNOWN.
 Old readers reject v2 proposals and accept unchanged v6/v7 activation formats.
 Crypto, provider, host-authority and retained-key contracts do not change.

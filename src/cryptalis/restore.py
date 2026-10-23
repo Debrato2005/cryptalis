@@ -1,4 +1,4 @@
-"""Restored protected-schema bring-up authority (``cryptalis.restore/v1``).
+"""Restored protected-schema bring-up authority.
 
 A copied protected database is never current authority by itself. The host
 must adopt it with explicit restore intent, quarantine evidence, and a fenced
@@ -41,6 +41,7 @@ from cryptalis.manifest.compiler import _canonical, _catalog_path
 from cryptalis.manifest.parser import decode_manifest_json
 
 FORMAT = 'cryptalis.restore/v1'
+SEQUENCE_FORMAT = 'cryptalis.restore/v2'
 
 
 @dataclass(frozen=True)
@@ -61,13 +62,17 @@ class RestoreBinding:
     def __post_init__(self):
         try:
             document = decode_manifest_json(self.artifact)
-            if (document.get('format') != FORMAT or document.get('kind') != 'restore'
+            sequence_format = document.get('format') == SEQUENCE_FORMAT
+            if (document.get('format') not in (FORMAT, SEQUENCE_FORMAT) or document.get('kind') != 'restore'
                     or _canonical(document) != self.artifact):
                 raise ValueError
-            if set(document) != {'format', 'kind', 'adoption_id', 'source', 'target',
+            members = {'format', 'kind', 'adoption_id', 'source', 'target',
                                  'journal_state_digest', 'custody', 'environment', 'approval',
-                                 'restatements'}:
+                                 'restatements'} | ({'sequences'} if sequence_format else set())
+            if set(document) != members:
                 raise ValueError
+            if sequence_format:
+                _validate_sequence_map(document['sequences'])
             if UUID(document['adoption_id']).int == 0:
                 raise ValueError
             source = document['source']
@@ -171,6 +176,7 @@ def _identity(source, binding):
             or any(source.document['key_policies'].get(tenant) != policy
                    for tenant, policy in binding.document['custody'].items())):
         raise m.TransitionFailure('restore_binding_mismatch', source.operation_id)
+    _sequence_inventory(source.document, binding)
     fields = {(model['table_id'], field['payload_column'] + '_frame'): field
               for model in source.document['lock']['models'] for field in model['fields']}
     quote = postgresql.dialect().identifier_preparer.quote
@@ -255,6 +261,7 @@ def _validate_lineage(document):
             identities.add(binding.adoption_id)
         if previous != document['target']:
             raise ValueError
+        _sequence_inventory(document)
     except (ValueError, TypeError, KeyError, AttributeError, m.TransitionFailure):
         raise m.TransitionFailure('invalid_restore_lineage') from None
 
@@ -271,7 +278,98 @@ def frame_admissions(document, model, binding=None):
             if item['model'] == model['table_id']}
 
 
-def _schema_evidence(c, source, state):
+def _sequence_key(item):
+    return tuple(item[name] for name in ('model', 'schema', 'name', 'column'))
+
+
+def _oid(value):
+    return (type(value) is str and value.isascii() and value.isdecimal()
+            and len(value) <= 10 and 0 < int(value) < 2**32 and str(int(value)) == value)
+
+
+def _validate_sequence_map(entries):
+    if type(entries) is not list or not entries:
+        raise ValueError
+    source_oids, target_oids, names = set(), set(), set()
+    for entry in entries:
+        if (type(entry) is not dict or set(entry) != {
+                'model', 'schema', 'name', 'column', 'source_oid', 'target_oid'}
+                or type(entry['model']) is not str or not UUID(entry['model']).int
+                or str(UUID(entry['model'])) != entry['model']
+                or any(type(entry[name]) is not str or not entry[name] or '\x00' in entry[name]
+                       or len(entry[name].encode('utf8')) > 63 for name in ('schema', 'name', 'column'))
+                or not _oid(entry['source_oid']) or not _oid(entry['target_oid'])
+                or entry['source_oid'] in source_oids or entry['target_oid'] in target_oids
+                or _sequence_key(entry) in names):
+            raise ValueError
+        source_oids.add(entry['source_oid'])
+        target_oids.add(entry['target_oid'])
+        names.add(_sequence_key(entry))
+    if entries != sorted(entries, key=_sequence_key):
+        raise ValueError
+
+
+def _sequence_inventory(document, binding=None):
+    """Evaluate sequence identity through exact, ordered host bindings."""
+    reverse = document.get('kind') == 'deprotect'
+    base = document['source_plan'] if reverse else document
+    inventory = {tuple((model['table_id'], entry['schema'], entry['name'], entry['column'])): dict(entry)
+                 for model in base['lock']['models']
+                 for entry in model.get('source_metadata', {}).get('owned_sequences', ())}
+    records = list(base.get('restore_lineage', ()))
+    if reverse and document.get('restore') is not None:
+        records.append(document['restore'])
+    if binding is not None:
+        if type(binding) is not RestoreBinding:
+            raise m.TransitionFailure('restore_binding_required')
+        records.append(binding.document)
+    for raw in records:
+        record = RestoreBinding(_canonical(raw)).document
+        entries = record.get('sequences', [])
+        if bool(inventory) != (record['format'] == SEQUENCE_FORMAT):
+            raise m.TransitionFailure('restore_sequence_mismatch')
+        if {_sequence_key(entry) for entry in entries} != set(inventory):
+            raise m.TransitionFailure('restore_sequence_mismatch')
+        for entry in entries:
+            key = _sequence_key(entry)
+            if entry['source_oid'] != inventory[key]['oid']:
+                raise m.TransitionFailure('restore_sequence_mismatch')
+            inventory[key]['oid'] = entry['target_oid']
+    return inventory
+
+
+def sequence_admissions(document, model, binding=None):
+    """Return the immutable sequence facts with the current target identities."""
+    inventory = _sequence_inventory(document, binding)
+    return [inventory[(model['table_id'], entry['schema'], entry['name'], entry['column'])]
+            for entry in model.get('source_metadata', {}).get('owned_sequences', ())]
+
+
+def _sequence_evidence(c, source, binding=None):
+    """Compare every logical fact before admitting restored sequence OIDs."""
+    from cryptalis.manifest.compiler import sequence_metadata
+    maps, facts = [], {}
+    if source.document['lock']['schema'] != 'cryptalis.lock/v5':
+        return maps, facts
+    for model in source.document['lock']['models']:
+        original = sequence_admissions(source.document, model)
+        expected = sequence_admissions(source.document, model, binding)
+        observed = sequence_metadata(c, model['schema'], model['table'],
+                                     [field['column'] for field in model['fields']])
+        logical = lambda entries: sorted((_canonical({key: value for key, value in entry.items()
+                                                     if key != 'oid'}) for entry in entries))
+        if logical(observed) != logical(original) or binding is not None and observed != expected:
+            raise m.TransitionFailure('restored_sequence_mismatch', source.operation_id)
+        by_name = {(entry['schema'], entry['name'], entry['column']): entry for entry in original}
+        for entry in observed:
+            old = by_name[(entry['schema'], entry['name'], entry['column'])]
+            maps.append(dict(model=model['table_id'], schema=entry['schema'], name=entry['name'],
+                             column=entry['column'], source_oid=old['oid'], target_oid=entry['oid']))
+        facts[model['table_id']] = observed
+    return sorted(maps, key=_sequence_key), facts
+
+
+def _schema_evidence(c, source, state, *, sequences=None):
     """Structural comparison of live schema facts against the recorded facts.
 
     Column ordinal numbers are physical slots; a logical restore compacts
@@ -281,7 +379,8 @@ def _schema_evidence(c, source, state):
     restatements = []
     for model in source.document['lock']['models']:
         start = len(restatements)
-        m._refuse_unrecorded_metadata(c,source,model)
+        expected_sequences = None if sequences is None else sequences.get(model['table_id'])
+        m._refuse_unrecorded_metadata(c,source,model,sequences=expected_sequences)
         observed = m._facts(c, model)
         recorded = state['models'][model['table_id']]['active_schema']
         if (observed['relation'] != recorded['relation']
@@ -322,7 +421,8 @@ def _schema_evidence(c, source, state):
                 raise m.TransitionFailure('restored_definition_restatement_unsupported',
                                           source.operation_id)
         admitted = {item['name']: _frame_expression(item['definition']) for item in restatements[start:]}
-        m._protected_contract(c, source, model, observed, admitted=admitted)
+        m._protected_contract(c, source, model, observed, admitted=admitted,
+                              sequences=expected_sequences)
     return restatements
 
 
@@ -382,7 +482,8 @@ def _probe_frame_checks(c, source, restatements):
 def _check_schema(c, source, state, binding):
     """Later operations must observe the same structure the adoption approved."""
     try:
-        observed = _schema_evidence(c, source, state)
+        _, sequences = _sequence_evidence(c, source, binding)
+        observed = _schema_evidence(c, source, state, sequences=sequences)
     except m.TransitionFailure as exc:
         if exc.code == 'restored_definition_restatement_unsupported':
             raise m.TransitionFailure('restored_schema_changed', source.operation_id) from None
@@ -483,7 +584,8 @@ def plan(source, engine, *, pin, keys, approval):
         d._inventory(c,source,source,own=None)
         m._runtime_safety(c,source.document['runtime_role'],source.document['target'][-1],
                           source.document['lock']['models'],journal=m._journal(c,source),operation_id=source.operation_id)
-        restatements = _schema_evidence(c, source, state)
+        sequence_map, sequence_facts = _sequence_evidence(c, source)
+        restatements = _schema_evidence(c, source, state, sequences=sequence_facts)
         custody = _scan(c, source, keys)
         restatements = _probe_frame_checks(c, source, restatements)
         system_identifier = None
@@ -494,8 +596,8 @@ def plan(source, engine, *, pin, keys, approval):
         except Exception:
             system_identifier = None
         version = c.exec_driver_sql('show server_version').scalar_one()
-    return RestoreBinding(_canonical({
-        'format': FORMAT, 'kind': 'restore', 'adoption_id': str(m.uuid4()),
+    document = {
+        'format': SEQUENCE_FORMAT if sequence_map else FORMAT, 'kind': 'restore', 'adoption_id': str(m.uuid4()),
         'source': {'operation_id': str(source.operation_id), 'plan_digest': source.digest,
                    'target': source.document['target']},
         'target': list(target), 'journal_state_digest': m._hash(state), 'custody': custody,
@@ -503,4 +605,7 @@ def plan(source, engine, *, pin, keys, approval):
         'environment': {'server_version': version, 'system_identifier': system_identifier},
         'approval': {'host': approval.host, 'intent': approval.intent,
                      'quarantine': approval.quarantine, 'source_fenced': True,
-                     'adopted_at': datetime.datetime.now(datetime.timezone.utc).isoformat()}}))
+                     'adopted_at': datetime.datetime.now(datetime.timezone.utc).isoformat()}}
+    if sequence_map:
+        document['sequences'] = sequence_map
+    return RestoreBinding(_canonical(document))

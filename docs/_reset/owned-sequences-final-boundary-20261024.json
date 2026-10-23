@@ -1,0 +1,476 @@
+{
+  "format": "cryptalis.owned-sequences-boundary/v1",
+  "base_revision": "5d8caec2bdc04dad0b57952603be6c9bb659508e",
+  "receipts": {
+    "docs/_reset/owned-sequences-source-readonly-recovery-20261024.json": {
+      "sha256": "835b22b20d06cbfe346e8c7fa4ce91920a1e74a19ba88e5ea96abdb2299702b2",
+      "counts": {
+        "passed": 201
+      },
+      "pytest_report_counts": {
+        "test_calls": {
+          "passed": 201
+        },
+        "subtest_calls": {},
+        "setup": {
+          "passed": 201
+        },
+        "teardown": {
+          "passed": 201
+        },
+        "collection": {},
+        "selected_items": 201
+      },
+      "elapsed_seconds": 97.9997617550107,
+      "source_files": 201,
+      "fixing_revision": "worktree-18c899d811fe2fa1"
+    },
+    "docs/_reset/owned-sequences-installed-affected-20261024.json": {
+      "sha256": "5a11528bd8115451dc7061a36c94870fdb87fade00de04b2a360904248f565df",
+      "counts": {
+        "passed": 269
+      },
+      "pytest_report_counts": {
+        "test_calls": {
+          "passed": 269
+        },
+        "subtest_calls": {},
+        "setup": {
+          "passed": 269
+        },
+        "teardown": {
+          "passed": 269
+        },
+        "collection": {},
+        "selected_items": 269
+      },
+      "elapsed_seconds": 158.85401878699486,
+      "source_files": 201,
+      "fixing_revision": "worktree-18c899d811fe2fa1"
+    },
+    "docs/_reset/owned-sequences-source-full-revised-20261024.json": {
+      "sha256": "70bd42d5778bdbe6400363974f1b2aaf7f35efb151f813d4f07074fadc0f61c6",
+      "counts": {
+        "passed": 2594,
+        "skipped": 2
+      },
+      "pytest_report_counts": {
+        "test_calls": {
+          "passed": 2478,
+          "skipped": 2
+        },
+        "subtest_calls": {
+          "passed": 116
+        },
+        "setup": {
+          "passed": 2480
+        },
+        "teardown": {
+          "passed": 2480
+        },
+        "collection": {
+          "skipped": 13
+        },
+        "selected_items": 2480
+      },
+      "elapsed_seconds": 825.2828792580112,
+      "source_files": 201,
+      "fixing_revision": "worktree-18c899d811fe2fa1"
+    },
+    "docs/_reset/fresh-cluster-export-20261024-38.json": {
+      "sha256": "80be0148ee17e5c8483b670e137298f69689ce652ab808eb584111fedd481c3d",
+      "counts": {
+        "passed": 1
+      },
+      "pytest_report_counts": {
+        "test_calls": {
+          "passed": 1
+        },
+        "subtest_calls": {},
+        "setup": {
+          "passed": 1
+        },
+        "teardown": {
+          "passed": 1
+        },
+        "collection": {},
+        "selected_items": 1
+      },
+      "elapsed_seconds": 1.214752038998995,
+      "source_files": 201,
+      "fixing_revision": "worktree-18c899d811fe2fa1"
+    },
+    "docs/_reset/fresh-cluster-export-20261024-39.json": {
+      "sha256": "462b7000b9a4e9dc7169c37907aa042297778a310737dd06e2212ba8677c9d37",
+      "counts": {
+        "passed": 1
+      },
+      "pytest_report_counts": {
+        "test_calls": {
+          "passed": 1
+        },
+        "subtest_calls": {},
+        "setup": {
+          "passed": 1
+        },
+        "teardown": {
+          "passed": 1
+        },
+        "collection": {},
+        "selected_items": 1
+      },
+      "elapsed_seconds": 1.2274095699976897,
+      "source_files": 201,
+      "fixing_revision": "worktree-18c899d811fe2fa1"
+    },
+    "docs/_reset/fresh-cluster-export-20261024-40.json": {
+      "sha256": "ee6d875e6480c5ee9dc4a111fc9de826f26cbbfae3c37eed0194f3eb26148fb5",
+      "counts": {
+        "passed": 1
+      },
+      "pytest_report_counts": {
+        "test_calls": {
+          "passed": 1
+        },
+        "subtest_calls": {},
+        "setup": {
+          "passed": 1
+        },
+        "teardown": {
+          "passed": 1
+        },
+        "collection": {},
+        "selected_items": 1
+      },
+      "elapsed_seconds": 1.527656954000122,
+      "source_files": 201,
+      "fixing_revision": "worktree-18c899d811fe2fa1"
+    },
+    "docs/_reset/fresh-cluster-export-20261024-41.json": {
+      "sha256": "ce25564556745371b1ebdb71c58a067a8da45ac0fd185f26e5faaf9ba0e29cb4",
+      "counts": {
+        "passed": 1
+      },
+      "pytest_report_counts": {
+        "test_calls": {
+          "passed": 1
+        },
+        "subtest_calls": {},
+        "setup": {
+          "passed": 1
+        },
+        "teardown": {
+          "passed": 1
+        },
+        "collection": {},
+        "selected_items": 1
+      },
+      "elapsed_seconds": 1.7882325890095672,
+      "source_files": 201,
+      "fixing_revision": "worktree-18c899d811fe2fa1"
+    },
+    "docs/_reset/fresh-cluster-restore-20261024-37.json": {
+      "sha256": "0eb7be1060008b66a6fd36e92d0aa782e383306cab1b6914a8419f9ee1976932",
+      "counts": {
+        "passed": 4
+      },
+      "pytest_report_counts": {
+        "test_calls": {
+          "passed": 4
+        },
+        "subtest_calls": {},
+        "setup": {
+          "passed": 4
+        },
+        "teardown": {
+          "passed": 4
+        },
+        "collection": {},
+        "selected_items": 4
+      },
+      "elapsed_seconds": 10.05426093999995,
+      "source_files": 201,
+      "fixing_revision": "worktree-18c899d811fe2fa1"
+    },
+    "docs/_reset/fresh-cluster-restore-20261024-38.json": {
+      "sha256": "eeba798e7bd892b7f20978c2d824794478fcef2d805535982ac8b6b8ed54216b",
+      "counts": {
+        "passed": 4
+      },
+      "pytest_report_counts": {
+        "test_calls": {
+          "passed": 4
+        },
+        "subtest_calls": {},
+        "setup": {
+          "passed": 4
+        },
+        "teardown": {
+          "passed": 4
+        },
+        "collection": {},
+        "selected_items": 4
+      },
+      "elapsed_seconds": 8.821774747993913,
+      "source_files": 201,
+      "fixing_revision": "worktree-18c899d811fe2fa1"
+    },
+    "docs/_reset/fresh-cluster-restore-20261024-39.json": {
+      "sha256": "951872d5c74ccc9a514f1665fa480a1694ff7217a4caa3b719d1bf7f96a4e240",
+      "counts": {
+        "passed": 1
+      },
+      "pytest_report_counts": {
+        "test_calls": {
+          "passed": 1
+        },
+        "subtest_calls": {},
+        "setup": {
+          "passed": 1
+        },
+        "teardown": {
+          "passed": 1
+        },
+        "collection": {},
+        "selected_items": 1
+      },
+      "elapsed_seconds": 2.5775523629999952,
+      "source_files": 201,
+      "fixing_revision": "worktree-18c899d811fe2fa1"
+    },
+    "docs/_reset/fresh-cluster-restore-20261024-40.json": {
+      "sha256": "7ab5728b130b0d46588f870ebd51b1d864cad4c07ddf6e4bf46b7a2a336df22f",
+      "counts": {
+        "passed": 1
+      },
+      "pytest_report_counts": {
+        "test_calls": {
+          "passed": 1
+        },
+        "subtest_calls": {},
+        "setup": {
+          "passed": 1
+        },
+        "teardown": {
+          "passed": 1
+        },
+        "collection": {},
+        "selected_items": 1
+      },
+      "elapsed_seconds": 3.303557284991257,
+      "source_files": 201,
+      "fixing_revision": "worktree-18c899d811fe2fa1"
+    }
+  },
+  "applications": {
+    "direct": {
+      "path": "docs/_reset/owned-sequences-installed-direct-adoption-application-20261024.json",
+      "sha256": "6fd96c350a9f56dcfc93d550b30ffe1610820e2cf78f85898b6f41c95535eb5e",
+      "direct_restore_binding": true,
+      "unchanged_source_files": 6,
+      "controls": {
+        "equality": true,
+        "IN": true,
+        "empty_IN": true,
+        "NULL": "no NULL email; IN NULL ignored",
+        "Unicode": true,
+        "unique_sqlstate": "23505",
+        "rollback": true,
+        "concurrent_unique_sqlstate": "23505",
+        "latest_email_edit": true
+      }
+    },
+    "legacy": {
+      "path": "docs/_reset/owned-sequences-installed-legacy-adoption-application-20261024.json",
+      "sha256": "cf4df65f0a3957a3688cb9980237ca4d8c7f2ac6e0647d0c12f9d48a04f15a0c",
+      "direct_restore_binding": false,
+      "unchanged_source_files": 6,
+      "controls": {
+        "equality": true,
+        "IN": true,
+        "empty_IN": true,
+        "NULL": "no NULL email; IN NULL ignored",
+        "Unicode": true,
+        "unique_sqlstate": "23505",
+        "rollback": true,
+        "concurrent_unique_sqlstate": "23505",
+        "latest_email_edit": true
+      }
+    },
+    "searchable": {
+      "path": "docs/_reset/owned-sequences-installed-searchable-application-20261024.json",
+      "sha256": "6df976f39ca89c1395e68304065379b9358b6bda4889ea8f2583da816998c5bc",
+      "unchanged_source_files": 6
+    },
+    "http": {
+      "path": "docs/_reset/owned-sequences-installed-http-application-20261024.json",
+      "sha256": "6909f3eda4f8b299e47a2bf637699936b0c463be89fe5611a824c7a1d4def63d",
+      "unchanged_source_files": 26
+    }
+  },
+  "release": {
+    "path": "docs/_reset/owned-sequences-release-revised-20261024.json",
+    "sha256": "0fb43209722783e64d8235244e7621a719a50b2bddcaf35d41b3e0397019ae4f",
+    "wheel_sha256": "1fbcc3df953b2ff98707443d1d655f963c22235e331e27560c68c5b4b235b0b1",
+    "installed_files": 40,
+    "modules": 36,
+    "changed_product_files": [
+      "src/cryptalis/_rotation_transition.py",
+      "src/cryptalis/deprotection.py",
+      "src/cryptalis/manifest/compiler.py",
+      "src/cryptalis/migration.py",
+      "src/cryptalis/restore.py",
+      "src/cryptalis/sqlalchemy.py"
+    ],
+    "unchanged_crypto_files": 10,
+    "package": "/tmp/cryptalis-owned-sequences-py313-20261024/lib/python3.13/site-packages/cryptalis/__init__.py"
+  },
+  "runtime": {
+    "python": "3.13.12",
+    "sqlmodel": "0.0.48",
+    "SQLAlchemy": "2.1.3",
+    "psycopg": "3.3.6",
+    "cryptography": "50.0.2",
+    "greenlet": "3.5.6"
+  },
+  "document_sha256": {
+    "docs/status.md": "f7bade09de9987e14827d723c550dea7ba6255d3fe03c80261f8fd9ad9cf4cf7",
+    "docs/BUILD_CHECKLIST.md": "988229f0d60803bde33e4ff000f266a4955a8b5a1cc00dbe838478e0458a4511",
+    "docs/decisions.md": "3d8b048a929a62d709ca7e31a6fb91a24af38ad62dda1274ed37a6024d03ac79",
+    "docs/lifecycle.md": "5c9e2fb60aa066fa5d1588c02cd1062baf83202cb8243f96cbe8500986414345",
+    "docs/security.md": "049f88de45c6a207bff8fd7768f7c1fcfad2b4a27f8914d77694cc0816d4d98a",
+    "docs/walkthrough-migration.md": "f9ab1f2f44fc0059b828eeab64d103afeceeed4eb1757443020ed12bf89f4e9a",
+    "docs/architecture/README.md": "9410010a025162e6ce4f71307b679af88d4b22330e2d16ece79864eac642de02"
+  },
+  "historical_evidence": {
+    "owned-sequences-source-red-20261024.json": {
+      "sha256": "d7aaa76c2d87fda41ebe8391ffb94aa86acb3ba34b2282b7d5fb7d445e12e496",
+      "pytest_report_counts": {
+        "test_calls": {
+          "passed": 1,
+          "failed": 1
+        },
+        "subtest_calls": {},
+        "setup": {
+          "passed": 2
+        },
+        "teardown": {
+          "passed": 2
+        },
+        "collection": {},
+        "selected_items": 2
+      },
+      "fixing_revision": "worktree-dfaf520568f7945f",
+      "scope": "Independent native control passed; pre-implementation owned-sequence planning refused."
+    },
+    "owned-sequences-source-initial-20261024.json": {
+      "sha256": "5db6b38d94a8796069149ceee02e88614b9f0115df1f287a37e6ab746a4a9bec",
+      "pytest_report_counts": {
+        "test_calls": {
+          "passed": 74,
+          "failed": 4
+        },
+        "subtest_calls": {},
+        "setup": {
+          "passed": 78
+        },
+        "teardown": {
+          "passed": 78
+        },
+        "collection": {},
+        "selected_items": 78
+      },
+      "fixing_revision": "worktree-47f7fa864d427982",
+      "scope": "Initial implementation: three absent-journal fixture errors and one diagnostic location mismatch, subsequently corrected."
+    },
+    "owned-sequences-source-focused-20261024.json": {
+      "sha256": "b4ba1fab10d5b011ebeab5031a3c9f42f52c4158f5e5f65c77112134d2c47adb",
+      "pytest_report_counts": {
+        "test_calls": {
+          "passed": 81
+        },
+        "subtest_calls": {},
+        "setup": {
+          "passed": 81
+        },
+        "teardown": {
+          "passed": 81
+        },
+        "collection": {},
+        "selected_items": 81
+      },
+      "fixing_revision": "worktree-481b72cbd34b3656",
+      "scope": "Earlier native and compiler controls before SELECT-shaped query revision."
+    },
+    "owned-sequences-source-full-20261024.json": {
+      "sha256": "a2ca2dfba03d157dac18b6b745a0f958dfc09ca8072eb91c231f48ba36409621",
+      "pytest_report_counts": {
+        "test_calls": {
+          "passed": 2459,
+          "failed": 19,
+          "skipped": 2
+        },
+        "subtest_calls": {
+          "passed": 116
+        },
+        "setup": {
+          "passed": 2480
+        },
+        "teardown": {
+          "passed": 2480
+        },
+        "collection": {
+          "skipped": 13
+        },
+        "selected_items": 2480
+      },
+      "fixing_revision": "worktree-481b72cbd34b3656",
+      "scope": "Nineteen read-only observer assertions rejected WITH as first SQL token. Query moved to SELECT outer shape; assertions unchanged."
+    },
+    "fresh-cluster-export-20261024-37.json": {
+      "sha256": "774bc4b8d10c6a27a288b710c59162ab25b39188a978457bb7459e90b0e6b164",
+      "pytest_report_counts": {
+        "test_calls": {
+          "passed": 1
+        },
+        "subtest_calls": {},
+        "setup": {
+          "passed": 1
+        },
+        "teardown": {
+          "passed": 1
+        },
+        "collection": {},
+        "selected_items": 1
+      },
+      "fixing_revision": "worktree-481b72cbd34b3656",
+      "scope": "Earlier source export before query revision."
+    },
+    "fresh-cluster-restore-20261024-36.json": {
+      "sha256": "6b88a8a96bcfeebf7ea1e67ef87c5a4665ca09333e60f7b352e10f9f43ebc68c",
+      "pytest_report_counts": {
+        "test_calls": {
+          "passed": 4
+        },
+        "subtest_calls": {},
+        "setup": {
+          "passed": 4
+        },
+        "teardown": {
+          "passed": 4
+        },
+        "collection": {},
+        "selected_items": 4
+      },
+      "fixing_revision": "worktree-481b72cbd34b3656",
+      "scope": "Earlier source fresh restore before query revision."
+    },
+    "owned-sequences-release-final-20261024.json": {
+      "sha256": "7a4b0c8eb052fddc4b56cf755b057d0a11f34d3e73a90a63774dc852e9598e41",
+      "scope": "Earlier reproducible cc6d wheel before SELECT-shaped query revision; not the current artifact."
+    }
+  },
+  "scope": "Local PostgreSQL 16 ordinary persistent automatically owned sequences on admitted protected TEXT/VARCHAR/Boolean columns; original OID/config/ACL/comment and native counter semantics across atomic forward/reverse, rollback, uncertain COMMIT, exact restore/v2 maps, repeated adoption and latest-value exit; actual revised wheel and original single-tenant SQLModel direct/rewrap-first restore/v1 routes. Runtime role cannot transfer ownership to a separate owner; do not claim live different-owner drift injection. No identity, protected server defaults, production custody/deployment/cost or independent human qualification.",
+  "objectives": "All 34 states unchanged",
+  "gates": "All seven UNKNOWN"
+}

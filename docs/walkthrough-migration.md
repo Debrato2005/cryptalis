@@ -870,6 +870,29 @@ activation acceptance controls. The `--sqlmodel-direct-search` profile reuses th
 pinned application snapshot required by `--sqlmodel-searchable`. It requires no
 previous-reader interpreter and adds no HTTP/JWT/SMTP qualification.
 
+## Preserve an admitted owned sequence
+
+Deploy readers for lock/v5 and restore/v2 before sequence-bearing protection.
+Keep record IDs application-generated. Keep protected server defaults absent.
+Planning captures each admitted sequence's identity, configuration, owner and ACL.
+The switch preserves that object through native ownership DDL. Do not reset its
+counter to the captured start value. Native rollback gaps remain valid.
+
+Keep the complete restore/v2 binding after fresh-cluster adoption. The restored
+sequence has a new OID, which the binding maps from the source-effective identity.
+Use that binding for attachment, direct generation planning or reverse planning.
+Later inherited lineage retains its mapping. A changed OID, ownership, ACL or
+configuration requires resolution before retry. Removal retains exact admitted
+user sequences, including declared `_cryptalis_*` names. Other leftover objects refuse.
+
+The revised query passes 201 source and 269 installed affected/application controls.
+Source and installed fresh-target profiles each pass four. Both original six-file
+SQLModel adoption paths pass with the installed wheel. The full source regression
+also passes. The
+[lifecycle contract](lifecycle.md#owned-sequence-preservation-and-restored-identity-2026-10-24),
+[format decision](decisions.md#owned-sequence-metadata-and-restored-identity-2026-10-24)
+and [status](status.md#owned-sequence-preservation-and-restore-2026-10-24) define the current scope.
+
 ## Measured throughput
 
 Use positive finite integer or floating-point observations for measured rows per second.

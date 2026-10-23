@@ -127,6 +127,8 @@ def main():
     parser.add_argument('--restore-lease', action='store_true',
                         help='Run focused restored-target key lease and no-effects controls.')
     profiles = parser.add_mutually_exclusive_group()
+    profiles.add_argument('--owned-sequences', action='store_true',
+                          help='Qualify original owned sequence identity through fresh restore and native exit.')
     profiles.add_argument('--boolean', action='store_true',
                           help='Qualify Boolean storage after payload rotation on a fresh cluster.')
     profiles.add_argument('--sqlmodel-direct-search', action='store_true',
@@ -149,6 +151,8 @@ def main():
     profiles.add_argument('--search-rotation', action='store_true',
                           help='Qualify backup recovery after search rotation and a later protected edit.')
     args = parser.parse_args()
+    if args.owned_sequences and (args.varchar or args.restore_lease):
+        parser.error('--owned-sequences uses the sequence-bearing TEXT fixture and restore lifecycle.')
     if args.boolean and (args.varchar or args.restore_lease):
         parser.error('--boolean uses the typed Boolean fixture and its restore lifecycle.')
     if (args.sqlmodel_searchable or args.sqlmodel_direct_search) and (args.varchar or args.restore_lease):
@@ -162,7 +166,8 @@ def main():
     export_receipt = receipt_path(f'fresh-cluster-export-{DATE}.json')
     restore_receipt = receipt_path(f'fresh-cluster-restore-{DATE}.json')
 
-    profile = ('; Boolean storage after payload rotation' if args.boolean else
+    profile = ('; owned-sequence identity mapping and native counter profile' if args.owned_sequences else
+               '; Boolean storage after payload rotation' if args.boolean else
                '; pinned SQLModel direct restore-binding search profile' if args.sqlmodel_direct_search else
                '; pinned searchable SQLModel app adoption and search-rotation profile' if (args.sqlmodel_searchable or args.sqlmodel_direct_search) else
                '; pinned Smolink root-rewrap and payload-rotation application profile' if args.smolink else
@@ -182,15 +187,22 @@ def main():
                          else 'tests/test_fresh_cluster_export.py'),
                         {'CRYPTALIS_SMOLINK_FRESH_EXPORT': str(workdir) if args.smolink else '',
                          'CRYPTALIS_FRESH_CLUSTER_DIR': str(workdir),
+                         'CRYPTALIS_FRESH_OWNED_SEQUENCES': '1' if args.owned_sequences else '0',
                          'CRYPTALIS_FRESH_ADOPTED_SEARCH': '1' if (args.adopted_search or args.direct_generation) else '0',
                          'CRYPTALIS_FRESH_SOURCE_VARCHAR': '1' if args.varchar else '0',
                          'CRYPTALIS_FRESH_SOURCE_REWRAP': '1' if args.rewrap else '0',
                          'CRYPTALIS_FRESH_SOURCE_PAYLOAD_ROTATION': '1' if args.payload_rotation else '0',
                          'CRYPTALIS_FRESH_SOURCE_SEARCH_ROTATION': '1' if args.search_rotation else '0'})
     manifest = json.loads((workdir / 'restore-manifest.json').read_text())
+    if manifest.get('owned_sequences', False) is not args.owned_sequences:
+        raise SystemExit('FreshCluster.ProfileMismatch: owned-sequence export did not match the requested profile.')
     if manifest.get('adopted_search', False) is not (args.adopted_search or args.direct_generation):
         raise SystemExit('FreshCluster.ProfileMismatch: adopted-search export did not match the requested profile.')
-    if args.boolean:
+    if args.owned_sequences:
+        plan = json.loads(base64.b64decode(manifest['plan'], validate=True))
+        if plan.get('lock', {}).get('schema') != 'cryptalis.lock/v5' or not manifest.get('sequence_facts'):
+            raise SystemExit('FreshCluster.ProfileMismatch: sequence-bearing source lock is missing.')
+    elif args.boolean:
         if manifest.get('application_profile') != 'boolean-storage':
             raise SystemExit('FreshCluster.ProfileMismatch: Boolean storage export is missing.')
         plan = json.loads(base64.b64decode(manifest['plan'], validate=True))
@@ -234,7 +246,8 @@ def main():
         credentials = provision(port, password, manifest, plain_database)
         home = write_home(workdir, port, manifest, credentials)
         restore = run_pytest(restore_receipt, 'Fresh-cluster protected-backup recovery and adoption; isolated cluster' + profile,
-                             ('tests/test_sqlmodel_searchable_restore.py' if (args.sqlmodel_searchable or args.sqlmodel_direct_search) else
+                             ('tests/test_owned_sequences_restore.py' if args.owned_sequences else
+                              'tests/test_sqlmodel_searchable_restore.py' if (args.sqlmodel_searchable or args.sqlmodel_direct_search) else
                               'tests/test_fresh_boolean_restore.py' if args.boolean else
                               'tests/test_smolink_fresh_cluster.py' if args.smolink
                               else 'tests/test_direct_generation.py' if args.direct_generation

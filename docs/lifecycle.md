@@ -563,7 +563,7 @@ Switch drops the ciphertext column without `CASCADE`, renames staging into the o
 column name, restores recorded constraints and indexes, and records the resulting schema.
 Pre-switch abort removes only reverse-owned staging and guards. Removal requires a
 `RemovalApproval`, matching external pins, an empty metadata diff, no remaining
-`_cryptalis` relations or functions in inventoried schemas, and the recorded retirable
+unadmitted `_cryptalis` relations or functions in inventoried schemas, and the recorded retirable
 aborted rows. A repeated terminal request asserts the recorded state and does not invent a
 new success.
 Journal retirement and later removal checks also compare the native catalog with
@@ -586,12 +586,54 @@ plan/removal refusals. Counts are not gate evidence.
 **Limits:** in-place reverse cannot restore physical column order (`attnum`). Lock v2
 captures and restores protected-column comments, statistics targets, storage,
 compression, options, column grants, constraint and index comments, and extended
-statistics. Protection refuses expression extended statistics and sequences owned by a
-protected column. At that checkpoint, fresh-cluster
+statistics. At that checkpoint, protection refused expression extended statistics and
+sequences owned by a protected column. The [sequence extension](#owned-sequence-preservation-and-restored-identity-2026-10-24)
+adds the bounded preservation contract. At that checkpoint, fresh-cluster
 restore, a real package-free application run, retained-backup reader proof, and the
 retained-native alternative remained UNKNOWN.
 Layout comparison and the decision not to promote retained-native are recorded in
 [the 2026-10-19 evaluation](_reset/layout-evaluation-20261019.md).
+
+### Owned-sequence preservation and restored identity: 2026-10-24
+
+**IMPLEMENTED, bounded source and installed verification:** lock/v5
+captures ordinary persistent sequences automatically owned by protected columns.
+Each sequence must share the table's schema and owner. The inventory records
+qualified name, OID, native type, configuration, comment, effective ACL, grantor,
+grant option and automatic dependency. Identity, internal, extension and other
+unsupported dependencies refuse. Existing generated-key and protected-default
+rules remain unchanged. Locks without owned sequences retain their earlier formats.
+
+Forward and reverse switches check the inventory, detach ownership, replace the
+column and attach the same sequence to its replacement. The existing transaction
+contains all steps. After native ALTER locking, another check requires the same
+OID, owner, configuration, comment and ACL before column replacement. ACTIVE,
+paused reverse, restore and removal checks require the admitted inventory.
+Older locks refuse a newly owned sequence. Terminal removal exempts only exact
+admitted sequence identities from its Cryptalis object scan, including declared
+`_cryptalis_*` names. Other leftover objects still refuse.
+
+Cryptalis does not capture mutable counters as drift facts, call sequence
+functions, recreate sequences or replay their state. Native increments, rollback
+gaps and unused cache reservations remain PostgreSQL behavior. Sequence locking
+does not authenticate the host's writer-exclusion assertion or fence all consumers.
+
+Sequence-bearing adoption emits restore/v2. Its complete ordered map binds each
+model, schema, name and column to its source-effective OID and actual target OID.
+Exact logical facts precede the mapping. Later checks require the mapped target
+identity. Flat lineage composes mappings through later adoption and direct
+generation planning without rewriting source artifacts or journal authority.
+Sources without owned sequences retain restore/v1. Deploy v5/v2 readers first.
+CF1, provider authority and retained-key duties remain unchanged. See the
+[format decision](decisions.md#owned-sequence-metadata-and-restored-identity-2026-10-24)
+and [current evidence](status.md#owned-sequence-preservation-and-restore-2026-10-24).
+The four source and installed fresh-target controls pass mapped identities through inherited
+root/payload lineage, direct generation planning, a second adoption and native
+exit. Actual older readers refuse both new formats before database access.
+The revised compiler query passes 201 source and 269 installed affected/application
+controls. Both installed original SQLModel adoption paths also pass. The full
+source regression passes 2,478 tests and 116 subtests. Physical column order
+and retained-native preservation remain separate open work.
 
 ### Reverse privilege admission: 2026-10-23
 
@@ -633,6 +675,7 @@ every exact value through the product decoder and an independent decoder oracle.
 A restored journal remains progress evidence, never restore authority by itself.
 
 `cryptalis.restore/v1` (`src/cryptalis/restore.py`) adds the approved bring-up contract.
+Sequence-bearing sources use the [restore/v2 extension](#owned-sequence-preservation-and-restored-identity-2026-10-24).
 A host `RestoreApproval` asserts the restore intent, the quarantine, and a fenced source
 (`source_fenced`). Adoption runs as the owner without durable database changes.
 It authenticates every retained frame with the retained keys, verifies the target
@@ -683,8 +726,9 @@ removal, schema-fact equality, native `psycopg` readback, and journal absence. R
 authenticate either and has no cryptographic evidence of source isolation. Adoption
 refuses a restated constraint without a retained frame row,
 and it admits two exact forms rather than general SQL equivalence. The probes cover only
-the named malformed frames. Physical column order and
-owned-sequence capture remain.
+the named malformed frames. Physical column order remains open. Owned-sequence
+capture was unadmitted at that checkpoint. Its [extension](#owned-sequence-preservation-and-restored-identity-2026-10-24)
+has a separate verification boundary.
 
 ### Payload-rotation backup adoption: 2026-10-23
 

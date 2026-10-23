@@ -266,10 +266,12 @@ Queries permit `equality` and `unique`. An empty list means storage-only. Equali
 Unique implies equality and requires both leakage acknowledgments. `protect` must be true.
 Removal uses a semantic diff and a later verified transition.
 
-Text-only plans emit `cryptalis.lock/v2`. Plans with native VARCHAR emit `cryptalis.lock/v3`
+Without owned sequences, text-only plans emit `cryptalis.lock/v2`. Plans with native VARCHAR emit `cryptalis.lock/v3`
 and require `pg-varchar/v1`. A plan with Boolean storage emits `cryptalis.lock/v4`
 and requires `boolean-u8/v1`. Mixed fields retain each required reader.
-Current readers accept v1 through v4. Older readers refuse v4 before use.
+Plans with admitted owned sequences emit `cryptalis.lock/v5`. Other plans retain
+their existing format selection and bytes. Current readers accept v1 through v5.
+Older operational readers refuse the embedded v5 lock before effects.
 The [VARCHAR decision](../decisions.md#native-varchar-text-admission-2026-10-22) defines assignment and reader boundaries.
 Its exact top-level members are
 `schema`, `profile`, `domain_id`, `database`, `declaration`, `models`, `writer_inventory`, `search_reviews`, `ddl`, and `required_readers`.
@@ -285,6 +287,16 @@ storage, compression, options, ACL entries), constraint and index comments, and 
 statistics rebuilt from captured fields. The protection switch applies captured column
 grants to the ciphertext column; reverse restores them. Statistics targets use strings because the
 manifest integer grammar is non-negative and bounded.
+V5 adds `owned_sequences` to every model's source metadata, including empty inventories.
+It records stable identity, owner, native configuration, effective ACL and dependency facts.
+Atomic ownership transfer preserves the same sequence object through either column switch.
+Restore/v2 binds new restored OIDs after exact logical comparison. No cryptographic
+value format changes. The [lifecycle contract](../lifecycle.md#owned-sequence-preservation-and-restored-identity-2026-10-24)
+and [status](../status.md#owned-sequence-preservation-and-restore-2026-10-24) define the verification boundary.
+The revised query passes source and installed controls. Both fresh-target profiles
+pass complete OID mapping, direct generation and repeated adoption. The full
+source regression also passes. Physical column order and retained-native
+preservation remain separate open work.
 Catalog type modifiers use strings because PostgreSQL uses negative sentinels.
 Unrelated SQL definitions use SHA-256 fingerprints of their canonical JSON string values.
 Original admitted unique constraints and indexes retain their exact definitions for later restoration.

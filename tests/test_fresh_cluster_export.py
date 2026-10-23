@@ -124,6 +124,7 @@ def published_sessions(app, varchar, key_factory):
 def test_export_fresh_cluster_source():
     workdir = Path(os.environ['CRYPTALIS_FRESH_CLUSTER_DIR'])
     varchar = os.environ.get('CRYPTALIS_FRESH_SOURCE_VARCHAR') == '1'
+    owned_sequences = os.environ.get('CRYPTALIS_FRESH_OWNED_SEQUENCES') == '1'
     adopted_search = os.environ.get('CRYPTALIS_FRESH_ADOPTED_SEARCH') == '1'
     rewrapped = os.environ.get('CRYPTALIS_FRESH_SOURCE_REWRAP') == '1'
     payload_rotated = os.environ.get('CRYPTALIS_FRESH_SOURCE_PAYLOAD_ROTATION') == '1'
@@ -131,7 +132,12 @@ def test_export_fresh_cluster_source():
     pre_rotation_frame = None
     if sum((rewrapped, payload_rotated, search_rotated)) > 1:
         pytest.fail('FreshCluster.ProfileMismatch: select one rotation profile.')
-    with application(setup=source_metadata_fixture,
+    def source_setup(connection, schema, role):
+        source_metadata_fixture(connection, schema, role)
+        if owned_sequences:
+            from test_owned_sequences import install_sequence
+            install_sequence(connection, schema, role)
+    with application(setup=source_setup,
                      value_type=String(64, collation='C') if varchar else None) as app:
         if adopted_search:
             declaration = app.plan.document['lock']['declaration']
@@ -147,6 +153,11 @@ def test_export_fresh_cluster_source():
                 backfill_rows_per_second=1000, verify_rows_per_second=1000,
                 temporary_bytes_per_row=1024, wal_bytes_per_row=2048)
             app.pin = m.DeploymentPin(app.plan.target_id, app.plan.operation_id, app.plan.digest, 'PREPARED')
+        sequence_oracle, sequence_next_expected = None, None
+        if owned_sequences:
+            from test_owned_sequences import facts, next_value
+            sequence_oracle = facts(app)
+            assert next_value(app) == 101
         assert_source_metadata(app, app.role)
         parsed = psycopg.conninfo.conninfo_to_dict(os.environ['CRYPTALIS_TEST_DATABASE_URL'])
         runtime = psycopg.conninfo.conninfo_to_dict(os.environ['CRYPTALIS_TEST_RUNTIME_DATABASE_URL'])
@@ -209,6 +220,10 @@ def test_export_fresh_cluster_source():
             assert current[ADDED_ID] != sealed[ADDED_ID]
             assert all(current[identity] == frame for identity, frame in sealed.items() if identity != ADDED_ID)
             assert index_identity(app) == index_before
+        if owned_sequences:
+            assert facts(app) == sequence_oracle
+            assert next_value(app) == 108
+            sequence_next_expected = 115
         dump(workdir / 'protected.sql', app.schema, environment('CRYPTALIS_TEST_DATABASE_URL'))
         model = app.plan.document['lock']['models'][0]
         field = next(field for field in model['fields'] if field['column'] == 'name')
@@ -217,6 +232,8 @@ def test_export_fresh_cluster_source():
         expected[str(ADDED_ID)] = [str(TENANT), later_value if payload_rotated or search_rotated else 'added while protected']
         del expected[str(DELETED_ID)]
         manifest = {
+            'owned_sequences': owned_sequences, 'sequence_facts': sequence_oracle,
+            'sequence_next_expected': sequence_next_expected,
             'adopted_search': adopted_search,
             'storage_expected': ({identity: ('fresh' if UUID(identity) == ADDED_ID else 'label-' + str(UUID(identity).int))
                                   for identity in expected} if adopted_search else None),

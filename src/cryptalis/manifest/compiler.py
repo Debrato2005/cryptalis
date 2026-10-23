@@ -388,6 +388,160 @@ def protected_owned_sequences(connection, schema, table, names):
     """, schema=schema, table=table) if row["column"] in wanted})
 
 
+def sequence_metadata(connection, schema, table, names, *, expected=()):
+    """Read stable sequence facts, including expected objects while detached."""
+    wanted = set(names)
+    expected_names = {(entry['schema'], entry['name']) for entry in expected}
+    expected_oids = {entry['oid'] for entry in expected}
+    entries = []
+    for row in _rows(connection, """
+        SELECT sn.nspname AS schema, s.relname AS name, a.attname AS column,
+               s.oid::text AS oid, r.rolname AS owner,
+               tn.nspname || '.' || ty.typname AS type,
+               q.seqstart::text AS start, q.seqincrement::text AS increment,
+               q.seqmin::text AS min, q.seqmax::text AS max,
+               q.seqcache::text AS cache, q.seqcycle AS cycle,
+               s.relpersistence AS persistence,
+               pg_catalog.obj_description(s.oid, 'pg_class') AS comment,
+               own.deptype AS dependency_kind,
+               EXISTS (SELECT 1 FROM pg_catalog.pg_depend d
+                       WHERE d.classid='pg_catalog.pg_class'::regclass
+                         AND d.objid=s.oid AND d.deptype='e') AS extension,
+               EXISTS (SELECT 1 FROM pg_catalog.pg_depend d
+                       WHERE d.refclassid='pg_catalog.pg_class'::regclass
+                         AND d.refobjid=s.oid) AS incoming,
+               (s.relowner<>target.relowner OR s.relnamespace<>target.relnamespace
+                OR own.refobjid IS NOT NULL AND
+                   (own.refobjid<>target.oid OR a.attname IS NULL OR
+                    NOT a.attname=ANY(CAST(:columns AS pg_catalog.text[])))
+                OR EXISTS (
+                    SELECT 1 FROM pg_catalog.pg_depend d
+                    WHERE d.classid='pg_catalog.pg_class'::regclass AND d.objid=s.oid
+                      AND NOT (
+                        d.objsubid=0 AND d.refobjsubid=0 AND d.deptype='n'
+                        AND d.refclassid='pg_catalog.pg_namespace'::regclass
+                        AND d.refobjid=s.relnamespace
+                        OR d.objsubid=0 AND own.refobjid IS NOT NULL
+                        AND d.refclassid='pg_catalog.pg_class'::regclass
+                        AND d.refobjid=own.refobjid AND d.refobjsubid=own.refobjsubid
+                        AND d.deptype=own.deptype
+                      )
+                )) AS other
+        FROM pg_catalog.pg_class s
+        JOIN pg_catalog.pg_namespace sn ON sn.oid=s.relnamespace
+        JOIN pg_catalog.pg_sequence q ON q.seqrelid=s.oid
+        JOIN pg_catalog.pg_type ty ON ty.oid=q.seqtypid
+        JOIN pg_catalog.pg_namespace tn ON tn.oid=ty.typnamespace
+        JOIN pg_catalog.pg_roles r ON r.oid=s.relowner
+        CROSS JOIN (
+            SELECT t.oid, t.relowner, t.relnamespace
+            FROM pg_catalog.pg_class t
+            JOIN pg_catalog.pg_namespace n ON n.oid=t.relnamespace
+            WHERE n.nspname=:schema AND t.relname=:table
+        ) AS target
+        LEFT JOIN pg_catalog.pg_depend own
+          ON own.classid='pg_catalog.pg_class'::regclass AND own.objid=s.oid
+          AND own.objsubid=0 AND own.refclassid='pg_catalog.pg_class'::regclass
+          AND own.deptype IN ('a','i')
+        LEFT JOIN pg_catalog.pg_attribute a
+          ON a.attrelid=own.refobjid AND a.attnum=own.refobjsubid
+          AND a.attnum>0 AND NOT a.attisdropped
+        WHERE s.relkind='S' AND (
+            own.refobjid=target.oid AND a.attname=ANY(CAST(:columns AS pg_catalog.text[]))
+            OR s.oid=ANY(CAST(:expected_oids AS pg_catalog.oid[]))
+            OR sn.nspname=ANY(CAST(:expected_schemas AS pg_catalog.text[]))
+               AND s.relname=ANY(CAST(:expected_names AS pg_catalog.text[]))
+        )
+    """, schema=schema, table=table, columns=sorted(wanted),
+            expected_oids=sorted(expected_oids),
+            expected_schemas=sorted({item[0] for item in expected_names}),
+            expected_names=sorted({item[1] for item in expected_names})):
+        if (row['oid'] not in expected_oids
+                and (row['schema'], row['name']) not in expected_names
+                and row['column'] not in wanted):
+            continue
+        row['dependencies'] = {key: row.pop(key) for key in ('extension', 'incoming', 'other')}
+        row['acl'] = []
+        entries.append(row)
+    by_oid = {}
+    for entry in entries:
+        by_oid.setdefault(entry['oid'], []).append(entry)
+    if not entries:
+        return []
+    for row in _rows(connection, """
+        SELECT s.oid::text AS oid, grantor.rolname AS grantor,
+               CASE WHEN x.grantee=0 THEN NULL ELSE grantee.rolname END AS grantee,
+               x.privilege_type AS privilege, x.is_grantable AS grantable
+        FROM pg_catalog.pg_class s
+        CROSS JOIN LATERAL pg_catalog.aclexplode(
+            COALESCE(s.relacl, pg_catalog.acldefault('S', s.relowner))) AS x
+        LEFT JOIN pg_catalog.pg_roles grantor ON grantor.oid=x.grantor
+        LEFT JOIN pg_catalog.pg_roles grantee ON grantee.oid=x.grantee
+        WHERE s.oid=ANY(CAST(:oids AS pg_catalog.oid[]))
+    """, oids=sorted(by_oid)):
+        oid = row.pop('oid')
+        for entry in by_oid[oid]:
+            entry['acl'].append(dict(row))
+    for entry in entries:
+        entry['acl'].sort(key=_canonical)
+    return sorted(entries, key=lambda item: (item['column'] or '', item['schema'], item['name'], item['oid']))
+
+
+def _validate_sequences(entries, model):
+    """Admit only canonical stable facts for ordinary automatic ownership."""
+    def require(condition):
+        if not condition:
+            raise ValueError
+
+    def integer(value, minimum, maximum):
+        require(type(value) is str and value.isascii())
+        try:
+            result = int(value)
+        except ValueError:
+            raise ValueError from None
+        require(value == str(result) and minimum <= result <= maximum)
+        return result
+
+    require(type(entries) is list)
+    fields = {field['column'] for field in model['fields']}
+    seen_oids, seen_names = set(), set()
+    for entry in entries:
+        require(type(entry) is dict and entry.keys() == set(
+            'schema name column oid owner type start increment min max cache cycle '
+            'persistence comment acl dependency_kind dependencies'.split()))
+        for key in ('schema', 'name', 'column', 'owner'):
+            require(type(entry[key]) is str and entry[key] and '\0' not in entry[key])
+        require(entry['schema'] == model['schema'] and entry['column'] in fields)
+        integer(entry['oid'], 1, 2**32 - 1)
+        require(entry['oid'] not in seen_oids and (entry['schema'], entry['name']) not in seen_names)
+        seen_oids.add(entry['oid'])
+        seen_names.add((entry['schema'], entry['name']))
+        require(entry['type'] in ('pg_catalog.int2', 'pg_catalog.int4', 'pg_catalog.int8'))
+        bits = {'pg_catalog.int2': 16, 'pg_catalog.int4': 32, 'pg_catalog.int8': 64}[entry['type']]
+        low = integer(entry['min'], -(2**(bits - 1)), 2**(bits - 1) - 1)
+        high = integer(entry['max'], -(2**(bits - 1)), 2**(bits - 1) - 1)
+        require(low < high)
+        integer(entry['start'], low, high)
+        require(integer(entry['increment'], -(2**63), 2**63 - 1) != 0)
+        integer(entry['cache'], 1, 2**63 - 1)
+        require(type(entry['cycle']) is bool and entry['persistence'] == 'p')
+        require(entry['comment'] is None or type(entry['comment']) is str)
+        require(entry['dependency_kind'] == 'a')
+        require(type(entry['dependencies']) is dict
+                and entry['dependencies'].keys() == {'extension', 'incoming', 'other'}
+                and all(value is False for value in entry['dependencies'].values()))
+        require(type(entry['acl']) is list)
+        for grant in entry['acl']:
+            require(type(grant) is dict and grant.keys() == {'grantor', 'grantee', 'privilege', 'grantable'})
+            require(type(grant['grantor']) is str and grant['grantor'] and '\0' not in grant['grantor'])
+            require(grant['grantee'] is None or
+                    type(grant['grantee']) is str and grant['grantee'] and '\0' not in grant['grantee'])
+            require(grant['privilege'] in ('SELECT', 'UPDATE', 'USAGE') and type(grant['grantable']) is bool)
+        canonical_acl = [_canonical(grant) for grant in entry['acl']]
+        require(canonical_acl == sorted(set(canonical_acl)))
+    require(entries == sorted(entries, key=lambda item: (item['column'], item['schema'], item['name'], item['oid'])))
+
+
 def _recorded_names(fields):
     constraints = sorted({item["name"] for field in fields for item in field["original"]["constraints"]})
     indexes = sorted({item["name"] for field in fields for item in field["original"]["indexes"]} | set(constraints))
@@ -422,7 +576,7 @@ def _column_acl(connection, schema, table, columns):
         facts["acl"].sort()
 
 
-def source_metadata(connection, schema, table, fields):
+def source_metadata(connection, schema, table, fields, *, sequences=False):
     """Capture protected-column facts the lock must restore after reverse."""
     columns = {field["column"]: {"comment": None, "statistics": "-1", "storage": "x",
                                  "compression": "", "options": [], "acl": []} for field in fields}
@@ -480,7 +634,10 @@ def source_metadata(connection, schema, table, fields):
             "statistics": str(row["target"]), "comment": row["comment"]}
         entry["definition_digest"] = _digest(entry)
         entries.append(entry)
-    return {"columns": columns, **comments, "extended_statistics": entries}
+    metadata = {"columns": columns, **comments, "extended_statistics": entries}
+    if sequences:
+        metadata['owned_sequences'] = sequence_metadata(connection, schema, table, columns)
+    return metadata
 
 
 def _metadata_issues(connection, schema, table, compiled, issues):
@@ -495,10 +652,14 @@ def _metadata_issues(connection, schema, table, compiled, issues):
         issues.append(Issue("unsupported_dependency", f"{compiled['model']}.{row['name']}",
                             "Drop expression extended statistics before planning; Cryptalis "
                             "does not capture them."))
-    for name in protected_owned_sequences(connection, schema, table, protected):
-        issues.append(Issue("unsupported_dependency", f"{compiled['model']}.{name}",
-                            "Drop the sequence or change its ownership before planning; Cryptalis "
-                            "drops the protected column and its owned sequences."))
+    sequences = compiled['source_metadata']['owned_sequences']
+    try:
+        _validate_sequences(sequences, compiled)
+    except (KeyError, TypeError, ValueError):
+        location = f"{compiled['model']}.{sequences[0]['name']}" if len(sequences) == 1 else compiled['model']
+        issues.append(Issue("unsupported_dependency", location,
+                            "Use ordinary persistent sequences owned by protected columns in the "
+                            "same schema and owner, without identity, extension or other dependencies."))
 
 
 def _id_codec(column, actual):
@@ -761,7 +922,7 @@ def _previous_lock(raw, current, engine):
     """Reject inconsistent compiler artifacts before computing a semantic diff."""
     old = decode_manifest_json(raw)
     try:
-        if (old.keys() != set('schema profile domain_id database declaration models writer_inventory search_reviews required_readers ddl'.split()) or old["schema"] not in ("cryptalis.lock/v1", "cryptalis.lock/v2", "cryptalis.lock/v3", "cryptalis.lock/v4")
+        if (old.keys() != set('schema profile domain_id database declaration models writer_inventory search_reviews required_readers ddl'.split()) or old["schema"] not in ("cryptalis.lock/v1", "cryptalis.lock/v2", "cryptalis.lock/v3", "cryptalis.lock/v4", "cryptalis.lock/v5")
                 or old["profile"] != "cf1" or old["domain_id"] != current["domain_id"]
                 or old["database"] != {"major": 16, "encoding": "UTF8"}):
             raise ValueError
@@ -771,6 +932,7 @@ def _previous_lock(raw, current, engine):
         if len(old["models"]) != len(declaration.models):
             raise ValueError
         seen = set()
+        sequence_oids, sequence_names = set(), set()
         for model, declared in zip(old["models"], declaration.models, strict=True):
             expected = set('model table_id schema table record tenancy fields source_schema source_metadata'.split())
             if old["schema"] == "cryptalis.lock/v1":
@@ -794,7 +956,10 @@ def _previous_lock(raw, current, engine):
                 raise ValueError
             if old["schema"] != "cryptalis.lock/v1":
                 metadata = model["source_metadata"]
-                if set(metadata) != {"columns", "constraints", "indexes", "extended_statistics"}:
+                metadata_keys = {"columns", "constraints", "indexes", "extended_statistics"}
+                if old['schema'] == 'cryptalis.lock/v5':
+                    metadata_keys.add('owned_sequences')
+                if set(metadata) != metadata_keys:
                     raise ValueError
                 if not all(isinstance(metadata[key], dict) for key in ("columns", "constraints", "indexes")):
                     raise ValueError
@@ -813,6 +978,14 @@ def _previous_lock(raw, current, engine):
                         raise ValueError
                     if not isinstance(entry["kinds"], list) or not isinstance(entry["columns"], list):
                         raise ValueError
+                if old['schema'] == 'cryptalis.lock/v5':
+                    _validate_sequences(metadata['owned_sequences'], model)
+                    for entry in metadata['owned_sequences']:
+                        name = (entry['schema'], entry['name'])
+                        if entry['oid'] in sequence_oids or name in sequence_names:
+                            raise ValueError
+                        sequence_oids.add(entry['oid'])
+                        sequence_names.add(name)
             if not isinstance(model["fields"], list) or len(model["fields"]) != len(declared.fields):
                 raise ValueError
             for field, intent in zip(model["fields"], declared.fields, strict=True):
@@ -820,7 +993,7 @@ def _previous_lock(raw, current, engine):
                 members = set('name column field_id queries representation payload_column unique_indexes original source descriptor descriptor_digest'.split())
                 if boolean:
                     members.add('application_default')
-                    if (old['schema'] != 'cryptalis.lock/v4' or intent.queries
+                    if (old['schema'] not in ('cryptalis.lock/v4', 'cryptalis.lock/v5') or intent.queries
                             or field['application_default'] is not None and type(field['application_default']) is not bool):
                         raise ValueError
                 if field.keys() != members or field["field_id"] != str(intent.field_id) or field["name"] != intent.name:
@@ -841,8 +1014,8 @@ def _previous_lock(raw, current, engine):
                         raise ValueError
             if any(not isinstance(model["source_schema"][key], list) for key in ("columns", "constraints", "indexes", "dependencies")):
                 raise ValueError
-            _validate_prior_source(model, varchar=old['schema'] in ('cryptalis.lock/v3', 'cryptalis.lock/v4'),
-                                   boolean=old['schema'] == 'cryptalis.lock/v4')
+            _validate_prior_source(model, varchar=old['schema'] in ('cryptalis.lock/v3', 'cryptalis.lock/v4', 'cryptalis.lock/v5'),
+                                   boolean=old['schema'] in ('cryptalis.lock/v4', 'cryptalis.lock/v5'))
         inventory = old["writer_inventory"]
         if inventory.keys() != {"complete", "evidence_kind", "writers"} or inventory["evidence_kind"] != "host_assertion":
             raise ValueError
@@ -854,7 +1027,11 @@ def _previous_lock(raw, current, engine):
             raise ValueError
         varchar = any(f['source']['type'] == 'varchar' for model in old['models'] for f in model['fields'])
         boolean = any(f['source']['type'] == 'bool' for model in old['models'] for f in model['fields'])
-        if boolean != (old['schema'] == 'cryptalis.lock/v4') or (not boolean and varchar != (old['schema'] == 'cryptalis.lock/v3')):
+        sequences = bool(sequence_oids)
+        expected_schema = ('cryptalis.lock/v5' if sequences else 'cryptalis.lock/v4' if boolean
+                           else 'cryptalis.lock/v3' if varchar else old['schema']
+                           if old['schema'] == 'cryptalis.lock/v1' else 'cryptalis.lock/v2')
+        if old['schema'] != expected_schema:
             raise ValueError
         if old["required_readers"] != _required_readers(old['models']):
             raise ValueError
@@ -1086,9 +1263,9 @@ def compile_protection(raw: bytes, mapping: Registry, engine: Engine, *,
                     continue
                 compiled = _compile_model(model, mapper, facts, issues, schema)
                 if compiled:
-                    _metadata_issues(connection, schema, table.name, compiled, issues)
                     compiled["source_metadata"] = source_metadata(
-                        connection, schema, table.name, compiled["fields"])
+                        connection, schema, table.name, compiled["fields"], sequences=True)
+                    _metadata_issues(connection, schema, table.name, compiled, issues)
                     for field in compiled["fields"]:
                         field["descriptor"]["domain_id"] = str(declaration.domain_id)
                         field["descriptor_digest"] = _digest(field["descriptor"])
@@ -1100,7 +1277,11 @@ def compile_protection(raw: bytes, mapping: Registry, engine: Engine, *,
         raise PlanningRejected(issues)
     varchar = any(f['source']['type'] == 'varchar' for model in models for f in model['fields'])
     boolean = any(f['source']['type'] == 'bool' for model in models for f in model['fields'])
-    document = {"schema": "cryptalis.lock/v4" if boolean else "cryptalis.lock/v3" if varchar else "cryptalis.lock/v2", "profile": "cf1",
+    sequences = any(model['source_metadata']['owned_sequences'] for model in models)
+    if not sequences:
+        for model in models:
+            del model['source_metadata']['owned_sequences']
+    document = {"schema": "cryptalis.lock/v5" if sequences else "cryptalis.lock/v4" if boolean else "cryptalis.lock/v3" if varchar else "cryptalis.lock/v2", "profile": "cf1",
                 "domain_id": str(declaration.domain_id), "database": {"major": 16, "encoding": "UTF8"},
                 "declaration": json.loads(declaration.canonical_bytes()), "models": models,
                 "writer_inventory": host, "search_reviews": reviews}

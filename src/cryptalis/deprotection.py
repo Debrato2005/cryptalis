@@ -15,7 +15,7 @@ Known limits, made explicit in removal approval:
   slot. Positional ``SELECT *`` readers must adjust.
 - Legacy locks without source_metadata refuse protected-column metadata.
   Current locks capture supported column metadata and protected extended
-  statistics for restoration. Owned sequences remain outside admission.
+  statistics for restoration. Lock v5 preserves admitted owned sequence objects.
 """
 from contextlib import contextmanager
 from dataclasses import dataclass
@@ -32,7 +32,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from cryptalis import migration as m
 from cryptalis.manifest.compiler import _metadata_diff
 from cryptalis.crypto.cf1 import FieldDescriptor, open_value
-from cryptalis.manifest.compiler import _canonical, _native_text_length, _previous_lock, source_metadata, _validate_catalog_facts
+from cryptalis.manifest.compiler import _canonical, _native_text_length, _previous_lock, _validate_catalog_facts
 
 FORMAT = 'cryptalis.reverse/v1'
 PHASES = ('PREPARED', 'EXPANDED', 'BACKFILLED', 'VERIFIED',
@@ -204,7 +204,7 @@ def plan(source, engine, *, source_pin, keys, plaintext_runtime_role, backfill_r
          verify_rows_per_second, temporary_bytes_per_row, wal_bytes_per_row, restore=None):
     """Read-only reverse proposal. No decrypt, staging, or implicit consent.
 
-    ``restore`` is an adopted ``cryptalis.restore/v1`` binding when the target
+    ``restore`` is an adopted restore binding when the target
     is a restored protected copy. The binding is recorded in the reverse
     artifact, so apply and remove refuse a different target without it.
     """
@@ -230,13 +230,15 @@ def plan(source, engine, *, source_pin, keys, plaintext_runtime_role, backfill_r
         m._check_connection(source, c, source_pin, binding=restore)
         if m._target(c)[:-1] != current[:-1]:
             raise m.TransitionFailure('maintenance_requires_planned_owner', source.operation_id)
+        from cryptalis.restore import sequence_admissions
         for model in source.document['lock']['models']:
             ownership = c.exec_driver_sql(
                 'SELECT pg_catalog.pg_get_userbyid(relowner) FROM pg_catalog.pg_class WHERE oid=pg_catalog.to_regclass(%s)',
                 (m._table(c, model),)).scalar_one()
             if ownership != source.document['target'][-1]:
                 raise m.TransitionFailure('maintenance_requires_table_owner', source.operation_id)
-            m._refuse_unrecorded_metadata(c, source, model)
+            m._refuse_unrecorded_metadata(c, source, model,
+                                          sequences=sequence_admissions(source.document, model, restore))
         retired = _inventory(c, source, source, own=None)
         _runtime_safety(c,source,plaintext_runtime_role,plaintext=True)
         for model in source.document['lock']['models']:
@@ -419,6 +421,7 @@ def _expand(c, p):
     source = p.source
     _inventory(c, p, p.source, own=p.operation_id)
     for model in p.document['lock']['models']:
+        m._check_owned_sequences(c, p, model)
         if m._facts(c, model) != p.document['active_schemas'][model['table_id']]:
             raise m.TransitionFailure('active_schema_mismatch', p.operation_id)
     functions = {}
@@ -537,8 +540,9 @@ def _literal(value):
 
 def _restore_metadata(c, p, model):
     table = m._table(c, model)
-    metadata = model.get('source_metadata')
+    metadata = m._expected_source_metadata(p, model)
     if metadata is None:
+        m._check_owned_sequences(c, p, model)
         return
     for column, facts in metadata['columns'].items():
         target = f'{table} ALTER COLUMN {m._quote(c, column)}'
@@ -590,7 +594,7 @@ def _restore_metadata(c, p, model):
             c.exec_driver_sql(f'ALTER STATISTICS {name} SET STATISTICS {target_statistics}')
         if entry['comment'] is not None:
             c.exec_driver_sql(f'COMMENT ON STATISTICS {name} IS {_literal(entry["comment"])}')
-    observed = source_metadata(c, model['schema'], model['table'], model['fields'])
+    observed = m._observed_source_metadata(c, p, model)
     if observed != metadata:
         raise m.TransitionFailure('metadata_restore_mismatch', p.operation_id)
 
@@ -606,10 +610,7 @@ def _switch(c, p, state, keys):
         table = m._table(c, model)
         m._refuse_unrecorded_metadata(c, p, model)
         for field in model['fields']:
-            # No CASCADE: an unexpected dependency blocks the atomic switch.
-            c.exec_driver_sql(f'ALTER TABLE {table} DROP COLUMN {m._quote(c, field["column"])}')
-            c.exec_driver_sql(f'ALTER TABLE {table} RENAME COLUMN {m._quote(c, _staging(field))} '
-                              f'TO {m._quote(c, field["column"])}')
+            m._replace_protected_column(c, p, model, field, _staging(field))
             if not field['source']['nullable']:
                 c.exec_driver_sql(f'ALTER TABLE {table} ALTER COLUMN {m._quote(c, field["column"])} SET NOT NULL')
         for original in sorted((item for field in model['fields'] for item in field['original']['constraints']),
@@ -644,8 +645,8 @@ def _inspect_plaintext(c, p, state, *, expect_guards):
         # A database journal cannot redefine the host-supplied native contract.
         if facts != observed['plaintext_schema'] or _metadata_diff(expected, facts):
             raise m.TransitionFailure('plaintext_schema_mismatch', p.operation_id)
-        metadata = model.get('source_metadata')
-        if metadata is not None and source_metadata(c, model['schema'], model['table'], model['fields']) != metadata:
+        metadata = m._expected_source_metadata(p, model)
+        if m._observed_source_metadata(c, p, model) != metadata:
             raise m.TransitionFailure('metadata_not_restored:source_metadata', p.operation_id)
 
 
@@ -745,11 +746,18 @@ def _assert_removed(c, p):
     journal = m._quote(c, p.document['journal_schema']) + '.' + m._quote(c, m.JOURNAL)
     if c.exec_driver_sql('SELECT pg_catalog.to_regclass(%s)', (journal,)).scalar_one() is not None:
         raise m.TransitionFailure('reverse_removal_incomplete', p.operation_id)
+    admitted_sequences = {
+        (entry['schema'], entry['name'], entry['oid'])
+        for model in p.document['lock']['models']
+        for entry in m._check_owned_sequences(c, p, model)
+    }
     schemas = sorted({model['schema'] for model in p.document['lock']['models']})
-    leftover = c.exec_driver_sql(
-        "SELECT n.nspname, c.relname FROM pg_catalog.pg_class c "
+    relations = c.exec_driver_sql(
+        "SELECT n.nspname, c.relname, c.oid::text, c.relkind FROM pg_catalog.pg_class c "
         "JOIN pg_catalog.pg_namespace n ON n.oid=c.relnamespace "
         "WHERE n.nspname=ANY(%s) AND pg_catalog.strpos(c.relname,'_cryptalis')=1", (schemas,)).all()
+    leftover = [entry for entry in relations
+                if not (entry[3] == 'S' and tuple(entry[:3]) in admitted_sequences)]
     functions = c.exec_driver_sql(
         "SELECT n.nspname, p.proname FROM pg_catalog.pg_proc p "
         "JOIN pg_catalog.pg_namespace n ON n.oid=p.pronamespace "
@@ -758,8 +766,8 @@ def _assert_removed(c, p):
         raise m.TransitionFailure('retained_cryptalis_objects', p.operation_id)
     for model in p.document['lock']['models']:
         differences = _metadata_diff(model['source_schema'], m._facts(c, model))
-        metadata = model.get('source_metadata')
-        if metadata is not None and source_metadata(c, model['schema'], model['table'], model['fields']) != metadata:
+        metadata = m._expected_source_metadata(p, model)
+        if m._observed_source_metadata(c, p, model) != metadata:
             differences.append('source_metadata')
         if differences:
             raise m.TransitionFailure('metadata_not_restored:' + ','.join(differences), p.operation_id)

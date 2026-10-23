@@ -24,7 +24,7 @@ from cryptalis.crypto.keys import CryptoFailure, Keyring, KeyUnavailable
 from cryptalis.crypto._payload_rotation import MAX_BATCH_BYTES, MAX_BATCH_ROWS
 from cryptalis.manifest.compiler import (compile_protection, _schema_facts, _canonical, _previous_lock,
                                           unrecorded_column_metadata, protected_extended_statistics,
-                                          protected_owned_sequences, source_metadata, _metadata_diff, _catalog_path)
+                                          sequence_metadata, source_metadata, _metadata_diff, _catalog_path)
 from cryptalis.manifest.parser import ManifestInvalid, _decode_json
 
 JOURNAL = '_cryptalis_journal'
@@ -343,11 +343,66 @@ def _apply_column_acl(c, table, column, entries, operation_id):
         c.exec_driver_sql(statement)
 
 
-def _refuse_unrecorded_metadata(c, p, model):
+def _expected_sequences(p, model, sequences=None):
+    if sequences is None:
+        from cryptalis.restore import sequence_admissions
+        return sequence_admissions(p.document, model)
+    return sequences
+
+
+def _check_owned_sequences(c, p, model, *, sequences=None):
+    expected = _expected_sequences(p, model, sequences)
+    observed = sequence_metadata(c, model['schema'], model['table'],
+                                 [field['column'] for field in model['fields']], expected=expected)
+    if observed != expected:
+        recorded = 'owned_sequences' in model.get('source_metadata', {})
+        raise TransitionFailure('source_metadata_changed' if recorded else 'unsupported_dependency', p.operation_id)
+    return expected
+
+
+def _expected_source_metadata(p, model, *, sequences=None):
+    metadata = deepcopy(model.get('source_metadata'))
+    if metadata is not None and 'owned_sequences' in metadata:
+        metadata['owned_sequences'] = _expected_sequences(p, model, sequences)
+    return metadata
+
+
+def _observed_source_metadata(c, p, model, *, sequences=None):
+    _check_owned_sequences(c, p, model, sequences=sequences)
+    metadata = model.get('source_metadata')
+    if metadata is None:
+        return None
+    return source_metadata(c, model['schema'], model['table'], model['fields'],
+                           sequences='owned_sequences' in metadata)
+
+
+def _replace_protected_column(c, p, model, field, replacement, *, sequences=None):
+    expected = _check_owned_sequences(c, p, model, sequences=sequences)
+    owned = [entry for entry in expected if entry['column'] == field['column']]
+    for entry in owned:
+        sequence = f'{_quote(c, entry["schema"])}.{_quote(c, entry["name"])}'
+        c.exec_driver_sql(f'ALTER SEQUENCE {sequence} OWNED BY NONE')
+    if owned:
+        detached = sequence_metadata(c, model['schema'], model['table'], [], expected=owned)
+        if detached != [{**entry, 'column': None, 'dependency_kind': None} for entry in owned]:
+            raise TransitionFailure('source_metadata_changed', p.operation_id)
+    table = _table(c, model)
+    # No CASCADE: an unexpected dependency blocks the atomic switch.
+    c.exec_driver_sql(f'ALTER TABLE {table} DROP COLUMN {_quote(c, field["column"])}')
+    c.exec_driver_sql(f'ALTER TABLE {table} RENAME COLUMN {_quote(c, replacement)} '
+                      f'TO {_quote(c, field["column"])}')
+    for entry in owned:
+        sequence = f'{_quote(c, entry["schema"])}.{_quote(c, entry["name"])}'
+        c.exec_driver_sql(f'ALTER SEQUENCE {sequence} OWNED BY {table}.{_quote(c, field["column"])}')
+    _check_owned_sequences(c, p, model, sequences=expected)
+
+
+def _refuse_unrecorded_metadata(c, p, model, *, sequences=None):
     protected = [field['column'] for field in model['fields']]
     metadata = model.get('source_metadata')
     if metadata is not None:
-        observed = source_metadata(c, model['schema'], model['table'], model['fields'])
+        observed = source_metadata(c, model['schema'], model['table'], model['fields'],
+                                   sequences='owned_sequences' in metadata)
         for field in model['fields']:
             if (observed['columns'][field['column']]['acl']
                     != metadata['columns'][field['column']]['acl']):
@@ -359,21 +414,16 @@ def _refuse_unrecorded_metadata(c, p, model):
             raise TransitionFailure('unsupported_protected_metadata', p.operation_id)
     if protected_extended_statistics(c, model['schema'], model['table'], protected):
         raise TransitionFailure('unsupported_dependency', p.operation_id)
-    if protected_owned_sequences(c, model['schema'], model['table'], protected):
-        raise TransitionFailure('unsupported_dependency', p.operation_id)
+    _check_owned_sequences(c, p, model, sequences=sequences)
 
 
 def _check_source_metadata(c, p, model):
     if 'source_metadata' not in model:
         _refuse_unrecorded_metadata(c, p, model)
         return
-    fields = model['fields']
-    observed = source_metadata(c, model['schema'], model['table'], fields)
-    if observed != model['source_metadata']:
+    observed = _observed_source_metadata(c, p, model)
+    if observed != _expected_source_metadata(p, model):
         raise TransitionFailure('source_metadata_changed', p.operation_id)
-    if protected_owned_sequences(c, model['schema'], model['table'],
-                                 [field['column'] for field in fields]):
-        raise TransitionFailure('unsupported_dependency', p.operation_id)
 
 
 def _target(c):
@@ -848,6 +898,7 @@ def _inspect_paused(c,p,state):
         if p.document['kind'] == 'protect':
             guard = _protected_contract(c, p, model, facts, paused=True, staging=True)
         else:
+            _check_owned_sequences(c, p, model)
             from cryptalis.deprotection import _staging
             expected = deepcopy(p.document['active_schemas'][model['table_id']])
             expected['relation']['user_triggers'] = True
@@ -934,9 +985,7 @@ def _switch(c,p,state,keys):
         _check_source_metadata(c,p,model)
         table=_table(c,model)
         for f in model['fields']:
-            # No CASCADE: an unexpected dependency blocks the atomic switch.
-            c.exec_driver_sql(f'ALTER TABLE {table} DROP COLUMN {_quote(c,f["column"])}')
-            c.exec_driver_sql(f'ALTER TABLE {table} RENAME COLUMN {_quote(c,f["payload_column"])} TO {_quote(c,f["column"])}')
+            _replace_protected_column(c, p, model, f, f['payload_column'])
             if not f['source']['nullable']:
                 c.exec_driver_sql(f'ALTER TABLE {table} ALTER COLUMN {_quote(c,f["column"])} SET NOT NULL')
             if 'source_metadata' in model:
@@ -946,10 +995,11 @@ def _switch(c,p,state,keys):
     state['phase']='PENDING'; _save(c,p,state)
 
 
-def _protected_contract(c, p, model, facts, *, paused=False, admitted=None, staging=False):
+def _protected_contract(c, p, model, facts, *, paused=False, admitted=None, staging=False, sequences=None):
     """Bind recorded catalog shape and generated storage to the host lock."""
     from cryptalis._sqlalchemy_search import validate_frame_storage, validate_search_storage
     from cryptalis.restore import frame_admissions
+    _check_owned_sequences(c, p, model, sequences=sequences)
     inherited = frame_admissions(p.document, model)
     inherited.update(admitted or {})
     admitted = inherited

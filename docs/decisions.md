@@ -44,7 +44,7 @@ No decision supplies executable qualification.
 | 6. Targets | Added p95 ≤ 3 ms point/equality, ≤ 8 ms IN-20. Protected column with equality index ≤ 2× storage | Read/storage-budget D resolved as targets, not achievements. Write-throughput and pause budgets remain D |
 | 7. Authorities/review | No designated production key provider and no independent review. Local provider is functional evidence only | G-PROVIDER, G-POLICY, and review requirements remain UNKNOWN. No production publication/restore procedure is selected |
 | 8. Build order | Compiler → crypto/KeyProvider/dev provider → sync/async SQLAlchemy → equality/IN/uniqueness → plan/apply/verify → decrypt-back/remove → three rotation operations | Baseline dependencies require real PostgreSQL tests. Independent workstreams can proceed within available capacity. New capabilities retain six-gate admission and leakage opt-in |
-| 9. Lock v2 metadata | Add `cryptalis.lock/v2` `source_metadata`; dual v1/v2 reader; new plans emit v2; in-place restore first, fresh cluster separate | Approved 2026-10-21. Column attributes, grants, comments, and extended statistics are captured and restored. Owned sequences stay refused |
+| 9. Lock v2 metadata | Add `cryptalis.lock/v2` `source_metadata`; dual v1/v2 reader; new plans emit v2; in-place restore first, fresh cluster separate | Approved 2026-10-21. Column attributes, grants, comments, and extended statistics are captured and restored. Owned sequences stayed refused at that checkpoint; the [sequence extension](#owned-sequence-metadata-and-restored-identity-2026-10-24) defines the next contract |
 
 **VERIFIED, earlier revision only:** the million-row receipt records equality p95 about 6.5 ms versus 0.93 ms native and IN-20 about 16.1 ms versus 1.1 ms.
 Both miss the approved added-latency targets. Point reads also miss. These are known performance work, not current-revision qualification.
@@ -931,3 +931,46 @@ This bounded path changes no cryptographic format, provider authority or tenant
 policy. It does not admit arbitrary public DML. Native PostgreSQL and unchanged
 HTTP application evidence belong to the status checkpoint. All seven production
 gates remain UNKNOWN.
+
+## Owned-sequence metadata and restored identity: 2026-10-24
+
+**IMPLEMENTED, bounded verification:** preserve an ordinary persistent sequence
+automatically owned by an admitted protected column. The sequence and table must
+keep the same schema and owner. Existing generated-key and protected server-default
+refusals remain required. Extension, internal and other unrecorded sequence
+dependencies require separate admission.
+
+Use `cryptalis.lock/v5` when any protected column owns an admitted sequence. Add
+`owned_sequences` to each model's existing source metadata. Capture qualified name,
+OID, owner, type, configuration, comment, effective ACL with grantor and ownership
+dependency. Validate the complete inventory before destructive DDL. Preserve the
+existing lock bytes and format selection for applications without owned sequences.
+
+Forward and reverse switches transfer ownership in their existing transaction:
+detach the sequence, replace the column, then attach the same sequence to its
+replacement. Repeat identity and metadata checks after native sequence locking.
+Never recreate the sequence or replay its counter. Current increments and native
+rollback gaps remain PostgreSQL behavior. See PostgreSQL 16
+[ownership and locking](https://www.postgresql.org/docs/16/sql-altersequence.html)
+and [counter semantics](https://www.postgresql.org/docs/16/functions-sequence.html).
+
+Sequence-bearing adoption uses `cryptalis.restore/v2`. Keep existing binding
+members and add a complete ordered `sequences` inventory with model, schema,
+name, column, source OID and target OID. Compare every logical sequence fact
+before admitting the restored OID. Later checks require that exact target OID.
+Compose mappings through flat lineage without changing the original source or
+journal authority. Sources without sequences retain restore/v1.
+
+CF1, key policy, retained readers and host fencing remain unchanged. Existing
+outer transition formats retain the new embedded lock. The previous installed
+reader refuses lock/v5 and restore/v2 before database or provider effects.
+Native tests cover lifecycle, rollback, uncertain COMMIT, exact restored identity,
+second-adoption mapping, latest-value removal and a package-free restart.
+The current owner and ACL remain exact; the test owner cannot inject transfer
+to another owner. Do not claim that live control as passed. Sources without
+sequences retain the existing format and application adoption paths.
+
+The [status checkpoint](status.md#owned-sequence-preservation-and-restore-2026-10-24)
+owns executable results and their source boundary. Native sequence cache gaps
+and counter changes survive rollback as PostgreSQL defines. No sequence counter
+snapshot, reset or replay is admitted. All seven production gates remain UNKNOWN.

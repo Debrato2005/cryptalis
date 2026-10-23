@@ -2042,7 +2042,7 @@ def attach(mapping: registry, engine: Engine | AsyncEngine, *, lock: bytes, keys
     try:
         document = decode_manifest_json(lock)
         if (not isinstance(mapping, registry) or not isinstance(engine, (Engine, AsyncEngine)) or
-                document["schema"] not in ("cryptalis.lock/v1", "cryptalis.lock/v2", "cryptalis.lock/v3", "cryptalis.lock/v4") or document["profile"] != "cf1"):
+                document["schema"] not in ("cryptalis.lock/v1", "cryptalis.lock/v2", "cryptalis.lock/v3", "cryptalis.lock/v4", "cryptalis.lock/v5") or document["profile"] != "cf1"):
             raise PolicyMismatch()
         native_engine = engine.sync_engine if isinstance(engine, AsyncEngine) else engine
         if native_engine.echo or not native_engine.hide_parameters:

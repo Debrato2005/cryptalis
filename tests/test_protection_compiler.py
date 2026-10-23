@@ -191,11 +191,13 @@ def test_extended_statistics_are_captured(app):
     assert len(entry['definition_digest']) == 64
 
 
-def test_sequence_owned_by_protected_column_is_refused(app):
+def test_owned_sequence_with_external_default_dependency_is_refused(app):
     engine, mapping, _, schema = app
     with engine.begin() as c:
         c.execute(text(f'CREATE SEQUENCE "{schema}".email_seq'))
         c.execute(text(f'ALTER SEQUENCE "{schema}".email_seq OWNED BY "{schema}".customer.email'))
+        c.execute(text(f"CREATE TABLE \"{schema}\".external_consumer "
+                       f"(id bigint DEFAULT nextval('\"{schema}\".email_seq'::regclass))"))
     with pytest.raises(PlanningRejected) as caught:
         compile_app(app)
     issues = [issue for issue in caught.value.issues if issue.code == 'unsupported_dependency']

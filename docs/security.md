@@ -445,13 +445,38 @@ Adoption authenticates current frames under A's exact selected policy and
 generation. It does not compare those frames with A's original sealing hashes.
 A valid older-generation frame still fails, although its root remains retained.
 The original source policy cannot replace A's target policy. Existing
-`cryptalis.restore/v1` bindings support this path without a new restore format.
+`cryptalis.restore/v1` bindings support this path for sources without owned sequences.
+Sequence-bearing sources use the restore/v2 identity mapping described below.
 Payload rotation after a published lineage-bearing successor follows the
 [adopted-lineage contract](lifecycle.md#payload-rotation-after-adopted-lineage-2026-10-24).
 Search rotation with lineage follows its [successor contract](lifecycle.md#search-rotation-after-adopted-lineage-2026-10-24).
 Direct restore-binding generation planning follows its
 [separate contract](lifecycle.md#generation-planning-from-a-restore-binding-2026-10-24).
 All seven full gates remain UNKNOWN.
+
+## Owned-sequence admission
+
+**IMPLEMENTED, bounded source and installed verification:** lock/v5 admits only inspected ordinary persistent sequences
+with automatic ownership of protected columns and the same table owner/schema.
+Admission checks visible catalog dependencies across the database. Unsupported
+dependencies refuse. Catalog checks do not enumerate arbitrary dynamic SQL or
+authenticate exclusion of external consumers. The host retains that responsibility.
+
+The switch preserves the same sequence object and its effective grants, including
+grantor and grant option. Runtime gets no new DDL or ownership privilege.
+Post-lock checks precede destructive column replacement. Reverse proposal and
+paused checks also refuse inventory drift before providers or new effects.
+Only exact admitted `_cryptalis_*` sequence identities escape terminal garbage
+classification. Counter tamper resistance is not established. Native counter
+increments and rollback gaps remain valid behavior.
+
+Restore/v2 maps source-effective sequence OIDs to new restored OIDs after exact
+logical catalog comparison. Later checks use those exact identities through flat
+lineage. The binding changes no source identity, host publication authority or
+key custody. Old locks still refuse late sequences. This admission does not allow
+server-generated record IDs or protected server defaults. Production gates remain UNKNOWN.
+See the [lifecycle contract](lifecycle.md#owned-sequence-preservation-and-restored-identity-2026-10-24)
+and [current evidence](status.md#owned-sequence-preservation-and-restore-2026-10-24).
 
 ## Cryptographic format
 
