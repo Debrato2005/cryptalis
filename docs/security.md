@@ -65,9 +65,17 @@ Owned physical column lineage binds the explicit tenant and generated record
 predicates. Each native group must consume the corresponding inputs before
 execution. Exact prepared frames, typed scope/record binds and final driver
 snapshots then protect dispatch. Read-only properties and SQL-producing bind
-types refuse before SQL. In synchronous execution, these refusals precede key
-preparation. Async execution retains its existing preparation order. Public Python
-bind processors remain native.
+types refuse before SQL and key preparation in both sync and async execution.
+The adapter captures the request before key preparation and checks it again
+afterward. Public Python bind processors remain native.
+
+For finite VARCHAR targets, each affected native group uses a private
+parameterized CASE with public constants. Omitted columns retain their existing
+frames. The carrier contains no protected plaintext. The adapter captures the
+generated statement, SQL, bind names and constants before execution.
+Compiled and final driver checks require those exact values with the existing
+row, tenant and frame proofs. The tested healthy route never stores the public
+overflow marker. These checks do not make arbitrary host plugins trustworthy.
 
 Attachment requires exact native identity types and flags without dialect
 variants or SQL-producing type hooks. Configuration admission repeats before

@@ -10,6 +10,84 @@ No PostgreSQL/provider/runtime cell, production key provider, independent review
 VERIFIED below refers only to the named checks and their exact revisions.
 All other contract and promotion requirements are SPECIFIED. All seven full gates remain UNKNOWN.
 
+## Native VARCHAR mapped UPDATE checkpoint: 2026-10-23
+
+**IMPLEMENTED, bounded verification:** mapped dictionary UPDATE extends its
+existing TEXT route to native VARCHAR. The route still requires `execute()`,
+a nonempty list of dictionaries, typed application IDs, one direct tenant-column
+equality and `synchronize_session=False`. It retains the existing refusals for
+Core, RETURNING, single-tenant mappings and other unsupported options or shapes.
+
+Assignment counts characters and accepts excess ASCII spaces before sealing.
+Omitted fields stay omitted. Equality query values retain their exact characters.
+A private owned CASE uses public constants for invalid assignments. Each emitted
+group preserves the tested native plan-sensitive behavior. Forced custom plans
+raise SQLSTATE 22001 for matching, missing and foreign records. Forced generic
+and the tested warmed automatic plan raise it for matching records. Missing and
+foreign records then produce zero matches without an error.
+
+Only the known owned carrier's DBAPI 22001 becomes its original safe
+`VarcharLengthExceeded`, with SQLSTATE `22001`. Other native DBAPI errors stay
+native. Protected text never becomes a SQL parameter for the error carrier.
+Ordinary flush and INSERT retain their existing length-failure paths.
+
+Sync/async admission captures exact typed requests before provider callbacks.
+The immutable ordered ledger binds owned lineage, compiled SQL, bind names,
+private constants and final driver bytes. Public expressions and SQL-producing
+type hooks gain no admission. Other UPDATE entry points, including scalar and
+stream helpers, refuse before key resolution or data SQL. CF1, readers, provider
+trust, leakage acceptance and search formats stay unchanged.
+
+Seven native oracle controls and three native CASE probe controls pass.
+The initial attached RED records 14 blanket refusals. Intermediate primary runs
+retain 58 passes/34 failures and 21 passes/13 failures. The final focused primary
+correction passes 13 cases. The final alternate affected run passes 92 cases.
+A later multi-field VARCHAR/int64 delta passes once in each cell. Those receipts remain partitioned specialist evidence.
+
+**VERIFIED, local PostgreSQL 16 cell:** the combined serial primary regression
+passes **2,281 tests and 18 subtests** in 720.06 seconds. Four skips and 48 existing
+SQLAlchemy deprecation warnings remain. All 158 recorded Python hashes stay unchanged.
+Both mandatory role probes pass. See the
+[full receipt](_reset/varchar-update-integration-full-20261023.json).
+
+Current repeat-build archives, exact dependency metadata, SBOM, 37 installed-file
+comparisons and CLI startup pass. All 33 wheel modules match the 38-file source
+bundle. The wheel SHA-256 is
+`8b57d11ade9364d952764b362478f59fe81e60aedc88b7e2ab53e57a61969191`.
+See the [release receipt](_reset/varchar-update-integration-release-20261023.json).
+
+A normal installation uses a disposable Python 3.13.12 environment.
+Pinned Smolink `498d24b` passes one URL lifecycle in 3.00 seconds.
+Its 38 application files stay unchanged.
+
+Exact runtime pins use cryptography
+50.0.2, greenlet 3.5.6, SQLAlchemy 2.1.3 and psycopg/binary 3.3.6. Product/runtime
+imports use the new site. App/test dependencies use the read-only Smolink fallback.
+All 37 checked wheel members and 33 product modules match before and after.
+The check excludes installer-rewritten RECORD. Its wrapper retains 158 stable
+Python hashes and passes both role probes.
+
+Real Redis, native/protected HTTP/ORM operations and package-free current-value
+removal pass. This application evidence covers the storage-only `Url.destination`
+workflow. The dedicated UPDATE controls supply the bulk UPDATE evidence.
+Authentication, deployment, SQLModel and a second external app remain unqualified.
+All seven production gates remain UNKNOWN. See the
+[installation](_reset/varchar-update-wheel-py313-install-20261023.json),
+[application](_reset/varchar-update-wheel-py313-application-20261023.json),
+[wrapper](_reset/varchar-update-wheel-py313-wrapper-20261023.json), and
+[exact boundary](_reset/varchar-update-wheel-py313-boundary-20261023.json).
+
+
+Evidence: [native plan observations](_reset/varchar-update-native-plan-observations-lifecycle-20261023.json),
+[native CASE observations](_reset/varchar-update-case-carrier-observations-lifecycle-20261023.json),
+[attached RED](_reset/varchar-update-attached-red-lifecycle-20261023.json),
+[first primary failure](_reset/varchar-update-primary-first-lifecycle-20261023.json),
+[remaining primary failures](_reset/varchar-update-primary-failed-cases-lifecycle-20261023.json),
+[final primary correction](_reset/varchar-update-primary-failed-cases2-lifecycle-20261023.json),
+[alternate regression](_reset/varchar-update-alternate-lifecycle-20261023.json),
+[primary multi-field delta](_reset/varchar-update-multifield-primary-lifecycle-20261023.json), and
+[alternate multi-field delta](_reset/varchar-update-multifield-alternate-lifecycle-20261023.json).
+
 ## Installed wheel Python 3.13 checkpoint: 2026-10-23
 
 **VERIFIED, bounded local cell:** a disposable environment uses Python 3.13.12.
@@ -329,6 +407,9 @@ SQL-producing type hooks and type variants. VARCHAR and single-tenant bulk
 UPDATE remain unadmitted. It adds no rowcount promise. Exact owned-column
 lineage, ordered input proofs, scope/ID binds, sealed bytes and final driver
 snapshots bind every emitted group to its prepared inputs.
+
+The later [native VARCHAR UPDATE checkpoint](#native-varchar-mapped-update-checkpoint-2026-10-23)
+extends this historical TEXT boundary. Its evidence and limits remain separate.
 
 Attachment also requires exact native row-context types and flags. Repeated
 configuration checks refuse changed identities before host key resolution.

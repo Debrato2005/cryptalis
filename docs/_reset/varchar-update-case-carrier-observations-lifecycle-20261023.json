@@ -1,0 +1,374 @@
+{
+  "scope": "Native-only public SQLAlchemy bytea CASE carrier prototype; no protected adapter admission, production or general plan-equivalence claim",
+  "base_revision": "6d45a0f029f99803363f4cb253728a7d9f0f906f",
+  "wrapper_receipt": "docs/_reset/varchar-update-case-carrier-first-lifecycle-20261023.json",
+  "wrapper_receipt_sha256": "4de2257df1c732d461beda02c1540c9e800e2b98797e5bbb17a03b561e81cc3c",
+  "test_source_sha256": "693a4bf2a8995e00e83e977a7958cd8974e8e6519f412216ea0d3daf2aba21e1",
+  "log_sha256": "bad8cf711b67f3f814d789dc3fa2ca75247f4b99e9e55f65df579d65e678b5c7",
+  "observations": [
+    {
+      "mode": "force_custom_plan",
+      "sent": [
+        {
+          "sql": "UPDATE cryptalis_migration_feb2635abd2b4dcda85d8e4f05e4d1c4.carrier SET name=CASE WHEN (%(carrier_frame)s = %(param_1)s) THEN CAST(pg_catalog.varchar(CAST(%(param_2)s::VARCHAR AS VARCHAR), %(param_3)s::INTEGER, %(param_4)s) AS BYTEA) ELSE %(carrier_frame)s END, label=%(label)s::VARCHAR WHERE cryptalis_migration_feb2635abd2b4dcda85d8e4f05e4d1c4.carrier.tenant_id = %(tenant_id_1)s::UUID AND cryptalis_migration_feb2635abd2b4dcda85d8e4f05e4d1c4.carrier.id = %(cryptalis_migration_feb2635abd2b4dcda85d8e4f05e4d1c4_carr_1)s::UUID",
+          "executemany": false
+        },
+        {
+          "sql": "UPDATE cryptalis_migration_feb2635abd2b4dcda85d8e4f05e4d1c4.carrier SET name=CASE WHEN (%(carrier_frame)s = %(param_1)s) THEN CAST(pg_catalog.varchar(CAST(%(param_2)s::VARCHAR AS VARCHAR), %(param_3)s::INTEGER, %(param_4)s) AS BYTEA) ELSE %(carrier_frame)s END WHERE cryptalis_migration_feb2635abd2b4dcda85d8e4f05e4d1c4.carrier.tenant_id = %(tenant_id_1)s::UUID AND cryptalis_migration_feb2635abd2b4dcda85d8e4f05e4d1c4.carrier.id = %(cryptalis_migration_feb2635abd2b4dcda85d8e4f05e4d1c4_carr_1)s::UUID",
+          "executemany": false
+        }
+      ],
+      "outcomes": [
+        {
+          "shape": "single",
+          "target": "matching",
+          "prepared_before": [],
+          "sqlstate": "22001"
+        },
+        {
+          "shape": "single",
+          "target": "missing",
+          "prepared_before": [],
+          "sqlstate": "22001"
+        },
+        {
+          "shape": "single",
+          "target": "foreign",
+          "prepared_before": [],
+          "sqlstate": "22001"
+        },
+        {
+          "shape": "same_group",
+          "target": "matching",
+          "prepared_before": [],
+          "sqlstate": "22001"
+        },
+        {
+          "shape": "same_group",
+          "target": "missing",
+          "prepared_before": [],
+          "sqlstate": "22001"
+        },
+        {
+          "shape": "same_group",
+          "target": "foreign",
+          "prepared_before": [],
+          "sqlstate": "22001"
+        },
+        {
+          "shape": "heterogeneous",
+          "target": "matching",
+          "prepared_before": [],
+          "sqlstate": "22001"
+        },
+        {
+          "shape": "heterogeneous",
+          "target": "missing",
+          "prepared_before": [],
+          "sqlstate": "22001"
+        },
+        {
+          "shape": "heterogeneous",
+          "target": "foreign",
+          "prepared_before": [],
+          "sqlstate": "22001"
+        }
+      ]
+    },
+    {
+      "mode": "force_generic_plan",
+      "sent": [
+        {
+          "sql": "UPDATE cryptalis_migration_3dbc9a4c4bb7494cbe231f090632e25f.carrier SET name=CASE WHEN (%(carrier_frame)s = %(param_1)s) THEN CAST(pg_catalog.varchar(CAST(%(param_2)s::VARCHAR AS VARCHAR), %(param_3)s::INTEGER, %(param_4)s) AS BYTEA) ELSE %(carrier_frame)s END, label=%(label)s::VARCHAR WHERE cryptalis_migration_3dbc9a4c4bb7494cbe231f090632e25f.carrier.tenant_id = %(tenant_id_1)s::UUID AND cryptalis_migration_3dbc9a4c4bb7494cbe231f090632e25f.carrier.id = %(cryptalis_migration_3dbc9a4c4bb7494cbe231f090632e25f_carr_1)s::UUID",
+          "executemany": false
+        },
+        {
+          "sql": "UPDATE cryptalis_migration_3dbc9a4c4bb7494cbe231f090632e25f.carrier SET name=CASE WHEN (%(carrier_frame)s = %(param_1)s) THEN CAST(pg_catalog.varchar(CAST(%(param_2)s::VARCHAR AS VARCHAR), %(param_3)s::INTEGER, %(param_4)s) AS BYTEA) ELSE %(carrier_frame)s END WHERE cryptalis_migration_3dbc9a4c4bb7494cbe231f090632e25f.carrier.tenant_id = %(tenant_id_1)s::UUID AND cryptalis_migration_3dbc9a4c4bb7494cbe231f090632e25f.carrier.id = %(cryptalis_migration_3dbc9a4c4bb7494cbe231f090632e25f_carr_1)s::UUID",
+          "executemany": false
+        }
+      ],
+      "outcomes": [
+        {
+          "shape": "single",
+          "target": "matching",
+          "prepared_before": [],
+          "sqlstate": "22001"
+        },
+        {
+          "shape": "single",
+          "target": "missing",
+          "prepared_before": [],
+          "sqlstate": null,
+          "prepared_after": [
+            {
+              "statement": "UPDATE cryptalis_migration_3dbc9a4c4bb7494cbe231f090632e25f.carrier SET name=CASE WHEN ($1 = $2) THEN CAST(pg_catalog.varchar(CAST($3::VARCHAR AS VARCHAR), $4::INTEGER, $5) AS BYTEA) ELSE $1 END WHERE cryptalis_migration_3dbc9a4c4bb7494cbe231f090632e25f.carrier.tenant_id = $6::UUID AND cryptalis_migration_3dbc9a4c4bb7494cbe231f090632e25f.carrier.id = $7::UUID",
+              "generic": 1,
+              "custom": 0
+            }
+          ]
+        },
+        {
+          "shape": "single",
+          "target": "foreign",
+          "prepared_before": [],
+          "sqlstate": null,
+          "prepared_after": [
+            {
+              "statement": "UPDATE cryptalis_migration_3dbc9a4c4bb7494cbe231f090632e25f.carrier SET name=CASE WHEN ($1 = $2) THEN CAST(pg_catalog.varchar(CAST($3::VARCHAR AS VARCHAR), $4::INTEGER, $5) AS BYTEA) ELSE $1 END WHERE cryptalis_migration_3dbc9a4c4bb7494cbe231f090632e25f.carrier.tenant_id = $6::UUID AND cryptalis_migration_3dbc9a4c4bb7494cbe231f090632e25f.carrier.id = $7::UUID",
+              "generic": 1,
+              "custom": 0
+            }
+          ]
+        },
+        {
+          "shape": "same_group",
+          "target": "matching",
+          "prepared_before": [],
+          "sqlstate": "22001"
+        },
+        {
+          "shape": "same_group",
+          "target": "missing",
+          "prepared_before": [],
+          "sqlstate": null,
+          "prepared_after": [
+            {
+              "statement": "UPDATE cryptalis_migration_3dbc9a4c4bb7494cbe231f090632e25f.carrier SET name=CASE WHEN ($1 = $2) THEN CAST(pg_catalog.varchar(CAST($3::VARCHAR AS VARCHAR), $4::INTEGER, $5) AS BYTEA) ELSE $1 END WHERE cryptalis_migration_3dbc9a4c4bb7494cbe231f090632e25f.carrier.tenant_id = $6::UUID AND cryptalis_migration_3dbc9a4c4bb7494cbe231f090632e25f.carrier.id = $7::UUID",
+              "generic": 2,
+              "custom": 0
+            }
+          ]
+        },
+        {
+          "shape": "same_group",
+          "target": "foreign",
+          "prepared_before": [],
+          "sqlstate": null,
+          "prepared_after": [
+            {
+              "statement": "UPDATE cryptalis_migration_3dbc9a4c4bb7494cbe231f090632e25f.carrier SET name=CASE WHEN ($1 = $2) THEN CAST(pg_catalog.varchar(CAST($3::VARCHAR AS VARCHAR), $4::INTEGER, $5) AS BYTEA) ELSE $1 END WHERE cryptalis_migration_3dbc9a4c4bb7494cbe231f090632e25f.carrier.tenant_id = $6::UUID AND cryptalis_migration_3dbc9a4c4bb7494cbe231f090632e25f.carrier.id = $7::UUID",
+              "generic": 2,
+              "custom": 0
+            }
+          ]
+        },
+        {
+          "shape": "heterogeneous",
+          "target": "matching",
+          "prepared_before": [],
+          "sqlstate": "22001"
+        },
+        {
+          "shape": "heterogeneous",
+          "target": "missing",
+          "prepared_before": [],
+          "sqlstate": null,
+          "prepared_after": [
+            {
+              "statement": "UPDATE cryptalis_migration_3dbc9a4c4bb7494cbe231f090632e25f.carrier SET name=CASE WHEN ($1 = $2) THEN CAST(pg_catalog.varchar(CAST($3::VARCHAR AS VARCHAR), $4::INTEGER, $5) AS BYTEA) ELSE $1 END, label=$6::VARCHAR WHERE cryptalis_migration_3dbc9a4c4bb7494cbe231f090632e25f.carrier.tenant_id = $7::UUID AND cryptalis_migration_3dbc9a4c4bb7494cbe231f090632e25f.carrier.id = $8::UUID",
+              "generic": 1,
+              "custom": 0
+            },
+            {
+              "statement": "UPDATE cryptalis_migration_3dbc9a4c4bb7494cbe231f090632e25f.carrier SET name=CASE WHEN ($1 = $2) THEN CAST(pg_catalog.varchar(CAST($3::VARCHAR AS VARCHAR), $4::INTEGER, $5) AS BYTEA) ELSE $1 END WHERE cryptalis_migration_3dbc9a4c4bb7494cbe231f090632e25f.carrier.tenant_id = $6::UUID AND cryptalis_migration_3dbc9a4c4bb7494cbe231f090632e25f.carrier.id = $7::UUID",
+              "generic": 1,
+              "custom": 0
+            }
+          ]
+        },
+        {
+          "shape": "heterogeneous",
+          "target": "foreign",
+          "prepared_before": [],
+          "sqlstate": null,
+          "prepared_after": [
+            {
+              "statement": "UPDATE cryptalis_migration_3dbc9a4c4bb7494cbe231f090632e25f.carrier SET name=CASE WHEN ($1 = $2) THEN CAST(pg_catalog.varchar(CAST($3::VARCHAR AS VARCHAR), $4::INTEGER, $5) AS BYTEA) ELSE $1 END, label=$6::VARCHAR WHERE cryptalis_migration_3dbc9a4c4bb7494cbe231f090632e25f.carrier.tenant_id = $7::UUID AND cryptalis_migration_3dbc9a4c4bb7494cbe231f090632e25f.carrier.id = $8::UUID",
+              "generic": 1,
+              "custom": 0
+            },
+            {
+              "statement": "UPDATE cryptalis_migration_3dbc9a4c4bb7494cbe231f090632e25f.carrier SET name=CASE WHEN ($1 = $2) THEN CAST(pg_catalog.varchar(CAST($3::VARCHAR AS VARCHAR), $4::INTEGER, $5) AS BYTEA) ELSE $1 END WHERE cryptalis_migration_3dbc9a4c4bb7494cbe231f090632e25f.carrier.tenant_id = $6::UUID AND cryptalis_migration_3dbc9a4c4bb7494cbe231f090632e25f.carrier.id = $7::UUID",
+              "generic": 1,
+              "custom": 0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "mode": "auto",
+      "sent": [
+        {
+          "sql": "UPDATE cryptalis_migration_d729f8ef64f145b4b38fa3c1b2475d5f.carrier SET name=CASE WHEN (%(carrier_frame)s = %(param_1)s) THEN CAST(pg_catalog.varchar(CAST(%(param_2)s::VARCHAR AS VARCHAR), %(param_3)s::INTEGER, %(param_4)s) AS BYTEA) ELSE %(carrier_frame)s END, label=%(label)s::VARCHAR WHERE cryptalis_migration_d729f8ef64f145b4b38fa3c1b2475d5f.carrier.tenant_id = %(tenant_id_1)s::UUID AND cryptalis_migration_d729f8ef64f145b4b38fa3c1b2475d5f.carrier.id = %(cryptalis_migration_d729f8ef64f145b4b38fa3c1b2475d5f_carr_1)s::UUID",
+          "executemany": false
+        },
+        {
+          "sql": "UPDATE cryptalis_migration_d729f8ef64f145b4b38fa3c1b2475d5f.carrier SET name=CASE WHEN (%(carrier_frame)s = %(param_1)s) THEN CAST(pg_catalog.varchar(CAST(%(param_2)s::VARCHAR AS VARCHAR), %(param_3)s::INTEGER, %(param_4)s) AS BYTEA) ELSE %(carrier_frame)s END WHERE cryptalis_migration_d729f8ef64f145b4b38fa3c1b2475d5f.carrier.tenant_id = %(tenant_id_1)s::UUID AND cryptalis_migration_d729f8ef64f145b4b38fa3c1b2475d5f.carrier.id = %(cryptalis_migration_d729f8ef64f145b4b38fa3c1b2475d5f_carr_1)s::UUID",
+          "executemany": false
+        }
+      ],
+      "outcomes": [
+        {
+          "shape": "single",
+          "target": "matching",
+          "prepared_before": [
+            {
+              "statement": "UPDATE cryptalis_migration_d729f8ef64f145b4b38fa3c1b2475d5f.carrier SET name=CASE WHEN ($1 = $2) THEN CAST(pg_catalog.varchar(CAST($3::VARCHAR AS VARCHAR), $4::INTEGER, $5) AS BYTEA) ELSE $1 END WHERE cryptalis_migration_d729f8ef64f145b4b38fa3c1b2475d5f.carrier.tenant_id = $6::UUID AND cryptalis_migration_d729f8ef64f145b4b38fa3c1b2475d5f.carrier.id = $7::UUID",
+              "generic": 2,
+              "custom": 5
+            }
+          ],
+          "sqlstate": "22001"
+        },
+        {
+          "shape": "single",
+          "target": "missing",
+          "prepared_before": [
+            {
+              "statement": "UPDATE cryptalis_migration_d729f8ef64f145b4b38fa3c1b2475d5f.carrier SET name=CASE WHEN ($1 = $2) THEN CAST(pg_catalog.varchar(CAST($3::VARCHAR AS VARCHAR), $4::INTEGER, $5) AS BYTEA) ELSE $1 END WHERE cryptalis_migration_d729f8ef64f145b4b38fa3c1b2475d5f.carrier.tenant_id = $6::UUID AND cryptalis_migration_d729f8ef64f145b4b38fa3c1b2475d5f.carrier.id = $7::UUID",
+              "generic": 2,
+              "custom": 5
+            }
+          ],
+          "sqlstate": null,
+          "prepared_after": [
+            {
+              "statement": "UPDATE cryptalis_migration_d729f8ef64f145b4b38fa3c1b2475d5f.carrier SET name=CASE WHEN ($1 = $2) THEN CAST(pg_catalog.varchar(CAST($3::VARCHAR AS VARCHAR), $4::INTEGER, $5) AS BYTEA) ELSE $1 END WHERE cryptalis_migration_d729f8ef64f145b4b38fa3c1b2475d5f.carrier.tenant_id = $6::UUID AND cryptalis_migration_d729f8ef64f145b4b38fa3c1b2475d5f.carrier.id = $7::UUID",
+              "generic": 3,
+              "custom": 5
+            }
+          ]
+        },
+        {
+          "shape": "single",
+          "target": "foreign",
+          "prepared_before": [
+            {
+              "statement": "UPDATE cryptalis_migration_d729f8ef64f145b4b38fa3c1b2475d5f.carrier SET name=CASE WHEN ($1 = $2) THEN CAST(pg_catalog.varchar(CAST($3::VARCHAR AS VARCHAR), $4::INTEGER, $5) AS BYTEA) ELSE $1 END WHERE cryptalis_migration_d729f8ef64f145b4b38fa3c1b2475d5f.carrier.tenant_id = $6::UUID AND cryptalis_migration_d729f8ef64f145b4b38fa3c1b2475d5f.carrier.id = $7::UUID",
+              "generic": 2,
+              "custom": 5
+            }
+          ],
+          "sqlstate": null,
+          "prepared_after": [
+            {
+              "statement": "UPDATE cryptalis_migration_d729f8ef64f145b4b38fa3c1b2475d5f.carrier SET name=CASE WHEN ($1 = $2) THEN CAST(pg_catalog.varchar(CAST($3::VARCHAR AS VARCHAR), $4::INTEGER, $5) AS BYTEA) ELSE $1 END WHERE cryptalis_migration_d729f8ef64f145b4b38fa3c1b2475d5f.carrier.tenant_id = $6::UUID AND cryptalis_migration_d729f8ef64f145b4b38fa3c1b2475d5f.carrier.id = $7::UUID",
+              "generic": 3,
+              "custom": 5
+            }
+          ]
+        },
+        {
+          "shape": "same_group",
+          "target": "matching",
+          "prepared_before": [
+            {
+              "statement": "UPDATE cryptalis_migration_d729f8ef64f145b4b38fa3c1b2475d5f.carrier SET name=CASE WHEN ($1 = $2) THEN CAST(pg_catalog.varchar(CAST($3::VARCHAR AS VARCHAR), $4::INTEGER, $5) AS BYTEA) ELSE $1 END WHERE cryptalis_migration_d729f8ef64f145b4b38fa3c1b2475d5f.carrier.tenant_id = $6::UUID AND cryptalis_migration_d729f8ef64f145b4b38fa3c1b2475d5f.carrier.id = $7::UUID",
+              "generic": 2,
+              "custom": 5
+            }
+          ],
+          "sqlstate": "22001"
+        },
+        {
+          "shape": "same_group",
+          "target": "missing",
+          "prepared_before": [
+            {
+              "statement": "UPDATE cryptalis_migration_d729f8ef64f145b4b38fa3c1b2475d5f.carrier SET name=CASE WHEN ($1 = $2) THEN CAST(pg_catalog.varchar(CAST($3::VARCHAR AS VARCHAR), $4::INTEGER, $5) AS BYTEA) ELSE $1 END WHERE cryptalis_migration_d729f8ef64f145b4b38fa3c1b2475d5f.carrier.tenant_id = $6::UUID AND cryptalis_migration_d729f8ef64f145b4b38fa3c1b2475d5f.carrier.id = $7::UUID",
+              "generic": 2,
+              "custom": 5
+            }
+          ],
+          "sqlstate": null,
+          "prepared_after": [
+            {
+              "statement": "UPDATE cryptalis_migration_d729f8ef64f145b4b38fa3c1b2475d5f.carrier SET name=CASE WHEN ($1 = $2) THEN CAST(pg_catalog.varchar(CAST($3::VARCHAR AS VARCHAR), $4::INTEGER, $5) AS BYTEA) ELSE $1 END WHERE cryptalis_migration_d729f8ef64f145b4b38fa3c1b2475d5f.carrier.tenant_id = $6::UUID AND cryptalis_migration_d729f8ef64f145b4b38fa3c1b2475d5f.carrier.id = $7::UUID",
+              "generic": 4,
+              "custom": 5
+            }
+          ]
+        },
+        {
+          "shape": "same_group",
+          "target": "foreign",
+          "prepared_before": [
+            {
+              "statement": "UPDATE cryptalis_migration_d729f8ef64f145b4b38fa3c1b2475d5f.carrier SET name=CASE WHEN ($1 = $2) THEN CAST(pg_catalog.varchar(CAST($3::VARCHAR AS VARCHAR), $4::INTEGER, $5) AS BYTEA) ELSE $1 END WHERE cryptalis_migration_d729f8ef64f145b4b38fa3c1b2475d5f.carrier.tenant_id = $6::UUID AND cryptalis_migration_d729f8ef64f145b4b38fa3c1b2475d5f.carrier.id = $7::UUID",
+              "generic": 2,
+              "custom": 5
+            }
+          ],
+          "sqlstate": null,
+          "prepared_after": [
+            {
+              "statement": "UPDATE cryptalis_migration_d729f8ef64f145b4b38fa3c1b2475d5f.carrier SET name=CASE WHEN ($1 = $2) THEN CAST(pg_catalog.varchar(CAST($3::VARCHAR AS VARCHAR), $4::INTEGER, $5) AS BYTEA) ELSE $1 END WHERE cryptalis_migration_d729f8ef64f145b4b38fa3c1b2475d5f.carrier.tenant_id = $6::UUID AND cryptalis_migration_d729f8ef64f145b4b38fa3c1b2475d5f.carrier.id = $7::UUID",
+              "generic": 4,
+              "custom": 5
+            }
+          ]
+        },
+        {
+          "shape": "heterogeneous",
+          "target": "matching",
+          "prepared_before": [
+            {
+              "statement": "UPDATE cryptalis_migration_d729f8ef64f145b4b38fa3c1b2475d5f.carrier SET name=CASE WHEN ($1 = $2) THEN CAST(pg_catalog.varchar(CAST($3::VARCHAR AS VARCHAR), $4::INTEGER, $5) AS BYTEA) ELSE $1 END WHERE cryptalis_migration_d729f8ef64f145b4b38fa3c1b2475d5f.carrier.tenant_id = $6::UUID AND cryptalis_migration_d729f8ef64f145b4b38fa3c1b2475d5f.carrier.id = $7::UUID",
+              "generic": 2,
+              "custom": 5
+            }
+          ],
+          "sqlstate": "22001"
+        },
+        {
+          "shape": "heterogeneous",
+          "target": "missing",
+          "prepared_before": [
+            {
+              "statement": "UPDATE cryptalis_migration_d729f8ef64f145b4b38fa3c1b2475d5f.carrier SET name=CASE WHEN ($1 = $2) THEN CAST(pg_catalog.varchar(CAST($3::VARCHAR AS VARCHAR), $4::INTEGER, $5) AS BYTEA) ELSE $1 END WHERE cryptalis_migration_d729f8ef64f145b4b38fa3c1b2475d5f.carrier.tenant_id = $6::UUID AND cryptalis_migration_d729f8ef64f145b4b38fa3c1b2475d5f.carrier.id = $7::UUID",
+              "generic": 2,
+              "custom": 5
+            }
+          ],
+          "sqlstate": null,
+          "prepared_after": [
+            {
+              "statement": "UPDATE cryptalis_migration_d729f8ef64f145b4b38fa3c1b2475d5f.carrier SET name=CASE WHEN ($1 = $2) THEN CAST(pg_catalog.varchar(CAST($3::VARCHAR AS VARCHAR), $4::INTEGER, $5) AS BYTEA) ELSE $1 END WHERE cryptalis_migration_d729f8ef64f145b4b38fa3c1b2475d5f.carrier.tenant_id = $6::UUID AND cryptalis_migration_d729f8ef64f145b4b38fa3c1b2475d5f.carrier.id = $7::UUID",
+              "generic": 3,
+              "custom": 5
+            }
+          ]
+        },
+        {
+          "shape": "heterogeneous",
+          "target": "foreign",
+          "prepared_before": [
+            {
+              "statement": "UPDATE cryptalis_migration_d729f8ef64f145b4b38fa3c1b2475d5f.carrier SET name=CASE WHEN ($1 = $2) THEN CAST(pg_catalog.varchar(CAST($3::VARCHAR AS VARCHAR), $4::INTEGER, $5) AS BYTEA) ELSE $1 END WHERE cryptalis_migration_d729f8ef64f145b4b38fa3c1b2475d5f.carrier.tenant_id = $6::UUID AND cryptalis_migration_d729f8ef64f145b4b38fa3c1b2475d5f.carrier.id = $7::UUID",
+              "generic": 2,
+              "custom": 5
+            }
+          ],
+          "sqlstate": null,
+          "prepared_after": [
+            {
+              "statement": "UPDATE cryptalis_migration_d729f8ef64f145b4b38fa3c1b2475d5f.carrier SET name=CASE WHEN ($1 = $2) THEN CAST(pg_catalog.varchar(CAST($3::VARCHAR AS VARCHAR), $4::INTEGER, $5) AS BYTEA) ELSE $1 END WHERE cryptalis_migration_d729f8ef64f145b4b38fa3c1b2475d5f.carrier.tenant_id = $6::UUID AND cryptalis_migration_d729f8ef64f145b4b38fa3c1b2475d5f.carrier.id = $7::UUID",
+              "generic": 3,
+              "custom": 5
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "gates": {
+    "G-ADAPTER": "UNKNOWN",
+    "G-CRYPTO": "UNKNOWN",
+    "G-QUERY": "UNKNOWN",
+    "G-LIFECYCLE": "UNKNOWN",
+    "G-PROVIDER": "UNKNOWN",
+    "G-POLICY": "UNKNOWN",
+    "G-RELEASE": "UNKNOWN"
+  }
+}

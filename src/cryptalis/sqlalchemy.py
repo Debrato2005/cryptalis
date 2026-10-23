@@ -12,7 +12,7 @@ import json
 from types import MappingProxyType, MethodType
 from uuid import UUID
 
-from sqlalchemy import BigInteger, Boolean, Column, Enum, LargeBinary, String, Table, Text, Uuid, UUID as SQLUUID, cast, event, func, inspect, literal, select, type_coerce
+from sqlalchemy import BigInteger, Boolean, Column, Enum, LargeBinary, String, Table, Text, Uuid, UUID as SQLUUID, bindparam, case, cast, event, func, inspect, literal, select, type_coerce
 from sqlalchemy.engine import Engine
 from sqlalchemy.dialects import postgresql as _postgresql_types
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, AsyncSessionTransaction
@@ -22,7 +22,7 @@ from sqlalchemy.orm.attributes import NO_VALUE
 from sqlalchemy.sql import operators, visitors
 from sqlalchemy.sql.annotation import Annotated, annotated_classes
 from sqlalchemy.sql import sqltypes as _native_types
-from sqlalchemy.sql.elements import BinaryExpression, BindParameter, BooleanClauseList, Cast, ClauseElement, ColumnClause, Grouping, Label, SavepointClause, RollbackToSavepointClause, ReleaseSavepointClause, TextClause, TypeCoerce, UnaryExpression
+from sqlalchemy.sql.elements import BinaryExpression, BindParameter, BooleanClauseList, Cast, ClauseElement, ColumnClause, Grouping, Label, SavepointClause, RollbackToSavepointClause, ReleaseSavepointClause, TextClause, TypeCoerce, UnaryExpression, quoted_name, _anonymous_label, _truncated_label
 from sqlalchemy.sql.functions import FunctionElement
 from sqlalchemy.sql.selectable import Alias, CTE, FromClause, Select, Join, Subquery
 from sqlalchemy.sql.dml import Insert, Update, Delete
@@ -86,6 +86,35 @@ def _varchar_assignment(value, limit):
     return value
 
 
+_VARCHAR_UPDATE_INVALID = b'PUBLIC VARCHAR OVERFLOW SENTINEL'
+
+
+def _update_bind_name(value):
+    if type(value) not in (str, quoted_name, _anonymous_label, _truncated_label):
+        raise UnsupportedProtectedOperation()
+    return str.__str__(value)
+
+
+@dataclass(frozen=True)
+class _UpdateCarrier:
+    statement: object = field(repr=False)
+    sql: str = field(repr=False)
+    names: tuple = field(repr=False)
+    constants: tuple = field(repr=False)
+    scope_key: str
+    record_key: str
+    bindings: tuple = field(repr=False)
+
+
+@dataclass(frozen=True)
+class _UpdateRequest:
+    mapper: object = field(repr=False)
+    table: object = field(repr=False)
+    tenant: UUID
+    columns: tuple = field(repr=False)
+    rows: tuple = field(repr=False)
+
+
 @dataclass(frozen=True)
 class _Binding:
     column: object
@@ -118,6 +147,7 @@ class _Operation:
     flushing: bool = False
     bulk_insert: object = field(default=None, repr=False)
     bulk_update: object = field(default=None, repr=False)
+    update_carrier: object = field(default=None, repr=False)
     scoped_delete: object = field(default=None, repr=False)
     bulk_returning: object = field(default=None, repr=False)
     bulk_seals: dict = field(default_factory=dict, repr=False)
@@ -255,7 +285,11 @@ class _Payload(TypeDecorator):
         if operation.bulk_table is not None and operation.bulk_seals.get(id(value)) is not value:
             raise UnsupportedProtectedOperation()
         if value.failure is not None:
-            raise value.failure
+            carrier = operation.update_carrier
+            if not (operation.bulk_update is not None and carrier is not None and
+                    type(value.failure) is VarcharLengthExceeded and value.body is _VARCHAR_UPDATE_INVALID and
+                    any(binding is value.binding for binding in carrier.bindings)):
+                raise value.failure
         return value.body
 
     def process_result_value(self, value, dialect):
@@ -809,6 +843,8 @@ class _Attachment:
         return permit, scope, record
 
     def update_context(self, statement, table, tenant, *, generated):
+        _delete_node(statement, Update)
+        _delete_node(statement.table, Table)
         if (not isinstance(statement, Update) or statement.table.name != table.name or
                 statement.table.schema != table.schema or
                 not all(column.key in statement.table.c and
@@ -819,7 +855,7 @@ class _Attachment:
             raise UnsupportedProtectedOperation()
         bindings = [binding for binding in self.bindings if binding.column.table is table]
         first = bindings[0]
-        if first.tenant is None or any(binding.max_characters is not None for binding in bindings):
+        if first.tenant is None:
             raise UnsupportedProtectedOperation()
         self.bind_type(first.record.type)
         self.bind_type(first.tenant.type)
@@ -827,6 +863,7 @@ class _Attachment:
         while pending:
             clause = pending.pop()
             if isinstance(clause, BooleanClauseList) and clause.operator is operators.and_:
+                _delete_node(clause, BooleanClauseList)
                 pending.extend(reversed(clause.clauses))
             else:
                 clauses.append(clause)
@@ -834,6 +871,7 @@ class _Attachment:
             raise UnsupportedProtectedOperation()
         scope, record = None, None
         for clause in clauses:
+            _delete_node(clause, BinaryExpression)
             if not isinstance(clause, BinaryExpression) or clause.operator is not operators.eq:
                 raise UnsupportedProtectedOperation()
             left, right = clause.left, clause.right
@@ -844,6 +882,8 @@ class _Attachment:
                     type(right.type) is not type(left.type)):
                 raise UnsupportedProtectedOperation()
             self.bind_type(right.type)
+            _delete_node(left, Column)
+            _delete_node(right, BindParameter)
             if left.shares_lineage(first.tenant) and scope is None:
                 if right.required or type(right.value) is not UUID or right.value != tenant:
                     raise UnsupportedProtectedOperation()
@@ -877,6 +917,8 @@ class _Attachment:
             operation = self._check()
             if operation.bulk_update is not bulk:
                 raise UnsupportedProtectedOperation()
+            if operation.update_carrier is not None and statement is operation.update_carrier.statement:
+                return
             self.update_context(statement, bulk, operation.tenant, generated=True)
             return
         if bulk is not None and isinstance(statement, Insert):
@@ -1058,7 +1100,7 @@ class _Attachment:
             return statement, multiparams, params
         if operation.bulk_update is not None and isinstance(statement, Update):
             groups = multiparams if multiparams else [params]
-            _, record_bind = self.update_context(statement, operation.bulk_update, operation.tenant, generated=True)
+            scope, record_bind = self.update_context(statement, operation.bulk_update, operation.tenant, generated=True)
             for group in groups:
                 if type(group) is not dict or operation.bulk_position >= len(operation.bulk_inputs):
                     raise UnsupportedProtectedOperation()
@@ -1071,7 +1113,8 @@ class _Attachment:
                     raise UnsupportedProtectedOperation()
                 operation.bulk_position += 1
             operation.bulk_batch = tuple(dict(group) for group in groups)
-            return statement, multiparams, params
+            operation.update_carrier = self.prepare_update_carrier(connection, statement, groups, scope, record_bind)
+            return (operation.update_carrier.statement if operation.update_carrier is not None else statement), multiparams, params
         if operation.bulk_insert is not None and isinstance(statement, Insert):
             groups = multiparams if multiparams else [params]
             self.check_bulk_rows(operation, groups)
@@ -1105,6 +1148,30 @@ class _Attachment:
                 changed.append(output)
             return statement, changed if multiparams else [], {} if multiparams else changed[0]
         return statement, multiparams, params
+
+    def prepare_update_carrier(self, connection, statement, groups, scope, record):
+        bindings = tuple(binding for binding in self.bindings
+                         if binding.column.table is _operation.get().bulk_update and
+                         binding.max_characters is not None and binding.column.key in groups[0])
+        if not bindings:
+            return None
+        constants, assignments = [], {}
+        for binding in bindings:
+            body = bindparam(binding.column.key, type_=binding.column.type)
+            sentinel, text, limit, explicit = (literal(_VARCHAR_UPDATE_INVALID, LargeBinary()),
+                literal('xx', String()), literal(5), literal(False))
+            constants.extend((sentinel, text, limit, explicit))
+            overflow = func.pg_catalog.varchar(cast(text, String()), limit, explicit)
+            assignments[binding.column] = case((body == sentinel, cast(overflow, LargeBinary())), else_=body)
+        generated = statement.values(assignments)
+        compiled = generated.compile(dialect=connection.dialect, column_keys=sorted(groups[0]),
+                                     for_executemany=len(groups) > 1)
+        names = tuple((_update_bind_name(bind.key), _update_bind_name(name)) for bind, name in compiled.bind_names.items())
+        if len({key for key, _ in names}) != len(names) or len({name for _, name in names}) != len(names):
+            raise UnsupportedProtectedOperation()
+        return _UpdateCarrier(generated, str(compiled), names,
+                              tuple((_update_bind_name(bind.key), bind.value) for bind in constants),
+                              _update_bind_name(scope.key), _update_bind_name(record.key), bindings)
 
     def prepare_many(self, context, parameters):
         operation = self._check()
@@ -1143,7 +1210,9 @@ class _Attachment:
                     raise UnsupportedProtectedOperation()
             return
         if operation.bulk_update is not None and isinstance(context.compiled.statement, Update):
-            if statement != str(context.compiled):
+            carrier = operation.update_carrier
+            if (statement != str(context.compiled) or carrier is not None and
+                    (context.compiled.statement is not carrier.statement or statement != carrier.sql)):
                 raise UnsupportedProtectedOperation()
             self.check_update_parameters(operation, context, parameters if context.executemany else [parameters])
             return
@@ -1158,13 +1227,26 @@ class _Attachment:
             self.check_bulk_parameters(operation, context, actual)
 
     def check_update_parameters(self, operation, context, actual):
-        scope, record = self.update_context(context.compiled.statement, operation.bulk_update,
-                                            operation.tenant, generated=True)
-        names = {bind.key: name for bind, name in context.compiled.bind_names.items()}
-        if scope.key not in names or record.key not in names:
+        carrier = operation.update_carrier
+        native_names = tuple((_update_bind_name(bind.key), _update_bind_name(name)) for bind, name in context.compiled.bind_names.items())
+        if carrier is not None:
+            if context.compiled.statement is not carrier.statement or native_names != carrier.names:
+                raise UnsupportedProtectedOperation()
+            names, scope_key, record_key = dict(carrier.names), carrier.scope_key, carrier.record_key
+            constants = {names[key]: value for key, value in carrier.constants}
+        else:
+            scope, record = self.update_context(context.compiled.statement, operation.bulk_update,
+                                                operation.tenant, generated=True)
+            names, scope_key, record_key = dict(native_names), _update_bind_name(scope.key), _update_bind_name(record.key)
+            constants = {}
+        if (scope_key not in names or record_key not in names or
+                any(type(name) is not str for name in names.values()) or
+                len(names) != len(native_names) or len(set(names.values())) != len(names)):
             raise UnsupportedProtectedOperation()
         for bind in context.compiled.bind_names:
-            self.bind_type(bind.type)
+            owned_constant = carrier is not None and any(
+                _update_bind_name(bind.key) == key for key, _ in carrier.constants)
+            self.bind_type(bind.type, selecting=owned_constant)
         groups = context.compiled_parameters
         if len(groups) != len(actual) or len(groups) != len(operation.bulk_batch):
             raise UnsupportedProtectedOperation()
@@ -1173,13 +1255,22 @@ class _Attachment:
             if any(key not in names for key in admitted):
                 raise UnsupportedProtectedOperation()
             expected = {names[key]: value for key, value in admitted.items()}
-            expected[names[scope.key]] = operation.tenant
+            expected[names[scope_key]] = operation.tenant
+            expected.update(constants)
             if type(sent) is not dict or set(sent) != set(expected) or set(group) != set(expected):
                 raise UnsupportedProtectedOperation()
             for name, value in expected.items():
-                if isinstance(value, _Sealed):
+                if name in constants:
+                    if type(group[name]) is not type(value) or group[name] != value:
+                        raise UnsupportedProtectedOperation()
+                    if type(value) is bytes:
+                        if type(sent[name]) is not binary or type(sent[name].obj) is not bytes or sent[name].obj != value:
+                            raise UnsupportedProtectedOperation()
+                    elif type(sent[name]) is not type(value) or sent[name] != value:
+                        raise UnsupportedProtectedOperation()
+                elif isinstance(value, _Sealed):
                     if (operation.bulk_seals.get(id(value)) is not value or value.permit is not operation or
-                            group[name] is not value or value.record != admitted[record.key] or
+                            group[name] is not value or value.record != admitted[record_key] or
                             value.tenant != operation.tenant or
                             (sent[name] is not None if value.body is None else
                              type(sent[name]) is not binary or type(sent[name].obj) is not bytes or sent[name].obj != value.body)):
@@ -1188,7 +1279,7 @@ class _Attachment:
                     if (group[name] is not value and
                             (type(group[name]) is not type(value) or group[name] != value)):
                         raise UnsupportedProtectedOperation()
-                    if (name in (names[scope.key], names[record.key]) and
+                    if (name in (names[scope_key], names[record_key]) and
                             (type(sent[name]) is not type(value) or sent[name] != value)):
                         raise UnsupportedProtectedOperation()
 
@@ -1255,12 +1346,12 @@ class _Session(Session):
         return self._owner.prepare(self._tenant)
 
     def scalar(self, statement, *args, **kwargs):
-        if isinstance(statement, Delete):
+        if isinstance(statement, (Delete, Update)):
             raise UnsupportedProtectedOperation()
         return super().scalar(statement, *args, **kwargs)
 
     def scalars(self, statement, *args, **kwargs):
-        if isinstance(statement, Delete):
+        if isinstance(statement, (Delete, Update)):
             raise UnsupportedProtectedOperation()
         return super().scalars(statement, *args, **kwargs)
 
@@ -1450,17 +1541,66 @@ def _bulk_insert(state):
         _operation.reset(token)
 
 
-def _bulk_update(state):
-    session, statement = state.session, state.statement
-    owner, mapper = session._owner, state.bind_mapper
-    if (not state.is_orm_statement or mapper is None or mapper.class_ not in owner.models or
-            type(state.parameters) is not list or not state.parameters or
-            set(state.bind_arguments) - {'clause', 'mapper'}):
+def _capture_update(owner, mapper, statement, parameters, tenant):
+    if (mapper is None or getattr(mapper, 'class_', None) not in owner.models or
+            mapper is not inspect(mapper.class_) or mapper.version_id_col is not None or
+            type(parameters) is not list or not parameters or type(tenant) is not UUID):
         raise UnsupportedProtectedOperation()
     bindings = owner.models[mapper.class_]
     first = bindings[0]
     table = first.column.table
-    owner.update_context(statement, table, session._tenant, generated=False)
+    tenant = UUID(bytes=tenant.bytes)
+    owner.update_context(statement, table, tenant, generated=False)
+    columns = {prop.key: prop.columns[0] for prop in mapper.column_attrs
+               if len(prop.columns) == 1 and isinstance(prop.columns[0], ColumnClause) and
+               prop.columns[0].table is table and table.c.get(prop.columns[0].key) is prop.columns[0] and
+               mapper.get_property_by_column(prop.columns[0]) is prop}
+    rows = []
+    for original in parameters:
+        if (type(original) is not dict or any(type(key) is not str for key in original) or
+                set(original) - columns.keys() or
+                first.tenant_attribute in original or
+                any(hasattr(value, '__clause_element__') or isinstance(value, ClauseElement)
+                    for value in original.values())):
+            raise UnsupportedProtectedOperation()
+        row = dict(original)
+        for attribute in row:
+            owner.bind_type(columns[attribute].type)
+        record = row.get(first.record_attribute)
+        if first.descriptor.record_codec == 'uuid16/v1':
+            if type(record) is not UUID:
+                raise UnsupportedProtectedOperation()
+            row[first.record_attribute] = UUID(bytes=record.bytes)
+        first.descriptor._record(tenant, record)
+        if any(column.onupdate is not None or column.server_onupdate is not None
+               for attribute, column in columns.items() if attribute not in row):
+            raise UnsupportedProtectedOperation()
+        rows.append(tuple(row.items()))
+    return _UpdateRequest(mapper, table, tenant, tuple(columns.items()), tuple(rows))
+
+
+def _same_update_request(original, current):
+    if (original.mapper is not current.mapper or original.table is not current.table or
+            original.tenant != current.tenant or len(original.rows) != len(current.rows) or
+            len(original.columns) != len(current.columns) or any(
+                left[0] != right[0] or left[1] is not right[1]
+                for left, right in zip(original.columns, current.columns))):
+        return False
+    for left, right in zip(original.rows, current.rows):
+        if len(left) != len(right) or any(
+                lkey != rkey or lvalue is not rvalue and
+                (type(lvalue) is not type(rvalue) or lvalue != rvalue)
+                for (lkey, lvalue), (rkey, rvalue) in zip(left, right)):
+            return False
+    return True
+
+
+def _bulk_update(state):
+    session, statement = state.session, state.statement
+    owner, mapper = session._owner, state.bind_mapper
+    if not state.is_orm_statement or set(state.bind_arguments) - {'clause', 'mapper'}:
+        raise UnsupportedProtectedOperation()
+    request = _capture_update(owner, mapper, statement, state.parameters, session._tenant)
     options = state.execution_options
     if (set(options) - {'synchronize_session', 'autoflush', 'prebuffer_rows', 'dml_strategy',
                        '_sa_orm_update_options', '_result_disable_adapt_to_context'} or
@@ -1470,35 +1610,29 @@ def _bulk_update(state):
         raise UnsupportedProtectedOperation()
     native = options.get('_sa_orm_update_options')
     if (native is None or native._subject_mapper is not mapper or native._dml_strategy != 'bulk' or
-            native._synchronize_session is not False or mapper.version_id_col is not None):
+            native._synchronize_session is not False):
         raise UnsupportedProtectedOperation()
-    columns = {prop.key: prop.columns[0] for prop in mapper.column_attrs
-               if len(prop.columns) == 1 and isinstance(prop.columns[0], ColumnClause) and
-               prop.columns[0].table is table and table.c.get(prop.columns[0].key) is prop.columns[0] and
-               mapper.get_property_by_column(prop.columns[0]) is prop}
-    rows = []
-    for original in state.parameters:
-        if (type(original) is not dict or set(original) - columns.keys() or
-                first.tenant_attribute in original or
-                any(hasattr(value, '__clause_element__') or isinstance(value, ClauseElement)
-                    for value in original.values())):
-            raise UnsupportedProtectedOperation()
-        row = dict(original)
-        for attribute in row:
-            owner.bind_type(columns[attribute].type)
-        first.descriptor._record(session._tenant, row.get(first.record_attribute))
-        if any(column.onupdate is not None or column.server_onupdate is not None
-               for attribute, column in columns.items() if attribute not in row):
-            raise UnsupportedProtectedOperation()
-        rows.append(row)
-    operation = _Operation(owner, session._keys(), session._tenant, session, bulk_update=table)
+    material = session._keys()
+    current = _capture_update(owner, mapper, statement, state.parameters, session._tenant)
+    if not _same_update_request(request, current):
+        raise UnsupportedProtectedOperation()
+    table, tenant = request.table, request.tenant
+    columns, rows = dict(request.columns), [dict(row) for row in request.rows]
+    bindings = owner.models[mapper.class_]
+    first = bindings[0]
+    operation = _Operation(owner, material, tenant, session, bulk_update=table)
     ledger = []
     for row in rows:
         record = row[first.record_attribute]
         for binding in bindings:
             if binding.attribute in row:
-                body = seal_text(row[binding.attribute], binding.descriptor, session._tenant, record, operation.keys)
-                sealed = _Sealed(body, operation, binding, record=record, tenant=session._tenant)
+                try:
+                    stored = _varchar_assignment(row[binding.attribute], binding.max_characters)
+                except VarcharLengthExceeded as failure:
+                    sealed = _Sealed(_VARCHAR_UPDATE_INVALID, operation, binding, failure, record, tenant)
+                else:
+                    body = seal_text(stored, binding.descriptor, tenant, record, operation.keys)
+                    sealed = _Sealed(body, operation, binding, record=record, tenant=tenant)
                 operation.bulk_seals[id(sealed)] = sealed
                 row[binding.attribute] = sealed
         values = {columns[attribute].key: value for attribute, value in row.items()
@@ -1515,10 +1649,19 @@ def _bulk_update(state):
         if operation.bulk_position != len(operation.bulk_inputs):
             raise UnsupportedProtectedOperation()
         return result
+    except DBAPIError as error:
+        if getattr(error.orig, 'sqlstate', None) == '22001' and operation.update_carrier is not None:
+            for row in operation.bulk_batch:
+                for value in row.values():
+                    if (type(value) is _Sealed and operation.bulk_seals.get(id(value)) is value and
+                            type(value.failure) is VarcharLengthExceeded):
+                        raise value.failure from None
+        raise
     finally:
         state.parameters = original_parameters
         operation.bulk_seals.clear()
         operation.bulk_batch = operation.bulk_inputs = ()
+        operation.update_carrier = None
         _operation.reset(token)
 
 
@@ -1557,22 +1700,34 @@ def _async_method(name):
     @wraps(native)
     async def method(self, *args, **kwargs):
         statement = args[0] if args else kwargs.get('statement')
-        permit = None
+        permit = request = None
         if isinstance(statement, Delete):
             if name != 'execute':
                 raise UnsupportedProtectedOperation()
             session = self.sync_session
             session._owner._check_configuration()
             permit, _, _ = session._owner.delete_context(statement, session._tenant)
+        if isinstance(statement, Update):
+            if name != 'execute':
+                raise UnsupportedProtectedOperation()
+            session = self.sync_session
+            session._owner._check_configuration()
+            parameters = args[1] if len(args) > 1 else kwargs.get('params')
+            request = _capture_update(session._owner, statement._propagate_attrs.get('plugin_subject'),
+                                      statement, parameters, session._tenant)
         try:
             await self._prepare()
             if permit is not None:
                 if session._tenant != permit.tenant:
                     raise UnsupportedProtectedOperation()
                 session._owner.delete_context(statement, permit.tenant, permit)
+            if request is not None:
+                current = _capture_update(session._owner, request.mapper, statement, parameters, session._tenant)
+                if not _same_update_request(request, current):
+                    raise UnsupportedProtectedOperation()
             return await native(self, *args, **kwargs)
         finally:
-            permit = None
+            permit = request = None
     return method
 
 

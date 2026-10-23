@@ -179,13 +179,14 @@ def test_unavailable_bulk_update_keys_leave_no_sql_or_partial_update(fault, monk
             session.commit()
 
 
-def test_scoped_varchar_update_remains_explicitly_unadmitted():
+def test_scoped_varchar_update_returning_remains_explicitly_unadmitted():
     with native_application(True) as app:
         factory = protect(app)
         before = _snapshot(app)
         with factory(tenant_id=TENANT) as session:
             with pytest.raises(UnsupportedProtectedOperation):
-                execute(session, app, [changes(100, name='fits')])
+                session.execute(update(app.Customer).where(app.Customer.tenant_id == TENANT).returning(app.Customer.name),
+                    [changes(100, name='fits')], execution_options={'synchronize_session': False})
             session.rollback()
         assert _snapshot(app) == before
 

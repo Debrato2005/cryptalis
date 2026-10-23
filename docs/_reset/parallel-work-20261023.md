@@ -17,10 +17,10 @@ a separate policy-checked retry. Their source observations and final checks rema
 
 | Owner | Worktree | Write scope | Current slice | State |
 |---|---|---|---|---|
-| Lifecycle specialist | `/tmp/cryptalis-parallel-lifecycle-20261023` | DELETE source, tests and receipts | Scoped mapped and native flush DELETE | Verified changes integrated. Offline package inspection follows |
-| SELECT specialist | `/tmp/cryptalis-parallel-kms-20261023` | SELECT admission, tests and receipts | Expanded projection descendants | Verified changes integrated. Source ownership complete |
-| Documentation specialist | Main worktree | Status, checklist and decisions | Defensive checkpoint evidence | Final full result pending |
-| Lead | `/home/debrato/Projects/cryptalis` | Security, compatibility, integration and brief | Serial combined PostgreSQL regression | Current committed base `5b3362b`. Integrated Python source frozen |
+| Lifecycle specialist | `/tmp/cryptalis-parallel-lifecycle-20261023` | Independent package metadata review | Optional SQLModel extra | Current installed-wheel application verification complete |
+| Framework specialist | `/tmp/cryptalis-parallel-kms-20261023` | Optional SQLModel bridge, compiler normalization and tests | Second SQLModel application | Nine new controls pass. Existing affected regressions run separately |
+| Documentation specialist | Main worktree | Status, checklist and decisions | Verified checkpoint evidence | Wait for VARCHAR integration results |
+| Lead | `/home/debrato/Projects/cryptalis` | Security, compatibility, integration and brief | Integrate verified slices | Current commit `dd7266f`. VARCHAR UPDATE verification complete. Local commit follows |
 
 Use the existing project interpreter with `PYTHONPATH` set to the worktree's
 `src` directory. Verify the imported module path. Run all database tests through
@@ -90,3 +90,36 @@ does not qualify deployment performance. All seven production gates remain UNKNO
 
 The receipts use the `defensive-projection-delete-` prefix in this directory.
 They bind the exact source hashes before the local integration commit.
+## Current continuation checkpoint
+
+Local commits after the defensive adapter fix:
+
+- `c2a7691` checks wheel dependency and Python metadata against the project.
+- `1428797` adds the held-mutex fork regression without product crypto changes.
+- `dd7266f` records the installed Python 3.13 wheel and exact-runtime application check.
+
+Those three commits left product modules byte-identical to `57e41e8`.
+All seven production gates remain UNKNOWN.
+
+Finite VARCHAR dictionary UPDATE now uses a private parameterized CASE.
+Seven native controls prove that custom and generic plans handle unmatched
+overlength assignments differently. Three native CASE controls match that
+behavior with public constants. The final alternate bundle passes 92 checks.
+The final two-column int64 control passes separately on both runtime cells.
+Earlier failed runs remain separate evidence. The serial combined primary
+suite passes 2,281 tests plus 18 subtests in 720.06 seconds. Four tests skip,
+and 48 existing deprecation warnings remain. All 158 Python files stay unchanged.
+
+Current reproducible archives, metadata, SBOM, installed files and CLI checks
+pass. A new Python 3.13 environment contains the current wheel and exact runtime
+pins. All 37 installed files and 33 modules match before and after its application
+check. The pinned Smolink lifecycle passes in 3.00 seconds with real Redis and
+a package-free restart. All 38 application files stay unchanged.
+
+The framework specialist implements an optional SQLModel bridge in a separate
+worktree. Pinned primary sources and independent source review found no blocker.
+Nine new native/runtime/application controls pass in its isolated cell.
+Existing plain-SQLAlchemy regressions remain in progress. The optional package
+extra has offline artifact controls in a separate temporary directory.
+The documentation owner records terminal integration results. The lead owns
+integration history, security and compatibility. No main Python wrapper remains active.

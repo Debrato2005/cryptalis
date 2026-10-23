@@ -48,7 +48,7 @@ Rollback/removal transforms current data through decrypt-back until explicit fin
 | Text storage/read/write, entity/scalar projection, SQL NULL | SUPPORTED | Randomized authenticated payload. Preserve exact str, empty text, NULL, native ORM state, and expected row/tenant context |
 | Mapped dictionary INSERT without RETURNING | SUPPORTED | Attached sync/async `Session.execute(insert(Model), list[dict])`, explicit typed IDs and tenant scope, copied attribute dictionaries, native NULL/grouping, autoflush, uniqueness and transaction behavior. Other bulk routes remain unadmitted |
 | Mapped dictionary INSERT with one protected scalar RETURNING | SUPPORTED | Exactly one direct protected mapped column. Preserve native Row/scalar keys/types, grouping, paging, parameter-order requests and empty identity map. Authenticate against exact prepared input. Tuple/entity, label/expression/alias, loader-option and caller return_defaults forms remain unadmitted |
-| Scoped mapped dictionary UPDATE | SUPPORTED | Attached sync/async TEXT targets, explicit tenant-column equality, typed IDs, nonempty list of dictionaries and synchronize_session=False. Preserve native omission/NULL, grouping, repeated IDs, zero matches and transactions. VARCHAR, single-tenant, Core and RETURNING routes remain unadmitted |
+| Scoped mapped dictionary UPDATE | SUPPORTED | Attached sync/async TEXT and VARCHAR targets, explicit tenant-column equality, typed IDs, nonempty list of dictionaries and synchronize_session=False. Preserve native omission/NULL, grouping, repeated IDs, zero matches and transactions. Single-tenant, Core and RETURNING routes remain unadmitted |
 | Scoped mapped single-record DELETE | SUPPORTED | Attached sync/async execute, exact typed tenant and application-record equalities, no external parameters or RETURNING, and synchronize_session=False. Preserve native row counts and transactions. Unsupported custom AST classes refuse before execution |
 | Equality `==` and `IN` | SUPPORTED | Declared full tenant/domain-bound HMAC term. Preserve typed binds and native NULL/empty-list truth tables |
 | Simple negative equality `!=`, `NOT IN`, and NULL presence | SUPPORTED | Reuse the authenticated term for values and a SQL NULL check for storage-only fields. Preserve native three-valued truth, NULL elements, empty lists, and outer-join NULL extension. General Boolean NOT remains unadmitted |
@@ -71,8 +71,10 @@ input dictionary. The single predicate must be direct typed tenant equality.
 The adapter rejects extra predicates, embedded values, version counters,
 dynamic defaults, read-only mapped properties, SQL-producing type hooks and
 type variants. Ordinary Python public-field bind processors remain native.
-The ordered input ledger authenticates each emitted group and complete consumption.
-The [bulk UPDATE checkpoint](status.md#scoped-mapped-bulk-update-checkpoint-2026-10-23) owns exact evidence and limits.
+The ordered input ledger checks each emitted group and complete consumption.
+The [bulk UPDATE checkpoint](status.md#scoped-mapped-bulk-update-checkpoint-2026-10-23) owns the earlier TEXT evidence.
+The [VARCHAR checkpoint](status.md#native-varchar-mapped-update-checkpoint-2026-10-23)
+adds finite VARCHAR targets and records native plan behavior.
 
 Admitted plaintext fields retain native query semantics, including ranges, order,
 aggregates, and joins through unprotected keys. SELECT type admission refuses
@@ -136,6 +138,14 @@ For the bounded dictionary INSERT route, a length failure preserves native
 Session activity and PostgreSQL's aborted transaction or savepoint state.
 An earlier row constraint failure retains precedence. No protected plaintext
 reaches PostgreSQL to produce the length error.
+For dictionary UPDATE, native plan selection can change when PostgreSQL rejects
+an overlength assignment. Custom plans reject the tested matching and unmatched
+assignments. Generic plans reject matching assignments but allow unmatched
+updates with zero effects. The adapter uses a parameterized CASE with public
+constants to preserve this behavior. Known carrier length errors retain the
+typed `VarcharLengthExceeded` failure and SQLSTATE `22001`.
+The tested transaction abort and savepoint recovery remain native.
+Protected plaintext does not reach PostgreSQL for this check.
 Custom type decorators and dialect variants remain unadmitted for protected mappings and query binds.
 See [native VARCHAR mappings](walkthrough-migration.md#native-varchar-mappings).
 

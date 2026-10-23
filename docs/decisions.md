@@ -104,6 +104,30 @@ zero-driver and healthy-restored assertions. Do not weaken this check to match
 the former later timing. Keep the separate CLI timeout failure and its UNKNOWN
 cause visible. Do not extend product or test timeouts without supporting evidence.
 
+## Native VARCHAR mapped dictionary UPDATE: 2026-10-23
+
+Extend only the existing mapped dictionary UPDATE route to native VARCHAR.
+Keep exact tenant equality, typed application IDs, a nonempty dictionary list
+and `synchronize_session=False`. Keep the route exclusive to `execute()`.
+Preserve all other admission limits and native result/transaction behavior.
+
+Apply native assignment coercion before sealing valid text. Keep omitted fields
+omitted and query values unchanged. For invalid text, admit only the private
+owned CASE and public constants for that emitted group. Preserve the tested
+native custom, generic and warmed automatic plan behavior, including its
+zero-match/error boundary. This refines early length-failure wording only for
+this bulk route. Protect the caller's text from SQL error parameters.
+
+Map only the known owned carrier's DBAPI 22001 to its retained
+`VarcharLengthExceeded`. Keep other native DBAPI errors native. Ordinary flush
+and INSERT retain their existing length-failure paths. Capture exact typed
+requests before provider callbacks in sync and async paths. Preserve the ordered
+immutable ledger and exact compiled/final driver checks.
+
+The internal CASE gives no public expression or type-hook waiver. Keep CF1,
+readers, provider authority, leakage acceptance and search representations unchanged.
+This decision supersedes only the earlier VARCHAR bulk UPDATE refusal.
+
 ## Scoped mapped TEXT bulk UPDATE: 2026-10-23
 
 Admit mapped dictionary UPDATE with one direct tenant-column equality, typed
@@ -113,6 +137,7 @@ extra predicates, dynamic defaults, read-only properties and SQL-producing types
 Use ordered input proofs and final exact scope/record/frame checks. Extend
 shared identity admission to attachment and pre-resolver configuration checks.
 The [compatibility owner](compatibility.md#full-capability-matrix) defines the route.
+The later [native VARCHAR UPDATE decision](#native-varchar-mapped-dictionary-update-2026-10-23) supersedes its VARCHAR refusal.
 
 ## Bounded rotation row recovery: 2026-10-23
 
@@ -333,6 +358,7 @@ Preserve pending ORM attributes until native refresh or expiration changes them.
 Do not apply assignment coercion to equality query values.
 An overlength non-space value raises a safe typed error before protected SQL.
 The error carries SQLSTATE `22001`. Callers must roll back before retry.
+The [bulk UPDATE decision](#native-varchar-mapped-dictionary-update-2026-10-23) defines its separate native plan-sensitive length-failure boundary.
 Read-time validation must refuse an authenticated value beyond its native limit.
 
 Keep CF1, `utf8-exact/v1`, and `identity/v1` unchanged.

@@ -1,0 +1,1306 @@
+{
+  "scope": "Native-only PostgreSQL VARCHAR scoped mapped dictionary UPDATE; observed plan-dependent errors, no protected implementation or production claim",
+  "base_revision": "57e41e8762a8eda0e9cc2d4c2c494663cf5b35f7",
+  "wrapper_receipt": "docs/_reset/varchar-update-native-plans-first-lifecycle-20261023.json",
+  "wrapper_receipt_sha256": "807ddcede27f3ffdda6b8745b433fdcd0619c60a64aab7ae03e54977c16a3a59",
+  "test_source_sha256": "4b35680736c6645a5a6ae96b21e23c96eb297867a22bd894e5e9722556bb1d47",
+  "log_sha256": "2c7adccc46332f328f1b83dc79c3c518fc057428066610b945398b484fab1364",
+  "observations": [
+    {
+      "label": "varchar_update_plan_observations",
+      "observation": {
+        "mode": "force_custom_plan",
+        "prepare_threshold": 0,
+        "shape": "single",
+        "sent": [
+          {
+            "sql": "UPDATE cryptalis_migration_91f57b769ff9409280d2214bced6568a.customer SET name=%(name)s::VARCHAR WHERE cryptalis_migration_91f57b769ff9409280d2214bced6568a.customer.tenant_id = %(tenant_id_1)s::UUID AND cryptalis_migration_91f57b769ff9409280d2214bced6568a.customer.id = %(cryptalis_migration_91f57b769ff9409280d2214bced6568a_cust_1)s::UUID",
+            "executemany": false
+          }
+        ],
+        "outcomes": [
+          {
+            "target": "matching",
+            "repeat": 0,
+            "sqlstate": "22001",
+            "prepared_before": [],
+            "completed_rowcounts": [],
+            "attempted": [
+              {
+                "groups": [
+                  [
+                    "cryptalis_migration_91f57b769ff9409280d2214bced6568a_cust_1",
+                    "name",
+                    "tenant_id_1"
+                  ]
+                ],
+                "executemany": false
+              }
+            ]
+          },
+          {
+            "target": "matching",
+            "repeat": 1,
+            "sqlstate": "22001",
+            "prepared_before": [],
+            "completed_rowcounts": [],
+            "attempted": [
+              {
+                "groups": [
+                  [
+                    "cryptalis_migration_91f57b769ff9409280d2214bced6568a_cust_1",
+                    "name",
+                    "tenant_id_1"
+                  ]
+                ],
+                "executemany": false
+              }
+            ]
+          },
+          {
+            "target": "missing",
+            "repeat": 0,
+            "sqlstate": "22001",
+            "prepared_before": [],
+            "completed_rowcounts": [],
+            "attempted": [
+              {
+                "groups": [
+                  [
+                    "cryptalis_migration_91f57b769ff9409280d2214bced6568a_cust_1",
+                    "name",
+                    "tenant_id_1"
+                  ]
+                ],
+                "executemany": false
+              }
+            ]
+          },
+          {
+            "target": "missing",
+            "repeat": 1,
+            "sqlstate": "22001",
+            "prepared_before": [],
+            "completed_rowcounts": [],
+            "attempted": [
+              {
+                "groups": [
+                  [
+                    "cryptalis_migration_91f57b769ff9409280d2214bced6568a_cust_1",
+                    "name",
+                    "tenant_id_1"
+                  ]
+                ],
+                "executemany": false
+              }
+            ]
+          },
+          {
+            "target": "foreign",
+            "repeat": 0,
+            "sqlstate": "22001",
+            "prepared_before": [],
+            "completed_rowcounts": [],
+            "attempted": [
+              {
+                "groups": [
+                  [
+                    "cryptalis_migration_91f57b769ff9409280d2214bced6568a_cust_1",
+                    "name",
+                    "tenant_id_1"
+                  ]
+                ],
+                "executemany": false
+              }
+            ]
+          },
+          {
+            "target": "foreign",
+            "repeat": 1,
+            "sqlstate": "22001",
+            "prepared_before": [],
+            "completed_rowcounts": [],
+            "attempted": [
+              {
+                "groups": [
+                  [
+                    "cryptalis_migration_91f57b769ff9409280d2214bced6568a_cust_1",
+                    "name",
+                    "tenant_id_1"
+                  ]
+                ],
+                "executemany": false
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "label": "varchar_update_plan_observations",
+      "observation": {
+        "mode": "force_generic_plan",
+        "prepare_threshold": 0,
+        "shape": "single",
+        "sent": [
+          {
+            "sql": "UPDATE cryptalis_migration_62a1dfac74b14064ad8b0a7b53ff4eec.customer SET name=%(name)s::VARCHAR WHERE cryptalis_migration_62a1dfac74b14064ad8b0a7b53ff4eec.customer.tenant_id = %(tenant_id_1)s::UUID AND cryptalis_migration_62a1dfac74b14064ad8b0a7b53ff4eec.customer.id = %(cryptalis_migration_62a1dfac74b14064ad8b0a7b53ff4eec_cust_1)s::UUID",
+            "executemany": false
+          }
+        ],
+        "outcomes": [
+          {
+            "target": "matching",
+            "repeat": 0,
+            "sqlstate": "22001",
+            "prepared_before": [],
+            "completed_rowcounts": [],
+            "attempted": [
+              {
+                "groups": [
+                  [
+                    "cryptalis_migration_62a1dfac74b14064ad8b0a7b53ff4eec_cust_1",
+                    "name",
+                    "tenant_id_1"
+                  ]
+                ],
+                "executemany": false
+              }
+            ]
+          },
+          {
+            "target": "matching",
+            "repeat": 1,
+            "sqlstate": "22001",
+            "prepared_before": [],
+            "completed_rowcounts": [],
+            "attempted": [
+              {
+                "groups": [
+                  [
+                    "cryptalis_migration_62a1dfac74b14064ad8b0a7b53ff4eec_cust_1",
+                    "name",
+                    "tenant_id_1"
+                  ]
+                ],
+                "executemany": false
+              }
+            ]
+          },
+          {
+            "target": "missing",
+            "repeat": 0,
+            "sqlstate": null,
+            "prepared_after_success": [
+              {
+                "statement": "UPDATE cryptalis_migration_62a1dfac74b14064ad8b0a7b53ff4eec.customer SET name=$1::VARCHAR WHERE cryptalis_migration_62a1dfac74b14064ad8b0a7b53ff4eec.customer.tenant_id = $2::UUID AND cryptalis_migration_62a1dfac74b14064ad8b0a7b53ff4eec.customer.id = $3::UUID",
+                "generic": 1,
+                "custom": 0
+              }
+            ],
+            "prepared_before": [],
+            "completed_rowcounts": [
+              0
+            ],
+            "attempted": [
+              {
+                "groups": [
+                  [
+                    "cryptalis_migration_62a1dfac74b14064ad8b0a7b53ff4eec_cust_1",
+                    "name",
+                    "tenant_id_1"
+                  ]
+                ],
+                "executemany": false
+              }
+            ]
+          },
+          {
+            "target": "missing",
+            "repeat": 1,
+            "sqlstate": null,
+            "prepared_after_success": [
+              {
+                "statement": "UPDATE cryptalis_migration_62a1dfac74b14064ad8b0a7b53ff4eec.customer SET name=$1::VARCHAR WHERE cryptalis_migration_62a1dfac74b14064ad8b0a7b53ff4eec.customer.tenant_id = $2::UUID AND cryptalis_migration_62a1dfac74b14064ad8b0a7b53ff4eec.customer.id = $3::UUID",
+                "generic": 1,
+                "custom": 0
+              }
+            ],
+            "prepared_before": [],
+            "completed_rowcounts": [
+              0
+            ],
+            "attempted": [
+              {
+                "groups": [
+                  [
+                    "cryptalis_migration_62a1dfac74b14064ad8b0a7b53ff4eec_cust_1",
+                    "name",
+                    "tenant_id_1"
+                  ]
+                ],
+                "executemany": false
+              }
+            ]
+          },
+          {
+            "target": "foreign",
+            "repeat": 0,
+            "sqlstate": null,
+            "prepared_after_success": [
+              {
+                "statement": "UPDATE cryptalis_migration_62a1dfac74b14064ad8b0a7b53ff4eec.customer SET name=$1::VARCHAR WHERE cryptalis_migration_62a1dfac74b14064ad8b0a7b53ff4eec.customer.tenant_id = $2::UUID AND cryptalis_migration_62a1dfac74b14064ad8b0a7b53ff4eec.customer.id = $3::UUID",
+                "generic": 1,
+                "custom": 0
+              }
+            ],
+            "prepared_before": [],
+            "completed_rowcounts": [
+              0
+            ],
+            "attempted": [
+              {
+                "groups": [
+                  [
+                    "cryptalis_migration_62a1dfac74b14064ad8b0a7b53ff4eec_cust_1",
+                    "name",
+                    "tenant_id_1"
+                  ]
+                ],
+                "executemany": false
+              }
+            ]
+          },
+          {
+            "target": "foreign",
+            "repeat": 1,
+            "sqlstate": null,
+            "prepared_after_success": [
+              {
+                "statement": "UPDATE cryptalis_migration_62a1dfac74b14064ad8b0a7b53ff4eec.customer SET name=$1::VARCHAR WHERE cryptalis_migration_62a1dfac74b14064ad8b0a7b53ff4eec.customer.tenant_id = $2::UUID AND cryptalis_migration_62a1dfac74b14064ad8b0a7b53ff4eec.customer.id = $3::UUID",
+                "generic": 1,
+                "custom": 0
+              }
+            ],
+            "prepared_before": [],
+            "completed_rowcounts": [
+              0
+            ],
+            "attempted": [
+              {
+                "groups": [
+                  [
+                    "cryptalis_migration_62a1dfac74b14064ad8b0a7b53ff4eec_cust_1",
+                    "name",
+                    "tenant_id_1"
+                  ]
+                ],
+                "executemany": false
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "label": "varchar_update_plan_observations",
+      "observation": {
+        "mode": "force_custom_plan",
+        "prepare_threshold": 0,
+        "shape": "same_group",
+        "sent": [
+          {
+            "sql": "UPDATE cryptalis_migration_653790086c7645e2a6a49822946dc52d.customer SET name=%(name)s::VARCHAR WHERE cryptalis_migration_653790086c7645e2a6a49822946dc52d.customer.tenant_id = %(tenant_id_1)s::UUID AND cryptalis_migration_653790086c7645e2a6a49822946dc52d.customer.id = %(cryptalis_migration_653790086c7645e2a6a49822946dc52d_cust_1)s::UUID",
+            "executemany": true
+          }
+        ],
+        "outcomes": [
+          {
+            "target": "matching",
+            "repeat": 0,
+            "sqlstate": "22001",
+            "prepared_before": [],
+            "completed_rowcounts": [],
+            "attempted": [
+              {
+                "groups": [
+                  [
+                    "cryptalis_migration_653790086c7645e2a6a49822946dc52d_cust_1",
+                    "name",
+                    "tenant_id_1"
+                  ],
+                  [
+                    "cryptalis_migration_653790086c7645e2a6a49822946dc52d_cust_1",
+                    "name",
+                    "tenant_id_1"
+                  ]
+                ],
+                "executemany": true
+              }
+            ]
+          },
+          {
+            "target": "matching",
+            "repeat": 1,
+            "sqlstate": "22001",
+            "prepared_before": [],
+            "completed_rowcounts": [],
+            "attempted": [
+              {
+                "groups": [
+                  [
+                    "cryptalis_migration_653790086c7645e2a6a49822946dc52d_cust_1",
+                    "name",
+                    "tenant_id_1"
+                  ],
+                  [
+                    "cryptalis_migration_653790086c7645e2a6a49822946dc52d_cust_1",
+                    "name",
+                    "tenant_id_1"
+                  ]
+                ],
+                "executemany": true
+              }
+            ]
+          },
+          {
+            "target": "missing",
+            "repeat": 0,
+            "sqlstate": "22001",
+            "prepared_before": [],
+            "completed_rowcounts": [],
+            "attempted": [
+              {
+                "groups": [
+                  [
+                    "cryptalis_migration_653790086c7645e2a6a49822946dc52d_cust_1",
+                    "name",
+                    "tenant_id_1"
+                  ],
+                  [
+                    "cryptalis_migration_653790086c7645e2a6a49822946dc52d_cust_1",
+                    "name",
+                    "tenant_id_1"
+                  ]
+                ],
+                "executemany": true
+              }
+            ]
+          },
+          {
+            "target": "missing",
+            "repeat": 1,
+            "sqlstate": "22001",
+            "prepared_before": [],
+            "completed_rowcounts": [],
+            "attempted": [
+              {
+                "groups": [
+                  [
+                    "cryptalis_migration_653790086c7645e2a6a49822946dc52d_cust_1",
+                    "name",
+                    "tenant_id_1"
+                  ],
+                  [
+                    "cryptalis_migration_653790086c7645e2a6a49822946dc52d_cust_1",
+                    "name",
+                    "tenant_id_1"
+                  ]
+                ],
+                "executemany": true
+              }
+            ]
+          },
+          {
+            "target": "foreign",
+            "repeat": 0,
+            "sqlstate": "22001",
+            "prepared_before": [],
+            "completed_rowcounts": [],
+            "attempted": [
+              {
+                "groups": [
+                  [
+                    "cryptalis_migration_653790086c7645e2a6a49822946dc52d_cust_1",
+                    "name",
+                    "tenant_id_1"
+                  ],
+                  [
+                    "cryptalis_migration_653790086c7645e2a6a49822946dc52d_cust_1",
+                    "name",
+                    "tenant_id_1"
+                  ]
+                ],
+                "executemany": true
+              }
+            ]
+          },
+          {
+            "target": "foreign",
+            "repeat": 1,
+            "sqlstate": "22001",
+            "prepared_before": [],
+            "completed_rowcounts": [],
+            "attempted": [
+              {
+                "groups": [
+                  [
+                    "cryptalis_migration_653790086c7645e2a6a49822946dc52d_cust_1",
+                    "name",
+                    "tenant_id_1"
+                  ],
+                  [
+                    "cryptalis_migration_653790086c7645e2a6a49822946dc52d_cust_1",
+                    "name",
+                    "tenant_id_1"
+                  ]
+                ],
+                "executemany": true
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "label": "varchar_update_plan_observations",
+      "observation": {
+        "mode": "force_generic_plan",
+        "prepare_threshold": 0,
+        "shape": "same_group",
+        "sent": [
+          {
+            "sql": "UPDATE cryptalis_migration_8b6111f93fbb43b7adc0caf54f8de1ac.customer SET name=%(name)s::VARCHAR WHERE cryptalis_migration_8b6111f93fbb43b7adc0caf54f8de1ac.customer.tenant_id = %(tenant_id_1)s::UUID AND cryptalis_migration_8b6111f93fbb43b7adc0caf54f8de1ac.customer.id = %(cryptalis_migration_8b6111f93fbb43b7adc0caf54f8de1ac_cust_1)s::UUID",
+            "executemany": true
+          }
+        ],
+        "outcomes": [
+          {
+            "target": "matching",
+            "repeat": 0,
+            "sqlstate": "22001",
+            "prepared_before": [],
+            "completed_rowcounts": [],
+            "attempted": [
+              {
+                "groups": [
+                  [
+                    "cryptalis_migration_8b6111f93fbb43b7adc0caf54f8de1ac_cust_1",
+                    "name",
+                    "tenant_id_1"
+                  ],
+                  [
+                    "cryptalis_migration_8b6111f93fbb43b7adc0caf54f8de1ac_cust_1",
+                    "name",
+                    "tenant_id_1"
+                  ]
+                ],
+                "executemany": true
+              }
+            ]
+          },
+          {
+            "target": "matching",
+            "repeat": 1,
+            "sqlstate": "22001",
+            "prepared_before": [],
+            "completed_rowcounts": [],
+            "attempted": [
+              {
+                "groups": [
+                  [
+                    "cryptalis_migration_8b6111f93fbb43b7adc0caf54f8de1ac_cust_1",
+                    "name",
+                    "tenant_id_1"
+                  ],
+                  [
+                    "cryptalis_migration_8b6111f93fbb43b7adc0caf54f8de1ac_cust_1",
+                    "name",
+                    "tenant_id_1"
+                  ]
+                ],
+                "executemany": true
+              }
+            ]
+          },
+          {
+            "target": "missing",
+            "repeat": 0,
+            "sqlstate": null,
+            "prepared_after_success": [
+              {
+                "statement": "UPDATE cryptalis_migration_8b6111f93fbb43b7adc0caf54f8de1ac.customer SET name=$1::VARCHAR WHERE cryptalis_migration_8b6111f93fbb43b7adc0caf54f8de1ac.customer.tenant_id = $2::UUID AND cryptalis_migration_8b6111f93fbb43b7adc0caf54f8de1ac.customer.id = $3::UUID",
+                "generic": 2,
+                "custom": 0
+              }
+            ],
+            "prepared_before": [],
+            "completed_rowcounts": [
+              1
+            ],
+            "attempted": [
+              {
+                "groups": [
+                  [
+                    "cryptalis_migration_8b6111f93fbb43b7adc0caf54f8de1ac_cust_1",
+                    "name",
+                    "tenant_id_1"
+                  ],
+                  [
+                    "cryptalis_migration_8b6111f93fbb43b7adc0caf54f8de1ac_cust_1",
+                    "name",
+                    "tenant_id_1"
+                  ]
+                ],
+                "executemany": true
+              }
+            ]
+          },
+          {
+            "target": "missing",
+            "repeat": 1,
+            "sqlstate": null,
+            "prepared_after_success": [
+              {
+                "statement": "UPDATE cryptalis_migration_8b6111f93fbb43b7adc0caf54f8de1ac.customer SET name=$1::VARCHAR WHERE cryptalis_migration_8b6111f93fbb43b7adc0caf54f8de1ac.customer.tenant_id = $2::UUID AND cryptalis_migration_8b6111f93fbb43b7adc0caf54f8de1ac.customer.id = $3::UUID",
+                "generic": 2,
+                "custom": 0
+              }
+            ],
+            "prepared_before": [],
+            "completed_rowcounts": [
+              1
+            ],
+            "attempted": [
+              {
+                "groups": [
+                  [
+                    "cryptalis_migration_8b6111f93fbb43b7adc0caf54f8de1ac_cust_1",
+                    "name",
+                    "tenant_id_1"
+                  ],
+                  [
+                    "cryptalis_migration_8b6111f93fbb43b7adc0caf54f8de1ac_cust_1",
+                    "name",
+                    "tenant_id_1"
+                  ]
+                ],
+                "executemany": true
+              }
+            ]
+          },
+          {
+            "target": "foreign",
+            "repeat": 0,
+            "sqlstate": null,
+            "prepared_after_success": [
+              {
+                "statement": "UPDATE cryptalis_migration_8b6111f93fbb43b7adc0caf54f8de1ac.customer SET name=$1::VARCHAR WHERE cryptalis_migration_8b6111f93fbb43b7adc0caf54f8de1ac.customer.tenant_id = $2::UUID AND cryptalis_migration_8b6111f93fbb43b7adc0caf54f8de1ac.customer.id = $3::UUID",
+                "generic": 2,
+                "custom": 0
+              }
+            ],
+            "prepared_before": [],
+            "completed_rowcounts": [
+              1
+            ],
+            "attempted": [
+              {
+                "groups": [
+                  [
+                    "cryptalis_migration_8b6111f93fbb43b7adc0caf54f8de1ac_cust_1",
+                    "name",
+                    "tenant_id_1"
+                  ],
+                  [
+                    "cryptalis_migration_8b6111f93fbb43b7adc0caf54f8de1ac_cust_1",
+                    "name",
+                    "tenant_id_1"
+                  ]
+                ],
+                "executemany": true
+              }
+            ]
+          },
+          {
+            "target": "foreign",
+            "repeat": 1,
+            "sqlstate": null,
+            "prepared_after_success": [
+              {
+                "statement": "UPDATE cryptalis_migration_8b6111f93fbb43b7adc0caf54f8de1ac.customer SET name=$1::VARCHAR WHERE cryptalis_migration_8b6111f93fbb43b7adc0caf54f8de1ac.customer.tenant_id = $2::UUID AND cryptalis_migration_8b6111f93fbb43b7adc0caf54f8de1ac.customer.id = $3::UUID",
+                "generic": 2,
+                "custom": 0
+              }
+            ],
+            "prepared_before": [],
+            "completed_rowcounts": [
+              1
+            ],
+            "attempted": [
+              {
+                "groups": [
+                  [
+                    "cryptalis_migration_8b6111f93fbb43b7adc0caf54f8de1ac_cust_1",
+                    "name",
+                    "tenant_id_1"
+                  ],
+                  [
+                    "cryptalis_migration_8b6111f93fbb43b7adc0caf54f8de1ac_cust_1",
+                    "name",
+                    "tenant_id_1"
+                  ]
+                ],
+                "executemany": true
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "label": "varchar_update_plan_observations",
+      "observation": {
+        "mode": "force_custom_plan",
+        "prepare_threshold": 0,
+        "shape": "heterogeneous",
+        "sent": [
+          {
+            "sql": "UPDATE cryptalis_migration_058feaaaa67a4d11b98a66bf99175c73.customer SET name=%(name)s::VARCHAR, label=%(label)s::VARCHAR WHERE cryptalis_migration_058feaaaa67a4d11b98a66bf99175c73.customer.tenant_id = %(tenant_id_1)s::UUID AND cryptalis_migration_058feaaaa67a4d11b98a66bf99175c73.customer.id = %(cryptalis_migration_058feaaaa67a4d11b98a66bf99175c73_cust_1)s::UUID",
+            "executemany": false
+          },
+          {
+            "sql": "UPDATE cryptalis_migration_058feaaaa67a4d11b98a66bf99175c73.customer SET name=%(name)s::VARCHAR WHERE cryptalis_migration_058feaaaa67a4d11b98a66bf99175c73.customer.tenant_id = %(tenant_id_1)s::UUID AND cryptalis_migration_058feaaaa67a4d11b98a66bf99175c73.customer.id = %(cryptalis_migration_058feaaaa67a4d11b98a66bf99175c73_cust_1)s::UUID",
+            "executemany": false
+          }
+        ],
+        "outcomes": [
+          {
+            "target": "matching",
+            "repeat": 0,
+            "sqlstate": "22001",
+            "prepared_before": [],
+            "completed_rowcounts": [
+              1
+            ],
+            "attempted": [
+              {
+                "groups": [
+                  [
+                    "cryptalis_migration_058feaaaa67a4d11b98a66bf99175c73_cust_1",
+                    "label",
+                    "name",
+                    "tenant_id_1"
+                  ]
+                ],
+                "executemany": false
+              },
+              {
+                "groups": [
+                  [
+                    "cryptalis_migration_058feaaaa67a4d11b98a66bf99175c73_cust_1",
+                    "name",
+                    "tenant_id_1"
+                  ]
+                ],
+                "executemany": false
+              }
+            ]
+          },
+          {
+            "target": "matching",
+            "repeat": 1,
+            "sqlstate": "22001",
+            "prepared_before": [],
+            "completed_rowcounts": [
+              1
+            ],
+            "attempted": [
+              {
+                "groups": [
+                  [
+                    "cryptalis_migration_058feaaaa67a4d11b98a66bf99175c73_cust_1",
+                    "label",
+                    "name",
+                    "tenant_id_1"
+                  ]
+                ],
+                "executemany": false
+              },
+              {
+                "groups": [
+                  [
+                    "cryptalis_migration_058feaaaa67a4d11b98a66bf99175c73_cust_1",
+                    "name",
+                    "tenant_id_1"
+                  ]
+                ],
+                "executemany": false
+              }
+            ]
+          },
+          {
+            "target": "missing",
+            "repeat": 0,
+            "sqlstate": "22001",
+            "prepared_before": [],
+            "completed_rowcounts": [
+              1
+            ],
+            "attempted": [
+              {
+                "groups": [
+                  [
+                    "cryptalis_migration_058feaaaa67a4d11b98a66bf99175c73_cust_1",
+                    "label",
+                    "name",
+                    "tenant_id_1"
+                  ]
+                ],
+                "executemany": false
+              },
+              {
+                "groups": [
+                  [
+                    "cryptalis_migration_058feaaaa67a4d11b98a66bf99175c73_cust_1",
+                    "name",
+                    "tenant_id_1"
+                  ]
+                ],
+                "executemany": false
+              }
+            ]
+          },
+          {
+            "target": "missing",
+            "repeat": 1,
+            "sqlstate": "22001",
+            "prepared_before": [],
+            "completed_rowcounts": [
+              1
+            ],
+            "attempted": [
+              {
+                "groups": [
+                  [
+                    "cryptalis_migration_058feaaaa67a4d11b98a66bf99175c73_cust_1",
+                    "label",
+                    "name",
+                    "tenant_id_1"
+                  ]
+                ],
+                "executemany": false
+              },
+              {
+                "groups": [
+                  [
+                    "cryptalis_migration_058feaaaa67a4d11b98a66bf99175c73_cust_1",
+                    "name",
+                    "tenant_id_1"
+                  ]
+                ],
+                "executemany": false
+              }
+            ]
+          },
+          {
+            "target": "foreign",
+            "repeat": 0,
+            "sqlstate": "22001",
+            "prepared_before": [],
+            "completed_rowcounts": [
+              1
+            ],
+            "attempted": [
+              {
+                "groups": [
+                  [
+                    "cryptalis_migration_058feaaaa67a4d11b98a66bf99175c73_cust_1",
+                    "label",
+                    "name",
+                    "tenant_id_1"
+                  ]
+                ],
+                "executemany": false
+              },
+              {
+                "groups": [
+                  [
+                    "cryptalis_migration_058feaaaa67a4d11b98a66bf99175c73_cust_1",
+                    "name",
+                    "tenant_id_1"
+                  ]
+                ],
+                "executemany": false
+              }
+            ]
+          },
+          {
+            "target": "foreign",
+            "repeat": 1,
+            "sqlstate": "22001",
+            "prepared_before": [],
+            "completed_rowcounts": [
+              1
+            ],
+            "attempted": [
+              {
+                "groups": [
+                  [
+                    "cryptalis_migration_058feaaaa67a4d11b98a66bf99175c73_cust_1",
+                    "label",
+                    "name",
+                    "tenant_id_1"
+                  ]
+                ],
+                "executemany": false
+              },
+              {
+                "groups": [
+                  [
+                    "cryptalis_migration_058feaaaa67a4d11b98a66bf99175c73_cust_1",
+                    "name",
+                    "tenant_id_1"
+                  ]
+                ],
+                "executemany": false
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "label": "varchar_update_plan_observations",
+      "observation": {
+        "mode": "force_generic_plan",
+        "prepare_threshold": 0,
+        "shape": "heterogeneous",
+        "sent": [
+          {
+            "sql": "UPDATE cryptalis_migration_7ac70ccabc8041d9acba01eb356fce54.customer SET name=%(name)s::VARCHAR, label=%(label)s::VARCHAR WHERE cryptalis_migration_7ac70ccabc8041d9acba01eb356fce54.customer.tenant_id = %(tenant_id_1)s::UUID AND cryptalis_migration_7ac70ccabc8041d9acba01eb356fce54.customer.id = %(cryptalis_migration_7ac70ccabc8041d9acba01eb356fce54_cust_1)s::UUID",
+            "executemany": false
+          },
+          {
+            "sql": "UPDATE cryptalis_migration_7ac70ccabc8041d9acba01eb356fce54.customer SET name=%(name)s::VARCHAR WHERE cryptalis_migration_7ac70ccabc8041d9acba01eb356fce54.customer.tenant_id = %(tenant_id_1)s::UUID AND cryptalis_migration_7ac70ccabc8041d9acba01eb356fce54.customer.id = %(cryptalis_migration_7ac70ccabc8041d9acba01eb356fce54_cust_1)s::UUID",
+            "executemany": false
+          }
+        ],
+        "outcomes": [
+          {
+            "target": "matching",
+            "repeat": 0,
+            "sqlstate": "22001",
+            "prepared_before": [],
+            "completed_rowcounts": [
+              1
+            ],
+            "attempted": [
+              {
+                "groups": [
+                  [
+                    "cryptalis_migration_7ac70ccabc8041d9acba01eb356fce54_cust_1",
+                    "label",
+                    "name",
+                    "tenant_id_1"
+                  ]
+                ],
+                "executemany": false
+              },
+              {
+                "groups": [
+                  [
+                    "cryptalis_migration_7ac70ccabc8041d9acba01eb356fce54_cust_1",
+                    "name",
+                    "tenant_id_1"
+                  ]
+                ],
+                "executemany": false
+              }
+            ]
+          },
+          {
+            "target": "matching",
+            "repeat": 1,
+            "sqlstate": "22001",
+            "prepared_before": [],
+            "completed_rowcounts": [
+              1
+            ],
+            "attempted": [
+              {
+                "groups": [
+                  [
+                    "cryptalis_migration_7ac70ccabc8041d9acba01eb356fce54_cust_1",
+                    "label",
+                    "name",
+                    "tenant_id_1"
+                  ]
+                ],
+                "executemany": false
+              },
+              {
+                "groups": [
+                  [
+                    "cryptalis_migration_7ac70ccabc8041d9acba01eb356fce54_cust_1",
+                    "name",
+                    "tenant_id_1"
+                  ]
+                ],
+                "executemany": false
+              }
+            ]
+          },
+          {
+            "target": "missing",
+            "repeat": 0,
+            "sqlstate": null,
+            "prepared_after_success": [
+              {
+                "statement": "UPDATE cryptalis_migration_7ac70ccabc8041d9acba01eb356fce54.customer SET name=$1::VARCHAR, label=$2::VARCHAR WHERE cryptalis_migration_7ac70ccabc8041d9acba01eb356fce54.customer.tenant_id = $3::UUID AND cryptalis_migration_7ac70ccabc8041d9acba01eb356fce54.customer.id = $4::UUID",
+                "generic": 1,
+                "custom": 0
+              },
+              {
+                "statement": "UPDATE cryptalis_migration_7ac70ccabc8041d9acba01eb356fce54.customer SET name=$1::VARCHAR WHERE cryptalis_migration_7ac70ccabc8041d9acba01eb356fce54.customer.tenant_id = $2::UUID AND cryptalis_migration_7ac70ccabc8041d9acba01eb356fce54.customer.id = $3::UUID",
+                "generic": 1,
+                "custom": 0
+              }
+            ],
+            "prepared_before": [],
+            "completed_rowcounts": [
+              1,
+              0
+            ],
+            "attempted": [
+              {
+                "groups": [
+                  [
+                    "cryptalis_migration_7ac70ccabc8041d9acba01eb356fce54_cust_1",
+                    "label",
+                    "name",
+                    "tenant_id_1"
+                  ]
+                ],
+                "executemany": false
+              },
+              {
+                "groups": [
+                  [
+                    "cryptalis_migration_7ac70ccabc8041d9acba01eb356fce54_cust_1",
+                    "name",
+                    "tenant_id_1"
+                  ]
+                ],
+                "executemany": false
+              }
+            ]
+          },
+          {
+            "target": "missing",
+            "repeat": 1,
+            "sqlstate": null,
+            "prepared_after_success": [
+              {
+                "statement": "UPDATE cryptalis_migration_7ac70ccabc8041d9acba01eb356fce54.customer SET name=$1::VARCHAR, label=$2::VARCHAR WHERE cryptalis_migration_7ac70ccabc8041d9acba01eb356fce54.customer.tenant_id = $3::UUID AND cryptalis_migration_7ac70ccabc8041d9acba01eb356fce54.customer.id = $4::UUID",
+                "generic": 1,
+                "custom": 0
+              },
+              {
+                "statement": "UPDATE cryptalis_migration_7ac70ccabc8041d9acba01eb356fce54.customer SET name=$1::VARCHAR WHERE cryptalis_migration_7ac70ccabc8041d9acba01eb356fce54.customer.tenant_id = $2::UUID AND cryptalis_migration_7ac70ccabc8041d9acba01eb356fce54.customer.id = $3::UUID",
+                "generic": 1,
+                "custom": 0
+              }
+            ],
+            "prepared_before": [],
+            "completed_rowcounts": [
+              1,
+              0
+            ],
+            "attempted": [
+              {
+                "groups": [
+                  [
+                    "cryptalis_migration_7ac70ccabc8041d9acba01eb356fce54_cust_1",
+                    "label",
+                    "name",
+                    "tenant_id_1"
+                  ]
+                ],
+                "executemany": false
+              },
+              {
+                "groups": [
+                  [
+                    "cryptalis_migration_7ac70ccabc8041d9acba01eb356fce54_cust_1",
+                    "name",
+                    "tenant_id_1"
+                  ]
+                ],
+                "executemany": false
+              }
+            ]
+          },
+          {
+            "target": "foreign",
+            "repeat": 0,
+            "sqlstate": null,
+            "prepared_after_success": [
+              {
+                "statement": "UPDATE cryptalis_migration_7ac70ccabc8041d9acba01eb356fce54.customer SET name=$1::VARCHAR, label=$2::VARCHAR WHERE cryptalis_migration_7ac70ccabc8041d9acba01eb356fce54.customer.tenant_id = $3::UUID AND cryptalis_migration_7ac70ccabc8041d9acba01eb356fce54.customer.id = $4::UUID",
+                "generic": 1,
+                "custom": 0
+              },
+              {
+                "statement": "UPDATE cryptalis_migration_7ac70ccabc8041d9acba01eb356fce54.customer SET name=$1::VARCHAR WHERE cryptalis_migration_7ac70ccabc8041d9acba01eb356fce54.customer.tenant_id = $2::UUID AND cryptalis_migration_7ac70ccabc8041d9acba01eb356fce54.customer.id = $3::UUID",
+                "generic": 1,
+                "custom": 0
+              }
+            ],
+            "prepared_before": [],
+            "completed_rowcounts": [
+              1,
+              0
+            ],
+            "attempted": [
+              {
+                "groups": [
+                  [
+                    "cryptalis_migration_7ac70ccabc8041d9acba01eb356fce54_cust_1",
+                    "label",
+                    "name",
+                    "tenant_id_1"
+                  ]
+                ],
+                "executemany": false
+              },
+              {
+                "groups": [
+                  [
+                    "cryptalis_migration_7ac70ccabc8041d9acba01eb356fce54_cust_1",
+                    "name",
+                    "tenant_id_1"
+                  ]
+                ],
+                "executemany": false
+              }
+            ]
+          },
+          {
+            "target": "foreign",
+            "repeat": 1,
+            "sqlstate": null,
+            "prepared_after_success": [
+              {
+                "statement": "UPDATE cryptalis_migration_7ac70ccabc8041d9acba01eb356fce54.customer SET name=$1::VARCHAR, label=$2::VARCHAR WHERE cryptalis_migration_7ac70ccabc8041d9acba01eb356fce54.customer.tenant_id = $3::UUID AND cryptalis_migration_7ac70ccabc8041d9acba01eb356fce54.customer.id = $4::UUID",
+                "generic": 1,
+                "custom": 0
+              },
+              {
+                "statement": "UPDATE cryptalis_migration_7ac70ccabc8041d9acba01eb356fce54.customer SET name=$1::VARCHAR WHERE cryptalis_migration_7ac70ccabc8041d9acba01eb356fce54.customer.tenant_id = $2::UUID AND cryptalis_migration_7ac70ccabc8041d9acba01eb356fce54.customer.id = $3::UUID",
+                "generic": 1,
+                "custom": 0
+              }
+            ],
+            "prepared_before": [],
+            "completed_rowcounts": [
+              1,
+              0
+            ],
+            "attempted": [
+              {
+                "groups": [
+                  [
+                    "cryptalis_migration_7ac70ccabc8041d9acba01eb356fce54_cust_1",
+                    "label",
+                    "name",
+                    "tenant_id_1"
+                  ]
+                ],
+                "executemany": false
+              },
+              {
+                "groups": [
+                  [
+                    "cryptalis_migration_7ac70ccabc8041d9acba01eb356fce54_cust_1",
+                    "name",
+                    "tenant_id_1"
+                  ]
+                ],
+                "executemany": false
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "label": "varchar_update_auto_plan_observations",
+      "observation": {
+        "mode": "auto",
+        "prepare_threshold": 5,
+        "outcomes": [
+          {
+            "phase": "cold",
+            "target": "matching",
+            "sqlstate": "22001",
+            "prepared_before": [],
+            "completed_rowcounts": [],
+            "attempted": [
+              {
+                "groups": [
+                  [
+                    "cryptalis_migration_b851527f440f412a86380337228a4aee_cust_1",
+                    "name",
+                    "tenant_id_1"
+                  ]
+                ],
+                "executemany": false
+              }
+            ]
+          },
+          {
+            "phase": "cold",
+            "target": "missing",
+            "sqlstate": "22001",
+            "prepared_before": [],
+            "completed_rowcounts": [],
+            "attempted": [
+              {
+                "groups": [
+                  [
+                    "cryptalis_migration_b851527f440f412a86380337228a4aee_cust_1",
+                    "name",
+                    "tenant_id_1"
+                  ]
+                ],
+                "executemany": false
+              }
+            ]
+          },
+          {
+            "phase": "cold",
+            "target": "foreign",
+            "sqlstate": "22001",
+            "prepared_before": [],
+            "completed_rowcounts": [],
+            "attempted": [
+              {
+                "groups": [
+                  [
+                    "cryptalis_migration_b851527f440f412a86380337228a4aee_cust_1",
+                    "name",
+                    "tenant_id_1"
+                  ]
+                ],
+                "executemany": false
+              }
+            ]
+          },
+          {
+            "phase": "warm",
+            "target": "matching",
+            "sqlstate": "22001",
+            "prepared_before": [
+              {
+                "statement": "UPDATE cryptalis_migration_b851527f440f412a86380337228a4aee.customer SET name=$1::VARCHAR WHERE cryptalis_migration_b851527f440f412a86380337228a4aee.customer.tenant_id = $2::UUID AND cryptalis_migration_b851527f440f412a86380337228a4aee.customer.id = $3::UUID",
+                "generic": 2,
+                "custom": 5
+              }
+            ],
+            "completed_rowcounts": [],
+            "attempted": [
+              {
+                "groups": [
+                  [
+                    "cryptalis_migration_b851527f440f412a86380337228a4aee_cust_1",
+                    "name",
+                    "tenant_id_1"
+                  ]
+                ],
+                "executemany": false
+              }
+            ]
+          },
+          {
+            "phase": "warm",
+            "target": "missing",
+            "sqlstate": null,
+            "prepared_after_success": [
+              {
+                "statement": "UPDATE cryptalis_migration_b851527f440f412a86380337228a4aee.customer SET name=$1::VARCHAR WHERE cryptalis_migration_b851527f440f412a86380337228a4aee.customer.tenant_id = $2::UUID AND cryptalis_migration_b851527f440f412a86380337228a4aee.customer.id = $3::UUID",
+                "generic": 3,
+                "custom": 5
+              }
+            ],
+            "prepared_before": [
+              {
+                "statement": "UPDATE cryptalis_migration_b851527f440f412a86380337228a4aee.customer SET name=$1::VARCHAR WHERE cryptalis_migration_b851527f440f412a86380337228a4aee.customer.tenant_id = $2::UUID AND cryptalis_migration_b851527f440f412a86380337228a4aee.customer.id = $3::UUID",
+                "generic": 2,
+                "custom": 5
+              }
+            ],
+            "completed_rowcounts": [
+              0
+            ],
+            "attempted": [
+              {
+                "groups": [
+                  [
+                    "cryptalis_migration_b851527f440f412a86380337228a4aee_cust_1",
+                    "name",
+                    "tenant_id_1"
+                  ]
+                ],
+                "executemany": false
+              }
+            ]
+          },
+          {
+            "phase": "warm",
+            "target": "foreign",
+            "sqlstate": null,
+            "prepared_after_success": [
+              {
+                "statement": "UPDATE cryptalis_migration_b851527f440f412a86380337228a4aee.customer SET name=$1::VARCHAR WHERE cryptalis_migration_b851527f440f412a86380337228a4aee.customer.tenant_id = $2::UUID AND cryptalis_migration_b851527f440f412a86380337228a4aee.customer.id = $3::UUID",
+                "generic": 3,
+                "custom": 5
+              }
+            ],
+            "prepared_before": [
+              {
+                "statement": "UPDATE cryptalis_migration_b851527f440f412a86380337228a4aee.customer SET name=$1::VARCHAR WHERE cryptalis_migration_b851527f440f412a86380337228a4aee.customer.tenant_id = $2::UUID AND cryptalis_migration_b851527f440f412a86380337228a4aee.customer.id = $3::UUID",
+                "generic": 2,
+                "custom": 5
+              }
+            ],
+            "completed_rowcounts": [
+              0
+            ],
+            "attempted": [
+              {
+                "groups": [
+                  [
+                    "cryptalis_migration_b851527f440f412a86380337228a4aee_cust_1",
+                    "name",
+                    "tenant_id_1"
+                  ]
+                ],
+                "executemany": false
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ],
+  "gates": {
+    "G-ADAPTER": "UNKNOWN",
+    "G-CRYPTO": "UNKNOWN",
+    "G-QUERY": "UNKNOWN",
+    "G-LIFECYCLE": "UNKNOWN",
+    "G-PROVIDER": "UNKNOWN",
+    "G-POLICY": "UNKNOWN",
+    "G-RELEASE": "UNKNOWN"
+  }
+}
