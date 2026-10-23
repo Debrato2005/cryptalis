@@ -18,8 +18,16 @@ The recorded candidate also rejects changed typed field/domain/tenant/record con
 Same-context replay, SQL-NULL presence substitution and omitted rows remain the threat limits below.
 
 New development roots and the local wrapping key are random and memory-only; the older experiments retain public lab roots.
-Local cold/warm/expired/outage and rewrap tests are functional evidence only. They do not qualify fork invalidation, independent-process recovery,
-remote-provider cancellation, native deletion or production custody. No production provider or deployment procedure has been designated.
+Local cold/warm/expired/outage and rewrap tests are functional evidence only.
+
+A Linux test forks while the keyring mutex is locked. The child refuses
+inherited sync/async preparation without deadlock. Fresh child keys work.
+The parent retains its prepared keys. The
+[fork checkpoint](status.md#keyring-held-mutex-fork-checkpoint-2026-10-23) bounds this evidence.
+
+These controls do not qualify other process/runtime cells, remote-provider
+cancellation, native deletion or production custody. No production provider or
+deployment procedure is designated.
 Independent human cryptographic/security review is unavailable: `external-review-required` remains UNKNOWN.
 Frozen independent admitted text/ID vectors, exact collation evidence, and nonce/usage bounds remain required before security qualification.
 

@@ -10,6 +10,24 @@ No PostgreSQL/provider/runtime cell, production key provider, independent review
 VERIFIED below refers only to the named checks and their exact revisions.
 All other contract and promotion requirements are SPECIFIED. All seven full gates remain UNKNOWN.
 
+## Keyring held-mutex fork checkpoint: 2026-10-23
+
+**VERIFIED, local Linux / Python 3.12.3:** the parent holds the mutex across an actual POSIX fork.
+A bounded join limits test duration. In the child, public sync/async
+preparation promptly raises `KeyUnavailable` before it locks the inherited mutex.
+Fresh keys in the child complete a CF1 roundtrip. Retained and newly prepared
+keys in the parent still work after lock release. Failure cleanup kills and reaps a live child.
+
+The specialist regression passes **71 tests**, including CF1 and provider controls.
+The integrated fork control passes once. Each run retains 155 stable Python hashes.
+Product source and crypto formats stay unchanged. The full suite retains its earlier source boundary.
+Production custody, deletion, zeroization and other platforms remain unqualified.
+All seven production gates remain UNKNOWN.
+
+Evidence: [specialist regression](_reset/keyring-held-mutex-fork-20261023.json),
+[exact boundary](_reset/keyring-held-mutex-fork-boundary-20261023.json), and
+[main integration](_reset/keyring-held-mutex-fork-integration-20261023.json).
+
 ## Artifact dependency metadata checkpoint: 2026-10-23
 
 **IMPLEMENTED, bounded offline verification:** the release checker compares wheel
