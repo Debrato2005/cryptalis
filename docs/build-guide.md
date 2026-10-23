@@ -141,7 +141,7 @@ CRYPTALIS_PERFORMANCE_RECEIPT=/tmp/cryptalis-performance-new.json \
 
 The profile writes raw samples and target PASS/FAIL before any target assertion.
 An observed target miss fails this explicit run. The seven production gates stay UNKNOWN.
-The receipt states its scalar/tuple, warm synchronous TEXT and public-key limits.
+The receipt states its scalar/tuple/entity, warm synchronous TEXT and public-key limits.
 Historical profiler helpers supply calculations only. Do not run their direct CLI
 as a substitute for the mandatory wrapper or the current lifecycle/pin path.
 

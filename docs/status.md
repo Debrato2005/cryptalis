@@ -23,7 +23,7 @@ cryptography 50.0.2 / PostgreSQL 16.15 on the recorded local WSL2 host.
 
 Each workload discards ten warmup pairs, then measures 100 pairs with alternating
 native/attached order. Added p95 means attached p95 minus native p95.
-Raw samples retain exact values. These are projection costs, not entity-path costs.
+Raw samples retain exact values. The following table records the initial projection run.
 
 | Workload | Native p95 ms | Protected p95 ms | Added p95 ms | Local target |
 |---|---:|---:|---:|---|
@@ -37,14 +37,24 @@ in the receipt. They are outside that isolated denominator.
 The wrapper passes one explicit profile case. Both receipts retain stable
 136-file Python hashes. Product bytes match the preceding full regression and wheel.
 
+A subsequent profile extends the same fixture and predicates to full ORM
+entities with all four attributes materialized. It retains no identity-map objects
+between samples. All six workloads pass exact native-result checks.
+Added entity p95 measures **1.2622 ms point**, **2.6119 ms equality**, and
+**2.8613 ms IN-20**, within the respective 3/3/8 ms local targets.
+Both subsequent receipts retain stable 136-file hashes at the extended profiler.
+Their raw projection measurements remain separate from the initial table.
+
 This is one warm synchronous TEXT observation with in-process public fixture keys.
-Shared-host load remains uncontrolled. Million-row/entity costs, remote/cold
+Shared-host load remains uncontrolled. Million-row costs, remote/cold
 providers, async/VARCHAR, concurrent load, throughput and maintenance pauses remain unmeasured here.
 The historical million-row receipts keep their earlier source and query-shape boundaries.
 All seven full gates remain UNKNOWN.
 
 Evidence: [raw samples, cell, lifecycle and storage](_reset/performance-current-20261023.json)
-and [mandatory wrapper receipt](_reset/performance-current-wrapper-20261023.json).
+and [mandatory wrapper receipt](_reset/performance-current-wrapper-20261023.json),
+then [full-entity samples](_reset/performance-entities-20261023.json)
+and [full-entity wrapper receipt](_reset/performance-entities-wrapper-20261023.json).
 
 ## Mapped protected scalar RETURNING checkpoint: 2026-10-23
 

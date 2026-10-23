@@ -26,7 +26,10 @@ No objective is complete until its acceptance evidence and applicable gate pass.
   Isolated name-column/equality-index storage measures 1.5248× native for
   unique 53-byte names. Both 136-file receipts stay stable. This warm synchronous
   TEXT cell uses public fixture keys and does not qualify entity, million-row,
-  remote-provider or deployment performance. See the
+  remote-provider or deployment performance by itself. The subsequent entity
+  extension meets local targets at 1.2622/2.6119/2.8613 ms added p95 for
+  point/equality/IN-20. Its separate receipts keep stable 136-file hashes.
+  See the
   [current performance checkpoint](status.md#current-pinned-performance-checkpoint-2026-10-23).
 - Mapped bulk INSERT now returns one direct protected scalar through native
   Row/scalar results and page handling. Exact prepared-input proofs reject
@@ -145,10 +148,10 @@ Requirement text is abbreviated. The full definitions remain in the research
 | OBJ-DX-03 | Real FastAPI/SQLModel app plus a second independent app | PARTIAL | Pinned Smolink revision 498d24b runs its original FastAPI app, HTTP URL creation and refusal cases, real Redis, repository/ORM CRUD, protect/decrypt-back/remove, and a fresh import-denied process; 38 original Python source hashes match, with zero source/model/query edits; only Url.destination is protected; the in-repo three-model application retains its separate evidence | Broader protected fields and application suite, exact packaged Python 3.13 cell, SQLModel integration, and a second external app |
 | OBJ-DX-04 | Normal ORM identity, loading, sessions, pooling, async | PARTIAL | Bounded sync/async adapter and search tests | Broader ORM/framework coverage |
 | OBJ-DX-05 | Complete quickstart, threat model, leakage, recovery docs | PARTIAL | README, architecture, security, lifecycle, walkthroughs | Keep docs tied to admitted APIs and evidence |
-| OBJ-PERF-01 | Continuous native vs protected latency/resource measurements | PARTIAL | Current pinned 10k-row scalar/tuple profile with matched runtime roles, full migration/ACTIVE attach, raw paired samples and isolated storage; historical entity/million-row receipts retain prior source boundaries | Current entity/scale, cold/concurrent/tail/WAL/provider measurements |
+| OBJ-PERF-01 | Continuous native vs protected latency/resource measurements | PARTIAL | Current pinned 10k-row scalar/tuple and full-entity profiles with matched runtime roles, full migration/ACTIVE attach, raw paired samples and isolated storage; historical million-row receipts retain prior source boundaries | Current scale, cold/concurrent/tail/WAL/provider measurements |
 | OBJ-PERF-02 | Profile-guided optimization without security loss | PARTIAL | Membership projection correction on 2026-10-09 | Continue profiling; no unverified speed claims |
 | OBJ-PERF-03 | Multithreading/multiprocessing/async at 1/4/16/saturation | SPECIFIED | Single-worker maintenance path | Define and run isolation/backpressure/cancellation tests |
-| OBJ-PERF-04 | Added p95 targets and growth path | PARTIAL | Current pinned 10k-row warm scalar/tuple reads meet local 3ms/8ms targets; isolated column plus equality index measures 1.5248x for 53-byte names | Entity/scale/remote-provider/concurrent qualification; write/pause budgets undecided |
+| OBJ-PERF-04 | Added p95 targets and growth path | PARTIAL | Current pinned 10k-row warm scalar/tuple and full-entity reads meet local 3ms/8ms targets; isolated column plus equality index measures 1.5248x for 53-byte names | Scale/remote-provider/concurrent qualification; write/pause budgets undecided |
 | OBJ-OPS-01 | Reproducible wheel/sdist, SBOM, provenance, reviewers | PARTIAL | `pyproject.toml`, `uv.lock`, `scripts/release_check.py`; [2026-10-21 receipt](_reset/release-check-20261021.json) shows identical repeat-build hashes, verified wheel `RECORD`, license metadata, CycloneDX 1.5 SBOM, and clean-venv import/CLI | Independent rebuild, signed provenance, vulnerability scan, publication identity, upgrade/uninstall matrix, independent review |
 | OBJ-OPS-02 | Recoverable source/evidence and traceability | PARTIAL | Git history and `docs/_reset` receipts | Durable archive and fresh restore |
 | OBJ-RESEARCH-01 | Source-backed comparative research with repeatable evidence | ONGOING | Research repository provenance; source-access and fallback rules in `AGENTS.md` | Preserve failed alternatives and provenance links |

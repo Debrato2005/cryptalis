@@ -148,6 +148,10 @@ Added p95 is 1.6294 ms for a point scalar, 2.0107 ms for equality tuples and
 2.5330 ms for IN-20 tuples. Isolated column/index storage is 1.5248× native.
 These meet the local targets in that cell. They do not qualify entity paths,
 million-row scale, remote providers or deployment performance.
+The subsequent full-entity extension measures 1.2622/2.6119/2.8613 ms added p95
+for point/equality/IN-20 on the same 10,000-row distribution.
+Those entity paths also meet the local targets. Their separate raw samples
+and exact source boundaries appear in the same checkpoint.
 
 **VERIFIED, recorded earlier revision only:** [million-row CF1 receipt](../spikes/revamp/results/gate-performance.json), warm PostgreSQL 16.15 and memory-only local keys.
 These observations predate the latest DISTINCT change and do not measure the current adapter.

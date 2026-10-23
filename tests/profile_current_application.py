@@ -101,29 +101,40 @@ def analyze_and_storage(app, index_name):
 def statements(app):
     customer = app.Customer
     scope = customer.tenant_id == TENANT
-    return {
+    result = {
         'point': select(customer.name).where(scope, customer.id == bindparam('point')),
         'equality': select(customer.id, customer.name).where(scope, customer.name == bindparam('value')),
         'in20': select(customer.id, customer.name).where(
             scope, customer.name.in_(bindparam('values', expanding=True))).order_by(customer.id),
     }
+    for workload in ('point', 'equality', 'in20'):
+        # Keep identical predicates/order while measuring native ORM loading.
+        result[workload + '_entities'] = result[workload].with_only_columns(customer)
+    return result
 
 
 def inputs(workload, sample):
+    base = workload.split('_', 1)[0]
     rank = (sample * 7919 + 13) % ROWS
-    if workload == 'point':
-        return {'point': identity(rank)}, [name(rank)]
-    if workload == 'equality':
-        return {'value': name(rank)}, [(identity(rank), name(rank))]
-    ranks = [(rank + delta * 977) % ROWS for delta in range(20)]
-    assert len(set(ranks)) == 20
-    return {'values': [name(value) for value in ranks]}, sorted(
-        (identity(value), name(value)) for value in ranks)
+    ranks = ([(rank + delta * 977) % ROWS for delta in range(20)] if base == 'in20' else [rank])
+    assert len(set(ranks)) == (20 if base == 'in20' else 1)
+    parameters = ({'point': identity(rank)} if base == 'point' else
+                  {'value': name(rank)} if base == 'equality' else
+                  {'values': [name(value) for value in ranks]})
+    if workload.endswith('_entities'):
+        expected = [(identity(value), TENANT, name(value), label(value)) for value in ranks]
+    elif base == 'point':
+        expected = [name(rank)]
+    else:
+        expected = [(identity(value), name(value)) for value in ranks]
+    return parameters, sorted(expected) if base == 'in20' else expected
 
 
-def read(session, statement, parameters, scalar):
+def read(session, statement, parameters, workload):
     result = session.execute(statement, parameters)
-    return result.scalars().all() if scalar else [tuple(row) for row in result.all()]
+    if workload.endswith('_entities'):
+        return [(row.id, row.tenant_id, row.name, row.label) for row in result.scalars().all()]
+    return result.scalars().all() if workload == 'point' else [tuple(row) for row in result.all()]
 
 
 def test_current_matched_application_profile(record_property):
@@ -163,7 +174,8 @@ def test_current_matched_application_profile(record_property):
         sessions = [stack.enter_context(Session(native.runtime)),
                     stack.enter_context(factory(tenant_id=TENANT))]
         queries = [statements(app) for app in (native, protected)]
-        for workload, target in (('point', 3), ('equality', 3), ('in20', 8)):
+        for workload, target in (('point', 3), ('equality', 3), ('in20', 8),
+                                 ('point_entities', 3), ('equality_entities', 3), ('in20_entities', 8)):
             timings = [[], []]
             for sample in range(WARMUPS + SAMPLES):
                 parameters, expected = inputs(workload, sample)
@@ -171,12 +183,16 @@ def test_current_matched_application_profile(record_property):
                 for path in ((0, 1) if sample % 2 == 0 else (1, 0)):
                     started = time.perf_counter_ns()
                     observed[path] = read(sessions[path], queries[path][workload], parameters,
-                                          scalar=workload == 'point')
+                                          workload=workload)
                     elapsed = (time.perf_counter_ns() - started) / 1_000_000
                     if sample >= WARMUPS:
                         timings[path].append(elapsed)
                     assert observed[path] == expected
-                    if workload == 'point':
+                    if workload.endswith('_entities'):
+                        assert all(type(record) is UUID and type(tenant) is UUID and
+                                   type(value) is str and type(public) is str
+                                   for record, tenant, value, public in observed[path])
+                    elif workload == 'point':
                         assert all(type(value) is str for value in observed[path])
                     else:
                         assert all(type(record) is UUID and type(value) is str
@@ -227,8 +243,8 @@ def test_current_matched_application_profile(record_property):
                  'native_and_attached_results_equal': True},
         'sampling': {'paired_samples_each': SAMPLES, 'discarded_warmup_pairs_each': WARMUPS,
                      'order': 'Alternating native/attached order in each pair.',
-                     'transaction': 'One long-lived read transaction per path; no ORM entities materialized.',
-                     'materialization': 'Point scalar name; equality tuple(id,name); IN20 tuples ordered by native ID.',
+                     'transaction': 'One long-lived read transaction per path; no retained ORM identity-map objects between samples.',
+                     'materialization': 'Scalar/tuple projections plus full ORM entities converted to (id,tenant_id,name,label); IN20 ordered by native ID.',
                      'added_p95': 'Attached p95 minus native p95; targets use unrounded values.'},
         'active_deployment': active_plan, 'whole_path': measurements,
         'storage_native_attached': storage_results, 'targets': targets,
