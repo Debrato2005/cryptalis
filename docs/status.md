@@ -21,6 +21,70 @@ and [competitive capability matrix](research/capability-matrix.md) govern priori
 Progress follows complete real-application journeys and resolved production requirements.
 All seven production gates remain UNKNOWN.
 
+## Direct restore-binding generation planning: 2026-10-24
+
+**VERIFIED, bounded source and installed-wheel profiles:** payload and search planners now
+accept an explicit existing restore binding with the original source and ACTIVE
+pin. The exact purpose/v2 proposal embeds that binding. No-binding proposals
+remain v1, including sources with inherited lineage. Activation retains v6/v7
+formats and appends flat restore lineage. Original source identity and journal
+authority remain distinct from the evaluated physical target.
+
+The [expanded source export](_reset/fresh-cluster-export-20261024-31.json) passes
+one test in 1.07 seconds. All [19 fresh-target controls](_reset/fresh-cluster-restore-20261024-30.json)
+pass in 50.18 seconds with 199 stable Python hashes that match current files.
+Changed restored CHECKs and disabled staged guards refuse before provider
+resolution. Source-only cancellation, keyless CLI status, SIGKILL recovery and
+a lost actual cutover COMMIT reply pass. A second genuine backup/restore
+adoption retains two flat bindings and rotates the other generation.
+
+The [source VARCHAR profile](_reset/fresh-cluster-restore-20261024-31.json)
+passes all 19 in 50.57 seconds. The [source affected suite](_reset/direct-generation-source-affected-20261024.json)
+passes 606 tests in 271.60 seconds. The [installed affected suite](_reset/direct-generation-installed-affected-20261024.json)
+passes 68 in 58.71 seconds with one existing Starlette warning. All 199 Python
+hashes stay stable and match the current files.
+The ordinary [searchable SQLModel](_reset/direct-generation-installed-searchable-application-20261024.json)
+and [HTTP/JWT/SMTP](_reset/direct-generation-installed-http-application-20261024.json)
+receipts preserve six and 26 pinned files. These regressions do not qualify the
+new direct-binding application journey.
+
+The [installed TEXT direct-generation profile](_reset/fresh-cluster-restore-20261024-32.json)
+passes all 19 in 50.17 seconds after its [source export](_reset/fresh-cluster-export-20261024-33.json).
+The original six-file SQLModel application also completes direct restore-binding
+search rotation without an intermediate rewrap. Its installed
+[export](_reset/fresh-cluster-export-20261024-34.json) and
+[fresh-target](_reset/fresh-cluster-restore-20261024-33.json) stages each pass
+one test in 1.19 and 2.35 seconds. Its source [export](_reset/fresh-cluster-export-20261024-35.json)
+and [fresh-target](_reset/fresh-cluster-restore-20261024-34.json) stages each
+pass one in 1.36 and 2.54 seconds. The [direct source](_reset/direct-generation-direct-source-application-20261024.json)
+and [direct installed](_reset/direct-generation-direct-installed-application-20261024.json)
+application receipts preserve original CRUD, storage frames, index identities,
+native catalog restoration and latest-value package-free exit.
+
+A separate installed legacy [export](_reset/fresh-cluster-export-20261024-36.json)
+and [fresh-target](_reset/fresh-cluster-restore-20261024-35.json) each pass one
+in 1.27 and 2.51 seconds. Its [application receipt](_reset/direct-generation-legacy-installed-application-20261024.json)
+retains the original intermediate root rewrap. Email equality/IN/uniqueness
+remains fixture-only in explicit single tenancy. The ordinary HTTP/JWT/SMTP
+profile keeps its separate boundary. All 199 Python hashes remain stable.
+
+The first [source export](_reset/fresh-cluster-export-20261024-30.json) passes
+one test in 1.12 seconds. Both [native positive cases](_reset/fresh-cluster-restore-20261024-29.json)
+pass in 3.97 seconds with 199 stable Python hashes. The
+[previous installed wheel](_reset/fresh-cluster-restore-20261024-28.json)
+reproduces two missing-restore-keyword failures. This does
+not establish a new full regression result.
+
+The [artifact check](_reset/direct-generation-release-final-20261024.json) verifies
+reproducible archives, metadata, RECORD, SBOM, 40 installed files and CLI.
+The [final boundary](_reset/direct-generation-final-boundary-20261024.json) binds
+the recorded runs, application receipts and seven canonical docs. Production
+email populations, browser and deployment qualification remain open or UNKNOWN.
+Old readers reject v2 proposals and accept unchanged v6/v7 activation formats.
+Crypto, provider, host-authority and retained-key contracts do not change.
+All seven production gates remain UNKNOWN.
+See the [format decision](decisions.md#direct-restore-binding-generation-planning-2026-10-24).
+
 ## Original searchable SQLModel adoption: 2026-10-24
 
 **VERIFIED, bounded source and installed-wheel journey:** the pinned SQLModel
@@ -41,21 +105,23 @@ The final [source export](_reset/fresh-cluster-export-20261024-28.json) and
 [fresh-target run](_reset/fresh-cluster-restore-20261024-27.json) each pass one
 test in 1.52 and 2.45 seconds. The installed [export](_reset/fresh-cluster-export-20261024-27.json)
 and [fresh-target](_reset/fresh-cluster-restore-20261024-26.json) stages each
-pass one in 1.37 and 2.11 seconds. All 198 Python hashes remain stable and match
-current files. The [initial source receipt](_reset/searchable-adoption-initial-source-application-20261024.json)
+pass one in 1.37 and 2.11 seconds. At that checkpoint, all 198 Python hashes stayed
+stable and matched its source files. The [initial source receipt](_reset/searchable-adoption-initial-source-application-20261024.json)
 precedes the explicit SQLModel 0.0.48 fixture guard and remains historical.
 
-All 36 product modules and 40 installed files retain the exact earlier wheel
-bytes. Earlier full regression and build evidence keep their recorded boundaries.
-This test-only slice adds no product behavior or full-suite run. The
+At that checkpoint, all 36 product modules and 40 installed files retained the
+exact earlier wheel bytes. Earlier full regression and build evidence keep their
+recorded boundaries. That test-only slice added no product behavior or full-suite run. The
 [final boundary](_reset/searchable-adoption-final-boundary-20261024.json) binds
-the current tests, unchanged artifact and application receipts.
+the tests, unchanged artifact and application receipts recorded at that checkpoint.
 
 The profile accepts fixture-only email equality/uniqueness leakage in explicit
 single tenancy. Production email-domain admission and external custody remain
 UNKNOWN. The HTTP/JWT/SMTP profile keeps its separate boundary. Browser and
-deployment qualification remain open. Direct restore-binding generation planning
-stays unadmitted. All seven production gates remain UNKNOWN.
+deployment qualification remain open. At this checkpoint, direct restore-binding
+generation planning stayed unadmitted. Its later
+[extension](#direct-restore-binding-generation-planning-2026-10-24) records the
+separate implementation and verification boundary. All seven production gates remain UNKNOWN.
 
 ## Search rotation after adopted lineage: 2026-10-24
 
@@ -79,7 +145,7 @@ The [source VARCHAR profile](_reset/fresh-cluster-restore-20261024-21.json) pass
 the same 11 controls in 28.59 seconds. The [source affected suite](_reset/adopted-search-source-affected-20261024.json)
 passes 496 tests in 268.01 seconds. The [installed affected suite](_reset/adopted-search-installed-affected-20261024.json)
 passes 68 in 58.10 seconds with one existing Starlette warning. All 196 Python
-hashes remain stable and match the current source.
+hashes stayed stable and matched the source at that checkpoint.
 The installed [searchable SQLModel](_reset/adopted-search-installed-searchable-application-20261024.json)
 and [original HTTP/JWT/SMTP](_reset/adopted-search-installed-http-application-20261024.json)
 receipts preserve six and 26 pinned files respectively. These are ordinary
@@ -118,6 +184,8 @@ It does not establish an installed adopted-application journey. Direct
 restore-binding generation planning, external custody and host authority remain
 unadmitted or unqualified. All seven production gates remain UNKNOWN. See the
 [format decision](decisions.md#adopted-target-search-rotation-2026-10-24).
+The later [direct-binding extension](#direct-restore-binding-generation-planning-2026-10-24)
+records its separate proposal API and current verification boundary.
 
 ## Payload rotation after adopted lineage: 2026-10-24
 
@@ -173,7 +241,7 @@ across the listed runs.
 The [artifact check](_reset/adopted-payload-release-final-20261024.json) verifies
 repeatable archives, metadata, RECORD, SBOM, 40 installed files and isolated CLI.
 The [final boundary](_reset/adopted-payload-final-boundary-20261024.json) binds
-these receipts to the current product and installed artifacts.
+these receipts to the product and installed artifacts recorded at that checkpoint.
 Smolink protection remains limited to Url.destination storage under explicit
 single tenancy. Browser and server deployment remain unqualified.
 At this checkpoint, adopted search rotation remained unadmitted. The later

@@ -249,6 +249,26 @@ def _payload_estimates(models, policies, backfill, verify, temporary, wal):
     return costs
 
 
+def _generation_source_document(source, binding, purpose):
+    """Private SQL context; the original source artifact remains authority."""
+    document = source.document
+    if binding is None:
+        return document
+    from cryptalis.restore import _identity, _validate_binding_frames, _validate_lineage
+    _identity(source, binding)
+    _validate_binding_frames(document, binding)
+    if binding.target[-1] != document['target'][-1]:
+        raise m.TransitionFailure('maintenance_requires_planned_owner', source.operation_id)
+    document.update(target=binding.target,
+                    restore_lineage=document.get('restore_lineage', []) + [binding.document])
+    # Validate adoption order before a sealed target artifact exists.
+    _validate_lineage(dict(format='cryptalis.transition/v6' if purpose=='payload' else 'cryptalis.transition/v7',
+        kind=purpose+'_rotation', target=document['target'], lock=document['lock'],
+        restore_lineage=document['restore_lineage'], predecessors=document.get('predecessors', []) + [
+            {'operation_id': str(source.operation_id), 'plan_digest': source.digest}]))
+    return document
+
+
 @dataclass(frozen=True, repr=False)
 class _GenerationRotationPlan:
     """Inactive source-pinned preparation artifact. It cannot activate a policy."""
@@ -258,8 +278,17 @@ class _GenerationRotationPlan:
         try:
             sizes = ('frame_bytes','logical_bytes','largest_row_logical_bytes')
             purpose=self.purpose
-            d, source, _ = _read_proposal(self.artifact, self.format, purpose+'_rotation',
-                extra=('successor_operation_id','batch_limits'), sizes=sizes)
+            restored = m._decode_transition_json(self.artifact).get('format') == self.restore_format
+            d, source, _ = _read_proposal(self.artifact, self.restore_format if restored else self.format,
+                purpose+'_rotation', extra=('successor_operation_id','batch_limits') +
+                    (('restore',) if restored else ()), sizes=sizes)
+            binding = self.restore_binding
+            if restored != (binding is not None):
+                raise ValueError
+            if binding is not None:
+                _generation_source_document(source, binding, purpose)
+                if d['journal_state_digest'] != binding.document['journal_state_digest']:
+                    raise ValueError
             identities = {source.operation_id, _uuid(d['operation_id'])} | {
                 UUID(p['operation_id']) for p in source.document.get('predecessors', [])}
             if (len(identities) != len(source.document.get('predecessors', [])) + 2
@@ -310,6 +339,13 @@ class _GenerationRotationPlan:
     def operation_id(self): return UUID(self.document['operation_id'])
     @property
     def source(self): return m.MigrationPlan(m._canonical(self.document['source_plan']))
+    @property
+    def restore_binding(self):
+        document = self.document.get('restore')
+        if document is None:
+            return None
+        from cryptalis.restore import RestoreBinding
+        return RestoreBinding(m._canonical(document))
 
     def __str__(self):
         d = self.document
@@ -322,11 +358,13 @@ class _GenerationRotationPlan:
 class PayloadRotationPlan(_GenerationRotationPlan):
     purpose='payload'
     format=PAYLOAD_FORMAT
+    restore_format='cryptalis.payload-rotation/v2'
 
 
 class SearchRotationPlan(_GenerationRotationPlan):
     purpose='search'
     format=SEARCH_FORMAT
+    restore_format='cryptalis.search-rotation/v2'
 
 
 def _search_shape(old,new,old_generation,new_generation,payload_generation):
@@ -453,7 +491,7 @@ def _payload_stream(c, model, after, limits, *, payloads=False):
 
 def _plan_generation_rotation(source, engine, *, purpose, source_pin, keys, target_keys,
         backfill_rows_per_second, verify_rows_per_second, temporary_bytes_per_row, wal_bytes_per_row,
-        max_batch_rows=1000, max_batch_bytes=64*1024*1024):
+        max_batch_rows=1000, max_batch_bytes=64*1024*1024, restore=None):
     """Pin source observations and exact retained custody in a read-only snapshot.
 
     This proposal does not stage frames, publish policy or authorize cutover.
@@ -462,6 +500,7 @@ def _plan_generation_rotation(source, engine, *, purpose, source_pin, keys, targ
     m._admit(source,source_pin)
     if source_pin.phase != 'ACTIVE':
         raise m.TransitionFailure('source_pin_must_be_active',source.operation_id)
+    _generation_source_document(source, restore, purpose)
     if purpose=='search' and not any(
             f['queries'] for model in source.document['lock']['models'] for f in model['fields']):
         raise m.TransitionFailure('search_rotation_requires_searchable_fields',source.operation_id)
@@ -469,7 +508,7 @@ def _plan_generation_rotation(source, engine, *, purpose, source_pin, keys, targ
     _payload_inputs(backfill_rows_per_second,verify_rows_per_second,temporary_bytes_per_row,wal_bytes_per_row,limits)
     with m._connection(engine,source.operation_id) as c:
         c.exec_driver_sql('SET TRANSACTION ISOLATION LEVEL REPEATABLE READ, READ ONLY')
-        m._check_connection(source,c,source_pin)
+        m._check_connection(source,c,source_pin,binding=restore)
         from cryptalis.deprotection import _inventory
         _inventory(c,source,source,own=None)
         state = m._state(c,source,source_pin)
@@ -484,10 +523,14 @@ def _plan_generation_rotation(source, engine, *, purpose, source_pin, keys, targ
         costs = _payload_estimates(models,policies,backfill_rows_per_second,verify_rows_per_second,
                                   temporary_bytes_per_row,wal_bytes_per_row)
         plan_type=PayloadRotationPlan if purpose=='payload' else SearchRotationPlan
-        proposal = plan_type(m._canonical(dict(format=plan_type.format,kind=purpose+'_rotation',
+        document = dict(format=plan_type.restore_format if restore is not None else plan_type.format,
+            kind=purpose+'_rotation',
             operation_id=str(uuid4()),successor_operation_id=str(uuid4()),source_plan=source.document,source_pin=pin,
             required_readers=source.document['lock']['required_readers'],journal_state_digest=m._hash(state),
-            models=models,key_policies=policies,batch_limits=limits,estimates=costs)))
+            models=models,key_policies=policies,batch_limits=limits,estimates=costs)
+        if restore is not None:
+            document['restore'] = restore.document
+        proposal = plan_type(m._canonical(document))
         for pair in prepared.values():
             (_same_payload_roots if purpose=='payload' else _same_search_roots)(*pair)
     except Exception as exc:
@@ -497,20 +540,22 @@ def _plan_generation_rotation(source, engine, *, purpose, source_pin, keys, targ
 
 def plan_payload_rotation(source,engine,*,source_pin,keys,target_keys,
         backfill_rows_per_second,verify_rows_per_second,temporary_bytes_per_row,wal_bytes_per_row,
-        max_batch_rows=1000,max_batch_bytes=64*1024*1024):
+        max_batch_rows=1000,max_batch_bytes=64*1024*1024,restore=None):
     return _plan_generation_rotation(source,engine,purpose='payload',source_pin=source_pin,keys=keys,
         target_keys=target_keys,backfill_rows_per_second=backfill_rows_per_second,
         verify_rows_per_second=verify_rows_per_second,temporary_bytes_per_row=temporary_bytes_per_row,
-        wal_bytes_per_row=wal_bytes_per_row,max_batch_rows=max_batch_rows,max_batch_bytes=max_batch_bytes)
+        wal_bytes_per_row=wal_bytes_per_row,max_batch_rows=max_batch_rows,max_batch_bytes=max_batch_bytes,
+        restore=restore)
 
 
 def plan_search_rotation(source,engine,*,source_pin,keys,target_keys,
         backfill_rows_per_second,verify_rows_per_second,temporary_bytes_per_row,wal_bytes_per_row,
-        max_batch_rows=1000,max_batch_bytes=64*1024*1024):
+        max_batch_rows=1000,max_batch_bytes=64*1024*1024,restore=None):
     return _plan_generation_rotation(source,engine,purpose='search',source_pin=source_pin,keys=keys,
         target_keys=target_keys,backfill_rows_per_second=backfill_rows_per_second,
         verify_rows_per_second=verify_rows_per_second,temporary_bytes_per_row=temporary_bytes_per_row,
-        wal_bytes_per_row=wal_bytes_per_row,max_batch_rows=max_batch_rows,max_batch_bytes=max_batch_bytes)
+        wal_bytes_per_row=wal_bytes_per_row,max_batch_rows=max_batch_rows,max_batch_bytes=max_batch_bytes,
+        restore=restore)
 
 
 def _require_proposal(proposal,purpose):

@@ -129,10 +129,14 @@ def main():
     profiles = parser.add_mutually_exclusive_group()
     profiles.add_argument('--boolean', action='store_true',
                           help='Qualify Boolean storage after payload rotation on a fresh cluster.')
+    profiles.add_argument('--sqlmodel-direct-search', action='store_true',
+                          help='Qualify original SQLModel search rotation directly from restore authority.')
     profiles.add_argument('--sqlmodel-searchable', action='store_true',
                           help='Qualify the pinned original searchable SQLModel app on a fresh cluster.')
     profiles.add_argument('--smolink', action='store_true',
                           help='Qualify the pinned Smolink URL lifecycle on a fresh cluster.')
+    profiles.add_argument('--direct-generation', action='store_true',
+                          help='Qualify payload/search rotation directly from explicit restored-target authority.')
     profiles.add_argument('--adopted-search', action='store_true',
                           help='Qualify search rotation after adoption with a retained storage-only field.')
     profiles.add_argument('--adopted-payload', action='store_true',
@@ -147,11 +151,11 @@ def main():
     args = parser.parse_args()
     if args.boolean and (args.varchar or args.restore_lease):
         parser.error('--boolean uses the typed Boolean fixture and its restore lifecycle.')
-    if args.sqlmodel_searchable and (args.varchar or args.restore_lease):
+    if (args.sqlmodel_searchable or args.sqlmodel_direct_search) and (args.varchar or args.restore_lease):
         parser.error('--sqlmodel-searchable uses the original application schema and lifecycle.')
     if args.smolink and (args.varchar or args.restore_lease):
         parser.error('--smolink uses the original application VARCHAR schema and lifecycle.')
-    if args.restore_lease and (args.adopted_search or args.adopted_payload or args.adopted_rewrap or args.rewrap or args.payload_rotation or args.search_rotation):
+    if args.restore_lease and (args.direct_generation or args.adopted_search or args.adopted_payload or args.adopted_rewrap or args.rewrap or args.payload_rotation or args.search_rotation):
         parser.error('--restore-lease supports the original TEXT/VARCHAR fixture only.')
     workdir = args.workdir or Path(tempfile.mkdtemp(prefix='cryptalis-fresh-'))
     workdir.mkdir(parents=True, exist_ok=True)
@@ -159,8 +163,10 @@ def main():
     restore_receipt = receipt_path(f'fresh-cluster-restore-{DATE}.json')
 
     profile = ('; Boolean storage after payload rotation' if args.boolean else
-               '; pinned searchable SQLModel app adoption and search-rotation profile' if args.sqlmodel_searchable else
+               '; pinned SQLModel direct restore-binding search profile' if args.sqlmodel_direct_search else
+               '; pinned searchable SQLModel app adoption and search-rotation profile' if (args.sqlmodel_searchable or args.sqlmodel_direct_search) else
                '; pinned Smolink root-rewrap and payload-rotation application profile' if args.smolink else
+               '; direct restored-target payload/search generation profile' if args.direct_generation else
                '; adopted-target search-rotation mixed-field profile' if args.adopted_search else
                '; adopted-target payload-rotation profile' if args.adopted_payload else
                '; adopted-target root-rewrap profile' if args.adopted_rewrap else
@@ -170,19 +176,19 @@ def main():
     if args.restore_lease:
         profile += '; restored-target lease controls'
     export = run_pytest(export_receipt, 'Fresh-cluster source export; primary cluster' + profile,
-                        ('tests/test_sqlmodel_searchable_export.py' if args.sqlmodel_searchable else
+                        ('tests/test_sqlmodel_searchable_export.py' if (args.sqlmodel_searchable or args.sqlmodel_direct_search) else
                          'tests/test_fresh_boolean_export.py' if args.boolean else
                          'tests/test_smolink_application.py' if args.smolink
                          else 'tests/test_fresh_cluster_export.py'),
                         {'CRYPTALIS_SMOLINK_FRESH_EXPORT': str(workdir) if args.smolink else '',
                          'CRYPTALIS_FRESH_CLUSTER_DIR': str(workdir),
-                         'CRYPTALIS_FRESH_ADOPTED_SEARCH': '1' if args.adopted_search else '0',
+                         'CRYPTALIS_FRESH_ADOPTED_SEARCH': '1' if (args.adopted_search or args.direct_generation) else '0',
                          'CRYPTALIS_FRESH_SOURCE_VARCHAR': '1' if args.varchar else '0',
                          'CRYPTALIS_FRESH_SOURCE_REWRAP': '1' if args.rewrap else '0',
                          'CRYPTALIS_FRESH_SOURCE_PAYLOAD_ROTATION': '1' if args.payload_rotation else '0',
                          'CRYPTALIS_FRESH_SOURCE_SEARCH_ROTATION': '1' if args.search_rotation else '0'})
     manifest = json.loads((workdir / 'restore-manifest.json').read_text())
-    if manifest.get('adopted_search', False) is not args.adopted_search:
+    if manifest.get('adopted_search', False) is not (args.adopted_search or args.direct_generation):
         raise SystemExit('FreshCluster.ProfileMismatch: adopted-search export did not match the requested profile.')
     if args.boolean:
         if manifest.get('application_profile') != 'boolean-storage':
@@ -191,7 +197,7 @@ def main():
         if (plan.get('kind') != 'payload_rotation' or plan.get('format') != 'cryptalis.transition/v3'
                 or plan.get('lock', {}).get('schema') != 'cryptalis.lock/v4'):
             raise SystemExit('FreshCluster.ProfileMismatch: Boolean payload successor is missing.')
-    elif args.sqlmodel_searchable:
+    elif args.sqlmodel_searchable or args.sqlmodel_direct_search:
         if manifest.get('application_profile') != 'sqlmodel-searchable':
             raise SystemExit('FreshCluster.ProfileMismatch: pinned searchable SQLModel export is missing.')
     elif args.smolink:
@@ -228,15 +234,17 @@ def main():
         credentials = provision(port, password, manifest, plain_database)
         home = write_home(workdir, port, manifest, credentials)
         restore = run_pytest(restore_receipt, 'Fresh-cluster protected-backup recovery and adoption; isolated cluster' + profile,
-                             ('tests/test_sqlmodel_searchable_restore.py' if args.sqlmodel_searchable else
+                             ('tests/test_sqlmodel_searchable_restore.py' if (args.sqlmodel_searchable or args.sqlmodel_direct_search) else
                               'tests/test_fresh_boolean_restore.py' if args.boolean else
                               'tests/test_smolink_fresh_cluster.py' if args.smolink
+                              else 'tests/test_direct_generation.py' if args.direct_generation
                               else 'tests/test_adopted_search.py' if args.adopted_search
                               else 'tests/test_adopted_payload.py' if args.adopted_payload
                               else 'tests/test_adopted_rewrap.py' if args.adopted_rewrap
                               else 'tests/test_restore_lease_fresh.py' if args.restore_lease
                               else 'tests/test_fresh_cluster_restore.py'),
                              {'HOME': str(home), 'CRYPTALIS_FRESH_CLUSTER_DIR': str(workdir),
+                              'CRYPTALIS_SQLMODEL_DIRECT_SEARCH': '1' if args.sqlmodel_direct_search else '0',
                               'CRYPTALIS_FRESH_PLAIN_DATABASE': plain_database,
                               'CRYPTALIS_FRESH_PLAINTEXT_ROLE': credentials['plaintext'][0],
                               'CRYPTALIS_FRESH_SOURCE_REWRAP': '1' if args.rewrap else '0',

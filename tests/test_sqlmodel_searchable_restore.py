@@ -71,6 +71,7 @@ print(json.dumps({'native_crud': 'passed', 'cryptalis_imported': False, 'origina
 
 
 def test_original_searchable_app_fresh_adoption_search_rotation_and_latest_native_exit(tmp_path, monkeypatch):
+    direct = os.environ.get('CRYPTALIS_SQLMODEL_DIRECT_SEARCH') == '1'
     directory = Path(os.environ['CRYPTALIS_FRESH_CLUSTER_DIR'])
     manifest = json.loads((directory / 'restore-manifest.json').read_text())
     assert manifest['application_profile'] == 'sqlmodel-searchable'
@@ -99,32 +100,43 @@ def test_original_searchable_app_fresh_adoption_search_rotation_and_latest_nativ
             approval=restore.RestoreApproval('qualification host', 'recover pinned original searchable SQLModel app',
                 'source schema dropped after export; this fresh restored copy is quarantined', True))
         assert m.diagnose_deployment(source, runtime, pin=source_pin, restore=binding) is None
-        rewrap = rotation.plan_rewrap(source, owner, source_pin=source_pin, keys=keys,
-            target_keys=adopted_keys, verify_rows_per_second=1000, restore=binding)
-        adopted = rewrap.activation_plan
-        assert adopted.document['format'] == 'cryptalis.transition/v5'
-        assert rotation.apply_rewrap(rewrap, owner, keys=keys, target_keys=adopted_keys,
-            pin=exported.pin(adopted, 'PREPARED'), approval=approval).phase == 'PENDING'
-        assert exported.storage(owner) == before
-        assert m.apply(adopted, owner, keys=adopted_keys, pin=exported.pin(adopted, 'ACTIVATING'),
-            approval=approval, until='ACTIVE').phase == 'ACTIVE'
-        with pytest.raises(m.TransitionFailure):
-            m.check_deployment(source, owner, pin=source_pin, restore=binding)
-        proposal = rotation.plan_search_rotation(adopted, owner, source_pin=exported.pin(adopted, 'ACTIVE'),
-            keys=adopted_keys, target_keys=search_keys, backfill_rows_per_second=1000,
-            verify_rows_per_second=1000, temporary_bytes_per_row=3000, wal_bytes_per_row=6000, max_batch_rows=1)
-        prep = m.DeploymentPin(adopted.target_id, proposal.operation_id, proposal.digest, 'PREPARED')
-        assert rotation.apply_search_rotation(proposal, owner, keys=adopted_keys, target_keys=search_keys,
+        rewrap = None
+        planner_options = {}
+        current_source, current_pin, source_keys, target = source, source_pin, keys, new_search_keys
+        if direct:
+            planner_options['restore'] = binding
+        else:
+            rewrap = rotation.plan_rewrap(source, owner, source_pin=source_pin, keys=keys,
+                target_keys=adopted_keys, verify_rows_per_second=1000, restore=binding)
+            adopted = rewrap.activation_plan
+            assert adopted.document['format'] == 'cryptalis.transition/v5'
+            assert rotation.apply_rewrap(rewrap, owner, keys=keys, target_keys=adopted_keys,
+                pin=exported.pin(adopted, 'PREPARED'), approval=approval).phase == 'PENDING'
+            assert exported.storage(owner) == before
+            assert m.apply(adopted, owner, keys=adopted_keys, pin=exported.pin(adopted, 'ACTIVATING'),
+                approval=approval, until='ACTIVE').phase == 'ACTIVE'
+            with pytest.raises(m.TransitionFailure):
+                m.check_deployment(source, owner, pin=source_pin, restore=binding)
+            current_source, current_pin = adopted, exported.pin(adopted, 'ACTIVE')
+            source_keys, target = adopted_keys, search_keys
+        proposal = rotation.plan_search_rotation(current_source, owner, source_pin=current_pin,
+            keys=source_keys, target_keys=target, backfill_rows_per_second=1000,
+            verify_rows_per_second=1000, temporary_bytes_per_row=3000, wal_bytes_per_row=6000, max_batch_rows=1, **planner_options)
+        if direct:
+            assert proposal.document['format'] == 'cryptalis.search-rotation/v2'
+            assert proposal.source.artifact == source.artifact and proposal.document['restore'] == binding.document
+        prep = m.DeploymentPin(current_source.target_id, proposal.operation_id, proposal.digest, 'PREPARED')
+        assert rotation.apply_search_rotation(proposal, owner, keys=source_keys, target_keys=target,
             pin=prep, approval=approval, max_chunks=1).committed_rows == 1
-        assert rotation.apply_search_rotation(proposal, owner, keys=adopted_keys, target_keys=search_keys,
+        assert rotation.apply_search_rotation(proposal, owner, keys=source_keys, target_keys=target,
             pin=prep, approval=approval).phase == 'BACKFILLED'
         assert exported.storage(owner) == before
-        activation = rotation.seal_search_rotation(proposal, owner, keys=adopted_keys, target_keys=search_keys,
+        activation = rotation.seal_search_rotation(proposal, owner, keys=source_keys, target_keys=target,
             pin=prep, approval=approval, copy_rows_per_second=1000.5, copy_wal_bytes_per_row=3000)
         assert activation.document['format'] == 'cryptalis.transition/v7'
         assert activation.document['restore_lineage'] == [binding.document]
         assert m.MigrationPlan(activation.artifact).artifact == activation.artifact
-        assert rotation.switch_search_rotation(proposal, activation, owner, keys=adopted_keys, target_keys=search_keys,
+        assert rotation.switch_search_rotation(proposal, activation, owner, keys=source_keys, target_keys=target,
             pin=exported.pin(activation, 'PREPARED'), approval=approval).phase == 'PENDING'
         after = exported.storage(owner)
         assert after[1] == before[1]
@@ -133,10 +145,12 @@ def test_original_searchable_app_fresh_adoption_search_rotation_and_latest_nativ
             assert name == old_name
             assert email[:10] == old_email[:10] and int.from_bytes(email[10:14], 'big') == 2
             assert email[14:46] != old_email[14:46] and email[46:58] != old_email[46:58]
-        assert m.apply(activation, owner, keys=search_keys, pin=exported.pin(activation, 'ACTIVATING'),
+        assert m.apply(activation, owner, keys=target, pin=exported.pin(activation, 'ACTIVATING'),
             approval=approval, until='ACTIVE').phase == 'ACTIVE'
+        with pytest.raises(m.TransitionFailure):
+            m.check_deployment(source, owner, pin=source_pin, restore=binding)
         assert m.diagnose_deployment(activation, runtime, pin=exported.pin(activation, 'ACTIVE')) is None
-        factory = attach(mapping, runtime, lock=activation.lock_bytes, keys=search_keys,
+        factory = attach(mapping, runtime, lock=activation.lock_bytes, keys=target,
                          deployment=(activation, exported.pin(activation, 'ACTIVE')))
         attached = lambda: factory(tenant_id=exported.original.TABLE, expire_on_commit=False)
         with attached() as session:
@@ -147,14 +161,14 @@ def test_original_searchable_app_fresh_adoption_search_rotation_and_latest_nativ
         current, controls = exported.search_controls(attached, current)
         assert controls == manifest['search_controls']
         runtime.dispose()
-        reverse = d.plan(activation, owner, source_pin=exported.pin(activation, 'ACTIVE'), keys=search_keys,
+        reverse = d.plan(activation, owner, source_pin=exported.pin(activation, 'ACTIVE'), keys=target,
             plaintext_runtime_role=os.environ['CRYPTALIS_FRESH_PLAINTEXT_ROLE'], backfill_rows_per_second=1000,
             verify_rows_per_second=1000, temporary_bytes_per_row=3000, wal_bytes_per_row=6000)
         consent = d.PlaintextApproval(reverse.target_id, reverse.operation_id, reverse.digest, True,
                                      'public fixture retained backup and latest original app values')
-        assert d.apply(reverse, owner, keys=search_keys, pin=exported.pin(reverse, 'PREPARED'),
+        assert d.apply(reverse, owner, keys=target, pin=exported.pin(reverse, 'PREPARED'),
             approval=approval, consent=consent).phase == 'PLAINTEXT_PENDING'
-        assert d.apply(reverse, owner, keys=search_keys, pin=exported.pin(reverse, 'PLAINTEXT_ACTIVATING'),
+        assert d.apply(reverse, owner, keys=target, pin=exported.pin(reverse, 'PLAINTEXT_ACTIVATING'),
             approval=approval, consent=consent, until='PLAINTEXT_ACTIVE').phase == 'PLAINTEXT_ACTIVE'
         removal = d.RemovalApproval(reverse.target_id, reverse.operation_id, reverse.digest,
             'original SQLModel CRUD restart with Cryptalis imports denied', 'public retained backup fixture only', True)
@@ -171,7 +185,8 @@ def test_original_searchable_app_fresh_adoption_search_rotation_and_latest_nativ
         with (directory / 'sqlmodel-searchable-journey-receipt.json').open('x') as stream:
             json.dump({'application_revision': manifest['application_revision'], 'application_source_sha256': hashes,
                 'model_changes': [], 'query_changes': [], 'source_plan_digest': source.digest,
-                'restore_adoption_id': binding.document['adoption_id'], 'rewrap_plan_digest': rewrap.digest,
+                'restore_adoption_id': binding.document['adoption_id'], 'rewrap_plan_digest': rewrap.digest if rewrap is not None else None,
+                'direct_restore_binding': direct,
                 'search_plan_digest': proposal.digest, 'activation_plan_digest': activation.digest,
                 'search_controls': controls, 'storage_frame_bytes_preserved': True, 'index_identity_preserved': True,
                 'native_catalog_restored': True, 'latest_value_decryptback': True, 'cryptalis_denied_restart': True,

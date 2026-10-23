@@ -370,10 +370,14 @@ artifact uses `cryptalis.search-rotation/v1`; activation uses
 It retains source roots, selects one new search generation, preserves payload
 selection, and replaces terms under fresh
 authenticated nonces. Native UPDATE maintains equality/unique indexes atomically.
-Storage-only frames remain exact. Generation rotation on an adopted target starts
-from its published lineage-bearing successor and its own ACTIVE pin. Direct
-generation planning with an explicit restore binding remains unadmitted. The
-[current status](../status.md#search-rotation-after-adopted-lineage-2026-10-24)
+Storage-only frames remain exact. Generation rotation on an adopted target can
+start from its published lineage-bearing successor and its own ACTIVE pin.
+Alternatively, both planners accept the original source ACTIVE pin and an explicit
+restore binding. This direct route embeds the binding in the purpose-specific
+preparation/v2 artifact. It retains the original source artifact and emits
+transition/v6 or v7 with the actual target and ordered restore lineage.
+With no explicit binding, preparation/v1 remains byte-compatible.
+The [current status](../status.md#direct-restore-binding-generation-planning-2026-10-24)
 records the exact verification boundary. All seven full gates remain UNKNOWN.
 See [lifecycle](../lifecycle.md#changes-and-rotation) for recovery and publication boundaries.
 [Security](../security.md#cryptographic-format) owns framing, commitments, keys, and failure rules.

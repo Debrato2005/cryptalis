@@ -521,7 +521,8 @@ After an uncertain commit, inspect the original operation through
 `status_payload_rotation`. Resume only after the original transaction is terminal.
 Keep the saved proposal and policies. An absent marker alone does not establish
 rollback. The [adopted-lineage route](#rotate-payload-keys-after-adopted-lineage)
-requires a published v5/v6 successor rather than a direct restore binding.
+uses a published successor. The [direct-binding route](#plan-generation-rotation-from-a-restore-binding)
+uses the original source and explicit binding.
 
 The byte budget is a logical bound across complete rows and fields, not a
 process resident-memory limit. P cannot enter `migration.apply` or authorize
@@ -646,7 +647,8 @@ All seven full gates remain UNKNOWN. See [status](status.md) for current evidenc
 Use the current ACTIVE v5 rewrap or v6 payload successor as `source_plan` in the
 payload workflow above. Supply that successor's own current pin and retained
 policies. Do not supply the earlier restore binding as current authority.
-Direct payload planning with `restore=binding` remains refused.
+Direct payload planning with `restore=binding` follows the
+[separate v2 route](#plan-generation-rotation-from-a-restore-binding).
 
 The saved preparation remains `cryptalis.payload-rotation/v1` and embeds the
 complete source. Sealing produces transition/v6 with every v3 payload proof
@@ -808,7 +810,8 @@ above. Preparation stays `cryptalis.search-rotation/v1`. Sealing adds the unchan
 flat restore lineage to all v4 proof members and emits `cryptalis.transition/v7`.
 Keep the same source-only cancellation, atomic switch and separate publication
 steps. Deploy compatible readers before publication. A historical binding cannot
-replace the successor pin. Direct restore-binding generation planning remains refused.
+replace the successor pin. Direct restore-binding generation planning follows its
+[separate v2 route](#plan-generation-rotation-from-a-restore-binding).
 
 ```bash
 .venv/bin/python scripts/fresh_cluster_qualification.py --adopted-search
@@ -838,6 +841,34 @@ search rotation. Fixture-only single-tenant email admission remains required.
 This profile does not add HTTP/JWT/SMTP, browser or deployment qualification.
 See the [application checkpoint](status.md#original-searchable-sqlmodel-adoption-2026-10-24)
 for exact receipts and the unchanged product boundary.
+
+## Plan generation rotation from a restore binding
+
+Add `restore=binding` to either existing generation-planner call. Keep the
+original source, its ACTIVE pin and retained policies. The binding supplies
+the evaluated target and recorded adoption, without rewriting source identity.
+Persist the complete v2 proposal. Preparation status uses that embedded binding
+and still refuses a separate CLI `--restore-binding` option.
+
+Use the same staging, source-only cancellation, sealing, switch and separate
+publication steps. Activation remains v6/v7 with inherited lineage plus the
+explicit binding. Deploy v2 proposal readers before use. Existing activation
+readers accept unchanged v6/v7 formats. All 19 source controls pass, including
+CLI status and process/COMMIT recovery. Source VARCHAR, affected-suite and ordinary
+installed application checks also pass. All 19 installed direct controls and
+the original six-file SQLModel direct source/installed journey pass. Its legacy
+installed path also passes. The
+[lifecycle](lifecycle.md#generation-planning-from-a-restore-binding-2026-10-24),
+[format decision](decisions.md#direct-restore-binding-generation-planning-2026-10-24)
+and [status](status.md#direct-restore-binding-generation-planning-2026-10-24)
+define the contract and evidence limits. All seven production gates remain UNKNOWN.
+
+The local `--direct-generation` harness profile requires
+`CRYPTALIS_PREVIOUS_READER_PYTHON` to name a trusted interpreter with the previous
+2df0715a9d4e wheel installed. This supplies actual old-reader proposal refusal and
+activation acceptance controls. The `--sqlmodel-direct-search` profile reuses the
+pinned application snapshot required by `--sqlmodel-searchable`. It requires no
+previous-reader interpreter and adds no HTTP/JWT/SMTP qualification.
 
 ## Measured throughput
 

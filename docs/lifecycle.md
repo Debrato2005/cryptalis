@@ -259,7 +259,8 @@ The [two-artifact decision](decisions.md#payload-rotation-preparation-and-activa
 defines the preparation and activation boundary. The
 [adopted-lineage extension](#payload-rotation-after-adopted-lineage-2026-10-24)
 defines the v5/v6 route below. Direct payload planning from an explicit restore
-binding remains refused. All seven full gates remain UNKNOWN.
+binding follows the [separate v2 route](#generation-planning-from-a-restore-binding-2026-10-24).
+All seven full gates remain UNKNOWN.
 
 ### Payload rotation after adopted lineage: 2026-10-24
 
@@ -285,7 +286,8 @@ Later payload rotation can retain the same lineage. Ordinary rewrap of v6
 produces rewrap/v2 and a v5 successor. Fractional copy rates must survive both
 direct and embedded-source artifact round-trips. No-lineage payload activation
 remains v3. [Search rotation with lineage](#search-rotation-after-adopted-lineage-2026-10-24)
-uses its separate successor format. Direct restore-binding generation planning remains refused. This adds no key-retirement permission,
+uses its separate successor format. Direct restore-binding generation planning follows its
+[separate route](#generation-planning-from-a-restore-binding-2026-10-24). This adds no key-retirement permission,
 host authority service or cryptographic format. All seven production gates remain UNKNOWN.
 See the [format decision](decisions.md#adopted-target-payload-rotation-2026-10-24).
 Native TEXT/VARCHAR and installed TEXT controls, plus the unchanged installed
@@ -365,7 +367,8 @@ authenticates the successor and reciprocal ancestry. Publish under its own pin.
 Retain exact frame/probe, owner and target-chain admission. Keep one selected
 search namespace and native index/uniqueness semantics. Later rewrap returns to
 v5. Later payload rotation produces v6. Both retain lineage and embedded
-fractional-rate identities. Direct restore-binding planning remains refused.
+fractional-rate identities. Direct restore-binding planning follows the
+[separate v2 route](#generation-planning-from-a-restore-binding-2026-10-24).
 
 Compatible readers must precede publication. Crypto, journal and authority
 contracts stay unchanged. No key-retirement permission follows.
@@ -374,6 +377,31 @@ All seven production gates remain UNKNOWN. See the
 Source TEXT/VARCHAR and installed TEXT controls verify this boundary.
 [Status](status.md#search-rotation-after-adopted-lineage-2026-10-24) records exact
 receipts and the separate ordinary application regressions.
+
+### Generation planning from a restore binding: 2026-10-24
+
+**IMPLEMENTED, bounded source and installed verification:** supply the existing binding through `restore`
+when planning payload or search rotation directly on an adopted target. Retain
+the original source and ACTIVE pin. A nonnull binding produces purpose/v2 with
+the full embedded binding. With no explicit binding, purpose/v1 remains byte-compatible.
+
+Validate identity, original custody, frame probes, owner, journal-state digest
+and the combined lineage before provider work. Use the evaluated actual target
+for maintenance and read-only status. Staging preserves the original source
+journal. Source-only cancellation keeps the original binding usable and later
+edits intact. Status uses the embedded binding, without separate binding authority.
+
+Seal v6/v7 with all existing proofs, inherited lineage plus the explicit binding,
+and the same flat source/preparation/activation ancestry. PENDING retry checks the
+current target, without rechecking a superseded source or calling its resolver.
+Publish under the successor's own pin. Deploy v2 proposal readers before use.
+Compatible existing readers can read unchanged v6/v7 activation formats.
+No crypto, provider, authority or key-retirement permission changes. All seven
+production gates remain UNKNOWN. See the
+[format decision](decisions.md#direct-restore-binding-generation-planning-2026-10-24).
+[Status](status.md#direct-restore-binding-generation-planning-2026-10-24) records
+19 controls each for source TEXT/VARCHAR and installed TEXT, refusal/recovery scope,
+and the unchanged SQLModel direct source/installed and legacy installed journeys.
 
 Keep exactly one active application writer representation during maintenance cutover.
 No partial-generation OR query or cross-generation uniqueness gap is silently admitted.
@@ -685,8 +713,9 @@ receipts and test totals.
 
 Backup adoption after payload rotation differs from rotation on an adopted
 target. The [adopted-lineage extension](#payload-rotation-after-adopted-lineage-2026-10-24)
-requires a published v5/v6 successor. Direct payload planning from a restore
-binding remains refused. [Search rotation with lineage](#search-rotation-after-adopted-lineage-2026-10-24)
+uses a published v5/v6 successor. Direct payload planning from a restore
+binding follows the [separate v2 route](#generation-planning-from-a-restore-binding-2026-10-24).
+[Search rotation with lineage](#search-rotation-after-adopted-lineage-2026-10-24)
 uses a published successor. Host publication provenance,
 source fencing, and provider custody remain external qualification boundaries.
 All seven full gates remain UNKNOWN.
@@ -713,7 +742,8 @@ The harness also accepts `--varchar`. [Status](status.md) owns each profile's
 receipts and qualification boundary. This evidence does not qualify production
 custody, host publication, or source fencing. Later generation rotation requires
 a [published lineage-bearing successor](#search-rotation-after-adopted-lineage-2026-10-24),
-rather than direct restore-binding planning. All seven full gates remain UNKNOWN.
+or the [direct-binding route](#generation-planning-from-a-restore-binding-2026-10-24).
+All seven full gates remain UNKNOWN.
 
 ### Independent application exit: 2026-10-19
 

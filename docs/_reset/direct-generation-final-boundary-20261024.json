@@ -1,0 +1,430 @@
+{
+  "format": "cryptalis.direct-generation-boundary/v1",
+  "base_revision": "9175263",
+  "receipts": {
+    "docs/_reset/direct-generation-source-affected-20261024.json": {
+      "sha256": "d538ca529c174069b4ef0910711bae9528c7c06a5f491f7eb1d5ea92526e6671",
+      "counts": {
+        "passed": 606
+      },
+      "pytest_report_counts": {
+        "test_calls": {
+          "passed": 606
+        },
+        "subtest_calls": {},
+        "setup": {
+          "passed": 606
+        },
+        "teardown": {
+          "passed": 606
+        },
+        "collection": {},
+        "selected_items": 606
+      },
+      "elapsed_seconds": 271.8493753109942,
+      "source_files": 199,
+      "fixing_revision": "worktree-d552b25a9a98048a"
+    },
+    "docs/_reset/direct-generation-installed-affected-20261024.json": {
+      "sha256": "cd0de950ad6a097795df9ed53f4bdf70fa554310dac7045f6d5599b219f3de26",
+      "counts": {
+        "passed": 68
+      },
+      "pytest_report_counts": {
+        "test_calls": {
+          "passed": 68
+        },
+        "subtest_calls": {},
+        "setup": {
+          "passed": 68
+        },
+        "teardown": {
+          "passed": 68
+        },
+        "collection": {},
+        "selected_items": 68
+      },
+      "elapsed_seconds": 59.365621426011785,
+      "source_files": 199,
+      "fixing_revision": "worktree-d552b25a9a98048a"
+    },
+    "docs/_reset/fresh-cluster-export-20261024-31.json": {
+      "sha256": "99bffa94f6232afa91362587091d99524776367ac75571a6309f676dfe6cf520",
+      "counts": {
+        "passed": 1
+      },
+      "pytest_report_counts": {
+        "test_calls": {
+          "passed": 1
+        },
+        "subtest_calls": {},
+        "setup": {
+          "passed": 1
+        },
+        "teardown": {
+          "passed": 1
+        },
+        "collection": {},
+        "selected_items": 1
+      },
+      "elapsed_seconds": 1.3000142630044138,
+      "source_files": 199,
+      "fixing_revision": "worktree-d552b25a9a98048a"
+    },
+    "docs/_reset/fresh-cluster-restore-20261024-30.json": {
+      "sha256": "dc62eb3e32f011ae2500715cd977e676ff970decadd5b57c58791a52544d4bc1",
+      "counts": {
+        "passed": 19
+      },
+      "pytest_report_counts": {
+        "test_calls": {
+          "passed": 19
+        },
+        "subtest_calls": {},
+        "setup": {
+          "passed": 19
+        },
+        "teardown": {
+          "passed": 19
+        },
+        "collection": {},
+        "selected_items": 19
+      },
+      "elapsed_seconds": 50.367263804000686,
+      "source_files": 199,
+      "fixing_revision": "worktree-d552b25a9a98048a"
+    },
+    "docs/_reset/fresh-cluster-export-20261024-32.json": {
+      "sha256": "2793f74ef98b6b779abc157ced9446a06950922ec15f88643bb9abac266a624a",
+      "counts": {
+        "passed": 1
+      },
+      "pytest_report_counts": {
+        "test_calls": {
+          "passed": 1
+        },
+        "subtest_calls": {},
+        "setup": {
+          "passed": 1
+        },
+        "teardown": {
+          "passed": 1
+        },
+        "collection": {},
+        "selected_items": 1
+      },
+      "elapsed_seconds": 1.0034672570036491,
+      "source_files": 199,
+      "fixing_revision": "worktree-d552b25a9a98048a"
+    },
+    "docs/_reset/fresh-cluster-restore-20261024-31.json": {
+      "sha256": "368e3b45f5e8db6946898851c6f6416189750d3dd35775ced43b4926eb634632",
+      "counts": {
+        "passed": 19
+      },
+      "pytest_report_counts": {
+        "test_calls": {
+          "passed": 19
+        },
+        "subtest_calls": {},
+        "setup": {
+          "passed": 19
+        },
+        "teardown": {
+          "passed": 19
+        },
+        "collection": {},
+        "selected_items": 19
+      },
+      "elapsed_seconds": 50.728347427997505,
+      "source_files": 199,
+      "fixing_revision": "worktree-d552b25a9a98048a"
+    },
+    "docs/_reset/fresh-cluster-export-20261024-33.json": {
+      "sha256": "8d9e1a7a990bd1218f09d4d1c01d3f95a7df240b79202a94c48010cf79242107",
+      "counts": {
+        "passed": 1
+      },
+      "pytest_report_counts": {
+        "test_calls": {
+          "passed": 1
+        },
+        "subtest_calls": {},
+        "setup": {
+          "passed": 1
+        },
+        "teardown": {
+          "passed": 1
+        },
+        "collection": {},
+        "selected_items": 1
+      },
+      "elapsed_seconds": 1.2131878340005642,
+      "source_files": 199,
+      "fixing_revision": "worktree-d552b25a9a98048a"
+    },
+    "docs/_reset/fresh-cluster-restore-20261024-32.json": {
+      "sha256": "61d829e482578c449037246d2f1cdc3579396b13d37e95a7777d9450c93216b8",
+      "counts": {
+        "passed": 19
+      },
+      "pytest_report_counts": {
+        "test_calls": {
+          "passed": 19
+        },
+        "subtest_calls": {},
+        "setup": {
+          "passed": 19
+        },
+        "teardown": {
+          "passed": 19
+        },
+        "collection": {},
+        "selected_items": 19
+      },
+      "elapsed_seconds": 50.378530800007866,
+      "source_files": 199,
+      "fixing_revision": "worktree-d552b25a9a98048a"
+    },
+    "docs/_reset/fresh-cluster-export-20261024-34.json": {
+      "sha256": "b948239d0cfadae73c1285b730db8d9a509c6208c7c8c83b8105833e25272996",
+      "counts": {
+        "passed": 1
+      },
+      "pytest_report_counts": {
+        "test_calls": {
+          "passed": 1
+        },
+        "subtest_calls": {},
+        "setup": {
+          "passed": 1
+        },
+        "teardown": {
+          "passed": 1
+        },
+        "collection": {},
+        "selected_items": 1
+      },
+      "elapsed_seconds": 1.4262639000080526,
+      "source_files": 199,
+      "fixing_revision": "worktree-d552b25a9a98048a"
+    },
+    "docs/_reset/fresh-cluster-restore-20261024-33.json": {
+      "sha256": "be48b3bcb11b43d20d421c4403c64bf87a4c23fa15b92dda330fee2471d5c725",
+      "counts": {
+        "passed": 1
+      },
+      "pytest_report_counts": {
+        "test_calls": {
+          "passed": 1
+        },
+        "subtest_calls": {},
+        "setup": {
+          "passed": 1
+        },
+        "teardown": {
+          "passed": 1
+        },
+        "collection": {},
+        "selected_items": 1
+      },
+      "elapsed_seconds": 2.5610665599961067,
+      "source_files": 199,
+      "fixing_revision": "worktree-d552b25a9a98048a"
+    },
+    "docs/_reset/fresh-cluster-export-20261024-35.json": {
+      "sha256": "c76cbd1b82d0eacd831a4c1b7e8025630c174f26f36bb64a1eba22e16c450819",
+      "counts": {
+        "passed": 1
+      },
+      "pytest_report_counts": {
+        "test_calls": {
+          "passed": 1
+        },
+        "subtest_calls": {},
+        "setup": {
+          "passed": 1
+        },
+        "teardown": {
+          "passed": 1
+        },
+        "collection": {},
+        "selected_items": 1
+      },
+      "elapsed_seconds": 1.5672017819888424,
+      "source_files": 199,
+      "fixing_revision": "worktree-d552b25a9a98048a"
+    },
+    "docs/_reset/fresh-cluster-restore-20261024-34.json": {
+      "sha256": "0df59ca0e7a8e9cb3c8e0764c63b00e79ce380fb51ef72ae3febe23acfea2b9e",
+      "counts": {
+        "passed": 1
+      },
+      "pytest_report_counts": {
+        "test_calls": {
+          "passed": 1
+        },
+        "subtest_calls": {},
+        "setup": {
+          "passed": 1
+        },
+        "teardown": {
+          "passed": 1
+        },
+        "collection": {},
+        "selected_items": 1
+      },
+      "elapsed_seconds": 2.777700015998562,
+      "source_files": 199,
+      "fixing_revision": "worktree-d552b25a9a98048a"
+    },
+    "docs/_reset/fresh-cluster-export-20261024-36.json": {
+      "sha256": "0a5a4bac00815dbbbdcb5ef6c5072c5885ff69194ef5680f570f608d3082c6cc",
+      "counts": {
+        "passed": 1
+      },
+      "pytest_report_counts": {
+        "test_calls": {
+          "passed": 1
+        },
+        "subtest_calls": {},
+        "setup": {
+          "passed": 1
+        },
+        "teardown": {
+          "passed": 1
+        },
+        "collection": {},
+        "selected_items": 1
+      },
+      "elapsed_seconds": 1.439598577999277,
+      "source_files": 199,
+      "fixing_revision": "worktree-d552b25a9a98048a"
+    },
+    "docs/_reset/fresh-cluster-restore-20261024-35.json": {
+      "sha256": "d73cde9404d83ab31a915cd75fc4929e26383af3f953104c2aa91190785ee125",
+      "counts": {
+        "passed": 1
+      },
+      "pytest_report_counts": {
+        "test_calls": {
+          "passed": 1
+        },
+        "subtest_calls": {},
+        "setup": {
+          "passed": 1
+        },
+        "teardown": {
+          "passed": 1
+        },
+        "collection": {},
+        "selected_items": 1
+      },
+      "elapsed_seconds": 2.7521345220011426,
+      "source_files": 199,
+      "fixing_revision": "worktree-d552b25a9a98048a"
+    }
+  },
+  "applications": {
+    "direct-source": {
+      "path": "docs/_reset/direct-generation-direct-source-application-20261024.json",
+      "sha256": "3d05d18ec4075e2eeebb173ee5b432b863ca9c1649b339fc09354f9eb7762949",
+      "direct_restore_binding": true,
+      "unchanged_source_files": 6,
+      "controls": {
+        "equality": true,
+        "IN": true,
+        "empty_IN": true,
+        "NULL": "no NULL email; IN NULL ignored",
+        "Unicode": true,
+        "unique_sqlstate": "23505",
+        "rollback": true,
+        "concurrent_unique_sqlstate": "23505",
+        "latest_email_edit": true
+      }
+    },
+    "direct-installed": {
+      "path": "docs/_reset/direct-generation-direct-installed-application-20261024.json",
+      "sha256": "c7c21c97f2a226e454d6436ef44f1a69f5f08ee1f86852483f962248cb773a13",
+      "direct_restore_binding": true,
+      "unchanged_source_files": 6,
+      "controls": {
+        "equality": true,
+        "IN": true,
+        "empty_IN": true,
+        "NULL": "no NULL email; IN NULL ignored",
+        "Unicode": true,
+        "unique_sqlstate": "23505",
+        "rollback": true,
+        "concurrent_unique_sqlstate": "23505",
+        "latest_email_edit": true
+      }
+    },
+    "legacy-installed": {
+      "path": "docs/_reset/direct-generation-legacy-installed-application-20261024.json",
+      "sha256": "1af506ca29a7f49ddfe2ad4eddfe1e788c413aec86b2d1f342ee083cb8fd90d5",
+      "direct_restore_binding": false,
+      "unchanged_source_files": 6,
+      "controls": {
+        "equality": true,
+        "IN": true,
+        "empty_IN": true,
+        "NULL": "no NULL email; IN NULL ignored",
+        "Unicode": true,
+        "unique_sqlstate": "23505",
+        "rollback": true,
+        "concurrent_unique_sqlstate": "23505",
+        "latest_email_edit": true
+      }
+    }
+  },
+  "release": {
+    "path": "docs/_reset/direct-generation-release-final-20261024.json",
+    "sha256": "9a01ab06ab04c29cbee1acfabae877135b98bba256dd19d47202180b9a37cce0",
+    "wheel_sha256": "33614adaaa01996523bc2d032c1cc3f2ac867b2e3fc6f88fa9d3161120f3c6ae",
+    "installed_files": 40,
+    "modules": 36,
+    "changed_product_files": [
+      "src/cryptalis/_rotation_activation.py",
+      "src/cryptalis/_rotation_transition.py",
+      "src/cryptalis/cli.py",
+      "src/cryptalis/rotation.py"
+    ],
+    "package": "/tmp/cryptalis-direct-generation-py313-20261024/lib/python3.13/site-packages/cryptalis/__init__.py"
+  },
+  "runtime": {
+    "python": "3.13.12",
+    "sqlmodel": "0.0.48",
+    "SQLAlchemy": "2.1.3",
+    "psycopg": "3.3.6",
+    "cryptography": "50.0.2",
+    "greenlet": "3.5.6"
+  },
+  "document_sha256": {
+    "docs/status.md": "386a15cec8d8c79fdfd9b3d865b804966c345d153ca3917626ba5d189d7a9047",
+    "docs/BUILD_CHECKLIST.md": "68e4e14bffd40c25060e88f5b0b3db1aece6ca0c9bf6758f8a9a30c372742e9d",
+    "docs/decisions.md": "3d4dc6b96ccca3f0271eb4ba83297447c4d43838dcbdc5548dbe4824396c1505",
+    "docs/lifecycle.md": "7d2819e1695126c54cb6bcf69d5298fac0f00f09415a5da8581b32a945a13550",
+    "docs/security.md": "97175f811b42e6279145cfbb47d6b0f2077f8e185e62bb4234397065433e6faa",
+    "docs/walkthrough-migration.md": "077454e8b52c4844af7ceade3d3a63dd86c25fa60d2f282ee60cb2810dd013bd",
+    "docs/architecture/README.md": "85fb72d47b4669c29d581e10ee662d2e73e9a9223e6c51dc85d0f91f55689691"
+  },
+  "historical_baseline": {
+    "receipt": "docs/_reset/fresh-cluster-restore-20261024-28.json",
+    "counts": {
+      "failed": 2
+    },
+    "product": "unchanged previous installed 2df wheel",
+    "scope": "Missing restore keyword before implementation; not a fixture or probe failure"
+  },
+  "initial_source": {
+    "receipt": "docs/_reset/fresh-cluster-restore-20261024-29.json",
+    "counts": {
+      "passed": 2
+    },
+    "scope": "Initial positive controls before expanded tests and final CLI diagnostic"
+  },
+  "scope": "Local PostgreSQL 16 native TEXT/VARCHAR; direct payload/search v2 preparation with exact binding; cancellation, wrong authority, stale generation, SIGKILL, COMMIT-loss, second adoption and latest-value exit; original pinned single-tenant SQLModel CRUD direct and legacy routes; installed HTTP profile separately bounded; no production email-domain, custody, deployment or human-review qualification",
+  "objectives": "All 34 states unchanged",
+  "gates": "All seven UNKNOWN"
+}

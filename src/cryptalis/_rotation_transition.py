@@ -31,7 +31,7 @@ def _operation(p):
     # SQL helpers need the validated source lock/target plus P's real identity
     # and cost. This private context is never a MigrationPlan or deployment.
     source=p.source
-    document=source.document
+    document=r._generation_source_document(source,p.restore_binding,p.purpose)
     document.update(operation_id=str(p.operation_id),estimates=p.document['estimates'])
     return SimpleNamespace(operation_id=p.operation_id,digest=p.digest,
                            lock_bytes=source.lock_bytes,document=document)
@@ -56,6 +56,9 @@ def _source_current(c,p,op,*,own):
     if (row is None or row[0]!=source.digest
             or m._hash(row[1])!=p.document['journal_state_digest']):
         raise m.TransitionFailure(f'{p.purpose}_source_state_changed',p.operation_id)
+    if p.restore_binding is not None:
+        from cryptalis.restore import _current
+        _current(source,p.restore_binding,c,row[1])
     from cryptalis.deprotection import _inventory
     _inventory(c,source,source,own=own)
     for model in source.document['lock']['models']:
@@ -127,7 +130,9 @@ def _inspect(c,p,op,state):
         facts['relation']['user_triggers']=False
         if m._hash(facts)!=p.document['models'][model['table_id']]['schema']:
             raise m.TransitionFailure(f'{p.purpose}_staging_schema_changed',p.operation_id)
-        m._protected_contract(c,p.source,model,facts)
+        from cryptalis.restore import frame_admissions
+        m._protected_contract(c,p.source,model,facts,
+                              admitted=frame_admissions(p.source.document,model,p.restore_binding))
 
 
 def _prepare(p,keys,target_keys):
@@ -183,7 +188,8 @@ def _new_state(p):
 
 
 def _expand(c,p,op,keys,prepared):
-    m._check_connection(p.source,c,m.DeploymentPin(p.source.target_id,p.source.operation_id,p.source.digest,'ACTIVE'))
+    m._check_connection(p.source,c,m.DeploymentPin(p.source.target_id,p.source.operation_id,p.source.digest,'ACTIVE'),
+                        binding=p.restore_binding)
     for model in p.source.document['lock']['models']:
         if m._hash(m._facts(c,model))!=p.document['models'][model['table_id']]['schema']:
             raise m.TransitionFailure(f'{p.purpose}_source_changed',p.operation_id)
@@ -338,6 +344,13 @@ def apply(p,engine,*,keys,target_keys,pin,approval,until,max_chunks):
             state=_state(c,p,op,pin)
             if state is not None and state['phase']=='ABORTED':
                 raise m.TransitionFailure('operation_aborted',p.operation_id)
+            if p.restore_binding is not None:
+                if state is None:
+                    source=p.source
+                    m._check_connection(source,c,m.DeploymentPin(source.target_id,source.operation_id,source.digest,'ACTIVE'),
+                                        binding=p.restore_binding)
+                else:
+                    _inspect(c,p,op,state)
             prepared=_prepare(p,keys,target_keys)
             if state is None:state=_expand(c,p,op,keys,prepared)
             else:
@@ -371,13 +384,14 @@ def status(p,engine,*,pin):
     source=p.source
     with m._connection(engine,p.operation_id) as c:
         c.exec_driver_sql('SET TRANSACTION ISOLATION LEVEL REPEATABLE READ, READ ONLY')
-        if m._target(c)[:-1]!=source.document['target'][:-1]:
+        if m._target(c)[:-1]!=op.document['target'][:-1]:
             raise m.TransitionFailure('wrong_database_target',p.operation_id)
         m._runtime_safety(c,source.document['runtime_role'],source.document['target'][-1],
                           source.document['lock']['models'],journal=m._journal(c,op),operation_id=p.operation_id)
         state=_state(c,p,op,pin)
         if state is None or state['phase']=='ABORTED':
-            m._check_connection(source,c,m.DeploymentPin(source.target_id,source.operation_id,source.digest,'ACTIVE'))
+            m._check_connection(source,c,m.DeploymentPin(source.target_id,source.operation_id,source.digest,'ACTIVE'),
+                                binding=p.restore_binding)
         else:_inspect(c,p,op,state)
         progress=m.Progress(p.operation_id,'PREPARED',0,0,'') if state is None else m._progress(op,state)
         return m.TransitionStatus(p.operation_id,progress.phase,pin.phase,progress.committed_rows,
@@ -396,12 +410,14 @@ def abort(p,engine,*,keys,source_pin,approval):
             m._lock_tables(c,op,verification=True)
             state=_state(c,p,op)
             if state is not None and state['phase']=='ABORTED':
-                m._check_connection(source,c,source_pin)
+                m._check_connection(source,c,source_pin,binding=p.restore_binding)
             else:
                 if state is not None:_inspect(c,p,op,state)
+                elif p.restore_binding is not None:
+                    m._check_connection(source,c,source_pin,binding=p.restore_binding)
                 _observe_source(c,p,keys)
                 if state is None:
-                    m._check_connection(source,c,source_pin)
+                    m._check_connection(source,c,source_pin,binding=p.restore_binding)
                     state=_new_state(p)
                 else:
                     m._lock_tables(c,op)
@@ -409,7 +425,7 @@ def abort(p,engine,*,keys,source_pin,approval):
                         for field in model['fields']:
                             c.exec_driver_sql(f'ALTER TABLE {m._table(c,model)} DROP COLUMN {m._quote(c,_shadow(field))}')
                     m._drop_guards(c,op)
-                    m._check_connection(source,c,source_pin)
+                    m._check_connection(source,c,source_pin,binding=p.restore_binding)
                 state.update(phase='ABORTED',aborted_to={'operation_id':str(source.operation_id),'plan_digest':source.digest})
                 exists=c.exec_driver_sql(f'SELECT 1 FROM {m._journal(c,op)} WHERE operation_id=%s',
                                          (p.operation_id,)).one_or_none()

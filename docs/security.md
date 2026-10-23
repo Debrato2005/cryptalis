@@ -449,7 +449,8 @@ The original source policy cannot replace A's target policy. Existing
 Payload rotation after a published lineage-bearing successor follows the
 [adopted-lineage contract](lifecycle.md#payload-rotation-after-adopted-lineage-2026-10-24).
 Search rotation with lineage follows its [successor contract](lifecycle.md#search-rotation-after-adopted-lineage-2026-10-24).
-Direct restore-binding generation planning remains refused.
+Direct restore-binding generation planning follows its
+[separate contract](lifecycle.md#generation-planning-from-a-restore-binding-2026-10-24).
 All seven full gates remain UNKNOWN.
 
 ## Cryptographic format
@@ -657,7 +658,8 @@ pass, as do the source VARCHAR and installed TEXT profiles. The final installed
 Smolink journey and full regression retain their exact
 [status boundaries](status.md#payload-rotation-after-adopted-lineage-2026-10-24).
 Search rotation with lineage follows its [successor contract](lifecycle.md#search-rotation-after-adopted-lineage-2026-10-24).
-Direct restore-binding generation planning remains refused. Deploy readers that admit the embedded
+Direct restore-binding generation planning follows its
+[separate contract](lifecycle.md#generation-planning-from-a-restore-binding-2026-10-24). Deploy readers that admit the embedded
 source and v6 before publication. CF1, host approval/fencing, retained-reader
 obligations and key-retirement permissions do not change. All seven production
 gates remain UNKNOWN. See the [format decision](decisions.md#adopted-target-payload-rotation-2026-10-24).
@@ -669,6 +671,17 @@ Source TEXT/VARCHAR, installed TEXT, affected and ordinary installed application
 checks pass within their recorded boundaries. See the
 [current boundary](status.md#search-rotation-after-adopted-lineage-2026-10-24).
 The crypto, index representation, journal and host-authority contracts do not change.
+
+Direct generation planning can embed the existing restore binding in an exact
+purpose/v2 proposal. Pure identity, original custody, frame/probe, owner and
+lineage checks precede provider work. The evaluated target does not replace the
+original source identity or host pin. Existing cancellation and publication
+authority rules remain required. The [current checkpoint](status.md#direct-restore-binding-generation-planning-2026-10-24)
+records 19 native controls, including changed CHECK and disabled-guard refusal
+before providers. Source VARCHAR, affected-suite and ordinary installed application
+checks also pass. All 19 installed direct controls and the original six-file
+SQLModel direct search journey pass within their recorded boundaries.
+This adds no cryptographic, production email-domain or key-retirement permission.
 
 **IMPLEMENTED, internal batch only:** `prepare_payload_rotation_batch(rows, field, tenant,
 source=..., target=...)` decodes each current frame under the exact source payload
@@ -743,7 +756,8 @@ They exclude later DDL, verification, commit, and publication. Other cluster
 writes can contribute WAL. These metrics establish no capacity bound, isolated
 WAL cost, deployment authority, or fresh cryptographic proof. Payload rotation
 after adopted lineage requires a published v5/v6 source; direct payload planning
-from an explicit restore binding remains refused. All seven full gates remain UNKNOWN.
+from an explicit restore binding follows the
+[separate v2 contract](lifecycle.md#generation-planning-from-a-restore-binding-2026-10-24). All seven full gates remain UNKNOWN.
 
 **IMPLEMENTED, bounded native verification:** search rotation retains every exact
 source wrapper and root material. It adds one independent search root above all

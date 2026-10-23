@@ -685,13 +685,15 @@ def _status_command(arguments: argparse.Namespace) -> int:
         raw_plan = read(arguments.plan, 'plan')
         artifact_format = _decode_transition_json(raw_plan).get('format')
         reverse = artifact_format == 'cryptalis.reverse/v1'
-        preparation = artifact_format in (PayloadRotationPlan.format, SearchRotationPlan.format)
+        preparation_type = next((candidate for candidate in (PayloadRotationPlan, SearchRotationPlan)
+            if artifact_format in (candidate.format, candidate.restore_format)), None)
+        preparation = preparation_type is not None
         if doctor and (reverse or preparation):
             raise ValueError('Doctor requires an active protection artifact')
         if preparation:
-            plan = (PayloadRotationPlan if artifact_format==PayloadRotationPlan.format else SearchRotationPlan)(raw_plan)
+            plan = preparation_type(raw_plan)
             if arguments.restore_binding is not None:
-                raise ValueError('Rotation preparation does not admit restored targets')
+                raise ValueError('Set restore authority when planning the rotation. Do not pass a separate binding to status.')
         else:
             plan = DeprotectionPlan(raw_plan) if reverse else MigrationPlan(raw_plan)
         pin_document = decode_manifest_json(read(arguments.pin, 'pin', 65536))

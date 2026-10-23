@@ -24,7 +24,7 @@ def _costs(p,copy,copy_wal):
 
 def _activation(p,observations,copy,copy_wal):
     source=p.source
-    source_document=source.document
+    source_document=r._generation_source_document(source,p.restore_binding,p.purpose)
     document={key:source_document[key] for key in _BASE}
     ancestors=source_document.get('predecessors',[])+[
         {'operation_id':str(source.operation_id),'plan_digest':source.digest},

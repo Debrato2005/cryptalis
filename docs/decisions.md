@@ -640,7 +640,8 @@ cancellation inspects the terminal marker and current source authority without
 replaying old data. A later source supersession prevents an old cancellation
 from reviving it. The [adopted-lineage extension](#adopted-target-payload-rotation-2026-10-24)
 defines preparation after a published lineage-bearing successor. Direct planning
-from an explicit restore binding remains refused.
+from an explicit restore binding follows the
+[separate v2 contract](#direct-restore-binding-generation-planning-2026-10-24).
 
 The initial final-switch implementation must preserve the existing public
 columns, their constraints, native expression indexes, grants and metadata.
@@ -686,7 +687,9 @@ or subsequent current-value decrypt-back/removal.
 **IMPLEMENTED, bounded verification:** payload rotation accepts a current ACTIVE
 v5 rewrap or v6 payload successor that already carries validated restore lineage.
 The preparation proposal keeps `cryptalis.payload-rotation/v1` and its complete
-embedded source. It adds no restore argument or publication authority.
+embedded source. This v1 encoding adds no restore member or publication authority.
+The [direct-binding extension](#direct-restore-binding-generation-planning-2026-10-24)
+defines its separate v2 route.
 
 With inherited lineage, activation uses `cryptalis.transition/v6`,
 `kind: payload_rotation`. Keep every v3 payload proof, observation, batch limit,
@@ -714,7 +717,8 @@ sources without changing their artifact identities.
 Readers that cannot admit the embedded source or v6 activation must refuse
 before effects and publication. Deploy compatible readers first.
 [Search rotation with lineage](#adopted-target-search-rotation-2026-10-24) uses its
-separate successor format. Direct restore-binding generation planning remains refused. CF1, retained-reader requirements, root retirement, maintenance approval,
+separate successor format. Direct restore-binding generation planning follows its
+[separate v2 contract](#direct-restore-binding-generation-planning-2026-10-24). CF1, retained-reader requirements, root retirement, maintenance approval,
 host fencing and publication authority do not change. All seven production gates
 remain UNKNOWN. See the [lifecycle contract](lifecycle.md#payload-rotation-after-adopted-lineage-2026-10-24).
 Native TEXT/VARCHAR and installed TEXT profiles verify this path. The unchanged
@@ -745,7 +749,8 @@ Fresh-cluster backup recovery alone does not admit a new generation rotation.
 The [adopted-lineage extension](#adopted-target-payload-rotation-2026-10-24) defines
 payload rotation after a published v5/v6 successor. The
 [search extension](#adopted-target-search-rotation-2026-10-24) defines its separate route.
-Direct restore-binding generation planning remains refused.
+Direct restore-binding generation planning follows its
+[separate v2 contract](#direct-restore-binding-generation-planning-2026-10-24).
 Search reindex, qualified production providers and all seven full gates remain
 open or UNKNOWN. See the [recorded evidence](status.md#payload-backup-recovery-and-runtime-admission-checkpoint-2026-10-23).
 
@@ -807,7 +812,8 @@ Production custody, authority and independent review remain unqualified.
 **IMPLEMENTED, bounded source and installed verification:** search rotation uses the current ACTIVE
 v5/v6/v7 successor. Require validated restore lineage and its own host pin.
 The `cryptalis.search-rotation/v1` preparation proposal keeps its complete embedded
-source and existing members. Do not add an explicit restore argument.
+source and existing members. The [direct-binding extension](#direct-restore-binding-generation-planning-2026-10-24)
+defines a separate v2 encoding for an explicit binding.
 
 Activation uses `cryptalis.transition/v7` with `kind: search_rotation`. Retain
 every v4 search proof, observation, batch limit, scope, policy and cost requirement.
@@ -839,6 +845,40 @@ The unchanged six-file SQLModel [adoption journey](status.md#original-searchable
 adds bounded source and installed-wheel application evidence for this existing
 contract. Its fixture-only email domain and explicit single tenancy do not
 qualify production email populations or change leakage admission.
+
+## Direct restore-binding generation planning: 2026-10-24
+
+**IMPLEMENTED, bounded source and installed verification:** add `restore=None` to the public payload and
+search planners. No binding retains the exact purpose/v1 proposal, including
+sources with inherited lineage. A nonnull existing `RestoreBinding` selects
+`cryptalis.payload-rotation/v2` or `cryptalis.search-rotation/v2`. Keep all v1
+members and add mandatory `restore` with the complete binding. Reject null
+`restore`, missing/extra members and wrong purpose/version pairs.
+
+Retain the complete original source, ACTIVE pin, policies, target_id and journal
+identity. Evaluate its physical target through the binding without rewriting
+the source artifact. Before provider work, validate source/binding identity,
+original-source custody, frame CHECK/probe forms, unchanged owner and prospective
+flat lineage. The proposal `journal_state_digest` must equal the binding's recorded
+journal state digest. Binding custody remains an observed subset of source policies.
+
+Reuse maintenance, staging, status, sealing and cancellation with the embedded
+binding and actual target. Source identity and journal state remain unchanged
+before switch. Cancellation requires the source ACTIVE pin, source custody and
+maintenance approval, without target custody. Terminal retries preserve current
+edits and cannot revive superseded source authority. PENDING switch retries keep
+target-only authentication and reciprocal ancestry checks.
+
+Activation remains v6/payload_rotation or v7/search_rotation. Append the explicit
+binding to inherited flat lineage and retain source-to-preparation-to-activation
+identities with every existing proof. Old proposal readers must refuse v2 before
+execution. Compatible existing v6/v7 readers can read the unchanged activation
+formats. Crypto, provider, host-authority and retained-key contracts do not change.
+All seven production gates remain UNKNOWN. See the
+[lifecycle contract](lifecycle.md#generation-planning-from-a-restore-binding-2026-10-24).
+[Status](status.md#direct-restore-binding-generation-planning-2026-10-24) records
+19 controls each for source TEXT/VARCHAR and installed TEXT, refusal/recovery scope,
+and the unchanged SQLModel direct source/installed and legacy installed journeys.
 
 ## Native UUID lookup inputs: 2026-10-24
 
