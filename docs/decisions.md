@@ -1439,6 +1439,15 @@ failure, ancestry, journal-free REMOVED status and output failure controls pass.
 Installed and optional genuine-fresh reference qualification remain pending.
 This evidence grants no external inventory, provider or recovery qualification.
 
+## Invalid native-coroutine SDK response cleanup: 2026-10-24
+
+Close an exact native CoroutineType returned by a synchronous SDK callback before
+rejecting the invalid response. Never await it or enter its body. Keep the existing
+KeyUnavailable redaction and healthy synchronous retry behavior. Already-closed
+coroutines remain safe to close. Do not run generic foreign awaitables or introduce
+an event loop for invalid responses. Protocol and local actual-SDK controls verify
+this boundary; live custody and installed qualification remain separate.
+
 ## Integrated query, provider and retained-status qualification: 2026-10-24
 
 **VERIFIED within the named installed and local PostgreSQL profiles:** combine the

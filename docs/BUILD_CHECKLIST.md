@@ -25,6 +25,10 @@ No objective is complete until its acceptance evidence and applicable gate pass.
 
 ## Current boundary
 
+- Invalid native-coroutine KMS responses are closed before the existing safe failure.
+  The source protocol and actual-SDK local profile pass 55 checks. See the
+  [checkpoint](status.md#invalid-kms-coroutine-response-cleanup-2026-10-24).
+
 - Integrated defensive hardening passes 74 source and 357 installed tests, with one
   inherited fresh setup skip. Genuine installed export/restore pass one and 24 tests,
   with one generation-specific setup skip. Twelve installed local SDK cases also pass.

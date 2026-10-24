@@ -246,6 +246,43 @@ def test_malformed_or_wrong_identity_response_never_releases_material(operation,
     assert_redacted(caught.value)
 
 
+@pytest.mark.parametrize("operation", ["wrap", "unwrap"])
+@pytest.mark.parametrize("already_closed", [False, True])
+def test_coroutine_return_is_redacted_closed_and_healthy_sdk_retry_works(operation, already_closed):
+    client = KmsProtocolDouble()
+    kms = provider(client)
+    wrapper = kms.wrap(ROOT, CONTEXT)
+    method = "encrypt" if operation == "wrap" else "decrypt"
+    original, calls, entered = getattr(client, method), [], []
+
+    async def invalid_response():
+        entered.append(True)
+        raise AssertionError(SECRET)
+
+    def unexpected(**request):
+        calls.append(True)
+        result = invalid_response()
+        if already_closed:
+            result.close()
+        return result
+
+    setattr(client, method, unexpected)
+    with warnings.catch_warnings(record=True) as emitted:
+        warnings.simplefilter("always", RuntimeWarning)
+        try:
+            with pytest.raises(KeyUnavailable) as caught:
+                kms.wrap(ROOT, CONTEXT) if operation == "wrap" else kms.unwrap(wrapper, CONTEXT)
+            assert_redacted(caught.value)
+            del caught
+            gc.collect()
+        finally:
+            setattr(client, method, original)
+    assert calls == [True]
+    assert entered == []
+    assert kms.unwrap(kms.wrap(ROOT, CONTEXT), CONTEXT) == ROOT
+    assert emitted == []
+
+
 @pytest.mark.parametrize("operation", ["wrap", "unwrap", "unwrap_async"])
 def test_sdk_exception_is_redacted_without_adapter_retry(operation):
     client = KmsProtocolDouble()
