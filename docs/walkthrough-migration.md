@@ -225,6 +225,18 @@ this command family. See the
 [architecture contract](architecture/README.md#search-rotation-cli) and
 [verified checkpoint](status.md#operational-cli-search-rotation-2026-10-24).
 
+## Qualify original HTTP across the CLI lifecycle
+
+**VERIFIED, bounded source and installed profiles:** run the existing original HTTP/JWT/local-SMTP
+workload before protection and after successor publication. Join initialization,
+protection, rewrap, payload2, search2 and latest-value reverse/removal through saved
+CLI artifacts and independent host pins. Keep the existing five SIGKILL checkpoints.
+Complete requests and mail before maintenance. Reload the entire original dependency/router
+graph with each new mapping and runtime factory. Override only `get_db`.
+Finish with original HTTP in a child that denies Cryptalis imports. It does not test mail. See the
+[acceptance boundary](architecture/README.md#original-http-operational-qualification) and
+[qualification checkpoint](status.md#original-http-operational-cli-journey-2026-10-24).
+
 ## Use the optional SQLModel bridge
 
 Use the `sqlmodel` extra from a locally built wheel in an isolated application environment.

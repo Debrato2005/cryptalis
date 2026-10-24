@@ -1327,3 +1327,55 @@ All 217 Python hashes stay stable. The previous 23 context declarations and four
 denial classifications remain unchanged. All 34 objective states and seven UNKNOWN
 gates retain their previous states. This slice repeats no fresh-cluster qualification.
 The unchanged core retains its historical boundary at `c612727`.
+
+## Original HTTP application and operational CLI acceptance: 2026-10-24
+
+**VERIFIED within the bounded source and installed profiles:** join the existing
+operational CLI lifecycle to the pinned original HTTP, JWT and loopback SMTP
+application journey.
+This acceptance profile adds no application, model, query, router or authentication edits.
+Only the original request-session dependency can receive an attached factory.
+Original authorization, password hashing and token validation remain in use.
+
+Exercise initialization, protection, root rewrap, payload generation 2 and search
+generation 2 through saved CLI artifacts and explicit host pins and approvals.
+Reuse the existing committed-checkpoint interruption protocol. Finish all requests
+and background mail before each approved maintenance pause. Reload the entire
+original dependency and router graph with the mapping after successor publication.
+Observe native row identities before reverse. Finish latest-value reverse/removal
+and an original HTTP child that refuses Cryptalis imports.
+
+Keep all 26 pinned source files unchanged. Protect User.email, User.full_name and
+User.is_active under the existing explicit fixture policy. Native password hashes
+and Item storage remain outside that protection declaration. Compare original HTTP
+and local SMTP controls after each relevant publication. Record no JWT, password,
+reset token, response body or private database URL in evidence.
+
+Reuse the verified installed wheel when every release-source input and product
+module remains identical. Do not label an unchanged artifact as a new build.
+Current evidence must identify its own test hashes and runtime origins.
+This first join qualifies no browser, deployment, external mail, live custody or
+new fresh-cluster cell. All 34 objective states and seven UNKNOWN gates remain unchanged.
+
+The [source run](_reset/http-cli-source-20261024.json) passes both the new joined
+profile and the existing HTTP regression. The [joined application report](_reset/http-cli-source-application-20261024.json)
+records six HTTP boundaries, four loopback SMTP messages at each boundary and five
+actual committed-checkpoint SIGKILLs followed by fresh-process continuation. Native
+row counts grow from three before protection to 15 before reverse. Exact latest
+plaintext, inactive False, index identities and public slots survive the journey.
+The package-free child exercises original HTTP with Cryptalis imports refused;
+SMTP is excluded from that child. The [reuse check](_reset/http-cli-artifact-reuse-20261024.json)
+confirms unchanged historical wheel bytes and all 43 release-source inputs.
+Only the new acceptance profile changes Python source; all 217 previous files remain exact.
+
+The [installed run](_reset/http-cli-installed-20261024.json) passes the same two
+profiles. Source and installed wrapper durations are 48.88 and 47.20 seconds,
+respectively, with no skips. Both runs keep all 218 Python hashes stable. Their
+joined controls and checkpoint observations agree. The existing HTTP regression
+passes after the new journey, which checks application reload and teardown.
+One existing Starlette deprecation warning occurs in each run. No product defect
+was reproduced, so this acceptance slice has no fabricated failing test or product fix.
+The [installed application report](_reset/http-cli-installed-application-20261024.json)
+and [final boundary](_reset/http-cli-final-boundary-20261024.json) bind the joined
+evidence to the unchanged wheel, current Python files and six documents.
+This slice repeats no full suite or fresh-cluster qualification.

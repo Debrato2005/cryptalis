@@ -21,9 +21,54 @@ and [competitive capability matrix](research/capability-matrix.md) govern priori
 Progress follows complete real-application journeys and resolved production requirements.
 All seven production gates remain UNKNOWN.
 
+## Original HTTP operational CLI journey: 2026-10-24
+
+**VERIFIED within the source and installed profiles at `worktree-048bd928c0a2c3e8`:**
+the unchanged 26-file FastAPI HTTP/JWT/local-SMTP application completes initialization,
+protection, rewrap, payload2, search2 and latest-value reverse/removal through existing
+CLI workflows. Earlier basic HTTP evidence retains its recorded boundary. This is
+an application-composition qualification, with no product or helper change.
+
+The [source run](_reset/http-cli-source-20261024.json) and
+[installed run](_reset/http-cli-installed-20261024.json) each pass two tests with no
+skips. Wrapper elapsed times are 48.88 and 47.20 seconds. Pytest reports 48.54
+and 46.44 seconds, with one existing Starlette deprecation warning per run.
+The new journey and existing basic HTTP control both pass. Their
+[source journey](_reset/http-cli-source-application-20261024.json),
+[source basic control](_reset/http-cli-source-basic-http-20261024.json),
+[installed journey](_reset/http-cli-installed-application-20261024.json) and
+[installed basic control](_reset/http-cli-installed-basic-http-20261024.json)
+receipts retain all 26 SHA-256 identities. The profile checks original Git blobs
+against the pinned manifest.
+
+Six boundaries repeat original HTTP/auth/password/inactive/Item-cascade controls:
+native, protected, rewrapped, payload-published, search-published and plaintext-published.
+Each delivers four real loopback SMTP messages, 24 per joined journey. Retained
+password, name, email and inactive False checks pass across these boundaries.
+Five actual committed-checkpoint SIGKILLs and independent CLI resumes preserve exact
+staged/sealed frames, saved P+A, native indexes and public slots. Old-pin refusal
+and target-only retry/publication pass. The import-denied original HTTP child verifies
+latest native values and excludes SMTP. Only original `get_db` is overridden.
+Original authentication, authorization, hashing, queries and routes remain unchanged.
+
+All 218 Python hashes stay stable and match this worktree. The 217 prior Python
+files remain unchanged. The [reuse attestation](_reset/http-cli-artifact-reuse-20261024.json)
+confirms the historical initialization wheel's exact 43 inputs, 38 modules, 42 installed
+files and 72 pinned requirements. Its SHA-256 remains
+`1d06531b894d117540117544ef251d5cdbe05cf75f0cc93394f4c266cc17ac04`.
+No artifact rebuild, install or dependency-environment change occurs. The
+[final boundary](_reset/http-cli-final-boundary-20261024.json) binds two current database
+receipts, four application receipts, six documents and reused artifact facts.
+No product defect or RED is claimed. No current full-suite, fresh-cluster, browser,
+deployment, external-mail, live-custody or production qualification follows. All 34 objective
+states and seven UNKNOWN gates remain unchanged. See the
+[acceptance boundary](architecture/README.md#original-http-operational-qualification),
+[security limits](security.md#http-operational-journey-limits) and
+[procedure](walkthrough-migration.md#qualify-original-http-across-the-cli-lifecycle).
+
 ## Operational CLI initialization: 2026-10-24
 
-**VERIFIED within the bounded source and installed profiles at `worktree-ad32b0cd9f5ebeac`:** `init --host-context MODULE:FACTORY --out DECLARATION`
+**VERIFIED within the bounded source and installed profiles at `85c00b3`:** `init --host-context MODULE:FACTORY --out DECLARATION`
 inspects explicit public declaration bytes from a trusted host. A frozen,
 repr-disabled `InitializationContext` requires `engine`, `mapping`, `declaration`,
 `writers` and `search_reviews`. The existing byte bound and strict parser run
@@ -45,7 +90,7 @@ The [parser RED](_reset/init-cli-source-red-20261024.json) records one failure i
 [focused source profile](_reset/init-cli-source-focused-initial-20261024.json) passes
 94 tests with four inherited genuine-fresh setup skips in 128.99 seconds: 15
 initialization controls and 79 existing operational/application controls. All 217 Python
-hashes stay stable and match this worktree. Strict-byte policy, key-free inspection,
+hashes stay stable and match that checkpoint. Strict-byte policy, key-free inspection,
 schema FAIL, unavailable inspection UNKNOWN, durability and failure controls pass.
 
 The [source application](_reset/init-cli-source-application-initial-20261024.json)
@@ -58,10 +103,10 @@ Initialization adds no sixth interruption checkpoint.
 The [affected-source suite](_reset/init-cli-source-affected-20261024.json) passes
 373 tests with no skips in 30.48 seconds. Its ten modules cover CLI, history,
 Doctor/preflight, declaration, compiler, public-slot, parser and canonicalization controls.
-All 217 Python hashes stay stable and match this worktree. The
+All 217 Python hashes stay stable and match that checkpoint. The
 [artifact check](_reset/init-cli-release-20261024.json) passes reproducible archives,
 SBOM, CLI, 38 modules and 42 installed-file checks. All 43 release-source hashes
-match this worktree. The wheel has SHA-256
+match that checkpoint. The wheel has SHA-256
 `1d06531b894d117540117544ef251d5cdbe05cf75f0cc93394f4c266cc17ac04`.
 Only three CLI product modules change. The other 35 modules, including ten crypto
 modules, remain unchanged. The
@@ -70,7 +115,7 @@ with four inherited genuine-fresh setup skips in 157.45 seconds. Its
 [application receipt](_reset/init-cli-installed-application-20261024.json) retains
 six pinned files, initialization-generated canonical input, the same five actual
 SIGKILL checkpoints and latest-value native exit. All 217 Python hashes stay stable
-and match this worktree. The [final boundary](_reset/init-cli-final-boundary-20261024.json)
+and match that checkpoint. The [final boundary](_reset/init-cli-final-boundary-20261024.json)
 binds three current database receipts, two application receipts, six documents and
 actual artifact bytes, with the earlier parser RED preserved. Fresh-cluster proofs
 retain their older `c612727` boundary. This slice repeats no fresh-cluster or full-suite

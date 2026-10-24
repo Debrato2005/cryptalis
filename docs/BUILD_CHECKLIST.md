@@ -25,6 +25,15 @@ No objective is complete until its acceptance evidence and applicable gate pass.
 
 ## Current boundary
 
+- The original 26-file HTTP operational join passes two source and two installed
+  tests with no skips. Six HTTP boundaries, 24 loopback messages per journey,
+  five actual SIGKILL/resume checkpoints and latest-value package-free HTTP exit pass.
+  All 218 Python hashes stay stable. The 217 prior files and historical artifact
+  bytes remain unchanged. Two database/four application receipts bind the
+  [final boundary](_reset/http-cli-final-boundary-20261024.json). No rebuild or current
+  fresh-cluster/full-suite qualification is claimed. See the
+  [verified checkpoint](status.md#original-http-operational-cli-journey-2026-10-24).
+
 - Initialization CLI passes 94 focused source tests with four inherited genuine-fresh
   setup skips. The unchanged six-file application consumes its private canonical
   declaration through planning, the same five SIGKILL checkpoints and latest-value
@@ -552,10 +561,10 @@ recovery and the final full regression. No production gate passes.
 
 ## Next critical path
 
-1. Complete remaining status coverage for keys and retained obligations from the canonical public surface.
-   Preserve explicit host authority, externally retained artifacts and Doctor's key-free contract.
-   The [initialization workflow](status.md#operational-cli-initialization-2026-10-24)
-   now has bounded source and installed evidence. Existing fresh-cluster proofs retain their older boundary.
+1. Specify remaining status coverage from explicit host backup/reader inventory and provenance.
+   Keep journal observations separate from external retained obligations. An empty journal does not prove that external obligations are absent.
+   The [original HTTP operational join](status.md#original-http-operational-cli-journey-2026-10-24)
+   now has bounded source and installed evidence.
 2. Retain the current removal contract while evaluating the unresolved retained-native
    alternative separately. Backup obligations remain open.
    Lock v2 captures and restores comments,

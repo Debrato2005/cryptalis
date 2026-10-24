@@ -224,6 +224,16 @@ deployment authority follows. Doctor's strict key-free tuple remains unchanged. 
 [verified checkpoint](../status.md#operational-cli-initialization-2026-10-24).
 Source and installed initialization verification pass.
 
+### Original HTTP operational qualification
+
+**VERIFIED, bounded source and installed qualification:** join existing CLI workflows to the original
+26-file HTTP/JWT/local-SMTP workload. Preserve all pinned source bytes. Use only the
+existing `get_db` override and reload its full dependency/router graph after successors.
+Run retained-user HTTP/password/inactive/Item-cascade controls after publication. Finish requests,
+background mail and fixture SMTP work before maintenance. Reuse the existing five
+process-recovery checkpoints. Product and helper bytes remain unchanged in this test-only join. See the
+[qualification checkpoint](../status.md#original-http-operational-cli-journey-2026-10-24).
+
 ## Exact data paths
 
 ```text

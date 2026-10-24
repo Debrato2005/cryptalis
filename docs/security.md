@@ -563,6 +563,20 @@ operation UUID or transition phase. Existing private publication and safe diagno
 [verified checkpoint](status.md#operational-cli-initialization-2026-10-24).
 Source and installed initialization verification pass.
 
+### HTTP operational journey limits
+
+**VERIFIED, bounded local source and installed profiles:** the joined profile keeps original authentication, authorization,
+JWT and password behavior. Only declared User.email, full_name and is_active fields
+are protected. Email equality/uniqueness uses the existing opaque UUID128 fixture in
+one explicit table tenant. Password hashes and Item remain native. SMTP capture uses real loopback
+TCP only. Receipts contain no JWTs, passwords, reset tokens, response bodies or private URLs.
+The import-denied original HTTP child verifies latest native data and does not test SMTP.
+
+This local ASGI/TestClient qualification supplies no browser, deployment, external-mail,
+live-custody or production evidence. Status of external retained obligations needs explicit
+host inventory/provenance. Wrappers or an empty journal cannot prove no obligations. See the
+[qualification checkpoint](status.md#original-http-operational-cli-journey-2026-10-24).
+
 ## Owned-sequence admission
 
 **IMPLEMENTED, bounded source and installed verification:** lock/v5 admits only inspected ordinary persistent sequences
