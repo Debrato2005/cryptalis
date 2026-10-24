@@ -1514,6 +1514,18 @@ forbidden. The preserved SDK target adds no dependency changes to the installed
 environment. This fifth current database wrapper keeps the same 221 Python hashes
 stable and supplies no live AWS custody evidence.
 
+## Integer assignment failure evidence before admission: 2026-10-24
+
+Native int2/int4/int8 range errors occur at the server with SQLSTATE 22003,
+including zero-match UPDATE. Protected integer implementation must preserve
+failure and transaction behavior without sending private integer values to
+PostgreSQL. Investigate a static public coercion sentinel for the native failure.
+It must retain write ordering, autoflush, rollback and savepoint behavior.
+The native oracle selects the required failure behavior.
+
+It admits no integer codecs, lock formats, mappings or query operators. Keep all six technical
+admission gates unpassed until their full executable evidence exists.
+
 ## Current public-policy and provider cleanup artifact: 2026-10-24
 
 The current source and actual installed profiles each pass 168 checks with all

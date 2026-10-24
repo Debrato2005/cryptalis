@@ -25,6 +25,11 @@ No objective is complete until its acceptance evidence and applicable gate pass.
 
 ## Current boundary
 
+- Native integer width/route failure timing is measured before protected admission.
+  Nine controls pass. Zero-match out-of-width UPDATE raises 22003. This admits
+  no protected integer type. See the
+  [oracle](status.md#native-integer-failure-oracle-2026-10-24).
+
 - Public policy status and invalid SDK-return cleanup pass 168 source and 168
   installed checks. The reproducible current wheel passes 45-input/40-module/44-file
   verification. Genuine installed direct-generation export/restore passes 1/19 controls.

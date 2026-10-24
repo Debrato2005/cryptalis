@@ -21,6 +21,22 @@ and [competitive capability matrix](research/capability-matrix.md) govern priori
 Progress follows complete real-application journeys and resolved production requirements.
 All seven production gates remain UNKNOWN.
 
+## Native integer failure oracle: 2026-10-24
+
+**VERIFIED, native PostgreSQL only:** nine width/route controls pass for int2,
+int4 and int8 entity flush, dictionary INSERT and scoped UPDATE. Extrema, NULL,
+rollback and savepoint recovery pass. Out-of-width values raise server 22003,
+including zero-match UPDATE.
+
+Flush deactivates the Session and rolls back the connection to IDLE. Direct
+execution leaves an active Session over an INERROR transaction until rollback. See the [run](_reset/integer-native-oracle-initial-20261024.json)
+and [observations](_reset/integer-native-observations-20261024.json).
+
+This fixes the native failure oracle before protected integer construction.
+No protected integer codec, compiler admission or query support is implemented
+by this slice. All six integer admission gates remain unpassed. All 34 objective
+states and seven UNKNOWN production gates remain unchanged.
+
 ## Public-policy status installed qualification: 2026-10-24
 
 **VERIFIED, current source and installed profiles:** pinned public key-policy
