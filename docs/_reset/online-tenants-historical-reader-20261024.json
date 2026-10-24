@@ -1,0 +1,11 @@
+{
+  "scope": "Physical historical installed reader rejects a new v2 preparation before execution. Canonical fixed-scope v2 derived from a real emitted v1 artifact; no database or key calls.",
+  "old_wheel_sha256": "4b588f5af8c528257209a39bd6558855a533ba0fb3fdacfa42f0b561b2631982",
+  "new_accepts": true,
+  "old_failure": "invalid_online_plan",
+  "old_exit_code": 0,
+  "source_artifact_sha256": "aa118932b470233708f2dcd7786572655f4228c119813674f806ab83de289b07",
+  "v2_artifact_sha256": "2d0226468ce00676a55667033132aeb2aaeca2388e5c521e94642f34b37f5753",
+  "old_modules_verified": 42,
+  "production_gate": "UNKNOWN"
+}

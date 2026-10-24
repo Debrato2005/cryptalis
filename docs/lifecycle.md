@@ -4,7 +4,7 @@
 plus an in-place decrypt-back and additive-removal path.
 Root rewrap, payload-key rotation, and search-key rotation have bounded cutover and shared publication paths.
 Generation preparation stages and verifies encrypted chunks, inspects progress, and supports cancellation before switch.
-P1 single-tenant online protection has source and installed evidence in the [status record](status.md#bounded-online-initial-protection-2026-10-24). The tenant-scoped P2 extension has local source evidence in the [status record](status.md#tenant-scoped-online-lifecycle-2026-10-24); installed verification remains pending.
+P1 single-tenant online protection has source and installed evidence in the [status record](status.md#bounded-online-initial-protection-2026-10-24). The tenant-scoped P2 extension has local source and installed evidence in the [status record](status.md#tenant-scoped-online-lifecycle-2026-10-24).
 The protection engine verifies and switches in one transaction; saved verification checkpoints require a fresh pass on resume.
 Plain reads continue during verification. Writes and locking reads wait; schema DDL can pause all access.
 VERIFIED paragraphs below describe recorded receipts, not current product qualification. All other requirements remain SPECIFIED.
