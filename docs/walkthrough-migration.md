@@ -90,6 +90,34 @@ Protection admits one initial operation per schema. Root rewrap adds an exact
 successor chain. General journal reuse remains unfinished.
 [Evidence](status.md) records tests, costs, and limits.
 
+## Plan and apply protection through the CLI
+
+The source and actual installed wheel pass the bounded workflow in
+[status](status.md#operational-cli-protection-workflow-2026-10-24).
+Use an explicit trusted factory through `--host-context MODULE:FACTORY`. Return
+`PlanningContext` for `plan` and `ApplyContext` for `apply`. Give every invocation
+a fresh owned engine. Do not reuse Doctor's key-free tuple for these operations.
+Key resolvers must be synchronous, including callable objects. Focused source
+validation, affected-source checks and the installed PostgreSQL workflow pass.
+
+Plan uses a manifest and `--out` for a new private artifact. Keep the saved
+artifact unchanged. Apply it with the current host pin and maintenance approval.
+Apply stops at PENDING by default. Use `--resume` with the saved operation UUID
+to resume, or `--abort` with that UUID before switch. Either selector must name
+the saved operation before the CLI loads host code.
+
+Publish ACTIVATING through the host authority before requesting `--until ACTIVE`.
+Supply that actual pin through `ApplyContext`. The request and factory name do
+not supply publication authority. Host imports, factory calls and native effects
+remain UNKNOWN. The CLI disposes its engine after success or failure. Rotation,
+decrypt-back and removal continue through existing Python APIs in this slice.
+Output or cleanup errors can follow artifact publication or committed progress.
+Preserve the original artifact and `known_result`. Inspect the operation and
+current host pin before retry. An error does not prove rollback.
+See the [architecture](architecture/README.md#operational-protection-cli),
+[security boundary](security.md#operational-cli-trust-boundary) and
+[status](status.md#operational-cli-protection-workflow-2026-10-24).
+
 ## Use the optional SQLModel bridge
 
 Use the `sqlmodel` extra from a locally built wheel in an isolated application environment.

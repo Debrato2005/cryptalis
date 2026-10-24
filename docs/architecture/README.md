@@ -66,6 +66,32 @@ The [query grammar](../compatibility.md#query-semantics) bounds this promise. Th
 CLI commands compose these four responsibilities. Startup, plan, apply, and status reuse the same checks.
 PostgreSQL supplies constraints, transactional DDL, atomic chunks, indexes, and ordinary transaction outcomes.
 Deployment supplies current policy, credentials, writer exclusion, and restore quarantine. The provider supplies external root custody.
+
+### Operational protection CLI
+
+**IMPLEMENTED, bounded source and installed verification:** the initial workflow composes
+existing Python operations. Public frozen `PlanningContext` and `ApplyContext` values
+supply explicit host inputs. `--host-context MODULE:FACTORY` selects a trusted
+synchronous zero-argument factory. There is no automatic context discovery or authority inference.
+
+`PlanningContext` requires `engine`, `mapping`, `writers`, `search_reviews`, `keys`,
+`runtime_role`, `target_id`, `backfill_rows_per_second`, `verify_rows_per_second`,
+`temporary_bytes_per_row` and `wal_bytes_per_row`. `ApplyContext` requires `engine`,
+`keys`, `pin` and `approval`. The factory supplies a fresh engine owned by
+one CLI invocation. Accept only PostgreSQL/psycopg with `echo` False or None
+and `hide_parameters` True. Dispose the engine on success and failure.
+Host-code effects remain UNKNOWN.
+Key resolvers must be synchronous, including callable objects. Recognized async
+callables must fail context admission before command-managed database access.
+
+Plan writes the existing immutable protection `MigrationPlan` artifact with exclusive
+private output and atomic durable publication. Apply accepts protection plans only.
+Resume and abort bind the requested operation before host loading. The default
+target is PENDING. ACTIVE requires the supplied ACTIVATING host pin and maintenance
+approval. The CLI cannot authenticate or infer host authority. Doctor's key-free
+configuration tuple remains separate. Other lifecycle commands remain required future
+work. No format, cryptographic or core protocol changes. See the
+[status checkpoint](../status.md#operational-cli-protection-workflow-2026-10-24).
 These dependencies do not supply host business authorization. No additional authority, workflow, or diagnostic service is required.
 
 ## Exact data paths
@@ -420,7 +446,9 @@ ACTIVE deployment. Pre-adoption mode uses the same compiler and an explicit
 trusted host factory; host-code effects remain UNKNOWN. ACTIVE mode uses the
 declared runtime connection and repeats shared attachment admission in a
 read-only snapshot. Unobserved boundaries and aggregate results remain UNKNOWN.
-Other commands below remain unimplemented package commands.
+The initial `plan` and protection `apply` commands have the bounded
+[operational contract](#operational-protection-cli). `init`, `rollback`, `keys rotate`
+and `remove` remain unimplemented package commands.
 Full status coverage of keys and retained obligations
 remains SPECIFIED. The migration walkthrough defines the implemented subset.
 See [committed progress](../walkthrough-migration.md#inspect-committed-progress).

@@ -454,6 +454,33 @@ Direct restore-binding generation planning follows its
 [separate contract](lifecycle.md#generation-planning-from-a-restore-binding-2026-10-24).
 All seven full gates remain UNKNOWN.
 
+## Operational CLI trust boundary
+
+**IMPLEMENTED, bounded source and installed verification:** the plan/apply workflow accepts
+an explicit trusted host factory. It executes Python code without a sandbox.
+Host imports, factory calls and native effects remain UNKNOWN. Planning authority
+is `HOST_SUPPLIED_CONTEXT`, distinct from a published pin. Apply requires the actual
+host pin and maintenance approval. The CLI does not authenticate, infer or
+publish that authority.
+
+Require a fresh CLI-owned PostgreSQL/psycopg engine with safe logging. After context
+handoff, dispose it on success and failure. Reject an operation mismatch before host loading.
+Key resolvers must be synchronous, including callable objects. Recognized async
+callables must fail context admission before command-managed database access.
+The first expanded candidate fails this requirement. Revised validation passes
+all 22 focused source controls. Existing affected CLI/Doctor/status routes pass.
+The actual installed wheel passes the combined 211 controls and original application.
+These checks do not qualify production host authentication or provider custody.
+Keep keys, credentials and host exception text outside result envelopes.
+The `effects` field reports known command-managed progress. `host_configuration_effects`
+remains UNKNOWN. Output or cleanup errors can follow artifact publication or
+committed transition progress. Preserve the original artifact and `known_result`.
+Inspect the operation and current host pin before retry. An error does not prove rollback.
+Doctor retains its strict key-free tuple and inspection scope. These contexts
+do not waive core planner, tenant, runtime-role or lifecycle admission. See the
+[specified workflow](walkthrough-migration.md#plan-and-apply-protection-through-the-cli)
+and [status](status.md#operational-cli-protection-workflow-2026-10-24).
+
 ## Owned-sequence admission
 
 **IMPLEMENTED, bounded source and installed verification:** lock/v5 admits only inspected ordinary persistent sequences

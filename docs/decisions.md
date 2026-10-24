@@ -1104,3 +1104,42 @@ effects. The query tests catalog existence without evaluating the expression.
 Removing the unadmitted object permits the same plan to resume after inspection.
 This extends an existing dependency refusal and changes no lock, transition,
 restore, ciphertext or key contract. Production qualification remains UNKNOWN.
+
+## Host-configured protection CLI: 2026-10-24
+
+**VERIFIED within the source and installed profiles in the [status checkpoint](status.md#operational-cli-protection-workflow-2026-10-24):**
+`plan` and protection `apply` compose the existing planner and executor.
+They add no transition engine, artifact format or key provider.
+Rotation, reverse and removal commands remain required follow-up work.
+
+An explicit synchronous `MODULE:FACTORY` supplies one exact typed context.
+`PlanningContext` contains the owned engine, registry, writer inventory, search
+reviews, key resolver, runtime role, target and measured planner inputs.
+`ApplyContext` contains the owned engine, key resolver, current deployment pin
+and maintenance approval. The CLI infers none of these inputs.
+Doctor retains its separate exact key-free tuple and existing read-only routes.
+
+Planning produces a proposal, with `HOST_SUPPLIED_CONTEXT` authority.
+Apply and abort retain `HOST_SUPPLIED_PIN` authority. Resume and abort must name
+the supplied artifact's operation. Default apply stops at PENDING.
+ACTIVE publication requires the host's actual ACTIVATING pin.
+Aborting after switch refuses instead of transforming or discarding current data.
+
+The factory transfers a synchronous PostgreSQL psycopg engine with safe logging
+and transactional connections. Fresh, unshared ownership remains a host assertion.
+The CLI disposes accepted engines on success and failure.
+It suppresses Python streams during factory, API and disposal calls.
+Host code, native descriptor writes and existing logger effects remain UNKNOWN.
+The CLI does not authenticate or sandbox host code.
+
+Plan output uses private, complete temporary files and exclusive atomic publication.
+It never replaces an existing destination. Success requires file and directory durability.
+Diagnostics retain observed publication or returned committed progress after output
+or cleanup failure. An unreturned executor outcome requires journal inspection.
+The same immutable artifact remains the recovery input.
+Exceptions, credentials, keys and application rows are not diagnostic messages.
+The focused source profile passes 22 cases. Existing source CLI and Doctor
+controls pass 189 cases. The actual installed wheel passes their combined 211
+cases, including the unchanged application, process interruption and independent
+resume. These checks do not qualify the full lifecycle or release gates.
+All seven production gates remain UNKNOWN.

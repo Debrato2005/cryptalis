@@ -21,9 +21,86 @@ and [competitive capability matrix](research/capability-matrix.md) govern priori
 Progress follows complete real-application journeys and resolved production requirements.
 All seven production gates remain UNKNOWN.
 
+## Operational CLI protection workflow: 2026-10-24
+
+**VERIFIED within the source and installed profiles below:** `plan` and `apply` commands
+reuse the existing protection planner and maintenance executor. An explicit
+trusted synchronous zero-argument host factory returns a frozen `PlanningContext`
+or `ApplyContext`. Planning requires an engine, mapping, writer inventory, search
+reviews, keys, runtime role, target ID and four existing measurements. Apply
+requires an engine, keys, host pin and maintenance approval. Doctor retains
+its separate key-free three-member tuple.
+
+Plan writes the canonical existing protection artifact to a new private path.
+Existing paths refuse. Atomic publication and fsync protect the artifact write.
+Planning authority is `HOST_SUPPLIED_CONTEXT`, not a published deployment pin.
+Apply defaults to PENDING. Resume and abort require the exact saved operation
+UUID before host loading. ACTIVE requires an actual ACTIVATING host pin and
+maintenance approval. Factory names and requested phases convey no authority.
+
+Each factory supplies a fresh CLI-owned PostgreSQL/psycopg engine with safe logging.
+The CLI disposes it after success or failure. Host imports, factory calls and
+native effects remain UNKNOWN. CLI reports expose no keys, credentials or host
+exception text. Rotation, reverse and removal commands remain outside this slice.
+Their later CLI completion remains required for the comprehensive public release.
+
+The [initial source profile](_reset/operational-cli-source-initial-20261024.json)
+passes 15 tests in 9.49 seconds: 14 CLI controls and one original SQLModel
+application journey. Its 212 Python hashes stay stable within the recorded run.
+The [earlier native RED](_reset/operational-cli-source-red-20261024.json) records
+one unknown-plan-command failure, exit 2 instead of 0, with 210 stable hashes.
+
+The [source application](_reset/operational-cli-source-application-20261024.json)
+retains six pinned files and protects `full_name` VARCHAR, `email` search/uniqueness
+and `is_active` Boolean through plan/apply/resume subprocesses. Actual SIGKILL follows
+committed BACKFILLED progress. Independent resume preserves all three fields' staged
+frames. An explicitly supplied ACTIVATING host pin permits publication. Original
+CRUD, search, Boolean values and latest false pass. Python decrypt-back/removal
+and an import-denied restart complete the journey. This is source-only evidence.
+Expanded failure controls, revised artifacts and installed PostgreSQL verification
+were pending at that initial checkpoint. No current full-suite result follows.
+
+The [first expanded source candidate](_reset/operational-cli-source-expanded-initial-20261024.json)
+reports 21 passed and one failed in 11.22 seconds. A recognized async callable
+key-resolver object passes `ApplyContext` validation instead of receiving
+`HostContextInvalid` before command-managed connection. Other controls pass, including
+artifact directory durability, output races and cleanup after known progress.
+The [expanded source application](_reset/operational-cli-source-expanded-application-20261024.json)
+also passes at that candidate's recorded boundary. Initial and expanded receipts
+keep separate historical snapshots.
+
+The [revised focused source profile](_reset/operational-cli-source-focused-20261024.json)
+passes all 22 tests in 11.39 seconds. All 212 Python hashes remain stable
+and match this worktree. The recognized async callable resolver now refuses
+before command-managed connection. The [verified source application](_reset/operational-cli-source-verified-application-20261024.json)
+retains six unchanged files and the actual SIGKILL, independent resume, explicit
+host publication and latest-value native exit.
+
+The [affected-source suite](_reset/operational-cli-source-affected-20261024.json)
+passes 189 tests in 76.82 seconds. Its 212 Python hashes remain stable and
+match this worktree. It covers existing CLI, history, status, Doctor and
+pre-adoption routes. The [artifact check](_reset/operational-cli-release-20261024.json)
+passes reproducible archives, CLI and 42 installed-file checks. All 43 release-source
+hashes match this worktree and all 38 product modules match the wheel.
+The [installed PostgreSQL suite](_reset/operational-cli-installed-affected-20261024.json)
+passes 211 tests in 79.34 seconds: 189 existing controls, 21 new native controls
+and one [unchanged application journey](_reset/operational-cli-installed-application-20261024.json).
+All 212 Python hashes remain stable and match this worktree. The installed wheel
+has SHA-256 `a133c4717d229ec277db7aed29576f8611c5d9bd131895ddbfedcbaa47d8c10f`.
+The [final boundary](_reset/operational-cli-final-boundary-20261024.json) binds
+the three current PostgreSQL receipts, two current application receipts, actual
+release/install bytes, historical candidates and six documents. Of the 36 prior
+product modules, only the CLI changes; all ten crypto modules remain unchanged.
+Two new modules supply host contexts and command composition. No current full-suite
+result follows. Rotation, reverse and removal CLI commands remain unimplemented.
+All 34 objective states and seven UNKNOWN gates remain unchanged. See the
+[architecture](architecture/README.md#operational-protection-cli),
+[security boundary](security.md#operational-cli-trust-boundary) and
+[specified procedure](walkthrough-migration.md#plan-and-apply-protection-through-the-cli).
+
 ## Legacy expression-statistics admission: 2026-10-24
 
-**VERIFIED, bounded source and installed profiles:** two
+**VERIFIED, bounded source and installed profiles at `7f231fc`:** two
 [native controls](_reset/legacy-expression-statistics-red-20261024.json) fail because
 late expression-only statistics reach a forbidden key resolver. One uses a
 planned legacy lock/v2 source. The other plans reverse from ACTIVE. Both
@@ -51,17 +128,17 @@ candidates retain their exact failed boundaries.
 
 The [revised source profile](_reset/legacy-expression-statistics-source-focused-20261024.json)
 passes all 44 controls in 65.39 seconds: 19 legacy cases and 25 public-slot cases.
-All 208 Python hashes remain stable and match this worktree. Refusal leaves
+At `7f231fc`, all 208 Python hashes remain stable and match its files. Refusal leaves
 snapshots unchanged and reaches no forbidden key resolver. Removing only the
 late object lets the same pinned plan complete its native exit. The
 [revised artifact check](_reset/legacy-expression-statistics-release-revised-20261024.json)
 passes reproducible archives, CLI, 36 product modules and 40 installed files
-against 41 current release-source hashes. The
+against 41 release-source hashes recorded at `7f231fc`. The
 [earlier artifact candidate](_reset/legacy-expression-statistics-release-20261024.json)
 remains historical.
 The [affected-source suite](_reset/legacy-expression-statistics-source-affected-20261024.json)
-passes 536 tests in 298.87 seconds. Its 208 Python hashes remain stable and
-match this worktree. This suite covers source, protected and paused admission,
+passes 536 tests in 298.87 seconds. Its 208 Python hashes remain stable at
+`7f231fc`. This suite covers source, protected and paused admission,
 reverse, metadata, restore, rotation, diagnostics and compiler behavior.
 
 The [revised wheel](_reset/legacy-expression-statistics-installed-affected-20261024.json)
@@ -79,8 +156,8 @@ in 1.60 and 3.63 seconds. Its [application receipt](_reset/legacy-expression-sta
 retains the six original files. The legacy owned-sequence profile passes one
 [export](_reset/fresh-cluster-export-20261024-54.json) in 0.93 seconds and
 [four target tests](_reset/fresh-cluster-restore-20261024-53.json) in 8.96 seconds.
-These seven current database receipts retain 208 stable Python hashes matching
-this worktree. The [final boundary](_reset/legacy-expression-statistics-final-boundary-20261024.json)
+These seven database receipts retain 208 stable Python hashes at `7f231fc`.
+The [final boundary](_reset/legacy-expression-statistics-final-boundary-20261024.json)
 binds those receipts, four application receipts and five canonical documents.
 The three RED runs and initial artifact remain historical. Only migration and
 deprotection product modules change. The earlier full suite retains its recorded

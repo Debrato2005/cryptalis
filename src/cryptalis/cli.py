@@ -8,7 +8,7 @@ import sys
 from collections.abc import Callable, Sequence
 from pathlib import Path
 from typing import BinaryIO, Literal, NoReturn, TextIO, cast
-from uuid import uuid4
+from uuid import UUID, uuid4
 
 from cryptalis.manifest.canonical import digest_manifest_json
 from cryptalis.manifest.header import (
@@ -107,7 +107,7 @@ def _parser() -> argparse.ArgumentParser:
     parser = _ArgumentParser(
         prog="cryptalis",
         allow_abbrev=False,
-        description="Inspect Cryptalis artifacts, deployments and transition progress.",
+        description="Plan protection, run approved transitions and inspect Cryptalis state.",
     )
     commands = parser.add_subparsers(dest="command", required=True)
     manifest = commands.add_parser(
@@ -182,6 +182,29 @@ def _parser() -> argparse.ArgumentParser:
     doctor.add_argument('--restore-binding', type=Path, help='Approved restored-target binding, when applicable.')
     doctor.add_argument('--json', action='store_true', dest='machine_json', help='Write one JSON object.')
     doctor.set_defaults(handler=_doctor_command)
+    plan = commands.add_parser('plan', help='Plan protection with an explicit trusted host context.',
+        allow_abbrev=False)
+    plan.add_argument('manifest', type=Path, help='Protection declaration JSON file.')
+    plan.add_argument('--host-context', required=True, metavar='MODULE:FACTORY',
+        help='Trusted synchronous factory returning a PlanningContext. Host code effects remain UNKNOWN.')
+    plan.add_argument('--out', type=Path, required=True, help='New private plan artifact. Existing paths refuse.')
+    plan.add_argument('--layout', choices=('preserve-public-slots/v1',),
+        help='Select the explicit original public-column layout.')
+    plan.add_argument('--json', action='store_true', dest='machine_json', help='Write one JSON object.')
+    plan.set_defaults(handler=_operational_command)
+    apply = commands.add_parser('apply', help='Apply, resume or abort a protection transition.',
+        allow_abbrev=False)
+    apply.add_argument('plan', type=Path, help='Immutable protection plan artifact.')
+    apply.add_argument('--host-context', required=True, metavar='MODULE:FACTORY',
+        help='Trusted synchronous factory returning an ApplyContext with current pin and maintenance approval.')
+    modes = apply.add_mutually_exclusive_group()
+    modes.add_argument('--resume', type=UUID, metavar='OPERATION', help='Inspect and resume this exact operation.')
+    modes.add_argument('--abort', type=UUID, metavar='OPERATION', help='Remove owned staging before switch.')
+    apply.add_argument('--until', choices=('EXPANDED', 'BACKFILLED', 'VERIFIED', 'PENDING', 'ACTIVE'),
+        help='Requested phase. The default stops at PENDING. ACTIVE requires host publication authority.')
+    apply.add_argument('--chunk-size', type=int, default=1000, help='Rows per committed chunk, from 1 through 5000.')
+    apply.add_argument('--json', action='store_true', dest='machine_json', help='Write one JSON object.')
+    apply.set_defaults(handler=_operational_command)
     return parser
 
 
@@ -540,6 +563,16 @@ def _preflight_failure(failure, report=None):
     failure.error.update(effects='NONE', effects_scope='compiler_inspection',
                          host_configuration_effects='UNKNOWN')
     return failure
+
+
+def _operational_command(arguments):
+    try:
+        from cryptalis._cli_operations import run
+    except ImportError:
+        raise _CommandFailure('Install the declared runtime dependencies before protection operations.',
+            family='Transition', code='DependenciesUnavailable', operation='transition.' + arguments.command,
+            stage='load_runtime', cause='ImportError', exit_code=4) from None
+    return run(arguments)
 
 
 def _doctor_command(arguments):
