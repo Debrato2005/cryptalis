@@ -723,10 +723,11 @@ def _preflight_command(arguments):
             stage='host_context', cause='HostContextError', exit_code=4)) from None
     if isinstance(context, CoroutineType):
         context.close()
-    if (type(context) is not tuple or len(context) != 3 or not isinstance(context[0], Registry)
+    if (type(context) is not tuple or len(context) not in (3, 4) or not isinstance(context[0], Registry)
             or not isinstance(context[1], WriterInventory) or type(context[2]) is not tuple
-            or any(not isinstance(review, SearchReview) for review in context[2])):
-        raise _preflight_failure(_CommandFailure('Return exactly (registry, WriterInventory, tuple[SearchReview]) without keys or an engine.',
+            or any(not isinstance(review, SearchReview) for review in context[2])
+            or len(context) == 4 and (type(context[3]) is not tuple or len(context[3]) > 128)):
+        raise _preflight_failure(_CommandFailure('Return (registry, WriterInventory, tuple[SearchReview]) with an optional fourth tuple of at most 128 SELECT samples. Supply no keys or engine.',
             family='Doctor', code='HostContextInvalid', operation=operation,
             stage='host_context', cause='InvalidContext')) from None
 
@@ -734,7 +735,8 @@ def _preflight_command(arguments):
     try:
         engine = create_engine('postgresql+psycopg://', echo=False, hide_parameters=True,
             creator=lambda: psycopg.connect(connection_info, connect_timeout=5))
-        report = preflight(raw, context[0], engine, writers=context[1], search_reviews=context[2])
+        report = preflight(raw, context[0], engine, writers=context[1], search_reviews=context[2],
+                           **({'queries': context[3]} if len(context) == 4 else {}))
         report.update(effects_scope='compiler_inspection', host_configuration_effects='UNKNOWN')
     except Exception:
         raise _preflight_failure(_CommandFailure('Schema inspection is unavailable. Check the connection and trusted host configuration.',
@@ -761,6 +763,14 @@ def _preflight_command(arguments):
             'Schema inspection is unavailable. Check the connection and retry inspection.',
             family='Doctor', code='SchemaIncompatible' if incompatible else 'InspectionUnavailable',
             operation=operation, stage='inspection', cause='SchemaAdmission' if incompatible else 'InspectionUnavailable',
+            exit_code=3 if incompatible else 4), report) from None
+    if report['checks'].get('query_samples', 'PASS') != 'PASS':
+        incompatible = report['checks']['query_samples'] == 'FAIL'
+        raise _preflight_failure(_CommandFailure(
+            'Resolve the supplied query incompatibilities before planning protection.' if incompatible else
+            'Query inspection is unavailable. Inspect the samples and mapping before planning.',
+            family='Doctor', code='QueryIncompatible' if incompatible else 'QueryInspectionUnavailable',
+            operation=operation, stage='query_inspection', cause='QueryAdmission' if incompatible else 'QueryInspectionUnavailable',
             exit_code=3 if incompatible else 4), report) from None
     output = (json.dumps(report, sort_keys=True, separators=(',', ':')) if arguments.machine_json else
         '\n'.join(f'{key}: {value}' for key, value in report.items() if key not in ('checks', 'issues'))

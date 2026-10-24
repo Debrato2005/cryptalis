@@ -1,0 +1,32 @@
+{
+  "archive": "docs/_reset/query-preflight-construction-history-20261024.tar.gz",
+  "sha256": "11d394471c40943582723d2abef20ef0196254adfccee064e51315fbeb7f5f43",
+  "bytes": 17170,
+  "members": {
+    "query-preflight-red-20261024.json": {
+      "sha256": "9b1a4d0908d7efa98f26170a45a3798340fba16b20b3651801bc9532ee821c58",
+      "bytes": 26315
+    },
+    "query-preflight-focused-20261024.json": {
+      "sha256": "c2a470e08eb4cbd64d37ee318d2b382b37c525f3eed8535085895fc0c12c3a62",
+      "bytes": 26180
+    },
+    "query-preflight-final-source-20261024.json": {
+      "sha256": "871ffe78fe59474172daf58997c9c47be8aadb80af775ec29ca1538a956d7650",
+      "bytes": 26369
+    },
+    "fresh-cluster-export-20261024-66.json": {
+      "sha256": "64b3822b30354a70b4af171c762c35fd1572af0dd9a5e627ed2e4fd9a51815ce",
+      "bytes": 26092
+    },
+    "fresh-cluster-restore-20261024-65.json": {
+      "sha256": "e2e69051cf36f107178d855e95c39579a136aa02796443250b9285d47ccd9e30",
+      "bytes": 26122
+    },
+    "sqlmodel-http-source-journey-receipt.json": {
+      "sha256": "dfc069cdb9392f89e4ed02af957dadff88a4a4016a99a98bcafa8e129e83a7be",
+      "bytes": 11524
+    }
+  },
+  "boundary": "Retained expected missing-operation failures, intermediate source controls and initial source HTTP fresh recovery. No failed mandatory role probe."
+}

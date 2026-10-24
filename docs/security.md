@@ -382,9 +382,17 @@ owns the full operator contract.
 reuses the existing read-only compiler catalog inspection. It accepts no keys
 and reads no application values. Known declaration/schema refusals return
 actionable issues. Inspection failure remains UNKNOWN with safe diagnostics.
-Schema compatibility alone can pass. Provider access, query routes, writer
-exclusion, runtime deployment, host authority and recovery capacity stay UNKNOWN.
+Schema compatibility alone can pass. Provider access, uninspected query routes,
+writer exclusion, runtime deployment, host authority and recovery capacity stay UNKNOWN.
 The report returns no deployment artifact or apply authority.
+
+Optional SELECT samples come from trusted host code. Doctor inspects their
+structures without executing them or reading application rows. It reports sample
+indexes and fixed diagnostics, without SQL text, bind values or exception messages.
+A successful sample check does not prove bind-time behavior, query results,
+complete route coverage or safe writes. Unknown host-code effects remain explicit.
+Doctor reports known query incompatibilities before migration. Runtime admission remains
+mandatory after protection and does not trust a diagnostic result as authority.
 The pre-adoption CLI accepts an explicit trusted host factory for the registry,
 writer inventory and search reviews. It owns the private connection and uses
 this same compiler. Host import/factory effects remain UNKNOWN; only compiler

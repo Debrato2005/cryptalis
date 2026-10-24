@@ -152,12 +152,13 @@ and schema against an immutable migration plan and supplied ACTIVE pin.
 Use the declared runtime connection, rather than maintenance credentials.
 Neither command applies protection or authenticates stored frames.
 Doctor reports unobserved checks as UNKNOWN, even when its scoped check passes.
-Before migration, `doctor --pre-adoption` inspects the manifest and native schema
-through an explicit trusted host factory. Host-code effects remain UNKNOWN.
+Before migration, `doctor --pre-adoption` inspects the manifest, native schema and optional supplied
+SELECT structures through an explicit trusted host factory. Host-code effects
+and complete route coverage remain UNKNOWN. Initialization, planning, protection,
+three rotations, reversal and removal also have bounded operational CLI implementations.
+Their exact evidence and limits appear in the [status record](docs/status.md).
 See [pre-adoption diagnosis](docs/walkthrough-migration.md#diagnose-before-adoption).
 See the migration walkthrough for inputs and exit codes.
-The specified `init`, `plan`, `apply`, `rollback`, `keys rotate`, and `remove`
-commands remain unimplemented package commands.
 The full operational status contract also remains incomplete.
 
 ```bash

@@ -24,9 +24,11 @@ from cryptalis.sqlalchemy import attach
 from cryptalis.doctor import preflight
 
 report = preflight(manifest_bytes, Base.registry, owner_engine,
-    writers=writer_inventory, search_reviews=domain_reviews)
+    writers=writer_inventory, search_reviews=domain_reviews,
+    queries=application_select_samples)
 print(report)
-if report["checks"]["manifest_schema"] != "PASS":
+if (report["checks"]["manifest_schema"] != "PASS" or
+        report["checks"].get("query_samples", "PASS") != "PASS"):
     raise SystemExit("Resolve the Doctor issues before planning protection.")
 
 p = plan(manifest_bytes, Base.registry, owner_engine,
@@ -40,6 +42,9 @@ approval = MaintenanceApproval(writer_exclusion_evidence, approved_pause_seconds
 options = dict(keys=tenant_keyrings, pin=prepared_pin, approval=approval)
 apply(p, owner_engine, **options)  # Switch database; return PENDING.
 ```
+
+Set `application_select_samples` to a tuple of representative SELECT objects.
+Use an empty tuple for schema-only inspection.
 
 The Python pre-adoption Doctor reuses the compiler's read-only catalog inspection.
 It reads no application values and resolves no keys. Known declaration or schema
@@ -279,9 +284,18 @@ cryptalis doctor --pre-adoption cryptalis.json --host-context myapp.cryptalis_co
 ```
 
 The host module must already be importable in the application's environment.
-Its synchronous zero-argument factory returns exactly
+Its synchronous zero-argument factory returns
 `(Base.registry, writer_inventory, domain_reviews)`, where `writer_inventory`
 is a `WriterInventory` and `domain_reviews` is a tuple of `SearchReview` records.
+An optional fourth member, select_samples, supplies at most 128 SELECT objects
+in a tuple. Python callers use the queries keyword. Query samples report
+STRUCTURE_ADMITTED after the shared runtime grammar accepts them. They execute no
+SQL and resolve no keys. A sample PASS does not establish complete route coverage
+or native execution semantics. Known sample refusal exits 3 with QueryIncompatible.
+Unavailable sample inspection exits 4 with QueryInspectionUnavailable. Resolve both
+before migration. Keep provider, host, writer-exclusion and route coverage claims
+UNKNOWN where the check supplies no evidence.
+
 Use the same explicit declarations as planning. Supply no engine or keys through
 this tuple. The CLI owns its inspection connection and cleanup.
 Keep the mapped application classes alive, as ordinary module-level models.
@@ -294,7 +308,7 @@ The report states `host_configuration_effects: UNKNOWN` and scopes `effects: NON
 to `compiler_inspection`. Do not load an untrusted module.
 
 The compiler inspects a read-only repeatable-read snapshot without application
-values or keys. Exit 0 means the manifest/schema check passed. Overall status and
+values or keys. Exit 0 means the manifest/schema and supplied sample checks passed. Overall status and
 unobserved provider, route and operational checks remain UNKNOWN. Schema refusal
 exits 3 with issue codes, locations and remedies. Unavailable inspection, loader,
 cleanup or output exits 4 with safe diagnostics. Invalid inputs exit 2.

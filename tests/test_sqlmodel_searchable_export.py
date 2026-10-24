@@ -137,10 +137,22 @@ def test_export_pinned_searchable_sqlmodel_current_values(tmp_path, monkeypatch)
             connection.exec_driver_sql(f'GRANT USAGE ON SCHEMA "{schema}" TO {q(role)}')
             connection.exec_driver_sql(f'GRANT SELECT,INSERT,UPDATE,DELETE ON ALL TABLES IN SCHEMA "{schema}" TO {q(role)}')
         native = lambda: Session(runtime, expire_on_commit=False)
-        baseline = workflow(native, uuid4().hex)
-        if boolean_controls:
-            baseline = boolean_controls(native, baseline, uuid4().hex)
-        baseline, native_search = search_controls(native, baseline)
+        samples = {}
+        if http:
+            from sqlalchemy import event
+            def collect(state):
+                if state.is_select:
+                    key = state.statement._generate_cache_key()
+                    samples[key.key if key is not None else id(state.statement)] = state.statement
+            event.listen(Session, 'do_orm_execute', collect)
+        try:
+            baseline = workflow(native, uuid4().hex)
+            if boolean_controls:
+                baseline = boolean_controls(native, baseline, uuid4().hex)
+            baseline, native_search = search_controls(native, baseline)
+        finally:
+            if http:
+                event.remove(Session, 'do_orm_execute', collect)
         native_schema = catalog(owner)
         source_slots = public_slots(owner) if slot_profile else None
         dump(directory / 'plain.sql', schema, environment('CRYPTALIS_TEST_DATABASE_URL'))
@@ -160,8 +172,17 @@ def test_export_pinned_searchable_sqlmodel_current_values(tmp_path, monkeypatch)
             'Arbitrary production email domain admission remains UNKNOWN.'),)
         inventory = WriterInventory(True, (Writer(original.TABLE, 'app', 'sqlalchemy',
             evidence='pinned unchanged official SQLModel CRUD; disposable single-tenant profile'),))
-        report = preflight(json.dumps(declaration).encode(), mapping, owner, writers=inventory, search_reviews=reviews)
+        report = preflight(json.dumps(declaration).encode(), mapping, owner, writers=inventory, search_reviews=reviews,
+            **({'queries': tuple(samples.values())} if http else {}))
         assert report['status'] == 'UNKNOWN' and report['checks']['manifest_schema'] == 'PASS'
+        if http:
+            from sqlmodel import select
+            assert samples and report['checks']['query_samples'] == 'PASS'
+            assert report['checks']['query_routes'] == 'UNKNOWN'
+            refused = preflight(json.dumps(declaration).encode(), mapping, owner, writers=inventory,
+                search_reviews=reviews, queries=(select(User).where(User.email.ilike('PRIVATE_UNADMITTED_PATTERN')),))
+            assert refused['status'] == refused['checks']['query_routes'] == 'FAIL'
+            assert 'PRIVATE_UNADMITTED_PATTERN' not in json.dumps(refused)
         proposal = m.plan(json.dumps(declaration).encode(), mapping, owner,
             **({'layout': 'preserve-public-slots/v1'} if slot_profile else {}), writers=inventory, search_reviews=reviews,
             keys=keys, runtime_role=role, target_id=uuid4(), backfill_rows_per_second=1000,

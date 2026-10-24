@@ -25,6 +25,13 @@ No objective is complete until its acceptance evidence and applicable gate pass.
 
 ## Current boundary
 
+- Doctor now checks supplied SELECT structures before migration without keys,
+  attachment or application-row reads. The original HTTP workload supplies twelve
+  admitted structures and one diagnosed unsupported-pattern control. Source
+  recovery and 72 affected controls pass. Installed verification remains pending. See the
+  [checkpoint](status.md#supplied-application-query-preflight-2026-10-24).
+
+
 - The original 26-file HTTP application now completes genuine fresh restore,
   all three rotations, latest-value removal and package-free HTTP restart.
   The existing public-slot SQLModel profile also passes. The installed wheel

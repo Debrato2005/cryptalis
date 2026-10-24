@@ -21,6 +21,39 @@ and [competitive capability matrix](research/capability-matrix.md) govern priori
 Progress follows complete real-application journeys and resolved production requirements.
 All seven production gates remain UNKNOWN.
 
+## Supplied application query preflight: 2026-10-24
+
+**IMPLEMENTED, bounded source verification:** Doctor accepts an optional tuple
+of at most 128 SELECT samples before migration. It reuses runtime SELECT
+admission against the compiler's inspected mapping and descriptors. It does not
+attach the mapping, execute the samples, read application rows or resolve keys.
+Known incompatibilities return fixed issue codes, sample indexes and remedies.
+SQL text, bound values and exception messages do not enter the report.
+
+All accepted samples produce query_samples PASS and STRUCTURE_ADMITTED items.
+Overall status and query_routes stay UNKNOWN because supplied samples do not
+prove complete route coverage, bind compatibility, execution or result semantics.
+A known unsupported sample sets query_routes and overall status FAIL. Unavailable
+inspection stays UNKNOWN. The CLI returns exit 3 for known query incompatibility
+and exit 4 for unavailable query inspection. Existing three-member host contexts
+retain their behavior. An optional fourth tuple supplies the samples.
+
+Source [verification](_reset/query-preflight-final-source2-20261024.json) passes
+72 affected Doctor/initialization controls. The new
+HTTP profile captures twelve distinct SELECT structures from the unchanged
+original routes, authentication, local SMTP and search workload. Doctor admits
+all twelve structures and refuses a protected ILIKE negative control. The same
+source application then passes genuine fresh restore, all three rotations,
+latest-value removal and a fresh original HTTP process with Cryptalis imports
+denied. Both phases pass fresh mandatory probes for both roles. The earlier
+three expected missing-operation failures remain in the
+[construction history](_reset/query-preflight-construction-history-20261024.json).
+
+Installed-artifact qualification is pending for this source slice. No manifest,
+ciphertext, key policy, tenant scope or query-operator admission changes. All
+34 objective states and seven UNKNOWN production gates remain unchanged.
+
+
 ## Original HTTP application fresh recovery: 2026-10-24
 
 **VERIFIED, installed local cell:** the unchanged 26-file FastAPI template completes
