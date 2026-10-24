@@ -1133,5 +1133,5 @@ and prepared-plan behavior through public coercion constants. Roll back after
 IntegerRangeExceeded, as the attached failure remedy requires.
 
 This is internal construction, not a qualified public type. See the
-[source checkpoint](status.md#integer-storage-source-checkpoint-2026-10-24)
+[installed checkpoint](status.md#integer-installed-lifecycle-checkpoint-2026-10-24)
 for the tested boundary and remaining admission evidence.

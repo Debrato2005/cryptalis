@@ -25,10 +25,16 @@ No objective is complete until its acceptance evidence and applicable gate pass.
 
 ## Current boundary
 
+- The installed integer candidate passes 663 affected checks. All six integer
+  width/layout fresh-cluster journeys and a Boolean control pass adoption,
+  rotation and native removal. Reproducible artifact checks pass. Full type
+  admission remains pending. See the
+  [checkpoint](status.md#integer-installed-lifecycle-checkpoint-2026-10-24).
+
 - Internal integer storage passes 233 source checks, including native plan timing,
   async writes, batch error order, rotations and real process recovery. Fresh int64
-  public-slot and Boolean restore/removal controls pass. Installed qualification
-  and full type admission remain pending. See the
+  public-slot and Boolean restore/removal controls pass. The later installed
+  checkpoint extends this evidence. Full type admission remains pending. See the
   [checkpoint](status.md#integer-storage-source-checkpoint-2026-10-24).
 
 - Native integer width/route failure timing is measured before protected admission.

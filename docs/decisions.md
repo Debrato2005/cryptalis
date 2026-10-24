@@ -1582,3 +1582,7 @@ proofs, leakage statement and measured costs exist. No production gate changes.
 The [source checkpoint](status.md#integer-storage-source-checkpoint-2026-10-24)
 records executable progress. This decision selects construction scope; full type
 admission and production qualification remain incomplete.
+
+The [installed checkpoint](status.md#integer-installed-lifecycle-checkpoint-2026-10-24)
+extends this evidence across all three widths and both layouts on genuine fresh
+PostgreSQL clusters. Full admission and workload-cost approval remain pending.

@@ -21,6 +21,35 @@ and [competitive capability matrix](research/capability-matrix.md) govern priori
 Progress follows complete real-application journeys and resolved production requirements.
 All seven production gates remain UNKNOWN.
 
+## Integer installed lifecycle checkpoint: 2026-10-24
+
+**VERIFIED, internal candidate:** the actual installed wheel passes
+[663 affected checks](_reset/integer-installed-regression-20261024.json), including
+the 233 source controls and native bulk, adapter/search, migration, restore,
+public-slot and removal regressions. Pytest reports 290.09 seconds. All 226 Python
+hashes stay stable. Every Cryptalis import comes from the isolated wheel.
+
+The existing fresh-cluster harness passes seven installed journeys: each signed
+integer width in both layouts, plus Boolean. All fourteen export/restore runs
+pass one control each with fresh probes for both roles. They preserve extrema,
+NULL, payload rotation, tamper refusal before adoption, latest edits, native width
+and public slots where selected. Every removal ends in a fresh child with
+Cryptalis imports denied. These are public fixture journeys, not production
+application qualification. The [final boundary](_reset/integer-storage-final-boundary-20261024.json)
+binds all current receipts and the exact archived fresh-run bytes.
+
+The [artifact check](_reset/integer-storage-final-release-20261024.json) passes
+reproducibility, 45 source inputs, 40 modules, 44 installed files, RECORD, SBOM
+and CLI checks with 72 unchanged dependency pins. Wheel SHA-256 is
+`13cba8a954426c98d5618a4a24e42e2a3f4723bfbd4f2e6ba2a243f4ba70100f`.
+The build still reports the existing uv/build-backend version warning.
+
+This completes a bounded implementation and artifact checkpoint. Integer defaults,
+query operators, measured workload costs and independent admission evidence remain
+required work. All six integer technical gates remain unpassed. All 34 objective
+states and seven UNKNOWN production gates remain unchanged. No full-suite,
+original-application integer, live-provider or production-readiness claim follows.
+
 ## Integer storage source checkpoint: 2026-10-24
 
 **IMPLEMENTED, internal candidate:** signed native int2/int4/int8 storage uses exact
@@ -56,8 +85,9 @@ The initial integer restore exposed a text-only result-type assertion; the
 corrected verifier requires the pinned native type after authentication.
 
 CF1 frame sizes are 44/46/50 bytes for non-NULL int2/int4/int8 values. These are
-frame costs, excluding heap, index, metadata and WAL costs. Installed-artifact
-qualification, full type admission and measured workload costs remain pending.
+frame costs, excluding heap, index, metadata and WAL costs. The [installed checkpoint](#integer-installed-lifecycle-checkpoint-2026-10-24)
+now supplies artifact evidence. Full type admission and measured workload costs
+remain pending.
 All six integer technical gates remain unpassed. All 34 objective states and
 seven UNKNOWN production gates remain unchanged. See the
 [contract](decisions.md#storage-only-postgresql-integer-contract-2026-10-24).
