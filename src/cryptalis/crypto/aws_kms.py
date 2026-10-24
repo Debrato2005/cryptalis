@@ -11,6 +11,7 @@ import asyncio
 import inspect
 import os
 import re
+from types import CoroutineType
 from uuid import UUID
 
 from .keys import InvalidContext, KeyContext, KeyProvider, KeyUnavailable, WrappedRoot
@@ -80,6 +81,8 @@ class AwsKmsKeyProvider:
         }
 
     def _response(self, response, field, minimum, maximum):
+        if type(response) is CoroutineType:
+            response.close()
         if (type(response) is not dict
                 or type(response.get("KeyId")) is not str
                 or response["KeyId"] != self.key_arn

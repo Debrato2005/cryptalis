@@ -21,6 +21,18 @@ and [competitive capability matrix](research/capability-matrix.md) govern priori
 Progress follows complete real-application journeys and resolved production requirements.
 All seven production gates remain UNKNOWN.
 
+## Invalid KMS coroutine-response cleanup: 2026-10-24
+
+**VERIFIED, bounded source protocol and actual-SDK checks:** a synchronous SDK
+callback can still return a native coroutine. The adapter now closes that invalid
+return without running its body, then retains its existing redacted KeyUnavailable
+failure. The [RED run](_reset/kms-response-cleanup-source-red-20261024.json) reproduces
+two warning failures. The [source run](_reset/kms-response-cleanup-source-green-20261024.json)
+passes 55 checks in 1.76 seconds, including fresh/already-closed returns, healthy
+retry and 12 local actual-SDK Stubber cases. All 221 Python hashes stay stable.
+This three-line cleanup change adds no generic awaitable execution or live provider
+qualification. Installed verification remains pending. All seven gates remain UNKNOWN.
+
 ## Synchronous KMS SDK admission: 2026-10-24
 
 **VERIFIED, bounded local protocol checks:** the AWS adapter rejects recognized
