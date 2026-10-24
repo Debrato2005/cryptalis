@@ -1,0 +1,219 @@
+{
+  "scope": "Exact immutable intermediate receipts, including failures. Final current receipts remain directly readable.",
+  "archive": "integer-construction-history-20261024.zip",
+  "sha256": "02450b19a475862f2eb7fbe34df4ff4065e11ce0014672cc23ab31afd1cd54c5",
+  "members": [
+    {
+      "member": "docs/_reset/fresh-cluster-export-20261024-66.json",
+      "sha256": "e76d886915b5663158bc22bb79ff4c879e1443c19301aad40f159bfb47d403ce",
+      "counts": {
+        "passed": 1
+      },
+      "exit_code": 0,
+      "scope": "Fresh-cluster source export; primary cluster; integer storage after payload rotation"
+    },
+    {
+      "member": "docs/_reset/fresh-cluster-export-20261024-67.json",
+      "sha256": "d5bbc95749f8cf0a341b4c3615b06e1585dd46eed1b36613cd8bc99d2969ade6",
+      "counts": {
+        "passed": 1
+      },
+      "exit_code": 0,
+      "scope": "Fresh-cluster source export; primary cluster; integer storage after payload rotation"
+    },
+    {
+      "member": "docs/_reset/fresh-cluster-restore-20261024-65.json",
+      "sha256": "d0f3d7e279a21ca023b99f783e3e9e5b5c58756623739252806a484cb48c0fa8",
+      "counts": {
+        "failed": 1
+      },
+      "exit_code": 1,
+      "scope": "Fresh-cluster protected-backup recovery and adoption; isolated cluster; integer storage after payload rotation"
+    },
+    {
+      "member": "docs/_reset/fresh-cluster-restore-20261024-66.json",
+      "sha256": "a9dab2f34b618d2800f39f49ee6f807ca2d9ae7c43a491171a283a3863f8af42",
+      "counts": {
+        "passed": 1
+      },
+      "exit_code": 0,
+      "scope": "Fresh-cluster protected-backup recovery and adoption; isolated cluster; integer storage after payload rotation"
+    },
+    {
+      "member": "docs/_reset/integer-async-and-admission-corrected-fixtures-20261024.json",
+      "sha256": "e48a2be17d574e33e8d1aa140a54dd26c9ad2f0313c4904cfd90ab052bdf52a8",
+      "counts": {
+        "passed": 15
+      },
+      "exit_code": 0,
+      "scope": "Correct row-count and pre-statement factory-policy baselines; async integer CRUD/range/savepoints both layouts and fail-closed admission"
+    },
+    {
+      "member": "docs/_reset/integer-async-and-admission-first-20261024.json",
+      "sha256": "b580f2fbc78253398d0e998a5f5454b34d1b1d1b7539a35f29ecfd7895086f39",
+      "counts": {
+        "failed": 9,
+        "passed": 6
+      },
+      "exit_code": 1,
+      "scope": "Integer async native CRUD and range/savepoint parity in both layouts; strict mapping/default/lock and pre-key query refusal controls"
+    },
+    {
+      "member": "docs/_reset/integer-batch-failure-order-first-red-20261024.json",
+      "sha256": "333ba14945065176e17033e8bc1cf18169ac37db440b0843a2d05c3b842900ad",
+      "counts": {
+        "failed": 3,
+        "passed": 9
+      },
+      "exit_code": 1,
+      "scope": "Native versus protected integer INSERT batch constraint and range error ordering, entity flush and dictionary routes with reversed negative controls"
+    },
+    {
+      "member": "docs/_reset/integer-batch-order-carrier-first-fix-20261024.json",
+      "sha256": "59603ec93863224bd46fb44ccdbaba94cd9a1c17611ec52d55642450d2a82124",
+      "counts": {
+        "passed": 113
+      },
+      "exit_code": 0,
+      "scope": "Owned integer ORM INSERT coercion preserves earlier native constraints; complete integer runtime/async/prepared/lifecycle controls with existing dictionary and Boolean regressions"
+    },
+    {
+      "member": "docs/_reset/integer-codec-initial-green-20261024.json",
+      "sha256": "0d980182cba7dd1b2270cec3fa2b9989a27d53326c16ec10358667653582211a",
+      "counts": {
+        "passed": 54
+      },
+      "exit_code": 0,
+      "scope": "Signed CF1 integer codec intermediate verification plus unchanged text Boolean CF1 regression; no compiler or type admission claim"
+    },
+    {
+      "member": "docs/_reset/integer-compiler-initial-green-20261024.json",
+      "sha256": "d298999819c1771fb9567f0e553353cd1f84ba39b16d3796b1d2f38592ed6ccf",
+      "counts": {},
+      "exit_code": 4,
+      "scope": "Integer width typed compiler and existing declaration/readers CF1 regression; intermediate construction, no runtime admission"
+    },
+    {
+      "member": "docs/_reset/integer-compiler-initial-green-corrected-target-20261024.json",
+      "sha256": "331618a32f0e7c5ed1c2848deae08597fdc885fa08e33c586de882c560a6eb23",
+      "counts": {
+        "passed": 119,
+        "failed": 1
+      },
+      "exit_code": 1,
+      "scope": "Initial signed integer codec/compiler plus existing CF1 and actual protection compiler module; no runtime admission claim"
+    },
+    {
+      "member": "docs/_reset/integer-layout-fix-focused-20261024.json",
+      "sha256": "fdc0f83d936d48de079dffe940adeb11335ae54d05622fbd9bc6809aadd7bc37",
+      "counts": {
+        "passed": 46
+      },
+      "exit_code": 0,
+      "scope": "Integer v7 layout admission composes public-slot inventory and exact native-width lifecycle with existing slot protections"
+    },
+    {
+      "member": "docs/_reset/integer-positive-carriers-layouts-20261024.json",
+      "sha256": "a3b3621882f16e8c80a18e5f65b0b0822414119b0180f2491aa47737d3a4a4d7",
+      "counts": {
+        "passed": 80,
+        "failed": 3
+      },
+      "exit_code": 1,
+      "scope": "Integer positive dictionary prepared carriers, entity/default and public-slot exact-width exit, and existing bulk/Boolean regressions"
+    },
+    {
+      "member": "docs/_reset/integer-prepared-native-oracle-20261024.json",
+      "sha256": "ddba7295516a56dd3e39dc6bea6823fb7a093912a7e26b8f847c43272f408d2d",
+      "counts": {
+        "passed": 6
+      },
+      "exit_code": 0,
+      "scope": "Native PostgreSQL prepared custom/generic plan integer zero-match range timing before selecting protected assignment failure machinery"
+    },
+    {
+      "member": "docs/_reset/integer-rotation-process-first-20261024.json",
+      "sha256": "806046cddd6f4c551bb37d99e1479c16e50e48399c828364c5e1468a24e81206",
+      "counts": {
+        "passed": 7,
+        "failed": 6
+      },
+      "exit_code": 1,
+      "scope": "Integer root and payload rotation through latest-value removal in both layouts; actual SIGKILL and fresh-process prefix recovery using the existing worker"
+    },
+    {
+      "member": "docs/_reset/integer-runtime-first-red-20261024.json",
+      "sha256": "662f1c6215a3b41429ec921ad39cf805f0b43cb78a5c2e5bdde9acef5befff9f",
+      "counts": {
+        "passed": 120,
+        "failed": 3
+      },
+      "exit_code": 1,
+      "scope": "Integer runtime entity projection and latest native-width removal first integration; codec/compiler plus unchanged CF1/compiler controls"
+    },
+    {
+      "member": "docs/_reset/integer-runtime-initial-green-20261024.json",
+      "sha256": "8639fbc469827d3080ed289136c796bffbd7c3c5ad27a17a76eed4709f1626b9",
+      "counts": {
+        "passed": 123
+      },
+      "exit_code": 0,
+      "scope": "Integer native width codec/compiler entity and current-value removal intermediate regression; existing CF1 and compiler controls; no complete type admission"
+    },
+    {
+      "member": "docs/_reset/integer-sigkill-corrected-index-oracle-20261024.json",
+      "sha256": "e6d60736ea5df85d2844eee44e9009b163d1a40373af505061453946a6ea2be8",
+      "counts": {
+        "passed": 7
+      },
+      "exit_code": 0,
+      "scope": "Existing real SIGKILL rotation worker with exact index inventories for storage-only integers; all widths and both layouts plus text positive control"
+    },
+    {
+      "member": "docs/_reset/integer-stale-entity-first-fix-20261024.json",
+      "sha256": "258693259eda21f629f647708a51f7ce6fec732e4d7540ae78b07322c1e4f9dc",
+      "counts": {
+        "passed": 64
+      },
+      "exit_code": 0,
+      "scope": "Integer ORM UPDATE uses the owned public coercion carrier; native stale-row plan timing plus prior integer and dictionary regression controls"
+    },
+    {
+      "member": "docs/_reset/integer-stale-entity-first-red-20261024.json",
+      "sha256": "58fbd4febe16d33a975f55f048f94e5c47a81b723e80d7d417e29ef14ca475d3",
+      "counts": {
+        "passed": 3,
+        "failed": 3
+      },
+      "exit_code": 1,
+      "scope": "Native versus protected stale ORM integer UPDATE under forced custom and generic prepared plans; concurrent authorized local sessions"
+    },
+    {
+      "member": "docs/_reset/integer-storage-first-red-20261024.json",
+      "sha256": "a83d3cd67677bd66fb3380b214f41ceddef2a756263d1df8d2910d488425211e",
+      "counts": {
+        "failed": 6
+      },
+      "exit_code": 1,
+      "scope": "Integer typed CF1 and compiler reader boundary first RED; exact signed widths only; native PostgreSQL16; no admitted type claim"
+    },
+    {
+      "member": "docs/_reset/integer-write-failure-first-red-20261024.json",
+      "sha256": "e3f633a9465cc4e9e386ea202db65770a9a50259b292e83e418fae12258c8c46",
+      "counts": {
+        "failed": 15
+      },
+      "exit_code": 1,
+      "scope": "Integer protected write native range transaction savepoint and prepared custom/generic zero-match compatibility first failure controls"
+    },
+    {
+      "member": "docs/_reset/integer-write-failure-initial-green-20261024.json",
+      "sha256": "b0b8d1e9fd17a4055f1836ab302b613fdaa0d3c26fe8a8d217478e0f9916cff6",
+      "counts": {
+        "passed": 15
+      },
+      "exit_code": 0,
+      "scope": "Integer deferred native range failures and owned public coercion UPDATE carriers; native custom/generic timing plus row transaction/savepoint controls"
+    }
+  ]
+}

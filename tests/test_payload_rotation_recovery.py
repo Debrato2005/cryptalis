@@ -11,7 +11,7 @@ from uuid import UUID
 
 import psycopg
 import pytest
-from sqlalchemy import create_engine, event
+from sqlalchemy import BigInteger, Integer, SmallInteger, create_engine, event
 from sqlalchemy.exc import DBAPIError
 
 from cryptalis import migration as m, rotation as r
@@ -38,11 +38,24 @@ def assert_preserved_prefix(before, after):
     assert before[UUID(int=102)][0] is not None
 
 
-def test_sigkill_after_committed_chunk_resumes_same_artifact_in_fresh_process(tmp_path):
-    with application() as app:
+@pytest.mark.parametrize('dtype,public_slots', [(None, False), (SmallInteger, False), (Integer, False),
+    (BigInteger, False), (SmallInteger, True), (Integer, True), (BigInteger, True)])
+def test_sigkill_after_committed_chunk_resumes_same_artifact_in_fresh_process(tmp_path, dtype, public_slots):
+    options = {} if dtype is None else {'value_type': dtype(), 'queries': [], 'protected_values': (0, 1, -1, None)}
+    with application(**options) as app:
+        if public_slots:
+            from test_public_slots import select_layout
+            select_layout(app)
         run(app); publish(app)
+        def indexes():
+            if dtype is None:
+                return index_identity(app)
+            with app.owner.connect() as connection:
+                return connection.exec_driver_sql('SELECT indexrelid::text,pg_catalog.pg_get_indexdef(indexrelid) '
+                    'FROM pg_catalog.pg_index WHERE indrelid=pg_catalog.to_regclass(%s) ORDER BY indexrelid',
+                    (f'"{app.schema}".customer',)).all()
         proposal = plan(app, target_keys)
-        original, index_before = frames(app, True), index_identity(app)
+        original, index_before = frames(app, True), indexes()
         artifact, pin_file, approval_file = (
             tmp_path / name for name in ('payload.json', 'pin.json', 'approval.json'))
         artifact.write_bytes(proposal.artifact)
@@ -60,7 +73,7 @@ def test_sigkill_after_committed_chunk_resumes_same_artifact_in_fresh_process(tm
             assert report == {'phase': 'EXPANDED', 'rows': 3, 'chunks': 1,
                               'operation_id': str(proposal.operation_id), 'digest': proposal.digest}
             prefix = staged_frames(app, proposal)
-            assert frames(app, True) == original and index_identity(app) == index_before
+            assert frames(app, True) == original and indexes() == index_before
             assert_paused(app)
             child.kill()
             child.communicate(timeout=20)
@@ -78,7 +91,7 @@ def test_sigkill_after_committed_chunk_resumes_same_artifact_in_fresh_process(tm
                 'phase': 'BACKFILLED', 'rows': len(original), 'chunks': 3,
                 'operation_id': str(proposal.operation_id), 'digest': proposal.digest}
             assert_preserved_prefix(prefix, staged_frames(app, proposal))
-            assert frames(app, True) == original and index_identity(app) == index_before
+            assert frames(app, True) == original and indexes() == index_before
             assert artifact.read_bytes() == proposal.artifact
             assert_paused(app)
         finally:

@@ -25,8 +25,15 @@ No objective is complete until its acceptance evidence and applicable gate pass.
 
 ## Current boundary
 
+- Internal integer storage passes 233 source checks, including native plan timing,
+  async writes, batch error order, rotations and real process recovery. Fresh int64
+  public-slot and Boolean restore/removal controls pass. Installed qualification
+  and full type admission remain pending. See the
+  [checkpoint](status.md#integer-storage-source-checkpoint-2026-10-24).
+
 - Native integer width/route failure timing is measured before protected admission.
-  Nine controls pass. Zero-match out-of-width UPDATE raises 22003. This admits
+  Nine initial controls pass under the default plan. Prepared generic plans can
+  return zero rows for an unmatched overflow, as the newer checkpoint records. This admits
   no protected integer type. See the
   [oracle](status.md#native-integer-failure-oracle-2026-10-24).
 

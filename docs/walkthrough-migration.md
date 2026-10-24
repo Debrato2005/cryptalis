@@ -1117,3 +1117,21 @@ as metadata identity only. See the
 The [current installed checkpoint](status.md#public-policy-status-installed-qualification-2026-10-24)
 verifies public policy metadata and provider-response cleanup together. Keep
 availability and material correctness UNKNOWN after digest agreement.
+
+
+## Internal integer storage construction
+
+The internal candidate uses the existing manifest with queries=[] and no search
+leakage terms. Map native signed int2/int4/int8 with exact SmallInteger, Integer
+or BigInteger. Supply a Python int or SQL NULL. Protected defaults and generated
+values remain refused. This construction does not admit integer query operators.
+
+The new v7 lock requires the exact codec readers and records the selected layout.
+The existing maintenance, publication, rotation, restore and removal paths retain
+native width. Out-of-width assignments preserve the measured native transaction
+and prepared-plan behavior through public coercion constants. Roll back after
+IntegerRangeExceeded, as the attached failure remedy requires.
+
+This is internal construction, not a qualified public type. See the
+[source checkpoint](status.md#integer-storage-source-checkpoint-2026-10-24)
+for the tested boundary and remaining admission evidence.

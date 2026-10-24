@@ -46,7 +46,7 @@ class InvalidText(CryptoFailure):
 
 class InvalidValue(CryptoFailure):
     stage = "value encoding"
-    remedy = "Supply a Boolean value or SQL NULL under the pinned Boolean descriptor."
+    remedy = "Supply a native value allowed by the pinned type codec, or SQL NULL."
 
 
 class InvalidFrame(CryptoFailure):

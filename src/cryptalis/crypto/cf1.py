@@ -23,6 +23,7 @@ from .keys import (
 
 MAX_TEXT_BYTES = 16 * 1024 * 1024
 _MAGIC = b"CF1\x00\x01"
+_INTEGER_WIDTHS = {"pg-int2-be/v1": 2, "pg-int4-be/v1": 4, "pg-int8-be/v1": 8}
 _DESCRIPTOR_MEMBERS = frozenset(("schema", "domain_id", "table_id", "field_id", "text_codec",
                                "normalizer", "null_policy", "record_codec", "tenant_codec", "representation"))
 
@@ -44,8 +45,8 @@ class FieldDescriptor:
         if (self.record_codec not in ("uuid16/v1", "int64-be/v1") or
                 self.tenant_codec not in ("uuid16/v1", "single-tenant-uuid/v1") or
                 self.representation not in ("cf1-storage/v1", "cf1-packed-equality/v1") or
-                self.value_codec not in ("utf8-exact/v1", "boolean-u8/v1") or
-                self.value_codec == "boolean-u8/v1" and self.representation != "cf1-storage/v1" or
+                self.value_codec not in ("utf8-exact/v1", "boolean-u8/v1", *_INTEGER_WIDTHS) or
+                self.value_codec != "utf8-exact/v1" and self.representation != "cf1-storage/v1" or
                 type(self.digest) is not bytes or len(self.digest) != 32):
             raise InvalidContext()
 
@@ -55,16 +56,17 @@ class FieldDescriptor:
         try:
             if type(document) is not dict:
                 raise InvalidContext()
-            boolean = document.get("schema") == "cryptalis.context/v2"
-            members = (_DESCRIPTOR_MEMBERS - {"text_codec"}) | {"value_codec"} if boolean else _DESCRIPTOR_MEMBERS
+            typed = document.get("schema") == "cryptalis.context/v2"
+            members = (_DESCRIPTOR_MEMBERS - {"text_codec"}) | {"value_codec"} if typed else _DESCRIPTOR_MEMBERS
             if set(document) != members:
                 raise InvalidContext()
             if any(type(v) is not str or len(v) > 128 for v in document.values()):
                 raise InvalidContext()
-            codec = document["value_codec" if boolean else "text_codec"]
-            if (document["schema"], codec, document["normalizer"], document["null_policy"]) != (
-                    "cryptalis.context/v2" if boolean else "cryptalis.context/v1",
-                    "boolean-u8/v1" if boolean else "utf8-exact/v1", "identity/v1", "sql-null/v1"):
+            codec = document["value_codec" if typed else "text_codec"]
+            allowed_codecs = ("boolean-u8/v1", *_INTEGER_WIDTHS) if typed else ("utf8-exact/v1",)
+            if ((document["schema"], document["normalizer"], document["null_policy"]) != (
+                    "cryptalis.context/v2" if typed else "cryptalis.context/v1", "identity/v1", "sql-null/v1")
+                    or codec not in allowed_codecs):
                 raise InvalidContext()
             canonical = json.dumps(document, ensure_ascii=False, sort_keys=True, separators=(",", ":"), allow_nan=False).encode("utf8")
             actual = hashlib.sha256(canonical).digest()
@@ -151,7 +153,7 @@ def _aad(field, tenant, record, header):
                        record, field.digest, header)
 
 
-def seal_value(value: str | bool | None, field: FieldDescriptor, tenant: UUID,
+def seal_value(value: str | bool | int | None, field: FieldDescriptor, tenant: UUID,
               record: UUID | int, keys: PreparedKeys) -> bytes | None:
     """Seal the pinned value codec with active keys and a fresh OS nonce."""
     typed = _context(field, tenant, record, keys)
@@ -163,6 +165,12 @@ def seal_value(value: str | bool | None, field: FieldDescriptor, tenant: UUID,
         if type(value) is not bool:
             raise InvalidValue()
         encoded = b"\x01" if value else b"\x00"
+    elif field.value_codec in _INTEGER_WIDTHS:
+        width = _INTEGER_WIDTHS[field.value_codec]
+        bound = 1 << (8 * width - 1)
+        if type(value) is not int or not -bound <= value < bound:
+            raise InvalidValue()
+        encoded = value.to_bytes(width, 'big', signed=True)
     else:
         encoded = _encode(value)
     search_generation = 0
@@ -187,7 +195,7 @@ def seal_value(value: str | bool | None, field: FieldDescriptor, tenant: UUID,
 
 
 def open_value(frame: bytes | None, field: FieldDescriptor, tenant: UUID,
-               record: UUID | int, keys: PreparedKeys) -> str | bool | None:
+               record: UUID | int, keys: PreparedKeys) -> str | bool | int | None:
     """Authenticate before decode or release. Header IDs cannot select custody."""
     typed = _context(field, tenant, record, keys)
     if frame is None:
@@ -222,6 +230,10 @@ def open_value(frame: bytes | None, field: FieldDescriptor, tenant: UUID,
         if encoded not in (b"\x00", b"\x01"):
             raise InvalidValue()
         value = encoded == b"\x01"
+    elif field.value_codec in _INTEGER_WIDTHS:
+        if len(encoded) != _INTEGER_WIDTHS[field.value_codec]:
+            raise InvalidValue()
+        value = int.from_bytes(encoded, 'big', signed=True)
     else:
         try:
             value = encoded.decode("utf8", errors="strict")

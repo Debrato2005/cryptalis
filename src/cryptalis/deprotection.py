@@ -449,8 +449,8 @@ def _expand(c, p):
             if native['collation_name']:
                 collate = (' COLLATE ' + m._quote(c, native['collation_schema'])
                            + '.' + m._quote(c, native['collation_name']))
-            if native['type'] == 'bool':
-                native_type = 'pg_catalog.bool'
+            if native['type'] in ('bool', 'int2', 'int4', 'int8'):
+                native_type = 'pg_catalog.' + native['type']
             else:
                 limit = _native_text_length(native)
                 native_type = 'pg_catalog.text' if native['type'] == 'text' else 'pg_catalog.varchar' + (f'({limit})' if limit is not None else '')

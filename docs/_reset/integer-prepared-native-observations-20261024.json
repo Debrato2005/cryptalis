@@ -1,0 +1,68 @@
+{
+  "scope": "Native prepared-plan oracle; integer runtime admission incomplete",
+  "observations": [
+    {
+      "bits": 16,
+      "plan_cache_mode": "force_custom_plan",
+      "observation": {
+        "result": "error",
+        "sqlstate": "22003",
+        "transaction": "INERROR"
+      },
+      "boundary": "Native prepared PostgreSQL only; no protected carrier admission"
+    },
+    {
+      "bits": 16,
+      "plan_cache_mode": "force_generic_plan",
+      "observation": {
+        "result": "zero_rows",
+        "rowcount": 0,
+        "transaction": "INTRANS"
+      },
+      "boundary": "Native prepared PostgreSQL only; no protected carrier admission"
+    },
+    {
+      "bits": 32,
+      "plan_cache_mode": "force_custom_plan",
+      "observation": {
+        "result": "error",
+        "sqlstate": "22003",
+        "transaction": "INERROR"
+      },
+      "boundary": "Native prepared PostgreSQL only; no protected carrier admission"
+    },
+    {
+      "bits": 32,
+      "plan_cache_mode": "force_generic_plan",
+      "observation": {
+        "result": "zero_rows",
+        "rowcount": 0,
+        "transaction": "INTRANS"
+      },
+      "boundary": "Native prepared PostgreSQL only; no protected carrier admission"
+    },
+    {
+      "bits": 64,
+      "plan_cache_mode": "force_custom_plan",
+      "observation": {
+        "result": "error",
+        "sqlstate": "22003",
+        "transaction": "INERROR"
+      },
+      "boundary": "Native prepared PostgreSQL only; no protected carrier admission"
+    },
+    {
+      "bits": 64,
+      "plan_cache_mode": "force_generic_plan",
+      "observation": {
+        "result": "zero_rows",
+        "rowcount": 0,
+        "transaction": "INTRANS"
+      },
+      "boundary": "Native prepared PostgreSQL only; no protected carrier admission"
+    }
+  ],
+  "source_receipt": "integer-prepared-native-oracle-20261024.json",
+  "source_note": "Observed before the test added exact custom/generic outcome assertions; rerun is required for the strengthened test bytes.",
+  "gates": "all seven UNKNOWN"
+}

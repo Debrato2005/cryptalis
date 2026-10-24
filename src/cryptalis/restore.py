@@ -339,7 +339,7 @@ def _sequence_inventory(document, binding=None):
     for raw in records:
         record = RestoreBinding(_canonical(raw)).document
         entries = record.get('sequences', [])
-        layout = base['lock']['schema'] == 'cryptalis.lock/v6'
+        layout = m._preserves_public_slot_lock(base['lock'])
         if ((layout and record['format'] != LAYOUT_FORMAT)
                 or (not layout and (record['format'] == LAYOUT_FORMAT
                     or bool(inventory) != (record['format'] == SEQUENCE_FORMAT)))):
@@ -383,7 +383,7 @@ def _validate_layout_map(entries):
 def _layout_inventory(document, binding=None):
     """Compose exact public slots while preserving their original visible order."""
     base, records = _binding_records(document, binding)
-    if base['lock']['schema'] != 'cryptalis.lock/v6':
+    if not m._preserves_public_slot_lock(base['lock']):
         return None
     inventory = {(model['table_id'], column['name']): column['attnum']
                  for model in base['lock']['models'] for column in model['source_schema']['columns']}
@@ -412,7 +412,7 @@ def layout_admissions(document, model, binding=None):
 
 
 def _layout_evidence(c, source, binding=None):
-    if source.document['lock']['schema'] != 'cryptalis.lock/v6':
+    if not m._preserves_public_slot_lock(source.document['lock']):
         return [], {}
     maps, facts = [], {}
     for model in source.document['lock']['models']:
@@ -442,7 +442,7 @@ def _sequence_evidence(c, source, binding=None):
     """Compare every logical fact before admitting restored sequence OIDs."""
     from cryptalis.manifest.compiler import sequence_metadata
     maps, facts = [], {}
-    if source.document['lock']['schema'] not in ('cryptalis.lock/v5', 'cryptalis.lock/v6'):
+    if source.document['lock']['schema'] not in ('cryptalis.lock/v5', 'cryptalis.lock/v6', 'cryptalis.lock/v7'):
         return maps, facts
     for model in source.document['lock']['models']:
         original = sequence_admissions(source.document, model)
@@ -635,7 +635,8 @@ def _scan(c, source, keys):
                         except CryptoFailure:
                             raise m.TransitionFailure('restored_frame_verification_failed',
                                                       source.operation_id) from None
-                        expected_type = bool if descriptors[i].value_codec == 'boolean-u8/v1' else str
+                        expected_type = (bool if descriptors[i].value_codec == 'boolean-u8/v1' else
+                            int if descriptors[i].value_codec in ('pg-int2-be/v1', 'pg-int4-be/v1', 'pg-int8-be/v1') else str)
                         if value is not None and type(value) is not expected_type:
                             raise m.TransitionFailure('restored_frame_verification_failed',
                                                       source.operation_id)

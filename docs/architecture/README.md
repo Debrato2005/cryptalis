@@ -466,12 +466,16 @@ and require `pg-varchar/v1`. A plan with Boolean storage emits `cryptalis.lock/v
 and requires `boolean-u8/v1`. Mixed fields retain each required reader.
 Plans with admitted owned sequences emit `cryptalis.lock/v5`. Other plans retain
 their existing format selection and bytes. The explicit public-slot layout emits
-`cryptalis.lock/v6`. Current readers accept v1 through v6.
+`cryptalis.lock/v6`. The internal integer candidate emits `cryptalis.lock/v7`
+and requires its exact pg-int2/int4/int8-be/v1 codec readers. Current readers
+accept v1 through v7; old readers refuse v7 before effects.
 Older operational readers refuse the embedded v5 lock before effects.
 The [VARCHAR decision](../decisions.md#native-varchar-text-admission-2026-10-22) defines assignment and reader boundaries.
 Its exact top-level members are
 `schema`, `profile`, `domain_id`, `database`, `declaration`, `models`, `writer_inventory`, `search_reviews`, `ddl`, and `required_readers`.
-Only v6 adds `layout: "preserve-public-slots/v1"`. Public `layout=None` keeps
+V6 adds `layout: "preserve-public-slots/v1"`. V7 always includes layout as
+NULL or that selector and always includes source_metadata.owned_sequences.
+For earlier formats, public `layout=None` keeps
 the earlier selector. A previous lock does not select a layout implicitly.
 The declaration is canonical. Models contain `model`, `table_id`, `schema`, `table`, `record`, `tenancy`, `fields`, `source_schema`, and `source_metadata`.
 Fields contain `name`, `column`, `field_id`, `queries`, `representation`, `payload_column`, `unique_indexes`, `original`, `source`, `descriptor`, and `descriptor_digest`.
@@ -523,6 +527,10 @@ Boolean storage uses `cryptalis.context/v2` with `value_codec: boolean-u8/v1`
 instead of `text_codec`. False encodes as byte 00. True encodes as byte 01.
 The descriptor digest binds the value type in the shared authenticated path.
 SQL NULL stays SQL NULL. Boolean equality terms remain unadmitted.
+The internal integer candidate also uses context/v2. Its pinned codecs encode
+signed int2/int4/int8 values as 2/4/8 big-endian bytes. All other CF1 authenticated
+context and nonce rules remain unchanged. Full integer admission remains pending;
+see the [source checkpoint](../status.md#integer-storage-source-checkpoint-2026-10-24).
 For equality, the stable field UUID identifies the search domain. Crypto implementation and independent vectors belong to slice 2.
 
 `WriterInventory` requires `complete=True` and a nonempty inventory for each protected table.
