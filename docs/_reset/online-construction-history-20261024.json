@@ -1,0 +1,207 @@
+{
+  "format": "cryptalis.online-construction-history/v1",
+  "archive": "online-construction-history-20261024.tar.gz",
+  "archive_sha256": "83bbf31294840066e0f304c4cdff08a8a93aa066a31090cfe4c5e2e4566dd821",
+  "runs": [
+    {
+      "member": "first.json",
+      "sha256": "9c31d499b91205506c522326850abf7c7a5dc0b53f7990ed8091b7414a6dd948",
+      "counts": {
+        "failed": 1
+      },
+      "exit_code": 1,
+      "preflight": {
+        "select_1_each": "passed",
+        "sha256_prefixes": [
+          "2882e8a0",
+          "12fb0305",
+          "b318dbbe"
+        ]
+      },
+      "source_stability": {
+        "unchanged": true,
+        "changed_paths": []
+      }
+    },
+    {
+      "member": "second.json",
+      "sha256": "f371ffa2a8d8da2aa3d9d9a5ae53bcb56b86ae9077918a904b0d656db593bf49",
+      "counts": {
+        "passed": 10
+      },
+      "exit_code": 0,
+      "preflight": {
+        "select_1_each": "passed",
+        "sha256_prefixes": [
+          "d14bd2ae",
+          "8312e979",
+          "489ff89d"
+        ]
+      },
+      "source_stability": {
+        "unchanged": true,
+        "changed_paths": []
+      }
+    },
+    {
+      "member": "third.json",
+      "sha256": "ed7f0986fb989f5b17938aa9fbb6f9d0905dbdc958e218ff96f23453459e5ff0",
+      "counts": {},
+      "exit_code": 1,
+      "preflight": {
+        "select_1_each": "passed",
+        "sha256_prefixes": [
+          "4be946c4",
+          "8c052a44",
+          "afa70e56"
+        ]
+      },
+      "source_stability": {
+        "unchanged": true,
+        "changed_paths": []
+      }
+    },
+    {
+      "member": "fourth.json",
+      "sha256": "53e35306ad0fa43f776d0abdd93b34b807c2be7cf0ff5ff130e62fa8c861bdea",
+      "counts": {
+        "passed": 13
+      },
+      "exit_code": 0,
+      "preflight": {
+        "select_1_each": "passed",
+        "sha256_prefixes": [
+          "1a57da86",
+          "d503918e",
+          "e7180a6b"
+        ]
+      },
+      "source_stability": {
+        "unchanged": true,
+        "changed_paths": []
+      }
+    },
+    {
+      "member": "fifth.json",
+      "sha256": "c0d5fbcb59367448d1bb58015278d754cd5dbb6fbd60a1284b1854d8074fe9e0",
+      "counts": {
+        "passed": 7,
+        "errors": 1
+      },
+      "exit_code": 1,
+      "preflight": {
+        "select_1_each": "passed",
+        "sha256_prefixes": [
+          "2ba93f95",
+          "238db539",
+          "02a357ae"
+        ]
+      },
+      "source_stability": {
+        "unchanged": true,
+        "changed_paths": []
+      }
+    },
+    {
+      "member": "sixth.json",
+      "sha256": "585c3f9427e9236865e2476bb0a013d2098ed1b43e39f7b9085627e004e98237",
+      "counts": {
+        "failed": 1
+      },
+      "exit_code": 1,
+      "preflight": {
+        "select_1_each": "passed",
+        "sha256_prefixes": [
+          "93345f9c",
+          "d818672e",
+          "ad0cc3cf"
+        ]
+      },
+      "source_stability": {
+        "unchanged": true,
+        "changed_paths": []
+      }
+    },
+    {
+      "member": "source-affected.json",
+      "sha256": "9000ad447a6efe97cde4249b1572845a28feb72ae3ddff94bfcfd052e85bb908",
+      "counts": {},
+      "exit_code": 4,
+      "preflight": {
+        "select_1_each": "passed",
+        "sha256_prefixes": [
+          "6959431d",
+          "d36410ec",
+          "2854cadb"
+        ]
+      },
+      "source_stability": {
+        "unchanged": true,
+        "changed_paths": []
+      }
+    },
+    {
+      "member": "source-final.json",
+      "sha256": "98a2c41ad5cd7ef2a70f870684607c50d71eee6da23bc5d16f611148685eb59e",
+      "counts": {
+        "passed": 7,
+        "failed": 1
+      },
+      "exit_code": 1,
+      "preflight": {
+        "select_1_each": "passed",
+        "sha256_prefixes": [
+          "c3257541",
+          "a4ae71db",
+          "525d6a25"
+        ]
+      },
+      "source_stability": {
+        "unchanged": true,
+        "changed_paths": []
+      }
+    },
+    {
+      "member": "multitable-final.json",
+      "sha256": "d69415c890a31fd2a4cc84b9adcc6cd40b42acaea089b5e101d75f82ae3cd2d2",
+      "counts": {
+        "passed": 1
+      },
+      "exit_code": 0,
+      "preflight": {
+        "select_1_each": "passed",
+        "sha256_prefixes": [
+          "4acadb57",
+          "49fd7c9a",
+          "0cbb0a24"
+        ]
+      },
+      "source_stability": {
+        "unchanged": true,
+        "changed_paths": []
+      }
+    },
+    {
+      "member": "source-verified.json",
+      "sha256": "1fd851db83d90e65365178c5a141a576eed915cec186f5d2ed630f4463f6e2be",
+      "counts": {
+        "passed": 15,
+        "failed": 1
+      },
+      "exit_code": 1,
+      "preflight": {
+        "select_1_each": "passed",
+        "sha256_prefixes": [
+          "1a44a1b9",
+          "bb24d518",
+          "7148f32f"
+        ]
+      },
+      "source_stability": {
+        "unchanged": true,
+        "changed_paths": []
+      }
+    }
+  ],
+  "limitations": "Construction attempts retain test fixture, collection and selection failures. No mandatory role probe failed. Intermediate passes are not final qualification."
+}

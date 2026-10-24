@@ -249,7 +249,8 @@ def _validate_lineage(document):
         lineage = document['restore_lineage']
         if ((document['format'], document['kind']) not in (
                 ('cryptalis.transition/v5', 'rewrap'), ('cryptalis.transition/v6', 'payload_rotation'),
-                ('cryptalis.transition/v7', 'search_rotation'))
+                ('cryptalis.transition/v7', 'search_rotation'), ('cryptalis.transition/v12', 'rewrap'),
+                ('cryptalis.transition/v13', 'payload_rotation'), ('cryptalis.transition/v14', 'search_rotation'))
                 or type(lineage) is not list or not lineage):
             raise ValueError
         ancestors = {(item['operation_id'], item['plan_digest']): index
@@ -469,6 +470,8 @@ def _schema_evidence(c, source, state, *, sequences=None, layouts=None):
     them. Only frame ``CHECK`` constraints may differ in their textual
     definition, and only within the known PG16 policy forms with probe evidence.
     """
+    from cryptalis import _access_contract as access
+    access.check(c, source)
     restatements = []
     for model in source.document['lock']['models']:
         start = len(restatements)

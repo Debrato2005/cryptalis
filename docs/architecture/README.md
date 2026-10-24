@@ -61,7 +61,7 @@ The [query grammar](../compatibility.md#query-semantics) bounds this promise. Th
 | Compiler | Validate manifest/mapping/schema. Generate stable identities, representations, DDL, query rules, and semantic diff |
 | SQLAlchemy adapter | Prepare row context, encrypt writes, rewrite admitted expressions, authenticate reads, reject unsupported paths |
 | Crypto/provider boundary | Encode typed values, use library AEAD/HKDF/HMAC, resolve exact admitted keys, wrap/unwrap roots |
-| Transition executor | Expand, backfill, verify, switch, contract under a maintenance write pause |
+| Transition executor | Maintenance transitions plus explicit bounded initial native-write capture, final catch-up fence, verification, switch and reversible role transfer |
 
 CLI commands compose these four responsibilities. Startup, plan, apply, and status reuse the same checks.
 PostgreSQL supplies constraints, transactional DDL, atomic chunks, indexes, and ordinary transaction outcomes.

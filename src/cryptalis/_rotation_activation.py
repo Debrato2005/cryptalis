@@ -40,6 +40,8 @@ def _activation(p,observations,copy,copy_wal):
     if source_document.get('restore_lineage'):
         document.update(format='cryptalis.transition/v6' if p.purpose=='payload' else 'cryptalis.transition/v7',
                         restore_lineage=source_document['restore_lineage'])
+    from cryptalis import _access_contract as access
+    access.carry(source, document)
     return m.MigrationPlan(m._canonical(document))
 
 
