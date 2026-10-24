@@ -1148,5 +1148,5 @@ Native pending inserts use the default for omitted or None values. Dictionary
 INSERT keeps native render_nulls behavior. A later explicit None assignment is
 SQL NULL; a non-nullable column raises native 23502. Valid flushes keep the value
 loaded for async access. See the
-[source checkpoint](status.md#integer-defaults-and-orm-state-source-checkpoint-2026-10-24)
+[installed checkpoint](status.md#integer-literal-default-installed-checkpoint-2026-10-24)
 for exact evidence and remaining qualification work.

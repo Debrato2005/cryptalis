@@ -21,6 +21,39 @@ and [competitive capability matrix](research/capability-matrix.md) govern priori
 Progress follows complete real-application journeys and resolved production requirements.
 All seven production gates remain UNKNOWN.
 
+## Integer literal-default installed checkpoint: 2026-10-24
+
+**VERIFIED, internal candidate:** the actual installed artifact passes
+[367 affected checks](_reset/integer-defaults-final-installed-20261024.json) in
+116.97 pytest seconds. Native default and default-free async writes retain their
+loaded attributes after INSERT and UPDATE. Zero and both signed extrema preserve
+native pending, NULL/render_nulls, refresh, rollback and savepoint behavior.
+Mapping mutation and noncanonical metadata refuse. Both retained readers pass
+their exact old-lock/new-reader boundaries. All 227 Python hashes stay stable.
+
+Seven installed fresh-cluster journeys pass fourteen export/restore controls.
+Six integer width/layout profiles cover zero or signed extrema, root rewrap,
+payload rotation, omitted defaults, explicit NULL edits, tamper refusal before
+adoption, latest-value removal and package-free native restart. A Boolean journey
+retains the original behavior. Source and installed checks use fresh role probes.
+The [final boundary](_reset/integer-defaults-final-boundary-20261024.json) binds
+all current receipts, exact archived fresh-run bytes and seven canonical documents.
+These are fixture checks; full application and production qualification remain open.
+
+The [artifact check](_reset/integer-defaults-final-release-20261024.json) passes
+reproducibility, 45 source inputs, 40 modules, 44 installed files, RECORD, SBOM and
+CLI checks with 72 unchanged dependency pins. Wheel SHA-256 is
+`ce92ab8e49c19ece07ae70ab3b9225162c5439e07a2a93e77bc58bb4df321bad`.
+The existing uv/build-backend version warning remains recorded.
+
+The prior installed expiration failure stays in the immutable construction
+history. No ciphertext, context, key policy or canonical-number contract changes.
+Default values remain public configuration in lock metadata. Server, callable,
+SQL, on-update and generated defaults remain unadmitted. All six integer technical
+gates remain unpassed. All 34 objective states and seven UNKNOWN production gates
+remain unchanged. Measured workload costs and independent admission evidence
+remain required. This is not a public-release qualification.
+
 ## Integer defaults and ORM state source checkpoint: 2026-10-24
 
 **IMPLEMENTED, internal candidate:** exact in-range native integer client defaults
@@ -52,7 +85,8 @@ NULL edits, root rewrap, payload rotation, adoption, latest-value removal and a
 fresh child with Cryptalis imports denied pass. Ciphertext bytes stay unchanged
 during root rewrap. This is fixture evidence.
 
-Installed qualification remains pending. Server, callable, SQL, on-update and
+The [installed checkpoint](#integer-literal-default-installed-checkpoint-2026-10-24)
+now extends this source evidence. Server, callable, SQL, on-update and
 generated defaults remain unadmitted. Full type admission and measured workload
 costs remain pending. All 34 objective states and seven UNKNOWN production gates
 remain unchanged. See the

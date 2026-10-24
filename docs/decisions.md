@@ -1610,3 +1610,7 @@ The [source checkpoint](status.md#integer-defaults-and-orm-state-source-checkpoi
 records native and retained-reader checks. Valid integer ORM writes retain native
 loaded attributes. Only a known range failure selects the public coercion
 expression. This preserves async pending-state access without implicit I/O.
+
+The [installed checkpoint](status.md#integer-literal-default-installed-checkpoint-2026-10-24)
+qualifies this bounded default/state behavior across both layouts and all three
+widths with genuine fresh PostgreSQL restores. It does not pass full admission.

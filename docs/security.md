@@ -1120,6 +1120,7 @@ refuse. Mapping mutations refuse before key preparation.
 Default-free integer locks retain their prior grammar and reader behavior.
 Valid ORM writes use sealed native bind values. A known range failure alone
 selects the owned public coercion expression. Native async loaded state,
-rollback and error-order controls pass in the bounded source cell. See the
-[checkpoint](status.md#integer-defaults-and-orm-state-source-checkpoint-2026-10-24).
+rollback and error-order controls pass in the bounded source and installed cells.
+All six integer width/layout fresh-cluster default journeys also pass. See the
+[checkpoint](status.md#integer-literal-default-installed-checkpoint-2026-10-24).
 All six type-admission gates remain unpassed.
