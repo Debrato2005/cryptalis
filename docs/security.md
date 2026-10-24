@@ -392,7 +392,8 @@ indexes and fixed diagnostics, without SQL text, bind values or exception messag
 A successful sample check does not prove bind-time behavior, query results,
 complete route coverage or safe writes. Unknown host-code effects remain explicit.
 Doctor reports known query incompatibilities before migration. Runtime admission remains
-mandatory after protection and does not trust a diagnostic result as authority.
+mandatory after protection and does not trust a diagnostic result as authority. See the
+[installed checkpoint](status.md#installed-application-query-diagnostics-2026-10-24).
 The pre-adoption CLI accepts an explicit trusted host factory for the registry,
 writer inventory and search reviews. It owns the private connection and uses
 this same compiler. Host import/factory effects remain UNKNOWN; only compiler

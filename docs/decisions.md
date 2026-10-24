@@ -1658,3 +1658,6 @@ existing session event, then removes that observer before inspection or attachme
 This is workload evidence, not a complete static scanner or route inventory.
 The [checkpoint](status.md#supplied-application-query-preflight-2026-10-24) records
 its bounded implementation and application journey.
+
+The [installed checkpoint](status.md#installed-application-query-diagnostics-2026-10-24) verifies the bounded query diagnostic and matching CLI
+child package. It does not qualify a complete scanner or deployment authority.

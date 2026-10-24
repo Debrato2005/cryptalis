@@ -294,7 +294,8 @@ SQL and resolve no keys. A sample PASS does not establish complete route coverag
 or native execution semantics. Known sample refusal exits 3 with QueryIncompatible.
 Unavailable sample inspection exits 4 with QueryInspectionUnavailable. Resolve both
 before migration. Keep provider, host, writer-exclusion and route coverage claims
-UNKNOWN where the check supplies no evidence.
+UNKNOWN where the check supplies no evidence. See the
+[installed checkpoint](status.md#installed-application-query-diagnostics-2026-10-24).
 
 Use the same explicit declarations as planning. Supply no engine or keys through
 this tuple. The CLI owns its inspection connection and cleanup.

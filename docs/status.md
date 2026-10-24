@@ -21,6 +21,38 @@ and [competitive capability matrix](research/capability-matrix.md) govern priori
 Progress follows complete real-application journeys and resolved production requirements.
 All seven production gates remain UNKNOWN.
 
+## Installed application query diagnostics: 2026-10-24
+
+**VERIFIED, bounded installed cell:** the reproducible wheel passes 40 focused
+Doctor controls in 20.02 pytest seconds. Python diagnostics and CLI children use the installed package.
+Positive samples, known refusal, unavailable inspection, read-only catalog access,
+no application-row reads, no key resolution, mapping preservation and redaction pass.
+The source checkpoint separately passes 72 affected Doctor/initialization controls.
+
+The unchanged original HTTP application passes genuine installed export and
+fresh PostgreSQL 16 recovery. Twelve native SELECT structures captured from
+original routes, authentication, local SMTP and search pass structural admission.
+A protected ILIKE control refuses before migration without disclosing its value.
+The same application completes root, payload and search rotations, latest-value
+removal, native schema/public-slot restoration and an import-denied HTTP restart.
+Three mail phases each deliver four loopback messages. Both fresh phases pass
+the mandatory probes for both roles. All 228 Python hashes remain stable.
+
+The artifact passes repeat-build, 45-input, 40-module, 44-installed-file, RECORD,
+SBOM and CLI checks with 72 unchanged dependency pins. Wheel SHA-256 is
+`f3fa093c5203ee7344ed4389d2616da0bab385836328b357c5bf582059ab6274`.
+The existing uv/build-backend version warning remains recorded. The [final boundary](_reset/query-preflight-final-boundary-20261024.json)
+binds current PostgreSQL evidence, exact archived receipts, product bytes and
+canonical documents. Construction history retains the earlier expected failures.
+
+This implements supplied-query diagnosis, not a complete route scanner. Successful
+samples retain aggregate and query_routes UNKNOWN. Runtime admission still applies.
+Public fixture keys, explicit single tenancy, local TestClient and loopback SMTP
+limit the application evidence. Live KMS, browser/deployment behavior and independent
+review remain open. No cryptographic, key-policy, format or tenant contract changes.
+All 34 objective states and seven UNKNOWN production gates remain unchanged.
+
+
 ## Supplied application query preflight: 2026-10-24
 
 **IMPLEMENTED, bounded source verification:** Doctor accepts an optional tuple
@@ -49,7 +81,8 @@ denied. Both phases pass fresh mandatory probes for both roles. The earlier
 three expected missing-operation failures remain in the
 [construction history](_reset/query-preflight-construction-history-20261024.json).
 
-Installed-artifact qualification is pending for this source slice. No manifest,
+The [installed checkpoint](#installed-application-query-diagnostics-2026-10-24) now extends this source evidence. It qualifies the
+supplied SELECT structures and the named original application only. No manifest,
 ciphertext, key policy, tenant scope or query-operator admission changes. All
 34 objective states and seven UNKNOWN production gates remain unchanged.
 

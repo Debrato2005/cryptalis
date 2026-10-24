@@ -634,7 +634,8 @@ select_samples as a fourth context member. Use a tuple of at most 128 samples.
 No attachment, query execution, mapping-type replacement or key resolution occurs.
 Successful samples report STRUCTURE_ADMITTED. Complete route coverage and aggregate
 health stay UNKNOWN. Known unsupported samples produce a FAIL with safe indexes
-and remedies. This check supplies no deployment or migration authority.
+and remedies. This check supplies no deployment or migration authority. See the
+[installed checkpoint](../status.md#installed-application-query-diagnostics-2026-10-24).
 
 The initial `plan` and protection `apply` commands have the bounded
 [operational contract](#operational-protection-cli). The
