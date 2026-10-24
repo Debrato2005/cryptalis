@@ -9,12 +9,15 @@ import hashlib
 from concurrent.futures import ThreadPoolExecutor
 import json
 import os
+import runpy
+import subprocess
 from pathlib import Path
 import sys
 import threading
 from uuid import UUID, uuid4
 
 import pytest
+import psycopg
 
 pytest.importorskip('sqlmodel', reason='optional pinned SQLModel HTTP application profile')
 pytest.importorskip('fastapi', reason='optional pinned original FastAPI HTTP profile')
@@ -320,6 +323,27 @@ def test_pinned_http_application_moves_online_to_protected_and_back(tmp_path, mo
         protected_mail = mail_workflow(api, protected_factory, protected, monkeypatch)
         assert protected_mail['smtp_messages'] == 4
         latest_rows = _mapped_rows(protected_factory,mapping)
+        backup = os.environ.get('CRYPTALIS_ONLINE_HTTP_BACKUP_DIR')
+        if backup:
+            directory = Path(backup)
+            helper = runpy.run_path(str(Path(__file__).resolve().parents[1]/'scripts/fresh_cluster_qualification.py'))
+            values = psycopg.conninfo.conninfo_to_dict(os.environ['CRYPTALIS_TEST_DATABASE_URL'])
+            environment = dict(os.environ,PGHOST=values.get('host',''),PGPORT=values.get('port',''),
+                               PGUSER=values['user'],PGPASSWORD=values['password'],PGDATABASE=values['dbname'])
+            path = directory/'protected.sql'
+            with path.open('xb') as output:
+                path.chmod(0o600)
+                dumped = subprocess.run([helper['pg_bin']('pg_dump'),'--schema='+schema],
+                    env=environment,stdout=output,stderr=subprocess.PIPE)
+            assert dumped.returncode == 0, 'online HTTP protected dump failed; diagnostics withheld'
+            with (directory/'manifest.json').open('x') as output:
+                json.dump({'schema':schema,'source_plan':successor.document,
+                    'native_catalog':{name:[list(row) for row in rows] for name,rows in baseline_catalog.items()},
+                    'source_public_slots':baseline_slots,
+                    'retained':protected,'expected_rows':latest_rows,
+                    'application_revision':SOURCE['revision'],'application_source_sha256':hashes},
+                    output,indent=2,default=str)
+            (directory/'manifest.json').chmod(0o600)
 
         with owner.connect() as connection:
             email_values = connection.exec_driver_sql(

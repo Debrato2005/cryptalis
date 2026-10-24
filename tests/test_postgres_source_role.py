@@ -75,3 +75,30 @@ def test_source_role_probe_failure_stops_before_pytest(tmp_path, monkeypatch):
 
     assert runner.main() == 2
     assert len(probes) == 1 and len(probes[0]) == 3
+
+
+def test_failed_source_cluster_shutdown_blocks_restored_authority(tmp_path,monkeypatch):
+    """A failed stop must prevent the fresh target from starting or adopting."""
+    from pathlib import Path
+    import subprocess
+    root = Path(__file__).resolve().parents[1]
+    monkeypatch.syspath_prepend(str(root/'scripts'))
+    harness = load_runner(root/'scripts/online_qualification.py')
+    started = []
+    def start(directory):
+        started.append(directory)
+        return directory/'cluster',54321,'PUBLIC unused fixture password'
+    monkeypatch.setattr(harness,'start_cluster',start)
+    monkeypatch.setattr(harness,'provision',lambda *args: {})
+    monkeypatch.setattr(harness,'write_home',lambda directory,*args,**kwargs: directory)
+    def run(command,**kwargs):
+        if Path(command[0]).name == 'pg_ctl':
+            if kwargs.get('check'):
+                raise subprocess.CalledProcessError(1,command)
+            return subprocess.CompletedProcess(command,1)
+        return subprocess.CompletedProcess(command,0)
+    monkeypatch.setattr(subprocess,'run',run)
+    monkeypatch.setattr(sys,'argv',['online_qualification.py','--workdir',str(tmp_path/'run'),'--http-fresh'])
+    with pytest.raises(subprocess.CalledProcessError):
+        harness.main()
+    assert started == [tmp_path/'run'/'source']

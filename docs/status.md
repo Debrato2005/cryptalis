@@ -10,6 +10,41 @@ No PostgreSQL/provider/runtime cell, production key provider, independent review
 VERIFIED below refers only to the named checks and their exact revisions.
 All other contract and promotion requirements are SPECIFIED. All seven full gates remain UNKNOWN.
 
+## Original online HTTP fresh recovery: 2026-10-24
+
+**VERIFIED, source and installed cells:** the unchanged 26-file application now
+completes online adoption, protected backup, genuinely fresh-cluster restore,
+explicit adoption, all three rotations and current-data native exit in one harness.
+The source cluster finishes its native exit and stops before the restored cluster
+starts. A nonzero `pg_ctl stop` result stops the harness. A focused failure control
+proves that failed source shutdown cannot start the restored phase.
+
+Each fresh cluster receives new credentials for the owner, encrypted runtime and
+native source roles. Every wrapper reloads and probes all three private files.
+The restored plan refuses ordinary admission until the host supplies its explicit
+restore binding. Root rewrap, payload generation 2 and search generation 2 retain
+the exact access contract through strict v12, v13 and v14 successors.
+The original HTTP/JWT, encrypted search, uniqueness races, rollback and local-mail
+workload then passes. Latest rows in every mapped table match after decrypt-back.
+Native catalog definitions and restored public column slots match after removal.
+Both original HTTP child processes refuse Cryptalis imports and use native source access.
+
+The source export/control phase passes five checks in 9.28 pytest seconds.
+Its fresh restore passes in 9.40 seconds. The installed phases pass five checks
+in 9.45 seconds and the restore workflow in 8.93 seconds. All four retain the same
+238 Python hashes. The product's 42 modules still match the earlier reproducible
+wheel, so the artifact is reused. The existing Starlette/AnyIO warning remains.
+Each complete journey observes sixteen local SMTP messages.
+
+The [final boundary](_reset/online-http-fresh-boundary-20261024.json) binds exact
+receipts, application hashes and reused artifact bytes. Run
+`scripts/online_qualification.py --workdir NEW_DIRECTORY --http-fresh` with the pinned
+`CRYPTALIS_SQLMODEL_HTTP_SOURCE`. This is a local single-tenant fixture with public,
+reconstructible test custody. It does not qualify live KMS, production source fencing,
+downtime budgets, multi-tenant online migration or independent review.
+All 34 objectives remain in scope. All seven production gates remain UNKNOWN.
+
+
 ## Original HTTP application online adoption: 2026-10-24
 
 **VERIFIED, source and installed cells:** the unchanged 26-file FastAPI/SQLModel

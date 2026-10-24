@@ -15,31 +15,60 @@ from fresh_cluster_qualification import start_cluster, stop_cluster, provision, 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--workdir', type=Path, required=True)
-    parser.add_argument('--http', action='store_true',
+    profiles = parser.add_mutually_exclusive_group()
+    profiles.add_argument('--http', action='store_true',
                         help='Run the pinned original HTTP application through online capture and native exit.')
+    profiles.add_argument('--http-fresh', action='store_true',
+                         help='Recover the online HTTP backup on a new cluster, rotate keys and restore native operation.')
     parser.add_argument('pytest_args', nargs=argparse.REMAINDER)
     args = parser.parse_args()
     args.workdir.mkdir(mode=0o700, parents=True, exist_ok=False)
     manifest = {'owner_role':'cryptalis_online_owner',
                 'runtime_role':'cryptalis_online_runtime', 'database':'cryptalis_online'}
+    root = Path(__file__).resolve().parents[1]
+    selected = args.pytest_args
+    if selected[:1] == ['--']: selected = selected[1:]
+    if not selected:
+        selected = (['tests/profile_online_http_application.py','-q'] if args.http or args.http_fresh else
+                    ['tests/test_online_protection.py','tests/test_online_recovery.py','tests/test_online_multitable.py',
+                     'tests/test_online_access.py','tests/test_postgres_source_role.py','-q'])
+    backup = args.workdir/'backup'
+    if args.http_fresh: backup.mkdir(mode=0o700)
+    source = args.workdir/'source' if args.http_fresh else args.workdir
+    if args.http_fresh: source.mkdir(mode=0o700)
     cluster = None
     try:
-        cluster,port,password = start_cluster(args.workdir)
+        cluster,port,password = start_cluster(source)
         credentials = provision(port,password,manifest,'cryptalis_online_native')
-        home = write_home(args.workdir,port,manifest,credentials,source_database=manifest['database'])
-        root = Path(__file__).resolve().parents[1]
-        selected = args.pytest_args
-        if selected[:1] == ['--']: selected = selected[1:]
-        if not selected:
-            selected = (['tests/profile_online_http_application.py','-q'] if args.http else
-                        ['tests/test_online_protection.py','tests/test_online_recovery.py','tests/test_online_multitable.py',
-                         'tests/test_online_access.py','tests/test_postgres_source_role.py','-q'])
+        home = write_home(source,port,manifest,credentials,source_database=manifest['database'])
         command = [sys.executable,str(root/'scripts/test_postgres.py'),'--source-role',
                    '--scope','Isolated PostgreSQL 16 online protection: three authenticated roles',
-                   '--receipt',str(args.workdir/'receipt.json'),'--',*selected]
+                   '--receipt',str(source/'receipt.json'),'--',*selected]
         environment = dict(os.environ,HOME=str(home),CRYPTALIS_ONLINE_RESTORE_DATABASE='cryptalis_online_native')
-        if args.http:
-            environment['CRYPTALIS_ONLINE_HTTP_REPORT'] = str(args.workdir/'application.json')
+        if args.http or args.http_fresh:
+            environment['CRYPTALIS_ONLINE_HTTP_REPORT'] = str(source/'application.json')
+        if args.http_fresh:
+            environment['CRYPTALIS_ONLINE_HTTP_BACKUP_DIR'] = str(backup)
+        result = subprocess.run(command,cwd=root,env=environment).returncode
+    finally:
+        if cluster is not None: stop_cluster(cluster)
+    if result or not args.http_fresh: return result
+    if not (backup/'manifest.json').is_file() or not (backup/'protected.sql').is_file():
+        raise SystemExit('Online HTTP export did not produce the required backup artifacts.')
+    # The source process is terminal before a distinct cluster receives authority.
+    restored = args.workdir/'restored'
+    restored.mkdir(mode=0o700)
+    manifest = {**manifest,'database':'cryptalis_online_restored'}
+    cluster = None
+    try:
+        cluster,port,password = start_cluster(restored)
+        credentials = provision(port,password,manifest,'cryptalis_online_restored_native')
+        home = write_home(restored,port,manifest,credentials,source_database=manifest['database'])
+        command = [sys.executable,str(root/'scripts/test_postgres.py'),'--source-role',
+                   '--scope','Fresh-cluster online HTTP restore, adopted rotations and native exit: three authenticated roles',
+                   '--receipt',str(restored/'receipt.json'),'--','tests/profile_online_http_restore.py','-q']
+        environment = dict(os.environ,HOME=str(home),CRYPTALIS_ONLINE_HTTP_BACKUP_DIR=str(backup),
+                           CRYPTALIS_ONLINE_HTTP_REPORT=str(restored/'application.json'))
         return subprocess.run(command,cwd=root,env=environment).returncode
     finally:
         if cluster is not None: stop_cluster(cluster)
