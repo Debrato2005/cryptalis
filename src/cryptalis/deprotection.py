@@ -429,6 +429,8 @@ def _expand(c, p):
         m._check_public_slots(c, p, model)
         if m._preserves_public_slots(p):
             m._refuse_unrecorded_metadata(c, p, model)
+        else:
+            m._refuse_expression_statistics(c, p, model)
         if m._facts(c, model) != p.document['active_schemas'][model['table_id']]:
             raise m.TransitionFailure('active_schema_mismatch', p.operation_id)
     functions = {}

@@ -25,6 +25,20 @@ No objective is complete until its acceptance evidence and applicable gate pass.
 
 ## Current boundary
 
+- Late expression-statistics refusal is REPRODUCED in two legacy native controls.
+  The shared catalog guard now covers all layouts. The first expanded candidate
+  passes 42 and fails one reverse-resume control. A separate first reverse-expansion
+  control also fails. Revised guards pass 44 focused source controls, including
+  both reverse failures and exact repair. The affected-source suite passes 536.
+  The revised wheel passes 583 installed controls, the original three-field
+  fresh-v6 journey and four legacy sequence/adoption controls. Seven current
+  database receipts bind 208 stable hashes. Earlier failed candidates remain
+  historical. See the
+  [final boundary](_reset/legacy-expression-statistics-final-boundary-20261024.json).
+  Earlier application, full-suite and artifact evidence retain their
+  recorded boundaries. See the
+  [defensive checkpoint](status.md#legacy-expression-statistics-admission-2026-10-24).
+
 - The unchanged three-field SQLModel application passes source and installed
   genuine fresh-v6 adoption, direct-binding search rotation and latest-value
   package-free exit. Recorded target public slots stay unchanged. Earlier full-suite
@@ -35,7 +49,7 @@ No objective is complete until its acceptance evidence and applicable gate pass.
 - The explicit public-slot layout is implemented as lock/v6 with restore/v3.
   The recorded focused profile passes 25 local/compiler/recovery controls.
   At `6cb926e`, source TEXT fresh-target profiles pass six each, with and without
-  an owned sequence. The unchanged 4025210f8957 wheel passes release checks.
+  an owned sequence. The 4025210f8957 wheel passes release checks at that checkpoint.
   Earlier formats retain their default selection and DROP/RENAME behavior.
   Source VARCHAR and installed sequence-bearing TEXT also pass six each.
   The actual wheel passes 294 affected/application controls and one original
@@ -462,10 +476,12 @@ recovery and the final full regression. No production gate passes.
 
 ## Next critical path
 
-1. Check legacy-layout refusal of late expression statistics before providers or effects.
-   This suspected gap remains UNREPRODUCED. Establish the native failure before a product fix.
-2. Resolve the retained-native alternative separately. Preserve the current removal
-   contract and backup obligations while its design and evidence remain open.
+1. Plan the next bounded operational CLI slice. Plan/apply/resume commands remain
+   UNIMPLEMENTED. First inspect the canonical contract and current parser, status
+   and Doctor routes. Use explicit trusted host context without inferring authority
+   from a factory.
+2. Retain the current removal contract while evaluating the unresolved retained-native
+   alternative separately. Backup obligations remain open.
    Lock v2 captures and restores comments,
    statistics targets, storage, compression, options, column grants, constraint and
    index comments, and extended statistics. Lock/v5 adds bounded owned-sequence

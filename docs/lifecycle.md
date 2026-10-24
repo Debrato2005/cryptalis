@@ -680,6 +680,22 @@ The original three-field application still needs fresh-v6/direct-binding qualifi
 The [format decision](decisions.md#original-slot-layout-and-restore-authority-2026-10-24)
 owns version admission. All seven gates remain UNKNOWN.
 
+### Late expression-statistics admission: 2026-10-24
+
+Expression-only statistics can omit ordinary column-key entries. Admission must
+check non-null `stxexprs` directly rather than infer absence from column keys.
+Legacy layouts share this rule with public-slot layout v6. The guard extension
+covers source, unrecorded-metadata and protected-contract checks.
+Two native legacy failures establish the pre-fix gap. The first expanded
+candidate passes 42 and fails one. An EXPANDED reverse retry reaches the forbidden resolver.
+A separate first reverse-expansion control also fails. Revised guards pass 44
+focused source controls, including both paths before providers or DDL and exact
+repair through native exit. Affected-source and revised installed controls pass,
+including the original three-field fresh-v6 journey and legacy sequence/adoption.
+Formats and cryptographic contracts remain unchanged.
+See the [decision](decisions.md#expression-statistics-admission-across-layouts-2026-10-24)
+and [current evidence](status.md#legacy-expression-statistics-admission-2026-10-24).
+
 ### Reverse privilege admission: 2026-10-23
 
 **IMPLEMENTED, bounded:** reverse planning checks source and plaintext runtime

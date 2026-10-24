@@ -385,7 +385,7 @@ def _preserves_public_slots(p):
 
 
 def _refuse_expression_statistics(c, p, model):
-    if _preserves_public_slots(p) and c.exec_driver_sql(
+    if c.exec_driver_sql(
         'SELECT EXISTS (SELECT 1 FROM pg_catalog.pg_statistic_ext '
         'WHERE stxrelid=pg_catalog.to_regclass(%s) AND stxexprs IS NOT NULL)',
         (_table(c, model),)).scalar_one():
@@ -497,8 +497,8 @@ def _refuse_unrecorded_metadata(c, p, model, *, sequences=None, slots=None):
     protected = [field['column'] for field in model['fields']]
     metadata = model.get('source_metadata')
     _check_public_slots(c, p, model, slots=slots)
+    _refuse_expression_statistics(c, p, model)
     if _preserves_public_slots(p):
-        _refuse_expression_statistics(c, p, model)
         observed = source_metadata(c, model['schema'], model['table'], model['fields'], sequences=True)
         if observed != _active_metadata(p, model, sequences=sequences):
             raise TransitionFailure('source_metadata_changed', p.operation_id)
@@ -1008,6 +1008,8 @@ def _inspect_paused(c,p,state):
             _check_owned_sequences(c, p, model)
             if _preserves_public_slots(p):
                 _refuse_unrecorded_metadata(c, p, model)
+            else:
+                _refuse_expression_statistics(c, p, model)
             from cryptalis.deprotection import _staging
             expected = deepcopy(p.document['active_schemas'][model['table_id']])
             expected['relation']['user_triggers'] = True
@@ -1121,6 +1123,8 @@ def _protected_contract(c, p, model, facts, *, paused=False, admitted=None, stag
             _check_source_metadata(c, p, model)
         else:
             _refuse_unrecorded_metadata(c, p, model, sequences=sequences, slots=slots)
+    else:
+        _refuse_expression_statistics(c, p, model)
     inherited = frame_admissions(p.document, model)
     inherited.update(admitted or {})
     admitted = inherited

@@ -478,6 +478,22 @@ server-generated record IDs or protected server defaults. Production gates remai
 See the [lifecycle contract](lifecycle.md#owned-sequence-preservation-and-restored-identity-2026-10-24)
 and [current evidence](status.md#owned-sequence-preservation-and-restore-2026-10-24).
 
+## Expression-statistics admission
+
+The unsupported-dependency rule covers expression statistics on modeled tables
+for every layout. The shared guard reads `pg_statistic_ext.stxexprs` through
+catalog EXISTS. It evaluates no statistics expression. The intended failure is
+`unsupported_dependency` before provider resolution or lifecycle effects.
+Product code implements the legacy extension. Its first expanded reverse-resume
+control reaches the forbidden resolver. A separate first reverse-expansion control
+also fails. Revised guards pass 44 focused source controls, including both reverse
+paths, unchanged-state refusal and exact repair. Affected-source and revised
+installed controls pass, including repair through native exit and both fresh-cluster
+profiles. The current status owns the exact scope.
+This changes no artifact version, key policy, privilege grant or host authority.
+See the [decision](decisions.md#expression-statistics-admission-across-layouts-2026-10-24)
+and [current evidence](status.md#legacy-expression-statistics-admission-2026-10-24).
+
 ## Public-slot authority
 
 **IMPLEMENTED, bounded source and installed verification:** lock/v6 selects original public attribute

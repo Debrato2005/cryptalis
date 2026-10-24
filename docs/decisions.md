@@ -1089,3 +1089,18 @@ extends this contract's verification through genuine fresh adoption and direct
 restore-binding search planning. Source and restored target table identities have
 separate evidence. The observed target public slots remain fixed through removal.
 This test profile adds no product contract or production qualification.
+
+## Expression-statistics admission across layouts: 2026-10-24
+
+**IMPLEMENTED, verification in the [status checkpoint](status.md#legacy-expression-statistics-admission-2026-10-24):**
+all layouts refuse expression statistics on an admitted model table with
+`unsupported_dependency`. Compiler planning already refuses these objects.
+The runtime catalog guard now applies to legacy source, protected and reverse
+admission as well as the explicit public-slot layout.
+
+Expression-only statistics can have an empty ordinary column list. Admission
+checks `pg_statistic_ext.stxexprs IS NOT NULL` before key resolution or transition
+effects. The query tests catalog existence without evaluating the expression.
+Removing the unadmitted object permits the same plan to resume after inspection.
+This extends an existing dependency refusal and changes no lock, transition,
+restore, ciphertext or key contract. Production qualification remains UNKNOWN.

@@ -21,9 +21,78 @@ and [competitive capability matrix](research/capability-matrix.md) govern priori
 Progress follows complete real-application journeys and resolved production requirements.
 All seven production gates remain UNKNOWN.
 
+## Legacy expression-statistics admission: 2026-10-24
+
+**VERIFIED, bounded source and installed profiles:** two
+[native controls](_reset/legacy-expression-statistics-red-20261024.json) fail because
+late expression-only statistics reach a forbidden key resolver. One uses a
+planned legacy lock/v2 source. The other plans reverse from ACTIVE. Both
+statistics objects have non-null `stxexprs` and no ordinary `stxkeys` entries.
+The recorded 208 Python hashes stay stable within that failed baseline run.
+
+The fix extends the existing catalog EXISTS guard to all layouts through
+shared source, unrecorded-metadata and protected-contract admission. It inspects
+catalog facts without evaluating expressions. Unsupported expression statistics
+raise `unsupported_dependency`. Artifact formats, layout selection, tenant and CF1
+contracts remain unchanged.
+
+The [first expanded candidate](_reset/legacy-expression-statistics-expanded-initial-20261024.json)
+reports 42 passed and one failed in 66.76 seconds. It combines 18 new legacy
+controls with 25 public-slot controls. The remaining failure reaches the forbidden
+resolver during an EXPANDED reverse retry. Other type/selector and phase controls
+pass at that candidate boundary.
+
+The [prepared-reverse control](_reset/legacy-expression-statistics-prepared-reverse-red-20261024.json)
+also fails because first reverse expansion does not raise the required refusal.
+This separate run reports one failure and 18 deselected cases in 1.05 seconds,
+with 208 stable Python hashes. Revised code adds guards in paused reverse
+inspection and first reverse expansion before DDL or provider work. Earlier
+candidates retain their exact failed boundaries.
+
+The [revised source profile](_reset/legacy-expression-statistics-source-focused-20261024.json)
+passes all 44 controls in 65.39 seconds: 19 legacy cases and 25 public-slot cases.
+All 208 Python hashes remain stable and match this worktree. Refusal leaves
+snapshots unchanged and reaches no forbidden key resolver. Removing only the
+late object lets the same pinned plan complete its native exit. The
+[revised artifact check](_reset/legacy-expression-statistics-release-revised-20261024.json)
+passes reproducible archives, CLI, 36 product modules and 40 installed files
+against 41 current release-source hashes. The
+[earlier artifact candidate](_reset/legacy-expression-statistics-release-20261024.json)
+remains historical.
+The [affected-source suite](_reset/legacy-expression-statistics-source-affected-20261024.json)
+passes 536 tests in 298.87 seconds. Its 208 Python hashes remain stable and
+match this worktree. This suite covers source, protected and paused admission,
+reverse, metadata, restore, rotation, diagnostics and compiler behavior.
+
+The [revised wheel](_reset/legacy-expression-statistics-installed-affected-20261024.json)
+passes 583 installed controls in 387.45 seconds, with one known Starlette warning.
+Three ordinary application receipts retain
+[six public-slot](_reset/legacy-expression-statistics-installed-public-slots-application-20261024.json),
+[six default-searchable](_reset/legacy-expression-statistics-installed-searchable-application-20261024.json)
+and [26 HTTP/JWT/SMTP](_reset/legacy-expression-statistics-installed-http-application-20261024.json)
+source files unchanged.
+
+The original three-field public-slot application also passes installed
+[export](_reset/fresh-cluster-export-20261024-53.json) and
+[fresh-target](_reset/fresh-cluster-restore-20261024-52.json) stages, one test each
+in 1.60 and 3.63 seconds. Its [application receipt](_reset/legacy-expression-statistics-installed-fresh-application-20261024.json)
+retains the six original files. The legacy owned-sequence profile passes one
+[export](_reset/fresh-cluster-export-20261024-54.json) in 0.93 seconds and
+[four target tests](_reset/fresh-cluster-restore-20261024-53.json) in 8.96 seconds.
+These seven current database receipts retain 208 stable Python hashes matching
+this worktree. The [final boundary](_reset/legacy-expression-statistics-final-boundary-20261024.json)
+binds those receipts, four application receipts and five canonical documents.
+The three RED runs and initial artifact remain historical. Only migration and
+deprotection product modules change. The earlier full suite retains its recorded
+boundary. No current full-suite result is claimed. See the
+[all-layout decision](decisions.md#expression-statistics-admission-across-layouts-2026-10-24),
+[security contract](security.md#expression-statistics-admission) and
+[lifecycle rule](lifecycle.md#late-expression-statistics-admission-2026-10-24).
+All seven production gates remain UNKNOWN.
+
 ## Original three-field SQLModel fresh adoption: 2026-10-24
 
-**VERIFIED, bounded source and installed journeys:** the unchanged six-file SQLModel
+**VERIFIED, bounded source and installed journeys at `f72a49d`:** the unchanged six-file SQLModel
 application completes genuine fresh-cluster adoption with `full_name` VARCHAR,
 `email` search/uniqueness and `is_active` Boolean. Lock/v6 preserves source public
 slots through protection. Restore/v3 records target slots, then direct-binding
@@ -40,7 +109,7 @@ and [target](_reset/fresh-cluster-restore-20261024-49.json) stages each pass one
 in 1.63 and 3.93 seconds. The [source](_reset/sqlmodel-public-slots-source-application-20261024.json)
 and [installed](_reset/sqlmodel-public-slots-installed-application-20261024.json)
 application receipts retain all six pinned files. All 207 Python hashes remain
-stable and match this test/harness revision.
+stable at `f72a49d`.
 
 The source legacy rewrap-first profile passes one
 [export](_reset/fresh-cluster-export-20261024-51.json) in 1.35 seconds and one
