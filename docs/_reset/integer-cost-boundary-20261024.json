@@ -1,0 +1,55 @@
+{
+  "scope": "Three 10k matched native/installed integer fixtures; observed local costs only.",
+  "archive": "integer-cost-observations-20261024.tar.gz",
+  "sha256": "8e6635483ae9967d6e2f5bf5f0859e039100841d1c3d7dab5685af65c660fbd8",
+  "observations": [
+    {
+      "member": "cryptalis-integer-costs-20261024-16.json",
+      "sha256": "a28c55f53a0fffcd8215824829cae634710a4d70492f0de4bc2adfb6ad36207d",
+      "bits": 16,
+      "column_ratio": 22.5,
+      "added_p95_ms": {
+        "point_scalar": 1.271275,
+        "point_entities": 1.610961,
+        "ids20_tuples": 1.807028,
+        "ids20_entities": 1.9064429999999999
+      }
+    },
+    {
+      "member": "cryptalis-integer-costs-20261024-32.json",
+      "sha256": "0f6b6135708d532e412ec827b879bd59e165cb38a29c4a0b2cb0564df501c498",
+      "bits": 32,
+      "column_ratio": 11.75,
+      "added_p95_ms": {
+        "point_scalar": 2.581549,
+        "point_entities": 2.0587690000000003,
+        "ids20_tuples": 1.6813150000000001,
+        "ids20_entities": 1.9006800000000001
+      }
+    },
+    {
+      "member": "cryptalis-integer-costs-20261024-64.json",
+      "sha256": "f5973c1edcdb56063c429fa53393bd2734ee6d111c33b34567e00c848204605d",
+      "bits": 64,
+      "column_ratio": 6.375,
+      "added_p95_ms": {
+        "point_scalar": 1.690106,
+        "point_entities": 1.526643,
+        "ids20_tuples": 1.774802,
+        "ids20_entities": 1.8667849999999997
+      }
+    }
+  ],
+  "wrapper": "integer-costs-installed-20261024.json",
+  "wrapper_sha256": "5ca1b6758f7e0a6b7049729fc218505da0099a2f9d598b454608c139a07268b9",
+  "source_manifest_member": "source_test_sha256",
+  "python_files": 228,
+  "installed_product_modules_verified": 40,
+  "qualified_wheel_sha256": "ce92ab8e49c19ece07ae70ab3b9225162c5439e07a2a93e77bc58bb4df321bad",
+  "limits": [
+    "All seven production gates UNKNOWN; all integer admission gates unpassed.",
+    "Peak RSS is process-lifetime high-water mark including imports and previous width cases, not incremental app memory.",
+    "The 2x storage target applies to a protected equality column plus its index; no equality index is admitted here.",
+    "No new product artifact is needed; every product module matches the qualified wheel."
+  ]
+}

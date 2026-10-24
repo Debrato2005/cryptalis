@@ -263,6 +263,13 @@ The six-gate grouping and conservative unadmitted grammar assumptions are record
 
 ## Performance targets and recorded costs
 
+The [integer observation](status.md#integer-storage-cost-observation-2026-10-24)
+records three storage-only 10k fixtures. All six scalar/entity point observations
+meet 3 ms locally. Column bytes measure 22.5×/11.75×/6.375× native for int2/int4/int8.
+No equality index is admitted, so this does not evaluate the 2× indexed-column
+target. Public-ID batches do not qualify encrypted-value IN. Cost approval and
+production performance remain UNKNOWN.
+
 The latest SQLModel integration profile has an initial six-target latency failure
 and a passing unchanged-source follow-up. The cause remains UNKNOWN. The
 [current checkpoint](status.md#optional-sqlmodel-template-checkpoint-2026-10-23)

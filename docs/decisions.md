@@ -1614,3 +1614,14 @@ expression. This preserves async pending-state access without implicit I/O.
 The [installed checkpoint](status.md#integer-literal-default-installed-checkpoint-2026-10-24)
 qualifies this bounded default/state behavior across both layouts and all three
 widths with genuine fresh PostgreSQL restores. It does not pass full admission.
+
+
+## Integer cost observation scope: 2026-10-24
+
+**VERIFIED, bounded observation:** record storage-only integer costs separately
+from the protected equality-column/index target. Publish column bytes and whole
+relation context separately. Retain raw paired samples, seed identity and cell.
+Public-ID batches do not establish encrypted-value IN performance. Process peaks
+do not establish incremental app memory. Ordinary VACUUM does not prove erasure.
+The [observation](status.md#integer-storage-cost-observation-2026-10-24) records
+actual values. These checks approve no workload budget and pass no admission gate.

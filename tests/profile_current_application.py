@@ -71,7 +71,8 @@ def protect(app, rings):
     app.plan = m.plan(json.dumps(declaration).encode(), app.mapping, app.owner,
         writers=WriterInventory(True, (Writer(TABLE_ID, 'profile', 'sqlalchemy',
                                               evidence='owned public synthetic application'),)),
-        search_reviews=(SearchReview(FIELD_ID, False, '53-byte public synthetic identifiers'),),
+        search_reviews=(SearchReview(FIELD_ID, False, '53-byte public synthetic identifiers'),)
+                       if any(field['queries'] for model in app.plan.document['lock']['models'] for field in model['fields']) else (),
         keys=rings.__getitem__, runtime_role=app.role, target_id=app.plan.target_id,
         backfill_rows_per_second=1000, verify_rows_per_second=1000,
         temporary_bytes_per_row=700, wal_bytes_per_row=2000)
