@@ -160,3 +160,17 @@ official source/API and native documentation reads supplied the remaining facts.
 The bounded source set does not establish a vendor's complete disaster recovery,
 three-way rotation or offboarding coverage. Absence from this record is not proof
 that the vendor cannot provide a capability.
+
+## Targeted lifecycle research check: 2026-10-24
+
+The [official migration guide](https://cipherstash.com/docs/guides/migration) still describes transactional dual writes,
+resumable backfill and reversible read cutover. After plaintext removal, its
+rollback table requires backup restoration or a new decrypting migration.
+This read does not establish an automated current-data exit for the vendor.
+It does not change the capability matrix or prove that such a workflow is absent.
+
+A valid Firecrawl request failed because its account had no credits. No retry
+followed. The official-page fallback supplied the expected title, final URL and
+relevant body. It did not expose an HTTP status. The guide still states
+30 July 2026 as its update date. Existing equality/range/text/JSON and SDK/proxy
+research stays at its recorded 2026-10-23 source boundary.

@@ -49,25 +49,52 @@ def catalog(owner):
 
 
 def app_copy(tmp_path, monkeypatch):
-    source = os.environ.get('CRYPTALIS_SQLMODEL_APP_SOURCE')
-    assert source, 'set CRYPTALIS_SQLMODEL_APP_SOURCE to the pinned six-file snapshot'
+    http = os.environ.get('CRYPTALIS_SQLMODEL_HTTP_FRESH') == '1'
+    source = os.environ.get('CRYPTALIS_SQLMODEL_HTTP_SOURCE' if http else 'CRYPTALIS_SQLMODEL_APP_SOURCE')
+    assert source, 'Set the application source variable for the selected pinned snapshot.'
     assert sys.version_info >= (3, 13), 'original template qualification uses Python 3.13'
     assert original.sqlmodel.__version__ == '0.0.48', 'original template qualification uses SQLModel 0.0.48'
     assert not any(name == 'app' or name.startswith('app.') for name in sys.modules)
-    backend, hashes = original.snapshot(Path(source), tmp_path / 'snapshot')
+    if http:
+        from test_sqlmodel_http_application import SOURCE
+        hashes = {}
+        for name, expected in SOURCE['files'].items():
+            raw = (Path(source) / name).read_bytes()
+            assert hashlib.sha1(b'blob ' + str(len(raw)).encode() + b'\0' + raw).hexdigest() == expected
+            destination = tmp_path / 'snapshot' / name
+            destination.parent.mkdir(parents=True, exist_ok=True)
+            destination.write_bytes(raw)
+            hashes[name] = hashlib.sha256(raw).hexdigest()
+        backend = tmp_path / 'snapshot' / 'backend'
+    else:
+        backend, hashes = original.snapshot(Path(source), tmp_path / 'snapshot')
     monkeypatch.syspath_prepend(str(backend))
     monkeypatch.chdir(tmp_path)
     original.settings(monkeypatch)
+    if http:
+        for name, value in dict(ENVIRONMENT='local', SMTP_HOST='', SMTP_USER='', SMTP_PASSWORD='',
+                EMAILS_FROM_EMAIL='', SENTRY_DSN='', FRONTEND_HOST='http://localhost:5173').items():
+            monkeypatch.setenv(name, value)
+        from app.main import app
+        from sqlmodel_http_workload import workflow as http_workflow
+        from sqlmodel_http_mail_workload import workflow as mail_workflow
+        def workflow(factory, phase, retained=None):
+            current = http_workflow(app, factory, retained=retained)
+            return dict(current, local_smtp=mail_workflow(app, factory, current, monkeypatch))
+        return backend, hashes, workflow
     namespace = runpy.run_path(str(Path(__file__).with_name('sqlmodel_template_workload.py')))
     return backend, hashes, namespace['workflow']
 
 
 def unchanged(backend, hashes):
     root = backend.parent
-    assert hashes == {name: hashlib.sha256((root / name).read_bytes()).hexdigest() for name in original.SOURCES}
+    assert hashes == {name: hashlib.sha256((root / name).read_bytes()).hexdigest() for name in hashes}
 
 
 def clear_app():
+    database = sys.modules.get('app.core.db')
+    if database is not None:
+        database.engine.dispose()
     for name in tuple(sys.modules):
         if name == 'app' or name.startswith('app.'):
             del sys.modules[name]
@@ -88,9 +115,10 @@ def storage(owner, *, boolean_storage=False):
 
 
 def test_export_pinned_searchable_sqlmodel_current_values(tmp_path, monkeypatch):
+    http = os.environ.get('CRYPTALIS_SQLMODEL_HTTP_FRESH') == '1'
     slot_profile = os.environ.get('CRYPTALIS_SQLMODEL_PUBLIC_SLOTS') == '1'
     backend, hashes, workflow = app_copy(tmp_path, monkeypatch)
-    boolean_controls = runpy.run_path(str(Path(__file__).with_name('sqlmodel_template_workload.py')))['boolean_controls'] if slot_profile else None
+    boolean_controls = runpy.run_path(str(Path(__file__).with_name('sqlmodel_template_workload.py')))['boolean_controls'] if slot_profile and not http else None
     from app.models import SQLModel, User
     schema = 'sqlmodel_search_fresh_' + uuid4().hex
     owner = original.native_engine('CRYPTALIS_TEST_DATABASE_URL', schema)
@@ -110,7 +138,7 @@ def test_export_pinned_searchable_sqlmodel_current_values(tmp_path, monkeypatch)
             connection.exec_driver_sql(f'GRANT SELECT,INSERT,UPDATE,DELETE ON ALL TABLES IN SCHEMA "{schema}" TO {q(role)}')
         native = lambda: Session(runtime, expire_on_commit=False)
         baseline = workflow(native, uuid4().hex)
-        if slot_profile:
+        if boolean_controls:
             baseline = boolean_controls(native, baseline, uuid4().hex)
         baseline, native_search = search_controls(native, baseline)
         native_schema = catalog(owner)
@@ -154,24 +182,35 @@ def test_export_pinned_searchable_sqlmodel_current_values(tmp_path, monkeypatch)
                          deployment=(proposal, pin(proposal, 'ACTIVE')))
         attached = lambda: factory(tenant_id=original.TABLE, expire_on_commit=False)
         current = workflow(attached, uuid4().hex, baseline)
-        if slot_profile:
+        if boolean_controls:
             current = boolean_controls(attached, current, uuid4().hex)
+        if slot_profile:
             assert public_slots(owner, source_slots) == source_slots
         current, protected_search = search_controls(attached, current)
         assert protected_search == native_search
         rows, _ = storage(owner, boolean_storage=slot_profile)
-        assert set(rows) == {baseline['id'], current['id']}
+        if http:
+            with attached() as session:
+                from sqlmodel import select
+                expected = {str(row.id): {'id': str(row.id), 'email': row.email,
+                    'full_name': row.full_name, 'is_active': row.is_active}
+                    for row in session.exec(select(User)).all()}
+            assert set(rows) == set(expected)
+        else:
+            assert set(rows) == {baseline['id'], current['id']}
+            expected = {row['id']: row for row in (baseline, current)}
         dump(directory / 'protected.sql', schema, environment('CRYPTALIS_TEST_DATABASE_URL'))
         values = psycopg.conninfo.conninfo_to_dict(os.environ['CRYPTALIS_TEST_DATABASE_URL'])
         with owner.connect() as connection:
             owner_role = connection.exec_driver_sql('SELECT current_user').scalar_one()
-        manifest = {'application_profile': 'sqlmodel-public-slots' if slot_profile else 'sqlmodel-searchable',
+        manifest = {'application_profile': 'sqlmodel-http' if http else 'sqlmodel-public-slots' if slot_profile else 'sqlmodel-searchable',
             'schema': schema, 'database': values['dbname'],
             'owner_role': owner_role, 'runtime_role': role, 'application_revision': original.REVISION,
             'application_source_sha256': hashes, 'native_catalog': native_schema,
             'plan': base64.b64encode(proposal.artifact).decode(), 'pin': asdict(pin(proposal, 'ACTIVE')),
             'baseline': baseline, 'current': current, 'search_controls': protected_search,
-            'expected': {row['id']: row for row in (baseline, current)},
+            'expected': expected,
+            'pre_adoption_doctor': report,
             'tenancy': 'one explicitly declared single-tenant table; original global email uniqueness',
             'key_custody': 'public deterministic fixture only', 'production_email_domain_admission': 'UNKNOWN',
             'gates': 'all seven UNKNOWN'}

@@ -220,3 +220,34 @@ The [status record](status.md#pinned-smolink-adoption-2026-10-22) names the two 
 dependency cells and their limits. The workload protects only `Url.destination`.
 HTTP covers URL creation and refusal cases. Repository and ORM calls cover other CRUD operations.
 The host replaces the session dependency and supplies protection policy and maintenance authority.
+
+### Automated application qualification matrix
+
+Run one selected row through `scripts/fresh_cluster_qualification.py`.
+The harness runs export and isolated restore through `scripts/test_postgres.py`.
+Each phase reloads both private URL files and probes both roles.
+If a probe fails, stop. Do not retry or substitute a database.
+Use the pinned snapshots and the exact dependency cell recorded in status.
+Keep each work directory new. The installed qualification runner must resolve
+Cryptalis imports from the reviewed wheel instead of the source checkout.
+
+| Row | Profile | Application journey | Evidence boundary |
+|---|---|---|---|
+| Original HTTP/authentication | `--sqlmodel-http` | Native routes, Doctor, protection, search, backup, fresh adoption, root/payload/search rotation, latest-value removal, package-free HTTP restart | 26 pinned files. TestClient and loopback SMTP. Explicit single tenancy and public fixture keys |
+| Original SQLModel CRUD | `--sqlmodel-public-slots` | Three protected fields, public slots, fresh adoption, direct restore-binding search rotation, native exit | Six pinned files. Positive control for the shared harness |
+| Original Smolink | `--smolink` | Async URL routes/repository operations, protected backup, fresh adoption, rotations and native exit | Separate pinned revision and historical qualification. No new execution claim follows from the HTTP row |
+
+Supply `CRYPTALIS_SQLMODEL_HTTP_SOURCE` for the HTTP row.
+Supply `CRYPTALIS_SQLMODEL_APP_SOURCE` for the CRUD row.
+Supply `CRYPTALIS_SMOLINK_CHECKOUT` and a local Redis executable for Smolink.
+
+```bash
+CRYPTALIS_SQLMODEL_HTTP_SOURCE=/path/to/pinned-http-snapshot \
+  /path/to/python3.13 scripts/fresh_cluster_qualification.py \
+  --sqlmodel-http --workdir /tmp/cryptalis-http-fresh-new-run
+```
+
+The earlier original HTTP CLI journey owns initialization and five actual
+SIGKILL/resume checkpoints. The new HTTP fresh row owns genuine restore and
+post-adoption authentication. Neither row proves every step or an external KMS.
+Retain these separate boundaries when reporting the full developer journey.

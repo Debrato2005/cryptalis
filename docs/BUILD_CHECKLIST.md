@@ -25,6 +25,13 @@ No objective is complete until its acceptance evidence and applicable gate pass.
 
 ## Current boundary
 
+- The original 26-file HTTP application now completes genuine fresh restore,
+  all three rotations, latest-value removal and package-free HTTP restart.
+  The existing public-slot SQLModel profile also passes. The installed wheel
+  stays unchanged. See the [checkpoint](status.md#original-http-application-fresh-recovery-2026-10-24)
+  and [matrix](build-guide.md#automated-application-qualification-matrix).
+
+
 - Three matched 10k integer profiles pass with unchanged installed product code.
   All six local point observations meet 3 ms added p95. Column-only storage
   measures 22.5×/11.75×/6.375× native; the indexed-column target is not evaluated.
