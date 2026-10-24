@@ -25,6 +25,10 @@ No objective is complete until its acceptance evidence and applicable gate pass.
 
 ## Current boundary
 
+- Synchronous KMS client admission rejects recognized async SDK methods before use.
+  Source protocol and isolated actual-SDK checks pass; live AWS and release gates
+  remain UNKNOWN. See the [checkpoint](status.md#synchronous-kms-sdk-admission-2026-10-24).
+
 - The original 26-file HTTP operational join passes two source and two installed
   tests with no skips. Six HTTP boundaries, 24 loopback messages per journey,
   five actual SIGKILL/resume checkpoints and latest-value package-free HTTP exit pass.

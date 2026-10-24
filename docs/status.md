@@ -21,6 +21,21 @@ and [competitive capability matrix](research/capability-matrix.md) govern priori
 Progress follows complete real-application journeys and resolved production requirements.
 All seven production gates remain UNKNOWN.
 
+## Synchronous KMS SDK admission: 2026-10-24
+
+**VERIFIED, bounded local protocol checks:** the AWS adapter rejects recognized
+coroutine and async-generator methods, including callable objects, during
+construction. The unchanged synchronous SDK contract does not dispatch these
+methods and leak unawaited-coroutine warnings. The [RED run](_reset/kms-sync-source-red-20261024.json) reproduces three late failures.
+The [protocol run](_reset/kms-sync-source-green-20261024.json) passes 39 checks in
+0.42 seconds and records the SDK collection skip in that environment. The separate
+[actual-SDK run](_reset/kms-sync-sdk-source-green-20261024.json) passes all 12 local
+Stubber cases in 2.17 seconds using the preserved isolated SDK target. Credential
+discovery and HTTP transport tripwires remain active. All 218 Python hashes stay
+stable in both runs. Installed qualification remains pending.
+This fixes client admission only; live AWS custody and production qualification
+remain UNKNOWN.
+
 ## Original HTTP operational CLI journey: 2026-10-24
 
 **VERIFIED within the source and installed profiles at `worktree-048bd928c0a2c3e8`:**

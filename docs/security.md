@@ -577,6 +577,14 @@ live-custody or production evidence. Status of external retained obligations nee
 host inventory/provenance. Wrappers or an empty journal cannot prove no obligations. See the
 [qualification checkpoint](status.md#original-http-operational-cli-journey-2026-10-24).
 
+### Synchronous KMS method boundary
+
+**IMPLEMENTED, bounded protocol verification:** recognized async encrypt/decrypt
+methods fail client construction with InvalidContext before invocation. Synchronous
+SDK behavior, key ARN, context and response checks remain unchanged. No live AWS
+qualification follows. See the
+[checkpoint](status.md#synchronous-kms-sdk-admission-2026-10-24).
+
 ## Owned-sequence admission
 
 **IMPLEMENTED, bounded source and installed verification:** lock/v5 admits only inspected ordinary persistent sequences

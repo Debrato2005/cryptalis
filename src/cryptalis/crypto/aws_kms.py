@@ -8,6 +8,7 @@ Python bytes do not provide a verified root-zeroization guarantee.
 """
 
 import asyncio
+import inspect
 import os
 import re
 from uuid import UUID
@@ -34,8 +35,12 @@ class AwsKmsKeyProvider:
                 or type(key_arn) is not str or _KEY_ARN.fullmatch(key_arn) is None):
             raise InvalidContext()
         try:
-            if not callable(client.encrypt) or not callable(client.decrypt):
-                raise InvalidContext()
+            for operation in (client.encrypt, client.decrypt):
+                if (not callable(operation)
+                        or any(inspect.iscoroutinefunction(candidate)
+                               or inspect.isasyncgenfunction(candidate)
+                               for candidate in (operation, getattr(operation, "__call__", None)))):
+                    raise InvalidContext()
         except Exception:
             raise InvalidContext() from None
         self._client = client

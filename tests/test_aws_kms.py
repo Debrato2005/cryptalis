@@ -1,9 +1,11 @@
 """SDK-shaped test double boundary, not botocore, IAM or live AWS evidence."""
 
 import asyncio
+import gc
 import os
 import threading
 import traceback
+import warnings
 from dataclasses import replace
 from uuid import UUID
 
@@ -164,6 +166,46 @@ def test_invalid_root_or_context_never_dispatches(root, context):
     client = KmsProtocolDouble()
     with pytest.raises(InvalidContext):
         provider(client).wrap(root, context)
+    assert client.calls == []
+
+
+@pytest.mark.parametrize("operation,kind", [
+    ("encrypt", "coroutine"), ("decrypt", "callable"), ("encrypt", "async_generator"),
+])
+def test_async_sdk_methods_refuse_before_use_without_coroutine_warnings(operation, kind):
+    async def coroutine(**request):
+        raise AssertionError("async SDK operation must not run")
+
+    class AsyncCallable:
+        async def __call__(self, **request):
+            raise AssertionError("async SDK operation must not run")
+
+    async def async_generator(**request):
+        yield {}
+
+    client = KmsProtocolDouble()
+    setattr(client, operation, {"coroutine": coroutine, "callable": AsyncCallable(),
+                               "async_generator": async_generator}[kind])
+    refused_at_construction = False
+    with warnings.catch_warnings(record=True) as emitted:
+        warnings.simplefilter("always", RuntimeWarning)
+        try:
+            kms = provider(client)
+        except InvalidContext:
+            refused_at_construction = True
+        else:
+            # Exercise the old late failure so RED records the coroutine warning,
+            # rather than merely inspecting the constructor's implementation.
+            with pytest.raises(KeyUnavailable):
+                if operation == "encrypt":
+                    kms.wrap(ROOT, CONTEXT)
+                else:
+                    kms.unwrap(WrappedRoot(PROVIDER, CONTEXT, b"opaque"), CONTEXT)
+        gc.collect()
+    assert refused_at_construction, (
+        "async SDK accepted until use; warning categories: "
+        + repr([warning.category.__name__ for warning in emitted]))
+    assert emitted == []
     assert client.calls == []
 
 

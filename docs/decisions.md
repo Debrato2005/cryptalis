@@ -1379,3 +1379,11 @@ The [installed application report](_reset/http-cli-installed-application-2026102
 and [final boundary](_reset/http-cli-final-boundary-20261024.json) bind the joined
 evidence to the unchanged wheel, current Python files and six documents.
 This slice repeats no full suite or fresh-cluster qualification.
+
+## Synchronous KMS client admission: 2026-10-24
+
+The existing AWS SDK adapter requires synchronous encrypt/decrypt callables.
+Reject recognized coroutine or async-generator functions and callable objects
+before storing the client. Keep InvalidContext redaction and existing synchronous
+SDK behavior. The separate async unwrap API retains its existing thread boundary.
+This admission check supplies no live provider qualification or credentials.
