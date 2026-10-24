@@ -21,6 +21,40 @@ and [competitive capability matrix](research/capability-matrix.md) govern priori
 Progress follows complete real-application journeys and resolved production requirements.
 All seven production gates remain UNKNOWN.
 
+## Integer storage cost observation: 2026-10-24
+
+**VERIFIED, local observation only:** three matched native/installed 10,000-row
+fixtures pass. The [wrapper](_reset/integer-costs-installed-20261024.json) keeps
+228 Python hashes stable. All 40 installed product modules match the qualified
+ce92 artifact. This slice changes tests only. No new artifact build follows.
+
+| Native width | Added p95 scalar point, ms | Added p95 entity point, ms | Isolated column bytes/native |
+|---|---:|---:|---:|
+| int2 | 1.2713 | 1.6110 | 22.5× |
+| int4 | 2.5815 | 2.0588 | 11.75× |
+| int8 | 1.6901 | 1.5266 | 6.375× |
+
+All six point observations meet the local 3 ms target. Each workload uses 100
+measured warm pairs after ten warmups, with alternating native/attached order.
+Public-ID batches of 20 also match native results. They are not encrypted-value
+IN queries, so no encrypted IN target claim follows. Raw samples and exact seed,
+cell, storage and process facts appear in the
+[boundary](_reset/integer-cost-boundary-20261024.json) and its verified archive.
+
+Column bytes use sum(pg_column_size(name)), including bytea headers. This profile
+has no equality index; it does not evaluate the 2× indexed-column target. Whole
+heap/relation sizes include retained space after ordinary VACUUM. They do not
+prove compact storage or plaintext erasure. Peak RSS is the process-lifetime
+high-water mark, including imports and prior cases; it is not incremental app memory.
+
+Protection/publication/attachment takes 0.87–1.02 seconds for these fixtures.
+Decrypt-back/removal takes 1.12–1.29 seconds, excluding reverse planning. All
+30,000 native values match after removal. No approved write or pause
+budget follows. Public local fixture keys, shared-host load and one warm synchronous
+cell limit these observations. Remote custody, async, concurrent and larger-scale
+costs remain unqualified. Cost approval, all six integer admission gates, all 34
+objective states and seven UNKNOWN production gates remain unchanged.
+
 ## Integer literal-default installed checkpoint: 2026-10-24
 
 **VERIFIED, internal candidate:** the actual installed artifact passes

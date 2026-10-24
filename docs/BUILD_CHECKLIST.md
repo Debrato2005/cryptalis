@@ -25,6 +25,12 @@ No objective is complete until its acceptance evidence and applicable gate pass.
 
 ## Current boundary
 
+- Three matched 10k integer profiles pass with unchanged installed product code.
+  All six local point observations meet 3 ms added p95. Column-only storage
+  measures 22.5×/11.75×/6.375× native; the indexed-column target is not evaluated.
+  Cost approval and full admission remain pending. See the
+  [observation](status.md#integer-storage-cost-observation-2026-10-24).
+
 - The installed default/state candidate passes 367 affected checks. All six
   integer width/layout default journeys and a Boolean control pass fresh
   adoption and native exit. Artifact and reader checks pass. Full type admission
