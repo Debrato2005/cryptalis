@@ -331,7 +331,7 @@ def test_integer_custom_mapping_hooks_remain_unadmitted(custom):
     assert 'unsupported_type' in {issue.code for issue in refused.value.issues}
 
 
-@pytest.mark.parametrize('default', [0, lambda: 1])
+@pytest.mark.parametrize('default', [True, '0', 1.0, lambda: 1])
 def test_integer_defaults_require_separate_admission(default):
     from cryptalis.manifest.compiler import PlanningRejected
     with pytest.raises(PlanningRejected) as refused:

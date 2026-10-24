@@ -480,6 +480,9 @@ the earlier selector. A previous lock does not select a layout implicitly.
 The declaration is canonical. Models contain `model`, `table_id`, `schema`, `table`, `record`, `tenancy`, `fields`, `source_schema`, and `source_metadata`.
 Fields contain `name`, `column`, `field_id`, `queries`, `representation`, `payload_column`, `unique_indexes`, `original`, `source`, `descriptor`, and `descriptor_digest`.
 Boolean fields also contain `application_default`: absent-default NULL or a literal Boolean.
+The internal integer candidate includes that member only for a literal client
+default. Its value is a canonical signed decimal string; pg-integer-default/v1
+is then required. Default-free v7 fields retain their existing bytes and readers.
 The compiler and attachment compare this fact with the current native mapping.
 Server, callable and on-update protected defaults remain refused.
 

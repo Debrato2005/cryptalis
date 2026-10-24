@@ -35,7 +35,7 @@ from ._sqlalchemy_search import rewrite_search, search_shape, validate_search_st
 from .crypto import CryptoFailure, AuthenticationFailed, FieldDescriptor, Keyring, KeyUnavailable, MAX_TEXT_BYTES, open_value, seal_value
 from .crypto.cf1 import _encode
 from .crypto.keys import InvalidText, InvalidValue, RepresentationMismatch
-from .manifest.compiler import _boolean_default, _native_text_length, _previous_lock, _value_mapping_matches
+from .manifest.compiler import _compiled_default, _value_default, _native_text_length, _previous_lock, _value_mapping_matches
 from .manifest.parser import decode_manifest_json
 
 
@@ -145,7 +145,7 @@ class _Binding:
     model: type
     max_characters: int | None = None
     boolean_processor: object = field(default=None, repr=False)
-    application_default: bool | None = None
+    application_default: bool | int | None = None
 
 
 def _assignment(value, binding):
@@ -691,8 +691,9 @@ class _Attachment:
                 source = next(c for c in model['source_schema']['columns'] if c['name'] == field['column'])
                 boolean = source['type'] == 'bool'
                 try:
-                    default_matches = (_boolean_default(column) is field['application_default'] if boolean
-                                       else column.default is None)
+                    actual_default = _value_default(column, field['descriptor'].get('value_codec', 'utf8-exact/v1'))
+                    expected_default = _compiled_default(field)
+                    default_matches = type(actual_default) is type(expected_default) and actual_default == expected_default
                 except ValueError:
                     raise PolicyMismatch() from None
                 if (not isinstance(actual["type"], LargeBinary) or not _value_mapping_matches(column, source) or
@@ -725,7 +726,7 @@ class _Attachment:
                                    mapper.get_property_by_column(tenant).key if tenant is not None else None,
                                    mapper.class_, None if boolean or source['type'] in ('int2', 'int4', 'int8') else _native_text_length(source),
                                    column.type.bind_processor(connection.dialect) if boolean else None,
-                                   field.get('application_default'))
+                                   _compiled_default(field))
                 self.bindings.append(binding)
             self.models[mapper.class_] = tuple(b for b in self.bindings if b.model is mapper.class_)
 
@@ -773,7 +774,8 @@ class _Attachment:
                 self.identity_type(binding.record.type)
                 if binding.tenant is not None:
                     self.identity_type(binding.tenant.type, uuid_only=True)
-                if binding.boolean_processor is not None and _boolean_default(binding.column) is not binding.application_default:
+                actual_default = _value_default(binding.column, binding.descriptor.value_codec)
+                if type(actual_default) is not type(binding.application_default) or actual_default != binding.application_default:
                     raise PolicyMismatch()
             return tuple((b.column.table.schema, b.column.table.name, column(b.column), column(b.record), column(b.tenant),
                           inspect(b.model).primary_key, inspect(b.model).get_property_by_column(b.column).key,
@@ -1384,7 +1386,9 @@ class _Attachment:
             operation.bulk_batch = ()
             integer_bindings = tuple(b for b in bindings if b.column.key in changed[0] and
                                      b.descriptor.value_codec in ('pg-int2-be/v1', 'pg-int4-be/v1', 'pg-int8-be/v1'))
-            if operation.flushing and integer_bindings:
+            integer_failure = any(type(value) is _Sealed and type(value.failure) is IntegerRangeExceeded
+                                  for group in changed for value in group.values())
+            if operation.flushing and integer_bindings and integer_failure:
                 record_bind = bindings[0].record
                 if isinstance(statement, Update):
                     record_binds = [node.right for criterion in statement._where_criteria

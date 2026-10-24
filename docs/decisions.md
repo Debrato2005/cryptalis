@@ -1586,3 +1586,27 @@ admission and production qualification remain incomplete.
 The [installed checkpoint](status.md#integer-installed-lifecycle-checkpoint-2026-10-24)
 extends this evidence across all three widths and both layouts on genuine fresh
 PostgreSQL clusters. Full admission and workload-cost approval remain pending.
+
+## Literal integer application default construction: 2026-10-24
+
+**IMPLEMENTED, bounded source checks:** permit an exact in-range Python int scalar
+client default for native int2/int4/int8 storage. Preserve native pending, NULL,
+render_nulls, refresh and rollback behavior. Server, callable, SQL, on-update and
+generated defaults remain outside this slice and remain required admission work.
+
+Add application_default to an integer field only when a literal default exists.
+Encode it as a canonical signed decimal string, including zero. This preserves
+the restricted manifest number grammar and exact signed 64-bit extrema. Reject
+leading zeroes, plus signs, negative zero, whitespace and other numeric syntax.
+The literal default is public application configuration. The lock records its
+decimal value; record values remain encrypted.
+Require pg-integer-default/v1 in that lock's reader set. Existing v7 locks without
+defaults retain their exact grammar and bytes. Older readers must still accept
+those locks and refuse a default-bearing lock before SQL. No descriptor, CF1,
+key-policy, nonce or ciphertext format changes follow. Full type admission and
+all production gates remain unchanged.
+
+The [source checkpoint](status.md#integer-defaults-and-orm-state-source-checkpoint-2026-10-24)
+records native and retained-reader checks. Valid integer ORM writes retain native
+loaded attributes. Only a known range failure selects the public coercion
+expression. This preserves async pending-state access without implicit I/O.

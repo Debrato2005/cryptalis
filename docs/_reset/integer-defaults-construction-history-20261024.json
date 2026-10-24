@@ -1,0 +1,82 @@
+{
+  "archive": "integer-defaults-construction-history-20261024.tar.gz",
+  "sha256": "fd692f33a709f5eefa1c4af2dcea071fe83a357b0ee137c30b0a0021b8404efa",
+  "scope": "Exact immutable construction and negative receipts; failures and setup-dependent skips retained.",
+  "members": [
+    {
+      "member": "cryptalis-integer-defaults-first-red-20261024.json",
+      "sha256": "21c349303c7591bd4831cb12fbf2005e53a6562e2625f318bf81862ee7f34443",
+      "counts": {
+        "failed": 12
+      },
+      "exit_code": 1,
+      "scope": "Native signed literal defaults, pending/refresh/NULL/dictionary/savepoint parity before enabling protected default construction"
+    },
+    {
+      "member": "cryptalis-integer-defaults-first-fix-20261024.json",
+      "sha256": "7360cc4d611ace854fa5696f1ffc2f3c43bfac214c4a8d579783640ba67ed9a5",
+      "counts": {
+        "failed": 12,
+        "passed": 153,
+        "skipped": 2
+      },
+      "exit_code": 1,
+      "scope": "Exact integer literal defaults reuse existing native default paths, strict optional reader grammar, native parity and Boolean/compiler regressions"
+    },
+    {
+      "member": "cryptalis-integer-defaults-native-green-20261024.json",
+      "sha256": "e146649c18b2866d4aef5b1e259cc721b712670cefb9673152cfc2b0ebbdb69a",
+      "counts": {
+        "passed": 18
+      },
+      "exit_code": 0,
+      "scope": "Canonical decimal default metadata preserves restricted manifest numbers; native default extrema/zero pending NULL dictionary and savepoint parity, all widths and nullability"
+    },
+    {
+      "member": "cryptalis-integer-defaults-admission-async-20261024.json",
+      "sha256": "aa15c9ecd64dd97ceaa99bbb49cc56ca713d34b06babcb4f91880e3c9ce53778",
+      "counts": {
+        "passed": 29,
+        "failed": 3
+      },
+      "exit_code": 1,
+      "scope": "Integer default grammar, in-range exact literals, live mapping mutation, retained installed-reader compatibility, and actual async native NULL/default/savepoint parity"
+    },
+    {
+      "member": "cryptalis-integer-orm-expiration-installed-red-20261024.json",
+      "sha256": "8b650a7c18fc7684bb5420658a5fe0ce6a8d58d89b8863852a0c4a05a4df903f",
+      "counts": {
+        "failed": 3
+      },
+      "exit_code": 1,
+      "scope": "Previous installed 13c integer candidate reproduces valid async INSERT attribute expiration against native PostgreSQL; default-free rows only"
+    },
+    {
+      "member": "cryptalis-integer-defaults-and-expiration-green-20261024.json",
+      "sha256": "621652b23642770ee65c88c4024dc48e5c29e3f1ce5f08974092aa568dfbec50",
+      "counts": {
+        "passed": 190
+      },
+      "exit_code": 0,
+      "scope": "Integer literal defaults and valid-write ORM state fix; default and default-free async controls, native error ordering/stale prepared plans, both retained readers and legacy Boolean/compiler regressions"
+    },
+    {
+      "member": "fresh-cluster-export-20261024-66.json",
+      "sha256": "46e8d2f8061492844cf10a624625950d9afa9d6794998fc9a27c248ffc75646b",
+      "counts": {
+        "passed": 1
+      },
+      "exit_code": 0,
+      "scope": "Fresh-cluster source export; primary cluster; original public slots and explicit restored-slot authority"
+    },
+    {
+      "member": "fresh-cluster-restore-20261024-65.json",
+      "sha256": "1d828951c7b59a9840a4f2c34d7a3419d2268b440296c94d588d2e424171ab88",
+      "counts": {
+        "passed": 1
+      },
+      "exit_code": 0,
+      "scope": "Fresh-cluster protected-backup recovery and adoption; isolated cluster; original public slots and explicit restored-slot authority"
+    }
+  ]
+}

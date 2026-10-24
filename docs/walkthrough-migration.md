@@ -1135,3 +1135,18 @@ IntegerRangeExceeded, as the attached failure remedy requires.
 This is internal construction, not a qualified public type. See the
 [installed checkpoint](status.md#integer-installed-lifecycle-checkpoint-2026-10-24)
 for the tested boundary and remaining admission evidence.
+
+
+## Internal literal integer client defaults
+
+Use a scalar in-range Python int for Column.default in this internal construction.
+Use the existing exact integer mapping. The lock records the public literal as a
+canonical decimal string and requires pg-integer-default/v1. Old default-free v7
+plans retain their reader behavior. Server and callable defaults remain refused.
+
+Native pending inserts use the default for omitted or None values. Dictionary
+INSERT keeps native render_nulls behavior. A later explicit None assignment is
+SQL NULL; a non-nullable column raises native 23502. Valid flushes keep the value
+loaded for async access. See the
+[source checkpoint](status.md#integer-defaults-and-orm-state-source-checkpoint-2026-10-24)
+for exact evidence and remaining qualification work.

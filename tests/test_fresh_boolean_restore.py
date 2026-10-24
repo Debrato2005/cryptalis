@@ -39,6 +39,12 @@ def test_boolean_fresh_cluster_authentication_adoption_and_package_free_latest_f
     native_python = int if bits else bool
     profile = 'integer-' + str(bits) if bits else 'boolean-storage'
     latest = -(1 << (bits - 1)) + 29 if bits else False
+    default = int(manifest['application_default']) if manifest.get('application_default') is not None else None
+    reader_keys = target_keys
+    if manifest.get('root_rewrapped'):
+        from payload_rotation_worker import rotated_keys
+        reader_keys = rotated_keys
+    assert manifest.get('root_rewrapped', False) is (default is not None)
     assert manifest['application_profile'] == profile and manifest.get('integer_bits', 0) == bits
     schema = manifest['schema']
     restore_dump(directory / 'plain.sql', os.environ['CRYPTALIS_FRESH_PLAIN_DATABASE'])
@@ -54,7 +60,7 @@ def test_boolean_fresh_cluster_authentication_adoption_and_package_free_latest_f
     owner, runtime = engine('CRYPTALIS_TEST_DATABASE_URL'), engine('CRYPTALIS_TEST_RUNTIME_DATABASE_URL')
     mapping = registry(metadata=MetaData(schema=schema))
     table = Table('customer', mapping.metadata, Column('id', Uuid, primary_key=True, autoincrement=False),
-        Column('tenant_id', Uuid, nullable=False), Column('name', dtype()), Column('label', Text))
+        Column('tenant_id', Uuid, nullable=False), Column('name', dtype(), default=default), Column('label', Text))
     class Customer: pass
     mapping.map_imperatively(Customer, table)
     approval = m.MaintenanceApproval('source export finished and schema dropped; fresh target excludes writers', 3600)
@@ -71,11 +77,11 @@ def test_boolean_fresh_cluster_authentication_adoption_and_package_free_latest_f
             connection.exec_driver_sql(f'UPDATE "{schema}".customer SET name=%s WHERE id=%s',
                 (frame[:-1] + bytes([frame[-1] ^ 1]), identity))
         with pytest.raises(m.TransitionFailure):
-            recovery.plan(source, owner, pin=pin, keys=target_keys, approval=intent)
+            recovery.plan(source, owner, pin=pin, keys=reader_keys, approval=intent)
         with owner.begin() as connection:
             connection.exec_driver_sql(f'UPDATE "{schema}".customer SET name=%s WHERE id=%s', (frame, identity))
-        binding = recovery.plan(source, owner, pin=pin, keys=target_keys, approval=intent)
-        sessions = attach(mapping, runtime, lock=source.lock_bytes, keys=target_keys,
+        binding = recovery.plan(source, owner, pin=pin, keys=reader_keys, approval=intent)
+        sessions = attach(mapping, runtime, lock=source.lock_bytes, keys=reader_keys,
                           deployment=(source, pin, binding))
         with sessions(tenant_id=TENANT) as session:
             observed = {str(row.id): row.name for row in session.scalars(select(Customer))}
@@ -88,16 +94,16 @@ def test_boolean_fresh_cluster_authentication_adoption_and_package_free_latest_f
             assert row.name == latest and type(row.name) is native_python
         expected = dict(manifest['expected'])
         expected[str(UUID(int=999))] = latest
-        reverse = d.plan(source, owner, source_pin=pin, keys=target_keys, restore=binding,
+        reverse = d.plan(source, owner, source_pin=pin, keys=reader_keys, restore=binding,
             plaintext_runtime_role=os.environ['CRYPTALIS_FRESH_PLAINTEXT_ROLE'],
             backfill_rows_per_second=1000, verify_rows_per_second=1000,
             temporary_bytes_per_row=1024, wal_bytes_per_row=2048)
         reverse_pin = app_pin(reverse, 'PREPARED')
         pure = d.PlaintextApproval(reverse.target_id, reverse.operation_id, reverse.digest, True,
                                   'public Boolean fixtures and retained protected dump')
-        assert d.apply(reverse, owner, keys=target_keys, pin=reverse_pin,
+        assert d.apply(reverse, owner, keys=reader_keys, pin=reverse_pin,
             approval=approval, consent=pure).phase == 'PLAINTEXT_PENDING'
-        assert d.apply(reverse, owner, keys=target_keys, pin=replace(reverse_pin, phase='PLAINTEXT_ACTIVATING'),
+        assert d.apply(reverse, owner, keys=reader_keys, pin=replace(reverse_pin, phase='PLAINTEXT_ACTIVATING'),
             approval=approval, consent=pure, until='PLAINTEXT_ACTIVE').phase == 'PLAINTEXT_ACTIVE'
         removal = d.RemovalApproval(reverse.target_id, reverse.operation_id, reverse.digest,
             'fresh process with Cryptalis imports denied', 'public fixture backup', True)
