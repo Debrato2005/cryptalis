@@ -34,7 +34,7 @@ from ._sqlmodel_types import autostring_impl
 from ._sqlalchemy_search import rewrite_search, search_shape, validate_search_storage
 from .crypto import CryptoFailure, AuthenticationFailed, FieldDescriptor, Keyring, KeyUnavailable, MAX_TEXT_BYTES, open_value, seal_value
 from .crypto.cf1 import _encode
-from .crypto.keys import InvalidText, RepresentationMismatch
+from .crypto.keys import InvalidText, InvalidValue, RepresentationMismatch
 from .manifest.compiler import _boolean_default, _native_text_length, _previous_lock, _value_mapping_matches
 from .manifest.parser import decode_manifest_json
 
@@ -79,6 +79,21 @@ class BulkVarcharFailureUnavailable(PolicyMismatch):
     remedy = 'Check PostgreSQL 16 VARCHAR coercion access and transaction state. Roll back before retry.'
 
 
+class IntegerRangeExceeded(InvalidValue, DontWrapMixin):
+    stage = 'PostgreSQL integer assignment'
+    sqlstate = '22003'
+    remedy = 'Use an integer within the declared native width. Roll back before retry.'
+
+    def __init__(self, width):
+        self.width = width
+        super().__init__()
+
+
+class BulkIntegerFailureUnavailable(PolicyMismatch):
+    stage = 'bulk integer failure'
+    remedy = 'Check PostgreSQL 16 integer coercion and transaction state. Roll back before retry.'
+
+
 def _varchar_assignment(value, limit):
     if limit is not None and type(value) is str and len(value) > limit:
         _encode(value)
@@ -89,6 +104,7 @@ def _varchar_assignment(value, limit):
 
 
 _VARCHAR_UPDATE_INVALID = b'PUBLIC VARCHAR OVERFLOW SENTINEL'
+_INTEGER_UPDATE_INVALID = b'PUBLIC INTEGER OVERFLOW SENTINEL'
 
 
 def _update_bind_name(value):
@@ -98,12 +114,12 @@ def _update_bind_name(value):
 
 
 @dataclass(frozen=True)
-class _UpdateCarrier:
+class _WriteCarrier:
     statement: object = field(repr=False)
     sql: str = field(repr=False)
     names: tuple = field(repr=False)
     constants: tuple = field(repr=False)
-    scope_key: str
+    scope_key: str | None
     record_key: str
     bindings: tuple = field(repr=False)
 
@@ -133,6 +149,16 @@ class _Binding:
 
 
 def _assignment(value, binding):
+    width = {'pg-int2-be/v1': 2, 'pg-int4-be/v1': 4, 'pg-int8-be/v1': 8}.get(binding.descriptor.value_codec)
+    if width is not None:
+        if value is None:
+            return None
+        if type(value) is not int:
+            raise InvalidValue()
+        bound = 1 << (width * 8 - 1)
+        if not -bound <= value < bound:
+            raise IntegerRangeExceeded(width)
+        return value
     if binding.boolean_processor is not None:
         try:
             return binding.boolean_processor(value)
@@ -367,8 +393,9 @@ class _Payload(TypeDecorator):
             raise UnsupportedProtectedOperation()
         if value.failure is not None:
             carrier = operation.update_carrier
-            if not (operation.bulk_update is not None and carrier is not None and
-                    type(value.failure) is VarcharLengthExceeded and value.body is _VARCHAR_UPDATE_INVALID and
+            if not ((operation.bulk_update is not None or operation.flushing) and carrier is not None and
+                    ((type(value.failure) is VarcharLengthExceeded and value.body is _VARCHAR_UPDATE_INVALID)
+                     or (type(value.failure) is IntegerRangeExceeded and value.body is _INTEGER_UPDATE_INVALID)) and
                     any(binding is value.binding for binding in carrier.bindings)):
                 raise value.failure
         return value.body
@@ -696,7 +723,7 @@ class _Attachment:
                 binding = _Binding(column, mapper.get_property_by_column(column).key, descriptor,
                                    record, mapper.get_property_by_column(record).key, tenant,
                                    mapper.get_property_by_column(tenant).key if tenant is not None else None,
-                                   mapper.class_, None if boolean else _native_text_length(source),
+                                   mapper.class_, None if boolean or source['type'] in ('int2', 'int4', 'int8') else _native_text_length(source),
                                    column.type.bind_processor(connection.dialect) if boolean else None,
                                    field.get('application_default'))
                 self.bindings.append(binding)
@@ -1276,14 +1303,15 @@ class _Attachment:
                     raise UnsupportedProtectedOperation()
                 try:
                     stored = _assignment(value, binding)
-                except (VarcharLengthExceeded, TypeError, ValueError) as failure:
-                    if binding.boolean_processor is None and not isinstance(failure, VarcharLengthExceeded):
+                except (VarcharLengthExceeded, IntegerRangeExceeded, TypeError, ValueError) as failure:
+                    if binding.boolean_processor is None and not isinstance(failure, (VarcharLengthExceeded, IntegerRangeExceeded)):
                         raise
                     # Bind processing occurs inside the native flush transaction.
-                    sealed = _Sealed(None, operation, binding, failure)
+                    sealed = _Sealed(_INTEGER_UPDATE_INVALID if type(failure) is IntegerRangeExceeded else None,
+                                     operation, binding, failure, record, tenant)
                 else:
                     body = seal_value(stored, binding.descriptor, tenant, record, operation.keys)
-                    sealed = _Sealed(body, operation, binding)
+                    sealed = _Sealed(body, operation, binding, record=record, tenant=tenant)
                 operation.prepared[(binding.column.table.schema, binding.column.table.name, record, binding.column.key)] = (value, sealed)
 
     def before_execute(self, connection, statement, multiparams, params, execution_options):
@@ -1319,7 +1347,7 @@ class _Attachment:
                     raise UnsupportedProtectedOperation()
                 operation.bulk_position += 1
             operation.bulk_batch = tuple(dict(group) for group in groups)
-            operation.update_carrier = self.prepare_update_carrier(connection, statement, groups, scope, record_bind)
+            operation.update_carrier = self.prepare_write_carrier(connection, statement, groups, scope, record_bind)
             return (operation.update_carrier.statement if operation.update_carrier is not None else statement), multiparams, params
         if operation.bulk_insert is not None and isinstance(statement, Insert):
             groups = multiparams if multiparams else [params]
@@ -1352,22 +1380,51 @@ class _Attachment:
                             raise UnsupportedProtectedOperation()
                         output[binding.column.key] = prepared[1]
                 changed.append(output)
+            operation.update_carrier = None
+            operation.bulk_batch = ()
+            integer_bindings = tuple(b for b in bindings if b.column.key in changed[0] and
+                                     b.descriptor.value_codec in ('pg-int2-be/v1', 'pg-int4-be/v1', 'pg-int8-be/v1'))
+            if operation.flushing and integer_bindings:
+                record_bind = bindings[0].record
+                if isinstance(statement, Update):
+                    record_binds = [node.right for criterion in statement._where_criteria
+                                    for node in visitors.iterate(criterion)
+                                    if isinstance(node, BinaryExpression) and node.operator is operators.eq
+                                    and isinstance(node.left, ColumnClause) and node.left.shares_lineage(record_bind)
+                                    and isinstance(node.right, BindParameter)]
+                    if len(record_binds) != 1:
+                        raise UnsupportedProtectedOperation()
+                    record_bind = record_binds[0]
+                operation.bulk_batch = tuple(dict(group) for group in changed)
+                operation.update_carrier = self.prepare_write_carrier(
+                    connection, statement, changed, None, record_bind, bindings=integer_bindings)
+                statement = operation.update_carrier.statement
             return statement, changed if multiparams else [], {} if multiparams else changed[0]
         return statement, multiparams, params
 
-    def prepare_update_carrier(self, connection, statement, groups, scope, record):
-        bindings = tuple(binding for binding in self.bindings
-                         if binding.column.table is _operation.get().bulk_update and
-                         binding.max_characters is not None and binding.column.key in groups[0])
+    def prepare_write_carrier(self, connection, statement, groups, scope, record, *, bindings=None):
+        if bindings is None:
+            bindings = tuple(binding for binding in self.bindings
+                             if binding.column.table is _operation.get().bulk_update and
+                             (binding.max_characters is not None or binding.descriptor.value_codec in
+                              ('pg-int2-be/v1', 'pg-int4-be/v1', 'pg-int8-be/v1')) and binding.column.key in groups[0])
         if not bindings:
             return None
         constants, assignments = [], {}
         for binding in bindings:
             body = bindparam(binding.column.key, type_=binding.column.type)
-            sentinel, text, limit, explicit = (literal(_VARCHAR_UPDATE_INVALID, LargeBinary()),
-                literal('xx', String()), literal(5), literal(False))
-            constants.extend((sentinel, text, limit, explicit))
-            overflow = func.pg_catalog.varchar(cast(text, String()), limit, explicit)
+            if binding.descriptor.value_codec in ('pg-int2-be/v1', 'pg-int4-be/v1', 'pg-int8-be/v1'):
+                width = int(binding.descriptor.value_codec[6])
+                dtype = {2: _native_types.SmallInteger, 4: _native_types.Integer, 8: _native_types.BigInteger}[width]
+                sentinel = literal(_INTEGER_UPDATE_INVALID, LargeBinary())
+                public_overflow = literal(str(1 << (8 * width - 1)), String())
+                constants.extend((sentinel, public_overflow))
+                overflow = cast(cast(public_overflow, dtype()), String())
+            else:
+                sentinel, text, limit, explicit = (literal(_VARCHAR_UPDATE_INVALID, LargeBinary()),
+                    literal('xx', String()), literal(5), literal(False))
+                constants.extend((sentinel, text, limit, explicit))
+                overflow = func.pg_catalog.varchar(cast(text, String()), limit, explicit)
             assignments[binding.column] = case((body == sentinel, cast(overflow, LargeBinary())), else_=body)
         generated = statement.values(assignments)
         compiled = generated.compile(dialect=connection.dialect, column_keys=sorted(groups[0]),
@@ -1375,9 +1432,9 @@ class _Attachment:
         names = tuple((_update_bind_name(bind.key), _update_bind_name(name)) for bind, name in compiled.bind_names.items())
         if len({key for key, _ in names}) != len(names) or len({name for _, name in names}) != len(names):
             raise UnsupportedProtectedOperation()
-        return _UpdateCarrier(generated, str(compiled), names,
+        return _WriteCarrier(generated, str(compiled), names,
                               tuple((_update_bind_name(bind.key), bind.value) for bind in constants),
-                              _update_bind_name(scope.key), _update_bind_name(record.key), bindings)
+                              _update_bind_name(scope.key) if scope is not None else None, _update_bind_name(record.key), bindings)
 
     def prepare_many(self, context, parameters):
         operation = self._check()
@@ -1429,7 +1486,8 @@ class _Attachment:
                             for name, value in expected.items())):
                     raise UnsupportedProtectedOperation()
             return
-        if operation.bulk_update is not None and isinstance(context.compiled.statement, Update):
+        if (operation.bulk_update is not None and isinstance(context.compiled.statement, Update) or
+                operation.flushing and operation.update_carrier is not None and isinstance(context.compiled.statement, (Insert, Update))):
             carrier = operation.update_carrier
             if (statement != str(context.compiled) or carrier is not None and
                     (context.compiled.statement is not carrier.statement or statement != carrier.sql)):
@@ -1459,7 +1517,7 @@ class _Attachment:
                                                 operation.tenant, generated=True)
             names, scope_key, record_key = dict(native_names), _update_bind_name(scope.key), _update_bind_name(record.key)
             constants = {}
-        if (scope_key not in names or record_key not in names or
+        if ((scope_key is None and not operation.flushing or scope_key is not None and scope_key not in names) or record_key not in names or
                 any(type(name) is not str for name in names.values()) or
                 len(names) != len(native_names) or len(set(names.values())) != len(names)):
             raise UnsupportedProtectedOperation()
@@ -1475,7 +1533,8 @@ class _Attachment:
             if any(key not in names for key in admitted):
                 raise UnsupportedProtectedOperation()
             expected = {names[key]: value for key, value in admitted.items()}
-            expected[names[scope_key]] = operation.tenant
+            if scope_key is not None:
+                expected[names[scope_key]] = operation.tenant
             expected.update(constants)
             if type(sent) is not dict or set(sent) != set(expected) or set(group) != set(expected):
                 raise UnsupportedProtectedOperation()
@@ -1489,7 +1548,10 @@ class _Attachment:
                     elif type(sent[name]) is not type(value) or sent[name] != value:
                         raise UnsupportedProtectedOperation()
                 elif isinstance(value, _Sealed):
-                    if (operation.bulk_seals.get(id(value)) is not value or value.permit is not operation or
+                    prepared = operation.prepared.get((value.binding.column.table.schema,
+                        value.binding.column.table.name, value.record, value.binding.column.key))
+                    owned = (prepared is not None and prepared[1] is value) if operation.flushing else operation.bulk_seals.get(id(value)) is value
+                    if (not owned or value.permit is not operation or
                             group[name] is not value or value.record != admitted[record_key] or
                             value.tenant != operation.tenant or
                             (sent[name] is not None if value.body is None else
@@ -1499,7 +1561,7 @@ class _Attachment:
                     if (group[name] is not value and
                             (type(group[name]) is not type(value) or group[name] != value)):
                         raise UnsupportedProtectedOperation()
-                    if (name in (names[scope_key], names[record_key]) and
+                    if (name in (names.get(scope_key), names[record_key]) and
                             (type(sent[name]) is not type(value) or sent[name] != value)):
                         raise UnsupportedProtectedOperation()
 
@@ -1582,6 +1644,14 @@ class _Session(Session):
         token = _operation.set(operation)
         try:
             return super().flush(objects)
+        except DBAPIError as error:
+            if getattr(error.orig, 'sqlstate', None) == '22003' and operation.update_carrier is not None:
+                for row in operation.bulk_batch:
+                    for value in row.values():
+                        if (type(value) is _Sealed and value.permit is operation and
+                                type(value.failure) is IntegerRangeExceeded):
+                            raise value.failure from None
+            raise
         finally:
             operation.prepared.clear()
             operation.rows.clear()
@@ -1757,10 +1827,10 @@ def _bulk_insert(state):
             value = row[binding.attribute]
             try:
                 stored = _assignment(value, binding)
-            except (VarcharLengthExceeded, TypeError, ValueError) as failure:
-                if binding.boolean_processor is None and not isinstance(failure, VarcharLengthExceeded):
+            except (VarcharLengthExceeded, IntegerRangeExceeded, TypeError, ValueError) as failure:
+                if binding.boolean_processor is None and not isinstance(failure, (VarcharLengthExceeded, IntegerRangeExceeded)):
                     raise
-                if type(failure) is VarcharLengthExceeded and failed_index is None:
+                if type(failure) in (VarcharLengthExceeded, IntegerRangeExceeded) and failed_index is None:
                     failed_index = index
                 sealed = _Sealed(None, operation, binding, failure, record, tenant)
             else:
@@ -1781,19 +1851,25 @@ def _bulk_insert(state):
             state.parameters = [rows[failed_index]]
             try:
                 state.invoke_statement()  # Includes native autoflush before binding.
-            except VarcharLengthExceeded as failure:
+            except (VarcharLengthExceeded, IntegerRangeExceeded) as failure:
                 if not any(value.failure is failure for value in operation.bulk_seals.values()):
                     raise
                 try:
                     # PG16 assignment coercion, with public constants only.
                     # Abort this transaction/savepoint without plaintext SQL.
-                    session.connection().execute(select(func.pg_catalog.varchar(
-                        cast(literal('xx'), String()), 5, False)))
+                    if type(failure) is IntegerRangeExceeded:
+                        dtype = {2: _native_types.SmallInteger, 4: _native_types.Integer, 8: _native_types.BigInteger}[failure.width]
+                        session.connection().execute(select(cast(literal(str(1 << (8 * failure.width - 1)), String()), dtype())))
+                    else:
+                        session.connection().execute(select(func.pg_catalog.varchar(
+                            cast(literal('xx'), String()), 5, False)))
                 except DBAPIError as error:
-                    if getattr(error.orig, 'sqlstate', None) != '22001':
-                        raise BulkVarcharFailureUnavailable() from None
+                    if getattr(error.orig, 'sqlstate', None) != failure.sqlstate:
+                        unavailable = BulkIntegerFailureUnavailable if type(failure) is IntegerRangeExceeded else BulkVarcharFailureUnavailable
+                        raise unavailable() from None
                     raise failure from None
-                raise BulkVarcharFailureUnavailable()
+                unavailable = BulkIntegerFailureUnavailable if type(failure) is IntegerRangeExceeded else BulkVarcharFailureUnavailable
+                raise unavailable()
             raise BulkVarcharFailureUnavailable()
         state.parameters = rows
         return state.invoke_statement()
@@ -1892,10 +1968,11 @@ def _bulk_update(state):
             if binding.attribute in row:
                 try:
                     stored = _assignment(row[binding.attribute], binding)
-                except (VarcharLengthExceeded, TypeError, ValueError) as failure:
-                    if binding.boolean_processor is None and not isinstance(failure, VarcharLengthExceeded):
+                except (VarcharLengthExceeded, IntegerRangeExceeded, TypeError, ValueError) as failure:
+                    if binding.boolean_processor is None and not isinstance(failure, (VarcharLengthExceeded, IntegerRangeExceeded)):
                         raise
-                    sealed = _Sealed(_VARCHAR_UPDATE_INVALID if type(failure) is VarcharLengthExceeded else None,
+                    sealed = _Sealed(_VARCHAR_UPDATE_INVALID if type(failure) is VarcharLengthExceeded else
+                                     _INTEGER_UPDATE_INVALID if type(failure) is IntegerRangeExceeded else None,
                                      operation, binding, failure, record, tenant)
                 else:
                     body = seal_value(stored, binding.descriptor, tenant, record, operation.keys)
@@ -1917,11 +1994,12 @@ def _bulk_update(state):
             raise UnsupportedProtectedOperation()
         return result
     except DBAPIError as error:
-        if getattr(error.orig, 'sqlstate', None) == '22001' and operation.update_carrier is not None:
+        if getattr(error.orig, 'sqlstate', None) in ('22001', '22003') and operation.update_carrier is not None:
             for row in operation.bulk_batch:
                 for value in row.values():
                     if (type(value) is _Sealed and operation.bulk_seals.get(id(value)) is value and
-                            type(value.failure) is VarcharLengthExceeded):
+                            type(value.failure) in (VarcharLengthExceeded, IntegerRangeExceeded) and
+                            value.failure.sqlstate == error.orig.sqlstate):
                         raise value.failure from None
         raise
     finally:
@@ -2046,7 +2124,7 @@ def attach(mapping: registry, engine: Engine | AsyncEngine, *, lock: bytes, keys
     try:
         document = decode_manifest_json(lock)
         if (not isinstance(mapping, registry) or not isinstance(engine, (Engine, AsyncEngine)) or
-                document["schema"] not in ("cryptalis.lock/v1", "cryptalis.lock/v2", "cryptalis.lock/v3", "cryptalis.lock/v4", "cryptalis.lock/v5", "cryptalis.lock/v6") or document["profile"] != "cf1"):
+                document["schema"] not in ("cryptalis.lock/v1", "cryptalis.lock/v2", "cryptalis.lock/v3", "cryptalis.lock/v4", "cryptalis.lock/v5", "cryptalis.lock/v6", "cryptalis.lock/v7") or document["profile"] != "cf1"):
             raise PolicyMismatch()
         native_engine = engine.sync_engine if isinstance(engine, AsyncEngine) else engine
         if native_engine.echo or not native_engine.hide_parameters:

@@ -21,6 +21,47 @@ and [competitive capability matrix](research/capability-matrix.md) govern priori
 Progress follows complete real-application journeys and resolved production requirements.
 All seven production gates remain UNKNOWN.
 
+## Integer storage source checkpoint: 2026-10-24
+
+**IMPLEMENTED, internal candidate:** signed native int2/int4/int8 storage uses exact
+Python int values or SQL NULL. Typed context/v2 binds fixed signed big-endian
+codecs. Lock/v7 names the required codec readers. Existing text and Boolean
+formats retain their selectors and bytes. Integer search, order, range,
+arithmetic, aggregates, joins and protected defaults remain unadmitted.
+
+**VERIFIED, bounded source cell:** [233 checks](_reset/integer-source-regression-20261024.json)
+pass in 83.85 wrapper seconds with all 226 Python hashes stable. They include
+independent frame construction, native extrema and prepared-plan controls,
+sync/async writes, rollback/savepoints, both layouts, rotations, process recovery,
+compiler refusals and the unchanged installed pre-integer reader. Seven actual
+SIGKILL/restart controls pass, including six integer width/layout combinations.
+The retained reader refuses v7 before SQL in both layouts.
+
+Native custom plans reject an unmatched out-of-width UPDATE with 22003. Generic
+plans return zero rows. A stale ORM row produces native StaleDataError under a
+generic plan. Public coercion constants preserve these outcomes without private
+numeric binds. Ordered entity/dictionary INSERT retains the earlier constraint
+error. Typed IntegerRangeExceeded exposes only width and SQLSTATE 22003.
+
+Genuine source [export](_reset/fresh-cluster-export-20261024-68.json) and
+[restore](_reset/fresh-cluster-restore-20261024-67.json) pass for int64 with
+preserved public slots after payload rotation. Each phase passes one control.
+Tampered frames refuse adoption; latest edits survive native-width removal and a
+fresh child with Cryptalis imports denied. The Boolean
+[export](_reset/fresh-cluster-export-20261024-69.json) and
+[restore](_reset/fresh-cluster-restore-20261024-68.json) also pass one control each.
+The [construction history](_reset/integer-construction-history-20261024.json)
+retains exact intermediate receipts, including failures, in a verified ZIP.
+The initial integer restore exposed a text-only result-type assertion; the
+corrected verifier requires the pinned native type after authentication.
+
+CF1 frame sizes are 44/46/50 bytes for non-NULL int2/int4/int8 values. These are
+frame costs, excluding heap, index, metadata and WAL costs. Installed-artifact
+qualification, full type admission and measured workload costs remain pending.
+All six integer technical gates remain unpassed. All 34 objective states and
+seven UNKNOWN production gates remain unchanged. See the
+[contract](decisions.md#storage-only-postgresql-integer-contract-2026-10-24).
+
 ## Native integer failure oracle: 2026-10-24
 
 **VERIFIED, native PostgreSQL only:** nine width/route controls pass for int2,

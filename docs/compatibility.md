@@ -195,6 +195,20 @@ Protected plaintext does not reach PostgreSQL for this check.
 Other custom type decorators and dialect variants remain unadmitted for protected mappings and query binds.
 See [native VARCHAR mappings](walkthrough-migration.md#native-varchar-mappings).
 
+## Internal integer storage candidate
+
+Native signed int2/int4/int8 mappings now have bounded storage-only source checks.
+They require exact SmallInteger/Integer/BigInteger types and Python int or SQL NULL.
+Bool, custom hooks, domains, width mismatches and coercions refuse. Protected
+integer predicates, ordering, arithmetic, aggregates, joins and defaults remain
+unadmitted. Existing NULL-presence predicates retain their bounded grammar.
+
+Native prepared-plan selection controls when an overflow fails. Public bound
+coercion constants preserve custom/generic timing, stale-row behavior and earlier
+INSERT constraints without private numeric binds. Range failures retain typed
+IntegerRangeExceeded and SQLSTATE 22003. Full type admission remains pending;
+see the [checkpoint](status.md#integer-storage-source-checkpoint-2026-10-24).
+
 ## Optional SQLModel bridge
 
 An explicit `cryptalis.sqlmodel.attach` bridge admits synchronous PostgreSQL

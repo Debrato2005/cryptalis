@@ -99,3 +99,44 @@ def test_native_integer_extrema_failure_rollback_savepoint_and_zero_match(dtype,
         with owner.begin() as connection:
             connection.exec_driver_sql(f'DROP SCHEMA IF EXISTS "{schema}" CASCADE')
         owner.dispose()
+
+
+@pytest.mark.parametrize('native_type,bits', [('smallint', 16), ('integer', 32), ('bigint', 64)])
+@pytest.mark.parametrize('mode', ['force_custom_plan', 'force_generic_plan'])
+def test_native_prepared_zero_match_integer_failure_timing(native_type, bits, mode):
+    """Observe prepared planning before selecting any protected failure carrier."""
+    import psycopg
+    schema = 'integer_prepared_' + uuid4().hex
+    owner = engine('CRYPTALIS_TEST_DATABASE_URL')
+    try:
+        with owner.begin() as connection:
+            connection.exec_driver_sql(f'CREATE SCHEMA "{schema}"')
+            connection.exec_driver_sql(f'CREATE TABLE "{schema}".subject(id uuid PRIMARY KEY, value {native_type})')
+        with psycopg.connect(os.environ['CRYPTALIS_TEST_DATABASE_URL']) as connection:
+            connection.execute('SET LOCAL plan_cache_mode=' + mode)
+            try:
+                result = connection.execute(f'UPDATE "{schema}".subject SET value=%s::{native_type} WHERE id=%s',
+                    (1 << (bits - 1), uuid4()), prepare=True)
+            except psycopg.Error as failure:
+                assert failure.sqlstate == '22003'
+                observation = dict(result='error', sqlstate=failure.sqlstate)
+            else:
+                assert result.rowcount == 0
+                observation = dict(result='zero_rows', rowcount=result.rowcount)
+            observation['transaction'] = connection.info.transaction_status.name
+            expected = ('error', 'INERROR') if mode == 'force_custom_plan' else ('zero_rows', 'INTRANS')
+            assert (observation['result'], observation['transaction']) == expected
+            connection.rollback()
+            assert connection.execute(f'SELECT count(*) FROM "{schema}".subject').fetchone() == (0,)
+        receipt = os.environ.get('CRYPTALIS_INTEGER_PREPARED_RECEIPT')
+        if receipt:
+            target = Path(receipt)
+            target = target.with_name(target.stem + '-' + str(bits) + '-' + mode + target.suffix)
+            with target.open('x') as stream:
+                json.dump(dict(bits=bits, plan_cache_mode=mode, observation=observation,
+                    boundary='Native prepared PostgreSQL only; no protected carrier admission'), stream, indent=2)
+                stream.write('\n')
+    finally:
+        with owner.begin() as connection:
+            connection.exec_driver_sql(f'DROP SCHEMA IF EXISTS "{schema}" CASCADE')
+        owner.dispose()

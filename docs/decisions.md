@@ -1544,3 +1544,41 @@ passed. The configured run verifies the unchanged prior reader, direct planning,
 cancellation, process/COMMIT recovery and latest-value exit. Preserve both receipts.
 The [final boundary](_reset/key-policy-final-boundary-20261024.json) binds the exact
 current artifact and qualification. No production gate changes.
+
+## Storage-only PostgreSQL integer contract: 2026-10-24
+
+**IMPLEMENTED, internal candidate:** add signed native int2, int4 and int8
+storage with exact SmallInteger, Integer and BigInteger mappings. No protected
+integer equality, ordering, range, arithmetic, aggregate or join is admitted.
+Keep strict built-in int values and SQL NULL. Refuse bool, subclasses and other
+Python coercions. Native width bounds remain exact.
+
+Use pg-int2-be/v1, pg-int4-be/v1 and pg-int8-be/v1 signed big-endian codecs of
+2, 4 and 8 bytes. Bind each codec through the existing typed context/v2 digest
+and AAD. Existing text and Boolean descriptor/frame bytes remain unchanged.
+Storage CF1 frames have exact non-NULL lengths 44, 46 and 50. Authenticate before
+decoding; reject malformed authenticated widths and cross-codec relocation.
+Use existing AEAD, KDF, root policy and fresh nonce rules.
+
+Integer locks use cryptalis.lock/v7 and always include layout as None or
+preserve-public-slots/v1. Source metadata always includes owned_sequences,
+including an empty list. Require an integer field and the exact codec reader set;
+refuse relabeled old locks. Existing v1-v6 emission and reader behavior stay exact.
+Both default replacement and public-slot layouts must retain native width,
+constraints, defaults policy and metadata through restore and removal. Initially
+refuse protected defaults and generated values; completing those remains required.
+
+Preserve the measured native failure and transaction/savepoint behavior without
+sending private numeric values to PostgreSQL. A prepared custom plan raises
+22003 even for zero-match UPDATE; a generic plan returns zero rows and retains
+an active transaction. A universal early overflow refusal would break that case.
+Use bound public coercion constants in the existing ordered write paths.
+The owned carrier also preserves stale ORM updates and INSERT batch error order.
+Fail explicitly if native failure behavior cannot be established. SQLAlchemy
+entity, dictionary INSERT and scoped dictionary UPDATE need separate native
+controls. All six technical admission gates remain unpassed until their full
+proofs, leakage statement and measured costs exist. No production gate changes.
+
+The [source checkpoint](status.md#integer-storage-source-checkpoint-2026-10-24)
+records executable progress. This decision selects construction scope; full type
+admission and production qualification remain incomplete.
