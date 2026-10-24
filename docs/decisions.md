@@ -1439,6 +1439,37 @@ failure, ancestry, journal-free REMOVED status and output failure controls pass.
 Installed and optional genuine-fresh reference qualification remain pending.
 This evidence grants no external inventory, provider or recovery qualification.
 
+## Pinned public key-policy status metadata: 2026-10-24
+
+**IMPLEMENTED, bounded source verification:** optional `status --key-policy-context
+MODULE:FACTORY` accepts a frozen, repr-disabled KeyPolicyStatusContext with
+operation_id, plan_digest and a tuple of public KeyPolicy values. Bind the exact
+operation and artifact digest before command-managed database access. Admit only
+protection or activation MigrationPlan artifacts and reverse plans with their
+embedded source policy. Refuse preparation P for this new option before host
+loading. Existing preparation status, Doctor and no-option output stay unchanged.
+
+Validate exact native policy, wrapper and context values and the complete
+per-tenant policy set. Bound the tuple to 64 policies, each policy's existing
+32-wrapper bound and 16 MiB aggregate sealed-wrapper bytes. Preserve the existing
+canonical policy document, wrapper order and digest through one pure helper.
+No new crypto or artifact format follows.
+
+Report selected payload/search generations and public domain, tenant, provider,
+root, context and wrapper-digest identities in a separate metadata object. Never
+report sealed bytes or material. DIGEST_MATCH means local agreement with the
+pinned artifact only. Authority remains HOST_SUPPLIED_METADATA, verification
+NOT_PERFORMED and provider availability, material correctness, inventory
+completeness and recovery capacity UNKNOWN. Host effects remain UNKNOWN.
+Allow this option with retained-backup metadata, with independent matching
+contexts. Neither option grants custody, authentication, retirement or loss rights.
+
+The source profile passes 113 checks with 25 new controls after one test-only
+preparation snapshot correction. Earlier parser RED and failed initial receipts
+remain intact. All 223 Python hashes remain stable. Generation2 publication and
+latest-value removal retain both public policy metadata and declared old-backup
+references without keys. Installed and production qualification remain separate.
+
 ## Invalid native-coroutine SDK response cleanup: 2026-10-24
 
 Close an exact native CoroutineType returned by a synchronous SDK callback before

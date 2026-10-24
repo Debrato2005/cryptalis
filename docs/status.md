@@ -21,6 +21,32 @@ and [competitive capability matrix](research/capability-matrix.md) govern priori
 Progress follows complete real-application journeys and resolved production requirements.
 All seven production gates remain UNKNOWN.
 
+## Pinned public key-policy status: 2026-10-24
+
+**VERIFIED, bounded source profile:** optional `status --key-policy-context
+MODULE:FACTORY` reports public policy metadata under the exact artifact digest.
+The host supplies KeyPolicyStatusContext(operation_id, plan_digest, policies).
+Strict native policy/context/wrapper validation and the exact tenant-policy set
+precede database access. A pure helper preserves the existing canonical policy
+document and digest, including wrapper order. Preparation P refuses before host
+loading for this option; its existing status path remains supported.
+
+The report lists selected generations, public provider/root/context identities
+and wrapper digests. It emits no sealed bytes. DIGEST_MATCH means local metadata
+agreement only. Verification is NOT_PERFORMED; provider availability, material
+correctness, completeness and recovery capacity remain UNKNOWN. Both metadata
+options can be used after current-value removal without a journal or key work.
+
+The [RED](_reset/key-policy-status-source-red-20261024.json) records one parser
+failure. The [initial run](_reset/key-policy-status-source-green-initial-20261024.json)
+passes 112 tests and exposes one test-only preparation snapshot error. After that
+fixture correction, the [source run](_reset/key-policy-status-source-green-final-20261024.json)
+passes all 113 tests in 76.17 seconds, including 25 new controls. All 223 Python
+hashes stay stable. Real rewrap, payload2, search2, latest-value reverse/removal,
+retained metadata, pre-connect refusals and output failure controls pass.
+Installed qualification remains pending. All 34 objective states and seven UNKNOWN
+gates remain unchanged. See the [contract](architecture/README.md#public-key-policy-status-metadata).
+
 ## Invalid KMS coroutine-response cleanup: 2026-10-24
 
 **VERIFIED, bounded source protocol and actual-SDK checks:** a synchronous SDK

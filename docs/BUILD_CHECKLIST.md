@@ -25,6 +25,11 @@ No objective is complete until its acceptance evidence and applicable gate pass.
 
 ## Current boundary
 
+- Pinned public key-policy status passes 113 source checks, including 25 new controls.
+  Generation metadata and retained backup references remain key-free after removal.
+  Digest agreement does not qualify custody. See the
+  [checkpoint](status.md#pinned-public-key-policy-status-2026-10-24).
+
 - Invalid native-coroutine KMS responses are closed before the existing safe failure.
   The source protocol and actual-SDK local profile pass 55 checks. See the
   [checkpoint](status.md#invalid-kms-coroutine-response-cleanup-2026-10-24).

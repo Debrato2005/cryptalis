@@ -173,6 +173,8 @@ def _parser() -> argparse.ArgumentParser:
     status.add_argument('--restore-binding', type=Path, help='Approved restored-target binding, when applicable.')
     status.add_argument('--host-context', metavar='MODULE:FACTORY',
                         help='Optional trusted synchronous factory for declared lineage backup references; completeness and availability remain UNKNOWN.')
+    status.add_argument('--key-policy-context', metavar='MODULE:FACTORY',
+                        help='Optional trusted synchronous factory for pinned public policy metadata; no provider or material verification.')
     status.add_argument('--json', action='store_true', dest='machine_json', help='Write one JSON object.')
     status.set_defaults(handler=_status_command)
     doctor = commands.add_parser('doctor', help='Inspect native schema or ACTIVE runtime admission.',
@@ -773,13 +775,16 @@ def _status_command(arguments: argparse.Namespace) -> int:
     doctor = arguments.command == 'doctor'
     operation = 'deployment.doctor' if doctor else 'transition.status'
     retained_specification = None if doctor else getattr(arguments, 'host_context', None)
-    retained = None
+    policy_specification = None if doctor else getattr(arguments, 'key_policy_context', None)
+    retained = policy_metadata = None
 
     def metadata_failure(failure):
-        if retained_specification is not None:
+        if retained_specification is not None or policy_specification is not None:
             failure.error.update(effects='NONE', host_configuration_effects='UNKNOWN')
             if retained is not None:
                 failure.error['retained_obligations'] = retained
+            if policy_metadata is not None:
+                failure.error['pinned_key_policy_metadata'] = policy_metadata
         return failure
     try:
         import psycopg
@@ -834,7 +839,11 @@ def _status_command(arguments: argparse.Namespace) -> int:
         if not connection_info or '\x00' in connection_info:
             raise ValueError('invalid connection input')
         connection_info = connection_info.replace('postgresql+psycopg://', 'postgresql://', 1)
-        if retained_specification is not None:
+        if policy_specification is not None and preparation:
+            raise _CommandFailure('Use a protection, activation or reverse artifact for public policy metadata.',
+                family='Transition', code='KeyPolicyMetadataUnsupported', operation=operation,
+                stage='inputs', cause='UnsupportedPreparation', exit_code=2)
+        if retained_specification is not None or policy_specification is not None:
             if preparation:
                 from cryptalis._rotation_transition import _pin as admit_preparation
                 admit_preparation(plan, pin)
@@ -856,6 +865,9 @@ def _status_command(arguments: argparse.Namespace) -> int:
     if retained_specification is not None:
         from cryptalis._retained_obligations import report
         retained = report(plan, retained_specification)
+    if policy_specification is not None:
+        from cryptalis._key_policy_status import report as policy_report
+        policy_metadata = policy_report(plan, policy_specification)
 
     engine = None
     try:
@@ -942,6 +954,8 @@ def _status_command(arguments: argparse.Namespace) -> int:
         result['source_operation_id'] = str(plan.source.operation_id)
     if retained is not None:
         result.update(retained_obligations=retained, host_configuration_effects='UNKNOWN')
+    if policy_metadata is not None:
+        result.update(pinned_key_policy_metadata=policy_metadata, host_configuration_effects='UNKNOWN')
     output = json.dumps(result, sort_keys=True, separators=(',', ':')) if arguments.machine_json else '\n'.join(
         f'{key}: {str(value).lower() if type(value) is bool else "UNKNOWN" if value is None else value}' for key, value in result.items())
     try:

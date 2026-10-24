@@ -224,6 +224,22 @@ deployment authority follows. Doctor's strict key-free tuple remains unchanged. 
 [verified checkpoint](../status.md#operational-cli-initialization-2026-10-24).
 Source and installed initialization verification pass.
 
+### Public key-policy status metadata
+
+**IMPLEMENTED, bounded source verification:** optional `status --key-policy-context
+MODULE:FACTORY` accepts exact KeyPolicyStatusContext(operation_id, plan_digest,
+policies). Admit protection/activation or reverse artifacts. Refuse preparation P
+before host loading. Require exact native policy values, matching domain and the
+complete pinned tenant-policy digest set. Bound metadata to 64 policies, 32
+wrappers per policy and 16 MiB aggregate sealed bytes. Existing policy canonical
+bytes and wrapper order remain unchanged.
+
+Report public identities, selected generations and wrapper SHA-256 values. Emit
+no wrapper bytes or keys. DIGEST_MATCH proves local agreement only. Host authority,
+provider availability, material correctness, completeness and recovery remain
+unqualified. Doctor, retained contexts and no-option status preserve their contracts.
+See the [checkpoint](../status.md#pinned-public-key-policy-status-2026-10-24).
+
 ### Retained-backup status metadata
 
 **IMPLEMENTED, bounded source and installed verification:** optional `status --host-context MODULE:FACTORY`

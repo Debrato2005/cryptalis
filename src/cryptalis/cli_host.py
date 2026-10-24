@@ -12,7 +12,7 @@ from uuid import UUID
 from sqlalchemy.engine import Engine
 from sqlalchemy.orm import registry
 
-from cryptalis.crypto.keys import Keyring
+from cryptalis.crypto.keys import KeyPolicy, Keyring
 from cryptalis.deprotection import PlaintextApproval, RemovalApproval
 from cryptalis.manifest.compiler import SearchReview, WriterInventory
 from cryptalis.migration import DeploymentPin, MaintenanceApproval
@@ -259,3 +259,10 @@ class RetainedObligationsContext:
     operation_id: UUID
     plan_digest: str
     records: tuple[RetainedBackupObligation, ...]
+
+
+@dataclass(frozen=True, repr=False)
+class KeyPolicyStatusContext:
+    operation_id: UUID
+    plan_digest: str
+    policies: tuple[KeyPolicy, ...]
