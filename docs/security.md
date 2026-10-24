@@ -585,6 +585,14 @@ SDK behavior, key ARN, context and response checks remain unchanged. No live AWS
 qualification follows. See the
 [checkpoint](status.md#synchronous-kms-sdk-admission-2026-10-24).
 
+### Protected-search dispatch admission
+
+**VERIFIED, bounded source controls:** reject unadmitted custom binary renderers
+before protected predicate rewriting and key resolution. Async SELECT admission
+must precede key preparation. Native FALSE controls and ordinary query parity
+separate safe refusal from changed SQL semantics. See the
+[checkpoint](status.md#exact-protected-search-expression-dispatch-2026-10-24).
+
 ## Owned-sequence admission
 
 **IMPLEMENTED, bounded source and installed verification:** lock/v5 admits only inspected ordinary persistent sequences

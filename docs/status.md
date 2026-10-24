@@ -36,6 +36,25 @@ stable in both runs. Installed qualification remains pending.
 This fixes client admission only; live AWS custody and production qualification
 remain UNKNOWN.
 
+## Exact protected-search expression dispatch: 2026-10-24
+
+**VERIFIED, bounded source native regressions:** protected equality rewriting requires
+native SQLAlchemy binary dispatch. Custom subclasses or instance renderers must
+fail before key resolution and execution. A benign FALSE renderer reproduced
+four attached-query failures while six native and ordinary-query controls passed.
+
+The first fix passed 183 affected tests but exposed two async early-key-resolution
+failures. Async SELECT admission now precedes preparation; synchronous execution
+rechecks admission. This changes no query capability, crypto or format.
+The [initial RED](_reset/search-ast-source-red-20261024.json) and
+[first attempted fix](_reset/search-ast-source-green-20261024.json) remain recorded.
+The [corrected source run](_reset/search-ast-source-green-final-20261024.json) passes
+185 native query, projection, NULL and Boolean controls in 45.77 seconds, with no
+skips. All 219 Python hashes stay stable.
+
+Both sync and async custom-dispatch refusals precede keys and driver execution.
+Installed qualification remains pending.
+
 ## Original HTTP operational CLI journey: 2026-10-24
 
 **VERIFIED within the source and installed profiles at `worktree-048bd928c0a2c3e8`:**

@@ -1968,6 +1968,10 @@ def _async_method(name):
     async def method(self, *args, **kwargs):
         statement = args[0] if args else kwargs.get('statement')
         permit = request = delete_tenant = None
+        if isinstance(statement, Select):
+            session = self.sync_session
+            session._owner._check_configuration()
+            session._owner.admit(statement)
         if isinstance(statement, Delete):
             if name != 'execute':
                 raise UnsupportedProtectedOperation()

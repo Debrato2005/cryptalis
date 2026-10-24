@@ -1387,3 +1387,13 @@ Reject recognized coroutine or async-generator functions and callable objects
 before storing the client. Keep InvalidContext redaction and existing synchronous
 SDK behavior. The separate async unwrap API retains its existing thread boundary.
 This admission check supplies no live provider qualification or credentials.
+
+## Native search-expression dispatch admission: 2026-10-24
+
+Reject custom binary compilation paths before rewriting protected predicates.
+A subclass or per-instance renderer can change native SQL semantics; replacing
+it with an ordinary equality predicate is not compatible. Reuse the existing
+exact native/annotated-node admission check. For async SELECT, perform existing
+configuration and statement admission before key preparation, then retain the
+normal execution check. Preserve ordinary equality, negative predicates, IN,
+NULL and Boolean expression behavior. This admits no new public operation.
