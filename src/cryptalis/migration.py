@@ -624,6 +624,8 @@ def _policy(ring):
 
 
 def _ring(keys, tenant, p):
+    if str(tenant) not in p.document['key_policies']:
+        raise TransitionFailure('key_policy_changed', p.operation_id)
     ring = keys(tenant) if callable(keys) else keys
     if (not isinstance(ring, Keyring) or ring.policy.tenant_id != tenant or
             str(ring.policy.domain_id) != p.document['lock']['domain_id'] or

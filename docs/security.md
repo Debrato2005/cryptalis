@@ -30,6 +30,16 @@ backups and statistics can retain plaintext from before protection. Decrypt-back
 requires explicit plaintext consent and restores the original source authority.
 These controls do not qualify independent security review or production fencing.
 
+### Tenant-scoped online capture (P2)
+
+**VERIFIED, local source cell; installed verification pending:** P2 is selected only by an explicit `native_tenants` tuple. The tuple accepts at most 1,024 unique UUID objects and is stored as sorted UUID strings. The nil UUID is valid. P1 remains the unchanged single-tenant v1 contract.
+
+The P2 artifact binds exactly the host-approved tenant policies, including tenants with no current rows. It also binds the fixed table UUID policy for each single-tenant table. A UUID outside the approved native and fixed scope union fails before the host key resolver runs. A native row whose UUID matches an approved fixed scope can resolve that known policy during read-only planning, then fails native-scope admission. It cannot add key authority or reach DDL. The locked expansion check rejects existing unapproved or NULL tenant values before it creates the journal or adds columns.
+
+During capture, native values remain authoritative. A non-owner write for an unapproved non-NULL tenant fails with SQLSTATE `55000`. A NULL tenant fails the native NOT NULL constraint with SQLSTATE `23502`. Every update clears all shadow payloads, including tenant and record moves. Backfill then seals with the row's actual tenant and record identity. Tenant-scoped unique indexes include the tenant key before the protected equality term.
+
+P2 uses the unchanged `cryptalis.transition/v8` activation artifact and access-contract successor chain. Empty tenant policies remain in the artifact through restore and all rotations. The host still excludes owner and DDL writers. This source change adds no live KMS or production pause qualification. All seven production gates remain UNKNOWN.
+
 
 ## Current local enforcement evidence: 2026-10-07
 

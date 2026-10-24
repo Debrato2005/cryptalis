@@ -25,6 +25,21 @@ Current-data decrypt-back must restore the recorded source role and revoke
 the encrypted target. Do not claim plaintext erasure or a bounded final pause.
 All seven production gates remain UNKNOWN.
 
+**APPROVED, tenant-scoped extension:** P1 remains the single-tenant
+`cryptalis.online-protection/v1` contract. P2 uses v2 only when the host supplies
+`native_tenants` as a tuple of at most 1,024 unique UUID values. The canonical
+artifact stores the UUID strings in sorted order. The nil UUID is a valid tenant
+value. An omitted tuple keeps P1 behavior.
+
+P2 binds exactly one key policy for each approved tenant, including tenants with
+no current rows, plus the fixed table UUID policy for each single-tenant table.
+Reject UUIDs outside the approved native and fixed scope union before host key
+resolution. A native row must belong to `native_tenants`, even if its UUID also
+identifies an approved fixed scope. Lock the tables and
+recheck existing rows before any DDL. The existing `cryptalis.transition/v8`
+activation artifact and access-contract successor chain remain unchanged.
+Keep all production gates UNKNOWN until their separate admission evidence passes.
+
 
 
 ## Comprehensive first public release: 2026-10-23

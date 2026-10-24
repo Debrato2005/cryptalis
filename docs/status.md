@@ -10,6 +10,16 @@ No PostgreSQL/provider/runtime cell, production key provider, independent review
 VERIFIED below refers only to the named checks and their exact revisions.
 All other contract and promotion requirements are SPECIFIED. All seven full gates remain UNKNOWN.
 
+## Tenant-scoped online lifecycle: 2026-10-24
+
+**VERIFIED, local source cell:** explicit approved tenant scopes extend online initial protection to tenant-column tables. The v2 preparation artifact binds the complete approved policy set, including empty scopes and fixed table scopes. Planning rejects UUIDs outside the approved policy set before host key lookup. Native membership must also pass the narrower tenant allowlist. Locked expansion rechecks membership before DDL. Native writes reject unknown tenants and preserve the native NULL failure. Backfill uses each row's current tenant and record identity. Scoped uniqueness includes the tenant key. P1 and the v8 activation format remain unchanged.
+
+The local lifecycle check stages real frames, moves a tenant and record identity, invalidates both protected fields in a fixed-scope table, and captures lower-key inserts, deletion/reinsertion and NULL. It then backs up, drops the source schema, restores into an explicitly selected second database, adopts, and rotates root wrapping, payload and search keys. An approved nil-UUID tenant stays empty until its first protected write after all rotations. Current protected edits survive decrypt-back and removal. A child process refuses Cryptalis imports, reads both native tables and commits an ordinary write.
+
+The affected source run passes **452 checks in 250.92 pytest seconds**, including the unchanged original HTTP application and prior single-tenant online controls. All three mandatory role probes pass. The [source receipt](_reset/online-tenants-source-20261024.json) retains all 239 Python hashes unchanged. The first focused attempt failed because the test used a tenant session for a fixed-scope table; the corrected focused run passes both lifecycle and refusal controls. The installed artifact check is pending. The existing Starlette/AnyIO warning remains.
+
+This is a synthetic SQLAlchemy fixture on a second database in the same local PostgreSQL 16 cluster. Development custody stays in the qualification process. It does not prove fresh-cluster multi-tenant recovery, independent provider recovery, live KMS, production fencing or pause budgets. All seven production gates remain UNKNOWN.
+
 ## Original online HTTP fresh recovery: 2026-10-24
 
 **VERIFIED, source and installed cells:** the unchanged 26-file application now

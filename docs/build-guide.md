@@ -237,6 +237,7 @@ Cryptalis imports from the reviewed wheel instead of the source checkout.
 
 | Row | Profile | Application journey | Evidence boundary |
 |---|---|---|---|
+| Tenant-scoped online lifecycle | `online_qualification.py -- tests/test_online_tenants.py -q` | Native capture and tenant moves, scoped uniqueness, protected backup, source-schema decommission, adoption, all rotations and current-data native exit | Synthetic mixed-scope SQLAlchemy fixture; second database on the same cluster; in-process development custody. Source and installed evidence remain separate |
 | Original online HTTP fresh recovery | `online_qualification.py --http-fresh` | Online adoption, protected backup, checked source shutdown, fresh restore/adoption, root/payload/search rotations, original HTTP and latest-value native exit | 26 unchanged files, three freshly probed roles per cluster, reconstructible public custody. No production fencing or pause claim |
 | Original HTTP online adoption | `online_qualification.py --http` | Concurrent original signup, native HTTP during capture, fenced cutover, protected HTTP/search, latest-value reverse and package-free HTTP restart | 26 unchanged pinned files. Three roles. No backup/rotation repeat or production downtime qualification |
 | Original HTTP/authentication | `--sqlmodel-http` | Native routes, Doctor, protection, search, backup, fresh adoption, root/payload/search rotation, latest-value removal, package-free HTTP restart | 26 pinned files. TestClient and loopback SMTP. Explicit single tenancy and public fixture keys |

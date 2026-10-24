@@ -30,7 +30,7 @@ def main():
     if selected[:1] == ['--']: selected = selected[1:]
     if not selected:
         selected = (['tests/profile_online_http_application.py','-q'] if args.http or args.http_fresh else
-                    ['tests/test_online_protection.py','tests/test_online_recovery.py','tests/test_online_multitable.py',
+                    ['tests/test_online_protection.py','tests/test_online_recovery.py','tests/test_online_multitable.py','tests/test_online_tenants.py',
                      'tests/test_online_access.py','tests/test_postgres_source_role.py','-q'])
     backup = args.workdir/'backup'
     if args.http_fresh: backup.mkdir(mode=0o700)
