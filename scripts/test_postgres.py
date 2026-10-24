@@ -29,6 +29,8 @@ except ImportError:
 
 VARIABLES = ("CRYPTALIS_TEST_DATABASE_URL", "CRYPTALIS_TEST_RUNTIME_DATABASE_URL")
 FILES = (".cryptalis-test-url", ".cryptalis-test-runtime-url")
+SOURCE_VARIABLE = "CRYPTALIS_TEST_SOURCE_URL"
+SOURCE_FILE = ".cryptalis-test-source-url"
 ROOT = Path(__file__).resolve().parents[1]
 
 
@@ -38,11 +40,12 @@ def source_hashes():
     return {str(path.relative_to(ROOT)): hashlib.sha256(path.read_bytes()).hexdigest() for path in files}
 
 
-def load_urls():
-    for name in VARIABLES:
+def load_urls(*, source_role=False):
+    for name in (*VARIABLES, SOURCE_VARIABLE):
         os.environ.pop(name, None)
+    files = FILES + ((SOURCE_FILE,) if source_role else ())
     return tuple((Path.home() / name).read_text().strip().replace(
-        "postgresql+psycopg://", "postgresql://", 1) for name in FILES)
+        "postgresql+psycopg://", "postgresql://", 1) for name in files)
 
 
 def fingerprints(urls):
@@ -269,8 +272,12 @@ class Results:
 
 
 def main():
+    for name in (*VARIABLES, SOURCE_VARIABLE):
+        os.environ.pop(name, None)
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--preflight-only", action="store_true")
+    parser.add_argument("--source-role", action="store_true",
+                        help="Also require and probe ~/.cryptalis-test-source-url before pytest.")
     parser.add_argument("--development-preflight", action="store_true",
                         help="Diagnose local tools, Git access and restricted PostgreSQL prerequisites; run no tests.")
     parser.add_argument("--wrong-password-proof", action="store_true",
@@ -287,13 +294,13 @@ def main():
         print('Dependencies.Unavailable: use the locked project environment.', flush=True)
         return 2
     try:
-        urls = load_urls()
+        urls = load_urls(source_role=args.source_role)
         if not all(urls):
             raise ValueError("empty credentials")
         if args.wrong_password_proof:
             values = conninfo_to_dict(urls[0])
             values["password"] = "CRYPTALIS_WRONG_PASSWORD_AUDIT_20261009"
-            urls = (make_conninfo(**values), urls[1])
+            urls = (make_conninfo(**values), *urls[1:])
     except Exception as exc:
         print(type(exc).__name__, flush=True)
         return 2
@@ -305,7 +312,8 @@ def main():
     print("PostgreSQL preflight passed", *fingerprints(urls), flush=True)
     if args.preflight_only:
         return 0
-    for name, value in zip(VARIABLES, urls):
+    variables = VARIABLES + ((SOURCE_VARIABLE,) if args.source_role else ())
+    for name, value in zip(variables, urls):
         os.environ[name] = value
     # In-process attestation cannot arrive through inherited environment values.
     admission = ModuleType("_cryptalis_test_preflight")

@@ -102,13 +102,17 @@ def provision(port, password, manifest, plain_database):
     return credentials
 
 
-def write_home(workdir, port, manifest, credentials):
+def write_home(workdir, port, manifest, credentials, *, source_database=None):
     home = workdir / 'fresh-home'
     home.mkdir(mode=0o700, exist_ok=True)
-    for filename, key in (('.cryptalis-test-url', 'owner'), ('.cryptalis-test-runtime-url', 'runtime')):
+    files = [('.cryptalis-test-url', 'owner', manifest['database']),
+             ('.cryptalis-test-runtime-url', 'runtime', manifest['database'])]
+    if source_database is not None:
+        files.append(('.cryptalis-test-source-url', 'plaintext', source_database))
+    for filename, key, database in files:
         role, secret = credentials[key]
         connection = psycopg.conninfo.make_conninfo(host='127.0.0.1', port=str(port), user=role,
-                                                    password=secret, dbname=manifest['database'])
+                                                    password=secret, dbname=database)
         path = home / filename
         path.write_text(connection + '\n')
         path.chmod(0o600)

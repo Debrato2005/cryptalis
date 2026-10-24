@@ -95,6 +95,43 @@ Protection admits one initial operation per schema. Root rewrap adds an exact
 successor chain. General journal reuse remains unfinished.
 [Evidence](status.md) records tests, costs, and limits.
 
+## Online initial protection
+
+`cryptalis.online` supports a bounded initial protection path for declared single-tenant tables. Protected fields must use `TEXT` or `VARCHAR`. The existing maintenance path above remains available.
+
+Create a plan with three distinct direct-login roles: the owner, the current source runtime role, and the target runtime role. The source role must have table-level CRUD while native columns are active. The target role must have no table privileges before switch, then table-level CRUD after switch. Column ACLs must be empty. The owner keeps table CRUD, `TRUNCATE`, `REFERENCES`, and `TRIGGER`. Exclude application writers with owner or DDL credentials for the full operation.
+
+```python
+from cryptalis import online
+
+p = online.plan(manifest_bytes, Base.registry, owner_engine,
+    source_role=source_runtime_role, runtime_role=target_runtime_role,
+    writers=writer_inventory, search_reviews=search_reviews, keys=tenant_keyrings,
+    target_id=target_id, backfill_rows_per_second=measured_backfill_rate,
+    verify_rows_per_second=measured_verify_rate,
+    temporary_bytes_per_row=estimated_staging_bytes, wal_bytes_per_row=estimated_wal_bytes,
+    max_rows=1000, max_bytes=64 * 1024 * 1024)
+save_durably(p.artifact)
+
+approval = online.OnlineApproval(
+    owner_writer_exclusion=writer_exclusion_evidence,
+    plaintext_capture_accepted=True,
+    approved_pause_seconds=approved_pause_seconds)
+
+progress = online.apply(p, owner_engine, keys=tenant_keyrings,
+    pin=prepared_pin, approval=approval, max_chunks=10)
+```
+
+The plan records the source and target grants. It changes no data or authority. The native values stay authoritative during capture. A trigger clears shadow payloads and sets a nullable dirty marker after each non-owner insert or update. `NULL` means dirty. Each apply call limits chunks, rows, and logical bytes. The row limit defaults to 1,000 and cannot exceed 5,000. The byte limit cannot exceed 1 GiB. These limits do not bound process memory, database memory, or storage use. Progress counts row versions, not unique rows. Repeated writes can keep rows dirty, so capture does not promise convergence while writes continue.
+
+Approve the final write pause before the fence. Then call `apply(..., fence=True)` with the current pin. This drains in-flight native writers and installs durable write guards. Continue bounded apply calls until catch-up completes. The source role can still write native values before the fence. The target role has no direct table CRUD until the switch.
+
+Call `seal` after catch-up. Save its returned successor artifact durably before `switch`. Switch verifies the current rows again, adds required indexes and constraints, and makes successor A PENDING. It also marks online plan P SUPERSEDED. Keep P and A. Publish A with the host authority, then call `migration.apply(A, ..., pin=activating_pin, until="ACTIVE")`. Keep writers stopped until activation finishes. The switch and host publication are separate effects.
+
+Before switch, `abort` removes capture objects and shadows. It preserves all committed native edits, whether the operation fenced writers or not. After switch, use the existing current-data reverse transition to return to plaintext. The access contract records the original source role for that transition. Keep P and A for rotations and restored-target operations. Their successors retain the same access contract. Finish with the existing package-free native exit.
+
+Terminal verification scans current data. Index creation, public-slot conversion, lock drain, and host publication can extend the pause. Measure and approve these costs. This path makes no global near-zero-downtime claim. Its installed verification remains pending, and all seven production gates remain UNKNOWN.
+
 ## Initialize an explicit declaration through the CLI
 
 **IMPLEMENTED, bounded source and installed verification:** make the trusted host factory return

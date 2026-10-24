@@ -8,6 +8,29 @@ Advanced search representations and shared joins are INTERNAL ONLY and remain UN
 The trusted application transforms protected plaintext before PostgreSQL receives it through an admitted path.
 Payload confidentiality depends on uncompromised application and key authority, qualified cryptography, and the declared leakage boundary.
 
+## Online protection trust boundary
+
+**IMPLEMENTED, bounded:** initial online capture deliberately retains native
+plaintext in PostgreSQL. Confidentiality begins at the protected representation
+switch, not at capture start. The host must exclude owner and DDL writers while
+native application writes continue under the recorded source role.
+
+The database capture trigger marks changed rows dirty and clears all protected
+shadows. Bounded backfill reads locked native rows and seals them under the exact
+host policy. A durable final guard stops native writes before full catch-up and
+verification. Cutover transfers direct CRUD grants between distinct source and
+target roles. Checks bind full table grants, grantors, grant options, column grants,
+role membership and effective privileges. Reconnecting and existing source workers
+lose table access after cutover. The host still owns external publication.
+
+The host retains the sealed activation artifact before switch. Journal consistency
+cannot reconstruct that authority after restore or a lost COMMIT reply. Existing
+hostile-database omission, replay and NULL-presence limits remain. Native WAL,
+backups and statistics can retain plaintext from before protection. Decrypt-back
+requires explicit plaintext consent and restores the original source authority.
+These controls do not qualify independent security review or production fencing.
+
+
 ## Current local enforcement evidence: 2026-10-07
 
 **VERIFIED, recorded spike revision:** the [integrated checkpoint](status.md#current-integrated-checkpoint-2026-10-07) guards inspected SQLAlchemy executions at the DBAPI method boundary.

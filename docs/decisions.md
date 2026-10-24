@@ -4,6 +4,29 @@
 It does not preserve old IDs as implementation obligations. Historical dispositions remain in [archived revamp evidence](research/revamp-evidence.md).
 [Status](status.md) owns IMPLEMENTED/VERIFIED claims. All seven full gates remain UNKNOWN.
 
+## Online capture and access transfer: 2026-10-24
+
+**APPROVED, bounded implementation:** keep the existing maintenance path and add
+an explicit initial-protection protocol. Use PostgreSQL row triggers to invalidate
+staged ciphertext when native application values change. Native source columns
+remain authoritative during capture. Exclude owner and DDL writers throughout.
+Refuse column grants, inherited runtime roles and undeclared table access.
+
+Keep the final fence durable across process death. Seal current membership and
+authenticated frames into a host-retained activation artifact before cutover.
+Recheck its proof in the switch transaction. Transfer source and target grants
+in that transaction. A database journal cannot replace the sealed host artifact.
+Retain the preparation as a superseded predecessor so rotations, restored adoption
+and eventual removal inspect the complete operation chain.
+
+Use new strict plan versions for online protection and every successor that
+carries its access contract. Historical readers refuse these artifacts.
+Current-data decrypt-back must restore the recorded source role and revoke
+the encrypted target. Do not claim plaintext erasure or a bounded final pause.
+All seven production gates remain UNKNOWN.
+
+
+
 ## Comprehensive first public release: 2026-10-23
 
 Target one comprehensive, production-grade first public release covering the full

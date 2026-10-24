@@ -41,7 +41,9 @@ def _decode_transition_json(raw):
     for prefix, owner in (((),document),(('source_plan',),document.get('source_plan') if type(document) is dict else None)):
         if (type(owner) is dict and (owner.get('format'),owner.get('kind')) in (
                     ('cryptalis.transition/v3','payload_rotation'),('cryptalis.transition/v4','search_rotation'),
-                    ('cryptalis.transition/v6','payload_rotation'),('cryptalis.transition/v7','search_rotation'))):
+                    ('cryptalis.transition/v6','payload_rotation'),('cryptalis.transition/v7','search_rotation'),
+                    ('cryptalis.transition/v10','payload_rotation'),('cryptalis.transition/v11','search_rotation'),
+                    ('cryptalis.transition/v13','payload_rotation'),('cryptalis.transition/v14','search_rotation'))):
             rate_paths.add(prefix+('estimates','copy_rows_per_second'))
 
     def check(value, path):
@@ -157,15 +159,27 @@ class MigrationPlan:
             members = {'format', 'kind', 'operation_id', 'target_id', 'target',
                             'runtime_role', 'journal_schema', 'lock', 'source_lock_digest',
                             'key_policies', 'scopes', 'estimates'}
-            rewrap = doc.get('format') in ('cryptalis.transition/v2', 'cryptalis.transition/v5') and doc.get('kind') == 'rewrap'
-            payload = doc.get('format') in ('cryptalis.transition/v3', 'cryptalis.transition/v6') and doc.get('kind') == 'payload_rotation'
-            search = doc.get('format') in ('cryptalis.transition/v4', 'cryptalis.transition/v7') and doc.get('kind') == 'search_rotation'
+            from cryptalis import _access_contract as access
+            formats = {'cryptalis.transition/v9': 'cryptalis.transition/v2',
+                       'cryptalis.transition/v10': 'cryptalis.transition/v3',
+                       'cryptalis.transition/v11': 'cryptalis.transition/v4',
+                       'cryptalis.transition/v12': 'cryptalis.transition/v5',
+                       'cryptalis.transition/v13': 'cryptalis.transition/v6',
+                       'cryptalis.transition/v14': 'cryptalis.transition/v7'}
+            fmt = formats.get(doc.get('format'), doc.get('format'))
+            online = fmt == 'cryptalis.transition/v8' and doc.get('kind') == 'protect'
+            carries_access = online or doc.get('format') in formats
+            if carries_access:
+                members.add('access_contract')
+            rewrap = fmt in ('cryptalis.transition/v2', 'cryptalis.transition/v5') and doc.get('kind') == 'rewrap'
+            payload = fmt in ('cryptalis.transition/v3', 'cryptalis.transition/v6') and doc.get('kind') == 'payload_rotation'
+            search = fmt in ('cryptalis.transition/v4', 'cryptalis.transition/v7') and doc.get('kind') == 'search_rotation'
             rotating=payload or search
             if rewrap or rotating:
                 proof_key = doc['kind']+'_plan_digest'
                 observations_key = doc['kind']+'_observations'
                 members |= {'predecessors', proof_key, observations_key}
-                if doc['format'] in ('cryptalis.transition/v5', 'cryptalis.transition/v6', 'cryptalis.transition/v7'):
+                if fmt in ('cryptalis.transition/v5', 'cryptalis.transition/v6', 'cryptalis.transition/v7'):
                     members.add('restore_lineage')
                 if rotating:
                     members.add(('payload' if payload else 'search')+'_batch_limits')
@@ -188,6 +202,17 @@ class MigrationPlan:
                     raise ValueError
                 if rotating and ancestors[-1]['plan_digest'] != doc[proof_key]:
                     raise ValueError
+            elif online:
+                members |= {'predecessors', 'online_preparation', 'online_verification'}
+                preparation = doc['online_preparation']
+                if (type(preparation) is not dict or set(preparation) != {'operation_id', 'plan_digest'}
+                        or type(doc['predecessors']) is not list or doc['predecessors'] != [preparation]
+                        or not UUID(preparation['operation_id']).int
+                        or str(UUID(preparation['operation_id'])) != preparation['operation_id']
+                        or preparation['operation_id'] == doc['operation_id']
+                        or type(preparation['plan_digest']) is not str or len(preparation['plan_digest']) != 64
+                        or any(c not in '0123456789abcdef' for c in preparation['plan_digest'])):
+                    raise ValueError
             elif doc.get('format') != 'cryptalis.transition/v1' or doc.get('kind') != 'protect':
                 raise ValueError
             if set(doc) != members or _canonical(doc) != self.artifact:
@@ -207,12 +232,14 @@ class MigrationPlan:
                 raise ValueError
             # Compiler validation needs identifier quoting, never a connection.
             _previous_lock(_canonical(doc['lock']), doc['lock'], SimpleNamespace(dialect=postgresql.dialect()))
-            if doc['format'] in ('cryptalis.transition/v5', 'cryptalis.transition/v6', 'cryptalis.transition/v7'):
+            if fmt in ('cryptalis.transition/v5', 'cryptalis.transition/v6', 'cryptalis.transition/v7'):
                 from cryptalis.restore import _validate_lineage
                 _validate_lineage(doc)
             _validate_estimates(doc['estimates'])
-            if rewrap or rotating:
-                observed = doc[observations_key]
+            if carries_access:
+                access.validate(doc['access_contract'], doc['lock']['models'], target[-1], doc['runtime_role'])
+            if rewrap or rotating or online:
+                observed = doc['online_verification'] if online else doc[observations_key]
                 if set(observed) != {model['table_id'] for model in doc['lock']['models']}:
                     raise ValueError
                 for item in observed.values():
@@ -224,6 +251,14 @@ class MigrationPlan:
                                 or any(c not in '0123456789abcdef' for c in item[key])):
                             raise ValueError
                 if sum(item['rows'] for item in observed.values()) != doc['estimates']['rows']:
+                    raise ValueError
+            if online:
+                scopes = doc['scopes']
+                if (any(type(item) is not dict or set(item) != {'table_id', 'estimated_rows'}
+                        or type(item['estimated_rows']) is not int for item in scopes)
+                        or len(scopes) != len(observed)
+                        or {item['table_id']: item['estimated_rows'] for item in scopes}
+                        != {table: item['rows'] for table, item in observed.items()}):
                     raise ValueError
             if rotating:
                 limits, costs = doc[('payload' if payload else 'search')+'_batch_limits'], doc['estimates']
@@ -766,19 +801,26 @@ def _maintenance_executor(p,engine,approval):
 
 def _state(c,p,pin,*,allow_aborted=False):
     kind = p.document['kind']
+    online = p.document['format'] == 'cryptalis.transition/v8'
     exists=c.exec_driver_sql('SELECT pg_catalog.to_regclass(%s)',(_journal(c,p),)).scalar_one()
     if exists is None:
+        if online: raise TransitionFailure('missing_online_successor', p.operation_id)
         if kind in _GENERATION_ROTATIONS:
             raise TransitionFailure('missing_'+kind.removesuffix('_rotation')+'_successor', p.operation_id)
         if pin.phase != 'PREPARED': raise TransitionFailure('restored_or_missing_transition',p.operation_id)
         return None
     row=c.exec_driver_sql(f'SELECT plan_digest, state FROM {_journal(c,p)} WHERE operation_id=%s',(p.operation_id,)).one_or_none()
+    if row is None and online: raise TransitionFailure('missing_online_successor', p.operation_id)
     if row is None and kind in _GENERATION_ROTATIONS:
         raise TransitionFailure('missing_'+kind.removesuffix('_rotation')+'_successor', p.operation_id)
     if row is None or row[0] != p.digest: raise TransitionFailure('journal_identity_mismatch',p.operation_id)
     state=row[1]
     if state.get('phase') == 'SUPERSEDED':
         raise TransitionFailure('deployment_superseded', p.operation_id)
+    if online:
+        if state.get('phase') not in ('PENDING', 'ACTIVE'):
+            raise TransitionFailure('online_successor_state_changed', p.operation_id)
+        _check_predecessors(c, p)
     if kind in ('rewrap',)+_GENERATION_ROTATIONS:
         proof_key = kind+'_plan_digest'
         if (state.get('phase') not in ('PENDING', 'ACTIVE')
@@ -1060,27 +1102,41 @@ def _backfill_chunk(c,p,state,keys,chunk_size):
 
 def _verify(c,p,state,keys):
     _inspect_paused(c,p,state)
-    digests={}
     for model in p.document['lock']['models']:
         progress=state['models'][model['table_id']]
         if _scope(c,model)!=progress['scope']: raise TransitionFailure('membership_changed',p.operation_id)
         if progress['rows']!=progress['scope']['count']: raise TransitionFailure('incomplete_backfill',p.operation_id)
+    digests = _verify_values(c,p,keys)
+    if p.document['format'] == 'cryptalis.transition/v8':
+        for model in p.document['lock']['models']:
+            expected = p.document['online_verification'][model['table_id']]
+            scope = state['models'][model['table_id']]['scope']
+            if (scope != {'count': expected['rows'], 'membership': expected['membership']}
+                    or digests[model['table_id']] != expected['frames']):
+                raise TransitionFailure('online_verification_changed', p.operation_id)
+    return digests
+
+
+def _verify_values(c,p,keys,*,active=False):
+    """Authenticate values and frames; callers own schema and membership proof."""
+    digests={}
+    for model in p.document['lock']['models']:
         descriptors=tuple(FieldDescriptor.from_compiled(f['descriptor'],f['descriptor_digest']) for f in model['fields'])
         cursor=None; digest=hashlib.sha256()
-        while rows:=_stream(c,model,payloads=True,after=cursor):
+        while rows:=_stream(c,model,payloads=not active,after=cursor):
             material={}
             for row in rows:
                 tenant=row[1] if 'column' in model['tenancy'] else UUID(model['table_id']); offset=2 if 'column' in model['tenancy'] else 1
                 def verify(prepared):
                     frames=[]
                     for i,f in enumerate(model['fields']):
-                        source,frame=row[offset+2*i:offset+2*i+2]
+                        source,frame=(None,row[offset+i]) if active else row[offset+2*i:offset+2*i+2]
                         frame=bytes(frame) if frame is not None else None
                         admitted=prepared.policy
                         if frame is not None and (int.from_bytes(frame[6:10],'big')!=admitted.payload_generation or int.from_bytes(frame[10:14],'big')!=(admitted.search_generation if f['queries'] else 0)):
                             raise TransitionFailure('generation_mismatch',p.operation_id)
                         value=open_value(frame,descriptors[i],tenant,row[0],prepared)
-                        if type(value)!=type(source) or value!=source: raise TransitionFailure('value_verification_failed',p.operation_id)
+                        if not active and (type(value)!=type(source) or value!=source): raise TransitionFailure('value_verification_failed',p.operation_id)
                         frames.append(frame)
                     return frames
                 frames=_with_row_keys(keys,tenant,p,material,verify)
@@ -1193,6 +1249,8 @@ def _protected_contract(c, p, model, facts, *, paused=False, admitted=None, stag
 
 
 def _active_schema(c,p,state):
+    from cryptalis import _access_contract as access
+    access.check(c, p)
     for model in p.document['lock']['models']:
         facts = _facts(c, model)
         if facts!=state['models'][model['table_id']]['active_schema']:
@@ -1200,9 +1258,20 @@ def _active_schema(c,p,state):
         _protected_contract(c, p, model, facts, paused=state['phase'] == 'PENDING')
 
 
+def _verify_online_target(c,p,keys):
+    digests = _verify_values(c,p,keys,active=True)
+    for model in p.document['lock']['models']:
+        expected = p.document['online_verification'][model['table_id']]
+        if (_scope(c,model) != {'count': expected['rows'], 'membership': expected['membership']}
+                or digests[model['table_id']] != expected['frames']):
+            raise TransitionFailure('online_activation_target_changed', p.operation_id)
+
+
 def _activate(c,p,state,pin,keys):
     if pin.phase!='ACTIVATING': raise TransitionFailure('matching_external_publication_required',p.operation_id)
     _lock_tables(c,p); _active_schema(c,p,state)
+    if p.document['format'] == 'cryptalis.transition/v8':
+        _verify_online_target(c,p,keys)
     if p.document['kind'] == 'rewrap':
         from cryptalis.rotation import _verify_rewrap_target
         _verify_rewrap_target(c, p, keys)
@@ -1230,24 +1299,30 @@ def apply(p,engine,*,keys,pin,approval,chunk_size=1000,until='PENDING'):
     """
     if type(chunk_size) is not int or not 1<=chunk_size<=5000 or until not in PHASES[1:]: raise TransitionFailure('invalid_apply_bound')
     _admit(p, pin)
+    online = p.document['format'] == 'cryptalis.transition/v8'
+    if online and (until != 'ACTIVE' or pin.phase not in ('ACTIVATING', 'ACTIVE')):
+        raise TransitionFailure('online_executor_required', p.operation_id)
     if p.document['kind'] == 'rewrap' and (until != 'ACTIVE' or pin.phase not in ('ACTIVATING', 'ACTIVE')):
         raise TransitionFailure('rewrap_executor_required', p.operation_id)
     if p.document['kind'] in _GENERATION_ROTATIONS and (until != 'ACTIVE' or pin.phase not in ('ACTIVATING', 'ACTIVE')):
         raise TransitionFailure(p.document['kind']+'_executor_required', p.operation_id)
     with _executor(p,engine,pin,approval) as c:
         state=_state(c,p,pin); c.commit()
-        if state is not None and state['phase'] == 'ACTIVE' and p.document['kind'] in ('rewrap',)+_GENERATION_ROTATIONS and pin.phase == 'ACTIVATING':
+        if state is not None and state['phase'] == 'ACTIVE' and (online or p.document['kind'] in ('rewrap',)+_GENERATION_ROTATIONS) and pin.phase == 'ACTIVATING':
             # A journal phase cannot replace the host's publication evidence.
             with c.begin():
                 _lock_tables(c,p,verification=True)
                 _active_schema(c,p,state)
-                if p.document['kind'] == 'rewrap':
+                if online:
+                    _verify_online_target(c,p,keys)
+                elif p.document['kind'] == 'rewrap':
                     from cryptalis.rotation import _verify_rewrap_target
                     _verify_rewrap_target(c,p,keys)
                 else:
                     from cryptalis._rotation_activation import verify_target
                     verify_target(c,p,keys)
         if state is None:
+            if online: raise TransitionFailure('missing_online_successor', p.operation_id)
             if p.document['kind'] in _GENERATION_ROTATIONS:
                 raise TransitionFailure('missing_'+p.document['kind'].removesuffix('_rotation')+'_successor', p.operation_id)
             with c.begin(): state=_expand(c,p)

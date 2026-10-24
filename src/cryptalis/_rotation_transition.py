@@ -51,6 +51,8 @@ def _cursor(model,value):
 
 def _source_current(c,p,op,*,own):
     source=p.source
+    from cryptalis import _access_contract as access
+    access.check(c,source)
     row=c.exec_driver_sql(f'SELECT plan_digest,state FROM {m._journal(c,op)} WHERE operation_id=%s',
                           (source.operation_id,)).one_or_none()
     if (row is None or row[0]!=source.digest

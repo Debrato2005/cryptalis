@@ -189,6 +189,8 @@ class RewrapPlan:
             estimates={'rows': d['estimates']['rows'],
                        'writer_pause_seconds_estimate': d['estimates']['verify_seconds_estimate'],
                        'limits': d['estimates']['limits']})
+        from cryptalis import _access_contract as access
+        access.carry(source, document)
         return m.MigrationPlan(m._canonical(document))
 
     def __str__(self):
@@ -691,6 +693,8 @@ def _prepare_rewrap(source, keys, target_keys, expected=None):
 
 def _observe_active(c, source, keys, *, prepared=None, peers=None, batch_limits=None):
     """Authenticate all active frames, including empty-scope key admission."""
+    from cryptalis import _access_contract as access
+    access.check(c, source)
     if prepared is None:
         prepared = {UUID(tenant): m._ring(keys, UUID(tenant), source).prepare()
                     for tenant in source.document['key_policies']}

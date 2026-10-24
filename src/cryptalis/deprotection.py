@@ -77,6 +77,9 @@ class DeprotectionPlan:
                     or not document['plaintext_runtime_role']
                     or document['plaintext_runtime_role'] == document['runtime_role']):
                 raise ValueError
+            access_contract = source.document.get('access_contract')
+            if access_contract is not None and document['plaintext_runtime_role'] != access_contract['source_role']:
+                raise ValueError
             if (not isinstance(document['active_schemas'], dict)
                     or set(document['active_schemas']) != {model['table_id'] for model in document['lock']['models']}):
                 raise ValueError
@@ -214,6 +217,9 @@ def plan(source, engine, *, source_pin, keys, plaintext_runtime_role, backfill_r
     if restore is not None:
         from cryptalis.restore import _identity
         _identity(source, restore)
+    access_contract = source.document.get('access_contract')
+    if access_contract is not None and plaintext_runtime_role != access_contract['source_role']:
+        raise m.TransitionFailure('online_plaintext_role_mismatch', source.operation_id)
     _grounded(source, plaintext_runtime_role,
               (backfill_rows_per_second, verify_rows_per_second),
               temporary_bytes_per_row, wal_bytes_per_row)
@@ -369,6 +375,8 @@ def _state(c, p, pin, *, allow_aborted=False):
         raise m.TransitionFailure('operation_aborted', p.operation_id)
     if phase not in PHASES:
         raise m.TransitionFailure('unknown_or_aborted_reverse_state', p.operation_id)
+    from cryptalis import _access_contract as access
+    access.check(c, p, plaintext=phase in ('PLAINTEXT_PENDING', 'PLAINTEXT_ACTIVE'))
     source_row = c.exec_driver_sql(
         f'SELECT plan_digest, state FROM {m._journal(c, p)} WHERE operation_id=%s',
         (p.source.operation_id,)).one_or_none()
@@ -422,6 +430,8 @@ def _guard(c, p, model, functions):
 
 def _expand(c, p):
     m._lock_tables(c, p)
+    from cryptalis import _access_contract as access
+    access.check(c, p)
     source = p.source
     _inventory(c, p, p.source, own=p.operation_id)
     for model in p.document['lock']['models']:
@@ -647,11 +657,15 @@ def _switch(c, p, state, keys):
                 raise m.TransitionFailure('plaintext_schema_mismatch', p.operation_id)
             m._check_public_slots(c, p, model, facts=facts)
         state['models'][model['table_id']]['plaintext_schema'] = facts
+    from cryptalis import _access_contract as access
+    access.transfer(c, p, plaintext=True)
     state['phase'] = 'PLAINTEXT_PENDING'
     m._save(c, p, state)
 
 
 def _inspect_plaintext(c, p, state, *, expect_guards):
+    from cryptalis import _access_contract as access
+    access.check(c, p, plaintext=True)
     for model in p.document['lock']['models']:
         observed = state['models'][model['table_id']]
         guard = m._check_guard(c, p, model) if expect_guards else m._guard_facts(c, p, model)
@@ -764,6 +778,8 @@ def abort(p, engine, *, pin, approval, consent):
 
 
 def _assert_removed(c, p):
+    from cryptalis import _access_contract as access
+    access.check(c, p, plaintext=True)
     journal = m._quote(c, p.document['journal_schema']) + '.' + m._quote(c, m.JOURNAL)
     if c.exec_driver_sql('SELECT pg_catalog.to_regclass(%s)', (journal,)).scalar_one() is not None:
         raise m.TransitionFailure('reverse_removal_incomplete', p.operation_id)

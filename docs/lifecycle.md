@@ -4,12 +4,26 @@
 plus an in-place decrypt-back and additive-removal path.
 Root rewrap, payload-key rotation, and search-key rotation have bounded cutover and shared publication paths.
 Generation preparation stages and verifies encrypted chunks, inspects progress, and supports cancellation before switch.
-Online transitions remain unimplemented product work. [Status](status.md) states the evidence and remaining limits.
+The source includes a bounded online initial-protection API. Installed qualification remains pending.
 The protection engine verifies and switches in one transaction; saved verification checkpoints require a fresh pass on resume.
 Plain reads continue during verification. Writes and locking reads wait; schema DDL can pause all access.
 VERIFIED paragraphs below describe recorded receipts, not current product qualification. All other requirements remain SPECIFIED.
 Every protection change uses expand → backfill → verify → switch → contract.
 Rollback, deprotect, search changes, and key transformations reuse this path.
+
+## Bounded online initial protection
+
+`cryptalis.online` captures native writes while it prepares an initial text protection plan. Each protected table must declare itself single-tenant. Different tables can have distinct key scopes. Every protected field must use `TEXT` or `VARCHAR`. It does not change the existing maintenance protection path.
+
+Planning records a strict access contract for three distinct direct-login roles: the table owner, the source runtime role, and the target runtime role. The source role has direct table-level CRUD while native columns are active. The target role has direct table-level CRUD while encrypted columns are active. The owner retains table CRUD, `TRUNCATE`, `REFERENCES`, and `TRIGGER`. Column ACLs must be empty. The host must exclude application writers with owner or DDL credentials for the operation.
+
+The capture trigger leaves native values authoritative until the representation switch. Each non-owner insert or update clears the shadow payloads and sets a nullable dirty marker. `NULL` means dirty. Bounded apply calls capture dirty rows by primary key, up to the plan's row and byte limits. The default is 1,000 rows and 1 GiB per call limit; plan limits cannot exceed 5,000 rows or 1 GiB. `max_chunks` bounds each call. Progress counts row versions, not unique rows. Repeated writes can keep a row dirty, so capture does not promise convergence while writes continue.
+
+The host approves the final write pause before it requests the fence. The fence drains in-flight native writers, then prevents writes while bounded catch-up and terminal verification run. `max_chunks` defaults to 1 and accepts 0 through 100,000 per call. After catch-up, `seal` returns the immutable successor artifact. Save it durably outside PostgreSQL before `switch`. A successful switch marks the capture plan P superseded and creates successor A as PENDING. Keep both artifacts. Publish A through the existing host authority, then call `migration.apply(A, ..., until="ACTIVE")` with its independently published `ACTIVATING` pin. The host must keep writers stopped until activation completes.
+
+Before switch, `abort` removes only this operation's capture objects and shadows. It preserves committed native edits, both before and after the fence. After switch, use the existing current-data reverse transition to return to plaintext. Its access contract records the original source runtime role. Keep P and A for all rotation and restored-target operations; successors retain the exact access contract. Finish with the existing package-free native exit.
+
+The terminal proof scans current data in O(N) and verifies all rows. Index DDL and public-slot conversion can also take time under locks. Chunk limits do not bound this work, lock drain, or host publication delay. Plan and approve measured pause costs. This API gives no global near-zero-downtime guarantee. All seven production gates remain UNKNOWN.
 
 Boolean storage uses this same lifecycle with typed value authentication.
 The [Boolean checkpoint](status.md#boolean-storage-checkpoint-2026-10-23) records mixed

@@ -10,6 +10,62 @@ No PostgreSQL/provider/runtime cell, production key provider, independent review
 VERIFIED below refers only to the named checks and their exact revisions.
 All other contract and promotion requirements are SPECIFIED. All seven full gates remain UNKNOWN.
 
+## Bounded online initial protection: 2026-10-24
+
+**VERIFIED, bounded source cell:** 480 affected checks pass through
+`scripts/online_qualification.py` in 238.13 pytest seconds. The wrapper reloads
+and probes all three private role URLs. All 236 Python hashes remain stable.
+The selection includes 15 online/access/wrapper checks and the affected maintenance,
+rotation, restore, Doctor and evidence controls. It proves overlapping native writes,
+row-lock ordering, dirty invalidation, NULL, delete/reinsert, lower-key insert,
+abort before and after fencing, exact grants, and two tables in one schema.
+
+Four committed-process SIGKILL checkpoints cover two backfill batches, the durable
+fence and switched PENDING state. A fresh child activates the retained artifact.
+These checks do not simulate a transport-level lost COMMIT reply. Six rotation
+successors preserve the contract through root rewrap, payload/search generation 2,
+actual dump/restore into another database, explicit adoption and generation 3.
+Latest-value decrypt-back restores native source access and revokes encrypted access.
+A fresh native child refuses Cryptalis imports and commits an ordinary write.
+Restore remains on the same cluster with in-process development custody.
+
+The [source receipt](_reset/online-source-verification-20261024.json) pins the
+verified checkout. The [construction history](_reset/online-construction-history-20261024.json)
+retains initial fixture and harness failures. No mandatory probe failed.
+Installed-artifact verification remains pending at this source checkpoint.
+
+**IMPLEMENTED:** `cryptalis.online` permits native application writes during
+initial TEXT/VARCHAR backfill on declared single-tenant tables. It records
+transactional dirty-row capture, bounded row locks, a durable final writer fence,
+full native-versus-decrypted verification and an immutable activation artifact.
+The host saves that artifact outside the database before the atomic switch.
+An empty backlog alone never permits cutover. Repeatedly changed rows can
+prevent convergence. Progress counts transformed row versions, not unique rows.
+
+Three distinct authenticated roles separate the migration owner, native source
+and encrypted target. The initial source has direct CRUD grants. The target
+has no table access. All column grants must be empty. Cutover atomically revokes
+source CRUD and grants target CRUD. This also fences existing source connections.
+The exact contract survives root, payload and search successors, restored adoption,
+current-data decrypt-back and removal. Native rollback restores source grants
+and revokes target grants. Owner and DDL writers remain a host exclusion duty.
+
+Native plaintext remains in PostgreSQL during capture. The capture trigger clears
+all staged protected values on each native INSERT or UPDATE. Each backfill batch
+locks rows before reading their values and commits frames with its progress marker.
+The executor checks row sizes before fetching values. NULL markers remain dirty.
+Deletes remove their shadows with the row. New identities below earlier work are
+found by dirty-state scans. The terminal fence drains in-flight writers before
+catch-up. Full authentication, index DDL, public-slot rewrites where selected,
+lock drain and publication still contribute to the final pause.
+
+This bounded implementation does not qualify near-zero downtime, parallel workers,
+adaptive scheduling, multi-tenant online migration or production deployment fencing.
+The current online checks use synthetic SQLAlchemy fixtures. They do not qualify
+an unchanged independent application or external KMS. All seven gates remain UNKNOWN.
+
+
+
 ## Comprehensive public release direction: 2026-10-23
 
 **SPECIFIED:** the first public release must cover the full SRS and all 34
