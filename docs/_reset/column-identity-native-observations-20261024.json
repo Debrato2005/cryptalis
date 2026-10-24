@@ -1,0 +1,638 @@
+{
+  "scope": "native_ALTER_TYPE_USING_shadow_oracle",
+  "cryptalis_execution": false,
+  "frame_fixture": "fixed public CF1-like bytes; no encryption/authentication claim",
+  "original_dropped_slot": 3,
+  "original_relation_oid_and_attnums_preserved": true,
+  "physical_rewrite_observed": true,
+  "observations": [
+    {
+      "direction": "forward",
+      "alter_type_wall_ns": 8003186,
+      "protocol_wall_ns": 21771822,
+      "lock_modes": [
+        "AccessExclusiveLock",
+        "ShareLock",
+        "ShareUpdateExclusiveLock"
+      ]
+    },
+    {
+      "direction": "reverse",
+      "alter_type_wall_ns": 5424060,
+      "protocol_wall_ns": 15560486,
+      "lock_modes": [
+        "AccessExclusiveLock",
+        "ShareLock"
+      ]
+    }
+  ],
+  "catalogs": {
+    "source": {
+      "table": [
+        "2480661",
+        "2480661"
+      ],
+      "columns": [
+        [
+          1,
+          "id",
+          "uuid",
+          true,
+          null,
+          -1,
+          "p",
+          "",
+          null,
+          null,
+          null
+        ],
+        [
+          2,
+          "tenant_id",
+          "uuid",
+          true,
+          null,
+          -1,
+          "p",
+          "",
+          null,
+          null,
+          null
+        ],
+        [
+          4,
+          "name",
+          "text",
+          false,
+          "pg_catalog.C",
+          500,
+          "e",
+          "p",
+          "{n_distinct=10}",
+          "{cryptalis_runtime=r*/cryptalis_migrator}",
+          "public original column"
+        ],
+        [
+          5,
+          "label",
+          "text",
+          false,
+          "pg_catalog.default",
+          -1,
+          "x",
+          "",
+          null,
+          null,
+          null
+        ],
+        [
+          6,
+          "limited",
+          "character varying(8)",
+          false,
+          "pg_catalog.C",
+          -1,
+          "x",
+          "",
+          null,
+          null,
+          null
+        ],
+        [
+          7,
+          "enabled",
+          "boolean",
+          false,
+          null,
+          -1,
+          "p",
+          "",
+          null,
+          null,
+          null
+        ],
+        [
+          8,
+          "tail",
+          "integer",
+          true,
+          null,
+          -1,
+          "p",
+          "",
+          null,
+          null,
+          null
+        ]
+      ],
+      "indexes": [
+        [
+          "customer_pkey",
+          "2480666",
+          "2480666",
+          "CREATE UNIQUE INDEX customer_pkey ON native_column_identity_256f878b015341fa8f90a2b7ad2e5d0b.customer USING btree (id)",
+          null
+        ],
+        [
+          "limited_unique",
+          "2480677",
+          "2480677",
+          "CREATE UNIQUE INDEX limited_unique ON native_column_identity_256f878b015341fa8f90a2b7ad2e5d0b.customer USING btree (tenant_id, limited)",
+          null
+        ],
+        [
+          "native_name",
+          "2480676",
+          "2480676",
+          "CREATE UNIQUE INDEX native_name ON native_column_identity_256f878b015341fa8f90a2b7ad2e5d0b.customer USING btree (tenant_id, name)",
+          "public original index"
+        ]
+      ],
+      "constraints": [
+        [
+          "customer_pkey",
+          "2480667",
+          "PRIMARY KEY (id)",
+          null
+        ],
+        [
+          "limited_unique",
+          "2480678",
+          "UNIQUE (tenant_id, limited)",
+          "public original uniqueness"
+        ]
+      ],
+      "incoming_constraints": [
+        [
+          "child_parent_fkey",
+          "2480671",
+          "FOREIGN KEY (parent) REFERENCES native_column_identity_256f878b015341fa8f90a2b7ad2e5d0b.customer(id)"
+        ]
+      ],
+      "statistics": [
+        [
+          "native_stats",
+          "2480679",
+          "CREATE STATISTICS native_column_identity_256f878b015341fa8f90a2b7ad2e5d0b.native_stats (ndistinct, dependencies) ON name, label FROM native_column_identity_256f878b015341fa8f90a2b7ad2e5d0b.customer",
+          300,
+          "public native statistics fixture"
+        ]
+      ],
+      "sequence": [
+        "2480680",
+        "native_column_identity_256f878b015341fa8f90a2b7ad2e5d0b",
+        "native_counter",
+        "cryptalis_migrator",
+        "p",
+        "bigint",
+        "101",
+        "7",
+        "1",
+        "9223372036854775807",
+        "1",
+        false,
+        "{cryptalis_migrator=rwU/cryptalis_migrator,cryptalis_runtime=rU/cryptalis_migrator}",
+        "public native sequence",
+        "a",
+        "2480661",
+        4
+      ],
+      "rows": [
+        [
+          "00000000-0000-0000-0000-000000000065",
+          "8743e849-e76d-46cb-9844-8f067f5b67d0",
+          null,
+          "public label",
+          null,
+          null,
+          0
+        ],
+        [
+          "00000000-0000-0000-0000-000000000066",
+          "8743e849-e76d-46cb-9844-8f067f5b67d0",
+          "\u96ea\ud83d\ude00",
+          "public label",
+          "tail  ",
+          true,
+          1
+        ],
+        [
+          "00000000-0000-0000-0000-000000000067",
+          "8743e849-e76d-46cb-9844-8f067f5b67d0",
+          "\u00e9",
+          "public label",
+          "space ",
+          false,
+          2
+        ]
+      ]
+    },
+    "protected": {
+      "table": [
+        "2480661",
+        "2480692"
+      ],
+      "columns": [
+        [
+          1,
+          "id",
+          "uuid",
+          true,
+          null,
+          -1,
+          "p",
+          "",
+          null,
+          null,
+          null
+        ],
+        [
+          2,
+          "tenant_id",
+          "uuid",
+          true,
+          null,
+          -1,
+          "p",
+          "",
+          null,
+          null,
+          null
+        ],
+        [
+          4,
+          "name",
+          "bytea",
+          false,
+          null,
+          500,
+          "x",
+          "",
+          "{n_distinct=10}",
+          "{cryptalis_runtime=r*/cryptalis_migrator}",
+          "public original column"
+        ],
+        [
+          5,
+          "label",
+          "text",
+          false,
+          "pg_catalog.default",
+          -1,
+          "x",
+          "",
+          null,
+          null,
+          null
+        ],
+        [
+          6,
+          "limited",
+          "bytea",
+          false,
+          null,
+          -1,
+          "x",
+          "",
+          null,
+          null,
+          null
+        ],
+        [
+          7,
+          "enabled",
+          "bytea",
+          false,
+          null,
+          -1,
+          "x",
+          "",
+          null,
+          null,
+          null
+        ],
+        [
+          8,
+          "tail",
+          "integer",
+          true,
+          null,
+          -1,
+          "p",
+          "",
+          null,
+          null,
+          null
+        ]
+      ],
+      "indexes": [
+        [
+          "_cf1_limited_eq",
+          "2480701",
+          "2480701",
+          "CREATE UNIQUE INDEX _cf1_limited_eq ON native_column_identity_256f878b015341fa8f90a2b7ad2e5d0b.customer USING btree (tenant_id, \"substring\"(limited, 15, 32))",
+          null
+        ],
+        [
+          "_cf1_name_eq",
+          "2480699",
+          "2480699",
+          "CREATE UNIQUE INDEX _cf1_name_eq ON native_column_identity_256f878b015341fa8f90a2b7ad2e5d0b.customer USING btree (tenant_id, \"substring\"(name, 15, 32))",
+          null
+        ],
+        [
+          "customer_pkey",
+          "2480666",
+          "2480697",
+          "CREATE UNIQUE INDEX customer_pkey ON native_column_identity_256f878b015341fa8f90a2b7ad2e5d0b.customer USING btree (id)",
+          null
+        ]
+      ],
+      "constraints": [
+        [
+          "_cf1_enabled_frame",
+          "2480702",
+          "CHECK (((enabled IS NULL) OR ((octet_length(enabled) = 43) AND (\"substring\"(enabled, 1, 6) = decode('434631000100'::text, 'hex'::text)))))",
+          null
+        ],
+        [
+          "_cf1_limited_frame",
+          "2480700",
+          "CHECK (((limited IS NULL) OR (((octet_length(limited) >= 74) AND (octet_length(limited) <= 16777290)) AND (\"substring\"(limited, 1, 6) = decode('434631000101'::text, 'hex'::text)))))",
+          null
+        ],
+        [
+          "_cf1_name_frame",
+          "2480698",
+          "CHECK (((name IS NULL) OR (((octet_length(name) >= 74) AND (octet_length(name) <= 16777290)) AND (\"substring\"(name, 1, 6) = decode('434631000101'::text, 'hex'::text)))))",
+          null
+        ],
+        [
+          "customer_pkey",
+          "2480667",
+          "PRIMARY KEY (id)",
+          null
+        ]
+      ],
+      "incoming_constraints": [
+        [
+          "child_parent_fkey",
+          "2480671",
+          "FOREIGN KEY (parent) REFERENCES native_column_identity_256f878b015341fa8f90a2b7ad2e5d0b.customer(id)"
+        ]
+      ],
+      "statistics": [],
+      "sequence": [
+        "2480680",
+        "native_column_identity_256f878b015341fa8f90a2b7ad2e5d0b",
+        "native_counter",
+        "cryptalis_migrator",
+        "p",
+        "bigint",
+        "101",
+        "7",
+        "1",
+        "9223372036854775807",
+        "1",
+        false,
+        "{cryptalis_migrator=rwU/cryptalis_migrator,cryptalis_runtime=rU/cryptalis_migrator}",
+        "public native sequence",
+        "a",
+        "2480661",
+        4
+      ],
+      "rows": [
+        [
+          "00000000-0000-0000-0000-000000000065",
+          "8743e849-e76d-46cb-9844-8f067f5b67d0",
+          null,
+          "public label",
+          null,
+          null,
+          0
+        ],
+        [
+          "00000000-0000-0000-0000-000000000066",
+          "8743e849-e76d-46cb-9844-8f067f5b67d0",
+          "b'CF1\\x00\\x01\\x01\\x00\\x00\\x00\\x01\\x00\\x00\\x00\\x01\\xc7\\xd64K;\\x16\\xcbs\\xd5^A\\xf1\\xbf>\\xc5\\xe7\\x1e\\xaf\\xcf2\\x96\\xb3\\xebA\\xe8\\xf9\\xe7v\\xe7\\xd5\\xbdE\\x14\\xd7\\x01x\\x15\\x98k\\xd8\\x97\\x07\\x0c\\'\\xe4\\xe3\\x05\\x10\\xa3z\"\\xb07\\xb3j;bI\\xb0\\xf9\\xeb\\xc4dt{\\x19Q\\xf6\\xfc\\x87\\x7fe~|\\xbd\\xafPUBLIC FIXTURE!!'",
+          "public label",
+          "b'CF1\\x00\\x01\\x01\\x00\\x00\\x00\\x01\\x00\\x00\\x00\\x01\\xc85\\xa0\\xe8T\\x16\\x112\\x1bm\\xce\\xb0)\\xbc*\\x824>4(N\\xbb\\xa0\\xb3\\xabb\\x1f6)Ko\\xe8\\xab\"\\xda\\xf3\\xdf\\xddg?\\xac\\xcc\\xb7\\x93X\\x19|T\\xf5\\x15\\xd5\\xc4\\t\\x08\\x11\\xb9\\xcdZ\\x15\\x9fm\\x12\\xf8\\x8a^\\xec\\xc0\\xe8\\x85k\\xc9O\\xcb\\xd2}1PUBLIC FIXTURE!!'",
+          "b'CF1\\x00\\x01\\x00\\x00\\x00\\x00\\x01\\x00\\x00\\x00\\x00\\xc1UZ\\xc8\\xf9\\xa9\\xfe+\\x10\\x81)\\x05\\x01PUBLIC FIXTURE!!'",
+          1
+        ],
+        [
+          "00000000-0000-0000-0000-000000000067",
+          "8743e849-e76d-46cb-9844-8f067f5b67d0",
+          "b'CF1\\x00\\x01\\x01\\x00\\x00\\x00\\x01\\x00\\x00\\x00\\x01J\\x99U~@3\\xc3S\\x9d\\xe2\\xebeG \\x17\\xca\\xd5\\xf9U\\x7fz\\x06%\\xa0\\x9f\\x1c?n+\\xa6\\x9cL\\xb1c\\x0e\\x0fM\\xe2\\x00!\"\\xe1\\xafw\\xf0\\xfa]A\\xe4;f\\xf0Xl\\x1a\\xfb\\t\\xb0\\xa1\\xc1+\\xbeE\\xe4\\xa6\\xd5nr\\x00\\x87\\xdc\\r\\xcf\\x1d\\xe4{PUBLIC FIXTURE!!'",
+          "public label",
+          "b'CF1\\x00\\x01\\x01\\x00\\x00\\x00\\x01\\x00\\x00\\x00\\x01\\xc3\\xefK\\xbeu\\xf0&*\\x05\\xf6\\x15I\\xdah\\xb25/\\xd31~r\\xf3\\xcd_J\\xa2\\xd3m\\xfe\\x96\\x11\\xf74o\\x0cP\\x93\\xa1\\x90\\xf1\\xc9\"\\x93\\xfa\\xe7\\x0f\\x91\\x7fc\\x96V\\xb3Y\\x9bv\\x8c\\xb1<l\\x9a\\xfd~\\x17\\x86\\xd8~\\x87\\xee\\x92DM\\xd8sn%LPUBLIC FIXTURE!!'",
+          "b'CF1\\x00\\x01\\x00\\x00\\x00\\x00\\x01\\x00\\x00\\x00\\x00,\\xdfpB\\xa5Q\\xe0\\x89\\x1e9_#\\x00PUBLIC FIXTURE!!'",
+          2
+        ]
+      ]
+    },
+    "restored": {
+      "table": [
+        "2480661",
+        "2480709"
+      ],
+      "columns": [
+        [
+          1,
+          "id",
+          "uuid",
+          true,
+          null,
+          -1,
+          "p",
+          "",
+          null,
+          null,
+          null
+        ],
+        [
+          2,
+          "tenant_id",
+          "uuid",
+          true,
+          null,
+          -1,
+          "p",
+          "",
+          null,
+          null,
+          null
+        ],
+        [
+          4,
+          "name",
+          "text",
+          false,
+          "pg_catalog.C",
+          500,
+          "e",
+          "p",
+          "{n_distinct=10}",
+          "{cryptalis_runtime=r*/cryptalis_migrator}",
+          "public original column"
+        ],
+        [
+          5,
+          "label",
+          "text",
+          false,
+          "pg_catalog.default",
+          -1,
+          "x",
+          "",
+          null,
+          null,
+          null
+        ],
+        [
+          6,
+          "limited",
+          "character varying(8)",
+          false,
+          "pg_catalog.C",
+          -1,
+          "x",
+          "",
+          null,
+          null,
+          null
+        ],
+        [
+          7,
+          "enabled",
+          "boolean",
+          false,
+          null,
+          -1,
+          "p",
+          "",
+          null,
+          null,
+          null
+        ],
+        [
+          8,
+          "tail",
+          "integer",
+          true,
+          null,
+          -1,
+          "p",
+          "",
+          null,
+          null,
+          null
+        ]
+      ],
+      "indexes": [
+        [
+          "customer_pkey",
+          "2480666",
+          "2480714",
+          "CREATE UNIQUE INDEX customer_pkey ON native_column_identity_256f878b015341fa8f90a2b7ad2e5d0b.customer USING btree (id)",
+          null
+        ],
+        [
+          "limited_unique",
+          "2480716",
+          "2480716",
+          "CREATE UNIQUE INDEX limited_unique ON native_column_identity_256f878b015341fa8f90a2b7ad2e5d0b.customer USING btree (tenant_id, limited)",
+          null
+        ],
+        [
+          "native_name",
+          "2480715",
+          "2480715",
+          "CREATE UNIQUE INDEX native_name ON native_column_identity_256f878b015341fa8f90a2b7ad2e5d0b.customer USING btree (tenant_id, name)",
+          "public original index"
+        ]
+      ],
+      "constraints": [
+        [
+          "customer_pkey",
+          "2480667",
+          "PRIMARY KEY (id)",
+          null
+        ],
+        [
+          "limited_unique",
+          "2480717",
+          "UNIQUE (tenant_id, limited)",
+          "public original uniqueness"
+        ]
+      ],
+      "incoming_constraints": [
+        [
+          "child_parent_fkey",
+          "2480671",
+          "FOREIGN KEY (parent) REFERENCES native_column_identity_256f878b015341fa8f90a2b7ad2e5d0b.customer(id)"
+        ]
+      ],
+      "statistics": [
+        [
+          "native_stats",
+          "2480718",
+          "CREATE STATISTICS native_column_identity_256f878b015341fa8f90a2b7ad2e5d0b.native_stats (ndistinct, dependencies) ON name, label FROM native_column_identity_256f878b015341fa8f90a2b7ad2e5d0b.customer",
+          300,
+          "public native statistics fixture"
+        ]
+      ],
+      "sequence": [
+        "2480680",
+        "native_column_identity_256f878b015341fa8f90a2b7ad2e5d0b",
+        "native_counter",
+        "cryptalis_migrator",
+        "p",
+        "bigint",
+        "101",
+        "7",
+        "1",
+        "9223372036854775807",
+        "1",
+        false,
+        "{cryptalis_migrator=rwU/cryptalis_migrator,cryptalis_runtime=rU/cryptalis_migrator}",
+        "public native sequence",
+        "a",
+        "2480661",
+        4
+      ],
+      "rows": [
+        [
+          "00000000-0000-0000-0000-000000000065",
+          "8743e849-e76d-46cb-9844-8f067f5b67d0",
+          null,
+          "public label",
+          null,
+          null,
+          0
+        ],
+        [
+          "00000000-0000-0000-0000-000000000066",
+          "8743e849-e76d-46cb-9844-8f067f5b67d0",
+          "latest \u96ea",
+          "public label",
+          "new\ud83d\ude00",
+          false,
+          1
+        ],
+        [
+          "00000000-0000-0000-0000-000000000067",
+          "8743e849-e76d-46cb-9844-8f067f5b67d0",
+          "\u00e9",
+          "public label",
+          "space ",
+          false,
+          2
+        ]
+      ]
+    }
+  },
+  "locks": "ACCESS EXCLUSIVE; separate runtime read refused 55P03",
+  "limits": "one tiny native table; no downtime, throughput, WAL or production qualification",
+  "production_gates": "all seven UNKNOWN"
+}

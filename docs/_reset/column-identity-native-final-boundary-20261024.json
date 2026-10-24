@@ -1,0 +1,38 @@
+{
+  "format": "cryptalis.column-identity-oracle-boundary/v1",
+  "base_revision": "db04623699648df5716a1cae27d795b3ef4724a7",
+  "test_receipt": {
+    "path": "docs/_reset/column-identity-native-20261024.json",
+    "sha256": "86d7e34c33a9e26fc272b6c5171d66b53c787f54bcdba3005b2cc53d193a45a6",
+    "counts": {
+      "passed": 1
+    },
+    "source_files": 202,
+    "fixing_revision": "worktree-b45a01a99ee07ef2"
+  },
+  "native_observations": {
+    "path": "docs/_reset/column-identity-native-observations-20261024.json",
+    "sha256": "4eff5076d6ba43d29528bd02d92ef4d782c52f954ff242fc27a530b650db4d93",
+    "timing_scope": "One three-row native table; observations only, no performance target qualification."
+  },
+  "product": {
+    "unchanged_modules": 36,
+    "baseline": "db04623699648df5716a1cae27d795b3ef4724a7",
+    "unchanged_wheel_sha256": "1fbcc3df953b2ff98707443d1d655f963c22235e331e27560c68c5b4b235b0b1",
+    "release_receipt": "docs/_reset/owned-sequences-release-revised-20261024.json"
+  },
+  "document_sha256": {
+    "docs/status.md": "bc0915c0ab8b89118634ce3d62e19187058adb75018a33e6b4d555e7b687eb12",
+    "docs/BUILD_CHECKLIST.md": "e8429034a828ed6cafd6f884475e75dde724e67dbefce2c8ccafd637baa74f2f",
+    "docs/decisions.md": "27ac636c35404d7bbf88914fbf2132c8336de6c3a7d4af649f08d7966a2451a9",
+    "docs/_reset/layout-evaluation-20261019.md": "9f845d8517f3ea1b7b95e61a11a03b538789e8336ae784b8d6aeeae00bcee487"
+  },
+  "scope": "Native SQL oracle with public fixed CF1-like bytes only. No Cryptalis protection/deprotection calls, authenticated ciphertext, product layout, real restored-slot maps or production cost qualification. Existing product retains drop/rename and its column-order limitation. Proposed lock/v6 and restore/v3 are unimplemented design candidates.",
+  "objectives": "All 34 states unchanged",
+  "gates": "All seven UNKNOWN",
+  "earlier_boundary": {
+    "path": "docs/_reset/column-identity-native-boundary-20261024.json",
+    "sha256": "0ed8ace086e3a1d921fa49e1fe42d1b60a2905787e2eac5013c904d530476e70",
+    "scope": "Initial document binding before the prose style correction; source, tests and native observations unchanged."
+  }
+}

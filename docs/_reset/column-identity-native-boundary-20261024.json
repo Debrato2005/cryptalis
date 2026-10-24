@@ -1,0 +1,33 @@
+{
+  "format": "cryptalis.column-identity-oracle-boundary/v1",
+  "base_revision": "db04623699648df5716a1cae27d795b3ef4724a7",
+  "test_receipt": {
+    "path": "docs/_reset/column-identity-native-20261024.json",
+    "sha256": "86d7e34c33a9e26fc272b6c5171d66b53c787f54bcdba3005b2cc53d193a45a6",
+    "counts": {
+      "passed": 1
+    },
+    "source_files": 202,
+    "fixing_revision": "worktree-b45a01a99ee07ef2"
+  },
+  "native_observations": {
+    "path": "docs/_reset/column-identity-native-observations-20261024.json",
+    "sha256": "4eff5076d6ba43d29528bd02d92ef4d782c52f954ff242fc27a530b650db4d93",
+    "timing_scope": "One three-row native table; observations only, no performance target qualification."
+  },
+  "product": {
+    "unchanged_modules": 36,
+    "baseline": "db04623699648df5716a1cae27d795b3ef4724a7",
+    "unchanged_wheel_sha256": "1fbcc3df953b2ff98707443d1d655f963c22235e331e27560c68c5b4b235b0b1",
+    "release_receipt": "docs/_reset/owned-sequences-release-revised-20261024.json"
+  },
+  "document_sha256": {
+    "docs/status.md": "7b037768036365384c61f10bf1c0fb1a390fcca4bd6205c3c76af630cedcdf59",
+    "docs/BUILD_CHECKLIST.md": "e8429034a828ed6cafd6f884475e75dde724e67dbefce2c8ccafd637baa74f2f",
+    "docs/decisions.md": "5423e3ae725bdb8a6d12a8f5bbb0e6029236ddfa8a729261197a03eb9814530b",
+    "docs/_reset/layout-evaluation-20261019.md": "9f845d8517f3ea1b7b95e61a11a03b538789e8336ae784b8d6aeeae00bcee487"
+  },
+  "scope": "Native SQL oracle with public fixed CF1-like bytes only. No Cryptalis protection/deprotection calls, authenticated ciphertext, product layout, real restored-slot maps or production cost qualification. Existing product retains drop/rename and its column-order limitation. Proposed lock/v6 and restore/v3 are unimplemented design candidates.",
+  "objectives": "All 34 states unchanged",
+  "gates": "All seven UNKNOWN"
+}

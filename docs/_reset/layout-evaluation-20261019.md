@@ -7,6 +7,10 @@ Date: 2026-10-19. Author: implementation agent. Evidence: current source,
 six local commits, 2026-10-19 receipts, and the research tree in
 `/tmp/opencode/research-s20/candidate`.
 
+This dated comparison records the 2026-10-19 boundary. Later lock/v2 captures
+native metadata and lock/v5 preserves admitted owned sequences. The addendum
+below evaluates a third native mechanism without promoting a product layout.
+
 ## Question
 
 Which layout gives the safest complete decrypt-back and removal path for the
@@ -58,3 +62,30 @@ Reasons:
 - A retained-native decision requires an architecture amendment. Its one
   material advantage is the original column slot. Its one material risk is
   the silent filler value.
+
+## Native original-slot oracle: 2026-10-24
+
+A third mechanism changes the original public column's type with ALTER TYPE
+USING a staged value. It does not retain a plaintext column with filler.
+The native [profile](column-identity-native-20261024.json) passes one test in
+0.50 seconds with 202 stable Python hashes. It preserves original public
+attnums/order, including gap 3, and the relation OID through forward and reverse
+conversion. Heap files change. The primary index keeps its OID with a new
+storage file. Rebuilt native indexes, constraints and statistics retain exact
+logical definitions with new OIDs.
+
+The sequence retains its identity, ownership attnum, ACL and native counter behavior.
+Post-ALTER rollback and separate-reader lock refusal pass. CHECK, uniqueness and
+VARCHAR failures retain SQLSTATEs 23514, 23505 and 22001. Column comments,
+statistics target 500, options and ACL survive conversion. Type conversion changes
+EXTERNAL/pglz storage policy to EXTENDED/default. Reverse restores the original policy explicitly.
+
+This is one native-only three-row experiment with fixed public CF1-like bytes.
+It executes no Cryptalis layout or cryptographic path. Forward/reverse ALTER
+times are 8.003/5.424 milliseconds and protocol times are 21.772/15.560 milliseconds.
+These [measurements](column-identity-native-observations-20261024.json) establish
+no representative performance or pause target. The current product still drops
+and renames columns. A versioned layout, restored-slot authority and product
+lifecycle evidence remain pending. The retained-native alternative remains
+unpromoted. All seven production gates remain UNKNOWN. See the
+[current checkpoint](../status.md#native-column-identity-oracle-2026-10-24).

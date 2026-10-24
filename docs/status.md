@@ -21,6 +21,38 @@ and [competitive capability matrix](research/capability-matrix.md) govern priori
 Progress follows complete real-application journeys and resolved production requirements.
 All seven production gates remain UNKNOWN.
 
+## Native column identity oracle: 2026-10-24
+
+**VERIFIED, native-only decision support:** one PostgreSQL 16
+[profile](_reset/column-identity-native-20261024.json) passes in 0.50 seconds
+with 202 stable Python hashes. It uses fixed public CF1-like bytes, without
+product encryption or authentication. No product layout changes.
+
+Native ALTER TYPE USING a staged column preserves original public attnums and
+column order through both directions, including the existing gap at slot 3.
+The relation OID stays unchanged, but heap relfilenodes change. The primary
+index retains its OID with a changed relfilenode. Rebuilt native indexes,
+constraints and extended statistics retain exact logical definitions with new OIDs.
+The sequence retains its OID, ownership attnum, ACL, configuration and native counter behavior.
+
+The profile also passes real post-ALTER rollback, a separate runtime read
+refusal with SQLSTATE 55P03, frame CHECK refusal 23514, native uniqueness 23505
+and VARCHAR assignment refusal 22001. Comments, statistics target 500, options
+and column ACL survive the bytea conversion. Storage EXTERNAL and compression
+pglz become EXTENDED and the default compression policy. Reverse restores both explicitly.
+
+The [observations](_reset/column-identity-native-observations-20261024.json) cover
+one local three-row table. They qualify no pause, throughput, WAL or production
+cost target. Measured forward/reverse ALTER times are 8.003/5.424 milliseconds.
+Whole-protocol times are 21.772/15.560 milliseconds. Product layout selection
+and restored-slot authority remain pending implementation. Current product
+DROP/RENAME behavior remains unchanged. The [layout evaluation](_reset/layout-evaluation-20261019.md#native-original-slot-oracle-2026-10-24)
+records this alternative. All seven production gates remain UNKNOWN.
+The [boundary](_reset/column-identity-native-final-boundary-20261024.json) binds the
+profile, observations, four documents and 36 unchanged product modules.
+The [design inputs](decisions.md#column-preserving-conversion-design-inputs-2026-10-24)
+describe the proposed explicit layout and restored-slot mapping.
+
 ## Owned-sequence preservation and restore: 2026-10-24
 
 **VERIFIED, bounded revised source and installed profiles:** lock/v5 records ordinary persistent

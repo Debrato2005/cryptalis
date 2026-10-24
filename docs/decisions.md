@@ -974,3 +974,57 @@ The [status checkpoint](status.md#owned-sequence-preservation-and-restore-2026-1
 owns executable results and their source boundary. Native sequence cache gaps
 and counter changes survive rollback as PostgreSQL defines. No sequence counter
 snapshot, reset or replay is admitted. All seven production gates remain UNKNOWN.
+
+## Column-preserving conversion design inputs: 2026-10-24
+
+**VERIFIED, native SQL oracle only. Product design remains SPECIFIED.**
+One PostgreSQL 16 table retains its relation OID, original public `attnum` values
+and visible column order. Each direction uses one batched `ALTER COLUMN TYPE ... USING`
+with staged values. The fixture uses fixed public CF1-like bytes. It does
+not call the protection or deprotection APIs and proves no cryptographic property.
+See the [native observations](_reset/column-identity-native-observations-20261024.json)
+and [test receipt](_reset/column-identity-native-20261024.json).
+
+This is a third design candidate alongside the historical drop/rename and
+retained-native approaches. The public protected column becomes bytea. No native
+filler remains. The experiment observes heap and index storage rewrites and an
+ACCESS EXCLUSIVE lock. Its three rows establish no production pause, WAL or
+resource budget. Existing operational artifacts keep their drop/rename behavior.
+
+The candidate must carry its strategy in the immutable lock so that root,
+payload and search successors retain it. A proposed lock/v6 would require the
+exact member `layout: "preserve-public-slots/v1"` and the v5 metadata shape.
+Earlier lock formats and their selection must retain their current semantics.
+Unknown layout values must refuse before effects. This encoding is not implemented.
+
+The proposed public opt-in is `layout=None` on `compile_protection()` and
+`migration.plan()`. The planner must forward it to the compiler. None retains
+the current selector and bytes. Only the exact new layout token selects v6.
+Invalid values must refuse before connections or providers. Attachment, reverse
+and rotation derive the strategy from the validated lock. A previous lock is
+comparison evidence, not an implicit opt-in. No manifest schema change is proposed.
+
+A logical restore can compact dropped slots while preserving visible column
+order. Do not tighten the shared legacy metadata comparison. The proposed
+restore/v3 would instead require a complete ordered public-column map with
+`model`, `column`, `source_attnum` and `target_attnum`, plus the complete sequence
+map or an empty list. Each source slot must match the current inherited mapping.
+Target slots must be positive and unique per model, with unchanged visible name
+order. Flat lineage must compose these maps without changing source artifacts,
+journal authority or host pins. Existing v1/v2 bindings cannot authorize the new
+layout. This mapping and its failure controls remain unimplemented.
+
+The implementation must rebuild frame CHECKs and equality indexes against the
+public column before dropping its shadow. Reverse must remove those generated
+dependencies, change the same public attribute to its native type and restore
+the captured constraints, indexes, statistics and column metadata. Sequence
+ownership can stay on the original attribute. Exact mapped inventory checks
+remain required. The oracle observes that comments, statistics targets, options
+and grants survive the bytea conversion, while storage and compression change.
+Define exact ACTIVE metadata rules for those facts. Do not waive drift checks.
+
+Product admission still needs real authenticated values, equality/IN/uniqueness,
+phase interruption and uncertain COMMIT recovery, old-reader refusal, a genuine
+compacted restore, repeated adoption, wrong-map refusal before providers and
+latest-value package-free positional reads. CF1 and key/tenant/host authority
+contracts remain unchanged. All seven production gates remain UNKNOWN.
