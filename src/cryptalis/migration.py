@@ -572,14 +572,17 @@ def _runtime_safety(c, runtime_role, owner, models, journal=None, operation_id=N
                 raise TransitionFailure('unsafe_runtime_role', operation_id)
 
 
-def _policy(ring):
-    if not isinstance(ring, Keyring): raise TransitionFailure('missing_key_policy')
-    p = ring.policy
-    return _hash({'domain':str(p.domain_id),'tenant':str(p.tenant_id), 'payload':p.payload_generation,
+def _policy_document(p):
+    return {'domain':str(p.domain_id),'tenant':str(p.tenant_id), 'payload':p.payload_generation,
         'search':p.search_generation, 'wrappers':[{'provider':str(w.provider_id), 'context':{
             'domain':str(w.context.domain_id),'tenant':str(w.context.tenant_id),'purpose':w.context.purpose,
             'root':str(w.context.root_id),'generation':w.context.generation},
-            'wrapper':hashlib.sha256(w.sealed).hexdigest()} for w in p.wrappers]})
+            'wrapper':hashlib.sha256(w.sealed).hexdigest()} for w in p.wrappers]}
+
+
+def _policy(ring):
+    if not isinstance(ring, Keyring): raise TransitionFailure('missing_key_policy')
+    return _hash(_policy_document(ring.policy))
 
 
 def _ring(keys, tenant, p):

@@ -563,6 +563,17 @@ operation UUID or transition phase. Existing private publication and safe diagno
 [verified checkpoint](status.md#operational-cli-initialization-2026-10-24).
 Source and installed initialization verification pass.
 
+### Public key-policy metadata boundary
+
+**VERIFIED, bounded source controls:** exact policy-digest agreement binds public
+metadata to the supplied artifact. It does not authenticate host provenance or
+prove root material, unwrap authority or live custody. Validate before database
+access; prepare no keys and contact no providers. The report never emits sealed
+wrappers. Keep availability, material correctness, completeness and recovery
+UNKNOWN. Allow independent retained-backup declarations under the same operation.
+No report grants deletion or retirement rights. See the
+[checkpoint](status.md#pinned-public-key-policy-status-2026-10-24).
+
 ### Retained-backup declaration boundary
 
 **IMPLEMENTED, source verified:** declared hashes prove no file availability, recovery or

@@ -1100,3 +1100,14 @@ Existing active text deployments do not receive an automatic type upgrade.
 
 Sources: [PostgreSQL 16 character types](https://www.postgresql.org/docs/16/datatype-character.html)
 and [SQLAlchemy 2.1 exception extensions](https://docs.sqlalchemy.org/en/21/core/exceptions.html#sqlalchemy.exc.DontWrapMixin).
+
+## Inspect pinned public key-policy metadata
+
+Supply a trusted synchronous factory through `status --key-policy-context
+MODULE:FACTORY`. Return KeyPolicyStatusContext with the exact current operation,
+artifact digest and complete public tenant policies. Use a protection/activation
+or reverse artifact; preparation P refuses this option. Add the independent
+`--host-context` when retained-backup declarations are required. The command does
+not prepare keys, contact providers or authorize retirement. Treat DIGEST_MATCH
+as metadata identity only. See the
+[checkpoint](status.md#pinned-public-key-policy-status-2026-10-24).

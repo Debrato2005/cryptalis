@@ -25,6 +25,11 @@ No objective is complete until its acceptance evidence and applicable gate pass.
 
 ## Current boundary
 
+- Pinned public key-policy status passes 113 source checks, including 25 new controls.
+  Generation metadata and retained backup references remain key-free after removal.
+  Digest agreement does not qualify custody. See the
+  [checkpoint](status.md#pinned-public-key-policy-status-2026-10-24).
+
 - Synchronous KMS client admission rejects recognized async SDK methods before use.
   Source protocol and isolated actual-SDK checks pass; live AWS and release gates
   remain UNKNOWN. See the [checkpoint](status.md#synchronous-kms-sdk-admission-2026-10-24).
