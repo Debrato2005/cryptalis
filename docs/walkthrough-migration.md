@@ -189,6 +189,25 @@ No journal reconstruction can replace a lost A. Search CLI remains required late
 [verified checkpoint](status.md#operational-cli-payload-rotation-2026-10-24).
 Source and installed genuine adopted-target verification pass.
 
+## Rotate search generation through the CLI
+
+**IMPLEMENTED, bounded source and installed verification:** use `keys rotate search` with the same seven
+actions and explicit host factory as payload rotation. Supply the corresponding
+Search context. Save P, stage to BACKFILLED and authenticate seal to save A.
+Keep exact private durable P+A outside the database. Use distinct P/A pins.
+Switch with saved A, then publish with target-only ACTIVATING/ACTIVE authority.
+Cancel only before switch using source custody and republished source ACTIVE authority.
+
+Follow the payload procedure for interrupted seal, switch, status and artifact retention.
+Search rotation preserves payload selection and storage-only frames. Searchable frames
+receive fresh nonces and search-generation terms. Source controls and the unchanged
+original application and genuine source/installed fresh-target scenarios pass within
+the recorded boundary. Existing payload evidence alone does not verify
+this command family. See the
+[payload procedure](#rotate-payload-generation-through-the-cli),
+[architecture contract](architecture/README.md#search-rotation-cli) and
+[verified checkpoint](status.md#operational-cli-search-rotation-2026-10-24).
+
 ## Use the optional SQLModel bridge
 
 Use the `sqlmodel` extra from a locally built wheel in an isolated application environment.

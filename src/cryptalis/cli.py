@@ -242,39 +242,40 @@ def _parser() -> argparse.ArgumentParser:
                 help='Resume this operation and re-sync an existing exact private successor artifact.')
         command.add_argument('--json', action='store_true', dest='machine_json', help='Write one JSON object.')
         command.set_defaults(handler=_operational_command)
-    payload = purposes.add_parser('payload', help='Stage, seal and publish an admitted payload generation.',
-        allow_abbrev=False)
-    payload_actions = payload.add_subparsers(dest='payload_action', required=True)
-    for action, description in (
-            ('plan', 'Save a payload preparation proposal with explicit host inputs.'),
-            ('apply', 'Stage encrypted chunks under the saved preparation.'),
-            ('status', 'Inspect recorded preparation or successor progress without keys.'),
-            ('seal', 'Authenticate completed staging and save its activation artifact.'),
-            ('switch', 'Switch verified staging using a saved durable activation artifact.'),
-            ('activate', 'Publish the saved successor under explicit host authority.'),
-            ('abort', 'Discard preparation staging under republished source authority.')):
-        command = payload_actions.add_parser(action, help=description, allow_abbrev=False)
-        command.add_argument('source' if action == 'plan' else 'plan', type=Path,
-            help='Source protection artifact.' if action == 'plan' else 'Saved preparation or activation artifact.')
-        command.add_argument('--host-context', required=True, metavar='MODULE:FACTORY',
-            help='Trusted synchronous factory returning the exact context for this payload action.')
-        if action in ('plan', 'seal'):
-            command.add_argument('--out', type=Path, required=True, help='New private artifact path. Existing paths refuse.')
-        if action == 'plan':
-            command.add_argument('--max-batch-rows', type=int, help='Preparation row bound; omitted uses the existing planner default.')
-            command.add_argument('--max-batch-bytes', type=int, help='Preparation byte bound; omitted uses the existing planner default.')
-        if action in ('apply', 'switch'):
-            command.add_argument('--resume', type=UUID, metavar='OPERATION',
-                help='Resume the exact preparation UUID for apply or activation UUID for switch.')
-        if action == 'apply':
-            command.add_argument('--until', choices=('EXPANDED', 'BACKFILLED'),
-                help='Requested staging phase. The default is BACKFILLED.')
-            command.add_argument('--max-chunks', type=int, help='Stop after this many committed chunks.')
-        if action == 'switch':
-            command.add_argument('--activation', type=Path, required=True,
-                help='Exact private activation artifact sealed from the completed staging.')
-        command.add_argument('--json', action='store_true', dest='machine_json', help='Write one JSON object.')
-        command.set_defaults(handler=_operational_command)
+    for purpose in ('payload', 'search'):
+        generation = purposes.add_parser(purpose, help=f'Stage, seal and publish an admitted {purpose} generation.',
+            allow_abbrev=False)
+        generation_actions = generation.add_subparsers(dest=purpose + '_action', required=True)
+        for action, description in (
+                ('plan', f'Save a {purpose} preparation proposal with explicit host inputs.'),
+                ('apply', 'Stage encrypted chunks under the saved preparation.'),
+                ('status', 'Inspect recorded preparation or successor progress without keys.'),
+                ('seal', 'Authenticate completed staging and save its activation artifact.'),
+                ('switch', 'Switch verified staging using a saved durable activation artifact.'),
+                ('activate', 'Publish the saved successor under explicit host authority.'),
+                ('abort', 'Discard preparation staging under republished source authority.')):
+            command = generation_actions.add_parser(action, help=description, allow_abbrev=False)
+            command.add_argument('source' if action == 'plan' else 'plan', type=Path,
+                help='Source protection artifact.' if action == 'plan' else 'Saved preparation or activation artifact.')
+            command.add_argument('--host-context', required=True, metavar='MODULE:FACTORY',
+                help=f'Trusted synchronous factory returning the exact context for this {purpose} action.')
+            if action in ('plan', 'seal'):
+                command.add_argument('--out', type=Path, required=True, help='New private artifact path. Existing paths refuse.')
+            if action == 'plan':
+                command.add_argument('--max-batch-rows', type=int, help='Preparation row bound; omitted uses the existing planner default.')
+                command.add_argument('--max-batch-bytes', type=int, help='Preparation byte bound; omitted uses the existing planner default.')
+            if action in ('apply', 'switch'):
+                command.add_argument('--resume', type=UUID, metavar='OPERATION',
+                    help='Resume the exact preparation UUID for apply or activation UUID for switch.')
+            if action == 'apply':
+                command.add_argument('--until', choices=('EXPANDED', 'BACKFILLED'),
+                    help='Requested staging phase. The default is BACKFILLED.')
+                command.add_argument('--max-chunks', type=int, help='Stop after this many committed chunks.')
+            if action == 'switch':
+                command.add_argument('--activation', type=Path, required=True,
+                    help='Exact private activation artifact sealed from the completed staging.')
+            command.add_argument('--json', action='store_true', dest='machine_json', help='Write one JSON object.')
+            command.set_defaults(handler=_operational_command)
     return parser
 
 

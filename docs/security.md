@@ -532,6 +532,22 @@ provider and Doctor boundaries remain unchanged. Host-code effects remain UNKNOW
 [verified checkpoint](status.md#operational-cli-payload-rotation-2026-10-24).
 Source and installed genuine adopted-target verification pass.
 
+### Search CLI admission
+
+**IMPLEMENTED, bounded source and installed verification:** authenticate all fields and preserve selected payload
+generation and retained wrappers. Reseal only searchable CF1 with new nonces and
+search terms. Preserve storage-only CF1 bytes exactly. Use search-specific artifact
+kinds, digests and explicit P/A authority. Keep existing protection/reverse/payload
+refusal exits unchanged. New contexts require direct dispatch evidence.
+
+Reuse the payload artifact-retention boundary, including authenticated reseal before
+switch and externally retained A after switch. Key-free status reports NOT_PERFORMED,
+not fresh value verification. Source-only cancellation, target-only publication,
+unknown host-code effects and Doctor's tuple remain unchanged. See the
+[payload retention contract](#payload-cli-artifact-retention) and
+[verified checkpoint](status.md#operational-cli-search-rotation-2026-10-24).
+Source and installed genuine adopted-target verification pass.
+
 ## Owned-sequence admission
 
 **IMPLEMENTED, bounded source and installed verification:** lock/v5 admits only inspected ordinary persistent sequences

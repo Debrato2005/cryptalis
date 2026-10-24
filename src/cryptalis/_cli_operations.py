@@ -28,6 +28,11 @@ _PAYLOAD_DENIED = _DENIED | frozenset(('invalid_payload_rotation_plan', 'payload
     'invalid_payload_apply_bound', 'invalid_payload_batch_bound', 'payload_activation_binding_mismatch',
     'rotation_activation_binding_mismatch', 'payload_switch_requires_prepared_or_pending_pin',
     'matching_external_publication_required', 'payload_rotation_executor_required'))
+_SEARCH_DENIED = _DENIED | frozenset(('invalid_search_rotation_plan', 'search_operation_pin_mismatch',
+    'invalid_payload_apply_bound', 'invalid_payload_batch_bound', 'search_activation_binding_mismatch',
+    'rotation_activation_binding_mismatch', 'search_switch_requires_prepared_or_pending_pin',
+    'matching_external_publication_required', 'search_rotation_executor_required',
+    'search_rotation_requires_searchable_fields'))
 _OPERATIONAL = frozenset(('database_effect_requires_inspection', 'operation_failed_requires_inspection',
     'connection_cleanup_requires_inspection', 'KeyUnavailable', 'CryptoBackendUnavailable'))
 
@@ -88,7 +93,9 @@ def _owned_engine(context, engine_type):
         h.RemovalContext, h.RewrapPlanningContext, h.RewrapApplyContext,
         h.RewrapActivationContext, h.RewrapAbortContext, h.PayloadPlanningContext,
         h.PayloadApplyContext, h.PayloadStatusContext, h.PayloadSealingContext,
-        h.PayloadSwitchContext, h.PayloadActivationContext, h.PayloadAbortContext)
+        h.PayloadSwitchContext, h.PayloadActivationContext, h.PayloadAbortContext, h.SearchPlanningContext,
+        h.SearchApplyContext, h.SearchStatusContext, h.SearchSealingContext,
+        h.SearchSwitchContext, h.SearchActivationContext, h.SearchAbortContext)
     return context.engine if type(context) in contexts and isinstance(context.engine, engine_type) else None
 
 
@@ -180,7 +187,8 @@ def _publish(path, raw, result, operation, *, artifact_only=False):
 def run(arguments):
     """Compose protection, current-value reverse or approved removal APIs."""
     if arguments.command == 'keys':
-        return run_payload(arguments) if arguments.rotation_kind == 'payload' else run_rewrap(arguments)
+        return (run_generation(arguments, arguments.rotation_kind) if arguments.rotation_kind in ('payload', 'search')
+                else run_rewrap(arguments))
     from cryptalis.cli import _CommandFailure, _read_local_file, _write_output
     operation = {'plan': 'transition.plan', 'apply': 'transition.apply',
                  'rollback': 'reverse.apply', 'remove': 'reverse.remove'}.get(arguments.command, 'transition')
@@ -601,19 +609,19 @@ def run_rewrap(arguments):
     return 0
 
 
-def _payload_summary(proposal, activation=None, progress=None, *, status=False):
+def _generation_summary(proposal, activation=None, progress=None, *, status=False, purpose):
     document = activation.document if activation is not None else proposal.document
     identity = activation.operation_id if activation is not None else proposal.operation_id
     digest = activation.digest if activation is not None else proposal.digest
     target = activation.target_id if activation is not None else proposal.source.target_id
     if status:
-        scope = 'payload_activation_status' if activation is not None else 'payload_preparation_status'
+        scope = purpose + '_activation_status' if activation is not None else purpose + '_preparation_status'
     else:
-        scope = ('payload_transition' if activation is not None else
-                 'payload_preparation_plan' if progress is None else 'payload_preparation_transition')
+        scope = (purpose + '_transition' if activation is not None else
+                 purpose + '_preparation_plan' if progress is None else purpose + '_preparation_transition')
     result = dict(scope=scope,
         operation_id=str(identity), target_id=str(target), plan_digest=digest,
-        proposal_digest=proposal.digest if proposal is not None else document['payload_rotation_plan_digest'],
+        proposal_digest=proposal.digest if proposal is not None else document[purpose + '_rotation_plan_digest'],
         phase='PREPARED' if progress is None else progress.phase,
         committed_rows=0 if progress is None else progress.committed_rows,
         committed_chunks=0 if progress is None else progress.committed_chunks,
@@ -634,10 +642,12 @@ def _payload_summary(proposal, activation=None, progress=None, *, status=False):
     return result
 
 
-def run_payload(arguments):
-    """Compose staged payload preparation, authenticated sealing and publication."""
+def run_generation(arguments, purpose):
+    """Compose admitted generation preparation, authenticated sealing and publication."""
     from cryptalis.cli import _CommandFailure, _read_local_file, _write_output
-    operation = 'payload.' + str(getattr(arguments, 'payload_action', 'invalid'))
+    operation = purpose + '.' + str(getattr(arguments, purpose + '_action', 'invalid'))
+    if purpose not in ('payload', 'search'):
+        raise _failure(operation, 'InvalidInput', 'inputs')
     try:
         from sqlalchemy.engine import Engine
         from cryptalis import migration as m, rotation as r, cli_host as h
@@ -649,9 +659,14 @@ def run_payload(arguments):
 
     proposal = activation = engine = result = known = artifact = None
     attempted = False
-    action = getattr(arguments, 'payload_action', None)
+    action = getattr(arguments, purpose + '_action', None)
+    plan_type = r.PayloadRotationPlan if purpose == 'payload' else r.SearchRotationPlan
+    prefix = 'Payload' if purpose == 'payload' else 'Search'
+    denied = _PAYLOAD_DENIED if purpose == 'payload' else _SEARCH_DENIED
+    functions = {name: getattr(r, name + '_' + purpose + '_rotation')
+                 for name in ('plan', 'apply', 'status', 'abort', 'seal', 'switch')}
     try:
-        if (arguments.keys_command != 'rotate' or arguments.rotation_kind != 'payload'
+        if (arguments.keys_command != 'rotate' or arguments.rotation_kind != purpose
                 or action not in ('plan', 'apply', 'status', 'seal', 'switch', 'activate', 'abort')
                 or type(arguments.host_context) is not str or _HOST.fullmatch(arguments.host_context) is None):
             raise ValueError
@@ -669,22 +684,22 @@ def run_payload(arguments):
                     raise ValueError
         elif action in ('activate', 'status'):
             if action == 'status' and m._decode_transition_json(raw).get('format') in (
-                    r.PAYLOAD_FORMAT, r.PayloadRotationPlan.restore_format):
-                proposal = r.PayloadRotationPlan(raw)
+                    plan_type.format, plan_type.restore_format):
+                proposal = plan_type(raw)
             else:
                 activation = m.MigrationPlan(raw)
-                if activation.document['kind'] != 'payload_rotation':
+                if activation.document['kind'] != purpose + '_rotation':
                     raise ValueError
         else:
-            proposal = r.PayloadRotationPlan(raw)
+            proposal = plan_type(raw)
         if action == 'switch':
             raw = _read_local_file(arguments.activation, 'activation', operation=operation)
             if len(raw) > MAX_DOCUMENT_BYTES:
                 raise ValueError
             activation = m.MigrationPlan(raw)
-            if (activation.document['kind'] != 'payload_rotation'
+            if (activation.document['kind'] != purpose + '_rotation'
                     or str(activation.operation_id) != proposal.document['successor_operation_id']
-                    or activation.document['payload_rotation_plan_digest'] != proposal.digest):
+                    or activation.document[purpose + '_rotation_plan_digest'] != proposal.digest):
                 raise ValueError
         if action in ('apply', 'switch'):
             identity = proposal.operation_id if action == 'apply' else activation.operation_id
@@ -720,7 +735,7 @@ def run_payload(arguments):
 
     try:
         if action == 'switch':
-            artifact = dict(scope='payload_activation_artifact', operation_id=str(activation.operation_id),
+            artifact = dict(scope=purpose + '_activation_artifact', operation_id=str(activation.operation_id),
                 plan_digest=activation.digest, activation_plan_digest=activation.digest, proposal_digest=proposal.digest,
                 artifact_published=False, artifact_reused=False, artifact_directory_durable=False,
                 artifact_temporary_retained=False, effects='NONE')
@@ -728,10 +743,10 @@ def run_payload(arguments):
         context = _load_host(arguments.host_context, operation)
         engine = _owned_engine(context, Engine)
         with _quiet():
-            expected = {'plan': h.PayloadPlanningContext, 'apply': h.PayloadApplyContext,
-                'status': h.PayloadStatusContext, 'seal': h.PayloadSealingContext,
-                'switch': h.PayloadSwitchContext, 'activate': h.PayloadActivationContext,
-                'abort': h.PayloadAbortContext}[action]
+            expected = {'plan': getattr(h, prefix + 'PlanningContext'), 'apply': getattr(h, prefix + 'ApplyContext'),
+                'status': getattr(h, prefix + 'StatusContext'), 'seal': getattr(h, prefix + 'SealingContext'),
+                'switch': getattr(h, prefix + 'SwitchContext'), 'activate': getattr(h, prefix + 'ActivationContext'),
+                'abort': getattr(h, prefix + 'AbortContext')}[action]
             if type(context) is not expected or engine is None:
                 raise _failure(operation, 'HostContextInvalid', 'host_context')
             if (engine.dialect.name != 'postgresql' or engine.dialect.driver != 'psycopg'
@@ -752,43 +767,43 @@ def run_payload(arguments):
                 limits = {name: getattr(arguments, name) for name in ('max_batch_rows', 'max_batch_bytes')
                           if getattr(arguments, name) is not None}
                 attempted = True
-                proposal = r.plan_payload_rotation(source, engine, source_pin=context.source_pin,
+                proposal = functions['plan'](source, engine, source_pin=context.source_pin,
                     keys=context.source_keys, target_keys=context.target_keys,
                     backfill_rows_per_second=context.backfill_rows_per_second,
                     verify_rows_per_second=context.verify_rows_per_second,
                     temporary_bytes_per_row=context.temporary_bytes_per_row,
                     wal_bytes_per_row=context.wal_bytes_per_row, restore=context.restore, **limits)
-                result = _payload_summary(proposal)
+                result = _generation_summary(proposal, purpose=purpose)
             elif action == 'seal':
                 attempted = True
-                activation = r.seal_payload_rotation(proposal, engine, keys=context.source_keys,
+                activation = functions['seal'](proposal, engine, keys=context.source_keys,
                     target_keys=context.target_keys, pin=context.pin, approval=context.approval,
                     copy_rows_per_second=context.copy_rows_per_second,
                     copy_wal_bytes_per_row=context.copy_wal_bytes_per_row)
             else:
                 attempted = True
                 if action == 'apply':
-                    progress = r.apply_payload_rotation(proposal, engine, keys=context.source_keys,
+                    progress = functions['apply'](proposal, engine, keys=context.source_keys,
                         target_keys=context.target_keys, pin=context.pin, approval=context.approval,
                         until=arguments.until or 'BACKFILLED', max_chunks=arguments.max_chunks)
                 elif action == 'switch':
-                    progress = r.switch_payload_rotation(proposal, activation, engine, keys=context.source_keys,
+                    progress = functions['switch'](proposal, activation, engine, keys=context.source_keys,
                         target_keys=context.target_keys, pin=context.pin, approval=context.approval)
                 elif action == 'activate':
                     progress = m.apply(activation, engine, keys=context.target_keys,
                                        pin=context.pin, approval=context.approval, until='ACTIVE')
                 elif action == 'abort':
-                    progress = r.abort_payload_rotation(proposal, engine, keys=context.source_keys,
+                    progress = functions['abort'](proposal, engine, keys=context.source_keys,
                                                        source_pin=context.source_pin, approval=context.approval)
                 else:
                     progress = (m.status(activation, engine, pin=context.pin) if activation is not None else
-                                r.status_payload_rotation(proposal, engine, pin=context.pin))
-                result = known = _payload_summary(proposal, activation, progress, status=action == 'status')
+                                functions['status'](proposal, engine, pin=context.pin))
+                result = known = _generation_summary(proposal, activation, progress, status=action == 'status', purpose=purpose)
                 if artifact is not None:
                     result['artifact_result'] = dict(artifact)
         if action in ('plan', 'seal'):
             output_plan = activation if action == 'seal' else proposal
-            artifact = dict(scope='payload_activation_artifact' if action == 'seal' else 'payload_preparation_artifact',
+            artifact = dict(scope=purpose + '_activation_artifact' if action == 'seal' else purpose + '_preparation_artifact',
                 operation_id=str(output_plan.operation_id), plan_digest=output_plan.digest, proposal_digest=proposal.digest,
                 artifact_published=False, artifact_reused=False, artifact_directory_durable=False,
                 artifact_temporary_retained=False, effects='NONE')
@@ -806,7 +821,7 @@ def run_payload(arguments):
     except m.TransitionFailure as error:
         code = error.code if type(error.code) is str and _CODE.fullmatch(error.code) else 'TransitionRejected'
         operational = bool(error.cleanup_errors) or code in _OPERATIONAL
-        failure = _failure(operation, code, 'transition', exit_code=4 if operational else 2 if code in _PAYLOAD_DENIED else 3)
+        failure = _failure(operation, code, 'transition', exit_code=4 if operational else 2 if code in denied else 3)
         failure.error['sqlstate'] = error.sqlstate if type(error.sqlstate) is str and _SQLSTATE.fullmatch(error.sqlstate) else None
         if error.cleanup_errors:
             failure.error['cleanup_errors'] = [dict(stage=stage if stage in ('rollback', 'invalidate', 'close', 'driver_close')

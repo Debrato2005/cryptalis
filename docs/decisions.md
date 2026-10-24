@@ -1248,3 +1248,42 @@ The [final boundary](_reset/payload-cli-final-boundary-20261024.json) binds seve
 current PostgreSQL receipts, both application receipts and the exact installed wheel.
 All 215 Python hashes stay stable. All 34 objective states and seven UNKNOWN gates
 remain unchanged. This evidence supplies no current full-suite or production qualification.
+
+## Search CLI generation and saved activation authority: 2026-10-24
+
+**IMPLEMENTED:** `keys rotate search` composes the existing search preparation,
+status, sealing, switch, publication and cancellation APIs.
+The payload and search CLI adapters share their bounded generation flow.
+Each purpose retains its own strict proposal kind, digest, scopes and exact contexts.
+Existing protection, reverse, rewrap and payload denial classifications stay unchanged.
+
+Search rotation retains the selected payload generation and exact storage-only CF1
+bytes. Searchable fields receive authenticated ciphertext with a fresh nonce and
+new search terms. The CLI must use the existing API proof and custody checks.
+It creates no keys, provider, pin, approval or restore authority.
+
+The [payload artifact-retention decision](#payload-cli-sealing-and-retained-activation-artifacts-2026-10-24)
+also governs search P+A. Seal reports artifact facts without a database phase.
+First switch uses both custody resolvers. Committed switch retry and activation
+use target custody alone. Abort uses source custody and the separate source ACTIVE pin.
+Status uses no keys and reports recorded progress with NOT_PERFORMED verification.
+A real restore binding can embed directly in search P/v2 and A/v7.
+No intermediate root rewrap can substitute for the required binding.
+
+**VERIFIED within the bounded source and installed profiles:** the
+[source profile](_reset/search-cli-source-focused-initial-20261024.json) passes
+79 tests. The [affected source suite](_reset/search-cli-source-affected-20261024.json)
+passes 449. The [actual installed suite](_reset/search-cli-installed-affected-20261024.json)
+passes 528. Focused primary and installed runs skip four separate genuine-fresh setup cases.
+Source and installed genuine export and restore each pass one test.
+The real binding embeds directly in search P/v2 and A/v7.
+Wrong binding refuses before key access. Both original-application profiles retain six
+unchanged files and five actual SIGKILL checkpoints. Search rotation preserves storage-only
+frames exactly, retains payload generation 2 and publishes search generation 2.
+Current CRUD, search, Boolean values and latest-value native exit pass.
+The [final boundary](_reset/search-cli-final-boundary-20261024.json) binds seven
+current PostgreSQL receipts, both application receipts and the exact installed wheel.
+All 216 Python hashes stay stable. The 23 exact host contexts retain the previous
+16 declarations and all earlier denial classifications unchanged. All 34 objective
+states and seven UNKNOWN gates remain unchanged. This evidence supplies no current
+full-suite or production qualification.

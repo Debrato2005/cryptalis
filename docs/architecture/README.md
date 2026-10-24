@@ -181,6 +181,28 @@ costs remain outside preparation chunk bounds. See the
 [verified checkpoint](../status.md#operational-cli-payload-rotation-2026-10-24).
 Source and installed genuine adopted-target verification pass.
 
+### Search-rotation CLI
+
+**IMPLEMENTED, bounded source and installed verification:** prefix the same seven payload actions with
+`keys rotate search`. Use exact `SearchPlanningContext`, `SearchApplyContext`,
+`SearchStatusContext`, `SearchSealingContext`, `SearchSwitchContext`,
+`SearchActivationContext` and `SearchAbortContext` types. Each requires the same
+fields as its corresponding Payload context. Planning requires explicit restore
+and four measurements. Sealing requires both copy measurements. Status is key-free,
+activation has only target keys, and abort has only source keys/source ACTIVE pin.
+
+P uses search-rotation/v1 or v2. A has kind `search_rotation`, transition/v4 or v7.
+Validate `search_rotation_plan_digest`, reserved A UUID and artifact kind before host
+loading. Keep P/A pins distinct. First switch uses both custody resolvers. Its
+PENDING retry accepts both arguments but invokes only target custody after reciprocal
+proof. Publication is target-only. Cancellation is source-only and refuses after switch.
+Shared payload seal, durability and external artifact-retention rules apply unchanged.
+Search rotation changes searchable CF1 nonces/terms while retaining exact payload
+custody and storage-only CF1 bytes. No new core or cryptographic construction follows. The
+[payload context table](#payload-rotation-cli) supplies the shared field contract.
+See the [verified checkpoint](../status.md#operational-cli-search-rotation-2026-10-24).
+Source and installed genuine adopted-target verification pass.
+
 ## Exact data paths
 
 ```text
@@ -538,8 +560,9 @@ The initial `plan` and protection `apply` commands have the bounded
 [reverse/removal extension](#reverse-and-removal-cli) and
 [root-rewrap CLI](#root-rewrap-cli) have bounded source, installed and genuine
 fresh-target evidence. The [payload CLI](#payload-rotation-cli) has bounded source
-verification. Its source and installed genuine adopted-target checks pass.
-`init` and search rotation CLI commands remain unimplemented.
+and installed verification. Its source and installed genuine adopted-target checks pass.
+`init` remains unimplemented. The [search CLI](#search-rotation-cli) has bounded
+source and installed verification. Its source and installed genuine adopted-target checks pass.
 Full status coverage of keys and retained obligations
 remains SPECIFIED. The migration walkthrough defines the implemented subset.
 See [committed progress](../walkthrough-migration.md#inspect-committed-progress).

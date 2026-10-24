@@ -26,10 +26,16 @@ from test_deprotection import least_privilege_role
 from test_migration import DOMAIN, keys
 from rewrap_worker import target_keys
 from payload_rotation_worker import rotated_keys
+from search_rotation_worker import target_keys as search_target_keys
 import test_sqlmodel_application as original
 
 
 ROOT = Path(__file__).resolve().parents[1]
+
+
+def search_keys(tenant):
+    return search_target_keys(tenant, source=rotated_keys)
+
 LAUNCH = r'''
 import json,pathlib,sys
 expected=pathlib.Path(sys.argv[1]).resolve()
@@ -55,13 +61,16 @@ from app.models import User
 from cryptalis.cli_host import (PlanningContext,ApplyContext,ReversePlanningContext,ReverseApplyContext,RemovalContext,
     RewrapPlanningContext,RewrapApplyContext,RewrapActivationContext,RewrapAbortContext,
     PayloadPlanningContext,PayloadApplyContext,PayloadStatusContext,PayloadSealingContext,
-    PayloadSwitchContext,PayloadActivationContext,PayloadAbortContext)
+    PayloadSwitchContext,PayloadActivationContext,PayloadAbortContext,
+    SearchPlanningContext,SearchApplyContext,SearchStatusContext,SearchSealingContext,
+    SearchSwitchContext,SearchActivationContext,SearchAbortContext)
 from cryptalis.manifest.compiler import Writer,WriterInventory,SearchReview
 from cryptalis.migration import DeploymentPin,MaintenanceApproval
 from cryptalis.deprotection import PlaintextApproval,RemovalApproval
 from test_migration import keys
 from rewrap_worker import target_keys
 from payload_rotation_worker import rotated_keys
+from search_rotation_worker import target_keys as search_target_keys
 from uuid import UUID
 
 def configuration():return json.loads(Path(os.environ['OPERATIONAL_HOST_CONFIGURATION']).read_text())
@@ -94,7 +103,8 @@ def pause_after_dispose(engine,c):
 def deployment(c):
     raw=json.loads(Path(c['pin_path']).read_text())
     return DeploymentPin(UUID(raw['target_id']),UUID(raw['operation_id']),raw['plan_digest'],raw['phase'])
-def current_keys(c):return rotated_keys if c.get('current_payload_custody') else target_keys if c.get('current_target_custody') else keys
+def search_keys(tenant):return search_target_keys(tenant,source=rotated_keys)
+def current_keys(c):return search_keys if c.get('current_search_custody') else rotated_keys if c.get('current_payload_custody') else target_keys if c.get('current_target_custody') else keys
 def reverse_planning():
     c=configuration()
     return ReversePlanningContext(engine=owned(c),keys=current_keys(c),source_pin=deployment(c),
@@ -179,6 +189,44 @@ def payload_activating():
 def payload_aborting():
     c=configuration()
     return PayloadAbortContext(engine=owned(c),source_keys=lambda t:payload_source(c,t),source_pin=deployment(c),
+        approval=MaintenanceApproval(**json.loads(Path(c['approval_path']).read_text())))
+def search_source(c,tenant):
+    if c.get('search_source_unavailable'):raise RuntimeError('PRIVATE_OPERATIONAL_HOST_OR_PROVIDER')
+    return rotated_keys(tenant)
+def search_target(c,tenant):
+    if c.get('search_target_unavailable'):raise RuntimeError('PRIVATE_OPERATIONAL_HOST_OR_PROVIDER')
+    return search_keys(tenant)
+def search_planning():
+    c=configuration()
+    return SearchPlanningContext(engine=owned(c),source_keys=lambda t:search_source(c,t),
+        target_keys=lambda t:search_target(c,t),source_pin=deployment(c),restore=None,
+        backfill_rows_per_second=1000,verify_rows_per_second=1000,temporary_bytes_per_row=3000,wal_bytes_per_row=6000)
+def search_applying():
+    c=configuration()
+    return SearchApplyContext(engine=owned(c),source_keys=lambda t:search_source(c,t),
+        target_keys=lambda t:search_target(c,t),pin=deployment(c),
+        approval=MaintenanceApproval(**json.loads(Path(c['approval_path']).read_text())))
+def search_status():
+    c=configuration()
+    return SearchStatusContext(engine=owned(c),pin=deployment(c))
+def search_sealing():
+    c=configuration()
+    return SearchSealingContext(engine=owned(c),source_keys=lambda t:search_source(c,t),
+        target_keys=lambda t:search_target(c,t),pin=deployment(c),
+        approval=MaintenanceApproval(**json.loads(Path(c['approval_path']).read_text())),
+        copy_rows_per_second=0.5,copy_wal_bytes_per_row=3000)
+def search_switching():
+    c=configuration();engine=owned(c);pause_after_dispose(engine,c)
+    return SearchSwitchContext(engine=engine,source_keys=lambda t:search_source(c,t),
+        target_keys=lambda t:search_target(c,t),pin=deployment(c),
+        approval=MaintenanceApproval(**json.loads(Path(c['approval_path']).read_text())))
+def search_activating():
+    c=configuration()
+    return SearchActivationContext(engine=owned(c),target_keys=lambda t:search_target(c,t),pin=deployment(c),
+        approval=MaintenanceApproval(**json.loads(Path(c['approval_path']).read_text())))
+def search_aborting():
+    c=configuration()
+    return SearchAbortContext(engine=owned(c),source_keys=lambda t:search_source(c,t),source_pin=deployment(c),
         approval=MaintenanceApproval(**json.loads(Path(c['approval_path']).read_text())))
 '''
 
@@ -489,6 +537,92 @@ def test_original_three_field_app_cli_plan_kill_resume_publish_and_native_exit(t
         current = workload['boolean_controls'](attached, current, uuid4().hex)
         current, payload_controls = search_controls(attached, current)
         assert payload_controls == controls
+        # Search rotation changes only the searchable representation; storage frames stay exact.
+        search_source_plan, search_source_pin = plan, pin('ACTIVE')
+        def search_command(action, path, factory, *extra):
+            return ('keys', 'rotate', 'search', action, str(path), '--host-context', module + ':' + factory, *extra, '--json')
+        pin_path.write_text(json.dumps(asdict(search_source_pin), default=str))
+        cancelled_search_path = tmp_path / 'cancelled-search.json'
+        source_search_frames = field_frames(owner, plan.document['lock']['models'][0], staged=False)
+        execute(*search_command('plan', plan_path, 'search_planning', '--out', str(cancelled_search_path)))
+        cancelled_search = r.SearchRotationPlan(cancelled_search_path.read_bytes())
+        configuration['search_target_unavailable'] = True
+        configuration_path.write_text(json.dumps(configuration))
+        assert execute(*search_command('abort', cancelled_search_path, 'search_aborting'))['phase'] == 'ABORTED'
+        assert field_frames(owner, plan.document['lock']['models'][0], staged=False) == source_search_frames
+        configuration['search_target_unavailable'] = False
+        configuration_path.write_text(json.dumps(configuration))
+        search_path, search_activation_path = tmp_path / 'search.json', tmp_path / 'search-activation.json'
+        execute(*search_command('plan', plan_path, 'search_planning', '--out', str(search_path)))
+        search = r.SearchRotationPlan(search_path.read_bytes())
+        search_before = field_frames(owner, plan.document['lock']['models'][0], staged=False)
+        pin_path.write_text(json.dumps(asdict(preparation_pin(search)), default=str))
+        assert execute(*search_command('apply', search_path, 'search_applying', '--max-chunks', '1'))['phase'] == 'EXPANDED'
+        assert execute(*search_command('apply', search_path, 'search_applying', '--resume', str(search.operation_id)))['phase'] == 'BACKFILLED'
+        assert field_frames(owner, plan.document['lock']['models'][0], staged=False) == search_before
+        assert execute(*search_command('status', search_path, 'search_status'))['verification'] == 'NOT_PERFORMED'
+        search_seal = execute(*search_command('seal', search_path, 'search_sealing', '--out', str(search_activation_path)))
+        assert 'phase' not in search_seal and 'known_result' not in search_seal
+        search_activation = m.MigrationPlan(search_activation_path.read_bytes())
+        search_repeated = tmp_path / 'identical-search-a.json'
+        execute(*search_command('seal', search_path, 'search_sealing', '--out', str(search_repeated)))
+        assert search_repeated.read_bytes() == search_activation_path.read_bytes()
+        fields = sorted(search.source.document['lock']['models'][0]['fields'], key=lambda field: field['column'])
+        with owner.connect() as connection:
+            quote = connection.dialect.identifier_preparer.quote
+            columns = [quote(field['payload_column'] + '_rotation') for field in fields]
+            search_staged = {str(row[0]): tuple(None if value is None else bytes(value) for value in row[1:])
+                for row in connection.exec_driver_sql('SELECT id,' + ','.join(columns) + ' FROM "user" ORDER BY id')}
+        for identity, values in search_staged.items():
+            for field, previous, frame in zip(fields, search_before[identity], values):
+                if field['column'] != 'email':
+                    assert frame == previous
+                else:
+                    assert frame[:10] == previous[:10] and int.from_bytes(frame[6:10], 'big') == 2
+                    assert int.from_bytes(frame[10:14], 'big') == 2 and frame[14:46] != previous[14:46]
+                    assert frame[46:58] != previous[46:58]
+        pin_path.write_text(json.dumps(asdict(m.DeploymentPin(search_activation.target_id,
+            search_activation.operation_id, search_activation.digest, 'PREPARED')), default=str))
+        Path(configuration['checkpoint']).unlink()
+        configuration['pause_after_dispose'] = True
+        configuration_path.write_text(json.dumps(configuration))
+        process = subprocess.Popen(command(*search_command('switch', search_path, 'search_switching',
+            '--activation', str(search_activation_path))), env=environment, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+        deadline = time.monotonic() + 25
+        while not Path(configuration['checkpoint']).exists():
+            assert process.poll() is None, 'search switch child exited early; diagnostics suppressed'
+            assert time.monotonic() < deadline, 'search committed checkpoint was not observed'
+            time.sleep(0.05)
+        assert m.status(search_activation, owner, pin=m.DeploymentPin(search_activation.target_id,
+            search_activation.operation_id, search_activation.digest, 'PREPARED')).phase == 'PENDING'
+        assert field_frames(owner, search_activation.document['lock']['models'][0], staged=False) == search_staged
+        process.kill();process.communicate(timeout=10)
+        assert process.returncode == -signal.SIGKILL
+        configuration.update(pause_after_dispose=False, search_source_unavailable=True)
+        configuration_path.write_text(json.dumps(configuration))
+        assert execute(*search_command('switch', search_path, 'search_switching', '--activation', str(search_activation_path),
+            '--resume', str(search_activation.operation_id)))['phase'] == 'PENDING'
+        pin_path.write_text(json.dumps(asdict(m.DeploymentPin(search_activation.target_id,
+            search_activation.operation_id, search_activation.digest, 'ACTIVATING')), default=str))
+        assert execute(*search_command('activate', search_activation_path, 'search_activating'))['phase'] == 'ACTIVE'
+        configuration['current_search_custody'] = True
+        configuration_path.write_text(json.dumps(configuration))
+        assert indices() == original_indexes and public_slots(owner, native_slots) == native_slots
+        with pytest.raises(m.TransitionFailure):m.check_deployment(search_source_plan, owner, pin=search_source_pin)
+        plan, plan_path = search_activation, search_activation_path
+        runtime.dispose();mapping.dispose();mapping.metadata.clear()
+        for name in tuple(sys.modules):
+            if name == 'app' or name.startswith('app.'):del sys.modules[name]
+        workload = runpy.run_path(str(helper))
+        from app.models import User as SearchedUser
+        mapping = SearchedUser._sa_registry
+        runtime = original.native_engine('CRYPTALIS_TEST_RUNTIME_DATABASE_URL', schema)
+        factory = attach(mapping, runtime, lock=plan.lock_bytes, keys=search_keys, deployment=(plan, pin('ACTIVE')))
+        attached = lambda: factory(tenant_id=original.TABLE, expire_on_commit=False)
+        current = workload['workflow'](attached, uuid4().hex, current)
+        current = workload['boolean_controls'](attached, current, uuid4().hex)
+        current, searched_controls = search_controls(attached, current)
+        assert searched_controls == controls
         # The trusted host supplies ACTIVE source authority before reverse planning.
         pin_path.write_text(json.dumps(asdict(pin('ACTIVE')), default=str))
         configuration['plaintext_runtime_role'] = least_privilege_role(SimpleNamespace(owner=owner, role=role))
@@ -500,7 +634,7 @@ def test_original_three_field_app_cli_plan_kill_resume_publish_and_native_exit(t
         assert reversed_plan['phase'] == 'PREPARED' and reversed_plan['source_operation_id'] == str(plan.operation_id)
         with owner.connect() as connection:
             reverse_source_ids = {str(row[0]) for row in connection.exec_driver_sql('SELECT id FROM "user"')}
-        assert len(reverse_source_ids) == 3
+        assert len(reverse_source_ids) == 4
         consent = d.PlaintextApproval(reverse.target_id, reverse.operation_id, reverse.digest, True,
                                      'public disposable original app values')
         consent_path, removal_path = tmp_path / 'host-consent.json', tmp_path / 'host-removal.json'
@@ -595,6 +729,13 @@ def test_original_three_field_app_cli_plan_kill_resume_publish_and_native_exit(t
                     'payload_authenticated_identical_reseal': True, 'sigkill_after_payload_pending': True,
                     'independent_payload_resume_preserved_frames': True, 'payload_target_only_publication': True,
                     'payload_search_boolean_latest_values': True,
+                    'cli_search_plan_stage_seal_switch_activate_abort_status': True,
+                    'search_proposal_digest': search.digest, 'search_activation_digest': search_activation.digest,
+                    'search_generation': 2, 'search_preserved_payload_generation': 2, 'search_keyless_status': True,
+                    'search_source_only_abort': True, 'cancelled_search_digest': cancelled_search.digest,
+                    'search_authenticated_identical_reseal': True, 'sigkill_after_search_pending': True,
+                    'independent_search_resume_preserved_frames': True, 'search_target_only_publication': True,
+                    'search_storage_frames_preserved_exactly': True, 'search_query_boolean_latest_values': True,
                     'sigkill_after_committed_backfilled': True, 'independent_resume_preserved_frames': True,
                     'cli_reverse_plan_apply_resume_remove': True, 'reverse_plan_digest': reverse.digest,
                     'sigkill_after_reverse_backfilled': True, 'independent_reverse_resume_preserved_plaintext': True,

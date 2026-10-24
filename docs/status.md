@@ -21,9 +21,77 @@ and [competitive capability matrix](research/capability-matrix.md) govern priori
 Progress follows complete real-application journeys and resolved production requirements.
 All seven production gates remain UNKNOWN.
 
+## Operational CLI search rotation: 2026-10-24
+
+**VERIFIED within the bounded source and installed profiles at `worktree-0dcdf51f7824071e`:** `keys rotate search` adds `plan`, `apply`,
+`status`, `seal`, `switch`, `activate` and `abort` over existing search APIs.
+P is search-rotation/v1 or direct-restored v2. Its reserved A uses transition/v4
+or adopted v7. Distinct P/A pins bind the exact operation and artifact digest.
+Search-specific validation preserves existing protection, reverse and payload exit behavior.
+
+Search rotation retains payload generation, roots and wrappers. It authenticates all
+fields, then reseals searchable CF1 with fresh nonces and search terms. Storage-only
+CF1 bytes remain exact. Source-only abort, target-only publication and key-free status
+retain their existing boundaries. Status reports NOT_PERFORMED verification.
+
+The seven explicit Search contexts mirror the corresponding Payload context fields.
+The same authenticated seal, private durable P+A and external-A retention rules apply.
+No new core API, artifact format, crypto or host authority is introduced. Doctor
+remains unchanged.
+
+The [parser RED](_reset/search-cli-source-red-20261024.json) preserves one failure
+in 0.82 seconds because the old command grammar lacks search rotation. The
+[focused source profile](_reset/search-cli-source-focused-initial-20261024.json)
+passes 79 tests with four genuine-fresh setup skips in 127.80 seconds: nine new
+search, 16 payload, 13 rewrap, 19 reverse, 21 protection controls and one original
+application journey. All 216 Python hashes stay stable and match this worktree.
+
+The [source application](_reset/search-cli-source-application-initial-20261024.json)
+retains six pinned files and five actual SIGKILL checkpoints. Its search transition
+keeps payload generation 2, selects search generation 2 and changes the searchable
+email nonce and term. Both storage-only fields retain exact CF1 bytes. Key-free
+status, source-only cancellation, saved-A recovery and target-only retry/publication pass.
+Original CRUD, equality/IN, native uniqueness and Boolean controls pass. Reverse
+observes four current records before latest-value removal and an import-denied restart.
+The [affected-source suite](_reset/search-cli-source-affected-20261024.json)
+passes 449 tests with no skips in 231.36 seconds. Its 21 modules cover 260
+existing CLI, Doctor and reverse controls, 129 payload controls and 60 search
+retained-reader, preparation, lifecycle and recovery controls. The unchanged 103 core
+root-rewrap controls retain their `f303a18` boundary. The focused source run includes
+13 current operational rewrap controls. All 216 Python hashes stay stable and match
+this worktree. The [artifact check](_reset/search-cli-release-20261024.json) passes
+reproducible archives, SBOM, CLI, 38 modules and 42 installed-file checks. All 43
+release-source hashes match this worktree. The wheel has SHA-256
+`a103f8c018d07c7942a289577f8caa091fb748825a059f758a596ce74cf57025`.
+Only three CLI product modules change. The other 35 modules, including ten crypto
+modules, remain byte-exact at `f303a18`. Genuine source
+[export](_reset/fresh-cluster-export-20261024-61.json) and
+[separate-cluster restore](_reset/fresh-cluster-restore-20261024-60.json) each pass
+one test in 0.89 and 1.75 seconds. A wrong restore binding refuses before keys.
+The real binding produces search proposal v2 and activation v7. Current search edits
+and CLI reverse/removal complete latest-value native exit. Both receipts retain 216
+stable/current Python hashes.
+
+The [installed suite](_reset/search-cli-installed-affected-20261024.json) passes
+528 tests with four genuine-fresh setup skips in 355.12 seconds. Its
+[application receipt](_reset/search-cli-installed-application-20261024.json) retains
+six unchanged files, five actual SIGKILL checkpoints and latest-value native exit.
+All 216 Python hashes stay stable and match this worktree. Actual installed
+[export](_reset/fresh-cluster-export-20261024-62.json) and
+[separate-cluster restore](_reset/fresh-cluster-restore-20261024-61.json) each pass
+one test in 0.82 and 1.24 seconds, with the same 216 stable/current hashes.
+The [final boundary](_reset/search-cli-final-boundary-20261024.json) binds seven
+current database receipts, two application receipts, six documents and actual
+artifact bytes. The earlier parser RED retains its historical boundary. No current
+full-suite, HTTP or live custody qualification follows. All 34 objective states and
+seven UNKNOWN gates remain unchanged. See the
+[architecture contract](architecture/README.md#search-rotation-cli),
+[admission boundary](security.md#search-cli-admission) and
+[procedure](walkthrough-migration.md#rotate-search-generation-through-the-cli).
+
 ## Operational CLI payload rotation: 2026-10-24
 
-**VERIFIED within the bounded source and installed profiles at `worktree-717ecb8bb324b4bb`:** `keys rotate payload` adds `plan`, `apply`,
+**VERIFIED within the bounded source and installed profiles at `f303a18`:** `keys rotate payload` adds `plan`, `apply`,
 `status`, `seal`, `switch`, `activate` and `abort` over existing APIs. P reserves
 A's operation UUID, not its content or digest. Seal authenticates BACKFILLED
 shadows to produce A. Seal changes no data, schema or journal phase. Provider
@@ -53,7 +121,7 @@ Earlier receipts retain their exact failed or incomplete boundaries:
 The corrected [application-only run](_reset/payload-cli-source-app-native-20261024.json)
 passes one test in 26.30 seconds. The [final focused profile](_reset/payload-cli-source-focused-final-20261024.json)
 passes 70 tests with three genuine-fresh setup skips in 94.73 seconds. All 215
-Python hashes stay stable and match this worktree. The
+Python hashes stay stable and match that checkpoint. The
 [final application receipt](_reset/payload-cli-source-application-final-20261024.json)
 retains six pinned files and four actual SIGKILL checkpoints across protection,
 rewrap, payload and reverse. It verifies source-only payload cancellation, key-free
@@ -64,10 +132,10 @@ passes 492 tests with one collection skip in 250.35 seconds. Its 22 selected mod
 include 363 existing CLI, Doctor, decrypt-back and rewrap controls plus 129 payload
 planning, preparation, execution, cutover and recovery controls. Direct-generation tests
 are collection-skipped through a fresh-only import. Their controls do not run here.
-All 215 Python hashes stay stable and match this worktree. The
+All 215 Python hashes stay stable and match that checkpoint. The
 [artifact check](_reset/payload-cli-release-20261024.json) passes reproducible archives,
 SBOM, CLI, 38 modules and 42 installed-file checks. All 43 release-source hashes
-match this worktree. The wheel has SHA-256
+match that checkpoint. The wheel has SHA-256
 `df6c287462dec619e79869ca169cb248d5b4800f1bc14fe4ea9b05218df1baba`.
 Only three CLI product modules change. The other 35 modules, including ten crypto
 modules, remain unchanged. The genuine source
@@ -82,10 +150,10 @@ The [installed suite](_reset/payload-cli-installed-affected-20261024.json) passe
 562 tests in 346.20 seconds, with three genuine-fresh setup skips and one
 direct-generation collection skip. Its [application receipt](_reset/payload-cli-installed-application-20261024.json)
 retains six unchanged files, four actual SIGKILL checkpoints and latest-value native
-exit. All 215 Python hashes stay stable and match this worktree. Actual installed
+exit. All 215 Python hashes stay stable and match that checkpoint. Actual installed
 [export](_reset/fresh-cluster-export-20261024-60.json) and
 [separate-cluster restore](_reset/fresh-cluster-restore-20261024-59.json) each pass
-one test in 0.88 and 1.81 seconds, with the same 215 stable/current hashes.
+one test in 0.88 and 1.81 seconds, with the same 215 stable hashes at that checkpoint.
 The [final boundary](_reset/payload-cli-final-boundary-20261024.json) binds seven
 current database receipts, two current application receipts, six documents and
 actual artifact bytes. Earlier failed/incomplete runs and the standalone application

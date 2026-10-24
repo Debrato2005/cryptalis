@@ -170,3 +170,67 @@ class PayloadAbortContext:
     source_keys: Keyring | Callable[[UUID], Keyring]
     source_pin: DeploymentPin
     approval: MaintenanceApproval
+
+
+@dataclass(frozen=True, repr=False)
+class SearchPlanningContext:
+    engine: Engine
+    source_keys: Keyring | Callable[[UUID], Keyring]
+    target_keys: Keyring | Callable[[UUID], Keyring]
+    source_pin: DeploymentPin
+    backfill_rows_per_second: float
+    verify_rows_per_second: float
+    temporary_bytes_per_row: int
+    wal_bytes_per_row: int
+    restore: RestoreBinding | None
+
+
+@dataclass(frozen=True, repr=False)
+class SearchApplyContext:
+    engine: Engine
+    source_keys: Keyring | Callable[[UUID], Keyring]
+    target_keys: Keyring | Callable[[UUID], Keyring]
+    pin: DeploymentPin
+    approval: MaintenanceApproval
+
+
+@dataclass(frozen=True, repr=False)
+class SearchStatusContext:
+    engine: Engine
+    pin: DeploymentPin
+
+
+@dataclass(frozen=True, repr=False)
+class SearchSealingContext:
+    engine: Engine
+    source_keys: Keyring | Callable[[UUID], Keyring]
+    target_keys: Keyring | Callable[[UUID], Keyring]
+    pin: DeploymentPin
+    approval: MaintenanceApproval
+    copy_rows_per_second: float
+    copy_wal_bytes_per_row: int
+
+
+@dataclass(frozen=True, repr=False)
+class SearchSwitchContext:
+    engine: Engine
+    source_keys: Keyring | Callable[[UUID], Keyring]
+    target_keys: Keyring | Callable[[UUID], Keyring]
+    pin: DeploymentPin
+    approval: MaintenanceApproval
+
+
+@dataclass(frozen=True, repr=False)
+class SearchActivationContext:
+    engine: Engine
+    target_keys: Keyring | Callable[[UUID], Keyring]
+    pin: DeploymentPin
+    approval: MaintenanceApproval
+
+
+@dataclass(frozen=True, repr=False)
+class SearchAbortContext:
+    engine: Engine
+    source_keys: Keyring | Callable[[UUID], Keyring]
+    source_pin: DeploymentPin
+    approval: MaintenanceApproval
