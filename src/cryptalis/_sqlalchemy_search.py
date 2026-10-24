@@ -45,6 +45,10 @@ def search_shape(owner, expression):
     bindings = [binding for binding in owner.bindings if left.shares_lineage(binding.column)]
     if len(bindings) != 1:
         return None
+    # Rewriting must not discard a custom renderer's native SQL semantics.
+    # Reuse exact native/annotated dispatch admission before resolving keys.
+    from .sqlalchemy import _delete_node
+    _delete_node(expression, BinaryExpression)
     null = expression.operator in (operators.is_, operators.is_not) and isinstance(right, Null)
     if not null and not bindings[0].descriptor.equality:
         return None

@@ -25,6 +25,11 @@ No objective is complete until its acceptance evidence and applicable gate pass.
 
 ## Current boundary
 
+- Protected search rejects custom binary dispatch before rewrite and key resolution.
+  Corrected source verification passes 185 native controls with no skips. Async
+  SELECT admission precedes preparation. See the
+  [checkpoint](status.md#exact-protected-search-expression-dispatch-2026-10-24).
+
 - The original 26-file HTTP operational join passes two source and two installed
   tests with no skips. Six HTTP boundaries, 24 loopback messages per journey,
   five actual SIGKILL/resume checkpoints and latest-value package-free HTTP exit pass.

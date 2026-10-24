@@ -1379,3 +1379,13 @@ The [installed application report](_reset/http-cli-installed-application-2026102
 and [final boundary](_reset/http-cli-final-boundary-20261024.json) bind the joined
 evidence to the unchanged wheel, current Python files and six documents.
 This slice repeats no full suite or fresh-cluster qualification.
+
+## Native search-expression dispatch admission: 2026-10-24
+
+Reject custom binary compilation paths before rewriting protected predicates.
+A subclass or per-instance renderer can change native SQL semantics; replacing
+it with an ordinary equality predicate is not compatible. Reuse the existing
+exact native/annotated-node admission check. For async SELECT, perform existing
+configuration and statement admission before key preparation, then retain the
+normal execution check. Preserve ordinary equality, negative predicates, IN,
+NULL and Boolean expression behavior. This admits no new public operation.

@@ -577,6 +577,14 @@ live-custody or production evidence. Status of external retained obligations nee
 host inventory/provenance. Wrappers or an empty journal cannot prove no obligations. See the
 [qualification checkpoint](status.md#original-http-operational-cli-journey-2026-10-24).
 
+### Protected-search dispatch admission
+
+**VERIFIED, bounded source controls:** reject unadmitted custom binary renderers
+before protected predicate rewriting and key resolution. Async SELECT admission
+must precede key preparation. Native FALSE controls and ordinary query parity
+separate safe refusal from changed SQL semantics. See the
+[checkpoint](status.md#exact-protected-search-expression-dispatch-2026-10-24).
+
 ## Owned-sequence admission
 
 **IMPLEMENTED, bounded source and installed verification:** lock/v5 admits only inspected ordinary persistent sequences
