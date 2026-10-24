@@ -167,6 +167,28 @@ completion or cancellation. These commands create no keys or authority. See the
 [verified checkpoint](status.md#operational-cli-root-rewrap-2026-10-24).
 Source and installed genuine adopted-target verification pass.
 
+## Rotate payload generation through the CLI
+
+**IMPLEMENTED, bounded source and installed verification:** supply the action's explicit trusted context.
+Use `keys rotate payload plan SOURCE --out P` to save the proposal.
+Keep P unchanged. Stage with `apply P`, optionally resuming its exact P UUID.
+Stage only to EXPANDED or BACKFILLED. Key-free `status P` reports recorded progress.
+
+Use `seal P --out A` after BACKFILLED. Supply both custody resolvers and explicit
+copy measurements. Retain exact private P+A outside the database before switch.
+If output is lost, authenticate the shadows again through seal. Use a fresh output
+path when another A exists. Compare exact bytes. Seal creates no journal phase.
+
+Use `switch P --activation A` with the distinct A pin. On uncertain commit,
+retain both artifacts and inspect A-status. Retry with `--resume A_UUID` and exact A.
+Use `activate A` with target custody and independent ACTIVATING/ACTIVE authority.
+Use `abort P` only before switch, with source custody and republished source ACTIVE authority.
+After switch, P-status and resealing refuse. Keep A for later recovery and exit.
+No journal reconstruction can replace a lost A. Search CLI remains required later. See the
+[architecture contract](architecture/README.md#payload-rotation-cli) and
+[verified checkpoint](status.md#operational-cli-payload-rotation-2026-10-24).
+Source and installed genuine adopted-target verification pass.
+
 ## Use the optional SQLModel bridge
 
 Use the `sqlmodel` extra from a locally built wheel in an isolated application environment.

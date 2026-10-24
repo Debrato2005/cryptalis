@@ -133,6 +133,8 @@ def main():
                           help='Qualify saved reverse planning and approved CLI removal on an adopted target.')
     profiles.add_argument('--rewrap-cli', action='store_true',
                           help='Qualify root-rewrap CLI cancellation, recovery and publication on an adopted target.')
+    profiles.add_argument('--payload-cli', action='store_true',
+                          help='Qualify staged payload CLI sealing, recovery and publication on an adopted target.')
     profiles.add_argument('--owned-sequences', action='store_true',
                           help='Qualify original owned sequence identity through fresh restore and native exit.')
     profiles.add_argument('--boolean', action='store_true',
@@ -163,6 +165,8 @@ def main():
         parser.error('--reverse-cli uses the original TEXT export and focused adopted-target CLI lifecycle.')
     if args.rewrap_cli and (args.varchar or args.restore_lease or args.public_slots):
         parser.error('--rewrap-cli uses the original TEXT export and focused adopted-target CLI lifecycle.')
+    if args.payload_cli and (args.varchar or args.restore_lease or args.public_slots):
+        parser.error('--payload-cli uses the original TEXT export and focused adopted-target CLI lifecycle.')
     if args.public_slots and (args.restore_lease or any((args.boolean, args.sqlmodel_public_slots, args.sqlmodel_direct_search,
             args.sqlmodel_searchable, args.smolink, args.direct_generation, args.adopted_search,
             args.adopted_payload, args.adopted_rewrap, args.rewrap, args.payload_rotation, args.search_rotation))):
@@ -182,7 +186,8 @@ def main():
     export_receipt = receipt_path(f'fresh-cluster-export-{DATE}.json')
     restore_receipt = receipt_path(f'fresh-cluster-restore-{DATE}.json')
 
-    profile = ('; root-rewrap CLI cancellation and publication on an adopted target' if args.rewrap_cli else
+    profile = ('; staged payload CLI sealing and publication on an adopted target' if args.payload_cli else
+               '; root-rewrap CLI cancellation and publication on an adopted target' if args.rewrap_cli else
                '; saved reverse-plan and approved removal CLI on an adopted target' if args.reverse_cli else
                '; original public slots and explicit restored-slot authority' if args.public_slots else
                '; owned-sequence identity mapping and native counter profile' if args.owned_sequences else
@@ -284,7 +289,8 @@ def main():
         credentials = provision(port, password, manifest, plain_database)
         home = write_home(workdir, port, manifest, credentials)
         restore = run_pytest(restore_receipt, 'Fresh-cluster protected-backup recovery and adoption; isolated cluster' + profile,
-                             ('tests/test_rewrap_operational_cli.py::test_genuine_adopted_rewrap_cli_preserves_binding_and_byte_identity' if args.rewrap_cli else
+                             ('tests/test_payload_operational_cli.py::test_genuine_adopted_payload_cli_seals_saved_activation_and_latest_native_exit' if args.payload_cli else
+                              'tests/test_rewrap_operational_cli.py::test_genuine_adopted_rewrap_cli_preserves_binding_and_byte_identity' if args.rewrap_cli else
                               'tests/test_reverse_operational_cli.py::test_genuine_adopted_source_reverse_cli_uses_explicit_binding_and_latest_native_exit' if args.reverse_cli else
                               'tests/test_public_slots_restore.py' if args.public_slots else
                               'tests/test_owned_sequences_restore.py' if args.owned_sequences else

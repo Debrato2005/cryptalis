@@ -24,6 +24,10 @@ _DENIED = frozenset(('external_policy_mismatch', 'wrong_database_target', 'inval
     'restore_binding_mismatch', 'restore_binding_required'))
 _REWRAP_DENIED = _DENIED | frozenset(('invalid_rewrap_plan', 'rewrap_prepublication_pin_required',
     'matching_external_publication_required', 'rewrap_executor_required'))
+_PAYLOAD_DENIED = _DENIED | frozenset(('invalid_payload_rotation_plan', 'payload_operation_pin_mismatch',
+    'invalid_payload_apply_bound', 'invalid_payload_batch_bound', 'payload_activation_binding_mismatch',
+    'rotation_activation_binding_mismatch', 'payload_switch_requires_prepared_or_pending_pin',
+    'matching_external_publication_required', 'payload_rotation_executor_required'))
 _OPERATIONAL = frozenset(('database_effect_requires_inspection', 'operation_failed_requires_inspection',
     'connection_cleanup_requires_inspection', 'KeyUnavailable', 'CryptoBackendUnavailable'))
 
@@ -76,6 +80,16 @@ def _load_host(specification, operation):
         # Neither exception text nor a host-defined exception class is a diagnostic.
         raise _failure(operation, 'HostContextUnavailable', 'host_context', exit_code=4) from None
     return context
+
+
+def _owned_engine(context, engine_type):
+    from cryptalis import cli_host as h
+    contexts = (h.PlanningContext, h.ApplyContext, h.ReversePlanningContext, h.ReverseApplyContext,
+        h.RemovalContext, h.RewrapPlanningContext, h.RewrapApplyContext,
+        h.RewrapActivationContext, h.RewrapAbortContext, h.PayloadPlanningContext,
+        h.PayloadApplyContext, h.PayloadStatusContext, h.PayloadSealingContext,
+        h.PayloadSwitchContext, h.PayloadActivationContext, h.PayloadAbortContext)
+    return context.engine if type(context) in contexts and isinstance(context.engine, engine_type) else None
 
 
 def _summary(plan, progress=None):
@@ -166,7 +180,7 @@ def _publish(path, raw, result, operation, *, artifact_only=False):
 def run(arguments):
     """Compose protection, current-value reverse or approved removal APIs."""
     if arguments.command == 'keys':
-        return run_rewrap(arguments)
+        return run_payload(arguments) if arguments.rotation_kind == 'payload' else run_rewrap(arguments)
     from cryptalis.cli import _CommandFailure, _read_local_file, _write_output
     operation = {'plan': 'transition.plan', 'apply': 'transition.apply',
                  'rollback': 'reverse.apply', 'remove': 'reverse.remove'}.get(arguments.command, 'transition')
@@ -248,10 +262,7 @@ def run(arguments):
 
     try:
         context = _load_host(arguments.host_context, operation)
-        if type(context) in (PlanningContext, ApplyContext, ReversePlanningContext,
-                ReverseApplyContext, RemovalContext, RewrapPlanningContext, RewrapApplyContext,
-                RewrapActivationContext, RewrapAbortContext) and isinstance(context.engine, Engine):
-            engine = context.engine
+        engine = _owned_engine(context, Engine)
         with _quiet():
             expected = (ReversePlanningContext if reversing else PlanningContext) if planning else (
                 RemovalContext if removing else ReverseApplyContext if reversing else ApplyContext)
@@ -512,11 +523,7 @@ def run_rewrap(arguments):
             else:
                 _publish(arguments.out, successor.artifact, artifact, operation, artifact_only=True)
         context = _load_host(arguments.host_context, operation)
-        contexts = (h.PlanningContext, h.ApplyContext, h.ReversePlanningContext, h.ReverseApplyContext,
-            h.RemovalContext, h.RewrapPlanningContext, h.RewrapApplyContext,
-            h.RewrapActivationContext, h.RewrapAbortContext)
-        if type(context) in contexts and isinstance(context.engine, Engine):
-            engine = context.engine
+        engine = _owned_engine(context, Engine)
         with _quiet():
             expected = {'plan': h.RewrapPlanningContext, 'apply': h.RewrapApplyContext,
                         'activate': h.RewrapActivationContext, 'abort': h.RewrapAbortContext}[action]
@@ -584,6 +591,239 @@ def run_rewrap(arguments):
                 failure = _failure(operation, 'CleanupUnavailable', 'engine_cleanup', exit_code=4,
                     primary=primary if isinstance(primary, _CommandFailure) else None)
                 raise annotate(failure) from None
+
+    output = json.dumps(result, sort_keys=True, separators=(',', ':')) if arguments.machine_json else '\n'.join(
+        f'{key}: {value}' for key, value in result.items())
+    try:
+        _write_output(output + '\n', sys.stdout, 'stdout')
+    except _CommandFailure as failure:
+        raise annotate(failure)
+    return 0
+
+
+def _payload_summary(proposal, activation=None, progress=None, *, status=False):
+    document = activation.document if activation is not None else proposal.document
+    identity = activation.operation_id if activation is not None else proposal.operation_id
+    digest = activation.digest if activation is not None else proposal.digest
+    target = activation.target_id if activation is not None else proposal.source.target_id
+    if status:
+        scope = 'payload_activation_status' if activation is not None else 'payload_preparation_status'
+    else:
+        scope = ('payload_transition' if activation is not None else
+                 'payload_preparation_plan' if progress is None else 'payload_preparation_transition')
+    result = dict(scope=scope,
+        operation_id=str(identity), target_id=str(target), plan_digest=digest,
+        proposal_digest=proposal.digest if proposal is not None else document['payload_rotation_plan_digest'],
+        phase='PREPARED' if progress is None else progress.phase,
+        committed_rows=0 if progress is None else progress.committed_rows,
+        committed_chunks=0 if progress is None else progress.committed_chunks,
+        authority='HOST_SUPPLIED_CONTEXT' if progress is None else 'HOST_SUPPLIED_PIN',
+        host_configuration_effects='UNKNOWN', effects='NONE' if progress is None or status else 'COMMITTED_PROGRESS',
+        remedy='Persist this proposal and obtain host approval before apply.' if progress is None else progress.remedy)
+    if activation is not None:
+        result.update(activation_plan_digest=activation.digest,
+            source_operation_id=document['predecessors'][-2]['operation_id'])
+    else:
+        result.update(source_operation_id=str(proposal.source.operation_id),
+                      successor_operation_id=document['successor_operation_id'])
+    if status:
+        result.update(external_phase=progress.external_phase,
+                      runtime_metadata_matches=progress.runtime_metadata_matches, verification=progress.verification)
+    if progress is None:
+        result['artifact_digest'] = proposal.digest
+    return result
+
+
+def run_payload(arguments):
+    """Compose staged payload preparation, authenticated sealing and publication."""
+    from cryptalis.cli import _CommandFailure, _read_local_file, _write_output
+    operation = 'payload.' + str(getattr(arguments, 'payload_action', 'invalid'))
+    try:
+        from sqlalchemy.engine import Engine
+        from cryptalis import migration as m, rotation as r, cli_host as h
+        from cryptalis.crypto.keys import Keyring
+        from cryptalis.manifest.parser import MAX_DOCUMENT_BYTES, ManifestInvalid
+        from cryptalis.restore import RestoreBinding
+    except ImportError:
+        raise _failure(operation, 'DependenciesUnavailable', 'load_runtime', exit_code=4) from None
+
+    proposal = activation = engine = result = known = artifact = None
+    attempted = False
+    action = getattr(arguments, 'payload_action', None)
+    try:
+        if (arguments.keys_command != 'rotate' or arguments.rotation_kind != 'payload'
+                or action not in ('plan', 'apply', 'status', 'seal', 'switch', 'activate', 'abort')
+                or type(arguments.host_context) is not str or _HOST.fullmatch(arguments.host_context) is None):
+            raise ValueError
+        if action in ('plan', 'seal') and os.path.lexists(arguments.out):
+            raise _failure(operation, 'ArtifactExists', 'inputs')
+        raw = _read_local_file(arguments.source if action == 'plan' else arguments.plan,
+                               'source_plan' if action == 'plan' else 'plan', operation=operation)
+        if len(raw) > MAX_DOCUMENT_BYTES:
+            raise ValueError
+        if action == 'plan':
+            source = m.MigrationPlan(raw)
+            for name, bound in (('max_batch_rows', r.MAX_BATCH_ROWS), ('max_batch_bytes', r.MAX_BATCH_BYTES)):
+                value = getattr(arguments, name)
+                if value is not None and (type(value) is not int or not 1 <= value <= bound):
+                    raise ValueError
+        elif action in ('activate', 'status'):
+            if action == 'status' and m._decode_transition_json(raw).get('format') in (
+                    r.PAYLOAD_FORMAT, r.PayloadRotationPlan.restore_format):
+                proposal = r.PayloadRotationPlan(raw)
+            else:
+                activation = m.MigrationPlan(raw)
+                if activation.document['kind'] != 'payload_rotation':
+                    raise ValueError
+        else:
+            proposal = r.PayloadRotationPlan(raw)
+        if action == 'switch':
+            raw = _read_local_file(arguments.activation, 'activation', operation=operation)
+            if len(raw) > MAX_DOCUMENT_BYTES:
+                raise ValueError
+            activation = m.MigrationPlan(raw)
+            if (activation.document['kind'] != 'payload_rotation'
+                    or str(activation.operation_id) != proposal.document['successor_operation_id']
+                    or activation.document['payload_rotation_plan_digest'] != proposal.digest):
+                raise ValueError
+        if action in ('apply', 'switch'):
+            identity = proposal.operation_id if action == 'apply' else activation.operation_id
+            if arguments.resume is not None and (type(arguments.resume) is not UUID or arguments.resume != identity):
+                raise ValueError
+        if action == 'apply':
+            if (arguments.until not in (None, 'EXPANDED', 'BACKFILLED') or arguments.max_chunks is not None
+                    and (type(arguments.max_chunks) is not int or arguments.max_chunks < 1)):
+                raise ValueError
+    except _CommandFailure:
+        raise
+    except (ManifestInvalid, m.TransitionFailure, AttributeError, KeyError, TypeError, ValueError):
+        raise _failure(operation, 'InvalidInput', 'inputs') from None
+
+    def annotate(failure):
+        if artifact is not None:
+            failure.error['artifact_result'] = dict(artifact)
+        if known is not None:
+            _known_result(failure, known)
+        else:
+            failure.error.pop('known_result', None)
+            failure.error['effects'] = 'INSPECT_JOURNAL' if attempted and action in (
+                'apply', 'switch', 'activate', 'abort') else 'NONE'
+            if activation is not None or proposal is not None:
+                failure.error['operation_id'] = str(activation.operation_id if activation is not None else proposal.operation_id)
+        if proposal is not None:
+            failure.error['proposal_digest'] = proposal.digest
+        if artifact is not None:
+            failure.error['remedy'] = failure.error.get('remedy', 'Retain the exact artifacts and inspect the reported outcome.') + (f' Artifact published={artifact["artifact_published"]}, '
+                f'reused={artifact["artifact_reused"]}, durable={artifact["artifact_directory_durable"]}; '
+                f'database effects={failure.error["effects"]}.')
+        return failure
+
+    try:
+        if action == 'switch':
+            artifact = dict(scope='payload_activation_artifact', operation_id=str(activation.operation_id),
+                plan_digest=activation.digest, activation_plan_digest=activation.digest, proposal_digest=proposal.digest,
+                artifact_published=False, artifact_reused=False, artifact_directory_durable=False,
+                artifact_temporary_retained=False, effects='NONE')
+            _sync_activation(arguments.activation, activation.artifact, artifact, operation)
+        context = _load_host(arguments.host_context, operation)
+        engine = _owned_engine(context, Engine)
+        with _quiet():
+            expected = {'plan': h.PayloadPlanningContext, 'apply': h.PayloadApplyContext,
+                'status': h.PayloadStatusContext, 'seal': h.PayloadSealingContext,
+                'switch': h.PayloadSwitchContext, 'activate': h.PayloadActivationContext,
+                'abort': h.PayloadAbortContext}[action]
+            if type(context) is not expected or engine is None:
+                raise _failure(operation, 'HostContextInvalid', 'host_context')
+            if (engine.dialect.name != 'postgresql' or engine.dialect.driver != 'psycopg'
+                    or engine.dialect.is_async or (engine.echo is not False and engine.echo is not None)
+                    or engine.hide_parameters is not True):
+                raise _failure(operation, 'UnsafeEngine', 'host_context')
+            resolvers = (() if action == 'status' else (context.source_keys,) if action == 'abort' else
+                         (context.target_keys,) if action == 'activate' else (context.source_keys, context.target_keys))
+            for keys in resolvers:
+                key_call = getattr(keys, '__call__', None)
+                if (not isinstance(keys, Keyring) and not callable(keys)
+                        or inspect.iscoroutinefunction(keys) or inspect.isasyncgenfunction(keys)
+                        or inspect.iscoroutinefunction(key_call) or inspect.isasyncgenfunction(key_call)):
+                    raise _failure(operation, 'HostContextInvalid', 'host_context')
+            if action == 'plan':
+                if context.restore is not None and type(context.restore) is not RestoreBinding:
+                    raise _failure(operation, 'HostContextInvalid', 'host_context')
+                limits = {name: getattr(arguments, name) for name in ('max_batch_rows', 'max_batch_bytes')
+                          if getattr(arguments, name) is not None}
+                attempted = True
+                proposal = r.plan_payload_rotation(source, engine, source_pin=context.source_pin,
+                    keys=context.source_keys, target_keys=context.target_keys,
+                    backfill_rows_per_second=context.backfill_rows_per_second,
+                    verify_rows_per_second=context.verify_rows_per_second,
+                    temporary_bytes_per_row=context.temporary_bytes_per_row,
+                    wal_bytes_per_row=context.wal_bytes_per_row, restore=context.restore, **limits)
+                result = _payload_summary(proposal)
+            elif action == 'seal':
+                attempted = True
+                activation = r.seal_payload_rotation(proposal, engine, keys=context.source_keys,
+                    target_keys=context.target_keys, pin=context.pin, approval=context.approval,
+                    copy_rows_per_second=context.copy_rows_per_second,
+                    copy_wal_bytes_per_row=context.copy_wal_bytes_per_row)
+            else:
+                attempted = True
+                if action == 'apply':
+                    progress = r.apply_payload_rotation(proposal, engine, keys=context.source_keys,
+                        target_keys=context.target_keys, pin=context.pin, approval=context.approval,
+                        until=arguments.until or 'BACKFILLED', max_chunks=arguments.max_chunks)
+                elif action == 'switch':
+                    progress = r.switch_payload_rotation(proposal, activation, engine, keys=context.source_keys,
+                        target_keys=context.target_keys, pin=context.pin, approval=context.approval)
+                elif action == 'activate':
+                    progress = m.apply(activation, engine, keys=context.target_keys,
+                                       pin=context.pin, approval=context.approval, until='ACTIVE')
+                elif action == 'abort':
+                    progress = r.abort_payload_rotation(proposal, engine, keys=context.source_keys,
+                                                       source_pin=context.source_pin, approval=context.approval)
+                else:
+                    progress = (m.status(activation, engine, pin=context.pin) if activation is not None else
+                                r.status_payload_rotation(proposal, engine, pin=context.pin))
+                result = known = _payload_summary(proposal, activation, progress, status=action == 'status')
+                if artifact is not None:
+                    result['artifact_result'] = dict(artifact)
+        if action in ('plan', 'seal'):
+            output_plan = activation if action == 'seal' else proposal
+            artifact = dict(scope='payload_activation_artifact' if action == 'seal' else 'payload_preparation_artifact',
+                operation_id=str(output_plan.operation_id), plan_digest=output_plan.digest, proposal_digest=proposal.digest,
+                artifact_published=False, artifact_reused=False, artifact_directory_durable=False,
+                artifact_temporary_retained=False, effects='NONE')
+            if action == 'seal':
+                artifact.update(activation_plan_digest=activation.digest, artifact_sealed=True)
+            _publish(arguments.out, output_plan.artifact, artifact, operation, artifact_only=True)
+            if action == 'seal':
+                result = dict(artifact, authority='HOST_SUPPLIED_PIN', host_configuration_effects='UNKNOWN', database_effects='NONE')
+            else:
+                result.update({name: artifact[name] for name in ('artifact_published', 'artifact_reused',
+                    'artifact_directory_durable', 'artifact_temporary_retained')})
+            result['artifact_result'] = dict(artifact)
+    except _CommandFailure as failure:
+        raise annotate(failure)
+    except m.TransitionFailure as error:
+        code = error.code if type(error.code) is str and _CODE.fullmatch(error.code) else 'TransitionRejected'
+        operational = bool(error.cleanup_errors) or code in _OPERATIONAL
+        failure = _failure(operation, code, 'transition', exit_code=4 if operational else 2 if code in _PAYLOAD_DENIED else 3)
+        failure.error['sqlstate'] = error.sqlstate if type(error.sqlstate) is str and _SQLSTATE.fullmatch(error.sqlstate) else None
+        if error.cleanup_errors:
+            failure.error['cleanup_errors'] = [dict(stage=stage if stage in ('rollback', 'invalidate', 'close', 'driver_close')
+                else 'cleanup', cause='CleanupError', sqlstate=state if type(state) is str and _SQLSTATE.fullmatch(state) else None)
+                for stage, _, state in error.cleanup_errors]
+        raise annotate(failure) from None
+    except BaseException:
+        raise annotate(_failure(operation, 'OperationUnavailable', 'operation', exit_code=4)) from None
+    finally:
+        if engine is not None:
+            primary = sys.exception()
+            try:
+                with _quiet():
+                    engine.dispose()
+            except BaseException:
+                raise annotate(_failure(operation, 'CleanupUnavailable', 'engine_cleanup', exit_code=4,
+                    primary=primary if isinstance(primary, _CommandFailure) else None)) from None
 
     output = json.dumps(result, sort_keys=True, separators=(',', ':')) if arguments.machine_json else '\n'.join(
         f'{key}: {value}' for key, value in result.items())

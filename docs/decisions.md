@@ -1207,3 +1207,44 @@ passes their combined 417 controls. Primary runs skip two separate fresh-target
 cases. Source and installed genuine fresh-cluster export and restore each pass
 one. All 214 Python hashes remain stable at the recorded boundary. These checks
 leave all seven production qualification gates UNKNOWN.
+
+## Payload CLI sealing and retained activation artifacts: 2026-10-24
+
+**IMPLEMENTED:** `keys rotate payload` composes the existing preparation,
+status, seal, switch, activation and cancellation APIs.
+Search rotation CLI remains required work.
+
+Preparation P reserves a successor UUID. It cannot supply A's digest or sealed
+frame observations. Seal must authenticate the completed BACKFILLED shadows and
+return the existing activation artifact A. Seal changes no journal phase.
+If its output is lost before switch, repeat authenticated sealing with the same
+staged ciphertext and explicit copy measurements. Do not derive A from P or
+recorded journal claims.
+
+Persist private P and A. Before switch, verify A through one bounded regular
+non-symlink descriptor, compare its exact bytes, and sync that descriptor and
+its parent directory. Retain both artifacts after an uncertain COMMIT reply.
+After switch, P is superseded and staging is gone. Recovery requires an external
+copy of the exact sealed A. The CLI must fail closed if every copy is lost.
+
+Explicit contexts separate preparation, key-free status, sealing, switching,
+target-only activation and source-only cancellation. P and A have distinct
+operation UUIDs and host pins. Status reports recorded progress with value
+verification NOT_PERFORMED. Seal reports artifact facts without synthetic
+database Progress. No context creates keys, providers, pins or approvals.
+Existing cryptographic, format and tenant contracts remain unchanged.
+
+**VERIFIED within the bounded source and installed profiles:** the
+[source profile](_reset/payload-cli-source-focused-final-20261024.json) passes
+70 tests. The [affected source suite](_reset/payload-cli-source-affected-20261024.json)
+passes 492. The [actual installed suite](_reset/payload-cli-installed-affected-20261024.json)
+passes 562. Primary runs skip three genuine-fresh setup cases and one fresh-only
+module collection where applicable. They do not prove that skipped module's controls.
+Source and installed genuine fresh-cluster export and restore each pass one test.
+The real binding embeds directly in P/v2 and A/v6. Wrong authority refuses before custody.
+Both original-application profiles retain six unchanged files and four actual SIGKILL
+checkpoints, including target-only payload recovery and latest-value native exit.
+The [final boundary](_reset/payload-cli-final-boundary-20261024.json) binds seven
+current PostgreSQL receipts, both application receipts and the exact installed wheel.
+All 215 Python hashes stay stable. All 34 objective states and seven UNKNOWN gates
+remain unchanged. This evidence supplies no current full-suite or production qualification.

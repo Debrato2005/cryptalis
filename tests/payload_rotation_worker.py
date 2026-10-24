@@ -16,6 +16,7 @@ from cryptalis import migration as m, rotation as r
 from cryptalis.crypto import KeyContext, Keyring
 from cryptalis.crypto.keys import KeyUnavailable, WrappedRoot
 from test_migration import DOMAIN, PROVIDER, PublicFixtureProvider, engine, keys
+from rewrap_worker import PublicRewrapProvider, target_keys as rewrap_keys
 
 
 TARGET_PROVIDER = UUID(int=9511)
@@ -56,6 +57,15 @@ def target_keys(tenant):
     policy = replace(source.policy, wrappers=source.policy.wrappers + (wrapper,),
                      payload_generation=2)
     return Keyring(policy, {PROVIDER: PublicFixtureProvider(), provider.provider_id: provider})
+
+
+def rotated_keys(tenant):
+    """Keep the public rewrapped readers and add the existing public payload root."""
+    old = rewrap_keys(tenant)
+    rewrap, payload = PublicRewrapProvider(), PublicPayloadProvider()
+    wrapper = WrappedRoot(payload.provider_id, target_context(tenant), TARGET_WRAPPER)
+    return Keyring(replace(old.policy, wrappers=old.policy.wrappers + (wrapper,), payload_generation=2),
+                   {rewrap.provider_id: rewrap, payload.provider_id: payload})
 
 
 def _execute(argv):

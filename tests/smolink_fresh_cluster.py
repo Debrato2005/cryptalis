@@ -13,16 +13,8 @@ from cryptalis.crypto.keys import WrappedRoot
 from test_fresh_cluster_export import dump, environment
 from test_migration import keys
 from rewrap_worker import PublicRewrapProvider, target_keys as rewrap_keys
-from payload_rotation_worker import PublicPayloadProvider, target_context, TARGET_WRAPPER
+from payload_rotation_worker import PublicPayloadProvider, target_context, TARGET_WRAPPER, rotated_keys
 
-
-def rotated_keys(tenant):
-    """Keep the public rewrapped readers and add the existing public payload root."""
-    old = rewrap_keys(tenant)
-    rewrap, payload = PublicRewrapProvider(), PublicPayloadProvider()
-    wrapper = WrappedRoot(payload.provider_id, target_context(tenant), TARGET_WRAPPER)
-    return Keyring(replace(old.policy, wrappers=old.policy.wrappers + (wrapper,), payload_generation=2),
-                   {rewrap.provider_id: rewrap, payload.provider_id: payload})
 
 
 def catalog(owner):

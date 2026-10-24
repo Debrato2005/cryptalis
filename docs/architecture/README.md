@@ -148,6 +148,39 @@ engine, synchronous resolver, privacy and Doctor boundaries remain unchanged. Se
 [verified checkpoint](../status.md#operational-cli-root-rewrap-2026-10-24).
 Source and installed genuine adopted-target verification pass.
 
+### Payload-rotation CLI
+
+**IMPLEMENTED, bounded source and installed verification:** `keys rotate payload` composes seven actions:
+`plan SOURCE --out P`, `apply P`, `status ARTIFACT`, `seal P --out A`,
+`switch P --activation A`, `activate A` and `abort P`.
+All use an explicit trusted synchronous factory and the existing owned-engine contract.
+
+| Trusted context | Required inputs |
+|---|---|
+| `PayloadPlanningContext` | `engine`, `source_keys`, `target_keys`, `source_pin`, four preparation measurements, `restore` |
+| `PayloadApplyContext` | `engine`, `source_keys`, `target_keys`, `pin`, `approval` |
+| `PayloadStatusContext` | `engine`, `pin` |
+| `PayloadSealingContext` | `engine`, `source_keys`, `target_keys`, `pin`, `approval`, `copy_rows_per_second`, `copy_wal_bytes_per_row` |
+| `PayloadSwitchContext` | `engine`, `source_keys`, `target_keys`, `pin`, `approval` |
+| `PayloadActivationContext` | `engine`, `target_keys`, `pin`, `approval` |
+| `PayloadAbortContext` | `engine`, `source_keys`, `source_pin`, `approval` |
+
+Preparation measurements retain `backfill_rows_per_second`, `verify_rows_per_second`,
+`temporary_bytes_per_row` and `wal_bytes_per_row`. Restore is explicit None or an
+existing binding. It enters only planning and stays embedded in P. Target keyrings
+already contain the independent payload root. The CLI creates no root or provider.
+P staging pins and A switch/publication pins bind distinct operation IDs and digests.
+
+Apply stops at EXPANDED or BACKFILLED. Seal authenticates BACKFILLED shadows without
+a new journal phase. Switch consumes externally retained exact P+A. First switch
+uses both custody resolvers. A PENDING switch retry accepts both arguments but
+uses target custody only after reciprocal proof. Activation is target-only. Abort
+is source-only and refuses after switch. Key-free status dispatches P/A to existing
+status APIs and reports NOT_PERFORMED verification. Copy, DDL, commit and publication
+costs remain outside preparation chunk bounds. See the
+[verified checkpoint](../status.md#operational-cli-payload-rotation-2026-10-24).
+Source and installed genuine adopted-target verification pass.
+
 ## Exact data paths
 
 ```text
@@ -502,9 +535,11 @@ declared runtime connection and repeats shared attachment admission in a
 read-only snapshot. Unobserved boundaries and aggregate results remain UNKNOWN.
 The initial `plan` and protection `apply` commands have the bounded
 [operational contract](#operational-protection-cli). The
-[reverse/removal extension](#reverse-and-removal-cli) has bounded source verification.
-`init` and `keys rotate` remain unimplemented package commands. Fresh-target and
-installed reverse/removal verification remains pending.
+[reverse/removal extension](#reverse-and-removal-cli) and
+[root-rewrap CLI](#root-rewrap-cli) have bounded source, installed and genuine
+fresh-target evidence. The [payload CLI](#payload-rotation-cli) has bounded source
+verification. Its source and installed genuine adopted-target checks pass.
+`init` and search rotation CLI commands remain unimplemented.
 Full status coverage of keys and retained obligations
 remains SPECIFIED. The migration walkthrough defines the implemented subset.
 See [committed progress](../walkthrough-migration.md#inspect-committed-progress).

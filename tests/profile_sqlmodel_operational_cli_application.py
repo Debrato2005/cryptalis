@@ -25,6 +25,7 @@ from profile_sqlmodel_searchable_application import native_catalog, search_contr
 from test_deprotection import least_privilege_role
 from test_migration import DOMAIN, keys
 from rewrap_worker import target_keys
+from payload_rotation_worker import rotated_keys
 import test_sqlmodel_application as original
 
 
@@ -52,12 +53,15 @@ import psycopg
 from sqlalchemy import create_engine,event
 from app.models import User
 from cryptalis.cli_host import (PlanningContext,ApplyContext,ReversePlanningContext,ReverseApplyContext,RemovalContext,
-    RewrapPlanningContext,RewrapApplyContext,RewrapActivationContext,RewrapAbortContext)
+    RewrapPlanningContext,RewrapApplyContext,RewrapActivationContext,RewrapAbortContext,
+    PayloadPlanningContext,PayloadApplyContext,PayloadStatusContext,PayloadSealingContext,
+    PayloadSwitchContext,PayloadActivationContext,PayloadAbortContext)
 from cryptalis.manifest.compiler import Writer,WriterInventory,SearchReview
 from cryptalis.migration import DeploymentPin,MaintenanceApproval
 from cryptalis.deprotection import PlaintextApproval,RemovalApproval
 from test_migration import keys
 from rewrap_worker import target_keys
+from payload_rotation_worker import rotated_keys
 from uuid import UUID
 
 def configuration():return json.loads(Path(os.environ['OPERATIONAL_HOST_CONFIGURATION']).read_text())
@@ -90,9 +94,10 @@ def pause_after_dispose(engine,c):
 def deployment(c):
     raw=json.loads(Path(c['pin_path']).read_text())
     return DeploymentPin(UUID(raw['target_id']),UUID(raw['operation_id']),raw['plan_digest'],raw['phase'])
+def current_keys(c):return rotated_keys if c.get('current_payload_custody') else target_keys if c.get('current_target_custody') else keys
 def reverse_planning():
     c=configuration()
-    return ReversePlanningContext(engine=owned(c),keys=target_keys if c.get('current_target_custody') else keys,source_pin=deployment(c),
+    return ReversePlanningContext(engine=owned(c),keys=current_keys(c),source_pin=deployment(c),
         plaintext_runtime_role=c['plaintext_runtime_role'],backfill_rows_per_second=1000,
         verify_rows_per_second=1000,temporary_bytes_per_row=3000,wal_bytes_per_row=6000,restore=None)
 def plaintext_consent(c):
@@ -103,7 +108,7 @@ def reversing():
     c=configuration()
     engine=owned(c)
     pause_after_dispose(engine,c)
-    return ReverseApplyContext(engine=engine,keys=target_keys if c.get('current_target_custody') else keys,pin=deployment(c),
+    return ReverseApplyContext(engine=engine,keys=current_keys(c),pin=deployment(c),
         approval=MaintenanceApproval(**json.loads(Path(c['approval_path']).read_text())),consent=plaintext_consent(c))
 def removing():
     c=configuration()
@@ -136,6 +141,44 @@ def rewrap_activating():
 def rewrap_aborting():
     c=configuration()
     return RewrapAbortContext(engine=owned(c),source_keys=lambda t:rewrap_source(c,t),source_pin=deployment(c),
+        approval=MaintenanceApproval(**json.loads(Path(c['approval_path']).read_text())))
+def payload_source(c,tenant):
+    if c.get('payload_source_unavailable'):raise RuntimeError('PRIVATE_OPERATIONAL_HOST_OR_PROVIDER')
+    return target_keys(tenant)
+def payload_target(c,tenant):
+    if c.get('payload_target_unavailable'):raise RuntimeError('PRIVATE_OPERATIONAL_HOST_OR_PROVIDER')
+    return rotated_keys(tenant)
+def payload_planning():
+    c=configuration()
+    return PayloadPlanningContext(engine=owned(c),source_keys=lambda t:payload_source(c,t),
+        target_keys=lambda t:payload_target(c,t),source_pin=deployment(c),restore=None,
+        backfill_rows_per_second=1000,verify_rows_per_second=1000,temporary_bytes_per_row=3000,wal_bytes_per_row=6000)
+def payload_applying():
+    c=configuration()
+    return PayloadApplyContext(engine=owned(c),source_keys=lambda t:payload_source(c,t),
+        target_keys=lambda t:payload_target(c,t),pin=deployment(c),
+        approval=MaintenanceApproval(**json.loads(Path(c['approval_path']).read_text())))
+def payload_status():
+    c=configuration()
+    return PayloadStatusContext(engine=owned(c),pin=deployment(c))
+def payload_sealing():
+    c=configuration()
+    return PayloadSealingContext(engine=owned(c),source_keys=lambda t:payload_source(c,t),
+        target_keys=lambda t:payload_target(c,t),pin=deployment(c),
+        approval=MaintenanceApproval(**json.loads(Path(c['approval_path']).read_text())),
+        copy_rows_per_second=0.5,copy_wal_bytes_per_row=3000)
+def payload_switching():
+    c=configuration();engine=owned(c);pause_after_dispose(engine,c)
+    return PayloadSwitchContext(engine=engine,source_keys=lambda t:payload_source(c,t),
+        target_keys=lambda t:payload_target(c,t),pin=deployment(c),
+        approval=MaintenanceApproval(**json.loads(Path(c['approval_path']).read_text())))
+def payload_activating():
+    c=configuration()
+    return PayloadActivationContext(engine=owned(c),target_keys=lambda t:payload_target(c,t),pin=deployment(c),
+        approval=MaintenanceApproval(**json.loads(Path(c['approval_path']).read_text())))
+def payload_aborting():
+    c=configuration()
+    return PayloadAbortContext(engine=owned(c),source_keys=lambda t:payload_source(c,t),source_pin=deployment(c),
         approval=MaintenanceApproval(**json.loads(Path(c['approval_path']).read_text())))
 '''
 
@@ -353,6 +396,99 @@ def test_original_three_field_app_cli_plan_kill_resume_publish_and_native_exit(t
         current = workload['boolean_controls'](attached, current, uuid4().hex)
         current, after_rewrap_controls = search_controls(attached, current)
         assert after_rewrap_controls == controls
+        # Payload generation changes retain the exact current rewrapped readers.
+        payload_source_plan, payload_source_path, payload_source_pin = plan, plan_path, pin('ACTIVE')
+        def payload_command(action, path, factory, *extra):
+            return ('keys', 'rotate', 'payload', action, str(path), '--host-context', module + ':' + factory, *extra, '--json')
+        pin_path.write_text(json.dumps(asdict(payload_source_pin), default=str))
+        cancelled_payload_path = tmp_path / 'cancelled-payload.json'
+        execute(*payload_command('plan', plan_path, 'payload_planning', '--out', str(cancelled_payload_path)))
+        cancelled_payload = r.PayloadRotationPlan(cancelled_payload_path.read_bytes())
+        def preparation_pin(proposal):
+            return m.DeploymentPin(proposal.source.target_id, proposal.operation_id, proposal.digest, 'PREPARED')
+        pin_path.write_text(json.dumps(asdict(preparation_pin(cancelled_payload)), default=str))
+        assert execute(*payload_command('apply', cancelled_payload_path, 'payload_applying', '--max-chunks', '1'))['phase'] == 'EXPANDED'
+        configuration['payload_target_unavailable'] = True
+        configuration_path.write_text(json.dumps(configuration))
+        pin_path.write_text(json.dumps(asdict(payload_source_pin), default=str))
+        assert execute(*payload_command('abort', cancelled_payload_path, 'payload_aborting'))['phase'] == 'ABORTED'
+        configuration['payload_target_unavailable'] = False
+        configuration_path.write_text(json.dumps(configuration))
+        payload_path, payload_activation_path = tmp_path / 'payload.json', tmp_path / 'payload-activation.json'
+        execute(*payload_command('plan', plan_path, 'payload_planning', '--out', str(payload_path)))
+        payload = r.PayloadRotationPlan(payload_path.read_bytes())
+        pin_path.write_text(json.dumps(asdict(preparation_pin(payload)), default=str))
+        payload_before = field_frames(owner, plan.document['lock']['models'][0], staged=False)
+        assert execute(*payload_command('apply', payload_path, 'payload_applying', '--max-chunks', '1'))['phase'] == 'EXPANDED'
+        assert execute(*payload_command('apply', payload_path, 'payload_applying', '--resume', str(payload.operation_id)))['phase'] == 'BACKFILLED'
+        assert execute(*payload_command('status', payload_path, 'payload_status'))['verification'] == 'NOT_PERFORMED'
+        sealed = execute(*payload_command('seal', payload_path, 'payload_sealing', '--out', str(payload_activation_path)))
+        assert 'phase' not in sealed and 'known_result' not in sealed
+        payload_activation = m.MigrationPlan(payload_activation_path.read_bytes())
+        repeated_seal = tmp_path / 'payload-identical-reseal.json'
+        execute(*payload_command('seal', payload_path, 'payload_sealing', '--out', str(repeated_seal)))
+        assert repeated_seal.read_bytes() == payload_activation_path.read_bytes()
+        def payload_staged():
+            model = payload.source.document['lock']['models'][0]
+            with owner.connect() as connection:
+                quote = connection.dialect.identifier_preparer.quote
+                columns = [quote(field['payload_column'] + '_rotation') for field in sorted(model['fields'], key=lambda field: field['column'])]
+                return {str(row[0]): tuple(None if value is None else bytes(value) for value in row[1:])
+                    for row in connection.exec_driver_sql('SELECT id,' + ','.join(columns) + ' FROM "user" ORDER BY id')}
+        sealed_frames = payload_staged()
+        fields = sorted(payload.source.document['lock']['models'][0]['fields'], key=lambda field: field['column'])
+        for identity, values in sealed_frames.items():
+            for field, previous, frame in zip(fields, payload_before[identity], values):
+                if frame is not None:
+                    assert int.from_bytes(frame[6:10], 'big') == 2 and frame != previous
+                    assert frame[10:14] == previous[10:14]
+                    if field['descriptor']['representation'] == 'cf1-packed-equality/v1':
+                        assert frame[14:46] == previous[14:46]
+                else:
+                    assert previous is None
+        pin_path.write_text(json.dumps(asdict(m.DeploymentPin(payload_activation.target_id,
+            payload_activation.operation_id, payload_activation.digest, 'PREPARED')), default=str))
+        Path(configuration['checkpoint']).unlink()
+        configuration['pause_after_dispose'] = True
+        configuration_path.write_text(json.dumps(configuration))
+        process = subprocess.Popen(command(*payload_command('switch', payload_path, 'payload_switching',
+            '--activation', str(payload_activation_path))), env=environment, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+        deadline = time.monotonic() + 25
+        while not Path(configuration['checkpoint']).exists():
+            assert process.poll() is None, 'payload switch child exited early; diagnostics suppressed'
+            assert time.monotonic() < deadline, 'payload committed checkpoint was not observed'
+            time.sleep(0.05)
+        assert m.status(payload_activation, owner, pin=m.DeploymentPin(payload_activation.target_id,
+            payload_activation.operation_id, payload_activation.digest, 'PREPARED')).phase == 'PENDING'
+        assert field_frames(owner, payload_activation.document['lock']['models'][0], staged=False) == sealed_frames
+        process.kill();process.communicate(timeout=10)
+        assert process.returncode == -signal.SIGKILL
+        configuration.update(pause_after_dispose=False, payload_source_unavailable=True)
+        configuration_path.write_text(json.dumps(configuration))
+        assert execute(*payload_command('switch', payload_path, 'payload_switching', '--activation', str(payload_activation_path),
+            '--resume', str(payload_activation.operation_id)))['phase'] == 'PENDING'
+        pin_path.write_text(json.dumps(asdict(m.DeploymentPin(payload_activation.target_id,
+            payload_activation.operation_id, payload_activation.digest, 'ACTIVATING')), default=str))
+        assert execute(*payload_command('activate', payload_activation_path, 'payload_activating'))['phase'] == 'ACTIVE'
+        configuration['current_payload_custody'] = True
+        configuration_path.write_text(json.dumps(configuration))
+        assert indices() == original_indexes and public_slots(owner, native_slots) == native_slots
+        assert sealed_frames != payload_before
+        with pytest.raises(m.TransitionFailure):m.check_deployment(payload_source_plan, owner, pin=payload_source_pin)
+        plan, plan_path = payload_activation, payload_activation_path
+        runtime.dispose();mapping.dispose();mapping.metadata.clear()
+        for name in tuple(sys.modules):
+            if name == 'app' or name.startswith('app.'):del sys.modules[name]
+        workload = runpy.run_path(str(helper))
+        from app.models import User as PayloadUser
+        mapping = PayloadUser._sa_registry
+        runtime = original.native_engine('CRYPTALIS_TEST_RUNTIME_DATABASE_URL', schema)
+        factory = attach(mapping, runtime, lock=plan.lock_bytes, keys=rotated_keys, deployment=(plan, pin('ACTIVE')))
+        attached = lambda: factory(tenant_id=original.TABLE, expire_on_commit=False)
+        current = workload['workflow'](attached, uuid4().hex, current)
+        current = workload['boolean_controls'](attached, current, uuid4().hex)
+        current, payload_controls = search_controls(attached, current)
+        assert payload_controls == controls
         # The trusted host supplies ACTIVE source authority before reverse planning.
         pin_path.write_text(json.dumps(asdict(pin('ACTIVE')), default=str))
         configuration['plaintext_runtime_role'] = least_privilege_role(SimpleNamespace(owner=owner, role=role))
@@ -362,6 +498,9 @@ def test_original_three_field_app_cli_plan_kill_resume_publish_and_native_exit(t
                                 '--out', str(reverse_path), '--json')
         reverse = d.DeprotectionPlan(reverse_path.read_bytes())
         assert reversed_plan['phase'] == 'PREPARED' and reversed_plan['source_operation_id'] == str(plan.operation_id)
+        with owner.connect() as connection:
+            reverse_source_ids = {str(row[0]) for row in connection.exec_driver_sql('SELECT id FROM "user"')}
+        assert len(reverse_source_ids) == 3
         consent = d.PlaintextApproval(reverse.target_id, reverse.operation_id, reverse.digest, True,
                                      'public disposable original app values')
         consent_path, removal_path = tmp_path / 'host-consent.json', tmp_path / 'host-removal.json'
@@ -382,7 +521,7 @@ def test_original_three_field_app_cli_plan_kill_resume_publish_and_native_exit(t
             assert time.monotonic() < deadline, 'reverse committed checkpoint was not observed'
             time.sleep(0.05)
         observed = d.status(reverse, owner, pin=reverse_pin('PREPARED'))
-        assert observed.phase == 'BACKFILLED' and observed.committed_rows == 2
+        assert observed.phase == 'BACKFILLED' and observed.committed_rows == len(reverse_source_ids)
         def plaintext_staging():
             fields = sorted(reverse.document['lock']['models'][0]['fields'], key=lambda field: field['column'])
             with owner.connect() as connection:
@@ -391,7 +530,7 @@ def test_original_three_field_app_cli_plan_kill_resume_publish_and_native_exit(t
                 return {str(row[0]): tuple(row[1:]) for row in connection.exec_driver_sql(
                     'SELECT id,' + ','.join(columns) + ' FROM "user" ORDER BY id')}
         plaintext_prefix = plaintext_staging()
-        assert len(plaintext_prefix) == 2
+        assert set(plaintext_prefix) == reverse_source_ids
         process.kill()
         process.communicate(timeout=10)
         assert process.returncode == -signal.SIGKILL
@@ -450,6 +589,12 @@ def test_original_three_field_app_cli_plan_kill_resume_publish_and_native_exit(t
                     'terminal_rewrap_abort_preserved_later_edit': True, 'sigkill_after_rewrap_pending': True,
                     'independent_rewrap_resume_preserved_frames': True, 'rewrap_target_only_activation': True,
                     'rewrap_frame_and_index_identity_preserved': True,
+                    'cli_payload_plan_stage_seal_switch_activate_abort_status': True,
+                    'payload_proposal_digest': payload.digest, 'payload_activation_digest': payload_activation.digest,
+                    'payload_generation': 2, 'payload_source_only_abort': True, 'payload_keyless_status': True,
+                    'payload_authenticated_identical_reseal': True, 'sigkill_after_payload_pending': True,
+                    'independent_payload_resume_preserved_frames': True, 'payload_target_only_publication': True,
+                    'payload_search_boolean_latest_values': True,
                     'sigkill_after_committed_backfilled': True, 'independent_resume_preserved_frames': True,
                     'cli_reverse_plan_apply_resume_remove': True, 'reverse_plan_digest': reverse.digest,
                     'sigkill_after_reverse_backfilled': True, 'independent_reverse_resume_preserved_plaintext': True,

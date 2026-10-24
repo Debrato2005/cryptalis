@@ -514,6 +514,24 @@ existing limits. Payload/search CLI admission remains future work. See the
 [verified checkpoint](status.md#operational-cli-root-rewrap-2026-10-24).
 Source and installed genuine adopted-target verification pass.
 
+### Payload CLI artifact retention
+
+**IMPLEMENTED, bounded source and installed verification:** P reserves only A's UUID. Seal must authenticate
+staged ciphertext before it creates A. Losing seal output permits authenticated
+resealing only while BACKFILLED shadows remain. Seal supplies no database Progress.
+Retain exact private durable P+A before switch. Verify bounded canonical A through
+a stable regular non-symlink mode0600 descriptor. Re-sync that descriptor and its
+parent before host loading or switch. Never overwrite an existing A.
+
+Keep artifact results separate from database known results. An unreturned switch
+requires INSPECT_JOURNAL. After switch, use A-status. P is superseded and its shadows
+are gone. Losing every external A copy loses the proof current APIs require.
+Do not reconstruct A from database assertions or treat key-free status as fresh
+verification. Existing source-only cancellation, target-only activation, host authority,
+provider and Doctor boundaries remain unchanged. Host-code effects remain UNKNOWN. See the
+[verified checkpoint](status.md#operational-cli-payload-rotation-2026-10-24).
+Source and installed genuine adopted-target verification pass.
+
 ## Owned-sequence admission
 
 **IMPLEMENTED, bounded source and installed verification:** lock/v5 admits only inspected ordinary persistent sequences
