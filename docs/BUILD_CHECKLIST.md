@@ -25,6 +25,11 @@ No objective is complete until its acceptance evidence and applicable gate pass.
 
 ## Current boundary
 
+- Public policy status and invalid SDK-return cleanup pass 168 source and 168
+  installed checks. The reproducible current wheel passes 45-input/40-module/44-file
+  verification. Genuine installed direct-generation export/restore passes 1/19 controls.
+  See the [checkpoint](status.md#public-policy-status-installed-qualification-2026-10-24).
+
 - Pinned public key-policy status passes 113 source checks, including 25 new controls.
   Generation metadata and retained backup references remain key-free after removal.
   Digest agreement does not qualify custody. See the

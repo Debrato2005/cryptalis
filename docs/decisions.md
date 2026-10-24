@@ -1513,3 +1513,22 @@ passes all 12 local Stubber cases with credential discovery and HTTP transport
 forbidden. The preserved SDK target adds no dependency changes to the installed
 environment. This fifth current database wrapper keeps the same 221 Python hashes
 stable and supplies no live AWS custody evidence.
+
+## Current public-policy and provider cleanup artifact: 2026-10-24
+
+The current source and actual installed profiles each pass 168 checks with all
+223 Python hashes stable. A reproducible wheel contains 40 modules; 44 installed
+files and 45 source inputs pass verification with 72 unchanged dependency pins.
+The build helper initially selected a historical receipt path. Its output guard
+stopped before building or installing. A new immutable path fixed that helper;
+the historical receipt remained unchanged. No guard was bypassed.
+Installed metadata agreement remains separate from custody, material correctness
+or key retirement. All production gates remain UNKNOWN.
+
+The current installed direct-generation profile passes one export and 19 restored
+target controls. An initial run omitted the required previous-reader interpreter;
+17 passed and two stopped at that configuration assertion. Both mandatory probes
+passed. The configured run verifies the unchanged prior reader, direct planning,
+cancellation, process/COMMIT recovery and latest-value exit. Preserve both receipts.
+The [final boundary](_reset/key-policy-final-boundary-20261024.json) binds the exact
+current artifact and qualification. No production gate changes.

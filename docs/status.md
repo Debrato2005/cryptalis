@@ -21,6 +21,32 @@ and [competitive capability matrix](research/capability-matrix.md) govern priori
 Progress follows complete real-application journeys and resolved production requirements.
 All seven production gates remain UNKNOWN.
 
+## Public-policy status installed qualification: 2026-10-24
+
+**VERIFIED, current source and installed profiles:** pinned public key-policy
+status and invalid native-coroutine SDK cleanup pass the same 168 checks from
+[source](_reset/key-policy-final-source-20261024.json) and the
+[installed wheel](_reset/key-policy-final-installed-20261024.json), in 65.54 and
+72.57 wrapper seconds. All 223 Python hashes remain stable. Both runs include
+generation2/removal status, retained obligations, legacy status/Doctor and actual
+local SDK controls. No keys are prepared for metadata inspection.
+
+The [reproducible artifact check](_reset/key-policy-final-release-20261024.json)
+verifies 45 source inputs, 40 modules and 44 installed files with 72 unchanged
+pinned dependencies. Wheel SHA-256 is
+`c5cff07217a37bb01f0d8e15d1d400d186cd2ed5f78c507e011612b78e513c1f`.
+Genuine installed [export](_reset/fresh-cluster-export-20261024-65.json) and
+[direct-generation restore](_reset/fresh-cluster-restore-20261024-64.json) pass one
+and 19 controls, respectively, with all 223 hashes stable. Direct v2 planning,
+cancellation, process/COMMIT recovery, previous-reader refusal and latest-value
+native exit pass. The initial [configuration run](_reset/fresh-cluster-restore-20261024-63.json)
+passed 17 and failed two because the required previous-reader interpreter was
+omitted. Its probes passed; the corrected run uses the unchanged verified reader.
+The [final boundary](_reset/key-policy-final-boundary-20261024.json) binds four
+current database receipts, exact artifacts and six documents. All 34 objective
+states and seven UNKNOWN gates remain unchanged. No full-suite or live AWS
+qualification follows.
+
 ## Pinned public key-policy status: 2026-10-24
 
 **VERIFIED, bounded source profile:** optional `status --key-policy-context
@@ -44,8 +70,10 @@ fixture correction, the [source run](_reset/key-policy-status-source-green-final
 passes all 113 tests in 76.17 seconds, including 25 new controls. All 223 Python
 hashes stay stable. Real rewrap, payload2, search2, latest-value reverse/removal,
 retained metadata, pre-connect refusals and output failure controls pass.
-Installed qualification remains pending. All 34 objective states and seven UNKNOWN
-gates remain unchanged. See the [contract](architecture/README.md#public-key-policy-status-metadata).
+Current installed verification appears in the
+[combined checkpoint](#public-policy-status-installed-qualification-2026-10-24).
+All 34 objective states and seven UNKNOWN gates remain unchanged. See the
+[contract](architecture/README.md#public-key-policy-status-metadata).
 
 ## Invalid KMS coroutine-response cleanup: 2026-10-24
 
@@ -57,7 +85,8 @@ two warning failures. The [source run](_reset/kms-response-cleanup-source-green-
 passes 55 checks in 1.76 seconds, including fresh/already-closed returns, healthy
 retry and 12 local actual-SDK Stubber cases. All 221 Python hashes stay stable.
 This three-line cleanup change adds no generic awaitable execution or live provider
-qualification. Installed verification remains pending. All seven gates remain UNKNOWN.
+qualification. Current installed verification appears in the
+[combined checkpoint](#public-policy-status-installed-qualification-2026-10-24). All seven gates remain UNKNOWN.
 
 ## Integrated defensive hardening: 2026-10-24
 

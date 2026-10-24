@@ -226,7 +226,7 @@ Source and installed initialization verification pass.
 
 ### Public key-policy status metadata
 
-**IMPLEMENTED, bounded source verification:** optional `status --key-policy-context
+**IMPLEMENTED, bounded source and installed verification:** optional `status --key-policy-context
 MODULE:FACTORY` accepts exact KeyPolicyStatusContext(operation_id, plan_digest,
 policies). Admit protection/activation or reverse artifacts. Refuse preparation P
 before host loading. Require exact native policy values, matching domain and the

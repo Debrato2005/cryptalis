@@ -565,7 +565,7 @@ Source and installed initialization verification pass.
 
 ### Public key-policy metadata boundary
 
-**VERIFIED, bounded source controls:** exact policy-digest agreement binds public
+**VERIFIED, bounded source and installed controls:** exact policy-digest agreement binds public
 metadata to the supplied artifact. It does not authenticate host provenance or
 prove root material, unwrap authority or live custody. Validate before database
 access; prepare no keys and contact no providers. The report never emits sealed

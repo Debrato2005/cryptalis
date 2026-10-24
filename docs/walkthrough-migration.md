@@ -1113,3 +1113,7 @@ or reverse artifact; preparation P refuses this option. Add the independent
 not prepare keys, contact providers or authorize retirement. Treat DIGEST_MATCH
 as metadata identity only. See the
 [checkpoint](status.md#pinned-public-key-policy-status-2026-10-24).
+
+The [current installed checkpoint](status.md#public-policy-status-installed-qualification-2026-10-24)
+verifies public policy metadata and provider-response cleanup together. Keep
+availability and material correctness UNKNOWN after digest agreement.

@@ -1,0 +1,166 @@
+{
+  "format": "cryptalis.key-policy-final-boundary/v1",
+  "base_revision": "f451ad9bcfd564a66a54fecbbb526bf81e070648",
+  "fixing_revision": "worktree-97230376de8f5287",
+  "source_manifest": {
+    "path": "/home/debrato/Projects/cryptalis/docs/_reset/key-policy-final-source-20261024.json",
+    "sha256": "9f629b2e493370bd1e79f223f02b65649756ceb4eb15145413fedf9c3b778ac4",
+    "member": "source_test_sha256",
+    "files": 223
+  },
+  "receipts": {
+    "key-policy-final-source-20261024.json": {
+      "path": "/home/debrato/Projects/cryptalis/docs/_reset/key-policy-final-source-20261024.json",
+      "sha256": "9f629b2e493370bd1e79f223f02b65649756ceb4eb15145413fedf9c3b778ac4",
+      "counts": {
+        "passed": 168
+      },
+      "elapsed_seconds": 65.53957442601677,
+      "modules": {
+        "tests/test_key_policy_status_cli.py": {
+          "passed": 25
+        },
+        "tests/test_retained_obligations_cli.py": {
+          "passed": 23
+        },
+        "tests/test_status_cli.py": {
+          "passed": 18
+        },
+        "tests/test_doctor_cli.py": {
+          "passed": 17
+        },
+        "tests/test_rotation_status_cli.py": {
+          "passed": 20
+        },
+        "tests/test_reverse_status_cli.py": {
+          "passed": 10
+        },
+        "tests/test_aws_kms.py": {
+          "passed": 43
+        },
+        "tests/profile_aws_kms_sdk.py": {
+          "passed": 12
+        }
+      }
+    },
+    "key-policy-final-installed-20261024.json": {
+      "path": "/home/debrato/Projects/cryptalis/docs/_reset/key-policy-final-installed-20261024.json",
+      "sha256": "e08fa56f8c724136c5f16805e6b3843bff00a65be7d7e436b2a017e0e44cc551",
+      "counts": {
+        "passed": 168
+      },
+      "elapsed_seconds": 72.56569718098035,
+      "modules": {
+        "tests/test_key_policy_status_cli.py": {
+          "passed": 25
+        },
+        "tests/test_retained_obligations_cli.py": {
+          "passed": 23
+        },
+        "tests/test_status_cli.py": {
+          "passed": 18
+        },
+        "tests/test_doctor_cli.py": {
+          "passed": 17
+        },
+        "tests/test_rotation_status_cli.py": {
+          "passed": 20
+        },
+        "tests/test_reverse_status_cli.py": {
+          "passed": 10
+        },
+        "tests/test_aws_kms.py": {
+          "passed": 43
+        },
+        "tests/profile_aws_kms_sdk.py": {
+          "passed": 12
+        }
+      }
+    },
+    "fresh-cluster-export-20261024-65.json": {
+      "path": "/home/debrato/Projects/cryptalis/docs/_reset/fresh-cluster-export-20261024-65.json",
+      "sha256": "97ca37320dd61d60d9c03172018e191356e1b7ae7df8d611089f74ce4e5191bd",
+      "counts": {
+        "passed": 1
+      },
+      "elapsed_seconds": 1.5612506059987936,
+      "modules": {
+        "tests/test_fresh_cluster_export.py": {
+          "passed": 1
+        }
+      }
+    },
+    "fresh-cluster-restore-20261024-64.json": {
+      "path": "/home/debrato/Projects/cryptalis/docs/_reset/fresh-cluster-restore-20261024-64.json",
+      "sha256": "abb8f84732c8c1fb0fa08296855d169eae2981e9580f981aa9ace63d1747aaae",
+      "counts": {
+        "passed": 19
+      },
+      "elapsed_seconds": 55.542267484997865,
+      "modules": {
+        "tests/test_direct_generation.py": {
+          "passed": 19
+        }
+      }
+    }
+  },
+  "release": {
+    "path": "/home/debrato/Projects/cryptalis/docs/_reset/key-policy-final-release-20261024.json",
+    "sha256": "5408eaec042b53da0e7465f667867434ac50026c1e2bfed247a5fa7846a2ed1e"
+  },
+  "install": {
+    "path": "/tmp/cryptalis-key-policy-final-install-evidence-20261024.json",
+    "sha256": "20bee63f0ecd4b10447f35ff8c28c04a6cc49a91e96a89025c283cea39a8dbd3"
+  },
+  "artifacts": {
+    "cryptalis-0.1.0-py3-none-any.whl": "c5cff07217a37bb01f0d8e15d1d400d186cd2ed5f78c507e011612b78e513c1f",
+    "cryptalis-0.1.0.tar.gz": "79b30cbb665950a5b0b3ae601d7919a2ba7d40d624fa64d494ffa617c6f5c18a"
+  },
+  "modules": 40,
+  "installed_files": 44,
+  "source_inputs": 45,
+  "dependency_pins": 72,
+  "historical_configuration_runs": {
+    "fresh-cluster-export-20261024-64.json": {
+      "path": "/home/debrato/Projects/cryptalis/docs/_reset/fresh-cluster-export-20261024-64.json",
+      "sha256": "74e4de0dc58ea3be6cd353dad22a13c3c75d0783464c1ebbccfb694e16077dd9",
+      "counts": {
+        "passed": 1
+      },
+      "scope": "Initial run omitted required previous-reader interpreter; not a mandatory probe failure or a verified product regression."
+    },
+    "fresh-cluster-restore-20261024-63.json": {
+      "path": "/home/debrato/Projects/cryptalis/docs/_reset/fresh-cluster-restore-20261024-63.json",
+      "sha256": "5844de01ad4e5e3e2d4f8707c37f848ebe87c6fe703a60b90e2f51a7554dd630",
+      "counts": {
+        "failed": 2,
+        "passed": 17
+      },
+      "scope": "Initial run omitted required previous-reader interpreter; not a mandatory probe failure or a verified product regression."
+    }
+  },
+  "previous_reader": {
+    "wheel": {
+      "path": "/tmp/cryptalis-adopted-search-final-release-20261024/cryptalis-0.1.0-py3-none-any.whl",
+      "sha256": "2df0715a9d4eb22bc9fb58abfa1ad570f734e8ed58df7558cb50755906bb8b82"
+    },
+    "verified_installed_files": 40
+  },
+  "prebuild_configuration_failure": {
+    "path": "/tmp/cryptalis-key-policy-final-prebuild-output-collision-20261024.json",
+    "sha256": "889208df5d16b1c49443aaea5881b3af279c5377d7b130201f870dd6a7b67a0e"
+  },
+  "document_sha256": {
+    "docs/status.md": "8419cb49026628b32bcd5465e9d541ffeed0dc43f50eddbe1d75e37d78852194",
+    "docs/BUILD_CHECKLIST.md": "093e0a2ba58d8aab643ab47d62c03ae0e1287e08a0ed65f769be917c1eb95d3d",
+    "docs/architecture/README.md": "99726d226858f3ce799fb613f61979387cbd185536228765f9491abc30b3cc15",
+    "docs/security.md": "38984d22566aaf3102da72ff76a32c0e7843629c2fe30a9cb3a7e109c3eb3796",
+    "docs/walkthrough-migration.md": "9ca72e7890ca6de7366e4fcba3776651e295c0b323d34316b8b071196597cb5d",
+    "docs/decisions.md": "3b24e6c6159d9afb58beb7ec4c964fa87782db672fd812518a9a4c6b3e255310"
+  },
+  "gates": "All seven UNKNOWN",
+  "objectives": "All 34 states unchanged",
+  "current_full_suite_runs": 0,
+  "scope": "Current source and installed metadata/lifecycle and local SDK profiles; genuine direct restore-binding generation cancellation, SIGKILL/COMMIT recovery, previous-reader refusal and latest-value native exit. Metadata identity does not qualify custody. No current HTTP repeat, live AWS, deployment, human review or production qualification.",
+  "checker_sha256": "e74fcb0635f9b9e9346f4dc4e1bd482d902f6b70d3a2d6e1b0a46c2f277b44c7"
+}
