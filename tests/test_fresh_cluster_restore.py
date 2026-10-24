@@ -628,7 +628,7 @@ def test_doctor_refuses_source_incompatible_binding_before_connection(tmp_path):
         owner.dispose()
 
 
-def test_restored_cluster_completes_adopted_lifecycle(tmp_path):
+def test_restored_cluster_completes_adopted_lifecycle(tmp_path, monkeypatch, capsys):
     source, pin = artifacts()
     owner, runtime = engine('CRYPTALIS_TEST_DATABASE_URL'), engine('CRYPTALIS_TEST_RUNTIME_DATABASE_URL')
     mapping, Customer = customer_mapping()
@@ -707,6 +707,75 @@ def test_restored_cluster_completes_adopted_lifecycle(tmp_path):
         with psycopg.connect(**environment('CRYPTALIS_TEST_DATABASE_URL')) as c:
             assert c.execute('SELECT pg_catalog.to_regclass(%s)',
                              (f'{MANIFEST["journal_schema"]}.{m.JOURNAL}',)).fetchone()[0] is None
+        if os.environ.get('CRYPTALIS_RETAINED_OBLIGATIONS_READER_ARTIFACT'):
+            retained_status_after_removal(source, proposal, replace(reverse_pin, phase='REMOVED'),
+                                          owner, tmp_path, monkeypatch, capsys)
     finally:
         owner.dispose()
         mapping.dispose()
+
+
+
+def retained_status_after_removal(source, reverse, pin, owner, tmp_path, monkeypatch, capsys):
+    """Bind actual restored-backup references without claiming a current drill."""
+    from dataclasses import asdict
+    import sys
+    from types import ModuleType
+    from cryptalis.cli_host import RetainedBackupObligation, RetainedObligationsContext
+    from cryptalis.crypto import Keyring
+    from test_operational_cli import invoke
+
+    reader = Path(os.environ['CRYPTALIS_RETAINED_OBLIGATIONS_READER_ARTIFACT'])
+    dump = WORKDIR / 'protected.sql'
+    assert reader.is_file() and dump.is_file()
+    dump_digest = hashlib.sha256(dump.read_bytes()).hexdigest()
+    reader_digest = hashlib.sha256(reader.read_bytes()).hexdigest()
+    retained = RetainedBackupObligation(uuid.uuid4(), source.artifact, dump_digest, reader_digest, None)
+    context = RetainedObligationsContext(reverse.operation_id, reverse.digest, (retained,))
+    module = ModuleType('fresh_retained_status_' + uuid.uuid4().hex)
+    module.factory = lambda: context
+    monkeypatch.setitem(sys.modules, module.__name__, module)
+    plan_path, pin_path = tmp_path / 'removed-plan.json', tmp_path / 'removed-pin.json'
+    plan_path.write_bytes(reverse.artifact)
+    pin_path.write_text(json.dumps(asdict(pin), default=str))
+    runtime_file = Path.home() / '.cryptalis-test-runtime-url'
+    assert runtime_file.is_file()
+    table = f'"{SCHEMA}".customer'
+    with owner.connect() as connection:
+        before = connection.exec_driver_sql(f'SELECT * FROM {table} ORDER BY id').all()
+        catalog = m._facts(connection, reverse.document['lock']['models'][0])
+    calls = []
+    def forbidden(*args, **kwargs):
+        calls.append(True)
+        pytest.fail('retained-obligation status must not prepare provider keys')
+    with monkeypatch.context() as no_keys:
+        no_keys.setattr(Keyring, 'prepare', forbidden)
+        code, text, error = invoke(capsys, 'status', str(plan_path), '--pin', str(pin_path),
+            '--database-url-file', str(runtime_file), '--host-context', module.__name__ + ':factory', '--json')
+    assert code == 0 and error == '' and calls == []
+    summary = json.loads(text)
+    obligations = summary['retained_obligations']
+    assert summary['phase'] == 'REMOVED' and summary['runtime_metadata_matches'] is True
+    assert obligations['status'] == obligations['inventory_completeness'] == 'UNKNOWN'
+    assert obligations['reader_availability'] == obligations['provider_availability'] == 'UNKNOWN'
+    assert obligations['verification'] == 'NOT_PERFORMED' and obligations['reported_count'] == 1
+    record = obligations['records'][0]
+    assert record['source_operation_id'] == str(source.operation_id) and record['source_plan_digest'] == source.digest
+    assert record['required_policy_digests'] == source.document['key_policies']
+    assert record['dump_sha256'] == dump_digest and record['reader_sha256'] == reader_digest
+    assert record['drill_sha256'] is None and record['provenance'] == 'HOST_DECLARED_DIGEST_REFERENCES'
+    with owner.connect() as connection:
+        assert connection.exec_driver_sql(f'SELECT * FROM {table} ORDER BY id').all() == before
+        assert m._facts(connection, reverse.document['lock']['models'][0]) == catalog
+        assert connection.exec_driver_sql('SELECT pg_catalog.to_regclass(%s)',
+            (f'{MANIFEST["journal_schema"]}.{m.JOURNAL}',)).scalar_one() is None
+    receipt = os.environ.get('CRYPTALIS_RETAINED_OBLIGATIONS_RECEIPT')
+    if receipt:
+        with Path(receipt).open('x') as stream:
+            json.dump({'scope': 'genuine_restored_backup_removed_status', 'source_operation_id': str(source.operation_id),
+                'source_plan_digest': source.digest, 'required_policy_digests': source.document['key_policies'],
+                'dump_sha256': dump_digest, 'reader_sha256': reader_digest, 'drill_sha256': None,
+                'status': obligations, 'journal_absent': True, 'provider_preparations': len(calls),
+                'boundary': 'Actual fresh backup recovery and latest native removal precede this status; references remain host declarations, availability and completeness UNKNOWN',
+                'gates': 'all seven UNKNOWN'}, stream, indent=2)
+            stream.write('\n')

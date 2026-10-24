@@ -237,6 +237,12 @@ Finish with original HTTP in a child that denies Cryptalis imports. It does not 
 [acceptance boundary](architecture/README.md#original-http-operational-qualification) and
 [qualification checkpoint](status.md#original-http-operational-cli-journey-2026-10-24).
 
+## Declare retained-backup status references
+
+**IMPLEMENTED, source verified:** add `--host-context MODULE:FACTORY` to status with the
+[exact context](architecture/README.md#retained-backup-status-metadata). Declared hashes are separate from
+database observations. Installed/fresh verification remains pending.
+
 ## Use the optional SQLModel bridge
 
 Use the `sqlmodel` extra from a locally built wheel in an isolated application environment.

@@ -1397,3 +1397,44 @@ exact native/annotated-node admission check. For async SELECT, perform existing
 configuration and statement admission before key preparation, then retain the
 normal execution check. Preserve ordinary equality, negative predicates, IN,
 NULL and Boolean expression behavior. This admits no new public operation.
+
+## Declared retained-backup status references: 2026-10-24
+
+**IMPLEMENTED, bounded source verification:** extend `status` with optional explicit
+`--host-context MODULE:FACTORY` for public metadata only. Preserve the existing
+plan, pin, private connection file, restore binding and status exit behavior.
+Doctor and status without this option keep their existing output contracts.
+
+Use frozen, repr-disabled RetainedObligationsContext(operation_id, plan_digest,
+records) and RetainedBackupObligation(backup_id, source_plan, dump_sha256,
+reader_sha256, drill_sha256). The context carries no engine, key resolver, provider,
+credential, pin or deletion authority. The operation and digest must match the
+current status artifact. Validate the existing input artifacts before host loading.
+Host Python effects remain UNKNOWN.
+
+Each bounded record supplies explicit saved MigrationPlan bytes and digest
+references. Require the source identity in the current protection artifact or its
+flat predecessors; reverse uses its embedded source and that source's predecessors.
+Report exact policy digests from the supplied source artifact. Require unique
+nonzero backup UUIDs and lowercase SHA-256 references. Reader and drill references
+may be explicit None. Bound the tuple to 64 records and source bytes to 16 MiB
+in aggregate, with the existing per-artifact bound.
+
+Label the inventory HOST_SUPPLIED_METADATA, verification NOT_PERFORMED and
+completeness, reader availability and provider availability UNKNOWN. Hashes remain
+host-declared references, not observed file identity or current recovery results.
+An empty declaration does not prove no obligations. Terminal REMOVED status must
+retain supplied obligations despite the absent journal. Refuse malformed or
+unrelated metadata before command-managed database access. Never fetch keys,
+retire material or infer safe deletion. Public key inventory and independent
+recovery qualification remain separate required work.
+
+The [RED run](_reset/retained-status-source-red-20261024.json) reproduces the
+missing optional command with one failure in 1.29 seconds. The
+[source run](_reset/retained-status-source-green-20261024.json) passes 131 checks
+in 76.37 seconds, including 23 new controls. One inherited fresh-cluster setup
+case is skipped. All 220 Python hashes remain stable. Exact legacy JSON/text
+output, key-free UNKNOWN declarations, strict bounds, malformed input, host
+failure, ancestry, journal-free REMOVED status and output failure controls pass.
+Installed and optional genuine-fresh reference qualification remain pending.
+This evidence grants no external inventory, provider or recovery qualification.
