@@ -1,0 +1,119 @@
+{
+  "format": "cryptalis.online-http-qualification/v1",
+  "base_revision": "d755d05",
+  "fixing_revision": "worktree-3256a1617ae72ead",
+  "source_manifest": {
+    "path": "docs/_reset/online-http-source-20261024.json",
+    "member": "source_test_sha256",
+    "sha256": "76e33893da82c5f08f6b4383a3036f20bd98e370692479c55cd2606a742a3580",
+    "python_files": 237
+  },
+  "runs": [
+    {
+      "scope": "Isolated PostgreSQL 16 online protection: three authenticated roles",
+      "preflight": {
+        "select_1_each": "passed",
+        "sha256_prefixes": [
+          "26000aa0",
+          "9dd6c2f3",
+          "933bd588"
+        ]
+      },
+      "counts": {
+        "passed": 1
+      },
+      "elapsed_seconds": 11.517972516972804,
+      "source_stability": {
+        "unchanged": true,
+        "changed_paths": []
+      },
+      "pytest_args": [
+        "tests/profile_online_http_application.py",
+        "-q"
+      ]
+    },
+    {
+      "scope": "Isolated PostgreSQL 16 online protection: three authenticated roles",
+      "preflight": {
+        "select_1_each": "passed",
+        "sha256_prefixes": [
+          "e2fc2a54",
+          "2326de55",
+          "d2f44860"
+        ]
+      },
+      "counts": {
+        "passed": 1
+      },
+      "elapsed_seconds": 9.770700365013909,
+      "source_stability": {
+        "unchanged": true,
+        "changed_paths": []
+      },
+      "pytest_args": [
+        "tests/profile_online_http_application.py",
+        "-q"
+      ]
+    }
+  ],
+  "archive": {
+    "path": "docs/_reset/online-http-receipts-20261024.tar.gz",
+    "sha256": "3904d13945f12bcacb77eae0d529641d2e0d19030223302cbc135fd70b98b25c",
+    "bytes": 16494,
+    "members": [
+      {
+        "member": "source-application.json",
+        "sha256": "fef35252fb07aac34ec81bc1d3609be9aa96162f7b044476ae8936d93f028e3b"
+      },
+      {
+        "member": "installed-postgres.json",
+        "sha256": "d39410bd73919de777379aad7b379535f3a9a94692435ba731d0d05af845c35e"
+      },
+      {
+        "member": "installed-application.json",
+        "sha256": "fef35252fb07aac34ec81bc1d3609be9aa96162f7b044476ae8936d93f028e3b"
+      }
+    ]
+  },
+  "application": {
+    "revision": "d40de23896d27d15c17a7bf9649123fd167a0aa8",
+    "pinned_files": 26,
+    "source_edits": [],
+    "supplied_SELECT_structures": 10,
+    "local_smtp_messages_per_run": 12,
+    "concurrent_original_signup": "PASS",
+    "native_latest_all_tables": "PASS",
+    "catalog_and_public_slots": "PASS",
+    "package_free_original_http": "PASS"
+  },
+  "installed": {
+    "wheel_sha256": "4b588f5af8c528257209a39bd6558855a533ba0fb3fdacfa42f0b561b2631982",
+    "source_wheel_installed_modules_equal": 42,
+    "reused_release_receipt": "docs/_reset/online-final-release-20261024.json",
+    "rebuild": "NOT_REQUIRED_PRODUCT_BYTES_UNCHANGED"
+  },
+  "documentation_sha256": {
+    "docs/status.md": "dadf5b04c3195cbded8f02db6578e6e5631dd4973a7bc9a29b3820de8292be64",
+    "docs/BUILD_CHECKLIST.md": "a7ca8b7607f6b2d4113165bff1cda0cba211c8af153a7cb3f10e75dcfc6fe6c3",
+    "docs/build-guide.md": "30a3bf1912697e5c75514e36aad10d92fd1a237463aa463a77361333a8cb9b23",
+    "docs/research/capability-matrix.md": "c4ed6b843679a625502fcab7fa7dab8dc8df69d9321d5feaff62fa375ee8578d"
+  },
+  "gates": {
+    "G-ADAPTER": "UNKNOWN",
+    "G-CRYPTO": "UNKNOWN",
+    "G-QUERY": "UNKNOWN",
+    "G-LIFECYCLE": "UNKNOWN",
+    "G-PROVIDER": "UNKNOWN",
+    "G-POLICY": "UNKNOWN",
+    "G-RELEASE": "UNKNOWN"
+  },
+  "limitations": [
+    "Single explicitly declared tenant and public fixture keys",
+    "No rotation or backup/restore repeat in this profile",
+    "No production downtime or external publication qualification",
+    "No external mail, live KMS or independent review"
+  ],
+  "warnings": [
+    "Starlette TestClient uses deprecated AnyIO BlockingPortal alias"
+  ]
+}
