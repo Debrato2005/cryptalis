@@ -90,6 +90,23 @@ Protection admits one initial operation per schema. Root rewrap adds an exact
 successor chain. General journal reuse remains unfinished.
 [Evidence](status.md) records tests, costs, and limits.
 
+## Initialize an explicit declaration through the CLI
+
+**IMPLEMENTED, bounded source and installed verification:** make the trusted host factory return
+`InitializationContext(engine, mapping, declaration, writers, search_reviews)`.
+Supply public declaration bytes and a fresh owned inspection engine. Create no
+keys, provider, pin, target ID, runtime role or plan for this command.
+
+Run `init --host-context MODULE:FACTORY --out DECLARATION` with optional `--json`.
+Use a new private output path. Schema PASS permits canonical publication.
+Keep aggregate and unobserved checks UNKNOWN. Retain the saved file and report.
+After an output or cleanup error, inspect the artifact facts before retry.
+Continue through existing planning with separate explicit planning authority.
+Initialization adds no transition or process-interruption checkpoint by itself. See the
+[architecture contract](architecture/README.md#initialization-cli) and
+[verified checkpoint](status.md#operational-cli-initialization-2026-10-24).
+Source and installed initialization verification pass.
+
 ## Plan and apply protection through the CLI
 
 The source and actual installed wheel pass the bounded workflow in

@@ -548,6 +548,21 @@ unknown host-code effects and Doctor's tuple remain unchanged. See the
 [verified checkpoint](status.md#operational-cli-search-rotation-2026-10-24).
 Source and installed genuine adopted-target verification pass.
 
+### Initialization CLI trust boundary
+
+**IMPLEMENTED, bounded source and installed verification:** declaration bytes are explicit public host input.
+Enforce their type, size and strict parse before canonicalization. Use the existing
+read-only compiler through Doctor preflight. Do not infer tenancy, runtime roles,
+keys, providers, pins or deployment authority. No application values or keys enter inspection.
+
+Publish only after manifest_schema PASS. Preserve all unobserved UNKNOWN results
+and the aggregate UNKNOWN status. Qualify effects NONE as compiler inspection only.
+Host import/factory effects remain UNKNOWN. On output, fsync or cleanup failure,
+preserve known inspection and artifact facts without inventing a database result,
+operation UUID or transition phase. Existing private publication and safe diagnostics apply. See the
+[verified checkpoint](status.md#operational-cli-initialization-2026-10-24).
+Source and installed initialization verification pass.
+
 ## Owned-sequence admission
 
 **IMPLEMENTED, bounded source and installed verification:** lock/v5 admits only inspected ordinary persistent sequences

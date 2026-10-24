@@ -21,9 +21,68 @@ and [competitive capability matrix](research/capability-matrix.md) govern priori
 Progress follows complete real-application journeys and resolved production requirements.
 All seven production gates remain UNKNOWN.
 
+## Operational CLI initialization: 2026-10-24
+
+**VERIFIED within the bounded source and installed profiles at `worktree-ad32b0cd9f5ebeac`:** `init --host-context MODULE:FACTORY --out DECLARATION`
+inspects explicit public declaration bytes from a trusted host. A frozen,
+repr-disabled `InitializationContext` requires `engine`, `mapping`, `declaration`,
+`writers` and `search_reviews`. The existing byte bound and strict parser run
+before canonicalization. No models, tenancy, providers or authority are inferred.
+
+Existing key-free Doctor preflight inspects the schema. Only manifest_schema PASS
+permits exclusive private publication of the canonical declaration. The report retains
+Doctor's pre-adoption format, six unobserved UNKNOWN checks and aggregate UNKNOWN.
+Its digest identifies the exact saved canonical bytes. Initialization creates no
+operation UUID, transition phase or database progress result.
+
+Compiler inspection effects are NONE. Host-code effects remain UNKNOWN. Output,
+fsync or cleanup errors retain known inspection and artifact facts. No key,
+provider, deployment pin, runtime role, target ID, measurement, layout or plan
+is supplied or created by initialization.
+
+The [parser RED](_reset/init-cli-source-red-20261024.json) records one failure in
+0.66 seconds because the old grammar lacks initialization. The
+[focused source profile](_reset/init-cli-source-focused-initial-20261024.json) passes
+94 tests with four inherited genuine-fresh setup skips in 128.99 seconds: 15
+initialization controls and 79 existing operational/application controls. All 217 Python
+hashes stay stable and match this worktree. Strict-byte policy, key-free inspection,
+schema FAIL, unavailable inspection UNKNOWN, durability and failure controls pass.
+
+The [source application](_reset/init-cli-source-application-initial-20261024.json)
+retains six pinned files. Initialization supplies the private canonical declaration
+consumed by existing planning, replacing the fixture's manual manifest write. Native
+schema remains unchanged. The same five actual SIGKILL checkpoints, original CRUD,
+search, Boolean values, four observed current IDs and latest-value native exit pass.
+Initialization adds no sixth interruption checkpoint.
+
+The [affected-source suite](_reset/init-cli-source-affected-20261024.json) passes
+373 tests with no skips in 30.48 seconds. Its ten modules cover CLI, history,
+Doctor/preflight, declaration, compiler, public-slot, parser and canonicalization controls.
+All 217 Python hashes stay stable and match this worktree. The
+[artifact check](_reset/init-cli-release-20261024.json) passes reproducible archives,
+SBOM, CLI, 38 modules and 42 installed-file checks. All 43 release-source hashes
+match this worktree. The wheel has SHA-256
+`1d06531b894d117540117544ef251d5cdbe05cf75f0cc93394f4c266cc17ac04`.
+Only three CLI product modules change. The other 35 modules, including ten crypto
+modules, remain unchanged. The
+[installed suite](_reset/init-cli-installed-affected-20261024.json) passes 467 tests
+with four inherited genuine-fresh setup skips in 157.45 seconds. Its
+[application receipt](_reset/init-cli-installed-application-20261024.json) retains
+six pinned files, initialization-generated canonical input, the same five actual
+SIGKILL checkpoints and latest-value native exit. All 217 Python hashes stay stable
+and match this worktree. The [final boundary](_reset/init-cli-final-boundary-20261024.json)
+binds three current database receipts, two application receipts, six documents and
+actual artifact bytes, with the earlier parser RED preserved. Fresh-cluster proofs
+retain their older `c612727` boundary. This slice repeats no fresh-cluster or full-suite
+qualification. No HTTP or production qualification follows. All 34 objective states
+and seven UNKNOWN gates remain unchanged. See the
+[architecture contract](architecture/README.md#initialization-cli),
+[trust boundary](security.md#initialization-cli-trust-boundary) and
+[procedure](walkthrough-migration.md#initialize-an-explicit-declaration-through-the-cli).
+
 ## Operational CLI search rotation: 2026-10-24
 
-**VERIFIED within the bounded source and installed profiles at `worktree-0dcdf51f7824071e`:** `keys rotate search` adds `plan`, `apply`,
+**VERIFIED within the bounded source and installed profiles at `c612727`:** `keys rotate search` adds `plan`, `apply`,
 `status`, `seal`, `switch`, `activate` and `abort` over existing search APIs.
 P is search-rotation/v1 or direct-restored v2. Its reserved A uses transition/v4
 or adopted v7. Distinct P/A pins bind the exact operation and artifact digest.
@@ -44,7 +103,7 @@ in 0.82 seconds because the old command grammar lacks search rotation. The
 [focused source profile](_reset/search-cli-source-focused-initial-20261024.json)
 passes 79 tests with four genuine-fresh setup skips in 127.80 seconds: nine new
 search, 16 payload, 13 rewrap, 19 reverse, 21 protection controls and one original
-application journey. All 216 Python hashes stay stable and match this worktree.
+application journey. All 216 Python hashes stay stable and match that checkpoint.
 
 The [source application](_reset/search-cli-source-application-initial-20261024.json)
 retains six pinned files and five actual SIGKILL checkpoints. Its search transition
@@ -61,7 +120,7 @@ root-rewrap controls retain their `f303a18` boundary. The focused source run inc
 13 current operational rewrap controls. All 216 Python hashes stay stable and match
 this worktree. The [artifact check](_reset/search-cli-release-20261024.json) passes
 reproducible archives, SBOM, CLI, 38 modules and 42 installed-file checks. All 43
-release-source hashes match this worktree. The wheel has SHA-256
+release-source hashes match that checkpoint. The wheel has SHA-256
 `a103f8c018d07c7942a289577f8caa091fb748825a059f758a596ce74cf57025`.
 Only three CLI product modules change. The other 35 modules, including ten crypto
 modules, remain byte-exact at `f303a18`. Genuine source
@@ -76,10 +135,10 @@ The [installed suite](_reset/search-cli-installed-affected-20261024.json) passes
 528 tests with four genuine-fresh setup skips in 355.12 seconds. Its
 [application receipt](_reset/search-cli-installed-application-20261024.json) retains
 six unchanged files, five actual SIGKILL checkpoints and latest-value native exit.
-All 216 Python hashes stay stable and match this worktree. Actual installed
+All 216 Python hashes stay stable and match that checkpoint. Actual installed
 [export](_reset/fresh-cluster-export-20261024-62.json) and
 [separate-cluster restore](_reset/fresh-cluster-restore-20261024-61.json) each pass
-one test in 0.82 and 1.24 seconds, with the same 216 stable/current hashes.
+one test in 0.82 and 1.24 seconds, with the same 216 stable hashes at that checkpoint.
 The [final boundary](_reset/search-cli-final-boundary-20261024.json) binds seven
 current database receipts, two application receipts, six documents and actual
 artifact bytes. The earlier parser RED retains its historical boundary. No current

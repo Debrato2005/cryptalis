@@ -58,7 +58,7 @@ import json,os,signal
 import psycopg
 from sqlalchemy import create_engine,event
 from app.models import User
-from cryptalis.cli_host import (PlanningContext,ApplyContext,ReversePlanningContext,ReverseApplyContext,RemovalContext,
+from cryptalis.cli_host import (InitializationContext,PlanningContext,ApplyContext,ReversePlanningContext,ReverseApplyContext,RemovalContext,
     RewrapPlanningContext,RewrapApplyContext,RewrapActivationContext,RewrapAbortContext,
     PayloadPlanningContext,PayloadApplyContext,PayloadStatusContext,PayloadSealingContext,
     PayloadSwitchContext,PayloadActivationContext,PayloadAbortContext,
@@ -78,6 +78,12 @@ def owned(c):
     return create_engine('postgresql+psycopg://',echo=False,hide_parameters=True,
         creator=lambda:psycopg.connect(os.environ['CRYPTALIS_TEST_DATABASE_URL'],
             options='-csearch_path='+c['schema'],connect_timeout=5))
+def initializing():
+    c=configuration()
+    return InitializationContext(engine=owned(c),mapping=User._sa_registry,
+        declaration=Path(c['declaration_path']).read_bytes(),
+        writers=WriterInventory(True,(Writer(UUID(int=1901),'app','sqlalchemy',evidence='unchanged pinned original CRUD; public disposable fixtures'),)),
+        search_reviews=(SearchReview(UUID(int=1903),False,'Opaque UUID128 fixture email local parts only; equality/frequency/query/uniqueness leakage accepted for public fixtures; production domain UNKNOWN.'),))
 def planning():
     c=configuration()
     return PlanningContext(engine=owned(c),mapping=User._sa_registry,
@@ -273,12 +279,13 @@ def test_original_three_field_app_cli_plan_kill_resume_publish_and_native_exit(t
                      'queries': ['equality', 'unique'], 'accept_leakage': ['equality', 'unique']},
                     {'name': 'is_active', 'field_id': str(UUID(int=1904)), 'protect': True, 'queries': [], 'accept_leakage': []}]}]}
         manifest, plan_path = tmp_path / 'manifest.json', tmp_path / 'cli-plan.json'
-        manifest.write_text(json.dumps(declaration))
+        public_intent = tmp_path / 'host-explicit-protection-intent.json'
+        public_intent.write_text(json.dumps(declaration, indent=2))
         pin_path, approval_path = tmp_path / 'host-pin.json', tmp_path / 'host-approval.json'
         approval = m.MaintenanceApproval('original fixture app stopped; all inventoried writers excluded', 3600)
         approval_path.write_text(json.dumps(asdict(approval)))
         configuration_path = tmp_path / 'host-configuration.json'
-        configuration = {'schema': schema, 'runtime_role': role, 'target_id': str(uuid4()),
+        configuration = {'schema': schema, 'runtime_role': role, 'target_id': str(uuid4()), 'declaration_path': str(public_intent),
             'pin_path': str(pin_path), 'approval_path': str(approval_path), 'checkpoint': str(tmp_path / 'committed-checkpoint')}
         configuration_path.write_text(json.dumps(configuration))
         module = 'original_cli_host_' + uuid4().hex
@@ -295,6 +302,19 @@ def test_original_three_field_app_cli_plan_kill_resume_publish_and_native_exit(t
             assert result.stderr == ''
             assert all(os.environ[name] not in result.stdout for name in ('CRYPTALIS_TEST_DATABASE_URL', 'CRYPTALIS_TEST_RUNTIME_DATABASE_URL'))
             return json.loads(result.stdout)
+        assert not manifest.exists()
+        initialized = execute('init', '--host-context', module + ':initializing', '--out', str(manifest), '--json')
+        assert initialized['scope'] == 'initialization' and initialized['status'] == 'UNKNOWN'
+        inspection = initialized['inspection']
+        assert inspection['format'] == 'cryptalis.doctor/v1' and inspection['scope'] == 'pre_adoption'
+        assert inspection['checks']['manifest_schema'] == 'PASS'
+        assert all(value == 'UNKNOWN' for name, value in inspection['checks'].items() if name != 'manifest_schema')
+        assert all(name not in initialized for name in ('phase', 'operation_id', 'known_result'))
+        from cryptalis.manifest.declaration import parse_protection_declaration
+        assert manifest.read_bytes() == parse_protection_declaration(public_intent.read_bytes()).canonical_bytes()
+        assert initialized['manifest_digest'] == hashlib.sha256(manifest.read_bytes()).hexdigest()
+        assert initialized['artifact_result']['artifact_published'] is initialized['artifact_result']['artifact_directory_durable'] is True
+        assert public_slots(owner) == native_slots and native_catalog(owner) == catalog
         planned = execute('plan', str(manifest), '--host-context', module + ':planning', '--out', str(plan_path),
                           '--layout', 'preserve-public-slots/v1', '--json')
         plan = m.MigrationPlan(plan_path.read_bytes())
@@ -717,6 +737,8 @@ def test_original_three_field_app_cli_plan_kill_resume_publish_and_native_exit(t
                     'model_changes': [], 'query_changes': [], 'layout': 'preserve-public-slots/v1',
                     'protected_fields': ['User.email', 'User.full_name', 'User.is_active'],
                     'source_plan_digest': protection_plan_digest, 'cli_plan_apply_resume_publication': True,
+                    'cli_init_canonical_manifest': True, 'initialization_manifest_digest': initialized['manifest_digest'],
+                    'initialization_inspection': inspection, 'initialization_preserved_native_schema': True,
                     'cli_root_rewrap_plan_apply_activate_abort': True, 'cancelled_rewrap_digest': cancelled.digest,
                     'rewrap_proposal_digest': rewrap.digest, 'rewrap_activation_digest': activation_plan.digest,
                     'rewrap_target_outage_retained_source': True, 'source_only_rewrap_abort_after_target_outage': True,

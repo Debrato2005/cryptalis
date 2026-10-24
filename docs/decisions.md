@@ -1287,3 +1287,43 @@ All 216 Python hashes stay stable. The 23 exact host contexts retain the previou
 16 declarations and all earlier denial classifications unchanged. All 34 objective
 states and seven UNKNOWN gates remain unchanged. This evidence supplies no current
 full-suite or production qualification.
+
+## Declaration initialization and read-only admission: 2026-10-24
+
+**IMPLEMENTED:** `init --host-context MODULE:FACTORY --out DECLARATION`
+creates a private canonical declaration after existing read-only schema inspection.
+`--json` selects structured output. The trusted factory returns exactly
+InitializationContext(engine, mapping, declaration, writers, search_reviews).
+The declaration contains explicit public bytes. The host selects all stable UUIDs,
+tenancy, fields, query capabilities and leakage acceptance. The CLI infers none.
+
+Parse the bounded declaration before canonicalization. Canonicalization must not
+supply leakage consent that the input omitted. Use the existing declaration format
+and exact canonical bytes. Compute manifest_digest from those saved bytes.
+The existing Doctor preflight supplies the inspection report unchanged.
+Publish only when manifest_schema is PASS. Aggregate status and all six unobserved
+checks remain UNKNOWN. Initialization creates no migration plan, layout, keys,
+provider, pin, runtime role, target identity or deployment approval.
+
+The command owns and disposes the supplied safe synchronous PostgreSQL psycopg
+engine. Refuse an existing output path before host import. Publish exclusively
+and sync the private file and parent directory through existing artifact helpers.
+Output separates initialization artifact facts from the unchanged nested inspection.
+It creates no operation UUID, journal phase or synthetic database Progress.
+Failure retains known inspection and file facts. Database effects remain NONE within
+compiler inspection. Trusted host-code effects remain UNKNOWN on every outcome.
+
+**VERIFIED within the bounded source and installed profiles:** the
+[source profile](_reset/init-cli-source-focused-initial-20261024.json) passes
+94 tests. The [affected suite](_reset/init-cli-source-affected-20261024.json)
+passes 373. The [actual installed suite](_reset/init-cli-installed-affected-20261024.json)
+passes 467. Focused and installed runs retain four separate genuine-fresh setup skips.
+Initialization itself uses real PostgreSQL and no key access. Both original-application
+profiles consume its private canonical declaration through the existing five SIGKILL
+checkpoints and latest-value native exit. Six pinned application files stay unchanged.
+The [final boundary](_reset/init-cli-final-boundary-20261024.json) binds three current
+PostgreSQL receipts, both application receipts and the exact installed wheel.
+All 217 Python hashes stay stable. The previous 23 context declarations and four
+denial classifications remain unchanged. All 34 objective states and seven UNKNOWN
+gates retain their previous states. This slice repeats no fresh-cluster qualification.
+The unchanged core retains its historical boundary at `c612727`.

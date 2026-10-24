@@ -234,3 +234,12 @@ class SearchAbortContext:
     source_keys: Keyring | Callable[[UUID], Keyring]
     source_pin: DeploymentPin
     approval: MaintenanceApproval
+
+
+@dataclass(frozen=True, repr=False)
+class InitializationContext:
+    engine: Engine
+    mapping: registry
+    declaration: bytes
+    writers: WriterInventory
+    search_reviews: tuple[SearchReview, ...]

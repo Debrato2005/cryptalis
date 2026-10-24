@@ -1,5 +1,6 @@
 """Operational CLI composition over the existing protection APIs."""
 from contextlib import contextmanager, redirect_stderr, redirect_stdout
+import hashlib
 import importlib
 import inspect
 import json
@@ -95,7 +96,7 @@ def _owned_engine(context, engine_type):
         h.PayloadApplyContext, h.PayloadStatusContext, h.PayloadSealingContext,
         h.PayloadSwitchContext, h.PayloadActivationContext, h.PayloadAbortContext, h.SearchPlanningContext,
         h.SearchApplyContext, h.SearchStatusContext, h.SearchSealingContext,
-        h.SearchSwitchContext, h.SearchActivationContext, h.SearchAbortContext)
+        h.SearchSwitchContext, h.SearchActivationContext, h.SearchAbortContext, h.InitializationContext)
     return context.engine if type(context) in contexts and isinstance(context.engine, engine_type) else None
 
 
@@ -186,6 +187,8 @@ def _publish(path, raw, result, operation, *, artifact_only=False):
 
 def run(arguments):
     """Compose protection, current-value reverse or approved removal APIs."""
+    if arguments.command == 'init':
+        return run_init(arguments)
     if arguments.command == 'keys':
         return (run_generation(arguments, arguments.rotation_kind) if arguments.rotation_kind in ('payload', 'search')
                 else run_rewrap(arguments))
@@ -380,6 +383,92 @@ def run(arguments):
     except _CommandFailure as failure:
         _known_result(failure, result)
         raise
+    return 0
+
+
+def run_init(arguments):
+    """Inspect explicit declaration intent and save its canonical bytes."""
+    from cryptalis.cli import _CommandFailure, _write_output
+    operation = 'initialization'
+    engine = inspection = artifact = None
+
+    def annotate(failure):
+        failure.error.pop('known_result', None)
+        failure.error.update(effects='NONE', effects_scope='compiler_inspection', host_configuration_effects='UNKNOWN',
+            remedy='Inspect the declaration, schema inspection and artifact facts before retry. Existing files are never replaced.')
+        if inspection is not None:
+            failure.error['inspection'] = inspection
+        if artifact is not None:
+            failure.error.update(manifest_digest=artifact['manifest_digest'], artifact_result=dict(artifact))
+        return failure
+
+
+    try:
+        from sqlalchemy.engine import Engine
+        from sqlalchemy.orm import registry
+        from cryptalis.cli_host import InitializationContext
+        from cryptalis.doctor import preflight
+        from cryptalis.manifest.compiler import WriterInventory, SearchReview
+        from cryptalis.manifest.declaration import parse_protection_declaration
+        from cryptalis.manifest.parser import MAX_DOCUMENT_BYTES, ManifestInvalid
+    except ImportError:
+        raise annotate(_failure(operation, 'DependenciesUnavailable', 'load_runtime', exit_code=4)) from None
+
+    try:
+        if type(arguments.host_context) is not str or _HOST.fullmatch(arguments.host_context) is None:
+            raise _failure(operation, 'InvalidInput', 'inputs')
+        if os.path.lexists(arguments.out):
+            raise _failure(operation, 'ArtifactExists', 'inputs')
+        context = _load_host(arguments.host_context, operation)
+        engine = _owned_engine(context, Engine)
+        with _quiet():
+            if type(context) is not InitializationContext or engine is None:
+                raise _failure(operation, 'HostContextInvalid', 'host_context')
+            if (engine.dialect.name != 'postgresql' or engine.dialect.driver != 'psycopg'
+                    or engine.dialect.is_async or (engine.echo is not False and engine.echo is not None)
+                    or engine.hide_parameters is not True):
+                raise _failure(operation, 'UnsafeEngine', 'host_context')
+            if (not isinstance(context.mapping, registry) or not isinstance(context.writers, WriterInventory)
+                    or type(context.search_reviews) is not tuple or type(context.declaration) is not bytes
+                    or any(not isinstance(review, SearchReview) for review in context.search_reviews)):
+                raise _failure(operation, 'HostContextInvalid', 'host_context')
+            if len(context.declaration) > MAX_DOCUMENT_BYTES:
+                raise _failure(operation, 'Manifest.Invalid', 'declaration')
+            canonical = parse_protection_declaration(context.declaration).canonical_bytes()
+            artifact = dict(scope='initialization_artifact', manifest_digest=hashlib.sha256(canonical).hexdigest(),
+                artifact_published=False, artifact_reused=False, artifact_directory_durable=False,
+                artifact_temporary_retained=False, effects='NONE')
+            inspection = preflight(canonical, context.mapping, engine, writers=context.writers,
+                                   search_reviews=context.search_reviews)
+            if inspection['checks']['manifest_schema'] != 'PASS':
+                incompatible = inspection['checks']['manifest_schema'] == 'FAIL'
+                raise _failure(operation, 'SchemaIncompatible' if incompatible else 'InspectionUnavailable',
+                               'inspection', exit_code=2 if incompatible else 4)
+        _publish(arguments.out, canonical, artifact, operation, artifact_only=True)
+        result = dict(scope='initialization', status=inspection['status'], manifest_digest=artifact['manifest_digest'],
+            inspection=inspection, effects='NONE', effects_scope='compiler_inspection',
+            host_configuration_effects='UNKNOWN', artifact_result=dict(artifact))
+    except _CommandFailure as failure:
+        raise annotate(failure)
+    except ManifestInvalid:
+        raise annotate(_failure(operation, 'Manifest.Invalid', 'declaration')) from None
+    except BaseException:
+        raise annotate(_failure(operation, 'InspectionUnavailable', 'inspection', exit_code=4)) from None
+    finally:
+        if engine is not None:
+            primary = sys.exception()
+            try:
+                with _quiet():
+                    engine.dispose()
+            except BaseException:
+                raise annotate(_failure(operation, 'CleanupUnavailable', 'engine_cleanup', exit_code=4,
+                    primary=primary if isinstance(primary, _CommandFailure) else None)) from None
+    output = json.dumps(result, sort_keys=True, separators=(',', ':')) if arguments.machine_json else '\n'.join(
+        f'{key}: {value}' for key, value in result.items())
+    try:
+        _write_output(output + '\n', sys.stdout, 'stdout')
+    except _CommandFailure as failure:
+        raise annotate(failure)
     return 0
 
 

@@ -203,6 +203,27 @@ custody and storage-only CF1 bytes. No new core or cryptographic construction fo
 See the [verified checkpoint](../status.md#operational-cli-search-rotation-2026-10-24).
 Source and installed genuine adopted-target verification pass.
 
+### Initialization CLI
+
+**IMPLEMENTED, bounded source and installed verification:** `init --host-context MODULE:FACTORY --out DECLARATION`
+accepts an exact frozen, repr-disabled `InitializationContext` with required
+`engine`, `mapping`, `declaration: bytes`, `writers` and `search_reviews` fields.
+Use the existing fresh owned PostgreSQL/psycopg engine with safe logging and disposal.
+Reject an existing output or symlink before host loading.
+
+Apply the existing byte bound and strict parser before canonicalization. Reuse
+`doctor.preflight` with no keys or application-row inspection. Publish canonical bytes
+only after manifest_schema PASS. Use exclusive private publication with file/parent
+fsync. Report SHA-256 of the exact saved canonical bytes.
+
+Successful scope is `initialization`, with status UNKNOWN and the unchanged embedded
+`doctor/v1` report with scope `pre_adoption`. Six unobserved checks and aggregate status remain UNKNOWN.
+The artifact result has no transition phase or operation UUID. Compiler inspection
+effects are NONE, while host-code effects remain UNKNOWN. No planning, key or
+deployment authority follows. Doctor's strict key-free tuple remains unchanged. See the
+[verified checkpoint](../status.md#operational-cli-initialization-2026-10-24).
+Source and installed initialization verification pass.
+
 ## Exact data paths
 
 ```text
@@ -561,7 +582,9 @@ The initial `plan` and protection `apply` commands have the bounded
 [root-rewrap CLI](#root-rewrap-cli) have bounded source, installed and genuine
 fresh-target evidence. The [payload CLI](#payload-rotation-cli) has bounded source
 and installed verification. Its source and installed genuine adopted-target checks pass.
-`init` remains unimplemented. The [search CLI](#search-rotation-cli) has bounded
+The [initialization CLI](#initialization-cli) has bounded source and installed verification.
+Its source and installed verification pass.
+The [search CLI](#search-rotation-cli) has bounded
 source and installed verification. Its source and installed genuine adopted-target checks pass.
 Full status coverage of keys and retained obligations
 remains SPECIFIED. The migration walkthrough defines the implemented subset.

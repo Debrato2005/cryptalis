@@ -110,6 +110,13 @@ def _parser() -> argparse.ArgumentParser:
         description="Plan protection, run approved transitions and inspect Cryptalis state.",
     )
     commands = parser.add_subparsers(dest="command", required=True)
+    initialization = commands.add_parser('init', help='Create a declaration and inspect explicit host configuration.',
+        allow_abbrev=False)
+    initialization.add_argument('--host-context', required=True, metavar='MODULE:FACTORY',
+        help='Trusted synchronous factory returning the exact key-free InitializationContext.')
+    initialization.add_argument('--out', type=Path, required=True, help='New private canonical declaration path. Existing paths refuse.')
+    initialization.add_argument('--json', action='store_true', dest='machine_json', help='Write one JSON object.')
+    initialization.set_defaults(handler=_operational_command)
     manifest = commands.add_parser(
         "manifest",
         help="Work with Protection Manifests.",
