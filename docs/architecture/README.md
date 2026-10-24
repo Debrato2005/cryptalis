@@ -270,11 +270,14 @@ Without owned sequences, text-only plans emit `cryptalis.lock/v2`. Plans with na
 and require `pg-varchar/v1`. A plan with Boolean storage emits `cryptalis.lock/v4`
 and requires `boolean-u8/v1`. Mixed fields retain each required reader.
 Plans with admitted owned sequences emit `cryptalis.lock/v5`. Other plans retain
-their existing format selection and bytes. Current readers accept v1 through v5.
+their existing format selection and bytes. The explicit public-slot layout emits
+`cryptalis.lock/v6`. Current readers accept v1 through v6.
 Older operational readers refuse the embedded v5 lock before effects.
 The [VARCHAR decision](../decisions.md#native-varchar-text-admission-2026-10-22) defines assignment and reader boundaries.
 Its exact top-level members are
 `schema`, `profile`, `domain_id`, `database`, `declaration`, `models`, `writer_inventory`, `search_reviews`, `ddl`, and `required_readers`.
+Only v6 adds `layout: "preserve-public-slots/v1"`. Public `layout=None` keeps
+the earlier selector. A previous lock does not select a layout implicitly.
 The declaration is canonical. Models contain `model`, `table_id`, `schema`, `table`, `record`, `tenancy`, `fields`, `source_schema`, and `source_metadata`.
 Fields contain `name`, `column`, `field_id`, `queries`, `representation`, `payload_column`, `unique_indexes`, `original`, `source`, `descriptor`, and `descriptor_digest`.
 Boolean fields also contain `application_default`: absent-default NULL or a literal Boolean.
@@ -287,7 +290,7 @@ storage, compression, options, ACL entries), constraint and index comments, and 
 statistics rebuilt from captured fields. The protection switch applies captured column
 grants to the ciphertext column; reverse restores them. Statistics targets use strings because the
 manifest integer grammar is non-negative and bounded.
-V5 adds `owned_sequences` to every model's source metadata, including empty inventories.
+V5 and v6 add `owned_sequences` to every model's source metadata, including empty inventories.
 It records stable identity, owner, native configuration, effective ACL and dependency facts.
 Atomic ownership transfer preserves the same sequence object through either column switch.
 Restore/v2 binds new restored OIDs after exact logical comparison. No cryptographic
@@ -295,8 +298,18 @@ value format changes. The [lifecycle contract](../lifecycle.md#owned-sequence-pr
 and [status](../status.md#owned-sequence-preservation-and-restore-2026-10-24) define the verification boundary.
 The revised query passes source and installed controls. Both fresh-target profiles
 pass complete OID mapping, direct generation and repeated adoption. The full
-source regression also passes. Physical column order and retained-native
-preservation remain separate open work.
+source regression also passes at that checkpoint. The public-slot extension below
+has a separate verification boundary. Retained-native preservation remains open.
+
+The opt-in v6 layout converts original public attributes with ALTER TYPE USING
+verified staged values. Public CF1 CHECKs and equality indexes precede shadow
+removal. Reverse converts the same attributes and restores captured native metadata.
+Sequences remain owned by the same attributes. Heap and index storage rewrites
+remain outside host-supplied row-rate/WAL estimates. Restore/v3 binds complete ordered
+source/target slots for every public column, plus a mandatory sequence map.
+Flat lineage composes these maps without changing legacy comparison or source authority.
+See the [lifecycle contract](../lifecycle.md#public-column-slot-layout-2026-10-24)
+and [bounded verification](../status.md#public-column-slot-preservation-2026-10-24).
 Catalog type modifiers use strings because PostgreSQL uses negative sentinels.
 Unrelated SQL definitions use SHA-256 fingerprints of their canonical JSON string values.
 Original admitted unique constraints and indexes retain their exact definitions for later restoration.

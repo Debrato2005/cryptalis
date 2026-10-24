@@ -445,7 +445,7 @@ Adoption authenticates current frames under A's exact selected policy and
 generation. It does not compare those frames with A's original sealing hashes.
 A valid older-generation frame still fails, although its root remains retained.
 The original source policy cannot replace A's target policy. Existing
-`cryptalis.restore/v1` bindings support this path for sources without owned sequences.
+`cryptalis.restore/v1` bindings support this path without owned sequences or the public-slot layout.
 Sequence-bearing sources use the restore/v2 identity mapping described below.
 Payload rotation after a published lineage-bearing successor follows the
 [adopted-lineage contract](lifecycle.md#payload-rotation-after-adopted-lineage-2026-10-24).
@@ -477,6 +477,24 @@ key custody. Old locks still refuse late sequences. This admission does not allo
 server-generated record IDs or protected server defaults. Production gates remain UNKNOWN.
 See the [lifecycle contract](lifecycle.md#owned-sequence-preservation-and-restored-identity-2026-10-24)
 and [current evidence](status.md#owned-sequence-preservation-and-restore-2026-10-24).
+
+## Public-slot authority
+
+**IMPLEMENTED, bounded source and installed verification:** lock/v6 selects original public attribute
+preservation explicitly. The exact `preserve-public-slots/v1` token cannot come from
+mutable journal state or an older comparison lock. Runtime gains no DDL privilege.
+Public frame CHECKs and equality indexes must refer to converted public columns.
+Unsupported expression statistics refuse before provider resolution or lifecycle effects.
+Host fencing remains an assertion.
+
+Restore/v3 grants only exact mapped slot authority for the source it names.
+The complete ordered map includes every public column. It preserves visible
+name order, rejects duplicate, Boolean and out-of-range slots, and composes through
+flat lineage. Sequence maps remain mandatory and exact. V1/v2 bindings cannot
+waive v6 slot checks. Legacy metadata comparison remains unchanged. CF1, tenant,
+key-policy and publication authority do not change. See the
+[lifecycle contract](lifecycle.md#public-column-slot-layout-2026-10-24) and
+[verification boundary](status.md#public-column-slot-preservation-2026-10-24).
 
 ## Cryptographic format
 

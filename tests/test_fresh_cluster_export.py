@@ -125,6 +125,7 @@ def test_export_fresh_cluster_source():
     workdir = Path(os.environ['CRYPTALIS_FRESH_CLUSTER_DIR'])
     varchar = os.environ.get('CRYPTALIS_FRESH_SOURCE_VARCHAR') == '1'
     owned_sequences = os.environ.get('CRYPTALIS_FRESH_OWNED_SEQUENCES') == '1'
+    public_slots = os.environ.get('CRYPTALIS_FRESH_PUBLIC_SLOTS') == '1'
     adopted_search = os.environ.get('CRYPTALIS_FRESH_ADOPTED_SEARCH') == '1'
     rewrapped = os.environ.get('CRYPTALIS_FRESH_SOURCE_REWRAP') == '1'
     payload_rotated = os.environ.get('CRYPTALIS_FRESH_SOURCE_PAYLOAD_ROTATION') == '1'
@@ -133,12 +134,20 @@ def test_export_fresh_cluster_source():
     if sum((rewrapped, payload_rotated, search_rotated)) > 1:
         pytest.fail('FreshCluster.ProfileMismatch: select one rotation profile.')
     def source_setup(connection, schema, role):
+        if public_slots:
+            from test_public_slots import original_gap
+            original_gap(connection, schema, role, sequence=False, kind='varchar' if varchar else 'text')
         source_metadata_fixture(connection, schema, role)
         if owned_sequences:
             from test_owned_sequences import install_sequence
             install_sequence(connection, schema, role)
     with application(setup=source_setup,
                      value_type=String(64, collation='C') if varchar else None) as app:
+        source_public_slots = None
+        if public_slots:
+            from test_public_slots import select_layout, slots
+            source_public_slots = [list(row) for row in slots(app)[1]]
+            select_layout(app)
         if adopted_search:
             declaration = app.plan.document['lock']['declaration']
             model = declaration['models'][0]
@@ -232,6 +241,7 @@ def test_export_fresh_cluster_source():
         expected[str(ADDED_ID)] = [str(TENANT), later_value if payload_rotated or search_rotated else 'added while protected']
         del expected[str(DELETED_ID)]
         manifest = {
+            'public_slots': public_slots, 'source_public_slots': source_public_slots,
             'owned_sequences': owned_sequences, 'sequence_facts': sequence_oracle,
             'sequence_next_expected': sequence_next_expected,
             'adopted_search': adopted_search,

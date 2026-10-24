@@ -24,6 +24,9 @@ from cryptalis.manifest.parser import MAX_DOCUMENT_BYTES, ManifestInvalid, decod
 from cryptalis._sqlmodel_types import autostring_impl
 
 
+_PUBLIC_SLOTS_LAYOUT = "preserve-public-slots/v1"
+
+
 @dataclass(frozen=True)
 class Writer:
     table_id: UUID
@@ -922,9 +925,15 @@ def _previous_lock(raw, current, engine):
     """Reject inconsistent compiler artifacts before computing a semantic diff."""
     old = decode_manifest_json(raw)
     try:
-        if (old.keys() != set('schema profile domain_id database declaration models writer_inventory search_reviews required_readers ddl'.split()) or old["schema"] not in ("cryptalis.lock/v1", "cryptalis.lock/v2", "cryptalis.lock/v3", "cryptalis.lock/v4", "cryptalis.lock/v5")
+        public_slots = old.get('schema') == 'cryptalis.lock/v6'
+        members = set('schema profile domain_id database declaration models writer_inventory search_reviews required_readers ddl'.split())
+        if public_slots:
+            members.add('layout')
+        if (old.keys() != members or old["schema"] not in ("cryptalis.lock/v1", "cryptalis.lock/v2", "cryptalis.lock/v3", "cryptalis.lock/v4", "cryptalis.lock/v5", "cryptalis.lock/v6")
                 or old["profile"] != "cf1" or old["domain_id"] != current["domain_id"]
                 or old["database"] != {"major": 16, "encoding": "UTF8"}):
+            raise ValueError
+        if public_slots and (type(old['layout']) is not str or old['layout'] != _PUBLIC_SLOTS_LAYOUT):
             raise ValueError
         declaration = parse_protection_declaration(_canonical(old["declaration"]))
         if str(declaration.domain_id) != old["domain_id"] or not isinstance(old["models"], list):
@@ -957,7 +966,7 @@ def _previous_lock(raw, current, engine):
             if old["schema"] != "cryptalis.lock/v1":
                 metadata = model["source_metadata"]
                 metadata_keys = {"columns", "constraints", "indexes", "extended_statistics"}
-                if old['schema'] == 'cryptalis.lock/v5':
+                if old['schema'] in ('cryptalis.lock/v5', 'cryptalis.lock/v6'):
                     metadata_keys.add('owned_sequences')
                 if set(metadata) != metadata_keys:
                     raise ValueError
@@ -978,7 +987,7 @@ def _previous_lock(raw, current, engine):
                         raise ValueError
                     if not isinstance(entry["kinds"], list) or not isinstance(entry["columns"], list):
                         raise ValueError
-                if old['schema'] == 'cryptalis.lock/v5':
+                if old['schema'] in ('cryptalis.lock/v5', 'cryptalis.lock/v6'):
                     _validate_sequences(metadata['owned_sequences'], model)
                     for entry in metadata['owned_sequences']:
                         name = (entry['schema'], entry['name'])
@@ -993,7 +1002,7 @@ def _previous_lock(raw, current, engine):
                 members = set('name column field_id queries representation payload_column unique_indexes original source descriptor descriptor_digest'.split())
                 if boolean:
                     members.add('application_default')
-                    if (old['schema'] not in ('cryptalis.lock/v4', 'cryptalis.lock/v5') or intent.queries
+                    if (old['schema'] not in ('cryptalis.lock/v4', 'cryptalis.lock/v5', 'cryptalis.lock/v6') or intent.queries
                             or field['application_default'] is not None and type(field['application_default']) is not bool):
                         raise ValueError
                 if field.keys() != members or field["field_id"] != str(intent.field_id) or field["name"] != intent.name:
@@ -1014,8 +1023,13 @@ def _previous_lock(raw, current, engine):
                         raise ValueError
             if any(not isinstance(model["source_schema"][key], list) for key in ("columns", "constraints", "indexes", "dependencies")):
                 raise ValueError
-            _validate_prior_source(model, varchar=old['schema'] in ('cryptalis.lock/v3', 'cryptalis.lock/v4', 'cryptalis.lock/v5'),
-                                   boolean=old['schema'] in ('cryptalis.lock/v4', 'cryptalis.lock/v5'))
+            _validate_prior_source(model, varchar=old['schema'] in ('cryptalis.lock/v3', 'cryptalis.lock/v4', 'cryptalis.lock/v5', 'cryptalis.lock/v6'),
+                                   boolean=old['schema'] in ('cryptalis.lock/v4', 'cryptalis.lock/v5', 'cryptalis.lock/v6'))
+            if public_slots:
+                slots = [column['attnum'] for column in model['source_schema']['columns']]
+                if (any(type(slot) is not int or not 0 < slot < 32768 for slot in slots)
+                        or slots != sorted(set(slots))):
+                    raise ValueError
         inventory = old["writer_inventory"]
         if inventory.keys() != {"complete", "evidence_kind", "writers"} or inventory["evidence_kind"] != "host_assertion":
             raise ValueError
@@ -1028,7 +1042,7 @@ def _previous_lock(raw, current, engine):
         varchar = any(f['source']['type'] == 'varchar' for model in old['models'] for f in model['fields'])
         boolean = any(f['source']['type'] == 'bool' for model in old['models'] for f in model['fields'])
         sequences = bool(sequence_oids)
-        expected_schema = ('cryptalis.lock/v5' if sequences else 'cryptalis.lock/v4' if boolean
+        expected_schema = ('cryptalis.lock/v6' if public_slots else 'cryptalis.lock/v5' if sequences else 'cryptalis.lock/v4' if boolean
                            else 'cryptalis.lock/v3' if varchar else old['schema']
                            if old['schema'] == 'cryptalis.lock/v1' else 'cryptalis.lock/v2')
         if old['schema'] != expected_schema:
@@ -1153,6 +1167,9 @@ def _validate_prior_source(model, *, varchar=False, boolean=False):
 
 def _changes(current, previous):
     changes = []
+    if previous and current.get('layout') != previous.get('layout'):
+        changes.append(Change('layout_changed', '', None,
+                              'Inspect the changed physical layout policy. Compile and verify a new transition before publication.'))
     old_models = {m["table_id"]: m for m in previous["models"]} if previous else {}
     for model in current["models"]:
         old = old_models.get(model["table_id"])
@@ -1193,13 +1210,17 @@ def _changes(current, previous):
 
 def compile_protection(raw: bytes, mapping: Registry, engine: Engine, *,
                        writers: WriterInventory, search_reviews: tuple[SearchReview, ...] = (),
-                       previous_lock: bytes | None = None) -> ProtectionPlan:
+                       previous_lock: bytes | None = None, layout: str | None = None) -> ProtectionPlan:
     """Inspect one declaration and native schema. Return an unapplied proposal.
 
     The engine must be a synchronous psycopg PostgreSQL engine. Inspection owns
     a fresh REPEATABLE READ, READ ONLY transaction. It never reads application
     values. A lock digest detects changes; it is not an authorization signature.
+    None retains the legacy layout. The explicit public-slot policy selects v6.
     """
+    if layout is not None and (type(layout) is not str or layout != _PUBLIC_SLOTS_LAYOUT):
+        raise PlanningRejected([Issue('unsupported_layout', 'layout',
+            'Use layout=None or the exact preserve-public-slots/v1 policy.')])
     declaration = parse_protection_declaration(raw)
     issues = []
     host, reviews = _host_evidence(declaration, writers, search_reviews, issues)
@@ -1278,13 +1299,15 @@ def compile_protection(raw: bytes, mapping: Registry, engine: Engine, *,
     varchar = any(f['source']['type'] == 'varchar' for model in models for f in model['fields'])
     boolean = any(f['source']['type'] == 'bool' for model in models for f in model['fields'])
     sequences = any(model['source_metadata']['owned_sequences'] for model in models)
-    if not sequences:
+    if not sequences and layout is None:
         for model in models:
             del model['source_metadata']['owned_sequences']
-    document = {"schema": "cryptalis.lock/v5" if sequences else "cryptalis.lock/v4" if boolean else "cryptalis.lock/v3" if varchar else "cryptalis.lock/v2", "profile": "cf1",
+    document = {"schema": "cryptalis.lock/v6" if layout is not None else "cryptalis.lock/v5" if sequences else "cryptalis.lock/v4" if boolean else "cryptalis.lock/v3" if varchar else "cryptalis.lock/v2", "profile": "cf1",
                 "domain_id": str(declaration.domain_id), "database": {"major": 16, "encoding": "UTF8"},
                 "declaration": json.loads(declaration.canonical_bytes()), "models": models,
                 "writer_inventory": host, "search_reviews": reviews}
+    if layout is not None:
+        document['layout'] = layout
     document["ddl"] = _ddl(document, engine)
     document["required_readers"] = _required_readers(models)
     previous = None

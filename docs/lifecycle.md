@@ -559,7 +559,7 @@ a pin may not claim a later plaintext phase than the journal has reached, and th
 may not report plaintext active while the external pin still declares ciphertext.
 Expand adds native-typed plaintext staging columns and fences inventoried schemas.
 Backfill decrypts current frames and verifies membership, authentication, and exact values.
-Switch drops the ciphertext column without `CASCADE`, renames staging into the original
+The default layout drops the ciphertext column without `CASCADE`, renames staging into the original
 column name, restores recorded constraints and indexes, and records the resulting schema.
 Pre-switch abort removes only reverse-owned staging and guards. Removal requires a
 `RemovalApproval`, matching external pins, an empty metadata diff, no remaining
@@ -583,7 +583,7 @@ The cases cover edited and deleted rows, a row added while protected, wrong cust
 corrupt frames, disabled guards, lost replies, abort, metadata restoration, and unsafe
 plan/removal refusals. Counts are not gate evidence.
 
-**Limits:** in-place reverse cannot restore physical column order (`attnum`). Lock v2
+**Limits:** the default DROP/RENAME layout cannot restore physical column order (`attnum`). Lock v2
 captures and restores protected-column comments, statistics targets, storage,
 compression, options, column grants, constraint and index comments, and extended
 statistics. At that checkpoint, protection refused expression extended statistics and
@@ -602,7 +602,7 @@ Each sequence must share the table's schema and owner. The inventory records
 qualified name, OID, native type, configuration, comment, effective ACL, grantor,
 grant option and automatic dependency. Identity, internal, extension and other
 unsupported dependencies refuse. Existing generated-key and protected-default
-rules remain unchanged. Locks without owned sequences retain their earlier formats.
+rules remain unchanged. Without the public-slot opt-in, locks without owned sequences retain their earlier formats.
 
 Forward and reverse switches check the inventory, detach ownership, replace the
 column and attach the same sequence to its replacement. The existing transaction
@@ -623,7 +623,8 @@ model, schema, name and column to its source-effective OID and actual target OID
 Exact logical facts precede the mapping. Later checks require the mapped target
 identity. Flat lineage composes mappings through later adoption and direct
 generation planning without rewriting source artifacts or journal authority.
-Sources without owned sequences retain restore/v1. Deploy v5/v2 readers first.
+Without the public-slot layout, sources without owned sequences retain restore/v1.
+Deploy v5/v2 readers first.
 CF1, provider authority and retained-key duties remain unchanged. See the
 [format decision](decisions.md#owned-sequence-metadata-and-restored-identity-2026-10-24)
 and [current evidence](status.md#owned-sequence-preservation-and-restore-2026-10-24).
@@ -632,8 +633,52 @@ root/payload lineage, direct generation planning, a second adoption and native
 exit. Actual older readers refuse both new formats before database access.
 The revised compiler query passes 201 source and 269 installed affected/application
 controls. Both installed original SQLModel adoption paths also pass. The full
-source regression passes 2,478 tests and 116 subtests. Physical column order
-and retained-native preservation remain separate open work.
+source regression passes 2,478 tests and 116 subtests. The later
+[public-slot extension](#public-column-slot-layout-2026-10-24) has a separate
+verification boundary. Retained-native preservation remains open.
+
+### Public column slot layout: 2026-10-24
+
+**IMPLEMENTED, bounded source and installed verification:** select `layout="preserve-public-slots/v1"`
+through the public compiler or protection planner. Lock/v6 carries that immutable
+policy and the v5 metadata shape, including empty owned-sequence inventories.
+Attachment, reverse and rotation derive their strategy from the validated lock.
+None and earlier formats retain existing selection and DROP/RENAME behavior.
+
+Within the existing maintenance transaction, ALTER COLUMN TYPE USING copies
+verified staged values into original public attributes. Forward rebuilds public
+CF1 CHECKs and equality indexes before dropping shadows. Reverse removes generated
+dependencies, converts those same attributes to native types and restores captured
+constraints, indexes, statistics and column metadata. Sequences retain the same
+object and ownership attribute without detach/reattach. Native counter gaps remain
+valid. No durable half-converted state is admitted.
+
+ACTIVE metadata preserves captured comments, statistics targets, options and ACLs.
+Storage/compression become EXTENDED/default for bytea. Reverse restores captured native
+policies. Late expression statistics remain unsupported and refuse before providers
+or effects. Host pins and mapped slot checks bound paused and terminal observations.
+A matching mutable journal cannot authorize changed public slots.
+
+Restore/v3 adds a complete ordered `columns` map to existing binding members.
+Each entry has `model`, `column`, `source_attnum` and `target_attnum`. Both slots
+are exact native integers greater than zero and below 32768. Sources must
+match the current inherited mapping. Targets must be unique per model and
+preserve visible name order. The `sequences` member is mandatory, including an
+empty list. Flat lineage composes both maps. Original source identity and
+journal authority remain unchanged. Restore/v1/v2 cannot authorize this layout.
+
+The operation rewrites heap and index storage under native maintenance locks.
+Host row-rate, WAL and staging estimates exclude these DDL costs. This contract
+changes no CF1 format, key custody, generated-ID admission or retained-backup duty.
+Current source TEXT fresh-target profiles pass six each, with and without an
+owned sequence. See [status](status.md#public-column-slot-preservation-2026-10-24)
+for the focused and VARCHAR scope. The actual installed wheel passes 294
+affected/application controls, six sequence-bearing fresh-target cases and the
+original three-field SQLModel lifecycle. Installed VARCHAR and legacy compatibility
+profiles also pass. The full source regression passes 2,503 tests and 116 subtests.
+The original three-field application still needs fresh-v6/direct-binding qualification.
+The [format decision](decisions.md#original-slot-layout-and-restore-authority-2026-10-24)
+owns version admission. All seven gates remain UNKNOWN.
 
 ### Reverse privilege admission: 2026-10-23
 

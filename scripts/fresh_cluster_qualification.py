@@ -126,6 +126,8 @@ def main():
     parser.add_argument('--varchar', action='store_true', help='Qualify a native VARCHAR(64) source and lock v3.')
     parser.add_argument('--restore-lease', action='store_true',
                         help='Run focused restored-target key lease and no-effects controls.')
+    parser.add_argument('--public-slots', action='store_true',
+                        help='Qualify explicit original-column slot preservation and restored slot authority.')
     profiles = parser.add_mutually_exclusive_group()
     profiles.add_argument('--owned-sequences', action='store_true',
                           help='Qualify original owned sequence identity through fresh restore and native exit.')
@@ -151,7 +153,11 @@ def main():
     profiles.add_argument('--search-rotation', action='store_true',
                           help='Qualify backup recovery after search rotation and a later protected edit.')
     args = parser.parse_args()
-    if args.owned_sequences and (args.varchar or args.restore_lease):
+    if args.public_slots and (args.restore_lease or any((args.boolean, args.sqlmodel_direct_search,
+            args.sqlmodel_searchable, args.smolink, args.direct_generation, args.adopted_search,
+            args.adopted_payload, args.adopted_rewrap, args.rewrap, args.payload_rotation, args.search_rotation))):
+        parser.error('--public-slots supports the original TEXT/VARCHAR fixture with optional owned sequences.')
+    if args.owned_sequences and (args.varchar and not args.public_slots or args.restore_lease):
         parser.error('--owned-sequences uses the sequence-bearing TEXT fixture and restore lifecycle.')
     if args.boolean and (args.varchar or args.restore_lease):
         parser.error('--boolean uses the typed Boolean fixture and its restore lifecycle.')
@@ -166,7 +172,8 @@ def main():
     export_receipt = receipt_path(f'fresh-cluster-export-{DATE}.json')
     restore_receipt = receipt_path(f'fresh-cluster-restore-{DATE}.json')
 
-    profile = ('; owned-sequence identity mapping and native counter profile' if args.owned_sequences else
+    profile = ('; original public slots and explicit restored-slot authority' if args.public_slots else
+               '; owned-sequence identity mapping and native counter profile' if args.owned_sequences else
                '; Boolean storage after payload rotation' if args.boolean else
                '; pinned SQLModel direct restore-binding search profile' if args.sqlmodel_direct_search else
                '; pinned searchable SQLModel app adoption and search-rotation profile' if (args.sqlmodel_searchable or args.sqlmodel_direct_search) else
@@ -187,6 +194,7 @@ def main():
                          else 'tests/test_fresh_cluster_export.py'),
                         {'CRYPTALIS_SMOLINK_FRESH_EXPORT': str(workdir) if args.smolink else '',
                          'CRYPTALIS_FRESH_CLUSTER_DIR': str(workdir),
+                         'CRYPTALIS_FRESH_PUBLIC_SLOTS': '1' if args.public_slots else '0',
                          'CRYPTALIS_FRESH_OWNED_SEQUENCES': '1' if args.owned_sequences else '0',
                          'CRYPTALIS_FRESH_ADOPTED_SEARCH': '1' if (args.adopted_search or args.direct_generation) else '0',
                          'CRYPTALIS_FRESH_SOURCE_VARCHAR': '1' if args.varchar else '0',
@@ -196,9 +204,17 @@ def main():
     manifest = json.loads((workdir / 'restore-manifest.json').read_text())
     if manifest.get('owned_sequences', False) is not args.owned_sequences:
         raise SystemExit('FreshCluster.ProfileMismatch: owned-sequence export did not match the requested profile.')
+    if manifest.get('public_slots', False) is not args.public_slots:
+        raise SystemExit('FreshCluster.ProfileMismatch: public-slot export did not match the requested profile.')
     if manifest.get('adopted_search', False) is not (args.adopted_search or args.direct_generation):
         raise SystemExit('FreshCluster.ProfileMismatch: adopted-search export did not match the requested profile.')
-    if args.owned_sequences:
+    if args.public_slots:
+        plan = json.loads(base64.b64decode(manifest['plan'], validate=True))
+        if (plan.get('lock', {}).get('schema') != 'cryptalis.lock/v6'
+                or plan['lock'].get('layout') != 'preserve-public-slots/v1'
+                or not manifest.get('source_public_slots')):
+            raise SystemExit('FreshCluster.ProfileMismatch: original-slot source lock is missing.')
+    elif args.owned_sequences:
         plan = json.loads(base64.b64decode(manifest['plan'], validate=True))
         if plan.get('lock', {}).get('schema') != 'cryptalis.lock/v5' or not manifest.get('sequence_facts'):
             raise SystemExit('FreshCluster.ProfileMismatch: sequence-bearing source lock is missing.')
@@ -246,7 +262,8 @@ def main():
         credentials = provision(port, password, manifest, plain_database)
         home = write_home(workdir, port, manifest, credentials)
         restore = run_pytest(restore_receipt, 'Fresh-cluster protected-backup recovery and adoption; isolated cluster' + profile,
-                             ('tests/test_owned_sequences_restore.py' if args.owned_sequences else
+                             ('tests/test_public_slots_restore.py' if args.public_slots else
+                              'tests/test_owned_sequences_restore.py' if args.owned_sequences else
                               'tests/test_sqlmodel_searchable_restore.py' if (args.sqlmodel_searchable or args.sqlmodel_direct_search) else
                               'tests/test_fresh_boolean_restore.py' if args.boolean else
                               'tests/test_smolink_fresh_cluster.py' if args.smolink

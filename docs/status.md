@@ -21,6 +21,94 @@ and [competitive capability matrix](research/capability-matrix.md) govern priori
 Progress follows complete real-application journeys and resolved production requirements.
 All seven production gates remain UNKNOWN.
 
+## Public column slot preservation: 2026-10-24
+
+**VERIFIED, bounded source and installed profiles:** explicit `layout="preserve-public-slots/v1"`
+selects lock/v6 through `compile_protection()` or `migration.plan()`. None retains
+the earlier format selection and DROP/RENAME behavior. A previous lock does
+not select the new layout. Invalid values refuse before connections or providers.
+
+The new switch changes original public attributes' types with authenticated
+staged values. It rebuilds public CF1 CHECKs and equality indexes before
+dropping shadows. Reverse changes the same attributes to native types and
+restores captured metadata. Within each target, original public attnums/order
+and admitted sequence identity remain pinned. Heap and index storage can change.
+DDL rewrites and index costs remain outside host-supplied row-rate/WAL estimates.
+
+Restore/v3 records every public column's complete ordered source-to-target slot
+map, plus a mandatory complete sequence map or empty list. Slot values must
+be exact integers in 1..32767. Boolean values refuse. Flat lineage composes
+current mapped target slots without changing original artifacts or authority.
+Legacy metadata comparison stays unchanged. Restore/v1/v2 cannot authorize v6 sources.
+
+The [recorded focused profile](_reset/public-slots-source-focused-20261024.json)
+passes 25 controls in 48.20 seconds: nine local, seven compiler and nine recovery
+cases. Actual SIGKILL, post-ALTER/index rollback, native counter gaps, lost COMMIT
+replies and slot drift despite matching journals pass. Its 206 hashes stay
+stable within that run. A later fixture-only serialization fix remains outside
+that snapshot. The [initial implementation](_reset/public-slots-source-initial-20261024.json)
+passes 14. The [strict opt-in baseline](_reset/public-slots-source-red-20261024.json)
+retains one legacy pass and two missing-layout failures. Both
+[late expression-statistics failures](_reset/public-slots-late-statistics-red-20261024.json)
+precede the v6 guard. Source, ACTIVE, paused, restore and terminal checks now
+refuse that dependency before providers or effects.
+
+Current source TEXT without sequences passes one
+[export](_reset/fresh-cluster-export-20261024-42.json) in 1.09 seconds and
+[six fresh-target tests](_reset/fresh-cluster-restore-20261024-41.json) in 10.70 seconds.
+TEXT with an owned sequence passes one [export](_reset/fresh-cluster-export-20261024-43.json)
+in 1.48 seconds and [six target tests](_reset/fresh-cluster-restore-20261024-42.json)
+in 12.04 seconds. Both profiles retain 206 stable Python hashes that match
+this worktree. The [current artifact check](_reset/public-slots-release-20261024.json)
+passes reproducible archives, CLI, 36 product modules and 40 installed files
+against 41 current release-source hashes. Source VARCHAR passes one
+[export](_reset/fresh-cluster-export-20261024-44.json) in 1.17 seconds and
+[six fresh-target tests](_reset/fresh-cluster-restore-20261024-43.json) in 10.32 seconds.
+The [actual installed wheel](_reset/public-slots-installed-affected-20261024.json)
+passes 294 affected/application controls in 198.49 seconds with one known warning.
+Its sequence-bearing v6 [export](_reset/fresh-cluster-export-20261024-45.json)
+passes one in 1.22 seconds and its [fresh-target profile](_reset/fresh-cluster-restore-20261024-44.json)
+passes six in 11.07 seconds. These runs retain 206 stable Python hashes.
+
+A new [installed profile](_reset/public-slots-installed-batched-application-20261024.json)
+passes one original SQLModel application journey in 2.91 seconds with 207 stable
+Python hashes. Its [application receipt](_reset/public-slots-installed-batched-original-application-20261024.json)
+keeps six pinned files unchanged. One batched conversion protects `full_name`
+VARCHAR, `email` search/uniqueness and `is_active` Boolean. Native User/Item table
+OIDs and public attnums/order remain intact. Exact staged CF1 bytes reach each
+public field at cutover. Original CRUD, search, Boolean values, latest-value
+removal, native catalogs and an import-denied restart pass. Email equality/uniqueness
+uses opaque fixture identities in explicit single tenancy. Production email-domain
+admission remains UNKNOWN. This profile adds
+no HTTP or fresh-adoption qualification. The ordinary HTTP regression retains
+its separate 26-file/default-layout boundary. Only this profile file is new
+after the earlier 206-file snapshots.
+
+The installed v6 profile uses VARCHAR without sequences. Its
+[export](_reset/fresh-cluster-export-20261024-46.json) passes one test in 1.01 seconds.
+[Six target tests](_reset/fresh-cluster-restore-20261024-45.json) pass in 10.01 seconds.
+The legacy lock/v5 and restore/v2 sequence profile passes one
+[export](_reset/fresh-cluster-export-20261024-47.json) in 0.91 seconds and
+[four target tests](_reset/fresh-cluster-restore-20261024-46.json) in 7.15 seconds.
+The original SQLModel application also passes its direct-search journey. Its
+[export](_reset/fresh-cluster-export-20261024-48.json) and
+[target](_reset/fresh-cluster-restore-20261024-47.json) stages each pass one test
+in 1.10 and 2.88 seconds. The [application receipt](_reset/public-slots-installed-legacy-direct-application-20261024.json)
+keeps the default legacy layout and restore/v1 scope, with six unchanged files.
+All 207 Python hashes remain stable and match this worktree.
+
+The [final full source regression](_reset/public-slots-source-full-20261024.json)
+passes 2,503 tests and 116 subtests in 851.39 seconds, with 16 skips and
+49 known warnings. Two test calls and 14 collection skips account for the skips.
+All 207 Python hashes remain stable and match this worktree. The installed
+294-test and three-field application profiles keep their separate recorded boundaries.
+The [final boundary](_reset/public-slots-final-boundary-20261024.json) binds 17 current
+receipts, four historical receipts, four application receipts and seven documents.
+The original three-field application still needs its fresh-v6/direct-binding journey.
+All seven production gates remain UNKNOWN. See the
+[lifecycle contract](lifecycle.md#public-column-slot-layout-2026-10-24) and
+[format decision](decisions.md#original-slot-layout-and-restore-authority-2026-10-24).
+
 ## Native column identity oracle: 2026-10-24
 
 **VERIFIED, native-only decision support:** one PostgreSQL 16
@@ -44,9 +132,10 @@ pglz become EXTENDED and the default compression policy. Reverse restores both e
 The [observations](_reset/column-identity-native-observations-20261024.json) cover
 one local three-row table. They qualify no pause, throughput, WAL or production
 cost target. Measured forward/reverse ALTER times are 8.003/5.424 milliseconds.
-Whole-protocol times are 21.772/15.560 milliseconds. Product layout selection
-and restored-slot authority remain pending implementation. Current product
-DROP/RENAME behavior remains unchanged. The [layout evaluation](_reset/layout-evaluation-20261019.md#native-original-slot-oracle-2026-10-24)
+Whole-protocol times are 21.772/15.560 milliseconds. At that checkpoint, product
+layout selection and restored-slot authority remained unimplemented. Its later
+[product extension](#public-column-slot-preservation-2026-10-24) has a separate
+verification boundary. The [layout evaluation](_reset/layout-evaluation-20261019.md#native-original-slot-oracle-2026-10-24)
 records this alternative. All seven production gates remain UNKNOWN.
 The [boundary](_reset/column-identity-native-final-boundary-20261024.json) binds the
 profile, observations, four documents and 36 unchanged product modules.
@@ -96,9 +185,9 @@ do not qualify the revised query or a new installed wheel.
 The [revised source controls](_reset/owned-sequences-source-readonly-recovery-20261024.json)
 pass 201 tests in 97.72 seconds. They cover all five failed modules plus the
 18 native sequence and 63 compiler cases. The read-only assertions remain
-unchanged. All 201 Python hashes stay stable and match the revised worktree.
+unchanged. At that checkpoint, all 201 Python hashes stay stable and match its worktree.
 The [revised artifact check](_reset/owned-sequences-release-revised-20261024.json)
-passes reproducible archives, CLI and 40 installed files against 41 current
+passes reproducible archives, CLI and 40 installed files against its 41 recorded
 source hashes and 36 product modules. The initial candidate remains historical.
 
 The revised [source export](_reset/fresh-cluster-export-20261024-38.json) passes
@@ -127,7 +216,7 @@ regressions, separate from the sequence-bearing four-case profile.
 The [revised full source regression](_reset/owned-sequences-source-full-revised-20261024.json)
 passes 2,478 tests and 116 subtests in 824.22 seconds, with 15 skips and
 49 known warnings. The skips comprise two test calls and 13 collection skips.
-All 201 Python hashes remain stable and match this worktree. This source run
+At that checkpoint, all 201 Python hashes remain stable and match its worktree. This source run
 includes the pinned original SQLModel CRUD and HTTP profiles. Installed-wheel
 evidence retains its separate boundary. The
 [final boundary](_reset/owned-sequences-final-boundary-20261024.json) binds current

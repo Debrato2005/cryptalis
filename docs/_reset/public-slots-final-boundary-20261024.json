@@ -1,0 +1,557 @@
+{
+  "format": "cryptalis.public-slots-boundary/v1",
+  "base_revision": "1ef17e00ef32b4014d6b4e73c28c7b090ba7f60a",
+  "receipts": {
+    "docs/_reset/public-slots-installed-affected-20261024.json": {
+      "sha256": "e1aa0379b84485cb5e2b4097884a1ee3db44f879b99836e576fc465fd94f137a",
+      "counts": {
+        "passed": 294
+      },
+      "pytest_report_counts": {
+        "test_calls": {
+          "passed": 294
+        },
+        "subtest_calls": {},
+        "setup": {
+          "passed": 294
+        },
+        "teardown": {
+          "passed": 294
+        },
+        "collection": {},
+        "selected_items": 294
+      },
+      "elapsed_seconds": 199.18347745301435,
+      "source_files": 206,
+      "fixing_revision": "worktree-a46fe865ca1cf9fc"
+    },
+    "docs/_reset/public-slots-installed-batched-application-20261024.json": {
+      "sha256": "be38005ea7297d5590271d2e011057ac3b43584a17998c372c3defe457b23663",
+      "counts": {
+        "passed": 1
+      },
+      "pytest_report_counts": {
+        "test_calls": {
+          "passed": 1
+        },
+        "subtest_calls": {},
+        "setup": {
+          "passed": 1
+        },
+        "teardown": {
+          "passed": 1
+        },
+        "collection": {},
+        "selected_items": 1
+      },
+      "elapsed_seconds": 3.118714386000647,
+      "source_files": 207,
+      "fixing_revision": "worktree-99128762c78a07b1"
+    },
+    "docs/_reset/public-slots-source-full-20261024.json": {
+      "sha256": "9976f4d1cf74c9e754213ad7dcee15c09c868dfb0bbe4065b7eb3c6a43c87b71",
+      "counts": {
+        "passed": 2619,
+        "skipped": 2
+      },
+      "pytest_report_counts": {
+        "test_calls": {
+          "passed": 2503,
+          "skipped": 2
+        },
+        "subtest_calls": {
+          "passed": 116
+        },
+        "setup": {
+          "passed": 2505
+        },
+        "teardown": {
+          "passed": 2505
+        },
+        "collection": {
+          "skipped": 14
+        },
+        "selected_items": 2505
+      },
+      "elapsed_seconds": 852.2815913170052,
+      "source_files": 207,
+      "fixing_revision": "worktree-99128762c78a07b1"
+    },
+    "docs/_reset/fresh-cluster-export-20261024-42.json": {
+      "sha256": "4d1f4e3272baa6d1f9d327e5be64774dbf25f9f8bb9484e915dc40899ceb2803",
+      "counts": {
+        "passed": 1
+      },
+      "pytest_report_counts": {
+        "test_calls": {
+          "passed": 1
+        },
+        "subtest_calls": {},
+        "setup": {
+          "passed": 1
+        },
+        "teardown": {
+          "passed": 1
+        },
+        "collection": {},
+        "selected_items": 1
+      },
+      "elapsed_seconds": 1.2886977779999143,
+      "source_files": 206,
+      "fixing_revision": "worktree-a46fe865ca1cf9fc"
+    },
+    "docs/_reset/fresh-cluster-export-20261024-43.json": {
+      "sha256": "5e8dce8cd082e692cf8663bccaa0508d637f3cf97c075d4ab9ab3d04520bf628",
+      "counts": {
+        "passed": 1
+      },
+      "pytest_report_counts": {
+        "test_calls": {
+          "passed": 1
+        },
+        "subtest_calls": {},
+        "setup": {
+          "passed": 1
+        },
+        "teardown": {
+          "passed": 1
+        },
+        "collection": {},
+        "selected_items": 1
+      },
+      "elapsed_seconds": 1.7353067790099885,
+      "source_files": 206,
+      "fixing_revision": "worktree-a46fe865ca1cf9fc"
+    },
+    "docs/_reset/fresh-cluster-export-20261024-44.json": {
+      "sha256": "cc7a02d46915c52352fc3deb6c3e18420f469e5cffad5579b2fdba0c9981c7a9",
+      "counts": {
+        "passed": 1
+      },
+      "pytest_report_counts": {
+        "test_calls": {
+          "passed": 1
+        },
+        "subtest_calls": {},
+        "setup": {
+          "passed": 1
+        },
+        "teardown": {
+          "passed": 1
+        },
+        "collection": {},
+        "selected_items": 1
+      },
+      "elapsed_seconds": 1.3266075190040283,
+      "source_files": 206,
+      "fixing_revision": "worktree-a46fe865ca1cf9fc"
+    },
+    "docs/_reset/fresh-cluster-export-20261024-45.json": {
+      "sha256": "e9c11c1388b6c4f48321e315ffb564f497c221c223c437509334dbf33f2ade37",
+      "counts": {
+        "passed": 1
+      },
+      "pytest_report_counts": {
+        "test_calls": {
+          "passed": 1
+        },
+        "subtest_calls": {},
+        "setup": {
+          "passed": 1
+        },
+        "teardown": {
+          "passed": 1
+        },
+        "collection": {},
+        "selected_items": 1
+      },
+      "elapsed_seconds": 1.4342106289986987,
+      "source_files": 206,
+      "fixing_revision": "worktree-a46fe865ca1cf9fc"
+    },
+    "docs/_reset/fresh-cluster-export-20261024-46.json": {
+      "sha256": "20b5acdef6a9841cc6b62b5ee43ec1d65ffcf1317770ac7381830923ff270b13",
+      "counts": {
+        "passed": 1
+      },
+      "pytest_report_counts": {
+        "test_calls": {
+          "passed": 1
+        },
+        "subtest_calls": {},
+        "setup": {
+          "passed": 1
+        },
+        "teardown": {
+          "passed": 1
+        },
+        "collection": {},
+        "selected_items": 1
+      },
+      "elapsed_seconds": 1.2117955699941376,
+      "source_files": 207,
+      "fixing_revision": "worktree-99128762c78a07b1"
+    },
+    "docs/_reset/fresh-cluster-export-20261024-47.json": {
+      "sha256": "5632981812c329dbecf8ed9356f4554777c1f82d1fc360532f02272c8ace6640",
+      "counts": {
+        "passed": 1
+      },
+      "pytest_report_counts": {
+        "test_calls": {
+          "passed": 1
+        },
+        "subtest_calls": {},
+        "setup": {
+          "passed": 1
+        },
+        "teardown": {
+          "passed": 1
+        },
+        "collection": {},
+        "selected_items": 1
+      },
+      "elapsed_seconds": 1.1150542789982865,
+      "source_files": 207,
+      "fixing_revision": "worktree-99128762c78a07b1"
+    },
+    "docs/_reset/fresh-cluster-export-20261024-48.json": {
+      "sha256": "d3348314a3ba996eded96397e1f7ea392b6f58b90fea8573f3ce51d2135467c4",
+      "counts": {
+        "passed": 1
+      },
+      "pytest_report_counts": {
+        "test_calls": {
+          "passed": 1
+        },
+        "subtest_calls": {},
+        "setup": {
+          "passed": 1
+        },
+        "teardown": {
+          "passed": 1
+        },
+        "collection": {},
+        "selected_items": 1
+      },
+      "elapsed_seconds": 1.2938987420056947,
+      "source_files": 207,
+      "fixing_revision": "worktree-99128762c78a07b1"
+    },
+    "docs/_reset/fresh-cluster-restore-20261024-41.json": {
+      "sha256": "07c4b137aa064b987f8c7b6859eb0a129089d1a784ba3d43a09565d6659f76ee",
+      "counts": {
+        "passed": 6
+      },
+      "pytest_report_counts": {
+        "test_calls": {
+          "passed": 6
+        },
+        "subtest_calls": {},
+        "setup": {
+          "passed": 6
+        },
+        "teardown": {
+          "passed": 6
+        },
+        "collection": {},
+        "selected_items": 6
+      },
+      "elapsed_seconds": 10.95356205200369,
+      "source_files": 206,
+      "fixing_revision": "worktree-a46fe865ca1cf9fc"
+    },
+    "docs/_reset/fresh-cluster-restore-20261024-42.json": {
+      "sha256": "7be61af539d22d0b29b8aa532e1b27a17791414f5ae5105d7c5a7e1421df2447",
+      "counts": {
+        "passed": 6
+      },
+      "pytest_report_counts": {
+        "test_calls": {
+          "passed": 6
+        },
+        "subtest_calls": {},
+        "setup": {
+          "passed": 6
+        },
+        "teardown": {
+          "passed": 6
+        },
+        "collection": {},
+        "selected_items": 6
+      },
+      "elapsed_seconds": 12.27559366299829,
+      "source_files": 206,
+      "fixing_revision": "worktree-a46fe865ca1cf9fc"
+    },
+    "docs/_reset/fresh-cluster-restore-20261024-43.json": {
+      "sha256": "263a2c9eaca28fd87809d96c976c8aab6d2eaf0b991129d062ab9545c0d1f22f",
+      "counts": {
+        "passed": 6
+      },
+      "pytest_report_counts": {
+        "test_calls": {
+          "passed": 6
+        },
+        "subtest_calls": {},
+        "setup": {
+          "passed": 6
+        },
+        "teardown": {
+          "passed": 6
+        },
+        "collection": {},
+        "selected_items": 6
+      },
+      "elapsed_seconds": 10.566251044001547,
+      "source_files": 206,
+      "fixing_revision": "worktree-a46fe865ca1cf9fc"
+    },
+    "docs/_reset/fresh-cluster-restore-20261024-44.json": {
+      "sha256": "006e6497e6c4e34a5b5b615497e3ea7441d852dd36b70d17a6c5a1ef70941097",
+      "counts": {
+        "passed": 6
+      },
+      "pytest_report_counts": {
+        "test_calls": {
+          "passed": 6
+        },
+        "subtest_calls": {},
+        "setup": {
+          "passed": 6
+        },
+        "teardown": {
+          "passed": 6
+        },
+        "collection": {},
+        "selected_items": 6
+      },
+      "elapsed_seconds": 11.278484827009379,
+      "source_files": 206,
+      "fixing_revision": "worktree-a46fe865ca1cf9fc"
+    },
+    "docs/_reset/fresh-cluster-restore-20261024-45.json": {
+      "sha256": "adbbfbdeaaf56ebfa44ecc40055775805ae7877565b0da884cbe6dbbe49d524a",
+      "counts": {
+        "passed": 6
+      },
+      "pytest_report_counts": {
+        "test_calls": {
+          "passed": 6
+        },
+        "subtest_calls": {},
+        "setup": {
+          "passed": 6
+        },
+        "teardown": {
+          "passed": 6
+        },
+        "collection": {},
+        "selected_items": 6
+      },
+      "elapsed_seconds": 10.24444075798965,
+      "source_files": 207,
+      "fixing_revision": "worktree-99128762c78a07b1"
+    },
+    "docs/_reset/fresh-cluster-restore-20261024-46.json": {
+      "sha256": "1f593b92610ab662ca83c523a0b18dcfcd5172c8bcc4549f7923923076104c02",
+      "counts": {
+        "passed": 4
+      },
+      "pytest_report_counts": {
+        "test_calls": {
+          "passed": 4
+        },
+        "subtest_calls": {},
+        "setup": {
+          "passed": 4
+        },
+        "teardown": {
+          "passed": 4
+        },
+        "collection": {},
+        "selected_items": 4
+      },
+      "elapsed_seconds": 7.339258472988149,
+      "source_files": 207,
+      "fixing_revision": "worktree-99128762c78a07b1"
+    },
+    "docs/_reset/fresh-cluster-restore-20261024-47.json": {
+      "sha256": "4e95ee20a2214800a7cd81718133e442258c137b37a1e83624741a4b5273dc3e",
+      "counts": {
+        "passed": 1
+      },
+      "pytest_report_counts": {
+        "test_calls": {
+          "passed": 1
+        },
+        "subtest_calls": {},
+        "setup": {
+          "passed": 1
+        },
+        "teardown": {
+          "passed": 1
+        },
+        "collection": {},
+        "selected_items": 1
+      },
+      "elapsed_seconds": 3.1229151470033685,
+      "source_files": 207,
+      "fixing_revision": "worktree-99128762c78a07b1"
+    }
+  },
+  "applications": {
+    "searchable": {
+      "path": "docs/_reset/public-slots-installed-searchable-application-20261024.json",
+      "sha256": "6df976f39ca89c1395e68304065379b9358b6bda4889ea8f2583da816998c5bc",
+      "unchanged_source_files": 6,
+      "scope": "Existing default-layout application compatibility; separate scope from the new layout."
+    },
+    "http": {
+      "path": "docs/_reset/public-slots-installed-http-application-20261024.json",
+      "sha256": "6909f3eda4f8b299e47a2bf637699936b0c463be89fe5611a824c7a1d4def63d",
+      "unchanged_source_files": 26,
+      "scope": "Existing default-layout application compatibility; separate scope from the new layout."
+    },
+    "batched-original": {
+      "path": "docs/_reset/public-slots-installed-batched-original-application-20261024.json",
+      "sha256": "802a24784e438f34af211bc67c97d575301362cb5b08f40718661c87e5659a31",
+      "unchanged_source_files": 6,
+      "scope": "Local three-field layout/v6 CRUD and native exit; no HTTP or app fresh adoption."
+    },
+    "legacy-direct": {
+      "path": "docs/_reset/public-slots-installed-legacy-direct-application-20261024.json",
+      "sha256": "c4f9332b85e59d3165bf4c54c9fb5c874c6ac1c4c259a381bebb9ee9baa7cf80",
+      "unchanged_source_files": 6,
+      "scope": "Existing default-layout application compatibility; separate scope from the new layout."
+    }
+  },
+  "historical_evidence": {
+    "public-slots-source-red-20261024.json": {
+      "sha256": "6b08bd0cc5c667d6665dcde01cc8c510f5c0ad32da0c3e7dfa1e86a0195ee67e",
+      "pytest_report_counts": {
+        "test_calls": {
+          "passed": 1,
+          "failed": 2
+        },
+        "subtest_calls": {},
+        "setup": {
+          "passed": 3
+        },
+        "teardown": {
+          "passed": 3
+        },
+        "collection": {},
+        "selected_items": 3
+      },
+      "fixing_revision": "worktree-116d76520b975c4e",
+      "scope": "Legacy positive control passed; explicit layout keyword missing before implementation."
+    },
+    "public-slots-source-initial-20261024.json": {
+      "sha256": "0cb833c5e695139e825596d59f17c143a84493968d4207087321b87284da7d59",
+      "pytest_report_counts": {
+        "test_calls": {
+          "passed": 14
+        },
+        "subtest_calls": {},
+        "setup": {
+          "passed": 14
+        },
+        "teardown": {
+          "passed": 14
+        },
+        "collection": {},
+        "selected_items": 14
+      },
+      "fixing_revision": "worktree-70cff401effffeed",
+      "scope": "Initial compiler/typed lifecycle pass before native slot upper bound and late-statistics guard."
+    },
+    "public-slots-late-statistics-red-20261024.json": {
+      "sha256": "76d394aacc352dae8f6ffa828b214bb6554ba069a62e9d74126ce890dce090fe",
+      "pytest_report_counts": {
+        "test_calls": {
+          "failed": 2
+        },
+        "subtest_calls": {},
+        "setup": {
+          "passed": 2
+        },
+        "teardown": {
+          "passed": 2
+        },
+        "collection": {},
+        "selected_items": 2
+      },
+      "fixing_revision": "worktree-01db96cab13f2878",
+      "scope": "Expression-only statistics escaped planned protection admission and reached ACTIVE reverse providers. Corrected by the v6 catalog guard."
+    },
+    "public-slots-source-focused-20261024.json": {
+      "sha256": "30c450d72d4db75cfa0bfaaa2b40f2a83a33f4e2c7b2a7b7c1f06476bb33085c",
+      "pytest_report_counts": {
+        "test_calls": {
+          "passed": 25
+        },
+        "subtest_calls": {},
+        "setup": {
+          "passed": 25
+        },
+        "teardown": {
+          "passed": 25
+        },
+        "collection": {},
+        "selected_items": 25
+      },
+      "fixing_revision": "worktree-8447bb1089f2d4bf",
+      "scope": "Expanded lifecycle/parser/recovery pass before export-only SQLAlchemy Row serialization correction. All six recorded product hashes still match."
+    }
+  },
+  "release": {
+    "path": "docs/_reset/public-slots-release-20261024.json",
+    "sha256": "7577c1bbbaaa6035524a51f0a3104396abc343f2ef2ab21c2d1394b5290bf2a7",
+    "wheel_sha256": "4025210f8957991f5c27427c170e131a8ac6fcb01bfbda77d3bad46754c3b673",
+    "installed_files": 40,
+    "modules": 36,
+    "changed_product_files": [
+      "src/cryptalis/_rotation_transition.py",
+      "src/cryptalis/deprotection.py",
+      "src/cryptalis/manifest/compiler.py",
+      "src/cryptalis/migration.py",
+      "src/cryptalis/restore.py",
+      "src/cryptalis/sqlalchemy.py"
+    ],
+    "unchanged_crypto_files": 10,
+    "package": "/tmp/cryptalis-public-slots-py313-20261024/lib/python3.13/site-packages/cryptalis/__init__.py"
+  },
+  "runtime": {
+    "python": "3.13.12",
+    "sqlmodel": "0.0.48",
+    "SQLAlchemy": "2.1.3",
+    "psycopg": "3.3.6",
+    "cryptography": "50.0.2",
+    "greenlet": "3.5.6"
+  },
+  "document_sha256": {
+    "docs/status.md": "db60c2a09ec77f0f18973347cf400d03510a21c2f4ef59263d57eafaddd5f1db",
+    "docs/BUILD_CHECKLIST.md": "81e913a961b99829e073ca7c6a336ca650a3778cae422e1d26187726413e7b11",
+    "docs/decisions.md": "be93f0e4264e33a50e957252ebbcb1082330ce9c093c9d30585bf9eaab3bc1db",
+    "docs/lifecycle.md": "18286bff75b613a0df15c2e4aa4f12da998d77f5868ed42846492fd715982a34",
+    "docs/security.md": "276654c65e035d79db98337d323cbe6c6efa873e270cf6e0906477d805f4e742",
+    "docs/walkthrough-migration.md": "50c1bd4763d4b5b140d3747f7356d59fd9b3f17c1b77dc400947df0217357fb1",
+    "docs/architecture/README.md": "1b1d432c1bc4e1d3f60d3a66f5e3f73e837d117a7d968c87aca0f1117e5a8175"
+  },
+  "scope": "Explicit new-layout native TEXT/VARCHAR/Boolean lifecycle with strict mapped restored slots, sequence identities, rotations, actual post-DDL rollback, COMMIT loss, process restart, slot drift and late metadata refusal. Actual wheel, three-field unchanged SQLModel local CRUD and import-denied native exit. Existing default-layout HTTP/JWT/SMTP and restore/v1-v2 compatibility stay separate. No production email population, authenticated host fencing, custody, deployment, representative DDL cost or independent human qualification.",
+  "objectives": "All 34 states unchanged",
+  "gates": "All seven UNKNOWN",
+  "installed_execution": {
+    "runner": {
+      "path": "/tmp/cryptalis-public-slots-installed-runner-20261024.py",
+      "sha256": "e581423a8875e27ce1befe4fe48795a2046ed40f5aec1dcc5fc0891ea2756e40",
+      "script": "from pathlib import Path\nimport runpy\nimport sys\nimport cryptalis\n\nsite = Path(sys.prefix) / 'lib/python3.13/site-packages'\nassert Path(cryptalis.__file__).resolve() == site / 'cryptalis/__init__.py'\nscript = Path('/tmp/cryptalis-public-slots-20261024/scripts/test_postgres.py')\nsys.argv = [str(script), *sys.argv[1:]]\ntry:\n    runpy.run_path(str(script), run_name='__main__')\nfinally:\n    for name, module in tuple(sys.modules.items()):\n        if name == 'cryptalis' or name.startswith('cryptalis.'):\n            assert site in Path(module.__file__).resolve().parents\n"
+    },
+    "fresh": {
+      "path": "/tmp/cryptalis-public-slots-installed-fresh-20261024.py",
+      "sha256": "54444dc15de607ed4bf48e265d82e8455cf3fc73747475fdb2303c1720509221",
+      "script": "from pathlib import Path\nimport runpy\nimport sys\nimport cryptalis\n\nsite = Path(sys.prefix) / 'lib/python3.13/site-packages'\nassert Path(cryptalis.__file__).resolve() == site / 'cryptalis/__init__.py'\nscript = Path('/tmp/cryptalis-public-slots-20261024/scripts/fresh_cluster_qualification.py')\nsys.argv = [str(script), *sys.argv[1:]]\ntry:\n    runpy.run_path(str(script), run_name='__main__')\nfinally:\n    for name, module in tuple(sys.modules.items()):\n        if name == 'cryptalis' or name.startswith('cryptalis.'):\n            assert site in Path(module.__file__).resolve().parents\n"
+    }
+  }
+}

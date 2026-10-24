@@ -66,9 +66,10 @@ def _source_current(c,p,op,*,own):
                                'WHERE oid=pg_catalog.to_regclass(%s)',(m._table(c,model),)).scalar_one()
         if owner!=source.document['target'][-1]:
             raise m.TransitionFailure('maintenance_requires_table_owner',p.operation_id)
-        from cryptalis.restore import sequence_admissions
+        from cryptalis.restore import sequence_admissions, layout_admissions
         m._refuse_unrecorded_metadata(c,source,model,
-            sequences=sequence_admissions(source.document,model,p.restore_binding))
+            sequences=sequence_admissions(source.document,model,p.restore_binding),
+            slots=layout_admissions(source.document,model,p.restore_binding))
 
 
 def _state(c,p,op,pin=None):
@@ -132,10 +133,11 @@ def _inspect(c,p,op,state):
         facts['relation']['user_triggers']=False
         if m._hash(facts)!=p.document['models'][model['table_id']]['schema']:
             raise m.TransitionFailure(f'{p.purpose}_staging_schema_changed',p.operation_id)
-        from cryptalis.restore import frame_admissions, sequence_admissions
+        from cryptalis.restore import frame_admissions, sequence_admissions, layout_admissions
         m._protected_contract(c,p.source,model,facts,
                               admitted=frame_admissions(p.source.document,model,p.restore_binding),
-                              sequences=sequence_admissions(p.source.document,model,p.restore_binding))
+                              sequences=sequence_admissions(p.source.document,model,p.restore_binding),
+                              slots=layout_admissions(p.source.document,model,p.restore_binding))
 
 
 def _prepare(p,keys,target_keys):

@@ -24,7 +24,8 @@ from cryptalis.crypto.keys import CryptoFailure, Keyring, KeyUnavailable
 from cryptalis.crypto._payload_rotation import MAX_BATCH_BYTES, MAX_BATCH_ROWS
 from cryptalis.manifest.compiler import (compile_protection, _schema_facts, _canonical, _previous_lock,
                                           unrecorded_column_metadata, protected_extended_statistics,
-                                          sequence_metadata, source_metadata, _metadata_diff, _catalog_path)
+                                          sequence_metadata, source_metadata, _metadata_diff, _catalog_path,
+                                          _native_text_length)
 from cryptalis.manifest.parser import ManifestInvalid, _decode_json
 
 JOURNAL = '_cryptalis_journal'
@@ -369,11 +370,106 @@ def _expected_source_metadata(p, model, *, sequences=None):
 
 def _observed_source_metadata(c, p, model, *, sequences=None):
     _check_owned_sequences(c, p, model, sequences=sequences)
+    _check_public_slots(c, p, model)
+    _refuse_expression_statistics(c, p, model)
     metadata = model.get('source_metadata')
     if metadata is None:
         return None
     return source_metadata(c, model['schema'], model['table'], model['fields'],
                            sequences='owned_sequences' in metadata)
+
+
+def _preserves_public_slots(p):
+    lock = p.document['lock']
+    return lock['schema'] == 'cryptalis.lock/v6' and lock.get('layout') == 'preserve-public-slots/v1'
+
+
+def _refuse_expression_statistics(c, p, model):
+    if _preserves_public_slots(p) and c.exec_driver_sql(
+        'SELECT EXISTS (SELECT 1 FROM pg_catalog.pg_statistic_ext '
+        'WHERE stxrelid=pg_catalog.to_regclass(%s) AND stxexprs IS NOT NULL)',
+        (_table(c, model),)).scalar_one():
+        raise TransitionFailure('unsupported_dependency', p.operation_id)
+
+
+def _check_public_slots(c, p, model, *, facts=None, slots=None):
+    if not _preserves_public_slots(p):
+        return
+    if slots is None:
+        from cryptalis.restore import layout_admissions
+        slots = layout_admissions(p.document, model)
+    names = [column['name'] for column in model['source_schema']['columns']]
+    if (type(slots) is not dict or set(slots) != set(names)
+            or any(type(value) is not int or not 0 < value < 32768 for value in slots.values())
+            or len(set(slots.values())) != len(slots)):
+        raise TransitionFailure('public_slots_changed', p.operation_id)
+    facts = _facts(c, model) if facts is None else facts
+    if type(facts) is not dict or type(facts.get('columns')) is not list:
+        raise TransitionFailure('public_slots_changed', p.operation_id)
+    observed = [(column['name'], column['attnum']) for column in facts['columns']
+                if column['name'] in slots]
+    if observed != [(name, slots[name]) for name in names]:
+        raise TransitionFailure('public_slots_changed', p.operation_id)
+
+
+def _active_metadata(p, model, *, sequences=None):
+    metadata = _expected_source_metadata(p, model, sequences=sequences)
+    for column in metadata['columns'].values():
+        column.update(storage='x', compression='')
+    metadata.update(constraints={}, indexes={}, extended_statistics=[])
+    return metadata
+
+
+def _convert_public_columns(c, p, model, *, plaintext=False):
+    """Convert verified shadows in one native rewrite without replacing attributes."""
+    _check_owned_sequences(c, p, model)
+    _check_public_slots(c, p, model)
+    table = _table(c, model)
+    if not plaintext:
+        constraints = {item['name'] for field in model['fields'] for item in field['original']['constraints']}
+        indexes = {item['name'] for field in model['fields'] for item in field['original']['indexes']}
+        for name in sorted(constraints):
+            c.exec_driver_sql(f'ALTER TABLE {table} DROP CONSTRAINT {_quote(c, name)}')
+        for name in sorted(indexes):
+            c.exec_driver_sql(f'DROP INDEX {_quote(c, model["schema"])}.{_quote(c, name)}')
+        for entry in model['source_metadata']['extended_statistics']:
+            c.exec_driver_sql(f'DROP STATISTICS {_quote(c, model["schema"])}.{_quote(c, entry["name"])}')
+    for field in model['fields']:
+        c.exec_driver_sql(f'ALTER TABLE {table} DROP CONSTRAINT {_quote(c, field["payload_column"] + "_frame")}')
+        if field['queries']:
+            c.exec_driver_sql(f'DROP INDEX {_quote(c, model["schema"])}.{_quote(c, field["payload_column"] + "_eq")}')
+    alterations, shadows = [], []
+    for field in model['fields']:
+        target = 'pg_catalog.bytea'
+        shadow = field['payload_column']
+        if plaintext:
+            from cryptalis.deprotection import _staging
+            shadow = _staging(field)
+            native = next(column for column in model['source_schema']['columns'] if column['name'] == field['column'])
+            if native['type'] == 'bool':
+                target = 'pg_catalog.bool'
+            else:
+                limit = _native_text_length(native)
+                target = ('pg_catalog.text' if native['type'] == 'text' else
+                          'pg_catalog.varchar' + (f'({limit})' if limit is not None else ''))
+                target += f' COLLATE {_quote(c, native["collation_schema"])}.{_quote(c, native["collation_name"])}'
+        alterations.append(f'ALTER COLUMN {_quote(c, field["column"])} TYPE {target} USING {_quote(c, shadow)}')
+        shadows.append(shadow)
+    c.exec_driver_sql(f'ALTER TABLE {table} ' + ','.join(alterations))
+    if not plaintext:
+        for field in model['fields']:
+            public = {**field, 'payload_column': field['column']}
+            c.exec_driver_sql(f'ALTER TABLE {table} ADD CONSTRAINT {_quote(c, field["payload_column"] + "_frame")} '
+                              f'CHECK ({_frame_check(c, public)})')
+            if field['queries']:
+                tenant = _quote(c, model['tenancy']['column']) + ', ' if 'column' in model['tenancy'] else ''
+                unique = 'UNIQUE ' if 'unique' in field['queries'] else ''
+                c.exec_driver_sql(f'CREATE {unique}INDEX {_quote(c, field["payload_column"] + "_eq")} ON {table} '
+                                  f'USING btree ({tenant}(pg_catalog.substring({_quote(c, field["column"])},15,32)) pg_catalog.bytea_ops)')
+    for shadow in shadows:
+        c.exec_driver_sql(f'ALTER TABLE {table} DROP COLUMN {_quote(c, shadow)}')
+    _check_owned_sequences(c, p, model)
+    _check_public_slots(c, p, model)
 
 
 def _replace_protected_column(c, p, model, field, replacement, *, sequences=None):
@@ -397,9 +493,17 @@ def _replace_protected_column(c, p, model, field, replacement, *, sequences=None
     _check_owned_sequences(c, p, model, sequences=expected)
 
 
-def _refuse_unrecorded_metadata(c, p, model, *, sequences=None):
+def _refuse_unrecorded_metadata(c, p, model, *, sequences=None, slots=None):
     protected = [field['column'] for field in model['fields']]
     metadata = model.get('source_metadata')
+    _check_public_slots(c, p, model, slots=slots)
+    if _preserves_public_slots(p):
+        _refuse_expression_statistics(c, p, model)
+        observed = source_metadata(c, model['schema'], model['table'], model['fields'], sequences=True)
+        if observed != _active_metadata(p, model, sequences=sequences):
+            raise TransitionFailure('source_metadata_changed', p.operation_id)
+        _check_owned_sequences(c, p, model, sequences=sequences)
+        return
     if metadata is not None:
         observed = source_metadata(c, model['schema'], model['table'], model['fields'],
                                    sequences='owned_sequences' in metadata)
@@ -504,7 +608,7 @@ def _with_row_keys(keys, tenant, p, material, operation):
 
 def plan(manifest, mapping, engine, *, writers, search_reviews=(), keys, runtime_role,
          target_id, backfill_rows_per_second, verify_rows_per_second,
-         temporary_bytes_per_row=None, wal_bytes_per_row=None):
+         temporary_bytes_per_row=None, wal_bytes_per_row=None, layout=None):
     """Read-only compiler admission plus target, keys, scope, and cost estimates.
 
     Rates and per-row costs are explicit host observations/estimates, not
@@ -515,7 +619,7 @@ def plan(manifest, mapping, engine, *, writers, search_reviews=(), keys, runtime
     rates = (backfill_rows_per_second, verify_rows_per_second)
     if any(not _finite_number(r) or r <= 0 for r in rates):
         raise TransitionFailure('missing_measured_rates')
-    proposal = compile_protection(manifest, mapping, engine, writers=writers, search_reviews=search_reviews)
+    proposal = compile_protection(manifest, mapping, engine, writers=writers, search_reviews=search_reviews, layout=layout)
     if any(type(cost) is not int or not 1<=cost<2**53 for cost in (temporary_bytes_per_row,wal_bytes_per_row)):
         raise TransitionFailure('missing_measured_storage_or_wal_costs')
     lock = json.loads(proposal.lock_bytes)
@@ -552,6 +656,9 @@ def plan(manifest, mapping, engine, *, writers, search_reviews=(), keys, runtime
         'checkpoint_extra_verify_seconds_estimate':_estimate_seconds(rows, rates[1]),
         'cost_basis':'Host-supplied per-row staging observations/estimates; not bounds or qualification.',
         'limits':'Host rate estimates exclude lock drain, DDL, index build, publication delay and capacity guarantees.'}
+    if layout is not None:
+        estimates['limits'] += (' Preserving public slots rewrites the whole heap and index storage during '
+                                'DDL; this cost is excluded from the rate and WAL estimates.')
     return MigrationPlan(_canonical({'format':'cryptalis.transition/v1','kind':'protect','operation_id':str(uuid4()),
         'target_id':str(target_id),'target':target,'runtime_role':runtime_role,'journal_schema':schema,
         'lock':lock,'source_lock_digest':proposal.source_lock_digest,'key_policies':policies,'scopes':scopes,'estimates':estimates}))
@@ -899,6 +1006,8 @@ def _inspect_paused(c,p,state):
             guard = _protected_contract(c, p, model, facts, paused=True, staging=True)
         else:
             _check_owned_sequences(c, p, model)
+            if _preserves_public_slots(p):
+                _refuse_unrecorded_metadata(c, p, model)
             from cryptalis.deprotection import _staging
             expected = deepcopy(p.document['active_schemas'][model['table_id']])
             expected['relation']['user_triggers'] = True
@@ -984,6 +1093,12 @@ def _switch(c,p,state,keys):
     for model in p.document['lock']['models']:
         _check_source_metadata(c,p,model)
         table=_table(c,model)
+        if _preserves_public_slots(p):
+            _convert_public_columns(c, p, model)
+            facts = _facts(c, model)
+            _protected_contract(c, p, model, facts, paused=True)
+            state['models'][model['table_id']]['active_schema'] = facts
+            continue
         for f in model['fields']:
             _replace_protected_column(c, p, model, f, f['payload_column'])
             if not f['source']['nullable']:
@@ -995,11 +1110,17 @@ def _switch(c,p,state,keys):
     state['phase']='PENDING'; _save(c,p,state)
 
 
-def _protected_contract(c, p, model, facts, *, paused=False, admitted=None, staging=False, sequences=None):
+def _protected_contract(c, p, model, facts, *, paused=False, admitted=None, staging=False, sequences=None, slots=None):
     """Bind recorded catalog shape and generated storage to the host lock."""
     from cryptalis._sqlalchemy_search import validate_frame_storage, validate_search_storage
     from cryptalis.restore import frame_admissions
     _check_owned_sequences(c, p, model, sequences=sequences)
+    _check_public_slots(c, p, model, facts=facts, slots=slots)
+    if _preserves_public_slots(p):
+        if staging:
+            _check_source_metadata(c, p, model)
+        else:
+            _refuse_unrecorded_metadata(c, p, model, sequences=sequences, slots=slots)
     inherited = frame_admissions(p.document, model)
     inherited.update(admitted or {})
     admitted = inherited

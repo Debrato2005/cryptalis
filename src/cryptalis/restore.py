@@ -42,6 +42,7 @@ from cryptalis.manifest.parser import decode_manifest_json
 
 FORMAT = 'cryptalis.restore/v1'
 SEQUENCE_FORMAT = 'cryptalis.restore/v2'
+LAYOUT_FORMAT = 'cryptalis.restore/v3'
 
 
 @dataclass(frozen=True)
@@ -62,17 +63,22 @@ class RestoreBinding:
     def __post_init__(self):
         try:
             document = decode_manifest_json(self.artifact)
-            sequence_format = document.get('format') == SEQUENCE_FORMAT
-            if (document.get('format') not in (FORMAT, SEQUENCE_FORMAT) or document.get('kind') != 'restore'
+            layout_format = document.get('format') == LAYOUT_FORMAT
+            sequence_format = document.get('format') in (SEQUENCE_FORMAT, LAYOUT_FORMAT)
+            if (document.get('format') not in (FORMAT, SEQUENCE_FORMAT, LAYOUT_FORMAT) or document.get('kind') != 'restore'
                     or _canonical(document) != self.artifact):
                 raise ValueError
             members = {'format', 'kind', 'adoption_id', 'source', 'target',
                                  'journal_state_digest', 'custody', 'environment', 'approval',
                                  'restatements'} | ({'sequences'} if sequence_format else set())
+            if layout_format:
+                members.add('columns')
             if set(document) != members:
                 raise ValueError
             if sequence_format:
-                _validate_sequence_map(document['sequences'])
+                _validate_sequence_map(document['sequences'], allow_empty=layout_format)
+            if layout_format:
+                _validate_layout_map(document['columns'])
             if UUID(document['adoption_id']).int == 0:
                 raise ValueError
             source = document['source']
@@ -177,6 +183,7 @@ def _identity(source, binding):
                    for tenant, policy in binding.document['custody'].items())):
         raise m.TransitionFailure('restore_binding_mismatch', source.operation_id)
     _sequence_inventory(source.document, binding)
+    _layout_inventory(source.document, binding)
     fields = {(model['table_id'], field['payload_column'] + '_frame'): field
               for model in source.document['lock']['models'] for field in model['fields']}
     quote = postgresql.dialect().identifier_preparer.quote
@@ -262,6 +269,7 @@ def _validate_lineage(document):
         if previous != document['target']:
             raise ValueError
         _sequence_inventory(document)
+        _layout_inventory(document)
     except (ValueError, TypeError, KeyError, AttributeError, m.TransitionFailure):
         raise m.TransitionFailure('invalid_restore_lineage') from None
 
@@ -287,8 +295,8 @@ def _oid(value):
             and len(value) <= 10 and 0 < int(value) < 2**32 and str(int(value)) == value)
 
 
-def _validate_sequence_map(entries):
-    if type(entries) is not list or not entries:
+def _validate_sequence_map(entries, *, allow_empty=False):
+    if type(entries) is not list or not entries and not allow_empty:
         raise ValueError
     source_oids, target_oids, names = set(), set(), set()
     for entry in entries:
@@ -309,13 +317,9 @@ def _validate_sequence_map(entries):
         raise ValueError
 
 
-def _sequence_inventory(document, binding=None):
-    """Evaluate sequence identity through exact, ordered host bindings."""
+def _binding_records(document, binding=None):
     reverse = document.get('kind') == 'deprotect'
     base = document['source_plan'] if reverse else document
-    inventory = {tuple((model['table_id'], entry['schema'], entry['name'], entry['column'])): dict(entry)
-                 for model in base['lock']['models']
-                 for entry in model.get('source_metadata', {}).get('owned_sequences', ())}
     records = list(base.get('restore_lineage', ()))
     if reverse and document.get('restore') is not None:
         records.append(document['restore'])
@@ -323,10 +327,22 @@ def _sequence_inventory(document, binding=None):
         if type(binding) is not RestoreBinding:
             raise m.TransitionFailure('restore_binding_required')
         records.append(binding.document)
+    return base, records
+
+
+def _sequence_inventory(document, binding=None):
+    """Evaluate sequence identity through exact, ordered host bindings."""
+    base, records = _binding_records(document, binding)
+    inventory = {tuple((model['table_id'], entry['schema'], entry['name'], entry['column'])): dict(entry)
+                 for model in base['lock']['models']
+                 for entry in model.get('source_metadata', {}).get('owned_sequences', ())}
     for raw in records:
         record = RestoreBinding(_canonical(raw)).document
         entries = record.get('sequences', [])
-        if bool(inventory) != (record['format'] == SEQUENCE_FORMAT):
+        layout = base['lock']['schema'] == 'cryptalis.lock/v6'
+        if ((layout and record['format'] != LAYOUT_FORMAT)
+                or (not layout and (record['format'] == LAYOUT_FORMAT
+                    or bool(inventory) != (record['format'] == SEQUENCE_FORMAT)))):
             raise m.TransitionFailure('restore_sequence_mismatch')
         if {_sequence_key(entry) for entry in entries} != set(inventory):
             raise m.TransitionFailure('restore_sequence_mismatch')
@@ -336,6 +352,83 @@ def _sequence_inventory(document, binding=None):
                 raise m.TransitionFailure('restore_sequence_mismatch')
             inventory[key]['oid'] = entry['target_oid']
     return inventory
+
+
+def _validate_layout_map(entries):
+    if type(entries) is not list or not entries:
+        raise ValueError
+    seen, source_slots, target_slots, last_target = set(), set(), set(), {}
+    for entry in entries:
+        if (type(entry) is not dict or set(entry) != {'model', 'column', 'source_attnum', 'target_attnum'}
+                or type(entry['model']) is not str or not UUID(entry['model']).int
+                or str(UUID(entry['model'])) != entry['model']
+                or type(entry['column']) is not str or not entry['column'] or '\x00' in entry['column']
+                or len(entry['column'].encode('utf8')) > 63
+                or any(type(entry[name]) is not int or not 0 < entry[name] < 32768
+                       for name in ('source_attnum', 'target_attnum'))):
+            raise ValueError
+        model, column = entry['model'], entry['column']
+        source, target = entry['source_attnum'], entry['target_attnum']
+        if ((model, column) in seen or (model, source) in source_slots
+                or (model, target) in target_slots or target <= last_target.get(model, 0)):
+            raise ValueError
+        seen.add((model, column))
+        source_slots.add((model, source))
+        target_slots.add((model, target))
+        last_target[model] = target
+    if entries != sorted(entries, key=lambda entry: (entry['model'], entry['source_attnum'])):
+        raise ValueError
+
+
+def _layout_inventory(document, binding=None):
+    """Compose exact public slots while preserving their original visible order."""
+    base, records = _binding_records(document, binding)
+    if base['lock']['schema'] != 'cryptalis.lock/v6':
+        return None
+    inventory = {(model['table_id'], column['name']): column['attnum']
+                 for model in base['lock']['models'] for column in model['source_schema']['columns']}
+    for raw in records:
+        record = RestoreBinding(_canonical(raw)).document
+        if record['format'] != LAYOUT_FORMAT:
+            raise m.TransitionFailure('restore_layout_mismatch')
+        entries = record['columns']
+        if {(entry['model'], entry['column']) for entry in entries} != set(inventory):
+            raise m.TransitionFailure('restore_layout_mismatch')
+        for entry in entries:
+            key = (entry['model'], entry['column'])
+            if entry['source_attnum'] != inventory[key]:
+                raise m.TransitionFailure('restore_layout_mismatch')
+            inventory[key] = entry['target_attnum']
+    return inventory
+
+
+def layout_admissions(document, model, binding=None):
+    """Return original public names with their currently admitted native slots."""
+    inventory = _layout_inventory(document, binding)
+    if inventory is None:
+        return None
+    return {column['name']: inventory[(model['table_id'], column['name'])]
+            for column in model['source_schema']['columns']}
+
+
+def _layout_evidence(c, source, binding=None):
+    if source.document['lock']['schema'] != 'cryptalis.lock/v6':
+        return [], {}
+    maps, facts = [], {}
+    for model in source.document['lock']['models']:
+        original = layout_admissions(source.document, model)
+        expected = layout_admissions(source.document, model, binding)
+        current = m._facts(c, model)
+        if current is None:
+            raise m.TransitionFailure('restored_layout_mismatch', source.operation_id)
+        observed = {column['name']: column['attnum'] for column in current['columns']}
+        if list(observed) != list(original) or binding is not None and observed != expected:
+            raise m.TransitionFailure('restored_layout_mismatch', source.operation_id)
+        for column, slot in original.items():
+            maps.append({'model': model['table_id'], 'column': column,
+                         'source_attnum': slot, 'target_attnum': observed[column]})
+        facts[model['table_id']] = observed
+    return sorted(maps, key=lambda entry: (entry['model'], entry['source_attnum'])), facts
 
 
 def sequence_admissions(document, model, binding=None):
@@ -349,7 +442,7 @@ def _sequence_evidence(c, source, binding=None):
     """Compare every logical fact before admitting restored sequence OIDs."""
     from cryptalis.manifest.compiler import sequence_metadata
     maps, facts = [], {}
-    if source.document['lock']['schema'] != 'cryptalis.lock/v5':
+    if source.document['lock']['schema'] not in ('cryptalis.lock/v5', 'cryptalis.lock/v6'):
         return maps, facts
     for model in source.document['lock']['models']:
         original = sequence_admissions(source.document, model)
@@ -369,7 +462,7 @@ def _sequence_evidence(c, source, binding=None):
     return sorted(maps, key=_sequence_key), facts
 
 
-def _schema_evidence(c, source, state, *, sequences=None):
+def _schema_evidence(c, source, state, *, sequences=None, layouts=None):
     """Structural comparison of live schema facts against the recorded facts.
 
     Column ordinal numbers are physical slots; a logical restore compacts
@@ -380,7 +473,8 @@ def _schema_evidence(c, source, state, *, sequences=None):
     for model in source.document['lock']['models']:
         start = len(restatements)
         expected_sequences = None if sequences is None else sequences.get(model['table_id'])
-        m._refuse_unrecorded_metadata(c,source,model,sequences=expected_sequences)
+        expected_slots = None if layouts is None else layouts.get(model['table_id'])
+        m._refuse_unrecorded_metadata(c,source,model,sequences=expected_sequences,slots=expected_slots)
         observed = m._facts(c, model)
         recorded = state['models'][model['table_id']]['active_schema']
         if (observed['relation'] != recorded['relation']
@@ -422,7 +516,7 @@ def _schema_evidence(c, source, state, *, sequences=None):
                                           source.operation_id)
         admitted = {item['name']: _frame_expression(item['definition']) for item in restatements[start:]}
         m._protected_contract(c, source, model, observed, admitted=admitted,
-                              sequences=expected_sequences)
+                              sequences=expected_sequences, slots=expected_slots)
     return restatements
 
 
@@ -483,7 +577,8 @@ def _check_schema(c, source, state, binding):
     """Later operations must observe the same structure the adoption approved."""
     try:
         _, sequences = _sequence_evidence(c, source, binding)
-        observed = _schema_evidence(c, source, state, sequences=sequences)
+        _, layouts = _layout_evidence(c, source, binding)
+        observed = _schema_evidence(c, source, state, sequences=sequences, layouts=layouts)
     except m.TransitionFailure as exc:
         if exc.code == 'restored_definition_restatement_unsupported':
             raise m.TransitionFailure('restored_schema_changed', source.operation_id) from None
@@ -585,7 +680,8 @@ def plan(source, engine, *, pin, keys, approval):
         m._runtime_safety(c,source.document['runtime_role'],source.document['target'][-1],
                           source.document['lock']['models'],journal=m._journal(c,source),operation_id=source.operation_id)
         sequence_map, sequence_facts = _sequence_evidence(c, source)
-        restatements = _schema_evidence(c, source, state, sequences=sequence_facts)
+        layout_map, layout_facts = _layout_evidence(c, source)
+        restatements = _schema_evidence(c, source, state, sequences=sequence_facts, layouts=layout_facts)
         custody = _scan(c, source, keys)
         restatements = _probe_frame_checks(c, source, restatements)
         system_identifier = None
@@ -597,7 +693,8 @@ def plan(source, engine, *, pin, keys, approval):
             system_identifier = None
         version = c.exec_driver_sql('show server_version').scalar_one()
     document = {
-        'format': SEQUENCE_FORMAT if sequence_map else FORMAT, 'kind': 'restore', 'adoption_id': str(m.uuid4()),
+        'format': LAYOUT_FORMAT if layout_map else SEQUENCE_FORMAT if sequence_map else FORMAT,
+        'kind': 'restore', 'adoption_id': str(m.uuid4()),
         'source': {'operation_id': str(source.operation_id), 'plan_digest': source.digest,
                    'target': source.document['target']},
         'target': list(target), 'journal_state_digest': m._hash(state), 'custody': custody,
@@ -606,6 +703,8 @@ def plan(source, engine, *, pin, keys, approval):
         'approval': {'host': approval.host, 'intent': approval.intent,
                      'quarantine': approval.quarantine, 'source_fenced': True,
                      'adopted_at': datetime.datetime.now(datetime.timezone.utc).isoformat()}}
-    if sequence_map:
+    if sequence_map or layout_map:
         document['sequences'] = sequence_map
+    if layout_map:
+        document['columns'] = layout_map
     return RestoreBinding(_canonical(document))

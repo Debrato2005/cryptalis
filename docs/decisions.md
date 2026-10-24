@@ -977,6 +977,11 @@ snapshot, reset or replay is admitted. All seven production gates remain UNKNOWN
 
 ## Column-preserving conversion design inputs: 2026-10-24
 
+This section records the native-only checkpoint before product implementation.
+The [implementation decision](#original-slot-layout-and-restore-authority-2026-10-24)
+supersedes its pending implementation state. Its native evidence keeps the
+original source and three-row measurement boundary.
+
 **VERIFIED, native SQL oracle only. Product design remains SPECIFIED.**
 One PostgreSQL 16 table retains its relation OID, original public `attnum` values
 and visible column order. Each direction uses one batched `ALTER COLUMN TYPE ... USING`
@@ -1028,3 +1033,53 @@ phase interruption and uncertain COMMIT recovery, old-reader refusal, a genuine
 compacted restore, repeated adoption, wrong-map refusal before providers and
 latest-value package-free positional reads. CF1 and key/tenant/host authority
 contracts remain unchanged. All seven production gates remain UNKNOWN.
+
+## Original-slot layout and restore authority: 2026-10-24
+
+**IMPLEMENTED, bounded evidence in the [status checkpoint](status.md#public-column-slot-preservation-2026-10-24):**
+`compile_protection()` and `migration.plan()` accept `layout=None` or the exact
+string `preserve-public-slots/v1`. None retains existing lock/v2-v5 selection and
+bytes. The explicit token selects lock/v6 with a required top-level layout member
+and the v5 metadata shape, including empty sequence inventories. Unknown values
+refuse before compiler connections. A previous lock does not select the layout.
+Structural parsing requires distinct, increasing native integer source slots
+in the range 1 through 32767. Attachment derives its strategy from the lock.
+
+The new switch uses one batched ALTER TYPE USING verified shadows per model.
+It removes only admitted native dependencies and generated shadow dependencies,
+rebuilds exact public-bound CF1 CHECKs and equality indexes, then drops its shadows.
+The original public attributes remain bytea, with their original slots and order.
+Reverse changes those same attributes to their native types and restores the
+captured constraints, indexes, extended statistics and column metadata. Existing
+lock/v1-v5 artifacts keep their earlier drop/rename path. CF1, key policy, tenant
+addresses, retained readers and publication authority remain unchanged.
+
+ACTIVE metadata requires exact recorded comments, statistics targets, options and
+grants. Storage must be EXTENDED with the default compression policy. Captured
+native constraints, indexes and extended statistics must be absent until reverse.
+Expression statistics refuse during planning and later admission, including
+expression-only objects whose ordinary column list is empty. This closes a
+reproduced late-metadata failure in the new path. Native sequence ownership stays
+on the original public attribute. Full mapped sequence identity checks remain.
+
+Restore/v3 requires all existing binding members plus `columns` and `sequences`.
+The columns list covers every public source column exactly once using `model`,
+`column`, `source_attnum` and `target_attnum`. Slots are native integers from 1
+through 32767. Entries sort by model and source slot. Source and target slots
+are unique per model, and target slots increase in original visible name order.
+The sequence list is complete or empty, according to the source inventory.
+
+Logical restore may compact dropped slots. Adoption compares complete logical
+facts and visible name order before admitting the actual target slots. Later
+checks require those exact slots. Flat lineage composes source-effective to
+target slots through reverse, root rewrap and both generation workflows. Original
+source artifacts, pins and journal authority stay unchanged. Restore/v1-v2 cannot
+authorize lock/v6, and old operational readers refuse the new formats before effects.
+Legacy metadata comparison retains its ordinal normalization.
+
+Each switch rewrites heap and index storage under a native exclusive lock.
+Current rate, temporary-space and WAL estimates do not include that DDL cost.
+No production pause or resource budget is qualified. Existing maintenance
+approval, quarantine and host fencing remain required. The new layout is an
+explicit opt-in and does not convert already replaced legacy slots. All 34
+objective states and all seven UNKNOWN production gates remain unchanged.

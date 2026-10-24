@@ -11,13 +11,13 @@ does not promise plaintext erasure. Plaintext enters WAL, backups, and
 statistics after this operation.
 
 Known limits, made explicit in removal approval:
-- Physical column order changes. The restored column occupies the payload
-  slot. Positional ``SELECT *`` readers must adjust.
+- Legacy layouts change physical column order. Lock v6 preserves admitted public slots.
 - Legacy locks without source_metadata refuse protected-column metadata.
   Current locks capture supported column metadata and protected extended
   statistics for restoration. Lock v5 preserves admitted owned sequence objects.
 """
 from contextlib import contextmanager
+from copy import deepcopy
 from dataclasses import dataclass
 import hashlib
 import json
@@ -230,7 +230,7 @@ def plan(source, engine, *, source_pin, keys, plaintext_runtime_role, backfill_r
         m._check_connection(source, c, source_pin, binding=restore)
         if m._target(c)[:-1] != current[:-1]:
             raise m.TransitionFailure('maintenance_requires_planned_owner', source.operation_id)
-        from cryptalis.restore import sequence_admissions
+        from cryptalis.restore import sequence_admissions, layout_admissions
         for model in source.document['lock']['models']:
             ownership = c.exec_driver_sql(
                 'SELECT pg_catalog.pg_get_userbyid(relowner) FROM pg_catalog.pg_class WHERE oid=pg_catalog.to_regclass(%s)',
@@ -238,7 +238,8 @@ def plan(source, engine, *, source_pin, keys, plaintext_runtime_role, backfill_r
             if ownership != source.document['target'][-1]:
                 raise m.TransitionFailure('maintenance_requires_table_owner', source.operation_id)
             m._refuse_unrecorded_metadata(c, source, model,
-                                          sequences=sequence_admissions(source.document, model, restore))
+                                          sequences=sequence_admissions(source.document, model, restore),
+                                          slots=layout_admissions(source.document, model, restore))
         retired = _inventory(c, source, source, own=None)
         _runtime_safety(c,source,plaintext_runtime_role,plaintext=True)
         for model in source.document['lock']['models']:
@@ -269,6 +270,9 @@ def plan(source, engine, *, source_pin, keys, plaintext_runtime_role, backfill_r
                  'writer_pause_seconds_estimate': pause_seconds,
                  'cost_basis': 'Host-supplied per-row staging observations/estimates; not bounds or qualification.',
                  'limits': 'Plaintext enters WAL and backups. Staging, DDL, and publication delays are excluded.'}
+    if m._preserves_public_slots(source):
+        estimates['limits'] += (' Preserving public slots rewrites the whole heap and index storage during '
+                                'DDL; this cost is excluded from the rate and WAL estimates.')
     return DeprotectionPlan(_canonical({
         'format': FORMAT, 'kind': 'deprotect', 'operation_id': str(uuid4()), 'target_id': str(source.target_id),
         'source_plan': source.document,
@@ -422,6 +426,9 @@ def _expand(c, p):
     _inventory(c, p, p.source, own=p.operation_id)
     for model in p.document['lock']['models']:
         m._check_owned_sequences(c, p, model)
+        m._check_public_slots(c, p, model)
+        if m._preserves_public_slots(p):
+            m._refuse_unrecorded_metadata(c, p, model)
         if m._facts(c, model) != p.document['active_schemas'][model['table_id']]:
             raise m.TransitionFailure('active_schema_mismatch', p.operation_id)
     functions = {}
@@ -571,7 +578,8 @@ def _restore_metadata(c, p, model):
                 if not re.fullmatch(r'[a-z_][a-z0-9_]*(=[-0-9.]+)?', option):
                     raise m.TransitionFailure('metadata_restore_invalid', p.operation_id)
             c.exec_driver_sql(f'ALTER TABLE {target} SET ({", ".join(facts["options"])})')
-        m._apply_column_acl(c, table, column, facts['acl'], p.operation_id)
+        if not m._preserves_public_slots(p):
+            m._apply_column_acl(c, table, column, facts['acl'], p.operation_id)
     for name, comment in metadata['constraints'].items():
         c.exec_driver_sql(f'COMMENT ON CONSTRAINT {m._quote(c, name)} ON {table} IS {_literal(comment)}')
     for name, comment in metadata['indexes'].items():
@@ -609,10 +617,13 @@ def _switch(c, p, state, keys):
     for model in p.document['lock']['models']:
         table = m._table(c, model)
         m._refuse_unrecorded_metadata(c, p, model)
-        for field in model['fields']:
-            m._replace_protected_column(c, p, model, field, _staging(field))
-            if not field['source']['nullable']:
-                c.exec_driver_sql(f'ALTER TABLE {table} ALTER COLUMN {m._quote(c, field["column"])} SET NOT NULL')
+        if m._preserves_public_slots(p):
+            m._convert_public_columns(c, p, model, plaintext=True)
+        else:
+            for field in model['fields']:
+                m._replace_protected_column(c, p, model, field, _staging(field))
+                if not field['source']['nullable']:
+                    c.exec_driver_sql(f'ALTER TABLE {table} ALTER COLUMN {m._quote(c, field["column"])} SET NOT NULL')
         for original in sorted((item for field in model['fields'] for item in field['original']['constraints']),
                                key=lambda item: item['name']):
             c.exec_driver_sql(f'ALTER TABLE {table} ADD CONSTRAINT {m._quote(c, original["name"])} '
@@ -626,7 +637,14 @@ def _switch(c, p, state, keys):
             raise
         except SQLAlchemyError:
             raise m.TransitionFailure('metadata_restore_failed', p.operation_id) from None
-        state['models'][model['table_id']]['plaintext_schema'] = m._facts(c, model)
+        facts = m._facts(c, model)
+        if m._preserves_public_slots(p):
+            expected = deepcopy(model['source_schema'])
+            expected['relation']['user_triggers'] = True
+            if _metadata_diff(expected, facts):
+                raise m.TransitionFailure('plaintext_schema_mismatch', p.operation_id)
+            m._check_public_slots(c, p, model, facts=facts)
+        state['models'][model['table_id']]['plaintext_schema'] = facts
     state['phase'] = 'PLAINTEXT_PENDING'
     m._save(c, p, state)
 
@@ -639,6 +657,7 @@ def _inspect_plaintext(c, p, state, *, expect_guards):
                 or (not expect_guards and guard is not None)):
             raise m.TransitionFailure('writer_fence_changed', p.operation_id)
         facts = m._facts(c, model)
+        m._check_public_slots(c, p, model, facts=facts)
         expected = model['source_schema']
         if expect_guards:
             expected = {**expected, 'relation': {**expected['relation'], 'user_triggers': True}}
@@ -765,7 +784,9 @@ def _assert_removed(c, p):
     if leftover or functions:
         raise m.TransitionFailure('retained_cryptalis_objects', p.operation_id)
     for model in p.document['lock']['models']:
-        differences = _metadata_diff(model['source_schema'], m._facts(c, model))
+        facts = m._facts(c, model)
+        m._check_public_slots(c, p, model, facts=facts)
+        differences = _metadata_diff(model['source_schema'], facts)
         metadata = m._expected_source_metadata(p, model)
         if m._observed_source_metadata(c, p, model) != metadata:
             differences.append('source_metadata')

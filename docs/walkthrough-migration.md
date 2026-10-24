@@ -64,7 +64,9 @@ Explicit `verify` adds a pass. The pause estimate excludes extra passes, drain, 
 
 Plain reads continue during verification; writes and locking reads wait. DDL can pause reads after its lock is granted.
 Strong locks retry three 100 ms attempts with 50 ms gaps; exhaustion reports `table_lock_busy_retry`. Other lock waits retain the 5 s default.
-Switch drops the original column and renames the ciphertext shadow. There is no live plaintext rollback mirror.
+The default switch drops the original column and renames the ciphertext shadow.
+The [explicit public-slot layout](#select-public-slot-preservation) converts the original
+attribute instead. Neither layout keeps a live plaintext rollback mirror.
 **Plaintext-at-rest remains possible:** dropped-column bytes can remain in heap tuples, WAL, snapshots, and backups.
 `DROP COLUMN` is not erasure ([PostgreSQL 16](https://www.postgresql.org/docs/16/sql-altertable.html)). Retain recovery dependencies until explicit finalization.
 The separate decrypt-back path restores current values. See [lifecycle](lifecycle.md#deprotect-and-remove).
@@ -892,6 +894,23 @@ also passes. The
 [lifecycle contract](lifecycle.md#owned-sequence-preservation-and-restored-identity-2026-10-24),
 [format decision](decisions.md#owned-sequence-metadata-and-restored-identity-2026-10-24)
 and [status](status.md#owned-sequence-preservation-and-restore-2026-10-24) define the current scope.
+
+## Select public-slot preservation
+
+Pass `layout="preserve-public-slots/v1"` to `compile_protection()` or `migration.plan()`.
+Deploy lock/v6 and restore/v3 readers first. Keep the complete restore/v3 binding
+after adoption. Attachment, reverse and rotation derive the layout from the lock.
+Do not treat a previous lock as an opt-in. Keep source artifacts and host pins unchanged.
+
+Budget the heap rewrite, index work and native lock drain separately. Host
+row-rate and WAL estimates exclude these costs. Retain the existing maintenance
+approval and writer exclusion. Repair slot or catalog drift before retry.
+Source TEXT/VARCHAR and installed sequence-bearing fresh-target controls pass.
+The installed three-field SQLModel lifecycle and legacy compatibility profiles
+also pass. The full source regression passes. The original three-field application
+still needs fresh-v6/direct-binding qualification. Earlier formats retain DROP/RENAME behavior.
+See the [lifecycle contract](lifecycle.md#public-column-slot-layout-2026-10-24)
+and [recorded evidence](status.md#public-column-slot-preservation-2026-10-24).
 
 ## Measured throughput
 
