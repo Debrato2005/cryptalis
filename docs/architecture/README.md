@@ -530,7 +530,7 @@ SQL NULL stays SQL NULL. Boolean equality terms remain unadmitted.
 The internal integer candidate also uses context/v2. Its pinned codecs encode
 signed int2/int4/int8 values as 2/4/8 big-endian bytes. All other CF1 authenticated
 context and nonce rules remain unchanged. Full integer admission remains pending;
-see the [source checkpoint](../status.md#integer-storage-source-checkpoint-2026-10-24).
+see the [installed checkpoint](../status.md#integer-installed-lifecycle-checkpoint-2026-10-24).
 For equality, the stable field UUID identifies the search domain. Crypto implementation and independent vectors belong to slice 2.
 
 `WriterInventory` requires `complete=True` and a nonempty inventory for each protected table.

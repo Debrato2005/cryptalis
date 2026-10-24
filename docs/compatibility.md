@@ -197,7 +197,7 @@ See [native VARCHAR mappings](walkthrough-migration.md#native-varchar-mappings).
 
 ## Internal integer storage candidate
 
-Native signed int2/int4/int8 mappings now have bounded storage-only source checks.
+Native signed int2/int4/int8 mappings have bounded storage-only source and installed checks.
 They require exact SmallInteger/Integer/BigInteger types and Python int or SQL NULL.
 Bool, custom hooks, domains, width mismatches and coercions refuse. Protected
 integer predicates, ordering, arithmetic, aggregates, joins and defaults remain
@@ -207,7 +207,7 @@ Native prepared-plan selection controls when an overflow fails. Public bound
 coercion constants preserve custom/generic timing, stale-row behavior and earlier
 INSERT constraints without private numeric binds. Range failures retain typed
 IntegerRangeExceeded and SQLSTATE 22003. Full type admission remains pending;
-see the [checkpoint](status.md#integer-storage-source-checkpoint-2026-10-24).
+see the [checkpoint](status.md#integer-installed-lifecycle-checkpoint-2026-10-24).
 
 ## Optional SQLModel bridge
 

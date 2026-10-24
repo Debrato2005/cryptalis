@@ -1093,7 +1093,7 @@ The [release gate](../ENGINEERING_PLAYBOOK.md#release-gate) remains mandatory.
 
 ## Internal storage-only integer boundary
 
-**IMPLEMENTED, bounded source checks:** signed fixed-width integer codecs use
+**IMPLEMENTED, bounded source and installed checks:** signed integer codecs use
 context/v2 and the existing CF1 authentication contract. No search or order terms
 follow. Exact width and codec identity survive authentication, rotation and
 restore. SQL NULL remains visible. Public coercion constants preserve measured
@@ -1103,6 +1103,7 @@ Custom mapping hooks, domains, width mismatches and Python coercions refuse.
 The source checkpoint covers native failure order, async/savepoint recovery,
 process interruption, tamper refusal, both layouts and native removal. These
 checks do not qualify a provider or replace independent composition review.
-All six capability gates remain unpassed. See the
-[checkpoint](status.md#integer-storage-source-checkpoint-2026-10-24) and
+All six capability gates remain unpassed. The installed wheel also passes all
+six integer width/layout fresh-cluster journeys. See the
+[checkpoint](status.md#integer-installed-lifecycle-checkpoint-2026-10-24) and
 [contract](decisions.md#storage-only-postgresql-integer-contract-2026-10-24).

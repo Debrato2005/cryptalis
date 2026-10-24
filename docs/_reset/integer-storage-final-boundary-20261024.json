@@ -1,0 +1,374 @@
+{
+  "scope": "Bounded integer source and actual installed lifecycle qualification; no capability-admission or production-gate promotion.",
+  "source_manifest": {
+    "path": "docs/_reset/integer-source-regression-20261024.json",
+    "sha256": "08fd2f9f5b727ce00a889650a538bad16670d92450cdc17f36a079d8d8858d98",
+    "member": "source_test_sha256",
+    "python_files": 226
+  },
+  "source_counts": {
+    "passed": 233
+  },
+  "installed_receipt": {
+    "path": "docs/_reset/integer-installed-regression-20261024.json",
+    "sha256": "25742c1ef7651d499a061e9fbd52317faa2f20608e0574f8b15c6c8ff9da2ea0"
+  },
+  "installed_counts": {
+    "passed": 663
+  },
+  "source_fresh_receipts": [
+    {
+      "path": "docs/_reset/fresh-cluster-export-20261024-68.json",
+      "sha256": "4d9ab6b03103aa83dfcdd369571ee5d0e7ba1e6f67aaf45151c1e0b73adab7a2"
+    },
+    {
+      "path": "docs/_reset/fresh-cluster-restore-20261024-67.json",
+      "sha256": "c81c00303b8e1e1688699d9a996204e3a54530f32eca04148a0a72f499ae39da"
+    },
+    {
+      "path": "docs/_reset/fresh-cluster-export-20261024-69.json",
+      "sha256": "fd0ec19988c1bcf545aca1d62770ee255891ccf5368a9cfd7ece8dec748c0061"
+    },
+    {
+      "path": "docs/_reset/fresh-cluster-restore-20261024-68.json",
+      "sha256": "8f339d8285dcee04eb363e7e6bcc9ceedfd856f42df23988f008bc4767cf9264"
+    }
+  ],
+  "installed_fresh_archive": {
+    "path": "docs/_reset/integer-installed-fresh-receipts-20261024.tar.gz",
+    "sha256": "b759bec3f265502b3d6270e3a60c4845d758c3c4df59705f686c6e25ce425246"
+  },
+  "installed_fresh_profiles": [
+    {
+      "bits": 16,
+      "public_slots": false,
+      "workdir": "/tmp/cryptalis-integer-installed-fresh-16-0-20261024",
+      "receipts": [
+        {
+          "member": "docs/_reset/fresh-cluster-export-20261024-66.json",
+          "sha256": "b7b71467d4acd9136d9c2f86bc49a3b8228d8df2a4b3aa59bc4e1e9e68239b20",
+          "counts": {
+            "passed": 1
+          },
+          "elapsed_seconds": 1.9164404119946994,
+          "preflight": {
+            "select_1_each": "passed",
+            "sha256_prefixes": [
+              "05362d31",
+              "ff897c9a"
+            ]
+          },
+          "base_revision": "0e9de3092821d6a27c057ec0face8435c454763d",
+          "fixing_revision": "worktree-b0eed6e7537a9d0f"
+        },
+        {
+          "member": "docs/_reset/fresh-cluster-restore-20261024-65.json",
+          "sha256": "f1856c1e3337c705e2fe27a56a35800d7c1278942194024178bbcf12c3cec1da",
+          "counts": {
+            "passed": 1
+          },
+          "elapsed_seconds": 1.717455289006466,
+          "preflight": {
+            "select_1_each": "passed",
+            "sha256_prefixes": [
+              "20d05241",
+              "ab53d6bd"
+            ]
+          },
+          "base_revision": "0e9de3092821d6a27c057ec0face8435c454763d",
+          "fixing_revision": "worktree-b0eed6e7537a9d0f"
+        }
+      ],
+      "dump_sha256": "d8111a78dc1566b929e2d2e798ce2b2b9610203100ef964542662eeb92c4ec80",
+      "journey_sha256": "5827e8458cd1d1fc0a32ac5044d2b6d6d643dcf6f37bf73cf885dfa42ea0c67e"
+    },
+    {
+      "bits": 16,
+      "public_slots": true,
+      "workdir": "/tmp/cryptalis-integer-installed-fresh-16-1-20261024",
+      "receipts": [
+        {
+          "member": "docs/_reset/fresh-cluster-export-20261024-67.json",
+          "sha256": "30d50ff4b06e7e6025f6c70bd36cebe6d71e95af285f643b777539895632067c",
+          "counts": {
+            "passed": 1
+          },
+          "elapsed_seconds": 2.737062950996915,
+          "preflight": {
+            "select_1_each": "passed",
+            "sha256_prefixes": [
+              "05362d31",
+              "ff897c9a"
+            ]
+          },
+          "base_revision": "0e9de3092821d6a27c057ec0face8435c454763d",
+          "fixing_revision": "worktree-b0eed6e7537a9d0f"
+        },
+        {
+          "member": "docs/_reset/fresh-cluster-restore-20261024-66.json",
+          "sha256": "189f45fd5e10f5553e0c62402aa852ce7307e6267b8e05f41140f99280dff51e",
+          "counts": {
+            "passed": 1
+          },
+          "elapsed_seconds": 2.2900587760086637,
+          "preflight": {
+            "select_1_each": "passed",
+            "sha256_prefixes": [
+              "90582f80",
+              "e4c87ec5"
+            ]
+          },
+          "base_revision": "0e9de3092821d6a27c057ec0face8435c454763d",
+          "fixing_revision": "worktree-b0eed6e7537a9d0f"
+        }
+      ],
+      "dump_sha256": "bb61d1938da3d76d378e90f5dba602f3e1189d2106336ef331d853df18315043",
+      "journey_sha256": "3831516e50e0c9011e19fb7c4fcef1c4bb629063136d21530151369a821f0383"
+    },
+    {
+      "bits": 32,
+      "public_slots": false,
+      "workdir": "/tmp/cryptalis-integer-installed-fresh-32-0-20261024",
+      "receipts": [
+        {
+          "member": "docs/_reset/fresh-cluster-export-20261024-70.json",
+          "sha256": "8bb927a1874bd801438e25ab26f3061c3892f883f8d62c40e8f1443deb9e9b13",
+          "counts": {
+            "passed": 1
+          },
+          "elapsed_seconds": 2.393924155010609,
+          "preflight": {
+            "select_1_each": "passed",
+            "sha256_prefixes": [
+              "05362d31",
+              "ff897c9a"
+            ]
+          },
+          "base_revision": "0e9de3092821d6a27c057ec0face8435c454763d",
+          "fixing_revision": "worktree-b0eed6e7537a9d0f"
+        },
+        {
+          "member": "docs/_reset/fresh-cluster-restore-20261024-69.json",
+          "sha256": "27b1a85e53ba26aebe77367274906fe0f5df4a042436b574dc2bd394bcee9a0d",
+          "counts": {
+            "passed": 1
+          },
+          "elapsed_seconds": 2.150463108002441,
+          "preflight": {
+            "select_1_each": "passed",
+            "sha256_prefixes": [
+              "bc0f45e4",
+              "07aa9159"
+            ]
+          },
+          "base_revision": "0e9de3092821d6a27c057ec0face8435c454763d",
+          "fixing_revision": "worktree-b0eed6e7537a9d0f"
+        }
+      ],
+      "dump_sha256": "2c83058f621e87f9b82413fe750c676289269127b637ecb2672bd0a96b839709",
+      "journey_sha256": "789e086407e23fb4dbb7314945326ed02add9856a7e9bc24bd5f971dd98455e7"
+    },
+    {
+      "bits": 32,
+      "public_slots": true,
+      "workdir": "/tmp/cryptalis-integer-installed-fresh-32-1-20261024",
+      "receipts": [
+        {
+          "member": "docs/_reset/fresh-cluster-export-20261024-71.json",
+          "sha256": "363a46acf4d0603da4c9fd25a550521969e229b30e7a4c08dc94f25aa2382798",
+          "counts": {
+            "passed": 1
+          },
+          "elapsed_seconds": 3.3059495629859157,
+          "preflight": {
+            "select_1_each": "passed",
+            "sha256_prefixes": [
+              "05362d31",
+              "ff897c9a"
+            ]
+          },
+          "base_revision": "0e9de3092821d6a27c057ec0face8435c454763d",
+          "fixing_revision": "worktree-b0eed6e7537a9d0f"
+        },
+        {
+          "member": "docs/_reset/fresh-cluster-restore-20261024-70.json",
+          "sha256": "24cd8c866c2b83e5c1e91f0bb1b9ccd97ccb32610d8a61ff29b2293ad1fb9863",
+          "counts": {
+            "passed": 1
+          },
+          "elapsed_seconds": 1.9735189549974166,
+          "preflight": {
+            "select_1_each": "passed",
+            "sha256_prefixes": [
+              "55d1febb",
+              "ac44727e"
+            ]
+          },
+          "base_revision": "0e9de3092821d6a27c057ec0face8435c454763d",
+          "fixing_revision": "worktree-b0eed6e7537a9d0f"
+        }
+      ],
+      "dump_sha256": "244841329a4a292ab09b0dde45e7edd5d5ae3a3804d17835ccda47fd55c5b851",
+      "journey_sha256": "5c43f6c09c18fb7abac674fd430ba740d3817b5a0e410143cabf05e0e16ef530"
+    },
+    {
+      "bits": 64,
+      "public_slots": false,
+      "workdir": "/tmp/cryptalis-integer-installed-fresh-64-0-20261024",
+      "receipts": [
+        {
+          "member": "docs/_reset/fresh-cluster-export-20261024-72.json",
+          "sha256": "61b827d06495dc4137a85c1f6d4269ae861861004e289a173c7e4421e5aabd65",
+          "counts": {
+            "passed": 1
+          },
+          "elapsed_seconds": 2.708900675002951,
+          "preflight": {
+            "select_1_each": "passed",
+            "sha256_prefixes": [
+              "05362d31",
+              "ff897c9a"
+            ]
+          },
+          "base_revision": "0e9de3092821d6a27c057ec0face8435c454763d",
+          "fixing_revision": "worktree-b0eed6e7537a9d0f"
+        },
+        {
+          "member": "docs/_reset/fresh-cluster-restore-20261024-71.json",
+          "sha256": "6d83e6214b27ffbbe7de4ca558b92c9708c919a2443b1af662cb6cbde8f6791a",
+          "counts": {
+            "passed": 1
+          },
+          "elapsed_seconds": 2.241866986005334,
+          "preflight": {
+            "select_1_each": "passed",
+            "sha256_prefixes": [
+              "8ceea132",
+              "d95446a9"
+            ]
+          },
+          "base_revision": "0e9de3092821d6a27c057ec0face8435c454763d",
+          "fixing_revision": "worktree-b0eed6e7537a9d0f"
+        }
+      ],
+      "dump_sha256": "03c94f21975dfaa3029280cd0132b8d13fcef7e984d56d1a44f27915d392e401",
+      "journey_sha256": "dc52ce27fc5451aecbf91b81fbbc4e90ac2d7bc9cf48d86ce16534bd94e13ec5"
+    },
+    {
+      "bits": 64,
+      "public_slots": true,
+      "workdir": "/tmp/cryptalis-integer-installed-fresh-64-1-20261024",
+      "receipts": [
+        {
+          "member": "docs/_reset/fresh-cluster-export-20261024-73.json",
+          "sha256": "249a9203c7d931db743ac7a6d09bd95cd1b6631382e78c4fa2d7a0ad2ac3d714",
+          "counts": {
+            "passed": 1
+          },
+          "elapsed_seconds": 2.657474050996825,
+          "preflight": {
+            "select_1_each": "passed",
+            "sha256_prefixes": [
+              "05362d31",
+              "ff897c9a"
+            ]
+          },
+          "base_revision": "0e9de3092821d6a27c057ec0face8435c454763d",
+          "fixing_revision": "worktree-b0eed6e7537a9d0f"
+        },
+        {
+          "member": "docs/_reset/fresh-cluster-restore-20261024-72.json",
+          "sha256": "c7dedd0a5545bdafce8e45d6d70f1bd677755954dd0e38f3439caeb1e6c05db7",
+          "counts": {
+            "passed": 1
+          },
+          "elapsed_seconds": 2.3013671789958607,
+          "preflight": {
+            "select_1_each": "passed",
+            "sha256_prefixes": [
+              "ad4e7485",
+              "4a2a4da6"
+            ]
+          },
+          "base_revision": "0e9de3092821d6a27c057ec0face8435c454763d",
+          "fixing_revision": "worktree-b0eed6e7537a9d0f"
+        }
+      ],
+      "dump_sha256": "1c91679ccbca94beb2d29336b0cd9eb34c571603cc2f7cf80f3802615d522bb0",
+      "journey_sha256": "654ee1451fcac9ee25c5a9725d2daf358cfd777891b481c593abe242a291e05d"
+    },
+    {
+      "bits": 0,
+      "public_slots": false,
+      "workdir": "/tmp/cryptalis-integer-installed-fresh-0-0-20261024",
+      "receipts": [
+        {
+          "member": "docs/_reset/fresh-cluster-export-20261024-74.json",
+          "sha256": "c06225207def7c6ac8bbcf8a5758fb8648245ea4ee9f86f6b1aa8c334527d50d",
+          "counts": {
+            "passed": 1
+          },
+          "elapsed_seconds": 2.2014143130218145,
+          "preflight": {
+            "select_1_each": "passed",
+            "sha256_prefixes": [
+              "05362d31",
+              "ff897c9a"
+            ]
+          },
+          "base_revision": "0e9de3092821d6a27c057ec0face8435c454763d",
+          "fixing_revision": "worktree-b0eed6e7537a9d0f"
+        },
+        {
+          "member": "docs/_reset/fresh-cluster-restore-20261024-73.json",
+          "sha256": "4f1f2f4bb22a65d21a6ee7f04151f0f508164987fe7e51ab97eef2f4b4a48653",
+          "counts": {
+            "passed": 1
+          },
+          "elapsed_seconds": 1.7848239809973165,
+          "preflight": {
+            "select_1_each": "passed",
+            "sha256_prefixes": [
+              "41e31469",
+              "d3e79456"
+            ]
+          },
+          "base_revision": "0e9de3092821d6a27c057ec0face8435c454763d",
+          "fixing_revision": "worktree-b0eed6e7537a9d0f"
+        }
+      ],
+      "dump_sha256": "4e05c132b47c002dc4753bffce7a656a43652e63392f1bc9da1b9f806310c9b7",
+      "journey_sha256": "cb648d6841ad3e10792d8c436e108ca723bb3be08042c4a6d270fede60ca196e"
+    }
+  ],
+  "current_postgresql_runs": 20,
+  "every_current_run_has_identical_source_manifest": true,
+  "release_receipt": {
+    "path": "docs/_reset/integer-storage-final-release-20261024.json",
+    "sha256": "a3f403413eba9fb994e1ce4dd5bc453bbab2ccfa125788ffaec28d54fb24b590"
+  },
+  "external_install_evidence": {
+    "path": "/tmp/cryptalis-integer-storage-final-install-evidence-20261024.json",
+    "sha256": "71905e3f8b3defbe09d15151f8cd5e85f7425ebf0ef8118b5cef3ad687301708"
+  },
+  "wheel_sha256": "13cba8a954426c98d5618a4a24e42e2a3f4723bfbd4f2e6ba2a243f4ba70100f",
+  "construction_history": {
+    "path": "docs/_reset/integer-construction-history-20261024.json",
+    "sha256": "b5cad4910217bbe764bca928a583ad37b882a0cd8ec19c2aff7d5845ea3f3ef3"
+  },
+  "documents": {
+    "docs/status.md": "22d1cfd7344f88e6782b024ace03cb4c0377fa437fd03c4c788cac392c0fd246",
+    "docs/BUILD_CHECKLIST.md": "fe889c121646ec3234f5f79a3f9043a2d411978d6c487032aac5a8c92ee783d9",
+    "docs/architecture/README.md": "f1ca7da6f5132e27504fab3d2f5af674d0635c26d69158aac1e509063ff4c086",
+    "docs/security.md": "d2f97ddec0787b619c2dc0458aeb04f64c7def8fbceb8a9be6175fc7f9f81d32",
+    "docs/walkthrough-migration.md": "177869411733af5ffb20f7329017a19de65e6f456c9d1d109ddfff05e0d57bb8",
+    "docs/decisions.md": "8f10e8052bbda0bf19b13e3ceec7f03eeac61175ce3da7a2eb9e2fd7bedb44e4",
+    "docs/compatibility.md": "3652ad1267fda4e6eb4a78ea52e3e0d930e0345554afaf338ffad9237ff96efd"
+  },
+  "limits": [
+    "Internal candidate; all six integer admission gates unpassed",
+    "All 34 objective states unchanged; all seven production gates UNKNOWN",
+    "No complete full-suite, original-application integer, live AWS or independent human qualification",
+    "Protected integer defaults and query operators remain unadmitted; workload costs require measurement and approval"
+  ]
+}
