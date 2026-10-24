@@ -10,6 +10,40 @@ No PostgreSQL/provider/runtime cell, production key provider, independent review
 VERIFIED below refers only to the named checks and their exact revisions.
 All other contract and promotion requirements are SPECIFIED. All seven full gates remain UNKNOWN.
 
+## Original HTTP application online adoption: 2026-10-24
+
+**VERIFIED, source and installed cells:** the unchanged 26-file FastAPI/SQLModel
+application completes initial online protection and current-data native exit.
+An original signup request commits while a backfill batch holds a row lock.
+The complete original HTTP/JWT and local-mail workload also runs during capture.
+Native writes include a lower UUID, NULL and delete/reinsert before catch-up.
+
+The final fence keeps source reads available and refuses source writes. Cutover
+revokes source access on existing and fresh connections, then publishes the
+host-retained activation artifact. Original target-role HTTP routes, encrypted
+email equality/IN, native uniqueness races and rollback pass. Full-name storage
+and native Boolean values retain their types. All mapped tables match the
+native snapshot after activation and the latest protected snapshot after reverse.
+Native catalog definitions and public column slots also match after removal.
+A fresh original HTTP child refuses Cryptalis imports and exercises current credentials.
+
+Each run observes ten supplied SELECT structures and twelve loopback SMTP messages
+across native, capture and protected phases. The source and installed workflows
+pass in 11.29 and 9.57 pytest seconds. Both retain all 237 Python hashes.
+The existing Starlette/AnyIO deprecation warning remains recorded.
+The [qualification boundary](_reset/online-http-boundary-20261024.json) pins the
+raw receipts, unchanged application hashes and reused installed wheel.
+All 42 product modules match the earlier qualified artifact. No rebuild is needed.
+
+Use `scripts/online_qualification.py --workdir NEW_DIRECTORY --http` with
+`CRYPTALIS_SQLMODEL_HTTP_SOURCE` set to the pinned snapshot. The harness creates
+an isolated PostgreSQL 16 cluster and reloads/probes three private role files.
+The new profile repeats no backup or rotation workflow. Those existing receipts
+retain their separate boundaries. Online fresh-cluster recovery, broader deployment
+fencing, pause budgets, live KMS and independent review remain open.
+All 34 objectives remain in scope. All seven production gates remain UNKNOWN.
+
+
 ## Bounded online initial protection: 2026-10-24
 
 **VERIFIED, installed cell:** the reproducible wheel passes 103 affected PostgreSQL

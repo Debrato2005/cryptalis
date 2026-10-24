@@ -15,6 +15,8 @@ from fresh_cluster_qualification import start_cluster, stop_cluster, provision, 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--workdir', type=Path, required=True)
+    parser.add_argument('--http', action='store_true',
+                        help='Run the pinned original HTTP application through online capture and native exit.')
     parser.add_argument('pytest_args', nargs=argparse.REMAINDER)
     args = parser.parse_args()
     args.workdir.mkdir(mode=0o700, parents=True, exist_ok=False)
@@ -29,12 +31,16 @@ def main():
         selected = args.pytest_args
         if selected[:1] == ['--']: selected = selected[1:]
         if not selected:
-            selected = ['tests/test_online_protection.py','tests/test_online_recovery.py','tests/test_online_multitable.py','tests/test_online_access.py',
-                        'tests/test_postgres_source_role.py','-q']
+            selected = (['tests/profile_online_http_application.py','-q'] if args.http else
+                        ['tests/test_online_protection.py','tests/test_online_recovery.py','tests/test_online_multitable.py',
+                         'tests/test_online_access.py','tests/test_postgres_source_role.py','-q'])
         command = [sys.executable,str(root/'scripts/test_postgres.py'),'--source-role',
                    '--scope','Isolated PostgreSQL 16 online protection: three authenticated roles',
                    '--receipt',str(args.workdir/'receipt.json'),'--',*selected]
-        return subprocess.run(command,cwd=root,env=dict(os.environ,HOME=str(home),CRYPTALIS_ONLINE_RESTORE_DATABASE='cryptalis_online_native')).returncode
+        environment = dict(os.environ,HOME=str(home),CRYPTALIS_ONLINE_RESTORE_DATABASE='cryptalis_online_native')
+        if args.http:
+            environment['CRYPTALIS_ONLINE_HTTP_REPORT'] = str(args.workdir/'application.json')
+        return subprocess.run(command,cwd=root,env=environment).returncode
     finally:
         if cluster is not None: stop_cluster(cluster)
 
