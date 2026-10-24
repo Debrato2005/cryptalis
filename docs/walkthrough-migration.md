@@ -130,7 +130,7 @@ Call `seal` after catch-up. Save its returned successor artifact durably before 
 
 Before switch, `abort` removes capture objects and shadows. It preserves all committed native edits, whether the operation fenced writers or not. After switch, use the existing current-data reverse transition to return to plaintext. The access contract records the original source role for that transition. Keep P and A for rotations and restored-target operations. Their successors retain the same access contract. Finish with the existing package-free native exit.
 
-Terminal verification scans current data. Index creation, public-slot conversion, lock drain, and host publication can extend the pause. Measure and approve these costs. This path makes no global near-zero-downtime claim. Its installed verification remains pending, and all seven production gates remain UNKNOWN.
+Terminal verification scans current data. Index creation, public-slot conversion, lock drain, and host publication can extend the pause. Measure and approve these costs. This path makes no global near-zero-downtime claim. Its source and installed evidence appears in [status](status.md#bounded-online-initial-protection-2026-10-24). All seven production gates remain UNKNOWN.
 
 ## Initialize an explicit declaration through the CLI
 

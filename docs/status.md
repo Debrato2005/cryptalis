@@ -12,6 +12,26 @@ All other contract and promotion requirements are SPECIFIED. All seven full gate
 
 ## Bounded online initial protection: 2026-10-24
 
+**VERIFIED, installed cell:** the reproducible wheel passes 103 affected PostgreSQL
+checks in 69.42 pytest seconds, including the complete 15-check online matrix.
+The source checkpoint is `aa2648f`. Both runs retain all 236 Python hashes.
+The installed run repeats concurrent native writes, four committed-process kills,
+six rotation successors, actual dump/restore, adopted access authority and current-data
+native exit. It uses three freshly probed roles on an isolated PostgreSQL 16 cluster.
+
+The release check proves reproducibility, wheel RECORD, SBOM, CLI and 46 installed
+files across 42 product modules. All 72 dependency pins stay unchanged.
+Wheel SHA-256 is `4b588f5af8c528257209a39bd6558855a533ba0fb3fdacfa42f0b561b2631982`.
+The existing uv/build-backend version warning remains recorded.
+The [final boundary](_reset/online-final-boundary-20261024.json) binds the source,
+installed receipt, release inputs and documentation. The previous installed reader
+refuses the new activation format before database or provider access.
+
+OBJ-LIFE-03 advances from SPECIFIED to PARTIAL. All 34 objectives remain in scope,
+and all seven production gates remain UNKNOWN. An unchanged independent application,
+a genuine fresh-cluster online restore, live KMS, measured pause budgets and independent
+security review remain required. This is bounded product evidence, not release qualification.
+
 **VERIFIED, bounded source cell:** 480 affected checks pass through
 `scripts/online_qualification.py` in 238.13 pytest seconds. The wrapper reloads
 and probes all three private role URLs. All 236 Python hashes remain stable.
@@ -32,7 +52,7 @@ Restore remains on the same cluster with in-process development custody.
 The [source receipt](_reset/online-source-verification-20261024.json) pins the
 verified checkout. The [construction history](_reset/online-construction-history-20261024.json)
 retains initial fixture and harness failures. No mandatory probe failed.
-Installed-artifact verification remains pending at this source checkpoint.
+This source checkpoint preceded the installed qualification above.
 
 **IMPLEMENTED:** `cryptalis.online` permits native application writes during
 initial TEXT/VARCHAR backfill on declared single-tenant tables. It records

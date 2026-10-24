@@ -1,0 +1,12 @@
+{
+  "format": "cryptalis.online-historical-reader-check/v1",
+  "interpreter": "/tmp/cryptalis-query-preflight-final-py313-20261024/bin/python",
+  "wheel_sha256": "f3fa093c5203ee7344ed4389d2616da0bab385836328b357c5bf582059ab6274",
+  "verified_old_modules": 40,
+  "artifact_format": "cryptalis.transition/v8",
+  "artifact_sha256": "1bd347ce48cd88769168506582f67eb322552ce3a70076d59468551cc6b6af13",
+  "result": "invalid_plan",
+  "database_access": "NOT_PERFORMED",
+  "provider_access": "NOT_PERFORMED",
+  "scope": "Actual preceding installed reader refuses the new initial online activation format; no other format or runtime gate claim."
+}

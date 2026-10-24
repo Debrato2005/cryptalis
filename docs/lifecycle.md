@@ -4,7 +4,7 @@
 plus an in-place decrypt-back and additive-removal path.
 Root rewrap, payload-key rotation, and search-key rotation have bounded cutover and shared publication paths.
 Generation preparation stages and verifies encrypted chunks, inspects progress, and supports cancellation before switch.
-The source includes a bounded online initial-protection API. Installed qualification remains pending.
+The source and installed wheel include a bounded online initial-protection API. [Status](status.md#bounded-online-initial-protection-2026-10-24) records its exact evidence.
 The protection engine verifies and switches in one transaction; saved verification checkpoints require a fresh pass on resume.
 Plain reads continue during verification. Writes and locking reads wait; schema DDL can pause all access.
 VERIFIED paragraphs below describe recorded receipts, not current product qualification. All other requirements remain SPECIFIED.

@@ -1,0 +1,110 @@
+{
+  "format": "cryptalis.online-qualification/v1",
+  "source_revision": "aa2648f69a3046c700b8ad17fd4029e0f55a609c",
+  "source_manifest": {
+    "path": "docs/_reset/online-source-verification-20261024.json",
+    "sha256": "82c76773d922c4400e22339df5d15c18d10b909cb21907cc5be567256179feef",
+    "member": "source_test_sha256",
+    "python_files": 236
+  },
+  "runs": [
+    {
+      "scope": "Isolated PostgreSQL 16 online protection: three authenticated roles",
+      "counts": {
+        "passed": 480
+      },
+      "preflight": {
+        "select_1_each": "passed",
+        "sha256_prefixes": [
+          "b6cf3b44",
+          "f12bb10b",
+          "2a6ef87d"
+        ]
+      },
+      "elapsed_seconds": 238.37616780301323,
+      "source_stability": {
+        "unchanged": true,
+        "changed_paths": []
+      },
+      "sha256": "82c76773d922c4400e22339df5d15c18d10b909cb21907cc5be567256179feef",
+      "path": "docs/_reset/online-source-verification-20261024.json",
+      "archive_member": null
+    },
+    {
+      "scope": "Isolated PostgreSQL 16 online protection: three authenticated roles",
+      "counts": {
+        "passed": 103
+      },
+      "preflight": {
+        "select_1_each": "passed",
+        "sha256_prefixes": [
+          "06a1c420",
+          "6f216cb4",
+          "d830df10"
+        ]
+      },
+      "elapsed_seconds": 69.87673442199593,
+      "source_stability": {
+        "unchanged": true,
+        "changed_paths": []
+      },
+      "sha256": "a87b7c5ecd28ed6a92f87d46162488b5e7dc1e7f3b0f013e157950a8b665aab6",
+      "path": null,
+      "archive_member": "installed-postgres.json"
+    }
+  ],
+  "archive": {
+    "path": "docs/_reset/online-installed-receipts-20261024.tar.gz",
+    "sha256": "4986e8a846bf5058aa178fb354bc9490eb320801122ee283c717b2e809d96df2",
+    "bytes": 12118
+  },
+  "release": {
+    "path": "docs/_reset/online-final-release-20261024.json",
+    "sha256": "8d6e8b633bf4ae16ffbe126ac183a58017965ca41231a79921b9835872b31262",
+    "wheel_sha256": "4b588f5af8c528257209a39bd6558855a533ba0fb3fdacfa42f0b561b2631982",
+    "reproducible": true,
+    "modules": 42,
+    "installed_files": 46,
+    "source_inputs": 47,
+    "exact_dependency_pins": 72,
+    "install_evidence_sha256": "e4191b9eeb3a7726a676d95e9ed28356b7c6a1612e2dfec77b39b5209a504aee"
+  },
+  "historical_reader": {
+    "path": "docs/_reset/online-historical-reader-20261024.json",
+    "sha256": "57b825a178e19ad55cb3033da85964e35e5f9deab3e33fd5eaacbc3116c2f5bb"
+  },
+  "documentation_sha256": {
+    "README.md": "6abd2f83e455446f4facac9958219b7e3654d2c064da98d26c0bd0ffd68c662a",
+    "docs/status.md": "d08f09bdc614a3f388d3e03714c8489b5a421268ec5f3a812110cbd3caeab26c",
+    "docs/BUILD_CHECKLIST.md": "38ce3c2f246eb44346a4d35dc4dd129e47dabc4fe3c852a80264574e16aeb7fc",
+    "docs/decisions.md": "ad6c02d84f8913595f80aec91d9b19a06acb0678fde0b3d9e10830f2dcb656ce",
+    "docs/architecture/README.md": "65829d58355bdd04f324dd3f9e07e07eff1d7811e1b2eff53022da191c92aa6c",
+    "docs/security.md": "857c5a6645a199ad447262e163c72a8082facf1210d0c02d19ad4f10833bb9cb",
+    "docs/walkthrough-migration.md": "7f0ee1990b8bb21108f3f94dde6420686976b565987c9867f00e94944f90ddb9",
+    "docs/lifecycle.md": "8612a95367bc4b268b8cc10b0c373b67fa53a490a9c6827a93cbbc29fc93c05e",
+    "docs/research/capability-matrix.md": "144bbb7c1de3dfbc195107cc8fa23c094239a5cafe4527b1a423a582f385ae7c"
+  },
+  "objective_change": {
+    "OBJ-LIFE-03": {
+      "before": "SPECIFIED",
+      "after": "PARTIAL"
+    }
+  },
+  "objective_count": 34,
+  "gates": {
+    "G-ADAPTER": "UNKNOWN",
+    "G-CRYPTO": "UNKNOWN",
+    "G-QUERY": "UNKNOWN",
+    "G-LIFECYCLE": "UNKNOWN",
+    "G-PROVIDER": "UNKNOWN",
+    "G-POLICY": "UNKNOWN",
+    "G-RELEASE": "UNKNOWN"
+  },
+  "limitations": [
+    "Synthetic SQLAlchemy fixture; unchanged independent online application not qualified",
+    "Same-cluster second database restore; in-process development custody",
+    "Post-commit process kills do not simulate transport-level lost COMMIT reply",
+    "No near-zero downtime, parallel/adaptive or multi-tenant online qualification",
+    "No live external KMS or independent security review"
+  ]
+}
