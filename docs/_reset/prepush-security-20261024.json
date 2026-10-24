@@ -1,0 +1,171 @@
+{
+  "scope": "Pre-push source preservation audit. No release or deployment qualification.",
+  "implementation_revision": "8b6bccc1b469f51896f84402078e1cfbdc7ceb18",
+  "branch": "integration/textual-reference-admission",
+  "remote": "https://github.com/Debrato2005/cryptalis",
+  "observed_remote_revision": "9c61511bf456ed74f9fd309a906e3d24c33a13aa",
+  "remote_is_ancestor": true,
+  "outgoing_commits_before_checkpoint": 111,
+  "scanner": {
+    "tool": "gitleaks",
+    "release": "v8.30.1",
+    "asset": "gitleaks_8.30.1_linux_x64.tar.gz",
+    "sha256": "551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb",
+    "source": "https://github.com/gitleaks/gitleaks/releases/tag/v8.30.1",
+    "checksum_source": "https://github.com/gitleaks/gitleaks/releases/download/v8.30.1/gitleaks_8.30.1_checksums.txt"
+  },
+  "secret_scans": {
+    "gitleaks-history.json": {
+      "raw_findings": 1431,
+      "rule_ids": [
+        "generic-api-key"
+      ],
+      "classification": {
+        "source_or_fixture_file_digest": 1419,
+        "published_cf1_test_vector": 12
+      },
+      "unclassified": 0,
+      "sha256": "a4e47baababcafa223df55e645c1e24831993f29ca577d9f23600acb59bfd253"
+    },
+    "gitleaks-snapshot.json": {
+      "raw_findings": 1490,
+      "rule_ids": [
+        "generic-api-key"
+      ],
+      "classification": {
+        "source_or_fixture_file_digest": 1478,
+        "published_cf1_test_vector": 12
+      },
+      "unclassified": 0,
+      "sha256": "cccbac035b3091c738cf1436e9b5dcbbf8ec61acdc53460e10ec85b0bd45932a"
+    },
+    "gitleaks-historical-archives.json": {
+      "raw_findings": 187,
+      "rule_ids": [
+        "generic-api-key"
+      ],
+      "classification": {
+        "source_or_fixture_file_digest": 187
+      },
+      "unclassified": 0,
+      "sha256": "5f54f4d49e1a65f433e406859a9fd77c6b16479a0b005aaf56d9c49985916142"
+    }
+  },
+  "secret_verdict": "No credential exposure identified. All Gitleaks matches are exact hexadecimal file digests or published CF1 test vectors; no allowlist or disabled rule used.",
+  "authenticated_literal_uri_control": {
+    "reachable_named_blobs": 2747,
+    "locations": 2,
+    "classification": "Both are the nonconnecting synthetic URL test; no real credentials."
+  },
+  "tracked_inventory": {
+    "files": 1522,
+    "large_files_over_5MiB": 0,
+    "private_configuration_paths": 0,
+    "executable_or_symlink_modes": 0
+  },
+  "integrity": {
+    "git_fsck_exit": 0,
+    "python_AST_files": 239,
+    "release_inputs_unchanged": 47,
+    "installed_modules_unchanged": 42,
+    "whitespace_change": "Remove one trailing blank line from tests/test_online_protection.py; Python AST unchanged."
+  },
+  "dependency_audit": {
+    "schema": {
+      "version": "preview"
+    },
+    "summary": {
+      "audited_packages": 20,
+      "vulnerabilities": 0,
+      "adverse_statuses": 0
+    },
+    "vulnerabilities": [],
+    "adverse_statuses": []
+  },
+  "application_qualification_dependency_audit": {
+    "packages": 72,
+    "findings": [
+      {
+        "package": "starlette",
+        "version": "0.46.2",
+        "advisories": [
+          "GHSA-2c2j-9gv5-cj73",
+          "GHSA-7f5h-v6xp-fcq8",
+          "GHSA-82w8-qh3p-5jfq",
+          "GHSA-86qp-5c8j-p5mr",
+          "GHSA-jp82-jpqv-5vv3",
+          "GHSA-wqp7-x3pw-xc5r",
+          "GHSA-x746-7m8f-x49c",
+          "PYSEC-2026-161",
+          "PYSEC-2026-1941",
+          "PYSEC-2026-1942",
+          "PYSEC-2026-2280",
+          "PYSEC-2026-2281",
+          "PYSEC-2026-248",
+          "PYSEC-2026-249"
+        ]
+      }
+    ],
+    "boundary": "Starlette0.46.2 belongs to the optional pinned independent application qualification cell. It is absent from the20-package project lock audit. Production application qualification remains blocked; no pins changed during this freeze."
+  },
+  "verification_reused": {
+    "boundary": "docs/_reset/online-tenants-boundary-20261024.json",
+    "source_passed": 452,
+    "installed_online_passed": 18,
+    "installed_original_http_export_passed": 5,
+    "installed_original_http_fresh_recovery_passed": 1,
+    "wheel_sha256": "6ddd45793f3f0dafa53fd33b5b29f10350b2ff3428c6b90657a908e8bdec9e89",
+    "reproducible": true
+  },
+  "unavailable_checks": [
+    "Ruff and Bandit were not installed; no fresh tool-specific lint or SAST pass is claimed."
+  ],
+  "local_preservation": {
+    "worktrees": 49,
+    "dirty_historical_worktrees": [
+      "/tmp/cryptalis-parallel-orm-20261023",
+      "/tmp/cryptalis-sqlmodel-red-worktree-20261023"
+    ],
+    "all_refs_bundle": "/tmp/cryptalis-prepush-20261024/cryptalis-all-refs.bundle",
+    "all_refs_bundle_sha256": "f77b41c1eb04101096df0439cf08b6ccd10338d26e495c1409a2e3f22f70dc5b",
+    "bundle_refs": 115,
+    "bundle_verified": true,
+    "private_audit_directory": "/tmp/cryptalis-prepush-20261024"
+  },
+  "continuation": "No implementation started for the next owner-scoped Item HTTP profile. Reuse original JWT/account authorization before tenant selection; preauthorize Item identity/owner metadata before decrypting; refuse global admin Item and User DELETE cascade paths until separately admitted.",
+  "production_gates": {
+    "G-ADAPTER": "UNKNOWN",
+    "G-CRYPTO": "UNKNOWN",
+    "G-QUERY": "UNKNOWN",
+    "G-LIFECYCLE": "UNKNOWN",
+    "G-PROVIDER": "UNKNOWN",
+    "G-POLICY": "UNKNOWN",
+    "G-RELEASE": "UNKNOWN"
+  },
+  "operator_state": "PAUSED. Do not resume before the exact user instruction: Continue Cryptalis.",
+  "push_state": "Pending ordinary push and remote readback; this receipt does not claim push success.",
+  "fresh_verification": {
+    "logging_controls": {
+      "passed": 22
+    },
+    "preflight": {
+      "select_1_each": "passed",
+      "sha256_prefixes": [
+        "faf48c82",
+        "388e7aa5",
+        "a73e750b"
+      ]
+    },
+    "source_stability": {
+      "unchanged": true,
+      "changed_paths": []
+    },
+    "receipt_sha256": "d60a85519bb8ed3e087177da6614f6d41c803eb95e0846389f031268072ec485",
+    "cli_help_exit": 0,
+    "installed_dependency_check": "73 packages compatible"
+  },
+  "execution_limits": [
+    "Direct pytest was refused by the repository guard before tests; rerun used the mandatory isolated three-role wrapper.",
+    "Default uv cache was read-only; compatibility check passed with an owned temporary cache."
+  ]
+}

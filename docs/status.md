@@ -10,6 +10,16 @@ No PostgreSQL/provider/runtime cell, production key provider, independent review
 VERIFIED below refers only to the named checks and their exact revisions.
 All other contract and promotion requirements are SPECIFIED. All seven full gates remain UNKNOWN.
 
+## Preservation checkpoint and operator pause: 2026-10-24
+
+**PAUSED by the operator.** Resume only after the explicit instruction **Continue Cryptalis**. The last integrated implementation is `8b6bccc`: approved tenant-scoped online capture, restored adoption, all rotations and current-data native exit. Its [qualification boundary](_reset/online-tenants-boundary-20261024.json) retains 452 source checks, 18 installed online checks and the installed original HTTP export/fresh-recovery controls. All 47 release inputs still match the reproducible wheel. The push audit removes one trailing test-file blank line with identical Python AST; it changes no product bytes.
+
+The [pre-push audit](_reset/prepush-security-20261024.json) checks all local Git history, tracked files, staged/local work and all 85 archived receipt members with Gitleaks v8.30.1. Every match is a file digest or published CF1 test vector. No credential exposure was identified. Git object integrity, private-file ignore rules, 239 Python AST parses and the retained build boundary pass. Fresh installed logging-admission controls pass through the mandatory three-role wrapper. The installed CLI and 73-package compatibility check also pass. Ruff and Bandit are unavailable; no fresh tool-specific pass is claimed.
+
+The frozen 20-package project dependency audit reports no advisories. The separate 72-package application-test cell reports Starlette 0.46.2 advisory identifiers. Keep that pinned cell isolated. Refresh and requalify its dependencies before production use. This finding does not qualify a production release. All seven gates remain UNKNOWN.
+
+All 49 worktrees remain preserved. Two historical test worktrees retain local changes; they are excluded from this push. A verified private all-refs bundle and copies of those tests remain under `/tmp/cryptalis-prepush-20261024`. No application-tenant profile was implemented. Future work must validate original JWT/account authority before tenant selection, preauthorize Item owner metadata, and handle global administrator and User DELETE cascade routes explicitly. Development agents are stopped. The final chat report records the confirmed pushed revision.
+
 ## Tenant-scoped online lifecycle: 2026-10-24
 
 **VERIFIED, local source and installed cells:** explicit approved tenant scopes extend online initial protection to tenant-column tables. The v2 preparation artifact binds the complete approved policy set, including empty scopes and fixed table scopes. Planning rejects UUIDs outside the approved policy set before host key lookup. Native membership must also pass the narrower tenant allowlist. Locked expansion rechecks membership before DDL. Native writes reject unknown tenants and preserve the native NULL failure. Backfill uses each row's current tenant and record identity. Scoped uniqueness includes the tenant key. P1 and the v8 activation format remain unchanged.

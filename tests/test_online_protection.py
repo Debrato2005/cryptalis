@@ -433,4 +433,3 @@ def test_capture_and_key_authority_failures_preserve_the_committed_prefix(app):
         online.apply(app.plan,app.owner,keys=keys,pin=app.pin,approval=app.approval,max_chunks=1)
     assert _payloads(app,app.plan)[UUID(int=10)] == before[UUID(int=10)]
     assert online.status(app.plan,app.owner,pin=app.pin) == progress
-

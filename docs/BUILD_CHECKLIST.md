@@ -554,6 +554,8 @@ No objective is complete until its acceptance evidence and applicable gate pass.
   review remain open. All seven qualification gates remain UNKNOWN.
 
 
+Operator pause: development is stopped pending **Continue Cryptalis**. The [preservation audit](status.md#preservation-checkpoint-and-operator-pause-2026-10-24) retains the current verification, dependency finding and continuation point. All 34 objectives remain in scope; all seven production gates remain UNKNOWN.
+
 ## Objective ledger
 
 Requirement text is abbreviated. The full definitions remain in the research
