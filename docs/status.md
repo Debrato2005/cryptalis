@@ -21,9 +21,49 @@ and [competitive capability matrix](research/capability-matrix.md) govern priori
 Progress follows complete real-application journeys and resolved production requirements.
 All seven production gates remain UNKNOWN.
 
+## Original three-field SQLModel fresh adoption: 2026-10-24
+
+**VERIFIED, bounded source and installed journeys:** the unchanged six-file SQLModel
+application completes genuine fresh-cluster adoption with `full_name` VARCHAR,
+`email` search/uniqueness and `is_active` Boolean. Lock/v6 preserves source public
+slots through protection. Restore/v3 records target slots, then direct-binding
+search rotation publishes v7 without an intermediate rewrap. Recorded target
+User/Item OIDs and public slots remain unchanged through original CRUD,
+latest-value removal and an import-denied restart. Source and target OIDs have
+separate evidence. Storage-only `full_name`/`is_active` frames stay byte-exact through search rotation.
+Original email search/uniqueness and Boolean controls pass, with the latest Boolean false after removal.
+
+The source [export](_reset/fresh-cluster-export-20261024-49.json) and
+[target](_reset/fresh-cluster-restore-20261024-48.json) stages each pass one test
+in 2.15 and 3.62 seconds. Installed [export](_reset/fresh-cluster-export-20261024-50.json)
+and [target](_reset/fresh-cluster-restore-20261024-49.json) stages each pass one
+in 1.63 and 3.93 seconds. The [source](_reset/sqlmodel-public-slots-source-application-20261024.json)
+and [installed](_reset/sqlmodel-public-slots-installed-application-20261024.json)
+application receipts retain all six pinned files. All 207 Python hashes remain
+stable and match this test/harness revision.
+
+The source legacy rewrap-first profile passes one
+[export](_reset/fresh-cluster-export-20261024-51.json) in 1.35 seconds and one
+[target test](_reset/fresh-cluster-restore-20261024-50.json) in 2.43 seconds.
+The installed direct-search legacy profile passes one [export](_reset/fresh-cluster-export-20261024-52.json)
+in 1.20 seconds and one [target test](_reset/fresh-cluster-restore-20261024-51.json)
+in 2.80 seconds. Their [source](_reset/sqlmodel-public-slots-legacy-source-application-20261024.json)
+and [installed](_reset/sqlmodel-public-slots-legacy-installed-application-20261024.json)
+application receipts retain the default-layout and restore/v1 boundaries.
+The [final boundary](_reset/sqlmodel-public-slots-final-boundary-20261024.json)
+binds eight PostgreSQL receipts, four application receipts and three documents.
+
+This test-only slice changes three harness/test files. All 36 product modules,
+including ten crypto modules, retain their earlier bytes. It reuses the
+[4025210f8957 wheel](_reset/public-slots-release-20261024.json). The prior full suite
+remains evidence for its recorded checkpoint. No new full run or artifact build
+follows from this application slice. Email admission stays fixture-only with
+explicit single tenancy. This journey adds no HTTP, browser, deployment or
+provider qualification. All seven production gates remain UNKNOWN.
+
 ## Public column slot preservation: 2026-10-24
 
-**VERIFIED, bounded source and installed profiles:** explicit `layout="preserve-public-slots/v1"`
+**VERIFIED, bounded source and installed profiles at `6cb926e`:** explicit `layout="preserve-public-slots/v1"`
 selects lock/v6 through `compile_protection()` or `migration.plan()`. None retains
 the earlier format selection and DROP/RENAME behavior. A previous lock does
 not select the new layout. Invalid values refuse before connections or providers.
@@ -53,13 +93,13 @@ retains one legacy pass and two missing-layout failures. Both
 precede the v6 guard. Source, ACTIVE, paused, restore and terminal checks now
 refuse that dependency before providers or effects.
 
-Current source TEXT without sequences passes one
+At `6cb926e`, source TEXT without sequences passes one
 [export](_reset/fresh-cluster-export-20261024-42.json) in 1.09 seconds and
 [six fresh-target tests](_reset/fresh-cluster-restore-20261024-41.json) in 10.70 seconds.
 TEXT with an owned sequence passes one [export](_reset/fresh-cluster-export-20261024-43.json)
 in 1.48 seconds and [six target tests](_reset/fresh-cluster-restore-20261024-42.json)
-in 12.04 seconds. Both profiles retain 206 stable Python hashes that match
-this worktree. The [current artifact check](_reset/public-slots-release-20261024.json)
+in 12.04 seconds. Both profiles record 206 stable Python hashes at `6cb926e`.
+The [artifact check](_reset/public-slots-release-20261024.json)
 passes reproducible archives, CLI, 36 product modules and 40 installed files
 against 41 current release-source hashes. Source VARCHAR passes one
 [export](_reset/fresh-cluster-export-20261024-44.json) in 1.17 seconds and
@@ -95,16 +135,18 @@ The original SQLModel application also passes its direct-search journey. Its
 [target](_reset/fresh-cluster-restore-20261024-47.json) stages each pass one test
 in 1.10 and 2.88 seconds. The [application receipt](_reset/public-slots-installed-legacy-direct-application-20261024.json)
 keeps the default legacy layout and restore/v1 scope, with six unchanged files.
-All 207 Python hashes remain stable and match this worktree.
+All 207 Python hashes remain stable at `6cb926e`.
 
 The [final full source regression](_reset/public-slots-source-full-20261024.json)
 passes 2,503 tests and 116 subtests in 851.39 seconds, with 16 skips and
 49 known warnings. Two test calls and 14 collection skips account for the skips.
-All 207 Python hashes remain stable and match this worktree. The installed
+All 207 Python hashes remain stable at `6cb926e`. The installed
 294-test and three-field application profiles keep their separate recorded boundaries.
 The [final boundary](_reset/public-slots-final-boundary-20261024.json) binds 17 current
 receipts, four historical receipts, four application receipts and seven documents.
-The original three-field application still needs its fresh-v6/direct-binding journey.
+The original three-field journey remained unverified at that checkpoint. Its
+[later application evidence](#original-three-field-sqlmodel-fresh-adoption-2026-10-24)
+has a separate test-only boundary.
 All seven production gates remain UNKNOWN. See the
 [lifecycle contract](lifecycle.md#public-column-slot-layout-2026-10-24) and
 [format decision](decisions.md#original-slot-layout-and-restore-authority-2026-10-24).

@@ -1,0 +1,39 @@
+{
+  "application_revision": "d40de23896d27d15c17a7bf9649123fd167a0aa8",
+  "application_source_sha256": {
+    "LICENSE": "0bd4e76cdd06ab24cce2de5e74f490920897f90a22ad35e8403ed006d4560f48",
+    "backend/pyproject.toml": "5c6bbcfb3fbdccbdc22d2828628ed4dc8352e13574899296cd9836ac9342c413",
+    "backend/app/models.py": "5cd49acda8771e6f9551f47a0d1e516bcce91d90841a1e9e0283a1ef2d6a7e94",
+    "backend/app/crud.py": "f69d79e858ee22cee7792494b0df0370afaed20439ed16bbf6f70767926254d1",
+    "backend/app/core/security.py": "0006fd18a2900107c6e06023c1b9ccf3960887e84cf664e1632307305c6c4ab7",
+    "backend/app/core/config.py": "668f895a04119a5aaa9890628a13add517e31f61856d228e03a471fa3eb62aa4"
+  },
+  "model_changes": [],
+  "query_changes": [],
+  "source_plan_digest": "797979a8e4e4fb7b8108741b5d2c81154309175ce32a3863e7514ce2619d0619",
+  "restore_adoption_id": "601cd631-0c91-48c7-9a85-a9934ffc56d5",
+  "rewrap_plan_digest": null,
+  "direct_restore_binding": true,
+  "search_plan_digest": "283804444bd5bac8753a00a553322b063214533f5ebe6c832c5ae87bea57fbdf",
+  "activation_plan_digest": "b08fc7304f298aef3ee85fe4f81c3b86de18e249a742d0a60a90ee1c5a982169",
+  "search_controls": {
+    "equality": true,
+    "IN": true,
+    "empty_IN": true,
+    "NULL": "no NULL email; IN NULL ignored",
+    "Unicode": true,
+    "unique_sqlstate": "23505",
+    "rollback": true,
+    "concurrent_unique_sqlstate": "23505",
+    "latest_email_edit": true
+  },
+  "storage_frame_bytes_preserved": true,
+  "index_identity_preserved": true,
+  "native_catalog_restored": true,
+  "latest_value_decryptback": true,
+  "cryptalis_denied_restart": true,
+  "tenancy": "one explicitly declared single-tenant table; original global email uniqueness",
+  "key_custody": "public deterministic fixture only",
+  "production_email_domain_admission": "UNKNOWN",
+  "gates": "all seven UNKNOWN"
+}

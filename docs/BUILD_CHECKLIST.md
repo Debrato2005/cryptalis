@@ -25,10 +25,17 @@ No objective is complete until its acceptance evidence and applicable gate pass.
 
 ## Current boundary
 
+- The unchanged three-field SQLModel application passes source and installed
+  genuine fresh-v6 adoption, direct-binding search rotation and latest-value
+  package-free exit. Recorded target public slots stay unchanged. Earlier full-suite
+  and artifact evidence retain their exact boundaries. See the
+  [application checkpoint](status.md#original-three-field-sqlmodel-fresh-adoption-2026-10-24)
+  and [final boundary](_reset/sqlmodel-public-slots-final-boundary-20261024.json).
+
 - The explicit public-slot layout is implemented as lock/v6 with restore/v3.
   The recorded focused profile passes 25 local/compiler/recovery controls.
-  Current source TEXT fresh-target profiles pass six each, with and without
-  an owned sequence. Current artifacts pass release checks.
+  At `6cb926e`, source TEXT fresh-target profiles pass six each, with and without
+  an owned sequence. The unchanged 4025210f8957 wheel passes release checks.
   Earlier formats retain their default selection and DROP/RENAME behavior.
   Source VARCHAR and installed sequence-bearing TEXT also pass six each.
   The actual wheel passes 294 affected/application controls and one original
@@ -455,9 +462,8 @@ recovery and the final full regression. No production gate passes.
 
 ## Next critical path
 
-1. Complete the original three-field application's fresh-v6/direct-binding journey.
-   Keep the existing one-database CRUD profile separate. The prepared journey
-   remains unverified until its authorized native profile runs.
+1. Check legacy-layout refusal of late expression statistics before providers or effects.
+   This suspected gap remains UNREPRODUCED. Establish the native failure before a product fix.
 2. Resolve the retained-native alternative separately. Preserve the current removal
    contract and backup obligations while its design and evidence remain open.
    Lock v2 captures and restores comments,

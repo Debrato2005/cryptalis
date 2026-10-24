@@ -21,6 +21,7 @@ from cryptalis.sqlmodel import attach
 from test_migration import DOMAIN, keys
 import test_sqlmodel_application as original
 from profile_sqlmodel_searchable_application import native_catalog, search_controls
+from profile_sqlmodel_public_slots_application import public_slots, field_frames
 from test_fresh_cluster_export import dump, environment
 
 if 'CRYPTALIS_FRESH_CLUSTER_DIR' not in os.environ:
@@ -72,21 +73,24 @@ def clear_app():
             del sys.modules[name]
 
 
-def storage(owner):
+def storage(owner, *, boolean_storage=False):
     with owner.connect() as connection:
-        rows = {str(identity): (bytes(email), bytes(name) if name is not None else None)
-            for identity, email, name in connection.exec_driver_sql('SELECT id,email,full_name FROM "user" ORDER BY id')}
+        columns = 'id,email,full_name,is_active' if boolean_storage else 'id,email,full_name'
+        rows = {str(row[0]): tuple(bytes(value) if value is not None else None for value in row[1:])
+            for row in connection.exec_driver_sql('SELECT ' + columns + ' FROM "user" ORDER BY id')}
         indexes = [tuple(row) for row in connection.exec_driver_sql(
             'SELECT c.relname,c.oid::text,c.relfilenode::text FROM pg_catalog.pg_class c '
             'JOIN pg_catalog.pg_index i ON i.indexrelid=c.oid '
             'WHERE i.indrelid=\'"user"\'::regclass ORDER BY c.relname')]
-    assert rows and all(email.startswith(b'CF1\0') and (name is None or name.startswith(b'CF1\0'))
-                        for email, name in rows.values())
+    assert rows and all(values[0].startswith(b'CF1\0')
+        and all(value is None or value.startswith(b'CF1\0') for value in values[1:]) for values in rows.values())
     return rows, indexes
 
 
 def test_export_pinned_searchable_sqlmodel_current_values(tmp_path, monkeypatch):
+    slot_profile = os.environ.get('CRYPTALIS_SQLMODEL_PUBLIC_SLOTS') == '1'
     backend, hashes, workflow = app_copy(tmp_path, monkeypatch)
+    boolean_controls = runpy.run_path(str(Path(__file__).with_name('sqlmodel_template_workload.py')))['boolean_controls'] if slot_profile else None
     from app.models import SQLModel, User
     schema = 'sqlmodel_search_fresh_' + uuid4().hex
     owner = original.native_engine('CRYPTALIS_TEST_DATABASE_URL', schema)
@@ -106,8 +110,11 @@ def test_export_pinned_searchable_sqlmodel_current_values(tmp_path, monkeypatch)
             connection.exec_driver_sql(f'GRANT SELECT,INSERT,UPDATE,DELETE ON ALL TABLES IN SCHEMA "{schema}" TO {q(role)}')
         native = lambda: Session(runtime, expire_on_commit=False)
         baseline = workflow(native, uuid4().hex)
+        if slot_profile:
+            baseline = boolean_controls(native, baseline, uuid4().hex)
         baseline, native_search = search_controls(native, baseline)
         native_schema = catalog(owner)
+        source_slots = public_slots(owner) if slot_profile else None
         dump(directory / 'plain.sql', schema, environment('CRYPTALIS_TEST_DATABASE_URL'))
         email = UUID(int=1903)
         declaration = {'schema': 'cryptalis.protection/v1', 'profile': 'cf1', 'domain_id': str(DOMAIN),
@@ -116,6 +123,9 @@ def test_export_pinned_searchable_sqlmodel_current_values(tmp_path, monkeypatch)
                     {'name': 'full_name', 'field_id': str(original.FIELD), 'protect': True, 'queries': [], 'accept_leakage': []},
                     {'name': 'email', 'field_id': str(email), 'protect': True,
                      'queries': ['equality', 'unique'], 'accept_leakage': ['equality', 'unique']}]}]}
+        if slot_profile:
+            declaration['models'][0]['fields'].append({'name': 'is_active', 'field_id': str(UUID(int=1904)),
+                'protect': True, 'queries': [], 'accept_leakage': []})
         reviews = (SearchReview(email, False,
             'Public qualification fixtures only: independent opaque UUID128 email local parts at example.com. '
             'Equality/frequency/query and uniqueness leakage accepted only for these disposable identities. '
@@ -124,26 +134,39 @@ def test_export_pinned_searchable_sqlmodel_current_values(tmp_path, monkeypatch)
             evidence='pinned unchanged official SQLModel CRUD; disposable single-tenant profile'),))
         report = preflight(json.dumps(declaration).encode(), mapping, owner, writers=inventory, search_reviews=reviews)
         assert report['status'] == 'UNKNOWN' and report['checks']['manifest_schema'] == 'PASS'
-        proposal = m.plan(json.dumps(declaration).encode(), mapping, owner, writers=inventory, search_reviews=reviews,
+        proposal = m.plan(json.dumps(declaration).encode(), mapping, owner,
+            **({'layout': 'preserve-public-slots/v1'} if slot_profile else {}), writers=inventory, search_reviews=reviews,
             keys=keys, runtime_role=role, target_id=uuid4(), backfill_rows_per_second=1000,
             verify_rows_per_second=1000, temporary_bytes_per_row=3000, wal_bytes_per_row=6000)
         maintenance = m.MaintenanceApproval('original app stopped; all inventoried fixture writers excluded', 3600)
+        if slot_profile:
+            assert proposal.document['lock']['schema'] == 'cryptalis.lock/v6'
+            assert m.apply(proposal, owner, keys=keys, pin=pin(proposal, 'PREPARED'),
+                approval=maintenance, until='VERIFIED').phase == 'VERIFIED'
+            staged = field_frames(owner, proposal.document['lock']['models'][0], staged=True)
         assert m.apply(proposal, owner, keys=keys, pin=pin(proposal, 'PREPARED'), approval=maintenance).phase == 'PENDING'
+        if slot_profile:
+            assert field_frames(owner, proposal.document['lock']['models'][0], staged=False) == staged
+            assert public_slots(owner, source_slots) == source_slots
         assert m.apply(proposal, owner, keys=keys, pin=pin(proposal, 'ACTIVATING'),
             approval=maintenance, until='ACTIVE').phase == 'ACTIVE'
         factory = attach(mapping, runtime, lock=proposal.lock_bytes, keys=keys,
                          deployment=(proposal, pin(proposal, 'ACTIVE')))
         attached = lambda: factory(tenant_id=original.TABLE, expire_on_commit=False)
         current = workflow(attached, uuid4().hex, baseline)
+        if slot_profile:
+            current = boolean_controls(attached, current, uuid4().hex)
+            assert public_slots(owner, source_slots) == source_slots
         current, protected_search = search_controls(attached, current)
         assert protected_search == native_search
-        rows, _ = storage(owner)
+        rows, _ = storage(owner, boolean_storage=slot_profile)
         assert set(rows) == {baseline['id'], current['id']}
         dump(directory / 'protected.sql', schema, environment('CRYPTALIS_TEST_DATABASE_URL'))
         values = psycopg.conninfo.conninfo_to_dict(os.environ['CRYPTALIS_TEST_DATABASE_URL'])
         with owner.connect() as connection:
             owner_role = connection.exec_driver_sql('SELECT current_user').scalar_one()
-        manifest = {'application_profile': 'sqlmodel-searchable', 'schema': schema, 'database': values['dbname'],
+        manifest = {'application_profile': 'sqlmodel-public-slots' if slot_profile else 'sqlmodel-searchable',
+            'schema': schema, 'database': values['dbname'],
             'owner_role': owner_role, 'runtime_role': role, 'application_revision': original.REVISION,
             'application_source_sha256': hashes, 'native_catalog': native_schema,
             'plan': base64.b64encode(proposal.artifact).decode(), 'pin': asdict(pin(proposal, 'ACTIVE')),
@@ -152,6 +175,9 @@ def test_export_pinned_searchable_sqlmodel_current_values(tmp_path, monkeypatch)
             'tenancy': 'one explicitly declared single-tenant table; original global email uniqueness',
             'key_custody': 'public deterministic fixture only', 'production_email_domain_admission': 'UNKNOWN',
             'gates': 'all seven UNKNOWN'}
+        if slot_profile:
+            manifest.update(sqlmodel_public_slots=True, source_public_slots=source_slots,
+                protected_fields=['User.email', 'User.full_name', 'User.is_active'])
         with (directory / 'restore-manifest.json').open('x') as stream:
             json.dump(manifest, stream, indent=2, default=str)
         unchanged(backend, hashes)

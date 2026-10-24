@@ -1083,3 +1083,9 @@ No production pause or resource budget is qualified. Existing maintenance
 approval, quarantine and host fencing remain required. The new layout is an
 explicit opt-in and does not convert already replaced legacy slots. All 34
 objective states and all seven UNKNOWN production gates remain unchanged.
+
+The [original three-field application checkpoint](status.md#original-three-field-sqlmodel-fresh-adoption-2026-10-24)
+extends this contract's verification through genuine fresh adoption and direct
+restore-binding search planning. Source and restored target table identities have
+separate evidence. The observed target public slots remain fixed through removal.
+This test profile adds no product contract or production qualification.
