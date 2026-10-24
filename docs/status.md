@@ -21,6 +21,39 @@ and [competitive capability matrix](research/capability-matrix.md) govern priori
 Progress follows complete real-application journeys and resolved production requirements.
 All seven production gates remain UNKNOWN.
 
+## Original HTTP application fresh recovery: 2026-10-24
+
+**VERIFIED, installed local cell:** the unchanged 26-file FastAPI template completes
+native HTTP/authentication, manifest diagnosis, protection, encrypted search,
+protected backup and genuine fresh PostgreSQL 16 adoption. The restored target
+completes root rewrap, payload rotation and search rotation. Original routes then
+accept retained latest credentials and reject old passwords, invalid tokens,
+inactive accounts and unauthorized cross-user operations. Local SMTP delivers
+four messages at each of three boundaries, including after restore.
+
+The journey also covers concurrent email uniqueness, rollback, NULL/Unicode
+edits, item ownership and cascade deletion. A corrupted email frame refuses
+adoption. Root rewrap preserves exact frames. Payload rotation changes every
+non-NULL frame. Search rotation preserves storage-only frames and index identity.
+Latest edits survive decrypt-back, native catalog and public-slot restoration,
+and a fresh original HTTP process with Cryptalis imports denied.
+
+The automated application matrix reuses the existing fresh-cluster harness with
+`--sqlmodel-http`. The existing six-file SQLModel public-slot/direct-search row
+also passes as an affected control. Four mandatory wrapper runs each pass their
+export or restore control with fresh probes for both roles. All 228 Python hashes
+stay stable. The [boundary](_reset/http-fresh-installed-boundary-20261024.json) retains exact
+receipts and both application reports.
+
+This slice changes tests and the harness only. All 40 product modules match the
+qualified ce92 wheel. No artifact rebuild is needed. Doctor still reports
+unproven host, query-route, writer-exclusion and custody checks as UNKNOWN.
+Public fixture keys, explicit single tenancy, local TestClient and loopback SMTP
+limit this evidence. Live KMS, browser/deployment behavior, external mail and
+independent security review remain open. All 34 objective states and seven
+UNKNOWN production gates remain unchanged.
+
+
 ## Integer storage cost observation: 2026-10-24
 
 **VERIFIED, local observation only:** three matched native/installed 10,000-row

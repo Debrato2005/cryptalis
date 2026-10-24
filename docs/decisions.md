@@ -1625,3 +1625,16 @@ Public-ID batches do not establish encrypted-value IN performance. Process peaks
 do not establish incremental app memory. Ordinary VACUUM does not prove erasure.
 The [observation](status.md#integer-storage-cost-observation-2026-10-24) records
 actual values. These checks approve no workload budget and pass no admission gate.
+
+## Application journey qualification: 2026-10-24
+
+Use complete existing-application journeys to select implementation work.
+Extend the current mandatory PostgreSQL and fresh-cluster harnesses instead of
+creating a parallel framework. Keep source revisions, application changes,
+installed artifact identity and exact journey boundaries in the evidence.
+
+The [HTTP checkpoint](status.md#original-http-application-fresh-recovery-2026-10-24) joins the original authentication and mail
+routes to protected restore, all three rotations and latest-value native exit.
+The public-slot CRUD row remains a regression control. These local checks do not
+qualify production custody, deployment fencing, browser operation or independent
+review. Preserve all 34 objectives and seven UNKNOWN production gates.

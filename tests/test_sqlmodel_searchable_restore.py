@@ -73,16 +73,17 @@ print(json.dumps({'native_crud': 'passed', 'cryptalis_imported': False, 'origina
 
 
 def test_original_searchable_app_fresh_adoption_search_rotation_and_latest_native_exit(tmp_path, monkeypatch):
+    http = os.environ.get('CRYPTALIS_SQLMODEL_HTTP_FRESH') == '1'
     slot_profile = os.environ.get('CRYPTALIS_SQLMODEL_PUBLIC_SLOTS') == '1'
-    direct = slot_profile or os.environ.get('CRYPTALIS_SQLMODEL_DIRECT_SEARCH') == '1'
+    direct = (slot_profile and not http) or os.environ.get('CRYPTALIS_SQLMODEL_DIRECT_SEARCH') == '1'
     directory = Path(os.environ['CRYPTALIS_FRESH_CLUSTER_DIR'])
     manifest = json.loads((directory / 'restore-manifest.json').read_text())
-    assert manifest['application_profile'] == ('sqlmodel-public-slots' if slot_profile else 'sqlmodel-searchable')
+    assert manifest['application_profile'] == ('sqlmodel-http' if http else 'sqlmodel-public-slots' if slot_profile else 'sqlmodel-searchable')
     assert manifest.get('sqlmodel_public_slots', False) is slot_profile
     backend, hashes, workflow = exported.app_copy(tmp_path, monkeypatch)
-    assert hashes == manifest['application_source_sha256'] and len(hashes) == 6
+    assert hashes == manifest['application_source_sha256'] and len(hashes) == (26 if http else 6)
     workload_helper = Path(__file__).with_name('sqlmodel_template_workload.py').resolve()
-    boolean_controls = runpy.run_path(str(workload_helper))['boolean_controls'] if slot_profile else None
+    boolean_controls = runpy.run_path(str(workload_helper))['boolean_controls'] if slot_profile and not http else None
     from app.models import User
     from app import crud
     source = m.MigrationPlan(base64.b64decode(manifest['plan'], validate=True))
@@ -108,6 +109,20 @@ def test_original_searchable_app_fresh_adoption_search_rotation_and_latest_nativ
             assert source.document['lock']['schema'] == 'cryptalis.lock/v6'
         with pytest.raises(m.TransitionFailure):
             m.check_deployment(source, owner, pin=source_pin)
+        if http:
+            identity = UUID(manifest['current']['id'])
+            frame = before[0][str(identity)][0]
+            with owner.begin() as connection:
+                connection.exec_driver_sql('UPDATE "user" SET email=%s WHERE id=%s',
+                    (frame[:-1] + bytes([frame[-1] ^ 1]), identity))
+            try:
+                with pytest.raises(m.TransitionFailure):
+                    restore.plan(source, owner, pin=source_pin, keys=keys,
+                        approval=restore.RestoreApproval('qualification host', 'refuse corrupted HTTP backup',
+                            'source schema dropped; this copy is quarantined', True))
+            finally:
+                with owner.begin() as connection:
+                    connection.exec_driver_sql('UPDATE "user" SET email=%s WHERE id=%s', (frame, identity))
         binding = restore.plan(source, owner, pin=source_pin, keys=keys,
             approval=restore.RestoreApproval('qualification host', 'recover pinned original searchable SQLModel app',
                 'source schema dropped after export; this fresh restored copy is quarantined', True))
@@ -139,6 +154,34 @@ def test_original_searchable_app_fresh_adoption_search_rotation_and_latest_nativ
                 m.check_deployment(source, owner, pin=source_pin, restore=binding)
             current_source, current_pin = adopted, exported.pin(adopted, 'ACTIVE')
             source_keys, target = adopted_keys, search_keys
+        payload = None
+        if http:
+            from payload_rotation_worker import rotated_keys
+            payload = rotation.plan_payload_rotation(current_source, owner, source_pin=current_pin,
+                keys=source_keys, target_keys=rotated_keys, backfill_rows_per_second=1000,
+                verify_rows_per_second=1000, temporary_bytes_per_row=3000, wal_bytes_per_row=6000,
+                max_batch_rows=1)
+            prepared = m.DeploymentPin(current_source.target_id, payload.operation_id, payload.digest, 'PREPARED')
+            assert rotation.apply_payload_rotation(payload, owner, keys=source_keys, target_keys=rotated_keys,
+                pin=prepared, approval=approval, max_chunks=1).committed_rows == 1
+            assert rotation.apply_payload_rotation(payload, owner, keys=source_keys, target_keys=rotated_keys,
+                pin=prepared, approval=approval).phase == 'BACKFILLED'
+            assert exported.storage(owner, boolean_storage=True) == before
+            successor = rotation.seal_payload_rotation(payload, owner, keys=source_keys, target_keys=rotated_keys,
+                pin=prepared, approval=approval, copy_rows_per_second=1000.5, copy_wal_bytes_per_row=3000)
+            assert rotation.switch_payload_rotation(payload, successor, owner, keys=source_keys,
+                target_keys=rotated_keys, pin=exported.pin(successor, 'PREPARED'), approval=approval).phase == 'PENDING'
+            assert m.apply(successor, owner, keys=rotated_keys, pin=exported.pin(successor, 'ACTIVATING'),
+                approval=approval, until='ACTIVE').phase == 'ACTIVE'
+            after_payload = exported.storage(owner, boolean_storage=True)
+            assert after_payload[1] == before[1]
+            for identity, values in after_payload[0].items():
+                for old, frame in zip(before[0][identity], values):
+                    assert (old is None and frame is None) or (frame != old
+                        and int.from_bytes(frame[6:10], 'big') == 2 and frame[10:14] == old[10:14])
+            before = after_payload
+            current_source, current_pin, source_keys = successor, exported.pin(successor, 'ACTIVE'), rotated_keys
+            target = lambda tenant: new_search_keys(tenant, source=rotated_keys)
         proposal = rotation.plan_search_rotation(current_source, owner, source_pin=current_pin,
             keys=source_keys, target_keys=target, backfill_rows_per_second=1000,
             verify_rows_per_second=1000, temporary_bytes_per_row=3000, wal_bytes_per_row=6000, max_batch_rows=1, **planner_options)
@@ -185,8 +228,9 @@ def test_original_searchable_app_fresh_adoption_search_rotation_and_latest_nativ
                 if slot_profile:
                     assert row.is_active is expected['is_active']
         current = workflow(attached, uuid4().hex, manifest['current'])
-        if slot_profile:
+        if boolean_controls:
             current = boolean_controls(attached, current, uuid4().hex)
+        if slot_profile:
             assert exported.public_slots(owner, manifest['source_public_slots']) == target_slots
         current, controls = exported.search_controls(attached, current)
         assert controls == manifest['search_controls']
@@ -212,15 +256,21 @@ def test_original_searchable_app_fresh_adoption_search_rotation_and_latest_nativ
             columns = 'email,full_name,is_active' if slot_profile else 'email,full_name'
             latest = connection.exec_driver_sql('SELECT ' + columns + ' FROM "user" WHERE id=%s',
                                                 (UUID(current['id']),)).one()
-        assert tuple(latest) == ((current['email'], current['full_name'], False) if slot_profile
+        assert tuple(latest) == ((current['email'], current['full_name'], current['is_active']) if http else
+                                (current['email'], current['full_name'], False) if slot_profile
                                  else (current['email'], current['full_name']))
-        if slot_profile:
+        child = None
+        if http:
+            from sqlmodel_http_package_free import run
+            child = run(backend.parent, schema, current)
+            assert exported.public_slots(owner) == target_slots
+        elif slot_profile:
             slot_restart(backend, schema, current, workload_helper)
             assert exported.public_slots(owner) == target_slots
         else:
             restart(backend, schema, current)
         exported.unchanged(backend, hashes)
-        receipt_name = 'sqlmodel-public-slots-journey-receipt.json' if slot_profile else 'sqlmodel-searchable-journey-receipt.json'
+        receipt_name = 'sqlmodel-http-journey-receipt.json' if http else 'sqlmodel-public-slots-journey-receipt.json' if slot_profile else 'sqlmodel-searchable-journey-receipt.json'
         with (directory / receipt_name).open('x') as stream:
             json.dump({'application_revision': manifest['application_revision'], 'application_source_sha256': hashes,
                 'model_changes': [], 'query_changes': [], 'source_plan_digest': source.digest,
@@ -229,6 +279,13 @@ def test_original_searchable_app_fresh_adoption_search_rotation_and_latest_nativ
                 **({'layout': 'preserve-public-slots/v1', 'restore_format': binding.document['format'],
                     'source_public_slots': manifest['source_public_slots'], 'restored_target_public_slots': target_slots,
                     'restored_target_public_slots_preserved': True, 'boolean_latest_false': True} if slot_profile else {}),
+                **({'payload_plan_digest': payload.digest, 'payload_generation': 2,
+                    'native_http_controls': manifest['baseline']['controls'],
+                    'protected_http_controls': manifest['current']['controls'],
+                    'restored_http_controls': current['controls'], 'pre_adoption_doctor': manifest['pre_adoption_doctor'],
+                    'local_smtp': [manifest['baseline']['local_smtp'], manifest['current']['local_smtp'], current['local_smtp']],
+                    'removed_original_http': child, 'tampered_backup': 'refused before adoption',
+                    'boundary': 'Pinned original TestClient HTTP/JWT and loopback SMTP; no browser, live KMS, external mail or deployment qualification'} if http else {}),
                 'search_plan_digest': proposal.digest, 'activation_plan_digest': activation.digest,
                 'search_controls': controls, 'storage_frame_bytes_preserved': True, 'index_identity_preserved': True,
                 'native_catalog_restored': True, 'latest_value_decryptback': True, 'cryptalis_denied_restart': True,

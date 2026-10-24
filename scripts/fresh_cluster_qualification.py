@@ -145,6 +145,8 @@ def main():
                           help='Qualify signed integer storage after payload rotation on a fresh cluster.')
     profiles.add_argument('--boolean', action='store_true',
                           help='Qualify Boolean storage after payload rotation on a fresh cluster.')
+    profiles.add_argument('--sqlmodel-http', action='store_true',
+                          help='Qualify original HTTP authentication, mail and three rotations after fresh restore.')
     profiles.add_argument('--sqlmodel-public-slots', action='store_true',
                           help='Qualify original three-field SQLModel public slots through fresh adoption and direct search.')
     profiles.add_argument('--sqlmodel-direct-search', action='store_true',
@@ -167,6 +169,8 @@ def main():
     profiles.add_argument('--search-rotation', action='store_true',
                           help='Qualify backup recovery after search rotation and a later protected edit.')
     args = parser.parse_args()
+    if args.sqlmodel_http and (args.varchar or args.restore_lease or args.public_slots or args.owned_sequences):
+        parser.error('--sqlmodel-http uses the original HTTP schema and its preserved public slots.')
     if args.reverse_cli and (args.varchar or args.restore_lease or args.public_slots):
         parser.error('--reverse-cli uses the original TEXT export and focused adopted-target CLI lifecycle.')
     if args.rewrap_cli and (args.varchar or args.restore_lease or args.public_slots):
@@ -175,7 +179,7 @@ def main():
         parser.error('--search-cli uses the original TEXT export and focused adopted-target CLI lifecycle.')
     if args.payload_cli and (args.varchar or args.restore_lease or args.public_slots):
         parser.error('--payload-cli uses the original TEXT export and focused adopted-target CLI lifecycle.')
-    if args.public_slots and (args.restore_lease or any((args.boolean, args.sqlmodel_public_slots, args.sqlmodel_direct_search,
+    if args.public_slots and (args.restore_lease or any((args.boolean, args.sqlmodel_public_slots, args.sqlmodel_http, args.sqlmodel_direct_search,
             args.sqlmodel_searchable, args.smolink, args.direct_generation, args.adopted_search,
             args.adopted_payload, args.adopted_rewrap, args.rewrap, args.payload_rotation, args.search_rotation))):
         parser.error('--public-slots supports the original TEXT/VARCHAR fixture with optional owned sequences.')
@@ -187,7 +191,7 @@ def main():
         parser.error('--integer uses the native signed scalar restore lifecycle.')
     if args.boolean and (args.varchar or args.restore_lease):
         parser.error('--boolean uses the typed Boolean fixture and its restore lifecycle.')
-    if (args.sqlmodel_searchable or args.sqlmodel_direct_search or args.sqlmodel_public_slots) and (args.varchar or args.restore_lease):
+    if (args.sqlmodel_searchable or args.sqlmodel_direct_search or args.sqlmodel_public_slots or args.sqlmodel_http) and (args.varchar or args.restore_lease):
         parser.error('--sqlmodel-searchable uses the original application schema and lifecycle.')
     if args.smolink and (args.varchar or args.restore_lease):
         parser.error('--smolink uses the original application VARCHAR schema and lifecycle.')
@@ -206,9 +210,10 @@ def main():
                '; owned-sequence identity mapping and native counter profile' if args.owned_sequences else
                '; integer storage after payload rotation' if args.integer else
                '; Boolean storage after payload rotation' if args.boolean else
+               '; pinned original HTTP/JWT and local SMTP, adopted-target root/payload/search rotation and native exit' if args.sqlmodel_http else
                '; original three-field SQLModel public slots and direct restore-binding search profile' if args.sqlmodel_public_slots else
                '; pinned SQLModel direct restore-binding search profile' if args.sqlmodel_direct_search else
-               '; pinned searchable SQLModel app adoption and search-rotation profile' if (args.sqlmodel_searchable or args.sqlmodel_direct_search or args.sqlmodel_public_slots) else
+               '; pinned searchable SQLModel app adoption and search-rotation profile' if (args.sqlmodel_searchable or args.sqlmodel_direct_search or args.sqlmodel_public_slots or args.sqlmodel_http) else
                '; pinned Smolink root-rewrap and payload-rotation application profile' if args.smolink else
                '; direct restored-target payload/search generation profile' if args.direct_generation else
                '; adopted-target search-rotation mixed-field profile' if args.adopted_search else
@@ -220,7 +225,7 @@ def main():
     if args.restore_lease:
         profile += '; restored-target lease controls'
     export = run_pytest(export_receipt, 'Fresh-cluster source export; primary cluster' + profile,
-                        ('tests/test_sqlmodel_searchable_export.py' if (args.sqlmodel_searchable or args.sqlmodel_direct_search or args.sqlmodel_public_slots) else
+                        ('tests/test_sqlmodel_searchable_export.py' if (args.sqlmodel_searchable or args.sqlmodel_direct_search or args.sqlmodel_public_slots or args.sqlmodel_http) else
                          'tests/test_fresh_boolean_export.py' if args.boolean or args.integer else
                          'tests/test_smolink_application.py' if args.smolink
                          else 'tests/test_fresh_cluster_export.py'),
@@ -229,7 +234,8 @@ def main():
                          'CRYPTALIS_FRESH_INTEGER_BITS': str(args.integer or 0),
                          'CRYPTALIS_FRESH_INTEGER_DEFAULT': '' if args.integer_default is None else str(args.integer_default),
                          'CRYPTALIS_FRESH_PUBLIC_SLOTS': '1' if args.public_slots else '0',
-                         'CRYPTALIS_SQLMODEL_PUBLIC_SLOTS': '1' if args.sqlmodel_public_slots else '0',
+                         'CRYPTALIS_SQLMODEL_PUBLIC_SLOTS': '1' if (args.sqlmodel_public_slots or args.sqlmodel_http) else '0',
+                         'CRYPTALIS_SQLMODEL_HTTP_FRESH': '1' if args.sqlmodel_http else '0',
                          'CRYPTALIS_FRESH_OWNED_SEQUENCES': '1' if args.owned_sequences else '0',
                          'CRYPTALIS_FRESH_ADOPTED_SEARCH': '1' if (args.adopted_search or args.direct_generation) else '0',
                          'CRYPTALIS_FRESH_SOURCE_VARCHAR': '1' if args.varchar else '0',
@@ -269,9 +275,9 @@ def main():
         if (plan.get('kind') != 'payload_rotation' or plan.get('format') != 'cryptalis.transition/v3'
                 or plan.get('lock', {}).get('schema') != 'cryptalis.lock/v4'):
             raise SystemExit('FreshCluster.ProfileMismatch: Boolean payload successor is missing.')
-    elif args.sqlmodel_public_slots:
+    elif args.sqlmodel_public_slots or args.sqlmodel_http:
         plan = json.loads(base64.b64decode(manifest['plan'], validate=True))
-        if (manifest.get('application_profile') != 'sqlmodel-public-slots'
+        if (manifest.get('application_profile') != ('sqlmodel-http' if args.sqlmodel_http else 'sqlmodel-public-slots')
                 or manifest.get('sqlmodel_public_slots') is not True
                 or plan.get('lock', {}).get('schema') != 'cryptalis.lock/v6'
                 or plan['lock'].get('layout') != 'preserve-public-slots/v1'
@@ -321,7 +327,7 @@ def main():
                               'tests/test_fresh_boolean_restore.py' if args.integer else
                               'tests/test_public_slots_restore.py' if args.public_slots else
                               'tests/test_owned_sequences_restore.py' if args.owned_sequences else
-                              'tests/test_sqlmodel_searchable_restore.py' if (args.sqlmodel_searchable or args.sqlmodel_direct_search or args.sqlmodel_public_slots) else
+                              'tests/test_sqlmodel_searchable_restore.py' if (args.sqlmodel_searchable or args.sqlmodel_direct_search or args.sqlmodel_public_slots or args.sqlmodel_http) else
                               'tests/test_fresh_boolean_restore.py' if args.boolean else
                               'tests/test_smolink_fresh_cluster.py' if args.smolink
                               else 'tests/test_direct_generation.py' if args.direct_generation
@@ -333,7 +339,8 @@ def main():
                              {'HOME': str(home), 'CRYPTALIS_FRESH_CLUSTER_DIR': str(workdir),
                               'CRYPTALIS_FRESH_INTEGER_BITS': str(args.integer or 0),
                               'CRYPTALIS_SQLMODEL_DIRECT_SEARCH': '1' if (args.sqlmodel_direct_search or args.sqlmodel_public_slots) else '0',
-                              'CRYPTALIS_SQLMODEL_PUBLIC_SLOTS': '1' if args.sqlmodel_public_slots else '0',
+                              'CRYPTALIS_SQLMODEL_PUBLIC_SLOTS': '1' if (args.sqlmodel_public_slots or args.sqlmodel_http) else '0',
+                              'CRYPTALIS_SQLMODEL_HTTP_FRESH': '1' if args.sqlmodel_http else '0',
                               'CRYPTALIS_FRESH_PLAIN_DATABASE': plain_database,
                               'CRYPTALIS_FRESH_PLAINTEXT_ROLE': credentials['plaintext'][0],
                               'CRYPTALIS_FRESH_SOURCE_REWRAP': '1' if args.rewrap else '0',
