@@ -21,6 +21,43 @@ and [competitive capability matrix](research/capability-matrix.md) govern priori
 Progress follows complete real-application journeys and resolved production requirements.
 All seven production gates remain UNKNOWN.
 
+## Integer defaults and ORM state source checkpoint: 2026-10-24
+
+**IMPLEMENTED, internal candidate:** exact in-range native integer client defaults
+now use the existing typed write paths. Optional application_default metadata
+uses a canonical signed decimal string and requires pg-integer-default/v1. The
+restricted manifest number grammar stays unchanged. Defaults are public
+application configuration; the lock contains their decimal values.
+
+**VERIFIED, bounded source cell:** the earlier 190-case check passes default and
+integer/compiler/Boolean controls. The [current frozen run](_reset/integer-defaults-final-source-20261024.json)
+passes 96 controls for zero/extrema, nullable and non-nullable defaults, native
+pending/refresh/rollback, dictionary NULL/render_nulls, async writes, retained
+readers and dictionary boundaries. All 227 Python hashes stay stable. An old
+integer reader accepts an unchanged default-free v7 plan and refuses new default
+metadata before SQL. Mapping-default mutation refuses before key preparation.
+
+The previous installed integer wheel fails three native async-state controls:
+its unconditional coercion expression expires valid attributes after flush.
+The fix reserves that expression for a known range failure. Valid INSERT and
+UPDATE retain native loaded state and avoid implicit async I/O. Overflow, stale
+prepared-row and earlier-constraint controls continue to pass. Exact historical
+receipts, including that installed failure, remain in the
+[construction archive](_reset/integer-defaults-construction-history-20261024.json).
+
+Genuine source [export](_reset/fresh-cluster-export-20261024-67.json) and
+[restore](_reset/fresh-cluster-restore-20261024-66.json) each pass one control for
+the minimum int64 default with preserved public slots. Default omission, explicit
+NULL edits, root rewrap, payload rotation, adoption, latest-value removal and a
+fresh child with Cryptalis imports denied pass. Ciphertext bytes stay unchanged
+during root rewrap. This is fixture evidence.
+
+Installed qualification remains pending. Server, callable, SQL, on-update and
+generated defaults remain unadmitted. Full type admission and measured workload
+costs remain pending. All 34 objective states and seven UNKNOWN production gates
+remain unchanged. See the
+[decision](decisions.md#literal-integer-application-default-construction-2026-10-24).
+
 ## Integer installed lifecycle checkpoint: 2026-10-24
 
 **VERIFIED, internal candidate:** the actual installed wheel passes

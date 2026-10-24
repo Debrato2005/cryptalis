@@ -167,6 +167,35 @@ def _boolean_default(column):
     raise ValueError
 
 
+def _value_default(column, codec):
+    if codec == 'boolean-u8/v1':
+        return _boolean_default(column)
+    if column.default is None:
+        return None
+    from sqlalchemy.sql.schema import ScalarElementColumnDefault
+    widths = {'pg-int2-be/v1': 2, 'pg-int4-be/v1': 4, 'pg-int8-be/v1': 8}
+    width = widths.get(codec)
+    if width is not None and type(column.default) is ScalarElementColumnDefault:
+        value = column.default.arg
+        bound = 1 << (8 * width - 1)
+        if type(value) is int and -bound <= value < bound:
+            return value
+    raise ValueError
+
+
+def _compiled_default(field):
+    raw = field.get('application_default')
+    if field['source']['type'] not in _INTEGER_TYPES or raw is None:
+        return raw
+    if type(raw) is not str or not 1 <= len(raw) <= 20:
+        raise ValueError
+    value = int(raw)
+    bound = 1 << (8 * int(field['source']['type'][3:]) - 1)
+    if str(value) != raw or not -bound <= value < bound:
+        raise ValueError
+    return value
+
+
 def _value_mapping_matches(column, native):
     return (_text_mapping_matches(column, native) or _boolean_mapping_matches(column, native)
             or _integer_mapping_matches(column, native))
@@ -195,7 +224,9 @@ def _required_readers(models):
                   | {m['record']['codec'] for m in models}
                   | {'uuid16/v1' for m in models if 'column' in m['tenancy']}
                   | ({'pg-varchar/v1'} if any(f['source']['type'] == 'varchar'
-                     for m in models for f in m['fields']) else set()))
+                     for m in models for f in m['fields']) else set())
+                  | ({'pg-integer-default/v1'} if any(f['source']['type'] in _INTEGER_TYPES and
+                     'application_default' in f for m in models for f in m['fields']) else set()))
 
 
 def _digest(document: object) -> str:
@@ -815,12 +846,9 @@ def _compile_model(model, mapper, facts, issues, schema):
             refuse("mapping_mismatch", field.name, "Match mapped and database nullability before planning.")
         application_default = None
         try:
-            if boolean:
-                application_default = _boolean_default(column)
-            elif column.default is not None:
-                raise ValueError
+            application_default = _value_default(column, _value_codec(actual))
         except ValueError:
-            refuse("protected_default", field.name, "Use a literal Boolean client default or assign values through admitted writes.")
+            refuse("protected_default", field.name, "Use a literal Boolean or in-range native integer client default, or assign an admitted value.")
         if (_server_generation(column, actual)
                 or column.onupdate is not None):
             refuse("protected_default", field.name, "Remove protected defaults and generated values. Assign values through admitted writes.")
@@ -894,8 +922,8 @@ def _compile_model(model, mapper, facts, issues, schema):
                        },
                        "source": {"type": actual["type"], "nullable": actual["nullable"], "collation": actual["collation"]},
                        "descriptor": descriptor})
-        if boolean:
-            fields[-1]['application_default'] = application_default
+        if boolean or actual['type'] in _INTEGER_TYPES and application_default is not None:
+            fields[-1]['application_default'] = application_default if boolean else str(application_default)
     for item in facts["constraints"] + facts["indexes"]:
         del item["definition"]
     return {"model": model.model, "table_id": str(model.table_id),
@@ -1027,6 +1055,10 @@ def _previous_lock(raw, current, engine):
                     if (old['schema'] not in ('cryptalis.lock/v4', 'cryptalis.lock/v5', 'cryptalis.lock/v6', 'cryptalis.lock/v7') or intent.queries
                             or field['application_default'] is not None and type(field['application_default']) is not bool):
                         raise ValueError
+                if field['source']['type'] in _INTEGER_TYPES and 'application_default' in field:
+                    if _compiled_default(field) is None:
+                        raise ValueError
+                    members.add('application_default')
                 if field.keys() != members or field["field_id"] != str(intent.field_id) or field["name"] != intent.name:
                     raise ValueError
                 if field["queries"] != list(intent.queries) or not isinstance(field["column"], str):

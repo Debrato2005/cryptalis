@@ -1107,3 +1107,19 @@ All six capability gates remain unpassed. The installed wheel also passes all
 six integer width/layout fresh-cluster journeys. See the
 [checkpoint](status.md#integer-installed-lifecycle-checkpoint-2026-10-24) and
 [contract](decisions.md#storage-only-postgresql-integer-contract-2026-10-24).
+
+
+## Internal integer literal defaults
+
+The literal default is public application configuration. The lock stores a
+canonical signed decimal string and requires pg-integer-default/v1. This does
+not change the restricted manifest number grammar, context digest, CF1 frame,
+nonce, root policy or record authentication. Noncanonical syntax and bounds
+refuse. Mapping mutations refuse before key preparation.
+
+Default-free integer locks retain their prior grammar and reader behavior.
+Valid ORM writes use sealed native bind values. A known range failure alone
+selects the owned public coercion expression. Native async loaded state,
+rollback and error-order controls pass in the bounded source cell. See the
+[checkpoint](status.md#integer-defaults-and-orm-state-source-checkpoint-2026-10-24).
+All six type-admission gates remain unpassed.

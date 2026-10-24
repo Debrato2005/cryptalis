@@ -123,6 +123,8 @@ def stop_cluster(cluster):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--workdir', type=Path, default=None)
+    parser.add_argument('--integer-default', type=int, default=None,
+                        help='Qualify an exact native integer literal client default.')
     parser.add_argument('--varchar', action='store_true', help='Qualify a native VARCHAR(64) source and lock v3.')
     parser.add_argument('--restore-lease', action='store_true',
                         help='Run focused restored-target key lease and no-effects controls.')
@@ -179,6 +181,8 @@ def main():
         parser.error('--public-slots supports the original TEXT/VARCHAR fixture with optional owned sequences.')
     if args.owned_sequences and (args.varchar and not args.public_slots or args.restore_lease):
         parser.error('--owned-sequences uses the sequence-bearing TEXT fixture and restore lifecycle.')
+    if args.integer_default is not None and (not args.integer or not -(1 << (args.integer - 1)) <= args.integer_default < 1 << (args.integer - 1)):
+        parser.error('--integer-default requires --integer and a value within that signed native width.')
     if args.integer and (args.varchar or args.restore_lease):
         parser.error('--integer uses the native signed scalar restore lifecycle.')
     if args.boolean and (args.varchar or args.restore_lease):
@@ -223,6 +227,7 @@ def main():
                         {'CRYPTALIS_SMOLINK_FRESH_EXPORT': str(workdir) if args.smolink else '',
                          'CRYPTALIS_FRESH_CLUSTER_DIR': str(workdir),
                          'CRYPTALIS_FRESH_INTEGER_BITS': str(args.integer or 0),
+                         'CRYPTALIS_FRESH_INTEGER_DEFAULT': '' if args.integer_default is None else str(args.integer_default),
                          'CRYPTALIS_FRESH_PUBLIC_SLOTS': '1' if args.public_slots else '0',
                          'CRYPTALIS_SQLMODEL_PUBLIC_SLOTS': '1' if args.sqlmodel_public_slots else '0',
                          'CRYPTALIS_FRESH_OWNED_SEQUENCES': '1' if args.owned_sequences else '0',
@@ -238,6 +243,8 @@ def main():
         raise SystemExit('FreshCluster.ProfileMismatch: public-slot export did not match the requested profile.')
     if manifest.get('adopted_search', False) is not (args.adopted_search or args.direct_generation):
         raise SystemExit('FreshCluster.ProfileMismatch: adopted-search export did not match the requested profile.')
+    if manifest.get('application_default') != (None if args.integer_default is None else str(args.integer_default)):
+        raise SystemExit('FreshCluster.ProfileMismatch: integer default export differs from the requested literal.')
     if args.public_slots:
         plan = json.loads(base64.b64decode(manifest['plan'], validate=True))
         if (plan.get('lock', {}).get('schema') != ('cryptalis.lock/v7' if args.integer else 'cryptalis.lock/v6')
