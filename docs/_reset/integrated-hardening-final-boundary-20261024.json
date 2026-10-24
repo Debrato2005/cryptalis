@@ -1,0 +1,241 @@
+{
+  "format": "cryptalis.integrated-hardening-boundary/v1",
+  "base_revision": "466cffae579a2fcc3e162584e021ec132352e846",
+  "fixing_revision": "worktree-6739968d9f52b9dd",
+  "source_manifest": {
+    "path": "/home/debrato/Projects/cryptalis/docs/_reset/integrated-hardening-source-20261024.json",
+    "sha256": "41fb9f24b1fc51cfeefd7286306b5eb191a21edd9eef50d9bdaabac48f908dde",
+    "member": "source_test_sha256",
+    "files": 221
+  },
+  "receipts": {
+    "integrated-hardening-source-20261024.json": {
+      "path": "/home/debrato/Projects/cryptalis/docs/_reset/integrated-hardening-source-20261024.json",
+      "sha256": "41fb9f24b1fc51cfeefd7286306b5eb191a21edd9eef50d9bdaabac48f908dde",
+      "counts": {
+        "passed": 74
+      },
+      "modules": {
+        "tests/test_retained_obligations_cli.py": {
+          "passed": 23
+        },
+        "tests/test_search_ast_dispatch.py": {
+          "passed": 10
+        },
+        "tests/test_aws_kms.py": {
+          "passed": 39
+        },
+        "tests/profile_sqlmodel_http_operational_cli_application.py": {
+          "passed": 1
+        },
+        "tests/test_sqlmodel_http_application.py": {
+          "passed": 1
+        }
+      },
+      "setup_skips": 0,
+      "elapsed_seconds": 89.37614899800974,
+      "source_stability": {
+        "unchanged": true,
+        "changed_paths": []
+      }
+    },
+    "integrated-hardening-installed-20261024.json": {
+      "path": "/home/debrato/Projects/cryptalis/docs/_reset/integrated-hardening-installed-20261024.json",
+      "sha256": "a9725d068d2297fd7a70654a9def6fb52cf4d965df17e2770b345b1319a35f1b",
+      "counts": {
+        "passed": 357
+      },
+      "modules": {
+        "tests/test_retained_obligations_cli.py": {
+          "passed": 23
+        },
+        "tests/test_status_cli.py": {
+          "passed": 18
+        },
+        "tests/test_doctor_cli.py": {
+          "passed": 17
+        },
+        "tests/test_doctor_preflight_cli.py": {
+          "passed": 27
+        },
+        "tests/test_rotation_status_cli.py": {
+          "passed": 20
+        },
+        "tests/test_runtime_boundary.py": {
+          "passed": 7
+        },
+        "tests/test_reverse_operational_cli.py": {
+          "passed": 19
+        },
+        "tests/test_search_ast_dispatch.py": {
+          "passed": 10
+        },
+        "tests/test_sqlalchemy_search.py": {
+          "passed": 75
+        },
+        "tests/test_sqlalchemy_negative_predicates.py": {
+          "passed": 59
+        },
+        "tests/test_select_type_hooks.py": {
+          "passed": 12
+        },
+        "tests/test_select_entity_type_hooks.py": {
+          "passed": 10
+        },
+        "tests/test_boolean_native.py": {
+          "passed": 2
+        },
+        "tests/test_boolean_storage.py": {
+          "passed": 17
+        },
+        "tests/test_aws_kms.py": {
+          "passed": 39
+        },
+        "tests/profile_sqlmodel_http_operational_cli_application.py": {
+          "passed": 1
+        },
+        "tests/test_sqlmodel_http_application.py": {
+          "passed": 1
+        }
+      },
+      "setup_skips": 1,
+      "elapsed_seconds": 245.7539284749946,
+      "source_stability": {
+        "unchanged": true,
+        "changed_paths": []
+      }
+    },
+    "fresh-cluster-export-20261024-63.json": {
+      "path": "/home/debrato/Projects/cryptalis/docs/_reset/fresh-cluster-export-20261024-63.json",
+      "sha256": "61fda48a7462070fb8ccaf8bc077893e0ac03737f878683bc082ededdb3269c4",
+      "counts": {
+        "passed": 1
+      },
+      "modules": {
+        "tests/test_fresh_cluster_export.py": {
+          "passed": 1
+        }
+      },
+      "setup_skips": 0,
+      "elapsed_seconds": 2.3353020189970266,
+      "source_stability": {
+        "unchanged": true,
+        "changed_paths": []
+      }
+    },
+    "fresh-cluster-restore-20261024-62.json": {
+      "path": "/home/debrato/Projects/cryptalis/docs/_reset/fresh-cluster-restore-20261024-62.json",
+      "sha256": "e7175e825b83a64cc5b81255712eab750ab37fbf8f902dd94acaf32c1818ed65",
+      "counts": {
+        "passed": 24
+      },
+      "modules": {
+        "tests/test_fresh_cluster_restore.py": {
+          "passed": 24
+        }
+      },
+      "setup_skips": 1,
+      "elapsed_seconds": 6.450559169985354,
+      "source_stability": {
+        "unchanged": true,
+        "changed_paths": []
+      }
+    },
+    "integrated-hardening-installed-sdk-20261024.json": {
+      "path": "/home/debrato/Projects/cryptalis/docs/_reset/integrated-hardening-installed-sdk-20261024.json",
+      "sha256": "0684108177efdff524e55650140978254751765cb608cbf7486ea196d12b2319",
+      "counts": {
+        "passed": 12
+      },
+      "modules": {
+        "tests/profile_aws_kms_sdk.py": {
+          "passed": 12
+        }
+      },
+      "setup_skips": 0,
+      "elapsed_seconds": 2.2653538860031404,
+      "source_stability": {
+        "unchanged": true,
+        "changed_paths": []
+      }
+    }
+  },
+  "applications": {
+    "integrated-hardening-source-application-20261024.json": {
+      "path": "/home/debrato/Projects/cryptalis/docs/_reset/integrated-hardening-source-application-20261024.json",
+      "sha256": "7117894eb90b10c88ff79c072335e0a8e3c037ac02b16a7ad0629bc2e417462f",
+      "scope": "Unchanged original local TestClient HTTP/ASGI/JWT and real loopback SMTP joined to public fixture CLI lifecycle; no browser, external mail, fresh-cluster, production host/custody or deployment qualification"
+    },
+    "integrated-hardening-source-basic-http-20261024.json": {
+      "path": "/home/debrato/Projects/cryptalis/docs/_reset/integrated-hardening-source-basic-http-20261024.json",
+      "sha256": "6909f3eda4f8b299e47a2bf637699936b0c463be89fe5611a824c7a1d4def63d",
+      "scope": "local TestClient ASGI routes and real localhost SMTP; no browser, deployment or external mail qualification"
+    },
+    "integrated-hardening-installed-application-20261024.json": {
+      "path": "/home/debrato/Projects/cryptalis/docs/_reset/integrated-hardening-installed-application-20261024.json",
+      "sha256": "09f04b1350a31a99a7502e44cf2a9737f56fe457c5ff2fb1126956ffe91f0d64",
+      "scope": "Unchanged original local TestClient HTTP/ASGI/JWT and real loopback SMTP joined to public fixture CLI lifecycle; no browser, external mail, fresh-cluster, production host/custody or deployment qualification"
+    },
+    "integrated-hardening-installed-basic-http-20261024.json": {
+      "path": "/home/debrato/Projects/cryptalis/docs/_reset/integrated-hardening-installed-basic-http-20261024.json",
+      "sha256": "6909f3eda4f8b299e47a2bf637699936b0c463be89fe5611a824c7a1d4def63d",
+      "scope": "local TestClient ASGI routes and real localhost SMTP; no browser, deployment or external mail qualification"
+    },
+    "integrated-hardening-fresh-retained-20261024.json": {
+      "path": "/home/debrato/Projects/cryptalis/docs/_reset/integrated-hardening-fresh-retained-20261024.json",
+      "sha256": "d7f82b14ce7f09ebe4cfc0713841f359630f8cf3e8e4f6df982a837b46bf3329",
+      "scope": "Actual fresh backup recovery and latest native removal precede this status; references remain host declarations, availability and completeness UNKNOWN"
+    }
+  },
+  "historical_source_sdk": {
+    "path": "/home/debrato/Projects/cryptalis/docs/_reset/kms-sync-sdk-source-green-20261024.json",
+    "sha256": "9d8a09f1b8b7f3c35a0a35351bc62277b8c5427074eb8412d60f118409ff0178",
+    "counts": {
+      "passed": 12
+    },
+    "modules": {
+      "tests/profile_aws_kms_sdk.py": {
+        "passed": 12
+      }
+    },
+    "setup_skips": 0,
+    "elapsed_seconds": 2.1734612110012677,
+    "source_stability": {
+      "unchanged": true,
+      "changed_paths": []
+    }
+  },
+  "release": {
+    "path": "/home/debrato/Projects/cryptalis/docs/_reset/integrated-hardening-release-20261024.json",
+    "sha256": "6f55545d136373808139b6cd11d63c7dbeeef8ed702dc801cd34cb8585f1ab87"
+  },
+  "install_evidence": {
+    "path": "/tmp/cryptalis-integrated-hardening-install-evidence-20261024.json",
+    "sha256": "a0adc4bc19b0963df1790a53b868ef144dbdddf01d553ebe892ac7c1764f777b"
+  },
+  "artifacts": {
+    "cryptalis-0.1.0-py3-none-any.whl": "53e416e8fd17438c460b76cbe258ae511740ddcb4a467928500410aae2a23b3c",
+    "cryptalis-0.1.0.tar.gz": "95a1a737e476af2cf52ef38b46a182e9ebba2e78847655fd6f7c42046dbcd169"
+  },
+  "dependency_pins": 72,
+  "release_inputs": 44,
+  "product_modules": 39,
+  "installed_files": 43,
+  "prebuild_argument_failure": {
+    "path": "/tmp/cryptalis-integrated-hardening-build-argument-failure-20261024.json",
+    "sha256": "be2da1824c2f006cf0ff7088bce5aaeba842f6a942e9c4e8b871ffa61379c223"
+  },
+  "document_sha256": {
+    "docs/status.md": "68462866904c58a6f7b8c3c53c6d64675c578fab79139a99ba3e1be5eb429006",
+    "docs/BUILD_CHECKLIST.md": "b6955af03a371238dff363a99f637593cc05960aad0749913a416b7e97dfef80",
+    "docs/security.md": "ba8c01bea09722d23dc8f8b658b983acbf068de0e04c8a6e0a9f4a6cba44d174",
+    "docs/decisions.md": "3cc11cb59fd89d8df5413348a062a733a149717d05518a4db4a6a11ec8746dde",
+    "docs/walkthrough-migration.md": "9ebe0530533046a5617122e5b7fe27a6d9097372fa09f0dfdab35fc8f7a77fb0",
+    "docs/architecture/README.md": "4d46ad30e90e67ff76dea8d858974aaacf6fd0392502e82df7299d95a306d2b1"
+  },
+  "objectives": "All 34 states unchanged",
+  "gates": "All seven UNKNOWN",
+  "current_full_suite_runs": 0,
+  "scope": "Focused integrated source, installed affected modules, original local HTTP/JWT/loopback SMTP and one genuine restored-target pair. Local SDK Stubber evidence is separate from live AWS custody. No full-suite, browser, external mail or production qualification.",
+  "checker_sha256": "f73534d4108dcb7552d64cf7a2c02d2aa04bf03edd08cb19c98029145b60d8bf"
+}

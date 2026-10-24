@@ -21,6 +21,38 @@ and [competitive capability matrix](research/capability-matrix.md) govern priori
 Progress follows complete real-application journeys and resolved production requirements.
 All seven production gates remain UNKNOWN.
 
+## Integrated defensive hardening: 2026-10-24
+
+**VERIFIED, bounded source and installed profiles at `worktree-6739968d9f52b9dd`:** custom
+protected-search dispatch refuses before keys in sync and async execution. Recognized
+async SDK methods refuse during client construction. Retained-backup status admits
+bounded declarations before database access and never prepares keys.
+
+The [source run](_reset/integrated-hardening-source-20261024.json) passes 74 tests in
+89.376 wrapper seconds. The [installed run](_reset/integrated-hardening-installed-20261024.json)
+passes 357 tests with one inherited fresh setup skip in 245.754 seconds.
+The genuine installed [export](_reset/fresh-cluster-export-20261024-63.json) passes one test.
+The separate-cluster [restore](_reset/fresh-cluster-restore-20261024-62.json) passes 24 tests
+with one generation-specific setup skip. The [installed SDK run](_reset/integrated-hardening-installed-sdk-20261024.json)
+passes 12 local Stubber cases in 2.265 seconds, with credential-discovery and transport tripwires.
+All five runs retain 221 stable Python hashes.
+
+The four HTTP reports retain the joined and basic controls:
+[source journey](_reset/integrated-hardening-source-application-20261024.json),
+[source basic](_reset/integrated-hardening-source-basic-http-20261024.json),
+[installed journey](_reset/integrated-hardening-installed-application-20261024.json) and
+[installed basic](_reset/integrated-hardening-installed-basic-http-20261024.json).
+The [fresh metadata report](_reset/integrated-hardening-fresh-retained-20261024.json)
+supplies actual dump/wheel references, with drill None, no journal and zero key preparations.
+The command reports host declarations. It does not inspect these files or prove recovery.
+
+The [artifact check](_reset/integrated-hardening-release-20261024.json) covers 44 inputs,
+39 modules and 43 installed files. The wheel SHA-256 is
+`53e416e8fd17438c460b76cbe258ae511740ddcb4a467928500410aae2a23b3c`.
+The [final boundary](_reset/integrated-hardening-final-boundary-20261024.json) binds this evidence.
+No current full-suite, live AWS or production qualification follows. All 34 objective
+states and seven UNKNOWN gates remain unchanged.
+
 ## Synchronous KMS SDK admission: 2026-10-24
 
 **VERIFIED, bounded local protocol checks:** the AWS adapter rejects recognized
@@ -32,7 +64,8 @@ The [protocol run](_reset/kms-sync-source-green-20261024.json) passes 39 checks 
 [actual-SDK run](_reset/kms-sync-sdk-source-green-20261024.json) passes all 12 local
 Stubber cases in 2.17 seconds using the preserved isolated SDK target. Credential
 discovery and HTTP transport tripwires remain active. All 218 Python hashes stay
-stable in both runs. Installed qualification remains pending.
+stable in both runs at that checkpoint. Current installed verification appears in the
+[integrated checkpoint](#integrated-defensive-hardening-2026-10-24).
 This fixes client admission only; live AWS custody and production qualification
 remain UNKNOWN.
 
@@ -53,7 +86,8 @@ The [corrected source run](_reset/search-ast-source-green-final-20261024.json) p
 skips. All 219 Python hashes stay stable.
 
 Both sync and async custom-dispatch refusals precede keys and driver execution.
-Installed qualification remains pending.
+Current installed verification appears in the
+[integrated checkpoint](#integrated-defensive-hardening-2026-10-24).
 
 ## Declared retained-backup status references: 2026-10-24
 
@@ -66,7 +100,9 @@ and match this checkpoint.
 
 Legacy output, key-free reporting, journal-free REMOVED ancestor references and output-error
 retention pass. References are HOST_DECLARED_DIGEST_REFERENCES. Verification is NOT_PERFORMED.
-Completeness, availability and recovery remain UNKNOWN. Installed/fresh verification remains pending.
+Completeness, availability and recovery remain UNKNOWN. Current installed and
+fresh-cluster verification appears in the
+[integrated checkpoint](#integrated-defensive-hardening-2026-10-24).
 All 34 objective states and seven UNKNOWN gates remain unchanged. See the
 [contract](architecture/README.md#retained-backup-status-metadata).
 

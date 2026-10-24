@@ -226,13 +226,16 @@ Source and installed initialization verification pass.
 
 ### Retained-backup status metadata
 
-**IMPLEMENTED, bounded source verification:** optional `status --host-context MODULE:FACTORY`
+**IMPLEMENTED, bounded source and installed verification:** optional `status --host-context MODULE:FACTORY`
 accepts exact frozen `RetainedObligationsContext(operation_id, plan_digest, records)` and
 `RetainedBackupObligation(backup_id, source_plan, dump_sha256, reader_sha256, drill_sha256)`.
 Admit exact source/predecessor lineage and restore bindings before database access.
 Limit records to 64 and aggregate source bytes to 16 MiB. Reader/drill references
 can be None. Contexts have no keys. Doctor and omitted-context status remain unchanged. See the
-[evidence](../status.md#declared-retained-backup-status-references-2026-10-24).
+[source checkpoint](../status.md#declared-retained-backup-status-references-2026-10-24).
+The [integrated checkpoint](../status.md#integrated-defensive-hardening-2026-10-24)
+includes genuine fresh-cluster metadata controls. Declared references do not prove
+file availability or recovery.
 
 ### Original HTTP operational qualification
 

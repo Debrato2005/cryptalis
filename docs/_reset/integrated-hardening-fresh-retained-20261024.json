@@ -1,0 +1,39 @@
+{
+  "scope": "genuine_restored_backup_removed_status",
+  "source_operation_id": "83429af9-d2ef-4630-8c04-e70a7b4fda59",
+  "source_plan_digest": "55eca93547b8ce0c26e5c569b5cfdb9d1fcc483f6467e0d4d6ad36171900eb01",
+  "required_policy_digests": {
+    "00000000-0000-0000-0000-0000000001f8": "547d791332de84aaea16e3ba8fe227c58971630e7832af96e7c3c83701b844b2"
+  },
+  "dump_sha256": "a0a560bb6985940d290757b1d931d6eef6ebb65ff457b35edb7f7b39486ab46b",
+  "reader_sha256": "53e416e8fd17438c460b76cbe258ae511740ddcb4a467928500410aae2a23b3c",
+  "drill_sha256": null,
+  "status": {
+    "authority": "HOST_SUPPLIED_METADATA",
+    "inventory_completeness": "UNKNOWN",
+    "provider_availability": "UNKNOWN",
+    "reader_availability": "UNKNOWN",
+    "records": [
+      {
+        "backup_id": "0dbe661e-3798-4171-8e72-9e856f031a94",
+        "drill_sha256": null,
+        "dump_sha256": "a0a560bb6985940d290757b1d931d6eef6ebb65ff457b35edb7f7b39486ab46b",
+        "provenance": "HOST_DECLARED_DIGEST_REFERENCES",
+        "reader_sha256": "53e416e8fd17438c460b76cbe258ae511740ddcb4a467928500410aae2a23b3c",
+        "required_policy_digests": {
+          "00000000-0000-0000-0000-0000000001f8": "547d791332de84aaea16e3ba8fe227c58971630e7832af96e7c3c83701b844b2"
+        },
+        "source_operation_id": "83429af9-d2ef-4630-8c04-e70a7b4fda59",
+        "source_plan_digest": "55eca93547b8ce0c26e5c569b5cfdb9d1fcc483f6467e0d4d6ad36171900eb01"
+      }
+    ],
+    "reported_count": 1,
+    "scope": "host_declared_lineage_backup_obligations",
+    "status": "UNKNOWN",
+    "verification": "NOT_PERFORMED"
+  },
+  "journal_absent": true,
+  "provider_preparations": 0,
+  "boundary": "Actual fresh backup recovery and latest native removal precede this status; references remain host declarations, availability and completeness UNKNOWN",
+  "gates": "all seven UNKNOWN"
+}

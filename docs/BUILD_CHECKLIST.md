@@ -25,8 +25,14 @@ No objective is complete until its acceptance evidence and applicable gate pass.
 
 ## Current boundary
 
+- Integrated defensive hardening passes 74 source and 357 installed tests, with one
+  inherited fresh setup skip. Genuine installed export/restore pass one and 24 tests,
+  with one generation-specific setup skip. Twelve installed local SDK cases also pass.
+  Metadata references remain host declarations. See the
+  [integrated checkpoint](status.md#integrated-defensive-hardening-2026-10-24).
+
 - Synchronous KMS client admission rejects recognized async SDK methods before use.
-  Source protocol and isolated actual-SDK checks pass; live AWS and release gates
+  Source and installed protocol/SDK checks pass. Live AWS and release gates
   remain UNKNOWN. See the [checkpoint](status.md#synchronous-kms-sdk-admission-2026-10-24).
 
 - Protected search rejects custom binary dispatch before rewrite and key resolution.
@@ -35,14 +41,14 @@ No objective is complete until its acceptance evidence and applicable gate pass.
   [checkpoint](status.md#exact-protected-search-expression-dispatch-2026-10-24).
 
 - Retained-backup status passes 131 source tests, including 23 new controls.
-  Installed/fresh verification remains pending. Metadata completeness and availability
-  remain UNKNOWN. See the [checkpoint](status.md#declared-retained-backup-status-references-2026-10-24).
+  Integrated installed and fresh-cluster checks also pass. Metadata completeness,
+  availability and recovery remain UNKNOWN. See the [checkpoint](status.md#declared-retained-backup-status-references-2026-10-24).
 
 - The original 26-file HTTP operational join passes two source and two installed
   tests with no skips. Six HTTP boundaries, 24 loopback messages per journey,
   five actual SIGKILL/resume checkpoints and latest-value package-free HTTP exit pass.
-  All 218 Python hashes stay stable. The 217 prior files and historical artifact
-  bytes remain unchanged. Two database/four application receipts bind the
+  At `53fd91b`, all 218 Python hashes stay stable. The 217 prior files and historical
+  artifact bytes remain unchanged. Two database/four application receipts bind the
   [final boundary](_reset/http-cli-final-boundary-20261024.json). No rebuild or current
   fresh-cluster/full-suite qualification is claimed. See the
   [verified checkpoint](status.md#original-http-operational-cli-journey-2026-10-24).
@@ -574,8 +580,9 @@ recovery and the final full regression. No production gate passes.
 
 ## Next critical path
 
-1. Verify installed and fresh-target retained status. External inventory/recovery qualification stays open.
-   Keep journal observations separate from external retained obligations. An empty journal does not prove that external obligations are absent.
+1. Qualify external retained inventory and recovery obligations. Installed and
+   fresh-target metadata checks pass. Keep journal observations separate from external
+   obligations. An empty journal does not prove that external obligations are absent.
    The [original HTTP operational join](status.md#original-http-operational-cli-journey-2026-10-24)
    now has bounded source and installed evidence.
 2. Retain the current removal contract while evaluating the unresolved retained-native

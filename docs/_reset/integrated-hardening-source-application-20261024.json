@@ -1,0 +1,267 @@
+{
+  "application_revision": "d40de23896d27d15c17a7bf9649123fd167a0aa8",
+  "application_source_sha256": {
+    "LICENSE": "0bd4e76cdd06ab24cce2de5e74f490920897f90a22ad35e8403ed006d4560f48",
+    "backend/app/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "backend/app/api/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "backend/app/api/deps.py": "04a3fe51c1a2f33b80bfc14df94487cf2ee388e037d3d1eeabc10adbede0d577",
+    "backend/app/api/main.py": "a3de7c6f3e910194974f41bcdf801f062e9e3ac80ed34bfa25917d3864f98896",
+    "backend/app/api/routes/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "backend/app/api/routes/items.py": "4f6f9efaea077ca4208cfa746fea676966f1cf423872137c69bfccdc722c54a6",
+    "backend/app/api/routes/login.py": "3c7f7c395b74cea54e505a16052679614b4fd92325d88b761385df8d952af642",
+    "backend/app/api/routes/private.py": "f5df74cc276f0d8d83337922fb8e05e69ecbc885d466d90d2e3de54ba5e4c8f4",
+    "backend/app/api/routes/users.py": "b358b1c83b86958528d8e80e0b789b9ecec39ed9100c9b88bdd3fae238913de2",
+    "backend/app/api/routes/utils.py": "5e77b59fab0bfcb1cef581938dcc8a47afb7518664a497763d4c50711898e925",
+    "backend/app/backend_pre_start.py": "81341fc74b8b147f504cdc6fe5d3dcbfeb12fb163f23bc1c7355230216990cf7",
+    "backend/app/core/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "backend/app/core/config.py": "668f895a04119a5aaa9890628a13add517e31f61856d228e03a471fa3eb62aa4",
+    "backend/app/core/db.py": "5efaacfa9f6c3f075a7755c72e071d7b3b46c7873f24822db33f26d699557967",
+    "backend/app/core/security.py": "0006fd18a2900107c6e06023c1b9ccf3960887e84cf664e1632307305c6c4ab7",
+    "backend/app/crud.py": "f69d79e858ee22cee7792494b0df0370afaed20439ed16bbf6f70767926254d1",
+    "backend/app/email-templates/build/new_account.html": "1682df1af2aceb2b4e72dae69fd305d66e4b733e41b06760ad1a67d156f03ff3",
+    "backend/app/email-templates/build/reset_password.html": "67b1406add8f206d27770ccebaaef128cd7f1f63cb22419287173715f77562b2",
+    "backend/app/email-templates/build/test_email.html": "a50c9a8b8c32175a01b90e82a8c7e1c66ccfee707997b7197e4c8f16c52973c2",
+    "backend/app/initial_data.py": "29b51ebdd3c8cb9fde80a426f9c10af08c606ad0ffcec39a23fddc6587ab812c",
+    "backend/app/main.py": "4519b757ecb6f410b6f59ff83c150cd3baeb2c065af567022dc31cb7190b018d",
+    "backend/app/models.py": "5cd49acda8771e6f9551f47a0d1e516bcce91d90841a1e9e0283a1ef2d6a7e94",
+    "backend/app/tests_pre_start.py": "aab5b1c1f1c3abd3aaf81f9922c5f10d384c0727571e5675082323ac6cb7f893",
+    "backend/app/utils.py": "5bec718e2bdbf97719f42261dfc6d36b30e71a6010540c2a5071d9cef4377661",
+    "backend/pyproject.toml": "5c6bbcfb3fbdccbdc22d2828628ed4dc8352e13574899296cd9836ac9342c413"
+  },
+  "model_changes": [],
+  "query_changes": [],
+  "route_changes": [],
+  "protected_fields": [
+    "User.email",
+    "User.full_name",
+    "User.is_active"
+  ],
+  "layout": "preserve-public-slots/v1",
+  "initialization_manifest_digest": "33fb8098a75579a2e37d2469a110e5b2db8cc496e4819202dc42296c02f56b78",
+  "initialization_inspection": {
+    "checks": {
+      "host_authority": "UNKNOWN",
+      "manifest_schema": "PASS",
+      "provider_keys": "UNKNOWN",
+      "query_routes": "UNKNOWN",
+      "recovery_capacity": "UNKNOWN",
+      "runtime_deployment": "UNKNOWN",
+      "writer_exclusion": "UNKNOWN"
+    },
+    "effects": "NONE",
+    "format": "cryptalis.doctor/v1",
+    "issues": [],
+    "scope": "pre_adoption",
+    "status": "UNKNOWN"
+  },
+  "operation_digests": {
+    "protection": "0c62489375e706fab9340f9072ac37f2a577be8f14bf7ed7d1e4e35e674e20f6",
+    "rewrap_proposal": "fbf8fdb547f754092f442d8ed25c1045778dfc4dbac0f4ee3c537eb7c767cd43",
+    "rewrap_activation": "67ede0a76f2249513dd4c32c66665b30172ce4f895d7aeb4b7890a26ca2c88e8",
+    "payload_proposal": "588b33526b65e97cf90a2f36e84ed2d278ea05f9c4cef17f2a830caca260012d",
+    "payload_activation": "90c8b132c32997cda513ca309678e9c36d8ab5afc92a72a63e9881108fb765ba",
+    "search_proposal": "d91cd3059b31d57ae8bfea39e92ece7be64730b982e7c524f1763378348639a0",
+    "search_activation": "3948c5bee87b611608e0c729a58638a1a407b10de4576683d4298e99e1ef1791",
+    "reverse": "ae95deec79217a616bcf5dc44f133a6a58133e4235a2cb6051660f79d38ab5b4"
+  },
+  "http_boundaries": {
+    "native": {
+      "http_controls": [
+        "signup, duplicate/invalid input, real password/JWT login and token refusals",
+        "own NULL/Unicode/email changes, uniqueness409 and password change with old/new login",
+        "ordinary-user admin/cross-user refusals; own/admin reads; superuser self-delete refusal",
+        "encrypted inactive denial, reactivation and one committed inactive user",
+        "own item CRUD/list; other-owner read/update/delete refusal and unchanged value",
+        "admin list, user self-delete and admin victim/item cascade deletion"
+      ],
+      "local_smtp": {
+        "smtp_messages": 4,
+        "controls": [
+          "unknown and existing account recovery response parity",
+          "actual template MIME delivery and token reset",
+          "invalid/expired reset token and inactive account refusal",
+          "admin HTML/test-email/new-account delivery",
+          "latest credentials restored after SMTP password reset"
+        ]
+      },
+      "retained_latest": false,
+      "inactive_false": true
+    },
+    "protected": {
+      "http_controls": [
+        "retained latest credentials, values and inactive flag",
+        "signup, duplicate/invalid input, real password/JWT login and token refusals",
+        "own NULL/Unicode/email changes, uniqueness409 and password change with old/new login",
+        "ordinary-user admin/cross-user refusals; own/admin reads; superuser self-delete refusal",
+        "encrypted inactive denial, reactivation and one committed inactive user",
+        "own item CRUD/list; other-owner read/update/delete refusal and unchanged value",
+        "admin list, user self-delete and admin victim/item cascade deletion"
+      ],
+      "local_smtp": {
+        "smtp_messages": 4,
+        "controls": [
+          "unknown and existing account recovery response parity",
+          "actual template MIME delivery and token reset",
+          "invalid/expired reset token and inactive account refusal",
+          "admin HTML/test-email/new-account delivery",
+          "latest credentials restored after SMTP password reset"
+        ]
+      },
+      "retained_latest": true,
+      "inactive_false": true
+    },
+    "rewrapped": {
+      "http_controls": [
+        "retained latest credentials, values and inactive flag",
+        "signup, duplicate/invalid input, real password/JWT login and token refusals",
+        "own NULL/Unicode/email changes, uniqueness409 and password change with old/new login",
+        "ordinary-user admin/cross-user refusals; own/admin reads; superuser self-delete refusal",
+        "encrypted inactive denial, reactivation and one committed inactive user",
+        "own item CRUD/list; other-owner read/update/delete refusal and unchanged value",
+        "admin list, user self-delete and admin victim/item cascade deletion"
+      ],
+      "local_smtp": {
+        "smtp_messages": 4,
+        "controls": [
+          "unknown and existing account recovery response parity",
+          "actual template MIME delivery and token reset",
+          "invalid/expired reset token and inactive account refusal",
+          "admin HTML/test-email/new-account delivery",
+          "latest credentials restored after SMTP password reset"
+        ]
+      },
+      "retained_latest": true,
+      "inactive_false": true
+    },
+    "payload_published": {
+      "http_controls": [
+        "retained latest credentials, values and inactive flag",
+        "signup, duplicate/invalid input, real password/JWT login and token refusals",
+        "own NULL/Unicode/email changes, uniqueness409 and password change with old/new login",
+        "ordinary-user admin/cross-user refusals; own/admin reads; superuser self-delete refusal",
+        "encrypted inactive denial, reactivation and one committed inactive user",
+        "own item CRUD/list; other-owner read/update/delete refusal and unchanged value",
+        "admin list, user self-delete and admin victim/item cascade deletion"
+      ],
+      "local_smtp": {
+        "smtp_messages": 4,
+        "controls": [
+          "unknown and existing account recovery response parity",
+          "actual template MIME delivery and token reset",
+          "invalid/expired reset token and inactive account refusal",
+          "admin HTML/test-email/new-account delivery",
+          "latest credentials restored after SMTP password reset"
+        ]
+      },
+      "retained_latest": true,
+      "inactive_false": true
+    },
+    "search_published": {
+      "http_controls": [
+        "retained latest credentials, values and inactive flag",
+        "signup, duplicate/invalid input, real password/JWT login and token refusals",
+        "own NULL/Unicode/email changes, uniqueness409 and password change with old/new login",
+        "ordinary-user admin/cross-user refusals; own/admin reads; superuser self-delete refusal",
+        "encrypted inactive denial, reactivation and one committed inactive user",
+        "own item CRUD/list; other-owner read/update/delete refusal and unchanged value",
+        "admin list, user self-delete and admin victim/item cascade deletion"
+      ],
+      "local_smtp": {
+        "smtp_messages": 4,
+        "controls": [
+          "unknown and existing account recovery response parity",
+          "actual template MIME delivery and token reset",
+          "invalid/expired reset token and inactive account refusal",
+          "admin HTML/test-email/new-account delivery",
+          "latest credentials restored after SMTP password reset"
+        ]
+      },
+      "retained_latest": true,
+      "inactive_false": true
+    },
+    "plaintext_published": {
+      "http_controls": [
+        "retained latest credentials, values and inactive flag",
+        "signup, duplicate/invalid input, real password/JWT login and token refusals",
+        "own NULL/Unicode/email changes, uniqueness409 and password change with old/new login",
+        "ordinary-user admin/cross-user refusals; own/admin reads; superuser self-delete refusal",
+        "encrypted inactive denial, reactivation and one committed inactive user",
+        "own item CRUD/list; other-owner read/update/delete refusal and unchanged value",
+        "admin list, user self-delete and admin victim/item cascade deletion"
+      ],
+      "local_smtp": {
+        "smtp_messages": 4,
+        "controls": [
+          "unknown and existing account recovery response parity",
+          "actual template MIME delivery and token reset",
+          "invalid/expired reset token and inactive account refusal",
+          "admin HTML/test-email/new-account delivery",
+          "latest credentials restored after SMTP password reset"
+        ]
+      },
+      "retained_latest": true,
+      "inactive_false": true
+    }
+  },
+  "committed_checkpoints": {
+    "protection": {
+      "phase": "BACKFILLED",
+      "committed_rows": 3,
+      "committed_chunks": 3,
+      "sigkill": true
+    },
+    "rewrap": {
+      "phase": "PENDING",
+      "committed_rows": 6,
+      "committed_chunks": 0,
+      "sigkill": true
+    },
+    "payload": {
+      "phase": "PENDING",
+      "committed_rows": 9,
+      "committed_chunks": 1,
+      "sigkill": true
+    },
+    "search": {
+      "phase": "PENDING",
+      "committed_rows": 12,
+      "committed_chunks": 1,
+      "sigkill": true
+    },
+    "reverse": {
+      "phase": "BACKFILLED",
+      "committed_rows": 15,
+      "committed_chunks": 15,
+      "sigkill": true
+    }
+  },
+  "payload_generation": 2,
+  "search_generation": 2,
+  "target_only_retry_and_publication": true,
+  "rotation_index_and_public_slot_identity": true,
+  "search_storage_frames_preserved_exactly": true,
+  "latest_value_decryptback": true,
+  "native_schema_restored": true,
+  "removed_original_http": {
+    "native_http": "passed",
+    "retained_latest": "passed",
+    "inactive_false": true,
+    "cryptalis_imported": false,
+    "cryptalis_import_refused": true,
+    "smtp_exercised": false
+  },
+  "runtime": {
+    "fastapi": "0.115.14",
+    "starlette": "0.46.2",
+    "httpx": "0.28.1",
+    "emails": "0.6",
+    "sqlmodel": "0.0.48",
+    "pydantic": "2.14.1",
+    "SQLAlchemy": "2.1.3",
+    "psycopg": "3.3.6",
+    "cryptography": "50.0.2"
+  },
+  "python": "3.13.12",
+  "boundary": "Unchanged original local TestClient HTTP/ASGI/JWT and real loopback SMTP joined to public fixture CLI lifecycle; no browser, external mail, fresh-cluster, production host/custody or deployment qualification",
+  "gates": "all seven UNKNOWN"
+}

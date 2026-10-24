@@ -1438,3 +1438,38 @@ output, key-free UNKNOWN declarations, strict bounds, malformed input, host
 failure, ancestry, journal-free REMOVED status and output failure controls pass.
 Installed and optional genuine-fresh reference qualification remain pending.
 This evidence grants no external inventory, provider or recovery qualification.
+
+## Integrated query, provider and retained-status qualification: 2026-10-24
+
+**VERIFIED within the named installed and local PostgreSQL profiles:** combine the
+native search-dispatch fix, synchronous KMS client admission and declared retained
+backup status. The current source run passes 74 checks, including the unchanged
+original HTTP lifecycle. The installed affected run passes 357 with one inherited
+fresh setup skip. Both keep all 221 Python hashes stable.
+
+One offline reproducible wheel contains 39 modules; 43 installed-file checks and
+44 release-source hashes pass with the unchanged 72 dependency pins. Actual
+installed fresh backup recovery passes one export and 24 restore controls, with
+one generation-specific setup skip. After actual removal, status retains the
+original backup and policy references with no journal and no key preparation.
+The fixture computes real dump/wheel hashes; the command still reports declared
+references and UNKNOWN current availability and completeness. Its drill reference
+is None because the current receipt is written after the test.
+
+The source and installed original HTTP reports preserve all 26 pinned files,
+five interruption/recovery checkpoints and latest-value package-free exit. This
+qualifies local TestClient and loopback SMTP behavior only. The initial build
+invocation's wrong revision stopped at admission before building or installing;
+the corrected invocation used exact HEAD. No assertion was bypassed.
+
+The [combined boundary](_reset/integrated-hardening-final-boundary-20261024.json)
+binds the current receipts, artifact and six documents. Earlier RED and attempted
+fix receipts remain intact. All 34 objective states and seven UNKNOWN production
+gates remain unchanged. This checkpoint repeats no full suite and grants no live
+AWS, host authority, deployment or independent security qualification.
+
+The [installed actual-SDK profile](_reset/integrated-hardening-installed-sdk-20261024.json)
+passes all 12 local Stubber cases with credential discovery and HTTP transport
+forbidden. The preserved SDK target adds no dependency changes to the installed
+environment. This fifth current database wrapper keeps the same 221 Python hashes
+stable and supplies no live AWS custody evidence.

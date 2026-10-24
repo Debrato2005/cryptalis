@@ -565,9 +565,12 @@ Source and installed initialization verification pass.
 
 ### Retained-backup declaration boundary
 
-**IMPLEMENTED, source verified:** declared hashes prove no file availability, recovery or
+**IMPLEMENTED, source and installed verified:** declared hashes prove no file availability, recovery or
 retirement authority. Never prepare keys. Empty metadata and absent journals settle no
-external obligations. Host-code effects remain UNKNOWN. See the [decision](decisions.md#declared-retained-backup-status-references-2026-10-24).
+external obligations. Host-code effects remain UNKNOWN. The
+[integrated checkpoint](status.md#integrated-defensive-hardening-2026-10-24)
+includes genuine fresh-cluster metadata controls. See the
+[decision](decisions.md#declared-retained-backup-status-references-2026-10-24).
 
 ### HTTP operational journey limits
 
@@ -585,19 +588,19 @@ host inventory/provenance. Wrappers or an empty journal cannot prove no obligati
 
 ### Synchronous KMS method boundary
 
-**IMPLEMENTED, bounded protocol verification:** recognized async encrypt/decrypt
+**IMPLEMENTED, bounded source and installed protocol verification:** recognized async encrypt/decrypt
 methods fail client construction with InvalidContext before invocation. Synchronous
 SDK behavior, key ARN, context and response checks remain unchanged. No live AWS
 qualification follows. See the
-[checkpoint](status.md#synchronous-kms-sdk-admission-2026-10-24).
+[integrated checkpoint](status.md#integrated-defensive-hardening-2026-10-24).
 
 ### Protected-search dispatch admission
 
-**VERIFIED, bounded source controls:** reject unadmitted custom binary renderers
+**VERIFIED, bounded source and installed controls:** reject unadmitted custom binary renderers
 before protected predicate rewriting and key resolution. Async SELECT admission
 must precede key preparation. Native FALSE controls and ordinary query parity
 separate safe refusal from changed SQL semantics. See the
-[checkpoint](status.md#exact-protected-search-expression-dispatch-2026-10-24).
+[integrated checkpoint](status.md#integrated-defensive-hardening-2026-10-24).
 
 ## Owned-sequence admission
 

@@ -239,9 +239,11 @@ Finish with original HTTP in a child that denies Cryptalis imports. It does not 
 
 ## Declare retained-backup status references
 
-**IMPLEMENTED, source verified:** add `--host-context MODULE:FACTORY` to status with the
-[exact context](architecture/README.md#retained-backup-status-metadata). Declared hashes are separate from
-database observations. Installed/fresh verification remains pending.
+**IMPLEMENTED, source and installed verified:** add `--host-context MODULE:FACTORY` to status with the
+[exact context](architecture/README.md#retained-backup-status-metadata). Keep declared hashes separate
+from database observations. Genuine fresh-cluster checks pass within the
+[integrated checkpoint](status.md#integrated-defensive-hardening-2026-10-24). The command does
+not inspect referenced files or prove recovery.
 
 ## Use the optional SQLModel bridge
 
