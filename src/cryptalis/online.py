@@ -16,11 +16,23 @@ from psycopg import sql
 from cryptalis import migration as m
 from cryptalis import _access_contract as access
 from cryptalis.crypto.cf1 import FieldDescriptor, seal_value
+from cryptalis.crypto.keys import Keyring, KeyUnavailable
 from cryptalis.crypto._payload_rotation import MAX_BATCH_BYTES, MAX_BATCH_ROWS
+from cryptalis.manifest.declaration import parse_protection_declaration
 
 
 FORMAT = 'cryptalis.online-protection/v1'
+TENANT_FORMAT = 'cryptalis.online-protection/v2'
+MAX_NATIVE_TENANTS = 1024
 PHASES = ('PREPARED', 'CAPTURING', 'FENCED')
+
+
+def _tenant_list(value):
+    if (type(value) is not list or len(value) > MAX_NATIVE_TENANTS
+            or any(type(item) is not str or str(UUID(item)) != item for item in value)
+            or value != sorted(set(value))):
+        raise ValueError
+    return {UUID(item) for item in value}
 
 
 @dataclass(frozen=True)
@@ -30,8 +42,10 @@ class OnlineProtectionPlan:
     def __post_init__(self):
         try:
             d = m._decode_transition_json(self.artifact)
-            base = {k: v for k, v in d.items() if k not in ('access_contract', 'batch_limits')}
-            if d['format'] != FORMAT or d['kind'] != 'online_protect':
+            tenant_scoped = d['format'] == TENANT_FORMAT
+            excluded = ('access_contract', 'batch_limits', 'native_tenants') if tenant_scoped else ('access_contract', 'batch_limits')
+            base = {k: v for k, v in d.items() if k not in excluded}
+            if d['format'] not in (FORMAT, TENANT_FORMAT) or d['kind'] != 'online_protect':
                 raise ValueError
             base.update(format='cryptalis.transition/v1', kind='protect')
             native = m.MigrationPlan(m._canonical(base))
@@ -43,9 +57,18 @@ class OnlineProtectionPlan:
                     or type(limits['max_bytes']) is not int or not 1 <= limits['max_bytes'] <= MAX_BATCH_BYTES):
                 raise ValueError
             models = d['lock']['models']
-            if any('column' in model['tenancy'] or any(
+            if any((not tenant_scoped and 'column' in model['tenancy']) or any(
                     field['source']['type'] not in ('text', 'varchar') for field in model['fields']) for model in models):
                 raise ValueError
+            if tenant_scoped:
+                tenants = _tenant_list(d['native_tenants'])
+                expected = {str(tenant) for tenant in tenants} | {
+                    model['table_id'] for model in models if 'column' not in model['tenancy']}
+                if (set(d['key_policies']) != expected or any(
+                        type(value) is not str or len(value) != 64
+                        or any(char not in '0123456789abcdef' for char in value)
+                        for value in d['key_policies'].values())):
+                    raise ValueError
             access.validate(d['access_contract'], models, d['target'][-1], d['runtime_role'])
             if native.operation_id != UUID(d['operation_id']):
                 raise ValueError
@@ -72,16 +95,62 @@ class OnlineApproval:
 
 
 def plan(manifest, mapping, engine, *, source_role, max_rows=1000,
-         max_bytes=MAX_BATCH_BYTES, **options):
-    """Compile native protection and a strict source-to-target access transfer."""
+         max_bytes=MAX_BATCH_BYTES, native_tenants=None, **options):
+    """Compile capture authority, including approved future tenant scopes.
+
+    Supply a tuple of native tenant UUIDs to select v2. Without it, v1 retains
+    its single-tenant contract. Empty approved scopes retain their policies.
+    """
+    approved = None
+    if native_tenants is not None:
+        if (type(native_tenants) is not tuple or len(native_tenants) > MAX_NATIVE_TENANTS
+                or any(type(tenant) is not UUID for tenant in native_tenants)
+                or len(set(native_tenants)) != len(native_tenants)):
+            raise m.TransitionFailure('invalid_native_tenants')
+        approved = set(native_tenants)
+        declaration = parse_protection_declaration(manifest)
+        allowed = approved | {model.table_id for model in declaration.models if model.tenant_column is None}
+        searchable = {model.table_id for model in declaration.models
+                      if model.tenant_column is None and any(field.queries for field in model.fields)}
+        if any(model.tenant_column is not None and any(field.queries for field in model.fields)
+               for model in declaration.models):
+            searchable |= approved
+        host_keys = options['keys']
+        rings = {}
+
+        def approved_keys(tenant):
+            if tenant not in allowed:
+                raise m.TransitionFailure('online_tenant_not_approved')
+            if tenant not in rings:
+                try:
+                    ring = host_keys(tenant) if callable(host_keys) else host_keys
+                except Exception:
+                    raise KeyUnavailable() from None
+                if (not isinstance(ring, Keyring) or ring.policy.tenant_id != tenant
+                        or ring.policy.domain_id != declaration.domain_id):
+                    raise m.TransitionFailure('missing_key_policy')
+                if tenant in searchable and ring.policy.search_generation is None:
+                    raise m.TransitionFailure('missing_search_policy')
+                rings[tenant] = ring
+            return rings[tenant]
+
+        options['keys'] = approved_keys
     native = m.plan(manifest, mapping, engine, **options)
     d = native.document
+    if approved is not None:
+        for tenant in sorted(approved):
+            d['key_policies'][str(tenant)] = m._policy(approved_keys(tenant))
+        d['native_tenants'] = sorted(str(tenant) for tenant in approved)
+        d['estimates']['provider_unwraps_per_cold_preparation'] = sum(
+            len(approved_keys(UUID(tenant)).policy.wrappers) for tenant in d['key_policies'])
     with m._connection(engine) as c:
         if m._target(c) != d['target']:
             raise m.TransitionFailure('wrong_database_target')
+        if approved is not None:
+            _check_native_tenants(c, d['lock']['models'], approved)
         contract = access.plan(c, d['lock']['models'], owner=d['target'][-1],
                                source_role=source_role, target_role=d['runtime_role'])
-    d.update(format=FORMAT, kind='online_protect', access_contract=contract,
+    d.update(format=FORMAT if approved is None else TENANT_FORMAT, kind='online_protect', access_contract=contract,
              batch_limits={'max_rows': max_rows, 'max_bytes': max_bytes})
     return OnlineProtectionPlan(m._canonical(d))
 
@@ -114,8 +183,24 @@ def _body(c, p, model):
     dirty, _, _ = _names(p)
     owner = sql.Literal(p.document['target'][-1]).as_string(c.connection.driver_connection)
     assignments = ' '.join('NEW.' + m._quote(c, f['payload_column']) + ' := NULL;' for f in model['fields'])
-    return (f'BEGIN IF CURRENT_USER <> {owner} THEN {assignments} '
+    tenant_check = ''
+    if 'column' in model['tenancy']:
+        tenant = 'NEW.' + m._quote(c, model['tenancy']['column'])
+        approved = sql.Literal(p.document['native_tenants']).as_string(c.connection.driver_connection)
+        tenant_check = (f'IF {tenant} IS NOT NULL AND NOT ({tenant} = ANY ({approved}::pg_catalog.uuid[])) '
+            "THEN RAISE EXCEPTION USING ERRCODE = '55000', MESSAGE = 'Native tenant is not approved for online capture.'; END IF; ")
+    return (f'BEGIN IF CURRENT_USER <> {owner} THEN {tenant_check}{assignments} '
             f'NEW.{m._quote(c, dirty)} := TRUE; END IF; RETURN NEW; END')
+
+
+def _check_native_tenants(c, models, approved, operation_id=None):
+    for model in models:
+        if 'column' in model['tenancy']:
+            tenant = m._quote(c, model['tenancy']['column'])
+            if c.exec_driver_sql(f'SELECT EXISTS (SELECT 1 FROM {m._table(c, model)} '
+                    f'WHERE {tenant} IS NULL OR NOT ({tenant} = ANY (%s::pg_catalog.uuid[])))',
+                    (sorted(approved),)).scalar_one():
+                raise m.TransitionFailure('online_tenant_not_approved', operation_id)
 
 
 def _capture(c, p, model):
@@ -204,6 +289,9 @@ def _expand(c, p):
         if m._facts(c, model) != model['source_schema']:
             raise m.TransitionFailure('source_schema_changed', p.operation_id)
         m._check_source_metadata(c, p, model)
+    if p.document['format'] == TENANT_FORMAT:
+        _check_native_tenants(c, p.document['lock']['models'],
+                              _tenant_list(p.document['native_tenants']), p.operation_id)
     c.exec_driver_sql(f'CREATE TABLE {m._journal(c,p)} (operation_id uuid PRIMARY KEY, plan_digest text NOT NULL, state jsonb NOT NULL)')
     c.exec_driver_sql(f'REVOKE ALL ON {m._journal(c,p)} FROM PUBLIC')
     c.exec_driver_sql(f'GRANT SELECT ON {m._journal(c,p)} TO {m._quote(c,p.document["runtime_role"])}')
@@ -230,9 +318,12 @@ def _chunk(c, p, state, keys):
     _inspect(c,p,state)
     dirty = _names(p)[0]
     limits = p.document['batch_limits']
+    approved = set(p.document.get('native_tenants', ()))
     for model in p.document['lock']['models']:
-        names = [model['record']['column']] + [f['column'] for f in model['fields']]
-        sizes = '+'.join('COALESCE(pg_catalog.octet_length('+m._quote(c,name)+'),0)+74' for name in names[1:])
+        scoped = 'column' in model['tenancy']
+        fields = [f['column'] for f in model['fields']]
+        names = [model['record']['column']] + ([model['tenancy']['column']] if scoped else []) + fields
+        sizes = '+'.join('COALESCE(pg_catalog.octet_length('+m._quote(c,name)+'),0)+74' for name in fields)
         candidates = c.exec_driver_sql('SELECT ' + m._quote(c,names[0]) + ', ' + sizes
             + f' FROM {m._table(c,model)} WHERE {m._quote(c,dirty)} IS DISTINCT FROM FALSE'
             + f' ORDER BY {m._quote(c,names[0])} LIMIT %s FOR UPDATE', (limits['max_rows'],)).all()
@@ -254,9 +345,12 @@ def _chunk(c, p, state, keys):
         descriptors = [FieldDescriptor.from_compiled(f['descriptor'],f['descriptor_digest']) for f in model['fields']]
         material, params = {}, []
         for row in rows:
-            tenant = UUID(model['table_id'])
+            tenant = row[1] if scoped else UUID(model['table_id'])
+            offset = 2 if scoped else 1
+            if scoped and str(tenant) not in approved:
+                raise m.TransitionFailure('online_tenant_not_approved', p.operation_id)
             frames = m._with_row_keys(keys,tenant,p,material,lambda prepared:
-                [seal_value(value,descriptor,tenant,row[0],prepared) for value,descriptor in zip(row[1:],descriptors)])
+                [seal_value(value,descriptor,tenant,row[0],prepared) for value,descriptor in zip(row[offset:],descriptors)])
             params.append(tuple(frames)+(row[0],))
         statement = f'UPDATE {m._table(c,model)} SET ' + ','.join(m._quote(c,f['payload_column'])+'=%s' for f in model['fields'])
         statement += f', {m._quote(c,dirty)}=FALSE WHERE {m._quote(c,names[0])}=%s'
@@ -337,6 +431,7 @@ def _successor(p, scopes, frames):
                 for table,scope in scopes.items()}
     d = p.document
     d.pop('batch_limits')
+    d.pop('native_tenants', None)
     d.update(format='cryptalis.transition/v8',kind='protect',
              operation_id=str(uuid5(p.operation_id,'cryptalis.online.activation/v1')),
              predecessors=[{'operation_id':str(p.operation_id),'plan_digest':p.digest}],
@@ -350,6 +445,9 @@ def _successor(p, scopes, frames):
 def _terminal_proof(c,p,state,keys):
     m._lock_tables(c,p)
     _inspect(c,p,state)
+    if p.document['format'] == TENANT_FORMAT:
+        _check_native_tenants(c, p.document['lock']['models'],
+                              _tenant_list(p.document['native_tenants']), p.operation_id)
     for model in p.document['lock']['models']:
         if c.exec_driver_sql(f'SELECT EXISTS (SELECT 1 FROM {m._table(c,model)} WHERE {m._quote(c,_names(p)[0])} IS DISTINCT FROM FALSE)').scalar_one():
             raise m.TransitionFailure('online_catchup_required',p.operation_id)
@@ -401,7 +499,8 @@ def switch(p, engine, *, successor, keys, pin, approval):
                 for field in model['fields']:
                     if field['queries']:
                         unique = 'UNIQUE ' if 'unique' in field['queries'] else ''
-                        c.exec_driver_sql(f'CREATE {unique}INDEX {m._quote(c,field["payload_column"]+"_eq")} ON {table} USING btree ((pg_catalog.substring({m._quote(c,field["payload_column"])},15,32)) pg_catalog.bytea_ops)')
+                        tenant = m._quote(c,model['tenancy']['column']) + ', ' if 'column' in model['tenancy'] else ''
+                        c.exec_driver_sql(f'CREATE {unique}INDEX {m._quote(c,field["payload_column"]+"_eq")} ON {table} USING btree ({tenant}(pg_catalog.substring({m._quote(c,field["payload_column"])},15,32)) pg_catalog.bytea_ops)')
                     c.exec_driver_sql(f'ALTER TABLE {table} ADD CONSTRAINT {m._quote(c,field["payload_column"]+"_frame")} CHECK ({m._frame_check(c,field)})')
                 models[model['table_id']] = {'scope':scopes[model['table_id']],'cursor':None,
                     'rows':scopes[model['table_id']]['count'],'chunks':0,
