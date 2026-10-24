@@ -25,10 +25,17 @@ No objective is complete until its acceptance evidence and applicable gate pass.
 
 ## Current boundary
 
+- The installed default/state candidate passes 367 affected checks. All six
+  integer width/layout default journeys and a Boolean control pass fresh
+  adoption and native exit. Artifact and reader checks pass. Full type admission
+  remains pending. See the
+  [checkpoint](status.md#integer-literal-default-installed-checkpoint-2026-10-24).
+
 - Literal integer defaults and native valid-write ORM state pass 190 initial and
   96 current source controls. Genuine minimum-int64 root/payload rotation,
   restore/adoption and native exit pass with public slots. Old readers retain
-  the exact default-free boundary. Installed qualification remains pending.
+  the exact default-free boundary. The installed checkpoint now extends this
+  source evidence.
   See the [checkpoint](status.md#integer-defaults-and-orm-state-source-checkpoint-2026-10-24).
 
 - The installed integer candidate passes 663 affected checks. All six integer

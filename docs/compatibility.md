@@ -209,7 +209,7 @@ coercion constants preserve custom/generic timing, stale-row behavior and earlie
 INSERT constraints without private numeric binds. Range failures retain typed
 IntegerRangeExceeded and SQLSTATE 22003. Full type admission remains pending;
 see the [installed checkpoint](status.md#integer-installed-lifecycle-checkpoint-2026-10-24).
-The newer [default/state checkpoint](status.md#integer-defaults-and-orm-state-source-checkpoint-2026-10-24)
+The newer [default/state checkpoint](status.md#integer-literal-default-installed-checkpoint-2026-10-24)
 adds native default semantics and fixes attribute expiration after valid flushes.
 
 ## Optional SQLModel bridge

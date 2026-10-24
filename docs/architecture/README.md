@@ -483,6 +483,8 @@ Boolean fields also contain `application_default`: absent-default NULL or a lite
 The internal integer candidate includes that member only for a literal client
 default. Its value is a canonical signed decimal string; pg-integer-default/v1
 is then required. Default-free v7 fields retain their existing bytes and readers.
+The [installed checkpoint](../status.md#integer-literal-default-installed-checkpoint-2026-10-24)
+owns the exact default and native ORM-state checks.
 The compiler and attachment compare this fact with the current native mapping.
 Server, callable and on-update protected defaults remain refused.
 
