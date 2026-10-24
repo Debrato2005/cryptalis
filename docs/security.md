@@ -563,6 +563,12 @@ operation UUID or transition phase. Existing private publication and safe diagno
 [verified checkpoint](status.md#operational-cli-initialization-2026-10-24).
 Source and installed initialization verification pass.
 
+### Retained-backup declaration boundary
+
+**IMPLEMENTED, source verified:** declared hashes prove no file availability, recovery or
+retirement authority. Never prepare keys. Empty metadata and absent journals settle no
+external obligations. Host-code effects remain UNKNOWN. See the [decision](decisions.md#declared-retained-backup-status-references-2026-10-24).
+
 ### HTTP operational journey limits
 
 **VERIFIED, bounded local source and installed profiles:** the joined profile keeps original authentication, authorization,

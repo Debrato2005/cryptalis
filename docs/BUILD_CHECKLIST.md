@@ -25,6 +25,10 @@ No objective is complete until its acceptance evidence and applicable gate pass.
 
 ## Current boundary
 
+- Retained-backup status passes 131 source tests, including 23 new controls.
+  Installed/fresh verification remains pending. Metadata completeness and availability
+  remain UNKNOWN. See the [checkpoint](status.md#declared-retained-backup-status-references-2026-10-24).
+
 - The original 26-file HTTP operational join passes two source and two installed
   tests with no skips. Six HTTP boundaries, 24 loopback messages per journey,
   five actual SIGKILL/resume checkpoints and latest-value package-free HTTP exit pass.
@@ -561,7 +565,7 @@ recovery and the final full regression. No production gate passes.
 
 ## Next critical path
 
-1. Specify remaining status coverage from explicit host backup/reader inventory and provenance.
+1. Verify installed and fresh-target retained status. External inventory/recovery qualification stays open.
    Keep journal observations separate from external retained obligations. An empty journal does not prove that external obligations are absent.
    The [original HTTP operational join](status.md#original-http-operational-cli-journey-2026-10-24)
    now has bounded source and installed evidence.

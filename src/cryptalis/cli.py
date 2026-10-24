@@ -171,6 +171,8 @@ def _parser() -> argparse.ArgumentParser:
     status.add_argument('--database-url-file', type=Path, required=True,
                         help='Private file with the PostgreSQL connection URL or conninfo.')
     status.add_argument('--restore-binding', type=Path, help='Approved restored-target binding, when applicable.')
+    status.add_argument('--host-context', metavar='MODULE:FACTORY',
+                        help='Optional trusted synchronous factory for declared lineage backup references; completeness and availability remain UNKNOWN.')
     status.add_argument('--json', action='store_true', dest='machine_json', help='Write one JSON object.')
     status.set_defaults(handler=_status_command)
     doctor = commands.add_parser('doctor', help='Inspect native schema or ACTIVE runtime admission.',
@@ -770,6 +772,15 @@ def _status_command(arguments: argparse.Namespace) -> int:
     # usable without database or cryptographic imports.
     doctor = arguments.command == 'doctor'
     operation = 'deployment.doctor' if doctor else 'transition.status'
+    retained_specification = None if doctor else getattr(arguments, 'host_context', None)
+    retained = None
+
+    def metadata_failure(failure):
+        if retained_specification is not None:
+            failure.error.update(effects='NONE', host_configuration_effects='UNKNOWN')
+            if retained is not None:
+                failure.error['retained_obligations'] = retained
+        return failure
     try:
         import psycopg
         from sqlalchemy import create_engine
@@ -785,7 +796,7 @@ def _status_command(arguments: argparse.Namespace) -> int:
         failure = _CommandFailure('Install the declared runtime dependencies before database inspection.',
             family='Transition', code='DependenciesUnavailable', operation=operation,
             stage='load_runtime', cause='ImportError', exit_code=4)
-        raise (_doctor_failure(failure) if doctor else failure) from None
+        raise (_doctor_failure(failure) if doctor else metadata_failure(failure)) from None
 
     try:
         def read(path, role, limit=MAX_DOCUMENT_BYTES):
@@ -823,14 +834,28 @@ def _status_command(arguments: argparse.Namespace) -> int:
         if not connection_info or '\x00' in connection_info:
             raise ValueError('invalid connection input')
         connection_info = connection_info.replace('postgresql+psycopg://', 'postgresql://', 1)
+        if retained_specification is not None:
+            if preparation:
+                from cryptalis._rotation_transition import _pin as admit_preparation
+                admit_preparation(plan, pin)
+            elif not reverse:
+                from cryptalis.migration import _admit
+                _admit(plan, pin)
+                if binding is not None:
+                    from cryptalis.restore import _identity
+                    _identity(plan, binding)
     except _CommandFailure as failure:
         failure.error['family'] = 'Transition'
-        raise (_doctor_failure(failure) if doctor else failure) from None
+        raise (_doctor_failure(failure) if doctor else metadata_failure(failure)) from None
     except (ValueError, TypeError, KeyError, AttributeError, TransitionFailure):
         failure = _CommandFailure('Supply a valid plan, pin, private connection file, and optional restore binding.',
             family='Transition', code='InvalidInput', operation=operation,
             stage='inputs', cause='InvalidInput')
-        raise (_doctor_failure(failure) if doctor else failure) from None
+        raise (_doctor_failure(failure) if doctor else metadata_failure(failure)) from None
+
+    if retained_specification is not None:
+        from cryptalis._retained_obligations import report
+        retained = report(plan, retained_specification)
 
     engine = None
     try:
@@ -875,7 +900,7 @@ def _status_command(arguments: argparse.Namespace) -> int:
             failure.error['cleanup_errors'] = [
                 {'stage': stage, 'cause': cause, 'sqlstate': sqlstate}
                 for stage, cause, sqlstate in error.cleanup_errors]
-        raise (_doctor_failure(failure, observed=not (operational or denied)) if doctor else failure) from None
+        raise (_doctor_failure(failure, observed=not (operational or denied)) if doctor else metadata_failure(failure)) from None
     finally:
         if engine is not None:
             primary = sys.exception()
@@ -888,7 +913,7 @@ def _status_command(arguments: argparse.Namespace) -> int:
                 failure.error['operation_id'] = str(plan.operation_id)
                 if isinstance(primary, _CommandFailure):
                     failure.error['related_error'] = primary.error
-                raise (_doctor_failure(failure) if doctor else failure) from None
+                raise (_doctor_failure(failure) if doctor else metadata_failure(failure)) from None
     if doctor:
         result = {
             'scope': 'active_runtime_deployment', 'operation_id': str(plan.operation_id),
@@ -915,9 +940,14 @@ def _status_command(arguments: argparse.Namespace) -> int:
     }
     if reverse or preparation:
         result['source_operation_id'] = str(plan.source.operation_id)
+    if retained is not None:
+        result.update(retained_obligations=retained, host_configuration_effects='UNKNOWN')
     output = json.dumps(result, sort_keys=True, separators=(',', ':')) if arguments.machine_json else '\n'.join(
         f'{key}: {str(value).lower() if type(value) is bool else "UNKNOWN" if value is None else value}' for key, value in result.items())
-    _write_output(output + '\n', sys.stdout, 'stdout')
+    try:
+        _write_output(output + '\n', sys.stdout, 'stdout')
+    except _CommandFailure as failure:
+        raise metadata_failure(failure) from None
     return 0 if observed.runtime_metadata_matches else 3
 
 

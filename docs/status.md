@@ -21,9 +21,24 @@ and [competitive capability matrix](research/capability-matrix.md) govern priori
 Progress follows complete real-application journeys and resolved production requirements.
 All seven production gates remain UNKNOWN.
 
+## Declared retained-backup status references: 2026-10-24
+
+**VERIFIED, bounded source profile at `worktree-fb4ad19d45ce786b`:** the
+[source suite](_reset/retained-status-source-green-20261024.json) passes 131 tests
+with one inherited fresh setup skip in 76.37 wrapper seconds (76.09 pytest).
+It includes 23 new controls. The [parser RED](_reset/retained-status-source-red-20261024.json)
+records one failure in 1.29 seconds. All 220 source/test hashes remain stable
+and match this checkpoint.
+
+Legacy output, key-free reporting, journal-free REMOVED ancestor references and output-error
+retention pass. References are HOST_DECLARED_DIGEST_REFERENCES. Verification is NOT_PERFORMED.
+Completeness, availability and recovery remain UNKNOWN. Installed/fresh verification remains pending.
+All 34 objective states and seven UNKNOWN gates remain unchanged. See the
+[contract](architecture/README.md#retained-backup-status-metadata).
+
 ## Original HTTP operational CLI journey: 2026-10-24
 
-**VERIFIED within the source and installed profiles at `worktree-048bd928c0a2c3e8`:**
+**VERIFIED within the source and installed profiles at `53fd91b`:**
 the unchanged 26-file FastAPI HTTP/JWT/local-SMTP application completes initialization,
 protection, rewrap, payload2, search2 and latest-value reverse/removal through existing
 CLI workflows. Earlier basic HTTP evidence retains its recorded boundary. This is
@@ -51,7 +66,7 @@ and target-only retry/publication pass. The import-denied original HTTP child ve
 latest native values and excludes SMTP. Only original `get_db` is overridden.
 Original authentication, authorization, hashing, queries and routes remain unchanged.
 
-All 218 Python hashes stay stable and match this worktree. The 217 prior Python
+All 218 Python hashes stay stable and match that checkpoint. The 217 prior Python
 files remain unchanged. The [reuse attestation](_reset/http-cli-artifact-reuse-20261024.json)
 confirms the historical initialization wheel's exact 43 inputs, 38 modules, 42 installed
 files and 72 pinned requirements. Its SHA-256 remains

@@ -243,3 +243,19 @@ class InitializationContext:
     declaration: bytes
     writers: WriterInventory
     search_reviews: tuple[SearchReview, ...]
+
+
+@dataclass(frozen=True, repr=False)
+class RetainedBackupObligation:
+    backup_id: UUID
+    source_plan: bytes
+    dump_sha256: str
+    reader_sha256: str | None
+    drill_sha256: str | None
+
+
+@dataclass(frozen=True, repr=False)
+class RetainedObligationsContext:
+    operation_id: UUID
+    plan_digest: str
+    records: tuple[RetainedBackupObligation, ...]
