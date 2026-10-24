@@ -25,6 +25,11 @@ No objective is complete until its acceptance evidence and applicable gate pass.
 
 ## Current boundary
 
+- Native integer width/route failure timing is measured before protected admission.
+  Nine controls pass. Zero-match out-of-width UPDATE raises 22003. This admits
+  no protected integer type. See the
+  [oracle](status.md#native-integer-failure-oracle-2026-10-24).
+
 - Invalid native-coroutine KMS responses are closed before the existing safe failure.
   The source protocol and actual-SDK local profile pass 55 checks. See the
   [checkpoint](status.md#invalid-kms-coroutine-response-cleanup-2026-10-24).

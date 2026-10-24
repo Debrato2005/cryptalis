@@ -1,0 +1,280 @@
+{
+  "scope": "Native PostgreSQL oracle only; no protected integer admission",
+  "runs": [
+    {
+      "bits": 16,
+      "route": "dictionary_insert",
+      "extrema_null_rollback_savepoint": "passed",
+      "observations": [
+        {
+          "case": "out_of_width",
+          "side": "low",
+          "sqlstate": "22003",
+          "session_active": true,
+          "transaction": "INERROR"
+        },
+        {
+          "case": "out_of_width",
+          "side": "high",
+          "sqlstate": "22003",
+          "session_active": true,
+          "transaction": "INERROR"
+        },
+        {
+          "result": "error",
+          "sqlstate": "22003",
+          "case": "zero_match_out_of_width",
+          "session_active": true,
+          "transaction": "INERROR"
+        }
+      ],
+      "boundary": "Native PostgreSQL only; no protected integer codec or query admission",
+      "gates": "all seven UNKNOWN"
+    },
+    {
+      "bits": 16,
+      "route": "flush",
+      "extrema_null_rollback_savepoint": "passed",
+      "observations": [
+        {
+          "case": "out_of_width",
+          "side": "low",
+          "sqlstate": "22003",
+          "session_active": false,
+          "transaction": "IDLE"
+        },
+        {
+          "case": "out_of_width",
+          "side": "high",
+          "sqlstate": "22003",
+          "session_active": false,
+          "transaction": "IDLE"
+        },
+        {
+          "result": "error",
+          "sqlstate": "22003",
+          "case": "zero_match_out_of_width",
+          "session_active": true,
+          "transaction": "INERROR"
+        }
+      ],
+      "boundary": "Native PostgreSQL only; no protected integer codec or query admission",
+      "gates": "all seven UNKNOWN"
+    },
+    {
+      "bits": 16,
+      "route": "scoped_update",
+      "extrema_null_rollback_savepoint": "passed",
+      "observations": [
+        {
+          "case": "out_of_width",
+          "side": "low",
+          "sqlstate": "22003",
+          "session_active": true,
+          "transaction": "INERROR"
+        },
+        {
+          "case": "out_of_width",
+          "side": "high",
+          "sqlstate": "22003",
+          "session_active": true,
+          "transaction": "INERROR"
+        },
+        {
+          "result": "error",
+          "sqlstate": "22003",
+          "case": "zero_match_out_of_width",
+          "session_active": true,
+          "transaction": "INERROR"
+        }
+      ],
+      "boundary": "Native PostgreSQL only; no protected integer codec or query admission",
+      "gates": "all seven UNKNOWN"
+    },
+    {
+      "bits": 32,
+      "route": "dictionary_insert",
+      "extrema_null_rollback_savepoint": "passed",
+      "observations": [
+        {
+          "case": "out_of_width",
+          "side": "low",
+          "sqlstate": "22003",
+          "session_active": true,
+          "transaction": "INERROR"
+        },
+        {
+          "case": "out_of_width",
+          "side": "high",
+          "sqlstate": "22003",
+          "session_active": true,
+          "transaction": "INERROR"
+        },
+        {
+          "result": "error",
+          "sqlstate": "22003",
+          "case": "zero_match_out_of_width",
+          "session_active": true,
+          "transaction": "INERROR"
+        }
+      ],
+      "boundary": "Native PostgreSQL only; no protected integer codec or query admission",
+      "gates": "all seven UNKNOWN"
+    },
+    {
+      "bits": 32,
+      "route": "flush",
+      "extrema_null_rollback_savepoint": "passed",
+      "observations": [
+        {
+          "case": "out_of_width",
+          "side": "low",
+          "sqlstate": "22003",
+          "session_active": false,
+          "transaction": "IDLE"
+        },
+        {
+          "case": "out_of_width",
+          "side": "high",
+          "sqlstate": "22003",
+          "session_active": false,
+          "transaction": "IDLE"
+        },
+        {
+          "result": "error",
+          "sqlstate": "22003",
+          "case": "zero_match_out_of_width",
+          "session_active": true,
+          "transaction": "INERROR"
+        }
+      ],
+      "boundary": "Native PostgreSQL only; no protected integer codec or query admission",
+      "gates": "all seven UNKNOWN"
+    },
+    {
+      "bits": 32,
+      "route": "scoped_update",
+      "extrema_null_rollback_savepoint": "passed",
+      "observations": [
+        {
+          "case": "out_of_width",
+          "side": "low",
+          "sqlstate": "22003",
+          "session_active": true,
+          "transaction": "INERROR"
+        },
+        {
+          "case": "out_of_width",
+          "side": "high",
+          "sqlstate": "22003",
+          "session_active": true,
+          "transaction": "INERROR"
+        },
+        {
+          "result": "error",
+          "sqlstate": "22003",
+          "case": "zero_match_out_of_width",
+          "session_active": true,
+          "transaction": "INERROR"
+        }
+      ],
+      "boundary": "Native PostgreSQL only; no protected integer codec or query admission",
+      "gates": "all seven UNKNOWN"
+    },
+    {
+      "bits": 64,
+      "route": "dictionary_insert",
+      "extrema_null_rollback_savepoint": "passed",
+      "observations": [
+        {
+          "case": "out_of_width",
+          "side": "low",
+          "sqlstate": "22003",
+          "session_active": true,
+          "transaction": "INERROR"
+        },
+        {
+          "case": "out_of_width",
+          "side": "high",
+          "sqlstate": "22003",
+          "session_active": true,
+          "transaction": "INERROR"
+        },
+        {
+          "result": "error",
+          "sqlstate": "22003",
+          "case": "zero_match_out_of_width",
+          "session_active": true,
+          "transaction": "INERROR"
+        }
+      ],
+      "boundary": "Native PostgreSQL only; no protected integer codec or query admission",
+      "gates": "all seven UNKNOWN"
+    },
+    {
+      "bits": 64,
+      "route": "flush",
+      "extrema_null_rollback_savepoint": "passed",
+      "observations": [
+        {
+          "case": "out_of_width",
+          "side": "low",
+          "sqlstate": "22003",
+          "session_active": false,
+          "transaction": "IDLE"
+        },
+        {
+          "case": "out_of_width",
+          "side": "high",
+          "sqlstate": "22003",
+          "session_active": false,
+          "transaction": "IDLE"
+        },
+        {
+          "result": "error",
+          "sqlstate": "22003",
+          "case": "zero_match_out_of_width",
+          "session_active": true,
+          "transaction": "INERROR"
+        }
+      ],
+      "boundary": "Native PostgreSQL only; no protected integer codec or query admission",
+      "gates": "all seven UNKNOWN"
+    },
+    {
+      "bits": 64,
+      "route": "scoped_update",
+      "extrema_null_rollback_savepoint": "passed",
+      "observations": [
+        {
+          "case": "out_of_width",
+          "side": "low",
+          "sqlstate": "22003",
+          "session_active": true,
+          "transaction": "INERROR"
+        },
+        {
+          "case": "out_of_width",
+          "side": "high",
+          "sqlstate": "22003",
+          "session_active": true,
+          "transaction": "INERROR"
+        },
+        {
+          "result": "error",
+          "sqlstate": "22003",
+          "case": "zero_match_out_of_width",
+          "session_active": true,
+          "transaction": "INERROR"
+        }
+      ],
+      "boundary": "Native PostgreSQL only; no protected integer codec or query admission",
+      "gates": "all seven UNKNOWN"
+    }
+  ],
+  "counts": {
+    "passed": 9
+  },
+  "source_receipt": "integer-native-oracle-initial-20261024.json",
+  "gates": "all seven UNKNOWN"
+}
