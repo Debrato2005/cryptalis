@@ -182,29 +182,40 @@ def _parser() -> argparse.ArgumentParser:
     doctor.add_argument('--restore-binding', type=Path, help='Approved restored-target binding, when applicable.')
     doctor.add_argument('--json', action='store_true', dest='machine_json', help='Write one JSON object.')
     doctor.set_defaults(handler=_doctor_command)
-    plan = commands.add_parser('plan', help='Plan protection with an explicit trusted host context.',
+    plan = commands.add_parser('plan', help='Plan protection or current-value reverse with an explicit host context.',
         allow_abbrev=False)
-    plan.add_argument('manifest', type=Path, help='Protection declaration JSON file.')
+    plan.add_argument('manifest', type=Path, nargs='?', help='Protection declaration JSON file; excludes --reverse.')
+    plan.add_argument('--reverse', type=Path, metavar='SOURCE', help='Plan reverse from this protection artifact; excludes MANIFEST and --layout.')
     plan.add_argument('--host-context', required=True, metavar='MODULE:FACTORY',
-        help='Trusted synchronous factory returning a PlanningContext. Host code effects remain UNKNOWN.')
+        help='Trusted synchronous factory returning a PlanningContext or ReversePlanningContext. Host effects remain UNKNOWN.')
     plan.add_argument('--out', type=Path, required=True, help='New private plan artifact. Existing paths refuse.')
     plan.add_argument('--layout', choices=('preserve-public-slots/v1',),
         help='Select the explicit original public-column layout.')
     plan.add_argument('--json', action='store_true', dest='machine_json', help='Write one JSON object.')
     plan.set_defaults(handler=_operational_command)
-    apply = commands.add_parser('apply', help='Apply, resume or abort a protection transition.',
+    for name, description in (
+            ('apply', 'Apply, resume or abort a protection or reverse transition.'),
+            ('rollback', 'Transform current protected values using an approved saved reverse plan.')):
+        apply = commands.add_parser(name, help=description, allow_abbrev=False)
+        apply.add_argument('plan', type=Path, help='Immutable plan artifact. Rollback accepts reverse plans only.')
+        apply.add_argument('--host-context', required=True, metavar='MODULE:FACTORY',
+            help='Trusted synchronous factory returning the matching ApplyContext or ReverseApplyContext.')
+        modes = apply.add_mutually_exclusive_group()
+        modes.add_argument('--resume', type=UUID, metavar='OPERATION', help='Inspect and resume this exact operation.')
+        modes.add_argument('--abort', type=UUID, metavar='OPERATION', help='Remove owned staging before switch.')
+        apply.add_argument('--until', choices=('EXPANDED', 'BACKFILLED', 'VERIFIED', 'PENDING', 'ACTIVE',
+            'PLAINTEXT_PENDING', 'PLAINTEXT_ACTIVE'),
+            help='Requested phase for the supplied plan. Publication requires matching host authority.')
+        apply.add_argument('--chunk-size', type=int, default=1000, help='Rows per committed chunk, from 1 through 5000.')
+        apply.add_argument('--json', action='store_true', dest='machine_json', help='Write one JSON object.')
+        apply.set_defaults(handler=_operational_command)
+    remove = commands.add_parser('remove', help='Retire generated objects with explicit plaintext and removal approvals.',
         allow_abbrev=False)
-    apply.add_argument('plan', type=Path, help='Immutable protection plan artifact.')
-    apply.add_argument('--host-context', required=True, metavar='MODULE:FACTORY',
-        help='Trusted synchronous factory returning an ApplyContext with current pin and maintenance approval.')
-    modes = apply.add_mutually_exclusive_group()
-    modes.add_argument('--resume', type=UUID, metavar='OPERATION', help='Inspect and resume this exact operation.')
-    modes.add_argument('--abort', type=UUID, metavar='OPERATION', help='Remove owned staging before switch.')
-    apply.add_argument('--until', choices=('EXPANDED', 'BACKFILLED', 'VERIFIED', 'PENDING', 'ACTIVE'),
-        help='Requested phase. The default stops at PENDING. ACTIVE requires host publication authority.')
-    apply.add_argument('--chunk-size', type=int, default=1000, help='Rows per committed chunk, from 1 through 5000.')
-    apply.add_argument('--json', action='store_true', dest='machine_json', help='Write one JSON object.')
-    apply.set_defaults(handler=_operational_command)
+    remove.add_argument('plan', type=Path, help='Immutable reverse plan artifact.')
+    remove.add_argument('--host-context', required=True, metavar='MODULE:FACTORY',
+        help='Trusted synchronous factory returning a key-free RemovalContext with current host approvals.')
+    remove.add_argument('--json', action='store_true', dest='machine_json', help='Write one JSON object.')
+    remove.set_defaults(handler=_operational_command)
     return parser
 
 
@@ -569,7 +580,7 @@ def _operational_command(arguments):
     try:
         from cryptalis._cli_operations import run
     except ImportError:
-        raise _CommandFailure('Install the declared runtime dependencies before protection operations.',
+        raise _CommandFailure('Install the declared runtime dependencies before lifecycle operations.',
             family='Transition', code='DependenciesUnavailable', operation='transition.' + arguments.command,
             stage='load_runtime', cause='ImportError', exit_code=4) from None
     return run(arguments)

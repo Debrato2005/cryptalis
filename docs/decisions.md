@@ -1143,3 +1143,33 @@ controls pass 189 cases. The actual installed wheel passes their combined 211
 cases, including the unchanged application, process interruption and independent
 resume. These checks do not qualify the full lifecycle or release gates.
 All seven production gates remain UNKNOWN.
+
+## Saved reverse plans and approved removal CLI: 2026-10-24
+
+**VERIFIED within the bounded source and installed profiles in [status](status.md#operational-cli-reverse-and-removal-2026-10-24):**
+`plan --reverse SOURCE` creates a
+read-only current-value reverse proposal. `rollback REVERSE` executes the saved
+proposal through the existing decrypt-back executor. `apply REVERSE` shares that
+execution path. Rollback does not implicitly create a plan or plaintext consent.
+The existing protection manifest input and `--reverse` are mutually exclusive.
+
+The host must review the persisted reverse artifact before supplying its exact
+`PlaintextApproval`. Reverse planning uses an explicit ACTIVE source pin and an
+explicit restore binding or None. The reverse artifact records any supplied
+binding. Apply, abort and removal use that recorded target without an override.
+
+Default reverse apply stops at PLAINTEXT_PENDING. Plaintext publication requires
+the host's actual PLAINTEXT_ACTIVATING pin. Removal requires the existing
+maintenance, plaintext and removal approvals. Its context contains no keys.
+An approved retry with a REMOVED pin reuses the existing removal verifier.
+A missing journal alone does not authorize success or retirement.
+
+These commands compose the existing lifecycle APIs. They do not uninstall the
+package, destroy provider keys or prove retained-backup disposition. Doctor's
+key-free context remains separate. Production qualification remains UNKNOWN.
+The focused source profile passes 41 controls. The affected-source suite passes
+260. The actual installed wheel passes their combined 301 controls. Each primary
+run skips the case that needs a separate restored cluster. Source and installed
+fresh-cluster export and restore pass one each. Both real application process
+interruptions, independent resumes and current-value native exit pass. These
+checks leave all seven production gates UNKNOWN.

@@ -481,6 +481,21 @@ do not waive core planner, tenant, runtime-role or lifecycle admission. See the
 [specified workflow](walkthrough-migration.md#plan-and-apply-protection-through-the-cli)
 and [status](status.md#operational-cli-protection-workflow-2026-10-24).
 
+### Reverse CLI authority
+
+**IMPLEMENTED, bounded source and installed verification:** the host supplies `PlaintextApproval` after it
+reviews the saved reverse digest. Removal also requires `RemovalApproval` and the
+exact REMOVING or REMOVED pin. A command, factory name or missing journal supplies
+no consent or authority. Retained-backup obligations remain host assertions.
+Planning embeds only the explicit `RestoreBinding` or None. Execution accepts no
+replacement binding. Reject wrong artifact kinds, phases, operation selectors and
+conflicting flags before host loading. An unreturned execution result requires
+INSPECT_JOURNAL. Preserve known progress after output or cleanup failure.
+No plaintext, credentials, raw host exceptions or context representations enter
+reports. Host-code effects remain UNKNOWN. Doctor's key-free tuple stays unchanged. See the
+[verified checkpoint](status.md#operational-cli-reverse-and-removal-2026-10-24).
+Source and installed genuine fresh-target verification pass.
+
 ## Owned-sequence admission
 
 **IMPLEMENTED, bounded source and installed verification:** lock/v5 admits only inspected ordinary persistent sequences

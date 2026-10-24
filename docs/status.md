@@ -21,9 +21,77 @@ and [competitive capability matrix](research/capability-matrix.md) govern priori
 Progress follows complete real-application journeys and resolved production requirements.
 All seven production gates remain UNKNOWN.
 
+## Operational CLI reverse and removal: 2026-10-24
+
+**VERIFIED within the bounded source and installed profiles below:** `plan` accepts mutually exclusive manifest
+or `--reverse SOURCE` inputs. Reverse planning saves the existing immutable
+`DeprotectionPlan` before the host reviews it and supplies separate plaintext consent.
+`rollback REVERSE` and `apply REVERSE` execute that same saved proposal. They do
+not create another proposal or infer authority. This reverses current values,
+not an arbitrary historical codec.
+
+Default execution stops at PLAINTEXT_PENDING. The host supplies PLAINTEXT_ACTIVATING
+before explicit PLAINTEXT_ACTIVE completion. Resume and abort require the saved
+reverse operation UUID before host loading. Abort removes only pre-switch staging.
+`remove REVERSE` requires exact host pins, plaintext consent and removal approval.
+Terminal retry still needs the REMOVED pin and the same approvals.
+
+Three explicit trusted contexts separate reverse planning, execution and removal.
+An optional restore binding enters only through planning and stays in the artifact.
+Removal uses no keys. Doctor retains its strict key-free tuple. Host-code effects
+remain UNKNOWN. Existing artifact formats, cryptographic and core protocols stay unchanged.
+
+The [focused source profile](_reset/reverse-cli-source-focused-initial-20261024.json)
+passes 41 tests with one skipped genuine-fresh case in 24.37 seconds. It combines
+19 new native controls, 21 protection controls and one original application journey.
+All 213 Python hashes stay stable and match this worktree. The
+[earlier parser](_reset/reverse-cli-source-red-20261024.json) fails one reverse-planning
+control in 0.89 seconds. Its receipt retains the historical 213-file snapshot.
+
+The [source application](_reset/reverse-cli-source-application-initial-20261024.json)
+retains six pinned files. Actual SIGKILL follows committed BACKFILLED progress during
+protection and reverse. Independent resumes preserve all three fields' staged frames
+and completed plaintext. Original native CRUD and latest Boolean false pass after
+explicit plaintext publication. Approved CLI removal, REMOVED retry and an
+import-denied restart complete the journey.
+
+The [affected-source suite](_reset/reverse-cli-source-affected-20261024.json)
+passes 260 tests in 116.94 seconds: 189 existing CLI, history, status and Doctor
+controls plus 71 native decrypt-back, runtime and status controls. All 213 Python
+hashes stay stable and match this worktree.
+
+The genuine source [export](_reset/fresh-cluster-export-20261024-55.json) and
+[separate-cluster restore](_reset/fresh-cluster-restore-20261024-54.json) each pass
+one test in 1.22 and 1.66 seconds. A wrong valid binding digest refuses before
+keys. The real binding embeds in the saved proposal and completes reverse and
+latest-value native exit. Both receipts retain the same 213 stable/current hashes.
+The [artifact check](_reset/reverse-cli-release-20261024.json) passes reproducible
+archives, CLI, 38 modules and 42 installed-file checks. All 43 release-source
+hashes match this worktree. The wheel has SHA-256
+`55c3d89de08465febfcf199352ae610ea0c3efef485d6e4b32ea60c4ee2a968a`.
+The [installed-primary suite](_reset/reverse-cli-installed-affected-20261024.json)
+passes 301 tests with one genuine-fresh setup skip in 136.00 seconds. It combines
+260 affected controls, 19 new native controls, 21 protection controls and one
+[unchanged application journey](_reset/reverse-cli-installed-application-20261024.json).
+All 213 Python hashes stay stable and match this worktree. The original six-file
+journey now passes on the actual wheel, including both interruption/resume paths,
+explicit plaintext publication, native latest values and approved package-free exit.
+The actual wheel also passes genuine [export](_reset/fresh-cluster-export-20261024-56.json)
+and [separate-cluster restore](_reset/fresh-cluster-restore-20261024-55.json) stages,
+one test each in 0.91 and 1.24 seconds. Both receipts retain 213 stable/current
+Python hashes. The [final boundary](_reset/reverse-cli-final-boundary-20261024.json)
+binds seven current database receipts, two application receipts and six documents,
+with actual artifact bytes and preserved historical RED evidence. No current
+full-suite, HTTP or external custody qualification follows. Root-rewrap CLI remains
+required next, followed by payload/search CLI work. All 34 objective states and
+seven UNKNOWN gates remain unchanged. See the
+[architecture contract](architecture/README.md#reverse-and-removal-cli),
+[authority boundary](security.md#reverse-cli-authority) and
+[procedure](walkthrough-migration.md#plan-and-execute-current-value-plaintext-reverse-through-the-cli).
+
 ## Operational CLI protection workflow: 2026-10-24
 
-**VERIFIED within the source and installed profiles below:** `plan` and `apply` commands
+**VERIFIED within the source and installed profiles at `4373e5e`:** `plan` and `apply` commands
 reuse the existing protection planner and maintenance executor. An explicit
 trusted synchronous zero-argument host factory returns a frozen `PlanningContext`
 or `ApplyContext`. Planning requires an engine, mapping, writer inventory, search
@@ -71,28 +139,29 @@ keep separate historical snapshots.
 
 The [revised focused source profile](_reset/operational-cli-source-focused-20261024.json)
 passes all 22 tests in 11.39 seconds. All 212 Python hashes remain stable
-and match this worktree. The recognized async callable resolver now refuses
+and match that checkpoint. The recognized async callable resolver now refuses
 before command-managed connection. The [verified source application](_reset/operational-cli-source-verified-application-20261024.json)
 retains six unchanged files and the actual SIGKILL, independent resume, explicit
 host publication and latest-value native exit.
 
 The [affected-source suite](_reset/operational-cli-source-affected-20261024.json)
 passes 189 tests in 76.82 seconds. Its 212 Python hashes remain stable and
-match this worktree. It covers existing CLI, history, status, Doctor and
+match that checkpoint. It covers existing CLI, history, status, Doctor and
 pre-adoption routes. The [artifact check](_reset/operational-cli-release-20261024.json)
 passes reproducible archives, CLI and 42 installed-file checks. All 43 release-source
-hashes match this worktree and all 38 product modules match the wheel.
+hashes match that checkpoint and all 38 product modules match the wheel.
 The [installed PostgreSQL suite](_reset/operational-cli-installed-affected-20261024.json)
 passes 211 tests in 79.34 seconds: 189 existing controls, 21 new native controls
 and one [unchanged application journey](_reset/operational-cli-installed-application-20261024.json).
-All 212 Python hashes remain stable and match this worktree. The installed wheel
+All 212 Python hashes remain stable and match that checkpoint. The installed wheel
 has SHA-256 `a133c4717d229ec277db7aed29576f8611c5d9bd131895ddbfedcbaa47d8c10f`.
 The [final boundary](_reset/operational-cli-final-boundary-20261024.json) binds
 the three current PostgreSQL receipts, two current application receipts, actual
 release/install bytes, historical candidates and six documents. Of the 36 prior
 product modules, only the CLI changes; all ten crypto modules remain unchanged.
 Two new modules supply host contexts and command composition. No current full-suite
-result follows. Rotation, reverse and removal CLI commands remain unimplemented.
+result follows. At that checkpoint, rotation, reverse and removal CLI commands remained
+unimplemented. The [new reverse workflow](#operational-cli-reverse-and-removal-2026-10-24) records later source evidence.
 All 34 objective states and seven UNKNOWN gates remain unchanged. See the
 [architecture](architecture/README.md#operational-protection-cli),
 [security boundary](security.md#operational-cli-trust-boundary) and

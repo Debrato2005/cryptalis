@@ -109,14 +109,39 @@ the saved operation before the CLI loads host code.
 Publish ACTIVATING through the host authority before requesting `--until ACTIVE`.
 Supply that actual pin through `ApplyContext`. The request and factory name do
 not supply publication authority. Host imports, factory calls and native effects
-remain UNKNOWN. The CLI disposes its engine after success or failure. Rotation,
-decrypt-back and removal continue through existing Python APIs in this slice.
+remain UNKNOWN. The CLI disposes its engine after success or failure. The
+`4373e5e` protection checkpoint uses Python decrypt-back/removal. The reverse CLI
+workflow below adds bounded source evidence. Rotation CLI work remains required.
 Output or cleanup errors can follow artifact publication or committed progress.
 Preserve the original artifact and `known_result`. Inspect the operation and
 current host pin before retry. An error does not prove rollback.
 See the [architecture](architecture/README.md#operational-protection-cli),
 [security boundary](security.md#operational-cli-trust-boundary) and
 [status](status.md#operational-cli-protection-workflow-2026-10-24).
+
+## Plan and execute current-value plaintext reverse through the CLI
+
+**IMPLEMENTED, bounded source and installed verification:** use the same explicit trusted factory and fresh
+owned engine boundary as protection. Return `ReversePlanningContext` for
+`plan --reverse SOURCE --out REVERSE`. Supply the ACTIVE source pin, keys,
+plaintext runtime role, four measurements and explicit restore binding or None.
+Keep the saved artifact unchanged. Obtain host plaintext consent for its exact digest.
+
+Return `ReverseApplyContext` for `rollback REVERSE` or `apply REVERSE`.
+Both spellings stop at PLAINTEXT_PENDING by default. Resume or abort with the
+saved reverse operation UUID. Abort is limited to pre-switch staging. Publish
+PLAINTEXT_ACTIVATING through host authority before requesting PLAINTEXT_ACTIVE.
+Then publish the host's PLAINTEXT_ACTIVE boundary before normal plaintext traffic.
+
+Return key-free `RemovalContext` for `remove REVERSE`. Supply plaintext consent,
+removal approval and the REMOVING pin. After a lost reply, supply REMOVED authority
+and the same approvals. A missing journal alone proves no successful removal.
+Keep the original artifact and inspect journal/host state after an unknown outcome.
+These commands do not delete keys or establish backup retirement. Rotation CLI
+commands remain required future work. See the
+[architecture contract](architecture/README.md#reverse-and-removal-cli) and
+[verified checkpoint](status.md#operational-cli-reverse-and-removal-2026-10-24).
+Source and installed genuine fresh-target verification pass.
 
 ## Use the optional SQLModel bridge
 

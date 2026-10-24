@@ -50,9 +50,10 @@ import json,os,signal
 import psycopg
 from sqlalchemy import create_engine,event
 from app.models import User
-from cryptalis.cli_host import PlanningContext,ApplyContext
+from cryptalis.cli_host import PlanningContext,ApplyContext,ReversePlanningContext,ReverseApplyContext,RemovalContext
 from cryptalis.manifest.compiler import Writer,WriterInventory,SearchReview
 from cryptalis.migration import DeploymentPin,MaintenanceApproval
+from cryptalis.deprotection import PlaintextApproval,RemovalApproval
 from test_migration import keys
 from uuid import UUID
 
@@ -73,14 +74,41 @@ def applying():
     raw=json.loads(Path(c['pin_path']).read_text())
     approval=json.loads(Path(c['approval_path']).read_text())
     engine=owned(c)
+    pause_after_dispose(engine,c)
+    return ApplyContext(engine=engine,keys=keys,
+        pin=DeploymentPin(UUID(raw['target_id']),UUID(raw['operation_id']),raw['plan_digest'],raw['phase']),
+        approval=MaintenanceApproval(**approval))
+def pause_after_dispose(engine,c):
     if c.get('pause_after_dispose'):
         def pause(ignored):
             Path(c['checkpoint']).write_text('disposed after committed API progress')
             signal.pause()
         event.listen(engine,'engine_disposed',pause)
-    return ApplyContext(engine=engine,keys=keys,
-        pin=DeploymentPin(UUID(raw['target_id']),UUID(raw['operation_id']),raw['plan_digest'],raw['phase']),
-        approval=MaintenanceApproval(**approval))
+def deployment(c):
+    raw=json.loads(Path(c['pin_path']).read_text())
+    return DeploymentPin(UUID(raw['target_id']),UUID(raw['operation_id']),raw['plan_digest'],raw['phase'])
+def reverse_planning():
+    c=configuration()
+    return ReversePlanningContext(engine=owned(c),keys=keys,source_pin=deployment(c),
+        plaintext_runtime_role=c['plaintext_runtime_role'],backfill_rows_per_second=1000,
+        verify_rows_per_second=1000,temporary_bytes_per_row=3000,wal_bytes_per_row=6000,restore=None)
+def plaintext_consent(c):
+    raw=json.loads(Path(c['consent_path']).read_text())
+    raw['target_id']=UUID(raw['target_id']);raw['operation_id']=UUID(raw['operation_id'])
+    return PlaintextApproval(**raw)
+def reversing():
+    c=configuration()
+    engine=owned(c)
+    pause_after_dispose(engine,c)
+    return ReverseApplyContext(engine=engine,keys=keys,pin=deployment(c),
+        approval=MaintenanceApproval(**json.loads(Path(c['approval_path']).read_text())),consent=plaintext_consent(c))
+def removing():
+    c=configuration()
+    raw=json.loads(Path(c['removal_path']).read_text())
+    raw['target_id']=UUID(raw['target_id']);raw['operation_id']=UUID(raw['operation_id'])
+    return RemovalContext(engine=owned(c),pin=deployment(c),
+        approval=MaintenanceApproval(**json.loads(Path(c['approval_path']).read_text())),
+        consent=plaintext_consent(c),removal=RemovalApproval(**raw))
 '''
 
 
@@ -189,21 +217,82 @@ def test_original_three_field_app_cli_plan_kill_resume_publish_and_native_exit(t
         current = workload['boolean_controls'](attached, current, uuid4().hex)
         current, controls = search_controls(attached, current)
         assert controls == native_search and public_slots(owner, native_slots) == native_slots
-        reverse = d.plan(plan, owner, source_pin=pin('ACTIVE'), keys=keys,
-            plaintext_runtime_role=least_privilege_role(SimpleNamespace(owner=owner, role=role)),
-            backfill_rows_per_second=1000, verify_rows_per_second=1000,
-            temporary_bytes_per_row=3000, wal_bytes_per_row=6000)
+        # The trusted host supplies ACTIVE source authority before reverse planning.
+        pin_path.write_text(json.dumps(asdict(pin('ACTIVE')), default=str))
+        configuration['plaintext_runtime_role'] = least_privilege_role(SimpleNamespace(owner=owner, role=role))
+        configuration_path.write_text(json.dumps(configuration))
+        reverse_path = tmp_path / 'cli-reverse.json'
+        reversed_plan = execute('plan', '--reverse', str(plan_path), '--host-context', module + ':reverse_planning',
+                                '--out', str(reverse_path), '--json')
+        reverse = d.DeprotectionPlan(reverse_path.read_bytes())
+        assert reversed_plan['phase'] == 'PREPARED' and reversed_plan['source_operation_id'] == str(plan.operation_id)
         consent = d.PlaintextApproval(reverse.target_id, reverse.operation_id, reverse.digest, True,
                                      'public disposable original app values')
+        consent_path, removal_path = tmp_path / 'host-consent.json', tmp_path / 'host-removal.json'
+        consent_path.write_text(json.dumps(asdict(consent), default=str))
+        configuration.update(consent_path=str(consent_path), removal_path=str(removal_path))
         def reverse_pin(phase): return m.DeploymentPin(reverse.target_id, reverse.operation_id, reverse.digest, phase)
-        assert d.apply(reverse, owner, keys=keys, pin=reverse_pin('PREPARED'), approval=approval,
-            consent=consent).phase == 'PLAINTEXT_PENDING'
-        assert d.apply(reverse, owner, keys=keys, pin=reverse_pin('PLAINTEXT_ACTIVATING'), approval=approval,
-            consent=consent, until='PLAINTEXT_ACTIVE').phase == 'PLAINTEXT_ACTIVE'
+        pin_path.write_text(json.dumps(asdict(reverse_pin('PREPARED')), default=str))
+        # The old protection marker cannot satisfy this second checkpoint wait.
+        Path(configuration['checkpoint']).unlink()
+        configuration['pause_after_dispose'] = True
+        configuration_path.write_text(json.dumps(configuration))
+        process = subprocess.Popen(command('rollback', str(reverse_path), '--host-context', module + ':reversing',
+            '--until', 'BACKFILLED', '--chunk-size', '1', '--json'), env=environment,
+            stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+        deadline = time.monotonic() + 25
+        while not Path(configuration['checkpoint']).exists():
+            assert process.poll() is None, 'reverse checkpoint child exited early; diagnostics suppressed'
+            assert time.monotonic() < deadline, 'reverse committed checkpoint was not observed'
+            time.sleep(0.05)
+        observed = d.status(reverse, owner, pin=reverse_pin('PREPARED'))
+        assert observed.phase == 'BACKFILLED' and observed.committed_rows == 2
+        def plaintext_staging():
+            fields = sorted(reverse.document['lock']['models'][0]['fields'], key=lambda field: field['column'])
+            with owner.connect() as connection:
+                quote = connection.dialect.identifier_preparer.quote
+                columns = [quote('_cryptalis_' + UUID(field['field_id']).hex + '_plain') for field in fields]
+                return {str(row[0]): tuple(row[1:]) for row in connection.exec_driver_sql(
+                    'SELECT id,' + ','.join(columns) + ' FROM "user" ORDER BY id')}
+        plaintext_prefix = plaintext_staging()
+        assert len(plaintext_prefix) == 2
+        process.kill()
+        process.communicate(timeout=10)
+        assert process.returncode == -signal.SIGKILL
+        configuration['pause_after_dispose'] = False
+        configuration_path.write_text(json.dumps(configuration))
+        resumed = execute('rollback', str(reverse_path), '--host-context', module + ':reversing',
+            '--resume', str(reverse.operation_id), '--until', 'VERIFIED', '--chunk-size', '1', '--json')
+        assert resumed['phase'] == 'VERIFIED' and plaintext_staging() == plaintext_prefix
+        assert execute('rollback', str(reverse_path), '--host-context', module + ':reversing', '--json')['phase'] == 'PLAINTEXT_PENDING'
+        pin_path.write_text(json.dumps(asdict(reverse_pin('PLAINTEXT_ACTIVATING')), default=str))
+        assert execute('apply', str(reverse_path), '--host-context', module + ':reversing',
+                       '--until', 'PLAINTEXT_ACTIVE', '--json')['phase'] == 'PLAINTEXT_ACTIVE'
+        # Reload the original mapping before native traffic; the attached mapping stays guarded.
+        mapping.dispose()
+        mapping.metadata.clear()
+        for name in tuple(sys.modules):
+            if name == 'app' or name.startswith('app.'):
+                del sys.modules[name]
+        native_workload = runpy.run_path(str(helper))
+        from app.models import User as NativeUser
+        mapping = NativeUser._sa_registry
+        native_runtime = original.native_engine('CRYPTALIS_TEST_RUNTIME_DATABASE_URL', schema)
+        try:
+            native = lambda: original.Session(native_runtime, expire_on_commit=False)
+            current = native_workload['workflow'](native, uuid4().hex, current)
+            current = native_workload['boolean_controls'](native, current, uuid4().hex)
+            current, native_after_publication = search_controls(native, current)
+            assert native_after_publication == controls
+        finally:
+            native_runtime.dispose()
         removal = d.RemovalApproval(reverse.target_id, reverse.operation_id, reverse.digest,
             'unchanged package-free original CRUD', 'public disposable fixture backups', True)
-        assert d.remove(reverse, owner, pin=reverse_pin('REMOVING'), approval=approval,
-                        removal=removal, consent=consent).phase == 'REMOVED'
+        removal_path.write_text(json.dumps(asdict(removal), default=str))
+        pin_path.write_text(json.dumps(asdict(reverse_pin('REMOVING')), default=str))
+        assert execute('remove', str(reverse_path), '--host-context', module + ':removing', '--json')['phase'] == 'REMOVED'
+        pin_path.write_text(json.dumps(asdict(reverse_pin('REMOVED')), default=str))
+        assert execute('remove', str(reverse_path), '--host-context', module + ':removing', '--json')['phase'] == 'REMOVED'
         assert d.check_removed(reverse, owner, pin=reverse_pin('REMOVED')) is None
         assert public_slots(owner) == native_slots and native_catalog(owner) == catalog
         with owner.connect() as connection:
@@ -220,6 +309,9 @@ def test_original_three_field_app_cli_plan_kill_resume_publish_and_native_exit(t
                     'protected_fields': ['User.email', 'User.full_name', 'User.is_active'],
                     'source_plan_digest': plan.digest, 'cli_plan_apply_resume_publication': True,
                     'sigkill_after_committed_backfilled': True, 'independent_resume_preserved_frames': True,
+                    'cli_reverse_plan_apply_resume_remove': True, 'reverse_plan_digest': reverse.digest,
+                    'sigkill_after_reverse_backfilled': True, 'independent_reverse_resume_preserved_plaintext': True,
+                    'native_latest_edits_after_plaintext_publication': True, 'keyless_idempotent_cli_removal': True,
                     'host_pin_authority': 'fixture-only; PREPARED then explicitly supplied ACTIVATING',
                     'search_controls': controls, 'native_public_slots_preserved': True,
                     'latest_value_decryptback': True, 'cryptalis_denied_restart': True,

@@ -85,7 +85,7 @@ Key resolvers must be synchronous, including callable objects. Recognized async
 callables must fail context admission before command-managed database access.
 
 Plan writes the existing immutable protection `MigrationPlan` artifact with exclusive
-private output and atomic durable publication. Apply accepts protection plans only.
+private output and atomic durable publication. Protection execution accepts protection plans only.
 Resume and abort bind the requested operation before host loading. The default
 target is PENDING. ACTIVE requires the supplied ACTIVATING host pin and maintenance
 approval. The CLI cannot authenticate or infer host authority. Doctor's key-free
@@ -93,6 +93,35 @@ configuration tuple remains separate. Other lifecycle commands remain required f
 work. No format, cryptographic or core protocol changes. See the
 [status checkpoint](../status.md#operational-cli-protection-workflow-2026-10-24).
 These dependencies do not supply host business authorization. No additional authority, workflow, or diagnostic service is required.
+
+### Reverse and removal CLI
+
+**IMPLEMENTED, bounded source and installed verification:** `plan --reverse SOURCE --out REVERSE` calls
+existing reverse planning and persists its canonical artifact. The positional
+manifest and `--reverse` are mutually exclusive. `apply REVERSE` and `rollback REVERSE`
+share the existing reverse executor. `rollback` accepts only reverse artifacts.
+
+| Trusted context | Required inputs |
+|---|---|
+| `ReversePlanningContext` | `engine`, `keys`, `source_pin`, `plaintext_runtime_role`, four measured costs/rates and explicit `restore` or None |
+| `ReverseApplyContext` | `engine`, `keys`, `pin`, `approval`, `consent` |
+| `RemovalContext` | `engine`, `pin`, `approval`, `consent`, `removal` |
+
+The four measurements retain `backfill_rows_per_second`, `verify_rows_per_second`,
+`temporary_bytes_per_row` and `wal_bytes_per_row`. The source pin names the ACTIVE
+source. Execution and removal pins name the exact reverse operation and digest.
+`consent` is `PlaintextApproval`. `removal` is `RemovalApproval`. An optional
+`RestoreBinding` is explicit during planning and has no execution override.
+
+Both execution spellings default to PLAINTEXT_PENDING. The host supplies the
+PLAINTEXT_ACTIVATING pin before explicit PLAINTEXT_ACTIVE completion. UUID checks
+precede host loading. Abort uses no keys and removes only pre-switch staging.
+Removal requires PLAINTEXT_ACTIVE database state and the REMOVING host pin.
+A terminal retry requires REMOVED authority and the same approvals. Removal
+neither uninstalls the package nor deletes provider material. Existing engine,
+publication, privacy and Doctor boundaries remain unchanged. See the
+[verified checkpoint](../status.md#operational-cli-reverse-and-removal-2026-10-24).
+Source and installed genuine fresh-target verification pass.
 
 ## Exact data paths
 
@@ -447,8 +476,10 @@ trusted host factory; host-code effects remain UNKNOWN. ACTIVE mode uses the
 declared runtime connection and repeats shared attachment admission in a
 read-only snapshot. Unobserved boundaries and aggregate results remain UNKNOWN.
 The initial `plan` and protection `apply` commands have the bounded
-[operational contract](#operational-protection-cli). `init`, `rollback`, `keys rotate`
-and `remove` remain unimplemented package commands.
+[operational contract](#operational-protection-cli). The
+[reverse/removal extension](#reverse-and-removal-cli) has bounded source verification.
+`init` and `keys rotate` remain unimplemented package commands. Fresh-target and
+installed reverse/removal verification remains pending.
 Full status coverage of keys and retained obligations
 remains SPECIFIED. The migration walkthrough defines the implemented subset.
 See [committed progress](../walkthrough-migration.md#inspect-committed-progress).

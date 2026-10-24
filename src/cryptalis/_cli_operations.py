@@ -17,7 +17,10 @@ _SQLSTATE = re.compile(r'[0-9A-Z]{5}\Z')
 _DENIED = frozenset(('external_policy_mismatch', 'wrong_database_target', 'invalid_plan',
     'maintenance_approval_required', 'writer_exclusion_or_pause_not_approved',
     'invalid_target_or_runtime_role', 'invalid_apply_bound', 'missing_measured_rates',
-    'missing_measured_storage_or_wal_costs', 'unsafe_runtime_role', 'maintenance_requires_table_owner'))
+    'missing_measured_storage_or_wal_costs', 'unsafe_runtime_role', 'maintenance_requires_table_owner',
+    'invalid_reverse_plan', 'external_reverse_policy_mismatch', 'source_pin_must_be_active',
+    'plaintext_approval_required', 'removal_approval_required', 'distinct_plaintext_runtime_role_required',
+    'restore_binding_mismatch', 'restore_binding_required'))
 _OPERATIONAL = frozenset(('database_effect_requires_inspection', 'operation_failed_requires_inspection',
     'connection_cleanup_requires_inspection', 'KeyUnavailable', 'CryptoBackendUnavailable'))
 
@@ -73,7 +76,9 @@ def _load_host(specification, operation):
 
 
 def _summary(plan, progress=None):
-    result = dict(scope='protection_plan' if progress is None else 'protection_transition',
+    reversing = plan.document['kind'] == 'deprotect'
+    prefix = 'reverse' if reversing else 'protection'
+    result = dict(scope=prefix + ('_plan' if progress is None else '_transition'),
         operation_id=str(plan.operation_id), target_id=str(plan.target_id), plan_digest=plan.digest,
         phase='PREPARED' if progress is None else progress.phase,
         committed_rows=0 if progress is None else progress.committed_rows,
@@ -82,6 +87,8 @@ def _summary(plan, progress=None):
         authority='HOST_SUPPLIED_CONTEXT' if progress is None else 'HOST_SUPPLIED_PIN',
         host_configuration_effects='UNKNOWN',
         effects='NONE' if progress is None else 'COMMITTED_PROGRESS')
+    if reversing:
+        result['source_operation_id'] = str(plan.source.operation_id)
     if progress is None:
         result.update(artifact_published=False, artifact_directory_durable=False,
                       artifact_temporary_retained=False)
@@ -148,53 +155,77 @@ def _publish(path, raw, result, operation):
 
 
 def run(arguments):
-    """Run one protection plan/apply command with explicit host authority."""
+    """Compose protection, current-value reverse or approved removal APIs."""
     from cryptalis.cli import _CommandFailure, _read_local_file, _write_output
-    operation = 'transition.plan' if arguments.command == 'plan' else 'transition.apply'
+    operation = {'plan': 'transition.plan', 'apply': 'transition.apply',
+                 'rollback': 'reverse.apply', 'remove': 'reverse.remove'}.get(arguments.command, 'transition')
     try:
         from sqlalchemy.engine import Engine
         from sqlalchemy.orm import registry
-        from cryptalis import migration as m
-        from cryptalis.cli_host import PlanningContext, ApplyContext
+        from cryptalis import migration as m, deprotection as d
+        from cryptalis.cli_host import (PlanningContext, ApplyContext, ReversePlanningContext,
+                                         ReverseApplyContext, RemovalContext)
         from cryptalis.crypto.keys import Keyring
         from cryptalis.manifest.compiler import WriterInventory, SearchReview, PlanningRejected
         from cryptalis.manifest.declaration import parse_protection_declaration
         from cryptalis.manifest.parser import MAX_DOCUMENT_BYTES, ManifestInvalid
+        from cryptalis.restore import RestoreBinding
     except ImportError:
         raise _failure(operation, 'DependenciesUnavailable', 'load_runtime', exit_code=4) from None
 
     planning = arguments.command == 'plan'
+    removing = arguments.command == 'remove'
+    reversing = False
     plan = result = engine = None
     try:
         if type(arguments.host_context) is not str or _HOST.fullmatch(arguments.host_context) is None:
             raise ValueError
         if planning:
+            source_path = getattr(arguments, 'reverse', None)
+            if (arguments.manifest is None) == (source_path is None):
+                raise ValueError
+            reversing = source_path is not None
+            if reversing:
+                operation = 'reverse.plan'
             if arguments.layout not in (None, 'preserve-public-slots/v1'):
+                raise ValueError
+            if reversing and arguments.layout is not None:
                 raise ValueError
             if os.path.lexists(arguments.out):
                 raise _failure(operation, 'ArtifactExists', 'inputs')
-            raw = _read_local_file(arguments.manifest, 'manifest', operation=operation)
+            raw = _read_local_file(source_path if reversing else arguments.manifest,
+                                   'source_plan' if reversing else 'manifest', operation=operation)
             if len(raw) > MAX_DOCUMENT_BYTES:
                 raise ValueError
-            parse_protection_declaration(raw)
+            if reversing:
+                plan = m.MigrationPlan(raw)
+            else:
+                parse_protection_declaration(raw)
         else:
-            if arguments.command != 'apply' or (arguments.resume is not None and arguments.abort is not None):
-                raise ValueError
-            if arguments.abort is not None and arguments.until is not None:
-                raise ValueError
-            if arguments.until not in (None, 'EXPANDED', 'BACKFILLED', 'VERIFIED', 'PENDING', 'ACTIVE'):
-                raise ValueError
-            if type(arguments.chunk_size) is not int or not 1 <= arguments.chunk_size <= 5000:
+            if arguments.command not in ('apply', 'rollback', 'remove'):
                 raise ValueError
             raw = _read_local_file(arguments.plan, 'plan', operation=operation)
             if len(raw) > MAX_DOCUMENT_BYTES:
                 raise ValueError
-            plan = m.MigrationPlan(raw)
-            if plan.document['kind'] != 'protect':
+            reversing = m._decode_transition_json(raw).get('format') == d.FORMAT
+            plan = d.DeprotectionPlan(raw) if reversing else m.MigrationPlan(raw)
+            if not reversing and (removing or arguments.command == 'rollback' or plan.document['kind'] != 'protect'):
                 raise ValueError
-            for selected in (arguments.resume, arguments.abort):
-                if selected is not None and (type(selected) is not UUID or selected != plan.operation_id):
+            if reversing:
+                operation = 'reverse.remove' if removing else 'reverse.apply'
+            if not removing:
+                if arguments.resume is not None and arguments.abort is not None:
                     raise ValueError
+                if arguments.abort is not None and arguments.until is not None:
+                    raise ValueError
+                allowed = d.PHASES[1:] if reversing else m.PHASES[1:]
+                if arguments.until is not None and arguments.until not in allowed:
+                    raise ValueError
+                if type(arguments.chunk_size) is not int or not 1 <= arguments.chunk_size <= 5000:
+                    raise ValueError
+                for selected in (arguments.resume, arguments.abort):
+                    if selected is not None and (type(selected) is not UUID or selected != plan.operation_id):
+                        raise ValueError
     except _CommandFailure:
         raise
     except (ManifestInvalid, m.TransitionFailure, TypeError, ValueError, AttributeError):
@@ -205,36 +236,60 @@ def run(arguments):
 
     try:
         context = _load_host(arguments.host_context, operation)
-        if type(context) in (PlanningContext, ApplyContext) and isinstance(context.engine, Engine):
+        if type(context) in (PlanningContext, ApplyContext, ReversePlanningContext,
+                             ReverseApplyContext, RemovalContext) and isinstance(context.engine, Engine):
             engine = context.engine
         with _quiet():
-            expected = PlanningContext if planning else ApplyContext
+            expected = (ReversePlanningContext if reversing else PlanningContext) if planning else (
+                RemovalContext if removing else ReverseApplyContext if reversing else ApplyContext)
             if type(context) is not expected or engine is None:
                 raise _failure(operation, 'HostContextInvalid', 'host_context')
             if (engine.dialect.name != 'postgresql' or engine.dialect.driver != 'psycopg'
                     or engine.dialect.is_async or (engine.echo is not False and engine.echo is not None)
                     or engine.hide_parameters is not True):
                 raise _failure(operation, 'UnsafeEngine', 'host_context')
-            key_call = getattr(context.keys, '__call__', None)
-            if (not isinstance(context.keys, Keyring) and not callable(context.keys)
-                    or inspect.iscoroutinefunction(context.keys) or inspect.isasyncgenfunction(context.keys)
-                    or inspect.iscoroutinefunction(key_call) or inspect.isasyncgenfunction(key_call)):
-                raise _failure(operation, 'HostContextInvalid', 'host_context')
-            if planning:
-                if (not isinstance(context.mapping, registry) or not isinstance(context.writers, WriterInventory)
-                        or type(context.search_reviews) is not tuple
-                        or any(not isinstance(review, SearchReview) for review in context.search_reviews)):
+            if not removing:
+                key_call = getattr(context.keys, '__call__', None)
+                if (not isinstance(context.keys, Keyring) and not callable(context.keys)
+                        or inspect.iscoroutinefunction(context.keys) or inspect.isasyncgenfunction(context.keys)
+                        or inspect.iscoroutinefunction(key_call) or inspect.isasyncgenfunction(key_call)):
                     raise _failure(operation, 'HostContextInvalid', 'host_context')
-                plan = m.plan(raw, context.mapping, engine, writers=context.writers,
-                    search_reviews=context.search_reviews, keys=context.keys,
-                    runtime_role=context.runtime_role, target_id=context.target_id,
-                    backfill_rows_per_second=context.backfill_rows_per_second,
-                    verify_rows_per_second=context.verify_rows_per_second,
-                    temporary_bytes_per_row=context.temporary_bytes_per_row,
-                    wal_bytes_per_row=context.wal_bytes_per_row, layout=arguments.layout)
+            if planning:
+                if reversing:
+                    if context.restore is not None and type(context.restore) is not RestoreBinding:
+                        raise _failure(operation, 'HostContextInvalid', 'host_context')
+                    plan = d.plan(plan, engine, source_pin=context.source_pin, keys=context.keys,
+                        plaintext_runtime_role=context.plaintext_runtime_role,
+                        backfill_rows_per_second=context.backfill_rows_per_second,
+                        verify_rows_per_second=context.verify_rows_per_second,
+                        temporary_bytes_per_row=context.temporary_bytes_per_row,
+                        wal_bytes_per_row=context.wal_bytes_per_row, restore=context.restore)
+                else:
+                    if (not isinstance(context.mapping, registry) or not isinstance(context.writers, WriterInventory)
+                            or type(context.search_reviews) is not tuple
+                            or any(not isinstance(review, SearchReview) for review in context.search_reviews)):
+                        raise _failure(operation, 'HostContextInvalid', 'host_context')
+                    plan = m.plan(raw, context.mapping, engine, writers=context.writers,
+                        search_reviews=context.search_reviews, keys=context.keys,
+                        runtime_role=context.runtime_role, target_id=context.target_id,
+                        backfill_rows_per_second=context.backfill_rows_per_second,
+                        verify_rows_per_second=context.verify_rows_per_second,
+                        temporary_bytes_per_row=context.temporary_bytes_per_row,
+                        wal_bytes_per_row=context.wal_bytes_per_row, layout=arguments.layout)
                 result = _summary(plan)
             else:
-                if arguments.abort is not None:
+                if removing:
+                    progress = d.remove(plan, engine, pin=context.pin, approval=context.approval,
+                                        consent=context.consent, removal=context.removal)
+                elif reversing:
+                    if arguments.abort is not None:
+                        progress = d.abort(plan, engine, pin=context.pin, approval=context.approval,
+                                           consent=context.consent)
+                    else:
+                        progress = d.apply(plan, engine, keys=context.keys, pin=context.pin,
+                            approval=context.approval, consent=context.consent,
+                            chunk_size=arguments.chunk_size, until=arguments.until or 'PLAINTEXT_PENDING')
+                elif arguments.abort is not None:
                     progress = m.abort(plan, engine, pin=context.pin, approval=context.approval)
                 else:
                     progress = m.apply(plan, engine, keys=context.keys, pin=context.pin,

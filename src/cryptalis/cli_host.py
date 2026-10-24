@@ -13,8 +13,10 @@ from sqlalchemy.engine import Engine
 from sqlalchemy.orm import registry
 
 from cryptalis.crypto.keys import Keyring
+from cryptalis.deprotection import PlaintextApproval, RemovalApproval
 from cryptalis.manifest.compiler import SearchReview, WriterInventory
 from cryptalis.migration import DeploymentPin, MaintenanceApproval
+from cryptalis.restore import RestoreBinding
 
 
 @dataclass(frozen=True, repr=False)
@@ -38,3 +40,34 @@ class ApplyContext:
     keys: Keyring | Callable[[UUID], Keyring]
     pin: DeploymentPin
     approval: MaintenanceApproval
+
+
+@dataclass(frozen=True, repr=False)
+class ReversePlanningContext:
+    engine: Engine
+    keys: Keyring | Callable[[UUID], Keyring]
+    source_pin: DeploymentPin
+    plaintext_runtime_role: str
+    backfill_rows_per_second: float
+    verify_rows_per_second: float
+    temporary_bytes_per_row: int
+    wal_bytes_per_row: int
+    restore: RestoreBinding | None
+
+
+@dataclass(frozen=True, repr=False)
+class ReverseApplyContext:
+    engine: Engine
+    keys: Keyring | Callable[[UUID], Keyring]
+    pin: DeploymentPin
+    approval: MaintenanceApproval
+    consent: PlaintextApproval
+
+
+@dataclass(frozen=True, repr=False)
+class RemovalContext:
+    engine: Engine
+    pin: DeploymentPin
+    approval: MaintenanceApproval
+    consent: PlaintextApproval
+    removal: RemovalApproval
