@@ -628,6 +628,15 @@ ACTIVE deployment. Pre-adoption mode uses the same compiler and an explicit
 trusted host factory; host-code effects remain UNKNOWN. ACTIVE mode uses the
 declared runtime connection and repeats shared attachment admission in a
 read-only snapshot. Unobserved boundaries and aggregate results remain UNKNOWN.
+Doctor can also inspect supplied SELECT structures through the same runtime
+admission rules. Python callers pass queries=select_samples. CLI hosts can add
+select_samples as a fourth context member. Use a tuple of at most 128 samples.
+No attachment, query execution, mapping-type replacement or key resolution occurs.
+Successful samples report STRUCTURE_ADMITTED. Complete route coverage and aggregate
+health stay UNKNOWN. Known unsupported samples produce a FAIL with safe indexes
+and remedies. This check supplies no deployment or migration authority. See the
+[installed checkpoint](../status.md#installed-application-query-diagnostics-2026-10-24).
+
 The initial `plan` and protection `apply` commands have the bounded
 [operational contract](#operational-protection-cli). The
 [reverse/removal extension](#reverse-and-removal-cli) and

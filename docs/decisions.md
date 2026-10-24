@@ -1638,3 +1638,26 @@ routes to protected restore, all three rotations and latest-value native exit.
 The public-slot CRUD row remains a regression control. These local checks do not
 qualify production custody, deployment fencing, browser operation or independent
 review. Preserve all 34 objectives and seven UNKNOWN production gates.
+
+## Supplied query structure diagnostics: 2026-10-24
+
+Extend pre-adoption Doctor with an optional bounded SELECT corpus.
+Reuse the runtime admission rules and compiler descriptors. Do not activate an
+attachment, resolve keys, execute samples or modify mapping types during inspection.
+Accept only a tuple with at most 128 samples. Report fixed indexes and safe
+remedies. Do not print SQL, bind values or private exception details.
+
+A scoped query_samples PASS means supplied structures passed admission only.
+Keep overall route coverage UNKNOWN after success. Known unsupported structures
+set query_routes FAIL. Inspection uncertainty must remain UNKNOWN with an explicit
+issue. DML samples require separate runtime qualification and do not pass this
+SELECT-only check. Existing schema-only contexts and reports retain their defaults.
+
+The original HTTP profile captures native ORM SELECT structures through the
+existing session event, then removes that observer before inspection or attachment.
+This is workload evidence, not a complete static scanner or route inventory.
+The [checkpoint](status.md#supplied-application-query-preflight-2026-10-24) records
+its bounded implementation and application journey.
+
+The [installed checkpoint](status.md#installed-application-query-diagnostics-2026-10-24) verifies the bounded query diagnostic and matching CLI
+child package. It does not qualify a complete scanner or deployment authority.

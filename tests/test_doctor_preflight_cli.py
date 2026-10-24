@@ -11,11 +11,13 @@ import psycopg
 import pytest
 from sqlalchemy.engine import Engine
 
+import cryptalis
 from cryptalis import cli
 from test_protection_compiler import app, declaration, engine, snapshot
 
 
 ROOT = Path(__file__).resolve().parents[1]
+PACKAGE_PATH = str(Path(cryptalis.__file__).resolve().parent.parent)
 PRIVATE = 'PRIVATE_DOCTOR_HOST_DETAIL'
 
 
@@ -35,7 +37,7 @@ def arguments(paths):
 
 
 def invoke(paths, *extra):
-    child_env = dict(os.environ, PYTHONPATH=os.pathsep.join((str(ROOT / 'src'),
+    child_env = dict(os.environ, PYTHONPATH=os.pathsep.join((PACKAGE_PATH,
         str(paths[0].parent), os.environ.get('PYTHONPATH', ''))), PYTHONDONTWRITEBYTECODE='1')
     return subprocess.run([sys.executable, '-m', 'cryptalis', *arguments(paths), *extra],
         cwd=ROOT, env=child_env, capture_output=True, text=True, timeout=10)
@@ -103,7 +105,7 @@ def test_incomplete_or_malformed_mode_refuses_before_host_import(tmp_path, chang
         option = '--host-context' if change == 'missing_context' else '--pre-adoption'
         index = args.index(option)
         del args[index:index + 2]
-    child_env = dict(os.environ, PYTHONPATH=os.pathsep.join((str(ROOT / 'src'), str(tmp_path))))
+    child_env = dict(os.environ, PYTHONPATH=os.pathsep.join((PACKAGE_PATH, str(tmp_path))))
     result = subprocess.run([sys.executable, '-m', 'cryptalis', *args],
         cwd=ROOT, env=child_env, capture_output=True, text=True, timeout=10)
     error(result, 2, 'InvalidArguments')
@@ -143,7 +145,7 @@ def test_equals_option_parse_failure_retains_pre_adoption_uncertainty(tmp_path):
     paths = inputs(tmp_path, 'def context():\n    raise AssertionError("must not load")\n')
     result = subprocess.run([sys.executable, '-m', 'cryptalis', 'doctor',
         '--pre-adoption=' + str(paths[1]), '--host-context=doctor_host:context', '--json'],
-        cwd=ROOT, env=dict(os.environ, PYTHONPATH=str(ROOT / 'src')),
+        cwd=ROOT, env=dict(os.environ, PYTHONPATH=PACKAGE_PATH),
         capture_output=True, text=True, timeout=10)
     observed = error(result, 2, 'InvalidArguments')
     assert observed['scope'] == 'pre_adoption'
@@ -226,6 +228,44 @@ def test_native_preflight_cli_keeps_host_effects_unknown_and_database_unchanged(
     assert snapshot(app) == before
 
 
+@pytest.mark.parametrize('unsupported', [False, True])
+def test_native_query_samples_have_explicit_cli_results_and_preserve_schema(app, native_inputs, unsupported):
+    before = snapshot(app)
+    module = native_inputs[0]
+    expression = "select(Customer).where(Customer.email.ilike('PRIVATE_QUERY_PATTERN'))" if unsupported else 'select(Customer)'
+    module.write_text(module.read_text().replace('    return mapping, writers, reviews',
+        '    from sqlalchemy import select\n    return mapping, writers, reviews, (' + expression + ',)'))
+    result = invoke(native_inputs)
+    if unsupported:
+        observed = error(result, 3, 'QueryIncompatible')
+        assert observed['checks']['manifest_schema'] == 'PASS'
+        assert observed['checks']['query_routes'] == 'FAIL'
+    else:
+        assert result.returncode == 0 and result.stderr == ''
+        observed = json.loads(result.stdout)
+        assert observed['checks']['query_samples'] == 'PASS'
+        assert observed['checks']['query_routes'] == observed['status'] == 'UNKNOWN'
+    assert 'PRIVATE_QUERY_PATTERN' not in result.stdout + result.stderr
+    assert snapshot(app) == before
+
+
+def test_query_inspection_outage_has_nonzero_unknown_cli_result(native_inputs, monkeypatch, capsys):
+    from cryptalis.sqlalchemy import _Attachment
+    module = native_inputs[0]
+    module.write_text(module.read_text().replace('    return mapping, writers, reviews',
+        '    from sqlalchemy import select\n    return mapping, writers, reviews, (select(Customer),)'))
+    monkeypatch.syspath_prepend(str(module.parent))
+    monkeypatch.delitem(sys.modules, 'doctor_host', raising=False)
+    def unavailable(*args, **kwargs):
+        raise RuntimeError(PRIVATE)
+    monkeypatch.setattr(_Attachment, 'admit', unavailable)
+    assert cli.main(arguments(native_inputs)) == 4
+    captured = capsys.readouterr()
+    observed = error(subprocess.CompletedProcess([], 4, captured.out, captured.err), 4, 'QueryInspectionUnavailable')
+    assert observed['checks']['manifest_schema'] == 'PASS'
+    assert observed['checks']['query_samples'] == observed['checks']['query_routes'] == 'UNKNOWN'
+
+
 def test_native_schema_refusal_has_nonzero_exit_and_actionable_issues(app, native_inputs):
     before = snapshot(app)
     doc = declaration()
@@ -271,7 +311,7 @@ def test_engine_cleanup_failure_is_loud_and_preserves_schema_result(native_input
 
 @pytest.mark.skipif(not Path('/dev/full').exists(), reason='requires /dev/full')
 def test_preflight_output_failure_remains_explicit(native_inputs):
-    child_env = dict(os.environ, PYTHONPATH=os.pathsep.join((str(ROOT / 'src'), str(native_inputs[0].parent))))
+    child_env = dict(os.environ, PYTHONPATH=os.pathsep.join((PACKAGE_PATH, str(native_inputs[0].parent))))
     with open('/dev/full', 'w') as output:
         result = subprocess.run([sys.executable, '-m', 'cryptalis', *arguments(native_inputs)],
             cwd=ROOT, env=child_env, stdout=output, stderr=subprocess.PIPE, text=True, timeout=10)

@@ -1,0 +1,128 @@
+{
+  "format": "cryptalis.query-preflight-qualification/v1",
+  "source_revision": "4293e3fad0282e03e9f0555808f1b8bf84be8cfd",
+  "source_manifest": {
+    "path": "docs/_reset/query-preflight-final-source2-20261024.json",
+    "sha256": "a5562169871b57fb02ada1b80438e8dd0bf71637a7be2abc9f898a0984dd3d3b",
+    "member": "source_test_sha256",
+    "python_files": 228
+  },
+  "runs": [
+    {
+      "scope": "Final source diagnostic integration with explicit unavailable-query CLI control; Doctor, initialization and schema compatibility",
+      "fixing_revision": "worktree-80e6201d43a03459",
+      "counts": {
+        "passed": 72
+      },
+      "preflight": {
+        "select_1_each": "passed",
+        "sha256_prefixes": [
+          "05362d31",
+          "ff897c9a"
+        ]
+      },
+      "elapsed_seconds": 23.35668555702432,
+      "sha256": "a5562169871b57fb02ada1b80438e8dd0bf71637a7be2abc9f898a0984dd3d3b",
+      "archive_member": null,
+      "path": "docs/_reset/query-preflight-final-source2-20261024.json"
+    },
+    {
+      "scope": "Actual installed Doctor query diagnostic and matching CLI child package; native positive/refusal/uncertainty, read-only no-row/no-key controls",
+      "fixing_revision": "worktree-80e6201d43a03459",
+      "counts": {
+        "passed": 40
+      },
+      "preflight": {
+        "select_1_each": "passed",
+        "sha256_prefixes": [
+          "05362d31",
+          "ff897c9a"
+        ]
+      },
+      "elapsed_seconds": 20.55746119399555,
+      "sha256": "a7175e685e6a92109f01c48252bde3504d880913da4c6f8a10f7568746dc6a22",
+      "archive_member": "installed-doctor.json",
+      "path": null
+    },
+    {
+      "scope": "Fresh-cluster source export; primary cluster; pinned original HTTP/JWT and local SMTP, adopted-target root/payload/search rotation and native exit",
+      "fixing_revision": "worktree-80e6201d43a03459",
+      "counts": {
+        "passed": 1
+      },
+      "preflight": {
+        "select_1_each": "passed",
+        "sha256_prefixes": [
+          "05362d31",
+          "ff897c9a"
+        ]
+      },
+      "elapsed_seconds": 6.8300745519809425,
+      "sha256": "808bbba602bb16ad19563babfd8d0061a51540672504f79af8731709987b78d7",
+      "archive_member": "installed-http-export.json",
+      "path": null
+    },
+    {
+      "scope": "Fresh-cluster protected-backup recovery and adoption; isolated cluster; pinned original HTTP/JWT and local SMTP, adopted-target root/payload/search rotation and native exit",
+      "fixing_revision": "worktree-80e6201d43a03459",
+      "counts": {
+        "passed": 1
+      },
+      "preflight": {
+        "select_1_each": "passed",
+        "sha256_prefixes": [
+          "9860d7eb",
+          "f5694c7f"
+        ]
+      },
+      "elapsed_seconds": 11.171259716997156,
+      "sha256": "8abec110b920fc6be1680e2a5c3ca3c6829ce39ef7ff1ad95604357c33bb811d",
+      "archive_member": "installed-http-restore.json",
+      "path": null
+    }
+  ],
+  "archive": {
+    "path": "docs/_reset/query-preflight-installed-receipts-20261024.tar.gz",
+    "sha256": "c4bceebc2e763111da28ec96aa6d8f6769cdc6f083f083b13752f0e6e1e662d9",
+    "bytes": 15870,
+    "members": {
+      "installed-doctor.json": {
+        "sha256": "a7175e685e6a92109f01c48252bde3504d880913da4c6f8a10f7568746dc6a22",
+        "bytes": 26187
+      },
+      "installed-http-export.json": {
+        "sha256": "808bbba602bb16ad19563babfd8d0061a51540672504f79af8731709987b78d7",
+        "bytes": 26076
+      },
+      "installed-http-restore.json": {
+        "sha256": "8abec110b920fc6be1680e2a5c3ca3c6829ce39ef7ff1ad95604357c33bb811d",
+        "bytes": 26104
+      },
+      "installed-http-journey.json": {
+        "sha256": "cf68e9169d4fdbb5ef4e49b140d2cee502bc0b8671e50ad4a46f64d492761905",
+        "bytes": 11524
+      }
+    }
+  },
+  "artifact": {
+    "release_receipt": "docs/_reset/query-preflight-final-release-20261024.json",
+    "release_receipt_sha256": "bcf1363d63c0731939be3786f9c2b9de90586dda1304f208e92a2d204d709004",
+    "wheel_sha256": "f3fa093c5203ee7344ed4389d2616da0bab385836328b357c5bf582059ab6274",
+    "matching_source_wheel_and_installed_modules": 40,
+    "installed_files": 44,
+    "source_inputs": 45,
+    "dependency_pins": 72,
+    "install_evidence_sha256": "7761d1cf676fab5c1b41ada38e80ff23f7ae43a4680021572499647f17c85b6f"
+  },
+  "document_sha256": {
+    "README.md": "569aec5fc80da11d1df0de4fb54ee293f64d6ecf9d9b5d18a9cacd939e566f1e",
+    "docs/status.md": "9337df335a18101520366edf1accb319d70b3f3386d19fa8d593e17a78a85927",
+    "docs/BUILD_CHECKLIST.md": "327adb3f61434a2eebeaafa9918f7f73a4f0d32abb4f4eacdf6a03f714004dd3",
+    "docs/decisions.md": "600599a70a102c52cca3ca843cf73a22063c0106962ad9343035c1cd4e2b4f5e",
+    "docs/architecture/README.md": "8d5bedaad23465d7c99b64b7b70612f335d8c01c6dc17ab16afa0af850430c71",
+    "docs/security.md": "ae21b89f5e6c6e2ebfa85826ad0a9d4cb11c73803dce009deac55bd1f3bf5ea4",
+    "docs/walkthrough-migration.md": "3ec381044a75e0c9e6325e2839108c205911ca383aa54169afacdafb4d5387f1"
+  },
+  "qualification": "Supplied SELECT structures and original pinned local HTTP recovery only; complete route coverage UNKNOWN",
+  "gates": "all seven UNKNOWN"
+}

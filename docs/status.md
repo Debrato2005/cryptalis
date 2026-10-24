@@ -21,6 +21,72 @@ and [competitive capability matrix](research/capability-matrix.md) govern priori
 Progress follows complete real-application journeys and resolved production requirements.
 All seven production gates remain UNKNOWN.
 
+## Installed application query diagnostics: 2026-10-24
+
+**VERIFIED, bounded installed cell:** the reproducible wheel passes 40 focused
+Doctor controls in 20.02 pytest seconds. Python diagnostics and CLI children use the installed package.
+Positive samples, known refusal, unavailable inspection, read-only catalog access,
+no application-row reads, no key resolution, mapping preservation and redaction pass.
+The source checkpoint separately passes 72 affected Doctor/initialization controls.
+
+The unchanged original HTTP application passes genuine installed export and
+fresh PostgreSQL 16 recovery. Twelve native SELECT structures captured from
+original routes, authentication, local SMTP and search pass structural admission.
+A protected ILIKE control refuses before migration without disclosing its value.
+The same application completes root, payload and search rotations, latest-value
+removal, native schema/public-slot restoration and an import-denied HTTP restart.
+Three mail phases each deliver four loopback messages. Both fresh phases pass
+the mandatory probes for both roles. All 228 Python hashes remain stable.
+
+The artifact passes repeat-build, 45-input, 40-module, 44-installed-file, RECORD,
+SBOM and CLI checks with 72 unchanged dependency pins. Wheel SHA-256 is
+`f3fa093c5203ee7344ed4389d2616da0bab385836328b357c5bf582059ab6274`.
+The existing uv/build-backend version warning remains recorded. The [final boundary](_reset/query-preflight-final-boundary-20261024.json)
+binds current PostgreSQL evidence, exact archived receipts, product bytes and
+canonical documents. Construction history retains the earlier expected failures.
+
+This implements supplied-query diagnosis, not a complete route scanner. Successful
+samples retain aggregate and query_routes UNKNOWN. Runtime admission still applies.
+Public fixture keys, explicit single tenancy, local TestClient and loopback SMTP
+limit the application evidence. Live KMS, browser/deployment behavior and independent
+review remain open. No cryptographic, key-policy, format or tenant contract changes.
+All 34 objective states and seven UNKNOWN production gates remain unchanged.
+
+
+## Supplied application query preflight: 2026-10-24
+
+**IMPLEMENTED, bounded source verification:** Doctor accepts an optional tuple
+of at most 128 SELECT samples before migration. It reuses runtime SELECT
+admission against the compiler's inspected mapping and descriptors. It does not
+attach the mapping, execute the samples, read application rows or resolve keys.
+Known incompatibilities return fixed issue codes, sample indexes and remedies.
+SQL text, bound values and exception messages do not enter the report.
+
+All accepted samples produce query_samples PASS and STRUCTURE_ADMITTED items.
+Overall status and query_routes stay UNKNOWN because supplied samples do not
+prove complete route coverage, bind compatibility, execution or result semantics.
+A known unsupported sample sets query_routes and overall status FAIL. Unavailable
+inspection stays UNKNOWN. The CLI returns exit 3 for known query incompatibility
+and exit 4 for unavailable query inspection. Existing three-member host contexts
+retain their behavior. An optional fourth tuple supplies the samples.
+
+Source [verification](_reset/query-preflight-final-source2-20261024.json) passes
+72 affected Doctor/initialization controls. The new
+HTTP profile captures twelve distinct SELECT structures from the unchanged
+original routes, authentication, local SMTP and search workload. Doctor admits
+all twelve structures and refuses a protected ILIKE negative control. The same
+source application then passes genuine fresh restore, all three rotations,
+latest-value removal and a fresh original HTTP process with Cryptalis imports
+denied. Both phases pass fresh mandatory probes for both roles. The earlier
+three expected missing-operation failures remain in the
+[construction history](_reset/query-preflight-construction-history-20261024.json).
+
+The [installed checkpoint](#installed-application-query-diagnostics-2026-10-24) now extends this source evidence. It qualifies the
+supplied SELECT structures and the named original application only. No manifest,
+ciphertext, key policy, tenant scope or query-operator admission changes. All
+34 objective states and seven UNKNOWN production gates remain unchanged.
+
+
 ## Original HTTP application fresh recovery: 2026-10-24
 
 **VERIFIED, installed local cell:** the unchanged 26-file FastAPI template completes
