@@ -216,6 +216,32 @@ def _parser() -> argparse.ArgumentParser:
         help='Trusted synchronous factory returning a key-free RemovalContext with current host approvals.')
     remove.add_argument('--json', action='store_true', dest='machine_json', help='Write one JSON object.')
     remove.set_defaults(handler=_operational_command)
+    keys = commands.add_parser('keys', help='Run explicitly authorized key lifecycle operations.', allow_abbrev=False)
+    key_commands = keys.add_subparsers(dest='keys_command', required=True)
+    rotate = key_commands.add_parser('rotate', help='Rotate admitted key custody.', allow_abbrev=False)
+    purposes = rotate.add_subparsers(dest='rotation_kind', required=True)
+    rewrap = purposes.add_parser('rewrap', help='Rewrap unchanged roots through saved proposal and successor artifacts.',
+        allow_abbrev=False)
+    actions = rewrap.add_subparsers(dest='rewrap_action', required=True)
+    for action, description in (
+            ('plan', 'Authenticate current roots and frames and save a rewrap proposal.'),
+            ('apply', 'Save the exact successor and commit the approved rewrap as PENDING.'),
+            ('activate', 'Publish a saved rewrap successor under explicit host authority.'),
+            ('abort', 'Cancel a pending rewrap under republished source ACTIVE authority.')):
+        command = actions.add_parser(action, help=description, allow_abbrev=False)
+        command.add_argument('source' if action == 'plan' else 'plan', type=Path,
+            help='Source protection artifact.' if action == 'plan' else
+                 'Saved successor artifact.' if action == 'activate' else 'Saved rewrap proposal.')
+        command.add_argument('--host-context', required=True, metavar='MODULE:FACTORY',
+            help='Trusted synchronous factory returning the exact context for this rewrap action.')
+        if action in ('plan', 'apply'):
+            command.add_argument('--out', type=Path, required=True,
+                help='New private proposal artifact.' if action == 'plan' else 'Durable exact successor artifact.')
+        if action == 'apply':
+            command.add_argument('--resume', type=UUID, metavar='OPERATION',
+                help='Resume this operation and re-sync an existing exact private successor artifact.')
+        command.add_argument('--json', action='store_true', dest='machine_json', help='Write one JSON object.')
+        command.set_defaults(handler=_operational_command)
     return parser
 
 

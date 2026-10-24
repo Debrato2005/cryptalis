@@ -18,12 +18,13 @@ from uuid import UUID, uuid4
 
 import pytest
 import cryptalis
-from cryptalis import deprotection as d, migration as m
+from cryptalis import deprotection as d, migration as m, rotation as r
 from cryptalis.sqlmodel import attach
 from profile_sqlmodel_public_slots_application import public_slots, field_frames, restart
 from profile_sqlmodel_searchable_application import native_catalog, search_controls
 from test_deprotection import least_privilege_role
 from test_migration import DOMAIN, keys
+from rewrap_worker import target_keys
 import test_sqlmodel_application as original
 
 
@@ -50,11 +51,13 @@ import json,os,signal
 import psycopg
 from sqlalchemy import create_engine,event
 from app.models import User
-from cryptalis.cli_host import PlanningContext,ApplyContext,ReversePlanningContext,ReverseApplyContext,RemovalContext
+from cryptalis.cli_host import (PlanningContext,ApplyContext,ReversePlanningContext,ReverseApplyContext,RemovalContext,
+    RewrapPlanningContext,RewrapApplyContext,RewrapActivationContext,RewrapAbortContext)
 from cryptalis.manifest.compiler import Writer,WriterInventory,SearchReview
 from cryptalis.migration import DeploymentPin,MaintenanceApproval
 from cryptalis.deprotection import PlaintextApproval,RemovalApproval
 from test_migration import keys
+from rewrap_worker import target_keys
 from uuid import UUID
 
 def configuration():return json.loads(Path(os.environ['OPERATIONAL_HOST_CONFIGURATION']).read_text())
@@ -89,7 +92,7 @@ def deployment(c):
     return DeploymentPin(UUID(raw['target_id']),UUID(raw['operation_id']),raw['plan_digest'],raw['phase'])
 def reverse_planning():
     c=configuration()
-    return ReversePlanningContext(engine=owned(c),keys=keys,source_pin=deployment(c),
+    return ReversePlanningContext(engine=owned(c),keys=target_keys if c.get('current_target_custody') else keys,source_pin=deployment(c),
         plaintext_runtime_role=c['plaintext_runtime_role'],backfill_rows_per_second=1000,
         verify_rows_per_second=1000,temporary_bytes_per_row=3000,wal_bytes_per_row=6000,restore=None)
 def plaintext_consent(c):
@@ -100,7 +103,7 @@ def reversing():
     c=configuration()
     engine=owned(c)
     pause_after_dispose(engine,c)
-    return ReverseApplyContext(engine=engine,keys=keys,pin=deployment(c),
+    return ReverseApplyContext(engine=engine,keys=target_keys if c.get('current_target_custody') else keys,pin=deployment(c),
         approval=MaintenanceApproval(**json.loads(Path(c['approval_path']).read_text())),consent=plaintext_consent(c))
 def removing():
     c=configuration()
@@ -109,6 +112,31 @@ def removing():
     return RemovalContext(engine=owned(c),pin=deployment(c),
         approval=MaintenanceApproval(**json.loads(Path(c['approval_path']).read_text())),
         consent=plaintext_consent(c),removal=RemovalApproval(**raw))
+def rewrap_source(c,tenant):
+    if c.get('rewrap_source_unavailable'):raise RuntimeError('PRIVATE_OPERATIONAL_HOST_OR_PROVIDER')
+    return keys(tenant)
+def rewrap_target(c,tenant):
+    if c.get('rewrap_target_unavailable'):raise RuntimeError('PRIVATE_OPERATIONAL_HOST_OR_PROVIDER')
+    return target_keys(tenant)
+def rewrap_planning():
+    c=configuration()
+    return RewrapPlanningContext(engine=owned(c),source_keys=lambda t:rewrap_source(c,t),
+        target_keys=lambda t:rewrap_target(c,t),source_pin=deployment(c),verify_rows_per_second=1000,restore=None)
+def rewrap_applying():
+    c=configuration()
+    engine=owned(c)
+    pause_after_dispose(engine,c)
+    return RewrapApplyContext(engine=engine,source_keys=lambda t:rewrap_source(c,t),
+        target_keys=lambda t:rewrap_target(c,t),pin=deployment(c),
+        approval=MaintenanceApproval(**json.loads(Path(c['approval_path']).read_text())))
+def rewrap_activating():
+    c=configuration()
+    return RewrapActivationContext(engine=owned(c),target_keys=lambda t:rewrap_target(c,t),pin=deployment(c),
+        approval=MaintenanceApproval(**json.loads(Path(c['approval_path']).read_text())))
+def rewrap_aborting():
+    c=configuration()
+    return RewrapAbortContext(engine=owned(c),source_keys=lambda t:rewrap_source(c,t),source_pin=deployment(c),
+        approval=MaintenanceApproval(**json.loads(Path(c['approval_path']).read_text())))
 '''
 
 
@@ -217,6 +245,114 @@ def test_original_three_field_app_cli_plan_kill_resume_publish_and_native_exit(t
         current = workload['boolean_controls'](attached, current, uuid4().hex)
         current, controls = search_controls(attached, current)
         assert controls == native_search and public_slots(owner, native_slots) == native_slots
+        protection_plan_digest = plan.digest
+        source_plan, source_path, source_active_pin = plan, plan_path, pin('ACTIVE')
+        def rewrap_command(action, path, factory, *extra):
+            return ('keys', 'rotate', 'rewrap', action, str(path), '--host-context', module + ':' + factory, *extra, '--json')
+        def indices():
+            with owner.connect() as connection:
+                return connection.exec_driver_sql('SELECT c.relname,c.oid::text,c.relfilenode::text '
+                    'FROM pg_catalog.pg_index i JOIN pg_catalog.pg_class c ON c.oid=i.indexrelid '
+                    'WHERE i.indrelid=\'"user"\'::regclass ORDER BY c.relname').all()
+        original_indexes = indices()
+        pin_path.write_text(json.dumps(asdict(source_active_pin), default=str))
+        configuration_path.write_text(json.dumps(configuration))
+        cancelled_path, cancelled_activation = tmp_path / 'cancelled-rewrap.json', tmp_path / 'cancelled-successor.json'
+        execute(*rewrap_command('plan', source_path, 'rewrap_planning', '--out', str(cancelled_path)))
+        cancelled = r.RewrapPlan(cancelled_path.read_bytes())
+        pin_path.write_text(json.dumps(asdict(m.DeploymentPin(cancelled.activation_plan.target_id,
+            cancelled.operation_id, cancelled.activation_plan.digest, 'PREPARED')), default=str))
+        configuration['rewrap_target_unavailable'] = True
+        configuration_path.write_text(json.dumps(configuration))
+        unavailable = subprocess.run(command(*rewrap_command('apply', cancelled_path, 'rewrap_applying',
+            '--out', str(cancelled_activation))), env=environment, capture_output=True, text=True, timeout=30)
+        assert unavailable.returncode == 4 and unavailable.stdout == ''
+        assert 'PRIVATE_OPERATIONAL_HOST_OR_PROVIDER' not in unavailable.stderr
+        refused = json.loads(unavailable.stderr)['error']
+        assert refused['effects'] == 'INSPECT_JOURNAL' and 'known_result' not in refused
+        assert refused['artifact_result']['artifact_directory_durable'] is True
+        assert m.status(source_plan, owner, pin=source_active_pin).runtime_metadata_matches
+        configuration['rewrap_target_unavailable'] = False
+        configuration_path.write_text(json.dumps(configuration))
+        original_frames = field_frames(owner, source_plan.document['lock']['models'][0], staged=False)
+        assert execute(*rewrap_command('apply', cancelled_path, 'rewrap_applying', '--out', str(cancelled_activation),
+            '--resume', str(cancelled.operation_id)))['phase'] == 'PENDING'
+        configuration['rewrap_target_unavailable'] = True
+        configuration_path.write_text(json.dumps(configuration))
+        pin_path.write_text(json.dumps(asdict(source_active_pin), default=str))
+        assert execute(*rewrap_command('abort', cancelled_path, 'rewrap_aborting'))['phase'] == 'ABORTED'
+        assert field_frames(owner, source_plan.document['lock']['models'][0], staged=False) == original_frames
+        assert indices() == original_indexes
+        from app import crud
+        from app.models import UserUpdate
+        with attached() as session:
+            row = crud.get_user_by_email(session=session, email=current['email'])
+            latest_name = 'private-name-after-rewrap-cancellation-' + uuid4().hex
+            crud.update_user(session=session, db_user=row, user_in=UserUpdate(full_name=latest_name))
+        current = dict(current, full_name=latest_name)
+        edited_frames = field_frames(owner, source_plan.document['lock']['models'][0], staged=False)
+        assert execute(*rewrap_command('abort', cancelled_path, 'rewrap_aborting'))['phase'] == 'ABORTED'
+        assert field_frames(owner, source_plan.document['lock']['models'][0], staged=False) == edited_frames
+        configuration['rewrap_target_unavailable'] = False
+        configuration_path.write_text(json.dumps(configuration))
+        rewrap_path, activation_path = tmp_path / 'current-rewrap.json', tmp_path / 'current-successor.json'
+        execute(*rewrap_command('plan', source_path, 'rewrap_planning', '--out', str(rewrap_path)))
+        rewrap = r.RewrapPlan(rewrap_path.read_bytes())
+        activation_plan = rewrap.activation_plan
+        pin_path.write_text(json.dumps(asdict(m.DeploymentPin(activation_plan.target_id,
+            activation_plan.operation_id, activation_plan.digest, 'PREPARED')), default=str))
+        Path(configuration['checkpoint']).unlink()
+        configuration['pause_after_dispose'] = True
+        configuration_path.write_text(json.dumps(configuration))
+        process = subprocess.Popen(command(*rewrap_command('apply', rewrap_path, 'rewrap_applying',
+            '--out', str(activation_path))), env=environment, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+        deadline = time.monotonic() + 25
+        while not Path(configuration['checkpoint']).exists():
+            assert process.poll() is None, 'rewrap checkpoint child exited early; diagnostics suppressed'
+            assert time.monotonic() < deadline, 'rewrap committed checkpoint was not observed'
+            time.sleep(0.05)
+        assert m.status(activation_plan, owner, pin=m.DeploymentPin(activation_plan.target_id,
+            activation_plan.operation_id, activation_plan.digest, 'PREPARED')).phase == 'PENDING'
+        assert field_frames(owner, source_plan.document['lock']['models'][0], staged=False) == edited_frames
+        process.kill()
+        process.communicate(timeout=10)
+        assert process.returncode == -signal.SIGKILL
+        configuration['pause_after_dispose'] = False
+        configuration_path.write_text(json.dumps(configuration))
+        resumed = execute(*rewrap_command('apply', rewrap_path, 'rewrap_applying', '--out', str(activation_path),
+            '--resume', str(rewrap.operation_id)))
+        assert resumed['phase'] == 'PENDING' and resumed['artifact_result']['artifact_reused'] is True
+        configuration.update(rewrap_source_unavailable=True, current_target_custody=True)
+        configuration_path.write_text(json.dumps(configuration))
+        pin_path.write_text(json.dumps(asdict(m.DeploymentPin(activation_plan.target_id,
+            activation_plan.operation_id, activation_plan.digest, 'ACTIVATING')), default=str))
+        assert execute(*rewrap_command('activate', activation_path, 'rewrap_activating'))['phase'] == 'ACTIVE'
+        assert field_frames(owner, source_plan.document['lock']['models'][0], staged=False) == edited_frames
+        assert indices() == original_indexes and public_slots(owner, native_slots) == native_slots
+        with pytest.raises(m.TransitionFailure):
+            m.check_deployment(source_plan, owner, pin=source_active_pin)
+        plan, plan_path = activation_plan, activation_path
+        runtime.dispose()
+        mapping.dispose()
+        mapping.metadata.clear()
+        for name in tuple(sys.modules):
+            if name == 'app' or name.startswith('app.'):
+                del sys.modules[name]
+        workload = runpy.run_path(str(helper))
+        from app.models import User as RewrappedUser, UserUpdate as RewrappedUpdate
+        from app import crud as rewrapped_crud
+        mapping = RewrappedUser._sa_registry
+        runtime = original.native_engine('CRYPTALIS_TEST_RUNTIME_DATABASE_URL', schema)
+        factory = attach(mapping, runtime, lock=plan.lock_bytes, keys=target_keys, deployment=(plan, pin('ACTIVE')))
+        attached = lambda: factory(tenant_id=original.TABLE, expire_on_commit=False)
+        with attached() as session:
+            row = rewrapped_crud.get_user_by_email(session=session, email=current['email'])
+            latest_name = 'private-name-under-target-custody-' + uuid4().hex
+            rewrapped_crud.update_user(session=session, db_user=row, user_in=RewrappedUpdate(full_name=latest_name))
+        current = dict(current, full_name=latest_name)
+        current = workload['boolean_controls'](attached, current, uuid4().hex)
+        current, after_rewrap_controls = search_controls(attached, current)
+        assert after_rewrap_controls == controls
         # The trusted host supplies ACTIVE source authority before reverse planning.
         pin_path.write_text(json.dumps(asdict(pin('ACTIVE')), default=str))
         configuration['plaintext_runtime_role'] = least_privilege_role(SimpleNamespace(owner=owner, role=role))
@@ -307,7 +443,13 @@ def test_original_three_field_app_cli_plan_kill_resume_publish_and_native_exit(t
                 json.dump({'application_revision': original.REVISION, 'application_source_sha256': hashes,
                     'model_changes': [], 'query_changes': [], 'layout': 'preserve-public-slots/v1',
                     'protected_fields': ['User.email', 'User.full_name', 'User.is_active'],
-                    'source_plan_digest': plan.digest, 'cli_plan_apply_resume_publication': True,
+                    'source_plan_digest': protection_plan_digest, 'cli_plan_apply_resume_publication': True,
+                    'cli_root_rewrap_plan_apply_activate_abort': True, 'cancelled_rewrap_digest': cancelled.digest,
+                    'rewrap_proposal_digest': rewrap.digest, 'rewrap_activation_digest': activation_plan.digest,
+                    'rewrap_target_outage_retained_source': True, 'source_only_rewrap_abort_after_target_outage': True,
+                    'terminal_rewrap_abort_preserved_later_edit': True, 'sigkill_after_rewrap_pending': True,
+                    'independent_rewrap_resume_preserved_frames': True, 'rewrap_target_only_activation': True,
+                    'rewrap_frame_and_index_identity_preserved': True,
                     'sigkill_after_committed_backfilled': True, 'independent_resume_preserved_frames': True,
                     'cli_reverse_plan_apply_resume_remove': True, 'reverse_plan_digest': reverse.digest,
                     'sigkill_after_reverse_backfilled': True, 'independent_reverse_resume_preserved_plaintext': True,

@@ -134,7 +134,7 @@ def test_apply_committed_chunks_resume_pending_and_explicit_host_publication(tmp
         assert frames(app, True) == prefix
         pending = _snapshot(app)
         refused = invoke(capsys, 'apply', str(path), '--host-context', reference, '--until', 'ACTIVE', '--json')
-        assert refused[0] != 0 and refused[1] == '' and _snapshot(app) == pending
+        assert refused[0] == 3 and refused[1] == '' and _snapshot(app) == pending
         configuration['pin'] = replace(app.pin, phase='ACTIVATING')
         success(invoke(capsys, 'apply', str(path), '--host-context', reference, '--until', 'ACTIVE', '--json'), app.plan, 'ACTIVE')
         assert frames(app, True) == prefix

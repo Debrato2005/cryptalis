@@ -143,6 +143,30 @@ commands remain required future work. See the
 [verified checkpoint](status.md#operational-cli-reverse-and-removal-2026-10-24).
 Source and installed genuine fresh-target verification pass.
 
+## Rewrap root custody through the CLI
+
+**IMPLEMENTED, bounded source and installed verification:** select an explicit trusted factory through
+`--host-context MODULE:FACTORY`. Use `RewrapPlanningContext` for
+`keys rotate rewrap plan SOURCE --out P`. Supply the source ACTIVE pin,
+preconfigured source/target keyrings, verification rate and explicit restore binding or None.
+Keep P unchanged.
+
+Use `RewrapApplyContext` for `keys rotate rewrap apply P --out A`.
+The CLI saves deterministic A before host loading or execution. Apply requires
+both custody resolvers and the successor pin. After interruption, use `--resume OP`
+with the exact operation UUID and A path. Resume checks exact bytes and durability.
+Inspect journal/host state after an unreturned API outcome. A alone proves no phase.
+
+Use `RewrapActivationContext` for `keys rotate rewrap activate A`.
+Supply only target custody and independent ACTIVATING/ACTIVE host authority.
+For cancellation, stop writers and republish the source ACTIVE boundary.
+Use `RewrapAbortContext` for `keys rotate rewrap abort P`. Supply source custody
+and source authority. Abort accepts only pending transitions. Keep P/A after
+completion or cancellation. These commands create no keys or authority. See the
+[architecture contract](architecture/README.md#root-rewrap-cli) and
+[verified checkpoint](status.md#operational-cli-root-rewrap-2026-10-24).
+Source and installed genuine adopted-target verification pass.
+
 ## Use the optional SQLModel bridge
 
 Use the `sqlmodel` extra from a locally built wheel in an isolated application environment.

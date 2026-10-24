@@ -1173,3 +1173,37 @@ run skips the case that needs a separate restored cluster. Source and installed
 fresh-cluster export and restore pass one each. Both real application process
 interruptions, independent resumes and current-value native exit pass. These
 checks leave all seven production gates UNKNOWN.
+
+## Root-rewrap CLI artifacts and authority: 2026-10-24
+
+**VERIFIED within the bounded source and installed profiles in [status](status.md#operational-cli-root-rewrap-2026-10-24):**
+`keys rotate rewrap` composes the
+existing plan, apply, activation and cancellation APIs. Payload and search
+rotation CLI workflows remain required work.
+
+Planning persists proposal P. Apply persists its deterministic successor A
+before host loading or database execution. Ordinary output collisions refuse.
+Explicit resume may re-sync an existing private, regular, non-symlink file only
+after exact byte comparison with A. It never replaces a different artifact.
+Keeping P permits recovery of A without creating another proposal.
+
+Four exact host contexts separate planning, apply, activation and abort.
+Planning and apply require both source and target custody. PENDING apply retry
+still requires both. Activation uses only target custody and the actual successor
+publication pin. Cancellation uses only source custody and the separately
+republished source ACTIVE pin. The cancellation context contains no target keys.
+Restore authority enters through planning and remains embedded in P and A.
+
+Artifact publication facts remain separate from database progress. A saved
+PREPARED artifact does not establish the database phase. An API call that returns
+no Progress requires journal inspection. Returned Progress and file facts survive
+output or cleanup errors. Commands create no provider, root, deployment pin or
+approval. Existing ciphertext, key isolation and format contracts remain unchanged.
+Rewrap-specific denial classification stays separate from existing commands.
+Two native controls reproduce the earlier candidate's changed refusal exit code.
+The correction preserves exit 3 for protection and reverse publication mismatches.
+The focused 54 and affected 363 source controls pass. The actual installed wheel
+passes their combined 417 controls. Primary runs skip two separate fresh-target
+cases. Source and installed genuine fresh-cluster export and restore each pass
+one. All 214 Python hashes remain stable at the recorded boundary. These checks
+leave all seven production qualification gates UNKNOWN.

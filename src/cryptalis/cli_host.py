@@ -71,3 +71,38 @@ class RemovalContext:
     approval: MaintenanceApproval
     consent: PlaintextApproval
     removal: RemovalApproval
+
+
+@dataclass(frozen=True, repr=False)
+class RewrapPlanningContext:
+    engine: Engine
+    source_keys: Keyring | Callable[[UUID], Keyring]
+    target_keys: Keyring | Callable[[UUID], Keyring]
+    source_pin: DeploymentPin
+    verify_rows_per_second: float
+    restore: RestoreBinding | None
+
+
+@dataclass(frozen=True, repr=False)
+class RewrapApplyContext:
+    engine: Engine
+    source_keys: Keyring | Callable[[UUID], Keyring]
+    target_keys: Keyring | Callable[[UUID], Keyring]
+    pin: DeploymentPin
+    approval: MaintenanceApproval
+
+
+@dataclass(frozen=True, repr=False)
+class RewrapActivationContext:
+    engine: Engine
+    target_keys: Keyring | Callable[[UUID], Keyring]
+    pin: DeploymentPin
+    approval: MaintenanceApproval
+
+
+@dataclass(frozen=True, repr=False)
+class RewrapAbortContext:
+    engine: Engine
+    source_keys: Keyring | Callable[[UUID], Keyring]
+    source_pin: DeploymentPin
+    approval: MaintenanceApproval

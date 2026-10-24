@@ -496,6 +496,24 @@ reports. Host-code effects remain UNKNOWN. Doctor's key-free tuple stays unchang
 [verified checkpoint](status.md#operational-cli-reverse-and-removal-2026-10-24).
 Source and installed genuine fresh-target verification pass.
 
+### Root-rewrap CLI artifact and authority boundary
+
+**IMPLEMENTED, bounded source and installed verification:** persist deterministic A before effectful host
+loading or API execution. Its existence supplies no authority or database progress.
+Normal output collisions refuse. Explicit resume checks the operation UUID, bounded
+artifact parse, exact expected bytes and a private regular file. Symlinks refuse.
+A missing output permits exclusive publication. Re-sync verified A and its parent
+before retry. Do not overwrite a mismatched artifact.
+
+Report file facts separately from database `known_result`. If an effectful API
+returns no progress, require INSPECT_JOURNAL even when A is durable. Preserve P/A
+after success or cancellation. Source ACTIVE cancellation authority and successor
+publication authority remain separate. The CLI creates no provider, keys, host pin,
+consent or fencing. Host-code effects and retained-backup obligations retain their
+existing limits. Payload/search CLI admission remains future work. See the
+[verified checkpoint](status.md#operational-cli-root-rewrap-2026-10-24).
+Source and installed genuine adopted-target verification pass.
+
 ## Owned-sequence admission
 
 **IMPLEMENTED, bounded source and installed verification:** lock/v5 admits only inspected ordinary persistent sequences

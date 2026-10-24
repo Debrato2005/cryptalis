@@ -123,6 +123,31 @@ publication, privacy and Doctor boundaries remain unchanged. See the
 [verified checkpoint](../status.md#operational-cli-reverse-and-removal-2026-10-24).
 Source and installed genuine fresh-target verification pass.
 
+### Root-rewrap CLI
+
+**IMPLEMENTED, bounded source and installed verification:** `keys rotate rewrap plan SOURCE --out P`
+saves the existing proposal. `apply P --out A` saves exact `P.activation_plan`
+before host loading and calls existing rewrap execution. It requires both source
+and target key resolvers, including PENDING retry. `activate A` calls the shared
+publication executor with target keys alone. `abort P` uses source keys and the
+separately supplied source ACTIVE pin. Abort creates no target context.
+
+| Trusted context | Required inputs |
+|---|---|
+| `RewrapPlanningContext` | `engine`, `source_keys`, `target_keys`, `source_pin`, `verify_rows_per_second`, `restore` |
+| `RewrapApplyContext` | `engine`, `source_keys`, `target_keys`, `pin`, `approval` |
+| `RewrapActivationContext` | `engine`, `target_keys`, `pin`, `approval` |
+| `RewrapAbortContext` | `engine`, `source_keys`, `source_pin`, `approval` |
+
+Restore is an explicit binding or None. P retains its binding and lineage.
+Apply requires successor PREPARED/PENDING authority bound to A. Activation requires
+ACTIVATING/ACTIVE authority. Cancellation requires republished source ACTIVE authority
+with writers stopped. An ACTIVE successor cannot be cancelled. Terminal ABORTED
+retry preserves later source edits and refuses later supersession. Existing safe
+engine, synchronous resolver, privacy and Doctor boundaries remain unchanged. See the
+[verified checkpoint](../status.md#operational-cli-root-rewrap-2026-10-24).
+Source and installed genuine adopted-target verification pass.
+
 ## Exact data paths
 
 ```text

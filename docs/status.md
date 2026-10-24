@@ -21,9 +21,80 @@ and [competitive capability matrix](research/capability-matrix.md) govern priori
 Progress follows complete real-application journeys and resolved production requirements.
 All seven production gates remain UNKNOWN.
 
+## Operational CLI root rewrap: 2026-10-24
+
+**VERIFIED within the bounded source and installed profiles below:** `keys rotate rewrap` adds `plan`, `apply`,
+`activate` and `abort` over existing root-rewrap APIs. Plan saves proposal P.
+Apply saves its deterministic activation A before host loading or database work.
+Both source and target resolvers remain necessary for apply, including PENDING retry.
+Only activation uses target custody alone. Abort uses source custody and the
+separate source ACTIVE pin. It creates no target context.
+
+Ordinary output collisions refuse. Explicit `apply --resume OP` checks the saved
+operation and exact private regular A before host loading. Symlinks and mismatched
+bytes refuse. If A is absent, resume publishes it exclusively. Resume re-syncs
+the verified file and parent before API retry. File publication does not establish
+any database phase. An unreturned API outcome requires INSPECT_JOURNAL.
+
+Four explicit trusted contexts supply host pins, approvals and keyrings. The CLI
+creates no authority, provider or key material. Existing formats, cryptography,
+core protocols and Doctor's tuple remain unchanged.
+
+The [initial parser RED](_reset/rewrap-cli-source-red-20261024.json) records one
+failure in 0.64 seconds. The [first source candidate](_reset/rewrap-cli-source-focused-initial-20261024.json)
+passes 54 tests in 48.11 seconds, with its [initial application](_reset/rewrap-cli-source-application-initial-20261024.json).
+Later review reproduces two [compatibility failures](_reset/rewrap-cli-compatibility-red-20261024.json)
+in 1.59 seconds: global denial classification changes existing protection/reverse
+publication refusals from exit 3 to 2. Rewrap-local classification restores those
+contracts. The [corrected source profile](_reset/rewrap-cli-source-focused-verified-20261024.json)
+passes 54 tests with two genuine-fresh setup skips in 50.14 seconds, including
+both compatibility controls. All 214 Python hashes stay stable and match this worktree.
+
+The [verified source application](_reset/rewrap-cli-source-application-verified-20261024.json)
+retains six pinned files and actual protection, rewrap and reverse SIGKILL checkpoints.
+Source-only cancellation passes during target outage. Terminal retry preserves a later
+source edit. A new proposal reaches PENDING, then independent exact-A resume and
+target-only activation preserve frames and native index identities. Original search,
+latest native values and package-free exit pass.
+
+The [affected-source suite](_reset/rewrap-cli-source-affected-20261024.json)
+passes 363 tests in 174.41 seconds: 260 existing CLI, decrypt-back, runtime and
+status controls plus 103 root-rewrap planner, preparation, execution and abort controls.
+All 214 Python hashes stay stable and match this worktree. The
+[artifact check](_reset/rewrap-cli-release-20261024.json) passes reproducible archives,
+SBOM, CLI, 38 modules and 42 installed-file checks. All 43 release-source hashes
+match this worktree. The wheel has SHA-256
+`b5e84edcf0096adee115dbacb4e1c4f0aebee312d1f21fc111c3ed9f639ba74a`.
+The genuine source [export](_reset/fresh-cluster-export-20261024-57.json) and
+[separate-cluster restore](_reset/fresh-cluster-restore-20261024-56.json) each pass
+one test in 1.15 and 1.79 seconds. A wrong binding refuses before either resolver.
+The real binding embeds in proposal v2 and successor v5. Payload frames and native
+index identities stay exact through rewrap. Target custody supports a later edit
+and existing CLI reverse/removal completes latest-value native exit. Both receipts
+retain 214 stable/current Python hashes.
+
+The [installed-primary suite](_reset/rewrap-cli-installed-affected-20261024.json)
+passes 417 tests with two genuine-fresh setup skips in 225.51 seconds: 363 affected,
+13 new native, 19 reverse, 21 protection controls and one original application journey.
+Its [application receipt](_reset/rewrap-cli-installed-application-20261024.json) retains
+six pinned files and all three actual SIGKILL checkpoints, source-only cancellation,
+target-only activation and latest-value native exit. All 214 Python hashes stay
+stable and match this worktree. Actual installed [export](_reset/fresh-cluster-export-20261024-58.json)
+and [separate-cluster restore](_reset/fresh-cluster-restore-20261024-57.json) each
+pass one test in 0.64 and 1.45 seconds, with 214 stable/current Python hashes.
+The [final boundary](_reset/rewrap-cli-final-boundary-20261024.json) binds seven
+current database receipts, two current application receipts, six documents and
+actual artifact bytes. Three earlier database receipts and the initial application
+retain their historical boundaries. No current full-suite, HTTP or live custody
+qualification follows. Payload CLI remains required next, then search CLI. All 34
+objective states and seven UNKNOWN gates remain unchanged. See the
+[architecture contract](architecture/README.md#root-rewrap-cli),
+[artifact/authority boundary](security.md#root-rewrap-cli-artifact-and-authority-boundary) and
+[procedure](walkthrough-migration.md#rewrap-root-custody-through-the-cli).
+
 ## Operational CLI reverse and removal: 2026-10-24
 
-**VERIFIED within the bounded source and installed profiles below:** `plan` accepts mutually exclusive manifest
+**VERIFIED within the bounded source and installed profiles at `402bdd5`:** `plan` accepts mutually exclusive manifest
 or `--reverse SOURCE` inputs. Reverse planning saves the existing immutable
 `DeprotectionPlan` before the host reviews it and supplies separate plaintext consent.
 `rollback REVERSE` and `apply REVERSE` execute that same saved proposal. They do
@@ -44,7 +115,7 @@ remain UNKNOWN. Existing artifact formats, cryptographic and core protocols stay
 The [focused source profile](_reset/reverse-cli-source-focused-initial-20261024.json)
 passes 41 tests with one skipped genuine-fresh case in 24.37 seconds. It combines
 19 new native controls, 21 protection controls and one original application journey.
-All 213 Python hashes stay stable and match this worktree. The
+All 213 Python hashes stay stable and match that checkpoint. The
 [earlier parser](_reset/reverse-cli-source-red-20261024.json) fails one reverse-planning
 control in 0.89 seconds. Its receipt retains the historical 213-file snapshot.
 
@@ -58,28 +129,28 @@ import-denied restart complete the journey.
 The [affected-source suite](_reset/reverse-cli-source-affected-20261024.json)
 passes 260 tests in 116.94 seconds: 189 existing CLI, history, status and Doctor
 controls plus 71 native decrypt-back, runtime and status controls. All 213 Python
-hashes stay stable and match this worktree.
+hashes stay stable and match that checkpoint.
 
 The genuine source [export](_reset/fresh-cluster-export-20261024-55.json) and
 [separate-cluster restore](_reset/fresh-cluster-restore-20261024-54.json) each pass
 one test in 1.22 and 1.66 seconds. A wrong valid binding digest refuses before
 keys. The real binding embeds in the saved proposal and completes reverse and
-latest-value native exit. Both receipts retain the same 213 stable/current hashes.
+latest-value native exit. Both receipts retain the same 213 stable hashes at that checkpoint.
 The [artifact check](_reset/reverse-cli-release-20261024.json) passes reproducible
 archives, CLI, 38 modules and 42 installed-file checks. All 43 release-source
-hashes match this worktree. The wheel has SHA-256
+hashes match that checkpoint. The wheel has SHA-256
 `55c3d89de08465febfcf199352ae610ea0c3efef485d6e4b32ea60c4ee2a968a`.
 The [installed-primary suite](_reset/reverse-cli-installed-affected-20261024.json)
 passes 301 tests with one genuine-fresh setup skip in 136.00 seconds. It combines
 260 affected controls, 19 new native controls, 21 protection controls and one
 [unchanged application journey](_reset/reverse-cli-installed-application-20261024.json).
-All 213 Python hashes stay stable and match this worktree. The original six-file
+All 213 Python hashes stay stable and match that checkpoint. The original six-file
 journey now passes on the actual wheel, including both interruption/resume paths,
 explicit plaintext publication, native latest values and approved package-free exit.
 The actual wheel also passes genuine [export](_reset/fresh-cluster-export-20261024-56.json)
 and [separate-cluster restore](_reset/fresh-cluster-restore-20261024-55.json) stages,
-one test each in 0.91 and 1.24 seconds. Both receipts retain 213 stable/current
-Python hashes. The [final boundary](_reset/reverse-cli-final-boundary-20261024.json)
+one test each in 0.91 and 1.24 seconds. Both receipts retain 213 stable
+Python hashes at that checkpoint. The [final boundary](_reset/reverse-cli-final-boundary-20261024.json)
 binds seven current database receipts, two application receipts and six documents,
 with actual artifact bytes and preserved historical RED evidence. No current
 full-suite, HTTP or external custody qualification follows. Root-rewrap CLI remains

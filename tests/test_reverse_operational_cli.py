@@ -145,7 +145,7 @@ def finish_cli(app, plan, path, reference, configuration, monkeypatch, capsys):
     result(invoke(capsys, 'rollback', str(path), '--host-context', reference, '--json'), plan, 'PLAINTEXT_PENDING')
     refused = invoke(capsys, 'rollback', str(path), '--host-context', reference,
                      '--until', 'PLAINTEXT_ACTIVE', '--json')
-    assert refused[0] != 0 and refused[1] == ''
+    assert refused[0] == 3 and refused[1] == ''
     configuration['pin'] = pin(plan, 'PLAINTEXT_ACTIVATING')
     result(invoke(capsys, 'apply', str(path), '--host-context', reference,
         '--until', 'PLAINTEXT_ACTIVE', '--json'), plan, 'PLAINTEXT_ACTIVE')

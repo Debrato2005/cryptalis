@@ -5,6 +5,7 @@ import inspect
 import json
 import os
 import re
+import stat
 import sys
 import tempfile
 from types import CoroutineType
@@ -21,6 +22,8 @@ _DENIED = frozenset(('external_policy_mismatch', 'wrong_database_target', 'inval
     'invalid_reverse_plan', 'external_reverse_policy_mismatch', 'source_pin_must_be_active',
     'plaintext_approval_required', 'removal_approval_required', 'distinct_plaintext_runtime_role_required',
     'restore_binding_mismatch', 'restore_binding_required'))
+_REWRAP_DENIED = _DENIED | frozenset(('invalid_rewrap_plan', 'rewrap_prepublication_pin_required',
+    'matching_external_publication_required', 'rewrap_executor_required'))
 _OPERATIONAL = frozenset(('database_effect_requires_inspection', 'operation_failed_requires_inspection',
     'connection_cleanup_requires_inspection', 'KeyUnavailable', 'CryptoBackendUnavailable'))
 
@@ -95,8 +98,15 @@ def _summary(plan, progress=None):
     return result
 
 
-def _publish(path, raw, result, operation):
+def _publish(path, raw, result, operation, *, artifact_only=False):
     """Publish a complete private artifact without replacing any destination."""
+    def failure(code, stage, *, exit_code=4, primary=None):
+        error = _failure(operation, code, stage, exit_code=exit_code,
+            result=None if artifact_only else result, primary=primary)
+        if artifact_only:
+            error.error.update(artifact_result=dict(result), effects='NONE')
+        return error
+
     descriptor = temporary = None
     stage = 'artifact_create'
     try:
@@ -129,8 +139,8 @@ def _publish(path, raw, result, operation):
         result['artifact_directory_durable'] = True
     except Exception as error:
         exists = isinstance(error, FileExistsError) and stage == 'artifact_publish'
-        raise _failure(operation, 'ArtifactExists' if exists else 'ArtifactOutputUnavailable',
-                       stage, exit_code=2 if exists else 4, result=result) from None
+        raise failure('ArtifactExists' if exists else 'ArtifactOutputUnavailable',
+                      stage, exit_code=2 if exists else 4) from None
     finally:
         primary = sys.exception()
         cleanup_failed = False
@@ -149,13 +159,14 @@ def _publish(path, raw, result, operation):
                 cleanup_failed = True
         if cleanup_failed:
             from cryptalis.cli import _CommandFailure
-            raise _failure(operation, 'ArtifactCleanupUnavailable', 'artifact_cleanup',
-                exit_code=4, result=result,
+            raise failure('ArtifactCleanupUnavailable', 'artifact_cleanup',
                 primary=primary if isinstance(primary, _CommandFailure) else None) from None
 
 
 def run(arguments):
     """Compose protection, current-value reverse or approved removal APIs."""
+    if arguments.command == 'keys':
+        return run_rewrap(arguments)
     from cryptalis.cli import _CommandFailure, _read_local_file, _write_output
     operation = {'plan': 'transition.plan', 'apply': 'transition.apply',
                  'rollback': 'reverse.apply', 'remove': 'reverse.remove'}.get(arguments.command, 'transition')
@@ -164,7 +175,8 @@ def run(arguments):
         from sqlalchemy.orm import registry
         from cryptalis import migration as m, deprotection as d
         from cryptalis.cli_host import (PlanningContext, ApplyContext, ReversePlanningContext,
-                                         ReverseApplyContext, RemovalContext)
+            ReverseApplyContext, RemovalContext, RewrapPlanningContext, RewrapApplyContext,
+            RewrapActivationContext, RewrapAbortContext)
         from cryptalis.crypto.keys import Keyring
         from cryptalis.manifest.compiler import WriterInventory, SearchReview, PlanningRejected
         from cryptalis.manifest.declaration import parse_protection_declaration
@@ -237,7 +249,8 @@ def run(arguments):
     try:
         context = _load_host(arguments.host_context, operation)
         if type(context) in (PlanningContext, ApplyContext, ReversePlanningContext,
-                             ReverseApplyContext, RemovalContext) and isinstance(context.engine, Engine):
+                ReverseApplyContext, RemovalContext, RewrapPlanningContext, RewrapApplyContext,
+                RewrapActivationContext, RewrapAbortContext) and isinstance(context.engine, Engine):
             engine = context.engine
         with _quiet():
             expected = (ReversePlanningContext if reversing else PlanningContext) if planning else (
@@ -348,4 +361,234 @@ def run(arguments):
     except _CommandFailure as failure:
         _known_result(failure, result)
         raise
+    return 0
+
+
+def _sync_activation(path, expected, artifact, operation):
+    """Verify and sync an existing private activation file without replacing it."""
+    from cryptalis.cli import _CommandFailure
+    descriptor = directory = None
+    stage = 'artifact_verify'
+    try:
+        if not hasattr(os, 'O_NOFOLLOW'):
+            raise ValueError
+        descriptor = os.open(path, os.O_RDONLY | os.O_NOFOLLOW | getattr(os, 'O_NONBLOCK', 0))
+        initial = os.fstat(descriptor)
+        if (not stat.S_ISREG(initial.st_mode) or stat.S_IMODE(initial.st_mode) != 0o600
+                or initial.st_size != len(expected)):
+            raise ValueError
+        contents = bytearray()
+        while len(contents) <= len(expected):
+            chunk = os.read(descriptor, min(65536, len(expected) + 1 - len(contents)))
+            if not chunk:
+                break
+            contents.extend(chunk)
+        if contents != expected:
+            raise ValueError
+        named = os.lstat(path)
+        if (not stat.S_ISREG(named.st_mode)
+                or (named.st_dev, named.st_ino) != (initial.st_dev, initial.st_ino)):
+            raise ValueError
+        artifact.update(artifact_published=True, artifact_reused=True, effects='ARTIFACT_REUSED')
+        stage = 'artifact_file_sync'
+        os.fsync(descriptor)
+        stage = 'artifact_directory_sync'
+        directory = os.open(path.parent, os.O_RDONLY | getattr(os, 'O_DIRECTORY', 0))
+        os.fsync(directory)
+        stage = 'artifact_verify'
+        current, named = os.fstat(descriptor), os.lstat(path)
+        if (not stat.S_ISREG(named.st_mode) or stat.S_IMODE(current.st_mode) != 0o600
+                or (named.st_dev, named.st_ino) != (initial.st_dev, initial.st_ino)
+                or (current.st_size, current.st_mtime_ns, current.st_ctime_ns)
+                    != (initial.st_size, initial.st_mtime_ns, initial.st_ctime_ns)):
+            raise ValueError
+        artifact['artifact_directory_durable'] = True
+    except (OSError, ValueError):
+        invalid = stage == 'artifact_verify'
+        raise _failure(operation, 'ActivationArtifactInvalid' if invalid else 'ArtifactDurabilityUnavailable',
+                       stage, exit_code=2 if invalid else 4) from None
+    finally:
+        primary = sys.exception()
+        failed = False
+        for resource in (descriptor, directory):
+            if resource is not None:
+                try:
+                    os.close(resource)
+                except Exception:
+                    failed = True
+        if failed:
+            raise _failure(operation, 'ArtifactCleanupUnavailable', 'artifact_cleanup', exit_code=4,
+                primary=primary if isinstance(primary, _CommandFailure) else None) from None
+
+
+def _rewrap_summary(successor, proposal=None, progress=None):
+    result = _summary(successor, progress)
+    result.update(scope='rewrap_plan' if progress is None else 'rewrap_transition',
+        proposal_digest=proposal.digest if proposal is not None else successor.document['rewrap_plan_digest'],
+        activation_plan_digest=successor.digest,
+        source_operation_id=successor.document['predecessors'][-1]['operation_id'])
+    if proposal is not None and progress is None:
+        result['artifact_digest'] = proposal.digest
+    return result
+
+
+def run_rewrap(arguments):
+    """Compose the existing root-rewrap lifecycle without inferring authority."""
+    from cryptalis.cli import _CommandFailure, _read_local_file, _write_output
+    operation = 'rewrap.' + str(getattr(arguments, 'rewrap_action', 'invalid'))
+    try:
+        from sqlalchemy.engine import Engine
+        from cryptalis import migration as m, rotation as r, cli_host as h
+        from cryptalis.crypto.keys import Keyring
+        from cryptalis.manifest.parser import MAX_DOCUMENT_BYTES, ManifestInvalid
+        from cryptalis.restore import RestoreBinding
+    except ImportError:
+        raise _failure(operation, 'DependenciesUnavailable', 'load_runtime', exit_code=4) from None
+
+    proposal = successor = engine = result = artifact = None
+    attempted = False
+    action = getattr(arguments, 'rewrap_action', None)
+    try:
+        if (arguments.keys_command != 'rotate' or arguments.rotation_kind != 'rewrap'
+                or action not in ('plan', 'apply', 'activate', 'abort')
+                or type(arguments.host_context) is not str or _HOST.fullmatch(arguments.host_context) is None):
+            raise ValueError
+        if action == 'plan' and os.path.lexists(arguments.out):
+            raise _failure(operation, 'ArtifactExists', 'inputs')
+        raw = _read_local_file(arguments.source if action == 'plan' else arguments.plan,
+                               'source_plan' if action == 'plan' else 'plan', operation=operation)
+        if len(raw) > MAX_DOCUMENT_BYTES:
+            raise ValueError
+        if action == 'plan':
+            source = m.MigrationPlan(raw)
+        elif action == 'activate':
+            successor = m.MigrationPlan(raw)
+            if successor.document['kind'] != 'rewrap':
+                raise ValueError
+        else:
+            proposal = r.RewrapPlan(raw)
+            successor = proposal.activation_plan
+            if action == 'apply':
+                if arguments.resume is not None and (
+                        type(arguments.resume) is not UUID or arguments.resume != proposal.operation_id):
+                    raise ValueError
+                if os.path.lexists(arguments.out) and arguments.resume is None:
+                    raise _failure(operation, 'ArtifactExists', 'inputs')
+    except _CommandFailure:
+        raise
+    except (ManifestInvalid, m.TransitionFailure, AttributeError, TypeError, ValueError):
+        failure = _failure(operation, 'InvalidInput', 'inputs')
+        if successor is not None:
+            failure.error['operation_id'] = str(successor.operation_id)
+        raise failure from None
+
+    def annotate(failure):
+        if artifact is not None:
+            failure.error['artifact_result'] = dict(artifact)
+        if result is not None:
+            _known_result(failure, result)
+        else:
+            failure.error.pop('known_result', None)
+            failure.error['effects'] = 'INSPECT_JOURNAL' if attempted and action != 'plan' else 'NONE'
+            if successor is not None:
+                failure.error['operation_id'] = str(successor.operation_id)
+        if proposal is not None:
+            failure.error['proposal_digest'] = proposal.digest
+        if artifact is not None:
+            failure.error['remedy'] += (f' Activation artifact published={artifact["artifact_published"]}, '
+                f'reused={artifact["artifact_reused"]}, durable={artifact["artifact_directory_durable"]}; '
+                f'database effects={failure.error["effects"]}.')
+        return failure
+
+    try:
+        if action == 'apply':
+            artifact = dict(scope='rewrap_activation_artifact', operation_id=str(successor.operation_id),
+                plan_digest=successor.digest, artifact_published=False, artifact_reused=False,
+                artifact_directory_durable=False, artifact_temporary_retained=False, effects='NONE')
+            if os.path.lexists(arguments.out):
+                if arguments.resume is None:
+                    raise _failure(operation, 'ArtifactExists', 'artifact_publish')
+                _sync_activation(arguments.out, successor.artifact, artifact, operation)
+            else:
+                _publish(arguments.out, successor.artifact, artifact, operation, artifact_only=True)
+        context = _load_host(arguments.host_context, operation)
+        contexts = (h.PlanningContext, h.ApplyContext, h.ReversePlanningContext, h.ReverseApplyContext,
+            h.RemovalContext, h.RewrapPlanningContext, h.RewrapApplyContext,
+            h.RewrapActivationContext, h.RewrapAbortContext)
+        if type(context) in contexts and isinstance(context.engine, Engine):
+            engine = context.engine
+        with _quiet():
+            expected = {'plan': h.RewrapPlanningContext, 'apply': h.RewrapApplyContext,
+                        'activate': h.RewrapActivationContext, 'abort': h.RewrapAbortContext}[action]
+            if type(context) is not expected or engine is None:
+                raise _failure(operation, 'HostContextInvalid', 'host_context')
+            if (engine.dialect.name != 'postgresql' or engine.dialect.driver != 'psycopg'
+                    or engine.dialect.is_async or (engine.echo is not False and engine.echo is not None)
+                    or engine.hide_parameters is not True):
+                raise _failure(operation, 'UnsafeEngine', 'host_context')
+            resolvers = ((context.source_keys,) if action == 'abort' else
+                         (context.target_keys,) if action == 'activate' else
+                         (context.source_keys, context.target_keys))
+            for keys in resolvers:
+                key_call = getattr(keys, '__call__', None)
+                if (not isinstance(keys, Keyring) and not callable(keys)
+                        or inspect.iscoroutinefunction(keys) or inspect.isasyncgenfunction(keys)
+                        or inspect.iscoroutinefunction(key_call) or inspect.isasyncgenfunction(key_call)):
+                    raise _failure(operation, 'HostContextInvalid', 'host_context')
+            if action == 'plan':
+                if context.restore is not None and type(context.restore) is not RestoreBinding:
+                    raise _failure(operation, 'HostContextInvalid', 'host_context')
+                attempted = True
+                proposal = r.plan_rewrap(source, engine, source_pin=context.source_pin,
+                    keys=context.source_keys, target_keys=context.target_keys,
+                    verify_rows_per_second=context.verify_rows_per_second, restore=context.restore)
+                successor = proposal.activation_plan
+                result = _rewrap_summary(successor, proposal)
+            else:
+                attempted = True
+                if action == 'apply':
+                    progress = r.apply_rewrap(proposal, engine, keys=context.source_keys,
+                        target_keys=context.target_keys, pin=context.pin, approval=context.approval)
+                elif action == 'activate':
+                    progress = m.apply(successor, engine, keys=context.target_keys,
+                                       pin=context.pin, approval=context.approval, until='ACTIVE')
+                else:
+                    progress = r.abort_rewrap(proposal, engine, keys=context.source_keys,
+                                             pin=context.source_pin, approval=context.approval)
+                result = _rewrap_summary(successor, proposal, progress)
+                if artifact is not None:
+                    result['artifact_result'] = dict(artifact)
+        if action == 'plan':
+            _publish(arguments.out, proposal.artifact, result, operation)
+    except _CommandFailure as failure:
+        raise annotate(failure)
+    except m.TransitionFailure as error:
+        code = error.code if type(error.code) is str and _CODE.fullmatch(error.code) else 'TransitionRejected'
+        operational = bool(error.cleanup_errors) or code in _OPERATIONAL
+        failure = _failure(operation, code, 'transition', exit_code=4 if operational else 2 if code in _REWRAP_DENIED else 3)
+        failure.error['sqlstate'] = error.sqlstate if type(error.sqlstate) is str and _SQLSTATE.fullmatch(error.sqlstate) else None
+        if error.cleanup_errors:
+            failure.error['cleanup_errors'] = [dict(stage=stage if stage in ('rollback', 'invalidate', 'close', 'driver_close')
+                else 'cleanup', cause='CleanupError', sqlstate=state if type(state) is str and _SQLSTATE.fullmatch(state) else None)
+                for stage, _, state in error.cleanup_errors]
+        raise annotate(failure) from None
+    except BaseException:
+        raise annotate(_failure(operation, 'OperationUnavailable', 'operation', exit_code=4)) from None
+    finally:
+        if engine is not None:
+            primary = sys.exception()
+            try:
+                with _quiet():
+                    engine.dispose()
+            except BaseException:
+                failure = _failure(operation, 'CleanupUnavailable', 'engine_cleanup', exit_code=4,
+                    primary=primary if isinstance(primary, _CommandFailure) else None)
+                raise annotate(failure) from None
+
+    output = json.dumps(result, sort_keys=True, separators=(',', ':')) if arguments.machine_json else '\n'.join(
+        f'{key}: {value}' for key, value in result.items())
+    try:
+        _write_output(output + '\n', sys.stdout, 'stdout')
+    except _CommandFailure as failure:
+        raise annotate(failure)
     return 0
