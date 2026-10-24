@@ -224,11 +224,12 @@ The host replaces the session dependency and supplies protection policy and main
 ### Automated application qualification matrix
 
 Run the online HTTP row through `scripts/online_qualification.py --http`.
+Use `--http-fresh` for its protected export, source-cluster shutdown and new-cluster recovery.
 Run the other selected rows through `scripts/fresh_cluster_qualification.py`.
 The fresh-cluster harness runs export and isolated restore through `scripts/test_postgres.py`.
 The online harness creates three private role files on an isolated cluster and probes all three before the application test.
-Each fresh-cluster export or restore phase reloads both private URL files and probes both roles.
-The online HTTP phase reloads all three private URL files and probes all three roles.
+The `fresh_cluster_qualification.py` phases reload two private files and probe both roles.
+All `online_qualification.py` phases reload three private files and probe all three roles.
 If a probe fails, stop. Do not retry or substitute a database.
 Use the pinned snapshots and the exact dependency cell recorded in status.
 Keep each work directory new. The installed qualification runner must resolve
@@ -236,6 +237,7 @@ Cryptalis imports from the reviewed wheel instead of the source checkout.
 
 | Row | Profile | Application journey | Evidence boundary |
 |---|---|---|---|
+| Original online HTTP fresh recovery | `online_qualification.py --http-fresh` | Online adoption, protected backup, checked source shutdown, fresh restore/adoption, root/payload/search rotations, original HTTP and latest-value native exit | 26 unchanged files, three freshly probed roles per cluster, reconstructible public custody. No production fencing or pause claim |
 | Original HTTP online adoption | `online_qualification.py --http` | Concurrent original signup, native HTTP during capture, fenced cutover, protected HTTP/search, latest-value reverse and package-free HTTP restart | 26 unchanged pinned files. Three roles. No backup/rotation repeat or production downtime qualification |
 | Original HTTP/authentication | `--sqlmodel-http` | Native routes, Doctor, protection, search, backup, fresh adoption, root/payload/search rotation, latest-value removal, package-free HTTP restart | 26 pinned files. TestClient and loopback SMTP. Explicit single tenancy and public fixture keys |
 | Original SQLModel CRUD | `--sqlmodel-public-slots` | Three protected fields, public slots, fresh adoption, direct restore-binding search rotation, native exit | Six pinned files. Positive control for the shared harness |

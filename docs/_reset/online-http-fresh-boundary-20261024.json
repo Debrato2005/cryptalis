@@ -1,0 +1,202 @@
+{
+  "format": "cryptalis.online-http-fresh-qualification/v1",
+  "base_revision": "2e0b469",
+  "source_manifest": {
+    "path": "docs/_reset/online-http-fresh-source-20261024.json",
+    "sha256": "4fff91c3b53f0f4cc28e98471b909bdf502920b65d97270ebfb4fd4350714d33",
+    "member": "source_test_sha256",
+    "python_files": 238
+  },
+  "runs": [
+    {
+      "mode": "source",
+      "phase": "source",
+      "counts": {
+        "passed": 5
+      },
+      "preflight": {
+        "select_1_each": "passed",
+        "sha256_prefixes": [
+          "e987a462",
+          "bd4de77c",
+          "0d486a37"
+        ]
+      },
+      "source_stability": {
+        "unchanged": true,
+        "changed_paths": []
+      },
+      "elapsed_seconds": 9.49117149799713,
+      "pytest_args": [
+        "tests/profile_online_http_application.py",
+        "tests/test_postgres_source_role.py",
+        "-q"
+      ],
+      "sha256": "4fff91c3b53f0f4cc28e98471b909bdf502920b65d97270ebfb4fd4350714d33",
+      "path": "docs/_reset/online-http-fresh-source-20261024.json",
+      "archive_member": null
+    },
+    {
+      "mode": "source",
+      "phase": "restored",
+      "counts": {
+        "passed": 1
+      },
+      "preflight": {
+        "select_1_each": "passed",
+        "sha256_prefixes": [
+          "06b2388d",
+          "269e43f9",
+          "781282ea"
+        ]
+      },
+      "source_stability": {
+        "unchanged": true,
+        "changed_paths": []
+      },
+      "elapsed_seconds": 9.657209019002039,
+      "pytest_args": [
+        "tests/profile_online_http_restore.py",
+        "-q"
+      ],
+      "sha256": "623d2bf9163323a3a4df340630c5e7f387a1ae19a744e14ec93096a370576527",
+      "path": null,
+      "archive_member": "source-restored-postgres.json"
+    },
+    {
+      "mode": "installed",
+      "phase": "source",
+      "counts": {
+        "passed": 5
+      },
+      "preflight": {
+        "select_1_each": "passed",
+        "sha256_prefixes": [
+          "a57e5033",
+          "ab037ed6",
+          "a39af307"
+        ]
+      },
+      "source_stability": {
+        "unchanged": true,
+        "changed_paths": []
+      },
+      "elapsed_seconds": 9.658885598008055,
+      "pytest_args": [
+        "tests/profile_online_http_application.py",
+        "tests/test_postgres_source_role.py",
+        "-q"
+      ],
+      "sha256": "d3a27affbcf0587ee1fac531cc6dad70d75385f9776fcb14fda3b43f2800b17a",
+      "path": null,
+      "archive_member": "installed-source-postgres.json"
+    },
+    {
+      "mode": "installed",
+      "phase": "restored",
+      "counts": {
+        "passed": 1
+      },
+      "preflight": {
+        "select_1_each": "passed",
+        "sha256_prefixes": [
+          "833a3fb6",
+          "2ae5118a",
+          "441ec372"
+        ]
+      },
+      "source_stability": {
+        "unchanged": true,
+        "changed_paths": []
+      },
+      "elapsed_seconds": 9.15200527900015,
+      "pytest_args": [
+        "tests/profile_online_http_restore.py",
+        "-q"
+      ],
+      "sha256": "6b06d0d912a7ad245454abf7955da38564c9681e18aa202eaf2e91ee2f60be88",
+      "path": null,
+      "archive_member": "installed-restored-postgres.json"
+    }
+  ],
+  "archive": {
+    "path": "docs/_reset/online-http-fresh-receipts-20261024.tar.gz",
+    "sha256": "53621bd45e8d8c307446c4e84dc769e65e18ca501be60916baf9beacc7dac2f0",
+    "bytes": 44452,
+    "members": [
+      {
+        "member": "source-source-application.json",
+        "sha256": "fef35252fb07aac34ec81bc1d3609be9aa96162f7b044476ae8936d93f028e3b"
+      },
+      {
+        "member": "source-restored-postgres.json",
+        "sha256": "623d2bf9163323a3a4df340630c5e7f387a1ae19a744e14ec93096a370576527"
+      },
+      {
+        "member": "source-restored-application.json",
+        "sha256": "6d93da1e877fb23e9652b8bb1d3db7e473232d5b9b42a418656dd6b60d6b389b"
+      },
+      {
+        "member": "installed-source-postgres.json",
+        "sha256": "d3a27affbcf0587ee1fac531cc6dad70d75385f9776fcb14fda3b43f2800b17a"
+      },
+      {
+        "member": "installed-source-application.json",
+        "sha256": "fef35252fb07aac34ec81bc1d3609be9aa96162f7b044476ae8936d93f028e3b"
+      },
+      {
+        "member": "installed-restored-postgres.json",
+        "sha256": "6b06d0d912a7ad245454abf7955da38564c9681e18aa202eaf2e91ee2f60be88"
+      },
+      {
+        "member": "installed-restored-application.json",
+        "sha256": "52c4676fb7e474be502b3dad51a590635cd48c78aa28aecd25522da2314f191e"
+      }
+    ]
+  },
+  "application": {
+    "revision": "d40de23896d27d15c17a7bf9649123fd167a0aa8",
+    "pinned_files": 26,
+    "source_edits": [],
+    "local_smtp_messages_per_complete_run": 16,
+    "logical_rows_and_catalogs": "PASS",
+    "restored_public_slots": "PASS",
+    "package_free_HTTP_in_both_clusters": "PASS",
+    "rotation_successor_formats": [
+      "cryptalis.transition/v12",
+      "cryptalis.transition/v13",
+      "cryptalis.transition/v14"
+    ]
+  },
+  "installed": {
+    "wheel_sha256": "4b588f5af8c528257209a39bd6558855a533ba0fb3fdacfa42f0b561b2631982",
+    "source_wheel_installed_modules_equal": 42,
+    "reused_release_receipt": "docs/_reset/online-final-release-20261024.json",
+    "rebuild": "NOT_REQUIRED_PRODUCT_BYTES_UNCHANGED"
+  },
+  "documentation_sha256": {
+    "docs/status.md": "1df1d20bd30ff64f06b1b81a066479fbe0096b167fa07632da00a4083676c014",
+    "docs/BUILD_CHECKLIST.md": "170a73ca2e2c1fd6f4c0a0dc6f71f1ce5aaa6f37baac777c74e6b67dcfae594f",
+    "docs/build-guide.md": "5736f3b429cc8d3417d3799b838f4fff0cc96acaa8e6bf98f7129f46f961bfbd",
+    "docs/research/capability-matrix.md": "02ded7f7ede46bb2e816e9a96850beb6f16a1272fb2b3f78937bbfeefe8e4ff3"
+  },
+  "gates": {
+    "G-ADAPTER": "UNKNOWN",
+    "G-CRYPTO": "UNKNOWN",
+    "G-QUERY": "UNKNOWN",
+    "G-LIFECYCLE": "UNKNOWN",
+    "G-PROVIDER": "UNKNOWN",
+    "G-POLICY": "UNKNOWN",
+    "G-RELEASE": "UNKNOWN"
+  },
+  "limitations": [
+    "Single explicitly declared tenant, unchanged pinned application profile",
+    "Public reconstructible fixture custody; no live KMS",
+    "Local checked shutdown does not qualify production fencing or external host authority",
+    "No production pause, memory or throughput qualification",
+    "No independent security review"
+  ],
+  "warnings": [
+    "Starlette TestClient uses deprecated AnyIO BlockingPortal alias"
+  ]
+}

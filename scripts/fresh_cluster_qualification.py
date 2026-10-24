@@ -121,7 +121,7 @@ def write_home(workdir, port, manifest, credentials, *, source_database=None):
 
 def stop_cluster(cluster):
     subprocess.run([pg_bin('pg_ctl'), '-D', str(cluster), '-m', 'fast', '-w', 'stop'],
-                   stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                   check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
 
 def main():
