@@ -317,6 +317,13 @@ Shared equality joins are INTERNAL ONLY research. They need a common search-doma
 Other fields and tenants derive different keys. There is no universal global token key.
 
 The internal provider contract is `wrap(root, context)`, `unwrap(wrapper, context)`, and `rewrap(wrapper, new_provider, context)`.
+Direct rewrap must confirm that the target unwraps the replacement to the exact
+original immutable 32-byte root under the same context. Pin and recheck the
+target provider identity; compare recovered root bytes in constant time.
+Wrapper metadata alone is insufficient. AWS and development direct methods have
+bounded local [recovery-proof evidence](status.md#direct-provider-rewrap-recovery-proof-2026-10-27).
+This proof requires target decrypt authority and can add one provider request.
+It does not publish the replacement, retire source custody or prove deletion.
 The wrapper records pinned provider identity and nonsecret scope, purpose, root identity, and generation.
 The deployment policy selects the exact wrapper. Envelope headers cannot choose provider URLs, credentials, or arbitrary keys.
 AWS KMS, Vault Transit, and GCP KMS have relevant envelope/rewrap APIs, but each adapter needs its own custody and failure evidence.

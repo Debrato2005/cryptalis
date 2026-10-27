@@ -25,6 +25,12 @@ No objective is complete until its acceptance evidence and applicable gate pass.
 
 ## Current boundary
 
+- Direct AWS/development rewrap now proves exact root recovery under unchanged
+  context and stable target identity. The isolated 107-check protocol bundle and
+  scoped agent review pass. One additional target unwrap is required. Live KMS
+  and all production gates remain UNKNOWN. See the
+  [checkpoint](status.md#direct-provider-rewrap-recovery-proof-2026-10-27).
+
 - Resumed the audited remote checkpoint. The isolated release cell now pins and
   hash-verifies the build backend, including explicit isolation/configuration
   controls. Fifteen artifact controls and byte-identical wheel/sdist rebuilds pass.

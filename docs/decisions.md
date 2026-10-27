@@ -4,6 +4,16 @@
 It does not preserve old IDs as implementation obligations. Historical dispositions remain in [archived revamp evidence](research/revamp-evidence.md).
 [Status](status.md) owns IMPLEMENTED/VERIFIED claims. All seven full gates remain UNKNOWN.
 
+## Direct provider custody transfer proof: 2026-10-27
+
+Require direct provider rewrap to prove target recovery of the original root,
+in addition to exact wrapper context and stable provider identity. Use existing
+provider unwrap and constant-time comparison; add no new format or primitive.
+Retain source custody on refusal. The extra unwrap requires target decrypt
+permission and can incur one provider request. Higher-level rotation retains
+its existing independent preparation and publication checks. Local protocol
+tests and agent review do not qualify external custody or deletion.
+
 ## Frozen isolated build inputs: 2026-10-27
 
 Pin the existing uv build backend to an exact version and retain standard

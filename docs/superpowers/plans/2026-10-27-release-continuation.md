@@ -31,9 +31,15 @@
 
 Owner: provider specialist. Files: `src/cryptalis/crypto/aws_kms.py`, `tests/test_aws_kms.py`.
 
-- [ ] Reproduce a target wrapper with valid metadata but wrong recovered root through the direct API.
-- [ ] Verify exact target material and stable identity before returning success, with safe typed failures.
-- [ ] Run focused provider/rewrap controls through the PostgreSQL wrapper; review, document and commit.
+- [x] Reproduce a target wrapper with valid metadata but wrong recovered root through the direct API.
+- [x] Verify exact target material and stable identity before returning success, with safe typed failures.
+- [x] Run focused provider/rewrap controls through the PostgreSQL wrapper; review, document and commit.
+
+Extend the same direct proof to the development provider so the protocol remains
+consistent. Fourteen RED failures, then 107 isolated GREEN controls with stable
+source; scoped agent compliance/quality review accepts. Receipt:
+`docs/_reset/direct-rewrap-20261027.json`. One target unwrap is the explicit cost.
+Live KMS and independent human review remain UNKNOWN.
 
 ## Task 2: Database-function writer admission
 

@@ -10,6 +10,29 @@ No PostgreSQL/provider/runtime cell, production key provider, independent review
 VERIFIED below refers only to the named checks and their exact revisions.
 All other contract and promotion requirements are SPECIFIED. All seven full gates remain UNKNOWN.
 
+## Direct provider rewrap recovery proof: 2026-10-27
+
+**VERIFIED, isolated local protocol cell:** both direct AWS SDK-adapter and
+development-provider `rewrap` methods now unwrap the replacement under the
+original context. They require exactly 32 immutable bytes, compare the original
+root in constant time and recheck the pinned target provider identity before
+returning success. Ordinary failures remain redacted `KeyUnavailable`;
+interruption propagates and the original wrapper remains usable.
+
+Previously, valid wrapper metadata alone could report apparent success even if
+the target wrapped a different root. Fourteen source controls reproduced that
+failure across both providers. The existing higher-level rotation preparation
+already performed its own recovery proof; this change closes the direct API gap.
+
+The [isolated receipt](_reset/direct-rewrap-20261027.json) records 107 passing
+provider, CF1 and rewrap-preparation checks with stable source hashes. Controls
+cover incorrect or malformed recovered material, target outage, identity drift,
+interruption, source retention and healthy retry. Agent review found no remaining
+scoped findings. Direct rewrap now requires target decrypt permission and can add
+one external provider request. No live AWS, custody retirement, deletion,
+independent human review or production-provider qualification was performed.
+All seven gates remain UNKNOWN.
+
 ## Resumption and frozen build backend: 2026-10-27
 
 **VERIFIED, isolated local build cell:** explicit `Continue Cryptalis` resumes the
