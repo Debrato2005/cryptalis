@@ -25,6 +25,13 @@ No objective is complete until its acceptance evidence and applicable gate pass.
 
 ## Current boundary
 
+- Attached SELECT functions now have finite native class/name/namespace/dispatch
+  admission before keys or driver. Supported ordinary calls resolve explicitly
+  in `pg_catalog`; native special syntax remains intact. The isolated 233-check
+  adapter/native-clause/cancellation bundle and corrected scoped review pass.
+  Arbitrary database functions remain unsupported and all gates UNKNOWN. See the
+  [checkpoint](status.md#finite-native-select-functions-2026-10-27).
+
 - Direct AWS/development rewrap now proves exact root recovery under unchanged
   context and stable target identity. The isolated 107-check protocol bundle and
   scoped agent review pass. One additional target unwrap is required. Live KMS

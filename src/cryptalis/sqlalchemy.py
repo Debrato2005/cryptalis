@@ -30,6 +30,7 @@ from sqlalchemy.sql.dml import Insert, Update, Delete
 from sqlalchemy.types import JSON, NullType, TypeDecorator, TypeEngine, UserDefinedType
 
 from ._sqlalchemy_guard import install_guard
+from ._sqlalchemy_functions import admit_function
 from ._sqlmodel_types import autostring_impl
 from ._sqlalchemy_search import rewrite_search, search_shape, validate_search_storage
 from .crypto import CryptoFailure, AuthenticationFailed, FieldDescriptor, Keyring, KeyUnavailable, MAX_TEXT_BYTES, open_value, seal_value
@@ -753,6 +754,19 @@ class _Attachment:
                       UnsafeDriverEvent, self.prepare_many)
         native_compiler = engine.dialect.statement_compiler
         class StorageCompiler(native_compiler):
+            def visit_function(compiler, function, **kw):
+                catalog = admit_function(function, _delete_node, UnsupportedProtectedOperation)
+                if catalog and function.packagenames != ('pg_catalog',):
+                    function = function._clone()
+                    function.packagenames = ('pg_catalog',)
+                return super().visit_function(function, **kw)
+
+            def visit_substring_func(compiler, function, **kw):
+                # Native PostgreSQL compilation uses special SQL syntax and
+                # ignores packagenames. Emit the equivalent catalog call with
+                # the native argument compiler so this path is explicit too.
+                return 'pg_catalog.substring' + compiler.function_argspec(function, **kw)
+
             def get_select_precolumns(compiler, select, **kw):
                 modifier = super().get_select_precolumns(select, **kw)
                 # PostgreSQL's public compiler hook emits only DISTINCT here.
@@ -1186,6 +1200,8 @@ class _Attachment:
             generated = operation is not None and operation.owner is self and operation.generated(node)
             if generated:
                 continue
+            if isinstance(node, FunctionElement):
+                admit_function(node, _delete_node, UnsupportedProtectedOperation)
             if isinstance(node, FunctionElement) and node.name == "count":
                 arguments = list(node.clauses)
                 if len(arguments) == 1 and isinstance(arguments[0], ColumnClause) and arguments[0].name == "*":

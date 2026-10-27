@@ -4,6 +4,17 @@
 It does not preserve old IDs as implementation obligations. Historical dispositions remain in [archived revamp evidence](research/revamp-evidence.md).
 [Status](status.md) owns IMPLEMENTED/VERIFIED claims. All seven full gates remain UNKNOWN.
 
+## Finite SELECT function authority: 2026-10-27
+
+Typed SELECT syntax does not establish that a database function is read-only.
+Use a finite native function class/name/namespace/dispatch admission table.
+Compile ordinary admitted calls with explicit `pg_catalog` resolution, retaining
+native special expressions and all protected-lineage checks. Preserve standard
+count/public-expression/window/cancellation behavior through native controls.
+Unknown database functions require separate admission and fail before keys or
+driver effects. No SQL parser, general purity inference or extra database service
+is introduced. Writer inventory and production exclusion remain separate obligations.
+
 ## Direct provider custody transfer proof: 2026-10-27
 
 Require direct provider rewrap to prove target recovery of the original root,

@@ -144,6 +144,17 @@ dialect-specific type variants. Attachment repeats configuration admission befor
 host key resolution and SQL, including changes to identity flags or type hooks. The real native SQL transformation controls and 105-case planning
 regression are recorded in the [identity planning checkpoint](status.md#identity-variant-planning-checkpoint-2026-10-23).
 
+## Native function admission
+
+Attached SELECTs accept the finite native function classes and names listed in
+[`_sqlalchemy_functions.py`](../src/cryptalis/_sqlalchemy_functions.py).
+Ordinary calls resolve explicitly in `pg_catalog`; supported special SQL
+expressions retain native syntax. Unknown or database-defined functions, other
+namespaces and custom dispatch refuse before keys and execution, including on
+unprotected arguments. Functions on protected fields still require their own
+capability admission. Existing aggregate/window/public-expression controls do
+not admit protected aggregates or general encrypted advanced queries.
+
 ## Query semantics
 
 Compare every admitted shape with the same native PostgreSQL application.

@@ -45,9 +45,17 @@ Live KMS and independent human review remain UNKNOWN.
 
 Owner: security specialist. Files: new function-admission helper and regression tests; minimal FunctionElement hunk in `src/cryptalis/sqlalchemy.py`.
 
-- [ ] Reproduce an attached typed SELECT calling a restricted-runtime invoker function that writes plaintext.
-- [ ] Refuse opaque function effects before keys/driver while preserving explicitly admitted pure native functions and search-path safety.
-- [ ] Run targeted native and original-application query controls; review, document and commit.
+- [x] Reproduce an attached typed SELECT calling a restricted-runtime invoker function that writes plaintext.
+- [x] Refuse opaque function effects before keys/driver while preserving explicitly admitted pure native functions and search-path safety.
+- [x] Run targeted native and original-application query controls; review, document and commit.
+
+Finite native class/name/namespace/dispatch admission and explicit catalog
+compilation address the observed route. Review found missing registered
+concat/rank/dense-rank classes; all are added with native result controls and
+accepted on re-review. Isolated final evidence: 233 passing checks, stable
+source hashes, 48 existing deprecation warnings. Receipt:
+`docs/_reset/select-functions-20261027.json`. Original HTTP integration continues
+under its separately qualified application profile. No production-gate promotion.
 
 ## Task 3: Exact storage-only DATE profile
 

@@ -10,6 +10,33 @@ No PostgreSQL/provider/runtime cell, production key provider, independent review
 VERIFIED below refers only to the named checks and their exact revisions.
 All other contract and promotion requirements are SPECIFIED. All seven full gates remain UNKNOWN.
 
+## Finite native SELECT functions: 2026-10-27
+
+**VERIFIED, isolated local adapter cell:** attached SELECT admission now rejects
+unrecognized functions, non-catalog namespaces and custom compiler dispatch
+before key resolution or driver execution. The finite
+[native function table](../src/cryptalis/_sqlalchemy_functions.py) covers ordinary
+public aggregates, string helpers, tested windows and cancellation helpers.
+Admitted ordinary calls compile with explicit `pg_catalog` resolution. Native
+special expressions such as COALESCE retain their syntax. Protected expression
+and search restrictions remain unchanged.
+
+The deciding control reproduced an unknown database-side function reaching
+execution through an attached typed SELECT. That route can perform effects
+outside prepared ORM writes. It now refuses before keys or driver calls.
+A separate positive control first observes a shadowed native function through
+the connection's search path, then proves attached calls use the catalog result.
+Registered concat/rank/dense-rank classes and native NULL/count/window results
+also pass after a scoped review correction.
+
+The [isolated receipt](_reset/select-functions-20261027.json) records 233 passing
+adapter, search, textual-clause, mapped-expression and async-cancellation checks
+with stable source hashes. Forty-eight existing DISTINCT deprecation warnings
+remain. Scoped agent review accepts the final change. Arbitrary application SQL
+functions require separate admission; typed SELECT is not general function-call
+authority. This evidence does not prove deployment-wide writer exclusion or
+independent human security qualification. All seven gates remain UNKNOWN.
+
 ## Direct provider rewrap recovery proof: 2026-10-27
 
 **VERIFIED, isolated local protocol cell:** both direct AWS SDK-adapter and

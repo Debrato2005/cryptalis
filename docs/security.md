@@ -66,6 +66,18 @@ Frozen independent admitted text/ID vectors, exact collation evidence, and nonce
 
 ## Slice 3 storage enforcement: 2026-10-08
 
+**IMPLEMENTED, bounded 2026-10-27 evidence:** a typed SELECT must not authorize
+arbitrary database function effects. Admit only the finite native function
+classes, names, namespaces and compiler dispatch in
+[`_sqlalchemy_functions.py`](../src/cryptalis/_sqlalchemy_functions.py).
+Reject unknown functions before key resolution or driver execution. Qualify
+ordinary admitted calls in `pg_catalog` so mutable search-path resolution cannot
+select a different function. Keep native special SQL expression syntax and
+all protected-lineage restrictions. This does not exclude separate credentials,
+privileged schema changes or deliberately compromised host code. The
+[function checkpoint](status.md#finite-native-select-functions-2026-10-27)
+records the native controls and remaining qualification boundary.
+
 **IMPLEMENTED, bounded prototype:** admitted ORM writes prepare row-bound CF1 frames before SQL.
 Public execution hooks substitute those frames without changing mapped plaintext attributes.
 Generated read projections carry the expected record and declared tenant context with the payload.
