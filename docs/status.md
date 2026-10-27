@@ -10,6 +10,34 @@ No PostgreSQL/provider/runtime cell, production key provider, independent review
 VERIFIED below refers only to the named checks and their exact revisions.
 All other contract and promotion requirements are SPECIFIED. All seven full gates remain UNKNOWN.
 
+## Resumption and frozen build backend: 2026-10-27
+
+**VERIFIED, isolated local build cell:** explicit `Continue Cryptalis` resumes the
+audited `5d6ff65` checkpoint. Remote main matched that revision before edits.
+The same disposable PostgreSQL 16.15 cluster was stopped on resume. After starting
+it, fresh private owner/runtime/source probes and six targeted online tenant and
+source-role controls passed. These observations do not qualify a production cell.
+
+Release builds now pin `uv_build==0.12.23` and enforce its standard uv-generated
+hash constraints through isolated PEP 517. Explicit build isolation and disabled
+configuration discovery prevent ambient configuration from weakening that claim.
+The receipt records interpreter, uv, backend requirement and constraint digest.
+The runtime dependency lock is unchanged.
+
+An isolated checkout passes all 15 artifact-integrity tests. Wrong backend hashes
+refuse without producing a wheel under default settings and conflicting isolation
+or hash-verification environment settings. Review identified the isolation override
+and an ignored input directory; both are corrected and re-reviewed. The earlier
+offline test failure came from its empty-cache assumption, which had depended on
+uv's internal fast build path. Offline PEP 517 checks now use the warmed admitted
+backend cache and the same constrained invocation.
+
+The [release receipt](_reset/build-backend-20261027.json) records byte-identical
+wheel/sdist rebuilds, archive/RECORD checks and SBOM. This is a build-input
+checkpoint over the audited product source, isolated from concurrent feature
+work. It is not a new production release, signed provenance, refreshed application
+dependency qualification, or independent human review. All seven gates remain UNKNOWN.
+
 ## Preservation checkpoint and operator pause: 2026-10-24
 
 **Operator pause.** Resume only after the explicit instruction **Continue Cryptalis**. Implementation `8b6bccc` adds approved tenants to online capture. It includes restored adoption, all rotations and current-data native exit. Its [qualification boundary](_reset/online-tenants-boundary-20261024.json) records 452 source checks and 18 installed online checks. The installed original HTTP application also passes export and fresh recovery.

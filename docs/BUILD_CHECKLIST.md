@@ -25,6 +25,13 @@ No objective is complete until its acceptance evidence and applicable gate pass.
 
 ## Current boundary
 
+- Resumed the audited remote checkpoint. The isolated release cell now pins and
+  hash-verifies the build backend, including explicit isolation/configuration
+  controls. Fifteen artifact controls and byte-identical wheel/sdist rebuilds pass.
+  Runtime dependencies stay unchanged. This is bounded build evidence; controlled
+  publication, provenance and all seven gates remain UNKNOWN. See the
+  [checkpoint](status.md#resumption-and-frozen-build-backend-2026-10-27).
+
 - Installed query preflight passes 40 focused controls and the original HTTP
   fresh-recovery journey. Twelve captured SELECT structures pass admission.
   An unsupported pattern refuses before migration. The reproducible artifact and

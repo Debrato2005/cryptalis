@@ -4,6 +4,17 @@
 It does not preserve old IDs as implementation obligations. Historical dispositions remain in [archived revamp evidence](research/revamp-evidence.md).
 [Status](status.md) owns IMPLEMENTED/VERIFIED claims. All seven full gates remain UNKNOWN.
 
+## Frozen isolated build inputs: 2026-10-27
+
+Pin the existing uv build backend to an exact version and retain standard
+hash constraints under `qualification/build-backend`. Release checks force
+isolated PEP 517, require backend hashes and disable ambient configuration
+discovery. Contradictory environment settings must fail before artifact creation.
+Record tool/interpreter identity and the constraint digest with artifact evidence.
+Offline checks require the admitted backend in the normal uv cache. Preserve
+runtime pins and all existing release requirements. Same-cell reproducibility
+and agent review do not establish independent provenance or production safety.
+
 ## Online capture and access transfer: 2026-10-24
 
 **APPROVED, bounded implementation:** keep the existing maintenance path and add

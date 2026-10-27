@@ -150,6 +150,12 @@ A release requires these independently reviewable artifacts:
 6. Dependency inventory, locked hashes, SBOM, inspected built artifacts, provenance and a verified publication identity.
 
 The release process uses mature PyPA, Sigstore, CycloneDX and provenance tools.
+`scripts/release_check.py` pins its isolated PEP 517 backend through
+`qualification/build-backend/requirements.txt`, requires its hashes and records
+the exact build inputs. Regenerate that lock with standard uv tooling when
+deliberately updating the backend. Offline artifact checks require the admitted
+backend to be cached by a prior constrained build. A contradictory ambient
+isolation setting must fail; it must never silently bypass backend verification.
 Maintainers use phishing-resistant authentication where available, protected recovery methods and separate release identities.
 Use PyPI Trusted Publishing with an exact repository/workflow and protected release environment.
 Build in an isolated job without publication authority or production credentials.

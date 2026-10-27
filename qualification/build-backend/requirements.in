@@ -1,0 +1,2 @@
+# Isolated PEP 517 build backend. Runtime dependencies remain in the root uv.lock.
+uv_build==0.12.23
