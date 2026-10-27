@@ -223,6 +223,33 @@ see the [installed checkpoint](status.md#integer-installed-lifecycle-checkpoint-
 The newer [default/state checkpoint](status.md#integer-literal-default-installed-checkpoint-2026-10-24)
 adds native default semantics and fixes attribute expiration after valid flushes.
 
+## Internal DATE storage candidate
+
+Exact native SQLAlchemy `Date`/PostgreSQL `DATE` mappings now have bounded
+storage-only construction and lifecycle evidence. Values are exact Python
+`datetime.date` or SQL NULL, from 0001-01-01 through 9999-12-31. Datetime objects,
+subclasses, implicit conversions, custom hooks, variants, server/callable/SQL
+defaults and on-update generation remain unadmitted. Literal date client defaults
+retain native omission/None, ORM/dictionary/async state and transaction behavior
+within the tested grammar. Public lock defaults use canonical `YYYY-MM-DD`.
+
+DATE-bearing plans use strict lock/v8, `pg-date-days-be/v1` and, only for literal
+defaults, `pg-date-default/v1`. Old v1-v7 behavior remains separate. The codec is
+four signed big-endian days from 2000-01-01, bound through existing context/v2.
+Non-NULL frames occupy 46 bytes and contain no search term. A count-only native
+source-domain check refuses infinity and dates outside Python's domain during
+operational planning and again under table locks before transition effects.
+The schema-only compiler does not read application values.
+
+Both physical layouts, rotations alongside independently searchable text,
+genuine fresh restore, latest-value reverse/removal and a process that refuses
+Cryptalis imports have local evidence. Protected DATE search, comparisons,
+ordering, arithmetic, aggregates and joins remain unadmitted; existing NULL
+presence grammar is retained. Online capture still accepts only TEXT/VARCHAR.
+An unchanged external DATE application, installed artifact/cost qualification
+and all six technical admission gates remain required. No full type or production
+qualification follows from this internal candidate.
+
 ## Optional SQLModel bridge
 
 An explicit `cryptalis.sqlmodel.attach` bridge admits synchronous PostgreSQL

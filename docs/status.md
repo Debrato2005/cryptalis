@@ -10,6 +10,40 @@ No PostgreSQL/provider/runtime cell, production key provider, independent review
 VERIFIED below refers only to the named checks and their exact revisions.
 All other contract and promotion requirements are SPECIFIED. All seven full gates remain UNKNOWN.
 
+## DATE storage construction and lifecycle: 2026-10-27
+
+**VERIFIED, bounded local source candidate:** exact native Date/DATE mappings
+now use authenticated four-byte days from 2000-01-01 under existing context/v2.
+Values are exact Python date or NULL, from 0001-01-01 through 9999-12-31.
+Literal client defaults use canonical ISO metadata. Strict lock/v8 requires the
+date codec and, only when applicable, default reader tag. Existing v1-v7
+selection remains unchanged; a physical installed v7 reader accepts unchanged
+integer artifacts and refuses DATE before execution.
+
+Operational planning counts infinity/out-of-domain source dates and refuses.
+Expansion repeats that check under table locks before journal or DDL effects.
+Custom mappings, variants, coercions and undeclared date search refuse. No date
+range/order/arithmetic/search or online type admission is added.
+
+The [source receipt](_reset/date-source-20261027.json) records 31 passing checks
+with stable source hashes: independent epoch/authenticated framing controls,
+native default/NULL/ORM/dictionary/async state, refusal controls, both layouts,
+three rotations alongside searchable text, current edits and package-free exit.
+Both genuinely fresh-cluster profiles pass export and restore: default layout
+[export](_reset/fresh-cluster-export-20261027-2.json)/[restore](_reset/fresh-cluster-restore-20261027-2.json),
+and public slots
+[export](_reset/fresh-cluster-export-20261027-3.json)/[restore](_reset/fresh-cluster-restore-20261027-3.json).
+Each uses a distinct initialized target, explicit adoption, typed latest values,
+corruption refusal and native restart. The initial failed restore receipt stays
+preserved; it exposed the missing expected Python date type check, which was fixed.
+
+Scoped independent agent review found no actionable DATE defect. These are
+synthetic fixtures with public reconstructible custody. An unchanged external
+DATE application, installed artifact/cost qualification and independent human
+review remain required. Earlier affected runs with concurrent tenant test edits
+retain their invalid wrapper outcomes; they are not stable verification.
+All 34 objectives remain in scope and all seven gates remain UNKNOWN.
+
 ## Finite native SELECT functions: 2026-10-27
 
 **VERIFIED, isolated local adapter cell:** attached SELECT admission now rejects
@@ -29,13 +63,19 @@ the connection's search path, then proves attached calls use the catalog result.
 Registered concat/rank/dense-rank classes and native NULL/count/window results
 also pass after a scoped review correction.
 
-The [isolated receipt](_reset/select-functions-20261027.json) records 233 passing
+The [source-bound isolated receipt](_reset/select-functions-source-bound-20261027.json) records 233 passing
 adapter, search, textual-clause, mapped-expression and async-cancellation checks
 with stable source hashes. Forty-eight existing DISTINCT deprecation warnings
 remain. Scoped agent review accepts the final change. Arbitrary application SQL
 functions require separate admission; typed SELECT is not general function-call
 authority. This evidence does not prove deployment-wide writer exclusion or
 independent human security qualification. All seven gates remain UNKNOWN.
+
+The earlier temporary-checkout receipt did not bind imported package location:
+the shared interpreter selected the main checkout's editable package. It is
+retained as historical evidence and superseded for source identity by the
+explicit-PYTHONPATH isolated rerun above. The same correction applies to the
+direct-provider receipt below. The build/archive evidence is unaffected.
 
 ## Direct provider rewrap recovery proof: 2026-10-27
 
@@ -51,7 +91,7 @@ the target wrapped a different root. Fourteen source controls reproduced that
 failure across both providers. The existing higher-level rotation preparation
 already performed its own recovery proof; this change closes the direct API gap.
 
-The [isolated receipt](_reset/direct-rewrap-20261027.json) records 107 passing
+The [source-bound isolated receipt](_reset/direct-rewrap-source-bound-20261027.json) records 107 passing
 provider, CF1 and rewrap-preparation checks with stable source hashes. Controls
 cover incorrect or malformed recovered material, target outage, identity drift,
 interruption, source retention and healthy retry. Agent review found no remaining

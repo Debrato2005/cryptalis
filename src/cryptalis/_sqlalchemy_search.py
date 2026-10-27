@@ -6,7 +6,7 @@ from sqlalchemy.sql.elements import BinaryExpression, BindParameter, ColumnClaus
 from sqlalchemy.types import NullType, TypeDecorator
 
 from .crypto.cf1 import equality_term
-from .manifest.compiler import _catalog_path
+from .manifest.compiler import _catalog_path, _fixed_value_width
 from ._sqlmodel_types import autostring_impl
 
 
@@ -185,7 +185,7 @@ def _frame_expressions(field, quote):
     """Known PG16 forms of one declared CF1 policy, including dump/restore."""
     column = quote(field['column'])
     overhead = 74 if field['queries'] else 42
-    width = {'bool': 1, 'int2': 2, 'int4': 4, 'int8': 8}.get(field['source']['type'])
+    width = _fixed_value_width(field['source'])
     minimum, maximum = (42 + width, 42 + width) if width is not None else (overhead, 16777216 + overhead)
     magic = '434631000101' if field['queries'] else '434631000100'
     comparison = '<>' if field['queries'] else '='

@@ -149,6 +149,8 @@ def main():
                           help='Qualify signed integer storage after payload rotation on a fresh cluster.')
     profiles.add_argument('--boolean', action='store_true',
                           help='Qualify Boolean storage after payload rotation on a fresh cluster.')
+    profiles.add_argument('--date', action='store_true',
+                          help='Qualify DATE storage and literal defaults after all rotations on a fresh cluster.')
     profiles.add_argument('--sqlmodel-http', action='store_true',
                           help='Qualify original HTTP authentication, mail and three rotations after fresh restore.')
     profiles.add_argument('--sqlmodel-public-slots', action='store_true',
@@ -195,6 +197,8 @@ def main():
         parser.error('--integer uses the native signed scalar restore lifecycle.')
     if args.boolean and (args.varchar or args.restore_lease):
         parser.error('--boolean uses the typed Boolean fixture and its restore lifecycle.')
+    if args.date and (args.varchar or args.restore_lease or args.owned_sequences):
+        parser.error('--date uses the native DATE fixture and its restore lifecycle.')
     if (args.sqlmodel_searchable or args.sqlmodel_direct_search or args.sqlmodel_public_slots or args.sqlmodel_http) and (args.varchar or args.restore_lease):
         parser.error('--sqlmodel-searchable uses the original application schema and lifecycle.')
     if args.smolink and (args.varchar or args.restore_lease):
@@ -210,6 +214,7 @@ def main():
                '; staged payload CLI sealing and publication on an adopted target' if args.payload_cli else
                '; root-rewrap CLI cancellation and publication on an adopted target' if args.rewrap_cli else
                '; saved reverse-plan and approved removal CLI on an adopted target' if args.reverse_cli else
+               '; DATE storage, literal default and three-rotation recovery' if args.date else
                '; original public slots and explicit restored-slot authority' if args.public_slots else
                '; owned-sequence identity mapping and native counter profile' if args.owned_sequences else
                '; integer storage after payload rotation' if args.integer else
@@ -229,7 +234,8 @@ def main():
     if args.restore_lease:
         profile += '; restored-target lease controls'
     export = run_pytest(export_receipt, 'Fresh-cluster source export; primary cluster' + profile,
-                        ('tests/test_sqlmodel_searchable_export.py' if (args.sqlmodel_searchable or args.sqlmodel_direct_search or args.sqlmodel_public_slots or args.sqlmodel_http) else
+                        ('tests/test_date_fresh_cluster.py::test_export_date_backup_after_rotations' if args.date else
+                         'tests/test_sqlmodel_searchable_export.py' if (args.sqlmodel_searchable or args.sqlmodel_direct_search or args.sqlmodel_public_slots or args.sqlmodel_http) else
                          'tests/test_fresh_boolean_export.py' if args.boolean or args.integer else
                          'tests/test_smolink_application.py' if args.smolink
                          else 'tests/test_fresh_cluster_export.py'),
@@ -253,11 +259,12 @@ def main():
         raise SystemExit('FreshCluster.ProfileMismatch: public-slot export did not match the requested profile.')
     if manifest.get('adopted_search', False) is not (args.adopted_search or args.direct_generation):
         raise SystemExit('FreshCluster.ProfileMismatch: adopted-search export did not match the requested profile.')
-    if manifest.get('application_default') != (None if args.integer_default is None else str(args.integer_default)):
+    expected_default = '0001-01-01' if args.date else None if args.integer_default is None else str(args.integer_default)
+    if manifest.get('application_default') != expected_default:
         raise SystemExit('FreshCluster.ProfileMismatch: integer default export differs from the requested literal.')
     if args.public_slots:
         plan = json.loads(base64.b64decode(manifest['plan'], validate=True))
-        if (plan.get('lock', {}).get('schema') != ('cryptalis.lock/v7' if args.integer else 'cryptalis.lock/v6')
+        if (plan.get('lock', {}).get('schema') != ('cryptalis.lock/v8' if args.date else 'cryptalis.lock/v7' if args.integer else 'cryptalis.lock/v6')
                 or plan['lock'].get('layout') != 'preserve-public-slots/v1'
                 or not manifest.get('source_public_slots')):
             raise SystemExit('FreshCluster.ProfileMismatch: original-slot source lock is missing.')
@@ -265,6 +272,11 @@ def main():
         plan = json.loads(base64.b64decode(manifest['plan'], validate=True))
         if plan.get('lock', {}).get('schema') != 'cryptalis.lock/v5' or not manifest.get('sequence_facts'):
             raise SystemExit('FreshCluster.ProfileMismatch: sequence-bearing source lock is missing.')
+    elif args.date:
+        plan = json.loads(base64.b64decode(manifest['plan'], validate=True))
+        if (manifest.get('application_profile') != 'date-storage' or plan.get('kind') != 'search_rotation'
+                or plan.get('lock', {}).get('schema') != 'cryptalis.lock/v8'):
+            raise SystemExit('FreshCluster.ProfileMismatch: DATE three-rotation successor is missing.')
     elif args.integer:
         plan = json.loads(base64.b64decode(manifest['plan'], validate=True))
         if (manifest.get('application_profile') != 'integer-' + str(args.integer)
@@ -324,7 +336,8 @@ def main():
         credentials = provision(port, password, manifest, plain_database)
         home = write_home(workdir, port, manifest, credentials)
         restore = run_pytest(restore_receipt, 'Fresh-cluster protected-backup recovery and adoption; isolated cluster' + profile,
-                             ('tests/test_search_operational_cli.py::test_genuine_adopted_search_cli_seals_saved_activation_and_latest_native_exit' if args.search_cli else
+                             ('tests/test_date_fresh_cluster.py::test_restore_date_authentication_explicit_adoption_latest_exit' if args.date else
+                              'tests/test_search_operational_cli.py::test_genuine_adopted_search_cli_seals_saved_activation_and_latest_native_exit' if args.search_cli else
                               'tests/test_payload_operational_cli.py::test_genuine_adopted_payload_cli_seals_saved_activation_and_latest_native_exit' if args.payload_cli else
                               'tests/test_rewrap_operational_cli.py::test_genuine_adopted_rewrap_cli_preserves_binding_and_byte_identity' if args.rewrap_cli else
                               'tests/test_reverse_operational_cli.py::test_genuine_adopted_source_reverse_cli_uses_explicit_binding_and_latest_native_exit' if args.reverse_cli else

@@ -4,6 +4,20 @@
 It does not preserve old IDs as implementation obligations. Historical dispositions remain in [archived revamp evidence](research/revamp-evidence.md).
 [Status](status.md) owns IMPLEMENTED/VERIFIED claims. All seven full gates remain UNKNOWN.
 
+## Exact storage-only DATE candidate: 2026-10-27
+
+Extend the existing typed storage path with native DATE, without introducing
+an ordered encryption construction or timestamp/time-zone equivalence claims.
+Admit exact Python date/NULL and literal date client defaults within the native
+0001-01-01 through 9999-12-31 domain. Refuse unsupported source dates by count
+during operational planning and again under lock before transition effects.
+Use existing context/v2 with four signed big-endian days from 2000-01-01.
+DATE-bearing locks select v8 and exact codec/default reader tags. Preserve old
+v1-v7 selection and keep online capture restricted to TEXT/VARCHAR.
+Both layouts use the common rotation, restore and current-data exit engine.
+No DATE search or production/type admission follows; independent external-app,
+cost and review obligations remain.
+
 ## Finite SELECT function authority: 2026-10-27
 
 Typed SELECT syntax does not establish that a database function is read-only.

@@ -26,6 +26,7 @@ binding, so a stale, cloned, tampered, or partially restored database is
 refused with a typed failure.
 """
 from dataclasses import dataclass
+from datetime import date
 import datetime
 import hashlib
 import json
@@ -443,7 +444,7 @@ def _sequence_evidence(c, source, binding=None):
     """Compare every logical fact before admitting restored sequence OIDs."""
     from cryptalis.manifest.compiler import sequence_metadata
     maps, facts = [], {}
-    if source.document['lock']['schema'] not in ('cryptalis.lock/v5', 'cryptalis.lock/v6', 'cryptalis.lock/v7'):
+    if source.document['lock']['schema'] not in ('cryptalis.lock/v5', 'cryptalis.lock/v6', 'cryptalis.lock/v7', 'cryptalis.lock/v8'):
         return maps, facts
     for model in source.document['lock']['models']:
         original = sequence_admissions(source.document, model)
@@ -639,7 +640,8 @@ def _scan(c, source, keys):
                             raise m.TransitionFailure('restored_frame_verification_failed',
                                                       source.operation_id) from None
                         expected_type = (bool if descriptors[i].value_codec == 'boolean-u8/v1' else
-                            int if descriptors[i].value_codec in ('pg-int2-be/v1', 'pg-int4-be/v1', 'pg-int8-be/v1') else str)
+                            int if descriptors[i].value_codec in ('pg-int2-be/v1', 'pg-int4-be/v1', 'pg-int8-be/v1') else
+                            date if descriptors[i].value_codec == 'pg-date-days-be/v1' else str)
                         if value is not None and type(value) is not expected_type:
                             raise m.TransitionFailure('restored_frame_verification_failed',
                                                       source.operation_id)

@@ -1152,6 +1152,23 @@ Also review ORM semantics, migration interruption, and package-free removal.
 AI council review is first-party criticism. It does not replace an independent cryptographer or production evidence.
 The [release gate](../ENGINEERING_PLAYBOOK.md#release-gate) remains mandatory.
 
+## Internal storage-only DATE boundary
+
+The DATE candidate reuses CF1, library AES-256-GCM-SIV and existing key/context
+derivation. It adds only the authenticated `pg-date-days-be/v1` codec: four signed
+big-endian days from 2000-01-01. Decode authenticates first and rejects values
+outside Python's exact date domain. The codec and literal-default reader tags
+are bound in strict lock/v8; old readers must refuse before execution.
+
+DATE storage has fixed length and no search representation. Accepted leakage
+remains row linkage, NULL presence, write/access patterns and result volumes.
+Public literal defaults are configuration, not secrets. No date equality,
+frequency, range or order representation is inferred. Operational planning and
+locked expansion count unsupported source dates without decoding or reporting
+private values, then refuse before effects. Online capture remains text-only.
+Full type admission, external application/cost evidence and independent human
+composition review remain required.
+
 ## Internal storage-only integer boundary
 
 **IMPLEMENTED, bounded source and installed checks:** signed integer codecs use

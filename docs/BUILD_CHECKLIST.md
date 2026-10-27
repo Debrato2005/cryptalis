@@ -25,6 +25,12 @@ No objective is complete until its acceptance evidence and applicable gate pass.
 
 ## Current boundary
 
+- The internal storage-only DATE candidate passes 31 frozen source checks and
+  both genuine fresh-cluster layouts, with all three rotations alongside text,
+  latest-value exit and old-reader refusal. Independent external DATE app,
+  artifact/cost and human qualification remain pending. See the
+  [checkpoint](status.md#date-storage-construction-and-lifecycle-2026-10-27).
+
 - Attached SELECT functions now have finite native class/name/namespace/dispatch
   admission before keys or driver. Supported ordinary calls resolve explicitly
   in `pg_catalog`; native special syntax remains intact. The isolated 233-check

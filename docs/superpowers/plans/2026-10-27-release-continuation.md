@@ -61,11 +61,24 @@ under its separately qualified application profile. No production-gate promotion
 
 Owner: type specialist. Files: compiler, CF1, Date-specific adapter/framing/lifecycle/restore hunks, dedicated Date controls, fresh-cluster harness.
 
-- [ ] Establish native Date/NULL/client-default and invalid source-domain oracles.
-- [ ] Encode exact Python date as signed four-byte days from 2000-01-01, with the codec bound by existing context/v2.
-- [ ] Emit strict lock/v8 only for Date, preserving v1-v7. Refuse date search, custom conversions, online capture and unsupported source dates.
-- [ ] Verify both layouts, root/payload rotation, fresh restore/adoption, current-data reverse and package-free native exit.
-- [ ] Review, document bounded evidence and unresolved type admission/cost/application gates, and commit.
+- [x] Establish native Date/NULL/client-default and invalid source-domain oracles.
+- [x] Encode exact Python date as signed four-byte days from 2000-01-01, with the codec bound by existing context/v2.
+- [x] Emit strict lock/v8 only for Date, preserving v1-v7. Refuse date search, custom conversions, online capture and unsupported source dates.
+- [x] Verify both layouts, root/payload rotation, fresh restore/adoption, current-data reverse and package-free native exit.
+- [x] Review, document bounded evidence and unresolved type admission/cost/application gates, and commit.
+
+Final dedicated source matrix: 31 pass with stable source. Both fresh layouts
+pass export/restore; historical failed restore stays preserved. Scoped DATE
+review accepts. An unchanged DATE app, artifact/cost and independent human gates
+remain separate. Earlier affected 313-pass run was correctly rejected because
+unrelated tenant tests changed; final integrated source verification is running.
+
+Ruling: explicitly bind isolated interpreter imports to the intended source.
+Earlier provider/function temporary-checkout receipts hashed the isolated tree
+but imported the main editable package. Preserve them as history; 107/233 fresh
+checks pass with explicit source PYTHONPATH. Correct authoritative receipt links
+to the source-bound reruns. Add automated wrapper runtime binding in a separate
+slice so future source/installed claims fail on this mismatch.
 
 ## Task 4: Reproducible HTTP qualification environment
 

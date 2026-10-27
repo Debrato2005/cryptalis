@@ -46,6 +46,12 @@ The [six-gate admission rule](../compatibility.md#capability-admission) and leak
 Use the [competitive capability matrix](../research/capability-matrix.md) to select secure practical profiles.
 Research arrays, order encodings, internal transport, and diagnostic helpers are **INTERNAL ONLY**. They do not admit a public capability.
 
+Internal storage-only candidates now include signed int2/int4/int8 and exact
+DATE. DATE uses the same compiler, CF1/context, adapter and lifecycle components,
+with strict lock/v8 and `pg-date-days-be/v1`; literal defaults also require
+`pg-date-default/v1`. These candidates do not admit numeric/date search or
+qualify a production cell. See the [DATE boundary](../compatibility.md#internal-date-storage-candidate).
+
 ## Compatibility promise
 
 Cryptalis never silently changes what the backend returns.

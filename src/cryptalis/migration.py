@@ -25,7 +25,7 @@ from cryptalis.crypto._payload_rotation import MAX_BATCH_BYTES, MAX_BATCH_ROWS
 from cryptalis.manifest.compiler import (compile_protection, _schema_facts, _canonical, _previous_lock,
                                           unrecorded_column_metadata, protected_extended_statistics,
                                           sequence_metadata, source_metadata, _metadata_diff, _catalog_path,
-                                          _native_text_length)
+                                          _native_text_length, _fixed_value_width)
 from cryptalis.manifest.parser import ManifestInvalid, _decode_json
 
 JOURNAL = '_cryptalis_journal'
@@ -415,7 +415,7 @@ def _observed_source_metadata(c, p, model, *, sequences=None):
 
 
 def _preserves_public_slot_lock(lock):
-    return lock['schema'] in ('cryptalis.lock/v6', 'cryptalis.lock/v7') and lock.get('layout') == 'preserve-public-slots/v1'
+    return lock['schema'] in ('cryptalis.lock/v6', 'cryptalis.lock/v7', 'cryptalis.lock/v8') and lock.get('layout') == 'preserve-public-slots/v1'
 
 
 def _preserves_public_slots(p):
@@ -484,7 +484,7 @@ def _convert_public_columns(c, p, model, *, plaintext=False):
             from cryptalis.deprotection import _staging
             shadow = _staging(field)
             native = next(column for column in model['source_schema']['columns'] if column['name'] == field['column'])
-            if native['type'] in ('bool', 'int2', 'int4', 'int8'):
+            if _fixed_value_width(native) is not None:
                 target = 'pg_catalog.' + native['type']
             else:
                 limit = _native_text_length(native)
@@ -672,6 +672,7 @@ def plan(manifest, mapping, engine, *, writers, search_reviews=(), keys, runtime
         _runtime_safety(c, runtime_role, target[-1], lock['models'])
         for model in lock['models']:
             if _facts(c,model) != model['source_schema']: raise TransitionFailure('stale_plan_schema')
+            _check_date_source_domain(c, model)
             tenant = _quote(c,model['tenancy']['column']) if 'column' in model['tenancy'] else None
             tenants=c.exec_driver_sql(f'SELECT DISTINCT {tenant} FROM {_table(c,model)}').scalars().all() if tenant else [UUID(model['table_id'])]
             for t in tenants:
@@ -682,10 +683,8 @@ def plan(manifest, mapping, engine, *, writers, search_reviews=(), keys, runtime
                     raise TransitionFailure('missing_search_policy')
                 policies[str(t)] = _policy(ring)
             count=c.exec_driver_sql(f'SELECT count(*) FROM {_table(c,model)}').scalar_one()
-            sizes = [(f'CASE WHEN {_quote(c, f["column"])} IS NULL THEN 0 ELSE 1 END'
-                      if f['source']['type'] == 'bool' else
-                      f'CASE WHEN {_quote(c, f["column"])} IS NULL THEN 0 ELSE {f["source"]["type"][3:]} END'
-                      if f['source']['type'] in ('int2', 'int4', 'int8') else
+            sizes = [(f'CASE WHEN {_quote(c, f["column"])} IS NULL THEN 0 ELSE {_fixed_value_width(f["source"])} END'
+                      if _fixed_value_width(f['source']) is not None else
                       f'coalesce(octet_length({_quote(c, f["column"])}),0)') for f in model['fields']]
             size=c.exec_driver_sql(f'SELECT coalesce(sum('+ '+'.join(sizes)+f'),0) FROM {_table(c,model)}').scalar_one()
             scopes.append({'table_id':model['table_id'],'estimated_rows':count})
@@ -997,7 +996,7 @@ def _frame_check(c,f):
     col=_quote(c,f['payload_column']); eq=bool(f['queries']); overhead=74 if eq else 42
     magic='434631000101' if eq else '434631000100'
     op='<>' if eq else '='
-    width = {'bool': 1, 'int2': 2, 'int4': 4, 'int8': 8}.get(f['source']['type'])
+    width = _fixed_value_width(f['source'])
     minimum, maximum = (42 + width, 42 + width) if width is not None else (overhead, 16777216+overhead)
     return f"{col} IS NULL OR (pg_catalog.octet_length({col}) BETWEEN {minimum} AND {maximum} AND pg_catalog.substring({col},1,6)=pg_catalog.decode('{magic}','hex') AND pg_catalog.substring({col},7,4)<>pg_catalog.decode('00000000','hex') AND pg_catalog.substring({col},11,4){op}pg_catalog.decode('00000000','hex'))"
 
@@ -1023,11 +1022,24 @@ def _install_guards(c,p):
         c.exec_driver_sql(f'ALTER TABLE {table} ENABLE ALWAYS TRIGGER {_quote(c,trigger)}')
 
 
+def _check_date_source_domain(c, model, operation_id=None):
+    """Count unsupported native dates without asking the driver to decode them."""
+    for field in model['fields']:
+        if field['source']['type'] != 'date':
+            continue
+        column = _quote(c, field['column'])
+        outside = c.exec_driver_sql(f'SELECT count(*) FROM {_table(c, model)} WHERE '
+            f"{column} < DATE '0001-01-01' OR {column} > DATE '9999-12-31'").scalar_one()
+        if outside:
+            raise TransitionFailure('date_source_domain', operation_id)
+
+
 def _expand(c,p):
     _lock_tables(c,p)
     for model in p.document['lock']['models']:
         if _facts(c,model)!=model['source_schema']: raise TransitionFailure('source_schema_changed',p.operation_id)
         _check_source_metadata(c,p,model)
+        _check_date_source_domain(c, model, p.operation_id)
     c.exec_driver_sql(f'CREATE TABLE {_journal(c,p)} (operation_id uuid PRIMARY KEY, plan_digest text NOT NULL, state jsonb NOT NULL)')
     c.exec_driver_sql(f'REVOKE ALL ON {_journal(c,p)} FROM PUBLIC')
     c.exec_driver_sql(f'GRANT SELECT ON {_journal(c,p)} TO {_quote(c,p.document["runtime_role"])}')
