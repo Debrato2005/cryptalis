@@ -10,6 +10,314 @@ No PostgreSQL/provider/runtime cell, production key provider, independent review
 VERIFIED below refers only to the named checks and their exact revisions.
 All other contract and promotion requirements are SPECIFIED. All seven full gates remain UNKNOWN.
 
+## Expanded source regression boundary: 2026-10-28
+
+**VERIFIED, complete collected source corpus across two ordered runs:**
+2,922 test calls and eighteen subtests pass on unchanged product code. The
+[combined boundary](_reset/expanded-regression-boundary-20261028.json) records
+2,336 prefix items and 624 suffix items, covering all 2,960 selected items.
+Eight call skips, thirty setup skips and fifteen collection skips stay explicit.
+Optional profiles retain their own prerequisites and evidence requirements.
+
+The [initial run](_reset/expanded-regression-initial-20261028.json) stops after
+2,324 passing calls on an obsolete negative control that expects entity DISTINCT
+to refuse. The test now uses multiple protected values without record identities,
+which remains unadmitted. The [187-check affected run](_reset/distinct-legacy-control-20261028.json)
+passes the corrected control and existing adapter/search/report cases.
+The fresh [complete suffix run](_reset/expanded-regression-tail-20261028.json)
+passes all 622 remaining test calls, including the entire corrected adapter file.
+Its five skips include three collection skips already counted in the original
+whole-corpus collection. The 48 warnings retain the existing legacy DISTINCT ON
+deprecation.
+
+All product and other Python hashes match between the initial and suffix runs;
+only that test file changes. Both wrappers report unchanged source during their
+own execution and all three role probes pass. The earlier failed receipt remains
+visible. This verifies the named corpus and local cell; production gates remain UNKNOWN.
+
+## Expanded installed-package checkpoint: 2026-10-28
+
+**VERIFIED, installed wheel:** the [174-check selection](_reset/expanded-installed-20261028.json)
+passes Date/UUID codecs and storage, mixed rotations, both DISTINCT routes,
+counts, tuple/entity INSERT results, result tamper refusal, scalar/parallel online
+capture and Doctor preflight. The configured pre-Date and pre-UUID readers refuse
+their new formats. All three role probes pass and all source hashes stay unchanged.
+
+The [release receipt](_reset/expanded-release-20261028.json) records identical
+repeat wheel/sdist hashes, verified metadata/RECORD, a CycloneDX SBOM, 43 modules,
+47 checked installed files and import/CLI checks in a clean environment.
+The frozen 20-package audit reports no known vulnerabilities. The separate
+[installed audit](_reset/expanded-installed-audit-20261028.json) clears eighteen
+third-party distributions; unpublished Cryptalis has no advisory-service entry
+and is explicitly skipped. Neither audit is an independent code review.
+
+Current-wheel fresh recovery passes for [Boolean](_reset/fresh-cluster-restore-20261028-7.json),
+[UUID with public slots](_reset/fresh-cluster-restore-20261028-8.json) and
+[Date](_reset/fresh-cluster-restore-20261028-9.json), with corresponding exports
+[Boolean](_reset/fresh-cluster-export-20261028-7.json),
+[UUID](_reset/fresh-cluster-export-20261028-8.json) and
+[Date](_reset/fresh-cluster-export-20261028-9.json).
+They authenticate actual source backups, adopt a distinct cluster, decrypt current
+values and restart native reads in a process that denies Cryptalis imports.
+Two initial concurrent exports passed their tests but collided while creating a
+receipt; their incomplete journeys are not claimed as recovery passes. The UUID
+and Date profiles then passed sequentially in new work directories. No role probe failed.
+Full production qualification remains UNKNOWN.
+
+## Parallel crypto and adaptive online batches: 2026-10-28
+
+**VERIFIED, local PostgreSQL 16.15:** the [31-check affected run](_reset/online-workers-20261028.json)
+passes actual four-thread row-crypto overlap, adaptive row limits of 16/8/4/2,
+resume with unchanged completed frames, full current-value authentication,
+native abort values and atomic refusal/retry after a worker failure. Existing
+online scalar, tenant and recovery controls pass in the same run. All three role
+probes pass and source stays unchanged.
+
+`online.apply` accepts `workers=1..16` and optional `target_chunk_seconds`.
+One worker remains the default. SQL writes, row locks and journal commits stay
+serial under one executor lock. Workers perform only cryptography, with separate
+per-thread, per-chunk preparation caches. Parallel use requires thread-safe host
+key resolvers/providers. Pool shutdown joins outstanding work before releasing
+the SQL executor. Tuning never raises the plan's row/byte limits and provides no
+pause guarantee. This establishes functional concurrency, not a speedup or a
+multi-executor database scheduler.
+
+The later [32-check boundary run](_reset/online-workers-boundary-20261028.json)
+also preserves typed invalid-plan refusal before database access. It includes
+the same worker, scalar, tenant and recovery controls after that correction.
+
+## Tuple and entity INSERT RETURNING: 2026-10-28
+
+**VERIFIED, local PostgreSQL 16.15:** mapped dictionary INSERT now returns native
+direct-column tuples, the inserted mapped entity or public-only columns.
+The [129-check affected run](_reset/insert-returning-rows-20261028.json) covers
+sync/async paging, optional input ordering, heterogeneous groups, NULL, original
+column keys, identity-map loading, expiration/refresh and rollback. TEXT,
+Boolean, int4, Date and UUID values pass actual native-versus-protected migrations.
+
+Every protected output authenticates against its own exact prepared input and
+row/tenant context. Swapping either protected field's returned carrier fails.
+The existing scalar tamper, lease, future-page, savepoint and error-precedence
+controls still pass. Custom INSERT or returned-column dispatch refuses before
+keys/SQL. Aliases, labels, expressions, loader options and caller return_defaults
+remain unadmitted. There are no extra per-row reads or new dependencies.
+This is source evidence; the current installed/full-source boundary follows separately.
+
+## Online capture for storage scalars: 2026-10-28
+
+**VERIFIED, local PostgreSQL 16.15:** native Boolean, int2/int4/int8, finite Date
+and UUID writes pass dirty-row capture, lower-key inserts, deletes, interrupted
+resume, durable fencing and either abort or publication plus latest-value native
+exit. The [27-check affected run](_reset/online-scalars-20261028.json) includes
+the existing text, multi-table, tenant, access and recovery controls. All three
+role probes pass and source stays unchanged.
+
+Fixed-width codecs now have fixed chunk-size estimates before value fetch.
+A Date written as infinity after planning raises `date_outside_python_range`
+before that chunk has payload or progress effects. This expands initial online
+type coverage; the final pause, owner-writer exclusion and production gates
+retain their existing requirements.
+
+## Native UUID value storage: 2026-10-28
+
+**VERIFIED, local PostgreSQL 16.15:** UUID values, including nil and the maximum
+UUID, pass protection, sync/async edits, counts and latest-value native removal
+in both column layouts. The [50-check lifecycle run](_reset/uuid-mixed-lifecycle-20261028.json)
+adds all three interrupted/resumed rotations beside searchable text and two
+tenant scopes, plus configured pre-Date and pre-UUID reader refusals before SQL.
+Custom, emulated, string-valued, searchable and defaulted UUID mappings refuse.
+
+The [fresh export](_reset/fresh-cluster-export-20261028-6.json) and
+[fresh recovery](_reset/fresh-cluster-restore-20261028-6.json) pass root/payload
+rotation, tamper refusal, adoption and public-slot native exit. A fresh process
+that denies Cryptalis imports reads exact native UUID values afterward.
+
+The [10,000-row matched cost profile](_reset/scalar-cost-uuid-20261028.json)
+records 100 alternating warm pairs after ten warmups. Added point p95 is
+1.4161 ms for scalars and 1.6965 ms for full entities. The column-only ratio is
+3.6875x, sixteen native bytes versus 59 bytes with the CF1 and bytea headers.
+Both local point observations meet 3 ms. No equality index or indexed-storage
+target applies. The [wrapper](_reset/scalar-cost-uuid-wrapper-20261028.json)
+records unchanged source and all three role probes.
+
+UUID fields use sixteen network-order bytes, context/v2 and lock/v9. Public
+record and tenant UUID codecs stay separate. No new dependency or earlier frame
+bytes change. This source checkpoint does not claim current installed-wheel or
+full-suite qualification. Production gates remain UNKNOWN.
+
+## DISTINCT with selected record identities: 2026-10-28
+
+**VERIFIED, local PostgreSQL 16.15:** entity/table projections and direct tuples
+retain native DISTINCT when every protected source's public primary key is
+selected. Sync/async native controls cover storage-only TEXT, Boolean and Date,
+public ordering/pagination, repeated join rows and original label keys. The
+[146-check affected run](_reset/identity-distinct-20261028.json) includes the
+existing reporting, search, Doctor and SQLModel bridge controls. Another alias's
+ID, renamed ID columns and custom ID renderers refuse before statement keys/SQL.
+
+The compiler retains native DISTINCT because selected record identities already
+distinguish source rows. This needs no equality term and keeps the existing
+authenticated carrier. Logical-value DISTINCT without those IDs retains the
+separate one-field equality contract. Caller DISTINCT ON and protected order/group
+remain unadmitted. No storage or key-derivation change.
+
+## Authenticated direct DISTINCT projection: 2026-10-28
+
+**VERIFIED, local PostgreSQL 16.15:** DISTINCT of one direct protected equality
+field returns native logical value sets and Python types through sync/async
+sessions. Labels retain original result-object keys. Aliases, SQL NULL, empty
+text, duplicate/Unicode values and encrypted WHERE filters pass in the
+[130-check affected run](_reset/distinct-projection-20261028.json).
+A corrupted representative frame raises AuthenticationFailed. Unscoped/multi-tenant,
+custom-rendered and other unadmitted shapes refuse before statement keys or SQL.
+
+The compiler deduplicates existing full-width terms and retains the selected
+row's authenticated context carrier. Ordering, pagination, grouping, caller
+DISTINCT ON, multiple outputs and storage-only fields remain unadmitted in this
+route. Public DISTINCT keeps its separate native contract. A native SELECT
+dispatch check also prevents custom protected SELECT rendering before keys.
+The result relies on the existing full-term collision and hostile-database
+completeness assumptions. No representation, key derivation or dependency changes.
+
+## Finite date storage and scalar cost decision: 2026-10-28
+
+**VERIFIED, installed wheel:** the [92-check selection](_reset/date-installed-20261028.json)
+passes Date storage, mixed rotations, crypto and integer controls. Two retained
+pre-integer reader controls remain skipped. The [artifact receipt](_reset/date-release-20261028.json)
+records repeat-build equality, metadata/RECORD/SBOM checks and 47 verified
+installed files. The installed Date profile also passes a separate-cluster
+public-slot restore and package-free native restart.
+
+**VERIFIED, local PostgreSQL 16.15:** finite native Date values retain exact
+Python types through protection, sync/async reads and edits, counts and native
+removal. The [220-check affected run](_reset/date-source-20261028.json) includes
+independent ordinal/frame controls and source-boundary refusals. Its two skips
+require a separate retained pre-integer reader. The configured pre-date reader
+does refuse lock/v8 before SQL. Non-finite/BC/out-of-range source dates, custom
+mappings, date search and date defaults remain refused.
+
+The [36-check mixed lifecycle run](_reset/date-mixed-lifecycle-20261028.json)
+adds Date beside searchable text across two tenants and tables. Root rewrap,
+payload rotation and search rotation preserve the expected bytes, key authority,
+current values and latest-value native exit. Interrupted chunks resume.
+
+Actual source exports and fresh-cluster recovery pass for both Date layouts:
+[ordinary export](_reset/fresh-cluster-export-20261028.json),
+[ordinary recovery](_reset/fresh-cluster-restore-20261028.json),
+[public-slot export](_reset/fresh-cluster-export-20261028-2.json) and
+[public-slot recovery](_reset/fresh-cluster-restore-20261028-2.json).
+These profiles perform root and payload rotation, tamper refusal, adoption,
+current-data removal and a fresh process that denies Cryptalis imports.
+The shared harness also passes retained Boolean and int64 fresh-recovery controls.
+The recovery profiles use two newly probed roles; the ordinary source selections
+use the three-role isolated harness. No probe failed.
+
+**VERIFIED, current local costs:** four 10,000-row scalar profiles pass native
+result comparisons, actual protection/publication and removal. Each workload
+records 100 alternating measured pairs after ten warmups. All eight scalar/entity
+point observations meet 3 ms added p95. Column-only ratios are 22.5x/11.75x/6.375x
+for int2/int4/int8 and 11.75x for Date. One Date scalar sample reaches 65.41 ms;
+all raw samples remain in the [date receipt](_reset/scalar-cost-date-20261028.json).
+The [wrapper](_reset/scalar-cost-wrapper-20261028.json) binds unchanged source.
+The [local integer admission decision](decisions.md#local-integer-storage-admission-2026-10-28)
+accepts the documented storage-only overhead for the assignment. These fields
+have no equality index; the 2x indexed-column target is not evaluated.
+
+Date uses four unsigned ordinal bytes, context/v2 and lock/v8. No runtime
+dependency or earlier codec/format bytes change. This adds bounded local type
+admission; broader numeric/temporal/JSON contracts remain work. Production gates
+remain UNKNOWN and retain their separate qualification requirements.
+
+The later [66-check ordinal control](_reset/date-ordinal-bounds-20261028.json)
+verifies typed refusal for authenticated unsigned ordinals above Python's signed
+conversion range as well as ordinary invalid dates. The unconfigured retained
+pre-date reader is its one skip; its configured earlier run retains separate proof.
+
+## Local assignment explanation and inspection profile: 2026-10-28
+
+**VERIFIED, full source regression:** the [current PostgreSQL receipt](_reset/reporting-postgres-20261028.json)
+passes 2,824 test calls and 18 subtests in 870.32 seconds. All Python source
+hashes remain unchanged and all three role probes pass. The 37 skips remain
+separate in the receipt: eight call skips, fourteen setup skips and fifteen
+collection skips. The 48 warnings retain the existing legacy DISTINCT ON
+deprecation. This includes the new reporting routes and the existing lifecycle,
+rotation, restore, adapter and diagnostic controls; skipped optional profiles
+retain their own evidence requirements.
+
+**VERIFIED, artifact checks:** the [reporting release receipt](_reset/count-release-20261028.json)
+records identical repeat wheel/sdist hashes, inspected RECORD/dependency metadata,
+CycloneDX SBOM, 43 product modules and 47 checked installed files. The clean
+environment passes import and CLI checks. The frozen 20-package audit reports
+no known vulnerabilities. Runtime pins remain unchanged. Independent review,
+signed provenance and production release qualification remain outside this result.
+
+**VERIFIED, installed wheel:** the reporting/search/Doctor selection passes
+120 checks on PostgreSQL 16.15 through the actual wheel. The
+[installed receipt](_reset/count-installed-20261028.json) records unchanged source
+and three role probes. TEXT, Boolean and all three internal integer widths retain
+native non-NULL counts after real protection. This does not promote the internal
+integer candidate or the production gates.
+
+**VERIFIED, local PostgreSQL 16.15:** matched count fixtures return the same
+non-NULL/distinct totals for native text and attached CF1. The
+[31-sample paired profile](_reset/count-performance-20261028.json) records warm
+synchronous p50/p95 and raw samples at 1,000 and 10,000 rows. Its
+[wrapper receipt](_reset/count-performance-wrapper-20261028.json) retains stable
+source hashes and three role probes. These are new-capability observations,
+not target-branch speedups or production qualification.
+
+**VERIFIED, local PostgreSQL 16.15:** count FILTER predicates over public fields
+and non-distinct count windows over public partitions/order retain native
+results. The [117-check affected run](_reset/window-counts-20261028.json)
+includes empty filtered input, a running ROWS frame, labeled partitioned results,
+filtered distinct counts and custom-window refusal. Protected filter/partition/order
+expressions and DISTINCT windows remain unadmitted.
+
+**VERIFIED, local PostgreSQL 16.15:** public-column DISTINCT and DISTINCT ON work
+with admitted encrypted WHERE predicates. Sync/async native comparisons cover
+aliases, NULL filters and pagination; protected distinct keys and outputs still
+refuse. The [267-check affected run](_reset/public-distinct-20261028.json) includes
+the existing textual-reference controls. It retains 48 existing SQLAlchemy
+deprecation warnings for the legacy DISTINCT ON spelling.
+
+**VERIFIED, local PostgreSQL 16.15:** equality fields support
+`COUNT(DISTINCT column)` through the existing full-width term. The original
+SQLAlchemy count expression remains intact; the engine's compiler renders the
+term operation and preserves native result-object lookup. Sync/async NULL,
+empty-input, duplicate, Unicode, alias and public-grouping controls pass in the
+[103-check affected run](_reset/distinct-counts-20261028.json).
+The [109-check tenant extension](_reset/scoped-distinct-counts-20261028.json)
+also verifies direct bound tenant equality and exact tenant grouping. Wrong-alias,
+OR and custom-rendered scope claims refuse before statement key preparation.
+Storage-only and global multi-tenant distinct counts remain refused.
+
+**VERIFIED, local PostgreSQL 16.15:** direct `COUNT(protected_column)` preserves
+native integer results, NULL/empty-input behavior, aliases, public grouping and
+transaction rollback through sync/async sessions. TEXT and Boolean storage-only
+counts pass after real protection. Custom count renderers and unadmitted wrappers
+refuse before statement key preparation and SQL. The [focused run](_reset/protected-counts-20261028.json)
+passes 97 checks, including the existing search and Doctor controls.
+No payload, key-policy, schema or stored representation changes are required.
+
+**IMPLEMENTED:** protected-column lineage is collected once per expression
+inspection. Native proxy-set intersection semantics remain unchanged, and no
+cross-operation cache is added. The [paired CPU profile](_reset/admission-lineage-20261028.json)
+compares the exact target-branch method with candidate `c9a1049`, including early
+and late matches and public/mixed projections. It records local inspection
+speedups and the early-match trade-off, not end-to-end application improvement.
+The [candidate PostgreSQL run](_reset/assignment-postgres-20261028.json) passes
+2,789 test calls and 18 subtests on Ubuntu CI, with all source hashes unchanged.
+Its eight call skips, fourteen setup skips and fifteen collection skips remain
+recorded separately. This verifies that scoped run, not a production cell.
+The [local artifact check](_reset/assignment-release-20261028.json) passes repeat
+wheel/sdist builds, RECORD inspection and SBOM generation. Clean installation
+was not measured by that check.
+
+The [illustrated assignment guide](professor-guide.md) explains existing features
+and historical performance. The [local run guide](local-development.md) and
+restricted-role CI workflow make the current checks reproducible. Runtime
+dependencies and all 34 objectives remain unchanged. All seven gates stay UNKNOWN.
+
 ## Preservation checkpoint and operator pause: 2026-10-24
 
 **Operator pause.** Resume only after the explicit instruction **Continue Cryptalis**. Implementation `8b6bccc` adds approved tenants to online capture. It includes restored adoption, all rotations and current-data native exit. Its [qualification boundary](_reset/online-tenants-boundary-20261024.json) records 452 source checks and 18 installed online checks. The installed original HTTP application also passes export and fresh recovery.

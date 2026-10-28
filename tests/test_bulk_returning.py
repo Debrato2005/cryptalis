@@ -208,7 +208,7 @@ def test_bulk_returning_one_protected_column_matches_native_rows_and_scalars(
                             json.dumps(observed['values'], ensure_ascii=False))
 
 
-@pytest.mark.parametrize('fault', ['tuple', 'entity', 'label', 'expression', 'defaults', 'loader_options'])
+@pytest.mark.parametrize('fault', ['label', 'expression', 'defaults', 'loader_options'])
 def test_bulk_returning_unadmitted_results_refuse_before_keys_or_data_sql(fault):
     with native_application(False) as app:
         resolutions, data_sql = [], []

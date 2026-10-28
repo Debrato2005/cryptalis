@@ -4,6 +4,144 @@
 It does not preserve old IDs as implementation obligations. Historical dispositions remain in [archived revamp evidence](research/revamp-evidence.md).
 [Status](status.md) owns IMPLEMENTED/VERIFIED claims. All seven full gates remain UNKNOWN.
 
+## Bounded parallel crypto and adaptive online batches: 2026-10-28
+
+Allow one through sixteen opt-in cryptographic workers during online capture.
+Keep one SQL writer, the existing executor lock and atomic payload/journal
+commits. Workers receive already locked native rows, perform no SQL, use separate
+per-thread preparation caches and preserve input order. Join workers before
+leaving the executor. Host key resolvers/providers must permit concurrent calls.
+One worker remains the default.
+
+An optional target chunk duration may adjust the next row count between half
+and twice the previous count, within the plan's existing maximum. Measure the
+whole chunk, including inspection and database work. The byte ceiling remains
+unchanged. This is a tuning target, not a promised pause or resource bound.
+Resume keeps committed bytes and restarts tuning from the approved row maximum.
+This implements parallel row cryptography, not multiple database executors.
+
+## Mapped dictionary INSERT tuple and entity RETURNING: 2026-10-28
+
+Extend the existing scalar RETURNING route to native direct-column tuples and
+the exact inserted mapped entity. Authenticate each protected output against
+its own prepared input frame and expected row/tenant context. Keep native Row
+keys, scalar consumption, entity identity/refresh behavior, heterogeneous groups,
+page boundaries, optional parameter ordering and rollback. Public fields retain
+native result processing. Validate the complete expanded output list before
+keys and again at compilation. Aliases, expressions, loader options and caller
+return_defaults remain unadmitted. No plaintext binds or per-row follow-up reads.
+
+## Online capture for admitted storage scalars: 2026-10-28
+
+Extend dirty-row capture to storage-only Boolean, int2/int4/int8, finite Date and
+UUID values. Native source writes stay authoritative until the durable fence.
+Use each codec's fixed width to bound a chunk before fetching values. A captured
+Date outside Python's finite range must raise the existing typed boundary error
+before sealing or committing that chunk. Preserve capture, byte-stable completed
+rows, resume, publication, role transfer, abort and latest-value native removal.
+The final write pause and host writer exclusion remain required. This adds no
+search representation or dependency.
+
+## Native UUID value storage: 2026-10-28
+
+Add storage-only PostgreSQL UUID values with exact standard native UUID mappings
+and Python UUID inputs. This protects ordinary UUID-valued fields; primary-key
+and tenant context columns remain public and retain their separate codecs.
+Use `uuid-bytes16/v1`, typed context/v2 and lock/v9. Encode exactly sixteen
+network-order UUID bytes, including the nil UUID. Authenticate before decoding.
+Non-NULL frames have exactly 58 bytes. Earlier readers must refuse before SQL.
+
+Keep string coercions, UUID field defaults, custom mappings and UUID search
+unadmitted in this addition. Carry current values through protection, native
+sync/async operations, rotations, fresh recovery and decrypt-back. No new
+cryptographic primitive or runtime dependency is required.
+
+## Native date storage: 2026-10-28
+
+Add storage-only PostgreSQL DATE with exact native SQLAlchemy Date mappings and
+Python date values in years 1 through 9999. SQL NULL stays SQL NULL. Do not infer
+dates from strings, timestamps, time zones or custom processors. Refuse date
+defaults and date search intent in this addition. Existing NULL predicates and
+direct non-NULL counts remain available.
+
+Encode the Gregorian ordinal as four unsigned big-endian bytes under
+`date-ordinal-u32/v1` and the existing typed context/v2. Authenticate before
+decoding. A non-NULL frame is exactly 46 bytes. Use lock/v8 and an explicit
+required reader, so prior readers refuse before database/provider access.
+Existing codecs and artifact versions keep their exact bytes.
+
+The protection planner must reject non-finite dates, BC values and years beyond
+9999 before migration effects. Recheck the value contract during backfill.
+Preserve native Date values through protection, current-value updates, root and
+payload rotation, protected backup adoption and latest-value native removal.
+This local addition does not qualify a production gate.
+
+## Local integer storage admission: 2026-10-28
+
+Admit storage-only signed int2/int4/int8 with the existing exact mappings,
+typed codecs, literal defaults and native error/transaction contracts. Keep
+integer search, ordering and arithmetic unadmitted. This changes local type
+admission, not the stored bytes or production qualification.
+
+Accept and publish the fixed CF1 overhead for the college workload. The current
+10,000-row profiles measure column-only ratios of 22.5x, 11.75x and 6.375x for
+int2/int4/int8. The equality-index storage target does not apply to storage-only
+fields. All eight scalar/entity point observations, including Date, meet the
+3 ms added-p95 target in this local run. Retain raw samples and observed tails;
+these observations do not establish a concurrent or production budget.
+
+## DISTINCT with selected record identities: 2026-10-28
+
+Keep native DISTINCT when every protected output is a direct column and its
+source's primary key is also selected. A matching public record identity already
+distinguishes different source rows. Repeated join rows contain the same stored
+frame/context, so native comparison preserves duplicate elimination.
+
+This route can admit entity/table projections and direct tuples with
+storage-only fields. Retain ordinary public ordering and pagination. Require
+the exact physical source alias and record name; another alias's ID is not proof.
+Keep caller DISTINCT ON and protected ordering/grouping under their separate
+contracts. Payload authentication remains unchanged.
+
+## Direct protected DISTINCT projection: 2026-10-28
+
+Admit DISTINCT of one directly selected equality-enabled protected field within
+one provable tenant scope. Native output labels and table aliases remain valid.
+Use PostgreSQL DISTINCT ON the existing full-width term, then authenticate the
+chosen row's existing payload/context carrier before returning its value.
+SQL NULL remains one distinct logical value. No additional stored term is needed.
+
+Keep DISTINCT ON supplied by callers, multiple output columns, grouping/HAVING,
+ordering, LIMIT/OFFSET/FETCH and row locks unadmitted in this addition. Unordered
+DISTINCT promises the same logical value set; it does not promise PostgreSQL's
+incidental output order. Reject storage-only fields and global cross-tenant
+deduplication. Preserve the existing public DISTINCT contract separately.
+
+## Bounded protected counts: 2026-10-28
+
+For the local assignment candidate, implement `COUNT(protected_column)` as a
+native non-NULL count. Stored SQL NULL remains SQL NULL, so the operation needs
+no decryption or additional search representation. Admit only a direct column
+argument to native SQLAlchemy `count`, optionally labeled as a selected result.
+Keep custom function/argument rendering and other protected expressions refused.
+Grouping by admitted public fields retains native PostgreSQL behavior.
+
+Implement `COUNT(DISTINCT protected_text)` separately for equality fields.
+Count the existing full-width equality term, preserving SQL NULL
+and empty-input behavior. This requires the field's existing equality leakage
+acceptance; it creates no new stored term. Do not silently count randomized
+payloads or combine tenant-scoped terms into a global distinct count.
+On tenant-column tables, require a native direct tenant equality to a bound value
+in a mandatory WHERE conjunction, or group by the counted source's exact tenant
+column. Do not infer scope from another alias, an OR predicate or a custom
+renderer. Each distinct group must contain only one tenant's terms.
+Native FILTER predicates over public fields also preserve count semantics.
+Admit non-distinct count windows with public partition/order expressions and
+native frame bounds. Keep protected filter/partition/order expressions and
+DISTINCT windows refused. Global multi-tenant distinct counts, protected grouping
+and general aggregates remain separate work. These local additions do not qualify
+production gates or remove objectives from the ledger.
+
 ## Online capture and access transfer: 2026-10-24
 
 **APPROVED, bounded implementation:** keep the existing maintenance path and add
@@ -1587,7 +1725,9 @@ current artifact and qualification. No production gate changes.
 
 **IMPLEMENTED, internal candidate:** add signed native int2, int4 and int8
 storage with exact SmallInteger, Integer and BigInteger mappings. No protected
-integer equality, ordering, range, arithmetic, aggregate or join is admitted.
+integer equality, ordering, range, arithmetic, aggregate or join was admitted at
+this checkpoint. The later [bounded count decision](#bounded-protected-counts-2026-10-28)
+admits direct non-NULL COUNT without changing integer storage admission.
 Keep strict built-in int values and SQL NULL. Refuse bool, subclasses and other
 Python coercions. Native width bounds remain exact.
 

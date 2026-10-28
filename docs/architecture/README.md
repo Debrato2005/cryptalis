@@ -34,12 +34,13 @@ The table below records current admission, not permanent product exclusions.
 | Contract | Approved choice |
 |---|---|
 | Stack | Python 3.12+, SQLAlchemy 2.x, psycopg 3 sync and async, PostgreSQL 16 |
-| Protected type | Native text and VARCHAR, with matching standard Text or String mappings. Other protected types remain CURRENTLY UNADMITTED pending secure admission |
-| Capabilities | SUPPORTED: storage-only, equality/IN with simple negative forms, tenant-scoped uniqueness |
+| Protected type | Native text/VARCHAR and storage-only Boolean, finite Date and signed integers with standard mappings. Other protected types remain CURRENTLY UNADMITTED |
+| Capabilities | SUPPORTED: storage-only, equality/IN with simple negative forms, tenant-scoped uniqueness and bounded count reports under the [compatibility contract](../compatibility.md) |
 | Tenancy | Every protected table declares a tenant column or declares itself single-tenant. The compiler never guesses tenant ownership |
 | Primary keys | Application-generated UUID, Snowflake-style, or another app-assigned ID. Reject serial, identity, and database-default-generated keys at plan time |
 
-Comparisons/ranges, ordering, prefix/substring/fuzzy search, protected aggregates, JSON and other encrypted types remain **CURRENTLY UNADMITTED**.
+Comparisons/ranges, ordering, prefix/substring/fuzzy search, protected aggregates
+other than admitted counts, JSON and other encrypted types remain **CURRENTLY UNADMITTED**.
 They remain engineering objectives. Safe refusal does not complete them.
 The [seven baseline slices](../build-guide.md#ordered-build-slices) retain their dependency requirements.
 The [six-gate admission rule](../compatibility.md#capability-admission) and leakage opt-in control each addition.
@@ -309,9 +310,11 @@ At final driver dispatch, match the actual SQL, identity, tenant and ciphertext
 against the admitted batch. Compiled parameters alone do not establish what the
 driver receives.
 
-Exactly one direct protected mapped column can use RETURNING.
-Its native Row/scalar result keeps grouping, page handling and parameter-order requests.
-Each returned scalar must match the tenant, real input identity and exact
+RETURNING admits direct mapped-column tuples/scalars, public-only columns and
+the inserted mapped entity. Native results keep grouping, page handling and
+optional parameter ordering. Entity loading retains the native identity map,
+expiration and refresh behavior. Each protected output must match its own tenant,
+real input identity and exact
 prepared frame or NULL. Immutable expectations come from that native group.
 They survive operation cleanup without retaining the operation or session.
 
@@ -320,8 +323,8 @@ Validate full processed input first, then each page's rows against the original
 frozen slice. An exact one-shot page snapshot precedes cursor callbacks and
 final dispatch. Reuse native result processing and sentinel ordering.
 The private page hook needs evidence for each selected SQLAlchemy cell.
-No tuple/entity RETURNING, embedded statement values, Core INSERT, upsert,
-INSERT SELECT or row SQL expression is admitted by this route.
+Labels, expressions, aliases, loader options, caller return_defaults, embedded
+statement values, Core INSERT, upsert and INSERT SELECT remain unadmitted.
 
 Stock SQLAlchemy SAVEPOINT, ROLLBACK TO and RELEASE clauses need no data permit.
 Accept only their exact native compilation with empty parameters and unchanged
@@ -374,8 +377,8 @@ defines its refusals. The [checkpoint](../status.md#optional-sqlmodel-template-c
 owns its bounded runtime and application evidence.
 
 The engine must use PostgreSQL/psycopg, `echo=False`, and `hide_parameters=True`. Attachment refuses unsafe logging settings before it opens a connection or resolves a key, and it requires no checked-out connections at activation.
-Ordinary ORM flush writes, mapped dictionary INSERT with optional single protected
-scalar RETURNING, direct
+Ordinary ORM flush writes, mapped dictionary INSERT with native scalar/tuple/entity
+RETURNING, direct
 projections and declared equality/IN are implemented. Simple negative equality,
 `NOT IN`, and NULL presence are admitted with native truth. Core writes, other
 bulk routes and unadmitted grammar reject.
@@ -415,7 +418,8 @@ The public manifest uses bounded JSON. Its field-intent declaration is independe
 | Mapping facts | Text codec, deterministic exact collation, nullability, application-assigned PK, tenant scope, constraint scope, and writer inventory |
 
 Range bounds, prefix limits, shared-join domains and arbitrary normalizers remain unadmitted.
-Boolean storage uses a pinned value codec. Other non-text codecs remain unadmitted.
+Boolean, signed integer, finite Date and UUID storage use pinned value codecs.
+Their search operators remain unadmitted.
 The compiler rejects unsupported types, server-generated keys, small-domain searchable fields, missing tenant scope, and unsupported writers at plan time.
 Searchable small domains remain unsafe because enumeration can label their equality classes. No invented cardinality threshold supplies evidence.
 The planner does not infer every application query. Attached staging tests expose query-level incompatibilities.
@@ -532,10 +536,14 @@ Boolean storage uses `cryptalis.context/v2` with `value_codec: boolean-u8/v1`
 instead of `text_codec`. False encodes as byte 00. True encodes as byte 01.
 The descriptor digest binds the value type in the shared authenticated path.
 SQL NULL stays SQL NULL. Boolean equality terms remain unadmitted.
-The internal integer candidate also uses context/v2. Its pinned codecs encode
-signed int2/int4/int8 values as 2/4/8 big-endian bytes. All other CF1 authenticated
-context and nonce rules remain unchanged. Full integer admission remains pending;
-see the [installed checkpoint](../status.md#integer-installed-lifecycle-checkpoint-2026-10-24).
+Signed integer storage also uses context/v2. Its pinned codecs encode int2/int4/int8
+as 2/4/8 signed big-endian bytes. Finite Date stores a four-byte unsigned Gregorian
+ordinal under `date-ordinal-u32/v1` and lock/v8. UUID values store sixteen
+network-order bytes under `uuid-bytes16/v1` and lock/v9. Nil UUID values are valid;
+the public record and tenant UUID codecs keep their separate context role.
+All other CF1 authenticated context and nonce rules remain unchanged. The
+[local scalar checkpoints](../status.md#native-uuid-value-storage-2026-10-28)
+retain their source, artifact and cost boundaries.
 For equality, the stable field UUID identifies the search domain. Crypto implementation and independent vectors belong to slice 2.
 
 `WriterInventory` requires `complete=True` and a nonempty inventory for each protected table.

@@ -1,0 +1,65 @@
+name: Local PostgreSQL checks
+
+on:
+  pull_request:
+  push:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: local-checks-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  postgres:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: astral-sh/setup-uv@37802adc94f370d6bfd71619e3f0bf239e1f3b78 # v7
+        with:
+          version: "0.13.6"
+          python-version: "3.12"
+          enable-cache: true
+      - name: Provide PostgreSQL 16 tools
+        run: |
+          if ! test -x /usr/lib/postgresql/16/bin/initdb; then
+            sudo apt-get update
+            sudo apt-get install --yes --no-install-recommends postgresql-16
+          fi
+      - name: Install frozen dependencies
+        run: uv sync --frozen --extra sqlmodel --compile-bytecode
+      - name: Retain PostgreSQL installer packages for local reproduction
+        run: |
+          mkdir "$RUNNER_TEMP/postgres-packages"
+          cd "$RUNNER_TEMP/postgres-packages"
+          # Runner-installed PGDG builds may have no configured download source.
+          apt-get download postgresql-16/noble-updates postgresql-client-16/noble-updates libpq5/noble-updates
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: postgres-packages
+          path: ${{ runner.temp }}/postgres-packages/*.deb
+      - name: Audit the dependency lock
+        run: uv audit --frozen
+      - name: Measure column-lineage inspection
+        env:
+          BASELINE_REVISION: ${{ github.event.pull_request.base.sha || 'main' }}
+        run: |
+          git fetch --no-tags --depth=1 origin "$BASELINE_REVISION"
+          uv run --frozen --extra sqlmodel python scripts/benchmark_admission.py \
+            --baseline FETCH_HEAD --output "$RUNNER_TEMP/admission.json"
+      - name: Run the suite through the restricted-role wrapper
+        run: >-
+          uv run --frozen --extra sqlmodel python scripts/online_qualification.py
+          --workdir "$RUNNER_TEMP/cryptalis-tests" -- tests -q
+      - name: Retain the sanitized test receipt
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: local-evidence
+          path: |
+            ${{ runner.temp }}/cryptalis-tests/receipt.json
+            ${{ runner.temp }}/admission.json
+          if-no-files-found: warn

@@ -1,5 +1,8 @@
 # Cryptalis
 
+For a classroom presentation, start with the [illustrated project guide](docs/professor-guide.md).
+It explains the architecture, searchable-encryption trade-offs, lifecycle and recorded performance.
+
 **IMPLEMENTED: research prototype with a manifest compiler, CF1 primitives, a local development provider, bounded SQLAlchemy storage/search, and a maintenance protection transition.**
 The sync/async attachment has scoped PostgreSQL tests under separate restricted runtime credentials.
 Tested runtime DDL and ownership changes are refused. Separate writers can still change data; deployment writer exclusion remains unverified.
@@ -8,7 +11,7 @@ No runtime compatibility cell, production key provider, or independent review is
 The [slice 3 walkthrough](docs/walkthrough-sqlalchemy.md) gives the implemented API and its limits.
 The [search walkthrough](docs/walkthrough-search.md) covers slice 4 and its native-index mechanism.
 The [migration walkthrough](docs/walkthrough-migration.md) covers slice 5: plan, atomic backfill, full verification, and publication-gated switch.
-The [bounded online API](docs/walkthrough-migration.md#online-initial-protection) also permits native writes during initial TEXT/VARCHAR backfill on declared single-tenant tables.
+The [bounded online API](docs/walkthrough-migration.md#online-initial-protection) permits native writes during initial text and admitted scalar backfill, under declared tenancy.
 It retains a final write pause and strict source-to-target role transfer. Production qualification remains UNKNOWN.
 Native `String(n)`/VARCHAR mappings now retain their character limits through protection and decrypt-back.
 The [VARCHAR walkthrough](docs/walkthrough-migration.md#native-varchar-mappings) states the tested rules and remaining limits.
@@ -37,8 +40,16 @@ Every protected table declares a tenant column or declares itself single-tenant.
 Primary keys must be application-generated, such as UUID, Snowflake-style, or another app-assigned ID.
 `plan` rejects serial, identity, and database-default-generated keys with a plain explanation.
 
+**IMPLEMENTED, bounded local verification:** direct protected-column `COUNT`,
+public-field count filters and non-distinct windows, plus equality-backed
+`COUNT(DISTINCT column)` within one provable tenant per group. Public-column
+`DISTINCT` can also use admitted encrypted WHERE filters. The
+[reporting examples and measured costs](docs/professor-guide.md#count-reports-over-encrypted-values)
+explain these additions and their limits.
+
 **CURRENTLY UNADMITTED:** comparisons and ranges, `ORDER BY`, `LIKE`/prefix/contains, regex,
-`SUM`/`AVG`/`MIN`/`MAX`, general `DISTINCT`, protected joins, structured JSON and non-text protected types.
+`SUM`/`AVG`/`MIN`/`MAX`, general protected `DISTINCT`, protected joins, structured JSON and
+additional protected types beyond documented text, Boolean, Date, UUID and signed-integer storage.
 These remain full-SRS engineering objectives. Their runtime refusal does not complete the feature.
 Other unadmitted operators also fail. Do not protect a field whose required queries use these operations.
 Queries on unprotected fields retain their native semantics.

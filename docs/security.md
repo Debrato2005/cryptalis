@@ -81,8 +81,12 @@ driver parameters after SQLAlchemy cursor events, including exact payload
 bytes, identity and tenant, against the admitted batch. Late parameter or SQL
 replacement refuses before driver dispatch. This boundary does not make
 arbitrary host plugins trustworthy or qualify other write routes.
-For one protected scalar RETURNING, the processor also requires a real input
-identity and exact prepared ciphertext or NULL for that native group.
+For scalar, tuple or entity RETURNING, every protected output also requires its
+own real input identity and exact prepared ciphertext or NULL for that native group.
+Swapping protected outputs fails their independent field/context authentication.
+The complete expanded output list must retain exact physical column identities
+and native dispatch before key resolution and again at compilation. Public
+outputs keep native processing and have no added payload-authentication claim.
 SELECT's outer-join NULL-identity rule does not apply to inserted rows.
 A valid fresh frame for the same context still refuses if this operation did
 not prepare it. This stronger write-result check does not establish general
@@ -722,6 +726,22 @@ AES-GCM requires stronger nonce uniqueness discipline. ChaCha20-Poly1305 also re
 Extended-nonce libraries can be alternatives after portability and review. No silent algorithm fallback is allowed.
 Primary algorithm and library evidence is in [prior art](prior-art.md).
 
+**IMPLEMENTED UUID value storage extension:** `uuid-bytes16/v1` stores exactly
+sixteen network-order UUID bytes under typed context/v2, including nil UUIDs.
+Authenticate before decoding. Refuse non-UUID inputs and invalid byte widths.
+Storage-only non-NULL frames have exactly 58 bytes. Lock/v9 requires the new
+reader; earlier readers refuse before SQL. Public record and tenant identity
+codecs stay separate. This adds no search leakage or cryptographic primitive.
+
+**IMPLEMENTED date storage extension:** `date-ordinal-u32/v1` stores an exact
+Gregorian ordinal in four unsigned big-endian bytes under typed context/v2.
+Authenticate before decoding. Refuse invalid widths and ordinals outside
+1 through 3,652,059. Date values have no equality term and non-NULL frames have
+exactly 46 bytes. Lock/v8 requires the date reader. Earlier readers refuse
+before database/provider access. The planner rejects PostgreSQL dates outside
+the finite Python date domain before migration effects. Existing SQL NULL,
+same-context replay and hostile-database completeness limits remain unchanged.
+
 **IMPLEMENTED Boolean storage extension:** the storage-only value
 codec uses `cryptalis.context/v2` and `value_codec: boolean-u8/v1`. Its canonical
 bytes are 00 for false and 01 for true. Authentication precedes the strict
@@ -1097,6 +1117,12 @@ Range-structure and prefix-specific published attacks remain unexecuted. None of
 `plan` must show that absence and block advanced-capability apply until the required attack evidence exists.
 An acknowledgment alone cannot convert missing security evidence to PASS.
 G-PROVIDER, G-POLICY, and independent review requirements remain UNKNOWN. No local provider/policy check qualifies production custody or publication.
+
+Protected counts are database-computed statistics. A non-NULL count observes
+the already visible SQL NULL pattern. Distinct counts reuse declared equality
+classes and require the existing equality leakage acceptance. Neither operation
+authenticates every stored frame or proves result completeness. The hostile
+database limits apply to these results, as they do to ordinary database counts.
 
 ## Public failure contract
 

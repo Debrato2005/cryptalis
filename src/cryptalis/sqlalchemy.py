@@ -6,6 +6,7 @@ does not migrate schemas or qualify external writers. Research prototype.
 
 from contextvars import ContextVar
 from dataclasses import dataclass, field
+from datetime import date
 from functools import wraps
 from hashlib import sha256
 import json
@@ -24,18 +25,19 @@ from sqlalchemy.sql import operators, visitors
 from sqlalchemy.sql.annotation import Annotated, annotated_classes
 from sqlalchemy.sql import sqltypes as _native_types
 from sqlalchemy.sql.elements import BinaryExpression, BindParameter, BooleanClauseList, Cast, ClauseElement, ColumnClause, Grouping, Label, SavepointClause, RollbackToSavepointClause, ReleaseSavepointClause, TextClause, TypeCoerce, UnaryExpression, quoted_name, _anonymous_label, _truncated_label
-from sqlalchemy.sql.functions import FunctionElement
+from sqlalchemy.sql.functions import FunctionElement, count
 from sqlalchemy.sql.selectable import Alias, CTE, FromClause, Select, Join, Subquery
 from sqlalchemy.sql.dml import Insert, Update, Delete
 from sqlalchemy.types import JSON, NullType, TypeDecorator, TypeEngine, UserDefinedType
 
 from ._sqlalchemy_guard import install_guard
+from ._sqlalchemy_aggregate import count_shape, distinct_projection, identity_distinct
 from ._sqlmodel_types import autostring_impl
-from ._sqlalchemy_search import rewrite_search, search_shape, validate_search_storage
+from ._sqlalchemy_search import equality_expression, rewrite_search, search_shape, validate_search_storage
 from .crypto import CryptoFailure, AuthenticationFailed, FieldDescriptor, Keyring, KeyUnavailable, MAX_TEXT_BYTES, open_value, seal_value
 from .crypto.cf1 import _encode
 from .crypto.keys import InvalidText, InvalidValue, RepresentationMismatch
-from .manifest.compiler import _compiled_default, _value_default, _native_text_length, _previous_lock, _value_mapping_matches
+from .manifest.compiler import _LOCK_SCHEMAS, _compiled_default, _value_default, _native_text_length, _previous_lock, _value_mapping_matches
 from .manifest.parser import decode_manifest_json
 
 
@@ -149,6 +151,14 @@ class _Binding:
 
 
 def _assignment(value, binding):
+    if binding.descriptor.value_codec == 'uuid-bytes16/v1':
+        if value is not None and type(value) is not UUID:
+            raise InvalidValue()
+        return value
+    if binding.descriptor.value_codec == 'date-ordinal-u32/v1':
+        if value is not None and type(value) is not date:
+            raise InvalidValue()
+        return value
     width = {'pg-int2-be/v1': 2, 'pg-int4-be/v1': 4, 'pg-int8-be/v1': 8}.get(binding.descriptor.value_codec)
     if width is not None:
         if value is None:
@@ -262,7 +272,7 @@ def _unprotected_column_state(column):
             dtype, attributes, tuple(methods), column.table)
 
 
-def _delete_node(node, native):
+def _delete_node(node, native, *, allow_type_annotation=False):
     dispatch = getattr(node, '_compiler_dispatch', None)
     if type(dispatch) is not MethodType or dispatch.__self__ is not node:
         raise UnsupportedProtectedOperation()
@@ -274,12 +284,24 @@ def _delete_node(node, native):
         if any(_delete_name_state(getattr(effective, name)) != _delete_name_state(getattr(node, name))
                for name in names):
             raise UnsupportedProtectedOperation()
-        if native is Column and (effective.table is not node.table or effective.type is not node.type):
+        if native is Column and (effective.table is not node.table or
+                not allow_type_annotation and effective.type is not node.type):
             raise UnsupportedProtectedOperation()
         dispatch = node._compiler_dispatch
     if (type(node) is not native or type(dispatch) is not MethodType or dispatch.__self__ is not node or
             dispatch.__func__ is not native._original_compiler_dispatch or
             native._compiler_dispatch is not native._original_compiler_dispatch):
+        raise UnsupportedProtectedOperation()
+    return node
+
+
+def _select_node(node):
+    if type(node) is annotated_classes.get(Select):
+        return _delete_node(node, Select)
+    dispatch = getattr(node, '_compiler_dispatch', None)
+    if (type(dispatch) is not MethodType or dispatch.__self__ is not node
+            or dispatch.__func__ is not Select._original_compiler_dispatch
+            or Select._compiler_dispatch is not Select._original_compiler_dispatch):
         raise UnsupportedProtectedOperation()
     return node
 
@@ -321,7 +343,7 @@ class _ReadText(TypeDecorator):
         self.tenant = operation.tenant
         self.points = tuple(value for column, value in operation.points if column.compare(record_column))
         self.returning_frames = None
-        if operation.bulk_returning is binding:
+        if operation.bulk_returning is not None and id(binding.column) in operation.bulk_returning:
             if not operation.bulk_batch:
                 raise UnsupportedProtectedOperation()
             frames = {}
@@ -533,7 +555,8 @@ class _Attachment:
     def protected(self, expression):
         # ORM annotations can retain a native type from mapping construction.
         # Stable column lineage is authoritative, not a mutable type hint.
-        return any(isinstance(node, ColumnClause) and any(node.shares_lineage(b.column) for b in self.bindings)
+        lineage = {column for binding in self.bindings for column in binding.column.proxy_set}
+        return any(isinstance(node, ColumnClause) and lineage.intersection(node.proxy_set)
                    for node in visitors.iterate(expression))
 
     def _admit_textual_references(self, statement):
@@ -724,7 +747,7 @@ class _Attachment:
                 binding = _Binding(column, mapper.get_property_by_column(column).key, descriptor,
                                    record, mapper.get_property_by_column(record).key, tenant,
                                    mapper.get_property_by_column(tenant).key if tenant is not None else None,
-                                   mapper.class_, None if boolean or source['type'] in ('int2', 'int4', 'int8') else _native_text_length(source),
+                                   mapper.class_, _native_text_length(source) if source['type'] in ('text', 'varchar') else None,
                                    column.type.bind_processor(connection.dialect) if boolean else None,
                                    _compiled_default(field))
                 self.bindings.append(binding)
@@ -753,12 +776,31 @@ class _Attachment:
                       UnsafeDriverEvent, self.prepare_many)
         native_compiler = engine.dialect.statement_compiler
         class StorageCompiler(native_compiler):
+            def visit_function(compiler, function, add_to_result_map=None, **kw):
+                aggregate = count_shape(self, function, compiler.current_executable)
+                if aggregate is None and isinstance(function, count) and self.protected(function):
+                    raise UnsupportedProtectedOperation()
+                if aggregate is None or not aggregate[3]:
+                    return super().visit_function(function, add_to_result_map=add_to_result_map, **kw)
+                generated = func.count(equality_expression(aggregate[2]).distinct(), type_=function.type)
+                result_map = None
+                if add_to_result_map is not None:
+                    def result_map(key, name, objects, dtype):
+                        return add_to_result_map(key, name, (function, *objects), dtype)
+                return super().visit_function(generated, add_to_result_map=result_map, **kw)
+
             def get_select_precolumns(compiler, select, **kw):
                 modifier = super().get_select_precolumns(select, **kw)
                 # PostgreSQL's public compiler hook emits only DISTINCT here.
                 # Check its modifier, not arbitrary user SQL text.
-                if modifier and (any(self.protected(c) for c in select.selected_columns) or self.protected(select)):
-                    raise UnsupportedProtectedOperation()
+                if modifier and any(self.protected(c) for c in select.selected_columns):
+                    if identity_distinct(self, select) is not None:
+                        return modifier
+                    projection = distinct_projection(self, select)
+                    if projection is None:
+                        raise UnsupportedProtectedOperation()
+                    column = projection[0]
+                    return 'DISTINCT ON (' + compiler.process(equality_expression(column), **kw) + ') '
                 return modifier
         engine.dialect.statement_compiler = StorageCompiler
 
@@ -796,24 +838,31 @@ class _Attachment:
             raise UnsupportedProtectedOperation()
         return operation
 
-    def returning_binding(self, statement, bulk):
+    def returning_signature(self, statement, bulk):
         if not statement._returning:
             return None
-        if (len(statement._returning) != 1 or statement._with_options or
-                type(statement._sort_by_parameter_order) is not bool):
+        if statement._with_options or type(statement._sort_by_parameter_order) is not bool:
             raise UnsupportedProtectedOperation()
-        return self.returning_column(statement._returning[0], bulk)
+        for root in statement._returning:
+            if isinstance(root, Table) and _delete_node(root, Table) is not bulk:
+                raise UnsupportedProtectedOperation()
+        columns = tuple(statement._all_selected_columns)
+        signature = tuple(self.returning_column_identity(column, bulk) for column in columns)
+        self.select_types(select(*columns))
+        return signature
 
-    def returning_column(self, column, bulk):
+    def returning_column_identity(self, column, bulk):
         if not isinstance(column, ColumnClause) or column.is_literal or column.table is not bulk:
             raise UnsupportedProtectedOperation()
-        # ORM annotations can retain native types. Resolve the owned physical
-        # column by lineage, as for SELECT; native compilation deannotates it.
-        bindings = [binding for binding in self.bindings if binding.column.table is bulk and
-                    column.shares_lineage(binding.column)]
-        if len(bindings) != 1:
+        native = _delete_node(column, Column if isinstance(column, Column) else ColumnClause,
+                              allow_type_annotation=True)
+        if (native is not bulk.c.get(column.key)
+                or _delete_name_state(column.name) != _delete_name_state(native.name)):
             raise UnsupportedProtectedOperation()
-        return bindings[0]
+        if type(native.type) is not _Payload:
+            self.select_dispatch(native.type)
+            self.bind_type(native.type, selecting=True)
+        return id(native)
 
     @classmethod
     def identity_type(cls, dtype, *, uuid_only=False):
@@ -1147,6 +1196,9 @@ class _Attachment:
             self.update_context(statement, bulk, operation.tenant, generated=True)
             return
         if bulk is not None and isinstance(statement, Insert):
+            _delete_node(statement, Insert)
+            if _delete_node(statement.table, Table) is not bulk:
+                raise UnsupportedProtectedOperation()
             if (statement.table.name != bulk.name or statement.table.schema != bulk.schema or
                     not all(column.key in statement.table.c and
                             statement.table.c[column.key].shares_lineage(column) for column in bulk.c) or
@@ -1158,28 +1210,41 @@ class _Attachment:
             operation = _operation.get()
             current = operation is not None and operation.owner is self and operation.bulk_insert is bulk
             if statement._return_defaults:
-                binding = operation.bulk_returning if current else None
-                primary = inspect(binding.model).primary_key if binding is not None else ()
+                returning = operation.bulk_returning if current else None
+                primary = tuple(bulk.primary_key) if returning is not None else ()
                 defaults = statement._return_defaults_columns or ()
                 supplemental = statement._supplemental_returning or ()
-                if (binding is None or len(defaults) != len(primary) or
+                if (returning is None or len(defaults) != len(primary) or
                         any(not isinstance(left, ColumnClause) or left.is_literal or left.table is not bulk or
                             not left.shares_lineage(right) for left, right in zip(defaults, primary)) or
                         statement._with_options or type(statement._sort_by_parameter_order) is not bool):
                     raise UnsupportedProtectedOperation()
                 if statement._returning:
-                    if supplemental or self.returning_binding(statement, bulk) is not binding:
+                    if supplemental or self.returning_signature(statement, bulk) != returning:
                         raise UnsupportedProtectedOperation()
-                elif len(supplemental) != 1 or self.returning_column(supplemental[0], bulk) is not binding:
+                elif tuple(self.returning_column_identity(column, bulk) for column in supplemental) != returning:
                     raise UnsupportedProtectedOperation()
             else:
-                binding = self.returning_binding(statement, bulk)
-                if current and binding is not operation.bulk_returning:
+                returning = self.returning_signature(statement, bulk)
+                if current and returning != operation.bulk_returning:
                     raise UnsupportedProtectedOperation()
             return
         if not isinstance(statement, Select):
             raise UnsupportedProtectedOperation()
         nodes = self.select_types(statement)
+        count_nodes, count_roots = set(), set()
+        for selection in (node for node in nodes if isinstance(node, Select)):
+            protected_outputs = any(self.protected(output) for output in selection.selected_columns)
+            if protected_outputs or self.protected(selection):
+                _select_node(selection)
+            if selection._distinct and protected_outputs:
+                if identity_distinct(self, selection) is None and distinct_projection(self, selection) is None:
+                    raise UnsupportedProtectedOperation()
+            for output in selection.selected_columns:
+                shape = count_shape(self, output, selection)
+                if shape is not None:
+                    count_roots.add(id(shape[0]))
+                    count_nodes.update(id(part) for part in visitors.iterate(shape[0]))
         safe_count_stars = set()
         for node in nodes:
             operation = _operation.get()
@@ -1218,11 +1283,18 @@ class _Attachment:
                             raise UnsupportedProtectedOperation()
             # Parentheses carry no new operation. Their children still pass
             # every admission check below; do not reject native AND/OR grouping.
-            if self.protected(node) and not isinstance(node, (Select, FromClause, ColumnClause, Label, Grouping)):
+            if (id(node) not in count_nodes and self.protected(node)
+                    and not isinstance(node, (Select, FromClause, ColumnClause, Label, Grouping))):
                 boolean = isinstance(node, BooleanClauseList) and node.operator in (operators.and_, operators.or_)
                 if not boolean and search_shape(self, node) is None:
                     raise UnsupportedProtectedOperation()
             if isinstance(node, Select):
+                for output in node.selected_columns:
+                    root = output
+                    while isinstance(root, (Label, Grouping)):
+                        root = root.element
+                    if id(root) in count_nodes and id(root) not in count_roots and not isinstance(root, ColumnClause):
+                        raise UnsupportedProtectedOperation()
                 def ungroup(expression):
                     while isinstance(expression, Grouping):
                         expression = expression.element
@@ -1784,7 +1856,7 @@ def _bulk_insert(state):
     if statement._return_defaults:
         raise UnsupportedProtectedOperation()
     owner.admit(statement, bulk=table)
-    returning = owner.returning_binding(statement, table)
+    returning = owner.returning_signature(statement, table)
     options = state.execution_options
     if (set(options) - {'render_nulls', 'autoflush', 'dml_strategy', 'prebuffer_rows',
                        '_sa_orm_insert_options', '_result_disable_adapt_to_context'} or
@@ -2128,7 +2200,7 @@ def attach(mapping: registry, engine: Engine | AsyncEngine, *, lock: bytes, keys
     try:
         document = decode_manifest_json(lock)
         if (not isinstance(mapping, registry) or not isinstance(engine, (Engine, AsyncEngine)) or
-                document["schema"] not in ("cryptalis.lock/v1", "cryptalis.lock/v2", "cryptalis.lock/v3", "cryptalis.lock/v4", "cryptalis.lock/v5", "cryptalis.lock/v6", "cryptalis.lock/v7") or document["profile"] != "cf1"):
+                document["schema"] not in _LOCK_SCHEMAS or document["profile"] != "cf1"):
             raise PolicyMismatch()
         native_engine = engine.sync_engine if isinstance(engine, AsyncEngine) else engine
         if native_engine.echo or not native_engine.hide_parameters:

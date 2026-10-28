@@ -2,12 +2,14 @@
 
 from sqlalchemy import LargeBinary, String, Text, TEXT, Unicode, UnicodeText, Uuid, VARCHAR, and_, or_, bindparam, func, literal, literal_column, type_coerce
 from sqlalchemy.sql import operators, visitors
-from sqlalchemy.sql.elements import BinaryExpression, BindParameter, ColumnClause, Null
+from sqlalchemy.sql.elements import BinaryExpression, BindParameter, ColumnClause, Grouping, Label, Null
+from sqlalchemy.sql.functions import count
 from sqlalchemy.types import NullType, TypeDecorator
 
 from .crypto.cf1 import equality_term
 from .manifest.compiler import _catalog_path
 from ._sqlmodel_types import autostring_impl
+from ._sqlalchemy_aggregate import count_shape, distinct_projection, identity_distinct
 
 
 class _SearchValue(TypeDecorator):
@@ -63,7 +65,24 @@ def search_shape(owner, expression):
     return bindings[0], left, right, null
 
 
+def equality_expression(column):
+    """Match the frozen equality index in both custom and generic PG plans."""
+    return func.pg_catalog.substring(type_coerce(column, LargeBinary()),
+                                     literal_column("15"), literal_column("32"), type_=LargeBinary())
+
+
 def rewrite_search(owner, statement, operation):
+    identity = identity_distinct(owner, statement)
+    distinct = distinct_projection(owner, statement) if identity is None else None
+    outputs = tuple(statement.selected_columns) if identity is not None or distinct is not None else ()
+    private = identity if identity is not None else ((outputs[0], *distinct),) if distinct is not None else ()
+    for output, _, binding in private:
+        wrapper = output
+        while isinstance(wrapper, (Label, Grouping)):
+            # Keep result keys and use the owned authenticated projection hook.
+            wrapper.type = binding.column.type
+            wrapper = wrapper.element
+    projections = {id(output) for output in outputs}
     # SQLAlchemy merges named placeholders. Multiple definitions without an
     # explicit value have compiler-dependent default precedence, outside this
     # bounded grammar. A shared bind object and supplied values are unambiguous.
@@ -84,6 +103,10 @@ def rewrite_search(owner, statement, operation):
         raise UnsupportedProtectedOperation()
 
     def replace(node):
+        # Counts have no search predicates inside their admitted arguments.
+        # Keep their identity so ORM result mappings retain expression keys.
+        if id(node) in projections or isinstance(node, count) or count_shape(owner, node, statement) is not None:
+            return node
         shape = search_shape(owner, node)
         if shape is None:
             return None
@@ -94,7 +117,7 @@ def rewrite_search(owner, statement, operation):
         else:
             # Fixed offsets must be SQL constants, so PostgreSQL generic plans
             # match the expression index as well as custom plans.
-            term = func.pg_catalog.substring(physical, literal_column("15"), literal_column("32"), type_=LargeBinary())
+            term = equality_expression(column)
             # A separate placeholder per occurrence preserves shared named binds
             # across fields and native expressions, which use different codecs.
             supplied = value.key in operation.parameters
@@ -185,7 +208,7 @@ def _frame_expressions(field, quote):
     """Known PG16 forms of one declared CF1 policy, including dump/restore."""
     column = quote(field['column'])
     overhead = 74 if field['queries'] else 42
-    width = {'bool': 1, 'int2': 2, 'int4': 4, 'int8': 8}.get(field['source']['type'])
+    width = {'bool': 1, 'int2': 2, 'int4': 4, 'int8': 8, 'date': 4, 'uuid': 16}.get(field['source']['type'])
     minimum, maximum = (42 + width, 42 + width) if width is not None else (overhead, 16777216 + overhead)
     magic = '434631000101' if field['queries'] else '434631000100'
     comparison = '<>' if field['queries'] else '='
