@@ -1,6 +1,7 @@
 """Finite native Date values survive authenticated storage and native exit."""
 import asyncio
 import os
+import subprocess
 from datetime import date
 from uuid import UUID
 
@@ -11,6 +12,7 @@ from sqlalchemy.ext.asyncio import create_async_engine
 from test_deprotection import app_pin, consent, d, proposal, reverse
 from test_migration import TENANT, application, frames, keys, publish, run
 
+from cryptalis.manifest.compiler import PlanningRejected
 from cryptalis.sqlalchemy import attach
 
 
@@ -71,3 +73,56 @@ def test_date_protection_sync_async_current_edit_count_and_native_removal(public
                 f'SELECT id,tenant_id,name FROM "{app.schema}".customer')} == expected
         if public_slots:
             assert slots(app) == original_slots
+
+
+@pytest.mark.parametrize('value', ['infinity', '-infinity', '10000-01-01', '0001-01-01 BC'])
+def test_date_bounds_refuse_in_planning_before_generated_columns(value):
+    from test_public_slots import select_layout
+    with application(rows=0, value_type=Date(), queries=[]) as app:
+        with app.owner.begin() as connection:
+            connection.exec_driver_sql(f'INSERT INTO "{app.schema}".customer (id,tenant_id,name) '
+                'VALUES (%s,%s,%s::date)', (UUID(int=100), TENANT, value))
+        with pytest.raises(app.m.TransitionFailure) as refused:
+            select_layout(app)
+        assert refused.value.code == 'date_outside_python_range'
+        with app.owner.connect() as connection:
+            assert tuple(connection.exec_driver_sql(f'SELECT * FROM "{app.schema}".customer LIMIT 0').keys()) == (
+                'id', 'tenant_id', 'name', 'label')
+
+
+@pytest.mark.parametrize('case', ['search', 'default', 'custom_type'])
+def test_date_unadmitted_intents_defaults_and_custom_mapping_refuse(case):
+    class CustomDate(Date):
+        pass
+    with pytest.raises(PlanningRejected) as refused, application(
+            rows=0, value_type=CustomDate() if case == 'custom_type' else Date(),
+            queries=['equality'] if case == 'search' else [],
+            value_default=date(2020, 1, 1) if case == 'default' else None):
+        pytest.fail('unadmitted date configuration reached a plan')
+    assert {'search': 'unsupported_query', 'default': 'protected_default',
+            'custom_type': 'unsupported_type'}[case] in {issue.code for issue in refused.value.issues}
+
+
+def test_previous_reader_refuses_date_plan_before_connecting(tmp_path):
+    reader = os.environ.get('CRYPTALIS_PREVIOUS_READER_PYTHON')
+    if not reader:
+        pytest.skip('supply a retained pre-date reader interpreter')
+    with application(rows=0, value_type=Date(), queries=[]) as app:
+        artifact = tmp_path / 'date-plan.json'
+        artifact.write_bytes(app.plan.artifact)
+        child = subprocess.run([reader, '-B', '-I', '-c', '''
+import sys
+from pathlib import Path
+from sqlalchemy.engine import Engine
+def forbidden(*args, **kwargs):
+    raise AssertionError('old reader must refuse before SQL')
+Engine.connect = forbidden
+from cryptalis import migration as m
+try:
+    m.MigrationPlan(Path(sys.argv[1]).read_bytes())
+except m.TransitionFailure:
+    print('date reader refused')
+else:
+    raise AssertionError('old reader admitted the date plan')
+''', str(artifact)], check=False, capture_output=True, text=True, timeout=20)
+        assert child.returncode == 0 and child.stdout.strip() == 'date reader refused', 'old reader refusal failed'
