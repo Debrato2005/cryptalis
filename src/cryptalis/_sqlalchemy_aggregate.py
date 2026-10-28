@@ -9,8 +9,10 @@ from sqlalchemy.sql.elements import (
     BooleanClauseList,
     ClauseList,
     ColumnClause,
+    FunctionFilter,
     Grouping,
     Label,
+    Over,
     UnaryExpression,
 )
 from sqlalchemy.sql.functions import count
@@ -67,6 +69,20 @@ def count_shape(owner, expression, selection=None):
     while isinstance(expression, (Label, Grouping)):
         wrappers.append((expression, Label if isinstance(expression, Label) else Grouping))
         expression = expression.element
+    root = expression
+    window = False
+    while isinstance(expression, (FunctionFilter, Over)):
+        wrappers.append((expression, FunctionFilter if isinstance(expression, FunctionFilter) else Over))
+        if isinstance(expression, FunctionFilter):
+            if owner.protected(expression.criterion):
+                return None
+            expression = expression.func
+        else:
+            if any(part is not None and owner.protected(part)
+                   for part in (expression.partition_by, expression.order_by)):
+                return None
+            window = True
+            expression = expression.element
     if not isinstance(expression, count):
         return None
     arguments = tuple(expression.clauses)
@@ -75,7 +91,7 @@ def count_shape(owner, expression, selection=None):
     column = arguments[0]
     distinct = isinstance(column, UnaryExpression) and column.operator is operators.distinct_op
     if distinct:
-        if column.modifier is not None:
+        if column.modifier is not None or window:
             return None
         wrappers.append((column, UnaryExpression))
         column = column.element
@@ -110,4 +126,4 @@ def count_shape(owner, expression, selection=None):
             or type(expression.type) is not Integer
             or expression.clause_expr.element.operator is not operators.comma_op):
         raise UnsupportedProtectedOperation()
-    return expression, bindings[0], column, distinct
+    return root, bindings[0], column, distinct

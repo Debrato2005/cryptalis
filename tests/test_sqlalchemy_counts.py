@@ -278,6 +278,44 @@ def test_distinct_count_rejects_global_or_forged_tenant_scope_before_statement_k
                 assert called == [] and observed == []
 
 
+@pytest.mark.parametrize('protected', [False, True], ids=['native', 'attached'])
+@pytest.mark.parametrize('mode', ['sync', 'async'])
+def test_nonnull_count_filters_and_windows_over_public_fields_match_native(protected, mode):
+    with search_application(protected, attach_now=False) as app:
+        model = app.Customer
+        values = [None, 'repeat', 'repeat', '', None]
+        cases = (
+            (select(func.count(model.name).filter(model.rank >= 2)).where(_scope(app)), [(2,)]),
+            (select(func.count(model.name.distinct()).filter(model.rank >= 1)).where(_scope(app)), [(2,)]),
+            (select(func.count(model.name).filter(model.rank < 0)).where(_scope(app)), [(0,)]),
+            (select(model.rank, func.count(model.name).over(order_by=model.rank, rows=(None, 0)))
+             .where(_scope(app)).order_by(model.rank), [(0, 0), (1, 1), (2, 2), (3, 3), (4, 3)]),
+            (select(model.rank, func.count(model.name).filter(model.rank >= 2).over(
+                partition_by=model.tenant_id).label('present')).where(_scope(app)).order_by(model.rank),
+             [(rank, 2) for rank in range(5)]),
+        )
+        if mode == 'sync':
+            if protected:
+                app.sessions = attach(app.mapping, app.engine, lock=app.plan.lock_bytes, keys=app.keys)
+            with app.sessions(tenant_id=app.tenant) as session:
+                session.add_all(_row(app, value, rank) for rank, value in enumerate(values))
+                session.commit()
+                for statement, expected in cases:
+                    assert session.execute(statement).all() == expected
+        else:
+            async def scenario():
+                engine, sessions = await _async_factory(app)
+                try:
+                    async with sessions(tenant_id=app.tenant) as session:
+                        session.add_all(_row(app, value, rank) for rank, value in enumerate(values))
+                        await session.commit()
+                        for statement, expected in cases:
+                            assert (await session.execute(statement)).all() == expected
+                finally:
+                    await engine.dispose()
+            asyncio.run(scenario())
+
+
 def test_custom_counts_and_unadmitted_aggregate_wrappers_refuse_before_keys_and_sql():
     with search_application(attach_now=False) as app:
         model = app.Customer
@@ -290,15 +328,19 @@ def test_custom_counts_and_unadmitted_aggregate_wrappers_refuse_before_keys_and_
 
         mutated = func.count(model.name)
         mutated._compiler_dispatch = MethodType(lambda self, visitor, **kw: 'count(*)', mutated)
+        custom_window = func.count(model.name).over()
+        custom_window._compiler_dispatch = MethodType(lambda self, visitor, **kw: 'count(*) OVER ()', custom_window)
         shared = func.count(model.name)
         statements = (
-            select(CustomCount(model.name)), select(mutated),
+            select(CustomCount(model.name)), select(mutated), select(custom_window),
             select(func.pg_catalog.count(model.name)),
             select(func.count(model.name.label('not_a_direct_column'))),
             select(func.count(model.name + 'suffix')),
             select(func.count(func.lower(model.name))),
-            select(func.count(model.name).over()),
-            select(func.count(model.name).filter(model.rank > 0)),
+            select(func.count(model.name).over(order_by=model.name)),
+            select(func.count(model.name).over(partition_by=model.name)),
+            select(func.count(model.name).filter(model.name == 'repeat')),
+            select(func.count(model.name.distinct()).over()).where(model.tenant_id == app.tenant),
             select(func.count(model.name.distinct())),
             select(shared, shared.clause_expr), select(shared.clause_expr, shared),
             select(shared, shared.clause_expr.element), select(shared.clause_expr.element, shared),
