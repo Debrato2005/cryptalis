@@ -40,8 +40,16 @@ Every protected table declares a tenant column or declares itself single-tenant.
 Primary keys must be application-generated, such as UUID, Snowflake-style, or another app-assigned ID.
 `plan` rejects serial, identity, and database-default-generated keys with a plain explanation.
 
+**IMPLEMENTED, bounded local verification:** direct protected-column `COUNT`,
+public-field count filters and non-distinct windows, plus equality-backed
+`COUNT(DISTINCT column)` within one provable tenant per group. Public-column
+`DISTINCT` can also use admitted encrypted WHERE filters. The
+[reporting examples and measured costs](docs/professor-guide.md#count-reports-over-encrypted-values)
+explain these additions and their limits.
+
 **CURRENTLY UNADMITTED:** comparisons and ranges, `ORDER BY`, `LIKE`/prefix/contains, regex,
-`SUM`/`AVG`/`MIN`/`MAX`, general `DISTINCT`, protected joins, structured JSON and non-text protected types.
+`SUM`/`AVG`/`MIN`/`MAX`, general protected `DISTINCT`, protected joins, structured JSON and
+additional protected types beyond the documented text/Boolean scope and internal integer candidate.
 These remain full-SRS engineering objectives. Their runtime refusal does not complete the feature.
 Other unadmitted operators also fail. Do not protect a field whose required queries use these operations.
 Queries on unprotected fields retain their native semantics.

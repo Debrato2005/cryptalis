@@ -12,6 +12,13 @@ All other contract and promotion requirements are SPECIFIED. All seven full gate
 
 ## Local assignment explanation and inspection profile: 2026-10-28
 
+**VERIFIED, installed wheel:** the reporting/search/Doctor selection passes
+120 checks on PostgreSQL 16.15 through the actual wheel. The
+[installed receipt](_reset/count-installed-20261028.json) records unchanged source
+and three role probes. TEXT, Boolean and all three internal integer widths retain
+native non-NULL counts after real protection. This does not promote the internal
+integer candidate or the production gates.
+
 **VERIFIED, local PostgreSQL 16.15:** matched count fixtures return the same
 non-NULL/distinct totals for native text and attached CF1. The
 [31-sample paired profile](_reset/count-performance-20261028.json) records warm

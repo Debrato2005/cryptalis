@@ -62,6 +62,7 @@ encryption with a stated trade-off, not a claim that database activity is hidden
 |---|---|---|
 | Values | TEXT/VARCHAR and storage-only Boolean; internal signed-integer candidate | Integer full admission and additional types remain pending |
 | Search | Exact equality, IN, admitted NULL/negative forms and tenant-scoped uniqueness | Protected ranges, ordering, text patterns and general aggregates refuse |
+| Reports | Non-NULL counts, one-tenant distinct counts, public count filters/windows and public DISTINCT with encrypted filters | General protected grouping, joins and other aggregate families remain pending |
 | Application integration | Sync/async SQLAlchemy and a synchronous SQLModel bridge | Selected operations and mappings, not arbitrary SQL |
 | Migration | Atomic resumable chunks, verification and publication-gated cutover | Initial online text capture still needs a final write pause |
 | Recovery | Protected backups, fresh-cluster adoption and stale-authority refusal | Local fixtures do not establish production disaster-recovery targets |
