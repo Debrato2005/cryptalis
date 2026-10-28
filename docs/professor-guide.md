@@ -74,6 +74,24 @@ These statements summarize [implementation status](status.md), not new test runs
 The [34-objective ledger](BUILD_CHECKLIST.md#objective-ledger) retains the full
 requirements and each remaining gap.
 
+## Work still open
+
+The repository's baseline is broader than this demonstration. These are actual
+implementation gaps, even with production qualification excluded:
+
+| Area | Remaining work |
+|---|---|
+| Protected queries | Ranges, ordering, exact text patterns, general grouping/joins and SUM/AVG/MIN/MAX |
+| Types | Additional scalar and structured JSON contracts; full admission of the internal integer candidate |
+| Integration | Broader bulk/RETURNING routes, upserts, trigger/cascade cases and automatic query/writer inventory |
+| Migration | Parallel/adaptive execution and broader online type coverage |
+| Measurements | Cold and saturated workloads, larger concurrent profiles, resource limits and pause/recovery budgets |
+
+These features need their own stored representations, query contracts or
+integration work. The counts added here reuse existing storage. Live provider
+qualification, production deployment assurance and independent security review
+remain outside the college demonstration.
+
 ## Count reports over encrypted values
 
 `COUNT(column)` counts non-NULL stored values without decrypting every row.
