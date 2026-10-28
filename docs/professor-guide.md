@@ -141,3 +141,6 @@ workload. Earlier slower measurements and unresolved anomalies remain in
 Keep the distinction between a design, implemented code and recorded verification
 visible. A refused unsupported query is a useful correctness demonstration, but
 it does not mean that query capability has been implemented.
+
+Use the [local run guide](local-development.md) to reproduce the checks and
+regenerate the figures without configuring a cloud account.
