@@ -462,7 +462,7 @@ def test_unprepared_opaque_computed_nested_ddl_and_raw_driver_paths_reject(app):
               update(Customer).values(note=func.lower("private")), select(func.lower(Customer.note)),
               select(Customer).where(Customer.note == "private"), select(Customer).order_by(Customer.note),
               select(Customer).where(Customer.rank.in_(select(func.length(Customer.note)))),
-              select(Customer).distinct(), select(Customer.note).distinct(),
+              select(Customer.note, Customer.secret).distinct(), select(Customer.note).distinct(),
               select(Customer.note).group_by(Customer.note), select(func.count(Customer.note.distinct())),
               select(Customer.note.label("protected_value")).order_by("protected_value"),
               select(literal_column("1")), select(type_coerce(Customer.note, Text))]
