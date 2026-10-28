@@ -25,6 +25,13 @@ No objective is complete until its acceptance evidence and applicable gate pass.
 
 ## Current boundary
 
+- Tenant maintenance now has operational plan/apply/activate/abort commands,
+  host-only policy authority and durable successor retention before effects.
+  The 96-check source matrix and two new integrated/installed journeys pass;
+  three existing adopted-profile opt-ins skip. Source v15 is exercised; a new
+  genuine v16 CLI drill remains unverified. See the
+  [checkpoint](status.md#tenant-policy-maintenance-cli-2026-10-28).
+
 - The installed int4 keyword identifier now passes genuine fresh recovery in
   both layouts, exact CHECK restatement, latest-value removal and package-free
   native restart. The default-name source fresh control also passes. See the

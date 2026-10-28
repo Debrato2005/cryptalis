@@ -201,6 +201,26 @@ covers this Python API with O(N) verification and a global writer pause. It is
 not scalable online tenant signup or a new policy service. Host authentication,
 external custody/publication and production fencing remain separate obligations.
 
+The CLI exposes the same authority through explicit host contexts:
+
+```sh
+cryptalis tenants provision plan active.json --host-context host:tenant_plan --out tenant-proposal.json --json
+cryptalis tenants provision apply tenant-proposal.json --host-context host:tenant_apply --out tenant-successor.json --json
+cryptalis tenants provision activate tenant-successor.json --host-context host:tenant_activate --json
+```
+
+Use `TenantPlanningContext` for the exact approved UUID/Keyring and current
+source authority. Apply and activation require their distinct exact host context
+types. Retain and publish the successor outside the database before activation;
+the CLI does not supply that publication. To retry apply, add `--resume` with its
+exact operation UUID and reuse the exact private successor path. To cancel a
+pending addition, republish source ACTIVE authority and use `tenants provision
+abort tenant-proposal.json --host-context host:tenant_abort --json` with a
+`TenantAbortContext` containing source-only keys. Each factory returns a fresh
+owned synchronous psycopg Engine with parameter hiding and SQL echo disabled.
+The [CLI checkpoint](status.md#tenant-policy-maintenance-cli-2026-10-28)
+records the source/installed v15 boundary and the unverified fresh v16 CLI drill.
+
 | Change | Engine action |
 |---|---|
 | Protect or stop protection | Transform payload, create/drop declared search representations, verify, switch, contract |

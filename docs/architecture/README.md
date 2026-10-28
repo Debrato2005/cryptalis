@@ -129,6 +129,21 @@ publication, privacy and Doctor boundaries remain unchanged. See the
 [verified checkpoint](../status.md#operational-cli-reverse-and-removal-2026-10-24).
 Source and installed genuine fresh-target verification pass.
 
+### Tenant-policy maintenance CLI
+
+**IMPLEMENTED, bounded source and installed verification:** `tenants provision
+plan|apply|activate|abort` reuses the maintenance tenant API and shared policy
+transition runner. The trusted host supplies the approved typed UUID/Keyring;
+there is no CLI-selected tenant/key authority. `TenantPlanningContext` carries
+`engine`, `source_keys`, `source_pin`, `tenant_id`, `key_policy`,
+`verify_rows_per_second` and `restore`. Distinct apply/activation contexts carry
+`engine`, `keys`, `pin` and `approval`; abort carries `engine`, `source_keys`,
+`source_pin` and `approval`. The existing engine and synchronous-resolver rules
+apply. Apply retains the exact private successor durably before host loading or
+database effects. Actual host publication and source-only cancel authority stay
+external. See the [procedure](../lifecycle.md#add-an-empty-tenant-policy-under-maintenance)
+and [evidence](../status.md#tenant-policy-maintenance-cli-2026-10-28).
+
 ### Root-rewrap CLI
 
 **IMPLEMENTED, bounded source and installed verification:** `keys rotate rewrap plan SOURCE --out P`

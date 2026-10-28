@@ -10,6 +10,39 @@ No PostgreSQL/provider/runtime cell, production key provider, independent review
 VERIFIED below refers only to the named checks and their exact revisions.
 All other contract and promotion requirements are SPECIFIED. All seven full gates remain UNKNOWN.
 
+## Tenant-policy maintenance CLI: 2026-10-28
+
+**VERIFIED, bounded source and installed cells:** `cryptalis tenants provision
+plan|apply|activate|abort` now composes the existing maintenance tenant API.
+Exact typed UUID and Keyring approval come only from the trusted host factory.
+Apply durably retains the exact private successor before loading host code or
+attempting database effects. Existing artifacts require the explicit matching
+operation UUID to resume. Activation uses the saved v15/v16 successor and actual
+host ACTIVATING pin; abort requires republished source ACTIVE authority and
+source keys. Safe failures retain artifact facts without inventing database
+progress. Host-owned engines are disposed on success and failure.
+
+The shared policy-transition runner preserves the existing rewrap CLI path.
+The 96-check source CLI/status/Doctor matrix passes, with three existing opt-in
+adopted-profile skips. Both new tenant journeys pass in the integrated source
+and installed wheel. They exercise read-only planning, PENDING/resume, premature
+activation refusal before keys, approved first protected write/equality, exact
+old-row identity, status/Doctor, source-only cancel/repeat and durable-artifact
+retry after host failure. An initial installed invocation omitted the required
+source-role opt-in and skipped both tests; the corrected three-role run passes.
+All receipts retain their exact source/runtime bindings. Independent scoped
+agent review accepts the four changed files.
+
+The reproducible wheel SHA-256 is
+`88de0689f0cff4a3ebec21c6c747d1dfc999b412897f238f121a181393ed8f3b`;
+44 modules, 48 installed files and CLI inspection pass. The
+[boundary](_reset/tenant-cli-boundary-20261028.json) archives exact evidence.
+These CLI journeys exercise normal v15, not a new genuine fresh v16 CLI drill.
+The prior Python/HTTP restored-tenant evidence remains separate. The O(N)
+verification/global writer pause, trusted host effects, external publication and
+custody obligations remain. No production gate or human review is qualified.
+All 34 objectives remain in scope and all seven gates remain UNKNOWN.
+
 ## Keyword identifier fresh recovery: 2026-10-28
 
 **VERIFIED, bounded installed and source cells:** the unchanged identifier-fix
