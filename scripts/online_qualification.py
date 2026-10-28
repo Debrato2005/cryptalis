@@ -20,8 +20,15 @@ def main():
                         help='Run the pinned original HTTP application through online capture and native exit.')
     profiles.add_argument('--http-fresh', action='store_true',
                          help='Recover the online HTTP backup on a new cluster, rotate keys and restore native operation.')
+    profiles.add_argument('--fresh-scalar', choices=('date', 'boolean', 'int16', 'int32', 'int64'),
+                         help='Qualify typed storage, rotations, fresh restore and package-free exit.')
+    parser.add_argument('--public-slots', action='store_true', help='Preserve public slots in scalar recovery.')
     parser.add_argument('pytest_args', nargs=argparse.REMAINDER)
     args = parser.parse_args()
+    if args.public_slots and (not args.fresh_scalar or args.fresh_scalar == 'boolean'):
+        parser.error('--public-slots requires --fresh-scalar date/int16/int32/int64')
+    if args.fresh_scalar and args.pytest_args:
+        parser.error('--fresh-scalar runs its fixed export/restore profile; omit pytest arguments')
     args.workdir.mkdir(mode=0o700, parents=True, exist_ok=False)
     manifest = {'owner_role':'cryptalis_online_owner',
                 'runtime_role':'cryptalis_online_runtime', 'database':'cryptalis_online'}
@@ -49,6 +56,13 @@ def main():
             environment['CRYPTALIS_ONLINE_HTTP_REPORT'] = str(source/'application.json')
         if args.http_fresh:
             environment['CRYPTALIS_ONLINE_HTTP_BACKUP_DIR'] = str(backup)
+        if args.fresh_scalar:
+            command = [sys.executable, str(root/'scripts/fresh_cluster_qualification.py'),
+                       '--workdir', str(args.workdir/'recovery')]
+            command += (['--integer', args.fresh_scalar[3:]] if args.fresh_scalar.startswith('int')
+                        else ['--' + args.fresh_scalar])
+            if args.public_slots:
+                command.append('--public-slots')
         result = subprocess.run(command,cwd=root,env=environment).returncode
     finally:
         if cluster is not None: stop_cluster(cluster)
