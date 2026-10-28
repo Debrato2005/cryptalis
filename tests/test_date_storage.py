@@ -108,12 +108,16 @@ def test_date_unadmitted_intents_defaults_and_custom_mapping_refuse(case):
             'custom_type': 'unsupported_type'}[case] in {issue.code for issue in refused.value.issues}
 
 
-def test_previous_reader_refuses_date_plan_before_connecting(tmp_path):
-    reader = os.environ.get('CRYPTALIS_PRE_DATE_READER_PYTHON')
+@pytest.mark.parametrize('dtype,environment', [
+    (Date(), 'CRYPTALIS_PRE_DATE_READER_PYTHON'),
+    (Uuid(), 'CRYPTALIS_PRE_UUID_READER_PYTHON'),
+])
+def test_previous_reader_refuses_scalar_plan_before_connecting(tmp_path, dtype, environment):
+    reader = os.environ.get(environment)
     if not reader:
-        pytest.skip('supply a retained pre-date reader interpreter')
-    with application(rows=0, value_type=Date(), queries=[]) as app:
-        artifact = tmp_path / 'date-plan.json'
+        pytest.skip('supply a retained pre-scalar reader interpreter')
+    with application(rows=0, value_type=dtype, queries=[]) as app:
+        artifact = tmp_path / 'scalar-plan.json'
         artifact.write_bytes(app.plan.artifact)
         child = subprocess.run([reader, '-B', '-I', '-c', '''
 import sys
@@ -126,8 +130,22 @@ from cryptalis import migration as m
 try:
     m.MigrationPlan(Path(sys.argv[1]).read_bytes())
 except m.TransitionFailure:
-    print('date reader refused')
+    print('scalar reader refused')
 else:
-    raise AssertionError('old reader admitted the date plan')
+    raise AssertionError('old reader admitted the scalar plan')
 ''', str(artifact)], check=False, capture_output=True, text=True, timeout=20)
-        assert child.returncode == 0 and child.stdout.strip() == 'date reader refused', 'old reader refusal failed'
+        assert child.returncode == 0 and child.stdout.strip() == 'scalar reader refused', 'old reader refusal failed'
+
+
+@pytest.mark.parametrize('case', ['search', 'default', 'custom_type', 'text_values', 'emulated'])
+def test_uuid_unadmitted_configuration_refuses(case):
+    class CustomUuid(Uuid):
+        pass
+    dtype = {'custom_type': CustomUuid(), 'text_values': Uuid(as_uuid=False),
+             'emulated': Uuid(native_uuid=False)}.get(case, Uuid())
+    with pytest.raises(PlanningRejected) as refused, application(
+            rows=0, value_type=dtype, queries=['equality'] if case == 'search' else [],
+            value_default=UUID(int=7) if case == 'default' else None):
+        pytest.fail('unadmitted UUID configuration reached a plan')
+    expected = {'search': 'unsupported_query', 'default': 'protected_default'}.get(case, 'unsupported_type')
+    assert expected in {issue.code for issue in refused.value.issues}

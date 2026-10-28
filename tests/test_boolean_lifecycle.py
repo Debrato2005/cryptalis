@@ -42,17 +42,19 @@ def note_frames(app):
 
 
 @pytest.mark.parametrize('purpose', ['rewrap', 'payload', 'search'])
-@pytest.mark.parametrize('dtype', [Boolean, Date])
+@pytest.mark.parametrize('dtype', [Boolean, Date, Uuid])
 def test_scalar_mixed_rotations_interruption_tenants_and_latest_value_removal(purpose, dtype):
     dates = dtype is Date
-    entered, latest = (date(2024, 2, 29), date(2025, 3, 1)) if dates else (True, False)
+    uuids = dtype is Uuid
+    entered, latest = ((UUID(int=2024), UUID(int=2025)) if uuids else
+                       (date(2024, 2, 29), date(2025, 3, 1)) if dates else (True, False))
     if purpose == 'rewrap':
         from rewrap_worker import target_keys
     elif purpose == 'payload':
         from payload_rotation_worker import target_keys
     else:
         from search_rotation_worker import target_keys
-    with multiple_tables(boolean_note=not dates, date_note=dates) as app:
+    with multiple_tables(boolean_note=dtype is Boolean, date_note=dates, uuid_note=uuids) as app:
         run(app); publish(app)
         source, source_pin = app.plan, app.pin
         sessions = attach(app.mapping, app.runtime, lock=app.plan.lock_bytes, keys=keys,
@@ -123,7 +125,7 @@ def test_scalar_mixed_rotations_interruption_tenants_and_latest_value_removal(pu
                         select(Other).where(Other.tenant_id == tenant))}
                     assert observed == {key: value for key, value in expected.items()
                                         if app.other_source[key][0] == tenant}
-                    assert all(type(value) is (date if dates else bool) or value is None for value in observed.values())
+                    assert all(type(value) is (UUID if uuids else date if dates else bool) or value is None for value in observed.values())
                     assert session.scalar(select(Customer.id).where(
                         Customer.tenant_id == tenant, Customer.name == app.source[
                             UUID(int=102) if tenant == TENANT else UUID(int=901)][1])) is not None
@@ -143,7 +145,7 @@ def test_scalar_mixed_rotations_interruption_tenants_and_latest_value_removal(pu
         assert d.apply(reverse, app.owner, keys=target_keys, pin=app_pin(reverse, 'PLAINTEXT_ACTIVATING'),
             approval=app.approval, consent=pure, until='PLAINTEXT_ACTIVE').phase == 'PLAINTEXT_ACTIVE'
         removal = d.RemovalApproval(reverse.target_id, reverse.operation_id, reverse.digest,
-            'native Boolean latest-value restart', 'public disposable fixture values', True)
+            'native scalar latest-value restart', 'public disposable fixture values', True)
         assert d.remove(reverse, app.owner, pin=app_pin(reverse, 'REMOVING'), approval=app.approval,
                         removal=removal, consent=pure).phase == 'REMOVED'
         assert d.check_removed(reverse, app.owner, pin=app_pin(reverse, 'REMOVED')) is None
@@ -153,4 +155,4 @@ def test_scalar_mixed_rotations_interruption_tenants_and_latest_value_removal(pu
         with app.owner.connect() as connection:
             assert connection.exec_driver_sql('SELECT data_type FROM information_schema.columns '
                 'WHERE table_schema=%s AND table_name=%s AND column_name=%s',
-                (app.schema, 'other_customer', 'note')).scalar_one() == ('date' if dates else 'boolean')
+                (app.schema, 'other_customer', 'note')).scalar_one() == ('uuid' if uuids else 'date' if dates else 'boolean')

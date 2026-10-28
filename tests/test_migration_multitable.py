@@ -22,12 +22,12 @@ NOTE_FIELD = UUID(int=804)
 
 
 @contextmanager
-def multiple_tables(*, boolean_note=False, date_note=False):
+def multiple_tables(*, boolean_note=False, date_note=False, uuid_note=False):
     with application() as app:
         table = Table('other_customer', app.mapping.metadata,
             Column('id', Uuid, primary_key=True, autoincrement=False),
             Column('tenant_id', Uuid, nullable=False), Column('name', Text(collation='C')),
-            Column('note', Date if date_note else Boolean if boolean_note else Text))
+            Column('note', Uuid if uuid_note else Date if date_note else Boolean if boolean_note else Text))
         Index('other_native_name', table.c.tenant_id, table.c.name, unique=True)
         class OtherCustomer: pass
         app.mapping.map_imperatively(OtherCustomer, table)
@@ -46,6 +46,9 @@ def multiple_tables(*, boolean_note=False, date_note=False):
             app.notes = {k: None if value is None else k.int % 2 == 0 for k, value in app.notes.items()}
         if date_note:
             app.notes = {k: None if value is None else date(2020, 1, k.int % 28 + 1)
+                         for k, value in app.notes.items()}
+        if uuid_note:
+            app.notes = {k: None if value is None else UUID(int=k.int + 1000)
                          for k, value in app.notes.items()}
         with sessionmaker(app.runtime)() as session:
             session.add_all(OtherCustomer(id=k, tenant_id=t, name=v, note=app.notes[k]) for k,(t,v) in app.other_source.items())
