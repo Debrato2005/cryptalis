@@ -73,6 +73,40 @@ These statements summarize [implementation status](status.md), not new test runs
 The [34-objective ledger](BUILD_CHECKLIST.md#objective-ledger) retains the full
 requirements and each remaining gap.
 
+## Count reports over encrypted values
+
+`COUNT(column)` counts non-NULL stored values without decrypting every row.
+For equality-enabled fields in an explicitly single-tenant table,
+`COUNT(DISTINCT column)` counts the existing equality terms. Randomized
+ciphertexts are not used as distinct-value keys.
+
+For the values `Ada`, `Ada`, NULL and an empty string, the row count is four,
+the non-NULL count is three and the distinct non-NULL count is two.
+
+```mermaid
+flowchart LR
+    Frames[("Stored CF1 frames")] --> Present["COUNT: non-NULL values"]
+    Frames --> Terms["Existing equality terms"]
+    Terms --> Distinct["COUNT DISTINCT: logical value classes"]
+    Present --> Result["Ordinary integer results"]
+    Distinct --> Result
+```
+
+The normal SQLAlchemy API and result keys remain available:
+
+```python
+present = func.count(Customer.name)
+distinct_names = func.count(Customer.name.distinct()).label("distinct_names")
+row = session.execute(select(present, distinct_names)).one()
+non_null_total = row._mapping[present]
+different_values = row.distinct_names
+```
+
+Use the attached session and declared single tenancy from the walkthrough.
+Counts trust the database's aggregate result; they do not authenticate every
+frame or prove that the database returned complete results. Other aggregate
+families and general protected grouping remain unfinished objectives.
+
 ## A reversible lifecycle
 
 ```mermaid

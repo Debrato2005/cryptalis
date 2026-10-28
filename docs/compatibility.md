@@ -74,7 +74,8 @@ Rollback/removal transforms current data through decrypt-back until explicit fin
 | LIKE, ILIKE, prefix/startswith, contains, suffix | CURRENTLY UNADMITTED | No admitted pattern/text grammar or representation |
 | Regex, fuzzy/similarity, full text | CURRENTLY UNADMITTED | No admitted exact query or text-search contract |
 | SUM, AVG, MIN, MAX, arithmetic | CURRENTLY UNADMITTED | Selected payload/equality format does not implement these operations |
-| General DISTINCT, DISTINCT ON, GROUP BY, COUNT DISTINCT | CURRENTLY UNADMITTED | Randomized-payload comparison changes logical semantics. A spike's scoped aggregate rewrite does not admit this family |
+| COUNT DISTINCT on a single-tenant equality field | IMPLEMENTED, bounded local verification | Count existing full-width equality terms. SQL NULL is excluded; native expression/label result keys are retained. Storage-only fields and multi-tenant distinct counts refuse |
+| General DISTINCT, DISTINCT ON, protected GROUP BY | CURRENTLY UNADMITTED | Randomized-payload comparison changes logical semantics. Count support does not admit this family |
 | Joins/FKs on protected fields | CURRENTLY UNADMITTED | No admitted shared search-domain or protected-FK contract |
 | Field-to-field equality, general Boolean NOT, other unadmitted functions/operators | CURRENTLY UNADMITTED | Approved scope does not independently admit these shapes |
 | Other non-text protected values, JSON predicates, unqualified custom protected types | CURRENTLY UNADMITTED | Text and storage-only Boolean have bounded admission. The exact pinned SQLModel AutoString exception retains native String admission |

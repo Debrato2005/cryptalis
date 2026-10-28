@@ -1098,6 +1098,12 @@ Range-structure and prefix-specific published attacks remain unexecuted. None of
 An acknowledgment alone cannot convert missing security evidence to PASS.
 G-PROVIDER, G-POLICY, and independent review requirements remain UNKNOWN. No local provider/policy check qualifies production custody or publication.
 
+Protected counts are database-computed statistics. A non-NULL count observes
+the already visible SQL NULL pattern. Distinct counts reuse declared equality
+classes and require the existing equality leakage acceptance. Neither operation
+authenticates every stored frame or proves result completeness. The hostile
+database limits apply to these results, as they do to ordinary database counts.
+
 ## Public failure contract
 
 Failures expose an operation ID, stage, safe code, retry class, durable progress, and a concrete remedy.
