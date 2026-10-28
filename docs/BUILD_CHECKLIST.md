@@ -25,6 +25,12 @@ No objective is complete until its acceptance evidence and applicable gate pass.
 
 ## Current boundary
 
+- Native protected non-NULL counts and equality-backed distinct counts now have
+  local PostgreSQL evidence. Distinct groups require one provable tenant scope.
+  Public DISTINCT with encrypted filters also retains native behavior. The
+  [assignment checkpoint](status.md#local-assignment-explanation-and-inspection-profile-2026-10-28)
+  records the exact evidence and remaining aggregate limits. OBJ-QUERY-02 stays partial.
+
 - Installed query preflight passes 40 focused controls and the original HTTP
   fresh-recovery journey. Twelve captured SELECT structures pass admission.
   An unsupported pattern refuses before migration. The reproducible artifact and

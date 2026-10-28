@@ -94,7 +94,10 @@ The [VARCHAR checkpoint](status.md#native-varchar-mapped-update-checkpoint-2026-
 adds finite VARCHAR targets and records native plan behavior.
 
 Admitted plaintext fields retain native query semantics, including ranges, order,
-aggregates, and joins through unprotected keys. SELECT type admission refuses
+aggregates, and joins through unprotected keys. Public-column DISTINCT and
+DISTINCT ON remain admitted when WHERE uses a supported protected search.
+They deduplicate public results only. Protected outputs and distinct keys retain
+their refusal. SELECT type admission refuses
 SQL-producing custom type hooks, dialect variants, custom SQL type rendering,
 user-defined SQL type spelling and literal-execution binds. Ordinary Python
 bind/result processors remain admitted under the finite native type contract.

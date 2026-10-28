@@ -12,6 +12,13 @@ All other contract and promotion requirements are SPECIFIED. All seven full gate
 
 ## Local assignment explanation and inspection profile: 2026-10-28
 
+**VERIFIED, local PostgreSQL 16.15:** public-column DISTINCT and DISTINCT ON work
+with admitted encrypted WHERE predicates. Sync/async native comparisons cover
+aliases, NULL filters and pagination; protected distinct keys and outputs still
+refuse. The [267-check affected run](_reset/public-distinct-20261028.json) includes
+the existing textual-reference controls. It retains 48 existing SQLAlchemy
+deprecation warnings for the legacy DISTINCT ON spelling.
+
 **VERIFIED, local PostgreSQL 16.15:** equality fields support
 `COUNT(DISTINCT column)` through the existing full-width term. The original
 SQLAlchemy count expression remains intact; the engine's compiler renders the
