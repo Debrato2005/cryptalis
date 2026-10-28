@@ -12,6 +12,13 @@ All other contract and promotion requirements are SPECIFIED. All seven full gate
 
 ## Local assignment explanation and inspection profile: 2026-10-28
 
+**VERIFIED, artifact checks:** the [reporting release receipt](_reset/count-release-20261028.json)
+records identical repeat wheel/sdist hashes, inspected RECORD/dependency metadata,
+CycloneDX SBOM, 43 product modules and 47 checked installed files. The clean
+environment passes import and CLI checks. The frozen 20-package audit reports
+no known vulnerabilities. Runtime pins remain unchanged. Independent review,
+signed provenance and production release qualification remain outside this result.
+
 **VERIFIED, installed wheel:** the reporting/search/Doctor selection passes
 120 checks on PostgreSQL 16.15 through the actual wheel. The
 [installed receipt](_reset/count-installed-20261028.json) records unchanged source
