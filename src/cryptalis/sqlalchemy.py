@@ -6,6 +6,7 @@ does not migrate schemas or qualify external writers. Research prototype.
 
 from contextvars import ContextVar
 from dataclasses import dataclass, field
+from datetime import date
 from functools import wraps
 from hashlib import sha256
 import json
@@ -36,7 +37,7 @@ from ._sqlalchemy_search import equality_expression, rewrite_search, search_shap
 from .crypto import CryptoFailure, AuthenticationFailed, FieldDescriptor, Keyring, KeyUnavailable, MAX_TEXT_BYTES, open_value, seal_value
 from .crypto.cf1 import _encode
 from .crypto.keys import InvalidText, InvalidValue, RepresentationMismatch
-from .manifest.compiler import _compiled_default, _value_default, _native_text_length, _previous_lock, _value_mapping_matches
+from .manifest.compiler import _LOCK_SCHEMAS, _compiled_default, _value_default, _native_text_length, _previous_lock, _value_mapping_matches
 from .manifest.parser import decode_manifest_json
 
 
@@ -150,6 +151,10 @@ class _Binding:
 
 
 def _assignment(value, binding):
+    if binding.descriptor.value_codec == 'date-ordinal-u32/v1':
+        if value is not None and type(value) is not date:
+            raise InvalidValue()
+        return value
     width = {'pg-int2-be/v1': 2, 'pg-int4-be/v1': 4, 'pg-int8-be/v1': 8}.get(binding.descriptor.value_codec)
     if width is not None:
         if value is None:
@@ -727,7 +732,7 @@ class _Attachment:
                 binding = _Binding(column, mapper.get_property_by_column(column).key, descriptor,
                                    record, mapper.get_property_by_column(record).key, tenant,
                                    mapper.get_property_by_column(tenant).key if tenant is not None else None,
-                                   mapper.class_, None if boolean or source['type'] in ('int2', 'int4', 'int8') else _native_text_length(source),
+                                   mapper.class_, None if boolean or source['type'] in ('int2', 'int4', 'int8', 'date') else _native_text_length(source),
                                    column.type.bind_processor(connection.dialect) if boolean else None,
                                    _compiled_default(field))
                 self.bindings.append(binding)
@@ -2158,7 +2163,7 @@ def attach(mapping: registry, engine: Engine | AsyncEngine, *, lock: bytes, keys
     try:
         document = decode_manifest_json(lock)
         if (not isinstance(mapping, registry) or not isinstance(engine, (Engine, AsyncEngine)) or
-                document["schema"] not in ("cryptalis.lock/v1", "cryptalis.lock/v2", "cryptalis.lock/v3", "cryptalis.lock/v4", "cryptalis.lock/v5", "cryptalis.lock/v6", "cryptalis.lock/v7") or document["profile"] != "cf1"):
+                document["schema"] not in _LOCK_SCHEMAS or document["profile"] != "cf1"):
             raise PolicyMismatch()
         native_engine = engine.sync_engine if isinstance(engine, AsyncEngine) else engine
         if native_engine.echo or not native_engine.hide_parameters:
