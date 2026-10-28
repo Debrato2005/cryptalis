@@ -58,7 +58,8 @@ class OnlineProtectionPlan:
                 raise ValueError
             models = d['lock']['models']
             if any((not tenant_scoped and 'column' in model['tenancy']) or any(
-                    field['source']['type'] not in ('text', 'varchar') for field in model['fields']) for model in models):
+                    field['source']['type'] not in ('text', 'varchar', 'bool', 'int2', 'int4', 'int8', 'date', 'uuid')
+                    for field in model['fields']) for model in models):
                 raise ValueError
             if tenant_scoped:
                 tenants = _tenant_list(d['native_tenants'])
@@ -323,7 +324,10 @@ def _chunk(c, p, state, keys):
         scoped = 'column' in model['tenancy']
         fields = [f['column'] for f in model['fields']]
         names = [model['record']['column']] + ([model['tenancy']['column']] if scoped else []) + fields
-        sizes = '+'.join('COALESCE(pg_catalog.octet_length('+m._quote(c,name)+'),0)+74' for name in fields)
+        widths = {'bool': 1, 'int2': 2, 'int4': 4, 'int8': 8, 'date': 4, 'uuid': 16}
+        sizes = '+'.join((str(widths[f['source']['type']]) if f['source']['type'] in widths else
+                         'COALESCE(pg_catalog.octet_length('+m._quote(c,f['column'])+'),0)') + '+74'
+                         for f in model['fields'])
         candidates = c.exec_driver_sql('SELECT ' + m._quote(c,names[0]) + ', ' + sizes
             + f' FROM {m._table(c,model)} WHERE {m._quote(c,dirty)} IS DISTINCT FROM FALSE'
             + f' ORDER BY {m._quote(c,names[0])} LIMIT %s FOR UPDATE', (limits['max_rows'],)).all()
@@ -339,6 +343,14 @@ def _chunk(c, p, state, keys):
             size += row_size
         # Lock identities and inspect sizes before fetching native values. The
         # row count alone does not bound memory for large text values.
+        for field in model['fields']:
+            if field['source']['type'] == 'date':
+                column = m._quote(c, field['column'])
+                if c.exec_driver_sql(f'SELECT EXISTS (SELECT 1 FROM {m._table(c,model)} '
+                        f'WHERE {m._quote(c,names[0])}=ANY(%s) AND '
+                        f"({column} < DATE '0001-01-01' OR {column} > DATE '9999-12-31'))",
+                        (selected,)).scalar_one():
+                    raise m.TransitionFailure('date_outside_python_range', p.operation_id)
         rows = c.exec_driver_sql('SELECT ' + ','.join(m._quote(c,name) for name in names)
             + f' FROM {m._table(c,model)} WHERE {m._quote(c,names[0])}=ANY(%s)'
             + f' ORDER BY {m._quote(c,names[0])}',(selected,)).all()
