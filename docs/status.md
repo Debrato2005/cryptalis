@@ -12,6 +12,14 @@ All other contract and promotion requirements are SPECIFIED. All seven full gate
 
 ## Local assignment explanation and inspection profile: 2026-10-28
 
+**VERIFIED, local PostgreSQL 16.15:** matched count fixtures return the same
+non-NULL/distinct totals for native text and attached CF1. The
+[31-sample paired profile](_reset/count-performance-20261028.json) records warm
+synchronous p50/p95 and raw samples at 1,000 and 10,000 rows. Its
+[wrapper receipt](_reset/count-performance-wrapper-20261028.json) retains stable
+source hashes and three role probes. These are new-capability observations,
+not target-branch speedups or production qualification.
+
 **VERIFIED, local PostgreSQL 16.15:** count FILTER predicates over public fields
 and non-distinct count windows over public partitions/order retain native
 results. The [117-check affected run](_reset/window-counts-20261028.json)

@@ -205,7 +205,8 @@ See [native VARCHAR mappings](walkthrough-migration.md#native-varchar-mappings).
 Native signed int2/int4/int8 mappings have bounded storage-only source and installed checks.
 They require exact SmallInteger/Integer/BigInteger types and Python int or SQL NULL.
 Bool, custom hooks, domains, width mismatches and coercions refuse. Protected
-integer predicates, ordering, arithmetic, aggregates and joins remain unadmitted.
+integer predicates, ordering, arithmetic, aggregates other than admitted direct
+COUNT, and joins remain unadmitted.
 Exact integer scalar client defaults now have internal construction evidence.
 Server, callable, SQL, on-update and generated defaults still refuse. Existing NULL-presence predicates retain their bounded grammar.
 

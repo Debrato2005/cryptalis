@@ -76,6 +76,19 @@ Use a new output path. The receipt includes every sample, source identity and
 runtime versions. This microbenchmark performs no database work and measures
 neither full query latency nor encryption throughput.
 
+Measure native and protected non-NULL/distinct counts on matched local data:
+
+```bash
+CRYPTALIS_COUNTS_REPORT=/tmp/cryptalis-counts.json \
+uv run --frozen --extra sqlmodel python scripts/online_qualification.py \
+  --workdir /tmp/cryptalis-college-counts -- tests/profile_protected_counts.py -q
+```
+
+Choose new report and work-directory paths. The report retains raw alternating
+samples for 1,000 and 10,000 rows. The harness receipt binds source hashes and
+database preflight. This optional synchronous fixture profile runs separately
+from the default suite and does not measure the migration lifecycle.
+
 ## Automated checks
 
 The [GitHub Actions workflow](../.github/workflows/local-checks.yml) runs the same

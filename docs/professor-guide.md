@@ -122,6 +122,29 @@ Counts trust the database's aggregate result; they do not authenticate every
 frame or prove that the database returned complete results. Other aggregate
 families and general protected grouping remain unfinished objectives.
 
+### Measured count cost
+
+![Native and protected non-NULL and distinct-count p95 latency for 1,000 and 10,000 rows.](images/count-latency.svg)
+
+| Rows | Operation | Native p95, ms | Protected p95, ms |
+|---:|---|---:|---:|
+| 1,000 | Non-NULL count | 0.32 | 1.05 |
+| 1,000 | Distinct count | 0.43 | 1.72 |
+| 10,000 | Non-NULL count | 0.73 | 1.47 |
+| 10,000 | Distinct count | 2.47 | 4.02 |
+
+These [local paired samples](_reset/count-performance-20261028.json) compare
+the same synchronous queries and data distribution on native text and attached
+CF1 fixtures. Each path has five warmups and 31 alternating samples. Both return
+909 or 9,090 non-NULL values and 257 distinct values. The query returns one
+integer rather than transferring all names to Python for counting.
+
+The [wrapper receipt](_reset/count-performance-wrapper-20261028.json) records
+stable source hashes and three authenticated PostgreSQL role probes. This is a
+loopback PostgreSQL 16.15 fixture measurement, not migration timing, a target-branch
+speedup or a production performance guarantee. The original target branch
+refused these protected counts.
+
 ## A reversible lifecycle
 
 ```mermaid

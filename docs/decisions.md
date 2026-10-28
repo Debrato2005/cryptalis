@@ -1612,7 +1612,9 @@ current artifact and qualification. No production gate changes.
 
 **IMPLEMENTED, internal candidate:** add signed native int2, int4 and int8
 storage with exact SmallInteger, Integer and BigInteger mappings. No protected
-integer equality, ordering, range, arithmetic, aggregate or join is admitted.
+integer equality, ordering, range, arithmetic, aggregate or join was admitted at
+this checkpoint. The later [bounded count decision](#bounded-protected-counts-2026-10-28)
+admits direct non-NULL COUNT without changing integer storage admission.
 Keep strict built-in int values and SQL NULL. Refuse bool, subclasses and other
 Python coercions. Native width bounds remain exact.
 
