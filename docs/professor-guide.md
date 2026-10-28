@@ -76,8 +76,8 @@ requirements and each remaining gap.
 ## Count reports over encrypted values
 
 `COUNT(column)` counts non-NULL stored values without decrypting every row.
-For equality-enabled fields in an explicitly single-tenant table,
-`COUNT(DISTINCT column)` counts the existing equality terms. Randomized
+For equality-enabled fields, `COUNT(DISTINCT column)` counts the existing equality
+terms within one tenant. Randomized
 ciphertexts are not used as distinct-value keys.
 
 For the values `Ada`, `Ada`, NULL and an empty string, the row count is four,
@@ -103,6 +103,10 @@ different_values = row.distinct_names
 ```
 
 Use the attached session and declared single tenancy from the walkthrough.
+For a tenant-column table, add a direct `Customer.tenant_id == tenant_id` filter,
+or group by `Customer.tenant_id` to report each tenant separately. A global
+distinct count across tenants refuses because their terms are intentionally
+different even when their plaintext values match.
 Counts trust the database's aggregate result; they do not authenticate every
 frame or prove that the database returned complete results. Other aggregate
 families and general protected grouping remain unfinished objectives.

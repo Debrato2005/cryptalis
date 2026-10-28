@@ -13,13 +13,17 @@ argument to native SQLAlchemy `count`, optionally labeled as a selected result.
 Keep custom function/argument rendering and other protected expressions refused.
 Grouping by admitted public fields retains native PostgreSQL behavior.
 
-Implement `COUNT(DISTINCT protected_text)` separately for explicitly single-tenant
-equality fields. Count the existing full-width equality term, preserving SQL NULL
+Implement `COUNT(DISTINCT protected_text)` separately for equality fields.
+Count the existing full-width equality term, preserving SQL NULL
 and empty-input behavior. This requires the field's existing equality leakage
 acceptance; it creates no new stored term. Do not silently count randomized
 payloads or combine tenant-scoped terms into a global distinct count.
-Multi-tenant distinct counts, protected grouping, windows, aggregate filters and
-general aggregates remain separate work. These local additions do not qualify
+On tenant-column tables, require a native direct tenant equality to a bound value
+in a mandatory WHERE conjunction, or group by the counted source's exact tenant
+column. Do not infer scope from another alias, an OR predicate or a custom
+renderer. Each distinct group must contain only one tenant's terms.
+Global multi-tenant distinct counts, protected grouping, windows, aggregate
+filters and general aggregates remain separate work. These local additions do not qualify
 production gates or remove objectives from the ledger.
 
 ## Online capture and access transfer: 2026-10-24

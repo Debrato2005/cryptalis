@@ -12,13 +12,16 @@ All other contract and promotion requirements are SPECIFIED. All seven full gate
 
 ## Local assignment explanation and inspection profile: 2026-10-28
 
-**VERIFIED, local PostgreSQL 16.15:** single-tenant equality fields support
+**VERIFIED, local PostgreSQL 16.15:** equality fields support
 `COUNT(DISTINCT column)` through the existing full-width term. The original
 SQLAlchemy count expression remains intact; the engine's compiler renders the
 term operation and preserves native result-object lookup. Sync/async NULL,
 empty-input, duplicate, Unicode, alias and public-grouping controls pass in the
 [103-check affected run](_reset/distinct-counts-20261028.json).
-Storage-only and unscoped multi-tenant distinct counts remain refused.
+The [109-check tenant extension](_reset/scoped-distinct-counts-20261028.json)
+also verifies direct bound tenant equality and exact tenant grouping. Wrong-alias,
+OR and custom-rendered scope claims refuse before statement key preparation.
+Storage-only and global multi-tenant distinct counts remain refused.
 
 **VERIFIED, local PostgreSQL 16.15:** direct `COUNT(protected_column)` preserves
 native integer results, NULL/empty-input behavior, aliases, public grouping and

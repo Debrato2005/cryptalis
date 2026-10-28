@@ -74,7 +74,7 @@ Rollback/removal transforms current data through decrypt-back until explicit fin
 | LIKE, ILIKE, prefix/startswith, contains, suffix | CURRENTLY UNADMITTED | No admitted pattern/text grammar or representation |
 | Regex, fuzzy/similarity, full text | CURRENTLY UNADMITTED | No admitted exact query or text-search contract |
 | SUM, AVG, MIN, MAX, arithmetic | CURRENTLY UNADMITTED | Selected payload/equality format does not implement these operations |
-| COUNT DISTINCT on a single-tenant equality field | IMPLEMENTED, bounded local verification | Count existing full-width equality terms. SQL NULL is excluded; native expression/label result keys are retained. Storage-only fields and multi-tenant distinct counts refuse |
+| COUNT DISTINCT on an equality field | IMPLEMENTED, bounded local verification | Count existing full-width equality terms within one tenant per group. Require explicit single tenancy, direct tenant equality in WHERE, or GROUP BY the exact tenant column. SQL NULL is excluded; native expression/label result keys are retained. Storage-only fields and global multi-tenant distinct counts refuse |
 | General DISTINCT, DISTINCT ON, protected GROUP BY | CURRENTLY UNADMITTED | Randomized-payload comparison changes logical semantics. Count support does not admit this family |
 | Joins/FKs on protected fields | CURRENTLY UNADMITTED | No admitted shared search-domain or protected-FK contract |
 | Field-to-field equality, general Boolean NOT, other unadmitted functions/operators | CURRENTLY UNADMITTED | Approved scope does not independently admit these shapes |
