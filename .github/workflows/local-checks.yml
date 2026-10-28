@@ -31,6 +31,15 @@ jobs:
           fi
       - name: Install frozen dependencies
         run: uv sync --frozen --extra sqlmodel --compile-bytecode
+      - name: Retain PostgreSQL installer packages for local reproduction
+        run: |
+          mkdir "$RUNNER_TEMP/postgres-packages"
+          cd "$RUNNER_TEMP/postgres-packages"
+          apt-get download postgresql-16 postgresql-client-16 libpq5
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: postgres-packages
+          path: ${{ runner.temp }}/postgres-packages/*.deb
       - name: Audit the dependency lock
         run: uv audit --frozen
       - name: Measure column-lineage inspection
