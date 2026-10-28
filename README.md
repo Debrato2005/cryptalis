@@ -1,5 +1,8 @@
 # Cryptalis
 
+For a classroom presentation, start with the [illustrated project guide](docs/professor-guide.md).
+It explains the architecture, searchable-encryption trade-offs, lifecycle and recorded performance.
+
 **IMPLEMENTED: research prototype with a manifest compiler, CF1 primitives, a local development provider, bounded SQLAlchemy storage/search, and a maintenance protection transition.**
 The sync/async attachment has scoped PostgreSQL tests under separate restricted runtime credentials.
 Tested runtime DDL and ownership changes are refused. Separate writers can still change data; deployment writer exclusion remains unverified.

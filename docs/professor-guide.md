@@ -101,6 +101,23 @@ The repository records matched native and protected read profiles at 10,000,
 pairs with alternating execution order. The recorded local warm TEXT workloads
 meet their read-latency and isolated column-plus-equality-index storage targets.
 
+![Native and protected p95 latency for point, equality and IN-20 reads at three recorded row counts.](images/read-latency.svg)
+
+The bars show complete native and protected p95, not just encryption CPU time.
+These are separate historical profiles at different source revisions, not a
+controlled scaling experiment or a before/after benchmark of this PR.
+
+![Protected column and equality-index storage relative to native storage; the local target is at most twice native.](images/indexed-storage.svg)
+
+| Recorded fixture | Source revision | Raw evidence |
+|---|---|---|
+| 10,000 rows | `4f11600` | [Latency samples and storage](_reset/performance-current-20261023.json) |
+| 100,000 rows | `c7cc47d` | [Latency samples and storage](_reset/performance-100k-20261023.json) |
+| 1,000,000 rows | `3bd4467` | [Latency samples and storage](_reset/performance-million-prepared-20261023.json) |
+
+Regenerate both figures with `uv run scripts/render_performance.py`. Its plotting
+dependency is isolated from the application environment and runtime package.
+
 P95 is the value at or below which 95% of the measured requests fall. Added p95
 means protected p95 minus native p95. It is not the p95 of pairwise differences.
 Storage counts the protected column and its equality index; it is not total
