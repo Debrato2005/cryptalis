@@ -4,6 +4,22 @@
 It does not preserve old IDs as implementation obligations. Historical dispositions remain in [archived revamp evidence](research/revamp-evidence.md).
 [Status](status.md) owns IMPLEMENTED/VERIFIED claims. All seven full gates remain UNKNOWN.
 
+## Bounded parallel crypto and adaptive online batches: 2026-10-28
+
+Allow one through sixteen opt-in cryptographic workers during online capture.
+Keep one SQL writer, the existing executor lock and atomic payload/journal
+commits. Workers receive already locked native rows, perform no SQL, use separate
+per-thread preparation caches and preserve input order. Join workers before
+leaving the executor. Host key resolvers/providers must permit concurrent calls.
+One worker remains the default.
+
+An optional target chunk duration may adjust the next row count between half
+and twice the previous count, within the plan's existing maximum. Measure the
+whole chunk, including inspection and database work. The byte ceiling remains
+unchanged. This is a tuning target, not a promised pause or resource bound.
+Resume keeps committed bytes and restarts tuning from the approved row maximum.
+This implements parallel row cryptography, not multiple database executors.
+
 ## Mapped dictionary INSERT tuple and entity RETURNING: 2026-10-28
 
 Extend the existing scalar RETURNING route to native direct-column tuples and
