@@ -34,9 +34,12 @@ jobs:
       - name: Audit the dependency lock
         run: uv audit --frozen
       - name: Measure column-lineage inspection
-        run: >-
-          uv run --frozen --extra sqlmodel python scripts/benchmark_admission.py
-          --output "$RUNNER_TEMP/admission.json"
+        env:
+          BASELINE_REVISION: ${{ github.event.pull_request.base.sha || 'main' }}
+        run: |
+          git fetch --no-tags --depth=1 origin "$BASELINE_REVISION"
+          uv run --frozen --extra sqlmodel python scripts/benchmark_admission.py \
+            --baseline FETCH_HEAD --output "$RUNNER_TEMP/admission.json"
       - name: Run the suite through the restricted-role wrapper
         run: >-
           uv run --frozen --extra sqlmodel python scripts/online_qualification.py
