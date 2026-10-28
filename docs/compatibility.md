@@ -474,3 +474,16 @@ No production cell is qualified. No production provider, authenticated deploymen
 | PostgreSQL 16 managed services | SUPPORTED design scope. RDS/Aurora, Cloud SQL, Azure, Supabase, and Neon cells remain UNKNOWN |
 
 The selected equality index requires no extension. No provider extension allowance supplies missing qualification.
+
+## Native identifier deparser admission
+
+**IMPLEMENTED, bounded verification:** PostgreSQL 16 type/function keyword
+identifiers can require quotes in catalog deparsing even when SQLAlchemy emits
+them without quotes. Frame admission accepts only the same declared column's
+known native quoted/unquoted nested forms. It checks the exact single-column
+constraint dependency and full frame policy. A dump-restored flattened form
+still requires its exact inspected restatement; equivalent arbitrary SQL is
+not admitted. Search indexes retain exact structural admission and use native
+`pg_catalog.quote_ident` for the expected expression spelling. See the
+[identifier checkpoint](status.md#postgresql-identifier-admission-correction-2026-10-28)
+for the exact tested cells and remaining qualification limits.

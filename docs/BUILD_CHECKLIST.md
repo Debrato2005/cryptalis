@@ -25,6 +25,13 @@ No objective is complete until its acceptance evidence and applicable gate pass.
 
 ## Current boundary
 
+- PostgreSQL keyword-named protected columns now pass exact storage/search
+  admission, both layouts and latest-value native exit. Integrated source,
+  final installed identifier and affected search checks pass. Bounds,
+  dependencies and explicit restored restatements remain enforced; no gate
+  promotion follows. See the
+  [checkpoint](status.md#postgresql-identifier-admission-correction-2026-10-28).
+
 - Explicit maintenance tenant-policy addition now passes state/cancellation and
   old-reader controls, source/installed original HTTP first-write approval,
   all rotations, genuine fresh adoption and latest native exit. Old policy and

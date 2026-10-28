@@ -406,7 +406,7 @@ def test_restored_frame_expression_and_same_named_incoming_fk_remain_admitted():
         model = source.document['lock']['models'][0]
         field = model['fields'][0]
         table, frame, definition, _, expression = _frame_policy_snapshot(owner, source)
-        canonical, flattened = _frame_expressions(field, owner.dialect.identifier_preparer.quote)
+        canonical, flattened, *_ = _frame_expressions(field, owner.dialect.identifier_preparer.quote)
         assert expression == flattened, expression
         assert expression != canonical
         with owner.connect() as c:

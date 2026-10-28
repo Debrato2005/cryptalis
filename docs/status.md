@@ -10,6 +10,37 @@ No PostgreSQL/provider/runtime cell, production key provider, independent review
 VERIFIED below refers only to the named checks and their exact revisions.
 All other contract and promotion requirements are SPECIFIED. All seven full gates remain UNKNOWN.
 
+## PostgreSQL identifier admission correction: 2026-10-28
+
+**VERIFIED, bounded source and installed cells:** protected physical columns
+whose names are PostgreSQL type/function keywords now pass activation and
+search validation. The old validator expected SQLAlchemy's unquoted `integer`
+while PostgreSQL deparsed the same identifier as `"integer"`.
+Known framing forms now include the native preparer's exact quoted spelling.
+The live CHECK must depend on exactly the declared column, retain its complete
+bounds/header/generation expression, be validated and permit inheritance.
+Ordinary admission remains nested-only; restored flattened expressions still
+require the exact separately inspected restatement. Search-index spelling comes
+from bound `pg_catalog.quote_ident` in the existing catalog query, with no extra
+round trip. No CF1, manifest grammar or cryptographic construction changes.
+
+The integrated matrix passes 173 checks, with two missing-reader skips and one
+fresh-fixture collection skip. After combining the catalog lookup, all 16 native
+identifier cases and 75 search controls pass. The final installed wheel passes
+the same 16 identifier cases, reproducible builds, 48 installed-file checks and
+CLI inspection. Its SHA-256 is
+`b560cb8aa830448a7f3d56fecd0c51f71e5e3a6d684d660bd301c98cdc9db7af`.
+Both layouts cover keyword, ordinary, mixed-case and embedded-quote names,
+equality/IN, latest edits and native removal. Changed bounds and additional
+column dependencies refuse before provider access. Native reparse controls
+retain the distinction between original and explicitly admitted restore forms.
+Independent agent review found no actionable defect in this scope.
+
+The [boundary](_reset/frame-identifier-boundary-20261028.json) retains exact
+receipts and source/runtime identities, including the initial collection-path
+error. These checks do not qualify a production compatibility cell, performance
+budget or independent human review. All seven production gates remain UNKNOWN.
+
 ## Maintenance tenant-policy provisioning: 2026-10-28
 
 **VERIFIED, bounded source and installed cells:** `cryptalis.tenancy` adds one

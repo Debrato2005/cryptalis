@@ -1787,3 +1787,15 @@ its bounded implementation and application journey.
 
 The [installed checkpoint](status.md#installed-application-query-diagnostics-2026-10-24) verifies the bounded query diagnostic and matching CLI
 child package. It does not qualify a complete scanner or deployment authority.
+
+## Exact native identifier spelling: 2026-10-28
+
+Retain exact SQL catalog admission while accepting the native preparer's quoted
+spelling of the declared column. Require the CHECK's exact single-column
+dependency before accepting these known variants. Preserve nested-only ordinary
+admission and the exact explicit restatement required for flattened restore
+forms. Obtain search-index identifier spelling from a bound native `quote_ident`
+in the existing catalog query. Do not strip quotes or normalize arbitrary SQL.
+The [checkpoint](status.md#postgresql-identifier-admission-correction-2026-10-28)
+records the bounded source, installed and refusal evidence. This corrects native
+PostgreSQL identifier compatibility without changing encryption or promoting gates.
