@@ -146,6 +146,8 @@ def main():
                           help='Qualify Boolean storage after payload rotation on a fresh cluster.')
     profiles.add_argument('--date', action='store_true',
                           help='Qualify DATE storage and literal defaults after all rotations on a fresh cluster.')
+    profiles.add_argument('--uuid', action='store_true',
+                          help='Qualify UUID value storage, rotations and fresh-cluster recovery.')
     profiles.add_argument('--sqlmodel-http', action='store_true',
                           help='Qualify original HTTP authentication, mail and three rotations after fresh restore.')
     profiles.add_argument('--sqlmodel-public-slots', action='store_true',
@@ -192,6 +194,8 @@ def main():
         parser.error('--integer-default requires --integer and a value within that signed native width.')
     if args.integer and (args.varchar or args.restore_lease):
         parser.error('--integer uses the native signed scalar restore lifecycle.')
+    if (args.date or args.uuid) and (args.varchar or args.restore_lease):
+        parser.error('--date/--uuid use their native scalar restore lifecycle.')
     if args.boolean and (args.varchar or args.restore_lease):
         parser.error('--boolean uses the typed Boolean fixture and its restore lifecycle.')
     if args.date and (args.varchar or args.restore_lease or args.owned_sequences):
@@ -219,6 +223,8 @@ def main():
                '; DATE storage, literal default and three-rotation recovery' if args.date else
                '; original public slots and explicit restored-slot authority' if args.public_slots else
                '; owned-sequence identity mapping and native counter profile' if args.owned_sequences else
+               '; native UUID storage after root and payload rotation' if args.uuid else
+               '; native date storage after root and payload rotation' if args.date else
                '; integer storage after payload rotation' if args.integer else
                '; Boolean storage after payload rotation' if args.boolean else
                '; pinned original HTTP/JWT and local SMTP, adopted-target root/payload/search rotation and native exit' if args.sqlmodel_http else
@@ -240,13 +246,15 @@ def main():
     export = run_pytest(export_receipt, 'Fresh-cluster source export; primary cluster' + profile,
                         ('tests/test_date_fresh_cluster.py::test_export_date_backup_after_rotations' if args.date else
                          'tests/test_sqlmodel_searchable_export.py' if (args.sqlmodel_searchable or args.sqlmodel_direct_search or args.sqlmodel_public_slots or args.sqlmodel_http) else
-                         'tests/test_fresh_boolean_export.py' if args.boolean or args.integer else
+                         'tests/test_fresh_boolean_export.py' if args.boolean or args.integer or args.uuid else
                          'tests/test_smolink_application.py' if args.smolink
                          else 'tests/test_fresh_cluster_export.py'),
                         {'CRYPTALIS_SMOLINK_FRESH_EXPORT': str(workdir) if args.smolink else '',
                          'CRYPTALIS_FRESH_CLUSTER_DIR': str(workdir),
                          'CRYPTALIS_FRESH_INTEGER_BITS': str(args.integer or 0),
                          'CRYPTALIS_FRESH_COLUMN_NAME': args.column_name,
+                         'CRYPTALIS_FRESH_DATE': '1' if args.date else '0',
+                         'CRYPTALIS_FRESH_UUID': '1' if args.uuid else '0',
                          'CRYPTALIS_FRESH_INTEGER_DEFAULT': '' if args.integer_default is None else str(args.integer_default),
                          'CRYPTALIS_FRESH_PUBLIC_SLOTS': '1' if args.public_slots else '0',
                          'CRYPTALIS_SQLMODEL_PUBLIC_SLOTS': '1' if (args.sqlmodel_public_slots or args.sqlmodel_http) else '0',
@@ -279,7 +287,7 @@ def main():
             raise SystemExit('FreshCluster.ProfileMismatch: integer payload successor is missing.')
     if args.public_slots:
         plan = json.loads(base64.b64decode(manifest['plan'], validate=True))
-        if (plan.get('lock', {}).get('schema') != ('cryptalis.lock/v8' if args.date else 'cryptalis.lock/v7' if args.integer else 'cryptalis.lock/v6')
+        if (plan.get('lock', {}).get('schema') != ('cryptalis.lock/v9' if args.uuid else 'cryptalis.lock/v8' if args.date else 'cryptalis.lock/v7' if args.integer else 'cryptalis.lock/v6')
                 or plan['lock'].get('layout') != 'preserve-public-slots/v1'
                 or not manifest.get('source_public_slots')):
             raise SystemExit('FreshCluster.ProfileMismatch: original-slot source lock is missing.')
@@ -287,6 +295,12 @@ def main():
         plan = json.loads(base64.b64decode(manifest['plan'], validate=True))
         if plan.get('lock', {}).get('schema') != 'cryptalis.lock/v5' or not manifest.get('sequence_facts'):
             raise SystemExit('FreshCluster.ProfileMismatch: sequence-bearing source lock is missing.')
+    elif args.uuid:
+        plan = json.loads(base64.b64decode(manifest['plan'], validate=True))
+        if (manifest.get('application_profile') != 'native-uuid-storage'
+                or plan.get('kind') != 'payload_rotation'
+                or plan.get('lock', {}).get('schema') != 'cryptalis.lock/v9'):
+            raise SystemExit('FreshCluster.ProfileMismatch: UUID payload successor is missing.')
     elif args.date:
         plan = json.loads(base64.b64decode(manifest['plan'], validate=True))
         if (manifest.get('application_profile') != 'date-storage' or plan.get('kind') != 'search_rotation'
@@ -351,7 +365,7 @@ def main():
                               'tests/test_payload_operational_cli.py::test_genuine_adopted_payload_cli_seals_saved_activation_and_latest_native_exit' if args.payload_cli else
                               'tests/test_rewrap_operational_cli.py::test_genuine_adopted_rewrap_cli_preserves_binding_and_byte_identity' if args.rewrap_cli else
                               'tests/test_reverse_operational_cli.py::test_genuine_adopted_source_reverse_cli_uses_explicit_binding_and_latest_native_exit' if args.reverse_cli else
-                              'tests/test_fresh_boolean_restore.py' if args.integer else
+                              'tests/test_fresh_boolean_restore.py' if args.integer or args.date or args.uuid else
                               'tests/test_public_slots_restore.py' if args.public_slots else
                               'tests/test_owned_sequences_restore.py' if args.owned_sequences else
                               'tests/test_sqlmodel_searchable_restore.py' if (args.sqlmodel_searchable or args.sqlmodel_direct_search or args.sqlmodel_public_slots or args.sqlmodel_http) else
@@ -366,6 +380,8 @@ def main():
                              {'HOME': str(home), 'CRYPTALIS_FRESH_CLUSTER_DIR': str(workdir),
                               'CRYPTALIS_FRESH_INTEGER_BITS': str(args.integer or 0),
                               'CRYPTALIS_FRESH_COLUMN_NAME': args.column_name,
+                              'CRYPTALIS_FRESH_DATE': '1' if args.date else '0',
+                              'CRYPTALIS_FRESH_UUID': '1' if args.uuid else '0',
                               'CRYPTALIS_SQLMODEL_DIRECT_SEARCH': '1' if (args.sqlmodel_direct_search or args.sqlmodel_public_slots) else '0',
                               'CRYPTALIS_SQLMODEL_PUBLIC_SLOTS': '1' if (args.sqlmodel_public_slots or args.sqlmodel_http) else '0',
                               'CRYPTALIS_SQLMODEL_HTTP_FRESH': '1' if args.sqlmodel_http else '0',

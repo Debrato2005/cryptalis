@@ -274,3 +274,23 @@ print('historical reader boundary passed')
             capture_output=True, text=True, timeout=20)
         assert child.returncode == 0, 'historical reader boundary failed; diagnostics withheld'
         assert child.stdout.strip() == 'historical reader boundary passed'
+
+
+def test_prior_ordinal_lock_reader_keeps_its_codec_and_reports_representation_change():
+    from cryptalis.manifest.compiler import _canonical, _digest, _previous_lock, _changes
+    with application(value_type=Date(), queries=[], protected_values=VALUES) as app:
+        current = app.plan.document['lock']
+        prior = app.plan.document['lock']
+        field = prior['models'][0]['fields'][0]
+        field['descriptor']['value_codec'] = 'date-ordinal-u32/v1'
+        field['descriptor_digest'] = _digest(field['descriptor'])
+        readers = prior['required_readers']
+        readers[readers.index('pg-date-days-be/v1')] = 'date-ordinal-u32/v1'
+        readers.sort()
+        accepted = _previous_lock(_canonical(prior), current, app.owner)
+        assert accepted == prior
+        assert any(change.kind == 'representation_changed' for change in _changes(current, accepted))
+        field['descriptor']['value_codec'] = 'unknown-date/v1'
+        field['descriptor_digest'] = _digest(field['descriptor'])
+        with pytest.raises(ValueError):
+            _previous_lock(_canonical(prior), current, app.owner)

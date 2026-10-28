@@ -419,7 +419,7 @@ def _observed_source_metadata(c, p, model, *, sequences=None):
 
 
 def _preserves_public_slot_lock(lock):
-    return lock['schema'] in ('cryptalis.lock/v6', 'cryptalis.lock/v7', 'cryptalis.lock/v8') and lock.get('layout') == 'preserve-public-slots/v1'
+    return lock['schema'] in ('cryptalis.lock/v6', 'cryptalis.lock/v7', 'cryptalis.lock/v8', 'cryptalis.lock/v9') and lock.get('layout') == 'preserve-public-slots/v1'
 
 
 def _preserves_public_slots(p):

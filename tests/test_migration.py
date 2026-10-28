@@ -149,7 +149,9 @@ def run(app, until='PENDING', pin=None, chunk_size=2, key_resolver=None):
 
 
 def frames(app, switched=False):
-    column = app.plan.document['lock']['models'][0]['fields'][0]['column'] if switched else '_cryptalis_' + FIELD_ID.hex
+    column = (next(field['column'] for model in app.plan.document['lock']['models']
+                   for field in model['fields'] if field['field_id'] == str(FIELD_ID))
+              if switched else '_cryptalis_' + FIELD_ID.hex)
     with app.owner.connect() as c:
         column = c.dialect.identifier_preparer.quote_identifier(column)
         return {r[0]:bytes(r[2]) if r[2] is not None else None for r in c.exec_driver_sql(

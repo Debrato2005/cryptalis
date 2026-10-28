@@ -33,7 +33,7 @@ def _engine(variable):
 
 
 @pytest.fixture
-def app():
+def app(request):
     required = ('CRYPTALIS_TEST_DATABASE_URL', 'CRYPTALIS_TEST_RUNTIME_DATABASE_URL',
                 'CRYPTALIS_TEST_SOURCE_URL')
     if any(not os.environ.get(name) for name in required):
@@ -43,9 +43,11 @@ def app():
     source = _engine(required[2])
     schema = 'cryptalis_online_' + uuid4().hex
     mapping = registry(metadata=MetaData(schema=schema))
+    dtype, values = getattr(request, 'param', (Text(collation='C'), ('body-10', 'body-20', 'body-30')))
+    scalar = not isinstance(dtype, Text)
     table = Table('customer', mapping.metadata,
         Column('id', Uuid, primary_key=True, autoincrement=False),
-        Column('body', Text(collation='C'), nullable=True),
+        Column('body', dtype, nullable=True),
         Column('label', String(64, collation='C'), nullable=True))
 
     class Customer:
@@ -73,20 +75,20 @@ def app():
         owner_factory = sessionmaker(owner, expire_on_commit=False)
         with owner_factory() as session:
             session.add_all((Customer(id=UUID(int=i), body=value, label=f'label-{i}')
-                             for i, value in ((10, 'body-10'), (20, 'body-20'), (30, 'body-30'))))
+                             for i, value in zip((10, 20, 30), values)))
             session.commit()
         declaration = {'schema': 'cryptalis.protection/v1', 'profile': 'cf1',
             'domain_id': str(DOMAIN), 'models': [{'model': 'Customer', 'table_id': str(TABLE_ID),
                 'tenancy': {'single_tenant': True}, 'fields': [
                     {'name': 'body', 'field_id': str(FIELD_ID), 'protect': True,
-                     'queries': ['equality'], 'accept_leakage': ['equality']},
+                     'queries': [] if scalar else ['equality'], 'accept_leakage': [] if scalar else ['equality']},
                     {'name': 'label', 'field_id': str(UUID(int=FIELD_ID.int + 1)), 'protect': True,
                      'queries': [], 'accept_leakage': []}]}]}
         inventory = WriterInventory(True, (Writer(TABLE_ID, 'native application', 'sqlalchemy',
             evidence='independent source-role ORM sessions over the declared table'),))
         proposal = online.plan(json.dumps(declaration).encode(), mapping, owner,
             source_role=source_role, writers=inventory, max_rows=1, max_bytes=4096,
-            search_reviews=(SearchReview(FIELD_ID, False,
+            search_reviews=() if scalar else (SearchReview(FIELD_ID, False,
                 'Disposable opaque fixture values; equality and frequency leakage accepted.'),),
             keys=keys, runtime_role=target_role, target_id=uuid4(),
             backfill_rows_per_second=1000, verify_rows_per_second=1000,

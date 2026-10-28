@@ -1,0 +1,144 @@
+{
+  "format": "cryptalis.consolidated-checkpoint/v1",
+  "parents": [
+    "1a3d93402e376ff67b7899a30a77b748b0035b48",
+    "f3de39bcd118c9c7ffa5f78278a10542bd2ceef9"
+  ],
+  "archive": {
+    "path": "docs/_reset/consolidated-receipts-20261029.tar.gz",
+    "sha256": "0a9d557aff988268a135b268e32f1202b4a40f1c7c522bf72e89a850f3a82347",
+    "members": {
+      "ci/controls.json": "4a776785408fd1b7af7a721097e11d92768efaf798b3b1579bb0c743046adcc4",
+      "ci/evidence.json": "5e90c14d8a6d63e40b9514052ec48728841a6efa5ff09f8c3b84a5fba2a70125",
+      "ci/report.md": "d3f718abd8090210a0b2ab132bfb859e1126c8ed822f08987a9185601ac95da4",
+      "ci/tools.json": "f1337abbe9f4b77865464c58cfe87b8620266b9bda0ba4ed517847289e76a5be",
+      "count/green.json": "3edc837bd2c83fc18ce1319aa6c80bc6438c2c6075e4c368bfc43bb26ec07ca8",
+      "count/red.json": "822c551dae0c18bfc4844ac67b14e23d93c2b31b140d1a21c70ace0b34517966",
+      "count/report.md": "a8b3ddccff02c14111d77ff9b69e33c29ee69588e1df09aeb4a8b4ffa1c62426",
+      "installed-http/restored-application.json": "1a1051bf36d40044939b2c116e7c2f592c6e12747d8a57862a1ef4b7643b8e95",
+      "installed-http/restored-receipt.json": "f3458b66f33495638c3f6cdc8c6e813026940f049f8012a5545ebc484e0d183b",
+      "installed-http/source-application.json": "28931cee569bf95e32e287d764483fd3bb9b672c2c1d3faead65ecb09ead45dc",
+      "installed-http/source-receipt.json": "964fda21a2a786ff5392eaef27336555106003aaf156ff67698ccc762512e459",
+      "installed-keyword/export.json": "302f128c4c104e7ea12ea6ef14041e440b83c8b115b305b1ee5e8896146766d3",
+      "installed-keyword/restore.json": "58e3a1c265704282e4efe1d493102d10c5510c1cea7e7e3509840ab9174c3d6f",
+      "ordinal/installed/boundary.json": "9a51a14a8400048dc73df3d3ba0668a12add5876c634a71c7275efe0669bd9ca",
+      "ordinal/installed/cross-reader-receipt.json": "a3d8cdb69d38910994c4d65e3b3daf360c7056c018a5da90f5ebade96a87eb0c",
+      "ordinal/installed/native-date-storage-journey-receipt.json": "086d8bb73b6e091b1b8c2480273618e34eae9f8ded310f828deadfb479996a9c",
+      "ordinal/source/boundary.json": "9a51a14a8400048dc73df3d3ba0668a12add5876c634a71c7275efe0669bd9ca",
+      "ordinal/source/cross-reader-receipt.json": "51cfc7eb51ae694939f82dcd1cec63ec4e49b6bf6e84dc7477ca40ba1b9d20a7",
+      "ordinal/source/native-date-storage-journey-receipt.json": "fda27a155ee38cf1f7a7e16d07bef18eccfa005663f5599c4f16236ada2ad950",
+      "release/build.json": "68dd8807c51aa3cf2a13f68bfacf080a4ea66e9b671deced93b2ded41be22e71",
+      "release/install.json": "ba2f89e302c7bb824671993062938f93f73d2755c375ca46b8d8a95357db98d5",
+      "release/status.json": "9ad1e17cc0831fbb28f81ee9dbf978e9f3094983a9bffc69f1bae6610e0e7e1f",
+      "source/date-corrections.json": "0a36363d730168b85228bbca854f3a79e76d28c3638271bc67c01286af82181b",
+      "source/full-receipt.json": "cc89d7c54f3818c93c26add1d8e938fae0648eb1c4c457e6758f1730475426a6",
+      "source/full-status.json": "2c854b5ffcaa8dca40daaf7c08a096782a4c962ec6ad7cb95a7ad0576f31fdc1",
+      "source/initial-failures.json": "62e50464411501131f3285871dfaf8486e04444d7eef7c9669120402468f4191"
+    }
+  },
+  "source_full": {
+    "exit_code": 0,
+    "pytest_report_counts": {
+      "test_calls": {
+        "passed": 2993,
+        "skipped": 12
+      },
+      "subtest_calls": {
+        "passed": 18
+      },
+      "setup": {
+        "passed": 3005,
+        "skipped": 47
+      },
+      "teardown": {
+        "passed": 3052
+      },
+      "collection": {
+        "skipped": 16
+      },
+      "selected_items": 3052
+    },
+    "runtime_binding": {
+      "mode": "source",
+      "runtime_root": "/workspace/.cryptalis-cloud/integration-20261029/src/cryptalis",
+      "module_count": 45,
+      "modules_sha256": "9dde4792bc4805db5a51e66ed5de9842bd973b54b69c49e0c9e0708a8c15803a",
+      "wheel": null,
+      "wheel_sha256": null
+    },
+    "runtime_binding_stability": {
+      "unchanged": true,
+      "after": {
+        "mode": "source",
+        "runtime_root": "/workspace/.cryptalis-cloud/integration-20261029/src/cryptalis",
+        "module_count": 45,
+        "modules_sha256": "9dde4792bc4805db5a51e66ed5de9842bd973b54b69c49e0c9e0708a8c15803a",
+        "wheel": null,
+        "wheel_sha256": null
+      }
+    },
+    "source_stability": {
+      "unchanged": true,
+      "changed_paths": []
+    },
+    "elapsed_seconds": 1091.5237782250042
+  },
+  "product_sha256": {
+    "src/cryptalis/__init__.py": "c1a82f9f958187e4b5423d11df5a035b17d75b34a0947af6be4aac436cd2fed2",
+    "src/cryptalis/__main__.py": "9967032819ce6f18e02a40d033958d5f4f7c328faf8693bc07ecc42a1a525707",
+    "src/cryptalis/_access_contract.py": "f650d64bb95c14dbfd623dd34b1754aa5dbc20434ce01aa63c2cfbdea137141b",
+    "src/cryptalis/_cli_operations.py": "94780698d84e78ff788902a556df9c1c4466d15073cf9118ae4a2c4efefa4bb3",
+    "src/cryptalis/_key_policy_status.py": "053d81b7eaa49c12d3baa6d71fe49c61b85fd1178119a9be170b45939da05cce",
+    "src/cryptalis/_retained_obligations.py": "ef4b05cf9f7b40874b405d666be4f17be1c537cda0dbbfacf7131ba1c956050a",
+    "src/cryptalis/_rotation_activation.py": "d18cf3c13d58ad4758e234f949124c777948de854191ab8051069f9f2fb8c056",
+    "src/cryptalis/_rotation_transition.py": "db3576a50e9e017c1c3370683fa3ba914c1586639201a425a82b90bcce52af88",
+    "src/cryptalis/_sqlalchemy_aggregate.py": "1842d7b3f5c0e0f63633255191f87b93b76d19f527f9ced762d90e8784a70dc4",
+    "src/cryptalis/_sqlalchemy_functions.py": "d5ca5cb022859e34b872c8a4c5a9764852b778594449d6c0ef2399c4bf7aa333",
+    "src/cryptalis/_sqlalchemy_guard.py": "d979c187c6dfc0171903b8c6c128ad903488916b0047b03f15f7ba9f0785233d",
+    "src/cryptalis/_sqlalchemy_search.py": "583ce8718dcf553ec8e3bda60c8a1bd26adeb93a63dd23b29279ee1f40eefb94",
+    "src/cryptalis/_sqlmodel_types.py": "591940a3fac58d084ad85ed236ee7d3dbe103772afef43bde187473cb54e4c92",
+    "src/cryptalis/cli.py": "22e3a59c6a5c094693cff68bccdc07a373405fe756e9641e7b8d5254966e0a7f",
+    "src/cryptalis/cli_host.py": "baf7798d31d4657b3943c9e245fd1cbae37754e13883d8a91d7bd054082b5158",
+    "src/cryptalis/contracts/__init__.py": "7a621ddfa3ed2dd543a3495b8cedaed3f892fc6b1fae0b6e8d04285741bd8660",
+    "src/cryptalis/contracts/active_state.py": "b22608114fda5f49b2fa054fef24763bc9735c37612edfce0b13e16ca0df7532",
+    "src/cryptalis/contracts/development_authority.py": "1fe8519fe06fd0121829b92e04f1b5be2b8b72e39f3b8eecc3d60b6e168810d7",
+    "src/cryptalis/contracts/transition.py": "407c8028827ac7660cf6c4d3d4cfae30ca2dacf69ca80749e4e52f07d5c3d923",
+    "src/cryptalis/crypto/__init__.py": "d2e5aba93eac500134274385c5d56deade8e973549f17b31e36da45932283c10",
+    "src/cryptalis/crypto/_candidate_envelope.py": "9c28cb84a85123130328b2273eb27786a95f7953a41f0ec27f1c11100e28e55f",
+    "src/cryptalis/crypto/_candidate_scalar.py": "b97a21a29b4bc9453af8c4c0a8f22b4860892b85854b5d1196ebca2f5094269a",
+    "src/cryptalis/crypto/_candidate_wrap.py": "18cd89777178a5938848c51d47b48603dab902f57e83a6b330a8643f92748dc4",
+    "src/cryptalis/crypto/_payload_rotation.py": "ac0728663ce3e426a965d7876760923ecb86682c8b7150f372b07689309aa920",
+    "src/cryptalis/crypto/_rewrap.py": "797d1789c983e8c4eba36a792c8d4b5c00cba734bd25b61d6a970f1711be734b",
+    "src/cryptalis/crypto/_search_rotation.py": "b2ec5f65ba77a8d44068b20beefb3d367e02f532fe8cb8d060929d476c535ae9",
+    "src/cryptalis/crypto/aws_kms.py": "361486029b46a396adfa9ac18070f09d4aacb053226a6da7eef439f823433bd6",
+    "src/cryptalis/crypto/cf1.py": "49cfc0a6f0910f1ea5d16442848ccb15111893e6144a9d21cdf83f8986b679b0",
+    "src/cryptalis/crypto/keys.py": "7510d2f8babc85380bb56789816616364cac3d486bb697a5d2a2387ce4303bcc",
+    "src/cryptalis/deprotection.py": "9eac66148c1e1670559f55983e88dd0bec9d2fa161bf36bf46b677f18e3b33bb",
+    "src/cryptalis/doctor.py": "c317667b84b84356800afb0aec9faea687959f059a3e30bdcd28dee29a1208f3",
+    "src/cryptalis/manifest/__init__.py": "d2dc8653181d66161df9d9eb29ea79fb36b38fd93848d4da4a25184cda6885cd",
+    "src/cryptalis/manifest/canonical.py": "6fe7e3d22cece14e5d85de912acdaf782a5421bfaa5c4dd796f78ab5bd4c2ec8",
+    "src/cryptalis/manifest/compiler.py": "c1a65a08d144c122cd50fe961f02699adbd9fe2799c21942474c6a0520e6b249",
+    "src/cryptalis/manifest/declaration.py": "348d8e9c4605a28924166e3c1f88bd23f0b6b3ebaae402f52cf0d2c3403ca6b8",
+    "src/cryptalis/manifest/descriptor.py": "739d0438451c47746850c6aa488add4cfd7782ddeebd743741cccd290d2ce20d",
+    "src/cryptalis/manifest/header.py": "6e450d8565e3d7c19ecedd6c6b3120715ea5c7ee3b1ee439fef9e5080bb5eb6a",
+    "src/cryptalis/manifest/parser.py": "43fd17656e0717b24c6e93689d3c619994a527ea65e11b2394e4eb66219877f6",
+    "src/cryptalis/migration.py": "b4887c127de085765bdd2c8322c1b9ace444f13124128c583eb07618c24722b4",
+    "src/cryptalis/online.py": "164d65ccb7d3eb77d4b7b1299743eabdb109621d60ac1d375fc3b6d3e52b3fa6",
+    "src/cryptalis/restore.py": "b6c66c9a0db77f1d4ef9502e8abbf115d437eabf3f901237f4e019e88ef866a6",
+    "src/cryptalis/rotation.py": "abdb6c34c0d74a1b7bd1d621e0e8021b75dc1e7f8425771ffffb5e2817bb4a65",
+    "src/cryptalis/sqlalchemy.py": "4836f006cca53b3a7c2116e1f5153081b678a72be11e63275cd07fd2b453e98d",
+    "src/cryptalis/sqlmodel.py": "ff21af5afc8e03b611237f497737746539d8acff60d4c20358782a016746a76b",
+    "src/cryptalis/tenancy.py": "07d31992b329e5390c74ffec0f94ae9a16ea74e85ebc4f8aa71fe4f0a7414f64"
+  },
+  "wheel_sha256": "c1ac937ace1e1f079a854d4bdfa0f8db96ab1edeea3a71c4536cc7fa5517e50f",
+  "reviews": [
+    "Independent agent review accepted strict dual-Date/UUID format and combined function/count compiler scopes.",
+    "Independent agent static CI review; exact action/tool provenance and local lint/helper controls retained."
+  ],
+  "limits": [
+    "All 34 objectives remain in scope; all seven production gates UNKNOWN.",
+    "No automatic ACTIVE codec conversion.",
+    "Existing manual nested-alias DISTINCT clone refusal remains separate work.",
+    "No remote CI claim before push; no live provider or independent human review."
+  ]
+}
