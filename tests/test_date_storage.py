@@ -104,7 +104,7 @@ def test_date_unadmitted_intents_defaults_and_custom_mapping_refuse(case):
 
 
 def test_previous_reader_refuses_date_plan_before_connecting(tmp_path):
-    reader = os.environ.get('CRYPTALIS_PREVIOUS_READER_PYTHON')
+    reader = os.environ.get('CRYPTALIS_PRE_DATE_READER_PYTHON')
     if not reader:
         pytest.skip('supply a retained pre-date reader interpreter')
     with application(rows=0, value_type=Date(), queries=[]) as app:

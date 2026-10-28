@@ -2,13 +2,14 @@
 import os
 import struct
 from datetime import date, datetime
+from uuid import UUID
 
 import pytest
 from test_cf1 import RECORD, setup_keys
 from test_cf1 import TENANT as CRYPTO_TENANT
 from test_cf1_integer import descriptor, document, independent_frame
 
-from cryptalis.crypto import CryptoFailure, cf1
+from cryptalis.crypto import AuthenticationFailed, CryptoFailure, cf1
 
 
 def test_independent_date_frames_ordinals_bounds_and_invalid_typed_values(monkeypatch):
@@ -23,6 +24,11 @@ def test_independent_date_frames_ordinals_bounds_and_invalid_typed_values(monkey
         assert cf1.seal_value(value, field, CRYPTO_TENANT, RECORD, material) == frame
         opened = cf1.open_value(frame, field, CRYPTO_TENANT, RECORD, material)
         assert opened == value and type(opened) is date
+        for expected, identity in ((field, UUID(int=99)), (descriptor(document(32)), RECORD)):
+            with pytest.raises(AuthenticationFailed):
+                cf1.open_value(frame, expected, CRYPTO_TENANT, identity, material)
+    assert cf1.seal_value(None, field, CRYPTO_TENANT, RECORD, material) is None
+    assert cf1.open_value(None, field, CRYPTO_TENANT, RECORD, material) is None
     for invalid in (datetime(2000, 1, 1), '2000-01-01', 1, True, b'2000-01-01'):
         with pytest.raises(CryptoFailure):
             cf1.seal_value(invalid, field, CRYPTO_TENANT, RECORD, material)

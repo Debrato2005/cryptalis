@@ -200,7 +200,7 @@ def seal_value(value: str | bool | int | date | None, field: FieldDescriptor, te
 
 
 def open_value(frame: bytes | None, field: FieldDescriptor, tenant: UUID,
-               record: UUID | int, keys: PreparedKeys) -> str | bool | int | None:
+              record: UUID | int, keys: PreparedKeys) -> str | bool | int | date | None:
     """Authenticate before decode or release. Header IDs cannot select custody."""
     typed = _context(field, tenant, record, keys)
     if frame is None:
