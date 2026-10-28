@@ -61,7 +61,7 @@ encryption with a stated trade-off, not a claim that database activity is hidden
 
 | Area | Recorded local behavior | Important boundary |
 |---|---|---|
-| Values | TEXT/VARCHAR and storage-only Boolean; internal signed-integer candidate | Integer full admission and additional types remain pending |
+| Values | TEXT/VARCHAR and storage-only Boolean, signed integers and finite dates | Additional scalar/structured types and non-text searches remain pending |
 | Search | Exact equality, IN, admitted NULL/negative forms and tenant-scoped uniqueness | Protected ranges, ordering, text patterns and general aggregates refuse |
 | Reports | Non-NULL counts, one-tenant distinct counts, public count filters/windows and public DISTINCT with encrypted filters | General protected grouping, joins and other aggregate families remain pending |
 | Application integration | Sync/async SQLAlchemy and a synchronous SQLModel bridge | Selected operations and mappings, not arbitrary SQL |
@@ -83,7 +83,7 @@ implementation gaps, even with production qualification excluded:
 | Area | Remaining work |
 |---|---|
 | Protected queries | Ranges, ordering, exact text patterns, general grouping/joins and SUM/AVG/MIN/MAX |
-| Types | Additional scalar and structured JSON contracts; full admission of the internal integer candidate |
+| Types | Additional scalar and structured JSON contracts |
 | Integration | Broader bulk/RETURNING routes, upserts, trigger/cascade cases and automatic query/writer inventory |
 | Migration | Parallel/adaptive execution and broader online type coverage |
 | Measurements | Cold and saturated workloads, larger concurrent profiles, resource limits and pause/recovery budgets |
@@ -92,6 +92,39 @@ These features need their own stored representations, query contracts or
 integration work. The counts added here reuse existing storage. Live provider
 qualification, production deployment assurance and independent security review
 remain outside the college demonstration.
+
+## Dates and small scalar values
+
+An ordinary Python `date` stays a date through protection, reads, edits, rotation,
+backup recovery and removal. The admitted date domain is years 1 through 9999.
+PostgreSQL infinity, BC values and larger years refuse before migration effects.
+The payload stores a four-byte ordinal inside the existing authenticated frame.
+It adds no date equality or ordering term.
+
+![Measured added point latency and isolated column storage for int2, int4, int8 and Date.](images/scalar-costs.svg)
+
+| Type | Scalar added p95, ms | Entity added p95, ms | Protected/native column bytes |
+|---|---:|---:|---:|
+| int2 | 1.73 | 1.57 | 22.50x |
+| int4 | 1.85 | 1.79 | 11.75x |
+| int8 | 1.44 | 1.88 | 6.375x |
+| Date | 1.66 | 2.26 | 11.75x |
+
+Each 10,000-row profile has 100 alternating measured pairs after ten warmups,
+real protection and publication, and current-value decrypt-back/removal. Every
+value matches the native database after removal. The
+[date receipt](_reset/scalar-cost-date-20261028.json) and integer receipts for
+[int2](_reset/scalar-cost-int16-20261028.json),
+[int4](_reset/scalar-cost-int32-20261028.json) and
+[int8](_reset/scalar-cost-int64-20261028.json) retain all samples, process costs
+and full-entity/public-ID batch observations.
+
+These fields have no equality index. The column-only ratios do not evaluate the
+2x indexed-column target. A Date occupies four native bytes; its authenticated
+frame plus the PostgreSQL short bytea header occupies 47 bytes in this fixture.
+The fixed authentication cost therefore dominates small values. One Date point
+sample reached 65.41 ms. The p95 result does not hide that tail observation or
+establish a concurrent/production guarantee.
 
 ## Count reports over encrypted values
 

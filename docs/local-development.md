@@ -91,6 +91,18 @@ from the default suite and does not measure the migration lifecycle.
 
 ## Automated checks
 
+Recover a scalar backup on a separately initialized PostgreSQL cluster, then
+decrypt current values and restart without Cryptalis imports:
+
+```bash
+uv run --frozen --extra sqlmodel python scripts/online_qualification.py \
+  --workdir /tmp/cryptalis-college-date-recovery --fresh-scalar date --public-slots
+```
+
+The same entry point supports `boolean`, `int16`, `int32` and `int64` profiles.
+Each profile uses its fixed export/restore selection and private credentials.
+Use `--public-slots` for dates or integers when checking original column positions.
+
 The [GitHub Actions workflow](../.github/workflows/local-checks.yml) runs the same
 restricted-role PostgreSQL harness on Ubuntu 24.04. It also audits the frozen
 lock and records the lineage microbenchmark. Its `local-evidence` artifact

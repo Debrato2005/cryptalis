@@ -49,7 +49,7 @@ explain these additions and their limits.
 
 **CURRENTLY UNADMITTED:** comparisons and ranges, `ORDER BY`, `LIKE`/prefix/contains, regex,
 `SUM`/`AVG`/`MIN`/`MAX`, general protected `DISTINCT`, protected joins, structured JSON and
-additional protected types beyond the documented text/Boolean scope and internal integer candidate.
+additional protected types beyond documented text, Boolean, Date and signed-integer storage.
 These remain full-SRS engineering objectives. Their runtime refusal does not complete the feature.
 Other unadmitted operators also fail. Do not protect a field whose required queries use these operations.
 Queries on unprotected fields retain their native semantics.
