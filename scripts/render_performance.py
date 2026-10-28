@@ -132,25 +132,25 @@ def main():
     save(figure, output / "count-latency.svg")
 
     scalars = [json.loads((ROOT / f'docs/_reset/scalar-cost-{name}-20261028.json').read_text())
-               for name in ('int16', 'int32', 'int64', 'date')]
+               for name in ('int16', 'int32', 'int64', 'date', 'uuid')]
     figure, axes = plt.subplots(1, 2, figsize=(12, 4.4), layout="constrained")
-    labels = ('int2', 'int4', 'int8', 'Date')
+    labels = ('int2', 'int4', 'int8', 'Date', 'UUID')
     for offset, workload, color, label in ((-.19, 'point_scalar', COLORS[0], 'Scalar result'),
                                           (.19, 'point_entities', COLORS[1], 'Full entity')):
-        bars = axes[0].bar([x + offset for x in range(4)],
+        bars = axes[0].bar([x + offset for x in range(len(scalars))],
                           [record['whole_path'][workload]['added_p95_ms'] for record in scalars],
                           width=.36, color=color, label=label)
         axes[0].bar_label(bars, fmt='%.2f', padding=3, fontsize=9)
     axes[0].axhline(3, linestyle='--', color='#9B4C22', label='Local added-p95 target')
     axes[0].set(title='Point-read cost above native', ylabel='Added p95 milliseconds', ylim=(0, 3.6))
     axes[0].legend(frameon=True, facecolor='white', edgecolor='none', framealpha=1, fontsize=9)
-    bars = axes[1].bar(range(4), [record['isolated_column_ratio'] for record in scalars], color=COLORS[1])
+    bars = axes[1].bar(range(len(scalars)), [record['isolated_column_ratio'] for record in scalars], color=COLORS[1])
     axes[1].bar_label(bars, fmt='%.2f×', padding=3)
     axes[1].axhline(1, color=COLORS[0], label='Native column: 1×')
     axes[1].set(title='Storage-only column cost', ylabel='Protected / native column bytes', ylim=(0, 26))
     axes[1].legend(frameon=False)
     for axis in axes:
-        axis.set(xticks=range(4), xticklabels=labels)
+        axis.set(xticks=range(len(scalars)), xticklabels=labels)
         axis.grid(axis='y', alpha=.18)
         axis.set_axisbelow(True)
     figure.suptitle('Local scalar costs: 10,000 rows and 100 alternating warm pairs', fontsize=14)

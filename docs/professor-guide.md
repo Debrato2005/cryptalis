@@ -85,7 +85,7 @@ implementation gaps, even with production qualification excluded:
 | Protected queries | Ranges, ordering, exact text patterns, general grouping/joins and SUM/AVG/MIN/MAX |
 | Types | Additional scalar and structured JSON contracts |
 | Integration | Broader UPDATE/DELETE RETURNING routes, upserts, trigger/cascade cases and automatic query/writer inventory |
-| Migration | Parallel/adaptive execution and online coverage for future types |
+| Migration | Multiple database executors and online coverage for future types |
 | Measurements | Cold and saturated workloads, larger concurrent profiles, resource limits and pause/recovery budgets |
 
 These features need their own stored representations, query contracts or
@@ -101,7 +101,7 @@ PostgreSQL infinity, BC values and larger years refuse before migration effects.
 The payload stores a four-byte ordinal inside the existing authenticated frame.
 It adds no date equality or ordering term.
 
-![Measured added point latency and isolated column storage for int2, int4, int8 and Date.](images/scalar-costs.svg)
+![Measured added point latency and isolated column storage for int2, int4, int8, Date and UUID.](images/scalar-costs.svg)
 
 | Type | Scalar added p95, ms | Entity added p95, ms | Protected/native column bytes |
 |---|---:|---:|---:|
@@ -250,6 +250,12 @@ flowchart LR
 ```
 
 ## A reversible lifecycle
+
+Online capture can use up to sixteen cryptographic workers while one SQL writer
+commits each row batch and its progress atomically. An optional duration target
+adapts the next row count within the manifest plan's row and byte ceilings.
+This preserves the existing capture/fence/resume workflow. The functional
+concurrency checks do not claim a measured speedup or eliminate the final pause.
 
 ```mermaid
 flowchart LR

@@ -127,6 +127,19 @@ progress = online.apply(p, owner_engine, keys=tenant_keyrings,
     pin=prepared_pin, approval=approval, max_chunks=10)
 ```
 
+For thread-safe host key resolvers/providers, pass `workers=4` to parallelize row
+cryptography. The default is one worker; the admitted maximum is sixteen. SQL
+writes and journal commits retain one executor and their existing atomicity.
+Workers perform no SQL and join before the executor closes. Completed chunks
+retain their bytes on resume.
+
+Pass `target_chunk_seconds=0.1` to tune the next candidate row count from measured
+whole-chunk duration. Each change stays between half and twice the prior count,
+within the plan's row maximum. The byte maximum stays unchanged. Resume restarts
+tuning at the approved row maximum. This target is not a maximum pause, memory
+or provider-cost guarantee. Measure representative workloads before increasing
+workers; small rows can spend more time coordinating threads than encrypting.
+
 The plan records the source and target grants. It changes no data or authority. The native values stay authoritative during capture. A trigger clears shadow payloads and sets a nullable dirty marker after each non-owner insert or update. `NULL` means dirty. Each apply call limits chunks, rows, and logical bytes. The row limit defaults to 1,000 and cannot exceed 5,000. The byte limit cannot exceed 1 GiB. These limits do not bound process memory, database memory, or storage use. Progress counts row versions, not unique rows. Repeated writes can keep rows dirty, so capture does not promise convergence while writes continue.
 
 Approve the final write pause before the fence. Then call `apply(..., fence=True)` with the current pin. This drains in-flight native writers and installs durable write guards. Continue bounded apply calls until catch-up completes. The source role can still write native values before the fence. The target role has no direct table CRUD until the switch.

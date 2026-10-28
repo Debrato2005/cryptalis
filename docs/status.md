@@ -10,6 +10,24 @@ No PostgreSQL/provider/runtime cell, production key provider, independent review
 VERIFIED below refers only to the named checks and their exact revisions.
 All other contract and promotion requirements are SPECIFIED. All seven full gates remain UNKNOWN.
 
+## Parallel crypto and adaptive online batches: 2026-10-28
+
+**VERIFIED, local PostgreSQL 16.15:** the [31-check affected run](_reset/online-workers-20261028.json)
+passes actual four-thread row-crypto overlap, adaptive row limits of 16/8/4/2,
+resume with unchanged completed frames, full current-value authentication,
+native abort values and atomic refusal/retry after a worker failure. Existing
+online scalar, tenant and recovery controls pass in the same run. All three role
+probes pass and source stays unchanged.
+
+`online.apply` accepts `workers=1..16` and optional `target_chunk_seconds`.
+One worker remains the default. SQL writes, row locks and journal commits stay
+serial under one executor lock. Workers perform only cryptography, with separate
+per-thread, per-chunk preparation caches. Parallel use requires thread-safe host
+key resolvers/providers. Pool shutdown joins outstanding work before releasing
+the SQL executor. Tuning never raises the plan's row/byte limits and provides no
+pause guarantee. This establishes functional concurrency, not a speedup or a
+multi-executor database scheduler.
+
 ## Tuple and entity INSERT RETURNING: 2026-10-28
 
 **VERIFIED, local PostgreSQL 16.15:** mapped dictionary INSERT now returns native
