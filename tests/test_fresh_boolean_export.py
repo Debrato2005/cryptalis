@@ -8,7 +8,7 @@ from uuid import UUID
 
 import psycopg
 import pytest
-from sqlalchemy import BigInteger, Boolean, Date, Integer, SmallInteger
+from sqlalchemy import BigInteger, Boolean, Date, Integer, SmallInteger, Uuid
 
 from cryptalis import migration as m, rotation as r
 from cryptalis.sqlalchemy import attach
@@ -26,15 +26,18 @@ def test_export_boolean_storage_after_payload_rotation():
     workdir = Path(os.environ['CRYPTALIS_FRESH_CLUSTER_DIR'])
     bits = int(os.environ.get('CRYPTALIS_FRESH_INTEGER_BITS', '0'))
     dates = os.environ.get('CRYPTALIS_FRESH_DATE') == '1'
-    dtype = Date if dates else {0: Boolean, 16: SmallInteger, 32: Integer, 64: BigInteger}[bits]
+    uuids = os.environ.get('CRYPTALIS_FRESH_UUID') == '1'
+    dtype = Uuid if uuids else Date if dates else {0: Boolean, 16: SmallInteger, 32: Integer, 64: BigInteger}[bits]
     lower, upper = (-(1 << (bits - 1)), (1 << (bits - 1)) - 1) if bits else (0, 1)
-    profile = 'native-date-storage' if dates else 'integer-' + str(bits) if bits else 'boolean-storage'
+    profile = 'native-uuid-storage' if uuids else 'native-date-storage' if dates else 'integer-' + str(bits) if bits else 'boolean-storage'
     default_raw = os.environ.get('CRYPTALIS_FRESH_INTEGER_DEFAULT', '')
     default = int(default_raw) if default_raw else None
     assert default is None or bits in (16, 32, 64)
     values = (lower, upper, None, -1, 0, 1, 17) if bits else (False, True, None)
     if dates:
         values = (date.min, date.max, None, date(1970, 1, 1), date(2000, 2, 29))
+    if uuids:
+        values = (UUID(int=0), UUID(int=(1 << 128) - 1), None, UUID(int=1), UUID(bytes=bytes(range(16))))
     if default is not None:
         values = (lower, upper, -1, 0, 1, 17, 29)
     with application(rows=7, value_type=dtype(), queries=[], protected_values=values, value_default=default) as app:
@@ -48,7 +51,7 @@ def test_export_boolean_storage_after_payload_rotation():
         dump(workdir / 'plain.sql', app.schema, environment('CRYPTALIS_TEST_DATABASE_URL'))
         run(app); publish(app)
         source_keys, reader_keys = keys, target_keys
-        if default is not None or dates:
+        if default is not None or dates or uuids:
             from rewrap_worker import target_keys as rewrapped_keys
             from payload_rotation_worker import rotated_keys
             before_rewrap = frames(app, True)
@@ -81,8 +84,8 @@ def test_export_boolean_storage_after_payload_rotation():
         sessions = attach(app.mapping, app.runtime, lock=activation.lock_bytes, keys=reader_keys,
                           deployment=(activation, app.pin))
         with sessions(tenant_id=TENANT) as session:
-            edited = date(2024, 2, 29) if dates else lower + 17 if bits else False
-            added = date(2025, 3, 1) if dates else upper - 17 if bits else True
+            edited = UUID(int=2024) if uuids else date(2024, 2, 29) if dates else lower + 17 if bits else False
+            added = UUID(int=2025) if uuids else date(2025, 3, 1) if dates else upper - 17 if bits else True
             session.get(app.Customer, UUID(int=101)).name = edited
             session.delete(session.get(app.Customer, UUID(int=106)))
             if default is not None:
@@ -97,16 +100,16 @@ def test_export_boolean_storage_after_payload_rotation():
         if default is not None:
             expected[str(UUID(int=102))] = None
         del expected[str(UUID(int=106))]
-        assert all(value is None or len(value) == (46 if dates else 42 + bits // 8 if bits else 43) for value in frames(app, True).values())
+        assert all(value is None or len(value) == (58 if uuids else 46 if dates else 42 + bits // 8 if bits else 43) for value in frames(app, True).values())
         dump(workdir / 'protected.sql', app.schema, environment('CRYPTALIS_TEST_DATABASE_URL'))
         owner = psycopg.conninfo.conninfo_to_dict(os.environ['CRYPTALIS_TEST_DATABASE_URL'])
         runtime = psycopg.conninfo.conninfo_to_dict(os.environ['CRYPTALIS_TEST_RUNTIME_DATABASE_URL'])
         manifest = {'application_profile': profile, 'integer_bits': bits,
-            'application_default': None if default is None else str(default), 'root_rewrapped': default is not None or dates,
+            'application_default': None if default is None else str(default), 'root_rewrapped': default is not None or dates or uuids,
             'public_slots': public_slots, 'source_public_slots': source_public_slots, 'database': owner['dbname'],
             'owner_role': owner['user'], 'runtime_role': runtime['user'], 'schema': app.schema,
             'source': source, 'expected': expected, 'plan': base64.b64encode(activation.artifact).decode(),
             'pin': {'target_id': str(app.pin.target_id), 'operation_id': str(app.pin.operation_id),
                     'plan_digest': app.pin.plan_digest, 'phase': app.pin.phase}}
     (workdir / 'restore-manifest.json').write_text(json.dumps(manifest, indent=2, sort_keys=True,
-                                                           default=date.isoformat) + '\n')
+                                                           default=lambda value: str(value) if type(value) is UUID else date.isoformat(value)) + '\n')

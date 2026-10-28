@@ -20,13 +20,13 @@ def main():
                         help='Run the pinned original HTTP application through online capture and native exit.')
     profiles.add_argument('--http-fresh', action='store_true',
                          help='Recover the online HTTP backup on a new cluster, rotate keys and restore native operation.')
-    profiles.add_argument('--fresh-scalar', choices=('date', 'boolean', 'int16', 'int32', 'int64'),
+    profiles.add_argument('--fresh-scalar', choices=('date', 'uuid', 'boolean', 'int16', 'int32', 'int64'),
                          help='Qualify typed storage, rotations, fresh restore and package-free exit.')
     parser.add_argument('--public-slots', action='store_true', help='Preserve public slots in scalar recovery.')
     parser.add_argument('pytest_args', nargs=argparse.REMAINDER)
     args = parser.parse_args()
     if args.public_slots and (not args.fresh_scalar or args.fresh_scalar == 'boolean'):
-        parser.error('--public-slots requires --fresh-scalar date/int16/int32/int64')
+        parser.error('--public-slots requires --fresh-scalar date/uuid/int16/int32/int64')
     if args.fresh_scalar and args.pytest_args:
         parser.error('--fresh-scalar runs its fixed export/restore profile; omit pytest arguments')
     args.workdir.mkdir(mode=0o700, parents=True, exist_ok=False)
