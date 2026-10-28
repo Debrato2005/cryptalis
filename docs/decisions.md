@@ -4,6 +4,26 @@
 It does not preserve old IDs as implementation obligations. Historical dispositions remain in [archived revamp evidence](research/revamp-evidence.md).
 [Status](status.md) owns IMPLEMENTED/VERIFIED claims. All seven full gates remain UNKNOWN.
 
+## Native date storage: 2026-10-28
+
+Add storage-only PostgreSQL DATE with exact native SQLAlchemy Date mappings and
+Python date values in years 1 through 9999. SQL NULL stays SQL NULL. Do not infer
+dates from strings, timestamps, time zones or custom processors. Refuse date
+defaults and date search intent in this addition. Existing NULL predicates and
+direct non-NULL counts remain available.
+
+Encode the Gregorian ordinal as four unsigned big-endian bytes under
+`date-ordinal-u32/v1` and the existing typed context/v2. Authenticate before
+decoding. A non-NULL frame is exactly 46 bytes. Use lock/v8 and an explicit
+required reader, so prior readers refuse before database/provider access.
+Existing codecs and artifact versions keep their exact bytes.
+
+The protection planner must reject non-finite dates, BC values and years beyond
+9999 before migration effects. Recheck the value contract during backfill.
+Preserve native Date values through protection, current-value updates, root and
+payload rotation, protected backup adoption and latest-value native removal.
+This local addition does not qualify a production gate.
+
 ## Bounded protected counts: 2026-10-28
 
 For the local assignment candidate, implement `COUNT(protected_column)` as a
