@@ -61,7 +61,7 @@ encryption with a stated trade-off, not a claim that database activity is hidden
 
 | Area | Recorded local behavior | Important boundary |
 |---|---|---|
-| Values | TEXT/VARCHAR and storage-only Boolean, signed integers and finite dates | Additional scalar/structured types and non-text searches remain pending |
+| Values | TEXT/VARCHAR and storage-only Boolean, signed integers, finite dates and UUIDs | Additional scalar/structured types and non-text searches remain pending |
 | Search | Exact equality, IN, admitted NULL/negative forms and tenant-scoped uniqueness | Protected ranges, ordering, text patterns and general aggregates refuse |
 | Reports | Non-NULL counts, one-tenant distinct counts, public count filters/windows and public DISTINCT with encrypted filters | General protected grouping, joins and other aggregate families remain pending |
 | Application integration | Sync/async SQLAlchemy and a synchronous SQLModel bridge | Selected operations and mappings, not arbitrary SQL |
@@ -109,6 +109,7 @@ It adds no date equality or ordering term.
 | int4 | 1.85 | 1.79 | 11.75x |
 | int8 | 1.44 | 1.88 | 6.375x |
 | Date | 1.66 | 2.26 | 11.75x |
+| UUID | 1.42 | 1.70 | 3.6875x |
 
 Each 10,000-row profile has 100 alternating measured pairs after ten warmups,
 real protection and publication, and current-value decrypt-back/removal. Every
@@ -125,6 +126,13 @@ frame plus the PostgreSQL short bytea header occupies 47 bytes in this fixture.
 The fixed authentication cost therefore dominates small values. One Date point
 sample reached 65.41 ms. The p95 result does not hide that tail observation or
 establish a concurrent/production guarantee.
+
+UUID-valued fields store sixteen authenticated network-order bytes, including
+the nil UUID. The [UUID profile](_reset/scalar-cost-uuid-20261028.json) uses the
+same matched workloads in a separate run. Its CF1 frame and bytea header occupy
+59 bytes versus sixteen native bytes. The UUID used as a record identity or
+tenant identifier stays public so the application can authenticate each value
+against its expected row and tenant.
 
 ## Count reports over encrypted values
 

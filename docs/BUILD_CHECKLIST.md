@@ -25,6 +25,11 @@ No objective is complete until its acceptance evidence and applicable gate pass.
 
 ## Current boundary
 
+- UUID-valued fields now pass both layouts, sync/async current-value storage,
+  mixed interrupted rotations, retained-reader refusal and fresh-cluster native
+  exit. A matched 10k cost profile records the fixed storage overhead and warm
+  latency. See the [UUID checkpoint](status.md#native-uuid-value-storage-2026-10-28).
+
 - Finite Date storage now passes native sync/async protection, all three mixed
   rotations, fresh-cluster recovery, retained-reader refusal and package-free
   native exit. Current Date/int2/int4/int8 profiles publish real column overhead

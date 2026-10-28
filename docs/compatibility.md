@@ -67,6 +67,7 @@ Rollback/removal transforms current data through decrypt-back until explicit fin
 | COUNT of a directly protected column | SUPPORTED | Bounded local implementation of native non-NULL counts, optional output labels, aliases, public grouping and public FILTER predicates. Non-distinct windows admit public partitions/order and native bounds. Custom dispatch and protected argument/filter/partition/order expressions refuse |
 | Boolean storage/read/write, entity/table/scalar projection, SQL NULL | SUPPORTED | Typed authenticated one-byte values, native Boolean input processing and literal client defaults. No Boolean equality term. [Bounded evidence](status.md#boolean-storage-checkpoint-2026-10-23) |
 | Date storage/read/write and SQL NULL | SUPPORTED | Exact Python date values in years 1 through 9999; typed four-byte ordinal and lock/v8. Storage-only, native sync/async values and latest-value removal. Non-finite/BC/out-of-range source dates refuse before migration effects |
+| UUID value storage/read/write and SQL NULL | SUPPORTED | Exact standard native UUID mappings and Python UUID inputs, including nil; sixteen authenticated network-order bytes and lock/v9. Storage-only; defaults, coercions and custom mappings refuse. Public record/tenant UUIDs keep their separate context contract |
 | Signed integer storage/read/write and SQL NULL | SUPPORTED | Exact int2/int4/int8 mappings and width-bound Python ints, literal client defaults, native failure/transaction behavior and typed fixed-width CF1. Storage-only; the fixed authentication overhead is published in the local cost profile |
 | Mapped dictionary INSERT without RETURNING | SUPPORTED | Attached sync/async `Session.execute(insert(Model), list[dict])`, explicit typed IDs and tenant scope, copied attribute dictionaries, native NULL/grouping, autoflush, uniqueness and transaction behavior. Other bulk routes remain unadmitted |
 | Mapped dictionary INSERT with one protected scalar RETURNING | SUPPORTED | Exactly one direct protected mapped column. Preserve native Row/scalar keys/types, grouping, paging, parameter-order requests and empty identity map. Authenticate against exact prepared input. Tuple/entity, label/expression/alias, loader-option and caller return_defaults forms remain unadmitted |
@@ -224,7 +225,7 @@ coercion constants preserve custom/generic timing, stale-row behavior and earlie
 INSERT constraints without private numeric binds. Range failures retain typed
 IntegerRangeExceeded and SQLSTATE 22003. Local storage admission retains the
 published fixed-overhead cost; production qualification remains UNKNOWN. See
-see the [installed checkpoint](status.md#integer-installed-lifecycle-checkpoint-2026-10-24).
+the [installed checkpoint](status.md#integer-installed-lifecycle-checkpoint-2026-10-24).
 The newer [default/state checkpoint](status.md#integer-literal-default-installed-checkpoint-2026-10-24)
 adds native default semantics and fixes attribute expiration after valid flushes.
 

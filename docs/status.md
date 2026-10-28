@@ -10,6 +10,33 @@ No PostgreSQL/provider/runtime cell, production key provider, independent review
 VERIFIED below refers only to the named checks and their exact revisions.
 All other contract and promotion requirements are SPECIFIED. All seven full gates remain UNKNOWN.
 
+## Native UUID value storage: 2026-10-28
+
+**VERIFIED, local PostgreSQL 16.15:** UUID values, including nil and the maximum
+UUID, pass protection, sync/async edits, counts and latest-value native removal
+in both column layouts. The [50-check lifecycle run](_reset/uuid-mixed-lifecycle-20261028.json)
+adds all three interrupted/resumed rotations beside searchable text and two
+tenant scopes, plus configured pre-Date and pre-UUID reader refusals before SQL.
+Custom, emulated, string-valued, searchable and defaulted UUID mappings refuse.
+
+The [fresh export](_reset/fresh-cluster-export-20261028-6.json) and
+[fresh recovery](_reset/fresh-cluster-restore-20261028-6.json) pass root/payload
+rotation, tamper refusal, adoption and public-slot native exit. A fresh process
+that denies Cryptalis imports reads exact native UUID values afterward.
+
+The [10,000-row matched cost profile](_reset/scalar-cost-uuid-20261028.json)
+records 100 alternating warm pairs after ten warmups. Added point p95 is
+1.4161 ms for scalars and 1.6965 ms for full entities. The column-only ratio is
+3.6875x, sixteen native bytes versus 59 bytes with the CF1 and bytea headers.
+Both local point observations meet 3 ms. No equality index or indexed-storage
+target applies. The [wrapper](_reset/scalar-cost-uuid-wrapper-20261028.json)
+records unchanged source and all three role probes.
+
+UUID fields use sixteen network-order bytes, context/v2 and lock/v9. Public
+record and tenant UUID codecs stay separate. No new dependency or earlier frame
+bytes change. This source checkpoint does not claim current installed-wheel or
+full-suite qualification. Production gates remain UNKNOWN.
+
 ## DISTINCT with selected record identities: 2026-10-28
 
 **VERIFIED, local PostgreSQL 16.15:** entity/table projections and direct tuples
