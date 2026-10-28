@@ -81,8 +81,12 @@ driver parameters after SQLAlchemy cursor events, including exact payload
 bytes, identity and tenant, against the admitted batch. Late parameter or SQL
 replacement refuses before driver dispatch. This boundary does not make
 arbitrary host plugins trustworthy or qualify other write routes.
-For one protected scalar RETURNING, the processor also requires a real input
-identity and exact prepared ciphertext or NULL for that native group.
+For scalar, tuple or entity RETURNING, every protected output also requires its
+own real input identity and exact prepared ciphertext or NULL for that native group.
+Swapping protected outputs fails their independent field/context authentication.
+The complete expanded output list must retain exact physical column identities
+and native dispatch before key resolution and again at compilation. Public
+outputs keep native processing and have no added payload-authentication claim.
 SELECT's outer-join NULL-identity rule does not apply to inserted rows.
 A valid fresh frame for the same context still refuses if this operation did
 not prepare it. This stronger write-result check does not establish general

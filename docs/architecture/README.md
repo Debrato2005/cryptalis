@@ -310,9 +310,11 @@ At final driver dispatch, match the actual SQL, identity, tenant and ciphertext
 against the admitted batch. Compiled parameters alone do not establish what the
 driver receives.
 
-Exactly one direct protected mapped column can use RETURNING.
-Its native Row/scalar result keeps grouping, page handling and parameter-order requests.
-Each returned scalar must match the tenant, real input identity and exact
+RETURNING admits direct mapped-column tuples/scalars, public-only columns and
+the inserted mapped entity. Native results keep grouping, page handling and
+optional parameter ordering. Entity loading retains the native identity map,
+expiration and refresh behavior. Each protected output must match its own tenant,
+real input identity and exact
 prepared frame or NULL. Immutable expectations come from that native group.
 They survive operation cleanup without retaining the operation or session.
 
@@ -321,8 +323,8 @@ Validate full processed input first, then each page's rows against the original
 frozen slice. An exact one-shot page snapshot precedes cursor callbacks and
 final dispatch. Reuse native result processing and sentinel ordering.
 The private page hook needs evidence for each selected SQLAlchemy cell.
-No tuple/entity RETURNING, embedded statement values, Core INSERT, upsert,
-INSERT SELECT or row SQL expression is admitted by this route.
+Labels, expressions, aliases, loader options, caller return_defaults, embedded
+statement values, Core INSERT, upsert and INSERT SELECT remain unadmitted.
 
 Stock SQLAlchemy SAVEPOINT, ROLLBACK TO and RELEASE clauses need no data permit.
 Accept only their exact native compilation with empty parameters and unchanged
@@ -375,8 +377,8 @@ defines its refusals. The [checkpoint](../status.md#optional-sqlmodel-template-c
 owns its bounded runtime and application evidence.
 
 The engine must use PostgreSQL/psycopg, `echo=False`, and `hide_parameters=True`. Attachment refuses unsafe logging settings before it opens a connection or resolves a key, and it requires no checked-out connections at activation.
-Ordinary ORM flush writes, mapped dictionary INSERT with optional single protected
-scalar RETURNING, direct
+Ordinary ORM flush writes, mapped dictionary INSERT with native scalar/tuple/entity
+RETURNING, direct
 projections and declared equality/IN are implemented. Simple negative equality,
 `NOT IN`, and NULL presence are admitted with native truth. Core writes, other
 bulk routes and unadmitted grammar reject.
