@@ -4,6 +4,20 @@
 It does not preserve old IDs as implementation obligations. Historical dispositions remain in [archived revamp evidence](research/revamp-evidence.md).
 [Status](status.md) owns IMPLEMENTED/VERIFIED claims. All seven full gates remain UNKNOWN.
 
+## Native UUID value storage: 2026-10-28
+
+Add storage-only PostgreSQL UUID values with exact standard native UUID mappings
+and Python UUID inputs. This protects ordinary UUID-valued fields; primary-key
+and tenant context columns remain public and retain their separate codecs.
+Use `uuid-bytes16/v1`, typed context/v2 and lock/v9. Encode exactly sixteen
+network-order UUID bytes, including the nil UUID. Authenticate before decoding.
+Non-NULL frames have exactly 58 bytes. Earlier readers must refuse before SQL.
+
+Keep string coercions, UUID field defaults, custom mappings and UUID search
+unadmitted in this addition. Carry current values through protection, native
+sync/async operations, rotations, fresh recovery and decrypt-back. No new
+cryptographic primitive or runtime dependency is required.
+
 ## Native date storage: 2026-10-28
 
 Add storage-only PostgreSQL DATE with exact native SQLAlchemy Date mappings and
