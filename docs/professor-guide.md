@@ -102,6 +102,17 @@ non_null_total = row._mapping[present]
 different_values = row.distinct_names
 ```
 
+Public fields can also control the report without decrypting the protected column:
+
+```python
+eligible = func.count(Customer.name).filter(Customer.age >= 18)
+running = func.count(Customer.name).over(order_by=Customer.id, rows=(None, 0))
+```
+
+The first expression counts non-NULL names for adults. The second reports a
+running non-NULL count in public ID order. Protected filters and sort keys still
+need their own query admission.
+
 Use the attached session and declared single tenancy from the walkthrough.
 For a tenant-column table, add a direct `Customer.tenant_id == tenant_id` filter,
 or group by `Customer.tenant_id` to report each tenant separately. A global

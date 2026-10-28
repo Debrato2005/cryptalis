@@ -12,6 +12,13 @@ All other contract and promotion requirements are SPECIFIED. All seven full gate
 
 ## Local assignment explanation and inspection profile: 2026-10-28
 
+**VERIFIED, local PostgreSQL 16.15:** count FILTER predicates over public fields
+and non-distinct count windows over public partitions/order retain native
+results. The [117-check affected run](_reset/window-counts-20261028.json)
+includes empty filtered input, a running ROWS frame, labeled partitioned results,
+filtered distinct counts and custom-window refusal. Protected filter/partition/order
+expressions and DISTINCT windows remain unadmitted.
+
 **VERIFIED, local PostgreSQL 16.15:** public-column DISTINCT and DISTINCT ON work
 with admitted encrypted WHERE predicates. Sync/async native comparisons cover
 aliases, NULL filters and pagination; protected distinct keys and outputs still

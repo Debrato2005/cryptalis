@@ -22,8 +22,11 @@ On tenant-column tables, require a native direct tenant equality to a bound valu
 in a mandatory WHERE conjunction, or group by the counted source's exact tenant
 column. Do not infer scope from another alias, an OR predicate or a custom
 renderer. Each distinct group must contain only one tenant's terms.
-Global multi-tenant distinct counts, protected grouping, windows, aggregate
-filters and general aggregates remain separate work. These local additions do not qualify
+Native FILTER predicates over public fields also preserve count semantics.
+Admit non-distinct count windows with public partition/order expressions and
+native frame bounds. Keep protected filter/partition/order expressions and
+DISTINCT windows refused. Global multi-tenant distinct counts, protected grouping
+and general aggregates remain separate work. These local additions do not qualify
 production gates or remove objectives from the ledger.
 
 ## Online capture and access transfer: 2026-10-24
