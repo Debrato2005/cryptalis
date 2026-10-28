@@ -12,6 +12,14 @@ All other contract and promotion requirements are SPECIFIED. All seven full gate
 
 ## Local assignment explanation and inspection profile: 2026-10-28
 
+**VERIFIED, local PostgreSQL 16.15:** direct `COUNT(protected_column)` preserves
+native integer results, NULL/empty-input behavior, aliases, public grouping and
+transaction rollback through sync/async sessions. TEXT and Boolean storage-only
+counts pass after real protection. Custom count renderers and unadmitted wrappers
+refuse before statement key preparation and SQL. The [focused run](_reset/protected-counts-20261028.json)
+passes 97 checks, including the existing search and Doctor controls.
+No payload, key-policy, schema or stored representation changes are required.
+
 **IMPLEMENTED:** protected-column lineage is collected once per expression
 inspection. Native proxy-set intersection semantics remain unchanged, and no
 cross-operation cache is added. The [paired CPU profile](_reset/admission-lineage-20261028.json)
