@@ -393,15 +393,17 @@ def apply(p, engine, *, keys, pin, approval, max_chunks=1, fence=False,
 
     An empty backlog is only a current observation. It never authorizes cutover.
     The fence first drains in-flight native writers under an exclusive lock.
+    Opt-in crypto workers require thread-safe host resolvers/providers. A target
+    chunk duration tunes row counts within the plan; it promises no pause bound.
     """
     if type(max_chunks) is not int or not 0 <= max_chunks <= 100000 or type(fence) is not bool:
         raise m.TransitionFailure('invalid_online_apply_bound')
     if (type(workers) is not int or not 1 <= workers <= 16 or target_chunk_seconds is not None and
             (not m._finite_number(target_chunk_seconds) or not 0 < target_chunk_seconds <= 60)):
         raise m.TransitionFailure('invalid_online_worker_bound')
-    row_limit = p.document['batch_limits']['max_rows']
     with _executor(p,engine,pin,approval) as c, (ThreadPoolExecutor(max_workers=workers)
             if workers > 1 else nullcontext()) as pool:
+        row_limit = p.document['batch_limits']['max_rows']
         state = _state(c,p,pin)
         c.commit()
         if state is None:

@@ -93,3 +93,9 @@ def test_invalid_execution_bounds_refuse_before_database_access(options):
     with pytest.raises(m.TransitionFailure) as failure:
         online.apply(None, None, keys=None, pin=None, approval=None, **options)
     assert failure.value.code == 'invalid_online_worker_bound'
+
+
+def test_invalid_plan_retains_typed_refusal_before_database_access():
+    with pytest.raises(m.TransitionFailure) as failure:
+        online.apply(None, None, keys=None, pin=None, approval=None)
+    assert failure.value.code == 'external_policy_mismatch'
