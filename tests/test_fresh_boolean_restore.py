@@ -9,6 +9,7 @@ import sys
 from uuid import UUID
 
 import psycopg
+from psycopg import sql
 import pytest
 from sqlalchemy import BigInteger, Integer, SmallInteger, Boolean, Column, MetaData, Table, Text, Uuid, select
 from sqlalchemy.orm import registry
@@ -46,23 +47,28 @@ def test_boolean_fresh_cluster_authentication_adoption_and_package_free_latest_f
         reader_keys = rotated_keys
     assert manifest.get('root_rewrapped', False) is (default is not None)
     assert manifest['application_profile'] == profile and manifest.get('integer_bits', 0) == bits
+    column_name = manifest.get('column', 'name')
+    assert column_name == os.environ.get('CRYPTALIS_FRESH_COLUMN_NAME', 'name')
+    source = m.MigrationPlan(base64.b64decode(manifest['plan'], validate=True))
+    assert source.document['lock']['models'][0]['fields'][0]['column'] == column_name
     schema = manifest['schema']
     restore_dump(directory / 'plain.sql', os.environ['CRYPTALIS_FRESH_PLAIN_DATABASE'])
     with psycopg.connect(os.environ['CRYPTALIS_TEST_DATABASE_URL'],
                          dbname=os.environ['CRYPTALIS_FRESH_PLAIN_DATABASE']) as connection:
-        native = connection.execute(f'SELECT id,name FROM "{schema}".customer').fetchall()
+        native = connection.execute(sql.SQL('SELECT id,{} FROM {}.customer').format(
+            sql.Identifier(column_name), sql.Identifier(schema))).fetchall()
     assert {str(key): value for key, value in native} == manifest['source']
     assert all(value is None or type(value) is native_python for _, value in native)
     restore_dump(directory / 'protected.sql')
-    source = m.MigrationPlan(base64.b64decode(manifest['plan'], validate=True))
     values = manifest['pin']
     pin = m.DeploymentPin(UUID(values['target_id']), UUID(values['operation_id']), values['plan_digest'], values['phase'])
     owner, runtime = engine('CRYPTALIS_TEST_DATABASE_URL'), engine('CRYPTALIS_TEST_RUNTIME_DATABASE_URL')
     mapping = registry(metadata=MetaData(schema=schema))
     table = Table('customer', mapping.metadata, Column('id', Uuid, primary_key=True, autoincrement=False),
-        Column('tenant_id', Uuid, nullable=False), Column('name', dtype(), default=default), Column('label', Text))
+        Column('tenant_id', Uuid, nullable=False), Column(column_name, dtype(), default=default), Column('label', Text))
     class Customer: pass
-    mapping.map_imperatively(Customer, table)
+    mapping.map_imperatively(Customer, table, properties={'name': table.c[column_name]})
+    column = owner.dialect.identifier_preparer.quote_identifier(column_name)
     approval = m.MaintenanceApproval('source export finished and schema dropped; fresh target excludes writers', 3600)
     intent = recovery.RestoreApproval('qualification host', 'adopt typed Boolean restored copy',
                                      'source schema dropped after export; target quarantined', True)
@@ -71,16 +77,19 @@ def test_boolean_fresh_cluster_authentication_adoption_and_package_free_latest_f
             m.check_deployment(source, owner, pin=pin)
         with owner.connect() as connection:
             identity, frame = connection.exec_driver_sql(
-                f'SELECT id,name FROM "{schema}".customer WHERE name IS NOT NULL ORDER BY id LIMIT 1').one()
+                f'SELECT id,{column} FROM "{schema}".customer WHERE {column} IS NOT NULL ORDER BY id LIMIT 1').one()
             frame = bytes(frame)
         with owner.begin() as connection:
-            connection.exec_driver_sql(f'UPDATE "{schema}".customer SET name=%s WHERE id=%s',
+            connection.exec_driver_sql(f'UPDATE "{schema}".customer SET {column}=%s WHERE id=%s',
                 (frame[:-1] + bytes([frame[-1] ^ 1]), identity))
         with pytest.raises(m.TransitionFailure):
             recovery.plan(source, owner, pin=pin, keys=reader_keys, approval=intent)
         with owner.begin() as connection:
-            connection.exec_driver_sql(f'UPDATE "{schema}".customer SET name=%s WHERE id=%s', (frame, identity))
+            connection.exec_driver_sql(f'UPDATE "{schema}".customer SET {column}=%s WHERE id=%s', (frame, identity))
         binding = recovery.plan(source, owner, pin=pin, keys=reader_keys, approval=intent)
+        if column_name != 'name':
+            frame_name = source.document['lock']['models'][0]['fields'][0]['payload_column'] + '_frame'
+            assert any(item['name'] == frame_name for item in binding.document['restatements'])
         sessions = attach(mapping, runtime, lock=source.lock_bytes, keys=reader_keys,
                           deployment=(source, pin, binding))
         with sessions(tenant_id=TENANT) as session:
@@ -127,23 +136,27 @@ sys.meta_path.insert(0, DenyCryptalis())
 import psycopg
 from psycopg import sql
 with psycopg.connect(os.environ['CRYPTALIS_TEST_RUNTIME_DATABASE_URL']) as connection:
-    values = connection.execute(sql.SQL('SELECT id,name FROM {}.customer').format(
-        sql.Identifier(os.environ['BOOLEAN_RESTORE_SCHEMA']))).fetchall()
+    values = connection.execute(sql.SQL('SELECT id,{} FROM {}.customer').format(
+        sql.Identifier(os.environ['SCALAR_RESTORE_COLUMN']), sql.Identifier(os.environ['BOOLEAN_RESTORE_SCHEMA']))).fetchall()
 assert {str(key): value for key, value in values} == json.loads(os.environ['BOOLEAN_RESTORE_EXPECTED'])
 assert all(value is None or type(value) is (int if int(os.environ['SCALAR_RESTORE_BITS']) else bool) for _, value in values)
 with psycopg.connect(os.environ['CRYPTALIS_TEST_RUNTIME_DATABASE_URL']) as connection:
     actual_type = connection.execute('SELECT a.atttypid::regtype::text FROM pg_catalog.pg_attribute a '
         'WHERE a.attrelid=pg_catalog.to_regclass(%s) AND a.attname=%s',
-        ('\"' + os.environ['BOOLEAN_RESTORE_SCHEMA'] + '\".customer', 'name')).fetchone()[0]
+        ('\"' + os.environ['BOOLEAN_RESTORE_SCHEMA'] + '\".customer', os.environ['SCALAR_RESTORE_COLUMN'])).fetchone()[0]
 assert actual_type == {0:'boolean',16:'smallint',32:'integer',64:'bigint'}[int(os.environ['SCALAR_RESTORE_BITS'])]
 assert not any(name == 'cryptalis' or name.startswith('cryptalis.') for name in sys.modules)
 print('native Boolean package-free restart passed')
-'''], env=dict(os.environ, BOOLEAN_RESTORE_SCHEMA=schema, BOOLEAN_RESTORE_EXPECTED=json.dumps(expected), SCALAR_RESTORE_BITS=str(bits)),
+'''], env=dict(os.environ, BOOLEAN_RESTORE_SCHEMA=schema, BOOLEAN_RESTORE_EXPECTED=json.dumps(expected),
+              SCALAR_RESTORE_BITS=str(bits), SCALAR_RESTORE_COLUMN=column_name),
             cwd=directory, capture_output=True, text=True, timeout=30)
         assert child.returncode == 0, 'native Boolean restart failed; diagnostics withheld'
         assert child.stdout.strip() == 'native Boolean package-free restart passed'
         (directory / (profile + '-journey-receipt.json')).write_text(json.dumps({
             'source_plan_digest': source.digest, 'restore_adoption_id': binding.document['adoption_id'],
+            'column': column_name, 'public_slots': manifest.get('public_slots', False),
+            'frame_restatements': [{'name': item['name'], 'definition': item['definition']}
+                                   for item in binding.document['restatements']],
             'profile': profile + ' storage, payload rotation, fresh PostgreSQL16 adoption, latest-value removal',
             'tampered_frame': 'refused before adoption', 'package_free_restart': 'passed',
             'gates': 'all seven UNKNOWN'}, indent=2) + '\n')

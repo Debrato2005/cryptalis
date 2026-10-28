@@ -90,20 +90,20 @@ def engine(variable):
 
 @contextmanager
 def application(rows=7, unique=True, setup=None, value_type=None, queries=None,
-                value_default=None, protected_values=None, value_nullable=True):
+                value_default=None, protected_values=None, value_nullable=True, value_column='name'):
     owner, runtime = engine('CRYPTALIS_TEST_DATABASE_URL'), engine('CRYPTALIS_TEST_RUNTIME_DATABASE_URL')
     schema = 'cryptalis_migration_' + uuid4().hex
     mapping = registry(metadata=MetaData(schema=schema))
     table = Table('customer', mapping.metadata, Column('id', Uuid, primary_key=True, autoincrement=False),
                   Column('tenant_id', Uuid, nullable=False),
-                  Column('name', value_type if value_type is not None else Text(collation='C'),
+                  Column(value_column, value_type if value_type is not None else Text(collation='C'),
                          default=value_default, nullable=value_nullable),
                   Column('label', Text))
     queries = list(queries) if queries is not None else (['equality', 'unique'] if unique else ['equality'])
     if queries:
-        Index('native_name', *((table.c.tenant_id, table.c.name) if unique else (table.c.name,)), unique=unique)
+        Index('native_name', *((table.c.tenant_id, table.c[value_column]) if unique else (table.c[value_column],)), unique=unique)
     class Customer: pass
-    mapping.map_imperatively(Customer, table)
+    mapping.map_imperatively(Customer, table, properties={'name': table.c[value_column]})
     declaration = {'schema':'cryptalis.protection/v1','profile':'cf1','domain_id':str(DOMAIN),
         'models':[{'model':'Customer','table_id':str(TABLE_ID),'tenancy':{'column':'tenant_id'},
             'fields':[{'name':'name','field_id':str(FIELD_ID),'protect':True,
@@ -149,10 +149,11 @@ def run(app, until='PENDING', pin=None, chunk_size=2, key_resolver=None):
 
 
 def frames(app, switched=False):
-    column = 'name' if switched else '_cryptalis_' + FIELD_ID.hex
+    column = app.plan.document['lock']['models'][0]['fields'][0]['column'] if switched else '_cryptalis_' + FIELD_ID.hex
     with app.owner.connect() as c:
+        column = c.dialect.identifier_preparer.quote_identifier(column)
         return {r[0]:bytes(r[2]) if r[2] is not None else None for r in c.exec_driver_sql(
-            f'SELECT id, tenant_id, "{column}" FROM "{app.schema}".customer ORDER BY id')}
+            f'SELECT id, tenant_id, {column} FROM "{app.schema}".customer ORDER BY id')}
 
 
 def publish(app):

@@ -25,6 +25,11 @@ No objective is complete until its acceptance evidence and applicable gate pass.
 
 ## Current boundary
 
+- The installed int4 keyword identifier now passes genuine fresh recovery in
+  both layouts, exact CHECK restatement, latest-value removal and package-free
+  native restart. The default-name source fresh control also passes. See the
+  [fresh checkpoint](status.md#keyword-identifier-fresh-recovery-2026-10-28).
+
 - PostgreSQL keyword-named protected columns now pass exact storage/search
   admission, both layouts and latest-value native exit. Integrated source,
   final installed identifier and affected search checks pass. Bounds,

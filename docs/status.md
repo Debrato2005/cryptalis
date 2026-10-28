@@ -10,6 +10,34 @@ No PostgreSQL/provider/runtime cell, production key provider, independent review
 VERIFIED below refers only to the named checks and their exact revisions.
 All other contract and promotion requirements are SPECIFIED. All seven full gates remain UNKNOWN.
 
+## Keyword identifier fresh recovery: 2026-10-28
+
+**VERIFIED, bounded installed and source cells:** the unchanged identifier-fix
+wheel `b560cb8aa830448a7f3d56fecd0c51f71e5e3a6d684d660bd301c98cdc9db7af`
+now passes genuine fresh PostgreSQL 16 recovery with a protected native int4
+column named `integer`, in both replacement and preserved-public-slot layouts.
+Each journey includes payload rotation before backup, native and protected dump
+recovery, corrupt-frame refusal before adoption, an actual exact keyword CHECK
+restatement, typed attached reads, latest protected edits, decrypt-back/removal
+and a new process that denies Cryptalis imports and reads current native int4
+values. The preserved-slot journey also checks exact original column positions.
+
+The existing harness adds bounded `--column-name integer` under `--integer`.
+It independently checks profile, width, physical column, successor kind and lock
+schema before layout checks. The optional fixture name preserves the Python
+property and the default `name` behavior. The default-name source fresh journey
+also passes. All six final export/restore test calls pass without skips, under
+stable source/runtime bindings. The four integrated fixture hashes match the
+recorded qualification inputs. All 54 integrated migration controls pass, and
+independent agent review accepts the final fixture changes. The
+[boundary](_reset/keyword-recovery-boundary-20261028.json) retains exact evidence.
+
+This closes the local installed int4 keyword recovery gap in the preceding
+checkpoint. It does not qualify keyword text fresh recovery, every identifier,
+production fencing, external custody, performance or independent human review.
+The source schemas are removed after export; the primary cluster remains live.
+All 34 objectives remain in scope and all seven production gates remain UNKNOWN.
+
 ## PostgreSQL identifier admission correction: 2026-10-28
 
 **VERIFIED, bounded source and installed cells:** protected physical columns

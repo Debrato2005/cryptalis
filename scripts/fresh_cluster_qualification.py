@@ -122,6 +122,8 @@ def main():
                         help='Bind export and restore wrappers to this inspected installed wheel.')
     parser.add_argument('--integer-default', type=int, default=None,
                         help='Qualify an exact native integer literal client default.')
+    parser.add_argument('--column-name', choices=('name', 'integer'), default='name',
+                        help='Select the native integer fixture column identifier; requires --integer for integer.')
     parser.add_argument('--varchar', action='store_true', help='Qualify a native VARCHAR(64) source and lock v3.')
     parser.add_argument('--restore-lease', action='store_true',
                         help='Run focused restored-target key lease and no-effects controls.')
@@ -168,6 +170,8 @@ def main():
     profiles.add_argument('--search-rotation', action='store_true',
                           help='Qualify backup recovery after search rotation and a later protected edit.')
     args = parser.parse_args()
+    if args.column_name != 'name' and not args.integer:
+        parser.error('--column-name integer requires --integer.')
     if args.sqlmodel_http and (args.varchar or args.restore_lease or args.public_slots or args.owned_sequences):
         parser.error('--sqlmodel-http uses the original HTTP schema and its preserved public slots.')
     if args.reverse_cli and (args.varchar or args.restore_lease or args.public_slots):
@@ -231,6 +235,8 @@ def main():
                '; search-rotation profile' if args.search_rotation else '')
     if args.restore_lease:
         profile += '; restored-target lease controls'
+    if args.column_name != 'name':
+        profile += '; keyword column ' + args.column_name
     export = run_pytest(export_receipt, 'Fresh-cluster source export; primary cluster' + profile,
                         ('tests/test_date_fresh_cluster.py::test_export_date_backup_after_rotations' if args.date else
                          'tests/test_sqlmodel_searchable_export.py' if (args.sqlmodel_searchable or args.sqlmodel_direct_search or args.sqlmodel_public_slots or args.sqlmodel_http) else
@@ -240,6 +246,7 @@ def main():
                         {'CRYPTALIS_SMOLINK_FRESH_EXPORT': str(workdir) if args.smolink else '',
                          'CRYPTALIS_FRESH_CLUSTER_DIR': str(workdir),
                          'CRYPTALIS_FRESH_INTEGER_BITS': str(args.integer or 0),
+                         'CRYPTALIS_FRESH_COLUMN_NAME': args.column_name,
                          'CRYPTALIS_FRESH_INTEGER_DEFAULT': '' if args.integer_default is None else str(args.integer_default),
                          'CRYPTALIS_FRESH_PUBLIC_SLOTS': '1' if args.public_slots else '0',
                          'CRYPTALIS_SQLMODEL_PUBLIC_SLOTS': '1' if (args.sqlmodel_public_slots or args.sqlmodel_http) else '0',
@@ -261,6 +268,15 @@ def main():
     expected_default = '0001-01-01' if args.date else None if args.integer_default is None else str(args.integer_default)
     if manifest.get('application_default') != expected_default:
         raise SystemExit('FreshCluster.ProfileMismatch: integer default export differs from the requested literal.')
+    if args.integer:
+        plan = json.loads(base64.b64decode(manifest['plan'], validate=True))
+        if (manifest.get('application_profile') != 'integer-' + str(args.integer)
+                or manifest.get('integer_bits') != args.integer
+                or manifest.get('column', 'name') != args.column_name
+                or plan.get('lock', {}).get('models', [{}])[0].get('fields', [{}])[0].get('column') != args.column_name
+                or plan.get('kind') != 'payload_rotation'
+                or plan.get('lock', {}).get('schema') != 'cryptalis.lock/v7'):
+            raise SystemExit('FreshCluster.ProfileMismatch: integer payload successor is missing.')
     if args.public_slots:
         plan = json.loads(base64.b64decode(manifest['plan'], validate=True))
         if (plan.get('lock', {}).get('schema') != ('cryptalis.lock/v8' if args.date else 'cryptalis.lock/v7' if args.integer else 'cryptalis.lock/v6')
@@ -277,12 +293,7 @@ def main():
                 or plan.get('lock', {}).get('schema') != 'cryptalis.lock/v8'):
             raise SystemExit('FreshCluster.ProfileMismatch: DATE three-rotation successor is missing.')
     elif args.integer:
-        plan = json.loads(base64.b64decode(manifest['plan'], validate=True))
-        if (manifest.get('application_profile') != 'integer-' + str(args.integer)
-                or manifest.get('integer_bits') != args.integer
-                or plan.get('kind') != 'payload_rotation'
-                or plan.get('lock', {}).get('schema') != 'cryptalis.lock/v7'):
-            raise SystemExit('FreshCluster.ProfileMismatch: integer payload successor is missing.')
+        pass
     elif args.boolean:
         if manifest.get('application_profile') != 'boolean-storage':
             raise SystemExit('FreshCluster.ProfileMismatch: Boolean storage export is missing.')
@@ -354,6 +365,7 @@ def main():
                               else 'tests/test_fresh_cluster_restore.py'),
                              {'HOME': str(home), 'CRYPTALIS_FRESH_CLUSTER_DIR': str(workdir),
                               'CRYPTALIS_FRESH_INTEGER_BITS': str(args.integer or 0),
+                              'CRYPTALIS_FRESH_COLUMN_NAME': args.column_name,
                               'CRYPTALIS_SQLMODEL_DIRECT_SEARCH': '1' if (args.sqlmodel_direct_search or args.sqlmodel_public_slots) else '0',
                               'CRYPTALIS_SQLMODEL_PUBLIC_SLOTS': '1' if (args.sqlmodel_public_slots or args.sqlmodel_http) else '0',
                               'CRYPTALIS_SQLMODEL_HTTP_FRESH': '1' if args.sqlmodel_http else '0',

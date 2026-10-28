@@ -487,3 +487,9 @@ not admitted. Search indexes retain exact structural admission and use native
 `pg_catalog.quote_ident` for the expected expression spelling. See the
 [identifier checkpoint](status.md#postgresql-identifier-admission-correction-2026-10-28)
 for the exact tested cells and remaining qualification limits.
+
+The same installed identifier-fix wheel also passes genuine int4 `integer`
+keyword fresh recovery in both layouts. The existing integer harness verifies
+exact restatement admission, latest edits, native types and package-free removal.
+This does not extend that fresh-recovery claim to keyword text or other names.
+See the [fresh checkpoint](status.md#keyword-identifier-fresh-recovery-2026-10-28).
