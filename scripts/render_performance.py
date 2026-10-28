@@ -90,6 +90,27 @@ def main():
     axis.set_axisbelow(True)
     save(figure, output / "indexed-storage.svg")
 
+    comparison = json.loads((ROOT / "docs/_reset/admission-lineage-20261028.json").read_text())
+    figure, axes = plt.subplots(1, 2, figsize=(11, 4), layout="constrained")
+    for axis, workload, title in zip(axes, ("public_projection", "first_protected"),
+                                     ("Wide public projection", "Early protected match")):
+        for offset, name, color, label in (
+                (-0.19, "baseline", COLORS[0], "Target branch"),
+                (0.19, "candidate", COLORS[1], "Candidate")):
+            values = [comparison["cases"][str(count)][workload][name]["median_us"]
+                      for count in (1, 8, 32)]
+            bars = axis.bar([x + offset for x in range(3)], values, width=0.36,
+                            color=color, label=label)
+            axis.bar_label(bars, fmt="%.2f", padding=3, fontsize=9)
+        axis.set(title=title, xticks=range(3), xticklabels=("1", "8", "32"),
+                 xlabel="Protected fields in the mapping", ylabel="Median microseconds per inspection")
+        axis.margins(y=0.22)
+        axis.grid(axis="y", alpha=0.18)
+        axis.set_axisbelow(True)
+    axes[0].legend(frameon=False)
+    figure.suptitle("Local query-inspection microbenchmark: speedup and trade-off", fontsize=14)
+    save(figure, output / "lineage-inspection.svg")
+
 
 if __name__ == "__main__":
     main()

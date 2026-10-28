@@ -129,6 +129,35 @@ They do not measure cloud key-provider latency or prove performance on every
 workload. Earlier slower measurements and unresolved anomalies remain in
 [compatibility](compatibility.md#performance-targets-and-recorded-costs).
 
+## Query-inspection optimization
+
+SQLAlchemy represents a query as a tree of expressions. Cryptalis inspects that
+tree to find references to protected columns. The implementation now builds one
+set of protected-column ancestors per inspection, then uses set intersections.
+It avoids repeating a comparison against every protected field for every query
+column. The set is rebuilt on each call; it is not a persistent query cache.
+
+![Target-branch and candidate inspection times for wide public projections and early protected matches, showing both the speedup and its trade-off.](images/lineage-inspection.svg)
+
+This [paired microbenchmark](_reset/admission-lineage-20261028.json) extracts the
+original method from target commit `5d6ff65` and runs it alongside candidate
+`c9a1049` in the same process. Each case has 100 warmups and 31 alternating
+batches of 200 calls. Both methods must agree with the expected lineage results.
+
+| Query shape with 32 protected fields | Target median, microseconds | Candidate median, microseconds |
+|---|---:|---:|
+| One public column | 7.60 | 3.65 |
+| 32 public projection labels | 282.53 | 56.45 |
+| First protected field matches | 4.20 | 6.84 |
+| Last protected field matches | 11.02 | 6.88 |
+| Public labels and a protected field | 36.87 | 32.86 |
+
+The wide public projection improves substantially, while an early match can cost
+more because the new method builds the complete lineage set first. One
+millisecond is 1,000 microseconds. These are inspection costs, not whole-query
+latency or encryption throughput. The receipt also includes the one-field and
+eight-field cases, raw samples, interpreter versions and exact source hashes.
+
 ## Suggested demonstration
 
 1. Explain the database-dump problem and the application/database trust boundary.

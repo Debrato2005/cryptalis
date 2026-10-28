@@ -10,6 +10,21 @@ No PostgreSQL/provider/runtime cell, production key provider, independent review
 VERIFIED below refers only to the named checks and their exact revisions.
 All other contract and promotion requirements are SPECIFIED. All seven full gates remain UNKNOWN.
 
+## Local assignment explanation and inspection profile: 2026-10-28
+
+**IMPLEMENTED:** protected-column lineage is collected once per expression
+inspection. Native proxy-set intersection semantics remain unchanged, and no
+cross-operation cache is added. The [paired CPU profile](_reset/admission-lineage-20261028.json)
+compares the exact target-branch method with candidate `c9a1049`, including early
+and late matches and public/mixed projections. It records local inspection
+speedups and the early-match trade-off, not end-to-end application improvement.
+Candidate PostgreSQL qualification remains pending at this checkpoint.
+
+The [illustrated assignment guide](professor-guide.md) explains existing features
+and historical performance. The [local run guide](local-development.md) and
+restricted-role CI workflow make the current checks reproducible. Runtime
+dependencies and all 34 objectives remain unchanged. All seven gates stay UNKNOWN.
+
 ## Preservation checkpoint and operator pause: 2026-10-24
 
 **Operator pause.** Resume only after the explicit instruction **Continue Cryptalis**. Implementation `8b6bccc` adds approved tenants to online capture. It includes restored adoption, all rotations and current-data native exit. Its [qualification boundary](_reset/online-tenants-boundary-20261024.json) records 452 source checks and 18 installed online checks. The installed original HTTP application also passes export and fresh recovery.
