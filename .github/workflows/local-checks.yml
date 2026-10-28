@@ -35,7 +35,8 @@ jobs:
         run: |
           mkdir "$RUNNER_TEMP/postgres-packages"
           cd "$RUNNER_TEMP/postgres-packages"
-          apt-get download postgresql-16 postgresql-client-16 libpq5
+          # Runner-installed PGDG builds may have no configured download source.
+          apt-get download postgresql-16/noble-updates postgresql-client-16/noble-updates libpq5/noble-updates
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: postgres-packages
