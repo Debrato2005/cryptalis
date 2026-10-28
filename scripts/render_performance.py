@@ -45,6 +45,7 @@ def load():
 
 def save(figure, destination):
     figure.savefig(destination, metadata={"Date": None}, bbox_inches="tight")
+    destination.write_text("".join(line.rstrip() + "\n" for line in destination.read_text().splitlines()))
     plt.close(figure)
 
 
