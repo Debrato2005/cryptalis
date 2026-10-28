@@ -10,6 +10,9 @@ exercise the implemented prototype. They do not complete every objective in the
 - PostgreSQL **16** server and client tools, including `initdb`, `pg_ctl` and `pg_dump`.
 - A normal, non-root operating-system account. PostgreSQL refuses `initdb` as root.
 
+The development interpreter defaults to Python 3.12 through `.python-version`,
+matching CI. Use uv's `--python` option for another supported interpreter.
+
 On Ubuntu 24.04, the server tools are available from the distribution:
 
 ```bash
