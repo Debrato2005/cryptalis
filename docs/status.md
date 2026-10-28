@@ -19,6 +19,9 @@ compares the exact target-branch method with candidate `c9a1049`, including earl
 and late matches and public/mixed projections. It records local inspection
 speedups and the early-match trade-off, not end-to-end application improvement.
 Candidate PostgreSQL qualification remains pending at this checkpoint.
+The [local artifact check](_reset/assignment-release-20261028.json) passes repeat
+wheel/sdist builds, RECORD inspection and SBOM generation. Clean installation
+was not measured by that check.
 
 The [illustrated assignment guide](professor-guide.md) explains existing features
 and historical performance. The [local run guide](local-development.md) and
