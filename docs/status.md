@@ -10,6 +10,22 @@ No PostgreSQL/provider/runtime cell, production key provider, independent review
 VERIFIED below refers only to the named checks and their exact revisions.
 All other contract and promotion requirements are SPECIFIED. All seven full gates remain UNKNOWN.
 
+## DISTINCT with selected record identities: 2026-10-28
+
+**VERIFIED, local PostgreSQL 16.15:** entity/table projections and direct tuples
+retain native DISTINCT when every protected source's public primary key is
+selected. Sync/async native controls cover storage-only TEXT, Boolean and Date,
+public ordering/pagination, repeated join rows and original label keys. The
+[146-check affected run](_reset/identity-distinct-20261028.json) includes the
+existing reporting, search, Doctor and SQLModel bridge controls. Another alias's
+ID, renamed ID columns and custom ID renderers refuse before statement keys/SQL.
+
+The compiler retains native DISTINCT because selected record identities already
+distinguish source rows. This needs no equality term and keeps the existing
+authenticated carrier. Logical-value DISTINCT without those IDs retains the
+separate one-field equality contract. Caller DISTINCT ON and protected order/group
+remain unadmitted. No storage or key-derivation change.
+
 ## Authenticated direct DISTINCT projection: 2026-10-28
 
 **VERIFIED, local PostgreSQL 16.15:** DISTINCT of one direct protected equality

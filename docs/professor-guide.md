@@ -198,6 +198,23 @@ loopback PostgreSQL 16.15 fixture measurement, not migration timing, a target-br
 speedup or a production performance guarantee. The original target branch
 refused these protected counts.
 
+## Distinct values and distinct rows
+
+`select(Customer.email).distinct()` returns logical unique values through the
+existing equality term. It needs declared equality and one provable tenant scope.
+The chosen representative frame still authenticates before its value is returned.
+SQL NULL appears once. This route currently has no ordering or pagination.
+
+`select(Customer).distinct().order_by(Customer.id).limit(20)` selects the public
+primary key as part of each row. That identity already distinguishes source rows,
+so Cryptalis can retain native DISTINCT, public ordering and pagination. This
+route also works for storage-only Date/Boolean/text fields. Repeated join rows
+collapse correctly. Another alias's ID cannot establish that identity.
+
+These are different SQL requests. Selecting an ID keeps separate records even
+when their protected values match. General protected grouping, caller DISTINCT ON
+and value ordering still require further work.
+
 ## A reversible lifecycle
 
 ```mermaid
