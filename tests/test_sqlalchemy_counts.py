@@ -4,7 +4,20 @@ import json
 from types import MethodType
 
 import pytest
-from sqlalchemy import Boolean, Text, Uuid, bindparam, event, func, inspect, or_, select
+from sqlalchemy import (
+    BigInteger,
+    Boolean,
+    Integer,
+    SmallInteger,
+    Text,
+    Uuid,
+    bindparam,
+    event,
+    func,
+    inspect,
+    or_,
+    select,
+)
 from sqlalchemy.orm import aliased
 from sqlalchemy.sql.functions import count
 from test_migration import TENANT, application, keys, publish, run
@@ -82,7 +95,10 @@ def test_nonnull_counts_match_native_with_aliases_filters_groups_and_nulls(prote
 
 
 @pytest.mark.parametrize('dtype,values', [(Text(collation='C'), (None, '', 'repeat', 'repeat')),
-                                       (Boolean(), (None, False, True, False))])
+                                       (Boolean(), (None, False, True, False)),
+                                       (SmallInteger(), (None, -32768, 0, 32767)),
+                                       (Integer(), (None, -(1 << 31), 0, (1 << 31) - 1)),
+                                       (BigInteger(), (None, -(1 << 63), 0, (1 << 63) - 1))])
 def test_storage_only_counts_survive_real_protection_and_native_nulls(dtype, values):
     with application(rows=4, value_type=dtype, queries=[], protected_values=values) as app:
         assert run(app).phase == 'PENDING'
