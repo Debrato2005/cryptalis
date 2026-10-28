@@ -219,7 +219,10 @@ abort tenant-proposal.json --host-context host:tenant_abort --json` with a
 `TenantAbortContext` containing source-only keys. Each factory returns a fresh
 owned synchronous psycopg Engine with parameter hiding and SQL echo disabled.
 The [CLI checkpoint](status.md#tenant-policy-maintenance-cli-2026-10-28)
-records the source/installed v15 boundary and the unverified fresh v16 CLI drill.
+records the source/installed v15 boundary. The later
+[fresh application checkpoint](status.md#restored-tenant-cli-application-journey-2026-10-29)
+exercises restored v16 through the installed public CLI entrypoint in-process,
+with independently retained fixture host pins and latest-value native exit.
 
 | Change | Engine action |
 |---|---|

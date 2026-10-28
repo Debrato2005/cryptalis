@@ -25,19 +25,26 @@ No objective is complete until its acceptance evidence and applicable gate pass.
 
 ## Current boundary
 
+- The original authenticated tenant application now exercises the public CLI
+  entrypoint after genuine fresh recovery, with an actual v16 successor and
+  independently retained host publication. Both phases pass from the inspected
+  installed wheel through latest-value package-free HTTP restart. The source
+  fixture cell also passes both phases. See the
+  [fresh CLI checkpoint](status.md#restored-tenant-cli-application-journey-2026-10-29).
+
 - The integration combines reviewed reporting/scalars/INSERT/online work with
   continuation security and tenant lifecycle. Both persisted Date codecs remain
   explicit; real legacy ordinal backup recovery passes from source and wheel.
-  The 45-module artifact and installed HTTP/fresh journeys pass. Whole-source
-  passes 2,993 test calls and eighteen subtests, with 75 explicit skips; remote
-  CI remains pending. All gates remain UNKNOWN. See the
+  The 45-module artifact and installed HTTP/fresh journeys pass. The whole source
+  suite passes 2,993 test calls and eighteen subtests, with 75 explicit skips;
+  GitHub CI passes for that checkpoint. All gates remain UNKNOWN. See the
   [combined boundary](status.md#consolidated-implementation-checkpoint-2026-10-29).
 
 - Tenant maintenance now has operational plan/apply/activate/abort commands,
   host-only policy authority and durable successor retention before effects.
   The 96-check source matrix and two new integrated/installed journeys pass;
-  three existing adopted-profile opt-ins skip. Source v15 is exercised; a new
-  genuine v16 CLI drill remains unverified. See the
+  three existing adopted-profile opt-ins skip. Source v15 is exercised; the
+  later fresh CLI checkpoint above adds restored v16 application evidence. See the
   [checkpoint](status.md#tenant-policy-maintenance-cli-2026-10-28).
 
 - The installed int4 keyword identifier now passes genuine fresh recovery in

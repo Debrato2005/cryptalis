@@ -45,7 +45,7 @@ def item_rows(scoped, public):
 
 
 def provision_account(*, owner, public, target, api, scoped, plan, current_keys, admin,
-        reload_application, schema, artifact_directory):
+        reload_application, schema, artifact_directory, publish_policy=None):
     """Original authentication -> explicit host approval -> published empty policy -> HTTP write."""
     from fastapi.testclient import TestClient
     from sqlmodel_http_tenant_host import TenantHost
@@ -86,21 +86,28 @@ def provision_account(*, owner, public, target, api, scoped, plan, current_keys,
         return new_policy if approved == tenant else current_keys(approved)
     with owner.connect() as connection:
         before = connection.exec_driver_sql('SELECT id,owner_id,title,description FROM item ORDER BY id').all()
-    proposal = tenancy.plan(plan, owner, source_pin=pin(plan, 'ACTIVE'), keys=current_keys,
-        tenant_id=tenant, key_policy=new_policy, verify_rows_per_second=1000)
     artifact_directory.mkdir(mode=0o700, parents=True, exist_ok=False)
-    (artifact_directory / 'proposal.json').write_bytes(proposal.artifact)
-    successor_path = artifact_directory / 'activation.json'
-    successor_path.write_bytes(proposal.activation_plan.artifact)
-    successor = m.MigrationPlan(successor_path.read_bytes())
+    maintenance = m.MaintenanceApproval('Original HTTP writers stopped and drained for explicit host-approved tenant maintenance.', 3600)
+    if publish_policy is None:
+        proposal = tenancy.plan(plan, owner, source_pin=pin(plan, 'ACTIVE'), keys=current_keys,
+            tenant_id=tenant, key_policy=new_policy, verify_rows_per_second=1000)
+        (artifact_directory / 'proposal.json').write_bytes(proposal.artifact)
+        successor_path = artifact_directory / 'activation.json'
+        successor_path.write_bytes(proposal.activation_plan.artifact)
+        successor = m.MigrationPlan(successor_path.read_bytes())
+        publication = {'method': 'PYTHON_API'}
+    else:
+        successor, publication = publish_policy(source=plan, source_keys=current_keys, tenant_id=tenant,
+            key_policy=new_policy, keys=augmented, approval=maintenance,
+            artifact_directory=artifact_directory, schema=schema)
     assert successor.lock_bytes == plan.lock_bytes
     assert successor.document['access_contract'] == plan.document['access_contract']
     assert successor.document['key_policies'] == {**plan.document['key_policies'], str(tenant): m._policy(new_policy)}
-    maintenance = m.MaintenanceApproval('Original HTTP writers stopped and drained for explicit host-approved tenant maintenance.', 3600)
-    assert tenancy.apply(proposal, owner, keys=augmented, pin=pin(successor, 'PREPARED'),
-        approval=maintenance).phase == 'PENDING'
-    assert m.apply(successor, owner, keys=augmented, pin=pin(successor, 'ACTIVATING'),
-        approval=maintenance, until='ACTIVE').phase == 'ACTIVE'
+    if publish_policy is None:
+        assert tenancy.apply(proposal, owner, keys=augmented, pin=pin(successor, 'PREPARED'),
+            approval=maintenance).phase == 'PENDING'
+        assert m.apply(successor, owner, keys=augmented, pin=pin(successor, 'ACTIVATING'),
+            approval=maintenance, until='ACTIVE').phase == 'ACTIVE'
     with owner.connect() as connection:
         assert connection.exec_driver_sql('SELECT id,owner_id,title,description FROM item ORDER BY id').all() == before
     # A retained old host/factory with valid old keys must refuse new requests
@@ -128,7 +135,7 @@ def provision_account(*, owner, public, target, api, scoped, plan, current_keys,
         observed = client.get('/api/v1/items/' + written.json()['id'], headers=headers)
         assert observed.status_code == 200 and observed.json() == latest.json()
     return dict(plan=successor, keys=augmented, api=api, target=target, scoped=scoped,
-        tenant_id=str(tenant), item=latest.json(), controls=[
+        tenant_id=str(tenant), item=latest.json(), publication=publication, controls=[
             'original post-migration signup/JWT then unapproved Item409 before key lookup',
             'original active administrator and account authorize exact typed new policy',
             'unchanged old policy digests/frame bytes/schema/lock/access contract through maintenance publication',
@@ -137,7 +144,7 @@ def provision_account(*, owner, public, target, api, scoped, plan, current_keys,
 
 
 def complete_lifecycle(*, owner, source, public, schema, plan, cohort,
-        reload_application, copied, monkeypatch, binding=None, expected_items=None):
+        reload_application, copied, monkeypatch, binding=None, expected_items=None, publish_policy=None):
     """One shared original-app rotation/current-value exit journey for both clusters."""
     from sqlmodel_http_tenant_host import TenantHost
     successor, current_keys = _rotate_all_scopes(owner, plan, keys, plan.document['access_contract'], binding)
@@ -155,7 +162,7 @@ def complete_lifecycle(*, owner, source, public, schema, plan, cohort,
             rotated = workflow(api, cohort, lambda: Session(public), host=host)
         provisioned = provision_account(owner=owner, public=public, target=target, api=api, scoped=scoped,
             plan=successor, current_keys=current_keys, admin=cohort['admin'], reload_application=reload_application,
-            schema=schema, artifact_directory=Path(copied).parent / 'late-tenant-provision')
+            schema=schema, artifact_directory=Path(copied).parent / 'late-tenant-provision', publish_policy=publish_policy)
         successor, current_keys, api, target, scoped = (provisioned[name] for name in ('plan', 'keys', 'api', 'target', 'scoped'))
         from app.models import User, Item
         latest_rows = item_rows(scoped, public)
@@ -203,7 +210,8 @@ def complete_lifecycle(*, owner, source, public, schema, plan, cohort,
             child = package_free(copied, schema, retained, retained_items=retained_items)
         return {'rotated': rotated, 'package_free': child, 'latest_item_count': len(latest_rows),
             'restore_lineage': successor.document.get('restore_lineage', []),
-            'provisioning_controls': provisioned['controls'], 'provisioning_format': successor.document['format']}
+            'provisioning_controls': provisioned['controls'], 'provisioning_format': successor.document['format'],
+            'provisioning_method': provisioned['publication']['method'], 'publication': provisioned['publication']}
     finally:
         target.dispose()
 

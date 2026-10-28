@@ -10,6 +10,38 @@ No PostgreSQL/provider/runtime cell, production key provider, independent review
 VERIFIED below refers only to the named checks and their exact revisions.
 All other contract and promotion requirements are SPECIFIED. All seven full gates remain UNKNOWN.
 
+## Restored tenant CLI application journey: 2026-10-29
+
+**VERIFIED, bounded installed application cell:** the unchanged 45-module wheel
+`c1ac937ace1e1f079a854d4bdfa0f8db96ab1edeea3a71c4536cc7fa5517e50f`
+passes both phases of the original authenticated tenant HTTP fresh-cluster
+journey. After adoption and all three rotations, the restored host uses the
+public `cli.main` entrypoint in-process for tenant provision plan/apply/activate
+with an actual v16 successor. The original signup/JWT and administrator approve
+the exact UUID/Keyring before invoking the CLI. Separately retained host pins
+publish ACTIVE, PREPARED, ACTIVATING and successor ACTIVE authority. The exact
+successor is durable before the apply factory runs. Malformed input refuses
+before host loading; premature activation refuses before key lookup. All four
+owned engines are disposed.
+
+The existing first protected write, stale-host refusal, HTTP edits and cascades,
+latest-data decrypt-back/removal and import-denied native restart still pass.
+The native child reads the latest eleven Items across ten owners. All 26
+original application files remain unchanged. Both installed phases pass without
+skips under stable source/runtime bindings. The isolated source fixture cell
+also passes both phases. Independent scoped agent review accepts the two test
+profile changes; no product implementation changed. The
+[boundary](_reset/tenant-cli-fresh-boundary-20261029.json) retains receipts,
+including the preserved initial failures and exact artifact hashes.
+
+The preceding consolidated checkpoint also passed
+[GitHub CI](https://github.com/Debrato2005/cryptalis/actions/runs/40755510001).
+This is local maintenance provisioning with O(N) verification, a global writer
+pause, reconstructible fixture custody and explicit host publication. It does
+not qualify scalable online provisioning, live custody, production fencing,
+pause budgets or independent human review. All 34 objectives remain in scope
+and all seven production gates remain UNKNOWN.
+
 ## Consolidated implementation checkpoint: 2026-10-29
 
 **VERIFIED, bounded source and installed cells:** this checkpoint combines
