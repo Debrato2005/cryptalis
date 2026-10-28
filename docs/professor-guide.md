@@ -65,7 +65,7 @@ encryption with a stated trade-off, not a claim that database activity is hidden
 | Search | Exact equality, IN, admitted NULL/negative forms and tenant-scoped uniqueness | Protected ranges, ordering, text patterns and general aggregates refuse |
 | Reports | Non-NULL counts, one-tenant distinct counts, public count filters/windows and public DISTINCT with encrypted filters | General protected grouping, joins and other aggregate families remain pending |
 | Application integration | Sync/async SQLAlchemy and a synchronous SQLModel bridge | Selected operations and mappings, not arbitrary SQL |
-| Migration | Atomic resumable chunks, verification and publication-gated cutover | Initial online text capture still needs a final write pause |
+| Migration | Atomic resumable chunks, online text/scalar capture, verification and publication-gated cutover | Initial online capture still needs a final write pause |
 | Recovery | Protected backups, fresh-cluster adoption and stale-authority refusal | Local fixtures do not establish production disaster-recovery targets |
 | Key changes | Root rewrap, payload rotation and search rotation | A local provider and SDK controls do not establish live cloud custody |
 | Exit | Latest-value decrypt-back, metadata restoration and package-free restart | Retained backups can still need old keys and readers |
@@ -85,7 +85,7 @@ implementation gaps, even with production qualification excluded:
 | Protected queries | Ranges, ordering, exact text patterns, general grouping/joins and SUM/AVG/MIN/MAX |
 | Types | Additional scalar and structured JSON contracts |
 | Integration | Broader bulk/RETURNING routes, upserts, trigger/cascade cases and automatic query/writer inventory |
-| Migration | Parallel/adaptive execution and broader online type coverage |
+| Migration | Parallel/adaptive execution and online coverage for future types |
 | Measurements | Cold and saturated workloads, larger concurrent profiles, resource limits and pause/recovery budgets |
 
 These features need their own stored representations, query contracts or

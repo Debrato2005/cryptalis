@@ -97,7 +97,12 @@ successor chain. General journal reuse remains unfinished.
 
 ## Online initial protection
 
-`cryptalis.online` supports a bounded initial protection path for declared single-tenant tables. Protected fields must use `TEXT` or `VARCHAR`. The existing maintenance path above remains available.
+`cryptalis.online` supports bounded initial protection for TEXT/VARCHAR and the
+admitted storage-only Boolean, int2/int4/int8, finite Date and UUID mappings.
+Declare single tenancy or supply the approved tenant scopes described below.
+Fixed-width values use their codec widths when bounding a chunk. Text uses its
+native byte length. Date values must remain in years 1 through 9999, including
+writes after planning. The maintenance path above remains available.
 
 Create a plan with three distinct direct-login roles: the owner, the current source runtime role, and the target runtime role. The source role must have table-level CRUD while native columns are active. The target role must have no table privileges before switch, then table-level CRUD after switch. Column ACLs must be empty. The owner keeps table CRUD, `TRUNCATE`, `REFERENCES`, and `TRIGGER`. Exclude application writers with owner or DDL credentials for the full operation.
 

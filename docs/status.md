@@ -10,6 +10,21 @@ No PostgreSQL/provider/runtime cell, production key provider, independent review
 VERIFIED below refers only to the named checks and their exact revisions.
 All other contract and promotion requirements are SPECIFIED. All seven full gates remain UNKNOWN.
 
+## Online capture for storage scalars: 2026-10-28
+
+**VERIFIED, local PostgreSQL 16.15:** native Boolean, int2/int4/int8, finite Date
+and UUID writes pass dirty-row capture, lower-key inserts, deletes, interrupted
+resume, durable fencing and either abort or publication plus latest-value native
+exit. The [27-check affected run](_reset/online-scalars-20261028.json) includes
+the existing text, multi-table, tenant, access and recovery controls. All three
+role probes pass and source stays unchanged.
+
+Fixed-width codecs now have fixed chunk-size estimates before value fetch.
+A Date written as infinity after planning raises `date_outside_python_range`
+before that chunk has payload or progress effects. This expands initial online
+type coverage; the final pause, owner-writer exclusion and production gates
+retain their existing requirements.
+
 ## Native UUID value storage: 2026-10-28
 
 **VERIFIED, local PostgreSQL 16.15:** UUID values, including nil and the maximum

@@ -25,6 +25,10 @@ No objective is complete until its acceptance evidence and applicable gate pass.
 
 ## Current boundary
 
+- Initial online capture now covers the admitted storage scalars as well as
+  text. Native edits, interrupted resume, abort, fencing, role transfer and
+  current-value removal pass. See the [online scalar checkpoint](status.md#online-capture-for-storage-scalars-2026-10-28).
+
 - UUID-valued fields now pass both layouts, sync/async current-value storage,
   mixed interrupted rotations, retained-reader refusal and fresh-cluster native
   exit. A matched 10k cost profile records the fixed storage overhead and warm

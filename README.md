@@ -11,7 +11,7 @@ No runtime compatibility cell, production key provider, or independent review is
 The [slice 3 walkthrough](docs/walkthrough-sqlalchemy.md) gives the implemented API and its limits.
 The [search walkthrough](docs/walkthrough-search.md) covers slice 4 and its native-index mechanism.
 The [migration walkthrough](docs/walkthrough-migration.md) covers slice 5: plan, atomic backfill, full verification, and publication-gated switch.
-The [bounded online API](docs/walkthrough-migration.md#online-initial-protection) also permits native writes during initial TEXT/VARCHAR backfill on declared single-tenant tables.
+The [bounded online API](docs/walkthrough-migration.md#online-initial-protection) permits native writes during initial text and admitted scalar backfill, under declared tenancy.
 It retains a final write pause and strict source-to-target role transfer. Production qualification remains UNKNOWN.
 Native `String(n)`/VARCHAR mappings now retain their character limits through protection and decrypt-back.
 The [VARCHAR walkthrough](docs/walkthrough-migration.md#native-varchar-mappings) states the tested rules and remaining limits.
