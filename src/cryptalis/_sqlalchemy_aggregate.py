@@ -1,6 +1,4 @@
 """Finite native count projections over directly protected columns."""
-from types import MethodType
-
 from sqlalchemy import Column, Integer
 from sqlalchemy.sql import operators
 from sqlalchemy.sql.elements import (
@@ -28,11 +26,9 @@ def _one_tenant(selection, column, tenant):
         UnsupportedProtectedOperation,
         _delete_name_state,
         _delete_node,
+        _select_node,
     )
-    dispatch = selection._compiler_dispatch
-    if (type(dispatch) is not MethodType or dispatch.__self__ is not selection
-            or dispatch.__func__ is not Select._original_compiler_dispatch):
-        raise UnsupportedProtectedOperation()
+    _select_node(selection)
 
     def scope_column(node):
         if (not isinstance(node, ColumnClause) or node.is_literal

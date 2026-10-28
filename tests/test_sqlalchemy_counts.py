@@ -344,11 +344,13 @@ def test_custom_counts_and_unadmitted_aggregate_wrappers_refuse_before_keys_and_
 
         mutated = func.count(model.name)
         mutated._compiler_dispatch = MethodType(lambda self, visitor, **kw: 'count(*)', mutated)
+        custom_select = select(func.count(model.name))
+        custom_select._compiler_dispatch = MethodType(lambda self, visitor, **kw: 'SELECT 12345', custom_select)
         custom_window = func.count(model.name).over()
         custom_window._compiler_dispatch = MethodType(lambda self, visitor, **kw: 'count(*) OVER ()', custom_window)
         shared = func.count(model.name)
         statements = (
-            select(CustomCount(model.name)), select(mutated), select(custom_window),
+            select(CustomCount(model.name)), select(mutated), select(custom_window), custom_select,
             select(func.pg_catalog.count(model.name)),
             select(func.count(model.name.label('not_a_direct_column'))),
             select(func.count(model.name + 'suffix')),

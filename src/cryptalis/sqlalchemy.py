@@ -291,6 +291,17 @@ def _delete_node(node, native, *, allow_type_annotation=False):
     return node
 
 
+def _select_node(node):
+    if type(node) is annotated_classes.get(Select):
+        return _delete_node(node, Select)
+    dispatch = getattr(node, '_compiler_dispatch', None)
+    if (type(dispatch) is not MethodType or dispatch.__self__ is not node
+            or dispatch.__func__ is not Select._original_compiler_dispatch
+            or Select._compiler_dispatch is not Select._original_compiler_dispatch):
+        raise UnsupportedProtectedOperation()
+    return node
+
+
 _INVALID_UUID_POINT = object()
 
 
@@ -1203,6 +1214,8 @@ class _Attachment:
         nodes = self.select_types(statement)
         count_nodes, count_roots = set(), set()
         for selection in (node for node in nodes if isinstance(node, Select)):
+            if self.protected(selection):
+                _select_node(selection)
             for output in selection.selected_columns:
                 shape = count_shape(self, output, selection)
                 if shape is not None:
