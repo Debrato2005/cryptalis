@@ -41,6 +41,7 @@ flowchart TD
     Value["Plaintext value"] --> Encrypt["Randomized authenticated encryption"]
     Value --> Term["Keyed equality term, when declared"]
     Context["Tenant + field + row + generation"] --> Encrypt
+    Scope["Tenant + field + search generation"] --> Term
     Encrypt --> Frame["CF1 stored frame"]
     Term --> Frame
     Query["Equality / IN search value"] --> QueryTerm["Same scoped keyed-term construction"]
