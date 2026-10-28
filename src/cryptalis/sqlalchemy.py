@@ -617,7 +617,9 @@ class _Attachment:
 
     def _ring(self, tenant):
         self._check_configuration()
-        if not isinstance(tenant, UUID):
+        if type(tenant) is not UUID:
+            raise PolicyMismatch()
+        if self.deployment is not None and str(tenant) not in self.deployment[0].document['key_policies']:
             raise PolicyMismatch()
         try:
             ring = self.keys if isinstance(self.keys, Keyring) else self.keys(tenant)

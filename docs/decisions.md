@@ -4,6 +4,20 @@
 It does not preserve old IDs as implementation obligations. Historical dispositions remain in [archived revamp evidence](research/revamp-evidence.md).
 [Status](status.md) owns IMPLEMENTED/VERIFIED claims. All seven full gates remain UNKNOWN.
 
+## Tenant resolution and interrupted-work preservation: 2026-10-28
+
+Admit only exact UUID tenant scope and reject absent pinned membership before
+host key lookup. Preserve ordinary and approved nil-UUID behavior. Keep the
+separate actual-SDK profile transport-free and bind its versions/model/input
+hashes; local Stubber evidence does not qualify live custody.
+
+Do not merge incomplete policy/count changes when specialist execution is
+blocked. Preserve their exact Git state in an explicitly unverified branch and
+bundle. Keep current executable source and artifact evidence separate. Resume
+from that branch without repeating completed research or promoting unrun gates.
+Do not integrate a slower cache merely to chase a latency target; retain the
+measured miss and all existing admission boundaries.
+
 ## Runtime evidence and tenant host boundary: 2026-10-28
 
 Require test receipts to identify the code actually imported. Source mode binds

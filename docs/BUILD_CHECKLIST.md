@@ -25,6 +25,14 @@ No objective is complete until its acceptance evidence and applicable gate pass.
 
 ## Current boundary
 
+- Exact tenant type/pinned membership now refuses before host key lookup. The
+  149-check source matrix and rebuilt installed tenant recovery pass. A separate
+  129-check actual-SDK protocol bundle includes 22 SDK cases with transport denied.
+  The warm 10k equality observation misses 3 ms; no performance fix is claimed.
+  Further tenant/count work is preserved unverified after an account quota block.
+  All seven gates remain UNKNOWN. See the
+  [checkpoint](status.md#sdk-protocol-and-early-tenant-admission-checkpoint-2026-10-28).
+
 - The authenticated tenant HTTP source/installed journeys pass genuine fresh
   recovery, all rotations, exact owner/admin page oracles, transactional cascades
   and HTTP reads of each latest Item after import-denied native restart. Explicit

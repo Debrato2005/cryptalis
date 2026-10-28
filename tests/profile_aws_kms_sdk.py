@@ -5,6 +5,7 @@ import base64
 import json
 import threading
 import traceback
+from uuid import UUID
 
 import pytest
 
@@ -14,7 +15,7 @@ from botocore.config import Config
 from botocore.exceptions import ClientError, ParamValidationError
 from botocore.stub import Stubber
 
-from cryptalis.crypto import KeyPolicy, Keyring, KeyUnavailable, WrappedRoot
+from cryptalis.crypto import DevelopmentKeyProvider, KeyPolicy, Keyring, KeyUnavailable, WrappedRoot
 from cryptalis.crypto.aws_kms import AwsKmsKeyProvider
 from test_aws_kms import ARN, CONTEXT, OTHER_ARN, PROVIDER, ROOT, SECRET
 
@@ -136,6 +137,63 @@ def test_real_sdk_model_rejects_wrong_output_type_before_use(sdk):
     _, stubber, _ = sdk
     with pytest.raises(ParamValidationError):
         stubber.add_response("decrypt", response("Plaintext", 42))
+
+
+@pytest.mark.parametrize("source_kind", ["aws-sdk", "development"])
+@pytest.mark.parametrize("recovery", [
+    "exact_root", "wrong_root", "short_material", "wrong_key", "disabled",
+])
+def test_direct_rewrap_requires_actual_sdk_target_recovery(sdk, source_kind, recovery):
+    client, stubber, target = sdk
+    source_id = UUID(int=902)
+    source_context = dict(ENCRYPTION_CONTEXT, **{"cryptalis:provider": str(source_id)})
+    source_request = {
+        "KeyId": OTHER_ARN, "CiphertextBlob": b"source-opaque-wrapper",
+        "EncryptionContext": source_context, "EncryptionAlgorithm": "SYMMETRIC_DEFAULT",
+    }
+    source_response = dict(response("Plaintext", ROOT), KeyId=OTHER_ARN)
+    if source_kind == "aws-sdk":
+        source = AwsKmsKeyProvider(client, provider_id=source_id, key_arn=OTHER_ARN)
+        original = WrappedRoot(source_id, CONTEXT, b"source-opaque-wrapper")
+        stubber.add_response("decrypt", source_response, source_request)
+    else:
+        source = DevelopmentKeyProvider()
+        original = source.wrap(ROOT, CONTEXT)
+
+    stubber.add_response("encrypt", response("CiphertextBlob", CIPHERTEXT), request("Plaintext", ROOT))
+    if recovery == "disabled":
+        stubber.add_client_error("decrypt", service_error_code="DisabledException",
+                                service_message=SECRET, http_status_code=400,
+                                expected_params=request("CiphertextBlob", CIPHERTEXT))
+    else:
+        recovered = {"exact_root": ROOT, "wrong_root": b"x" * 32,
+                     "short_material": b"short", "wrong_key": ROOT}[recovery]
+        reply = response("Plaintext", recovered)
+        if recovery == "wrong_key":
+            reply["KeyId"] = OTHER_ARN
+        stubber.add_response("decrypt", reply, request("CiphertextBlob", CIPHERTEXT))
+
+    if recovery == "exact_root":
+        replacement = source.rewrap(original, target, CONTEXT)
+        assert replacement == WrappedRoot(PROVIDER, CONTEXT, CIPHERTEXT)
+    else:
+        with pytest.raises(KeyUnavailable) as caught:
+            source.rewrap(original, target, CONTEXT)
+        assert SECRET not in "".join(traceback.format_exception(caught.value))
+        assert caught.value.operation_id
+
+    # A failed recovery never retires source custody. A healthy retry uses the
+    # original source root/context and must perform a new target recovery proof.
+    if source_kind == "aws-sdk":
+        stubber.add_response("decrypt", source_response, source_request)
+    assert source.unwrap(original, CONTEXT) == ROOT
+    if source_kind == "aws-sdk":
+        stubber.add_response("decrypt", source_response, source_request)
+    stubber.add_response("encrypt", response("CiphertextBlob", CIPHERTEXT), request("Plaintext", ROOT))
+    stubber.add_response("decrypt", response("Plaintext", ROOT), request("CiphertextBlob", CIPHERTEXT))
+    replacement = source.rewrap(original, target, CONTEXT)
+    stubber.add_response("decrypt", response("Plaintext", ROOT), request("CiphertextBlob", CIPHERTEXT))
+    assert target.unwrap(replacement, CONTEXT) == ROOT
 
 
 def test_real_sdk_blocking_call_cancellation_does_not_publish_keyring_material(sdk):

@@ -339,6 +339,12 @@ Shared equality joins are INTERNAL ONLY research. They need a common search-doma
 Other fields and tenants derive different keys. There is no universal global token key.
 
 The internal provider contract is `wrap(root, context)`, `unwrap(wrapper, context)`, and `rewrap(wrapper, new_provider, context)`.
+Bound runtime factories require an exact UUID and membership in the pinned
+policy map before invoking the host key resolver. A custom string identity cannot
+select a pinned policy. Host authentication and authorization remain required;
+this membership check does not replace them. The
+[early-admission checkpoint](status.md#sdk-protocol-and-early-tenant-admission-checkpoint-2026-10-28)
+records the source and installed controls.
 Direct rewrap must confirm that the target unwraps the replacement to the exact
 original immutable 32-byte root under the same context. Pin and recheck the
 target provider identity; compare recovered root bytes in constant time.

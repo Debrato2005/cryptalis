@@ -301,6 +301,14 @@ The six-gate grouping and conservative unadmitted grammar assumptions are record
 
 ## Performance targets and recorded costs
 
+The [current warm 10k observation](status.md#sdk-protocol-and-early-tenant-admission-checkpoint-2026-10-28)
+over `d7f2dba` reports added p95 of 1.8042 ms point, 3.5577 ms equality and
+3.7962 ms IN-20. Equality misses 3 ms; isolated indexed-column storage measures
+1.4976×. This is one local synchronous warm-provider cell with 40 samples per
+workload. It does not supersede older cells, prove a deterministic regression,
+or qualify production performance. A slower admission-cache experiment was
+reverted; all three security admission checks remain.
+
 The [integer observation](status.md#integer-storage-cost-observation-2026-10-24)
 records three storage-only 10k fixtures. All six scalar/entity point observations
 meet 3 ms locally. Column bytes measure 22.5×/11.75×/6.375× native for int2/int4/int8.

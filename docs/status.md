@@ -10,6 +10,56 @@ No PostgreSQL/provider/runtime cell, production key provider, independent review
 VERIFIED below refers only to the named checks and their exact revisions.
 All other contract and promotion requirements are SPECIFIED. All seven full gates remain UNKNOWN.
 
+## SDK protocol and early tenant admission checkpoint: 2026-10-28
+
+**VERIFIED, local source and installed cells:** the isolated
+[AWS SDK cell](../qualification/aws-sdk/README.md) retains boto3 1.42.89 and
+botocore 1.42.97 with exact dependency hashes and service-model identity.
+The 129-check protocol bundle passes, including 22 real SDK serializer/model
+cases. Source and target Stubber queues verify source decrypt, target encrypt
+and target decrypt. Wrong roots, malformed material, wrong key identity and
+disabled-target responses refuse while source custody remains usable.
+Credential discovery and HTTP transport are explicitly denied. No live AWS
+cryptography, IAM, custody, deletion or production-provider qualification follows.
+
+The factory now checks exact UUID type and pinned tenant membership before the
+host key resolver. Previously an unapproved UUID reached that callback before
+refusal, and a UUID subclass with a changed string identity could pass the
+policy comparison. Both native PostgreSQL controls reproduce the old boundary.
+The correction passes 149 affected adapter, context, online-tenant and actual-SDK
+checks, including ordinary approved-scope access. The known-approved nil UUID
+retains its existing online lifecycle coverage.
+
+The current reproducible wheel is
+`d809a9b6a9dc2f3a2f306bb97061c98d3d4038d49a1f7cc6a630496b8eaf5054`.
+All 50 release inputs, 47 installed files and CLI inspection pass. Its installed
+tenant source/fresh-restored journeys both pass with stable source and runtime
+identity. The earlier `4af03c…` wheel and its wider DATE/original-HTTP evidence
+remain preserved at their own boundary. No package publication occurred.
+
+A matched warm 10k profile over the preceding `d7f2dba` product bytes reports
+1.8042 ms added point p95, 3.5577 ms equality and 3.7962 ms IN-20; isolated
+column-plus-equality-index storage is 1.4976× native. Equality **misses** its
+3 ms target. Other stated targets pass in that one local observation. Profiling
+shows repeated traversal at three distinct security admission boundaries.
+A per-admission memoization experiment was slower and was reverted. Host
+variance remains unresolved; no performance fix or production pass is claimed.
+
+The [boundary](_reset/sdk-admission-boundary-20261028.json) binds archived
+receipts, exact inputs, the failed performance observation and the preserved
+unfinished branch. SDK-profile agent review accepted; the final small admission
+fix has root self-review and executable evidence only. Independent human review
+remains required. All seven production gates remain UNKNOWN.
+
+**Execution blocked by account usage limit.** Specialist turns for tenant-policy
+provisioning, count reporting and cache architecture were rejected by the account
+quota. Their unfinished code is preserved as local branch
+`wip/policy-count-unverified-20261028`, commit `7c0dd6b`, and in the
+[verified Git bundle](_reset/policy-count-unverified-20261028.bundle). It is not
+imported, enabled or qualified on the continuation branch. The runtime UUID guard
+was completed separately; broader provisioning and counts remain unfinished.
+See the [resume record](superpowers/plans/2026-10-28-policy-query-resume.md).
+
 ## Verified continuation checkpoint: 2026-10-28
 
 **VERIFIED, bounded source and installed cells:** the unchanged 26-file original
