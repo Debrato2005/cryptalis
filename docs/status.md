@@ -28,6 +28,10 @@ the SQL executor. Tuning never raises the plan's row/byte limits and provides no
 pause guarantee. This establishes functional concurrency, not a speedup or a
 multi-executor database scheduler.
 
+The later [32-check boundary run](_reset/online-workers-boundary-20261028.json)
+also preserves typed invalid-plan refusal before database access. It includes
+the same worker, scalar, tenant and recovery controls after that correction.
+
 ## Tuple and entity INSERT RETURNING: 2026-10-28
 
 **VERIFIED, local PostgreSQL 16.15:** mapped dictionary INSERT now returns native

@@ -99,9 +99,9 @@ uv run --frozen --extra sqlmodel python scripts/online_qualification.py \
   --workdir /tmp/cryptalis-college-date-recovery --fresh-scalar date --public-slots
 ```
 
-The same entry point supports `boolean`, `int16`, `int32` and `int64` profiles.
+The same entry point supports `uuid`, `boolean`, `int16`, `int32` and `int64` profiles.
 Each profile uses its fixed export/restore selection and private credentials.
-Use `--public-slots` for dates or integers when checking original column positions.
+Use `--public-slots` for dates, UUIDs or integers when checking original column positions.
 
 The [GitHub Actions workflow](../.github/workflows/local-checks.yml) runs the same
 restricted-role PostgreSQL harness on Ubuntu 24.04. It also audits the frozen
