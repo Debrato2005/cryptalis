@@ -251,7 +251,8 @@ def _validate_lineage(document):
         if ((document['format'], document['kind']) not in (
                 ('cryptalis.transition/v5', 'rewrap'), ('cryptalis.transition/v6', 'payload_rotation'),
                 ('cryptalis.transition/v7', 'search_rotation'), ('cryptalis.transition/v12', 'rewrap'),
-                ('cryptalis.transition/v13', 'payload_rotation'), ('cryptalis.transition/v14', 'search_rotation'))
+                ('cryptalis.transition/v13', 'payload_rotation'), ('cryptalis.transition/v14', 'search_rotation'),
+                ('cryptalis.transition/v16', 'tenant_provision'))
                 or type(lineage) is not list or not lineage):
             raise ValueError
         ancestors = {(item['operation_id'], item['plan_digest']): index

@@ -156,6 +156,10 @@ class MigrationPlan:
     def __post_init__(self):
         try:
             doc = _decode_transition_json(self.artifact)
+            if doc.get('format') in ('cryptalis.transition/v15', 'cryptalis.transition/v16'):
+                from cryptalis.tenancy import _validate_activation
+                _validate_activation(doc, self.artifact)
+                return
             members = {'format', 'kind', 'operation_id', 'target_id', 'target',
                             'runtime_role', 'journal_schema', 'lock', 'source_lock_digest',
                             'key_policies', 'scopes', 'estimates'}
@@ -822,7 +826,7 @@ def _state(c,p,pin,*,allow_aborted=False):
         if state.get('phase') not in ('PENDING', 'ACTIVE'):
             raise TransitionFailure('online_successor_state_changed', p.operation_id)
         _check_predecessors(c, p)
-    if kind in ('rewrap',)+_GENERATION_ROTATIONS:
+    if kind in ('rewrap', 'tenant_provision')+_GENERATION_ROTATIONS:
         proof_key = kind+'_plan_digest'
         if (state.get('phase') not in ('PENDING', 'ACTIVE')
                 or state.get(proof_key) != p.document[proof_key]):
@@ -1289,6 +1293,9 @@ def _activate(c,p,state,pin,keys):
     if p.document['kind'] == 'rewrap':
         from cryptalis.rotation import _verify_rewrap_target
         _verify_rewrap_target(c, p, keys)
+    elif p.document['kind'] == 'tenant_provision':
+        from cryptalis.tenancy import verify_target
+        verify_target(c, p, keys)
     elif p.document['kind'] in _GENERATION_ROTATIONS:
         from cryptalis._rotation_activation import verify_target
         verify_target(c, p, keys)
@@ -1316,13 +1323,13 @@ def apply(p,engine,*,keys,pin,approval,chunk_size=1000,until='PENDING'):
     online = p.document['format'] == 'cryptalis.transition/v8'
     if online and (until != 'ACTIVE' or pin.phase not in ('ACTIVATING', 'ACTIVE')):
         raise TransitionFailure('online_executor_required', p.operation_id)
-    if p.document['kind'] == 'rewrap' and (until != 'ACTIVE' or pin.phase not in ('ACTIVATING', 'ACTIVE')):
-        raise TransitionFailure('rewrap_executor_required', p.operation_id)
+    if p.document['kind'] in ('rewrap', 'tenant_provision') and (until != 'ACTIVE' or pin.phase not in ('ACTIVATING', 'ACTIVE')):
+        raise TransitionFailure(p.document['kind']+'_executor_required', p.operation_id)
     if p.document['kind'] in _GENERATION_ROTATIONS and (until != 'ACTIVE' or pin.phase not in ('ACTIVATING', 'ACTIVE')):
         raise TransitionFailure(p.document['kind']+'_executor_required', p.operation_id)
     with _executor(p,engine,pin,approval) as c:
         state=_state(c,p,pin); c.commit()
-        if state is not None and state['phase'] == 'ACTIVE' and (online or p.document['kind'] in ('rewrap',)+_GENERATION_ROTATIONS) and pin.phase == 'ACTIVATING':
+        if state is not None and state['phase'] == 'ACTIVE' and (online or p.document['kind'] in ('rewrap', 'tenant_provision')+_GENERATION_ROTATIONS) and pin.phase == 'ACTIVATING':
             # A journal phase cannot replace the host's publication evidence.
             with c.begin():
                 _lock_tables(c,p,verification=True)
@@ -1332,11 +1339,16 @@ def apply(p,engine,*,keys,pin,approval,chunk_size=1000,until='PENDING'):
                 elif p.document['kind'] == 'rewrap':
                     from cryptalis.rotation import _verify_rewrap_target
                     _verify_rewrap_target(c,p,keys)
+                elif p.document['kind'] == 'tenant_provision':
+                    from cryptalis.tenancy import verify_target
+                    verify_target(c,p,keys)
                 else:
                     from cryptalis._rotation_activation import verify_target
                     verify_target(c,p,keys)
         if state is None:
             if online: raise TransitionFailure('missing_online_successor', p.operation_id)
+            if p.document['kind'] == 'tenant_provision':
+                raise TransitionFailure('missing_tenant_provision_successor', p.operation_id)
             if p.document['kind'] in _GENERATION_ROTATIONS:
                 raise TransitionFailure('missing_'+p.document['kind'].removesuffix('_rotation')+'_successor', p.operation_id)
             with c.begin(): state=_expand(c,p)

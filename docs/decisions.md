@@ -4,6 +4,17 @@
 It does not preserve old IDs as implementation obligations. Historical dispositions remain in [archived revamp evidence](research/revamp-evidence.md).
 [Status](status.md) owns IMPLEMENTED/VERIFIED claims. All seven full gates remain UNKNOWN.
 
+## Additive maintenance tenant authority: 2026-10-28
+
+Use a strict immutable tenant-provision proposal and v15/v16 successor rather
+than mutating an ACTIVE policy map. Add one explicitly approved empty tenant;
+preserve old policy digests and representation bytes. Reuse existing maintenance
+locks, durable guards, reciprocal journal transitions, external publication and
+inspected cancellation. Retain lineage through rotations and restored adoption.
+The first implementation deliberately retains O(N) source authentication and a
+global writer pause. It adds no policy service, new cipher or implicit signup
+authority. Production scalability and qualification remain separate work.
+
 ## Tenant resolution and interrupted-work preservation: 2026-10-28
 
 Admit only exact UUID tenant scope and reject absent pinned membership before

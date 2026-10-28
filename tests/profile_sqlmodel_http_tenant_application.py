@@ -14,6 +14,8 @@ pytest.importorskip('fastapi', reason='optional original HTTP tenant profile')
 
 from sqlmodel import Session, select
 from cryptalis import deprotection as d, migration as m, online
+from cryptalis import tenancy
+from cryptalis.crypto.keys import KeyUnavailable
 from cryptalis.manifest.compiler import SearchReview, Writer, WriterInventory
 from cryptalis.sqlmodel import attach
 from test_migration import DOMAIN, keys
@@ -42,6 +44,98 @@ def item_rows(scoped, public):
     return result
 
 
+def provision_account(*, owner, public, target, api, scoped, plan, current_keys, admin,
+        reload_application, schema, artifact_directory):
+    """Original authentication -> explicit host approval -> published empty policy -> HTTP write."""
+    from fastapi.testclient import TestClient
+    from sqlmodel_http_tenant_host import TenantHost
+    from sqlmodel_http_tenant_workload import PASSWORD
+    from app.api.deps import get_current_user, get_current_active_superuser
+    old_plan = plan
+    host = TenantHost(api, lambda: Session(public), scoped,
+        approved_tenants=tuple(UUID(value) for value in plan.document['key_policies']),
+        deployment=(plan, pin(plan, 'ACTIVE')))
+    with host, TestClient(api) as client:
+        email = uuid4().hex + '@example.com'
+        registered = client.post('/api/v1/users/signup', json={'email': email, 'password': PASSWORD})
+        assert registered.status_code == 200
+        login = client.post('/api/v1/login/access-token', data={'username': email, 'password': PASSWORD})
+        admin_login = client.post('/api/v1/login/access-token', data={
+            'username': admin['email'], 'password': PASSWORD})
+        assert login.status_code == admin_login.status_code == 200
+        token, admin_token = login.json()['access_token'], admin_login.json()['access_token']
+        headers = {'Authorization': 'Bearer ' + token}
+        assert client.get('/api/v1/users/me', headers=headers).json()['id'] == registered.json()['id']
+        count = len(host.scopes)
+        refused = client.post('/api/v1/items/', headers=headers, json={'title': 'PUBLIC before approval'})
+        assert refused.status_code == 409 and len(host.scopes) == count
+    # This is a trusted host operation, not a new unauthenticated application
+    # route. The original current-account and administrator rules authorize the
+    # exact typed identity; no body/JWT tenant claim or database frame chooses it.
+    with Session(public) as session:
+        account = get_current_user(session, token)
+        administrator = get_current_user(session, admin_token)
+        get_current_active_superuser(administrator)
+        tenant = account.id
+        assert type(tenant) is UUID and str(tenant) == registered.json()['id']
+    new_policy = keys(tenant)
+    allowed = {UUID(value) for value in plan.document['key_policies']} | {tenant}
+    def augmented(approved):
+        if type(approved) is not UUID or approved not in allowed:
+            raise KeyUnavailable()
+        return new_policy if approved == tenant else current_keys(approved)
+    with owner.connect() as connection:
+        before = connection.exec_driver_sql('SELECT id,owner_id,title,description FROM item ORDER BY id').all()
+    proposal = tenancy.plan(plan, owner, source_pin=pin(plan, 'ACTIVE'), keys=current_keys,
+        tenant_id=tenant, key_policy=new_policy, verify_rows_per_second=1000)
+    artifact_directory.mkdir(mode=0o700, parents=True, exist_ok=False)
+    (artifact_directory / 'proposal.json').write_bytes(proposal.artifact)
+    successor_path = artifact_directory / 'activation.json'
+    successor_path.write_bytes(proposal.activation_plan.artifact)
+    successor = m.MigrationPlan(successor_path.read_bytes())
+    assert successor.lock_bytes == plan.lock_bytes
+    assert successor.document['access_contract'] == plan.document['access_contract']
+    assert successor.document['key_policies'] == {**plan.document['key_policies'], str(tenant): m._policy(new_policy)}
+    maintenance = m.MaintenanceApproval('Original HTTP writers stopped and drained for explicit host-approved tenant maintenance.', 3600)
+    assert tenancy.apply(proposal, owner, keys=augmented, pin=pin(successor, 'PREPARED'),
+        approval=maintenance).phase == 'PENDING'
+    assert m.apply(successor, owner, keys=augmented, pin=pin(successor, 'ACTIVATING'),
+        approval=maintenance, until='ACTIVE').phase == 'ACTIVE'
+    with owner.connect() as connection:
+        assert connection.exec_driver_sql('SELECT id,owner_id,title,description FROM item ORDER BY id').all() == before
+    # A retained old host/factory with valid old keys must refuse new requests
+    # under its stale pin, even though old tenants' payload keys did not change.
+    count = len(host.scopes)
+    with host, TestClient(api, raise_server_exceptions=False) as client:
+        stale = client.get('/api/v1/items/', headers={'Authorization': 'Bearer ' + admin_token})
+        assert stale.status_code == 500 and len(host.scopes) == count
+    with pytest.raises(m.TransitionFailure):
+        m.check_deployment(old_plan, public, pin=pin(old_plan, 'ACTIVE'))
+    target.dispose()
+    api, User, Item = reload_application()
+    target = native_engine('CRYPTALIS_TEST_RUNTIME_DATABASE_URL', schema)
+    scoped = attach(User._sa_registry, target, lock=successor.lock_bytes, keys=augmented,
+        deployment=(successor, pin(successor, 'ACTIVE')))
+    host = TenantHost(api, lambda: Session(public), scoped, approved_tenants=tuple(allowed),
+        deployment=(successor, pin(successor, 'ACTIVE')))
+    with host, TestClient(api) as client:
+        written = client.post('/api/v1/items/', headers=headers, json={
+            'title': 'PUBLIC newly provisioned Item ' + uuid4().hex, 'description': 'PUBLIC dynamic 雪😀'})
+        assert written.status_code == 200 and written.json()['owner_id'] == str(tenant)
+        latest = client.put('/api/v1/items/' + written.json()['id'], headers=headers,
+            json={'title': 'PUBLIC latest provisioned Item ' + uuid4().hex, 'description': None})
+        assert latest.status_code == 200
+        observed = client.get('/api/v1/items/' + written.json()['id'], headers=headers)
+        assert observed.status_code == 200 and observed.json() == latest.json()
+    return dict(plan=successor, keys=augmented, api=api, target=target, scoped=scoped,
+        tenant_id=str(tenant), item=latest.json(), controls=[
+            'original post-migration signup/JWT then unapproved Item409 before key lookup',
+            'original active administrator and account authorize exact typed new policy',
+            'unchanged old policy digests/frame bytes/schema/lock/access contract through maintenance publication',
+            'retained stale host pin refuses before scoped factory after publication',
+            'first protected Item and latest NULL/Unicode edit/read succeed after actual successor activation'])
+
+
 def complete_lifecycle(*, owner, source, public, schema, plan, cohort,
         reload_application, copied, monkeypatch, binding=None, expected_items=None):
     """One shared original-app rotation/current-value exit journey for both clusters."""
@@ -55,9 +149,15 @@ def complete_lifecycle(*, owner, source, public, schema, plan, cohort,
         if expected_items is not None:
             assert json.loads(json.dumps(item_rows(scoped, public))) == expected_items
         tenants = tuple(UUID(value) for value in successor.document['key_policies'])
-        host = TenantHost(api, lambda: Session(public), scoped, approved_tenants=tenants)
+        host = TenantHost(api, lambda: Session(public), scoped, approved_tenants=tenants,
+            deployment=(successor, pin(successor, 'ACTIVE')))
         with host:
             rotated = workflow(api, cohort, lambda: Session(public), host=host)
+        provisioned = provision_account(owner=owner, public=public, target=target, api=api, scoped=scoped,
+            plan=successor, current_keys=current_keys, admin=cohort['admin'], reload_application=reload_application,
+            schema=schema, artifact_directory=Path(copied).parent / 'late-tenant-provision')
+        successor, current_keys, api, target, scoped = (provisioned[name] for name in ('plan', 'keys', 'api', 'target', 'scoped'))
+        from app.models import User, Item
         latest_rows = item_rows(scoped, public)
         with owner.connect() as connection:
             users_before = connection.exec_driver_sql('SELECT * FROM "user" ORDER BY id').all()
@@ -102,7 +202,8 @@ def complete_lifecycle(*, owner, source, public, schema, plan, cohort,
             child_environment.setenv('CRYPTALIS_TEST_RUNTIME_DATABASE_URL', os.environ['CRYPTALIS_TEST_SOURCE_URL'])
             child = package_free(copied, schema, retained, retained_items=retained_items)
         return {'rotated': rotated, 'package_free': child, 'latest_item_count': len(latest_rows),
-            'restore_lineage': successor.document.get('restore_lineage', [])}
+            'restore_lineage': successor.document.get('restore_lineage', []),
+            'provisioning_controls': provisioned['controls'], 'provisioning_format': successor.document['format']}
     finally:
         target.dispose()
 
@@ -221,7 +322,8 @@ def test_original_http_authenticated_owners_admin_cascades_rotations_and_native_
         from sqlmodel_http_tenant_host import TenantHost
         scoped = attach(mapping, target, lock=successor.lock_bytes, keys=keys,
             deployment=(successor, pin(successor, 'ACTIVE')))
-        host = TenantHost(api, lambda: Session(public), scoped, approved_tenants=tenants)
+        host = TenantHost(api, lambda: Session(public), scoped, approved_tenants=tenants,
+            deployment=(successor, pin(successor, 'ACTIVE')))
         with host:
             with TestClient(api) as client:
                 for account, expected in captured:
@@ -269,6 +371,11 @@ def test_original_http_authenticated_owners_admin_cascades_rotations_and_native_
                 restored = client.get('/api/v1/items/' + str(identity), headers=headers)
                 assert restored.status_code == 200 and restored.json() == protected['latest']
         assert native['controls'] == protected['controls'][:len(native['controls'])]
+        initial_provision = provision_account(owner=owner, public=public, target=target, api=api,
+            scoped=scoped, plan=successor, current_keys=keys, admin=cohorts['protected']['admin'],
+            reload_application=reload_application, schema=schema, artifact_directory=tmp_path / 'initial-tenant-provision')
+        successor, api, target, scoped = (initial_provision[name] for name in ('plan', 'api', 'target', 'scoped'))
+        from app.models import User, Item
         backup = os.environ.get('CRYPTALIS_TENANT_HTTP_BACKUP_DIR')
         if backup:
             directory = Path(backup)
@@ -305,9 +412,12 @@ def test_original_http_authenticated_owners_admin_cascades_rotations_and_native_
                         'exact captured HTTP values after protected publication'],
                     'fault_controls': ['owner race refuses 409 before protected Item load',
                         'damaged authenticated title refuses HTTP500 without plaintext; restored frame reads correctly'],
+                    'initial_provisioning_controls': initial_provision['controls'],
+                    'later_provisioning_controls': completed['provisioning_controls'],
                     'rotated_controls': rotated['controls'], 'package_free': child,
                     'boundary': 'Local original ASGI routes; preapproved existing owner policies; public fixture custody. '
-                        'Dynamic owner-policy provisioning, fresh-cluster tenant application restore, production fencing, '
+                        'Explicit maintenance tenant provisioning uses a global pause and O(N) frame scans. '
+                        'Scalable online signup provisioning, production fencing, '
                         'external custody, pause budgets and independent review remain UNKNOWN.',
                     'gates': 'all seven UNKNOWN'}, stream, indent=2)
                 stream.write('\n')

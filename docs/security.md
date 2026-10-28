@@ -10,6 +10,15 @@ Payload confidentiality depends on uncompromised application and key authority, 
 
 ## Online protection trust boundary
 
+The maintenance tenant-addition API accepts explicit host authority, not an
+unauthenticated signup claim or a database-selected root. It preserves every
+old policy digest and verifies source data, typed new scope and empty membership
+again under locks before adding authority. Publication and cancellation require
+their actual host pins. Restored addition retains explicit restore lineage.
+The HTTP integration checks the retained current artifact before opening a
+scoped factory; this does not promise revocation of arbitrary in-flight workers.
+See the [bounded checkpoint](status.md#maintenance-tenant-policy-provisioning-2026-10-28).
+
 The [owner-scoped HTTP checkpoint](status.md#verified-continuation-checkpoint-2026-10-28)
 keeps global account authentication native. Its explicit host adapter validates
 the original JWT/account authority before selecting an approved owner policy.

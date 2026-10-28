@@ -10,6 +10,43 @@ No PostgreSQL/provider/runtime cell, production key provider, independent review
 VERIFIED below refers only to the named checks and their exact revisions.
 All other contract and promotion requirements are SPECIFIED. All seven full gates remain UNKNOWN.
 
+## Maintenance tenant-policy provisioning: 2026-10-28
+
+**VERIFIED, bounded source and installed cells:** `cryptalis.tenancy` adds one
+explicitly host-approved empty tenant through the existing maintenance and
+publication lifecycle. Old policy digests, lock, access contract, schema and
+ciphertext bytes remain exact. Planning authenticates current frames; apply
+rechecks empty membership under locks and atomically records source SUPERSEDED
+and successor PENDING with durable guards. Strict successors v15/v16 require
+external retention/publication and the actual ACTIVATING pin. Inspected retry
+and cancellation preserve source authority and data. Physical older readers
+refuse the new formats before execution.
+
+The original HTTP account authenticates but receives 409 before approval, then
+creates its first protected Item after explicit administrator-approved
+publication. A stale host artifact refuses before factory/key lookup. The
+enlarged cohort survives root, payload and search rotation, genuine fresh
+adoption, another restored-target addition and latest-value removal. Both
+import-denied native children HTTP-read eleven latest Items through ten owners.
+All 26 original application files remain unchanged; explicit host integration
+still applies.
+
+The integrated source matrix passes 207 checks with one omitted-reader skip;
+that physical-reader control passes separately. The isolated tenant-only matrix
+passes all 13 controls. Source and actual installed fresh journeys pass with
+stable runtime bindings. The reproducible wheel is
+`72d4ccde3fefc016cf8e07f5219c7eb0690321884efcd3ac2396e5f26cc4aa19`;
+44 modules and installed-file/CLI inspection pass. The
+[boundary](_reset/tenant-provision-boundary-20261028.json) retains exact receipts
+and release inputs. Independent agent review found no actionable tenant defect.
+
+This Python API performs O(N) frame authentication under a global writer pause.
+It does not qualify scalable online signup, arbitrary-process revocation, live
+KMS, operational CLI provisioning, production budgets or independent human
+review. COUNT candidate code is excluded. Execution resumed after the earlier
+quota interruption; the preserved bundle remains historical recovery material.
+All 34 objectives remain in scope and all seven gates remain UNKNOWN.
+
 ## SDK protocol and early tenant admission checkpoint: 2026-10-28
 
 **VERIFIED, local source and installed cells:** the isolated

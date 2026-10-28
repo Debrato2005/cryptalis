@@ -25,6 +25,13 @@ No objective is complete until its acceptance evidence and applicable gate pass.
 
 ## Current boundary
 
+- Explicit maintenance tenant-policy addition now passes state/cancellation and
+  old-reader controls, source/installed original HTTP first-write approval,
+  all rotations, genuine fresh adoption and latest native exit. Old policy and
+  ciphertext remain exact; the Python API retains O(N)/global-pause limits.
+  COUNT remains separate unfinished work and all gates remain UNKNOWN. See the
+  [checkpoint](status.md#maintenance-tenant-policy-provisioning-2026-10-28).
+
 - Exact tenant type/pinned membership now refuses before host key lookup. The
   149-check source matrix and rebuilt installed tenant recovery pass. A separate
   129-check actual-SDK protocol bundle includes 22 SDK cases with transport denied.

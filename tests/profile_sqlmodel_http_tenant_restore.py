@@ -97,11 +97,14 @@ def test_original_tenant_http_fresh_restore_adopt_rotate_and_package_free_exit(t
                     'explicit_restore_binding': True, 'backup_item_count': len(manifest['expected_items']),
                     'latest_item_count': completed['latest_item_count'],
                     'restored_http_controls': completed['rotated']['controls'],
+                    'provisioning_controls': completed['provisioning_controls'],
+                    'provisioning_format': completed['provisioning_format'],
                     'package_free': completed['package_free'],
                     'boundary': 'Distinct local PostgreSQL16 clusters with successful source shutdown first. '
                         'Original HTTP/JWT and explicit tenant/admin/cascade host adapters. '
-                        'Existing approved owner policies and public reconstructible fixture custody only. '
-                        'Dynamic policy provisioning, production fencing, independent custody/review and measured pause budgets remain UNKNOWN.',
+                        'Explicit maintenance owner-policy addition, global writer pause, O(N) verification and '
+                        'public reconstructible fixture custody only. Scalable online signup provisioning, '
+                        'production fencing, independent custody/review and measured pause budgets remain UNKNOWN.',
                     'gates': 'all seven UNKNOWN'}, stream, indent=2)
                 stream.write('\n')
     finally:

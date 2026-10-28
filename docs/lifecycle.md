@@ -179,6 +179,28 @@ The integrated checkpoint records the original application's narrow rollback/rem
 
 ## Changes and rotation
 
+### Add an empty tenant policy under maintenance
+
+`cryptalis.tenancy.plan` accepts an ACTIVE source and actual source pin, an exact
+new UUID and host-held Keyring, declared source keys and a verification rate.
+The source must carry a scoped-table access contract. Existing/fixed scopes,
+wrong policy contexts, occupied membership and unsupported authority refuse.
+Existing policies, lock, schema and frames remain unchanged.
+
+Retain the immutable proposal and successor outside PostgreSQL. Apply under
+the existing stop/drain/exclusion approval; it repeats source authentication and
+emptiness checks under locks before committing source SUPERSEDED/new PENDING.
+Normal/adopted successors use v15/v16. Publish the actual successor externally,
+then use its ACTIVATING pin with `migration.apply` to reach ACTIVE. A pending
+retry inspects the same operation. Cancellation requires the republished source
+ACTIVE authority and retains an ABORTED successor. Keep the full lineage for
+rotation, restore and current-data removal.
+
+The [verified boundary](status.md#maintenance-tenant-policy-provisioning-2026-10-28)
+covers this Python API with O(N) verification and a global writer pause. It is
+not scalable online tenant signup or a new policy service. Host authentication,
+external custody/publication and production fencing remain separate obligations.
+
 | Change | Engine action |
 |---|---|
 | Protect or stop protection | Transform payload, create/drop declared search representations, verify, switch, contract |

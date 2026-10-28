@@ -15,11 +15,12 @@ from sqlmodel import select
 
 
 class TenantHost:
-    def __init__(self, api, public_factory, scoped_factory, *, approved_tenants):
+    def __init__(self, api, public_factory, scoped_factory, *, approved_tenants, deployment):
         self.api = api
         self.public_factory = public_factory
         self.scoped_factory = scoped_factory
         self.approved_tenants = frozenset(approved_tenants)
+        self.deployment = deployment
         self.scopes = []
         self.payload_requests = 0
         self.fail_next_account_commit = False
@@ -55,6 +56,13 @@ class TenantHost:
     def _session(self, tenant):
         if type(tenant) is not UUID or tenant not in self.approved_tenants:
             raise HTTPException(status_code=409, detail='Item owner policy is not approved')
+        # The host re-admits its retained current artifact on every request,
+        # before key lookup. The journal can deny stale authority, never choose
+        # a new tenant or supply the externally published successor artifact.
+        from cryptalis import migration
+        plan, pin = self.deployment
+        with self.public_factory() as public:
+            migration.check_deployment(plan, public.get_bind(), pin=pin)
         self.scopes.append(tenant)
         return self.scoped_factory(tenant_id=tenant, expire_on_commit=False)
 
