@@ -32,7 +32,8 @@ def test_independent_date_frames_ordinals_bounds_and_invalid_typed_values(monkey
     for invalid in (datetime(2000, 1, 1), '2000-01-01', 1, True, b'2000-01-01'):
         with pytest.raises(CryptoFailure):
             cf1.seal_value(invalid, field, CRYPTO_TENANT, RECORD, material)
-    for raw in (b'', b'\0', struct.pack('>I', 0), struct.pack('>I', 3652060), b'\0' * 5):
+    for raw in (b'', b'\0', struct.pack('>I', 0), struct.pack('>I', 3652060),
+                struct.pack('>I', 1 << 31), struct.pack('>I', (1 << 32) - 1), b'\0' * 5):
         with pytest.raises(CryptoFailure):
             cf1.open_value(independent_frame(raw, field, nonce), field, CRYPTO_TENANT, RECORD, material)
 

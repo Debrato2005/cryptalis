@@ -240,7 +240,7 @@ def open_value(frame: bytes | None, field: FieldDescriptor, tenant: UUID,
             raise InvalidValue()
         try:
             value = date.fromordinal(int.from_bytes(encoded, 'big'))
-        except ValueError:
+        except (ValueError, OverflowError):
             raise InvalidValue() from None
     elif field.value_codec in _INTEGER_WIDTHS:
         if len(encoded) != _INTEGER_WIDTHS[field.value_codec]:
