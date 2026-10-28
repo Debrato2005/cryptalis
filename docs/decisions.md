@@ -24,6 +24,20 @@ Preserve native Date values through protection, current-value updates, root and
 payload rotation, protected backup adoption and latest-value native removal.
 This local addition does not qualify a production gate.
 
+## Local integer storage admission: 2026-10-28
+
+Admit storage-only signed int2/int4/int8 with the existing exact mappings,
+typed codecs, literal defaults and native error/transaction contracts. Keep
+integer search, ordering and arithmetic unadmitted. This changes local type
+admission, not the stored bytes or production qualification.
+
+Accept and publish the fixed CF1 overhead for the college workload. The current
+10,000-row profiles measure column-only ratios of 22.5x, 11.75x and 6.375x for
+int2/int4/int8. The equality-index storage target does not apply to storage-only
+fields. All eight scalar/entity point observations, including Date, meet the
+3 ms added-p95 target in this local run. Retain raw samples and observed tails;
+these observations do not establish a concurrent or production budget.
+
 ## Bounded protected counts: 2026-10-28
 
 For the local assignment candidate, implement `COUNT(protected_column)` as a

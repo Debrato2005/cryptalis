@@ -24,6 +24,11 @@ All normative sections here are SPECIFIED. Recorded-cost sections are VERIFIED o
 Python 3.12+, SQLAlchemy 2.x, psycopg 3 sync and async, PostgreSQL 16.
 The text family includes native PostgreSQL text and VARCHAR, with matching standard mappings.
 Native Boolean storage has a separate pinned codec and standard Boolean mapping.
+Native signed int2/int4/int8 storage uses exact SmallInteger/Integer/BigInteger
+mappings, typed fixed-width values and admitted literal client defaults.
+Native DATE storage admits exact standard Date mappings and Python date values
+in years 1 through 9999. Date search, defaults, string/timestamp coercions and
+custom mappings refuse; NULL presence and direct COUNT retain their grammar.
 Literal Boolean client defaults retain native INSERT omission/None behavior.
 UPDATE with None retains native nullability errors and rollback. Custom converters refuse admission.
 An explicit [SQLModel bridge](#optional-sqlmodel-bridge) admits one exact pinned
@@ -61,6 +66,8 @@ Rollback/removal transforms current data through decrypt-back until explicit fin
 | Text storage/read/write, entity/scalar projection, SQL NULL | SUPPORTED | Randomized authenticated payload. Preserve exact str, empty text, NULL, native ORM state, and expected row/tenant context |
 | COUNT of a directly protected column | SUPPORTED | Bounded local implementation of native non-NULL counts, optional output labels, aliases, public grouping and public FILTER predicates. Non-distinct windows admit public partitions/order and native bounds. Custom dispatch and protected argument/filter/partition/order expressions refuse |
 | Boolean storage/read/write, entity/table/scalar projection, SQL NULL | SUPPORTED | Typed authenticated one-byte values, native Boolean input processing and literal client defaults. No Boolean equality term. [Bounded evidence](status.md#boolean-storage-checkpoint-2026-10-23) |
+| Date storage/read/write and SQL NULL | SUPPORTED | Exact Python date values in years 1 through 9999; typed four-byte ordinal and lock/v8. Storage-only, native sync/async values and latest-value removal. Non-finite/BC/out-of-range source dates refuse before migration effects |
+| Signed integer storage/read/write and SQL NULL | SUPPORTED | Exact int2/int4/int8 mappings and width-bound Python ints, literal client defaults, native failure/transaction behavior and typed fixed-width CF1. Storage-only; the fixed authentication overhead is published in the local cost profile |
 | Mapped dictionary INSERT without RETURNING | SUPPORTED | Attached sync/async `Session.execute(insert(Model), list[dict])`, explicit typed IDs and tenant scope, copied attribute dictionaries, native NULL/grouping, autoflush, uniqueness and transaction behavior. Other bulk routes remain unadmitted |
 | Mapped dictionary INSERT with one protected scalar RETURNING | SUPPORTED | Exactly one direct protected mapped column. Preserve native Row/scalar keys/types, grouping, paging, parameter-order requests and empty identity map. Authenticate against exact prepared input. Tuple/entity, label/expression/alias, loader-option and caller return_defaults forms remain unadmitted |
 | Scoped mapped dictionary UPDATE | SUPPORTED | Attached sync/async TEXT, VARCHAR and Boolean targets, explicit tenant-column equality, typed IDs, nonempty list of dictionaries and synchronize_session=False. Preserve native omission/NULL, grouping, repeated IDs, zero matches and transactions. Single-tenant, Core and RETURNING routes remain unadmitted |
@@ -78,7 +85,7 @@ Rollback/removal transforms current data through decrypt-back until explicit fin
 | General DISTINCT, DISTINCT ON, protected GROUP BY | CURRENTLY UNADMITTED | Randomized-payload comparison changes logical semantics. Count support does not admit this family |
 | Joins/FKs on protected fields | CURRENTLY UNADMITTED | No admitted shared search-domain or protected-FK contract |
 | Field-to-field equality, general Boolean NOT, other unadmitted functions/operators | CURRENTLY UNADMITTED | Approved scope does not independently admit these shapes |
-| Other non-text protected values, JSON predicates, unqualified custom protected types | CURRENTLY UNADMITTED | Text and storage-only Boolean have bounded admission. The exact pinned SQLModel AutoString exception retains native String admission |
+| Other protected types, JSON predicates, unqualified custom protected types | CURRENTLY UNADMITTED | Text and storage-only Boolean, Date and signed integers have bounded admission. The exact pinned SQLModel AutoString exception retains native String admission |
 | Opaque raw SQL/COPY protected writes and unknown external writers | UNSUPPORTED BY DESIGN | Reject guarded routes. Plan blocks protection unless the deployment excludes separate routes |
 | Research range/prefix arrays, order candidates, scoped aggregate helpers, internal binary projections | INTERNAL ONLY | Experiments and adapter machinery, not public query capabilities |
 
@@ -200,20 +207,21 @@ Protected plaintext does not reach PostgreSQL for this check.
 Other custom type decorators and dialect variants remain unadmitted for protected mappings and query binds.
 See [native VARCHAR mappings](walkthrough-migration.md#native-varchar-mappings).
 
-## Internal integer storage candidate
+## Signed integer storage
 
 Native signed int2/int4/int8 mappings have bounded storage-only source and installed checks.
 They require exact SmallInteger/Integer/BigInteger types and Python int or SQL NULL.
 Bool, custom hooks, domains, width mismatches and coercions refuse. Protected
 integer predicates, ordering, arithmetic, aggregates other than admitted direct
 COUNT, and joins remain unadmitted.
-Exact integer scalar client defaults now have internal construction evidence.
+Exact integer scalar client defaults have bounded construction evidence.
 Server, callable, SQL, on-update and generated defaults still refuse. Existing NULL-presence predicates retain their bounded grammar.
 
 Native prepared-plan selection controls when an overflow fails. Public bound
 coercion constants preserve custom/generic timing, stale-row behavior and earlier
 INSERT constraints without private numeric binds. Range failures retain typed
-IntegerRangeExceeded and SQLSTATE 22003. Full type admission remains pending;
+IntegerRangeExceeded and SQLSTATE 22003. Local storage admission retains the
+published fixed-overhead cost; production qualification remains UNKNOWN. See
 see the [installed checkpoint](status.md#integer-installed-lifecycle-checkpoint-2026-10-24).
 The newer [default/state checkpoint](status.md#integer-literal-default-installed-checkpoint-2026-10-24)
 adds native default semantics and fixes attribute expiration after valid flushes.
@@ -273,8 +281,10 @@ The [integer observation](status.md#integer-storage-cost-observation-2026-10-24)
 records three storage-only 10k fixtures. All six scalar/entity point observations
 meet 3 ms locally. Column bytes measure 22.5×/11.75×/6.375× native for int2/int4/int8.
 No equality index is admitted, so this does not evaluate the 2× indexed-column
-target. Public-ID batches do not qualify encrypted-value IN. Cost approval and
-production performance remain UNKNOWN.
+target. Public-ID batches do not qualify encrypted-value IN. The later
+[local admission decision](decisions.md#local-integer-storage-admission-2026-10-28)
+accepts these storage-only costs for the assignment. Production performance
+remains UNKNOWN.
 
 The latest SQLModel integration profile has an initial six-target latency failure
 and a passing unchanged-source follow-up. The cause remains UNKNOWN. The

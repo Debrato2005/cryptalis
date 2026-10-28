@@ -34,12 +34,13 @@ The table below records current admission, not permanent product exclusions.
 | Contract | Approved choice |
 |---|---|
 | Stack | Python 3.12+, SQLAlchemy 2.x, psycopg 3 sync and async, PostgreSQL 16 |
-| Protected type | Native text and VARCHAR, with matching standard Text or String mappings. Other protected types remain CURRENTLY UNADMITTED pending secure admission |
-| Capabilities | SUPPORTED: storage-only, equality/IN with simple negative forms, tenant-scoped uniqueness |
+| Protected type | Native text/VARCHAR and storage-only Boolean, finite Date and signed integers with standard mappings. Other protected types remain CURRENTLY UNADMITTED |
+| Capabilities | SUPPORTED: storage-only, equality/IN with simple negative forms, tenant-scoped uniqueness and bounded count reports under the [compatibility contract](../compatibility.md) |
 | Tenancy | Every protected table declares a tenant column or declares itself single-tenant. The compiler never guesses tenant ownership |
 | Primary keys | Application-generated UUID, Snowflake-style, or another app-assigned ID. Reject serial, identity, and database-default-generated keys at plan time |
 
-Comparisons/ranges, ordering, prefix/substring/fuzzy search, protected aggregates, JSON and other encrypted types remain **CURRENTLY UNADMITTED**.
+Comparisons/ranges, ordering, prefix/substring/fuzzy search, protected aggregates
+other than admitted counts, JSON and other encrypted types remain **CURRENTLY UNADMITTED**.
 They remain engineering objectives. Safe refusal does not complete them.
 The [seven baseline slices](../build-guide.md#ordered-build-slices) retain their dependency requirements.
 The [six-gate admission rule](../compatibility.md#capability-admission) and leakage opt-in control each addition.

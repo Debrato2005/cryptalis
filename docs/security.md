@@ -722,6 +722,15 @@ AES-GCM requires stronger nonce uniqueness discipline. ChaCha20-Poly1305 also re
 Extended-nonce libraries can be alternatives after portability and review. No silent algorithm fallback is allowed.
 Primary algorithm and library evidence is in [prior art](prior-art.md).
 
+**IMPLEMENTED date storage extension:** `date-ordinal-u32/v1` stores an exact
+Gregorian ordinal in four unsigned big-endian bytes under typed context/v2.
+Authenticate before decoding. Refuse invalid widths and ordinals outside
+1 through 3,652,059. Date values have no equality term and non-NULL frames have
+exactly 46 bytes. Lock/v8 requires the date reader. Earlier readers refuse
+before database/provider access. The planner rejects PostgreSQL dates outside
+the finite Python date domain before migration effects. Existing SQL NULL,
+same-context replay and hostile-database completeness limits remain unchanged.
+
 **IMPLEMENTED Boolean storage extension:** the storage-only value
 codec uses `cryptalis.context/v2` and `value_codec: boolean-u8/v1`. Its canonical
 bytes are 00 for false and 01 for true. Authentication precedes the strict
