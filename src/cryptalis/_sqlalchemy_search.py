@@ -9,7 +9,7 @@ from sqlalchemy.types import NullType, TypeDecorator
 from .crypto.cf1 import equality_term
 from .manifest.compiler import _catalog_path
 from ._sqlmodel_types import autostring_impl
-from ._sqlalchemy_aggregate import count_shape, distinct_projection
+from ._sqlalchemy_aggregate import count_shape, distinct_projection, identity_distinct
 
 
 class _SearchValue(TypeDecorator):
@@ -72,14 +72,17 @@ def equality_expression(column):
 
 
 def rewrite_search(owner, statement, operation):
-    distinct = distinct_projection(owner, statement)
-    projection = statement.selected_columns[0] if distinct is not None else None
-    wrapper = projection
-    while isinstance(wrapper, (Label, Grouping)):
-        # Labels may retain the native pre-attachment type. Keep their identity
-        # and give compilation the owned authenticated projection hook.
-        wrapper.type = distinct[1].column.type
-        wrapper = wrapper.element
+    identity = identity_distinct(owner, statement)
+    distinct = distinct_projection(owner, statement) if identity is None else None
+    outputs = tuple(statement.selected_columns) if identity is not None or distinct is not None else ()
+    private = identity if identity is not None else ((outputs[0], *distinct),) if distinct is not None else ()
+    for output, _, binding in private:
+        wrapper = output
+        while isinstance(wrapper, (Label, Grouping)):
+            # Keep result keys and use the owned authenticated projection hook.
+            wrapper.type = binding.column.type
+            wrapper = wrapper.element
+    projections = {id(output) for output in outputs}
     # SQLAlchemy merges named placeholders. Multiple definitions without an
     # explicit value have compiler-dependent default precedence, outside this
     # bounded grammar. A shared bind object and supplied values are unambiguous.
@@ -102,7 +105,7 @@ def rewrite_search(owner, statement, operation):
     def replace(node):
         # Counts have no search predicates inside their admitted arguments.
         # Keep their identity so ORM result mappings retain expression keys.
-        if node is projection or isinstance(node, count) or count_shape(owner, node, statement) is not None:
+        if id(node) in projections or isinstance(node, count) or count_shape(owner, node, statement) is not None:
             return node
         shape = search_shape(owner, node)
         if shape is None:

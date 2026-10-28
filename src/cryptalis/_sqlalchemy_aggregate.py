@@ -135,15 +135,19 @@ def distinct_projection(owner, statement):
     columns = tuple(statement.selected_columns)
     if len(columns) != 1:
         return None
+    return _projection(owner, columns[0], statement, distinct=True)
+
+
+def _projection(owner, output, statement, *, distinct):
     from .sqlalchemy import _delete_node, _Payload
-    column, wrappers = columns[0], []
+    column, wrappers = output, []
     while isinstance(column, (Label, Grouping)):
         _delete_node(column, Label if isinstance(column, Label) else Grouping)
         wrappers.append(column)
         column = column.element
     if not isinstance(column, ColumnClause) or column.is_literal:
         return None
-    argument = UnaryExpression(column, operator=operators.distinct_op)
+    argument = UnaryExpression(column, operator=operators.distinct_op) if distinct else column
     shape = count_shape(owner, count(argument), statement)
     if shape is None:
         return None
@@ -157,3 +161,37 @@ def distinct_projection(owner, statement):
     if type(payload) is _Payload and effective.type is not payload:
         return None
     return column, shape[1]
+
+
+def identity_distinct(owner, statement):
+    if (statement._distinct is not True or statement._distinct_on
+            or getattr(statement, '_pre_columns_clause', None) is not None):
+        return None
+    from .sqlalchemy import (
+        UnsupportedProtectedOperation,
+        _delete_name_state,
+        _delete_node,
+    )
+    roots, private = [], []
+    for output in statement.selected_columns:
+        column = output
+        while isinstance(column, (Label, Grouping)):
+            _delete_node(column, Label if isinstance(column, Label) else Grouping)
+            column = column.element
+        if isinstance(column, ColumnClause) and not column.is_literal:
+            roots.append(column)
+        if owner.protected(output):
+            shape = _projection(owner, output, statement, distinct=False)
+            if shape is None:
+                return None
+            private.append((output, *shape))
+    for _, column, binding in private:
+        candidates = [root for root in roots if root.table is column.table and root.shares_lineage(binding.record)]
+        if not candidates:
+            return None
+        for candidate in candidates:
+            native = _delete_node(candidate, Column if isinstance(candidate, Column) else ColumnClause,
+                                  allow_type_annotation=True)
+            if _delete_name_state(native.name) != _delete_name_state(binding.record.name):
+                raise UnsupportedProtectedOperation()
+    return tuple(private) if private else None

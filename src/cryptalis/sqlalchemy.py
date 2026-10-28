@@ -31,7 +31,7 @@ from sqlalchemy.sql.dml import Insert, Update, Delete
 from sqlalchemy.types import JSON, NullType, TypeDecorator, TypeEngine, UserDefinedType
 
 from ._sqlalchemy_guard import install_guard
-from ._sqlalchemy_aggregate import count_shape, distinct_projection
+from ._sqlalchemy_aggregate import count_shape, distinct_projection, identity_distinct
 from ._sqlmodel_types import autostring_impl
 from ._sqlalchemy_search import equality_expression, rewrite_search, search_shape, validate_search_storage
 from .crypto import CryptoFailure, AuthenticationFailed, FieldDescriptor, Keyring, KeyUnavailable, MAX_TEXT_BYTES, open_value, seal_value
@@ -790,6 +790,8 @@ class _Attachment:
                 # PostgreSQL's public compiler hook emits only DISTINCT here.
                 # Check its modifier, not arbitrary user SQL text.
                 if modifier and any(self.protected(c) for c in select.selected_columns):
+                    if identity_distinct(self, select) is not None:
+                        return modifier
                     projection = distinct_projection(self, select)
                     if projection is None:
                         raise UnsupportedProtectedOperation()
@@ -1218,10 +1220,11 @@ class _Attachment:
         nodes = self.select_types(statement)
         count_nodes, count_roots = set(), set()
         for selection in (node for node in nodes if isinstance(node, Select)):
-            if self.protected(selection):
+            protected_outputs = any(self.protected(output) for output in selection.selected_columns)
+            if protected_outputs or self.protected(selection):
                 _select_node(selection)
-            if selection._distinct and any(self.protected(output) for output in selection.selected_columns):
-                if distinct_projection(self, selection) is None:
+            if selection._distinct and protected_outputs:
+                if identity_distinct(self, selection) is None and distinct_projection(self, selection) is None:
                     raise UnsupportedProtectedOperation()
             for output in selection.selected_columns:
                 shape = count_shape(self, output, selection)
