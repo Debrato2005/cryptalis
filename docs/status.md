@@ -18,7 +18,10 @@ cross-operation cache is added. The [paired CPU profile](_reset/admission-lineag
 compares the exact target-branch method with candidate `c9a1049`, including early
 and late matches and public/mixed projections. It records local inspection
 speedups and the early-match trade-off, not end-to-end application improvement.
-Candidate PostgreSQL qualification remains pending at this checkpoint.
+The [candidate PostgreSQL run](_reset/assignment-postgres-20261028.json) passes
+2,789 test calls and 18 subtests on Ubuntu CI, with all source hashes unchanged.
+Its eight call skips, fourteen setup skips and fifteen collection skips remain
+recorded separately. This verifies that scoped run, not a production cell.
 The [local artifact check](_reset/assignment-release-20261028.json) passes repeat
 wheel/sdist builds, RECORD inspection and SBOM generation. Clean installation
 was not measured by that check.
