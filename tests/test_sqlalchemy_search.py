@@ -403,7 +403,7 @@ def test_unsupported_search_grammar_never_reaches_driver(mode):
                       select(C).join(alias, C.name.is_(None)),
                       select(C).join(alias, and_(C.id == alias.id, C.name == "x")),
                       select(C).join(alias, or_(C.id == alias.id, C.name.in_(["x"]))),
-                      select(func.count(C.name)), select(func.min(C.name)), select(C).order_by(C.name),
+                      select(func.min(C.name)), select(C).order_by(C.name),
                       select(C.name, func.count()).group_by(C.name),
                       select(C).where(func.lower(C.name) == "x"),
                       select(C).where(C.name.in_(select(alias.name))),

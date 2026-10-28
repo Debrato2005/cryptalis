@@ -30,6 +30,7 @@ from sqlalchemy.sql.dml import Insert, Update, Delete
 from sqlalchemy.types import JSON, NullType, TypeDecorator, TypeEngine, UserDefinedType
 
 from ._sqlalchemy_guard import install_guard
+from ._sqlalchemy_aggregate import count_shape
 from ._sqlmodel_types import autostring_impl
 from ._sqlalchemy_search import rewrite_search, search_shape, validate_search_storage
 from .crypto import CryptoFailure, AuthenticationFailed, FieldDescriptor, Keyring, KeyUnavailable, MAX_TEXT_BYTES, open_value, seal_value
@@ -262,7 +263,7 @@ def _unprotected_column_state(column):
             dtype, attributes, tuple(methods), column.table)
 
 
-def _delete_node(node, native):
+def _delete_node(node, native, *, allow_type_annotation=False):
     dispatch = getattr(node, '_compiler_dispatch', None)
     if type(dispatch) is not MethodType or dispatch.__self__ is not node:
         raise UnsupportedProtectedOperation()
@@ -274,7 +275,8 @@ def _delete_node(node, native):
         if any(_delete_name_state(getattr(effective, name)) != _delete_name_state(getattr(node, name))
                for name in names):
             raise UnsupportedProtectedOperation()
-        if native is Column and (effective.table is not node.table or effective.type is not node.type):
+        if native is Column and (effective.table is not node.table or
+                not allow_type_annotation and effective.type is not node.type):
             raise UnsupportedProtectedOperation()
         dispatch = node._compiler_dispatch
     if (type(node) is not native or type(dispatch) is not MethodType or dispatch.__self__ is not node or
@@ -1181,6 +1183,13 @@ class _Attachment:
         if not isinstance(statement, Select):
             raise UnsupportedProtectedOperation()
         nodes = self.select_types(statement)
+        count_nodes, count_roots = set(), set()
+        for selection in (node for node in nodes if isinstance(node, Select)):
+            for output in selection.selected_columns:
+                shape = count_shape(self, output)
+                if shape is not None:
+                    count_roots.add(id(shape[0]))
+                    count_nodes.update(id(part) for part in visitors.iterate(shape[0]))
         safe_count_stars = set()
         for node in nodes:
             operation = _operation.get()
@@ -1219,11 +1228,18 @@ class _Attachment:
                             raise UnsupportedProtectedOperation()
             # Parentheses carry no new operation. Their children still pass
             # every admission check below; do not reject native AND/OR grouping.
-            if self.protected(node) and not isinstance(node, (Select, FromClause, ColumnClause, Label, Grouping)):
+            if (id(node) not in count_nodes and self.protected(node)
+                    and not isinstance(node, (Select, FromClause, ColumnClause, Label, Grouping))):
                 boolean = isinstance(node, BooleanClauseList) and node.operator in (operators.and_, operators.or_)
                 if not boolean and search_shape(self, node) is None:
                     raise UnsupportedProtectedOperation()
             if isinstance(node, Select):
+                for output in node.selected_columns:
+                    root = output
+                    while isinstance(root, (Label, Grouping)):
+                        root = root.element
+                    if id(root) in count_nodes and id(root) not in count_roots and not isinstance(root, ColumnClause):
+                        raise UnsupportedProtectedOperation()
                 def ungroup(expression):
                     while isinstance(expression, Grouping):
                         expression = expression.element
