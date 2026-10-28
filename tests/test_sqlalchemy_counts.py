@@ -48,6 +48,8 @@ def test_nonnull_counts_match_native_with_aliases_filters_groups_and_nulls(prote
                 for statement, expected in statements:
                     check(session.scalar(statement), expected)
                 assert session.execute(combined).one() == (8, 7)
+                row = session.execute(combined).one()
+                assert tuple(row._mapping[column] for column in combined.selected_columns) == (8, 7)
                 assert session.execute(grouped).all() == [(rank, int(value is not None))
                                                          for rank, value in enumerate(values)]
                 row = session.scalars(select(model).where(_scope(app), model.rank == 1)).one()
@@ -94,6 +96,76 @@ def test_count_preflight_uses_the_same_admission_without_keys_or_attachment():
         assert report['checks']['query_samples'] == 'PASS'
         assert report['checks']['query_routes'] == 'UNKNOWN'
         assert report['query_samples']['execution'] == 'NOT_PERFORMED'
+
+
+@pytest.mark.parametrize('protected', [False, True], ids=['native', 'attached'])
+@pytest.mark.parametrize('mode', ['sync', 'async'])
+def test_single_tenant_distinct_counts_use_logical_values_including_empty_and_unicode(protected, mode):
+    with search_application(protected, single_tenant=True, attach_now=False) as app:
+        model, other = app.Customer, aliased(app.Customer)
+        values = [None, '', 'repeat', 'repeat', '雪', '雪', 'é', 'e\u0301']
+        cases = ((select(func.count(model.name.distinct())), 5),
+                 (select(func.count(other.name.distinct()).label('distinct_names')), 5),
+                 (select(func.count(model.name.distinct())).where(model.rank < 0), 0),
+                 (select(func.count(model.name.distinct())).where(model.rank == 9), 0),
+                 (select(func.count(model.name.distinct())).where(model.name == 'repeat'), 1))
+        grouped = select(model.rank, func.count(model.name.distinct())).group_by(model.rank).order_by(model.rank)
+        expected_groups = [(0, 1), (1, 1), (2, 1), (3, 2), (9, 0)]
+        observed = []
+        if mode == 'sync':
+            if protected:
+                app.sessions = attach(app.mapping, app.engine, lock=app.plan.lock_bytes, keys=app.keys)
+            with app.sessions(tenant_id=app.tenant) as session:
+                session.add_all(_row(app, value, rank // 2) for rank, value in enumerate(values))
+                session.add(_row(app, None, 9))
+                session.commit()
+                event.listen(app.engine, 'before_cursor_execute',
+                             lambda connection, cursor, statement, *args: observed.append(statement))
+                for statement, expected in cases:
+                    assert session.scalar(statement) == expected
+                metric = cases[0][0].selected_columns[0]
+                assert session.execute(cases[0][0]).one()._mapping[metric] == 5
+                assert session.execute(grouped).all() == expected_groups
+        else:
+            async def scenario():
+                engine, sessions = await _async_factory(app)
+                try:
+                    async with sessions(tenant_id=app.tenant) as session:
+                        session.add_all(_row(app, value, rank // 2) for rank, value in enumerate(values))
+                        session.add(_row(app, None, 9))
+                        await session.commit()
+                        event.listen(engine.sync_engine, 'before_cursor_execute',
+                                     lambda connection, cursor, statement, *args: observed.append(statement))
+                        for statement, expected in cases:
+                            assert await session.scalar(statement) == expected
+                        metric = cases[0][0].selected_columns[0]
+                        assert (await session.execute(cases[0][0])).one()._mapping[metric] == 5
+                        assert (await session.execute(grouped)).all() == expected_groups
+                finally:
+                    await engine.dispose()
+            asyncio.run(scenario())
+        if protected:
+            assert any('substring' in sql.lower() and 'distinct' in sql.lower() for sql in observed), observed
+
+
+def test_distinct_count_cannot_reuse_an_internal_distinct_argument_as_a_projection():
+    with search_application(single_tenant=True) as app:
+        argument = app.Customer.name.distinct()
+        counted = func.count(argument)
+        with app.sessions(tenant_id=app.tenant) as session:
+            for statement in (select(counted, argument), select(argument, counted)):
+                with pytest.raises(UnsupportedProtectedOperation):
+                    session.execute(statement)
+
+
+def test_distinct_count_still_refuses_storage_without_an_equality_representation():
+    with application(rows=2, queries=[]) as app:
+        run(app)
+        publish(app)
+        sessions = attach(app.mapping, app.runtime, lock=app.plan.lock_bytes, keys=keys,
+                          deployment=(app.plan, app.pin))
+        with sessions(tenant_id=TENANT) as session, pytest.raises(UnsupportedProtectedOperation):
+            session.scalar(select(func.count(app.Customer.name.distinct())))
 
 
 def test_custom_counts_and_unadmitted_aggregate_wrappers_refuse_before_keys_and_sql():

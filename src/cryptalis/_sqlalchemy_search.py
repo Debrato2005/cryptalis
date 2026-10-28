@@ -3,11 +3,13 @@
 from sqlalchemy import LargeBinary, String, Text, TEXT, Unicode, UnicodeText, Uuid, VARCHAR, and_, or_, bindparam, func, literal, literal_column, type_coerce
 from sqlalchemy.sql import operators, visitors
 from sqlalchemy.sql.elements import BinaryExpression, BindParameter, ColumnClause, Null
+from sqlalchemy.sql.functions import count
 from sqlalchemy.types import NullType, TypeDecorator
 
 from .crypto.cf1 import equality_term
 from .manifest.compiler import _catalog_path
 from ._sqlmodel_types import autostring_impl
+from ._sqlalchemy_aggregate import count_shape
 
 
 class _SearchValue(TypeDecorator):
@@ -63,6 +65,12 @@ def search_shape(owner, expression):
     return bindings[0], left, right, null
 
 
+def equality_expression(column):
+    """Match the frozen equality index in both custom and generic PG plans."""
+    return func.pg_catalog.substring(type_coerce(column, LargeBinary()),
+                                     literal_column("15"), literal_column("32"), type_=LargeBinary())
+
+
 def rewrite_search(owner, statement, operation):
     # SQLAlchemy merges named placeholders. Multiple definitions without an
     # explicit value have compiler-dependent default precedence, outside this
@@ -84,6 +92,10 @@ def rewrite_search(owner, statement, operation):
         raise UnsupportedProtectedOperation()
 
     def replace(node):
+        # Counts have no search predicates inside their admitted arguments.
+        # Keep their identity so ORM result mappings retain expression keys.
+        if isinstance(node, count) or count_shape(owner, node) is not None:
+            return node
         shape = search_shape(owner, node)
         if shape is None:
             return None
@@ -94,7 +106,7 @@ def rewrite_search(owner, statement, operation):
         else:
             # Fixed offsets must be SQL constants, so PostgreSQL generic plans
             # match the expression index as well as custom plans.
-            term = func.pg_catalog.substring(physical, literal_column("15"), literal_column("32"), type_=LargeBinary())
+            term = equality_expression(column)
             # A separate placeholder per occurrence preserves shared named binds
             # across fields and native expressions, which use different codecs.
             supplied = value.key in operation.parameters

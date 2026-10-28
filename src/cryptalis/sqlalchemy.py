@@ -32,7 +32,7 @@ from sqlalchemy.types import JSON, NullType, TypeDecorator, TypeEngine, UserDefi
 from ._sqlalchemy_guard import install_guard
 from ._sqlalchemy_aggregate import count_shape
 from ._sqlmodel_types import autostring_impl
-from ._sqlalchemy_search import rewrite_search, search_shape, validate_search_storage
+from ._sqlalchemy_search import equality_expression, rewrite_search, search_shape, validate_search_storage
 from .crypto import CryptoFailure, AuthenticationFailed, FieldDescriptor, Keyring, KeyUnavailable, MAX_TEXT_BYTES, open_value, seal_value
 from .crypto.cf1 import _encode
 from .crypto.keys import InvalidText, InvalidValue, RepresentationMismatch
@@ -756,6 +756,17 @@ class _Attachment:
                       UnsafeDriverEvent, self.prepare_many)
         native_compiler = engine.dialect.statement_compiler
         class StorageCompiler(native_compiler):
+            def visit_function(compiler, function, add_to_result_map=None, **kw):
+                aggregate = count_shape(self, function)
+                if aggregate is None or not aggregate[3]:
+                    return super().visit_function(function, add_to_result_map=add_to_result_map, **kw)
+                generated = func.count(equality_expression(aggregate[2]).distinct(), type_=function.type)
+                result_map = None
+                if add_to_result_map is not None:
+                    def result_map(key, name, objects, dtype):
+                        return add_to_result_map(key, name, (function, *objects), dtype)
+                return super().visit_function(generated, add_to_result_map=result_map, **kw)
+
             def get_select_precolumns(compiler, select, **kw):
                 modifier = super().get_select_precolumns(select, **kw)
                 # PostgreSQL's public compiler hook emits only DISTINCT here.
