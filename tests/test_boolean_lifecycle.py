@@ -1,9 +1,10 @@
 """Mixed text/search/Boolean lifecycle with two tables and tenant isolation."""
 from contextlib import contextmanager
+from datetime import date
 from uuid import UUID
 
 import pytest
-from sqlalchemy import Boolean, Column, MetaData, Table, Text, Uuid, select
+from sqlalchemy import Boolean, Column, Date, MetaData, Table, Text, Uuid, select
 from sqlalchemy.orm import registry, sessionmaker
 
 from cryptalis import deprotection as d, migration as m, rotation as r
@@ -16,14 +17,14 @@ from test_payload_rotation_execution import staged_frames
 
 
 @contextmanager
-def boolean_mapping(app):
+def scalar_mapping(app, dtype):
     mapping = registry(metadata=MetaData(schema=app.schema))
     customer = Table('customer', mapping.metadata,
         Column('id', Uuid, primary_key=True, autoincrement=False),
         Column('tenant_id', Uuid, nullable=False), Column('name', Text(collation='C')), Column('label', Text))
     other = Table('other_customer', mapping.metadata,
         Column('id', Uuid, primary_key=True, autoincrement=False),
-        Column('tenant_id', Uuid, nullable=False), Column('name', Text(collation='C')), Column('note', Boolean))
+        Column('tenant_id', Uuid, nullable=False), Column('name', Text(collation='C')), Column('note', dtype))
     class Customer: pass
     class OtherCustomer: pass
     mapping.map_imperatively(Customer, customer)
@@ -41,14 +42,17 @@ def note_frames(app):
 
 
 @pytest.mark.parametrize('purpose', ['rewrap', 'payload', 'search'])
-def test_boolean_mixed_rotations_interruption_tenants_and_latest_value_removal(purpose):
+@pytest.mark.parametrize('dtype', [Boolean, Date])
+def test_scalar_mixed_rotations_interruption_tenants_and_latest_value_removal(purpose, dtype):
+    dates = dtype is Date
+    entered, latest = (date(2024, 2, 29), date(2025, 3, 1)) if dates else (True, False)
     if purpose == 'rewrap':
         from rewrap_worker import target_keys
     elif purpose == 'payload':
         from payload_rotation_worker import target_keys
     else:
         from search_rotation_worker import target_keys
-    with multiple_tables(boolean_note=True) as app:
+    with multiple_tables(boolean_note=not dates, date_note=dates) as app:
         run(app); publish(app)
         source, source_pin = app.plan, app.pin
         sessions = attach(app.mapping, app.runtime, lock=app.plan.lock_bytes, keys=keys,
@@ -56,10 +60,10 @@ def test_boolean_mixed_rotations_interruption_tenants_and_latest_value_removal(p
         identity = UUID(int=101)
         with sessions(tenant_id=TENANT) as session:
             row = session.get(app.other, identity)
-            row.note = True
+            row.note = entered
             session.commit()
         expected = dict(app.notes)
-        expected[identity] = True
+        expected[identity] = entered
         before = note_frames(app)
         if purpose == 'rewrap':
             preparation = r.plan_rewrap(source, app.owner, source_pin=source_pin,
@@ -105,12 +109,12 @@ def test_boolean_mixed_rotations_interruption_tenants_and_latest_value_removal(p
                        for key, frame in before.items())
         if purpose == 'rewrap':
             with sessions(tenant_id=TENANT) as stale:
-                assert stale.get(app.other, identity).note is True  # Root bytes and generations stay unchanged.
+                assert stale.get(app.other, identity).note == entered  # Root bytes and generations stay unchanged.
         else:
             with pytest.raises(KeyUnavailable):
                 with sessions(tenant_id=TENANT) as stale:
                     stale.get(app.other, identity)
-        with boolean_mapping(app) as (mapping, Customer, Other, runtime):
+        with scalar_mapping(app, dtype) as (mapping, Customer, Other, runtime):
             current = attach(mapping, runtime, lock=activation.lock_bytes, keys=target_keys,
                              deployment=(activation, app.pin))
             for tenant in (TENANT, OTHER_TENANT):
@@ -119,14 +123,14 @@ def test_boolean_mixed_rotations_interruption_tenants_and_latest_value_removal(p
                         select(Other).where(Other.tenant_id == tenant))}
                     assert observed == {key: value for key, value in expected.items()
                                         if app.other_source[key][0] == tenant}
-                    assert all(type(value) is bool or value is None for value in observed.values())
+                    assert all(type(value) is (date if dates else bool) or value is None for value in observed.values())
                     assert session.scalar(select(Customer.id).where(
                         Customer.tenant_id == tenant, Customer.name == app.source[
                             UUID(int=102) if tenant == TENANT else UUID(int=901)][1])) is not None
             with current(tenant_id=TENANT) as session:
-                session.get(Other, identity).note = False
+                session.get(Other, identity).note = latest
                 session.commit()
-            expected[identity] = False
+            expected[identity] = latest
         reverse = d.plan(app.plan, app.owner, source_pin=app.pin, keys=target_keys,
             plaintext_runtime_role=least_privilege_role(app), backfill_rows_per_second=1000,
             verify_rows_per_second=1000, temporary_bytes_per_row=1024, wal_bytes_per_row=2048)
@@ -143,10 +147,10 @@ def test_boolean_mixed_rotations_interruption_tenants_and_latest_value_removal(p
         assert d.remove(reverse, app.owner, pin=app_pin(reverse, 'REMOVING'), approval=app.approval,
                         removal=removal, consent=pure).phase == 'REMOVED'
         assert d.check_removed(reverse, app.owner, pin=app_pin(reverse, 'REMOVED')) is None
-        with boolean_mapping(app) as (_, _, Other, runtime):
+        with scalar_mapping(app, dtype) as (_, _, Other, runtime):
             with sessionmaker(runtime)() as session:
                 assert {row.id: row.note for row in session.scalars(select(Other))} == expected
         with app.owner.connect() as connection:
             assert connection.exec_driver_sql('SELECT data_type FROM information_schema.columns '
                 'WHERE table_schema=%s AND table_name=%s AND column_name=%s',
-                (app.schema, 'other_customer', 'note')).scalar_one() == 'boolean'
+                (app.schema, 'other_customer', 'note')).scalar_one() == ('date' if dates else 'boolean')
