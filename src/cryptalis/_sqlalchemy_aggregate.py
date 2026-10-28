@@ -1,7 +1,12 @@
 """Finite native count projections over directly protected columns."""
+from types import MethodType
+
 from sqlalchemy import Column, Integer
 from sqlalchemy.sql import operators
 from sqlalchemy.sql.elements import (
+    BinaryExpression,
+    BindParameter,
+    BooleanClauseList,
     ClauseList,
     ColumnClause,
     Grouping,
@@ -9,10 +14,55 @@ from sqlalchemy.sql.elements import (
     UnaryExpression,
 )
 from sqlalchemy.sql.functions import count
-from sqlalchemy.sql.selectable import Alias
+from sqlalchemy.sql.selectable import Alias, Select
 
 
-def count_shape(owner, expression):
+def _one_tenant(selection, column, tenant):
+    if tenant is None:
+        return True
+    if not isinstance(selection, Select):
+        return False
+    from .sqlalchemy import (
+        UnsupportedProtectedOperation,
+        _delete_name_state,
+        _delete_node,
+    )
+    dispatch = selection._compiler_dispatch
+    if (type(dispatch) is not MethodType or dispatch.__self__ is not selection
+            or dispatch.__func__ is not Select._original_compiler_dispatch):
+        raise UnsupportedProtectedOperation()
+
+    def scope_column(node):
+        if (not isinstance(node, ColumnClause) or node.is_literal
+                or node.table is not column.table or not node.shares_lineage(tenant)):
+            return False
+        _delete_node(node, Column if isinstance(node, Column) else ColumnClause,
+                     allow_type_annotation=True)
+        if _delete_name_state(node.name) != _delete_name_state(tenant.name):
+            raise UnsupportedProtectedOperation()
+        return True
+
+    if any(scope_column(node) for node in selection._group_by_clauses):
+        return True
+    predicates = list(selection._where_criteria)
+    while predicates:
+        node = predicates.pop()
+        if isinstance(node, Grouping):
+            _delete_node(node, Grouping)
+            predicates.append(node.element)
+        elif isinstance(node, BooleanClauseList) and node.operator is operators.and_:
+            _delete_node(node, BooleanClauseList)
+            predicates.extend(node.clauses)
+        elif isinstance(node, BinaryExpression) and node.operator is operators.eq:
+            for left, right in ((node.left, node.right), (node.right, node.left)):
+                if isinstance(right, BindParameter) and not right.expanding and scope_column(left):
+                    _delete_node(node, BinaryExpression)
+                    _delete_node(right, BindParameter)
+                    return True
+    return False
+
+
+def count_shape(owner, expression, selection=None):
     wrappers = []
     while isinstance(expression, (Label, Grouping)):
         wrappers.append((expression, Label if isinstance(expression, Label) else Grouping))
@@ -34,7 +84,8 @@ def count_shape(owner, expression):
     bindings = [binding for binding in owner.bindings if column.shares_lineage(binding.column)]
     if len(bindings) != 1:
         return None
-    if distinct and (not bindings[0].descriptor.equality or bindings[0].tenant is not None):
+    if distinct and (not bindings[0].descriptor.equality
+                     or not _one_tenant(selection, column, bindings[0].tenant)):
         return None
     from .sqlalchemy import (
         UnsupportedProtectedOperation,

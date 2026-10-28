@@ -4,11 +4,17 @@ import json
 from types import MethodType
 
 import pytest
-from sqlalchemy import Boolean, Text, event, func, inspect, select
+from sqlalchemy import Boolean, Text, Uuid, bindparam, event, func, inspect, or_, select
 from sqlalchemy.orm import aliased
 from sqlalchemy.sql.functions import count
 from test_migration import TENANT, application, keys, publish, run
-from test_sqlalchemy_search import _async_factory, _row, _scope, search_application
+from test_sqlalchemy_search import (
+    OTHER,
+    _async_factory,
+    _row,
+    _scope,
+    search_application,
+)
 
 from cryptalis.doctor import preflight
 from cryptalis.sqlalchemy import UnsupportedProtectedOperation, attach
@@ -186,6 +192,90 @@ def test_distinct_count_rejects_alias_column_renaming_before_keys_or_sql():
             with pytest.raises(UnsupportedProtectedOperation):
                 session.scalar(statement)
         assert called == [] and observed == []
+
+
+@pytest.mark.parametrize('protected', [False, True], ids=['native', 'attached'])
+@pytest.mark.parametrize('mode', ['sync', 'async'])
+def test_distinct_counts_require_one_tenant_or_group_by_the_exact_tenant_column(protected, mode):
+    with search_application(protected, attach_now=False) as app:
+        model, other = app.Customer, aliased(app.Customer)
+        scoped = select(func.count(model.name.distinct())).where(
+            model.tenant_id == bindparam('scope', type_=Uuid()))
+        reversed_scope = select(func.count(other.name.distinct())).where(
+            bindparam('scope', type_=Uuid()) == other.tenant_id)
+        grouped = select(model.tenant_id, func.count(model.name.distinct())).group_by(
+            model.tenant_id).order_by(model.tenant_id)
+        labeled = select(func.count(other.name.distinct()).label('different')).where(
+            ((other.tenant_id == bindparam('scope', type_=Uuid())) & (other.rank >= 0)).self_group())
+        values = [(app.tenant, None), (app.tenant, 'shared'), (app.tenant, 'shared'),
+                  (app.tenant, 'only first tenant'), (OTHER, 'shared'), (OTHER, 'only other tenant'),
+                  (OTHER, 'only other tenant')]
+        expected_groups = sorted([(app.tenant, 2), (OTHER, 2)])
+        if mode == 'sync':
+            if protected:
+                app.sessions = attach(app.mapping, app.engine, lock=app.plan.lock_bytes, keys=app.keys)
+            for tenant in (app.tenant, OTHER):
+                with app.sessions(tenant_id=tenant) as session:
+                    session.add_all(_row(app, value, index, scope) for index, (scope, value) in enumerate(values)
+                                    if scope == tenant)
+                    session.commit()
+            with app.sessions(tenant_id=app.tenant) as session:
+                for tenant in (app.tenant, OTHER):
+                    assert session.scalar(scoped, {'scope': tenant}) == 2
+                    assert session.scalar(reversed_scope, {'scope': tenant}) == 2
+                    assert session.execute(labeled, {'scope': tenant}).one().different == 2
+                assert session.execute(grouped).all() == expected_groups
+                metric = scoped.selected_columns[0]
+                assert session.execute(scoped, {'scope': app.tenant}).one()._mapping[metric] == 2
+        else:
+            async def scenario():
+                engine, sessions = await _async_factory(app)
+                try:
+                    for tenant in (app.tenant, OTHER):
+                        async with sessions(tenant_id=tenant) as session:
+                            session.add_all(_row(app, value, index, scope)
+                                            for index, (scope, value) in enumerate(values) if scope == tenant)
+                            await session.commit()
+                    async with sessions(tenant_id=app.tenant) as session:
+                        for tenant in (app.tenant, OTHER):
+                            assert await session.scalar(scoped, {'scope': tenant}) == 2
+                            assert await session.scalar(reversed_scope, {'scope': tenant}) == 2
+                            assert (await session.execute(labeled, {'scope': tenant})).one().different == 2
+                        assert (await session.execute(grouped)).all() == expected_groups
+                finally:
+                    await engine.dispose()
+            asyncio.run(scenario())
+
+
+def test_distinct_count_rejects_global_or_forged_tenant_scope_before_statement_keys():
+    with search_application(attach_now=False) as app:
+        model, other = app.Customer, aliased(app.Customer)
+        spoofed = model.tenant_id == app.tenant
+        spoofed._compiler_dispatch = MethodType(lambda self, visitor, **kw: 'TRUE', spoofed)
+        statements = (
+            select(func.count(model.name.distinct())),
+            select(func.count(model.name.distinct())).where(or_(model.tenant_id == app.tenant,
+                                                                model.tenant_id == OTHER)),
+            select(func.count(model.name.distinct())).join(other, model.rank == other.rank).where(
+                other.tenant_id == app.tenant),
+            select(func.count(model.name.distinct())).join(other, model.rank == other.rank).group_by(
+                other.tenant_id),
+            select(func.count(model.name.distinct())).where(spoofed),
+        )
+        called, observed = [], []
+
+        def resolve(tenant):
+            called.append(tenant)
+            return app.keys(tenant)
+
+        sessions = attach(app.mapping, app.engine, lock=app.plan.lock_bytes, keys=resolve)
+        event.listen(app.engine, 'before_cursor_execute', lambda *args: observed.append(True))
+        with sessions(tenant_id=app.tenant) as session:
+            called.clear()
+            for statement in statements:
+                with pytest.raises(UnsupportedProtectedOperation):
+                    session.scalar(statement)
+                assert called == [] and observed == []
 
 
 def test_custom_counts_and_unadmitted_aggregate_wrappers_refuse_before_keys_and_sql():

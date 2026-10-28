@@ -94,7 +94,7 @@ def rewrite_search(owner, statement, operation):
     def replace(node):
         # Counts have no search predicates inside their admitted arguments.
         # Keep their identity so ORM result mappings retain expression keys.
-        if isinstance(node, count) or count_shape(owner, node) is not None:
+        if isinstance(node, count) or count_shape(owner, node, statement) is not None:
             return node
         shape = search_shape(owner, node)
         if shape is None:

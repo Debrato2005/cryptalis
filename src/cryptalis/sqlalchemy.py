@@ -24,7 +24,7 @@ from sqlalchemy.sql import operators, visitors
 from sqlalchemy.sql.annotation import Annotated, annotated_classes
 from sqlalchemy.sql import sqltypes as _native_types
 from sqlalchemy.sql.elements import BinaryExpression, BindParameter, BooleanClauseList, Cast, ClauseElement, ColumnClause, Grouping, Label, SavepointClause, RollbackToSavepointClause, ReleaseSavepointClause, TextClause, TypeCoerce, UnaryExpression, quoted_name, _anonymous_label, _truncated_label
-from sqlalchemy.sql.functions import FunctionElement
+from sqlalchemy.sql.functions import FunctionElement, count
 from sqlalchemy.sql.selectable import Alias, CTE, FromClause, Select, Join, Subquery
 from sqlalchemy.sql.dml import Insert, Update, Delete
 from sqlalchemy.types import JSON, NullType, TypeDecorator, TypeEngine, UserDefinedType
@@ -757,7 +757,9 @@ class _Attachment:
         native_compiler = engine.dialect.statement_compiler
         class StorageCompiler(native_compiler):
             def visit_function(compiler, function, add_to_result_map=None, **kw):
-                aggregate = count_shape(self, function)
+                aggregate = count_shape(self, function, compiler.current_executable)
+                if aggregate is None and isinstance(function, count) and self.protected(function):
+                    raise UnsupportedProtectedOperation()
                 if aggregate is None or not aggregate[3]:
                     return super().visit_function(function, add_to_result_map=add_to_result_map, **kw)
                 generated = func.count(equality_expression(aggregate[2]).distinct(), type_=function.type)
@@ -1197,7 +1199,7 @@ class _Attachment:
         count_nodes, count_roots = set(), set()
         for selection in (node for node in nodes if isinstance(node, Select)):
             for output in selection.selected_columns:
-                shape = count_shape(self, output)
+                shape = count_shape(self, output, selection)
                 if shape is not None:
                     count_roots.add(id(shape[0]))
                     count_nodes.update(id(part) for part in visitors.iterate(shape[0]))
