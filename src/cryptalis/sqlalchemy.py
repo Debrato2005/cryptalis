@@ -533,7 +533,8 @@ class _Attachment:
     def protected(self, expression):
         # ORM annotations can retain a native type from mapping construction.
         # Stable column lineage is authoritative, not a mutable type hint.
-        return any(isinstance(node, ColumnClause) and any(node.shares_lineage(b.column) for b in self.bindings)
+        lineage = {column for binding in self.bindings for column in binding.column.proxy_set}
+        return any(isinstance(node, ColumnClause) and lineage.intersection(node.proxy_set)
                    for node in visitors.iterate(expression))
 
     def _admit_textual_references(self, statement):
