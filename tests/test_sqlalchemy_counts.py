@@ -4,7 +4,7 @@ import json
 from types import MethodType
 
 import pytest
-from sqlalchemy import Boolean, Text, event, func, select
+from sqlalchemy import Boolean, Text, event, func, inspect, select
 from sqlalchemy.orm import aliased
 from sqlalchemy.sql.functions import count
 from test_migration import TENANT, application, keys, publish, run
@@ -166,6 +166,26 @@ def test_distinct_count_still_refuses_storage_without_an_equality_representation
                           deployment=(app.plan, app.pin))
         with sessions(tenant_id=TENANT) as session, pytest.raises(UnsupportedProtectedOperation):
             session.scalar(select(func.count(app.Customer.name.distinct())))
+
+
+def test_distinct_count_rejects_alias_column_renaming_before_keys_or_sql():
+    with search_application(single_tenant=True, attach_now=False) as app:
+        changed = aliased(app.Customer)
+        inspect(changed).selectable.c.name.name = 'label'
+        statement = select(func.count(changed.name.distinct()))
+        called, observed = [], []
+
+        def resolve(tenant):
+            called.append(tenant)
+            return app.keys(tenant)
+
+        sessions = attach(app.mapping, app.engine, lock=app.plan.lock_bytes, keys=resolve)
+        event.listen(app.engine, 'before_cursor_execute', lambda *args: observed.append(True))
+        with sessions(tenant_id=app.tenant) as session:
+            called.clear()
+            with pytest.raises(UnsupportedProtectedOperation):
+                session.scalar(statement)
+        assert called == [] and observed == []
 
 
 def test_custom_counts_and_unadmitted_aggregate_wrappers_refuse_before_keys_and_sql():

@@ -9,6 +9,7 @@ from sqlalchemy.sql.elements import (
     UnaryExpression,
 )
 from sqlalchemy.sql.functions import count
+from sqlalchemy.sql.selectable import Alias
 
 
 def count_shape(owner, expression):
@@ -35,7 +36,18 @@ def count_shape(owner, expression):
         return None
     if distinct and (not bindings[0].descriptor.equality or bindings[0].tenant is not None):
         return None
-    from .sqlalchemy import UnsupportedProtectedOperation, _delete_node
+    from .sqlalchemy import (
+        UnsupportedProtectedOperation,
+        _delete_name_state,
+        _delete_node,
+    )
+    source = column.table
+    while isinstance(source, Alias):
+        _delete_node(source, Alias)
+        source = source.element
+    if (source is not bindings[0].column.table
+            or _delete_name_state(column.name) != _delete_name_state(bindings[0].column.name)):
+        raise UnsupportedProtectedOperation()
     for node, native in (*wrappers, (expression, count), (expression.clause_expr, Grouping),
                          (expression.clause_expr.element, ClauseList)):
         _delete_node(node, native)
