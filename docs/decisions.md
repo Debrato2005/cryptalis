@@ -38,6 +38,20 @@ fields. All eight scalar/entity point observations, including Date, meet the
 3 ms added-p95 target in this local run. Retain raw samples and observed tails;
 these observations do not establish a concurrent or production budget.
 
+## Direct protected DISTINCT projection: 2026-10-28
+
+Admit DISTINCT of one directly selected equality-enabled protected field within
+one provable tenant scope. Native output labels and table aliases remain valid.
+Use PostgreSQL DISTINCT ON the existing full-width term, then authenticate the
+chosen row's existing payload/context carrier before returning its value.
+SQL NULL remains one distinct logical value. No additional stored term is needed.
+
+Keep DISTINCT ON supplied by callers, multiple output columns, grouping/HAVING,
+ordering, LIMIT/OFFSET/FETCH and row locks unadmitted in this addition. Unordered
+DISTINCT promises the same logical value set; it does not promise PostgreSQL's
+incidental output order. Reject storage-only fields and global cross-tenant
+deduplication. Preserve the existing public DISTINCT contract separately.
+
 ## Bounded protected counts: 2026-10-28
 
 For the local assignment candidate, implement `COUNT(protected_column)` as a
