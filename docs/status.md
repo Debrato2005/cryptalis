@@ -10,6 +10,35 @@ No PostgreSQL/provider/runtime cell, production key provider, independent review
 VERIFIED below refers only to the named checks and their exact revisions.
 All other contract and promotion requirements are SPECIFIED. All seven full gates remain UNKNOWN.
 
+## Expanded installed-package checkpoint: 2026-10-28
+
+**VERIFIED, installed wheel:** the [174-check selection](_reset/expanded-installed-20261028.json)
+passes Date/UUID codecs and storage, mixed rotations, both DISTINCT routes,
+counts, tuple/entity INSERT results, result tamper refusal, scalar/parallel online
+capture and Doctor preflight. The configured pre-Date and pre-UUID readers refuse
+their new formats. All three role probes pass and all source hashes stay unchanged.
+
+The [release receipt](_reset/expanded-release-20261028.json) records identical
+repeat wheel/sdist hashes, verified metadata/RECORD, a CycloneDX SBOM, 43 modules,
+47 checked installed files and import/CLI checks in a clean environment.
+The frozen 20-package audit reports no known vulnerabilities. The separate
+[installed audit](_reset/expanded-installed-audit-20261028.json) clears eighteen
+third-party distributions; unpublished Cryptalis has no advisory-service entry
+and is explicitly skipped. Neither audit is an independent code review.
+
+Current-wheel fresh recovery passes for [Boolean](_reset/fresh-cluster-restore-20261028-7.json),
+[UUID with public slots](_reset/fresh-cluster-restore-20261028-8.json) and
+[Date](_reset/fresh-cluster-restore-20261028-9.json), with corresponding exports
+[Boolean](_reset/fresh-cluster-export-20261028-7.json),
+[UUID](_reset/fresh-cluster-export-20261028-8.json) and
+[Date](_reset/fresh-cluster-export-20261028-9.json).
+They authenticate actual source backups, adopt a distinct cluster, decrypt current
+values and restart native reads in a process that denies Cryptalis imports.
+Two initial concurrent exports passed their tests but collided while creating a
+receipt; their incomplete journeys are not claimed as recovery passes. The UUID
+and Date profiles then passed sequentially in new work directories. No role probe failed.
+Full production qualification remains UNKNOWN.
+
 ## Parallel crypto and adaptive online batches: 2026-10-28
 
 **VERIFIED, local PostgreSQL 16.15:** the [31-check affected run](_reset/online-workers-20261028.json)
