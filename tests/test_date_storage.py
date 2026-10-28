@@ -7,7 +7,7 @@ from uuid import UUID
 
 import psycopg
 import pytest
-from sqlalchemy import Date, func, select
+from sqlalchemy import Date, Uuid, func, select
 from sqlalchemy.ext.asyncio import create_async_engine
 from test_deprotection import app_pin, consent, d, proposal, reverse
 from test_migration import TENANT, application, frames, keys, publish, run
@@ -18,18 +18,23 @@ from cryptalis.sqlalchemy import attach
 
 @pytest.mark.parametrize('public_slots', [False, True])
 @pytest.mark.parametrize('mode', ['sync', 'async'])
-def test_date_protection_sync_async_current_edit_count_and_native_removal(public_slots, mode):
-    values = (date.min, date(1970, 1, 1), date(2000, 2, 29), date.max, None)
-    with application(rows=5, value_type=Date(), queries=[], protected_values=values) as app:
+@pytest.mark.parametrize('dtype,values,edited,schema,width', [
+    (Date(), (date.min, date(1970, 1, 1), date(2000, 2, 29), date.max, None),
+     date(2025, 3, 1), 'cryptalis.lock/v8', 46),
+    (Uuid(), (UUID(int=0), UUID(int=1), UUID(bytes=bytes(range(16))), UUID(int=(1 << 128) - 1), None),
+     UUID(int=2025), 'cryptalis.lock/v9', 58),
+])
+def test_scalar_protection_sync_async_current_edit_count_and_native_removal(public_slots, mode, dtype, values, edited, schema, width):
+    with application(rows=5, value_type=dtype, queries=[], protected_values=values) as app:
         if public_slots:
             from test_public_slots import select_layout, slots
             original_slots = slots(app)
             select_layout(app)
-        assert app.plan.document['lock']['schema'] == 'cryptalis.lock/v8'
-        assert 'date-ordinal-u32/v1' in app.plan.document['lock']['required_readers']
+        assert app.plan.document['lock']['schema'] == schema
+        assert ('uuid-bytes16/v1' if isinstance(dtype, Uuid) else 'date-ordinal-u32/v1') in app.plan.document['lock']['required_readers']
         assert run(app, until='EXPANDED').phase == 'EXPANDED'
         assert run(app, until='BACKFILLED').phase == 'BACKFILLED'
-        assert all(value is None or len(value) == 46 for value in frames(app).values())
+        assert all(value is None or len(value) == width for value in frames(app).values())
         assert run(app).phase == 'PENDING'
         publish(app)
         if mode == 'sync':
@@ -39,7 +44,7 @@ def test_date_protection_sync_async_current_edit_count_and_native_removal(public
                 assert session.scalars(select(app.Customer.name).order_by(app.Customer.id)).all() == list(values)
                 assert session.scalar(select(func.count(app.Customer.name))) == 4
                 row = session.get(app.Customer, UUID(int=101))
-                row.name = date(2025, 3, 1)
+                row.name = edited
                 session.commit()
         async def check():
             engine = create_async_engine('postgresql+psycopg://', hide_parameters=True,
@@ -51,15 +56,15 @@ def test_date_protection_sync_async_current_edit_count_and_native_removal(public
                     assert (await session.scalars(select(app.Customer.name).order_by(app.Customer.id))).all() == list(values)
                     assert await session.scalar(select(func.count(app.Customer.name))) == 4
                     row = await session.get(app.Customer, UUID(int=101))
-                    assert row.name == date(1970, 1, 1) and type(row.name) is date
-                    row.name = date(2025, 3, 1)
+                    assert row.name == values[1] and type(row.name) is type(values[1])
+                    row.name = edited
                     await session.commit()
             finally:
                 await engine.dispose()
         if mode == 'async':
             asyncio.run(check())
         expected = dict(app.source)
-        expected[UUID(int=101)] = TENANT, date(2025, 3, 1)
+        expected[UUID(int=101)] = TENANT, edited
         plan = proposal(app)
         reverse(app, plan)
         reverse(app, plan, until='PLAINTEXT_ACTIVE', phase='PLAINTEXT_ACTIVATING')

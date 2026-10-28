@@ -151,6 +151,10 @@ class _Binding:
 
 
 def _assignment(value, binding):
+    if binding.descriptor.value_codec == 'uuid-bytes16/v1':
+        if value is not None and type(value) is not UUID:
+            raise InvalidValue()
+        return value
     if binding.descriptor.value_codec == 'date-ordinal-u32/v1':
         if value is not None and type(value) is not date:
             raise InvalidValue()
@@ -743,7 +747,7 @@ class _Attachment:
                 binding = _Binding(column, mapper.get_property_by_column(column).key, descriptor,
                                    record, mapper.get_property_by_column(record).key, tenant,
                                    mapper.get_property_by_column(tenant).key if tenant is not None else None,
-                                   mapper.class_, None if boolean or source['type'] in ('int2', 'int4', 'int8', 'date') else _native_text_length(source),
+                                   mapper.class_, _native_text_length(source) if source['type'] in ('text', 'varchar') else None,
                                    column.type.bind_processor(connection.dialect) if boolean else None,
                                    _compiled_default(field))
                 self.bindings.append(binding)

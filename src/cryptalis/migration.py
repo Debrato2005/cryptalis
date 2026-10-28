@@ -415,7 +415,7 @@ def _observed_source_metadata(c, p, model, *, sequences=None):
 
 
 def _preserves_public_slot_lock(lock):
-    return lock['schema'] in ('cryptalis.lock/v6', 'cryptalis.lock/v7', 'cryptalis.lock/v8') and lock.get('layout') == 'preserve-public-slots/v1'
+    return lock['schema'] in ('cryptalis.lock/v6', 'cryptalis.lock/v7', 'cryptalis.lock/v8', 'cryptalis.lock/v9') and lock.get('layout') == 'preserve-public-slots/v1'
 
 
 def _preserves_public_slots(p):
@@ -484,7 +484,7 @@ def _convert_public_columns(c, p, model, *, plaintext=False):
             from cryptalis.deprotection import _staging
             shadow = _staging(field)
             native = next(column for column in model['source_schema']['columns'] if column['name'] == field['column'])
-            if native['type'] in ('bool', 'int2', 'int4', 'int8', 'date'):
+            if native['type'] in ('bool', 'int2', 'int4', 'int8', 'date', 'uuid'):
                 target = 'pg_catalog.' + native['type']
             else:
                 limit = _native_text_length(native)
@@ -694,6 +694,8 @@ def plan(manifest, mapping, engine, *, writers, search_reviews=(), keys, runtime
                       if f['source']['type'] in ('int2', 'int4', 'int8') else
                       f'CASE WHEN {_quote(c, f["column"])} IS NULL THEN 0 ELSE 4 END'
                       if f['source']['type'] == 'date' else
+                      f'CASE WHEN {_quote(c, f["column"])} IS NULL THEN 0 ELSE 16 END'
+                      if f['source']['type'] == 'uuid' else
                       f'coalesce(octet_length({_quote(c, f["column"])}),0)') for f in model['fields']]
             size=c.exec_driver_sql(f'SELECT coalesce(sum('+ '+'.join(sizes)+f'),0) FROM {_table(c,model)}').scalar_one()
             scopes.append({'table_id':model['table_id'],'estimated_rows':count})
@@ -1005,7 +1007,7 @@ def _frame_check(c,f):
     col=_quote(c,f['payload_column']); eq=bool(f['queries']); overhead=74 if eq else 42
     magic='434631000101' if eq else '434631000100'
     op='<>' if eq else '='
-    width = {'bool': 1, 'int2': 2, 'int4': 4, 'int8': 8, 'date': 4}.get(f['source']['type'])
+    width = {'bool': 1, 'int2': 2, 'int4': 4, 'int8': 8, 'date': 4, 'uuid': 16}.get(f['source']['type'])
     minimum, maximum = (42 + width, 42 + width) if width is not None else (overhead, 16777216+overhead)
     return f"{col} IS NULL OR (pg_catalog.octet_length({col}) BETWEEN {minimum} AND {maximum} AND pg_catalog.substring({col},1,6)=pg_catalog.decode('{magic}','hex') AND pg_catalog.substring({col},7,4)<>pg_catalog.decode('00000000','hex') AND pg_catalog.substring({col},11,4){op}pg_catalog.decode('00000000','hex'))"
 
