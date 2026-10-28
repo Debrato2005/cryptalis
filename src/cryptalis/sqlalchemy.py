@@ -31,7 +31,7 @@ from sqlalchemy.sql.dml import Insert, Update, Delete
 from sqlalchemy.types import JSON, NullType, TypeDecorator, TypeEngine, UserDefinedType
 
 from ._sqlalchemy_guard import install_guard
-from ._sqlalchemy_aggregate import count_shape
+from ._sqlalchemy_aggregate import count_shape, distinct_projection
 from ._sqlmodel_types import autostring_impl
 from ._sqlalchemy_search import equality_expression, rewrite_search, search_shape, validate_search_storage
 from .crypto import CryptoFailure, AuthenticationFailed, FieldDescriptor, Keyring, KeyUnavailable, MAX_TEXT_BYTES, open_value, seal_value
@@ -790,7 +790,11 @@ class _Attachment:
                 # PostgreSQL's public compiler hook emits only DISTINCT here.
                 # Check its modifier, not arbitrary user SQL text.
                 if modifier and any(self.protected(c) for c in select.selected_columns):
-                    raise UnsupportedProtectedOperation()
+                    projection = distinct_projection(self, select)
+                    if projection is None:
+                        raise UnsupportedProtectedOperation()
+                    column = projection[0]
+                    return 'DISTINCT ON (' + compiler.process(equality_expression(column), **kw) + ') '
                 return modifier
         engine.dialect.statement_compiler = StorageCompiler
 
@@ -1216,6 +1220,9 @@ class _Attachment:
         for selection in (node for node in nodes if isinstance(node, Select)):
             if self.protected(selection):
                 _select_node(selection)
+            if selection._distinct and any(self.protected(output) for output in selection.selected_columns):
+                if distinct_projection(self, selection) is None:
+                    raise UnsupportedProtectedOperation()
             for output in selection.selected_columns:
                 shape = count_shape(self, output, selection)
                 if shape is not None:

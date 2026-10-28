@@ -123,3 +123,37 @@ def count_shape(owner, expression, selection=None):
             or expression.clause_expr.element.operator is not operators.comma_op):
         raise UnsupportedProtectedOperation()
     return root, bindings[0], column, distinct
+
+
+def distinct_projection(owner, statement):
+    if (statement._distinct is not True or statement._distinct_on
+            or getattr(statement, '_pre_columns_clause', None) is not None
+            or statement._order_by_clauses or statement._group_by_clauses or statement._having_criteria
+            or any(part is not None for part in (statement._limit_clause, statement._offset_clause,
+                                                statement._fetch_clause, statement._for_update_arg))):
+        return None
+    columns = tuple(statement.selected_columns)
+    if len(columns) != 1:
+        return None
+    from .sqlalchemy import _delete_node, _Payload
+    column, wrappers = columns[0], []
+    while isinstance(column, (Label, Grouping)):
+        _delete_node(column, Label if isinstance(column, Label) else Grouping)
+        wrappers.append(column)
+        column = column.element
+    if not isinstance(column, ColumnClause) or column.is_literal:
+        return None
+    argument = UnaryExpression(column, operator=operators.distinct_op)
+    shape = count_shape(owner, count(argument), statement)
+    if shape is None:
+        return None
+    payload = shape[1].column.type
+    if any(node.type is not column.type and node.type is not payload for node in wrappers):
+        return None
+    if type(column.type) is _Payload and column.type is not payload:
+        return None
+    effective = _delete_node(column, Column if isinstance(column, Column) else ColumnClause,
+                             allow_type_annotation=True)
+    if type(payload) is _Payload and effective.type is not payload:
+        return None
+    return column, shape[1]

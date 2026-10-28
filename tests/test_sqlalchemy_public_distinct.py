@@ -23,7 +23,7 @@ def test_public_distinct_with_protected_filters_aliases_and_pagination(protected
                           (filtered.distinct().order_by(model.rank).offset(1).limit(1), [2]),
                           (filtered.ext(distinct_on(model.rank)).order_by(model.rank), [1, 2]),
                           (select(model.rank).where(_scope(app, model), model.name.is_(None)).distinct(), [4])))
-            refused.extend((select(model.name).where(_scope(app, model)).distinct(),
+            refused.extend((select(model.name, model.rank).where(_scope(app, model)).distinct(),
                             filtered.ext(distinct_on(model.name))))
 
         if mode == 'sync':

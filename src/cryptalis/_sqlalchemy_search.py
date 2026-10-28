@@ -2,14 +2,14 @@
 
 from sqlalchemy import LargeBinary, String, Text, TEXT, Unicode, UnicodeText, Uuid, VARCHAR, and_, or_, bindparam, func, literal, literal_column, type_coerce
 from sqlalchemy.sql import operators, visitors
-from sqlalchemy.sql.elements import BinaryExpression, BindParameter, ColumnClause, Null
+from sqlalchemy.sql.elements import BinaryExpression, BindParameter, ColumnClause, Grouping, Label, Null
 from sqlalchemy.sql.functions import count
 from sqlalchemy.types import NullType, TypeDecorator
 
 from .crypto.cf1 import equality_term
 from .manifest.compiler import _catalog_path
 from ._sqlmodel_types import autostring_impl
-from ._sqlalchemy_aggregate import count_shape
+from ._sqlalchemy_aggregate import count_shape, distinct_projection
 
 
 class _SearchValue(TypeDecorator):
@@ -72,6 +72,14 @@ def equality_expression(column):
 
 
 def rewrite_search(owner, statement, operation):
+    distinct = distinct_projection(owner, statement)
+    projection = statement.selected_columns[0] if distinct is not None else None
+    wrapper = projection
+    while isinstance(wrapper, (Label, Grouping)):
+        # Labels may retain the native pre-attachment type. Keep their identity
+        # and give compilation the owned authenticated projection hook.
+        wrapper.type = distinct[1].column.type
+        wrapper = wrapper.element
     # SQLAlchemy merges named placeholders. Multiple definitions without an
     # explicit value have compiler-dependent default precedence, outside this
     # bounded grammar. A shared bind object and supplied values are unambiguous.
@@ -94,7 +102,7 @@ def rewrite_search(owner, statement, operation):
     def replace(node):
         # Counts have no search predicates inside their admitted arguments.
         # Keep their identity so ORM result mappings retain expression keys.
-        if isinstance(node, count) or count_shape(owner, node, statement) is not None:
+        if node is projection or isinstance(node, count) or count_shape(owner, node, statement) is not None:
             return node
         shape = search_shape(owner, node)
         if shape is None:
