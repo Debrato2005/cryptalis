@@ -12,6 +12,15 @@ All other contract and promotion requirements are SPECIFIED. All seven full gate
 
 ## Local assignment explanation and inspection profile: 2026-10-28
 
+**VERIFIED, full source regression:** the [current PostgreSQL receipt](_reset/reporting-postgres-20261028.json)
+passes 2,824 test calls and 18 subtests in 870.32 seconds. All Python source
+hashes remain unchanged and all three role probes pass. The 37 skips remain
+separate in the receipt: eight call skips, fourteen setup skips and fifteen
+collection skips. The 48 warnings retain the existing legacy DISTINCT ON
+deprecation. This includes the new reporting routes and the existing lifecycle,
+rotation, restore, adapter and diagnostic controls; skipped optional profiles
+retain their own evidence requirements.
+
 **VERIFIED, artifact checks:** the [reporting release receipt](_reset/count-release-20261028.json)
 records identical repeat wheel/sdist hashes, inspected RECORD/dependency metadata,
 CycloneDX SBOM, 43 product modules and 47 checked installed files. The clean
