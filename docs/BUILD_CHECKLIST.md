@@ -25,6 +25,13 @@ No objective is complete until its acceptance evidence and applicable gate pass.
 
 ## Current boundary
 
+- Finite Date storage now passes native sync/async protection, all three mixed
+  rotations, fresh-cluster recovery, retained-reader refusal and package-free
+  native exit. Current Date/int2/int4/int8 profiles publish real column overhead
+  and warm read costs; local integer storage admission accepts those costs.
+  See the [typed scalar checkpoint](status.md#finite-date-storage-and-scalar-cost-decision-2026-10-28).
+  Other scalar/structured types and their query operators remain incomplete.
+
 - Native protected non-NULL counts and equality-backed distinct counts now have
   local PostgreSQL evidence. Distinct groups require one provable tenant scope.
   Public DISTINCT with encrypted filters also retains native behavior. The

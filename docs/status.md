@@ -10,6 +10,55 @@ No PostgreSQL/provider/runtime cell, production key provider, independent review
 VERIFIED below refers only to the named checks and their exact revisions.
 All other contract and promotion requirements are SPECIFIED. All seven full gates remain UNKNOWN.
 
+## Finite date storage and scalar cost decision: 2026-10-28
+
+**VERIFIED, installed wheel:** the [92-check selection](_reset/date-installed-20261028.json)
+passes Date storage, mixed rotations, crypto and integer controls. Two retained
+pre-integer reader controls remain skipped. The [artifact receipt](_reset/date-release-20261028.json)
+records repeat-build equality, metadata/RECORD/SBOM checks and 47 verified
+installed files. The installed Date profile also passes a separate-cluster
+public-slot restore and package-free native restart.
+
+**VERIFIED, local PostgreSQL 16.15:** finite native Date values retain exact
+Python types through protection, sync/async reads and edits, counts and native
+removal. The [220-check affected run](_reset/date-source-20261028.json) includes
+independent ordinal/frame controls and source-boundary refusals. Its two skips
+require a separate retained pre-integer reader. The configured pre-date reader
+does refuse lock/v8 before SQL. Non-finite/BC/out-of-range source dates, custom
+mappings, date search and date defaults remain refused.
+
+The [36-check mixed lifecycle run](_reset/date-mixed-lifecycle-20261028.json)
+adds Date beside searchable text across two tenants and tables. Root rewrap,
+payload rotation and search rotation preserve the expected bytes, key authority,
+current values and latest-value native exit. Interrupted chunks resume.
+
+Actual source exports and fresh-cluster recovery pass for both Date layouts:
+[ordinary export](_reset/fresh-cluster-export-20261028.json),
+[ordinary recovery](_reset/fresh-cluster-restore-20261028.json),
+[public-slot export](_reset/fresh-cluster-export-20261028-2.json) and
+[public-slot recovery](_reset/fresh-cluster-restore-20261028-2.json).
+These profiles perform root and payload rotation, tamper refusal, adoption,
+current-data removal and a fresh process that denies Cryptalis imports.
+The shared harness also passes retained Boolean and int64 fresh-recovery controls.
+The recovery profiles use two newly probed roles; the ordinary source selections
+use the three-role isolated harness. No probe failed.
+
+**VERIFIED, current local costs:** four 10,000-row scalar profiles pass native
+result comparisons, actual protection/publication and removal. Each workload
+records 100 alternating measured pairs after ten warmups. All eight scalar/entity
+point observations meet 3 ms added p95. Column-only ratios are 22.5x/11.75x/6.375x
+for int2/int4/int8 and 11.75x for Date. One Date scalar sample reaches 65.41 ms;
+all raw samples remain in the [date receipt](_reset/scalar-cost-date-20261028.json).
+The [wrapper](_reset/scalar-cost-wrapper-20261028.json) binds unchanged source.
+The [local integer admission decision](decisions.md#local-integer-storage-admission-2026-10-28)
+accepts the documented storage-only overhead for the assignment. These fields
+have no equality index; the 2x indexed-column target is not evaluated.
+
+Date uses four unsigned ordinal bytes, context/v2 and lock/v8. No runtime
+dependency or earlier codec/format bytes change. This adds bounded local type
+admission; broader numeric/temporal/JSON contracts remain work. Production gates
+remain UNKNOWN and retain their separate qualification requirements.
+
 ## Local assignment explanation and inspection profile: 2026-10-28
 
 **VERIFIED, full source regression:** the [current PostgreSQL receipt](_reset/reporting-postgres-20261028.json)
