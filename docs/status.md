@@ -10,6 +10,23 @@ No PostgreSQL/provider/runtime cell, production key provider, independent review
 VERIFIED below refers only to the named checks and their exact revisions.
 All other contract and promotion requirements are SPECIFIED. All seven full gates remain UNKNOWN.
 
+## Tuple and entity INSERT RETURNING: 2026-10-28
+
+**VERIFIED, local PostgreSQL 16.15:** mapped dictionary INSERT now returns native
+direct-column tuples, the inserted mapped entity or public-only columns.
+The [129-check affected run](_reset/insert-returning-rows-20261028.json) covers
+sync/async paging, optional input ordering, heterogeneous groups, NULL, original
+column keys, identity-map loading, expiration/refresh and rollback. TEXT,
+Boolean, int4, Date and UUID values pass actual native-versus-protected migrations.
+
+Every protected output authenticates against its own exact prepared input and
+row/tenant context. Swapping either protected field's returned carrier fails.
+The existing scalar tamper, lease, future-page, savepoint and error-precedence
+controls still pass. Custom INSERT or returned-column dispatch refuses before
+keys/SQL. Aliases, labels, expressions, loader options and caller return_defaults
+remain unadmitted. There are no extra per-row reads or new dependencies.
+This is source evidence; the current installed/full-source boundary follows separately.
+
 ## Online capture for storage scalars: 2026-10-28
 
 **VERIFIED, local PostgreSQL 16.15:** native Boolean, int2/int4/int8, finite Date

@@ -416,7 +416,8 @@ The public manifest uses bounded JSON. Its field-intent declaration is independe
 | Mapping facts | Text codec, deterministic exact collation, nullability, application-assigned PK, tenant scope, constraint scope, and writer inventory |
 
 Range bounds, prefix limits, shared-join domains and arbitrary normalizers remain unadmitted.
-Boolean storage uses a pinned value codec. Other non-text codecs remain unadmitted.
+Boolean, signed integer, finite Date and UUID storage use pinned value codecs.
+Their search operators remain unadmitted.
 The compiler rejects unsupported types, server-generated keys, small-domain searchable fields, missing tenant scope, and unsupported writers at plan time.
 Searchable small domains remain unsafe because enumeration can label their equality classes. No invented cardinality threshold supplies evidence.
 The planner does not infer every application query. Attached staging tests expose query-level incompatibilities.
@@ -533,10 +534,14 @@ Boolean storage uses `cryptalis.context/v2` with `value_codec: boolean-u8/v1`
 instead of `text_codec`. False encodes as byte 00. True encodes as byte 01.
 The descriptor digest binds the value type in the shared authenticated path.
 SQL NULL stays SQL NULL. Boolean equality terms remain unadmitted.
-The internal integer candidate also uses context/v2. Its pinned codecs encode
-signed int2/int4/int8 values as 2/4/8 big-endian bytes. All other CF1 authenticated
-context and nonce rules remain unchanged. Full integer admission remains pending;
-see the [installed checkpoint](../status.md#integer-installed-lifecycle-checkpoint-2026-10-24).
+Signed integer storage also uses context/v2. Its pinned codecs encode int2/int4/int8
+as 2/4/8 signed big-endian bytes. Finite Date stores a four-byte unsigned Gregorian
+ordinal under `date-ordinal-u32/v1` and lock/v8. UUID values store sixteen
+network-order bytes under `uuid-bytes16/v1` and lock/v9. Nil UUID values are valid;
+the public record and tenant UUID codecs keep their separate context role.
+All other CF1 authenticated context and nonce rules remain unchanged. The
+[local scalar checkpoints](../status.md#native-uuid-value-storage-2026-10-28)
+retain their source, artifact and cost boundaries.
 For equality, the stable field UUID identifies the search domain. Crypto implementation and independent vectors belong to slice 2.
 
 `WriterInventory` requires `complete=True` and a nonempty inventory for each protected table.

@@ -25,6 +25,11 @@ No objective is complete until its acceptance evidence and applicable gate pass.
 
 ## Current boundary
 
+- Mapped dictionary INSERT now returns native tuples, public columns and mapped
+  entities. Paging, input ordering, identity/refresh, per-field prepared-input
+  authentication and existing fault controls pass. See the
+  [RETURNING checkpoint](status.md#tuple-and-entity-insert-returning-2026-10-28).
+
 - Initial online capture now covers the admitted storage scalars as well as
   text. Native edits, interrupted resume, abort, fencing, role transfer and
   current-value removal pass. See the [online scalar checkpoint](status.md#online-capture-for-storage-scalars-2026-10-28).

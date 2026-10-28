@@ -84,7 +84,7 @@ implementation gaps, even with production qualification excluded:
 |---|---|
 | Protected queries | Ranges, ordering, exact text patterns, general grouping/joins and SUM/AVG/MIN/MAX |
 | Types | Additional scalar and structured JSON contracts |
-| Integration | Broader bulk/RETURNING routes, upserts, trigger/cascade cases and automatic query/writer inventory |
+| Integration | Broader UPDATE/DELETE RETURNING routes, upserts, trigger/cascade cases and automatic query/writer inventory |
 | Migration | Parallel/adaptive execution and online coverage for future types |
 | Measurements | Cold and saturated workloads, larger concurrent profiles, resource limits and pause/recovery budgets |
 
@@ -222,6 +222,32 @@ collapse correctly. Another alias's ID cannot establish that identity.
 These are different SQL requests. Selecting an ID keeps separate records even
 when their protected values match. General protected grouping, caller DISTINCT ON
 and value ordering still require further work.
+
+## Returning inserted records
+
+Applications can insert dictionaries and receive the inserted entity directly:
+
+```python
+rows = session.scalars(
+    insert(Customer).returning(Customer, sort_by_parameter_order=True),
+    [{"id": new_id, "tenant_id": tenant_id, "email": "student@example.test"}],
+).all()
+```
+
+Direct tuples such as `.returning(Customer.id, Customer.email)` also retain native
+Row keys. The adapter authenticates every protected output against the exact
+frame it prepared for that input row. It keeps public fields and ORM identity
+loading native. Paging and heterogeneous parameter groups need no per-row query.
+Labels, expressions, loader options and caller return_defaults still refuse.
+
+```mermaid
+flowchart LR
+    Input["Input dictionaries"] --> Seal["Seal each value with row + tenant"]
+    Seal --> Insert["Native paged INSERT RETURNING"]
+    Insert --> Proof["Match each returned frame to its prepared input"]
+    Proof --> Auth["Authenticate and decode"]
+    Auth --> Rows["Native tuples or mapped entities"]
+```
 
 ## A reversible lifecycle
 

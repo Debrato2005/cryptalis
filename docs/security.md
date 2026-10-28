@@ -722,6 +722,13 @@ AES-GCM requires stronger nonce uniqueness discipline. ChaCha20-Poly1305 also re
 Extended-nonce libraries can be alternatives after portability and review. No silent algorithm fallback is allowed.
 Primary algorithm and library evidence is in [prior art](prior-art.md).
 
+**IMPLEMENTED UUID value storage extension:** `uuid-bytes16/v1` stores exactly
+sixteen network-order UUID bytes under typed context/v2, including nil UUIDs.
+Authenticate before decoding. Refuse non-UUID inputs and invalid byte widths.
+Storage-only non-NULL frames have exactly 58 bytes. Lock/v9 requires the new
+reader; earlier readers refuse before SQL. Public record and tenant identity
+codecs stay separate. This adds no search leakage or cryptographic primitive.
+
 **IMPLEMENTED date storage extension:** `date-ordinal-u32/v1` stores an exact
 Gregorian ordinal in four unsigned big-endian bytes under typed context/v2.
 Authenticate before decoding. Refuse invalid widths and ordinals outside
