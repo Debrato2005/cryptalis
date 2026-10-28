@@ -46,7 +46,7 @@ class FieldDescriptor:
         if (self.record_codec not in ("uuid16/v1", "int64-be/v1") or
                 self.tenant_codec not in ("uuid16/v1", "single-tenant-uuid/v1") or
                 self.representation not in ("cf1-storage/v1", "cf1-packed-equality/v1") or
-                self.value_codec not in ("utf8-exact/v1", "boolean-u8/v1", "date-ordinal-u32/v1", *_INTEGER_WIDTHS) or
+                self.value_codec not in ("utf8-exact/v1", "boolean-u8/v1", "date-ordinal-u32/v1", "uuid-bytes16/v1", *_INTEGER_WIDTHS) or
                 self.value_codec != "utf8-exact/v1" and self.representation != "cf1-storage/v1" or
                 type(self.digest) is not bytes or len(self.digest) != 32):
             raise InvalidContext()
@@ -64,7 +64,7 @@ class FieldDescriptor:
             if any(type(v) is not str or len(v) > 128 for v in document.values()):
                 raise InvalidContext()
             codec = document["value_codec" if typed else "text_codec"]
-            allowed_codecs = ("boolean-u8/v1", "date-ordinal-u32/v1", *_INTEGER_WIDTHS) if typed else ("utf8-exact/v1",)
+            allowed_codecs = ("boolean-u8/v1", "date-ordinal-u32/v1", "uuid-bytes16/v1", *_INTEGER_WIDTHS) if typed else ("utf8-exact/v1",)
             if ((document["schema"], document["normalizer"], document["null_policy"]) != (
                     "cryptalis.context/v2" if typed else "cryptalis.context/v1", "identity/v1", "sql-null/v1")
                     or codec not in allowed_codecs):
@@ -154,7 +154,7 @@ def _aad(field, tenant, record, header):
                        record, field.digest, header)
 
 
-def seal_value(value: str | bool | int | date | None, field: FieldDescriptor, tenant: UUID,
+def seal_value(value: str | bool | int | date | UUID | None, field: FieldDescriptor, tenant: UUID,
               record: UUID | int, keys: PreparedKeys) -> bytes | None:
     """Seal the pinned value codec with active keys and a fresh OS nonce."""
     typed = _context(field, tenant, record, keys)
@@ -166,6 +166,10 @@ def seal_value(value: str | bool | int | date | None, field: FieldDescriptor, te
         if type(value) is not bool:
             raise InvalidValue()
         encoded = b"\x01" if value else b"\x00"
+    elif field.value_codec == 'uuid-bytes16/v1':
+        if type(value) is not UUID:
+            raise InvalidValue()
+        encoded = value.bytes
     elif field.value_codec == 'date-ordinal-u32/v1':
         if type(value) is not date:
             raise InvalidValue()
@@ -200,7 +204,7 @@ def seal_value(value: str | bool | int | date | None, field: FieldDescriptor, te
 
 
 def open_value(frame: bytes | None, field: FieldDescriptor, tenant: UUID,
-              record: UUID | int, keys: PreparedKeys) -> str | bool | int | date | None:
+              record: UUID | int, keys: PreparedKeys) -> str | bool | int | date | UUID | None:
     """Authenticate before decode or release. Header IDs cannot select custody."""
     typed = _context(field, tenant, record, keys)
     if frame is None:
@@ -235,6 +239,10 @@ def open_value(frame: bytes | None, field: FieldDescriptor, tenant: UUID,
         if encoded not in (b"\x00", b"\x01"):
             raise InvalidValue()
         value = encoded == b"\x01"
+    elif field.value_codec == 'uuid-bytes16/v1':
+        if len(encoded) != 16:
+            raise InvalidValue()
+        value = UUID(bytes=encoded)
     elif field.value_codec == 'date-ordinal-u32/v1':
         if len(encoded) != 4:
             raise InvalidValue()
