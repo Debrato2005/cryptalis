@@ -10,6 +10,31 @@ No PostgreSQL/provider/runtime cell, production key provider, independent review
 VERIFIED below refers only to the named checks and their exact revisions.
 All other contract and promotion requirements are SPECIFIED. All seven full gates remain UNKNOWN.
 
+## Expanded source regression boundary: 2026-10-28
+
+**VERIFIED, complete collected source corpus across two ordered runs:**
+2,922 test calls and eighteen subtests pass on unchanged product code. The
+[combined boundary](_reset/expanded-regression-boundary-20261028.json) records
+2,336 prefix items and 624 suffix items, covering all 2,960 selected items.
+Eight call skips, thirty setup skips and fifteen collection skips stay explicit.
+Optional profiles retain their own prerequisites and evidence requirements.
+
+The [initial run](_reset/expanded-regression-initial-20261028.json) stops after
+2,324 passing calls on an obsolete negative control that expects entity DISTINCT
+to refuse. The test now uses multiple protected values without record identities,
+which remains unadmitted. The [187-check affected run](_reset/distinct-legacy-control-20261028.json)
+passes the corrected control and existing adapter/search/report cases.
+The fresh [complete suffix run](_reset/expanded-regression-tail-20261028.json)
+passes all 622 remaining test calls, including the entire corrected adapter file.
+Its five skips include three collection skips already counted in the original
+whole-corpus collection. The 48 warnings retain the existing legacy DISTINCT ON
+deprecation.
+
+All product and other Python hashes match between the initial and suffix runs;
+only that test file changes. Both wrappers report unchanged source during their
+own execution and all three role probes pass. The earlier failed receipt remains
+visible. This verifies the named corpus and local cell; production gates remain UNKNOWN.
+
 ## Expanded installed-package checkpoint: 2026-10-28
 
 **VERIFIED, installed wheel:** the [174-check selection](_reset/expanded-installed-20261028.json)
