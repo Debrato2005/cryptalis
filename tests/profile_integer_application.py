@@ -14,7 +14,7 @@ import cryptography
 import psycopg
 import pytest
 import sqlalchemy
-from sqlalchemy import BigInteger, Date, Integer, SmallInteger, bindparam, select
+from sqlalchemy import BigInteger, Date, Integer, SmallInteger, Uuid, bindparam, select
 from sqlalchemy.orm import Session
 
 from profile_current_application import cell, prepare_seeded_fixture, protect, seed
@@ -54,23 +54,27 @@ def read(session, statement, parameters, workload):
     return result.scalars().all() if workload == 'point_scalar' else [tuple(row) for row in result.all()]
 
 
-@pytest.mark.parametrize('dtype,bits', [(SmallInteger, 16), (Integer, 32), (BigInteger, 64), (Date, 32)])
+@pytest.mark.parametrize('dtype,bits', [(SmallInteger, 16), (Integer, 32), (BigInteger, 64), (Date, 32), (Uuid, 128)])
 def test_matched_integer_costs_and_native_exit(dtype, bits):
     requested = os.environ.get('CRYPTALIS_INTEGER_PERFORMANCE_RECEIPT')
     if not requested: pytest.fail('Supply a new absolute CRYPTALIS_INTEGER_PERFORMANCE_RECEIPT prefix.')
     prefix = Path(requested)
     dates = dtype is Date
-    output = prefix.with_name(prefix.stem + '-' + ('date' if dates else str(bits)) + '.json')
+    uuids = dtype is Uuid
+    output = prefix.with_name(prefix.stem + '-' + ('uuid' if uuids else 'date' if dates else str(bits)) + '.json')
     assert prefix.is_absolute() and output.parent.is_dir() and not output.exists()
     started, cpu = time.perf_counter(), time.process_time()
     lower, upper = -(1 << (bits - 1)), (1 << (bits - 1)) - 1
     domain = (lower, upper, -1, 0, 1, 17, None)
     if dates:
         domain = (date.min, date.max, date(1970, 1, 1), date(2000, 2, 29), None)
+    if uuids:
+        domain = (UUID(int=0), UUID(int=(1 << 128) - 1), UUID(int=1), UUID(bytes=bytes(range(16))), None)
     values = [dict(id=UUID(int=rank + 100), tenant_id=TENANT, name=domain[rank % len(domain)],
                    label=f'label-{rank + 100}') for rank in range(ROWS)]
     seed_sha = hashlib.sha256(json.dumps([dict(row, id=str(row['id']), tenant_id=str(row['tenant_id']))
-        for row in values], sort_keys=True, separators=(',', ':'), default=date.isoformat).encode()).hexdigest()
+        for row in values], sort_keys=True, separators=(',', ':'),
+        default=lambda value: str(value) if type(value) is UUID else date.isoformat(value)).encode()).hexdigest()
     rings = {TENANT: keys(TENANT)}
     timings, metadata = {}, {}
     with ExitStack() as stack:
@@ -139,7 +143,7 @@ def test_matched_integer_costs_and_native_exit(dtype, bits):
             rows = connection.exec_driver_sql(f'SELECT id,name FROM "{protected.schema}".customer ORDER BY id').all()
         assert rows == [(row['id'], row['name']) for row in values]
     content = dict(scope='Warm synchronous storage-only scalar fixture costs; no production qualification.',
-        value_type='date' if dates else 'integer', bits=bits, rows=ROWS, seed_sha256=seed_sha, cell=dict(metadata, python=platform.python_version(),
+        value_type='uuid' if uuids else 'date' if dates else 'integer', bits=bits, rows=ROWS, seed_sha256=seed_sha, cell=dict(metadata, python=platform.python_version(),
         sqlalchemy=sqlalchemy.__version__, psycopg=psycopg.__version__, cryptography=cryptography.__version__),
         sampling=dict(pairs=SAMPLES, discarded_warmup_pairs=WARMUPS, order='Alternating native/attached order.',
                       transactions='One long-lived read transaction per path; no retained entities.'),
