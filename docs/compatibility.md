@@ -82,7 +82,8 @@ Rollback/removal transforms current data through decrypt-back until explicit fin
 | Regex, fuzzy/similarity, full text | CURRENTLY UNADMITTED | No admitted exact query or text-search contract |
 | SUM, AVG, MIN, MAX, arithmetic | CURRENTLY UNADMITTED | Selected payload/equality format does not implement these operations |
 | COUNT DISTINCT on an equality field | SUPPORTED | Bounded local implementation counts existing full-width equality terms within one tenant per group. Require explicit single tenancy, direct tenant equality in WHERE, or GROUP BY the exact tenant column. SQL NULL is excluded; native expression/label result keys are retained. Storage-only fields and global multi-tenant distinct counts refuse |
-| General DISTINCT, DISTINCT ON, protected GROUP BY | CURRENTLY UNADMITTED | Randomized-payload comparison changes logical semantics. Count support does not admit this family |
+| DISTINCT of one direct protected equality field | SUPPORTED | Existing full-width terms within one provable tenant scope; authenticate the representative payload. Labels, aliases and SQL NULL retain native value-set semantics. No output-order promise |
+| General DISTINCT, DISTINCT ON, protected GROUP BY | CURRENTLY UNADMITTED | Multiple outputs, caller DISTINCT ON, protected grouping, ordering and pagination require separate admission. Randomized-payload comparison changes logical semantics |
 | Joins/FKs on protected fields | CURRENTLY UNADMITTED | No admitted shared search-domain or protected-FK contract |
 | Field-to-field equality, general Boolean NOT, other unadmitted functions/operators | CURRENTLY UNADMITTED | Approved scope does not independently admit these shapes |
 | Other protected types, JSON predicates, unqualified custom protected types | CURRENTLY UNADMITTED | Text and storage-only Boolean, Date and signed integers have bounded admission. The exact pinned SQLModel AutoString exception retains native String admission |

@@ -10,6 +10,24 @@ No PostgreSQL/provider/runtime cell, production key provider, independent review
 VERIFIED below refers only to the named checks and their exact revisions.
 All other contract and promotion requirements are SPECIFIED. All seven full gates remain UNKNOWN.
 
+## Authenticated direct DISTINCT projection: 2026-10-28
+
+**VERIFIED, local PostgreSQL 16.15:** DISTINCT of one direct protected equality
+field returns native logical value sets and Python types through sync/async
+sessions. Labels retain original result-object keys. Aliases, SQL NULL, empty
+text, duplicate/Unicode values and encrypted WHERE filters pass in the
+[130-check affected run](_reset/distinct-projection-20261028.json).
+A corrupted representative frame raises AuthenticationFailed. Unscoped/multi-tenant,
+custom-rendered and other unadmitted shapes refuse before statement keys or SQL.
+
+The compiler deduplicates existing full-width terms and retains the selected
+row's authenticated context carrier. Ordering, pagination, grouping, caller
+DISTINCT ON, multiple outputs and storage-only fields remain unadmitted in this
+route. Public DISTINCT keeps its separate native contract. A native SELECT
+dispatch check also prevents custom protected SELECT rendering before keys.
+The result relies on the existing full-term collision and hostile-database
+completeness assumptions. No representation, key derivation or dependency changes.
+
 ## Finite date storage and scalar cost decision: 2026-10-28
 
 **VERIFIED, installed wheel:** the [92-check selection](_reset/date-installed-20261028.json)
@@ -58,6 +76,11 @@ Date uses four unsigned ordinal bytes, context/v2 and lock/v8. No runtime
 dependency or earlier codec/format bytes change. This adds bounded local type
 admission; broader numeric/temporal/JSON contracts remain work. Production gates
 remain UNKNOWN and retain their separate qualification requirements.
+
+The later [66-check ordinal control](_reset/date-ordinal-bounds-20261028.json)
+verifies typed refusal for authenticated unsigned ordinals above Python's signed
+conversion range as well as ordinary invalid dates. The unconfigured retained
+pre-date reader is its one skip; its configured earlier run retains separate proof.
 
 ## Local assignment explanation and inspection profile: 2026-10-28
 
