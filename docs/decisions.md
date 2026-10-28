@@ -38,6 +38,19 @@ fields. All eight scalar/entity point observations, including Date, meet the
 3 ms added-p95 target in this local run. Retain raw samples and observed tails;
 these observations do not establish a concurrent or production budget.
 
+## DISTINCT with selected record identities: 2026-10-28
+
+Keep native DISTINCT when every protected output is a direct column and its
+source's primary key is also selected. A matching public record identity already
+distinguishes different source rows. Repeated join rows contain the same stored
+frame/context, so native comparison preserves duplicate elimination.
+
+This route can admit entity/table projections and direct tuples with
+storage-only fields. Retain ordinary public ordering and pagination. Require
+the exact physical source alias and record name; another alias's ID is not proof.
+Keep caller DISTINCT ON and protected ordering/grouping under their separate
+contracts. Payload authentication remains unchanged.
+
 ## Direct protected DISTINCT projection: 2026-10-28
 
 Admit DISTINCT of one directly selected equality-enabled protected field within
