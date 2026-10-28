@@ -773,7 +773,7 @@ class _Attachment:
                 modifier = super().get_select_precolumns(select, **kw)
                 # PostgreSQL's public compiler hook emits only DISTINCT here.
                 # Check its modifier, not arbitrary user SQL text.
-                if modifier and (any(self.protected(c) for c in select.selected_columns) or self.protected(select)):
+                if modifier and any(self.protected(c) for c in select.selected_columns):
                     raise UnsupportedProtectedOperation()
                 return modifier
         engine.dialect.statement_compiler = StorageCompiler
