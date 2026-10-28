@@ -4,6 +4,17 @@
 It does not preserve old IDs as implementation obligations. Historical dispositions remain in [archived revamp evidence](research/revamp-evidence.md).
 [Status](status.md) owns IMPLEMENTED/VERIFIED claims. All seven full gates remain UNKNOWN.
 
+## Online capture for admitted storage scalars: 2026-10-28
+
+Extend dirty-row capture to storage-only Boolean, int2/int4/int8, finite Date and
+UUID values. Native source writes stay authoritative until the durable fence.
+Use each codec's fixed width to bound a chunk before fetching values. A captured
+Date outside Python's finite range must raise the existing typed boundary error
+before sealing or committing that chunk. Preserve capture, byte-stable completed
+rows, resume, publication, role transfer, abort and latest-value native removal.
+The final write pause and host writer exclusion remain required. This adds no
+search representation or dependency.
+
 ## Native UUID value storage: 2026-10-28
 
 Add storage-only PostgreSQL UUID values with exact standard native UUID mappings
