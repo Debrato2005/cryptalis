@@ -4,11 +4,14 @@ Native values remain authoritative until a durable maintenance fence. The host
 excludes owner/DDL writers throughout and retains both operation artifacts.
 This module does not supply external deployment publication or a pause bound.
 """
-from contextlib import contextmanager
+from concurrent.futures import ThreadPoolExecutor
+from contextlib import contextmanager, nullcontext
 from copy import deepcopy
 from dataclasses import dataclass
 import hashlib
 import json
+from threading import local
+from time import perf_counter
 from uuid import UUID, uuid5
 
 from psycopg import sql
@@ -315,7 +318,7 @@ def _expand(c, p):
     return state
 
 
-def _chunk(c, p, state, keys):
+def _chunk(c, p, state, keys, *, pool=None, row_limit=None):
     _inspect(c,p,state)
     dirty = _names(p)[0]
     limits = p.document['batch_limits']
@@ -330,7 +333,7 @@ def _chunk(c, p, state, keys):
                          for f in model['fields'])
         candidates = c.exec_driver_sql('SELECT ' + m._quote(c,names[0]) + ', ' + sizes
             + f' FROM {m._table(c,model)} WHERE {m._quote(c,dirty)} IS DISTINCT FROM FALSE'
-            + f' ORDER BY {m._quote(c,names[0])} LIMIT %s FOR UPDATE', (limits['max_rows'],)).all()
+            + f' ORDER BY {m._quote(c,names[0])} LIMIT %s FOR UPDATE', (row_limit or limits['max_rows'],)).all()
         if not candidates:
             continue
         selected, size = [], 0
@@ -355,15 +358,18 @@ def _chunk(c, p, state, keys):
             + f' FROM {m._table(c,model)} WHERE {m._quote(c,names[0])}=ANY(%s)'
             + f' ORDER BY {m._quote(c,names[0])}',(selected,)).all()
         descriptors = [FieldDescriptor.from_compiled(f['descriptor'],f['descriptor_digest']) for f in model['fields']]
-        material, params = {}, []
-        for row in rows:
+        material = local()
+        def seal_row(row):
+            if not hasattr(material, 'keys'):
+                material.keys = {}
             tenant = row[1] if scoped else UUID(model['table_id'])
             offset = 2 if scoped else 1
             if scoped and str(tenant) not in approved:
                 raise m.TransitionFailure('online_tenant_not_approved', p.operation_id)
-            frames = m._with_row_keys(keys,tenant,p,material,lambda prepared:
+            frames = m._with_row_keys(keys,tenant,p,material.keys,lambda prepared:
                 [seal_value(value,descriptor,tenant,row[0],prepared) for value,descriptor in zip(row[offset:],descriptors)])
-            params.append(tuple(frames)+(row[0],))
+            return tuple(frames)+(row[0],)
+        params = list(pool.map(seal_row, rows) if pool is not None else map(seal_row, rows))
         statement = f'UPDATE {m._table(c,model)} SET ' + ','.join(m._quote(c,f['payload_column'])+'=%s' for f in model['fields'])
         statement += f', {m._quote(c,dirty)}=FALSE WHERE {m._quote(c,names[0])}=%s'
         c.exec_driver_sql(statement,params)
@@ -381,7 +387,8 @@ def _progress(p,state):
                       'Inspect the current host policy and capture before resume. Counts include repeated row versions.')
 
 
-def apply(p, engine, *, keys, pin, approval, max_chunks=1, fence=False):
+def apply(p, engine, *, keys, pin, approval, max_chunks=1, fence=False,
+          workers=1, target_chunk_seconds=None):
     """Commit bounded dirty-row batches, then optionally install a durable fence.
 
     An empty backlog is only a current observation. It never authorizes cutover.
@@ -389,16 +396,26 @@ def apply(p, engine, *, keys, pin, approval, max_chunks=1, fence=False):
     """
     if type(max_chunks) is not int or not 0 <= max_chunks <= 100000 or type(fence) is not bool:
         raise m.TransitionFailure('invalid_online_apply_bound')
-    with _executor(p,engine,pin,approval) as c:
+    if (type(workers) is not int or not 1 <= workers <= 16 or target_chunk_seconds is not None and
+            (not m._finite_number(target_chunk_seconds) or not 0 < target_chunk_seconds <= 60)):
+        raise m.TransitionFailure('invalid_online_worker_bound')
+    row_limit = p.document['batch_limits']['max_rows']
+    with _executor(p,engine,pin,approval) as c, (ThreadPoolExecutor(max_workers=workers)
+            if workers > 1 else nullcontext()) as pool:
         state = _state(c,p,pin)
         c.commit()
         if state is None:
             with c.begin(): state = _expand(c,p)
         for _ in range(max_chunks):
+            started = perf_counter()
             with c.begin():
-                changed = _chunk(c,p,state,keys)
+                changed = _chunk(c,p,state,keys,pool=pool,row_limit=row_limit)
             if not changed:
                 break
+            if target_chunk_seconds is not None:
+                proposed = int(row_limit * target_chunk_seconds / max(perf_counter() - started, 1e-9))
+                row_limit = max(1, min(p.document['batch_limits']['max_rows'], row_limit * 2,
+                                       max(row_limit // 2, proposed)))
         if fence and state['phase'] == 'CAPTURING':
             with c.begin():
                 m._lock_tables(c,p)
