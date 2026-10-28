@@ -111,6 +111,26 @@ def main():
     figure.suptitle("Local query-inspection microbenchmark: speedup and trade-off", fontsize=14)
     save(figure, output / "lineage-inspection.svg")
 
+    counts = json.loads((ROOT / "docs/_reset/count-performance-20261028.json").read_text())
+    figure, axes = plt.subplots(1, 2, figsize=(10, 4), layout="constrained", sharey=True)
+    for axis, workload, title in zip(axes, ("nonnull", "distinct"),
+                                     ("COUNT of non-NULL names", "COUNT of distinct names")):
+        results = [entry for entry in counts["observations"] if entry["workload"] == workload]
+        for offset, name, color in ((-0.19, "native", COLORS[0]), (0.19, "protected", COLORS[1])):
+            values = [entry["paths"][name]["p95_ms"] for entry in results]
+            bars = axis.bar([x + offset for x in range(len(results))], values, width=0.36,
+                            color=color, label=name.capitalize())
+            axis.bar_label(bars, fmt="%.2f", padding=3, fontsize=9)
+        axis.set(title=title, xticks=range(len(results)),
+                 xticklabels=[f'{entry["rows"]:,}' for entry in results], xlabel="Rows per application")
+        axis.grid(axis="y", alpha=0.18)
+        axis.set_axisbelow(True)
+        axis.margins(y=0.2)
+    axes[0].set_ylabel("P95 milliseconds; lower is better")
+    axes[0].legend(frameon=False)
+    figure.suptitle("Local count queries: 31 alternating warm samples per path", fontsize=14)
+    save(figure, output / "count-latency.svg")
+
 
 if __name__ == "__main__":
     main()
