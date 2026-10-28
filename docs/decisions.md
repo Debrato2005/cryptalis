@@ -4,6 +4,17 @@
 It does not preserve old IDs as implementation obligations. Historical dispositions remain in [archived revamp evidence](research/revamp-evidence.md).
 [Status](status.md) owns IMPLEMENTED/VERIFIED claims. All seven full gates remain UNKNOWN.
 
+## Mapped dictionary INSERT tuple and entity RETURNING: 2026-10-28
+
+Extend the existing scalar RETURNING route to native direct-column tuples and
+the exact inserted mapped entity. Authenticate each protected output against
+its own prepared input frame and expected row/tenant context. Keep native Row
+keys, scalar consumption, entity identity/refresh behavior, heterogeneous groups,
+page boundaries, optional parameter ordering and rollback. Public fields retain
+native result processing. Validate the complete expanded output list before
+keys and again at compilation. Aliases, expressions, loader options and caller
+return_defaults remain unadmitted. No plaintext binds or per-row follow-up reads.
+
 ## Online capture for admitted storage scalars: 2026-10-28
 
 Extend dirty-row capture to storage-only Boolean, int2/int4/int8, finite Date and
