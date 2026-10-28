@@ -33,6 +33,10 @@ jobs:
         run: uv sync --frozen --extra sqlmodel --compile-bytecode
       - name: Audit the dependency lock
         run: uv audit --frozen
+      - name: Measure column-lineage inspection
+        run: >-
+          uv run --frozen --extra sqlmodel python scripts/benchmark_admission.py
+          --output "$RUNNER_TEMP/admission.json"
       - name: Run the suite through the restricted-role wrapper
         run: >-
           uv run --frozen --extra sqlmodel python scripts/online_qualification.py
@@ -41,6 +45,8 @@ jobs:
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
-          name: postgres-receipt
-          path: ${{ runner.temp }}/cryptalis-tests/receipt.json
+          name: local-evidence
+          path: |
+            ${{ runner.temp }}/cryptalis-tests/receipt.json
+            ${{ runner.temp }}/admission.json
           if-no-files-found: warn
