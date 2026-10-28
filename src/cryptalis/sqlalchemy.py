@@ -343,7 +343,7 @@ class _ReadText(TypeDecorator):
         self.tenant = operation.tenant
         self.points = tuple(value for column, value in operation.points if column.compare(record_column))
         self.returning_frames = None
-        if operation.bulk_returning is binding:
+        if operation.bulk_returning is not None and id(binding.column) in operation.bulk_returning:
             if not operation.bulk_batch:
                 raise UnsupportedProtectedOperation()
             frames = {}
@@ -838,24 +838,31 @@ class _Attachment:
             raise UnsupportedProtectedOperation()
         return operation
 
-    def returning_binding(self, statement, bulk):
+    def returning_signature(self, statement, bulk):
         if not statement._returning:
             return None
-        if (len(statement._returning) != 1 or statement._with_options or
-                type(statement._sort_by_parameter_order) is not bool):
+        if statement._with_options or type(statement._sort_by_parameter_order) is not bool:
             raise UnsupportedProtectedOperation()
-        return self.returning_column(statement._returning[0], bulk)
+        for root in statement._returning:
+            if isinstance(root, Table) and _delete_node(root, Table) is not bulk:
+                raise UnsupportedProtectedOperation()
+        columns = tuple(statement._all_selected_columns)
+        signature = tuple(self.returning_column_identity(column, bulk) for column in columns)
+        self.select_types(select(*columns))
+        return signature
 
-    def returning_column(self, column, bulk):
+    def returning_column_identity(self, column, bulk):
         if not isinstance(column, ColumnClause) or column.is_literal or column.table is not bulk:
             raise UnsupportedProtectedOperation()
-        # ORM annotations can retain native types. Resolve the owned physical
-        # column by lineage, as for SELECT; native compilation deannotates it.
-        bindings = [binding for binding in self.bindings if binding.column.table is bulk and
-                    column.shares_lineage(binding.column)]
-        if len(bindings) != 1:
+        native = _delete_node(column, Column if isinstance(column, Column) else ColumnClause,
+                              allow_type_annotation=True)
+        if (native is not bulk.c.get(column.key)
+                or _delete_name_state(column.name) != _delete_name_state(native.name)):
             raise UnsupportedProtectedOperation()
-        return bindings[0]
+        if type(native.type) is not _Payload:
+            self.select_dispatch(native.type)
+            self.bind_type(native.type, selecting=True)
+        return id(native)
 
     @classmethod
     def identity_type(cls, dtype, *, uuid_only=False):
@@ -1189,6 +1196,9 @@ class _Attachment:
             self.update_context(statement, bulk, operation.tenant, generated=True)
             return
         if bulk is not None and isinstance(statement, Insert):
+            _delete_node(statement, Insert)
+            if _delete_node(statement.table, Table) is not bulk:
+                raise UnsupportedProtectedOperation()
             if (statement.table.name != bulk.name or statement.table.schema != bulk.schema or
                     not all(column.key in statement.table.c and
                             statement.table.c[column.key].shares_lineage(column) for column in bulk.c) or
@@ -1200,23 +1210,23 @@ class _Attachment:
             operation = _operation.get()
             current = operation is not None and operation.owner is self and operation.bulk_insert is bulk
             if statement._return_defaults:
-                binding = operation.bulk_returning if current else None
-                primary = inspect(binding.model).primary_key if binding is not None else ()
+                returning = operation.bulk_returning if current else None
+                primary = tuple(bulk.primary_key) if returning is not None else ()
                 defaults = statement._return_defaults_columns or ()
                 supplemental = statement._supplemental_returning or ()
-                if (binding is None or len(defaults) != len(primary) or
+                if (returning is None or len(defaults) != len(primary) or
                         any(not isinstance(left, ColumnClause) or left.is_literal or left.table is not bulk or
                             not left.shares_lineage(right) for left, right in zip(defaults, primary)) or
                         statement._with_options or type(statement._sort_by_parameter_order) is not bool):
                     raise UnsupportedProtectedOperation()
                 if statement._returning:
-                    if supplemental or self.returning_binding(statement, bulk) is not binding:
+                    if supplemental or self.returning_signature(statement, bulk) != returning:
                         raise UnsupportedProtectedOperation()
-                elif len(supplemental) != 1 or self.returning_column(supplemental[0], bulk) is not binding:
+                elif tuple(self.returning_column_identity(column, bulk) for column in supplemental) != returning:
                     raise UnsupportedProtectedOperation()
             else:
-                binding = self.returning_binding(statement, bulk)
-                if current and binding is not operation.bulk_returning:
+                returning = self.returning_signature(statement, bulk)
+                if current and returning != operation.bulk_returning:
                     raise UnsupportedProtectedOperation()
             return
         if not isinstance(statement, Select):
@@ -1846,7 +1856,7 @@ def _bulk_insert(state):
     if statement._return_defaults:
         raise UnsupportedProtectedOperation()
     owner.admit(statement, bulk=table)
-    returning = owner.returning_binding(statement, table)
+    returning = owner.returning_signature(statement, table)
     options = state.execution_options
     if (set(options) - {'render_nulls', 'autoflush', 'dml_strategy', 'prebuffer_rows',
                        '_sa_orm_insert_options', '_result_disable_adapt_to_context'} or
