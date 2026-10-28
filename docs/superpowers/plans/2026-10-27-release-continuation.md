@@ -84,20 +84,42 @@ slice so future source/installed claims fail on this mismatch.
 
 Owner: release specialist. Files: separate `qualification/http` dependency project/lock and setup script if required. Root product pins remain unchanged.
 
-- [ ] Resolve a compatible refreshed application dependency cell; preserve the original 26 application files and verify pinned hashes.
-- [ ] Freeze transitive hashes and reproduce installation in an isolated environment.
-- [ ] Record exact interpreter/package/advisory evidence and limitations.
-- [ ] Run unchanged HTTP and fresh lifecycle qualification in the new cell; review, document and commit.
+- [x] Resolve a compatible refreshed application dependency cell; preserve the original 26 application files and verify pinned hashes.
+- [x] Freeze transitive hashes and reproduce installation in an isolated environment.
+- [x] Record exact interpreter/package/advisory evidence and limitations.
+- [x] Run unchanged HTTP and fresh lifecycle qualification in the new cell; review, document and commit.
 
 ## Task 5: Authenticated tenant HTTP application
 
 Owner: application specialist. Files: new tenant host, workload and application profile modules.
 
-- [ ] Authenticate through original JWT/account dependency before selecting tenant keys or protected sessions.
-- [ ] Preauthorize public Item owner metadata and recheck it at protected access.
-- [ ] Preserve ordinary user, superuser pagination and account-delete/cascade outcomes through explicit host integration; measure all host changes.
-- [ ] Exercise the full install/protect/CRUD/rotate/recover/current-data removal journey and cross-tenant/invalid-authority refusals.
-- [ ] Review, document exact original/host boundaries and commit.
+- [x] Authenticate through original JWT/account dependency before selecting tenant keys or protected sessions.
+- [x] Preauthorize public Item owner metadata and recheck it at protected access.
+- [x] Preserve ordinary user, superuser pagination and account-delete/cascade outcomes through explicit host integration; measure all host changes.
+- [x] Exercise the full install/protect/CRUD/rotate/recover/current-data removal journey and cross-tenant/invalid-authority refusals.
+- [x] Review, document exact original/host boundaries and commit.
+
+Source and actual-wheel tenant phases pass genuinely fresh recovery. Review
+identified missing owner-page and retained-Item HTTP evidence; both are added
+and pass in both clusters. Each import-denied child HTTP-reads nine exact latest
+Items through eight original owners. Scoped re-review accepts. Dynamic owner
+provisioning remains unfinished: new owner Item writes refuse before key lookup.
+
+## Task 7: Bind qualification to actual runtime bytes
+
+- [x] Refuse wrong source/installed modules before pytest; bind an explicit wheel.
+- [x] Check loaded module origins and before/after runtime identity.
+- [x] Preserve existing receipt/role/preflight contracts and mutually exclusive diagnostics.
+- [x] Propagate installed-wheel selection through both fresh qualification harnesses.
+- [x] Verify 35 wrapper controls and actual-wheel HTTP/DATE recovery matrices.
+
+All four initial runtime-guard review findings are fixed and re-reviewed.
+Parallel DATE export uncovered a receipt filename race; per-run private receipt
+paths remove the shared namespace. Both installed layouts then pass concurrently.
+The inspected wheel, 43 modules and 50 release inputs match. Final agent code
+review found no actionable defect. The broad source attempt remains incomplete
+(exit 3); recovery and tail follow-ups pass and all receipts remain archived.
+No clean full-suite or production-gate pass is claimed.
 
 ## Continuation ledger
 

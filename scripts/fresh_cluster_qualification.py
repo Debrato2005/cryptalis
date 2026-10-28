@@ -12,7 +12,6 @@ Usage: .venv/bin/python scripts/fresh_cluster_qualification.py [--workdir PATH]
 """
 import argparse
 import base64
-import datetime
 import json
 import os
 from pathlib import Path
@@ -27,7 +26,6 @@ import psycopg
 from psycopg import sql
 
 ROOT = Path(__file__).resolve().parents[1]
-DATE = datetime.date.today().strftime('%Y%m%d')
 
 
 def pg_bin(name):
@@ -46,18 +44,11 @@ def free_port():
         return probe.getsockname()[1]
 
 
-def receipt_path(name):
-    base = ROOT / 'docs' / '_reset' / name
-    path, attempt = base, 1
-    while path.exists():
-        attempt += 1
-        path = base.with_name(f'{base.stem}-{attempt}{base.suffix}')
-    return path
-
-
-def run_pytest(receipt, scope, module, extra_env):
+def run_pytest(receipt, scope, module, extra_env, *, installed_wheel=None):
+    runtime_options = ([] if installed_wheel is None else
+                       ['--installed-wheel', str(installed_wheel.resolve())])
     command = [sys.executable, str(ROOT / 'scripts' / 'test_postgres.py'),
-               '--receipt', str(receipt), '--scope', scope, '--', module, '-q']
+               *runtime_options, '--receipt', str(receipt), '--scope', scope, '--', module, '-q']
     result = subprocess.run(command, cwd=ROOT, env=dict(os.environ, **extra_env))
     if result.returncode != 0:
         raise SystemExit(f'pytest step failed: {module}')
@@ -127,6 +118,8 @@ def stop_cluster(cluster):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--workdir', type=Path, default=None)
+    parser.add_argument('--installed-wheel', type=Path,
+                        help='Bind export and restore wrappers to this inspected installed wheel.')
     parser.add_argument('--integer-default', type=int, default=None,
                         help='Qualify an exact native integer literal client default.')
     parser.add_argument('--varchar', action='store_true', help='Qualify a native VARCHAR(64) source and lock v3.')
@@ -205,10 +198,15 @@ def main():
         parser.error('--smolink uses the original application VARCHAR schema and lifecycle.')
     if args.restore_lease and (args.direct_generation or args.adopted_search or args.adopted_payload or args.adopted_rewrap or args.rewrap or args.payload_rotation or args.search_rotation):
         parser.error('--restore-lease supports the original TEXT/VARCHAR fixture only.')
-    workdir = args.workdir or Path(tempfile.mkdtemp(prefix='cryptalis-fresh-'))
-    workdir.mkdir(parents=True, exist_ok=True)
-    export_receipt = receipt_path(f'fresh-cluster-export-{DATE}.json')
-    restore_receipt = receipt_path(f'fresh-cluster-restore-{DATE}.json')
+    if args.workdir is None:
+        workdir = Path(tempfile.mkdtemp(prefix='cryptalis-fresh-'))
+    else:
+        workdir = args.workdir
+        workdir.mkdir(mode=0o700, parents=True, exist_ok=False)
+    # Each run owns one new directory. Parallel profiles cannot select the
+    # same global receipt filename between existence check and exclusive write.
+    export_receipt = workdir / 'export-receipt.json'
+    restore_receipt = workdir / 'restore-receipt.json'
 
     profile = ('; staged search CLI sealing and publication on an adopted target' if args.search_cli else
                '; staged payload CLI sealing and publication on an adopted target' if args.payload_cli else
@@ -251,7 +249,8 @@ def main():
                          'CRYPTALIS_FRESH_SOURCE_VARCHAR': '1' if args.varchar else '0',
                          'CRYPTALIS_FRESH_SOURCE_REWRAP': '1' if args.rewrap else '0',
                          'CRYPTALIS_FRESH_SOURCE_PAYLOAD_ROTATION': '1' if args.payload_rotation else '0',
-                         'CRYPTALIS_FRESH_SOURCE_SEARCH_ROTATION': '1' if args.search_rotation else '0'})
+                         'CRYPTALIS_FRESH_SOURCE_SEARCH_ROTATION': '1' if args.search_rotation else '0'},
+                        installed_wheel=args.installed_wheel)
     manifest = json.loads((workdir / 'restore-manifest.json').read_text())
     if manifest.get('owned_sequences', False) is not args.owned_sequences:
         raise SystemExit('FreshCluster.ProfileMismatch: owned-sequence export did not match the requested profile.')
@@ -362,7 +361,8 @@ def main():
                               'CRYPTALIS_FRESH_PLAINTEXT_ROLE': credentials['plaintext'][0],
                               'CRYPTALIS_FRESH_SOURCE_REWRAP': '1' if args.rewrap else '0',
                               'CRYPTALIS_FRESH_SOURCE_PAYLOAD_ROTATION': '1' if args.payload_rotation else '0',
-                              'CRYPTALIS_FRESH_SOURCE_SEARCH_ROTATION': '1' if args.search_rotation else '0'})
+                              'CRYPTALIS_FRESH_SOURCE_SEARCH_ROTATION': '1' if args.search_rotation else '0'},
+                             installed_wheel=args.installed_wheel)
     finally:
         stop_cluster(cluster)
     print('workdir', workdir)

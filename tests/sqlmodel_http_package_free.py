@@ -37,7 +37,14 @@ engine = create_engine('postgresql+psycopg://', hide_parameters=True,
     creator=lambda: psycopg.connect(os.environ['CRYPTALIS_TEST_RUNTIME_DATABASE_URL'],
         options='-csearch_path=' + os.environ['SQLMODEL_HTTP_CHILD_SCHEMA']))
 try:
-    retained = json.loads(sys.stdin.read())
+    payload = json.loads(sys.stdin.read())
+    retained = payload['retained']
+    retained_items = payload['retained_items']
+    item_summary = {}
+    if retained_items is not None:
+        tenant_workload = runpy.run_path(os.environ['SQLMODEL_HTTP_CHILD_TENANT_WORKLOAD'])
+        item_summary = tenant_workload['verify_retained_items'](
+            app, lambda: Session(engine), retained_items)
     current = workload['workflow'](app, lambda: Session(engine), retained=retained)
     assert type(current['is_active']) is bool and current['is_active'] is True
     assert all(type(current[field]) is str for field in ('id', 'email', 'full_name'))
@@ -52,15 +59,15 @@ try:
     assert not any(name == 'cryptalis' or name.startswith('cryptalis.') for name in sys.modules)
     print(json.dumps({'native_http': 'passed', 'retained_latest': 'passed',
         'inactive_false': True, 'cryptalis_imported': False,
-        'cryptalis_import_refused': True, 'smtp_exercised': False}))
+        'cryptalis_import_refused': True, 'smtp_exercised': False, **item_summary}))
 finally:
     engine.dispose()
     original_engine.dispose()
 '''
 
 
-def run(copied, schema, retained):
-    """Return a safe summary after the unchanged original HTTP journey."""
+def run(copied, schema, retained, *, retained_items=None):
+    """Restart original HTTP, optionally checking specific pre-exit Item values."""
     environment = dict(os.environ,
         PROJECT_NAME='Cryptalis disposable HTTP restart profile',
         POSTGRES_SERVER='unused.invalid', POSTGRES_USER='unused',
@@ -70,13 +77,14 @@ def run(copied, schema, retained):
         ENVIRONMENT='local', SMTP_HOST='', EMAILS_FROM_EMAIL='', SENTRY_DSN='',
         SQLMODEL_HTTP_CHILD_PATHS=json.dumps([str(Path(copied).resolve() / 'backend'), *sys.path]),
         SQLMODEL_HTTP_CHILD_SCHEMA=schema,
-        SQLMODEL_HTTP_CHILD_WORKLOAD=str(Path(__file__).with_name('sqlmodel_http_workload.py').resolve()))
+        SQLMODEL_HTTP_CHILD_WORKLOAD=str(Path(__file__).with_name('sqlmodel_http_workload.py').resolve()),
+        SQLMODEL_HTTP_CHILD_TENANT_WORKLOAD=str(Path(__file__).with_name('sqlmodel_http_tenant_workload.py').resolve()))
     with TemporaryDirectory(prefix='cryptalis-http-package-free-') as directory:
         empty = Path(directory) / 'empty'
         empty.mkdir()
         try:
             child = subprocess.run([sys.executable, '-B', '-I', '-c', _CHILD],
-                input=json.dumps(retained), env=environment, cwd=empty,
+                input=json.dumps({'retained': retained, 'retained_items': retained_items}), env=environment, cwd=empty,
                 capture_output=True, text=True, timeout=120)
         except subprocess.TimeoutExpired:
             raise AssertionError('Package-free HTTP restart timed out; diagnostics suppressed') from None
@@ -84,6 +92,9 @@ def run(copied, schema, retained):
     expected = {'native_http': 'passed', 'retained_latest': 'passed',
         'inactive_false': True, 'cryptalis_imported': False,
         'cryptalis_import_refused': True, 'smtp_exercised': False}
+    if retained_items is not None:
+        expected.update({'retained_item_http': 'passed', 'retained_item_count': len(retained_items['rows']),
+            'retained_item_owner_count': len(retained_items['accounts'])})
     try:
         observed = json.loads(child.stdout)
     except (ValueError, TypeError):

@@ -13,6 +13,16 @@ Rollback, deprotect, search changes, and key transformations reuse this path.
 
 ## Bounded online initial protection
 
+The [authenticated tenant HTTP journey](status.md#verified-continuation-checkpoint-2026-10-28)
+extends local P2 evidence to an unchanged original application's approved owner
+cohort. Source and actual-wheel runs stop the source cluster before initializing
+a distinct restore target, require explicit adoption, exercise all rotations,
+reverse the latest values and restart original HTTP with Cryptalis imports
+refused. Each restarted child reads the specific latest Items under original
+owner authentication. Dynamic tenant-policy provisioning is not implemented.
+These are local, public-fixture-custody observations, not production recovery or
+external fencing qualification.
+
 `cryptalis.online` captures native writes while it prepares an initial text protection plan. P1 requires each protected table to declare itself single-tenant. P2 accepts tenant-column tables with a host-approved tenant set. Tables without a tenant column retain their fixed table UUID scope. P1 behavior and format v1 remain unchanged. Every protected field must use `TEXT` or `VARCHAR`. The online path does not change the existing maintenance path.
 
 Select P2 by supplying `native_tenants` as a tuple of at most 1,024 unique UUID objects. The artifact stores the approved UUID strings in sorted order. The nil UUID is valid. An omitted tuple selects P1. P2's policy map contains exactly one policy for each approved tenant, including empty scopes, plus one fixed table UUID policy for each single-tenant table. UUIDs outside the approved native and fixed scope union fail before the host key resolver. A native row whose UUID matches a fixed scope can resolve that already approved policy before its native-scope refusal. It still cannot pass planning or locked admission. Lock tables and recheck all existing tenant values before journal creation or other DDL.

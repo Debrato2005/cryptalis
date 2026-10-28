@@ -10,6 +10,16 @@ Payload confidentiality depends on uncompromised application and key authority, 
 
 ## Online protection trust boundary
 
+The [owner-scoped HTTP checkpoint](status.md#verified-continuation-checkpoint-2026-10-28)
+keeps global account authentication native. Its explicit host adapter validates
+the original JWT/account authority before selecting an approved owner policy.
+Public owner metadata is authorized, then locked and rechecked before payload
+loading. Global administrator pages select exact public membership before scoped
+reads. Account cascades retain one transaction. These fixture-specific adaptations
+do not create dynamic tenant authority: a new owner without an approved policy
+receives 409 before key lookup. Production identity, policy publication, custody,
+writer exclusion and independent review remain separate requirements.
+
 **IMPLEMENTED, bounded:** initial online capture deliberately retains native
 plaintext in PostgreSQL. Confidentiality begins at the protected representation
 switch, not at capture start. The host must exclude owner and DDL writers while

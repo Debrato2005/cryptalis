@@ -110,6 +110,15 @@ Use deliberate generators/seeds and meaningful bounds, not arbitrary case-count 
 Tests passing once and high coverage do not establish production safety.
 
 Run focused checks that exercise the changed contract.
+The mandatory wrapper defaults to source binding for this checkout. Use
+`--installed-wheel PATH` only for the inspected artifact installed in the
+selected interpreter. Both qualification harnesses propagate that option.
+The wrapper records runtime root/module hashes, checks them before and after
+pytest, and refuses wrong-checkout, changed-runtime or unadmitted-origin results.
+`--runtime-binding-only` checks identity without database access or pytest.
+Fresh-cluster export/restore receipts live in that run's new private work
+directory. Archive the selected receipts explicitly; never archive private
+credential files or database dumps as routine public evidence.
 Broaden checks when failures, new changes or unresolved risks justify them.
 Record commands, versions, environment, outcomes, scope and limits.
 Do not label an unrun or unavailable check successful.

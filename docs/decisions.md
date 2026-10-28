@@ -4,6 +4,23 @@
 It does not preserve old IDs as implementation obligations. Historical dispositions remain in [archived revamp evidence](research/revamp-evidence.md).
 [Status](status.md) owns IMPLEMENTED/VERIFIED claims. All seven full gates remain UNKNOWN.
 
+## Runtime evidence and tenant host boundary: 2026-10-28
+
+Require test receipts to identify the code actually imported. Source mode binds
+the checkout; installed mode binds every Cryptalis Python module to the inspected
+wheel. Reject mismatches before pytest and changed identities afterward. Keep
+diagnostic modes mutually exclusive. Qualification receipts belong to one new
+private run directory so parallel profiles cannot race for global filenames.
+
+The original tenant HTTP fixture may use explicit host adapters while preserving
+all original source bytes. Authenticate the original global User first, require
+an approved owner cohort, then authorize and lock/recheck public Item metadata.
+The administrator uses one exact native metadata page and authorized scoped
+payload reads. Account cascades remain in one transaction. This is measured
+application-specific integration, not a new generic runtime or policy service.
+New-owner policy provisioning remains required work; explicit refusal does not
+complete it. Source/wheel E2E and agent reviews never promote production gates.
+
 ## Exact storage-only DATE candidate: 2026-10-27
 
 Extend the existing typed storage path with native DATE, without introducing

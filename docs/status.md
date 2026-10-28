@@ -10,6 +10,65 @@ No PostgreSQL/provider/runtime cell, production key provider, independent review
 VERIFIED below refers only to the named checks and their exact revisions.
 All other contract and promotion requirements are SPECIFIED. All seven full gates remain UNKNOWN.
 
+## Verified continuation checkpoint: 2026-10-28
+
+**VERIFIED, bounded source and installed cells:** the unchanged 26-file original
+HTTP application now has an owner-scoped Item journey through original JWT/account
+authentication, online capture, administrator pagination, transactional account
+cascades, all three rotations, genuinely fresh recovery and latest-data native
+exit. The host authenticates before selecting an approved owner, then locks and
+rechecks public owner metadata before payload access. Ordinary and administrator
+pages match their public count/order/offset/limit oracles. Both package-free
+children HTTP-read all nine specific latest Items through eight original owners.
+
+Original application bytes are unchanged; integration is not zero-change.
+The fixture replaces the request database dependency, adapts the administrator
+list handler and translates the exact account-cascade delete in one transaction.
+Global User authentication remains native. This profile protects Item title and
+description as storage-only fields. New accounts can authenticate, but new-owner
+Item writes refuse with 409 before key lookup. Dynamic tenant-policy provisioning
+remains unfinished product work. This is not complete arbitrary-signup SaaS adoption.
+
+The separate [HTTP dependency cell](../qualification/http/README.md) replaces the
+earlier Starlette pin and records exact transitive hashes. Python 3.13.5,
+FastAPI 0.162.0 and Starlette 1.10.0 pass the named journeys. The current upstream
+standard-extra/Sentry conflict is documented. Recorded PyPI fields contain no
+advisory entries, but raw retrieval receipts were not retained and OSV returned
+403. A complete dependency security audit remains UNKNOWN.
+
+The reproducible wheel has SHA-256
+`4af03c2cc3b265249be505c87fcef8d8134ee370414c9caa9c166a44d1439ea3`.
+All 50 release inputs match, 47 installed files and CLI inspection pass, and all
+43 runtime module bytes match. The actual wheel passes tenant and original HTTP
+source/fresh-restored phases, including original email equality/IN and rotations.
+It also passes DATE export/restore in both layouts. The TestClient deprecation
+warning remains. No public package was published.
+
+The mandatory wrapper now rejects a wrong source checkout or mismatched installed
+wheel before pytest. It checks candidate bytes before import, suppresses import
+diagnostics, rejects unadmitted loaded module origins, records runtime hashes
+and repeats their checks after pytest. Explicit `--installed-wheel` propagates
+through both qualification harnesses. All 35 affected wrapper controls pass.
+Parallel DATE runs exposed a global receipt-name collision; fresh qualification
+now stores receipts in each new private work directory. Both profiles pass together.
+
+The broad source attempt ended with pytest internal exit 3 after 2,218 passing
+calls and 18 passing subtests, with stable source and no ordinary failed-call
+report. Its final terminal trace was unavailable after executor reattachment;
+the cause remains UNKNOWN. The following recovery module passes three checks,
+and the remaining tail passes 615 with three call skips and four collection
+skips. The separate online matrix passes 18. These are explicit follow-up
+matrices; no clean full-suite pass is claimed and the incomplete receipt is retained.
+
+The [qualification boundary](_reset/release-continuation-boundary-20261028.json)
+binds exact archived receipts, source/runtime hashes, artifact bytes, dependency
+inputs and known failures. Scoped reviews and the final agent code review found
+no remaining actionable findings. Agent review does not supply independent human
+qualification. Advanced encrypted queries, additional type admission, dynamic
+tenant policies, production fencing/budgets, live KMS, independent review and
+controlled publication remain open. All 34 objectives remain in scope. All seven
+production gates remain UNKNOWN; this is a development checkpoint, not the release.
+
 ## DATE storage construction and lifecycle: 2026-10-27
 
 **VERIFIED, bounded local source candidate:** exact native Date/DATE mappings
