@@ -1,0 +1,106 @@
+{
+  "format": "cryptalis.current-ci/v1",
+  "verified_revision": "dd5ac01467712b2a2e451706b188bd53417eabb7",
+  "workflow_run": "https://github.com/Debrato2005/cryptalis/actions/runs/40955279799",
+  "failed_run_fixed": "https://github.com/Debrato2005/cryptalis/actions/runs/40947951794",
+  "fix_commit": "fa5045ab341339f36a50bc204c7dc94effd44155",
+  "source_artifact": {
+    "id": 12934690908,
+    "sha256": "133022676a81fca145e271443d7316d8222e4d2fabec489e73843980c1715373"
+  },
+  "release_artifact": {
+    "id": 12933141691,
+    "sha256": "5a538e4cf0a5cdf78f7bfd70b9d1d81b03ce4624dc64e1e44cd373d6f08b20ef"
+  },
+  "source": {
+    "counts": {
+      "passed": 3121,
+      "skipped": 12
+    },
+    "pytest_report_counts": {
+      "test_calls": {
+        "passed": 3103,
+        "skipped": 12
+      },
+      "subtest_calls": {
+        "passed": 18
+      },
+      "setup": {
+        "passed": 3115,
+        "skipped": 63
+      },
+      "teardown": {
+        "passed": 3178
+      },
+      "collection": {
+        "skipped": 16
+      },
+      "selected_items": 3178
+    },
+    "exit_code": 0,
+    "all_current_python_hashes_match": true,
+    "python_files": 280,
+    "source_role_checks": {
+      "passed": 6
+    }
+  },
+  "release": {
+    "outcome": "PASS",
+    "provider_and_doctor": 69,
+    "orm": 29,
+    "fresh_export": 1,
+    "fresh_restore": 1,
+    "artifacts": {
+      "cryptalis-0.1.0-py3-none-any.whl": "1d690b2ac227e6a4a7f3e196c9b3b1da4c95ac2793b675566e29ab647e6e5cd8",
+      "cryptalis-0.1.0.tar.gz": "9107628d51cd4646280cc6320a43af717629c680043f5740a90da9ecd4c9602a"
+    },
+    "artifacts_match_local_build": true
+  },
+  "archive": {
+    "path": "docs/_reset/github-current-receipts-20261030.tar.gz",
+    "sha256": "b92f9c8276f9057e3c860b5ac86e2e3f051529b7107a4898b9c68b04e7e23016",
+    "members": {
+      "release/install-receipt.json": "3532861c9adb489f4d6dea2dcc7bc987738b6e24df8ee7e311d6133752864577",
+      "release/installed-export-receipt.json": "275cfc5d309dd31d49bb988cb4960ed910ad6f779df0bb229779abe7de14a9d0",
+      "release/installed-journey-receipt.json": "def30196248ae18cb362d7eabf7a59e7c9d391cc472ca5277103b8b278de591e",
+      "release/installed-openbao-qualification.json": "456f725c8179221e58943fb451b909c34a990b9b11d147ce955fb149da84f515",
+      "release/installed-openbao-tests.json": "0ac9e7adf6c45bcf7434c8949bac201b64f266bdfbc10b9aed728c9399b7e04b",
+      "release/installed-restore-receipt.json": "4ae24cbef491ecd7fc5d2c1849b56fc2f50a8ea0c22c2d9da134a1c1178e46b6",
+      "release/installed-sqlmodel-receipt.json": "bb8c84dfe52c670899af5e9d9b1f4dd764534b37b6a50104163e6fecf478e4a3",
+      "release/job-status.json": "577c3c86cd56e33b4f427f76f1f33d5a12883e41c9c0f710520731d24598dd4f",
+      "release/release-receipt.json": "923637b92cebf5f2166f6fab8cf135e4d66c5df225e7e3d4a9dc9418dfae83f2",
+      "release/sbom.cdx.json": "2e0354915a122c0a01e2aa4613da4a4d15a2f27cd563469e5d4c433f37bb1e6c",
+      "release/status.json": "c4e23b58ef1487dc11585e353dcd31df16f4b1e29f7af5f01e48ba28fd5d30a4",
+      "source/admission.json": "86f99643f87543efc9e0c1e0e2c74606ed8657ea303a922576c54f7642f69d36",
+      "source/dependency-audit.json": "1c56bec0c2759391bf94903f7a683114ca2cd02d6ad3230b6d0def910fd8917a",
+      "source/job-status.json": "577c3c86cd56e33b4f427f76f1f33d5a12883e41c9c0f710520731d24598dd4f",
+      "source/qualification/source-receipt.json": "06b0b29952f7df9d990884c5d45eee28888d1cb8a129f7acfe6698a73384093e",
+      "source/qualification/status.json": "78d28b805f4cdf1420304168cc4d23d29dac877b13c1a91b1762c6dbf61872c4"
+    }
+  },
+  "production_gates": {
+    "G-ADAPTER": "UNKNOWN",
+    "G-CRYPTO": "UNKNOWN",
+    "G-QUERY": "UNKNOWN",
+    "G-LIFECYCLE": "UNKNOWN",
+    "G-PROVIDER": "UNKNOWN",
+    "G-POLICY": "UNKNOWN",
+    "G-RELEASE": "UNKNOWN"
+  },
+  "limits": [
+    "Default-suite optional/external skips remain explicit; no skipped cell is qualified.",
+    "Actual OpenBao evidence uses isolated local services; production controls and independent review remain open.",
+    "All 34 objectives remain in scope; this is a verified implementation checkpoint, not a production release."
+  ],
+  "dependency_audit": {
+    "audited_packages": 26,
+    "vulnerabilities": 0,
+    "adverse_statuses": 0
+  },
+  "workflow_completed_at": "2026-10-29T21:22:44Z",
+  "postgresql_installation_observed": {
+    "libpq5:amd64": "18.6-1.pgdg24.04+2",
+    "postgresql-16": "16.15-1.pgdg24.04+2",
+    "postgresql-client-16": "16.15-1.pgdg24.04+2"
+  }
+}
