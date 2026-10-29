@@ -3,6 +3,10 @@
 [Revamp evidence](revamp-evidence.md) records the current simplified architecture's experiments, decisions and incomplete goal requirements.
 [Prior art](../prior-art.md) links current primary sources. [Status](../status.md) owns runtime claims.
 
+[Key-provider selection](key-provider-selection.md) compares OpenBao, Vault,
+AWS, Google, Azure and development custody using official API, license and
+pricing evidence. It records the optional OpenBao implementation decision.
+
 [Metadata preservation and lock evolution](metadata-preservation-and-format-evolution.md)
 records verified catalog gaps and format-evolution options. It is research evidence, not an
 approved format or contract.

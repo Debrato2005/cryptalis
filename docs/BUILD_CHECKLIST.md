@@ -25,6 +25,12 @@ No objective is complete until its acceptance evidence and applicable gate pass.
 
 ## Current boundary
 
+- OpenBao Transit now implements the existing provider contract through an
+  optional SDK, with actual TLS/Transit and PostgreSQL lifecycle tests. The
+  affected selection passes 137 calls and sixteen artifact checks; installed
+  optional-service qualification and production provider controls remain open.
+  See the [checkpoint](status.md#openbao-transit-provider-2026-10-30).
+
 - Isolated verification accepts an explicit private credential directory and
   rejects unsafe files before every run. Sixteen checks and three real PostgreSQL
   role probes pass. Fresh recovery execution remains separate. See the

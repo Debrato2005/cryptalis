@@ -10,6 +10,42 @@ No PostgreSQL/provider/runtime cell, production key provider, independent review
 VERIFIED below refers only to the named checks and their exact revisions.
 All other contract and promotion requirements are SPECIFIED. All seven full gates remain UNKNOWN.
 
+## OpenBao Transit provider: 2026-10-30
+
+**IMPLEMENTED and VERIFIED, local integration only:** optional
+`OpenBaoTransitKeyProvider` uses hvac 2.4.0 and the unchanged KeyProvider/root-policy
+contract. It requires verified HTTPS, an explicit key version, safe Transit key
+metadata and a current token callback. It binds every root-context component as
+AAD and proves rewrap recovery before returning. See [setup](openbao.md) and
+[security](security.md#optional-openbao-transit-adapter).
+
+The [source receipt](_reset/openbao-source-20261030.json) records 137 passing calls,
+three PostgreSQL role probes and unchanged source/runtime hashes. Twelve calls
+use an actual OpenBao 2.7.2 service over verified TLS, with a private CA, single
+Raft node and separate admin/runtime tokens. They cover context forgery, wrong
+keys/providers/CA, corruption, privilege refusal, explicit-version rewrap and
+revocation, token replacement, async cancellation, and real PostgreSQL
+protect/search/edit/NULL-preserving decrypt-back/removal. Other calls protect
+SDK-response, CF1, existing AWS and fork boundaries.
+
+Sixteen offline artifact checks pass. The [artifact receipt](_reset/openbao-release-20261030.json)
+records reproducible wheel/sdist hashes, 46 packaged modules and optional-extra
+metadata. Its SBOM covers the default dependency set only; installed optional
+qualification and its SBOM remain pending. A precise URL-parser import exception
+keeps the existing import review gate while refusing network-import variants.
+An initial test selection used a nonexistent filename; a later receipt-name
+collision prevented evidence retention after passing calls. The final run uses
+a new receipt path and completes successfully. Neither failed run is counted as
+a successful retained check.
+
+The [provider comparison](research/key-provider-selection.md) retains AWS as
+optional, selects OpenBao for local no-cloud-fee integration and defers additional
+cloud adapters until a live authorized cell and requirement justify them. No
+cloud resources were provisioned. This local service is not a hardened production
+deployment. Availability, service backup/recovery, workload authentication,
+auditing, destruction and independent security review remain unqualified.
+All 34 objectives remain in scope and all seven production gates remain UNKNOWN.
+
 ## Isolated verification configuration: 2026-10-30
 
 **VERIFIED, test infrastructure:** `CRYPTALIS_TEST_CONFIG_DIR` selects an absolute
