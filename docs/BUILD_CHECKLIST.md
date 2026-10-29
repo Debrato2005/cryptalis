@@ -25,6 +25,11 @@ No objective is complete until its acceptance evidence and applicable gate pass.
 
 ## Current boundary
 
+- Isolated verification accepts an explicit private credential directory and
+  rejects unsafe files before every run. Sixteen checks and three real PostgreSQL
+  role probes pass. Fresh recovery execution remains separate. See the
+  [checkpoint](status.md#isolated-verification-configuration-2026-10-30).
+
 - The release-continuation and single-tenant UPDATE branches are consolidated
   with both test/evidence families retained. The merged source passes 364 calls
   with seven call and four collection skips; reproducible artifacts and the

@@ -10,6 +10,19 @@ No PostgreSQL/provider/runtime cell, production key provider, independent review
 VERIFIED below refers only to the named checks and their exact revisions.
 All other contract and promotion requirements are SPECIFIED. All seven full gates remain UNKNOWN.
 
+## Isolated verification configuration: 2026-10-30
+
+**VERIFIED, test infrastructure:** `CRYPTALIS_TEST_CONFIG_DIR` selects an absolute
+private credential directory without changing the process home. All wrapper modes
+now reject unsafe credential files through the opened inode before database access.
+CI and fresh-recovery callers pass the directory explicitly. Sixteen checks pass
+through the mandatory wrapper against an operator-authorized isolated PostgreSQL
+16 container with separate restricted owner/runtime/source roles. The
+[receipt](_reset/private-config-directory-20261030.json) records unchanged source
+and three successful probes. The fresh recovery harness was updated but not run
+in this slice; local PostgreSQL command-line tools remain unavailable.
+No product capability or production gate is promoted.
+
 ## Verified branch consolidation: 2026-10-30
 
 **VERIFIED, bounded local merge regression:** consolidate `2291ce9` from the

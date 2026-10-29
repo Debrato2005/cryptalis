@@ -23,6 +23,14 @@ database DDL or credential, service, ownership, or policy change.
 The operator must still authorize the configured target as disposable.
 `target_authorization` therefore remains UNKNOWN even when prerequisites pass.
 
+Set `CRYPTALIS_TEST_CONFIG_DIR` to an absolute private directory when credentials
+must remain outside the home directory. The default remains the home directory.
+Both modes read the same named private URL files and clear inherited URL values.
+Every test invocation rejects symlinks, nonregular files, other-owner files,
+group/world permissions, empty files and files larger than 64 KiB before probing.
+The CI and fresh-cluster harnesses select their private directory explicitly;
+they do not change `HOME`.
+
 Results identify automatically repairable tool discovery, an authorized
 alternative, an external prerequisite, or an implementation defect.
 A read-only Git mount or denied socket creation can
