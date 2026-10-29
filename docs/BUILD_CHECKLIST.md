@@ -25,6 +25,13 @@ No objective is complete until its acceptance evidence and applicable gate pass.
 
 ## Current boundary
 
+- The complete source baseline at `ff7dfe1` passes 2,997 test calls and eighteen
+  subtests, with all 75 skips explicit and exact committed Python hashes checked.
+  Later fixed-scope DML has separate affected/installed evidence below.
+  Live KMS test access and independent human review are not arranged, as confirmed
+  by the user. They remain external blockers; all 34 objectives and seven gates
+  retain their requirements. See the [regression boundary](status.md#continuation-regression-and-remaining-release-work-2026-10-29).
+
 - Explicit single-tenant tables now accept single-record mapped DELETE under
   fixed table-UUID authority. Native row counts, ORM state, rollback, savepoints,
   current-value exit and record/driver mutation refusals pass six focused checks.
