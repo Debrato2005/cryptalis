@@ -1,7 +1,50 @@
-"""Pre-adoption diagnostics through the existing read-only schema compiler."""
+"""Bounded schema, query and explicitly requested cold-key diagnostics."""
 
 from .manifest.compiler import InspectionUnavailable, PlanningRejected, compile_protection
 from .manifest.parser import ManifestInvalid
+
+
+def check_keys(keyrings=()):
+    """Observe cold access for at most 16 supplied Keyrings; no database access.
+
+    No roots, wrapper identities or underlying exception text enter the report.
+    Caller caches and their lease deadlines are unchanged. A successful check
+    establishes access only at observation time, not complete provider health.
+    """
+    from .crypto.keys import Keyring
+
+    report = {
+        'format': 'cryptalis.doctor/v1', 'scope': 'cold_provider_access',
+        'status': 'UNKNOWN', 'effects': 'NONE', 'cache': 'BYPASSED',
+        'checks': {name: 'UNKNOWN' for name in (
+            'cold_key_preparation', 'frame_authentication', 'runtime_deployment',
+            'host_authority', 'recovery_capacity', 'production_custody')},
+        'items': [], 'issues': [],
+    }
+    if (type(keyrings) is not tuple or len(keyrings) > 16
+            or any(type(ring) is not Keyring for ring in keyrings)):
+        report['status'] = report['checks']['cold_key_preparation'] = 'FAIL'
+        report['issues'].append({'code': 'Provider.InvalidKeyrings', 'location': 'keyrings',
+            'remedy': 'Supply a tuple of at most 16 Keyring instances from trusted host policy.'})
+        return report
+    if keyrings:
+        report['effects'] = 'PROVIDER_ACCESS'
+    for index, ring in enumerate(keyrings):
+        try:
+            ring.check_access()
+        except Exception:
+            state = 'FAIL'
+            report['issues'].append({'code': 'Provider.KeyUnavailable', 'location': f'keyrings[{index}]',
+                'remedy': 'Check provider access, credentials and the exact wrapped-root policy, then repeat diagnosis.'})
+        else:
+            state = 'PASS'
+        report['items'].append({'index': index, 'status': state})
+    if keyrings:
+        failed = any(item['status'] == 'FAIL' for item in report['items'])
+        report['checks']['cold_key_preparation'] = 'FAIL' if failed else 'PASS'
+        if failed:
+            report['status'] = 'FAIL'
+    return report
 
 
 def _query_samples(report, plan, mapping, engine, queries):

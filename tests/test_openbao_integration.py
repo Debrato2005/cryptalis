@@ -176,6 +176,53 @@ def test_token_revocation_refuses_cold_access_and_renewal_callback_recovers(live
     assert p.unwrap(wrapper, CONTEXT) == ROOT
 
 
+def test_doctor_observes_revocation_despite_warm_cache_and_cli_recovers(live, tmp_path):
+    from cryptalis.doctor import check_keys
+    from test_doctor_provider import invoke
+    s = live.service
+    token = s.admin.auth.token.create(policies=[s.mount], no_default_policy=True, ttl='5m')['auth']['client_token']
+    current = [token]
+    p = live.make(token=lambda: current[0])
+    wrapper = p.wrap(ROOT, CONTEXT)
+    ring = Keyring(KeyPolicy(CONTEXT.domain_id, CONTEXT.tenant_id, (wrapper,), 1), {p.provider_id: p})
+    ring.prepare()
+    cache = dict(ring._cache)
+    assert check_keys((ring,))['checks']['cold_key_preparation'] == 'PASS'
+    configuration = tmp_path / 'private-provider.json'
+    values = dict(endpoint=s.config['endpoint'], ca_cert=s.config['ca_cert'], token=token,
+                  mount=s.mount, key_name=live.name, sealed=wrapper.sealed.decode('ascii'))
+    configuration.write_text(json.dumps(values))
+    configuration.chmod(0o600)
+    body = f'''
+import json
+from pathlib import Path
+from uuid import UUID
+from cryptalis.crypto import KeyContext, KeyPolicy, Keyring, WrappedRoot
+from cryptalis.crypto.openbao import OpenBaoTransitKeyProvider
+def context():
+    config = json.loads(Path({str(configuration)!r}).read_text())
+    token, sealed = config.pop('token'), config.pop('sealed')
+    p = OpenBaoTransitKeyProvider(**config, token=lambda: token, provider_id=UUID(int=908), key_version=1)
+    c = KeyContext(UUID(int=1), UUID(int=4), 'payload', UUID(int=907), 1)
+    w = WrappedRoot(p.provider_id, c, sealed.encode('ascii'))
+    return (Keyring(KeyPolicy(c.domain_id, c.tenant_id, (w,), 1), {{p.provider_id: p}}),)
+'''
+    assert invoke(tmp_path, body).returncode == 0
+    s.admin.auth.token.revoke(token)
+    assert ring.prepare()  # Still inside the application's original bounded lease.
+    assert check_keys((ring,))['checks']['cold_key_preparation'] == 'FAIL'
+    refused = invoke(tmp_path, body)
+    assert refused.returncode == 4 and refused.stdout == ''
+    assert json.loads(refused.stderr)['error']['checks']['cold_key_preparation'] == 'FAIL'
+    assert token not in refused.stderr and wrapper.sealed.decode('ascii') not in refused.stderr
+    current[0] = s.token
+    values['token'] = s.token
+    configuration.write_text(json.dumps(values))
+    assert invoke(tmp_path, body).returncode == 0
+    assert check_keys((ring,))['checks']['cold_key_preparation'] == 'PASS'
+    assert ring._cache == cache
+
+
 def test_cancellation_does_not_publish_late_keys(live):
     p = live.provider
     wrapper = create_root(p, CONTEXT)

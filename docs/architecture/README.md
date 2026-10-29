@@ -680,6 +680,16 @@ health stay UNKNOWN. Known unsupported samples produce a FAIL with safe indexes
 and remedies. This check supplies no deployment or migration authority. See the
 [installed checkpoint](../status.md#installed-application-query-diagnostics-2026-10-24).
 
+An explicitly separate `doctor --provider-context MODULE:FACTORY` mode accepts a
+trusted synchronous factory returning at most 16 Keyrings in a tuple.
+`doctor.check_keys` performs cold preparation of every supplied policy through
+the existing provider contract. It uses temporary keyrings, preserves caller
+caches and lease deadlines, and has no database connection. Only
+`cold_key_preparation` can pass; frame integrity, runtime admission, host
+authority, recovery and production custody remain UNKNOWN. Empty input remains
+UNKNOWN; invalid input refuses before provider dispatch. No diagnostic grants
+runtime or lifecycle authority. The schema and ACTIVE modes remain key-free.
+
 The initial `plan` and protection `apply` commands have the bounded
 [operational contract](#operational-protection-cli). The
 [reverse/removal extension](#reverse-and-removal-cli) and
