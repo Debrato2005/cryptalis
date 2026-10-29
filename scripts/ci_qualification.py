@@ -1,6 +1,7 @@
 """Compose existing CI checks; stage named public evidence, never cluster files.
 
-Both modes use disposable local PostgreSQL 16 and public fixture roots only.
+Both modes use disposable local PostgreSQL 16. Release also creates an isolated
+OpenBao service whose keys and private files never enter public evidence.
 This helper does not publish artifacts or qualify a production release gate.
 """
 import argparse
@@ -70,6 +71,7 @@ class Qualification:
         artifacts = self.workdir / 'artifacts'
         self.run('reproducible wheel sdist SBOM inspection', [sys.executable,
             'scripts/release_check.py', '--output', str(artifacts),
+            '--extra', 'openbao', '--extra', 'sqlmodel',
             '--receipt', str(self.workdir / 'release.json')])
         wheels = list(artifacts.glob('cryptalis-*.whl'))
         if len(wheels) != 1:
@@ -125,6 +127,9 @@ class Qualification:
                     or receipt['runtime_binding']['mode'] != 'installed-wheel'
                     or receipt['runtime_binding']['wheel_sha256'] != digest):
                 raise CheckFailed(1)
+            self.run('installed OpenBao TLS outage and PostgreSQL lifecycle', [str(python),
+                'scripts/openbao_qualification.py', '--workdir', str(self.workdir / 'openbao'),
+                '--installed-wheel', str(wheel)], environment=environment)
             self.run('installed keyword public-slot genuine fresh recovery', [str(python),
                 'scripts/fresh_cluster_qualification.py', '--workdir', str(self.workdir / 'fresh'),
                 '--integer', '32', '--column-name', 'integer', '--public-slots',
@@ -154,6 +159,8 @@ class Qualification:
                 ('source/receipt.json', 'source-receipt.json'),
                 ('release.json', 'release-receipt.json'), ('install.json', 'install-receipt.json'),
                 ('installed-sqlmodel-receipt.json', 'installed-sqlmodel-receipt.json'),
+                ('openbao/tests.json', 'installed-openbao-tests.json'),
+                ('openbao/qualification.json', 'installed-openbao-qualification.json'),
                 ('fresh/export-receipt.json', 'installed-export-receipt.json'),
                 ('fresh/restore-receipt.json', 'installed-restore-receipt.json'),
                 ('fresh/integer-32-journey-receipt.json', 'installed-journey-receipt.json')):

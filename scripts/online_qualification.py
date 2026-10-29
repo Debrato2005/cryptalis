@@ -61,7 +61,7 @@ def main():
         command = [sys.executable,str(root/'scripts/test_postgres.py'),*runtime_options,'--source-role',
                    '--scope','Isolated PostgreSQL 16 online protection: three authenticated roles',
                    '--receipt',str(source/'receipt.json'),'--',*selected]
-        environment = dict(os.environ,HOME=str(home),CRYPTALIS_ONLINE_RESTORE_DATABASE='cryptalis_online_native')
+        environment = dict(os.environ,CRYPTALIS_TEST_CONFIG_DIR=str(home),CRYPTALIS_ONLINE_RESTORE_DATABASE='cryptalis_online_native')
         if args.http or fresh:
             environment[report_variable] = str(source/'application.json')
         if fresh:
@@ -92,7 +92,7 @@ def main():
                    '--scope','Fresh-cluster online HTTP restore, adopted rotations and native exit: three authenticated roles',
                    '--receipt',str(restored/'receipt.json'),'--',
                    'tests/profile_sqlmodel_http_tenant_restore.py' if args.tenant_http_fresh else 'tests/profile_online_http_restore.py','-q']
-        environment = dict(os.environ, HOME=str(home), **{backup_variable: str(backup),
+        environment = dict(os.environ, CRYPTALIS_TEST_CONFIG_DIR=str(home), **{backup_variable: str(backup),
                            report_variable: str(restored/'application.json')})
         return subprocess.run(command,cwd=root,env=environment).returncode
     finally:
