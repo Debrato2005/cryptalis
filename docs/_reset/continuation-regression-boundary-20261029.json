@@ -1,0 +1,92 @@
+{
+  "format": "cryptalis.continuation-regression/v1",
+  "verified_commit": "ff7dfe1054b2aad2a460359ca22fe5e36aedb4f0",
+  "commit_binding": {
+    "all_python_receipt_hashes_match": true,
+    "files": 272
+  },
+  "archive": {
+    "path": "docs/_reset/continuation-regression-receipts-20261029.tar.gz",
+    "sha256": "759c0359c07354103c612b525c60ca9998d24a63733349bcb2df5875f3aecbe3",
+    "members": {
+      "source/receipt.json": "cd7a721d0a716128dfe35e853d1ec96bcc939487bf3f375192ec9c5e87f73faf",
+      "source/status.json": "ab287df6c0b07df1fa45bee8dfe6be75e5672c1e4c12f716466af1d8da33cf23"
+    }
+  },
+  "source": {
+    "base_revision": "6711f0f5c09a24ac1cfdf51837c95bb4b5bbd4c5",
+    "fixing_revision": "worktree-299894720ec62dc6",
+    "counts": {
+      "passed": 3015,
+      "skipped": 12
+    },
+    "pytest_report_counts": {
+      "test_calls": {
+        "passed": 2997,
+        "skipped": 12
+      },
+      "subtest_calls": {
+        "passed": 18
+      },
+      "setup": {
+        "passed": 3009,
+        "skipped": 47
+      },
+      "teardown": {
+        "passed": 3056
+      },
+      "collection": {
+        "skipped": 16
+      },
+      "selected_items": 3056
+    },
+    "source_stability": {
+      "unchanged": true,
+      "changed_paths": []
+    },
+    "runtime_binding": {
+      "mode": "source",
+      "runtime_root": "/workspace/cryptalis/src/cryptalis",
+      "module_count": 45,
+      "modules_sha256": "cd1b0a8df5a037376fb7ed8c3abcfda2f3cf2cb71e18f0dcde3b699f42cb6703",
+      "wheel": null,
+      "wheel_sha256": null
+    },
+    "runtime_binding_stability": {
+      "unchanged": true,
+      "after": {
+        "mode": "source",
+        "runtime_root": "/workspace/cryptalis/src/cryptalis",
+        "module_count": 45,
+        "modules_sha256": "cd1b0a8df5a037376fb7ed8c3abcfda2f3cf2cb71e18f0dcde3b699f42cb6703",
+        "wheel": null,
+        "wheel_sha256": null
+      }
+    },
+    "exit_code": 0,
+    "elapsed_seconds": 1493.29835697
+  },
+  "later_deltas": [
+    {
+      "commit": "f7514b942ba4a13dbab0c4a884123f911a942b2e",
+      "boundary": "docs/_reset/single-tenant-update-boundary-20261029.json",
+      "source_passed": 216,
+      "source_call_skips": 4
+    },
+    {
+      "commit": "a343bf27190a6cc35cd920f1b3fc62a3fdf433b9",
+      "boundary": "docs/_reset/single-tenant-delete-boundary-20261029.json",
+      "source_passed": 140,
+      "installed_passed": 29
+    }
+  ],
+  "external_prerequisites": {
+    "live_kms_test_account": "NOT ARRANGED: user confirmed 2026-10-29",
+    "independent_human_security_reviewer": "NOT ARRANGED: user confirmed 2026-10-29"
+  },
+  "limits": [
+    "The complete source run binds exactly to the async-bridge commit; the two later DML changes have separate affected and installed evidence.",
+    "All seven production gates remain UNKNOWN.",
+    "Range/order/text/structured-data and broader SQL objectives remain incomplete."
+  ]
+}

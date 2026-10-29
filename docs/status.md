@@ -10,6 +10,31 @@ No PostgreSQL/provider/runtime cell, production key provider, independent review
 VERIFIED below refers only to the named checks and their exact revisions.
 All other contract and promotion requirements are SPECIFIED. All seven full gates remain UNKNOWN.
 
+## Continuation regression and remaining release work: 2026-10-29
+
+**VERIFIED, complete default source corpus at `ff7dfe1`:** 2,997 test calls and
+eighteen subtests pass; twelve call skips, 47 setup skips and sixteen collection
+skips remain explicit. All 3,056 selected items complete. All three role probes
+and source/runtime stability checks pass. Independent comparison binds every
+one of the receipt's 272 Python hashes to that committed async-bridge source.
+The artifact-integrity and offline rewrap checks also pass. The
+[retained boundary](_reset/continuation-regression-boundary-20261029.json)
+records the exact counts, receipts and commit comparison.
+
+This full run precedes the fixed-scope UPDATE and DELETE changes. Their separate
+affected selections pass 216 checks with four skips and 140 checks without skips;
+the combined installed route/bridge selection passes 29 checks without skips.
+Their boundaries below retain code hashes, native oracles, failure controls and
+actual installed fresh recovery. Do not relabel the earlier complete run as
+verification of those later changes.
+
+All 34 objectives remain in scope. The user confirmed that no live KMS test
+account or independent human security reviewer is arranged. Those external
+qualification prerequisites remain blocked; no local test replaces them.
+Range/ordering, text search, structured data, broader SQL and the remaining
+performance/lifecycle qualification are still incomplete. All seven production
+gates remain UNKNOWN.
+
 ## Single-tenant mapped single-record DELETE: 2026-10-29
 
 **IMPLEMENTED, bounded PostgreSQL 16.15 source verification:** explicitly
