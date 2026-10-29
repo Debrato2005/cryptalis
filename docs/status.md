@@ -10,6 +10,47 @@ No PostgreSQL/provider/runtime cell, production key provider, independent review
 VERIFIED below refers only to the named checks and their exact revisions.
 All other contract and promotion requirements are SPECIFIED. All seven full gates remain UNKNOWN.
 
+## Current complete CI qualification
+
+**VERIFIED at `dd5ac01467712b2a2e451706b188bd53417eabb7`:** GitHub
+[run 40955279799](https://github.com/Debrato2005/cryptalis/actions/runs/40955279799)
+completed successfully on 2026-10-29 UTC. Both Source / PostgreSQL 16 and
+Reproducible artifacts / installed recovery passed. This supersedes the pending
+full-suite status in the implementation checkpoints below.
+
+The complete default source run passes 3,103 test calls and eighteen subtests.
+Twelve call skips, 63 setup skips and sixteen collection skips remain explicit;
+all 3,178 selected items complete. All six source-role wrapper checks pass,
+resolving the three fixture failures in run 40947951794 at `2d53867`.
+Three role probes, all 280 current Python hashes, source stability and imported
+runtime stability pass. The [retained CI boundary](_reset/github-current-boundary-20261030.json)
+includes the actual source and installed receipts, with archive digests verified
+against GitHub artifact metadata. No skipped cell is treated as qualified.
+
+The installed wheel passes 69 OpenBao/provider/Doctor checks, 29 ORM controls,
+one export and one genuine fresh PostgreSQL recovery. Both the local environment
+and GitHub runner produce identical wheel and sdist hashes. Selected-extra SBOM,
+installed file/CLI inspection and dependency consistency pass. The frozen audit
+reports 26 packages, no known vulnerabilities and no adverse statuses. This
+does not establish absence of unknown vulnerabilities or independent review.
+
+The credentials fixture fix is `fa5045a`; OpenBao, operational qualification,
+cold-provider Doctor and independent snapshot recovery are committed and pushed.
+The final evidence update changes documentation only, with all tested executable
+hashes preserved. Earlier interrupted/cancelled runs remain incomplete evidence.
+
+The 34-objective [ledger](BUILD_CHECKLIST.md#objective-ledger) retains seven
+bounded VERIFIED entries, 23 PARTIAL entries, one SPECIFIED, one BLOCKED, one
+IMPLEMENTED and one ONGOING. These are implementation labels, not production
+completion. Remaining work includes simpler manifest/host integration, broader
+ORM/query/type coverage and lower-leakage research, complete static/dynamic route
+inventory, versioned upgrades, authenticated deployment/failover authority,
+retained-backup obligations and controlled destruction, production provider
+identity/audit/HA, combined disaster drills, and performance acceptance.
+Independent human review remains unavailable; selected live cloud cells need
+authorized accounts. All 34 objectives stay in scope and all seven production
+gates remain UNKNOWN.
+
 ## Independent OpenBao snapshot recovery: 2026-10-30
 
 **VERIFIED, isolated source and installed cells:** the provider qualification

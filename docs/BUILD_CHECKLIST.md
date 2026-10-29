@@ -25,6 +25,14 @@ No objective is complete until its acceptance evidence and applicable gate pass.
 
 ## Current boundary
 
+- Complete GitHub source and release jobs pass at `dd5ac01`: 3,103 test calls
+  plus eighteen subtests, with all 91 collection/setup/call skips explicit;
+  69 installed provider/Doctor and 29 ORM controls; genuine fresh PostgreSQL
+  export/recovery; matching local/GitHub artifacts and a clean frozen audit.
+  All 280 Python hashes match. This resolves the `2d53867` CI failure and
+  supersedes pending full-suite statements below. See the
+  [current CI boundary](status.md#current-complete-ci-qualification).
+
 - Independent OpenBao snapshot recovery now passes with the source stopped and
   a new TLS/storage target. Source and installed provider/Doctor selections each
   pass 69 checks; artifact, installed ORM and separate fresh PostgreSQL recovery
