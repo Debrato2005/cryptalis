@@ -72,7 +72,7 @@ def test_local_restriction_stops_before_database_probe(monkeypatch, capsys, rest
 @pytest.mark.parametrize('fault', ['permissions', 'symlink', 'different_target'])
 def test_unsafe_test_configuration_refuses_without_connection(monkeypatch, capsys, tmp_path, fault):
     module = runner(monkeypatch)
-    original_home = Path.home()
+    original_home = module.configuration_directory()
     for name in module.FILES:
         path = tmp_path / name
         path.write_bytes((original_home / name).read_bytes())
@@ -88,7 +88,7 @@ def test_unsafe_test_configuration_refuses_without_connection(monkeypatch, capsy
             'postgresql+psycopg://', 'postgresql://', 1))
         values['dbname'] = 'PUBLIC_WRONG_TEST_TARGET'
         path.write_text(module.make_conninfo(**values))
-    monkeypatch.setattr(Path, 'home', classmethod(lambda cls: tmp_path))
+    monkeypatch.setenv(module.CONFIG_DIRECTORY, str(tmp_path))
     # Keep build-tool discovery independent of the temporary private-file HOME.
     monkeypatch.setenv('PATH', str(original_home / '.local/bin') + os.pathsep + os.environ['PATH'])
     monkeypatch.setattr(psycopg, 'connect', lambda *a, **k: pytest.fail('unsafe configuration connected'))
@@ -96,6 +96,48 @@ def test_unsafe_test_configuration_refuses_without_connection(monkeypatch, capsy
     document = report(capsys)
     assert document['checks']['test_configuration']['status'] == 'FAIL'
     assert document['checks']['test_configuration']['classification'] == 'external_prerequisite'
+
+
+@pytest.mark.parametrize('fault', ['permissions', 'symlink', 'fifo', 'empty', 'oversized', 'relative'])
+def test_ordinary_test_run_also_rejects_unsafe_private_files(monkeypatch, capsys, tmp_path, fault):
+    module = runner(monkeypatch)
+    monkeypatch.setattr(sys, 'argv', ['test_postgres.py', '--preflight-only'])
+    for name, value in zip(module.FILES, PRIVATE_URLS):
+        path = tmp_path / name
+        path.write_text(value)
+        path.chmod(0o600)
+    path = tmp_path / module.FILES[0]
+    if fault == 'permissions':
+        path.chmod(0o640)
+    elif fault in ('symlink', 'fifo'):
+        path.unlink()
+        if fault == 'symlink':
+            path.symlink_to(tmp_path / module.FILES[1])
+        else:
+            os.mkfifo(path, 0o600)
+    elif fault == 'empty':
+        path.write_text('  ')
+    elif fault == 'oversized':
+        path.write_bytes(b'x' * 65537)
+    monkeypatch.setenv(module.CONFIG_DIRECTORY, '.' if fault == 'relative' else str(tmp_path))
+    monkeypatch.setattr(psycopg, 'connect', lambda *a, **k: pytest.fail('unsafe configuration connected'))
+    assert module.main() == 2
+    output = capsys.readouterr().out
+    assert all(value not in output for value in PRIVATE_URLS)
+
+
+def test_explicit_private_directory_keeps_home_and_probes_both_roles(monkeypatch, capsys, tmp_path):
+    module = runner(monkeypatch)
+    original_home = Path.home()
+    for name, value in zip(module.FILES, PRIVATE_URLS):
+        path = tmp_path / name
+        path.write_text(value)
+        path.chmod(0o600)
+    monkeypatch.setenv(module.CONFIG_DIRECTORY, str(tmp_path))
+    assert module.main() == 0
+    document = report(capsys)
+    assert document['checks']['restricted_roles']['status'] == 'PASS'
+    assert Path.home() == original_home
 
 
 def test_connection_failure_is_classified_without_raw_exception_text(monkeypatch, capsys):

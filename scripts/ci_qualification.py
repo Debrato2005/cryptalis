@@ -110,7 +110,7 @@ class Qualification:
                         'database': 'cryptalis_ci'}
             credentials = provision(port, password, manifest, manifest['database'] + '_native')
             home = write_home(primary, port, manifest, credentials, source_database=manifest['database'])
-            environment = dict(os.environ, HOME=str(home), PYTHONPATH='')
+            environment = dict(os.environ, CRYPTALIS_TEST_CONFIG_DIR=str(home), PYTHONPATH='')
             self.run('installed SQLModel bridges and fixed-scope DML', [str(python),
                 'scripts/test_postgres.py', '--installed-wheel', str(wheel), '--source-role',
                 '--scope', 'Installed SQLModel bridges and single-tenant UPDATE/DELETE with native lifecycle and failure controls',

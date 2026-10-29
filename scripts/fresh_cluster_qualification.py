@@ -4,9 +4,9 @@ Step 1 runs ``tests/test_fresh_cluster_export.py`` against the primary test
 cluster and writes a plaintext dump, a protected dump, and a manifest.
 Step 2 initializes a new PostgreSQL 16 cluster, creates same-named roles and
 databases, and runs ``tests/test_fresh_cluster_restore.py`` through
-``scripts/test_postgres.py`` with a temporary HOME credential pair.
+``scripts/test_postgres.py`` with an explicit private credential directory.
 Both pytest runs use the mandatory credential wrapper. Passwords stay in the
-temporary HOME and never appear in output.
+private directory and never appear in output.
 
 Usage: .venv/bin/python scripts/fresh_cluster_qualification.py [--workdir PATH]
 """
@@ -377,7 +377,7 @@ def main():
                               else 'tests/test_adopted_rewrap.py' if args.adopted_rewrap
                               else 'tests/test_restore_lease_fresh.py' if args.restore_lease
                               else 'tests/test_fresh_cluster_restore.py'),
-                             {'HOME': str(home), 'CRYPTALIS_FRESH_CLUSTER_DIR': str(workdir),
+                             {'CRYPTALIS_TEST_CONFIG_DIR': str(home), 'CRYPTALIS_FRESH_CLUSTER_DIR': str(workdir),
                               'CRYPTALIS_FRESH_INTEGER_BITS': str(args.integer or 0),
                               'CRYPTALIS_FRESH_COLUMN_NAME': args.column_name,
                               'CRYPTALIS_FRESH_DATE': '1' if args.date else '0',

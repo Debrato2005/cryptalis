@@ -738,7 +738,7 @@ def retained_status_after_removal(source, reverse, pin, owner, tmp_path, monkeyp
     plan_path, pin_path = tmp_path / 'removed-plan.json', tmp_path / 'removed-pin.json'
     plan_path.write_bytes(reverse.artifact)
     pin_path.write_text(json.dumps(asdict(pin), default=str))
-    runtime_file = Path.home() / '.cryptalis-test-runtime-url'
+    runtime_file = Path(os.environ.get('CRYPTALIS_TEST_CONFIG_DIR', Path.home())) / '.cryptalis-test-runtime-url'
     assert runtime_file.is_file()
     table = f'"{SCHEMA}".customer'
     with owner.connect() as connection:
