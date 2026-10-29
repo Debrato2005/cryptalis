@@ -72,7 +72,7 @@ Rollback/removal transforms current data through decrypt-back until explicit fin
 | Mapped dictionary INSERT without RETURNING | SUPPORTED | Attached sync/async `Session.execute(insert(Model), list[dict])`, explicit typed IDs and tenant scope, copied attribute dictionaries, native NULL/grouping, autoflush, uniqueness and transaction behavior. Other bulk routes remain unadmitted |
 | Mapped dictionary INSERT with RETURNING | SUPPORTED | Native direct-column tuples/scalars and inserted mapped entities, including public-only columns. Preserve result keys/types, grouping, paging and optional input ordering. Entity results retain identity-map loading and refresh. Authenticate each protected output against its own exact prepared input. Label/expression/alias, loader-option and caller return_defaults forms remain unadmitted |
 | Scoped mapped dictionary UPDATE | SUPPORTED | Attached sync/async admitted storage types, typed IDs, nonempty list of dictionaries and synchronize_session=False. Tenant-column tables require explicit tenant equality. Declared single-tenant tables use the fixed table UUID and no caller WHERE. Preserve native omission/NULL, grouping, repeated IDs, row-count checks and transactions. Core and RETURNING routes remain unadmitted |
-| Scoped mapped single-record DELETE | SUPPORTED | Attached sync/async execute, exact typed tenant and application-record equalities, no external parameters or RETURNING, and synchronize_session=False. Preserve native row counts and transactions. Unsupported custom AST classes refuse before execution |
+| Scoped mapped single-record DELETE | SUPPORTED | Attached sync/async execute, exact typed record equality and either tenant equality or explicit fixed table-UUID scope. No external parameters or RETURNING; require synchronize_session=False. Preserve native row counts and transactions. Unsupported custom AST classes refuse before execution |
 | Unprotected-table mapped DELETE | SUPPORTED | One physical table mapped in the attached registry, with no protected fields. Native equality/AND predicates with fixed typed literals only. Default/auto/evaluate/False synchronization. No Core, RETURNING, fetch synchronization or custom AST |
 | Equality `==` and `IN` | SUPPORTED | Declared full tenant/domain-bound HMAC term. Preserve typed binds and native NULL/empty-list truth tables |
 | Simple negative equality `!=`, `NOT IN`, and NULL presence | SUPPORTED | Reuse the authenticated term for values and a SQL NULL check for storage-only fields. Preserve native three-valued truth, NULL elements, empty lists, and outer-join NULL extension. General Boolean NOT remains unadmitted |
@@ -95,11 +95,12 @@ Rollback/removal transforms current data through decrypt-back until explicit fin
 For mapped bulk UPDATE, use `update(Model).where(Model.tenant_id == tenant)`
 with `execution_options={"synchronize_session": False}` and typed IDs in each
 input dictionary. The single predicate must be direct typed tenant equality.
-For a declared single-tenant table, use `update(Model)` without a caller WHERE
-predicate and open the attached session with the manifest's table UUID.
-SQLAlchemy supplies the primary-key predicate. Missing records retain native
-`StaleDataError` row-count checks; they do not inherit the tenant-filtered route's
-zero-match behavior. See the [single-tenant checkpoint](status.md#single-tenant-mapped-update-2026-10-29).
+For an explicitly single-tenant table, use bare `update(Model)` with the same
+list of typed-ID dictionaries and session scope equal to its declared table
+UUID. Caller WHERE clauses refuse for that route. Native missing-record
+row-count failures remain `StaleDataError`; roll back the transaction or savepoint
+before retry.
+See also the [online scalar UPDATE evidence](status.md#single-tenant-mapped-update-2026-10-29).
 The adapter rejects extra predicates, embedded values, version counters,
 dynamic defaults, read-only mapped properties, SQL-producing type hooks and
 type variants. Ordinary Python public-field bind processors remain native.
@@ -139,8 +140,10 @@ owns its recorded native refusal and compatibility evidence.
 Tenant-scoped uniqueness uses PostgreSQL's original qualified NULL behavior. Unqualified partial/compound or NULLS NOT DISTINCT variants must reject at plan time.
 
 For scoped mapped DELETE, use `delete(Model)` with exact typed tenant and record
-equalities and `execution_options={"synchronize_session": False}`. The route
-admits one application-assigned UUID or int64 record on a tenant-column table.
+equalities and `execution_options={"synchronize_session": False}`. Explicit
+single-tenant tables instead require only exact record equality, with session
+scope equal to their declared table UUID. The route admits one
+application-assigned UUID or int64 record.
 It returns native row counts. Core DELETE, external parameter dictionaries,
 RETURNING, inheritance, version counters and other predicate shapes refuse.
 Ordinary ORM flush DELETE retains its existing native lifecycle contract.
@@ -163,6 +166,17 @@ Protection planning and attachment require native row-context codecs without
 dialect-specific type variants. Attachment repeats configuration admission before
 host key resolution and SQL, including changes to identity flags or type hooks. The real native SQL transformation controls and 105-case planning
 regression are recorded in the [identity planning checkpoint](status.md#identity-variant-planning-checkpoint-2026-10-23).
+
+## Native function admission
+
+Attached SELECTs accept the finite native function classes and names listed in
+[`_sqlalchemy_functions.py`](../src/cryptalis/_sqlalchemy_functions.py).
+Ordinary calls resolve explicitly in `pg_catalog`; supported special SQL
+expressions retain native syntax. Unknown or database-defined functions, other
+namespaces and custom dispatch refuse before keys and execution, including on
+unprotected arguments. Functions on protected fields still require their own
+capability admission. Existing aggregate/window/public-expression controls do
+not admit protected aggregates or general encrypted advanced queries.
 
 ## Query semantics
 
@@ -234,14 +248,45 @@ the [installed checkpoint](status.md#integer-installed-lifecycle-checkpoint-2026
 The newer [default/state checkpoint](status.md#integer-literal-default-installed-checkpoint-2026-10-24)
 adds native default semantics and fixes attribute expiration after valid flushes.
 
+## Internal DATE storage candidate
+
+Exact native SQLAlchemy `Date`/PostgreSQL `DATE` mappings now have bounded
+storage-only construction and lifecycle evidence. Values are exact Python
+`datetime.date` or SQL NULL, from 0001-01-01 through 9999-12-31. Datetime objects,
+subclasses, implicit conversions, custom hooks, variants, server/callable/SQL
+defaults and on-update generation remain unadmitted. Literal date client defaults
+retain native omission/None, ORM/dictionary/async state and transaction behavior
+within the tested grammar. Public lock defaults use canonical `YYYY-MM-DD`.
+
+DATE-bearing plans use strict lock/v8, `pg-date-days-be/v1` and, only for literal
+defaults, `pg-date-default/v1`. Old v1-v7 behavior remains separate. The codec is
+four signed big-endian days from 2000-01-01, bound through existing context/v2.
+Non-NULL frames occupy 46 bytes and contain no search term. A count-only native
+source-domain check refuses infinity and dates outside Python's domain during
+operational planning and again under table locks before transition effects.
+The schema-only compiler does not read application values.
+
+Both physical layouts, rotations alongside independently searchable text,
+genuine fresh restore, latest-value reverse/removal and a process that refuses
+Cryptalis imports have local evidence. Protected DATE search, comparisons,
+ordering, arithmetic, aggregates and joins remain unadmitted; existing NULL
+presence grammar is retained. Online capture still accepts only TEXT/VARCHAR.
+An unchanged external DATE application, installed artifact/cost qualification
+and all six technical admission gates remain required. No full type or production
+qualification follows from this internal candidate.
+
 ## Optional SQLModel bridge
 
-An explicit `cryptalis.sqlmodel.attach` bridge admits synchronous PostgreSQL
-sessions on SQLModel 0.0.48. It uses the same manifest, authenticated tenant
+An explicit `cryptalis.sqlmodel.attach` bridge targets synchronous and
+asynchronous PostgreSQL sessions on SQLModel 0.0.48. It uses the same manifest,
+authenticated tenant
 scope, key policy and deployment pin. The returned session inherits native
 `Session.exec` and keeps native scalar, tuple and entity results.
-Missing dependencies, unsupported versions and async engines refuse before
-connection or key work. The ordinary SQLAlchemy attachment keeps its existing interface.
+For an AsyncEngine, await attachment and use the returned async session factory.
+Async `exec` uses native SQLModel result shaping after guarded statement
+admission and awaited key preparation. Existing SELECT and mapped DML grammar
+applies. Missing dependencies and unsupported versions refuse before connection
+or key work. The ordinary SQLAlchemy attachment keeps its existing interface.
 
 Only the exact pinned AutoString type can normalize to its checked native String
 implementation. Its type, version, native method identities, flags, length,
@@ -284,6 +329,14 @@ G-RELEASE remains an additional release requirement. No local experiment or ackn
 The six-gate grouping and conservative unadmitted grammar assumptions are recorded in [reset notes](_reset/notes.md).
 
 ## Performance targets and recorded costs
+
+The [current warm 10k observation](status.md#sdk-protocol-and-early-tenant-admission-checkpoint-2026-10-28)
+over `d7f2dba` reports added p95 of 1.8042 ms point, 3.5577 ms equality and
+3.7962 ms IN-20. Equality misses 3 ms; isolated indexed-column storage measures
+1.4976×. This is one local synchronous warm-provider cell with 40 samples per
+workload. It does not supersede older cells, prove a deterministic regression,
+or qualify production performance. A slower admission-cache experiment was
+reverted; all three security admission checks remain.
 
 The [integer observation](status.md#integer-storage-cost-observation-2026-10-24)
 records three storage-only 10k fixtures. All six scalar/entity point observations
@@ -452,3 +505,35 @@ No production cell is qualified. No production provider, authenticated deploymen
 | PostgreSQL 16 managed services | SUPPORTED design scope. RDS/Aurora, Cloud SQL, Azure, Supabase, and Neon cells remain UNKNOWN |
 
 The selected equality index requires no extension. No provider extension allowance supplies missing qualification.
+
+## Native identifier deparser admission
+
+**IMPLEMENTED, bounded verification:** PostgreSQL 16 type/function keyword
+identifiers can require quotes in catalog deparsing even when SQLAlchemy emits
+them without quotes. Frame admission accepts only the same declared column's
+known native quoted/unquoted nested forms. It checks the exact single-column
+constraint dependency and full frame policy. A dump-restored flattened form
+still requires its exact inspected restatement; equivalent arbitrary SQL is
+not admitted. Search indexes retain exact structural admission and use native
+`pg_catalog.quote_ident` for the expected expression spelling. See the
+[identifier checkpoint](status.md#postgresql-identifier-admission-correction-2026-10-28)
+for the exact tested cells and remaining qualification limits.
+
+The same installed identifier-fix wheel also passes genuine int4 `integer`
+keyword fresh recovery in both layouts. The existing integer harness verifies
+exact restatement admission, latest edits, native types and package-free removal.
+This does not extend that fresh-recovery claim to keyword text or other names.
+See the [fresh checkpoint](status.md#keyword-identifier-fresh-recovery-2026-10-28).
+
+## Persisted Date reader compatibility
+
+New protection plans use `pg-date-days-be/v1`. The reader also accepts the exact
+historical `date-ordinal-u32/v1` descriptor, digest and required-reader identity
+in an otherwise valid Date-bearing lock. The codec is never inferred from v8.
+Both encodings authenticate before returning an exact Python Date. PG-epoch
+literal defaults and their reader tag remain separate from the default-free
+ordinal profile. Changing codecs is a representation change in the semantic
+diff; automatic conversion of an ACTIVE deployment remains unimplemented.
+An actual retained ordinal backup passes new source and installed-reader
+recovery through latest-data removal. See the
+[combined checkpoint](status.md#consolidated-implementation-checkpoint-2026-10-29).

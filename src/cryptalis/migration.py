@@ -25,7 +25,7 @@ from cryptalis.crypto._payload_rotation import MAX_BATCH_BYTES, MAX_BATCH_ROWS
 from cryptalis.manifest.compiler import (compile_protection, _schema_facts, _canonical, _previous_lock,
                                           unrecorded_column_metadata, protected_extended_statistics,
                                           sequence_metadata, source_metadata, _metadata_diff, _catalog_path,
-                                          _native_text_length)
+                                          _native_text_length, _fixed_value_width)
 from cryptalis.manifest.parser import ManifestInvalid, _decode_json
 
 JOURNAL = '_cryptalis_journal'
@@ -156,6 +156,10 @@ class MigrationPlan:
     def __post_init__(self):
         try:
             doc = _decode_transition_json(self.artifact)
+            if doc.get('format') in ('cryptalis.transition/v15', 'cryptalis.transition/v16'):
+                from cryptalis.tenancy import _validate_activation
+                _validate_activation(doc, self.artifact)
+                return
             members = {'format', 'kind', 'operation_id', 'target_id', 'target',
                             'runtime_role', 'journal_schema', 'lock', 'source_lock_digest',
                             'key_policies', 'scopes', 'estimates'}
@@ -484,7 +488,7 @@ def _convert_public_columns(c, p, model, *, plaintext=False):
             from cryptalis.deprotection import _staging
             shadow = _staging(field)
             native = next(column for column in model['source_schema']['columns'] if column['name'] == field['column'])
-            if native['type'] in ('bool', 'int2', 'int4', 'int8', 'date', 'uuid'):
+            if _fixed_value_width(native) is not None:
                 target = 'pg_catalog.' + native['type']
             else:
                 limit = _native_text_length(native)
@@ -672,12 +676,7 @@ def plan(manifest, mapping, engine, *, writers, search_reviews=(), keys, runtime
         _runtime_safety(c, runtime_role, target[-1], lock['models'])
         for model in lock['models']:
             if _facts(c,model) != model['source_schema']: raise TransitionFailure('stale_plan_schema')
-            for field in model['fields']:
-                if field['source']['type'] == 'date':
-                    column = _quote(c, field['column'])
-                    if c.exec_driver_sql(f'SELECT EXISTS (SELECT 1 FROM {_table(c, model)} '
-                            f"WHERE {column} < DATE '0001-01-01' OR {column} > DATE '9999-12-31')").scalar_one():
-                        raise TransitionFailure('date_outside_python_range')
+            _check_date_source_domain(c, model)
             tenant = _quote(c,model['tenancy']['column']) if 'column' in model['tenancy'] else None
             tenants=c.exec_driver_sql(f'SELECT DISTINCT {tenant} FROM {_table(c,model)}').scalars().all() if tenant else [UUID(model['table_id'])]
             for t in tenants:
@@ -688,14 +687,8 @@ def plan(manifest, mapping, engine, *, writers, search_reviews=(), keys, runtime
                     raise TransitionFailure('missing_search_policy')
                 policies[str(t)] = _policy(ring)
             count=c.exec_driver_sql(f'SELECT count(*) FROM {_table(c,model)}').scalar_one()
-            sizes = [(f'CASE WHEN {_quote(c, f["column"])} IS NULL THEN 0 ELSE 1 END'
-                      if f['source']['type'] == 'bool' else
-                      f'CASE WHEN {_quote(c, f["column"])} IS NULL THEN 0 ELSE {f["source"]["type"][3:]} END'
-                      if f['source']['type'] in ('int2', 'int4', 'int8') else
-                      f'CASE WHEN {_quote(c, f["column"])} IS NULL THEN 0 ELSE 4 END'
-                      if f['source']['type'] == 'date' else
-                      f'CASE WHEN {_quote(c, f["column"])} IS NULL THEN 0 ELSE 16 END'
-                      if f['source']['type'] == 'uuid' else
+            sizes = [(f'CASE WHEN {_quote(c, f["column"])} IS NULL THEN 0 ELSE {_fixed_value_width(f["source"])} END'
+                      if _fixed_value_width(f['source']) is not None else
                       f'coalesce(octet_length({_quote(c, f["column"])}),0)') for f in model['fields']]
             size=c.exec_driver_sql(f'SELECT coalesce(sum('+ '+'.join(sizes)+f'),0) FROM {_table(c,model)}').scalar_one()
             scopes.append({'table_id':model['table_id'],'estimated_rows':count})
@@ -833,7 +826,7 @@ def _state(c,p,pin,*,allow_aborted=False):
         if state.get('phase') not in ('PENDING', 'ACTIVE'):
             raise TransitionFailure('online_successor_state_changed', p.operation_id)
         _check_predecessors(c, p)
-    if kind in ('rewrap',)+_GENERATION_ROTATIONS:
+    if kind in ('rewrap', 'tenant_provision')+_GENERATION_ROTATIONS:
         proof_key = kind+'_plan_digest'
         if (state.get('phase') not in ('PENDING', 'ACTIVE')
                 or state.get(proof_key) != p.document[proof_key]):
@@ -1007,7 +1000,7 @@ def _frame_check(c,f):
     col=_quote(c,f['payload_column']); eq=bool(f['queries']); overhead=74 if eq else 42
     magic='434631000101' if eq else '434631000100'
     op='<>' if eq else '='
-    width = {'bool': 1, 'int2': 2, 'int4': 4, 'int8': 8, 'date': 4, 'uuid': 16}.get(f['source']['type'])
+    width = _fixed_value_width(f['source'])
     minimum, maximum = (42 + width, 42 + width) if width is not None else (overhead, 16777216+overhead)
     return f"{col} IS NULL OR (pg_catalog.octet_length({col}) BETWEEN {minimum} AND {maximum} AND pg_catalog.substring({col},1,6)=pg_catalog.decode('{magic}','hex') AND pg_catalog.substring({col},7,4)<>pg_catalog.decode('00000000','hex') AND pg_catalog.substring({col},11,4){op}pg_catalog.decode('00000000','hex'))"
 
@@ -1033,11 +1026,24 @@ def _install_guards(c,p):
         c.exec_driver_sql(f'ALTER TABLE {table} ENABLE ALWAYS TRIGGER {_quote(c,trigger)}')
 
 
+def _check_date_source_domain(c, model, operation_id=None):
+    """Count unsupported native dates without asking the driver to decode them."""
+    for field in model['fields']:
+        if field['source']['type'] != 'date':
+            continue
+        column = _quote(c, field['column'])
+        outside = c.exec_driver_sql(f'SELECT count(*) FROM {_table(c, model)} WHERE '
+            f"{column} < DATE '0001-01-01' OR {column} > DATE '9999-12-31'").scalar_one()
+        if outside:
+            raise TransitionFailure('date_source_domain', operation_id)
+
+
 def _expand(c,p):
     _lock_tables(c,p)
     for model in p.document['lock']['models']:
         if _facts(c,model)!=model['source_schema']: raise TransitionFailure('source_schema_changed',p.operation_id)
         _check_source_metadata(c,p,model)
+        _check_date_source_domain(c, model, p.operation_id)
     c.exec_driver_sql(f'CREATE TABLE {_journal(c,p)} (operation_id uuid PRIMARY KEY, plan_digest text NOT NULL, state jsonb NOT NULL)')
     c.exec_driver_sql(f'REVOKE ALL ON {_journal(c,p)} FROM PUBLIC')
     c.exec_driver_sql(f'GRANT SELECT ON {_journal(c,p)} TO {_quote(c,p.document["runtime_role"])}')
@@ -1287,6 +1293,9 @@ def _activate(c,p,state,pin,keys):
     if p.document['kind'] == 'rewrap':
         from cryptalis.rotation import _verify_rewrap_target
         _verify_rewrap_target(c, p, keys)
+    elif p.document['kind'] == 'tenant_provision':
+        from cryptalis.tenancy import verify_target
+        verify_target(c, p, keys)
     elif p.document['kind'] in _GENERATION_ROTATIONS:
         from cryptalis._rotation_activation import verify_target
         verify_target(c, p, keys)
@@ -1314,13 +1323,13 @@ def apply(p,engine,*,keys,pin,approval,chunk_size=1000,until='PENDING'):
     online = p.document['format'] == 'cryptalis.transition/v8'
     if online and (until != 'ACTIVE' or pin.phase not in ('ACTIVATING', 'ACTIVE')):
         raise TransitionFailure('online_executor_required', p.operation_id)
-    if p.document['kind'] == 'rewrap' and (until != 'ACTIVE' or pin.phase not in ('ACTIVATING', 'ACTIVE')):
-        raise TransitionFailure('rewrap_executor_required', p.operation_id)
+    if p.document['kind'] in ('rewrap', 'tenant_provision') and (until != 'ACTIVE' or pin.phase not in ('ACTIVATING', 'ACTIVE')):
+        raise TransitionFailure(p.document['kind']+'_executor_required', p.operation_id)
     if p.document['kind'] in _GENERATION_ROTATIONS and (until != 'ACTIVE' or pin.phase not in ('ACTIVATING', 'ACTIVE')):
         raise TransitionFailure(p.document['kind']+'_executor_required', p.operation_id)
     with _executor(p,engine,pin,approval) as c:
         state=_state(c,p,pin); c.commit()
-        if state is not None and state['phase'] == 'ACTIVE' and (online or p.document['kind'] in ('rewrap',)+_GENERATION_ROTATIONS) and pin.phase == 'ACTIVATING':
+        if state is not None and state['phase'] == 'ACTIVE' and (online or p.document['kind'] in ('rewrap', 'tenant_provision')+_GENERATION_ROTATIONS) and pin.phase == 'ACTIVATING':
             # A journal phase cannot replace the host's publication evidence.
             with c.begin():
                 _lock_tables(c,p,verification=True)
@@ -1330,11 +1339,16 @@ def apply(p,engine,*,keys,pin,approval,chunk_size=1000,until='PENDING'):
                 elif p.document['kind'] == 'rewrap':
                     from cryptalis.rotation import _verify_rewrap_target
                     _verify_rewrap_target(c,p,keys)
+                elif p.document['kind'] == 'tenant_provision':
+                    from cryptalis.tenancy import verify_target
+                    verify_target(c,p,keys)
                 else:
                     from cryptalis._rotation_activation import verify_target
                     verify_target(c,p,keys)
         if state is None:
             if online: raise TransitionFailure('missing_online_successor', p.operation_id)
+            if p.document['kind'] == 'tenant_provision':
+                raise TransitionFailure('missing_tenant_provision_successor', p.operation_id)
             if p.document['kind'] in _GENERATION_ROTATIONS:
                 raise TransitionFailure('missing_'+p.document['kind'].removesuffix('_rotation')+'_successor', p.operation_id)
             with c.begin(): state=_expand(c,p)

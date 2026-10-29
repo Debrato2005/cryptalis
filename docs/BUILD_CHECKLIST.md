@@ -25,6 +25,127 @@ No objective is complete until its acceptance evidence and applicable gate pass.
 
 ## Current boundary
 
+- The release-continuation and single-tenant UPDATE branches are consolidated
+  with both test/evidence families retained. The merged source passes 364 calls
+  with seven call and four collection skips; reproducible artifacts and the
+  artifact/rewrap regressions pass. No objective or production gate is promoted.
+  See the [merge checkpoint](status.md#verified-branch-consolidation-2026-10-30).
+
+- The complete source baseline at `ff7dfe1` passes 2,997 test calls and eighteen
+  subtests, with all 75 skips explicit and exact committed Python hashes checked.
+  Later fixed-scope DML has separate affected/installed evidence below.
+  Live KMS test access and independent human review are not arranged, as confirmed
+  by the user. They remain external blockers; all 34 objectives and seven gates
+  retain their requirements. See the [regression boundary](status.md#continuation-regression-and-remaining-release-work-2026-10-29).
+
+- Explicit single-tenant tables now accept single-record mapped DELETE under
+  fixed table-UUID authority. Native row counts, ORM state, rollback, savepoints,
+  current-value exit and record/driver mutation refusals pass six focused checks.
+  All 140 affected source checks, 29 installed DML/bridge checks and existing
+  fresh recovery pass; installed selection remains in release CI.
+  See the [checkpoint](status.md#single-tenant-mapped-single-record-delete-2026-10-29).
+  All production gates remain open.
+
+- Explicit single-tenant tables now accept native mapped dictionary UPDATE
+  under their fixed table UUID. Missing-record errors, partial transaction
+  effects, savepoints, overflow precedence and latest-value removal pass native
+  oracles. The affected source selection passes 216 checks with four skips;
+  23 installed route/bridge checks and existing fresh recovery also pass.
+  See the [checkpoint](status.md#single-tenant-mapped-dictionary-update-2026-10-29).
+  Production admission and independent review remain open.
+
+- SQLModel 0.0.48 now has an async bridge through the existing guarded async
+  attachment. Native CRUD/results, search, tenant isolation, cancellation and
+  current-value removal pass thirteen source and thirteen installed PostgreSQL
+  checks. Repeat artifact hashes, installed-file checks and existing fresh
+  recovery pass. Release CI also selects the installed sync/async bridge.
+  See the [checkpoint](status.md#async-sqlmodel-bridge-2026-10-29).
+  Full production and independent review requirements remain open.
+
+- The original authenticated tenant application now exercises the public CLI
+  entrypoint after genuine fresh recovery, with an actual v16 successor and
+  independently retained host publication. Both phases pass from the inspected
+  installed wheel through latest-value package-free HTTP restart. The source
+  fixture cell also passes both phases. See the
+  [fresh CLI checkpoint](status.md#restored-tenant-cli-application-journey-2026-10-29).
+
+- The integration combines reviewed reporting/scalars/INSERT/online work with
+  continuation security and tenant lifecycle. Both persisted Date codecs remain
+  explicit; real legacy ordinal backup recovery passes from source and wheel.
+  The 45-module artifact and installed HTTP/fresh journeys pass. The whole source
+  suite passes 2,993 test calls and eighteen subtests, with 75 explicit skips;
+  GitHub CI passes for that checkpoint. All gates remain UNKNOWN. See the
+  [combined boundary](status.md#consolidated-implementation-checkpoint-2026-10-29).
+
+- Tenant maintenance now has operational plan/apply/activate/abort commands,
+  host-only policy authority and durable successor retention before effects.
+  The 96-check source matrix and two new integrated/installed journeys pass;
+  three existing adopted-profile opt-ins skip. Source v15 is exercised; the
+  later fresh CLI checkpoint above adds restored v16 application evidence. See the
+  [checkpoint](status.md#tenant-policy-maintenance-cli-2026-10-28).
+
+- The installed int4 keyword identifier now passes genuine fresh recovery in
+  both layouts, exact CHECK restatement, latest-value removal and package-free
+  native restart. The default-name source fresh control also passes. See the
+  [fresh checkpoint](status.md#keyword-identifier-fresh-recovery-2026-10-28).
+
+- PostgreSQL keyword-named protected columns now pass exact storage/search
+  admission, both layouts and latest-value native exit. Integrated source,
+  final installed identifier and affected search checks pass. Bounds,
+  dependencies and explicit restored restatements remain enforced; no gate
+  promotion follows. See the
+  [checkpoint](status.md#postgresql-identifier-admission-correction-2026-10-28).
+
+- Explicit maintenance tenant-policy addition now passes state/cancellation and
+  old-reader controls, source/installed original HTTP first-write approval,
+  all rotations, genuine fresh adoption and latest native exit. Old policy and
+  ciphertext remain exact; the Python API retains O(N)/global-pause limits.
+  COUNT remains separate unfinished work and all gates remain UNKNOWN. See the
+  [checkpoint](status.md#maintenance-tenant-policy-provisioning-2026-10-28).
+
+- Exact tenant type/pinned membership now refuses before host key lookup. The
+  149-check source matrix and rebuilt installed tenant recovery pass. A separate
+  129-check actual-SDK protocol bundle includes 22 SDK cases with transport denied.
+  The warm 10k equality observation misses 3 ms; no performance fix is claimed.
+  Further tenant/count work is preserved unverified after an account quota block.
+  All seven gates remain UNKNOWN. See the
+  [checkpoint](status.md#sdk-protocol-and-early-tenant-admission-checkpoint-2026-10-28).
+
+- The authenticated tenant HTTP source/installed journeys pass genuine fresh
+  recovery, all rotations, exact owner/admin page oracles, transactional cascades
+  and HTTP reads of each latest Item after import-denied native restart. Explicit
+  host integration and the unfinished dynamic-owner boundary are recorded.
+  Runtime source/wheel binding, reproducible artifact inspection and both
+  installed DATE layouts pass. The interrupted broad run remains incomplete;
+  follow-up matrices retain their exact scope. All gates remain UNKNOWN. See the
+  [checkpoint](status.md#verified-continuation-checkpoint-2026-10-28).
+
+- The internal storage-only DATE candidate passes 31 frozen source checks and
+  both genuine fresh-cluster layouts, with all three rotations alongside text,
+  latest-value exit and old-reader refusal. Independent external DATE app,
+  artifact/cost and human qualification remain pending. See the
+  [checkpoint](status.md#date-storage-construction-and-lifecycle-2026-10-27).
+
+- Attached SELECT functions now have finite native class/name/namespace/dispatch
+  admission before keys or driver. Supported ordinary calls resolve explicitly
+  in `pg_catalog`; native special syntax remains intact. The isolated 233-check
+  adapter/native-clause/cancellation bundle and corrected scoped review pass.
+  Arbitrary database functions remain unsupported and all gates UNKNOWN. See the
+  [checkpoint](status.md#finite-native-select-functions-2026-10-27).
+
+- Direct AWS/development rewrap now proves exact root recovery under unchanged
+  context and stable target identity. The isolated 107-check protocol bundle and
+  scoped agent review pass. One additional target unwrap is required. Live KMS
+  and all production gates remain UNKNOWN. See the
+  [checkpoint](status.md#direct-provider-rewrap-recovery-proof-2026-10-27).
+
+- Resumed the audited remote checkpoint. The isolated release cell now pins and
+  hash-verifies the build backend, including explicit isolation/configuration
+  controls. Fifteen artifact controls and byte-identical wheel/sdist rebuilds pass.
+  Runtime dependencies stay unchanged. This is bounded build evidence; controlled
+  publication, provenance and all seven gates remain UNKNOWN. See the
+  [checkpoint](status.md#resumption-and-frozen-build-backend-2026-10-27).
+
 - Declared single-tenant tables now accept native mapped dictionary UPDATE,
   including admitted scalar values, native missing-record and overflow errors,
   sync/async ORM state and current-value removal. Fixed scope and final driver

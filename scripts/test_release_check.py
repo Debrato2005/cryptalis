@@ -314,10 +314,28 @@ class InstalledArtifactTests(unittest.TestCase):
     def test_clean_install_is_bound_to_the_current_wheel(self):
         with tempfile.TemporaryDirectory(prefix="cryptalis-install-test-") as temporary:
             base = Path(temporary)
-            environment = dict(os.environ, UV_OFFLINE="true", UV_CACHE_DIR=str(base / "cache"))
-            built = subprocess.run(["uv", "build", "--offline", "--out-dir", str(base / "built")],
+            # Offline PEP 517 builds need the admitted backend in uv's cache.
+            # Populate it with the hash-constrained release check first. An
+            # empty cache previously worked only through uv's internal fast path.
+            environment = dict(os.environ, UV_OFFLINE="true")
+            build_command = ["uv", "build", "--offline", "--force-pep517",
+                             "--build-isolation", "--no-config",
+                             "--python", sys.executable, "--require-hashes",
+                             "--build-constraints", str(ROOT / "qualification/build-backend/requirements.txt")]
+            built = subprocess.run([*build_command, "--out-dir", str(base / "built")],
                                    cwd=ROOT, env=environment, capture_output=True, text=True)
             self.assertEqual(built.returncode, 0, built.stderr)
+            rejected_constraints = base / "rejected-build.txt"
+            rejected_constraints.write_text("uv-build==0.12.23 --hash=sha256:" + "0" * 64 + "\n")
+            rejected_command = [*build_command]
+            rejected_command[-1] = str(rejected_constraints)
+            for override in ({}, {"UV_NO_BUILD_ISOLATION": "1"}, {"UV_NO_VERIFY_HASHES": "1"}):
+                with self.subTest(build_environment=override):
+                    rejected = subprocess.run([*rejected_command, "--out-dir", str(base / "rejected")],
+                                              cwd=ROOT, env=dict(environment, **override),
+                                              capture_output=True, text=True)
+                    self.assertNotEqual(rejected.returncode, 0)
+                    self.assertFalse(list((base / "rejected").glob("*.whl")))
             wheel = next((base / "built").glob("*.whl"))
             target = base / "venv"
             venv.EnvBuilder(with_pip=False).create(target)

@@ -254,6 +254,14 @@ CRYPTALIS_SQLMODEL_HTTP_SOURCE=/path/to/pinned-http-snapshot \
   --sqlmodel-http --workdir /tmp/cryptalis-http-fresh-new-run
 ```
 
+The integer recovery row also accepts `--integer 32 --column-name integer`.
+This keeps the Python property while exercising PostgreSQL's keyword identifier
+spelling through payload rotation, backup, fresh adoption and current-data exit.
+Add `--public-slots` for original column-position preservation and
+`--installed-wheel /path/to/reviewed.whl` to bind both phases to that artifact.
+Use its installed interpreter with an empty `PYTHONPATH`. See the
+[keyword recovery boundary](status.md#keyword-identifier-fresh-recovery-2026-10-28).
+
 The earlier original HTTP CLI journey owns initialization and five actual
 SIGKILL/resume checkpoints. The new HTTP fresh row owns genuine restore and
 post-adoption authentication. Neither row proves every step or an external KMS.

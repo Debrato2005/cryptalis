@@ -4,12 +4,17 @@ Usage: .venv/bin/python scripts/test_postgres.py -- [pytest arguments]
 No inherited test URL is admitted. Failure output contains no connection detail.
 """
 import argparse
+import atexit
+from contextlib import redirect_stderr, redirect_stdout
 import errno
 import hashlib
 import importlib
+import importlib.util
+import io
 import json
 import os
 from pathlib import Path
+from pathlib import PurePosixPath
 import re
 import shutil
 import socket
@@ -19,6 +24,7 @@ import subprocess
 import tempfile
 import time
 from types import ModuleType
+import zipfile
 
 try:
     import psycopg
@@ -32,12 +38,180 @@ FILES = (".cryptalis-test-url", ".cryptalis-test-runtime-url")
 SOURCE_VARIABLE = "CRYPTALIS_TEST_SOURCE_URL"
 SOURCE_FILE = ".cryptalis-test-source-url"
 ROOT = Path(__file__).resolve().parents[1]
+_RUNTIME_CACHE = None
 
 
 def source_hashes():
     files = sorted(path for directory in ('src/cryptalis', 'tests', 'scripts')
                    for path in (ROOT / directory).rglob('*.py'))
     return {str(path.relative_to(ROOT)): hashlib.sha256(path.read_bytes()).hexdigest() for path in files}
+
+
+class RuntimeBindingError(Exception):
+    """The package imported for qualification does not match its declared source."""
+
+
+def _runtime_cache():
+    """Compile package imports from the bound source files, not stale pyc files."""
+    global _RUNTIME_CACHE
+    if _RUNTIME_CACHE is None:
+        _RUNTIME_CACHE = tempfile.TemporaryDirectory(prefix="cryptalis-runtime-pycache-")
+        sys.pycache_prefix = _RUNTIME_CACHE.name
+        atexit.register(_RUNTIME_CACHE.cleanup)
+
+
+def _candidate_package_root():
+    try:
+        spec = importlib.util.find_spec("cryptalis")
+        if spec is None or spec.origin is None:
+            raise RuntimeBindingError
+        origin_path = Path(spec.origin)
+        locations = list(spec.submodule_search_locations or ())
+        if (origin_path.is_symlink() or any(Path(location).is_symlink() for location in locations)
+                or origin_path.name != "__init__.py" or len(locations) != 1):
+            raise RuntimeBindingError
+        origin = origin_path.resolve(strict=True)
+        package_root = Path(locations[0]).resolve(strict=True)
+        if origin.parent != package_root:
+            raise RuntimeBindingError
+        return package_root
+    except RuntimeBindingError:
+        raise
+    except Exception:
+        raise RuntimeBindingError from None
+
+
+def _module_key(relative):
+    return "cryptalis/" + relative.as_posix()
+
+
+def _module_digest(modules):
+    hashes = {name: hashlib.sha256(content).hexdigest()
+              for name, content in sorted(modules.items())}
+    encoded = json.dumps(hashes, sort_keys=True, separators=(",", ":")).encode()
+    return hashes, hashlib.sha256(encoded).hexdigest()
+
+
+def _read_installed_wheel(installed_wheel):
+    try:
+        candidate = Path(installed_wheel).expanduser()
+        if candidate.is_symlink():
+            raise RuntimeBindingError
+        wheel_path = candidate.resolve(strict=True)
+        if not wheel_path.is_file() or wheel_path.suffix != ".whl":
+            raise RuntimeBindingError
+        wheel_bytes = wheel_path.read_bytes()
+        wheel_sha256 = hashlib.sha256(wheel_bytes).hexdigest()
+        modules = {}
+        with zipfile.ZipFile(io.BytesIO(wheel_bytes)) as archive:
+            names = archive.namelist()
+            if len(names) != len(set(names)):
+                raise RuntimeBindingError
+            for name in names:
+                if not name.startswith("cryptalis/") or not name.endswith(".py"):
+                    continue
+                relative = PurePosixPath(name)
+                if (relative.is_absolute() or "\\" in name
+                        or any(part in ("", ".", "..") for part in name.split("/"))):
+                    raise RuntimeBindingError
+                modules[name] = archive.read(name)
+        if "cryptalis/__init__.py" not in modules:
+            raise RuntimeBindingError
+        return wheel_path, wheel_sha256, modules
+    except RuntimeBindingError:
+        raise
+    except Exception:
+        raise RuntimeBindingError from None
+
+
+def _read_package_modules(package_root):
+    try:
+        modules = {}
+        for path in sorted(package_root.rglob("*.py")):
+            if path.is_symlink():
+                raise RuntimeBindingError
+            modules[_module_key(path.relative_to(package_root))] = path.read_bytes()
+        if "cryptalis/__init__.py" not in modules:
+            raise RuntimeBindingError
+        return modules
+    except RuntimeBindingError:
+        raise
+    except Exception:
+        raise RuntimeBindingError from None
+
+
+def _validate_package_tree(package_root, expected_hashes):
+    try:
+        modules = _read_package_modules(package_root)
+        actual_hashes, _ = _module_digest(modules)
+        if actual_hashes != expected_hashes:
+            raise RuntimeBindingError
+        for name, module in tuple(sys.modules.items()):
+            if name != "cryptalis" and not name.startswith("cryptalis."):
+                continue
+            filename = getattr(module, "__file__", None)
+            if not isinstance(filename, (str, os.PathLike)):
+                raise RuntimeBindingError
+            source_path = Path(filename)
+            if source_path.is_symlink() or source_path.suffix != ".py":
+                raise RuntimeBindingError
+            path = source_path.resolve(strict=True)
+            relative = path.relative_to(package_root)
+            key = _module_key(relative)
+            if key not in expected_hashes or hashlib.sha256(path.read_bytes()).hexdigest() != expected_hashes[key]:
+                raise RuntimeBindingError
+    except RuntimeBindingError:
+        raise
+    except Exception:
+        raise RuntimeBindingError from None
+
+
+def _import_bound_package(package_root):
+    try:
+        # Startup hooks and package import diagnostics are not trusted output.
+        with redirect_stdout(io.StringIO()), redirect_stderr(io.StringIO()):
+            package = importlib.import_module("cryptalis")
+        origin_path = Path(package.__file__)
+        locations = list(package.__path__)
+        if (origin_path.is_symlink() or any(Path(location).is_symlink() for location in locations)
+                or origin_path.resolve(strict=True) != package_root / "__init__.py"
+                or len(locations) != 1 or Path(locations[0]).resolve(strict=True) != package_root):
+            raise RuntimeBindingError
+    except RuntimeBindingError:
+        raise
+    except Exception:
+        raise RuntimeBindingError from None
+
+
+def runtime_binding(installed_wheel=None):
+    """Bind imported Cryptalis module bytes to this checkout or one wheel."""
+    _runtime_cache()
+    package_root = _candidate_package_root()
+    wheel_path = None
+    wheel_sha256 = None
+    expected_root = (ROOT / "src" / "cryptalis").resolve()
+    if installed_wheel is None:
+        if package_root != expected_root:
+            raise RuntimeBindingError
+        mode = "source"
+        modules = _read_package_modules(package_root)
+    else:
+        wheel_path, wheel_sha256, modules = _read_installed_wheel(installed_wheel)
+        if package_root == expected_root or expected_root in package_root.parents:
+            raise RuntimeBindingError
+        mode = "installed-wheel"
+    expected_hashes, modules_sha256 = _module_digest(modules)
+    _validate_package_tree(package_root, expected_hashes)
+    _import_bound_package(package_root)
+    _validate_package_tree(package_root, expected_hashes)
+    return {
+        "mode": mode,
+        "runtime_root": str(package_root),
+        "module_count": len(modules),
+        "modules_sha256": modules_sha256,
+        "wheel": str(wheel_path) if wheel_path else None,
+        "wheel_sha256": wheel_sha256,
+    }
 
 
 def load_urls(*, source_role=False):
@@ -275,13 +449,18 @@ def main():
     for name in (*VARIABLES, SOURCE_VARIABLE):
         os.environ.pop(name, None)
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--preflight-only", action="store_true")
+    diagnostics = parser.add_mutually_exclusive_group()
+    diagnostics.add_argument("--preflight-only", action="store_true")
     parser.add_argument("--source-role", action="store_true",
                         help="Also require and probe ~/.cryptalis-test-source-url before pytest.")
-    parser.add_argument("--development-preflight", action="store_true",
-                        help="Diagnose local tools, Git access and restricted PostgreSQL prerequisites; run no tests.")
-    parser.add_argument("--wrong-password-proof", action="store_true",
-                        help="Use a public wrong password in the owner probe; run no tests.")
+    parser.add_argument("--installed-wheel", type=Path,
+                        help="Bind imported Cryptalis Python modules to this inspected wheel.")
+    diagnostics.add_argument("--runtime-binding-only", action="store_true",
+                             help="Verify and report runtime package identity without database access or pytest.")
+    diagnostics.add_argument("--development-preflight", action="store_true",
+                             help="Diagnose local tools, Git access and restricted PostgreSQL prerequisites; run no tests.")
+    diagnostics.add_argument("--wrong-password-proof", action="store_true",
+                             help="Use a public wrong password in the owner probe; run no tests.")
     parser.add_argument("--receipt", type=Path)
     parser.add_argument("--scope", default="PostgreSQL verification; research prototype")
     parser.add_argument("--receipt-dir", type=Path,
@@ -290,6 +469,15 @@ def main():
     args = parser.parse_args()
     if args.development_preflight:
         return development_preflight()
+    try:
+        runtime_before = runtime_binding(args.installed_wheel)
+    except Exception:
+        print("Verification.RuntimeBindingFailed: imported package does not match the selected runtime.",
+              flush=True)
+        return 4
+    if args.runtime_binding_only:
+        print(json.dumps({"runtime_binding": runtime_before}, sort_keys=True), flush=True)
+        return 0
     if psycopg is None:
         print('Dependencies.Unavailable: use the locked project environment.', flush=True)
         return 2
@@ -343,9 +531,18 @@ def main():
         print('Verification.SourceUnavailable', type(error).__name__, flush=True)
         return 4
     changed = sorted(path for path in hashes.keys() | after.keys() if hashes.get(path) != after.get(path))
-    code = 4 if changed else pytest_code
+    runtime_after = None
+    runtime_changed = False
+    try:
+        runtime_after = runtime_binding(args.installed_wheel)
+        runtime_changed = runtime_after != runtime_before
+    except Exception:
+        runtime_changed = True
+    code = 4 if changed or runtime_changed else pytest_code
     if changed:
         print('Verification.SourceChanged: review the changes, then run the wrapper again.', flush=True)
+    if runtime_changed:
+        print('Verification.RuntimeBindingChanged: runtime package bytes changed during pytest.', flush=True)
     if args.receipt or args.receipt_dir:
         revision = hashlib.sha256(json.dumps(hashes, sort_keys=True).encode()).hexdigest()
         receipt = {
@@ -355,6 +552,9 @@ def main():
             "source_test_sha256": hashes,
             "source_stability": {"unchanged": not changed, "changed_paths": changed},
             "source_after_sha256": {path: after.get(path) for path in changed},
+            "runtime_binding": runtime_before,
+            "runtime_binding_stability": {"unchanged": not runtime_changed,
+                                          "after": runtime_after},
             "preflight": {"select_1_each": "passed", "sha256_prefixes": fingerprints(urls)},
             "pytest_args": pytest_args, "counts": results.counts, "exit_code": code,
             "pytest_report_counts": results.pytest_report_counts,

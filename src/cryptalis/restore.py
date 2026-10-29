@@ -26,6 +26,7 @@ binding, so a stale, cloned, tampered, or partially restored database is
 refused with a typed failure.
 """
 from dataclasses import dataclass
+from datetime import date
 import datetime
 import hashlib
 import json
@@ -250,7 +251,8 @@ def _validate_lineage(document):
         if ((document['format'], document['kind']) not in (
                 ('cryptalis.transition/v5', 'rewrap'), ('cryptalis.transition/v6', 'payload_rotation'),
                 ('cryptalis.transition/v7', 'search_rotation'), ('cryptalis.transition/v12', 'rewrap'),
-                ('cryptalis.transition/v13', 'payload_rotation'), ('cryptalis.transition/v14', 'search_rotation'))
+                ('cryptalis.transition/v13', 'payload_rotation'), ('cryptalis.transition/v14', 'search_rotation'),
+                ('cryptalis.transition/v16', 'tenant_provision'))
                 or type(lineage) is not list or not lineage):
             raise ValueError
         ancestors = {(item['operation_id'], item['plan_digest']): index
@@ -640,7 +642,7 @@ def _scan(c, source, keys):
                                                       source.operation_id) from None
                         expected_type = (bool if descriptors[i].value_codec == 'boolean-u8/v1' else
                             UUID if descriptors[i].value_codec == 'uuid-bytes16/v1' else
-                            datetime.date if descriptors[i].value_codec == 'date-ordinal-u32/v1' else
+                            date if descriptors[i].value_codec in ('pg-date-days-be/v1', 'date-ordinal-u32/v1') else
                             int if descriptors[i].value_codec in ('pg-int2-be/v1', 'pg-int4-be/v1', 'pg-int8-be/v1') else str)
                         if value is not None and type(value) is not expected_type:
                             raise m.TransitionFailure('restored_frame_verification_failed',

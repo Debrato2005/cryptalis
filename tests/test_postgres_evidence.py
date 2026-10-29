@@ -29,6 +29,13 @@ def test_receipt_admission_binds_the_source_that_preceded_pytest(tmp_path, monke
     receipt = tmp_path / 'receipt.json'
     monkeypatch.chdir(tmp_path)
     monkeypatch.setattr(runner, 'ROOT', tmp_path, raising=False)
+    # This test isolates receipt/source stability admission with a disposable
+    # source tree. Real runtime binding is covered in test_runtime_source_binding.py.
+    monkeypatch.setattr(runner, 'runtime_binding', lambda installed_wheel=None: {
+        'mode': 'source', 'runtime_root': str(tmp_path / 'src/cryptalis'),
+        'module_count': 1, 'modules_sha256': '0' * 64,
+        'wheel': None, 'wheel_sha256': None,
+    })
     options = ['--receipt', str(receipt)] if with_receipt else []
     monkeypatch.setattr(sys, 'argv', ['test_postgres.py', *options,
                                     '--scope', 'controlled pytest source-stability admission'])

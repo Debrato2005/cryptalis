@@ -32,6 +32,8 @@ def test_export_boolean_storage_after_payload_rotation():
     profile = 'native-uuid-storage' if uuids else 'native-date-storage' if dates else 'integer-' + str(bits) if bits else 'boolean-storage'
     default_raw = os.environ.get('CRYPTALIS_FRESH_INTEGER_DEFAULT', '')
     default = int(default_raw) if default_raw else None
+    column_name = os.environ.get('CRYPTALIS_FRESH_COLUMN_NAME', 'name')
+    assert column_name in ('name', 'integer') and (column_name == 'name' or bits)
     assert default is None or bits in (16, 32, 64)
     values = (lower, upper, None, -1, 0, 1, 17) if bits else (False, True, None)
     if dates:
@@ -40,7 +42,8 @@ def test_export_boolean_storage_after_payload_rotation():
         values = (UUID(int=0), UUID(int=(1 << 128) - 1), None, UUID(int=1), UUID(bytes=bytes(range(16))))
     if default is not None:
         values = (lower, upper, -1, 0, 1, 17, 29)
-    with application(rows=7, value_type=dtype(), queries=[], protected_values=values, value_default=default) as app:
+    with application(rows=7, value_type=dtype(), queries=[], protected_values=values,
+                     value_default=default, value_column=column_name) as app:
         source_public_slots = None
         public_slots = os.environ.get('CRYPTALIS_FRESH_PUBLIC_SLOTS') == '1'
         if public_slots:
@@ -104,7 +107,7 @@ def test_export_boolean_storage_after_payload_rotation():
         dump(workdir / 'protected.sql', app.schema, environment('CRYPTALIS_TEST_DATABASE_URL'))
         owner = psycopg.conninfo.conninfo_to_dict(os.environ['CRYPTALIS_TEST_DATABASE_URL'])
         runtime = psycopg.conninfo.conninfo_to_dict(os.environ['CRYPTALIS_TEST_RUNTIME_DATABASE_URL'])
-        manifest = {'application_profile': profile, 'integer_bits': bits,
+        manifest = {'application_profile': profile, 'integer_bits': bits, 'column': column_name,
             'application_default': None if default is None else str(default), 'root_rewrapped': default is not None or dates or uuids,
             'public_slots': public_slots, 'source_public_slots': source_public_slots, 'database': owner['dbname'],
             'owner_role': owner['user'], 'runtime_role': runtime['user'], 'schema': app.schema,

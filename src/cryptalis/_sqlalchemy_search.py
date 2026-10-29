@@ -7,7 +7,7 @@ from sqlalchemy.sql.functions import count
 from sqlalchemy.types import NullType, TypeDecorator
 
 from .crypto.cf1 import equality_term
-from .manifest.compiler import _catalog_path
+from .manifest.compiler import _catalog_path, _fixed_value_width
 from ._sqlmodel_types import autostring_impl
 from ._sqlalchemy_aggregate import count_shape, distinct_projection, identity_distinct
 
@@ -169,12 +169,11 @@ def validate_search_storage(connection, model, field, *, admitted=None):
 
 
 def _validate_search_storage(connection, model, field):
-    quote = connection.dialect.identifier_preparer.quote
     target = connection.dialect.identifier_preparer.quote_identifier(model["schema"]) + "." + connection.dialect.identifier_preparer.quote_identifier(model["table"])
-    column = quote(field["column"])
     suffix = field["field_id"].replace("-", "")
     index = connection.exec_driver_sql("""
-        SELECT i.indisunique, i.indisvalid, i.indisready, i.indislive,
+        SELECT pg_catalog.quote_ident(%s),
+               i.indisunique, i.indisvalid, i.indisready, i.indislive,
                i.indimmediate, i.indnullsnotdistinct, i.indpred IS NULL,
                am.amname, i.indnkeyatts, i.indnatts,
                pg_catalog.pg_get_expr(i.indexprs, i.indrelid),
@@ -187,14 +186,18 @@ def _validate_search_storage(connection, model, field):
         FROM pg_catalog.pg_index i JOIN pg_catalog.pg_class ix ON ix.oid=i.indexrelid
         JOIN pg_catalog.pg_am am ON am.oid=ix.relam
         WHERE i.indrelid=pg_catalog.to_regclass(%s) AND ix.relname=%s
-        """, (target, "_cryptalis_" + suffix + "_eq")).one_or_none()
+        """, (field["column"], target, "_cryptalis_" + suffix + "_eq")).one_or_none()
+    if index is None:
+        raise ValueError("Unqualified search index")
+    # Match PostgreSQL deparser spelling without an extra catalog round trip.
+    column, *index = index
     scoped = "column" in model["tenancy"]
     count = 2 if scoped else 1
     columns = [model["tenancy"]["column"], None] if scoped else [None]
     opclasses = ["pg_catalog.uuid_ops", "pg_catalog.bytea_ops"] if scoped else ["pg_catalog.bytea_ops"]
     expected = ("unique" in field["queries"], True, True, True, True, False, True, "btree", count, count,
                 f'"substring"({column}, 15, 32)', columns, opclasses, [0] * count, [0] * count)
-    if index is None or tuple(index) != expected:
+    if tuple(index) != expected:
         raise ValueError("Unqualified search index")
 
 
@@ -206,20 +209,26 @@ def validate_frame_storage(connection, model, field, *, admitted=None):
 
 def _frame_expressions(field, quote):
     """Known PG16 forms of one declared CF1 policy, including dump/restore."""
-    column = quote(field['column'])
+    # Keep the original nested/flattened pair first. Every alternative spells
+    # the same identifier through the supplied native PostgreSQL preparer.
+    columns = dict.fromkeys((quote(field['column']),
+                             quote.__self__.quote_identifier(field['column'])))
     overhead = 74 if field['queries'] else 42
-    width = {'bool': 1, 'int2': 2, 'int4': 4, 'int8': 8, 'date': 4, 'uuid': 16}.get(field['source']['type'])
+    width = _fixed_value_width(field['source'])
     minimum, maximum = (42 + width, 42 + width) if width is not None else (overhead, 16777216 + overhead)
     magic = '434631000101' if field['queries'] else '434631000100'
     comparison = '<>' if field['queries'] else '='
-    terms = [f'(octet_length({column}) >= {minimum})',
-             f'(octet_length({column}) <= {maximum})',
-             f"(\"substring\"({column}, 1, 6) = decode('{magic}'::text, 'hex'::text))",
-             f"(\"substring\"({column}, 7, 4) <> decode('00000000'::text, 'hex'::text))",
-             f"(\"substring\"({column}, 11, 4) {comparison} decode('00000000'::text, 'hex'::text))"]
-    nested = f'({terms[0]} AND {terms[1]}) AND ' + ' AND '.join(terms[2:])
-    flattened = ' AND '.join(terms)
-    return tuple(f'(({column} IS NULL) OR ({body}))' for body in (nested, flattened))
+    forms = []
+    for column in columns:
+        terms = [f'(octet_length({column}) >= {minimum})',
+                 f'(octet_length({column}) <= {maximum})',
+                 f"(\"substring\"({column}, 1, 6) = decode('{magic}'::text, 'hex'::text))",
+                 f"(\"substring\"({column}, 7, 4) <> decode('00000000'::text, 'hex'::text))",
+                 f"(\"substring\"({column}, 11, 4) {comparison} decode('00000000'::text, 'hex'::text))"]
+        nested = f'({terms[0]} AND {terms[1]}) AND ' + ' AND '.join(terms[2:])
+        flattened = ' AND '.join(terms)
+        forms.extend(f'(({column} IS NULL) OR ({body}))' for body in (nested, flattened))
+    return tuple(forms)
 
 
 def _validate_frame_storage(connection, model, field, *, admitted=None):
@@ -227,13 +236,20 @@ def _validate_frame_storage(connection, model, field, *, admitted=None):
     target = connection.dialect.identifier_preparer.quote_identifier(model['schema']) + '.' + connection.dialect.identifier_preparer.quote_identifier(model['table'])
     suffix = field['field_id'].replace('-', '')
     check = connection.exec_driver_sql("""
-        SELECT convalidated, connoinherit, pg_catalog.pg_get_expr(conbin, conrelid)
-        FROM pg_catalog.pg_constraint WHERE conrelid=pg_catalog.to_regclass(%s)
-        AND conname=%s AND contype='c'
+        SELECT c.convalidated, c.connoinherit, pg_catalog.pg_get_expr(c.conbin, c.conrelid),
+               ARRAY(SELECT a.attname FROM pg_catalog.unnest(c.conkey) WITH ORDINALITY k(attnum,n)
+                     LEFT JOIN pg_catalog.pg_attribute a ON a.attrelid=c.conrelid AND a.attnum=k.attnum
+                     ORDER BY k.n)
+        FROM pg_catalog.pg_constraint c WHERE c.conrelid=pg_catalog.to_regclass(%s)
+        AND c.conname=%s AND c.contype='c'
         """, (target, "_cryptalis_" + suffix + "_frame")).one_or_none()
+    if check is None or (check[0], check[1], check[3]) != (True, False, [field['column']]):
+        raise ValueError('Unqualified framing check')
     forms = _frame_expressions(field, quote)
     if admitted is not None and admitted not in forms:
         raise ValueError('Unqualified framing check')
-    expected_check = forms[0] if admitted is None else admitted
-    if check is None or tuple(check) != (True, False, expected_check):
+    # Keep ordinary admission nested-only; a restored flattened expression
+    # still needs its exact separately inspected restatement.
+    expected_checks = forms[::2] if admitted is None else (admitted,)
+    if check[2] not in expected_checks:
         raise ValueError("Unqualified framing check")

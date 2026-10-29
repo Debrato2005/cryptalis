@@ -204,8 +204,18 @@ class DevelopmentKeyProvider:
     def rewrap(self, wrapper: WrappedRoot, new_provider: KeyProvider, context: KeyContext) -> WrappedRoot:
         root = self.unwrap(wrapper, context)
         try:
+            identity = new_provider.provider_id
+            if type(identity) is not UUID or identity.int == 0:
+                raise KeyUnavailable()
             result = new_provider.wrap(root, context)
-            if not isinstance(result, WrappedRoot) or result.context != context or result.provider_id != new_provider.provider_id:
+            if (type(result) is not WrappedRoot or result.context != context
+                    or result.provider_id != identity
+                    or new_provider.provider_id != identity):
+                raise KeyUnavailable()
+            recovered = new_provider.unwrap(result, context)
+            if (type(recovered) is not bytes or len(recovered) != 32
+                    or not compare_digest(root, recovered)
+                    or new_provider.provider_id != identity):
                 raise KeyUnavailable()
             return result
         except Exception:
