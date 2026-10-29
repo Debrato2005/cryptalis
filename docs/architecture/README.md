@@ -391,7 +391,9 @@ Attachment returns a factory called as `sessions(tenant_id=tenant_uuid)`. Await 
 The compiler lock must be trusted by the host. Physical protected columns must already be `bytea`.
 This call does not perform a schema/data transition. Attach before application sessions or model use.
 The optional `cryptalis.sqlmodel.attach` uses the same arguments for synchronous
-PostgreSQL sessions on SQLModel 0.0.48. It inherits native `Session.exec` and
+and asynchronous PostgreSQL sessions on SQLModel 0.0.48. Await attachment for an
+AsyncEngine. It reuses native `Session.exec` result shaping; async `exec` first
+passes the shared async admission and key preparation boundary. It
 normalizes only the checked exact AutoString mapping to native String.
 The [compatibility contract](../compatibility.md#optional-sqlmodel-bridge)
 defines its refusals. The [checkpoint](../status.md#optional-sqlmodel-template-checkpoint-2026-10-23)

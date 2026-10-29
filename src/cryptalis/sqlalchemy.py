@@ -2120,8 +2120,10 @@ class _AsyncTransaction(AsyncSessionTransaction):
 
 
 class _AsyncSession(AsyncSession):
+    _sync_session_class = _Session
+
     def __init__(self, *args, **kwargs):
-        super().__init__(*args, sync_session_class=_Session, _asynchronous=True, **kwargs)
+        super().__init__(*args, sync_session_class=self._sync_session_class, _asynchronous=True, **kwargs)
 
     async def _prepare(self):
         session = self.sync_session
@@ -2134,8 +2136,8 @@ class _AsyncSession(AsyncSession):
         return _AsyncTransaction(self, nested=True)
 
 
-def _async_method(name):
-    native = getattr(AsyncSession, name)
+def _async_method(name, *, native=None):
+    native = getattr(AsyncSession, name) if native is None else native
     @wraps(native)
     async def method(self, *args, **kwargs):
         statement = args[0] if args else kwargs.get('statement')
@@ -2190,6 +2192,7 @@ for _name in ("execute", "scalar", "scalars", "stream", "stream_scalars", "get",
 
 class _Factory:
     _sync_session = _Session
+    _async_session = _AsyncSession
 
     def __init__(self, owner):
         self._owner = owner
@@ -2198,7 +2201,7 @@ class _Factory:
         if any(k in options for k in ("bind", "binds", "class_", "sync_session_class", "_owner", "_asynchronous")):
             raise UnsupportedProtectedOperation()
         self._owner._ring(tenant_id)
-        cls = _AsyncSession if isinstance(self._owner.engine, AsyncEngine) else self._sync_session
+        cls = self._async_session if isinstance(self._owner.engine, AsyncEngine) else self._sync_session
         return cls(bind=self._owner.engine, _owner=self._owner, tenant_id=tenant_id, **options)
 
 

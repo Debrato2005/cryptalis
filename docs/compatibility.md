@@ -269,12 +269,16 @@ qualification follows from this internal candidate.
 
 ## Optional SQLModel bridge
 
-An explicit `cryptalis.sqlmodel.attach` bridge admits synchronous PostgreSQL
-sessions on SQLModel 0.0.48. It uses the same manifest, authenticated tenant
+An explicit `cryptalis.sqlmodel.attach` bridge targets synchronous and
+asynchronous PostgreSQL sessions on SQLModel 0.0.48. It uses the same manifest,
+authenticated tenant
 scope, key policy and deployment pin. The returned session inherits native
 `Session.exec` and keeps native scalar, tuple and entity results.
-Missing dependencies, unsupported versions and async engines refuse before
-connection or key work. The ordinary SQLAlchemy attachment keeps its existing interface.
+For an AsyncEngine, await attachment and use the returned async session factory.
+Async `exec` uses native SQLModel result shaping after guarded statement
+admission and awaited key preparation. Existing SELECT and mapped DML grammar
+applies. Missing dependencies and unsupported versions refuse before connection
+or key work. The ordinary SQLAlchemy attachment keeps its existing interface.
 
 Only the exact pinned AutoString type can normalize to its checked native String
 implementation. Its type, version, native method identities, flags, length,

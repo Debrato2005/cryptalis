@@ -111,6 +111,19 @@ class Qualification:
             credentials = provision(port, password, manifest, manifest['database'] + '_native')
             home = write_home(primary, port, manifest, credentials, source_database=manifest['database'])
             environment = dict(os.environ, HOME=str(home), PYTHONPATH='')
+            self.run('installed SQLModel sync and async bridge', [str(python),
+                'scripts/test_postgres.py', '--installed-wheel', str(wheel), '--source-role',
+                '--scope', 'Installed SQLModel sync and async bridge with native lifecycle and failure controls',
+                '--receipt', str(self.workdir / 'installed-sqlmodel-receipt.json'), '--',
+                'tests/test_sqlmodel_bridge.py', 'tests/test_sqlmodel_async.py', '-q'],
+                environment=environment)
+            receipt = json.loads((self.workdir / 'installed-sqlmodel-receipt.json').read_text())
+            if (receipt['exit_code'] != 0 or receipt['counts'].get('passed', 0) == 0
+                    or set(receipt['counts']) != {'passed'}
+                    or receipt['pytest_report_counts']['collection']
+                    or receipt['runtime_binding']['mode'] != 'installed-wheel'
+                    or receipt['runtime_binding']['wheel_sha256'] != digest):
+                raise CheckFailed(1)
             self.run('installed keyword public-slot genuine fresh recovery', [str(python),
                 'scripts/fresh_cluster_qualification.py', '--workdir', str(self.workdir / 'fresh'),
                 '--integer', '32', '--column-name', 'integer', '--public-slots',
@@ -139,6 +152,7 @@ class Qualification:
         for relative, name in (
                 ('source/receipt.json', 'source-receipt.json'),
                 ('release.json', 'release-receipt.json'), ('install.json', 'install-receipt.json'),
+                ('installed-sqlmodel-receipt.json', 'installed-sqlmodel-receipt.json'),
                 ('fresh/export-receipt.json', 'installed-export-receipt.json'),
                 ('fresh/restore-receipt.json', 'installed-restore-receipt.json'),
                 ('fresh/integer-32-journey-receipt.json', 'installed-journey-receipt.json')):
