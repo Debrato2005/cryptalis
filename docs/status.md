@@ -10,6 +10,35 @@ No PostgreSQL/provider/runtime cell, production key provider, independent review
 VERIFIED below refers only to the named checks and their exact revisions.
 All other contract and promotion requirements are SPECIFIED. All seven full gates remain UNKNOWN.
 
+## Single-tenant mapped single-record DELETE: 2026-10-29
+
+**IMPLEMENTED, bounded PostgreSQL 16.15 source verification:** explicitly
+single-tenant tables accept mapped DELETE with one direct typed record equality,
+fixed table-UUID session authority and `synchronize_session=False`. Tenant-column
+tables retain their existing two-predicate grammar. External parameters, Core
+DELETE, RETURNING and extra caller predicates remain unadmitted.
+
+Six focused native controls pass sync, async and async SQLModel row counts,
+loaded identity state, duplicate/missing IDs, savepoints, rollback, autoflush
+and latest-value decrypt-back/removal. Separate controls refuse wrong authority
+and unsupported shapes before key/SQL effects, reject record mutation during
+awaited preparation and block a late driver-bind replacement before dispatch.
+All three role probes and source/runtime stability checks pass. A separate
+agent source review found no actionable defect; independent human review
+remains required. The [retained boundary](_reset/single-tenant-delete-boundary-20261029.json)
+records 140 affected source checks and 29 installed DML/bridge checks, all
+passing without skips. Source/runtime bindings stay unchanged and three role
+probes pass in each run. Repeat wheel/sdist hashes, 49 installed files and CLI
+startup pass inspection. The existing keyword/public-slot profile passes
+export and actual fresh-cluster recovery. Release CI retains the installed
+selection. That recovery remains an integer lifecycle profile, not an
+independent original fixed-scope application journey.
+
+The same immutable deletion permit binds the physical table, record, typed
+identity and fixed policy scope. Only the unused physical tenant bind is absent.
+No crypto, format, dependency or lifecycle state changes. All seven production
+gates remain UNKNOWN.
+
 ## Single-tenant mapped dictionary UPDATE: 2026-10-29
 
 **IMPLEMENTED, bounded PostgreSQL 16.15 source verification:** explicitly

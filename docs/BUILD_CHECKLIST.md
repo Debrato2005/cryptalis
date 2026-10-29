@@ -25,6 +25,14 @@ No objective is complete until its acceptance evidence and applicable gate pass.
 
 ## Current boundary
 
+- Explicit single-tenant tables now accept single-record mapped DELETE under
+  fixed table-UUID authority. Native row counts, ORM state, rollback, savepoints,
+  current-value exit and record/driver mutation refusals pass six focused checks.
+  All 140 affected source checks, 29 installed DML/bridge checks and existing
+  fresh recovery pass; installed selection remains in release CI.
+  See the [checkpoint](status.md#single-tenant-mapped-single-record-delete-2026-10-29).
+  All production gates remain open.
+
 - Explicit single-tenant tables now accept native mapped dictionary UPDATE
   under their fixed table UUID. Missing-record errors, partial transaction
   effects, savepoints, overflow precedence and latest-value removal pass native

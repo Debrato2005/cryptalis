@@ -97,6 +97,21 @@ native `StaleDataError`; roll back before retry. Tenant-column tables use the
 separate explicit tenant-equality form in the [UPDATE contract](compatibility.md#full-capability-matrix).
 Async sessions use the same statements with awaited execution and commit.
 
+Delete one record from the same explicitly single-tenant table with its exact
+typed primary key:
+
+```python
+from sqlalchemy import delete
+
+with sessions(tenant_id=declared_table_uuid) as session:
+    result = session.execute(delete(Customer).where(Customer.id == first_uuid),
+                             execution_options={"synchronize_session": False})
+    session.commit()
+```
+
+Native `result.rowcount` is zero or one. Do not supply external parameter
+dictionaries, RETURNING or additional predicates for this route.
+
 Request one direct protected mapped column when the caller needs inserted values:
 
 ```python
