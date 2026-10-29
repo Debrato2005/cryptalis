@@ -10,6 +10,50 @@ No PostgreSQL/provider/runtime cell, production key provider, independent review
 VERIFIED below refers only to the named checks and their exact revisions.
 All other contract and promotion requirements are SPECIFIED. All seven full gates remain UNKNOWN.
 
+## Protected-column DELETE RETURNING: 2026-10-29
+
+**VERIFIED, local PostgreSQL 16.15:** the
+[71-check focused boundary](_reset/protected-delete-returning-focused-20261029.json)
+passes native sync/async scalar and direct-tuple results for TEXT, VARCHAR,
+Boolean, int2/int4/int8, finite Date and UUID values. SQL NULL, empty values,
+result keys, zero matches, rollback and commit retain native behavior.
+The original statement's result type descriptions remain unchanged.
+
+Every returned protected carrier identifies the original requested row and
+tenant; every non-NULL frame authenticates its field. Actual stored corruption,
+swapped fields, another row's valid frame, wrong/missing context and NULL-context
+substitution refuse. UUID and signed-int64 record contexts pass. A result error
+can follow DELETE execution; keep the transaction open and roll back on failure.
+
+Attachment records the original application type. An owned projection copy
+selects physical authenticated types while the original permit freezes both
+physical and effective projection configurations. Independent review identified
+that capturing a fresh permit after cloning could replace record authority.
+Both sync and async regressions demonstrated the issue before the fix. The
+clone now validates against the original permit with only its projection states
+normalized; the substituted record refuses before driver dispatch.
+
+All three role probes pass and source stays unchanged during the focused run.
+The [complete source boundary](_reset/protected-delete-full-regression-20261029.json)
+covers all 161 files and 3,033 selected items: 3,020 passing test calls and
+eighteen passing subtests. Nine call skips, four setup skips and fifteen
+collection skips remain explicit. The 48 warnings retain the existing DISTINCT
+ON deprecation. The [release check](_reset/protected-delete-release-20261029.json)
+passes same-host repeat builds, archive integrity and SBOM generation.
+
+The initial parallel selections retain sixteen failures: fifteen older private
+decoder fixtures omitted the new operation field, and one rotation correctly
+refused a runtime role while another worker deliberately granted database
+CREATE. The fixtures now declare `scoped_delete=None`, matching a normal read.
+A serialized 43-check run passes the entire UUID decoder file, rotation lifecycle
+and privilege controls. Product hashes remain identical across every run; only
+that test fixture file changes. The boundary replaces affected file outcomes
+without counting repeated tests twice and preserves the initial failure record.
+Parallel workers must use isolated roles/clusters or serialize privilege tests.
+
+Entity, label, expression, alias, broad DELETE and UPDATE RETURNING routes retain
+separate admission requirements. Production gates remain UNKNOWN.
+
 ## Public-column DELETE RETURNING: 2026-10-29
 
 **VERIFIED, local PostgreSQL 16.15:** the

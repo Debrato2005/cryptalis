@@ -4,6 +4,25 @@
 It does not preserve old IDs as implementation obligations. Historical dispositions remain in [archived revamp evidence](research/revamp-evidence.md).
 [Status](status.md) owns IMPLEMENTED/VERIFIED claims. All seven full gates remain UNKNOWN.
 
+## Authenticated protected-column DELETE RETURNING: 2026-10-29
+
+Extend the exact tenant-and-record DELETE route to direct protected scalar and
+column-tuple results. Reuse the existing CF1 read carrier. Require every carrier
+to identify the original requested row and session tenant; authenticate each
+non-NULL frame against its own field. A DELETE result cannot use the outer-join
+NULL extension.
+
+Record the original application type at attachment. Accept only that exact
+annotation or the owned physical type for a protected column. Freeze canonical
+and effective projection configurations before keys. Compile an owned projection
+copy with physical types and validate it against a normalized copy of the
+original permit. Preserve its original scope and identity, even if a cloning
+hook returns another valid DELETE. Keep the caller's statement unchanged.
+The compiler-owned hex-format literal keeps the final driver's original two
+predicate parameters. Result authentication can fail after DML; the caller must
+keep the transaction open and roll back on result failure. Entity, label,
+expression, alias and broader DML routes retain separate admission requirements.
+
 ## Public-column scoped DELETE RETURNING: 2026-10-29
 
 Admit native direct public columns from the existing exact tenant-and-record

@@ -25,10 +25,17 @@ No objective is complete until its acceptance evidence and applicable gate pass.
 
 ## Current boundary
 
+- Direct protected-column DELETE RETURNING now uses authenticated read carriers
+  bound to the original requested row and tenant. Native scalar types, NULLs,
+  sync/async transactions, swapped fields and context faults have focused
+  controls. The owned projection copy preserves caller annotations and original
+  authority across cloning. See the
+  [checkpoint](status.md#protected-column-delete-returning-2026-10-29).
+
 - Scoped mapped DELETE now admits direct public-column RETURNING. Native
   sync/async result keys, scalar/tuple values, zero matches and transaction
   behavior have focused controls. Returned columns and effective types stay
-  bound to the original permit across callbacks. Protected/entity RETURNING
+  bound to the original permit across callbacks. Entity RETURNING
   remains separate admission work. See the
   [checkpoint](status.md#public-column-delete-returning-2026-10-29).
 
@@ -612,7 +619,7 @@ Requirement text is abbreviated. The full definitions remain in the research
 | OBJ-QUERY-01 | Exact equality, `IN`, scoped uniqueness, NULL logic, races | VERIFIED, bounded | `_sqlalchemy_search.py`, slice 4 receipt; native concurrency tests | Keep grammar reconciliation current |
 | OBJ-QUERY-02 | Ordinary SQL correctness: NULL predicates, aliases, joins, projections | PARTIAL | Native sync/async controls; textual reference admission and simple negative/NULL predicates; expanded entity/table/descendant admission preserves authenticated outputs and safe public expressions. Bounded protected counts, tenant-scoped distinct counts, public count filters/windows and public DISTINCT with encrypted filters pass [installed controls](status.md#local-assignment-explanation-and-inspection-profile-2026-10-28) | Continue finite native-oracle matrix; general Boolean NOT, protected grouping and protected joins remain unadmitted |
 | OBJ-QUERY-03 | Ordering, ranges, prefix/text search, aggregates, other types | PARTIAL | Bounded TEXT/VARCHAR, Boolean, signed integer, finite Date and UUID storage; non-NULL/distinct counts and authenticated DISTINCT reuse admitted representations. Current lifecycle/cost receipts retain their exact boundaries | Range/order/pattern profiles, other aggregates and structured JSON remain unadmitted. Refusal does not complete the objective |
-| OBJ-QUERY-04 | INSERT/UPDATE/DELETE, bulk, RETURNING, triggers, cascades, savepoints | PARTIAL | Scoped tenant-column TEXT/VARCHAR dictionary UPDATE with native plan-sensitive VARCHAR assignment/errors, transaction/group semantics and exact ordered input proofs; ORM flush writes and attached sync/async mapped dictionary INSERT, with native scalar, direct-tuple and mapped-entity RETURNING, per-field prepared-input proof and native paging/identity/refresh; native NULL/grouping, typed context, errors and savepoints; exact driver/page/input-result checks; finite mapped TEXT/VARCHAR tenant/record DELETE with native results, public-column RETURNING and transactions; custom DELETE AST refusal also covers ordinary flush; 55 scoped integration checks and both 65-case flush bundles pass | Qualify protected DELETE RETURNING, UPDATE RETURNING, upserts, broader DML/defaults and each trigger/cascade effect separately |
+| OBJ-QUERY-04 | INSERT/UPDATE/DELETE, bulk, RETURNING, triggers, cascades, savepoints | PARTIAL | Scoped tenant-column TEXT/VARCHAR dictionary UPDATE with native plan-sensitive VARCHAR assignment/errors, transaction/group semantics and exact ordered input proofs; ORM flush writes and attached sync/async mapped dictionary INSERT, with native scalar, direct-tuple and mapped-entity RETURNING, per-field prepared-input proof and native paging/identity/refresh; native NULL/grouping, typed context, errors and savepoints; exact driver/page/input-result checks; finite mapped tenant/record DELETE with native public/protected-column RETURNING, original field/row/tenant authentication and transactions; custom DELETE AST refusal also covers ordinary flush; 55 scoped integration checks and both 65-case flush bundles pass | Qualify entity DELETE RETURNING, UPDATE RETURNING, upserts, broader DML/defaults and each trigger/cascade effect separately |
 | OBJ-QUERY-05 | Versioned compatibility corpus and read-only scanner | PARTIAL | Native-vs-attached tests and receipts; [supplied SELECT preflight](status.md#installed-application-query-diagnostics-2026-10-24) reuses runtime admission before migration and diagnoses original HTTP query structures without rows or keys | Complete automatic query/write route inventory and reconcile current revisions |
 | OBJ-LIFE-01 | Deterministic plan/apply/verify with diagnostics | VERIFIED, bounded | `migration.py` plan/apply/verify; compiler inspection maps SQLAlchemy and direct psycopg errors to safe SQLSTATE; slice 5 receipts; read-only Doctor/status failure controls preserve operation identity, safe known remedies and UNKNOWN observations | Broader schema and failure boundaries |
 | OBJ-LIFE-02 | Resumable, atomic, byte-bounded backfill with verification | VERIFIED, bounded | Journal, advisory lock, chunks, crash/resume tests; one expiry-specific local row retry with policy checks and atomic failure controls in protection/decrypt-back | Exact memory/WAL bounds remain host inputs |

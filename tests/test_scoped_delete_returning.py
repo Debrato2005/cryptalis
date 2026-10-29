@@ -97,8 +97,9 @@ def test_public_delete_results_match_native_keys_values_and_rollback(varchar, ki
             assert actual == expected
 
 
-@pytest.mark.parametrize('fault', ['protected', 'entity', 'label', 'expression', 'foreign', 'custom',
-                                 'custom_type', 'native_type'])
+@pytest.mark.parametrize('fault', ['protected_label', 'entity', 'label', 'expression', 'foreign', 'custom',
+                                 'custom_type', 'native_type', 'missing_type', 'protected_custom_type',
+                                 'protected_native_type', 'protected_missing_type'])
 def test_unadmitted_delete_projections_refuse_before_keys_or_driver(fault, monkeypatch):
     with native_application(False) as app:
         resolved = []
@@ -107,26 +108,31 @@ def test_unadmitted_delete_projections_refuse_before_keys_or_driver(fault, monke
             return keys(tenant)
         factory = protect(app, resolver=resolve)
         columns = {
-            'protected': (app.Customer.name,), 'entity': (app.Customer,),
+            'protected_label': (app.Customer.name.label('private'),), 'entity': (app.Customer,),
             'label': (app.Customer.id.label('renamed'),),
             'expression': (func.lower(app.Customer.label),),
             'foreign': (select(app.Customer.id).subquery().c.id,),
             'custom': (app.Customer.id,),
             'custom_type': (app.Customer.id,), 'native_type': (app.Customer.id,),
+            'missing_type': (app.Customer.id,),
+            'protected_custom_type': (app.Customer.name,), 'protected_native_type': (app.Customer.name,),
+            'protected_missing_type': (app.Customer.name,),
         }[fault]
         query = delete(app.Customer).where(app.Customer.tenant_id == TENANT,
             app.Customer.id == UUID(int=101)).returning(*columns)
         if fault == 'custom':
             target = query._returning[0]
             monkeypatch.setattr(target, '_compiler_dispatch', MethodType(lambda *a, **k: 'NULL', target))
-        elif fault in ('custom_type', 'native_type'):
+        elif fault in ('custom_type', 'native_type', 'missing_type', 'protected_custom_type',
+                       'protected_native_type', 'protected_missing_type'):
             class CustomResult(TypeDecorator):
                 impl = String
                 cache_ok = False
                 def column_expression(self, column):
                     return literal_column("'custom-result'", String())
             monkeypatch.setattr(query._returning[0], 'type',
-                CustomResult() if fault == 'custom_type' else String())
+                CustomResult() if fault.endswith('custom_type') else
+                None if fault.endswith('missing_type') else String())
         before = _snapshot(app)
         with factory(tenant_id=TENANT) as session:
             resolved.clear()

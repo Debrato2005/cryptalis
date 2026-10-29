@@ -40,6 +40,10 @@ roles with generated private credentials. Every test runs through
 `scripts/test_postgres.py`, which reloads and probes those credentials. The
 cluster stops when the test process finishes. A failed probe stops the run.
 
+Use separate PostgreSQL clusters for parallel test workers, or serialize tests
+that change database-wide role privileges. Shared-role wrapper processes can
+observe another test's temporary grants and correctly refuse unsafe access.
+
 The test receipt is `/tmp/cryptalis-college-check/receipt.json`. It records the
 source hashes, selected tests, outcomes and unchanged-source check. Keep skips
 visible. Optional original-application and fresh-restore profiles need their

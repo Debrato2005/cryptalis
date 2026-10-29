@@ -5,7 +5,7 @@ does not migrate schemas or qualify external writers. Research prototype.
 """
 
 from contextvars import ContextVar
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from datetime import date
 from functools import wraps
 from hashlib import sha256
@@ -14,7 +14,7 @@ import re
 from types import MappingProxyType, MethodType
 from uuid import UUID
 
-from sqlalchemy import BigInteger, Boolean, Column, Enum, LargeBinary, String, Table, Text, Uuid, UUID as SQLUUID, bindparam, case, cast, event, func, inspect, literal, select, type_coerce
+from sqlalchemy import BigInteger, Boolean, Column, Enum, LargeBinary, String, Table, Text, Uuid, UUID as SQLUUID, bindparam, case, cast, event, func, inspect, literal, literal_column, select, type_coerce
 from sqlalchemy.engine import Engine
 from sqlalchemy.dialects import postgresql as _postgresql_types
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, AsyncSessionTransaction
@@ -148,6 +148,7 @@ class _Binding:
     max_characters: int | None = None
     boolean_processor: object = field(default=None, repr=False)
     application_default: bool | int | None = None
+    source_type: object = field(default=None, repr=False)
 
 
 def _assignment(value, binding):
@@ -343,6 +344,9 @@ class _ReadText(TypeDecorator):
         self.keys = operation.keys
         self.tenant = operation.tenant
         self.points = tuple(value for column, value in operation.points if column.compare(record_column))
+        self.require_record = operation.scoped_delete is not None
+        if self.require_record and self.points != (operation.scoped_delete.identity,):
+            raise UnsupportedProtectedOperation()
         self.returning_frames = None
         if operation.bulk_returning is not None and id(binding.column) in operation.bulk_returning:
             if not operation.bulk_batch:
@@ -363,7 +367,7 @@ class _ReadText(TypeDecorator):
         payload, record, tenant = value
         descriptor = self.binding.descriptor
         if record is None:
-            if self.returning_frames is not None:
+            if self.returning_frames is not None or self.require_record:
                 raise AuthenticationFailed()
             valid_null_scope = (tenant is None if descriptor.tenant_codec == "uuid16/v1" else
                                 tenant == str(descriptor.table_id) == str(self.tenant))
@@ -444,8 +448,10 @@ class _Payload(TypeDecorator):
             tenant = table.c[self.binding.tenant.key]
         else:
             tenant = str(self.binding.descriptor.table_id)
+        # DELETE permits exactly its two original predicates at driver dispatch.
+        encoding = literal_column("'hex'", String()) if operation.scoped_delete is not None else "hex"
         packed = func.pg_catalog.jsonb_build_array(
-            func.pg_catalog.encode(type_coerce(column, LargeBinary()), "hex"), record, tenant)
+            func.pg_catalog.encode(type_coerce(column, LargeBinary()), encoding), record, tenant)
         return type_coerce(packed, _ReadText(self.binding, operation, record))
 
 
@@ -750,7 +756,7 @@ class _Attachment:
                                    mapper.get_property_by_column(tenant).key if tenant is not None else None,
                                    mapper.class_, _native_text_length(source) if source['type'] in ('text', 'varchar') else None,
                                    column.type.bind_processor(connection.dialect) if boolean else None,
-                                   _compiled_default(field))
+                                   _compiled_default(field), column.type)
                 self.bindings.append(binding)
             self.models[mapper.class_] = tuple(b for b in self.bindings if b.model is mapper.class_)
 
@@ -1066,9 +1072,13 @@ class _Attachment:
         returning = []
         for column in statement._returning:
             self.returning_column_identity(column, table)
-            if self.protected(column) or column.type is not table.c[column.key].type:
+            native = table.c[column.key]
+            if (column.type is not native.type and not (type(native.type) is _Payload and
+                    column.type is native.type.binding.source_type)):
                 raise UnsupportedProtectedOperation()
-            returning.append(_unprotected_column_state(table.c[column.key]))
+            returning.append((_unprotected_column_state(native), _unprotected_column_state(column)[1:]))
+        if returning:
+            self.select_types(select(*statement._returning))
         for column in (first.record, first.tenant):
             self.identity_type(column.type, uuid_only=column is first.tenant)
             self.bind_type(column.type, selecting=True)
@@ -1843,12 +1853,25 @@ def _scoped_delete(state):
     if session._tenant != permit.tenant:
         raise UnsupportedProtectedOperation()
     owner.delete_context(statement, permit.tenant, permit)
-    operation = _Operation(owner, material, permit.tenant, session, scoped_delete=permit)
+    if any(owner.protected(column) for column in statement._returning):
+        # ORM annotations can retain the original application type. Compile an
+        # owned projection copy so every protected result invokes its carrier.
+        statement = statement._generate()
+        statement._returning = tuple(permit.table.c[column.key]._annotate(
+            dict(column._annotations, cryptalis_delete_returning=True))
+            for column in state.statement._returning)
+        permit = replace(permit, returning=tuple((native, native[1:]) for native, _ in permit.returning))
+        owner.delete_context(statement, permit.tenant, permit)
+    operation = _Operation(owner, material, permit.tenant, session, scoped_delete=permit,
+                           points=((permit.record, permit.identity),))
     state.update_execution_options(compiled_cache=None)
     token = _operation.set(operation)
+    original_statement = state.statement
     try:
+        state.statement = statement
         return state.invoke_statement()
     finally:
+        state.statement = original_statement
         _operation.reset(token)
 
 
@@ -2200,8 +2223,9 @@ def attach(mapping: registry, engine: Engine | AsyncEngine, *, lock: bytes, keys
     tenant passed to the returned factory. ORM flush and bounded mapped
     dictionary INSERT, tenant-scoped TEXT UPDATE, and single-record tenant-scoped
     DELETE writes are admitted. Mapped DELETE requires execute() with explicit
-    tenant/record equality and synchronize_session=False. Direct public columns
-    can be selected with DELETE RETURNING.
+    tenant/record equality and synchronize_session=False. Direct mapped columns
+    can be selected with DELETE RETURNING; protected values authenticate against
+    the requested record and tenant. Roll back after a result failure.
 
     ``deployment`` is ``(plan, pin)`` or ``(plan, pin, restore_binding)``. The
     third element is an adopted ``cryptalis.restore/v1`` binding when the

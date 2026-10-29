@@ -385,13 +385,24 @@ bulk routes and unadmitted grammar reject.
 Mapped text attributes remain ordinary `str` or NULL. Generated projections carry row and tenant context for authentication.
 Protected projections and predicates disable compilation caching because their processors retain prepared material and operation context.
 
-Scoped mapped DELETE also admits direct public-column RETURNING through native
-sync/async Result objects. The statement must retain its exact typed tenant and
-record predicates and `synchronize_session=False`. Public projections use their
-canonical native column types. The immutable DELETE permit captures their order
-and configuration before key preparation and rechecks them after callbacks and
-at driver dispatch. Protected fields, entities, labels, expressions, foreign
-columns and customized projection types require separate admission.
+Scoped mapped DELETE also admits direct public and protected-column RETURNING
+through native sync/async Result objects. The statement must retain its exact
+typed tenant and record predicates and `synchronize_session=False`. The permit
+freezes projection order, physical configuration and effective types before key
+preparation. Protected columns may retain only their exact recorded application
+type annotation or their owned physical type. An owned statement copy selects
+the physical types and is checked against the original permit; cloning cannot
+replace the requested row or tenant.
+
+Protected DELETE results reuse the authenticated read carrier. Every carrier
+must identify the requested row and tenant, including SQL NULL results; the
+outer-join NULL extension is invalid here. Every non-NULL frame authenticates
+its own field context. The generated encoding-format literal is fixed and adds
+no user input or driver parameters. The final driver check still binds the two
+original predicates exactly. Keep the transaction open while consuming results.
+Authentication can fail after DELETE executes; roll back on result failure.
+Entity, label, expression, alias and customized-type projections require separate
+admission.
 Unprotected projections retain native caching. Guards reject public raw-driver, opaque SQL, COPY, and unprepared-write routes.
 **VERIFIED:** native/attached comparisons and cache regression sensitivity have the exact boundary in the
 [slice 3 checkpoint](../status.md#slice-3-checkpoint-2026-10-08).
