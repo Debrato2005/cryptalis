@@ -10,6 +10,36 @@ No PostgreSQL/provider/runtime cell, production key provider, independent review
 VERIFIED below refers only to the named checks and their exact revisions.
 All other contract and promotion requirements are SPECIFIED. All seven full gates remain UNKNOWN.
 
+## Independent OpenBao snapshot recovery: 2026-10-30
+
+**VERIFIED, isolated source and installed cells:** the provider qualification
+runner restores a real encrypted Raft snapshot into separate newly initialized
+storage with new TLS credentials and a different loopback endpoint. The original
+service is stopped before restore. Original unseal material and the same logical
+provider identity recover the wrapped root and authenticate the original CF1
+frame through fresh Keyrings and Doctor. A key created after the snapshot is
+absent. The target stops before the source restarts; both storage directories,
+snapshots and initialization material are retained privately.
+
+Runtime credentials cannot export or restore snapshots. Default restore with a
+different seal and malformed force-restore input refuse. Force restore is confined
+to the newly created empty test target; this adds no arbitrary service-restore API.
+The helper reuses the same pinned image, private TLS setup and container controls.
+
+The [retained boundary](_reset/openbao-snapshot-boundary-20261030.json) records
+69 source and 69 installed provider/Doctor checks without skips, all 280 Python
+hashes unchanged, reproducible artifacts and selected-extra SBOM, 29 installed
+ORM checks and one export plus one genuine fresh PostgreSQL recovery. The
+PostgreSQL and provider recovery profiles are separate; a combined disaster drill
+is still required. Complete default-source GitHub CI remains pending.
+
+Production backup custody, authenticated failover/fencing, HA, RPO/RTO,
+controlled destruction and independent human review remain unqualified. The next
+implementation priority is simplifying host integration while preserving explicit
+deployment and tenant authority, followed by the remaining query/type, upgrade,
+inventory and performance work. All 34 objectives remain in scope; no production
+gate is promoted.
+
 ## Cold-provider Doctor: 2026-10-30
 
 **IMPLEMENTED and VERIFIED, bounded local cells:** `doctor.check_keys` and

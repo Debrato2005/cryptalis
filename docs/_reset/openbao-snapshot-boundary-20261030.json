@@ -1,0 +1,51 @@
+{
+  "format": "cryptalis.openbao-snapshot/v1",
+  "base_revision": "e5f52b32bac3df301bf69a068144e76d1f5c51ed",
+  "archive": {
+    "path": "docs/_reset/openbao-snapshot-receipts-20261030.tar.gz",
+    "sha256": "f4f81a8236fcc71ccfa08a60447878904ab19618002d9f8c79e58f90bfe00de0",
+    "members": {
+      "release/install-receipt.json": "2c346cb3d581f2afe3b9157b2cc24a4adebfba1e004f77aab510cfe3f6a73b34",
+      "release/installed-export-receipt.json": "f93eb0b3fcdf46e6a307a618621e0dcfc2cf5de2f97fd8a61d81539e1e1028ac",
+      "release/installed-journey-receipt.json": "2c38d5ee5c0360d8febb404c8d18930a6e2c2dd85e8cbaa5da7e7bdb68731853",
+      "release/installed-openbao-qualification.json": "456f725c8179221e58943fb451b909c34a990b9b11d147ce955fb149da84f515",
+      "release/installed-openbao-tests.json": "cddee7741963145e8dbb5bcd701481d55b1c2280cb03a490a94580233a442d19",
+      "release/installed-restore-receipt.json": "c30840d0e50ebabced8eca177514563012e899cafc102750a86a89fe6acd0dd3",
+      "release/installed-sqlmodel-receipt.json": "068e98169ca5cc56a2c5723663f91db5d184eb75c7114eefce0d27d620ade869",
+      "release/release-receipt.json": "a893ee991e7c1a4c79555aa38f52425fde68e96641aa2823b7deb048ba3c1fa6",
+      "release/sbom.cdx.json": "845975850edc238b738bb8c990875a60bfc1d8e8442150c421d9b54c5733bf1c",
+      "release/status.json": "e52ef5cfe56097dc6870da7bdd4a36e1f7db5022611b58207c3688a28161c3ea",
+      "source/qualification.json": "456f725c8179221e58943fb451b909c34a990b9b11d147ce955fb149da84f515",
+      "source/tests.json": "a25695f5b5c8a4f6edf9c7320d0852f01739b5b25b27494b57407e474b110800"
+    }
+  },
+  "source_hash_binding": {
+    "files": 280,
+    "all_current_python_hashes_match": true
+  },
+  "source_provider_and_doctor": 69,
+  "release": {
+    "outcome": "PASS",
+    "installed_provider_and_doctor": 69,
+    "installed_orm": 29,
+    "fresh_export": 1,
+    "fresh_restore": 1,
+    "extras": [
+      "openbao",
+      "sqlmodel"
+    ]
+  },
+  "complete_default_source": "Pending GitHub CI; no complete source pass claimed.",
+  "snapshot_boundary": [
+    "Independent empty target, distinct TLS identity and endpoint; source service stopped before restore.",
+    "Wrong-seal normal restore and malformed force restore refuse; runtime snapshot export and restore forbidden.",
+    "Original unseal material recovers cold root and pre-snapshot CF1 frame; post-snapshot key absent.",
+    "Target stops before original source restarts; private snapshot and initialization secrets retained, not archived."
+  ],
+  "production_gates": "UNKNOWN",
+  "limits": [
+    "No production HA, authenticated failover, backup custody, RPO/RTO or destruction qualification.",
+    "The PostgreSQL fresh-recovery profile and provider snapshot drill are separate; a combined database/provider disaster drill remains open.",
+    "All 34 objectives remain in scope; independent human review remains unavailable."
+  ]
+}

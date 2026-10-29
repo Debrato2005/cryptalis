@@ -137,6 +137,10 @@ def test_runtime_policy_cannot_create_export_or_administer_keys(live):
             s.runtime.write(path, **values)
     with pytest.raises(s.hvac.exceptions.Forbidden):
         s.runtime.read(f'{s.mount}/export/encryption-key/{live.name}')
+    with pytest.raises(s.hvac.exceptions.Forbidden):
+        s.runtime.sys.take_raft_snapshot()
+    with pytest.raises(s.hvac.exceptions.Forbidden):
+        s.runtime.sys.force_restore_raft_snapshot(b'public invalid snapshot')
     with pytest.raises(KeyUnavailable):
         live.make(key_name='missing').wrap(ROOT, CONTEXT)
 
@@ -302,6 +306,103 @@ def test_isolated_service_outage_expiry_and_sealed_restart_recovery(live):
             s.admin.sys.submit_unseal_key(initialization['keys'][0])
     assert p.unwrap(wrapper, CONTEXT) == ROOT
     assert open_text(frame, field, CONTEXT.tenant_id, record, ring.prepare()) == 'outage value'
+
+
+def test_independent_snapshot_restores_cold_roots_with_source_fenced(live):
+    """Restore only into newly initialized empty test storage; retain all files."""
+    import re
+    import sys
+    from cryptalis.doctor import check_keys
+    s, p = live.service, live.provider
+    source_container = s.config.get('isolated_container')
+    if not source_container:
+        pytest.skip('snapshot recovery requires the isolated qualification harness')
+    assert re.fullmatch(r'cryptalis-bao-[0-9a-f]{32}', source_container)
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'scripts'))
+    try:
+        from openbao_qualification import docker, service_files, start_container, wait_available, write_private
+    finally:
+        sys.path.pop(0)
+    # Keep snapshots and bootstrap secrets outside pytest's temporary cleanup.
+    workdir = Path(s.config['admin_token_file']).parent / 'snapshot-recovery'
+    workdir.mkdir(mode=0o700, exist_ok=False)
+    target_container = 'cryptalis-bao-' + uuid4().hex
+    wrapper = create_root(p, CONTEXT)
+    policy = KeyPolicy(CONTEXT.domain_id, CONTEXT.tenant_id, (wrapper,), 1)
+    field, record = descriptor(), UUID(int=5)
+    frame = seal_text('independent provider recovery', field, CONTEXT.tenant_id, record,
+                      Keyring(policy, {p.provider_id: p}).prepare())
+    with s.admin.sys.take_raft_snapshot() as response:
+        chunks, size = [], 0
+        for chunk in response.iter_content(65536):
+            size += len(chunk)
+            assert size <= 16 * 1024 * 1024
+            chunks.append(chunk)
+        snapshot = b''.join(chunks)
+    assert snapshot
+    write_private(workdir / 'source.snap', snapshot)
+    # This key must remain absent after point-in-time recovery.
+    s.admin.write(f'{s.mount}/keys/after-snapshot', type='aes256-gcm96')
+    service_files(workdir)
+    created = source_stopped = target_stopped = False
+    client = None
+    try:
+        endpoint = start_container(workdir, target_container)
+        created = True
+        write_private(workdir / 'container-name', target_container.encode())
+        assert endpoint != s.config['endpoint']
+        client = s.hvac.Client(url=endpoint, verify=str(workdir / 'ca.pem'), allow_redirects=False, timeout=30)
+        assert not wait_available(client)
+        initialized = client.sys.initialize(secret_shares=1, secret_threshold=1)
+        write_private(workdir / 'bootstrap-initialization.json', json.dumps(initialized).encode())
+        client.sys.submit_unseal_key(initialized['keys'][0])
+        client.token = initialized['root_token']
+        assert s.mount + '/' not in client.sys.list_mounted_secrets_engines()
+        recovered = live.make(endpoint=endpoint, ca_cert=str(workdir / 'ca.pem'))
+        with pytest.raises(KeyUnavailable):
+            recovered.unwrap(wrapper, CONTEXT)
+        # Default restore refuses a different seal; malformed force input also refuses.
+        with pytest.raises(s.hvac.exceptions.VaultError):
+            client.sys.restore_raft_snapshot(snapshot)
+        with pytest.raises(s.hvac.exceptions.VaultError):
+            client.sys.force_restore_raft_snapshot(b'public invalid snapshot')
+        assert not client.sys.is_sealed()
+        docker('stop', '--time', '10', source_container)
+        source_stopped = True
+        assert docker('inspect', '--format', '{{.State.Running}}', source_container) == 'false'
+        with pytest.raises(KeyUnavailable):
+            p.unwrap(wrapper, CONTEXT)
+        # Force is confined to this proven-empty disposable target, never an existing service.
+        client.sys.force_restore_raft_snapshot(snapshot)
+        deadline = time.monotonic() + 30
+        while not client.sys.is_sealed():
+            assert time.monotonic() < deadline, 'restored service did not seal'
+            time.sleep(0.1)
+        with pytest.raises(KeyUnavailable):
+            recovered.unwrap(wrapper, CONTEXT)
+        source_initialization = private_json(s.config['admin_token_file'])
+        client.sys.submit_unseal_key(source_initialization['keys'][0])
+        client.token = source_initialization['root_token']
+        assert client.read(f'{s.mount}/keys/after-snapshot') is None
+        cold = Keyring(policy, {p.provider_id: recovered})
+        assert check_keys((cold,))['checks']['cold_key_preparation'] == 'PASS'
+        assert not cold._cache
+        assert open_text(frame, field, CONTEXT.tenant_id, record, cold.prepare()) == 'independent provider recovery'
+        assert docker('inspect', '--format', '{{.State.Running}}', source_container) == 'false'
+    finally:
+        try:
+            if client is not None:
+                client.session.close()
+        finally:
+            if created:
+                docker('stop', '--time', '15', target_container)
+                target_stopped = True
+            # Never restart source authority if target shutdown failed.
+            if source_stopped and target_stopped:
+                docker('start', source_container)
+                assert wait_available(s.admin)
+                s.admin.sys.submit_unseal_key(private_json(s.config['admin_token_file'])['keys'][0])
+    assert p.unwrap(wrapper, CONTEXT)
 
 
 def test_real_provider_protect_search_edit_and_verified_plaintext_exit(live, monkeypatch):

@@ -86,10 +86,11 @@ duration are not. Cancellation can leave a remote request running, although no
 late result is published into Keyring. Revocation cannot erase an already cached
 root; existing lease expiry still applies.
 
-Local qualification uses a real HTTPS server, private CA, single-node Raft
-storage and separate admin/runtime tokens. It does not qualify HA, secure
-unsealing, protected audit storage, service disaster recovery or controlled
-destruction. Independent security review and all applicable release gates remain
+Local qualification uses real HTTPS servers, private CAs, single-node Raft
+storage and separate admin/runtime tokens. It covers independent snapshot
+recovery on a fresh isolated service. It does not qualify HA, secure unsealing,
+protected audit storage, production disaster recovery or controlled destruction.
+Independent security review and all applicable release gates remain
 required. See [security](security.md#optional-openbao-transit-adapter).
 
 ## Repeatable local qualification
@@ -109,7 +110,8 @@ digest-pinned OpenBao 2.7.2 container, a short-lived private test CA, TLS keys,
 single-node Raft storage and test initialization credentials. It pins a loopback
 port across restart, drops container capabilities and uses a read-only container
 root with one private writable mount. It runs the protocol, actual-service,
-concurrency, outage/lease/sealed-restart and PostgreSQL lifecycle checks. A
+concurrency, outage/lease/sealed-restart, independent snapshot recovery and
+PostgreSQL lifecycle checks. A
 passing result requires no skips. Service setup uses a longer timeout than
 runtime key operations; ambiguous initialization failure is not retried.
 
@@ -118,11 +120,22 @@ to bind every imported Cryptalis module to the inspected artifact. Release CI
 uses this route and exports an SBOM with both `--extra openbao` and
 `--extra sqlmodel`. Default SBOM exports continue to cover the base package only.
 
-The service stops on exit. The private directory, service keys and container are
+The services stop on exit. The private directory, service keys and containers are
 retained for inspection; no automatic key deletion is performed. The report
 records cleanup failures even when another failure occurred first. Only
 `tests.json` and `qualification.json` are public evidence candidates. Never
 upload the complete work directory, initialization JSON, TLS private key,
 service logs or database credentials. The single-share test unseal arrangement
-is unsuitable for production. A retained-node restart is not an independent
-snapshot restore or disaster-recovery qualification.
+is unsuitable for production.
+
+The snapshot drill creates a second instance with new TLS credentials and empty
+Raft storage. It verifies refusal of mismatched-seal and malformed snapshots,
+stops the original service, and restores only into that newly initialized test
+target. The documented force-restore API permits importing a different seal;
+the original unseal material is still required. The drill confirms cold key
+preparation and CF1 decryption at the new endpoint, and confirms that a key
+created after the snapshot is absent. The original service stays stopped until
+the recovered target stops successfully. Snapshot and bootstrap secrets remain
+in the private work directory. This proves the listed local recovery behavior;
+production fencing, secure backup custody, retention, RPO/RTO and independent
+disaster-recovery acceptance remain unqualified.
