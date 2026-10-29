@@ -357,6 +357,15 @@ class Keyring:
         except Exception:
             raise KeyUnavailable() from None
 
+    def check_access(self) -> None:
+        """Cold-check every admitted root without warming or extending this cache.
+
+        Provider access can generate remote audit records. This does not verify
+        application ciphertext, deployment authority or backup recoverability.
+        """
+        self._check()
+        Keyring(self.policy, self._providers, max_age=self._max_age).prepare()
+
     async def prepare_async(self) -> PreparedKeys:
         started, staged = self._snapshot()
         try:

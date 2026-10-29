@@ -51,6 +51,26 @@ attachment and lifecycle operations. No application model or query changes are
 required specifically for OpenBao. Provider credentials are not manifest fields.
 Full automatic setup and host-factory simplification remain separate work.
 
+To check current provider access, return the application's existing policy
+keyrings from a trusted synchronous host factory:
+
+```python
+def provider_diagnostics():
+    return (application_keyring,)
+```
+
+```console
+cryptalis doctor --provider-context myapp.security:provider_diagnostics --json
+```
+
+Use up to 16 Keyrings per diagnostic. The command checks every admitted root
+without using or extending the caller cache and without a database connection.
+Python callers can use `cryptalis.doctor.check_keys((application_keyring,))`.
+An access PASS remains an aggregate UNKNOWN: it does not prove stored-frame
+integrity, backup recoverability or production custody. Failed access exits 4;
+invalid context exits 2. An empty tuple exits 4 with UNKNOWN access. Host factory
+effects remain UNKNOWN. Do not place tokens or wrapped roots in command arguments.
+
 For key rotation, provision the new service version, construct the successor
 provider with an explicit version and distinct provider UUID, then use the
 existing verified root-rewrap lifecycle. Retain old versions until retained

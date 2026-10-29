@@ -177,18 +177,21 @@ def _parser() -> argparse.ArgumentParser:
                         help='Optional trusted synchronous factory for pinned public policy metadata; no provider or material verification.')
     status.add_argument('--json', action='store_true', dest='machine_json', help='Write one JSON object.')
     status.set_defaults(handler=_status_command)
-    doctor = commands.add_parser('doctor', help='Inspect native schema or ACTIVE runtime admission.',
+    doctor = commands.add_parser('doctor', help='Inspect native schema, ACTIVE runtime admission or cold provider access.',
         description='Compiler inspection is read-only. An explicit host context imports and calls trusted '
                     'Python code; its effects remain UNKNOWN. This command does not sandbox host code.',
         allow_abbrev=False)
     modes = doctor.add_mutually_exclusive_group(required=True)
     modes.add_argument('plan', type=Path, nargs='?', help='Published protection or rotation activation artifact.')
     modes.add_argument('--pre-adoption', type=Path, metavar='MANIFEST', help='Inspect a native schema before adoption.')
+    modes.add_argument('--provider-context', metavar='MODULE:FACTORY',
+        help='Explicit trusted synchronous factory returning a tuple of at most 16 Keyrings. '
+             'Check cold provider access without database access or changing caller caches.')
     doctor.add_argument('--host-context', metavar='MODULE:FACTORY',
         help='Explicit trusted synchronous factory returning (registry, WriterInventory, tuple[SearchReview]). '
              'Host Python effects remain UNKNOWN; no keys or engine belong in this tuple.')
     doctor.add_argument('--pin', type=Path, help='Current host-controlled ACTIVE deployment pin.')
-    doctor.add_argument('--database-url-file', type=Path, required=True,
+    doctor.add_argument('--database-url-file', type=Path,
                         help='Private file with the declared runtime PostgreSQL connection URL or conninfo.')
     doctor.add_argument('--restore-binding', type=Path, help='Approved restored-target binding, when applicable.')
     doctor.add_argument('--json', action='store_true', dest='machine_json', help='Write one JSON object.')
@@ -671,6 +674,18 @@ def _preflight_failure(failure, report=None):
     return failure
 
 
+def _provider_failure(failure, report=None):
+    failure.error.update(report or {
+        'scope': 'cold_provider_access', 'status': 'UNKNOWN',
+        'checks': {name: 'UNKNOWN' for name in (
+            'cold_key_preparation', 'frame_authentication', 'runtime_deployment',
+            'host_authority', 'recovery_capacity', 'production_custody')},
+        'effects': 'UNKNOWN',
+    })
+    failure.error['host_configuration_effects'] = 'UNKNOWN'
+    return failure
+
+
 def _operational_command(arguments):
     try:
         from cryptalis._cli_operations import run
@@ -682,6 +697,15 @@ def _operational_command(arguments):
 
 
 def _doctor_command(arguments):
+    if arguments.provider_context is not None:
+        reference = arguments.provider_context.split(':')
+        if (arguments.host_context is not None or arguments.pin is not None
+                or arguments.restore_binding is not None or arguments.database_url_file is not None
+                or len(reference) != 2 or not all(part.isidentifier() for part in reference[0].split('.'))
+                or not reference[1].isidentifier()):
+            raise _CommandFailure('Supply only a trusted provider-context factory for cold-key diagnosis.',
+                family='CLI', code='InvalidArguments', operation='cli', stage='arguments', cause='ArgumentError')
+        return _provider_command(arguments)
     if arguments.pre_adoption is None:
         valid = arguments.host_context is None and arguments.pin is not None
     else:
@@ -689,10 +713,55 @@ def _doctor_command(arguments):
         valid = (arguments.pin is None and arguments.restore_binding is None and len(reference) == 2
             and all(part.isidentifier() for part in reference[0].split('.'))
             and reference[1].isidentifier())
-    if not valid:
+    if not valid or arguments.database_url_file is None:
         raise _CommandFailure('Supply either an ACTIVE plan and pin, or a pre-adoption manifest and trusted host context.',
             family='CLI', code='InvalidArguments', operation='cli', stage='arguments', cause='ArgumentError')
     return _status_command(arguments) if arguments.pre_adoption is None else _preflight_command(arguments)
+
+
+def _provider_command(arguments):
+    operation = 'deployment.provider_diagnosis'
+    try:
+        import importlib
+        import inspect
+        from contextlib import redirect_stderr, redirect_stdout
+        from types import CoroutineType
+        from cryptalis.doctor import check_keys
+    except ImportError:
+        raise _provider_failure(_CommandFailure('Install the declared runtime dependencies before provider inspection.',
+            family='Doctor', code='DependenciesUnavailable', operation=operation,
+            stage='load_runtime', cause='ImportError', exit_code=4)) from None
+    module_name, factory_name = arguments.provider_context.split(':')
+    try:
+        with open(os.devnull, 'w', encoding='utf-8') as discard, redirect_stdout(discard), redirect_stderr(discard):
+            factory = getattr(importlib.import_module(module_name), factory_name)
+            context = factory() if callable(factory) and not inspect.iscoroutinefunction(factory) else None
+            if isinstance(context, CoroutineType):
+                context.close()
+                context = None
+            report = check_keys(context)
+    except BaseException:
+        raise _provider_failure(_CommandFailure('The trusted provider context could not run. Check its synchronous factory and provider configuration.',
+            family='Doctor', code='HostContextUnavailable', operation=operation,
+            stage='host_context', cause='HostContextError', exit_code=4)) from None
+    report['host_configuration_effects'] = 'UNKNOWN'
+    observed = report['checks']['cold_key_preparation']
+    if observed != 'PASS':
+        invalid = any(issue['code'] == 'Provider.InvalidKeyrings' for issue in report['issues'])
+        raise _provider_failure(_CommandFailure(
+            'Supply valid Keyrings from trusted policy.' if invalid else
+            'Cold key access was not established. Inspect the reported issues and provider configuration.',
+            family='Doctor', code='HostContextInvalid' if invalid else 'KeyAccessUnavailable', operation=operation,
+            stage='host_context' if invalid else 'provider_access', cause='InvalidContext' if invalid else 'KeyUnavailable',
+            exit_code=2 if invalid else 4), report) from None
+    output = (json.dumps(report, sort_keys=True, separators=(',', ':')) if arguments.machine_json else
+        '\n'.join(f'{key}: {value}' for key, value in report.items() if key not in ('checks', 'issues', 'items'))
+        + '\n' + '\n'.join(f'{name}: {status}' for name, status in report['checks'].items()))
+    try:
+        _write_output(output + '\n', sys.stdout, 'stdout')
+    except _CommandFailure as failure:
+        raise _provider_failure(failure, report) from None
+    return 0
 
 
 def _preflight_command(arguments):
@@ -1010,7 +1079,9 @@ def main(argv: Sequence[str] | None = None) -> int:
         return handler(arguments)
     except _CommandFailure as failure:
         if tokens and tokens[0] == 'doctor' and 'checks' not in failure.error:
-            if any(token.split('=', 1)[0] in ('--pre-adoption', '--host-context') for token in tokens[:option_end]):
+            if any(token.split('=', 1)[0] == '--provider-context' for token in tokens[:option_end]):
+                _provider_failure(failure)
+            elif any(token.split('=', 1)[0] in ('--pre-adoption', '--host-context') for token in tokens[:option_end]):
                 _preflight_failure(failure)
             else:
                 _doctor_failure(failure)

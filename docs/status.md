@@ -10,6 +10,34 @@ No PostgreSQL/provider/runtime cell, production key provider, independent review
 VERIFIED below refers only to the named checks and their exact revisions.
 All other contract and promotion requirements are SPECIFIED. All seven full gates remain UNKNOWN.
 
+## Cold-provider Doctor: 2026-10-30
+
+**IMPLEMENTED and VERIFIED, bounded local cells:** `doctor.check_keys` and
+`cryptalis doctor --provider-context MODULE:FACTORY` inspect fresh provider access
+for explicitly supplied policies. They use temporary Keyrings, preserving the
+caller's cached roots and lease deadlines. Invalid input refuses before provider
+dispatch. Empty input remains UNKNOWN. Reports retain only fixed codes and safe
+indexes. The CLI suppresses Python stream output from trusted host/provider code;
+host effects and native descriptor writes remain outside that boundary.
+
+The [retained boundary](_reset/doctor-provider-boundary-20261030.json) records
+176 affected source checks, 68 actual-service/provider/Doctor checks and 68 of
+the same checks against the inspected installed wheel, with no skips. Real
+OpenBao token revocation fails diagnosis despite a warm application cache;
+credential replacement restores access through Python and the installed CLI.
+Earlier key-free schema/ACTIVE modes and CF1/AWS/fork boundaries remain verified.
+The local release composition passes reproducible artifacts, selected-extra SBOM,
+installed file/CLI checks, 29 ORM controls and one genuine export plus one fresh
+PostgreSQL recovery. All 280 Python hashes match across the final receipts.
+One earlier affected run lacked the native tool path; its failure is retained
+separately. The final run supplies the already verified PostgreSQL layout.
+
+Only cold preparation can pass. Frame authentication, runtime admission, host
+authority, recovery capacity, production custody and aggregate health remain
+UNKNOWN. This does not issue deployment authority or complete Doctor's full
+static/dynamic inventory. Complete default-source GitHub CI remains pending.
+All 34 objectives and seven production gates retain their requirements.
+
 ## CI credential-fixture correction: 2026-10-30
 
 GitHub run [40947951794](https://github.com/Debrato2005/cryptalis/actions/runs/40947951794)

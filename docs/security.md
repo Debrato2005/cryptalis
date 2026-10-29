@@ -513,6 +513,28 @@ unavailable inspection reports UNKNOWN. Current grants can change later.
 This observation neither authenticates host publication nor establishes
 production readiness. See [Doctor diagnosis](walkthrough-migration.md#diagnose-an-active-deployment).
 
+**IMPLEMENTED, explicitly requested cold-provider Doctor:** `doctor.check_keys`
+and `cryptalis doctor --provider-context MODULE:FACTORY` prepare every admitted
+root in each supplied Keyring through a fresh temporary cache. A warm caller
+cache cannot hide a provider refusal. Diagnosis does not populate or extend the
+caller's cache. Existing lease and post-fork refusal rules remain mandatory.
+Recovered roots are not returned or included in diagnostics. Python immutable
+bytes still have no verified zeroization guarantee.
+
+The check reads no application rows and does not authenticate existing frames,
+prove recovery, verify workload authorization, or qualify production custody.
+These checks and aggregate health remain UNKNOWN after successful preparation.
+Failures expose fixed codes and tuple indexes, without exception text, wrapper
+identities, credentials or root bytes. Input is an explicit tuple of at most
+16 exact Keyring instances; each retains its existing finite policy limit.
+All input shape checks precede provider dispatch. Provider access can generate
+remote audit records; the report does not claim no effects. The CLI suppresses
+Python stream output during host import, factory execution and provider calls.
+Trusted host Python, native descriptor writes, callback duration and provider
+side effects are outside that boundary. Per-provider timeouts remain applicable;
+there is no aggregate diagnostic deadline. Empty policy selection proves nothing
+and exits nonzero. The existing schema and ACTIVE diagnostic modes remain key-free.
+
 **IMPLEMENTED, bounded reverse admission:** reverse planning checks the source
 and declared plaintext runtime roles before key work. Reverse execution and
 read-only status repeat the effective-privilege checks for the role selected
