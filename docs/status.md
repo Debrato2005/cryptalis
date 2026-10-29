@@ -10,6 +10,46 @@ No PostgreSQL/provider/runtime cell, production key provider, independent review
 VERIFIED below refers only to the named checks and their exact revisions.
 All other contract and promotion requirements are SPECIFIED. All seven full gates remain UNKNOWN.
 
+## OpenBao operational and installed qualification: 2026-10-30
+
+**VERIFIED, isolated local services:** the repeatable OpenBao runner performs
+private TLS/Raft setup, mandatory PostgreSQL role probes, protocol and service
+checks, explicit outage/lease expiry, sealed restart and retained-key recovery.
+It uses a digest-pinned container, a stable loopback endpoint and no runtime
+key-administration privileges. It stops the service and retains private keys and
+storage. Cleanup failure remains visible alongside any primary failure.
+
+The [retained local release composition](_reset/openbao-operations-boundary-20261030.json)
+passes. It verifies reproducible archives,
+46 packaged modules, 50 installed files, CLI startup and dependency consistency;
+its SBOM includes the selected OpenBao and SQLModel extras. Twenty-nine installed
+ORM controls, 47 installed OpenBao controls and the genuine integer/public-slot
+export and fresh recovery pass. Source provider qualification also passes 47
+controls before the final cleanup-report addition. The final installed run binds
+all current Python source hashes. The full default source run is pending and
+will have its own retained outcome; these counts do not replace it.
+
+The frozen dependency audit reports 26 packages with no known vulnerabilities
+or adverse statuses. This observation is not independent review or absence of
+unknown vulnerabilities. Sixteen artifact and five offline rewrap checks pass.
+The local release runner now includes OpenBao and stages only named public
+receipts. The online/fresh/CI harnesses use explicit private credential directories.
+Both source and installed genuine fresh PostgreSQL recovery verify that change.
+
+Initial qualification attempts exposed an insufficient setup timeout and Docker
+ephemeral port reassignment after restart. The runner now uses a bounded setup
+timeout and pins its loopback port. Relocated PostgreSQL tools initially lacked
+their share-data layout; restoring the image's relative installation layout
+enabled genuine fresh recovery. Failed attempts are retained separately from
+successful evidence. No failed database probe was retried or substituted.
+
+This is local operational evidence, not production HA, independent snapshot
+recovery, secure unsealing, service audit qualification, controlled destruction
+or independent cryptographic review. All 34 objectives remain in scope and all
+seven production gates remain UNKNOWN. The immediate continuation includes
+provider-aware Doctor diagnostics and host integration simplification, followed
+by the remaining lifecycle/SQL/type work under the existing admission rules.
+
 ## OpenBao Transit provider: 2026-10-30
 
 **IMPLEMENTED and VERIFIED, local integration only:** optional

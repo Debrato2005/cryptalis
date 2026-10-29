@@ -10,6 +10,8 @@ import os
 from pathlib import Path
 import stat
 import threading
+import time
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import replace
 from types import SimpleNamespace
 from uuid import UUID, uuid4
@@ -81,6 +83,20 @@ def test_real_transit_randomized_wrapping_and_cf1_sync_async(live):
     field, record = descriptor(), UUID(int=5)
     frame = seal_text('café 雪', field, CONTEXT.tenant_id, record, keys.prepare())
     assert open_text(frame, field, CONTEXT.tenant_id, record, asyncio.run(keys.prepare_async())) == 'café 雪'
+
+
+def test_concurrent_operations_share_no_sdk_session_or_root_state(live):
+    p = live.provider
+    contexts = [replace(CONTEXT, root_id=uuid4()) for _ in range(8)]
+    def round_trip(context):
+        wrapper = create_root(p, context)
+        return wrapper, p.unwrap(wrapper, context)
+    with ThreadPoolExecutor(max_workers=4) as pool:
+        results = list(pool.map(round_trip, contexts))
+    assert len({root for _, root in results}) == len(contexts)
+    for (wrapper, _), context in zip(results, contexts[1:] + contexts[:1]):
+        with pytest.raises(KeyUnavailable):
+            p.unwrap(replace(wrapper, context=context), context)
 
 
 @pytest.mark.parametrize('field,value', [
@@ -181,6 +197,64 @@ def test_cancellation_does_not_publish_late_keys(live):
             release.set()
     asyncio.run(cancel())  # Waits for the worker's actual service request to finish.
     assert not ring._cache
+
+
+def test_isolated_service_outage_expiry_and_sealed_restart_recovery(live):
+    s, p = live.service, live.provider
+    container = s.config.get('isolated_container')
+    if not container:
+        pytest.skip('service restart requires the isolated qualification harness')
+    # Only the harness-created container, never an arbitrary configured service.
+    import re
+    import requests
+    import sys
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'scripts'))
+    try:
+        from openbao_qualification import docker
+    finally:
+        sys.path.pop(0)
+    assert re.fullmatch(r'cryptalis-bao-[0-9a-f]{32}', container)
+    wrapper = p.wrap(ROOT, CONTEXT)
+    ring = Keyring(KeyPolicy(CONTEXT.domain_id, CONTEXT.tenant_id, (wrapper,), 1),
+                   {p.provider_id: p}, max_age=5)
+    field, record = descriptor(), UUID(int=5)
+    frame = seal_text('outage value', field, CONTEXT.tenant_id, record, ring.prepare())
+    docker('stop', '--time', '10', container)
+    try:
+        with pytest.raises(KeyUnavailable):
+            p.unwrap(wrapper, CONTEXT)
+        # Bounded cache availability is explicit; no remote retry or plaintext fallback.
+        prepared = ring.prepare()
+        assert open_text(frame, field, CONTEXT.tenant_id, record, prepared) == 'outage value'
+        time.sleep(5.1)
+        with pytest.raises(KeyUnavailable):
+            open_text(frame, field, CONTEXT.tenant_id, record, prepared)
+        with pytest.raises(KeyUnavailable):
+            ring.prepare()
+    finally:
+        docker('start', container)
+        deadline = time.monotonic() + 15
+        while True:
+            try:
+                assert s.admin.sys.is_sealed()
+                break
+            except s.hvac.exceptions.VaultError:
+                if time.monotonic() >= deadline:
+                    raise
+                time.sleep(0.1)
+            except (requests.ConnectionError, requests.Timeout):
+                if time.monotonic() >= deadline:
+                    raise
+                time.sleep(0.1)
+        # A sealed server refuses cold decryption; unlock only this retained test service.
+        try:
+            with pytest.raises(KeyUnavailable):
+                p.unwrap(wrapper, CONTEXT)
+        finally:
+            initialization = private_json(s.config['admin_token_file'])
+            s.admin.sys.submit_unseal_key(initialization['keys'][0])
+    assert p.unwrap(wrapper, CONTEXT) == ROOT
+    assert open_text(frame, field, CONTEXT.tenant_id, record, ring.prepare()) == 'outage value'
 
 
 def test_real_provider_protect_search_edit_and_verified_plaintext_exit(live, monkeypatch):

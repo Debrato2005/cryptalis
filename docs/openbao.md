@@ -71,3 +71,38 @@ storage and separate admin/runtime tokens. It does not qualify HA, secure
 unsealing, protected audit storage, service disaster recovery or controlled
 destruction. Independent security review and all applicable release gates remain
 required. See [security](security.md#optional-openbao-transit-adapter).
+
+## Repeatable local qualification
+
+The Linux qualification runner requires a working local Docker daemon, the
+OpenBao extra and an already authorized disposable PostgreSQL 16 test target.
+Configure the three private owner/runtime/source URL files through
+`CRYPTALIS_TEST_CONFIG_DIR`. The runner probes that target through the mandatory
+wrapper before it creates a service. It does not create or substitute PostgreSQL.
+
+```console
+.venv/bin/python scripts/openbao_qualification.py --workdir /absolute/private/new-run
+```
+
+The work directory must not exist; its parent must exist. The runner creates a
+digest-pinned OpenBao 2.7.2 container, a short-lived private test CA, TLS keys,
+single-node Raft storage and test initialization credentials. It pins a loopback
+port across restart, drops container capabilities and uses a read-only container
+root with one private writable mount. It runs the protocol, actual-service,
+concurrency, outage/lease/sealed-restart and PostgreSQL lifecycle checks. A
+passing result requires no skips. Service setup uses a longer timeout than
+runtime key operations; ambiguous initialization failure is not retried.
+
+Use the clean installed interpreter and `--installed-wheel /absolute/package.whl`
+to bind every imported Cryptalis module to the inspected artifact. Release CI
+uses this route and exports an SBOM with both `--extra openbao` and
+`--extra sqlmodel`. Default SBOM exports continue to cover the base package only.
+
+The service stops on exit. The private directory, service keys and container are
+retained for inspection; no automatic key deletion is performed. The report
+records cleanup failures even when another failure occurred first. Only
+`tests.json` and `qualification.json` are public evidence candidates. Never
+upload the complete work directory, initialization JSON, TLS private key,
+service logs or database credentials. The single-share test unseal arrangement
+is unsuitable for production. A retained-node restart is not an independent
+snapshot restore or disaster-recovery qualification.
