@@ -36,6 +36,9 @@ FORBIDDEN_PREFIXES = ("tests/", "docs/", "examples/", "spikes/")
 NETWORK_TERMS = ("import socket", "import subprocess", "import urllib", "import http",
                  "import requests", "from socket", "from subprocess", "from urllib",
                  "from http", "from requests", "telemetry", "analytics")
+# URL syntax parsing has no transport side effects. This exact reviewed import
+# does not admit urllib.request, other modules, or appended executable text.
+REVIEWED_IMPORTS = {("crypto/openbao.py", "from urllib.parse import urlsplit")}
 
 
 def run(args, cwd=ROOT):
@@ -188,10 +191,12 @@ def inspect_sdist(path):
 def inspect_source_imports(root):
     findings = []
     for path in sorted(Path(root).rglob("*.py")):
-        text = path.read_text(encoding="utf-8")
+        lines = path.read_text(encoding="utf-8").splitlines()
+        relative = str(path.relative_to(root))
         for term in NETWORK_TERMS:
-            if term in text:
-                findings.append({"file": str(path.relative_to(root)), "term": term})
+            if any(term in line and (relative, line.strip()) not in REVIEWED_IMPORTS
+                   for line in lines):
+                findings.append({"file": relative, "term": term})
     return findings
 
 

@@ -903,6 +903,46 @@ key-policy admission do not change.
 The [AWS encryption-context reference](https://docs.aws.amazon.com/kms/latest/developerguide/encrypt_context.html)
 explains service matching and logging. No caller-supplied context names are accepted.
 
+### Optional OpenBao Transit adapter
+
+`cryptalis.crypto.openbao.OpenBaoTransitKeyProvider` implements the same
+`KeyProvider` protocol through optional `hvac==2.4.0`. See the
+[provider setup](openbao.md) and [research decision](research/key-provider-selection.md).
+It does not alter CF1 payload encryption, HKDF, HMAC or the root-policy format.
+
+The provider pins a nonzero UUID, HTTPS endpoint, Transit mount, existing key name
+and positive key version. It admits service-generated `aes256-gcm96` keys with
+derivation, export, plaintext backup and deletion disabled. Each cold operation
+reads key metadata before encrypt/decrypt. Metadata inspection cannot prevent an
+administrator from changing policy after the observation. Operator separation,
+service audit and independent deployment review remain required.
+
+Transit AAD is base64 of the existing length-prefixed `tuple_bytes` encoding of:
+`CF1/openbao-transit-wrap/v1`, provider UUID bytes, ASCII mount, ASCII key name,
+four-byte big-endian key version, domain UUID bytes, tenant UUID bytes, ASCII
+purpose, root UUID bytes and four-byte big-endian generation. The endpoint is a
+trusted transport setting, not logical root identity; a recovered service can
+use the same logical authority at another approved endpoint. Transit generates
+its own nonce. The adapter supplies no nonce, derivation context or batch input.
+The service's versioned ciphertext remains opaque wrapped-root material. Both
+its version prefix and the encrypt response must match the pinned version.
+
+HTTPS verifies certificates and hostnames. Redirects and SDK retries are disabled.
+The token callback supplies current authentication for each isolated SDK session;
+token acquisition and renewal remain host responsibilities. Individual network
+waits have a finite configured timeout. There is no total-deadline guarantee.
+Malformed replies and provider errors raise redacted `KeyUnavailable`, without
+plaintext fallback. Inherited providers refuse use after fork. Cancellation
+cannot stop a blocking SDK request; Keyring does not publish its late result.
+Rewrap proves target recovery of the identical root before returning a wrapper.
+
+Cached roots retain the existing maximum 300-second lease semantics. Service
+revocation therefore affects cold preparation immediately, and cached material
+when its lease expires; it is not instantaneous process-memory erasure. Raising
+`min_decryption_version` is reversible administration, not destruction. No key
+deletion, backup destruction, production availability, workload identity or
+human cryptographic-review claim follows from local Transit tests.
+
 ### Implemented CF1 primitives and local custody
 
 `cryptalis.crypto` exports `FieldDescriptor`, `seal_text`, `open_text`, `KeyProvider`,
