@@ -10,6 +10,35 @@ No PostgreSQL/provider/runtime cell, production key provider, independent review
 VERIFIED below refers only to the named checks and their exact revisions.
 All other contract and promotion requirements are SPECIFIED. All seven full gates remain UNKNOWN.
 
+## Single-tenant mapped dictionary UPDATE: 2026-10-29
+
+**IMPLEMENTED, bounded PostgreSQL 16.15 source verification:** explicitly
+single-tenant tables now accept bare mapped `update(Model)` with a nonempty
+list of typed primary-key dictionaries and `synchronize_session=False`.
+Session authority must equal the descriptor's fixed table UUID. The native
+table needs no tenant column. Caller WHERE clauses remain refused on this
+route; tenant-column tables retain their explicit equality grammar.
+
+The ten new native differential/lifecycle controls cover sync, async and async
+SQLModel execution, renamed attributes, repeated IDs, heterogeneous groups,
+NULL, refresh, missing-record `StaleDataError`, partial effects and savepoint
+rollback. VARCHAR and integer failures preserve custom/generic prepared-plan
+precedence. Fixed-scope refusal and mutation during awaited preparation precede
+key/SQL effects. Driver binds and latest-value decrypt-back/removal pass.
+The affected source selection passes 216 checks with four explicit call skips;
+all three role probes and source/runtime stability checks pass. Separate agent
+review found no actionable guard defect. This is not independent human review.
+
+The implementation reuses the existing ordered input ledger and failure
+carriers. It adds no format, dependency, search representation or lifecycle
+state. The [retained boundary](_reset/single-tenant-update-boundary-20261029.json)
+also records 23 passing installed checks covering this route and both SQLModel
+bridges, with stable source/runtime bindings and three passing role probes.
+Repeat wheel/sdist hashes match, 49 installed files and CLI startup pass, and
+the existing keyword/public-slot profile passes export and genuine fresh
+recovery. Release CI retains this installed selection. All seven production
+gates remain UNKNOWN.
+
 ## Async SQLModel bridge: 2026-10-29
 
 **IMPLEMENTED, bounded PostgreSQL 16.15 source verification:** SQLModel 0.0.48

@@ -362,6 +362,23 @@ Their absolute guarantees are also removed: immediate arbitrary-worker denial, a
 whole-result publication, subject cryptographic erasure, and hostile-database completeness/freshness.
 A removed mechanism cannot retain its old guarantee through wording alone.
 
+## Fixed-scope mapped dictionary UPDATE: 2026-10-29
+
+Extend the existing mapped dictionary UPDATE route to explicitly single-tenant
+tables. Use bare `update(Model)` and a nonempty list of dictionaries with exact
+application-assigned primary keys. The session scope must equal the descriptor's
+fixed table UUID. Admit no caller WHERE clause, synthetic tenant column or
+synthetic predicate. Retain the existing explicit tenant-equality grammar for
+tenant-column tables.
+
+Reuse the immutable input ledger, per-record preparation, final driver checks
+and existing VARCHAR/integer failure carriers. A missing tenant bind is valid
+only for this verified fixed scope or the existing ORM flush route. Native
+primary-key row-count checks must still raise `StaleDataError` on a missing row,
+with native partial effects and rollback/savepoint behavior. Keep RETURNING,
+Core UPDATE and synchronization other than False unadmitted. No format, crypto,
+leakage or key-authority change follows from this extension.
+
 ## Async SQLModel bridge: 2026-10-29
 
 Extend the exact SQLModel 0.0.48 bridge to PostgreSQL AsyncEngine. Await the

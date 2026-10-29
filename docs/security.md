@@ -133,6 +133,10 @@ An expired lease refuses at actual key use without a provider refresh.
 Roll back after a result failure. SQL can succeed before result authentication.
 
 The scoped mapped bulk UPDATE route keeps an ordered immutable input ledger.
+For an explicitly single-tenant table, the descriptor's fixed table UUID binds
+session authority. The caller supplies no WHERE clause; SQLAlchemy adds the
+exact record predicate from each input dictionary. Absence of a tenant bind
+must not weaken the record, prepared-frame or final driver checks.
 Owned physical column lineage binds the explicit tenant and generated record
 predicates. Each native group must consume the corresponding inputs before
 execution. Exact prepared frames, typed scope/record binds and final driver

@@ -78,6 +78,25 @@ The native bulk Result returns no rows and adds no objects to the identity map.
 `render_nulls=True` retains native explicit-NULL grouping.
 Rollback and nested savepoint cleanup retain native behavior.
 
+For mapped dictionary UPDATE on an explicitly single-tenant table, use its
+declared table UUID as session scope and let SQLAlchemy select each typed
+primary key:
+
+```python
+from sqlalchemy import update
+
+with sessions(tenant_id=declared_table_uuid) as session:
+    session.execute(update(Customer),
+                    [{"id": first_uuid, "note": "updated"}],
+                    execution_options={"synchronize_session": False})
+    session.commit()
+```
+
+Supply no WHERE clause for this fixed-scope route. A missing primary key retains
+native `StaleDataError`; roll back before retry. Tenant-column tables use the
+separate explicit tenant-equality form in the [UPDATE contract](compatibility.md#full-capability-matrix).
+Async sessions use the same statements with awaited execution and commit.
+
 Request one direct protected mapped column when the caller needs inserted values:
 
 ```python

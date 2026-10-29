@@ -1142,11 +1142,12 @@ class _Attachment:
             raise UnsupportedProtectedOperation()
         bindings = [binding for binding in self.bindings if binding.column.table is table]
         first = bindings[0]
-        if first.tenant is None:
+        if first.tenant is None and (type(tenant) is not UUID or tenant != first.descriptor.table_id):
             raise UnsupportedProtectedOperation()
         self.bind_type(first.record.type)
-        self.bind_type(first.tenant.type)
-        clauses, pending = [], [statement.whereclause]
+        if first.tenant is not None:
+            self.bind_type(first.tenant.type)
+        clauses, pending = [], [statement.whereclause] if statement.whereclause is not None else []
         while pending:
             clause = pending.pop()
             if isinstance(clause, BooleanClauseList) and clause.operator is operators.and_:
@@ -1154,7 +1155,7 @@ class _Attachment:
                 pending.extend(reversed(clause.clauses))
             else:
                 clauses.append(clause)
-        if len(clauses) != (2 if generated else 1):
+        if len(clauses) != int(first.tenant is not None) + int(generated):
             raise UnsupportedProtectedOperation()
         scope, record = None, None
         for clause in clauses:
@@ -1171,7 +1172,7 @@ class _Attachment:
             self.bind_type(right.type)
             _delete_node(left, Column)
             _delete_node(right, BindParameter)
-            if left.shares_lineage(first.tenant) and scope is None:
+            if first.tenant is not None and left.shares_lineage(first.tenant) and scope is None:
                 if right.required or type(right.value) is not UUID or right.value != tenant:
                     raise UnsupportedProtectedOperation()
                 scope = right
@@ -1179,7 +1180,7 @@ class _Attachment:
                 record = right
             else:
                 raise UnsupportedProtectedOperation()
-        if scope is None or generated and record is None:
+        if first.tenant is not None and scope is None or generated and record is None:
             raise UnsupportedProtectedOperation()
         return scope, record
 
@@ -1609,9 +1610,12 @@ class _Attachment:
         else:
             scope, record = self.update_context(context.compiled.statement, operation.bulk_update,
                                                 operation.tenant, generated=True)
-            names, scope_key, record_key = dict(native_names), _update_bind_name(scope.key), _update_bind_name(record.key)
+            names, scope_key, record_key = (dict(native_names),
+                _update_bind_name(scope.key) if scope is not None else None, _update_bind_name(record.key))
             constants = {}
-        if ((scope_key is None and not operation.flushing or scope_key is not None and scope_key not in names) or record_key not in names or
+        first = next((binding for binding in self.bindings if binding.column.table is operation.bulk_update), None)
+        fixed_scope = first is not None and first.tenant is None and operation.tenant == first.descriptor.table_id
+        if ((scope_key is None and not (operation.flushing or fixed_scope) or scope_key is not None and scope_key not in names) or record_key not in names or
                 any(type(name) is not str for name in names.values()) or
                 len(names) != len(native_names) or len(set(names.values())) != len(names)):
             raise UnsupportedProtectedOperation()
