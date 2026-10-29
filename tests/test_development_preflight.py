@@ -22,9 +22,10 @@ def runner(monkeypatch):
     spec = importlib.util.spec_from_file_location('_cryptalis_dev_preflight', path)
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
-    for name in module.VARIABLES:
+    for name in (*module.VARIABLES, module.SOURCE_VARIABLE):
         # The CLI clears inherited values. Restore the outer runner after this test.
-        monkeypatch.setenv(name, os.environ[name])
+        if name in os.environ:
+            monkeypatch.setenv(name, os.environ[name])
     monkeypatch.setattr(sys, 'argv', [str(path), '--development-preflight'])
     monkeypatch.setattr(pytest, 'main', lambda *a, **k: pytest.fail('diagnosis invoked pytest'))
     return module
@@ -35,6 +36,22 @@ def report(capsys):
     assert all(value not in output for value in PRIVATE_URLS)
     assert 'PRIVATE_DIAGNOSTIC_DETAIL' not in output
     return json.loads(output)
+
+
+@pytest.mark.parametrize('source_present', [False, True])
+def test_diagnostics_restore_optional_source_role_for_following_tests(monkeypatch, capsys, source_present):
+    name = 'CRYPTALIS_TEST_SOURCE_URL'
+    if source_present:
+        monkeypatch.setenv(name, 'PUBLIC source-role restoration sentinel')
+    else:
+        monkeypatch.delenv(name, raising=False)
+    with monkeypatch.context() as diagnostic:
+        module = runner(diagnostic)
+        assert module.main() == 0
+        assert report(capsys)['checks']['restricted_roles']['status'] == 'PASS'
+    restored = (os.environ.get(name) == 'PUBLIC source-role restoration sentinel'
+                if source_present else name not in os.environ)
+    assert restored, 'Diagnostics changed the optional source-role state for later tests.'
 
 
 def test_native_development_prerequisites_do_not_authorize_destructive_tests(monkeypatch, capsys):
