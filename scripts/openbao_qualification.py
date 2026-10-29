@@ -1,7 +1,7 @@
 """Run real OpenBao qualification against an already authorized PostgreSQL target.
 
-Creates one private, isolated, digest-pinned Docker service on loopback. Retains
-its keys/storage, stops the service on exit, and never provisions or substitutes
+Creates private, isolated, digest-pinned Docker services on loopback. Retains
+their keys/storage, stops the services on exit, and never provisions or substitutes
 PostgreSQL. Never archive the private work directory as public evidence.
 """
 import argparse
@@ -82,6 +82,37 @@ def wait_available(client):
             time.sleep(0.1)
 
 
+def service_files(workdir):
+    certificates(workdir)
+    (workdir / 'data').mkdir(mode=0o700)
+    write_private(workdir / 'server.hcl', b'''
+storage "raft" {
+  path = "/bao/work/data"
+  node_id = "cryptalis-local-qualification"
+}
+listener "tcp" {
+  address = "0.0.0.0:8200"
+  tls_cert_file = "/bao/work/server.pem"
+  tls_key_file = "/bao/work/server.key"
+}
+api_addr = "https://127.0.0.1:8200"
+cluster_addr = "https://127.0.0.1:8201"
+''')
+
+
+def start_container(workdir, container):
+    # Pin the loopback port across restart. A binding race fails Docker startup.
+    with socket.socket() as reservation:
+        reservation.bind(('127.0.0.1', 0))
+        port = reservation.getsockname()[1]
+    docker('run', '-d', '--name', container, '--user', f'{os.geteuid()}:{os.getegid()}',
+           '--cap-drop=ALL', '--security-opt=no-new-privileges', '--read-only',
+           '--tmpfs', '/tmp:rw,noexec,nosuid,size=64m', '-p', f'127.0.0.1:{port}:8200',
+           '--mount', f'type=bind,src={workdir},dst=/bao/work', IMAGE,
+           'server', '-config=/bao/work/server.hcl')
+    return f'https://127.0.0.1:{port}'
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--workdir', type=Path, required=True,
@@ -99,35 +130,10 @@ def main():
     container = 'cryptalis-bao-' + uuid4().hex
     created, failure, cleanup = False, None, 'NOT_STARTED'
     try:
-        certificates(workdir)
-        (workdir / 'data').mkdir(mode=0o700)
-        write_private(workdir / 'server.hcl', b'''
-storage "raft" {
-  path = "/bao/work/data"
-  node_id = "cryptalis-local-qualification"
-}
-listener "tcp" {
-  address = "0.0.0.0:8200"
-  tls_cert_file = "/bao/work/server.pem"
-  tls_key_file = "/bao/work/server.key"
-}
-api_addr = "https://127.0.0.1:8200"
-cluster_addr = "https://127.0.0.1:8201"
-''')
-        # Docker can allocate a new ephemeral host port after restart. Pin the
-        # chosen loopback port so the outage drill retains endpoint identity.
-        with socket.socket() as reservation:
-            reservation.bind(('127.0.0.1', 0))
-            port = reservation.getsockname()[1]
-        docker('run', '-d', '--name', container, '--user', f'{os.geteuid()}:{os.getegid()}',
-               '--cap-drop=ALL', '--security-opt=no-new-privileges', '--read-only',
-               '--tmpfs', '/tmp:rw,noexec,nosuid,size=64m', '-p', f'127.0.0.1:{port}:8200',
-               '--mount', f'type=bind,src={workdir},dst=/bao/work', IMAGE,
-               'server', '-config=/bao/work/server.hcl')
+        service_files(workdir)
+        endpoint = start_container(workdir, container)
         created = True
         write_private(workdir / 'container-name', container.encode())
-        port = docker('port', container, '8200').rsplit(':', 1)[1]
-        endpoint = f'https://127.0.0.1:{int(port)}'
         client = hvac.Client(url=endpoint, verify=str(workdir / 'ca.pem'),
                              allow_redirects=False, timeout=30)
         try:
@@ -146,7 +152,7 @@ cluster_addr = "https://127.0.0.1:8201"
         environment = dict(os.environ, CRYPTALIS_OPENBAO_TEST_CONFIG=str(config_path))
         result = subprocess.run([sys.executable, str(ROOT / 'scripts/test_postgres.py'),
             *options, '--source-role', '--receipt', str(workdir / 'tests.json'),
-            '--scope', 'OpenBao 2.7.2 isolated TLS/Raft service, real outage/restart, and PostgreSQL lifecycle',
+            '--scope', 'OpenBao 2.7.2 isolated TLS/Raft, outage/restart, independent snapshot recovery and PostgreSQL lifecycle',
             '--', 'tests/test_openbao_protocol.py', 'tests/test_openbao_integration.py',
             'tests/test_doctor_provider.py',
             '-q', '--tb=short'], cwd=ROOT, env=environment)
@@ -173,7 +179,7 @@ cluster_addr = "https://127.0.0.1:8201"
                   cleanup=cleanup,
                   failure=str(failure) if isinstance(failure, QualificationFailure)
                   else type(failure).__name__ if failure else None,
-                  storage='single-node Raft; keys and files retained in private workdir',
+                  storage='single-node Raft with independent snapshot target; private keys and files retained',
                   tls='private test CA; certificate and hostname verification enabled',
                   gate='UNKNOWN')
     write_private(workdir / 'qualification.json', json.dumps(report, indent=2).encode())

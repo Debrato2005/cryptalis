@@ -965,6 +965,18 @@ when its lease expires; it is not instantaneous process-memory erasure. Raising
 deletion, backup destruction, production availability, workload identity or
 human cryptographic-review claim follows from local Transit tests.
 
+The local snapshot qualification restores encrypted Raft state into a new,
+previously empty isolated instance with an independent TLS identity and endpoint.
+The source is stopped before restoration. The original unseal material and
+logical provider identity recover the admitted root and authenticate a pre-backup
+CF1 frame. A post-snapshot key is absent. Runtime tokens cannot export or restore
+snapshots. Mismatched-seal normal restore and malformed force-restore input refuse.
+Force restore is restricted to the newly created disposable target in this test;
+there is no product API for restoring arbitrary services. Both instances and
+private snapshot/unseal material are retained, with no concurrent source/target
+authority during recovery. This is local functional evidence, not production
+backup custody, authenticated failover, HA, measured RPO/RTO or destruction proof.
+
 ### Implemented CF1 primitives and local custody
 
 `cryptalis.crypto` exports `FieldDescriptor`, `seal_text`, `open_text`, `KeyProvider`,

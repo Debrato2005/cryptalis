@@ -36,6 +36,11 @@ Official sources inspected:
 - [OpenBao license](https://github.com/openbao/openbao/blob/v2.7.2/LICENSE).
   Source retains HashiCorp copyright and MPL-2.0 notices. No upstream source is
   copied into the adapter.
+- [OpenBao Raft snapshot API](https://openbao.org/docs/api/system/storage/raft/)
+  and the same pinned tag's `internal/vault/logical_system_raft.go` establish
+  snapshot export, seal verification, asynchronous restore and explicit
+  force-restore behavior. The local drill confines force restore to newly
+  initialized empty test storage and requires the source unseal material.
 - [hvac 2.4.0 client](https://github.com/hvac/hvac/blob/v2.4.0/hvac/v1/__init__.py)
   and [HTTP adapter](https://github.com/hvac/hvac/blob/v2.4.0/hvac/adapters.py).
   TLS verification, redirect control, timeout and session ownership were checked
@@ -56,6 +61,6 @@ older Vault-style `file` storage/`disable_mlock` settings; the working OpenBao
 from an earlier service version.
 
 Local service tests can establish real cryptographic and API behavior without
-cloud charges. They cannot replace independent review, HA/outage/recovery drills,
+cloud charges. They cannot replace independent review or production HA/recovery acceptance,
 production identity controls, provider-side audit verification or destruction
 proof covering backups and all retained copies.
