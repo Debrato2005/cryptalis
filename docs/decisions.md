@@ -362,6 +362,21 @@ Their absolute guarantees are also removed: immediate arbitrary-worker denial, a
 whole-result publication, subject cryptographic erasure, and hostile-database completeness/freshness.
 A removed mechanism cannot retain its old guarantee through wording alone.
 
+## Fixed-scope mapped single-record DELETE: 2026-10-29
+
+Extend the existing mapped single-record DELETE route to explicitly single-tenant
+tables. Require exactly one direct typed application-record equality and session
+scope equal to the descriptor's fixed table UUID. Keep tenant-column tables on
+their existing tenant-plus-record grammar. Admit neither a missing record
+predicate nor a fabricated tenant predicate.
+
+Reuse the immutable deletion permit, pre/post-preparation admission and exact
+compiled/final driver checks. Fixed scope removes only the physical tenant bind;
+the target table, record, identity type and policy authority remain mandatory.
+Retain native row counts, autoflush, transactions and rollback. External
+parameters, Core DELETE, RETURNING and synchronization other than False remain
+unadmitted. This adds no crypto, format, leakage or lifecycle contract.
+
 ## Fixed-scope mapped dictionary UPDATE: 2026-10-29
 
 Extend the existing mapped dictionary UPDATE route to explicitly single-tenant

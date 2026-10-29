@@ -72,7 +72,7 @@ Rollback/removal transforms current data through decrypt-back until explicit fin
 | Mapped dictionary INSERT without RETURNING | SUPPORTED | Attached sync/async `Session.execute(insert(Model), list[dict])`, explicit typed IDs and tenant scope, copied attribute dictionaries, native NULL/grouping, autoflush, uniqueness and transaction behavior. Other bulk routes remain unadmitted |
 | Mapped dictionary INSERT with RETURNING | SUPPORTED | Native direct-column tuples/scalars and inserted mapped entities, including public-only columns. Preserve result keys/types, grouping, paging and optional input ordering. Entity results retain identity-map loading and refresh. Authenticate each protected output against its own exact prepared input. Label/expression/alias, loader-option and caller return_defaults forms remain unadmitted |
 | Scoped mapped dictionary UPDATE | SUPPORTED | Attached sync/async updates with typed IDs, a nonempty list of dictionaries and synchronize_session=False. Tenant-column tables require explicit tenant equality. Explicit single-tenant tables use bare UPDATE under the fixed table UUID. Preserve native omission/NULL, grouping, repeated IDs and transactions; fixed-scope missing rows retain native StaleDataError. Core and RETURNING remain unadmitted |
-| Scoped mapped single-record DELETE | SUPPORTED | Attached sync/async execute, exact typed tenant and application-record equalities, no external parameters or RETURNING, and synchronize_session=False. Preserve native row counts and transactions. Unsupported custom AST classes refuse before execution |
+| Scoped mapped single-record DELETE | SUPPORTED | Attached sync/async execute, exact typed record equality and either tenant equality or explicit fixed table-UUID scope. No external parameters or RETURNING; require synchronize_session=False. Preserve native row counts and transactions. Unsupported custom AST classes refuse before execution |
 | Unprotected-table mapped DELETE | SUPPORTED | One physical table mapped in the attached registry, with no protected fields. Native equality/AND predicates with fixed typed literals only. Default/auto/evaluate/False synchronization. No Core, RETURNING, fetch synchronization or custom AST |
 | Equality `==` and `IN` | SUPPORTED | Declared full tenant/domain-bound HMAC term. Preserve typed binds and native NULL/empty-list truth tables |
 | Simple negative equality `!=`, `NOT IN`, and NULL presence | SUPPORTED | Reuse the authenticated term for values and a SQL NULL check for storage-only fields. Preserve native three-valued truth, NULL elements, empty lists, and outer-join NULL extension. General Boolean NOT remains unadmitted |
@@ -139,8 +139,10 @@ owns its recorded native refusal and compatibility evidence.
 Tenant-scoped uniqueness uses PostgreSQL's original qualified NULL behavior. Unqualified partial/compound or NULLS NOT DISTINCT variants must reject at plan time.
 
 For scoped mapped DELETE, use `delete(Model)` with exact typed tenant and record
-equalities and `execution_options={"synchronize_session": False}`. The route
-admits one application-assigned UUID or int64 record on a tenant-column table.
+equalities and `execution_options={"synchronize_session": False}`. Explicit
+single-tenant tables instead require only exact record equality, with session
+scope equal to their declared table UUID. The route admits one
+application-assigned UUID or int64 record.
 It returns native row counts. Core DELETE, external parameter dictionaries,
 RETURNING, inheritance, version counters and other predicate shapes refuse.
 Ordinary ORM flush DELETE retains its existing native lifecycle contract.

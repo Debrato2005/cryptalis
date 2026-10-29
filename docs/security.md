@@ -137,6 +137,7 @@ For an explicitly single-tenant table, the descriptor's fixed table UUID binds
 session authority. The caller supplies no WHERE clause; SQLAlchemy adds the
 exact record predicate from each input dictionary. Absence of a tenant bind
 must not weaken the record, prepared-frame or final driver checks.
+
 Owned physical column lineage binds the explicit tenant and generated record
 predicates. Each native group must consume the corresponding inputs before
 execution. Exact prepared frames, typed scope/record binds and final driver
@@ -144,6 +145,11 @@ snapshots then protect dispatch. Read-only properties and SQL-producing bind
 types refuse before SQL and key preparation in both sync and async execution.
 The adapter captures the request before key preparation and checks it again
 afterward. Public Python bind processors remain native.
+
+The single-record mapped DELETE route has the same fixed-scope authority for
+explicitly single-tenant tables. Its immutable permit and compiled/driver proof
+must still bind the exact record identity and native target. Only the physical
+tenant equality/bind is absent; a missing or changed record predicate refuses.
 
 For finite VARCHAR targets, each affected native group uses a private
 parameterized CASE with public constants. Omitted columns retain their existing

@@ -346,6 +346,11 @@ Native primary-key predicates and row-count failures remain in force; no
 synthetic predicate disables missing-record detection. Both routes require
 typed record IDs and `synchronize_session=False`, with no RETURNING.
 
+Single-record mapped DELETE likewise uses direct record equality under the
+fixed table UUID for explicitly single-tenant tables. Tenant-column tables
+retain tenant-plus-record equality. Both forms reuse the same immutable permit
+and final driver proof, with no external parameters or RETURNING.
+
 The dialect's native page generator supplies SQL and processed parameters.
 Validate full processed input first, then each page's rows against the original
 frozen slice. An exact one-shot page snapshot precedes cursor callbacks and

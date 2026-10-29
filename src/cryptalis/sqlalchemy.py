@@ -1069,7 +1069,7 @@ class _Attachment:
         else:
             table = expected.table
             first = next(binding for binding in self.bindings if binding.column.table is table)
-        if (not isinstance(statement, Delete) or first.tenant is None or
+        if (not isinstance(statement, Delete) or first.tenant is None and tenant != first.descriptor.table_id or
                 statement.table.name != table.name or statement.table.schema != table.schema or
                 not all(column.key in statement.table.c and statement.table.c[column.key].shares_lineage(column)
                         for column in table.c) or statement._returning or statement._return_defaults or
@@ -1078,7 +1078,7 @@ class _Attachment:
             raise UnsupportedProtectedOperation()
         _delete_node(table, Table)
         _delete_node(statement.table, Table)
-        for column in (first.record, first.tenant):
+        for column in (first.record,) + ((first.tenant,) if first.tenant is not None else ()):
             self.identity_type(column.type, uuid_only=column is first.tenant)
             self.bind_type(column.type, selecting=True)
         clauses, pending = [], [statement.whereclause]
@@ -1089,7 +1089,7 @@ class _Attachment:
                 pending.extend(reversed(clause.clauses))
             else:
                 clauses.append(clause)
-        if len(clauses) != 2:
+        if len(clauses) != 1 + int(first.tenant is not None):
             raise UnsupportedProtectedOperation()
         scope = record = None
         for clause in clauses:
@@ -1106,7 +1106,7 @@ class _Attachment:
             _delete_node(left, Column)
             _delete_node(right, BindParameter)
             self.bind_type(right.type, selecting=True)
-            if left.shares_lineage(first.tenant) and scope is None:
+            if first.tenant is not None and left.shares_lineage(first.tenant) and scope is None:
                 if type(right.value) is not UUID or right.value != tenant:
                     raise UnsupportedProtectedOperation()
                 scope = right
@@ -1117,7 +1117,8 @@ class _Attachment:
                 record = right
             else:
                 raise UnsupportedProtectedOperation()
-        if scope is None or record is None or scope.key == record.key:
+        if (record is None or first.tenant is not None and scope is None or
+                scope is not None and scope.key == record.key):
             raise UnsupportedProtectedOperation()
         identity = UUID(bytes=record.value.bytes) if type(record.value) is UUID else record.value
         permit = _DeletePermit(table, first.record, first.tenant, identity, UUID(bytes=tenant.bytes))
@@ -1569,12 +1570,13 @@ class _Attachment:
         if operation.scoped_delete is not None and isinstance(context.compiled.statement, Delete):
             permit, scope, record = self.delete_context(context.compiled.statement, operation.tenant,
                                                        operation.scoped_delete)
-            names = [context.compiled.bind_names.get(bind) for bind in (scope, record)]
+            names = [context.compiled.bind_names.get(bind) for bind in (scope, record) if bind is not None]
             if (context.executemany or statement != str(context.compiled) or any(type(name) is not str for name in names) or
-                    names[0] == names[1] or len(context.compiled.bind_names) != 2 or
+                    len(set(names)) != len(names) or len(context.compiled.bind_names) != len(names) or
                     len(context.compiled_parameters) != 1):
                 raise UnsupportedProtectedOperation()
-            expected = dict(zip(names, (permit.tenant, permit.identity)))
+            values = (permit.identity,) if scope is None else (permit.tenant, permit.identity)
+            expected = dict(zip(names, values))
             for group in (context.compiled_parameters[0], parameters):
                 if (type(group) is not dict or set(group) != set(expected) or
                         any(type(group[name]) is not type(value) or group[name] != value
