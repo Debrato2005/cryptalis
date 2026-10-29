@@ -99,7 +99,11 @@ Roll back after a result failure. SQL can succeed before result authentication.
 
 The scoped mapped bulk UPDATE route keeps an ordered immutable input ledger.
 Owned physical column lineage binds the explicit tenant and generated record
-predicates. Each native group must consume the corresponding inputs before
+predicates. Declared single-tenant tables instead require the manifest's fixed
+table UUID as the session scope, no caller predicate, and the exact generated
+record predicate. Admission checks that scope before statement key preparation
+and during compilation. An absent tenant bind does not authorize a tenant-column
+table. Each native group must consume the corresponding inputs before
 execution. Exact prepared frames, typed scope/record binds and final driver
 snapshots then protect dispatch. Read-only properties and SQL-producing bind
 types refuse before SQL and key preparation in both sync and async execution.

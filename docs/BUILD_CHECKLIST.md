@@ -25,6 +25,13 @@ No objective is complete until its acceptance evidence and applicable gate pass.
 
 ## Current boundary
 
+- Declared single-tenant tables now accept native mapped dictionary UPDATE,
+  including admitted scalar values, native missing-record and overflow errors,
+  sync/async ORM state and current-value removal. Fixed scope and final driver
+  mutation controls pass. This advances OBJ-QUERY-04 and OBJ-DX-04 within the
+  existing DML boundary. See the [checkpoint](status.md#single-tenant-mapped-update-2026-10-29).
+  Broader DML and production qualification remain incomplete.
+
 - Online capture has opt-in bounded crypto workers and adaptive row counts.
   Actual worker overlap, unchanged byte limits, atomic failure and authenticated
   resume pass. SQL execution remains serial. See the

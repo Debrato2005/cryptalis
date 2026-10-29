@@ -1,0 +1,103 @@
+{
+  "format": "cryptalis.release-check/v1",
+  "base_revision": "f3de39bcd118c9c7ffa5f78278a10542bd2ceef9",
+  "fixing_revision": "worktree-57c86c31bdcdd5da",
+  "source_sha256": {
+    "pyproject.toml": "f22d6065eb3abaaef9c939f22a042c15391a3d8a0be6fe600cee92347dac61d1",
+    "LICENSE": "7f5a6a6ca9e6e2d6e75ec8530612396f3eebd2659c79a6ca123bf30a933f23df",
+    "README.md": "dc7584f542eb875eea968ca3129659d14b74cfd8092779ffe2fa5dbf71e64b81",
+    "scripts/release_check.py": "1d24ed0c55ab99eeab5e7bc29c668735414bb7997d84105c4f05dd0f9a745f99",
+    "scripts/test_release_check.py": "72dbcf4b1be8aeec94e8bdffe527922d9dfa6f83c6f418033432c40fff186bb7",
+    "src/cryptalis/__init__.py": "c1a82f9f958187e4b5423d11df5a035b17d75b34a0947af6be4aac436cd2fed2",
+    "src/cryptalis/__main__.py": "9967032819ce6f18e02a40d033958d5f4f7c328faf8693bc07ecc42a1a525707",
+    "src/cryptalis/_access_contract.py": "439c9b24746c7aabad9b182dac0929eaed48f4303bfcc4c715e128936304213b",
+    "src/cryptalis/_cli_operations.py": "b5c2adab3a5924e6346d54d11b51fb1bf059663cede9bd58cace3827b2cec2ab",
+    "src/cryptalis/_key_policy_status.py": "053d81b7eaa49c12d3baa6d71fe49c61b85fd1178119a9be170b45939da05cce",
+    "src/cryptalis/_retained_obligations.py": "ef4b05cf9f7b40874b405d666be4f17be1c537cda0dbbfacf7131ba1c956050a",
+    "src/cryptalis/_rotation_activation.py": "d18cf3c13d58ad4758e234f949124c777948de854191ab8051069f9f2fb8c056",
+    "src/cryptalis/_rotation_transition.py": "db3576a50e9e017c1c3370683fa3ba914c1586639201a425a82b90bcce52af88",
+    "src/cryptalis/_sqlalchemy_aggregate.py": "46d84cc8cbd10fc41f56e48174880952574d3f4c4d903e5b5f9c5660281e7645",
+    "src/cryptalis/_sqlalchemy_guard.py": "d979c187c6dfc0171903b8c6c128ad903488916b0047b03f15f7ba9f0785233d",
+    "src/cryptalis/_sqlalchemy_search.py": "6edb058e14a77ec2b7e08b93da440d0d26cc586bfd3c2973f6c1f7c1624997c5",
+    "src/cryptalis/_sqlmodel_types.py": "591940a3fac58d084ad85ed236ee7d3dbe103772afef43bde187473cb54e4c92",
+    "src/cryptalis/cli.py": "d221a0f3b1ab1bd903fda77a0aa5f558e77e20b81d6b5ba73622f11790307c0e",
+    "src/cryptalis/cli_host.py": "2561e0aedf0998f5a3aa1729cec12ec71b82ec2d017814805d69a2709d7e2562",
+    "src/cryptalis/contracts/__init__.py": "7a621ddfa3ed2dd543a3495b8cedaed3f892fc6b1fae0b6e8d04285741bd8660",
+    "src/cryptalis/contracts/active_state.py": "b22608114fda5f49b2fa054fef24763bc9735c37612edfce0b13e16ca0df7532",
+    "src/cryptalis/contracts/development_authority.py": "1fe8519fe06fd0121829b92e04f1b5be2b8b72e39f3b8eecc3d60b6e168810d7",
+    "src/cryptalis/contracts/transition.py": "407c8028827ac7660cf6c4d3d4cfae30ca2dacf69ca80749e4e52f07d5c3d923",
+    "src/cryptalis/crypto/__init__.py": "d2e5aba93eac500134274385c5d56deade8e973549f17b31e36da45932283c10",
+    "src/cryptalis/crypto/_candidate_envelope.py": "9c28cb84a85123130328b2273eb27786a95f7953a41f0ec27f1c11100e28e55f",
+    "src/cryptalis/crypto/_candidate_scalar.py": "b97a21a29b4bc9453af8c4c0a8f22b4860892b85854b5d1196ebca2f5094269a",
+    "src/cryptalis/crypto/_candidate_wrap.py": "18cd89777178a5938848c51d47b48603dab902f57e83a6b330a8643f92748dc4",
+    "src/cryptalis/crypto/_payload_rotation.py": "ac0728663ce3e426a965d7876760923ecb86682c8b7150f372b07689309aa920",
+    "src/cryptalis/crypto/_rewrap.py": "797d1789c983e8c4eba36a792c8d4b5c00cba734bd25b61d6a970f1711be734b",
+    "src/cryptalis/crypto/_search_rotation.py": "b2ec5f65ba77a8d44068b20beefb3d367e02f532fe8cb8d060929d476c535ae9",
+    "src/cryptalis/crypto/aws_kms.py": "cd832a5d24a01166c8a8b96588f7883679d077b2e3240eb43236c366e31e75ae",
+    "src/cryptalis/crypto/cf1.py": "921563ac648b2f75bef7b9ad3c3c1f7d1a33e68c39ab6c67298e18e2607685be",
+    "src/cryptalis/crypto/keys.py": "af3e819e83829a3c95e6c3cd32ac29ac44a040189f00cc089a6bf70d25d6938c",
+    "src/cryptalis/deprotection.py": "cfdd38451304e33479f2b91649bf7587d2e86630ea285a76448ab2665bc9a907",
+    "src/cryptalis/doctor.py": "c317667b84b84356800afb0aec9faea687959f059a3e30bdcd28dee29a1208f3",
+    "src/cryptalis/manifest/__init__.py": "d2dc8653181d66161df9d9eb29ea79fb36b38fd93848d4da4a25184cda6885cd",
+    "src/cryptalis/manifest/canonical.py": "6fe7e3d22cece14e5d85de912acdaf782a5421bfaa5c4dd796f78ab5bd4c2ec8",
+    "src/cryptalis/manifest/compiler.py": "1cc0b3d3a2f3b9a89e68460b518e0904af4dd5f476ce701993312aa8181e4e81",
+    "src/cryptalis/manifest/declaration.py": "348d8e9c4605a28924166e3c1f88bd23f0b6b3ebaae402f52cf0d2c3403ca6b8",
+    "src/cryptalis/manifest/descriptor.py": "739d0438451c47746850c6aa488add4cfd7782ddeebd743741cccd290d2ce20d",
+    "src/cryptalis/manifest/header.py": "6e450d8565e3d7c19ecedd6c6b3120715ea5c7ee3b1ee439fef9e5080bb5eb6a",
+    "src/cryptalis/manifest/parser.py": "43fd17656e0717b24c6e93689d3c619994a527ea65e11b2394e4eb66219877f6",
+    "src/cryptalis/migration.py": "2ab0617c2913c1119cdfc470ee3d9185ca6bbb1380f14d69ab8dd0f589354f12",
+    "src/cryptalis/online.py": "164d65ccb7d3eb77d4b7b1299743eabdb109621d60ac1d375fc3b6d3e52b3fa6",
+    "src/cryptalis/restore.py": "7d45d955a0d719a8b163590a429bb547426f4c65bda226833012f2174a594e35",
+    "src/cryptalis/rotation.py": "368e05524da5effcc47334998d7c99d606f20453b301417b08f986b7aa56367d",
+    "src/cryptalis/sqlalchemy.py": "1d08fb4cfda614ba25364bddebfc7cff16ab718b83cabdebe27151e4ebf04242",
+    "src/cryptalis/sqlmodel.py": "ff21af5afc8e03b611237f497737746539d8acff60d4c20358782a016746a76b"
+  },
+  "dirty": true,
+  "artifacts": {
+    "cryptalis-0.1.0-py3-none-any.whl": "b558fb833adaf0f623e138608142c22b642f5b259cd2be9a7eec09eea7e73c48",
+    "cryptalis-0.1.0.tar.gz": "cd3ddc6f44f16b44372f60ccb21e52fb119c73dc2ed005185b977f476cccab07"
+  },
+  "reproducible": true,
+  "wheel": {
+    "members": 54,
+    "modules": 43,
+    "metadata": "cryptalis-0.1.0.dist-info/METADATA",
+    "record": "cryptalis-0.1.0.dist-info/RECORD",
+    "requires_python": ">=3.12",
+    "provides_extra": [
+      "sqlmodel"
+    ],
+    "requires_dist": [
+      "cryptography==50.0.2",
+      "greenlet==3.5.6",
+      "psycopg[binary]==3.3.6",
+      "sqlalchemy==2.1.3",
+      "sqlmodel==0.0.48; extra == \"sqlmodel\""
+    ]
+  },
+  "sdist": {
+    "members": 54,
+    "modules": 43
+  },
+  "sbom": {
+    "path": "sbom.cdx.json",
+    "sha256": "6f53508023bfe8b5cb2a353b30694b587b0c9a3918a833098f9ce00b300e17df",
+    "components": [
+      "cffi",
+      "cryptalis",
+      "cryptography",
+      "greenlet",
+      "psycopg",
+      "psycopg-binary",
+      "pycparser",
+      "sqlalchemy",
+      "typing-extensions",
+      "tzdata"
+    ]
+  },
+  "source_scan": {
+    "network_or_telemetry_terms": []
+  },
+  "clean_install": "NOT MEASURED",
+  "gate": "UNKNOWN"
+}

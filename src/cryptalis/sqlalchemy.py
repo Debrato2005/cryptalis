@@ -1126,11 +1126,13 @@ class _Attachment:
             raise UnsupportedProtectedOperation()
         bindings = [binding for binding in self.bindings if binding.column.table is table]
         first = bindings[0]
-        if first.tenant is None:
+        scoped = first.tenant is not None
+        if not scoped and (type(tenant) is not UUID or tenant != first.descriptor.table_id):
             raise UnsupportedProtectedOperation()
         self.bind_type(first.record.type)
-        self.bind_type(first.tenant.type)
-        clauses, pending = [], [statement.whereclause]
+        if scoped:
+            self.bind_type(first.tenant.type)
+        clauses, pending = [], [] if statement.whereclause is None else [statement.whereclause]
         while pending:
             clause = pending.pop()
             if isinstance(clause, BooleanClauseList) and clause.operator is operators.and_:
@@ -1138,7 +1140,7 @@ class _Attachment:
                 pending.extend(reversed(clause.clauses))
             else:
                 clauses.append(clause)
-        if len(clauses) != (2 if generated else 1):
+        if len(clauses) != int(scoped) + int(generated):
             raise UnsupportedProtectedOperation()
         scope, record = None, None
         for clause in clauses:
@@ -1155,7 +1157,7 @@ class _Attachment:
             self.bind_type(right.type)
             _delete_node(left, Column)
             _delete_node(right, BindParameter)
-            if left.shares_lineage(first.tenant) and scope is None:
+            if scoped and left.shares_lineage(first.tenant) and scope is None:
                 if right.required or type(right.value) is not UUID or right.value != tenant:
                     raise UnsupportedProtectedOperation()
                 scope = right
@@ -1163,7 +1165,7 @@ class _Attachment:
                 record = right
             else:
                 raise UnsupportedProtectedOperation()
-        if scope is None or generated and record is None:
+        if scoped and scope is None or generated and record is None:
             raise UnsupportedProtectedOperation()
         return scope, record
 
@@ -1591,9 +1593,15 @@ class _Attachment:
         else:
             scope, record = self.update_context(context.compiled.statement, operation.bulk_update,
                                                 operation.tenant, generated=True)
-            names, scope_key, record_key = dict(native_names), _update_bind_name(scope.key), _update_bind_name(record.key)
+            names = dict(native_names)
+            scope_key = _update_bind_name(scope.key) if scope is not None else None
+            record_key = _update_bind_name(record.key)
             constants = {}
-        if ((scope_key is None and not operation.flushing or scope_key is not None and scope_key not in names) or record_key not in names or
+        if scope_key is None and not operation.flushing:
+            first = next(binding for binding in self.bindings if binding.column.table is operation.bulk_update)
+            if first.tenant is not None or operation.tenant != first.descriptor.table_id:
+                raise UnsupportedProtectedOperation()
+        if (scope_key is not None and scope_key not in names or record_key not in names or
                 any(type(name) is not str for name in names.values()) or
                 len(names) != len(native_names) or len(set(names.values())) != len(names)):
             raise UnsupportedProtectedOperation()
@@ -2189,7 +2197,7 @@ def attach(mapping: registry, engine: Engine | AsyncEngine, *, lock: bytes, keys
 
     Schema transition is not performed. The host authenticates the lock and the
     tenant passed to the returned factory. ORM flush and bounded mapped
-    dictionary INSERT, tenant-scoped TEXT UPDATE, and single-record tenant-scoped
+    dictionary INSERT, fixed- or column-scoped UPDATE, and single-record tenant-scoped
     DELETE writes are admitted. Mapped DELETE requires execute() with explicit
     tenant/record equality and synchronize_session=False, without RETURNING.
 

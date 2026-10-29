@@ -89,6 +89,28 @@ Callable defaults, tuple/transformed identities and ambiguous bind forms reject 
 Primary-key lookups in HAVING or JOIN ON also reject for protected reads.
 Explicit public bind overrides retain native values. Compiler-generated override names reject.
 
+Mapped dictionary UPDATE also supports declared single-tenant tables:
+
+```python
+from sqlalchemy import update
+
+with sessions(tenant_id=table_uuid_from_manifest) as session:
+    session.execute(update(Customer), [
+        {"id": first_uuid, "note": "updated"},
+        {"id": second_uuid, "note": None},
+    ], execution_options={"synchronize_session": False})
+    session.commit()
+```
+
+Supply no WHERE predicate for this route. SQLAlchemy adds each record ID and
+checks matched row counts. Missing IDs can raise `StaleDataError`. Use rollback
+or the enclosing savepoint to recover. Loaded objects retain native stale state
+until refresh or expiration. For tenant-column tables, retain the explicit
+`where(Customer.tenant_id == authenticated_tenant)` predicate. UPDATE expressions,
+Core statements and RETURNING remain unadmitted. The
+[single-tenant checkpoint](status.md#single-tenant-mapped-update-2026-10-29)
+records exact local evidence.
+
 Run from the project root. The wrapper reloads both private credential files and probes both roles.
 It ignores inherited URLs, prints safe failures and stops if either probe fails.
 

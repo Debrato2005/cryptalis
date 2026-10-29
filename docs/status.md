@@ -10,6 +10,54 @@ No PostgreSQL/provider/runtime cell, production key provider, independent review
 VERIFIED below refers only to the named checks and their exact revisions.
 All other contract and promotion requirements are SPECIFIED. All seven full gates remain UNKNOWN.
 
+## Single-tenant mapped UPDATE: 2026-10-29
+
+**VERIFIED, local PostgreSQL 16.15:** declared single-tenant tables accept mapped
+dictionary UPDATE through sync and async sessions with the manifest's table UUID
+as scope. The caller supplies typed record IDs, no WHERE predicate and
+`synchronize_session=False`. Tenant-column tables retain explicit tenant equality.
+
+The [28-check native differential run](_reset/single-tenant-update-green-20261029.json)
+passes TEXT, VARCHAR, Boolean, int2/int4/int8, finite Date and UUID updates through
+online protection, heterogeneous and repeated-ID groups, NULL/omission, autoflush,
+stale identity-map state, refresh, rollback, commit and latest-value removal.
+Native missing-record row-count errors and VARCHAR/integer overflow preserve
+savepoint recovery. Wrong fixed scope and unsupported requests refuse before
+statement key resolution or driver UPDATE. Changed final IDs, frames and SQL
+refuse before driver execution; exact retry succeeds. A native positive collector
+observes the fixture plaintext; attached UPDATE binds omit it.
+
+The [RED receipt](_reset/single-tenant-update-red-20261029.json) fails at the original
+single-tenant refusal after its native oracle passes. The
+[first implementation run](_reset/single-tenant-update-first-20261029.json) records
+six passes and 22 failures: sixteen reach a misnamed reverse-plan keyword, and
+six inspect retired staging columns in the new test helper. Corrected helpers
+use `source_pin` and current public columns. No product change follows that run.
+The passing receipt records three successful role probes and unchanged source.
+
+The [affected regression](_reset/single-tenant-update-regression-20261029.json)
+passes 508 test calls with six explicit retained-reader skips, including existing
+scoped UPDATE, INSERT/results, scalar, driver, online and adapter controls.
+The [installed-wheel run](_reset/single-tenant-update-installed-20261029.json)
+passes 93 calls, including all 28 new controls and existing scoped UPDATE
+boundaries. Both runs record unchanged source and all three role probes.
+The [release check](_reset/single-tenant-update-release-20261029.json) records
+identical repeat wheel/sdist hashes, metadata/RECORD/SBOM checks, 43 modules and
+47 verified installed files with CLI/import checks in a clean environment.
+These runs use Python 3.12.14, SQLAlchemy 2.1.3 and psycopg 3.3.6.
+
+Fresh read-only code review found no blocking defects. The new pre-key refusal
+and final-driver mutation controls run synchronously. Separate async fixed-scope
+failure injection and direct generated-predicate AST mutation are not established
+by the new module; shared capture/recheck and scoped-update evidence remain
+separate. The complete source corpus, fresh-cluster recovery and production
+qualification were not rerun for this bounded change.
+
+The existing immutable input ledger, generated-record validation, authenticated
+frames and final driver checks remain in use. No format, dependency, key policy
+or leakage representation changes. This local evidence adds no production
+qualification; all seven full gates remain UNKNOWN.
+
 ## Expanded source regression boundary: 2026-10-28
 
 **VERIFIED, complete collected source corpus across two ordered runs:**

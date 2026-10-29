@@ -71,7 +71,7 @@ Rollback/removal transforms current data through decrypt-back until explicit fin
 | Signed integer storage/read/write and SQL NULL | SUPPORTED | Exact int2/int4/int8 mappings and width-bound Python ints, literal client defaults, native failure/transaction behavior and typed fixed-width CF1. Storage-only; the fixed authentication overhead is published in the local cost profile |
 | Mapped dictionary INSERT without RETURNING | SUPPORTED | Attached sync/async `Session.execute(insert(Model), list[dict])`, explicit typed IDs and tenant scope, copied attribute dictionaries, native NULL/grouping, autoflush, uniqueness and transaction behavior. Other bulk routes remain unadmitted |
 | Mapped dictionary INSERT with RETURNING | SUPPORTED | Native direct-column tuples/scalars and inserted mapped entities, including public-only columns. Preserve result keys/types, grouping, paging and optional input ordering. Entity results retain identity-map loading and refresh. Authenticate each protected output against its own exact prepared input. Label/expression/alias, loader-option and caller return_defaults forms remain unadmitted |
-| Scoped mapped dictionary UPDATE | SUPPORTED | Attached sync/async TEXT, VARCHAR and Boolean targets, explicit tenant-column equality, typed IDs, nonempty list of dictionaries and synchronize_session=False. Preserve native omission/NULL, grouping, repeated IDs, zero matches and transactions. Single-tenant, Core and RETURNING routes remain unadmitted |
+| Scoped mapped dictionary UPDATE | SUPPORTED | Attached sync/async admitted storage types, typed IDs, nonempty list of dictionaries and synchronize_session=False. Tenant-column tables require explicit tenant equality. Declared single-tenant tables use the fixed table UUID and no caller WHERE. Preserve native omission/NULL, grouping, repeated IDs, row-count checks and transactions. Core and RETURNING routes remain unadmitted |
 | Scoped mapped single-record DELETE | SUPPORTED | Attached sync/async execute, exact typed tenant and application-record equalities, no external parameters or RETURNING, and synchronize_session=False. Preserve native row counts and transactions. Unsupported custom AST classes refuse before execution |
 | Unprotected-table mapped DELETE | SUPPORTED | One physical table mapped in the attached registry, with no protected fields. Native equality/AND predicates with fixed typed literals only. Default/auto/evaluate/False synchronization. No Core, RETURNING, fetch synchronization or custom AST |
 | Equality `==` and `IN` | SUPPORTED | Declared full tenant/domain-bound HMAC term. Preserve typed binds and native NULL/empty-list truth tables |
@@ -95,6 +95,11 @@ Rollback/removal transforms current data through decrypt-back until explicit fin
 For mapped bulk UPDATE, use `update(Model).where(Model.tenant_id == tenant)`
 with `execution_options={"synchronize_session": False}` and typed IDs in each
 input dictionary. The single predicate must be direct typed tenant equality.
+For a declared single-tenant table, use `update(Model)` without a caller WHERE
+predicate and open the attached session with the manifest's table UUID.
+SQLAlchemy supplies the primary-key predicate. Missing records retain native
+`StaleDataError` row-count checks; they do not inherit the tenant-filtered route's
+zero-match behavior. See the [single-tenant checkpoint](status.md#single-tenant-mapped-update-2026-10-29).
 The adapter rejects extra predicates, embedded values, version counters,
 dynamic defaults, read-only mapped properties, SQL-producing type hooks and
 type variants. Ordinary Python public-field bind processors remain native.

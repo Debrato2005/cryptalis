@@ -4,6 +4,29 @@
 It does not preserve old IDs as implementation obligations. Historical dispositions remain in [archived revamp evidence](research/revamp-evidence.md).
 [Status](status.md) owns IMPLEMENTED/VERIFIED claims. All seven full gates remain UNKNOWN.
 
+## Single-tenant mapped dictionary UPDATE: 2026-10-29
+
+Extend mapped dictionary UPDATE to tables declared `single_tenant: true`.
+Use the manifest's fixed table UUID as the session and payload scope. Admit
+`Session.execute(update(Model), list_of_dicts)` with typed application record
+IDs and `synchronize_session=False`. The caller supplies no WHERE predicate;
+SQLAlchemy supplies the exact primary-key predicate for each native group.
+Tenant-column tables still require their explicit tenant equality.
+
+Reuse the immutable input ledger, prepared frames, native grouping and final
+driver checks. Do not synthesize a tenant column or infer scope from data.
+Check fixed scope before statement key preparation and again at compilation.
+Keep native missing-record row-count failures, stale identity-map state,
+refresh, autoflush, rollback and savepoint behavior. Retain typed VARCHAR and
+integer overflow handling without plaintext binds. Core updates, expressions,
+RETURNING, extra predicates and automatic session synchronization remain
+unadmitted. This adds no format, representation, provider or dependency.
+
+The selected approach extends existing admission. A separate write executor
+would duplicate its security boundary; a manufactured WHERE condition would
+change native row-count behavior. Local PostgreSQL differential and failure
+controls must precede a VERIFIED claim. Production gates remain UNKNOWN.
+
 ## Bounded parallel crypto and adaptive online batches: 2026-10-28
 
 Allow one through sixteen opt-in cryptographic workers during online capture.
