@@ -52,6 +52,9 @@ explain these additions and their limits.
 additional protected types beyond documented text, Boolean, Date, UUID and signed-integer storage.
 These remain full-SRS engineering objectives. Their runtime refusal does not complete the feature.
 Other unadmitted operators also fail. Do not protect a field whose required queries use these operations.
+Internal storage-only integer and [DATE candidates](docs/compatibility.md#internal-date-storage-candidate)
+have separate bounded evidence. They do not admit numeric/date search or qualify
+full type or production support.
 Queries on unprotected fields retain their native semantics.
 The seven baseline slices retain their dependency and PostgreSQL evidence requirements.
 Each new capability needs all [six technical gates](docs/compatibility.md#capability-admission) and explicit leakage opt-in before admission.

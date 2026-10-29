@@ -47,6 +47,12 @@ The [six-gate admission rule](../compatibility.md#capability-admission) and leak
 Use the [competitive capability matrix](../research/capability-matrix.md) to select secure practical profiles.
 Research arrays, order encodings, internal transport, and diagnostic helpers are **INTERNAL ONLY**. They do not admit a public capability.
 
+Internal storage-only candidates now include signed int2/int4/int8 and exact
+DATE. DATE uses the same compiler, CF1/context, adapter and lifecycle components,
+with strict lock/v8 and `pg-date-days-be/v1`; literal defaults also require
+`pg-date-default/v1`. These candidates do not admit numeric/date search or
+qualify a production cell. See the [DATE boundary](../compatibility.md#internal-date-storage-candidate).
+
 ## Compatibility promise
 
 Cryptalis never silently changes what the backend returns.
@@ -123,6 +129,21 @@ neither uninstalls the package nor deletes provider material. Existing engine,
 publication, privacy and Doctor boundaries remain unchanged. See the
 [verified checkpoint](../status.md#operational-cli-reverse-and-removal-2026-10-24).
 Source and installed genuine fresh-target verification pass.
+
+### Tenant-policy maintenance CLI
+
+**IMPLEMENTED, bounded source and installed verification:** `tenants provision
+plan|apply|activate|abort` reuses the maintenance tenant API and shared policy
+transition runner. The trusted host supplies the approved typed UUID/Keyring;
+there is no CLI-selected tenant/key authority. `TenantPlanningContext` carries
+`engine`, `source_keys`, `source_pin`, `tenant_id`, `key_policy`,
+`verify_rows_per_second` and `restore`. Distinct apply/activation contexts carry
+`engine`, `keys`, `pin` and `approval`; abort carries `engine`, `source_keys`,
+`source_pin` and `approval`. The existing engine and synchronous-resolver rules
+apply. Apply retains the exact private successor durably before host loading or
+database effects. Actual host publication and source-only cancel authority stay
+external. See the [procedure](../lifecycle.md#add-an-empty-tenant-policy-under-maintenance)
+and [evidence](../status.md#tenant-policy-maintenance-cli-2026-10-28).
 
 ### Root-rewrap CLI
 
@@ -318,6 +339,18 @@ real input identity and exact
 prepared frame or NULL. Immutable expectations come from that native group.
 They survive operation cleanup without retaining the operation or session.
 
+Mapped dictionary UPDATE reuses the prepared-input ledger. Tenant-column tables
+require one explicit tenant equality. Explicitly single-tenant tables instead
+use bare `update(Model)` with session scope equal to the declared table UUID.
+Native primary-key predicates and row-count failures remain in force; no
+synthetic predicate disables missing-record detection. Both routes require
+typed record IDs and `synchronize_session=False`, with no RETURNING.
+
+Single-record mapped DELETE likewise uses direct record equality under the
+fixed table UUID for explicitly single-tenant tables. Tenant-column tables
+retain tenant-plus-record equality. Both forms reuse the same immutable permit
+and final driver proof, with no external parameters or RETURNING.
+
 The dialect's native page generator supplies SQL and processed parameters.
 Validate full processed input first, then each page's rows against the original
 frozen slice. An exact one-shot page snapshot precedes cursor callbacks and
@@ -370,7 +403,9 @@ Attachment returns a factory called as `sessions(tenant_id=tenant_uuid)`. Await 
 The compiler lock must be trusted by the host. Physical protected columns must already be `bytea`.
 This call does not perform a schema/data transition. Attach before application sessions or model use.
 The optional `cryptalis.sqlmodel.attach` uses the same arguments for synchronous
-PostgreSQL sessions on SQLModel 0.0.48. It inherits native `Session.exec` and
+and asynchronous PostgreSQL sessions on SQLModel 0.0.48. Await attachment for an
+AsyncEngine. It reuses native `Session.exec` result shaping; async `exec` first
+passes the shared async admission and key preparation boundary. It
 normalizes only the checked exact AutoString mapping to native String.
 The [compatibility contract](../compatibility.md#optional-sqlmodel-bridge)
 defines its refusals. The [checkpoint](../status.md#optional-sqlmodel-template-checkpoint-2026-10-23)

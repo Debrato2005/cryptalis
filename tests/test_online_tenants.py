@@ -105,14 +105,15 @@ def _rotate_all_scopes(owner, source, source_keys, contract, binding):
         keys=source_keys, target_keys=target_keys, verify_rows_per_second=1000, restore=binding)
     successor = proposal.activation_plan
     assert successor.document['access_contract'] == contract
-    assert successor.document['format'] == 'cryptalis.transition/v12'
+    assert successor.document['format'] == ('cryptalis.transition/v12' if binding else 'cryptalis.transition/v9')
     assert rotation.apply_rewrap(proposal, owner, keys=source_keys, target_keys=target_keys,
         pin=_rotation_pin(successor, 'PREPARED'), approval=_transition_approval_for_rotation()).phase == 'PENDING'
     assert m.apply(successor, owner, keys=target_keys, pin=_rotation_pin(successor, 'ACTIVATING'),
         approval=_transition_approval_for_rotation(), until='ACTIVE').phase == 'ACTIVE'
     source, source_keys = successor, target_keys
-    for purpose, expected_format in (
-            ('payload', 'cryptalis.transition/v13'), ('search', 'cryptalis.transition/v14')):
+    for purpose, normal_format, adopted_format in (
+            ('payload', 'cryptalis.transition/v10', 'cryptalis.transition/v13'),
+            ('search', 'cryptalis.transition/v11', 'cryptalis.transition/v14')):
         target_keys = _generation(source_keys, purpose)
         proposal = getattr(rotation, 'plan_' + purpose + '_rotation')(
             source, owner, source_pin=_rotation_pin(source, 'ACTIVE'), keys=source_keys,
@@ -125,7 +126,7 @@ def _rotate_all_scopes(owner, source, source_keys, contract, binding):
             proposal, owner, keys=source_keys, target_keys=target_keys,
             pin=_rotation_pin(proposal, 'PREPARED'), approval=_transition_approval_for_rotation(),
             copy_rows_per_second=1000, copy_wal_bytes_per_row=3000)
-        assert successor.document['format'] == expected_format
+        assert successor.document['format'] == (adopted_format if binding else normal_format)
         assert successor.document['access_contract'] == contract
         assert getattr(rotation, 'switch_' + purpose + '_rotation')(
             proposal, successor, owner, keys=source_keys, target_keys=target_keys,

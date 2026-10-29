@@ -12,7 +12,6 @@ Usage: .venv/bin/python scripts/fresh_cluster_qualification.py [--workdir PATH]
 """
 import argparse
 import base64
-import datetime
 import json
 import os
 from pathlib import Path
@@ -27,7 +26,6 @@ import psycopg
 from psycopg import sql
 
 ROOT = Path(__file__).resolve().parents[1]
-DATE = datetime.date.today().strftime('%Y%m%d')
 
 
 def pg_bin(name):
@@ -46,18 +44,11 @@ def free_port():
         return probe.getsockname()[1]
 
 
-def receipt_path(name):
-    base = ROOT / 'docs' / '_reset' / name
-    path, attempt = base, 1
-    while path.exists():
-        attempt += 1
-        path = base.with_name(f'{base.stem}-{attempt}{base.suffix}')
-    return path
-
-
-def run_pytest(receipt, scope, module, extra_env):
+def run_pytest(receipt, scope, module, extra_env, *, installed_wheel=None):
+    runtime_options = ([] if installed_wheel is None else
+                       ['--installed-wheel', str(installed_wheel.resolve())])
     command = [sys.executable, str(ROOT / 'scripts' / 'test_postgres.py'),
-               '--receipt', str(receipt), '--scope', scope, '--', module, '-q']
+               *runtime_options, '--receipt', str(receipt), '--scope', scope, '--', module, '-q']
     result = subprocess.run(command, cwd=ROOT, env=dict(os.environ, **extra_env))
     if result.returncode != 0:
         raise SystemExit(f'pytest step failed: {module}')
@@ -127,8 +118,12 @@ def stop_cluster(cluster):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--workdir', type=Path, default=None)
+    parser.add_argument('--installed-wheel', type=Path,
+                        help='Bind export and restore wrappers to this inspected installed wheel.')
     parser.add_argument('--integer-default', type=int, default=None,
                         help='Qualify an exact native integer literal client default.')
+    parser.add_argument('--column-name', choices=('name', 'integer'), default='name',
+                        help='Select the native integer fixture column identifier; requires --integer for integer.')
     parser.add_argument('--varchar', action='store_true', help='Qualify a native VARCHAR(64) source and lock v3.')
     parser.add_argument('--restore-lease', action='store_true',
                         help='Run focused restored-target key lease and no-effects controls.')
@@ -150,7 +145,7 @@ def main():
     profiles.add_argument('--boolean', action='store_true',
                           help='Qualify Boolean storage after payload rotation on a fresh cluster.')
     profiles.add_argument('--date', action='store_true',
-                          help='Qualify native date storage, rotations and fresh-cluster recovery.')
+                          help='Qualify DATE storage and literal defaults after all rotations on a fresh cluster.')
     profiles.add_argument('--uuid', action='store_true',
                           help='Qualify UUID value storage, rotations and fresh-cluster recovery.')
     profiles.add_argument('--sqlmodel-http', action='store_true',
@@ -177,6 +172,8 @@ def main():
     profiles.add_argument('--search-rotation', action='store_true',
                           help='Qualify backup recovery after search rotation and a later protected edit.')
     args = parser.parse_args()
+    if args.column_name != 'name' and not args.integer:
+        parser.error('--column-name integer requires --integer.')
     if args.sqlmodel_http and (args.varchar or args.restore_lease or args.public_slots or args.owned_sequences):
         parser.error('--sqlmodel-http uses the original HTTP schema and its preserved public slots.')
     if args.reverse_cli and (args.varchar or args.restore_lease or args.public_slots):
@@ -201,21 +198,29 @@ def main():
         parser.error('--date/--uuid use their native scalar restore lifecycle.')
     if args.boolean and (args.varchar or args.restore_lease):
         parser.error('--boolean uses the typed Boolean fixture and its restore lifecycle.')
+    if args.date and (args.varchar or args.restore_lease or args.owned_sequences):
+        parser.error('--date uses the native DATE fixture and its restore lifecycle.')
     if (args.sqlmodel_searchable or args.sqlmodel_direct_search or args.sqlmodel_public_slots or args.sqlmodel_http) and (args.varchar or args.restore_lease):
         parser.error('--sqlmodel-searchable uses the original application schema and lifecycle.')
     if args.smolink and (args.varchar or args.restore_lease):
         parser.error('--smolink uses the original application VARCHAR schema and lifecycle.')
     if args.restore_lease and (args.direct_generation or args.adopted_search or args.adopted_payload or args.adopted_rewrap or args.rewrap or args.payload_rotation or args.search_rotation):
         parser.error('--restore-lease supports the original TEXT/VARCHAR fixture only.')
-    workdir = args.workdir or Path(tempfile.mkdtemp(prefix='cryptalis-fresh-'))
-    workdir.mkdir(parents=True, exist_ok=True)
-    export_receipt = receipt_path(f'fresh-cluster-export-{DATE}.json')
-    restore_receipt = receipt_path(f'fresh-cluster-restore-{DATE}.json')
+    if args.workdir is None:
+        workdir = Path(tempfile.mkdtemp(prefix='cryptalis-fresh-'))
+    else:
+        workdir = args.workdir
+        workdir.mkdir(mode=0o700, parents=True, exist_ok=False)
+    # Each run owns one new directory. Parallel profiles cannot select the
+    # same global receipt filename between existence check and exclusive write.
+    export_receipt = workdir / 'export-receipt.json'
+    restore_receipt = workdir / 'restore-receipt.json'
 
     profile = ('; staged search CLI sealing and publication on an adopted target' if args.search_cli else
                '; staged payload CLI sealing and publication on an adopted target' if args.payload_cli else
                '; root-rewrap CLI cancellation and publication on an adopted target' if args.rewrap_cli else
                '; saved reverse-plan and approved removal CLI on an adopted target' if args.reverse_cli else
+               '; DATE storage, literal default and three-rotation recovery' if args.date else
                '; original public slots and explicit restored-slot authority' if args.public_slots else
                '; owned-sequence identity mapping and native counter profile' if args.owned_sequences else
                '; native UUID storage after root and payload rotation' if args.uuid else
@@ -236,14 +241,18 @@ def main():
                '; search-rotation profile' if args.search_rotation else '')
     if args.restore_lease:
         profile += '; restored-target lease controls'
+    if args.column_name != 'name':
+        profile += '; keyword column ' + args.column_name
     export = run_pytest(export_receipt, 'Fresh-cluster source export; primary cluster' + profile,
-                        ('tests/test_sqlmodel_searchable_export.py' if (args.sqlmodel_searchable or args.sqlmodel_direct_search or args.sqlmodel_public_slots or args.sqlmodel_http) else
-                         'tests/test_fresh_boolean_export.py' if args.boolean or args.integer or args.date or args.uuid else
+                        ('tests/test_date_fresh_cluster.py::test_export_date_backup_after_rotations' if args.date else
+                         'tests/test_sqlmodel_searchable_export.py' if (args.sqlmodel_searchable or args.sqlmodel_direct_search or args.sqlmodel_public_slots or args.sqlmodel_http) else
+                         'tests/test_fresh_boolean_export.py' if args.boolean or args.integer or args.uuid else
                          'tests/test_smolink_application.py' if args.smolink
                          else 'tests/test_fresh_cluster_export.py'),
                         {'CRYPTALIS_SMOLINK_FRESH_EXPORT': str(workdir) if args.smolink else '',
                          'CRYPTALIS_FRESH_CLUSTER_DIR': str(workdir),
                          'CRYPTALIS_FRESH_INTEGER_BITS': str(args.integer or 0),
+                         'CRYPTALIS_FRESH_COLUMN_NAME': args.column_name,
                          'CRYPTALIS_FRESH_DATE': '1' if args.date else '0',
                          'CRYPTALIS_FRESH_UUID': '1' if args.uuid else '0',
                          'CRYPTALIS_FRESH_INTEGER_DEFAULT': '' if args.integer_default is None else str(args.integer_default),
@@ -255,7 +264,8 @@ def main():
                          'CRYPTALIS_FRESH_SOURCE_VARCHAR': '1' if args.varchar else '0',
                          'CRYPTALIS_FRESH_SOURCE_REWRAP': '1' if args.rewrap else '0',
                          'CRYPTALIS_FRESH_SOURCE_PAYLOAD_ROTATION': '1' if args.payload_rotation else '0',
-                         'CRYPTALIS_FRESH_SOURCE_SEARCH_ROTATION': '1' if args.search_rotation else '0'})
+                         'CRYPTALIS_FRESH_SOURCE_SEARCH_ROTATION': '1' if args.search_rotation else '0'},
+                        installed_wheel=args.installed_wheel)
     manifest = json.loads((workdir / 'restore-manifest.json').read_text())
     if manifest.get('owned_sequences', False) is not args.owned_sequences:
         raise SystemExit('FreshCluster.ProfileMismatch: owned-sequence export did not match the requested profile.')
@@ -263,8 +273,18 @@ def main():
         raise SystemExit('FreshCluster.ProfileMismatch: public-slot export did not match the requested profile.')
     if manifest.get('adopted_search', False) is not (args.adopted_search or args.direct_generation):
         raise SystemExit('FreshCluster.ProfileMismatch: adopted-search export did not match the requested profile.')
-    if manifest.get('application_default') != (None if args.integer_default is None else str(args.integer_default)):
+    expected_default = '0001-01-01' if args.date else None if args.integer_default is None else str(args.integer_default)
+    if manifest.get('application_default') != expected_default:
         raise SystemExit('FreshCluster.ProfileMismatch: integer default export differs from the requested literal.')
+    if args.integer:
+        plan = json.loads(base64.b64decode(manifest['plan'], validate=True))
+        if (manifest.get('application_profile') != 'integer-' + str(args.integer)
+                or manifest.get('integer_bits') != args.integer
+                or manifest.get('column', 'name') != args.column_name
+                or plan.get('lock', {}).get('models', [{}])[0].get('fields', [{}])[0].get('column') != args.column_name
+                or plan.get('kind') != 'payload_rotation'
+                or plan.get('lock', {}).get('schema') != 'cryptalis.lock/v7'):
+            raise SystemExit('FreshCluster.ProfileMismatch: integer payload successor is missing.')
     if args.public_slots:
         plan = json.loads(base64.b64decode(manifest['plan'], validate=True))
         if (plan.get('lock', {}).get('schema') != ('cryptalis.lock/v9' if args.uuid else 'cryptalis.lock/v8' if args.date else 'cryptalis.lock/v7' if args.integer else 'cryptalis.lock/v6')
@@ -275,19 +295,19 @@ def main():
         plan = json.loads(base64.b64decode(manifest['plan'], validate=True))
         if plan.get('lock', {}).get('schema') != 'cryptalis.lock/v5' or not manifest.get('sequence_facts'):
             raise SystemExit('FreshCluster.ProfileMismatch: sequence-bearing source lock is missing.')
-    elif args.date or args.uuid:
+    elif args.uuid:
         plan = json.loads(base64.b64decode(manifest['plan'], validate=True))
-        if (manifest.get('application_profile') != ('native-uuid-storage' if args.uuid else 'native-date-storage')
+        if (manifest.get('application_profile') != 'native-uuid-storage'
                 or plan.get('kind') != 'payload_rotation'
-                or plan.get('lock', {}).get('schema') != ('cryptalis.lock/v9' if args.uuid else 'cryptalis.lock/v8')):
-            raise SystemExit('FreshCluster.ProfileMismatch: scalar payload successor is missing.')
+                or plan.get('lock', {}).get('schema') != 'cryptalis.lock/v9'):
+            raise SystemExit('FreshCluster.ProfileMismatch: UUID payload successor is missing.')
+    elif args.date:
+        plan = json.loads(base64.b64decode(manifest['plan'], validate=True))
+        if (manifest.get('application_profile') != 'date-storage' or plan.get('kind') != 'search_rotation'
+                or plan.get('lock', {}).get('schema') != 'cryptalis.lock/v8'):
+            raise SystemExit('FreshCluster.ProfileMismatch: DATE three-rotation successor is missing.')
     elif args.integer:
-        plan = json.loads(base64.b64decode(manifest['plan'], validate=True))
-        if (manifest.get('application_profile') != 'integer-' + str(args.integer)
-                or manifest.get('integer_bits') != args.integer
-                or plan.get('kind') != 'payload_rotation'
-                or plan.get('lock', {}).get('schema') != 'cryptalis.lock/v7'):
-            raise SystemExit('FreshCluster.ProfileMismatch: integer payload successor is missing.')
+        pass
     elif args.boolean:
         if manifest.get('application_profile') != 'boolean-storage':
             raise SystemExit('FreshCluster.ProfileMismatch: Boolean storage export is missing.')
@@ -340,7 +360,8 @@ def main():
         credentials = provision(port, password, manifest, plain_database)
         home = write_home(workdir, port, manifest, credentials)
         restore = run_pytest(restore_receipt, 'Fresh-cluster protected-backup recovery and adoption; isolated cluster' + profile,
-                             ('tests/test_search_operational_cli.py::test_genuine_adopted_search_cli_seals_saved_activation_and_latest_native_exit' if args.search_cli else
+                             ('tests/test_date_fresh_cluster.py::test_restore_date_authentication_explicit_adoption_latest_exit' if args.date else
+                              'tests/test_search_operational_cli.py::test_genuine_adopted_search_cli_seals_saved_activation_and_latest_native_exit' if args.search_cli else
                               'tests/test_payload_operational_cli.py::test_genuine_adopted_payload_cli_seals_saved_activation_and_latest_native_exit' if args.payload_cli else
                               'tests/test_rewrap_operational_cli.py::test_genuine_adopted_rewrap_cli_preserves_binding_and_byte_identity' if args.rewrap_cli else
                               'tests/test_reverse_operational_cli.py::test_genuine_adopted_source_reverse_cli_uses_explicit_binding_and_latest_native_exit' if args.reverse_cli else
@@ -358,6 +379,7 @@ def main():
                               else 'tests/test_fresh_cluster_restore.py'),
                              {'HOME': str(home), 'CRYPTALIS_FRESH_CLUSTER_DIR': str(workdir),
                               'CRYPTALIS_FRESH_INTEGER_BITS': str(args.integer or 0),
+                              'CRYPTALIS_FRESH_COLUMN_NAME': args.column_name,
                               'CRYPTALIS_FRESH_DATE': '1' if args.date else '0',
                               'CRYPTALIS_FRESH_UUID': '1' if args.uuid else '0',
                               'CRYPTALIS_SQLMODEL_DIRECT_SEARCH': '1' if (args.sqlmodel_direct_search or args.sqlmodel_public_slots) else '0',
@@ -367,7 +389,8 @@ def main():
                               'CRYPTALIS_FRESH_PLAINTEXT_ROLE': credentials['plaintext'][0],
                               'CRYPTALIS_FRESH_SOURCE_REWRAP': '1' if args.rewrap else '0',
                               'CRYPTALIS_FRESH_SOURCE_PAYLOAD_ROTATION': '1' if args.payload_rotation else '0',
-                              'CRYPTALIS_FRESH_SOURCE_SEARCH_ROTATION': '1' if args.search_rotation else '0'})
+                              'CRYPTALIS_FRESH_SOURCE_SEARCH_ROTATION': '1' if args.search_rotation else '0'},
+                             installed_wheel=args.installed_wheel)
     finally:
         stop_cluster(cluster)
     print('workdir', workdir)

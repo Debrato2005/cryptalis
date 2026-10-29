@@ -1,5 +1,5 @@
 """Finite native count projections over directly protected columns."""
-from sqlalchemy import Column, Integer
+from sqlalchemy import Column, Integer, Table
 from sqlalchemy.sql import operators
 from sqlalchemy.sql.elements import (
     BinaryExpression,
@@ -108,6 +108,7 @@ def count_shape(owner, expression, selection=None):
     while isinstance(source, Alias):
         _delete_node(source, Alias)
         source = source.element
+    _delete_node(source, Table)
     if (source is not bindings[0].column.table
             or _delete_name_state(column.name) != _delete_name_state(bindings[0].column.name)):
         raise UnsupportedProtectedOperation()
