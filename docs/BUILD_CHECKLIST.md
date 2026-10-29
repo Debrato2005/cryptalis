@@ -25,6 +25,14 @@ No objective is complete until its acceptance evidence and applicable gate pass.
 
 ## Current boundary
 
+- Explicit single-tenant tables now accept native mapped dictionary UPDATE
+  under their fixed table UUID. Missing-record errors, partial transaction
+  effects, savepoints, overflow precedence and latest-value removal pass native
+  oracles. The affected source selection passes 216 checks with four skips;
+  23 installed route/bridge checks and existing fresh recovery also pass.
+  See the [checkpoint](status.md#single-tenant-mapped-dictionary-update-2026-10-29).
+  Production admission and independent review remain open.
+
 - SQLModel 0.0.48 now has an async bridge through the existing guarded async
   attachment. Native CRUD/results, search, tenant isolation, cancellation and
   current-value removal pass thirteen source and thirteen installed PostgreSQL

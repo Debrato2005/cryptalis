@@ -339,6 +339,13 @@ real input identity and exact
 prepared frame or NULL. Immutable expectations come from that native group.
 They survive operation cleanup without retaining the operation or session.
 
+Mapped dictionary UPDATE reuses the prepared-input ledger. Tenant-column tables
+require one explicit tenant equality. Explicitly single-tenant tables instead
+use bare `update(Model)` with session scope equal to the declared table UUID.
+Native primary-key predicates and row-count failures remain in force; no
+synthetic predicate disables missing-record detection. Both routes require
+typed record IDs and `synchronize_session=False`, with no RETURNING.
+
 The dialect's native page generator supplies SQL and processed parameters.
 Validate full processed input first, then each page's rows against the original
 frozen slice. An exact one-shot page snapshot precedes cursor callbacks and

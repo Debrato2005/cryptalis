@@ -111,11 +111,12 @@ class Qualification:
             credentials = provision(port, password, manifest, manifest['database'] + '_native')
             home = write_home(primary, port, manifest, credentials, source_database=manifest['database'])
             environment = dict(os.environ, HOME=str(home), PYTHONPATH='')
-            self.run('installed SQLModel sync and async bridge', [str(python),
+            self.run('installed SQLModel bridges and fixed-scope UPDATE', [str(python),
                 'scripts/test_postgres.py', '--installed-wheel', str(wheel), '--source-role',
-                '--scope', 'Installed SQLModel sync and async bridge with native lifecycle and failure controls',
+                '--scope', 'Installed SQLModel bridges and single-tenant UPDATE with native lifecycle and failure controls',
                 '--receipt', str(self.workdir / 'installed-sqlmodel-receipt.json'), '--',
-                'tests/test_sqlmodel_bridge.py', 'tests/test_sqlmodel_async.py', '-q'],
+                'tests/test_sqlmodel_bridge.py', 'tests/test_sqlmodel_async.py',
+                'tests/test_single_tenant_update.py', '-q'],
                 environment=environment)
             receipt = json.loads((self.workdir / 'installed-sqlmodel-receipt.json').read_text())
             if (receipt['exit_code'] != 0 or receipt['counts'].get('passed', 0) == 0
