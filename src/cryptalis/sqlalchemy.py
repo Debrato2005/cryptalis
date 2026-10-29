@@ -238,6 +238,7 @@ class _DeletePermit:
     scope: object
     identity: object
     tenant: UUID
+    returning: tuple = ()
 
 
 @dataclass(frozen=True)
@@ -1056,12 +1057,18 @@ class _Attachment:
         if (not isinstance(statement, Delete) or first.tenant is None or
                 statement.table.name != table.name or statement.table.schema != table.schema or
                 not all(column.key in statement.table.c and statement.table.c[column.key].shares_lineage(column)
-                        for column in table.c) or statement._returning or statement._return_defaults or
+                        for column in table.c) or statement._return_defaults or
                 statement._with_options or statement._prefixes or statement._hints or
                 statement._independent_ctes or statement.dialect_kwargs):
             raise UnsupportedProtectedOperation()
         _delete_node(table, Table)
         _delete_node(statement.table, Table)
+        returning = []
+        for column in statement._returning:
+            self.returning_column_identity(column, table)
+            if self.protected(column) or column.type is not table.c[column.key].type:
+                raise UnsupportedProtectedOperation()
+            returning.append(_unprotected_column_state(table.c[column.key]))
         for column in (first.record, first.tenant):
             self.identity_type(column.type, uuid_only=column is first.tenant)
             self.bind_type(column.type, selecting=True)
@@ -1104,11 +1111,13 @@ class _Attachment:
         if scope is None or record is None or scope.key == record.key:
             raise UnsupportedProtectedOperation()
         identity = UUID(bytes=record.value.bytes) if type(record.value) is UUID else record.value
-        permit = _DeletePermit(table, first.record, first.tenant, identity, UUID(bytes=tenant.bytes))
+        permit = _DeletePermit(table, first.record, first.tenant, identity, UUID(bytes=tenant.bytes),
+                               tuple(returning))
         if expected is not None:
             if (permit.table is not expected.table or permit.record is not expected.record or
                     permit.scope is not expected.scope or type(permit.identity) is not type(expected.identity) or
-                    permit.identity != expected.identity or permit.tenant != expected.tenant):
+                    permit.identity != expected.identity or permit.tenant != expected.tenant or
+                    permit.returning != expected.returning):
                 raise UnsupportedProtectedOperation()
             permit = expected
         return permit, scope, record
@@ -2191,7 +2200,8 @@ def attach(mapping: registry, engine: Engine | AsyncEngine, *, lock: bytes, keys
     tenant passed to the returned factory. ORM flush and bounded mapped
     dictionary INSERT, tenant-scoped TEXT UPDATE, and single-record tenant-scoped
     DELETE writes are admitted. Mapped DELETE requires execute() with explicit
-    tenant/record equality and synchronize_session=False, without RETURNING.
+    tenant/record equality and synchronize_session=False. Direct public columns
+    can be selected with DELETE RETURNING.
 
     ``deployment`` is ``(plan, pin)`` or ``(plan, pin, restore_binding)``. The
     third element is an adopted ``cryptalis.restore/v1`` binding when the

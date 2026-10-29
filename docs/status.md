@@ -10,6 +10,41 @@ No PostgreSQL/provider/runtime cell, production key provider, independent review
 VERIFIED below refers only to the named checks and their exact revisions.
 All other contract and promotion requirements are SPECIFIED. All seven full gates remain UNKNOWN.
 
+## Public-column DELETE RETURNING: 2026-10-29
+
+**VERIFIED, local PostgreSQL 16.15:** the
+[220-check affected selection](_reset/public-delete-returning-20261029.json)
+passes public-column scalar/tuple DELETE results beside existing native DELETE,
+flush, driver, INSERT RETURNING and online controls. All three role probes pass,
+all selected checks execute without skips, and Python source stays unchanged.
+
+The new route keeps exact tenant-and-record equality and
+`synchronize_session=False`. Native sync/async Row keys, values, zero matches,
+rollback and commit pass for TEXT and VARCHAR fixtures. Returned column order,
+native configuration and effective types remain bound to the original permit
+across key callbacks and final driver admission. Custom annotation types,
+protected/entity/label/expression/foreign outputs and custom dispatch refuse.
+Three type-substitution regressions first demonstrate the review finding, then
+pass after requiring canonical effective type identity.
+
+Development-diagnostic tests also restore the optional source-role variable.
+Their present/absent regression and a combined 52-check diagnostic/online matrix
+pass; online tests execute after diagnostics in the same wrapper process.
+The existing negative DELETE control now uses a protected output, preserving
+refusal coverage while permitting the new public result route.
+
+The [full source boundary](_reset/public-delete-full-regression-20261029.json)
+covers all 160 test files and 2,982 selected items across four non-overlapping
+wrapper processes. It records 2,969 passing test calls and eighteen passing
+subtests. Nine call skips, four setup skips and fifteen collection skips remain
+explicit. All four processes pass fresh three-role probes and retain the same
+Python hashes. The 48 warnings are the existing DISTINCT ON deprecation.
+The [release check](_reset/public-delete-release-20261029.json) also records
+identical same-host repeat builds, wheel integrity checks and an SBOM.
+
+This is a bounded source checkpoint. Protected DELETE results, UPDATE RETURNING,
+broader DML and production qualification retain separate requirements.
+
 ## Expanded source regression boundary: 2026-10-28
 
 **VERIFIED, complete collected source corpus across two ordered runs:**

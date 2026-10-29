@@ -4,6 +4,17 @@
 It does not preserve old IDs as implementation obligations. Historical dispositions remain in [archived revamp evidence](research/revamp-evidence.md).
 [Status](status.md) owns IMPLEMENTED/VERIFIED claims. All seven full gates remain UNKNOWN.
 
+## Public-column scoped DELETE RETURNING: 2026-10-29
+
+Admit native direct public columns from the existing exact tenant-and-record
+mapped DELETE route, with `synchronize_session=False`. Preserve native scalar
+and tuple results, keys, zero-match behavior, rollback and commit. Require each
+effective projection type to be the canonical column's exact type object.
+Freeze returned-column order and configuration in the original DELETE permit.
+Recheck after provider callbacks and at final driver dispatch. Protected values,
+entity projections, labels, expressions, aliases and custom rendering remain
+separate work. No stored format, key policy or dependency change is needed.
+
 ## Bounded parallel crypto and adaptive online batches: 2026-10-28
 
 Allow one through sixteen opt-in cryptographic workers during online capture.

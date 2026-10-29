@@ -384,6 +384,14 @@ projections and declared equality/IN are implemented. Simple negative equality,
 bulk routes and unadmitted grammar reject.
 Mapped text attributes remain ordinary `str` or NULL. Generated projections carry row and tenant context for authentication.
 Protected projections and predicates disable compilation caching because their processors retain prepared material and operation context.
+
+Scoped mapped DELETE also admits direct public-column RETURNING through native
+sync/async Result objects. The statement must retain its exact typed tenant and
+record predicates and `synchronize_session=False`. Public projections use their
+canonical native column types. The immutable DELETE permit captures their order
+and configuration before key preparation and rechecks them after callbacks and
+at driver dispatch. Protected fields, entities, labels, expressions, foreign
+columns and customized projection types require separate admission.
 Unprotected projections retain native caching. Guards reject public raw-driver, opaque SQL, COPY, and unprepared-write routes.
 **VERIFIED:** native/attached comparisons and cache regression sensitivity have the exact boundary in the
 [slice 3 checkpoint](../status.md#slice-3-checkpoint-2026-10-08).
