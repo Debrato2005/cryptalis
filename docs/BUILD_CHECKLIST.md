@@ -25,6 +25,12 @@ No objective is complete until its acceptance evidence and applicable gate pass.
 
 ## Current boundary
 
+- The three source-role CI fixture regressions from `2d53867` are corrected.
+  Twenty-two affected checks pass, including explicit/default credential location
+  and private-file refusal controls. Full corrected CI remains pending; the
+  interrupted local full run supplies no pass. See the
+  [CI checkpoint](status.md#ci-credential-fixture-correction-2026-10-30).
+
 - The full local release workflow now verifies the installed OpenBao extra,
   its dependency SBOM, actual outage/sealed-restart recovery and PostgreSQL
   lifecycle. It passes 47 provider, 29 ORM and two genuine fresh-recovery calls.
