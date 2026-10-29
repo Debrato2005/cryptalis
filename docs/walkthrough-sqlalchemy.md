@@ -34,6 +34,28 @@ with sessions(tenant_id=authenticated_tenant) as session:
 # AsyncEngine: await attach(...); use async with and await Session methods.
 ```
 
+SQLModel 0.0.48 uses its optional attachment with native `exec` results:
+
+```python
+from cryptalis.sqlmodel import attach
+from sqlmodel import select
+
+sessions = await attach(Base.registry, async_engine, lock=plan.lock_bytes,
+                        keys=tenant_keys.__getitem__, deployment=(plan, active_pin))
+async with sessions(tenant_id=authenticated_tenant) as session:
+    customer = (await session.exec(
+        select(Customer).where(Customer.id == app_assigned_uuid)
+    )).one()
+    customer.note = "updated"
+    await session.commit()
+```
+
+Call async `exec` with `await`; consume its buffered native result normally.
+Use ordinary async SQLAlchemy methods for streaming and transaction operations.
+The same query, tenant and writer restrictions apply. For a synchronous engine,
+omit `await` and use the synchronous session context. The [SQLModel contract](compatibility.md#optional-sqlmodel-bridge)
+states dependency and mapping admission.
+
 Storage-only locks reject protected search. [Equality/IN/uniqueness](walkthrough-search.md) require declared capabilities.
 Opaque SQL, COPY, protocol handles, Core writes and unsupported expressions reject.
 The attached session admits ordinary mapped dictionary INSERT without RETURNING:
@@ -78,7 +100,8 @@ plaintext that already passed authentication, even after its key lease expires.
 Any later key use must pass its lease check. Roll back after a result failure before retry.
 The INSERT can succeed before result authentication.
 
-Tuple/entity RETURNING, labels, expressions, aliases, loader options,
+Direct tuple/entity RETURNING is also admitted under the [current result contract](compatibility.md#full-capability-matrix).
+Labels, expressions, aliases, loader options,
 caller `return_defaults()`, upserts, Core INSERT, statement-embedded values, INSERT SELECT,
 SQL expressions in rows and the legacy bulk methods remain unadmitted.
 A used callable, context-sensitive, SQL or server default also refuses.

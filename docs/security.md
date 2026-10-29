@@ -102,6 +102,10 @@ Public execution hooks substitute those frames without changing mapped plaintext
 Generated read projections carry the expected record and declared tenant context with the payload.
 The processor verifies host tenant and requested point, then authenticates and decodes each value.
 Keys are prepared outside synchronous async hooks. Protected SELECT compilation caching is disabled.
+The optional async SQLModel `exec` route uses the same awaited preparation and
+statement admission as guarded async SQLAlchemy execution. Its native method
+alone enters the synchronous session directly and cannot supply that boundary.
+Provider-preparation cancellation must propagate before driver dispatch.
 Unprotected SELECTs retain native caching. The host must authenticate the lock and tenant scope.
 Guards reject unsupported grammar, opaque SQL, COPY, protocol handles, and unprepared writes on the attached engine.
 These guards do not constrain independent connections or a compromised application.

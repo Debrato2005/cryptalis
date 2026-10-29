@@ -61,7 +61,7 @@ def record_application():
         mapping.dispose()
 
 
-def protect(app):
+def protect(app, *, attach_runtime=True):
     import cryptalis.migration as migration
     declaration = {'schema': 'cryptalis.protection/v1', 'profile': 'cf1', 'domain_id': str(DOMAIN),
         'models': [{'model': 'Record', 'table_id': str(TABLE_ID), 'tenancy': {'column': 'tenant_id'},
@@ -76,6 +76,8 @@ def protect(app):
     app.approval = migration.MaintenanceApproval('disposable application stopped; inventoried writers excluded', 3600)
     run(app)
     publish(app)
+    if not attach_runtime:
+        return
     from cryptalis.sqlmodel import attach
     return attach(app.mapping, app.runtime, lock=app.plan.lock_bytes, keys=keys, deployment=(app.plan, app.pin))
 
@@ -185,13 +187,14 @@ def test_changed_autostring_mappings_are_refused_before_key_resolution(change, m
             pytest.fail('changed AutoString admitted')
 
 
-def test_optional_bridge_refuses_async_before_connection_or_key_work():
+def test_optional_async_bridge_refuses_invalid_lock_before_connection_or_key_work():
     from cryptalis.sqlmodel import attach
+    from cryptalis.sqlalchemy import PolicyMismatch
     engine = create_async_engine('postgresql+psycopg://', hide_parameters=True)
     observed = []
     event.listen(engine.sync_engine, 'connect', lambda *args: observed.append('connected'))
     try:
-        with pytest.raises(UnsupportedProtectedOperation):
+        with pytest.raises(PolicyMismatch):
             attach(registry(), engine, lock=b'', keys=lambda tenant: pytest.fail('key resolution'))
         assert observed == []
     finally:

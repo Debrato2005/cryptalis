@@ -362,17 +362,34 @@ Their absolute guarantees are also removed: immediate arbitrary-worker denial, a
 whole-result publication, subject cryptographic erasure, and hostile-database completeness/freshness.
 A removed mechanism cannot retain its old guarantee through wording alone.
 
+## Async SQLModel bridge: 2026-10-29
+
+Extend the exact SQLModel 0.0.48 bridge to PostgreSQL AsyncEngine. Await the
+existing SQLAlchemy attachment and use its guarded async session with the
+SQLModel guarded synchronous session. Wrap native SQLModel `AsyncSession.exec`
+with the same async statement admission and key preparation as `execute`.
+Native `exec` enters its synchronous session directly; inheriting it alone
+would bypass async preparation and is not sufficient.
+
+Retain native scalar, tuple and entity results, transaction behavior and the
+existing query/write grammar. Cancellation during provider preparation must
+not dispatch SQL. Repeat existing UPDATE/DELETE admission after awaited key
+preparation. Keep caller session-class and binding overrides refused.
+This changes no crypto format, key authority, dependency or leakage contract.
+Local source and installed evidence remain separate from production gates.
+
 ## Optional exact SQLModel bridge: 2026-10-23
 
-Add an explicit optional SQLModel attachment for synchronous PostgreSQL only.
+Add an explicit optional SQLModel attachment for synchronous PostgreSQL.
+The later async bridge decision extends this original boundary.
 Pin SQLModel 0.0.48 and retain the four base runtime pins. Normalize only its
 exact stock AutoString through shared native type admission. Reject changed
 hooks, subclasses, variants and other unsupported protected types.
 Reuse native `Session.exec` and existing SQLAlchemy transaction/result guards.
 Keep the ordinary SQLAlchemy attachment behavior unchanged.
 
-Reject top-level SQLModel absence, unsupported version tags and async SQLModel
-attachment before database or key work. Internal package import failures retain
+Reject top-level SQLModel absence and unsupported version tags before database
+or key work. Internal package import failures retain
 their native failure behavior. Keep CF1, readers, tenancy, key authority and
 leakage contracts unchanged. Pinned external CRUD evidence remains separate
 from full application, authentication, deployment and broader ORM qualification.

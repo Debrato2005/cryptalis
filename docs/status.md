@@ -10,6 +10,39 @@ No PostgreSQL/provider/runtime cell, production key provider, independent review
 VERIFIED below refers only to the named checks and their exact revisions.
 All other contract and promotion requirements are SPECIFIED. All seven full gates remain UNKNOWN.
 
+## Async SQLModel bridge: 2026-10-29
+
+**IMPLEMENTED, bounded PostgreSQL 16.15 source verification:** SQLModel 0.0.48
+now uses the same optional attachment for synchronous and asynchronous engines.
+Await attachment for an AsyncEngine. The returned native SQLModel async session
+prepares keys and checks admitted statements before native `exec` enters its
+synchronous session. Native scalar, tuple and entity results remain unchanged.
+The ordinary SQLAlchemy attachment retains its existing session classes.
+
+The thirteen focused checks cover native-versus-protected CRUD, tuple INSERT
+RETURNING, scoped UPDATE/DELETE, NULL, failed-savepoint recovery, refresh,
+equality/IN through interleaved tenants and latest-value decrypt-back/removal.
+Separate controls refuse protected ordering before provider work, cancel awaited
+preparation before autoflush/SQL, retry after cancellation and refuse UPDATE
+request mutation during preparation. Independent stored-frame and driver-bind
+observations retain the existing plaintext boundary. A separate agent source
+review found no actionable guard defect; this is not independent human review.
+
+The [retained boundary](_reset/async-sqlmodel-boundary-20261029.json) records
+thirteen source checks and thirteen installed-wheel checks, with unchanged
+source/runtime bindings and three passing role probes for each. Initial failed
+controls and fixture corrections remain in the receipt archive. Repeat wheel
+and sdist hashes match; 49 installed files and CLI startup pass inspection.
+The installed wheel also passes keyword/public-slot export and actual
+fresh-cluster recovery. That recovery is an existing integer lifecycle profile,
+not an independent original async SQLModel application.
+
+Release CI now includes the installed sync/async bridge selection and retains
+its sanitized receipt beside installed fresh recovery. The complete default
+source suite is running separately; this checkpoint does not claim its outcome.
+No crypto format, dependency, search representation or provider authority changes.
+All seven production gates remain UNKNOWN.
+
 ## Restored tenant CLI application journey: 2026-10-29
 
 **VERIFIED, bounded installed application cell:** the unchanged 45-module wheel

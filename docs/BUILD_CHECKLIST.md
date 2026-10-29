@@ -25,6 +25,14 @@ No objective is complete until its acceptance evidence and applicable gate pass.
 
 ## Current boundary
 
+- SQLModel 0.0.48 now has an async bridge through the existing guarded async
+  attachment. Native CRUD/results, search, tenant isolation, cancellation and
+  current-value removal pass thirteen source and thirteen installed PostgreSQL
+  checks. Repeat artifact hashes, installed-file checks and existing fresh
+  recovery pass. Release CI also selects the installed sync/async bridge.
+  See the [checkpoint](status.md#async-sqlmodel-bridge-2026-10-29).
+  Full production and independent review requirements remain open.
+
 - The original authenticated tenant application now exercises the public CLI
   entrypoint after genuine fresh recovery, with an actual v16 successor and
   independently retained host publication. Both phases pass from the inspected
