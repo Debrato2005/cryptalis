@@ -10,6 +10,25 @@ No PostgreSQL/provider/runtime cell, production key provider, independent review
 VERIFIED below refers only to the named checks and their exact revisions.
 All other contract and promotion requirements are SPECIFIED. All seven full gates remain UNKNOWN.
 
+## CI credential-fixture correction: 2026-10-30
+
+GitHub run [40947951794](https://github.com/Debrato2005/cryptalis/actions/runs/40947951794)
+at `2d53867` passed installed release qualification but failed three source-role
+wrapper tests: their temporary credential files were not private, and their
+HOME-only selection did not isolate the explicit directory inherited from CI.
+The fixtures now use mode 0600 and explicitly select or unset that directory.
+Both explicit-directory and default-home selection are checked. Production
+credential checks and mandatory database probes remain unchanged.
+
+The [affected regression](_reset/ci-credential-fixtures-green-20261030.json)
+passes 22 checks with three real PostgreSQL role probes and unchanged source/runtime
+bindings. The [local reproduction](_reset/ci-credential-fixtures-red-20261030.json)
+retains the earlier fixture failures and a separate missing-native-tool failure;
+the successful run supplies the already verified PostgreSQL tool layout.
+The prior complete local source run was interrupted before it produced a final
+receipt; its partial progress is not a pass. The isolated cluster was stopped.
+The corrected complete GitHub suite remains pending. No release gate is promoted.
+
 ## OpenBao operational and installed qualification: 2026-10-30
 
 **VERIFIED, isolated local services:** the repeatable OpenBao runner performs
