@@ -261,6 +261,10 @@ Admission also requires explicit per-capability leakage opt-in, exact grammar, b
 G-RELEASE remains an additional release requirement. No local experiment or acknowledgment bypasses these gates.
 The six-gate grouping and conservative unadmitted grammar assumptions are recorded in [reset notes](_reset/notes.md).
 
+**INTERNAL ONLY:** the [NULL-safe equality candidate](status.md#internal-null-safe-equality-candidate-2026-10-31)
+has bounded native differential evidence. Normal attachment still refuses
+`IS DISTINCT FROM` and `IS NOT DISTINCT FROM` pending this admission procedure.
+
 ## Performance targets and recorded costs
 
 The [integer observation](status.md#integer-storage-cost-observation-2026-10-24)

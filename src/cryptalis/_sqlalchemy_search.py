@@ -10,6 +10,9 @@ from .manifest.compiler import _catalog_path
 from ._sqlmodel_types import autostring_impl
 
 
+_NULL_SAFE = (operators.is_distinct_from, operators.is_not_distinct_from)
+
+
 class _SearchValue(TypeDecorator):
     impl = LargeBinary
     cache_ok = False
@@ -33,12 +36,16 @@ def ordinary_bind(owner, value):
             any(type(value.type) is type(binding.column.type) for binding in owner.bindings))
 
 
-def search_shape(owner, expression):
+def search_shape(owner, expression, *, _nullsafe_candidate=False):
     """Only a direct declared column and a typed/deferred value are admitted."""
+    # Internal qualification can exercise this implementation. Normal attachment
+    # cannot admit a new operator before the six capability gates pass.
+    null_safe = _NULL_SAFE if _nullsafe_candidate is True else ()
     if not isinstance(expression, BinaryExpression):
         return None
     left, right = expression.left, expression.right
-    if expression.operator in (operators.eq, operators.ne) and isinstance(left, BindParameter):
+    if (expression.operator in (operators.eq, operators.ne, *null_safe) and isinstance(left, BindParameter) or
+            expression.operator in null_safe and isinstance(left, Null)):
         left, right = right, left
     if not isinstance(left, ColumnClause) or left.is_literal:
         return None
@@ -49,16 +56,18 @@ def search_shape(owner, expression):
     # Reuse exact native/annotated dispatch admission before resolving keys.
     from .sqlalchemy import _delete_node
     _delete_node(expression, BinaryExpression)
-    null = expression.operator in (operators.is_, operators.is_not) and isinstance(right, Null)
+    null = expression.operator in (operators.is_, operators.is_not, *null_safe) and isinstance(right, Null)
     if not null and not bindings[0].descriptor.equality:
         return None
-    if not null and not (expression.operator in (operators.eq, operators.ne, operators.in_op, operators.not_in_op) and isinstance(right, BindParameter)):
+    if not null and not (expression.operator in (operators.eq, operators.ne, operators.in_op, operators.not_in_op, *null_safe) and isinstance(right, BindParameter)):
         return None
     if not null and not ordinary_bind(owner, right):
         return None
     if not null and right.callable is not None:
         return None
     if expression.operator in (operators.in_op, operators.not_in_op) and not right.expanding:
+        return None
+    if expression.operator in _NULL_SAFE and isinstance(right, BindParameter) and right.expanding:
         return None
     return bindings[0], left, right, null
 
@@ -90,7 +99,7 @@ def rewrite_search(owner, statement, operation):
         binding, column, value, null = shape
         physical = type_coerce(column, LargeBinary())
         if null:
-            predicate = physical.is_(None) if node.operator is operators.is_ else physical.is_not(None)
+            predicate = physical.is_(None) if node.operator in (operators.is_, operators.is_not_distinct_from) else physical.is_not(None)
         else:
             # Fixed offsets must be SQL constants, so PostgreSQL generic plans
             # match the expression index as well as custom plans.
@@ -105,8 +114,9 @@ def rewrite_search(owner, statement, operation):
         if binding.tenant is not None:
             tenant_column = column.table.c[binding.tenant.key]
             scope = tenant_column == literal(operation.tenant, Uuid())
-            if null or node.operator is operators.not_in_op:
+            if null or node.operator in (operators.not_in_op, *_NULL_SAFE):
                 # Empty NOT IN is TRUE even on a null-extended row.
+                # NULL-safe predicates can also be TRUE on an absent row.
                 # Attachment validates the record column as a non-null primary
                 # key. Its NULL value identifies an absent outer-joined row,
                 # whose IS NULL result must remain TRUE. Resolve the key by

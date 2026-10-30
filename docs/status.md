@@ -10,6 +10,22 @@ No PostgreSQL/provider/runtime cell, production key provider, independent review
 VERIFIED below refers only to the named checks and their exact revisions.
 All other contract and promotion requirements are SPECIFIED. All seven full gates remain UNKNOWN.
 
+## Internal NULL-safe equality candidate: 2026-10-31
+
+**IMPLEMENTED, INTERNAL ONLY:** an internal qualification profile rewrites
+`IS DISTINCT FROM` and `IS NOT DISTINCT FROM` through the existing full equality
+term and NULL-presence representations. It passes native sync/async truth,
+alias, pagination, reversed/late bind, literal/bound NULL, outer-join and tenant
+oracles. The affected query selection passes 293 checks with 48 existing
+deprecation warnings. The [receipt](_reset/nullsafe-internal-20261031.json) binds
+the exact source and test selection.
+
+Normal attachment still refuses these operators before SQL. An explicit control
+checks that boundary. The candidate is not admitted public functionality and
+does not complete OBJ-QUERY-02. Six-gate admission, capability leakage acceptance
+and measured-cost approval remain required. No new representation or key format
+is selected. The preceding entity slice is pushed as `36415ba`.
+
 ## ORM entity INSERT RETURNING: 2026-10-31
 
 **VERIFIED, bounded local source cell:** mapped dictionary INSERT can return the

@@ -3,13 +3,29 @@
 Finite randomized values are test data, not a real low-cardinality search approval.
 """
 import asyncio,random
+from functools import partial
 import pytest
-from sqlalchemy import select,bindparam,Text,and_,or_,not_
+from sqlalchemy import select,bindparam,Text,and_,or_,not_,null,event
 from sqlalchemy.orm import aliased
 from test_sqlalchemy_search import search_application,_row,_async_factory,OTHER
 
 KINDS=['is_not_null','ne','ne_reverse','not_in_empty','not_in_null','not_in_values','not_in_mixed','not_in_late','not_of_in','not_of_eq']
+KINDS += ['distinct','not_distinct','distinct_reverse','not_distinct_reverse',
+          'distinct_late','not_distinct_late','distinct_null','not_distinct_null',
+          'distinct_late_null','not_distinct_late_null','distinct_reverse_null','not_distinct_reverse_null']
 VALUES=[None,'','a','A','é','e\u0301','雪','😀','a ',' ',"quote'and\\slash"]
+
+@pytest.fixture(autouse=True)
+def nullsafe_internal_profile(request,monkeypatch):
+    """Qualify the candidate without changing normal attachment admission."""
+    parameters=getattr(getattr(request.node,'callspec',None),'params',{})
+    kind=parameters.get('kind','')
+    if kind.startswith(('distinct','not_distinct')) or parameters.get('form')=='distinct':
+        import cryptalis._sqlalchemy_search as search
+        import cryptalis.sqlalchemy as adapter
+        candidate=partial(search.search_shape,_nullsafe_candidate=True)
+        monkeypatch.setattr(search,'search_shape',candidate)
+        monkeypatch.setattr(adapter,'search_shape',candidate)
 
 def predicate(column,kind,value,choices):
     if kind=='is_not_null':return column.is_not(None),{}
@@ -22,6 +38,22 @@ def predicate(column,kind,value,choices):
     if kind=='not_in_late':return column.not_in(bindparam('choices',expanding=True,type_=Text())),{'choices':choices}
     if kind=='not_of_in':return not_(column.in_(choices)),{}
     if kind=='not_of_eq':return not_(column==value),{}
+    if kind in ('distinct','not_distinct'):
+        method=column.is_distinct_from if kind=='distinct' else column.is_not_distinct_from
+        return method(value),{}
+    if kind in ('distinct_reverse','not_distinct_reverse'):
+        bound=bindparam('value',type_=Text())
+        method=bound.is_distinct_from if kind=='distinct_reverse' else bound.is_not_distinct_from
+        return method(column),{'value':value}
+    if kind in ('distinct_late','not_distinct_late','distinct_late_null','not_distinct_late_null'):
+        method=column.is_not_distinct_from if kind.startswith('not_') else column.is_distinct_from
+        return method(bindparam('value',type_=Text())),{'value':None if kind.endswith('_null') else value}
+    if kind in ('distinct_null','not_distinct_null'):
+        method=column.is_distinct_from if kind=='distinct_null' else column.is_not_distinct_from
+        return method(None),{}
+    if kind in ('distinct_reverse_null','not_distinct_reverse_null'):
+        method=null().is_distinct_from if kind=='distinct_reverse_null' else null().is_not_distinct_from
+        return method(column),{}
     raise AssertionError(kind)
 
 @pytest.mark.parametrize('kind',KINDS)
@@ -66,7 +98,8 @@ def test_fixed_seed_negative_query_truth_and_rows_match_native(kind,mode,single)
             outcomes.append(actual)
     assert outcomes[1]==outcomes[0]
 
-@pytest.mark.parametrize('kind',['is_not_null','ne','not_in_empty','not_in_null','not_in_values','not_in_mixed'])
+@pytest.mark.parametrize('kind',['is_not_null','ne','not_in_empty','not_in_null','not_in_values','not_in_mixed',
+    'distinct','not_distinct','distinct_null','not_distinct_null','distinct_late_null','not_distinct_late_null'])
 @pytest.mark.parametrize('single',[False,True])
 def test_outer_join_absent_and_present_null_negative_truth_matches_native(kind,single):
     outcomes=[]
@@ -89,22 +122,41 @@ from uuid import uuid4
 
 @pytest.mark.parametrize('protected',[False,True])
 @pytest.mark.parametrize('negated',[False,True])
-def test_storage_only_null_predicates_need_no_equality_representation(app,protected,negated):
+@pytest.mark.parametrize('form',['presence','distinct'])
+def test_storage_only_null_predicates_need_no_equality_representation(app,protected,negated,form):
     sessions=factory(app,protected)
     with sessions(tenant_id=TENANT) as s:
         for i,value in enumerate([None,'','雪']):
             s.add(app.Customer(id=uuid4(),tenant_id=TENANT,name=f'name-{i}',note=value,secret='',rank=i))
         s.commit()
         expr=app.Customer.note.is_not(None) if negated else app.Customer.note.is_(None)
+        if form=='distinct':
+            expr=app.Customer.note.is_distinct_from(None) if negated else app.Customer.note.is_not_distinct_from(None)
         values=[tuple(r) for r in s.execute(select(app.Customer.rank,expr).order_by(app.Customer.rank))]
         assert values==[(0,not negated),(1,negated),(2,negated)]
 
-@pytest.mark.parametrize('kind',['ne','not_in_values','not_in_empty'])
+@pytest.mark.parametrize('kind',['ne','not_in_values','not_in_empty','distinct','not_distinct_null'])
 def test_negative_predicate_retains_authenticated_tenant_guard(kind):
     with search_application(True) as app:
         for tenant,rank in [(app.tenant,1),(OTHER,2)]:
             with app.sessions(tenant_id=tenant) as s:
-                s.add(_row(app,'present',rank,tenant));s.commit()
+                s.add(_row(app,None if kind=='not_distinct_null' else 'present',rank,tenant));s.commit()
         expr,params=predicate(app.Customer.name,kind,'absent',['absent'])
         with app.sessions(tenant_id=app.tenant) as s:
             assert list(s.scalars(select(app.Customer.rank).where(expr),params))==[1]
+
+
+def test_nullsafe_candidate_is_not_publicly_admitted():
+    from cryptalis.sqlalchemy import UnsupportedProtectedOperation
+    with search_application(True) as app:
+        observed=[]
+        def observe(*args):observed.append(True)
+        event.listen(app.engine,'before_cursor_execute',observe)
+        try:
+            with app.sessions(tenant_id=app.tenant) as s:
+                for expression in (app.Customer.name.is_distinct_from('private'),
+                                   app.Customer.name.is_not_distinct_from(None)):
+                    with pytest.raises(UnsupportedProtectedOperation):
+                        s.execute(select(app.Customer.rank).where(expression))
+                assert observed==[]
+        finally:event.remove(app.engine,'before_cursor_execute',observe)
