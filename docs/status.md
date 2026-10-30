@@ -6,32 +6,32 @@ Use the [documentation map](README.md) to find contracts and procedures.
 
 ## Current complete CI qualification
 
-**VERIFIED at `743b5e9e70ef91a4353bbee8daf6329d313a20f7`:** GitHub
-[run 41011079692](https://github.com/Debrato2005/cryptalis/actions/runs/41011079692)
+**VERIFIED at `ccf7d12858e9e6d8e9ee23b2e1dd17788bbf9cba`:** GitHub
+[run 41014333321](https://github.com/Debrato2005/cryptalis/actions/runs/41014333321)
 passes both Source / PostgreSQL 16 and Reproducible artifacts / installed recovery.
-The [retained CI boundary](_reset/github-approle-boundary-20261030.json)
+The [retained CI boundary](_reset/github-application-rotations-boundary-20261030.json)
 contains verified GitHub archive digests and the actual source/installed receipts.
 
-The complete default source run passes 3,242 test calls and eighteen subtests.
-Twelve call skips, 72 setup skips and seventeen collection skips remain explicit;
-all 3,326 selected items complete. All 286 Python hashes match the recorded checkout,
+The complete default source run passes 3,254 test calls and eighteen subtests.
+Twelve call skips, 73 setup skips and seventeen collection skips remain explicit;
+all 3,339 selected items complete. All 287 Python hashes match the recorded checkout,
 and source/imported-runtime stability passes. The original source-role fixture
 failure at `2d53867` remains fixed; no skipped cell is treated as qualified.
 
-The installed wheel passes 96 ORM/configuration controls, 50 Google SDK and 114 OpenBao/provider
-checks, one export and one genuine fresh PostgreSQL recovery. Local and GitHub
+The installed wheel passes 105 ORM/configuration controls, 50 Google SDK and 115 OpenBao/provider
+checks, two exports and three genuine fresh PostgreSQL recovery checks. Local and GitHub
 wheel/sdist hashes are identical. Repeat archives, SBOM, installed-file inspection
 and dependency consistency pass. The frozen audit reports 39 packages, zero known
 vulnerabilities and zero adverse statuses; this is not proof of absence of unknown
 vulnerabilities or independent review. Earlier CI is retained in
-[history](history/implementation-2026-10.md#complete-ci-at-bda4fb3-2026-10-30).
+[history](history/implementation-2026-10.md#complete-ci-at-743b5e9-2026-10-30).
 The separate explicit performance profile below fails latency targets; a green
 default CI run does not qualify performance.
 
 Documentation consolidation is `26e882b`; shared init/Doctor is `15ffdb3` and
 shared application configuration is `09c635a`; lifecycle integration is `b92cfc7`.
-Google KMS is `bda4fb3`; AppRole is `743b5e9`. The later shared rotation API
-below has a separate local verification boundary.
+Google KMS is `bda4fb3`; AppRole is `743b5e9`; shared rotations are `ccf7d12`.
+The subsequent Doctor authentication diagnostic has a separate local boundary.
 
 The 34-objective [ledger](BUILD_CHECKLIST.md#objective-ledger) retains seven
 bounded VERIFIED entries, 23 PARTIAL entries, one SPECIFIED, one BLOCKED, one
@@ -80,7 +80,7 @@ completes removal. All 287 Python hashes and runtime bytes are stable. Initial
 pin-code assertions, two service test timing failures and an omitted restore
 prerequisite remain archived with corrections. A separate 45s source Doctor startup
 timeout has no established cause; its isolated rerun is retained separately. The final source and installed
-checks pass. This extension still awaits complete remote CI; all gates stay UNKNOWN.
+checks pass. Complete remote CI above also verifies this extension; all gates stay UNKNOWN.
 
 ## Google Cloud KMS SDK boundary
 
@@ -127,6 +127,16 @@ Host credential delivery, historical SecretID retirement, policy contents, audit
 sinks, production HA and combined deployment recovery remain unqualified. Current
 role inspection cannot prove past settings or prevent future administrator edits.
 All seven production gates remain UNKNOWN.
+
+The subsequent [Doctor boundary](_reset/doctor-authentication-boundary-20261030.json)
+preserves `Provider.AuthenticationUnavailable`, UNKNOWN native effects and explicit
+no-retry guidance through Python and CLI diagnostics. It keeps individual outcomes
+and caller leases unchanged. Local verification passes 76 source checks, 105
+installed application checks, 50 Google checks, 117 OpenBao/provider checks, two
+exports and three fresh-restore checks. All 287 Python hashes and runtime bytes
+are stable; repeat artifacts and installation checks pass. Native AppRole refusal
+and subsequent recovery are exercised. Complete remote CI still covers the
+earlier boundary; this does not establish production audit or custody.
 
 ## Current performance boundary
 

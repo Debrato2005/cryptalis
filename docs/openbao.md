@@ -139,6 +139,14 @@ integrity, backup recoverability or production custody. Failed access exits 4;
 invalid context exits 2. An empty tuple exits 4 with UNKNOWN access. Host factory
 effects remain UNKNOWN. Do not place tokens or wrapped roots in command arguments.
 
+An AppRole authentication failure reports `Provider.AuthenticationUnavailable`
+with `retryable: false` and overall `effects: UNKNOWN`. The report directs the
+operator to inspect workload credentials, role policy and native token issuance;
+login or later validation may already have issued a token. Other supplied
+keyrings keep their individual outcomes. Diagnosis does not invalidate, refresh
+or extend the application's existing root leases. A later successful cold check
+proves current access only and leaves production custody UNKNOWN.
+
 For key rotation, provision the new service version, construct the successor
 provider with an explicit version and distinct provider UUID, then use the
 existing verified root-rewrap lifecycle. Retain old versions until retained

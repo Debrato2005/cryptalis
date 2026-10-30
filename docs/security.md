@@ -1028,6 +1028,12 @@ backup custody, authenticated failover, HA, measured RPO/RTO or destruction proo
 
 ### OpenBao AppRole authentication
 
+Cold-provider Doctor preserves the authentication failure distinction. Its
+`Provider.AuthenticationUnavailable` issue forbids automatic retry and reports
+UNKNOWN effects, including when other supplied keyrings pass. It reports no
+credentials, wrapped-root bytes or raw exception details and leaves caller leases
+unchanged. See the [diagnostic procedure](openbao.md#diagnose-current-provider-access).
+
 `OpenBaoAppRoleToken` is an optional synchronous credential callback. It uses
 verified HTTPS without redirects and an explicit empty SDK token to suppress
 ambient token discovery. It validates role identity, exact issued/effective

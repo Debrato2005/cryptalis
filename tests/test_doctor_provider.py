@@ -64,6 +64,30 @@ def test_empty_input_remains_unknown_and_partial_failure_keeps_all_outcomes(monk
     assert not first._cache and not second._cache
 
 
+def test_authentication_failure_keeps_partial_results_unknown_effects_and_caller_leases(monkeypatch):
+    from cryptalis.crypto import ProviderAuthenticationUnavailable
+    first, _ = keyring()
+    second, provider = keyring()
+    second.prepare()
+    cache = dict(second._cache)
+    calls = []
+    def unavailable(*args):
+        calls.append(True)
+        raise ProviderAuthenticationUnavailable() from RuntimeError('PRIVATE_AUTH_DETAIL')
+    monkeypatch.setattr(provider, 'unwrap', unavailable)
+    report = check_keys((first, second))
+    assert report['status'] == report['checks']['cold_key_preparation'] == 'FAIL'
+    assert report['effects'] == 'UNKNOWN'
+    assert report['items'] == [{'index': 0, 'status': 'PASS'}, {'index': 1, 'status': 'FAIL'}]
+    issue, = report['issues']
+    assert issue['code'] == 'Provider.AuthenticationUnavailable' and issue['retryable'] is False
+    assert 'native token issuance' in issue['remedy']
+    assert 'PRIVATE_AUTH_DETAIL' not in json.dumps(report)
+    assert len(calls) == 1 and second._cache == cache
+    assert second.prepare()  # Diagnosis cannot revoke or refresh the caller's lease.
+    assert len(calls) == 1
+
+
 def invoke(directory, body, *options):
     (directory / 'provider_host.py').write_text(body)
     environment = dict(os.environ, PYTHONPATH=os.pathsep.join((

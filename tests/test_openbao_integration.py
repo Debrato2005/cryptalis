@@ -347,6 +347,66 @@ def test_cancellation_does_not_publish_late_keys(live):
     assert not ring._cache
 
 
+def test_approle_doctor_and_cli_preserve_uncertain_native_issuance(live, tmp_path):
+    from cryptalis.doctor import check_keys
+    from test_doctor_provider import invoke
+    workload = workload_credentials(live)
+    authentication = [workload.token]
+    p = live.make(token=lambda: authentication[0]())
+    wrapper = create_root(p, CONTEXT)
+    ring = Keyring(KeyPolicy(CONTEXT.domain_id, CONTEXT.tenant_id, (wrapper,), 1), {p.provider_id: p})
+    ring.prepare()
+    original_cache = dict(ring._cache)
+    # Native login succeeds, but its 60s lease exceeds this explicitly lower
+    # admission ceiling. The library cannot claim no native token was issued.
+    authentication[0] = workload.make(max_token_ttl=1)
+    report = check_keys((ring,))
+    assert report['effects'] == 'UNKNOWN' and report['status'] == 'FAIL'
+    assert report['issues'][0]['code'] == 'Provider.AuthenticationUnavailable'
+    assert report['issues'][0]['retryable'] is False
+    assert ring._cache == original_cache and ring.prepare()
+    configuration = tmp_path / 'private-approle.json'
+    config = dict(endpoint=live.service.config['endpoint'], ca_cert=live.service.config['ca_cert'],
+        mount=workload.mount, role_name='application', role_id=workload.role_id,
+        secret_id=workload.current[0], policies=[workload.mount], max_token_ttl=1,
+        transit_mount=live.service.mount, key_name=live.name, sealed=wrapper.sealed.decode('ascii'))
+    configuration.write_text(json.dumps(config)); configuration.chmod(0o600)
+    body = f'''
+import json
+from pathlib import Path
+from uuid import UUID
+from cryptalis.crypto import KeyContext, KeyPolicy, Keyring, WrappedRoot
+from cryptalis.crypto.openbao import OpenBaoAppRoleToken, OpenBaoTransitKeyProvider
+def context():
+    config = json.loads(Path({str(configuration)!r}).read_text())
+    secret, sealed = config.pop('secret_id'), config.pop('sealed')
+    mount, name = config.pop('transit_mount'), config.pop('key_name')
+    config['policies'] = tuple(config['policies'])
+    auth = OpenBaoAppRoleToken(**config, secret_id=lambda: secret)
+    p = OpenBaoTransitKeyProvider(endpoint=config['endpoint'], ca_cert=config['ca_cert'],
+        token=auth, mount=mount, key_name=name, key_version=1, provider_id=UUID(int=908))
+    c = KeyContext(UUID(int=1), UUID(int=4), 'payload', UUID(int=907), 1)
+    w = WrappedRoot(p.provider_id, c, sealed.encode('ascii'))
+    return (Keyring(KeyPolicy(c.domain_id, c.tenant_id, (w,), 1), {{p.provider_id: p}}),)
+'''
+    refused = invoke(tmp_path, body)
+    assert refused.returncode == 4 and refused.stdout == ''
+    error = json.loads(refused.stderr)['error']
+    assert error['code'] == 'KeyAccessUnavailable' and error['effects'] == 'UNKNOWN'
+    assert error['issues'][0]['code'] == 'Provider.AuthenticationUnavailable'
+    assert error['retryable'] is error['issues'][0]['retryable'] is False
+    assert workload.current[0] not in refused.stderr and config['sealed'] not in refused.stderr
+    config['max_token_ttl'] = 60
+    configuration.write_text(json.dumps(config))
+    recovered = invoke(tmp_path, body)
+    assert recovered.returncode == 0 and recovered.stderr == ''
+    report = json.loads(recovered.stdout)
+    assert report['checks']['cold_key_preparation'] == 'PASS' and report['status'] == 'UNKNOWN'
+    authentication[0] = workload.token
+    assert check_keys((ring,))['checks']['cold_key_preparation'] == 'PASS'
+    assert ring._cache == original_cache
+
+
 def test_isolated_service_outage_expiry_and_sealed_restart_recovery(live):
     s, p = live.service, live.provider
     container = s.config.get('isolated_container')
