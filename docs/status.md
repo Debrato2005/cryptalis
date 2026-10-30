@@ -1,5 +1,23 @@
 # Implementation status
 
+## Cached direct alias projections: 2026-10-31
+
+**VERIFIED, bounded:** native ORM and Core alias columns created before
+attachment now use the owned authenticated result codec. A native annotation
+creates a separate compiler projection; cached caller column types and result
+lookup remain unchanged. The stale codec cannot return CF1 bytes as a public
+value. Native TEXT/VARCHAR/Boolean comparisons cover aliases, search rewrites,
+sync/async results, exact False/True/NULL values and altered-tag authentication
+failure.
+
+All [410 affected source checks](_reset/cached-projections-20261031.json) and
+[91 clean installed checks](_reset/cached-projections-installed-20261031.json)
+pass. The [artifact receipt](_reset/cached-projections-release-20261031.json)
+verifies reproducible wheel/sdist, SBOM, CLI and 46 installed files. The full
+3,091-test source checkpoint remains at `172f8c7` and predates this localized
+correction. These local Python 3.13.12/PostgreSQL 16.2 observations close the
+recorded cached-alias codec gap; they promote no production gate or other cell.
+
 ## Asynchronous SQLModel and cached projections: 2026-10-31
 
 The [final full source regression](_reset/sqlmodel-async-full-20261031.json)
@@ -10,9 +28,9 @@ verifies the wheel/sdist, SBOM, dependency metadata, CLI and 46 installed files.
 All [64 installed API/projection checks](_reset/sqlmodel-async-installed-20261031.json)
 pass in a clean optional-SQLModel environment.
 
-A separate reviewed gap remains: direct cached alias columns can retain a native
-result codec. This checkpoint covers labels and parentheses, not that path.
-The next correction must authenticate those direct alias results too.
+At this checkpoint, direct cached alias columns could still retain a native
+result codec. The [following correction](#cached-direct-alias-projections-2026-10-31)
+adds authenticated decoding for that separate path.
 
 The [initial full run](_reset/sqlmodel-async-full-initial-20261031.json) stopped
 after five label-admission regressions, with 2,554 passes, 36 skips and 18

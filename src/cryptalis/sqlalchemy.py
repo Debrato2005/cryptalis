@@ -799,13 +799,16 @@ class _Attachment:
                                      asfrom, column_clause_args, *args, **kw):
                 operation = _operation.get()
                 if (operation is not None and operation.owner is self and isinstance(statement, Select) and
-                        isinstance(column, (Label, Grouping))):
+                        isinstance(column, (ColumnClause, Label, Grouping))):
                     element = _projection_column(column)
                     binding = next((binding for binding in self.bindings
                                     if element is not None and element.shares_lineage(binding.column)), None)
-                    if binding is not None:
+                    if (binding is not None and (not isinstance(column, ColumnClause) or
+                            column.type is not binding.column.type)):
                         original = column
-                        column = column._clone()
+                        # ColumnClause._clone() can return itself. Native
+                        # annotation gives a separate compiler projection.
+                        column = column._annotate({}) if isinstance(column, ColumnClause) else column._clone()
                         column.type = binding.column.type
                         column_clause_args = dict(column_clause_args)
                         column_clause_args['result_map_targets'] = (

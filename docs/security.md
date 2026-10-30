@@ -105,6 +105,10 @@ parenthesized columns. A cached native type cannot return a CF1 frame as a
 public byte value. The native mapped attribute resolves to its column without
 calling an arbitrary clause provider. Search rewriting retains the caller's
 direct projection identity, and the compiler changes only its SQL codec.
+Direct cached ORM/Core alias columns use a separate native annotated compiler
+projection too. The caller's cached type stays unchanged. Boolean results retain
+exact False/True/NULL values; an altered frame fails authentication before a
+public value is released.
 The result processor still authenticates the field, tenant and record context.
 Buffered asynchronous Core results permit only native cursor soft-close;
 that operation releases no row or protocol handle.
