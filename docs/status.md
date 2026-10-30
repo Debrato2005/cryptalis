@@ -4,14 +4,14 @@ Cryptalis implements a bounded research prototype. **No production release or co
 This page owns current verification and release gates; the [34-objective ledger](BUILD_CHECKLIST.md) owns remaining work.
 Use the [documentation map](README.md) to find contracts and procedures.
 
-**Latest hosted run: PASS at `a477fd6`.** Both jobs in
+**Latest complete hosted run: PASS at `a477fd6`.** Both jobs in
 [run 41047596731](https://github.com/Debrato2005/cryptalis/actions/runs/41047596731)
 pass. The fifteen UUID fixture failures at `95a35a5` are repaired without a
 runtime fallback; all 24 boundary checks now enter installed CI. The
 [retained failure](_reset/github-point-update-returning-failed-boundary-20261030.json)
 and [local repair](_reset/point-delete-returning-ci-fix-boundary-20261030.json)
-remain available. The active-field modification below has separate local evidence and is outside
-this hosted CI boundary.
+remain available. The local modification and query-preflight boundaries below have separate
+evidence and are outside this complete hosted CI boundary.
 
 ## Current complete CI qualification
 
@@ -58,6 +58,25 @@ Independent human review remains unavailable; selected live cloud cells need
 authorized accounts. All 34 objectives stay in scope and all seven production
 gates remain UNKNOWN.
 
+## Modification query preflight
+
+**VERIFIED locally, source and installed wheel:** the
+[query-preflight boundary](_reset/modification-queries-boundary-20261030.json)
+allows the existing configuration's optional SELECT samples during modification
+planning. Doctor's shared structural admission checks the validated target lock
+before database access or keys. Unsupported samples and UNKNOWN inspection refuse
+with typed errors; samples are neither executed nor retained in the proposal.
+This does not prove complete route coverage or runtime parameter validity.
+
+Seventy-five focused source checks and 313 installed application checks pass,
+including six new native/no-effects controls. Installed Doctor (15), Google (50),
+OpenBao/provider (147), three exports and four fresh recovery checks also pass.
+All 307 Python hashes and runtime bytes remain stable, with identical source
+inventories across final source and installed runs. Reproducible artifacts,
+SBOM, installed-file inspection and dependency consistency pass. The initial six
+reproduced failures remain archived. No query grammar, cryptographic format or
+production gate changes.
+
 ## Active-field search modification
 
 **VERIFIED locally, source and installed wheel:** the
@@ -88,7 +107,7 @@ builds, SBOM, installed inspection and dependency consistency pass.
 
 This route preserves preapproved key policies and requires maintenance. General
 manifest/type/package upgrades, modification from already-adopted lineage,
-supplied query-sample planning and production pause/resource qualification remain
+and production pause/resource qualification remain
 open. All seven production gates remain UNKNOWN; optimization stays deferred.
 
 ## Single-record DELETE RETURNING

@@ -190,8 +190,11 @@ include an approved search root for every affected scope, including empty
 scopes. Modification neither generates nor changes key policies. Mapping drift,
 generated identities/defaults, unsupported intent, index-name collisions and
 missing search custody refuse explicitly. Planning is read-only and authenticates
-the complete current source. This first route accepts explicit-schema mappings,
-has no query-sample planning route, and refuses already-adopted source lineage.
+the complete current source. Optional SELECT samples use Doctor's existing
+structural admission against the target lock before database access or keys.
+Unsupported or UNKNOWN inspection refuses planning without executing samples.
+This first route accepts explicit-schema mappings and refuses already-adopted
+source lineage.
 
 `ApplicationConfig.plan_modification` returns an inactive
 `cryptalis.modification/v1` proposal. Preparation, status, sealing, cutover and

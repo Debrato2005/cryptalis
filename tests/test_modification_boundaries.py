@@ -40,7 +40,8 @@ def test_unsupported_intent_refuses_before_database_or_keys(fault):
         configured = replace(configured, manifest=json.dumps(declaration).encode())
         if fault == 'small_domain': configured = replace(configured, search_reviews=(SearchReview(FIELD_ID, True, 'enumerable'),))
         if fault == 'inventory': configured = replace(configured, writers=WriterInventory(False, ()))
-        if fault == 'queries': configured = replace(configured, queries=(select(app.Customer),))
+        if fault == 'queries': configured = replace(configured, queries=(select(app.Customer).where(
+            app.Customer.name.like('PRIVATE_PATTERN%')),))
         if fault == 'mapping_default': app.table.c.name.default = ColumnDefault('private default')
         if fault == 'tenant_nullable': app.table.c.tenant_id.nullable = True
         if fault == 'record_onupdate': app.table.c.id.onupdate = ColumnDefault(uuid4)

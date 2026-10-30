@@ -324,10 +324,8 @@ class ApplicationConfig:
         if (type(deployment) is not tuple or len(deployment) != 2 or
                 type(deployment[0]) is not MigrationPlan or type(deployment[1]) is not DeploymentPin):
             raise ConfigurationInvalid('Application.InvalidDeployment')
-        if self.queries:
-            raise ConfigurationInvalid('Application.ModificationQuerySamplesNotAdmitted')
         return plan(deployment[0], engine, source_pin=deployment[1], manifest=self.manifest,
-            mapping=self.mapping, writers=self.writers, search_reviews=self.search_reviews, keys=keys,
+            mapping=self.mapping, writers=self.writers, search_reviews=self.search_reviews, queries=self.queries, keys=keys,
             backfill_rows_per_second=backfill_rows_per_second, verify_rows_per_second=verify_rows_per_second,
             temporary_bytes_per_row=temporary_bytes_per_row, wal_bytes_per_row=wal_bytes_per_row,
             max_batch_rows=max_batch_rows, max_batch_bytes=max_batch_bytes)
