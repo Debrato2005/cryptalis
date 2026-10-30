@@ -470,6 +470,42 @@ Search rotation with lineage requires a
 [The walkthrough](walkthrough-migration.md#inspect-rotation-preparation)
 owns the full operator contract.
 
+**IMPLEMENTED, bounded static code inventory:** `doctor.scan_routes` and
+`cryptalis doctor --code-root DIRECTORY` invoke an explicitly trusted local
+ast-grep 0.51.0 executable with packaged Python rules. A separate tool environment
+keeps its dependencies out of the application/provider environment. The wrapper
+supplies an empty configuration, disables custom language libraries and uses
+native scan operations without rewrite flags. Application modules, SQL and keys
+are not requested. The selected executable is trusted host code, not a sandbox.
+
+The report contains relative paths, one-based lines and fixed candidate kinds for
+configuration/imports, ORM query/write calls, execution, COPY, driver access and
+SQL text. Method-name matches can refer to unrelated objects; import matches do
+not resolve arbitrary aliases or runtime call targets. They are review candidates,
+not incompatibility findings. Matched source, literal values, native diagnostics
+and exception details are omitted. Native parser recovery observations preserve
+other known candidates and produce an unavailable inspection result.
+
+A successful process establishes only `scanner_execution: PASS`. Code validity,
+complete route inventory, protected query compatibility, writer exclusion, tenant
+isolation and runtime deployment remain UNKNOWN. Native parsers can recover or
+omit invalid regions without reporting an error. Scanned/skipped path counts are
+UNKNOWN because this JSON protocol does not provide them. Ignore-file categories
+are explicitly disabled for the selected directory and a Python glob is applied;
+native `ast-grep-ignore` comments can suppress candidates and this is stated in
+every report. Symlink targets, non-Python writers, generated code, external jobs and dynamic
+routes still require separate inventory. No diagnostic output admits deployment.
+
+The wrapper checks the tool version, uses one native scan thread, bounds combined
+version/scan time to 60 seconds by default (up to 300 through Python), caps stdout
+at 16 MiB and stderr at 1 MiB, and rejects more than 8,192 observations. Truncation,
+unknown rules, invalid paths, parser recovery, failed processes and missing tools
+remain explicit. Timeout/failure terminates the dedicated un-reaped process group
+and never retries automatically. These are process/output bounds, not a native
+parser memory or whole-application performance guarantee. See the
+[procedure](walkthrough-migration.md#inventory-python-code-routes) for installation,
+CLI exits and the separate runtime checks that follow.
+
 **IMPLEMENTED, bounded pre-adoption Doctor:** `cryptalis.doctor.preflight`
 reuses the existing read-only compiler catalog inspection. It accepts no keys
 and reads no application values. Known declaration/schema refusals return

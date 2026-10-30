@@ -177,12 +177,16 @@ def _parser() -> argparse.ArgumentParser:
                         help='Optional trusted synchronous factory for pinned public policy metadata; no provider or material verification.')
     status.add_argument('--json', action='store_true', dest='machine_json', help='Write one JSON object.')
     status.set_defaults(handler=_status_command)
-    doctor = commands.add_parser('doctor', help='Inspect native schema, ACTIVE runtime admission or cold provider access.',
+    doctor = commands.add_parser('doctor', help='Inspect code routes, native schema, ACTIVE runtime admission or cold provider access.',
         description='Compiler inspection is read-only. An explicit host context imports and calls trusted '
                     'Python code; its effects remain UNKNOWN. This command does not sandbox host code.',
         allow_abbrev=False)
     modes = doctor.add_mutually_exclusive_group(required=True)
     modes.add_argument('plan', type=Path, nargs='?', help='Published protection or rotation activation artifact.')
+    modes.add_argument('--code-root', type=Path, metavar='DIRECTORY',
+        help='Inventory Python call candidates using trusted local ast-grep 0.51.0; coverage remains UNKNOWN.')
+    doctor.add_argument('--scanner', type=Path, metavar='EXECUTABLE',
+        help='Explicit trusted ast-grep executable for --code-root; otherwise resolve ast-grep on PATH.')
     modes.add_argument('--pre-adoption', type=Path, metavar='MANIFEST', help='Inspect a native schema before adoption.')
     modes.add_argument('--initialization-context', metavar='MODULE:FACTORY',
         help='Reuse the key-free InitializationContext used by init. Inspect its declaration, '
@@ -700,6 +704,15 @@ def _operational_command(arguments):
 
 
 def _doctor_command(arguments):
+    if arguments.code_root is not None:
+        if any(value is not None for value in (arguments.host_context, arguments.pin,
+                arguments.restore_binding, arguments.database_url_file)):
+            raise _CommandFailure('Supply only a code root and optional trusted scanner for static route inventory.',
+                family='CLI', code='InvalidArguments', operation='cli', stage='arguments', cause='ArgumentError')
+        return _code_command(arguments)
+    if arguments.scanner is not None:
+        raise _CommandFailure('The scanner option requires --code-root.', family='CLI',
+            code='InvalidArguments', operation='cli', stage='arguments', cause='ArgumentError')
     if arguments.initialization_context is not None:
         if any(value is not None for value in (arguments.host_context, arguments.pin,
                 arguments.restore_binding, arguments.database_url_file)):
@@ -727,6 +740,33 @@ def _doctor_command(arguments):
         raise _CommandFailure('Supply either an ACTIVE plan and pin, or a pre-adoption manifest and trusted host context.',
             family='CLI', code='InvalidArguments', operation='cli', stage='arguments', cause='ArgumentError')
     return _status_command(arguments) if arguments.pre_adoption is None else _preflight_command(arguments)
+
+
+def _code_failure(failure, report=None):
+    failure.error.update(report or dict(scope='static_code_routes', status='UNKNOWN', effects='LOCAL_SCANNER',
+        checks={name: 'UNKNOWN' for name in ('scanner_execution', 'code_validity', 'complete_route_inventory',
+            'protected_query_compatibility', 'writer_exclusion', 'tenant_isolation', 'runtime_deployment')}))
+    return failure
+
+
+def _code_command(arguments):
+    from cryptalis.doctor import scan_routes
+    report = scan_routes(arguments.code_root, scanner=arguments.scanner)
+    if report['checks']['scanner_execution'] != 'PASS':
+        code = report['issues'][-1]['code']
+        raise _code_failure(_CommandFailure(
+            'Static route inspection did not complete. Resolve the reported scanner issue before repeating.',
+            family='Doctor', code=code, operation='deployment.code_diagnosis', stage='code_inspection',
+            cause='ScannerUnavailable', exit_code=2 if code == 'Code.InvalidInput' else 4), report)
+    output = (json.dumps(report, sort_keys=True, separators=(',', ':')) if arguments.machine_json else
+        'Static code routes: UNKNOWN\nScanner execution: PASS\n' + report['selection'] + '\n' + '\n'.join(
+            f'{json.dumps(item["path"])}:{item["line"]} {item["kind"]}: UNKNOWN'
+            for item in report['items']) + '\n' + report['issues'][0]['remedy'])
+    try:
+        _write_output(output + '\n', sys.stdout, 'stdout')
+    except _CommandFailure as failure:
+        raise _code_failure(failure, report) from None
+    return 0
 
 
 def _provider_command(arguments):
@@ -1089,7 +1129,9 @@ def main(argv: Sequence[str] | None = None) -> int:
         return handler(arguments)
     except _CommandFailure as failure:
         if tokens and tokens[0] == 'doctor' and 'checks' not in failure.error:
-            if any(token.split('=', 1)[0] == '--provider-context' for token in tokens[:option_end]):
+            if any(token.split('=', 1)[0] == '--code-root' for token in tokens[:option_end]):
+                _code_failure(failure)
+            elif any(token.split('=', 1)[0] == '--provider-context' for token in tokens[:option_end]):
                 _provider_failure(failure)
             elif any(token.split('=', 1)[0] in ('--pre-adoption', '--host-context') for token in tokens[:option_end]):
                 _preflight_failure(failure)

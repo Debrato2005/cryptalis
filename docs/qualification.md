@@ -3,6 +3,22 @@
 Use [local development](local-development.md) for prerequisites and the full CI commands.
 This page owns optional application/profile selection. Skips and old receipts do not qualify current code.
 
+## Static code inventory toolchain
+
+`tools/scanner` holds an independent lock for ast-grep 0.51.0. Release verification
+exports hashed dependencies, installs only its binary wheel into a separate
+interpreter, exports its own SBOM and audits that frozen lock. The installed
+Cryptalis wheel then runs native code-inventory and failure/privacy controls.
+Only named public receipts, the scanner toolchain identity, SBOM and audit enter
+the evidence directory. The application/provider lock stays independent.
+
+Default source tests skip the three native scanner cases unless
+`CRYPTALIS_TEST_SCANNER` names an explicit absolute executable. Installed release
+qualification supplies the locked executable and requires those cases to pass.
+A zero-advisory package audit does not audit the bundled native code or replace
+independent security review. The [operator route](walkthrough-migration.md#inventory-python-code-routes)
+defines what the diagnostic does and does not prove.
+
 ## Installed baseline
 
 The release harness runs the built wheel through ORM/DML controls and the shared

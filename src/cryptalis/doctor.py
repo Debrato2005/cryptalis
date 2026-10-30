@@ -2,6 +2,7 @@
 
 from .manifest.compiler import InspectionUnavailable, PlanningRejected, compile_protection
 from .manifest.parser import ManifestInvalid
+from ._doctor_code import scan_routes
 
 
 def check_keys(keyrings=()):
