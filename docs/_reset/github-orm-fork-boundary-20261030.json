@@ -1,0 +1,207 @@
+{
+  "format": "cryptalis.github-ci-boundary/v1",
+  "run_id": 41037120145,
+  "url": "https://github.com/Debrato2005/cryptalis/actions/runs/41037120145",
+  "head_sha": "b01d66599456583520ed3a0b73822907c07ec70d",
+  "conclusion": "success",
+  "source_job": 124000584177,
+  "release_job": 124000584484,
+  "source_checks": {
+    "test_calls": {
+      "passed": 3314,
+      "skipped": 12
+    },
+    "subtest_calls": {
+      "passed": 18
+    },
+    "setup": {
+      "passed": 3326,
+      "skipped": 82
+    },
+    "teardown": {
+      "passed": 3408
+    },
+    "collection": {
+      "skipped": 17
+    },
+    "selected_items": 3408
+  },
+  "source_files": 294,
+  "source_and_runtime_unchanged": true,
+  "source_hashes_match_recorded_git_revision": true,
+  "artifacts": {
+    "cryptalis-0.1.0-py3-none-any.whl": "ed20adf47ad1a9cb77bb8d9bfdcf46b0ef13688324a79fb22c008cc29ba327c0",
+    "cryptalis-0.1.0.tar.gz": "f0cb3ae318c9d3afdac9ce679691a853ea9b6dfe0c9c4f48f6746d976ec2abaa"
+  },
+  "local_and_github_artifacts_identical": true,
+  "frozen_audit": {
+    "schema": {
+      "version": "preview"
+    },
+    "summary": {
+      "audited_packages": 39,
+      "vulnerabilities": 0,
+      "adverse_statuses": 0
+    },
+    "vulnerabilities": [],
+    "adverse_statuses": []
+  },
+  "github_archives": [
+    {
+      "id": 12969021571,
+      "sha256": "895573c13bd97055fa7d723af3c2c7baed98d97b1741c82353a94241ea12babb"
+    },
+    {
+      "id": 12967819843,
+      "sha256": "3e7d0fdc19835acc7035bbaa0db6273fa91e103feaf7e572df8fb9220ac5e3fd"
+    }
+  ],
+  "archive": {
+    "path": "docs/_reset/github-orm-fork-receipts-20261030.tar.gz",
+    "sha256": "fda1dc269485d246862121857f99dcc8d7d6e3fc7c3fa0e7f7957578a2683975",
+    "members": [
+      "source/admission.json",
+      "source/dependency-audit.json",
+      "source/job-status.json",
+      "source/qualification/source-receipt.json",
+      "source/qualification/status.json",
+      "release/install-receipt.json",
+      "release/installed-application-export-receipt.json",
+      "release/installed-application-restore-receipt.json",
+      "release/installed-code-receipt.json",
+      "release/installed-export-receipt.json",
+      "release/installed-google-kms-receipt.json",
+      "release/installed-journey-receipt.json",
+      "release/installed-openbao-qualification.json",
+      "release/installed-openbao-tests.json",
+      "release/installed-restore-receipt.json",
+      "release/installed-sqlmodel-receipt.json",
+      "release/job-status.json",
+      "release/release-receipt.json",
+      "release/sbom.cdx.json",
+      "release/scanner-audit.json",
+      "release/scanner-sbom.cdx.json",
+      "release/scanner-toolchain.json",
+      "release/status.json"
+    ]
+  },
+  "production_gates": "UNKNOWN",
+  "limits": [
+    "Explicit skipped cells and failed separate performance observations remain unqualified.",
+    "Fork refusal and fresh-child native transaction evidence do not qualify arbitrary process memory, driver handles, wrappers or concurrent throughput."
+  ],
+  "installed_checks": {
+    "installed-code-receipt.json": {
+      "test_calls": {
+        "passed": 15
+      },
+      "subtest_calls": {},
+      "setup": {
+        "passed": 15
+      },
+      "teardown": {
+        "passed": 15
+      },
+      "collection": {},
+      "selected_items": 15
+    },
+    "installed-sqlmodel-receipt.json": {
+      "test_calls": {
+        "passed": 128
+      },
+      "subtest_calls": {},
+      "setup": {
+        "passed": 128
+      },
+      "teardown": {
+        "passed": 128
+      },
+      "collection": {},
+      "selected_items": 128
+    },
+    "installed-google-kms-receipt.json": {
+      "test_calls": {
+        "passed": 50
+      },
+      "subtest_calls": {},
+      "setup": {
+        "passed": 50
+      },
+      "teardown": {
+        "passed": 50
+      },
+      "collection": {},
+      "selected_items": 50
+    },
+    "installed-openbao-tests.json": {
+      "test_calls": {
+        "passed": 146
+      },
+      "subtest_calls": {},
+      "setup": {
+        "passed": 146
+      },
+      "teardown": {
+        "passed": 146
+      },
+      "collection": {},
+      "selected_items": 146
+    },
+    "installed-export-receipt.json": {
+      "test_calls": {
+        "passed": 1
+      },
+      "subtest_calls": {},
+      "setup": {
+        "passed": 1
+      },
+      "teardown": {
+        "passed": 1
+      },
+      "collection": {},
+      "selected_items": 1
+    },
+    "installed-restore-receipt.json": {
+      "test_calls": {
+        "passed": 1
+      },
+      "subtest_calls": {},
+      "setup": {
+        "passed": 1
+      },
+      "teardown": {
+        "passed": 1
+      },
+      "collection": {},
+      "selected_items": 1
+    },
+    "installed-application-export-receipt.json": {
+      "test_calls": {
+        "passed": 1
+      },
+      "subtest_calls": {},
+      "setup": {
+        "passed": 1
+      },
+      "teardown": {
+        "passed": 1
+      },
+      "collection": {},
+      "selected_items": 1
+    },
+    "installed-application-restore-receipt.json": {
+      "test_calls": {
+        "passed": 2
+      },
+      "subtest_calls": {},
+      "setup": {
+        "passed": 2
+      },
+      "teardown": {
+        "passed": 2
+      },
+      "collection": {},
+      "selected_items": 2
+    }
+  }
+}

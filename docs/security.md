@@ -143,6 +143,26 @@ types refuse before SQL and key preparation in both sync and async execution.
 The adapter captures the request before key preparation and checks it again
 afterward. Public Python bind processors remain native.
 
+Single-record UPDATE RETURNING reuses that ledger and driver proof with one
+explicit record/tenant permit and one assignment dictionary. The current
+RETURNING roots and entity/column shape are inspected before keys and again
+after key resolution; a memoized ORM column list cannot authorize a changed
+request. Protected annotated outputs select the owned authenticated reader on
+a fresh expression clone. Native projection constants are captured separately
+from caller assignments and checked at final dispatch.
+
+Each changed protected output must equal this operation's exact prepared frame
+or NULL. Every protected RETURNING output requires a real record identity, even
+when its payload is NULL; SELECT's outer-join NULL representation cannot stand
+in for a returned row. Unchanged protected outputs authenticate against the requested record,
+tenant and field, with the same freshness limits as SELECT. Public outputs have
+no cryptographic integrity claim. Outstanding result processors keep their own
+immutable proof; later operations cannot replace it. Result authentication or
+key expiry can fail after SQL has executed, so the caller must roll back before
+retrying or committing. No plaintext database write or new searchable
+representation is introduced. [Compatibility](compatibility.md#full-capability-matrix)
+owns the precise single-statement grammar and the distinct bulk dictionary form.
+
 The single-record mapped DELETE route has the same fixed-scope authority for
 explicitly single-tenant tables. Its immutable permit and compiled/driver proof
 must still bind the exact record identity and native target. Only the physical

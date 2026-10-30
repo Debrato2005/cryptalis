@@ -6,25 +6,25 @@ Use the [documentation map](README.md) to find contracts and procedures.
 
 ## Current complete CI qualification
 
-**VERIFIED at `c4cba97748f99f6de9707f53cb88d09687d28ea0`:** GitHub
-[run 41032832780](https://github.com/Debrato2005/cryptalis/actions/runs/41032832780)
+**VERIFIED at `b01d66599456583520ed3a0b73822907c07ec70d`:** GitHub
+[run 41037120145](https://github.com/Debrato2005/cryptalis/actions/runs/41037120145)
 passes both Source / PostgreSQL 16 and Reproducible artifacts / installed recovery.
-The [retained CI boundary](_reset/github-doctor-code-boundary-20261030.json)
+The [retained CI boundary](_reset/github-orm-fork-boundary-20261030.json)
 contains verified GitHub archive digests and the actual source/installed receipts.
 
-The complete default source run passes 3,300 test calls and eighteen subtests.
+The complete default source run passes 3,314 test calls and eighteen subtests.
 Twelve call skips, 82 setup skips and seventeen collection skips remain explicit;
-all 3,394 selected items complete. All 293 Python hashes match the recorded checkout,
+all 3,408 selected items complete. All 294 Python hashes match the recorded checkout,
 and source/imported-runtime stability passes. The original source-role fixture
 failure at `2d53867` remains fixed; no skipped cell is treated as qualified.
 
-The installed wheel passes 15 native code-inventory and 114 ORM/configuration controls, 50 Google SDK and 146 OpenBao/provider
+The installed wheel passes 15 native code-inventory and 128 ORM/configuration controls, 50 Google SDK and 146 OpenBao/provider
 checks, two exports and three genuine fresh PostgreSQL recovery checks. Local and GitHub
 wheel/sdist hashes are identical. Repeat archives, SBOM, installed-file inspection
 and dependency consistency pass. The frozen audit reports 39 packages, zero known
 vulnerabilities and zero adverse statuses; this is not proof of absence of unknown
 vulnerabilities or independent review. Earlier CI is retained in
-[history](history/implementation-2026-10.md#complete-ci-at-e55733d-2026-10-30).
+[history](history/implementation-2026-10.md#complete-ci-at-c4cba97-2026-10-30).
 The separate explicit performance profile below fails latency targets; a green
 default CI run does not qualify performance.
 
@@ -34,7 +34,7 @@ Google KMS is `bda4fb3`; AppRole is `743b5e9`; shared rotations are `ccf7d12`.
 Doctor authentication diagnostics are `7e7d1c5`; native audit is `a2d8230`.
 Shared online capture and tenant configuration are `1e316c4`; lifecycle/runtime
 authentication diagnostics are `98f742b`. Container retirement is `e55733d`; static Python inventory is `c4cba97`.
-Both are covered by complete CI.
+ORM process ownership is `b01d665`. These are covered by complete CI.
 
 The 34-objective [ledger](BUILD_CHECKLIST.md#objective-ledger) retains seven
 bounded VERIFIED entries, 23 PARTIAL entries, one SPECIFIED, one BLOCKED, one
@@ -48,9 +48,48 @@ Independent human review remains unavailable; selected live cloud cells need
 authorized accounts. All 34 objectives stay in scope and all seven production
 gates remain UNKNOWN.
 
-## ORM process ownership
+## Single-record UPDATE RETURNING
 
 **VERIFIED locally, source and installed wheel:** the
+[retained boundary](_reset/point-update-returning-boundary-20261030.json) records
+340 affected PostgreSQL checks passing across the new
+UPDATE route, shared INSERT/UPDATE/DELETE machinery, SELECT outer joins, provider
+failure diagnostics and fork isolation. All 297 Python hashes and runtime bytes
+remain stable. The 69 new cases include signed 64-bit record IDs, multiple
+protected outputs and unchanged-NULL result identity controls.
+The [operator example](walkthrough-sqlalchemy.md) and
+[exact grammar](compatibility.md#full-capability-matrix) define the supported
+single-record assignment dictionary and the distinct bulk UPDATE form.
+
+Native sync/async and SQLModel comparisons cover direct columns and entities,
+renamed labels, typed values/NULLs, missing records, native constraint/coercion
+errors, identity state, savepoints, rollback and current-value removal. Hostile
+callback, SQL/parameter, returned-frame/context and expiry controls pass.
+Changed protected outputs must match their exact newly prepared frames;
+unchanged outputs retain SELECT's authentication and freshness limits.
+Every protected RETURNING output requires a real record identity, including NULL.
+Result failure can follow SQL execution and requires caller rollback.
+
+The final wheel passes 197 application controls, 15 Doctor checks, 50 Google
+adapter checks, 146 OpenBao/provider checks, two exports and three genuine fresh
+PostgreSQL recovery checks. Native AppRole/OpenBao custody exercises this UPDATE
+route through verified current-value removal. Repeat builds, SBOM, installed
+inspection and dependency consistency pass. Seventeen offline artifact controls
+pass. The earlier successful package run predates the missing-identity
+counterexample and is retained as prior evidence, alongside failed attempts.
+
+The retained attempts exposed stale ORM result types, native projection-bind
+identity changes and a RETURNING mutation hidden by memoized columns; the final
+reader and driver checks correct those boundaries. A later counterexample caught
+a missing row identity accepted for unchanged protected NULL outputs; that is now
+rejected while SELECT outer-join behavior is preserved. Native assignment-key,
+SQLModel argument and missing-row error assumptions were also corrected.
+This extension is separate from the complete hosted CI revision above.
+All production gates remain UNKNOWN; performance optimization remains deferred.
+
+## ORM process ownership
+
+**VERIFIED locally and in complete GitHub CI:** the
 [retained fork boundary](_reset/orm-fork-boundary-20261030.json) records 63 focused
 PostgreSQL checks passing for sync/async
 fork refusal, driver events, the SQLModel bridge, UUID identity, inherited key
@@ -72,8 +111,8 @@ The [process contract](compatibility.md#process-ownership) requires fresh mappin
 engine, provider/keyring and attachment per child. Copied Python objects, buffered
 results, plaintext/keys and private handles are not revoked or erased. General
 process throughput, fork during native driver execution and authenticated host
-fencing remain open. This extension has not yet been included in the complete
-hosted CI revision above; all production gates remain UNKNOWN.
+fencing remain open. Complete hosted CI above covers this extension; all
+production gates remain UNKNOWN.
 
 ## Static Python route inventory
 
