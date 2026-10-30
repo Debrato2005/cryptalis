@@ -96,6 +96,18 @@ def test_exact_sdk_requests_and_keyring_cf1_round_trip():
     assert str(ROOT) not in repr(wrapper)
 
 
+def test_rewrap_preserves_unknown_authentication_effects_without_raw_cause():
+    from cryptalis.crypto import ProviderAuthenticationUnavailable
+    source = provider(); wrapped = source.wrap(ROOT, CONTEXT)
+    destination = DevelopmentKeyProvider()
+    def failed(*args): raise ProviderAuthenticationUnavailable() from RuntimeError(SECRET)
+    destination.wrap = failed
+    with pytest.raises(ProviderAuthenticationUnavailable) as error:
+        source.rewrap(wrapped, destination, CONTEXT)
+    assert error.value.effects == 'UNKNOWN' and error.value.retryable is False
+    assert SECRET not in ''.join(traceback.format_exception(error.value))
+
+
 @pytest.mark.parametrize("key_arn", [
     "alias/application", "arn:aws:kms:us-east-1:111122223333:alias/application",
     "1234abcd-12ab-34cd-56ef-1234567890ab", ARN + "\n", ARN + "/suffix", " " + ARN,

@@ -1026,6 +1026,32 @@ private snapshot/unseal material are retained, with no concurrent source/target
 authority during recovery. This is local functional evidence, not production
 backup custody, authenticated failover, HA, measured RPO/RTO or destruction proof.
 
+### OpenBao AppRole authentication
+
+`OpenBaoAppRoleToken` is an optional synchronous credential callback. It uses
+verified HTTPS without redirects and an explicit empty SDK token to suppress
+ambient token discovery. It validates role identity, exact issued/effective
+policies, absence of additional identity policies, service-token type, unlimited
+use count within a bounded positive token lease, then reads the exact role with
+the issued token. Disabled SecretID binding, nonpositive role SecretID TTL,
+changed policies or an unavailable role observation refuse token release.
+
+The host supplies RoleID/current SecretID and an explicit policy set, bounded
+lease, endpoint and trust. Credentials are read only when authentication runs;
+none are cached or renewed by the helper. Policy contents, credential delivery,
+previous credential retirement and changes after observation remain host duties.
+Native runtime permissions exclude role/SecretID/key administration and permit
+only the configured Transit operations and exact role read. See
+[configuration and limits](openbao.md#approle-workload-authentication).
+
+Authentication failure can follow native token issuance. The typed
+`ProviderAuthenticationUnavailable` retains UNKNOWN effects and forbids automatic
+retry while preserving redaction through root creation, Keyring and rewrap.
+No failure result proves that a native token was never issued. Existing root
+leases can outlive credential revocation; cold Doctor checks bypass those leases.
+No local AppRole observation qualifies production distribution, HA, provider audit
+or independent review.
+
 ### Implemented CF1 primitives and local custody
 
 `cryptalis.crypto` exports `FieldDescriptor`, `seal_text`, `open_text`, `KeyProvider`,
@@ -1314,6 +1340,7 @@ Engine defaults use `echo=False` and `hide_parameters=True`. Attachment refuses 
 |---|---|
 | Missing or expired key | `KeyUnavailable`, no plaintext fallback |
 | Provider outage, revoked identity or malformed material | `KeyUnavailable` (or `TransitionFailure` carrying that code), no partial commit; retry after provider recovery |
+| AppRole login or role verification unavailable | `ProviderAuthenticationUnavailable`, a `KeyUnavailable` subtype; native token effects UNKNOWN, no automatic retry; inspect credentials, role and issuance |
 | Unsupported query/mapping/writer | `UnsupportedProtectedOperation`, reject the affected path before admitted plaintext SQL |
 | Wrong context or invalid tag | `AuthenticationFailed`, no unauthenticated value |
 | Payload/companion mismatch | `RepresentationMismatch`, fail the operation rather than filter candidates |
