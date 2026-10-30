@@ -1,0 +1,146 @@
+{
+  "format": "cryptalis.github-ci-boundary/v1",
+  "run_id": 41002748166,
+  "url": "https://github.com/Debrato2005/cryptalis/actions/runs/41002748166",
+  "head_sha": "09c635aa9b665d1f5e34f3ca25b618af548cd866",
+  "conclusion": "success",
+  "source_job": 123890681797,
+  "release_job": 123890682095,
+  "source_checks": {
+    "test_calls": {
+      "passed": 3138,
+      "skipped": 12
+    },
+    "subtest_calls": {
+      "passed": 18
+    },
+    "setup": {
+      "passed": 3150,
+      "skipped": 63
+    },
+    "teardown": {
+      "passed": 3213
+    },
+    "collection": {
+      "skipped": 16
+    },
+    "selected_items": 3213
+  },
+  "source_files": 282,
+  "source_and_runtime_unchanged": true,
+  "source_hashes_match_local_checkout": true,
+  "frozen_audit": {
+    "schema": {
+      "version": "preview"
+    },
+    "summary": {
+      "audited_packages": 26,
+      "vulnerabilities": 0,
+      "adverse_statuses": 0
+    },
+    "vulnerabilities": [],
+    "adverse_statuses": []
+  },
+  "artifacts": {
+    "cryptalis-0.1.0-py3-none-any.whl": "4ed1bb41c770e85ba396ae2fdc7f9349ce72fadd60e661d393475635afb32c1f",
+    "cryptalis-0.1.0.tar.gz": "45389dc2beb1b71557cca84b0abc7cebd9bca44b9c52757e83309905a5f74f8e"
+  },
+  "local_and_github_artifacts_identical": true,
+  "github_archives": [
+    {
+      "id": 12954637358,
+      "sha256": "6a3332ddba766b817e8899a52983266f527be33597e7faf0d89ae7b80b8d01d4"
+    },
+    {
+      "id": 12954162485,
+      "sha256": "478f0f3e102c522066f4353d52bb482e648d6ab0b975a11531b19af7ccd61823"
+    }
+  ],
+  "archive": {
+    "path": "docs/_reset/github-application-config-receipts-20261030.tar.gz",
+    "sha256": "5c7e41c1c40ccc3daa37ab68c58ee868fe9fc7fe94e5453177a7e289ad4069df",
+    "members": [
+      "source/admission.json",
+      "source/dependency-audit.json",
+      "source/job-status.json",
+      "source/qualification/source-receipt.json",
+      "source/qualification/status.json",
+      "release/install-receipt.json",
+      "release/installed-export-receipt.json",
+      "release/installed-journey-receipt.json",
+      "release/installed-openbao-qualification.json",
+      "release/installed-openbao-tests.json",
+      "release/installed-restore-receipt.json",
+      "release/installed-sqlmodel-receipt.json",
+      "release/job-status.json",
+      "release/release-receipt.json",
+      "release/sbom.cdx.json",
+      "release/status.json"
+    ]
+  },
+  "production_gates": "UNKNOWN",
+  "limits": [
+    "Source skips remain explicit and unqualified.",
+    "Local and GitHub PostgreSQL 16 plus disposable local OpenBao cells only.",
+    "No independent human review, production provider qualification, deployment authorization or release publication.",
+    "The separate explicit performance profile fails latency targets; the default CI suite does not qualify performance."
+  ],
+  "installed_checks": {
+    "installed-sqlmodel-receipt.json": {
+      "test_calls": {
+        "passed": 79
+      },
+      "subtest_calls": {},
+      "setup": {
+        "passed": 79
+      },
+      "teardown": {
+        "passed": 79
+      },
+      "collection": {},
+      "selected_items": 79
+    },
+    "installed-openbao-tests.json": {
+      "test_calls": {
+        "passed": 69
+      },
+      "subtest_calls": {},
+      "setup": {
+        "passed": 69
+      },
+      "teardown": {
+        "passed": 69
+      },
+      "collection": {},
+      "selected_items": 69
+    },
+    "installed-export-receipt.json": {
+      "test_calls": {
+        "passed": 1
+      },
+      "subtest_calls": {},
+      "setup": {
+        "passed": 1
+      },
+      "teardown": {
+        "passed": 1
+      },
+      "collection": {},
+      "selected_items": 1
+    },
+    "installed-restore-receipt.json": {
+      "test_calls": {
+        "passed": 1
+      },
+      "subtest_calls": {},
+      "setup": {
+        "passed": 1
+      },
+      "teardown": {
+        "passed": 1
+      },
+      "collection": {},
+      "selected_items": 1
+    }
+  }
+}

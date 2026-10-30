@@ -351,7 +351,13 @@ The six-gate grouping and conservative unadmitted grammar assumptions are record
 
 ## Performance targets and recorded costs
 
-The [current warm 10k observation](history/implementation-2026-10.md#sdk-protocol-and-early-tenant-admission-checkpoint-2026-10-28)
+The [current `09c635a` observation](status.md#current-performance-boundary) fails
+all six scalar/tuple and full-entity read-latency targets in the warm 10k profile.
+Indexed-column storage meets 2× at 1.52483×. Diagnostic traversal measurements and
+a discarded candidate are retained; they do not qualify performance or explain
+all historical anomalies. Earlier observations below retain their exact bounds.
+
+The [earlier warm 10k observation](history/implementation-2026-10.md#sdk-protocol-and-early-tenant-admission-checkpoint-2026-10-28)
 over `d7f2dba` reports added p95 of 1.8042 ms point, 3.5577 ms equality and
 3.7962 ms IN-20. Equality misses 3 ms; isolated indexed-column storage measures
 1.4976×. This is one local synchronous warm-provider cell with 40 samples per
