@@ -289,9 +289,11 @@ Both physical layouts, rotations alongside independently searchable text,
 genuine fresh restore, latest-value reverse/removal and a process that refuses
 Cryptalis imports have local evidence. Protected DATE search, comparisons,
 ordering, arithmetic, aggregates and joins remain unadmitted; existing NULL
-presence grammar is retained. Online capture still accepts only TEXT/VARCHAR.
-An unchanged external DATE application, installed artifact/cost qualification
-and all six technical admission gates remain required. No full type or production
+presence grammar is retained. Bounded online capture also covers Date alongside
+Boolean, signed integers and UUID; the [native scalar journey](../tests/test_online_scalars.py)
+checks current values, interruption/resume, abort and native exit.
+Broader external DATE applications, deployment cost qualification and all six
+technical admission gates remain required. No full type or production
 qualification follows from this internal candidate.
 
 ## Optional SQLModel bridge
@@ -435,7 +437,7 @@ No encrypted range/prefix/order capability follows from these plaintext queries.
 
 **VERIFIED, bounded product cell:** PostgreSQL 16 storage/search/transition suites include protected DISTINCT refusal.
 [Status](status.md) owns current revision-bound evidence. Earlier single-user/service research remains [archived provenance](research/revamp-evidence.md).
-No production cell is qualified. No production provider, authenticated deployment procedure, or independent review is available.
+No production cell is qualified. Provider deployment and authenticated publication remain unqualified; independent human review is unavailable.
 
 | Cell | Classification and qualification |
 |---|---|

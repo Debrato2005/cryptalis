@@ -22,8 +22,9 @@ evidence. Update a row when its implementation, proof, gap or next action change
 
 ## Objective ledger
 
-Requirement text is abbreviated. The full definitions remain in the research
-`CRYPTALIS_BUILD_CHECKLIST.md` and the final blueprint; no requirement is dropped.
+The [primary SRS](requirements.md) maps all 20 core requirements to these 34
+objectives. Earlier research imports retain their provenance in [history](history/README.md);
+the current contract owners define acceptance, without dropping any objective.
 
 | ID | Requirement (abbreviated) | Product status | Implemented mechanism and evidence | Open gap / next action |
 |---|---|---|---|---|

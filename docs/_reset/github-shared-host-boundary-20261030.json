@@ -1,0 +1,145 @@
+{
+  "format": "cryptalis.github-ci-boundary/v1",
+  "run_id": 40994737233,
+  "url": "https://github.com/Debrato2005/cryptalis/actions/runs/40994737233",
+  "head_sha": "15ffdb39a28ea0b9e254f68a76443fa399886a54",
+  "conclusion": "success",
+  "source_job": 123865123746,
+  "release_job": 123865123930,
+  "source_checks": {
+    "test_calls": {
+      "passed": 3122,
+      "skipped": 12
+    },
+    "subtest_calls": {
+      "passed": 18
+    },
+    "setup": {
+      "passed": 3134,
+      "skipped": 63
+    },
+    "teardown": {
+      "passed": 3197
+    },
+    "collection": {
+      "skipped": 16
+    },
+    "selected_items": 3197
+  },
+  "source_files": 280,
+  "source_and_runtime_unchanged": true,
+  "source_hashes_match_local_checkout": true,
+  "frozen_audit": {
+    "schema": {
+      "version": "preview"
+    },
+    "summary": {
+      "audited_packages": 26,
+      "vulnerabilities": 0,
+      "adverse_statuses": 0
+    },
+    "vulnerabilities": [],
+    "adverse_statuses": []
+  },
+  "artifacts": {
+    "cryptalis-0.1.0-py3-none-any.whl": "0f03498ef9680f478d1e3f03ab6cde3b02d559e913f4d645b2fe12579b3d633f",
+    "cryptalis-0.1.0.tar.gz": "243887e5fea9eef58f648504c19bc42d68125d9a47c0502c01d3c4fe9bd626ab"
+  },
+  "local_and_github_artifacts_identical": true,
+  "github_archives": [
+    {
+      "id": 12951256849,
+      "sha256": "a0104463f611c0addfc1a52f18abed896a58ffc00b8ec18f16f68022137385ad"
+    },
+    {
+      "id": 12950268390,
+      "sha256": "9e91c4f1e3ae4d44f9512584ad579dd101b82932fd031a39831d31a752ba64c3"
+    }
+  ],
+  "archive": {
+    "path": "docs/_reset/github-shared-host-receipts-20261030.tar.gz",
+    "sha256": "7f3e957ed21972f6601dbbd7f899cb16ffa04b692f6079d7d5ac88ca90f1a19d",
+    "members": [
+      "source/admission.json",
+      "source/dependency-audit.json",
+      "source/job-status.json",
+      "source/qualification/source-receipt.json",
+      "source/qualification/status.json",
+      "release/install-receipt.json",
+      "release/installed-export-receipt.json",
+      "release/installed-journey-receipt.json",
+      "release/installed-openbao-qualification.json",
+      "release/installed-openbao-tests.json",
+      "release/installed-restore-receipt.json",
+      "release/installed-sqlmodel-receipt.json",
+      "release/job-status.json",
+      "release/release-receipt.json",
+      "release/sbom.cdx.json",
+      "release/status.json"
+    ]
+  },
+  "production_gates": "UNKNOWN",
+  "limits": [
+    "Source skips remain explicit and unqualified.",
+    "Local and GitHub PostgreSQL 16 plus disposable local OpenBao cells only.",
+    "No independent human review, production provider qualification, deployment authorization or release publication."
+  ],
+  "installed_checks": {
+    "installed-sqlmodel-receipt.json": {
+      "test_calls": {
+        "passed": 63
+      },
+      "subtest_calls": {},
+      "setup": {
+        "passed": 63
+      },
+      "teardown": {
+        "passed": 63
+      },
+      "collection": {},
+      "selected_items": 63
+    },
+    "installed-openbao-tests.json": {
+      "test_calls": {
+        "passed": 69
+      },
+      "subtest_calls": {},
+      "setup": {
+        "passed": 69
+      },
+      "teardown": {
+        "passed": 69
+      },
+      "collection": {},
+      "selected_items": 69
+    },
+    "installed-export-receipt.json": {
+      "test_calls": {
+        "passed": 1
+      },
+      "subtest_calls": {},
+      "setup": {
+        "passed": 1
+      },
+      "teardown": {
+        "passed": 1
+      },
+      "collection": {},
+      "selected_items": 1
+    },
+    "installed-restore-receipt.json": {
+      "test_calls": {
+        "passed": 1
+      },
+      "subtest_calls": {},
+      "setup": {
+        "passed": 1
+      },
+      "teardown": {
+        "passed": 1
+      },
+      "collection": {},
+      "selected_items": 1
+    }
+  }
+}

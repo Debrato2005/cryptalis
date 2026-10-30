@@ -8,6 +8,7 @@ Use this page to find the owner of a question; use [status](status.md) for curre
 
 | I need to… | Read / run |
 |---|---|
+| Trace the primary requirements | [20-point SRS and objective mapping](requirements.md) → [34-objective ledger](BUILD_CHECKLIST.md) |
 | Understand the project | [Repository overview](../README.md) → [architecture](architecture/README.md) |
 | Declare protected data | [Manifest reference](manifest.md) → [supported operations](compatibility.md#full-capability-matrix) |
 | Integrate an application | [SQLAlchemy/SQLModel attachment](walkthrough-sqlalchemy.md) → [search examples](walkthrough-search.md) |
@@ -25,6 +26,7 @@ Use this page to find the owner of a question; use [status](status.md) for curre
 
 | Owner | Defines |
 |---|---|
+| [Requirements](requirements.md) | Primary SRS obligations and their mapping to all 34 objectives |
 | [Architecture](architecture/README.md) | Components, data flow and division between library, host and provider |
 | [Manifest](manifest.md) | Declaration syntax, compiler inputs and generated-lock structure |
 | [Security](security.md) | Trust boundaries, cryptography, keys, leakage and failure guarantees |

@@ -40,7 +40,7 @@ capabilities stay in the full first-release objective ledger.
 |---|---|
 | Behavior | Inspect one manifest, mapping, schema, and writer inventory. Emit a deterministic lock and semantic plan without database effects |
 | Dependencies | Approved stack and [scope](architecture/README.md#approved-scope). A native PostgreSQL application oracle with app-assigned keys and explicit tenancy |
-| Invariants | Admit only the specified text family and bounded Boolean storage. Stable typed identities. No guessed tenancy, silent equivalence change, removed constraint, or plan-time write |
+| Invariants | Admit only the types/codecs in the current compatibility contract. Stable typed identities. No guessed tenancy, silent equivalence change, removed constraint, or plan-time write |
 | Tests | Inspect real PostgreSQL mappings for UUID/app-assigned IDs, tenant-column and explicit single-tenant tables, NULL/empty text, deterministic collation and scoped uniqueness. Compare plan facts with native schema |
 | Failure cases | Serial/identity/database-default keys, unadmitted protected types, Boolean search and other small-domain searchable fields, missing tenancy/leakage acceptance, unknown writers, unsupported constraints, malformed or ambiguous declarations |
 | Definition of done | Freeze exact manifest/lock syntax and typed context descriptors. PostgreSQL acceptance/refusal cases pass. Plan explains every incompatibility plainly and leaves schema/data unchanged |

@@ -6657,3 +6657,32 @@ real resource-exhaustion faults, production provider custody, authenticated poli
 [Gate criteria](../status.md#missing-evidence-and-promotion-criteria) state the deciding observations without restoring the deleted control plane.
 No production provider is designated. The local provider is functional evidence only.
 G-PROVIDER, G-POLICY, all review requirements, and the [release gate](../../ENGINEERING_PLAYBOOK.md#release-gate) remain UNKNOWN.
+
+## Complete CI at dd5ac01: 2026-10-30
+
+**VERIFIED at `dd5ac01467712b2a2e451706b188bd53417eabb7`:** GitHub
+[run 40955279799](https://github.com/Debrato2005/cryptalis/actions/runs/40955279799)
+completed successfully on 2026-10-29 UTC. Both Source / PostgreSQL 16 and
+Reproducible artifacts / installed recovery passed. Historical checkpoints are in the [evidence history](implementation-2026-10.md).
+
+The complete default source run passes 3,103 test calls and eighteen subtests.
+Twelve call skips, 63 setup skips and sixteen collection skips remain explicit;
+all 3,178 selected items complete. All six source-role wrapper checks pass,
+resolving the three fixture failures in run 40947951794 at `2d53867`.
+Three role probes, all 280 Python hashes at that revision, source stability and imported
+runtime stability pass. The [retained CI boundary](../_reset/github-current-boundary-20261030.json)
+includes the actual source and installed receipts, with archive digests verified
+against GitHub artifact metadata. No skipped cell is treated as qualified.
+
+The installed wheel passes 69 OpenBao/provider/Doctor checks, 29 ORM controls,
+one export and one genuine fresh PostgreSQL recovery. Both the local environment
+and GitHub runner produce identical wheel and sdist hashes. Selected-extra SBOM,
+installed file/CLI inspection and dependency consistency pass. The frozen audit
+reports 26 packages, no known vulnerabilities and no adverse statuses. This
+does not establish absence of unknown vulnerabilities or independent review.
+
+The credentials fixture fix is `fa5045a`; OpenBao, operational qualification,
+cold-provider Doctor and independent snapshot recovery are committed and pushed.
+The subsequent documentation consolidation is `26e882b`. The shared-host
+implementation below changes executable code and has its own verification boundary.
+Earlier interrupted/cancelled runs remain incomplete evidence.

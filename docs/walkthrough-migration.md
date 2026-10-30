@@ -33,7 +33,7 @@
 - [Internal literal integer client defaults](#internal-literal-integer-client-defaults)
 
 
-**IMPLEMENTED research prototype.** No production provider or independent review exists.
+**IMPLEMENTED research prototype.** No provider deployment is production-qualified; independent human review remains unavailable.
 All seven gates remain UNKNOWN. Use the authorized disposable PostgreSQL 16 cell.
 
 1. Keep the native text mapping as `Text`, `String(n)`, or `VARCHAR(n)`. Assign primary keys in the application.
@@ -355,10 +355,11 @@ with sessions(tenant_id=tenant_uuid) as session:
     user = session.exec(select(User).where(User.id == record_id)).one()
 ```
 
-The optional bridge supports SQLModel 0.0.48 with synchronous PostgreSQL only.
+The optional bridge supports SQLModel 0.0.48 with synchronous and asynchronous PostgreSQL.
 It preserves native SQLModel validation, client defaults, NULL, refresh and
 `Session.exec` result shapes in the tested cell. Missing dependencies, other
-versions and async engines refuse before connection or key work.
+versions refuse before connection or key work. For an AsyncEngine, await attachment
+and use the returned async session factory; see the [bridge contract](compatibility.md#optional-sqlmodel-bridge).
 The [pinned template checkpoint](history/implementation-2026-10.md#optional-sqlmodel-template-checkpoint-2026-10-23)
 covers unchanged CRUD modules for one storage-only field.
 HTTP routes, authentication, full startup and deployment remain outside that checkpoint.

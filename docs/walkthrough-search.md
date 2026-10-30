@@ -1,7 +1,7 @@
 # Slice 4: equality, IN and tenant-scoped uniqueness
 
 **IMPLEMENTED:** bounded sync/async search attachment for exact text on PostgreSQL 16.
-This is a research prototype. All seven gates remain **UNKNOWN**. No production provider or independent review exists. See [status](status.md).
+This is a research prototype. All seven gates remain **UNKNOWN**. No provider deployment is production-qualified; independent human review remains unavailable. See [status](status.md).
 
 Declare `queries: ["equality"]`, or `["equality", "unique"]`, in the manifest.
 Supply the matching `accept_leakage` entries and a host `SearchReview` for each field.
