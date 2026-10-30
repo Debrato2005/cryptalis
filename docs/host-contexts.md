@@ -161,6 +161,20 @@ custody and storage-only CF1 bytes. No new core or cryptographic construction fo
 See the [verified checkpoint](history/implementation-2026-10.md#operational-cli-search-rotation-2026-10-24).
 Source and installed genuine adopted-target verification pass.
 
+### Shared configuration and planning intent
+
+[ApplicationConfig](application.md) produces initialization and planning contexts
+from one canonical declaration, mapping, writer inventory, search reviews and
+optional SELECT samples. `PlanningContext` now accepts optional `declaration`
+and `queries` fields. A supplied declaration must match the CLI manifest after
+canonicalization before database or key access. Invalid or mismatched intent
+still disposes the owned engine. Legacy contexts default to no declaration binding.
+
+Planning inspects any supplied queries against the compiled lock before resolving
+key policies. Invalid sample containers and incompatible samples refuse with typed
+errors; unavailable inspection remains an operational failure. No plan artifact
+is published on these failures. The empty tuple preserves existing planning behavior.
+
 ### Initialization CLI
 
 **IMPLEMENTED, bounded source and installed verification:** `init --host-context MODULE:FACTORY --out DECLARATION`

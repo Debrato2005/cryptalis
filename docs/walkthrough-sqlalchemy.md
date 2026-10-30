@@ -1,5 +1,10 @@
 # SQLAlchemy storage attachment
 
+Use [shared application configuration](application.md) to reuse one manifest and
+registry across planning, Doctor and attachment. The lower-level attachment
+interface below remains supported.
+
+
 **IMPLEMENTED:** bounded sync/async attachment for the [admitted types and operations](compatibility.md).
 All seven production gates remain **UNKNOWN**; no provider deployment is production-qualified.
 [Status](status.md) owns revision-bound tests and the corrective row-isolation evidence.

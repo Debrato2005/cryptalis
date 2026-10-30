@@ -17,6 +17,7 @@ _HOST = re.compile(r'[A-Za-z_][A-Za-z0-9_]*(?:\.[A-Za-z_][A-Za-z0-9_]*)*:[A-Za-z
 _CODE = re.compile(r'[A-Za-z][A-Za-z0-9_.:,-]{0,127}\Z')
 _SQLSTATE = re.compile(r'[0-9A-Z]{5}\Z')
 _DENIED = frozenset(('external_policy_mismatch', 'wrong_database_target', 'invalid_plan',
+    'invalid_query_samples', 'query_samples_incompatible',
     'maintenance_approval_required', 'writer_exclusion_or_pause_not_approved',
     'invalid_target_or_runtime_role', 'invalid_apply_bound', 'missing_measured_rates',
     'missing_measured_storage_or_wal_costs', 'unsafe_runtime_role', 'maintenance_requires_table_owner',
@@ -39,7 +40,8 @@ _SEARCH_DENIED = _DENIED | frozenset(('invalid_search_rotation_plan', 'search_op
     'matching_external_publication_required', 'search_rotation_executor_required',
     'search_rotation_requires_searchable_fields'))
 _OPERATIONAL = frozenset(('database_effect_requires_inspection', 'operation_failed_requires_inspection',
-    'connection_cleanup_requires_inspection', 'KeyUnavailable', 'CryptoBackendUnavailable'))
+    'connection_cleanup_requires_inspection', 'KeyUnavailable', 'CryptoBackendUnavailable',
+    'query_inspection_unavailable'))
 
 
 def _known_result(failure, result):
@@ -311,8 +313,17 @@ def run(arguments):
                             or type(context.search_reviews) is not tuple
                             or any(not isinstance(review, SearchReview) for review in context.search_reviews)):
                         raise _failure(operation, 'HostContextInvalid', 'host_context')
+                    if context.declaration is not None:
+                        if type(context.declaration) is not bytes:
+                            raise _failure(operation, 'HostContextInvalid', 'host_context')
+                        try:
+                            declaration = parse_protection_declaration(context.declaration).canonical_bytes()
+                        except ManifestInvalid:
+                            raise _failure(operation, 'HostContextInvalid', 'host_context') from None
+                        if declaration != parse_protection_declaration(raw).canonical_bytes():
+                            raise _failure(operation, 'ManifestMismatch', 'host_context')
                     plan = m.plan(raw, context.mapping, engine, writers=context.writers,
-                        search_reviews=context.search_reviews, keys=context.keys,
+                        search_reviews=context.search_reviews, queries=context.queries, keys=context.keys,
                         runtime_role=context.runtime_role, target_id=context.target_id,
                         backfill_rows_per_second=context.backfill_rows_per_second,
                         verify_rows_per_second=context.verify_rows_per_second,

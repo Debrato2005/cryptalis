@@ -26,8 +26,8 @@ vulnerabilities and zero adverse statuses; this is not proof of absence of unkno
 vulnerabilities or independent review. Earlier CI is retained in [history](history/implementation-2026-10.md#complete-ci-at-dd5ac01-2026-10-30).
 
 Documentation consolidation is `26e882b`; the shared-host implementation is
-`15ffdb3`. The final requirements/routing/evidence follow-up changes documentation
-only and preserves the tested executable hashes.
+`15ffdb3`. The requirements/routing/evidence follow-up preserved those executable hashes.
+The subsequent application configuration implementation below has a separate boundary.
 
 The 34-objective [ledger](BUILD_CHECKLIST.md#objective-ledger) retains seven
 bounded VERIFIED entries, 23 PARTIAL entries, one SPECIFIED, one BLOCKED, one
@@ -41,25 +41,29 @@ Independent human review remains unavailable; selected live cloud cells need
 authorized accounts. All 34 objectives stay in scope and all seven production
 gates remain UNKNOWN.
 
-## Shared initialization and Doctor context
+## Shared application configuration
 
-**VERIFIED locally, current source and installed wheel:** one key-free
-`InitializationContext` now serves both `init` and `doctor --initialization-context`.
-Optional SELECT samples are structurally admitted without execution. Doctor writes
-no artifact; init refuses publication for a failed sample. Invalid/conflicting
-inputs, unsafe engines, inspection failure, cleanup and output failure stay visible.
+**VERIFIED locally, source and installed wheel:** [ApplicationConfig](application.md)
+shares one key-free declaration/mapping/evidence configuration across init, Doctor,
+planning and sync/async SQLAlchemy/SQLModel attachment. Planning rejects failed or
+unavailable sample admission before key resolution. Runtime attachment rejects
+manifest or writer/search-evidence drift before database/key access. Explicit
+host pins, tenant authentication, maintenance and removal approvals remain required.
 
-The [retained boundary](_reset/shared-host-boundary-20261030.json) binds 160 focused
-source checks, 63 installed ORM/init/Doctor checks, 69 real OpenBao/provider checks,
-and one genuine PostgreSQL export plus one fresh-target recovery. Repeat archives,
-SBOM, installed files and dependency consistency pass. The first source attempt's
-new test assertion failure is retained with the correction. The complete GitHub
-source run above additionally verifies this implementation. No production gate changes.
+The [retained boundary](_reset/application-config-boundary-20261030.json) records
+231 affected source checks, 79 installed ORM/configuration checks, 69 real
+OpenBao/provider checks, one export and one genuine fresh PostgreSQL recovery.
+The restored target uses the shared configuration with its explicit restore binding.
+Repeat artifacts, SBOM, installed-file inspection and dependency consistency pass;
+all 282 Python hashes and runtime bytes are stable. Complete CI above is the prior
+base; the new implementation still awaits its own full remote run. Sample inspection
+does not establish full application coverage. All production gates remain UNKNOWN.
 
 ## Capability summary
 
 | Area | Implemented boundary | Contract / instructions |
 |---|---|---|
+| Application setup | One key-free configuration for diagnosis, planning and pinned runtime attachment | [Application configuration](application.md) |
 | Manifest | Bounded JSON declaration, mapping/schema validation, generated locks and semantic diff | [Manifest](manifest.md) |
 | Crypto | CF1 AES-256-GCM-SIV, random nonces, HKDF, independent HMAC search roots and authenticated context | [Security](security.md) |
 | ORM/search | Bounded sync/async SQLAlchemy and optional SQLModel; exact/IN/uniqueness and explicitly admitted forms | [Compatibility matrix](compatibility.md#full-capability-matrix) |

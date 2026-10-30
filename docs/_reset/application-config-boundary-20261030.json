@@ -1,0 +1,177 @@
+{
+  "format": "cryptalis.application-config-boundary/v1",
+  "date": "2026-10-30",
+  "base_revision": "e99629961349f8f77b301f8cc18391fee18e0409",
+  "source_identity": "worktree-be122efc17ae4b54",
+  "source_files": 282,
+  "source_checks": {
+    "test_calls": {
+      "passed": 231
+    },
+    "subtest_calls": {},
+    "setup": {
+      "passed": 231
+    },
+    "teardown": {
+      "passed": 231
+    },
+    "collection": {},
+    "selected_items": 231
+  },
+  "source_and_runtime_unchanged": true,
+  "release_steps": [
+    {
+      "name": "reproducible wheel sdist SBOM inspection",
+      "outcome": "PASS",
+      "exit_code": 0,
+      "elapsed_seconds": 1.196160488994792
+    },
+    {
+      "name": "export locked hashed wheel-test dependencies",
+      "outcome": "PASS",
+      "exit_code": 0,
+      "elapsed_seconds": 0.028569100999447983
+    },
+    {
+      "name": "create isolated wheel interpreter",
+      "outcome": "PASS",
+      "exit_code": 0,
+      "elapsed_seconds": 0.01974079499632353
+    },
+    {
+      "name": "install hashed dependencies",
+      "outcome": "PASS",
+      "exit_code": 0,
+      "elapsed_seconds": 0.8508194930036552
+    },
+    {
+      "name": "install exact inspected wheel",
+      "outcome": "PASS",
+      "exit_code": 0,
+      "elapsed_seconds": 0.046567703000619076
+    },
+    {
+      "name": "installed dependency consistency",
+      "outcome": "PASS",
+      "exit_code": 0,
+      "elapsed_seconds": 0.02261772000201745
+    },
+    {
+      "name": "installed file and CLI inspection",
+      "outcome": "PASS"
+    },
+    {
+      "name": "installed ORM and shared initialization/Doctor context",
+      "outcome": "PASS",
+      "exit_code": 0,
+      "elapsed_seconds": 34.25020315599977
+    },
+    {
+      "name": "installed OpenBao TLS outage and PostgreSQL lifecycle",
+      "outcome": "PASS",
+      "exit_code": 0,
+      "elapsed_seconds": 65.46272259699617
+    },
+    {
+      "name": "installed keyword public-slot genuine fresh recovery",
+      "outcome": "PASS",
+      "exit_code": 0,
+      "elapsed_seconds": 14.174813824000012
+    }
+  ],
+  "artifacts": {
+    "cryptalis-0.1.0-py3-none-any.whl": "4ed1bb41c770e85ba396ae2fdc7f9349ce72fadd60e661d393475635afb32c1f",
+    "cryptalis-0.1.0.tar.gz": "45389dc2beb1b71557cca84b0abc7cebd9bca44b9c52757e83309905a5f74f8e"
+  },
+  "reproducible": true,
+  "archive": {
+    "path": "docs/_reset/application-config-receipts-20261030.tar.gz",
+    "sha256": "4891281d19dce3567ca56c52cc2463f38b714528cce516295f31ff930fe82b0f",
+    "members": [
+      "application-config-first.json",
+      "application-config-regression.json",
+      "application-config-final.json",
+      "install-receipt.json",
+      "installed-export-receipt.json",
+      "installed-journey-receipt.json",
+      "installed-openbao-qualification.json",
+      "installed-openbao-tests.json",
+      "installed-restore-receipt.json",
+      "installed-sqlmodel-receipt.json",
+      "release-receipt.json",
+      "sbom.cdx.json",
+      "status.json"
+    ]
+  },
+  "behavior": [
+    "One key-free ApplicationConfig shares declaration, mapping, writer inventory, search reviews and optional SELECT samples.",
+    "Initialization, Doctor, CLI/Python planning and sync/async SQLAlchemy/SQLModel attachment reuse the configuration.",
+    "Planning refuses failed or unknown query admission before key-policy resolution; CLI mismatch refuses before connection.",
+    "Attachment compares canonical declaration and writer/search evidence to the trusted deployment before database or key access.",
+    "Native CRUD/search/current-value removal and genuine fresh-target adopted attachment pass."
+  ],
+  "limits": [
+    "Focused source run, not a complete default CI run at this revision.",
+    "Sample admission is not automatic or complete application-route inventory.",
+    "Host authorization, credentials, publication, maintenance, plaintext consent and retained-backup obligations remain explicit.",
+    "Independent security review and all seven production gates remain UNKNOWN."
+  ],
+  "installed_checks": {
+    "installed-sqlmodel-receipt.json": {
+      "test_calls": {
+        "passed": 79
+      },
+      "subtest_calls": {},
+      "setup": {
+        "passed": 79
+      },
+      "teardown": {
+        "passed": 79
+      },
+      "collection": {},
+      "selected_items": 79
+    },
+    "installed-openbao-tests.json": {
+      "test_calls": {
+        "passed": 69
+      },
+      "subtest_calls": {},
+      "setup": {
+        "passed": 69
+      },
+      "teardown": {
+        "passed": 69
+      },
+      "collection": {},
+      "selected_items": 69
+    },
+    "installed-export-receipt.json": {
+      "test_calls": {
+        "passed": 1
+      },
+      "subtest_calls": {},
+      "setup": {
+        "passed": 1
+      },
+      "teardown": {
+        "passed": 1
+      },
+      "collection": {},
+      "selected_items": 1
+    },
+    "installed-restore-receipt.json": {
+      "test_calls": {
+        "passed": 1
+      },
+      "subtest_calls": {},
+      "setup": {
+        "passed": 1
+      },
+      "teardown": {
+        "passed": 1
+      },
+      "collection": {},
+      "selected_items": 1
+    }
+  }
+}
