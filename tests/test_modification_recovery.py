@@ -15,15 +15,17 @@ from sqlalchemy import create_engine
 from cryptalis.migration import TransitionFailure
 from migration_commit_proxy import lost_commit_reply
 from test_application_modification import configured_change, propose, prepare, seal
+from test_modification_storage import storage_change
 from test_deprotection import app_pin
 from test_migration import application, frames, keys, publish, run
 from test_payload_rotation_execution import operation_pin, snapshot, staged_frames
 from test_payload_rotation_recovery import assert_paused
 
 
-def test_sigkill_after_committed_chunk_resumes_in_fresh_process(tmp_path):
-    with application(unique=False, queries=[]) as app:
-        configured = configured_change(app)
+@pytest.mark.parametrize('search', [True, False])
+def test_sigkill_after_committed_chunk_resumes_in_fresh_process(tmp_path, search):
+    with application(unique=False, queries=[] if search else ['equality']) as app:
+        configured = configured_change(app) if search else storage_change(app)
         run(app); publish(app)
         proposal = propose(configured, app)
         original = frames(app, True)
@@ -58,9 +60,10 @@ def test_sigkill_after_committed_chunk_resumes_in_fresh_process(tmp_path):
 
 
 @pytest.mark.parametrize('operation', ['chunk', 'switch'])
-def test_lost_commit_reply_is_inspected_before_resume(operation):
-    with application(unique=False, queries=[]) as app:
-        configured = configured_change(app)
+@pytest.mark.parametrize('search', [True, False])
+def test_lost_commit_reply_is_inspected_before_resume(operation, search):
+    with application(unique=False, queries=[] if search else ['equality']) as app:
+        configured = configured_change(app) if search else storage_change(app)
         run(app); publish(app)
         proposal = propose(configured, app)
         if operation == 'chunk':

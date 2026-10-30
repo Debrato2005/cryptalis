@@ -176,18 +176,24 @@ binds all three rotation workflows to the same manifest and host evidence used
 for protection and attachment. It delegates to the executors below and retains
 their separate staging, external publication and cancellation authority.
 
-### Enable exact search on active encrypted text
+### Change exact search on active encrypted text
 
-The active-field modification route admits `queries: []` to
-`queries: ["equality"]` on existing TEXT/VARCHAR fields, with explicit equality
-leakage acceptance and a non-small-domain host review. It changes the existing
-CF1 representation, not its cryptographic primitives. All other field, record,
+<a id="enable-exact-search-on-active-encrypted-text"></a>
+
+The active-field modification route admits both `queries: []` to
+`queries: ["equality"]` and the reverse on existing TEXT/VARCHAR fields. Enabling
+search requires explicit equality leakage acceptance and a non-small-domain host
+review. Disabling requires empty `queries` and `accept_leakage`, and removal of
+that field’s search review. Reviews for unchanged searchable fields remain exact.
+A field with uniqueness cannot become storage-only through this route. The transition
+uses the existing CF1 representations and cryptographic primitives. All other field, record,
 tenant, native-schema, layout and writer-inventory declarations remain identical.
 Uniqueness changes and general type/codec/package upgrades remain open work.
 
 The source must be ACTIVE with its exact host pin. Source custody must already
-include an approved search root for every affected scope, including empty
-scopes. Modification neither generates nor changes key policies. Mapping drift,
+include an approved search root for every target searchable scope, including
+empty scopes. Modification neither generates nor changes key policies. Mapping
+drift,
 generated identities/defaults, unsupported intent, index-name collisions and
 missing search custody refuse explicitly. Planning is read-only and authenticates
 the complete current source. Optional SELECT samples use Doctor's existing
@@ -200,19 +206,23 @@ source lineage.
 `cryptalis.modification/v1` proposal. Preparation, status, sealing, cutover and
 cancellation reuse the existing encrypted rotation engine, journal, maintenance
 authority and row/byte bounds. Changed fields are authenticated and resealed with
-fresh nonces and keyed search terms; unchanged protected fields retain exact
-ciphertext. NULL remains NULL. Bounds include the larger target representation
+fresh nonces; equality targets include keyed search terms, while storage-only
+targets omit them. Unchanged protected fields retain exact ciphertext. NULL
+remains NULL. Bounds include both source and target representations
 and final verification, and inspect staged lengths before fetching frame bodies.
 
 The host retains the sealed successor before cutover and publishes it separately.
 Successors use transition v17, or v18 with the existing access contract. One
 transaction copies verified ciphertext, replaces only the owned frame checks,
-creates the equality indexes and advances the predecessor chain. Failure rolls
-back those changes together. Publication requires the successor's ACTIVATING pin
+creates or removes the corresponding owned equality indexes and advances the
+predecessor chain. Failure rolls back those changes together. Publication requires the successor's ACTIVATING pin
 and verified current target; a source or journal pin cannot authorize attachment.
 Cancellation before cutover requires explicitly republished source authority.
 After cutover, current-value removal uses the successor and original native-schema
-obligations. Index creation and terminal verification can take locks and time;
+obligations. Disabling search removes current tokens and their index; it does not
+erase
+historical equality leakage, copies, WAL or backups and does not retire keys.
+Index changes and terminal verification can take locks and time;
 there is no online-modification or bounded-pause claim.
 
 The [application route](application.md#modify-active-fields) gives the public

@@ -4,59 +4,79 @@ Cryptalis implements a bounded research prototype. **No production release or co
 This page owns current verification and release gates; the [34-objective ledger](BUILD_CHECKLIST.md) owns remaining work.
 Use the [documentation map](README.md) to find contracts and procedures.
 
-**Latest complete hosted run: PASS at `a477fd6`.** Both jobs in
-[run 41047596731](https://github.com/Debrato2005/cryptalis/actions/runs/41047596731)
-pass. The fifteen UUID fixture failures at `95a35a5` are repaired without a
-runtime fallback; all 24 boundary checks now enter installed CI. The
-[retained failure](_reset/github-point-update-returning-failed-boundary-20261030.json)
-and [local repair](_reset/point-delete-returning-ci-fix-boundary-20261030.json)
-remain available. The local modification and query-preflight boundaries below have separate
-evidence and are outside this complete hosted CI boundary.
+**Latest complete hosted run: PASS at `50549cb`.** Both jobs in
+[run 41057718353](https://github.com/Debrato2005/cryptalis/actions/runs/41057718353)
+pass, including active-field search enablement and optional query preflight.
+The original `2d53867` source-role failure and later UUID fixture failures remain
+repaired. [Retained failure](_reset/github-point-update-returning-failed-boundary-20261030.json)
+and [repair evidence](_reset/point-delete-returning-ci-fix-boundary-20261030.json)
+remain available. Reverse search modification below is outside this hosted boundary.
 
 ## Current complete CI qualification
 
-**VERIFIED at `a477fd643f81697ac4d0051a0523ee89043912b1`:** GitHub
-[run 41047596731](https://github.com/Debrato2005/cryptalis/actions/runs/41047596731)
-passes both Source / PostgreSQL 16 and Reproducible artifacts / installed recovery.
-The [retained CI boundary](_reset/github-point-delete-returning-boundary-20261030.json)
-contains verified GitHub archive digests and the actual source/installed receipts.
+**VERIFIED at `50549cb11d4dd6f6402311dd7f607506b1b9be45`:** GitHub
+[run 41057718353](https://github.com/Debrato2005/cryptalis/actions/runs/41057718353)
+passes Source / PostgreSQL 16 and Reproducible artifacts / installed recovery.
+The [retained CI boundary](_reset/github-modification-queries-boundary-20261030.json)
+binds GitHub archive digests and actual source/installed receipts to this revision.
 
-The complete default source run passes 3,426 test calls and eighteen subtests.
-Twelve call skips, 82 setup skips and seventeen collection skips remain explicit;
-all 3,520 selected items complete. All 300 Python hashes match the recorded checkout,
-and source/imported-runtime stability passes. The original source-role fixture
-failure at `2d53867` remains fixed; no skipped cell is treated as qualified.
+The complete default source run passes 3,474 test calls and eighteen subtests.
+Twelve call skips, 84 setup skips and eighteen collection skips remain explicit;
+all 3,570 selected items complete. All 307 Python hashes match the recorded checkout,
+and source/imported-runtime stability passes. No skipped cell is qualified.
 
-The installed wheel passes 15 native code-inventory and 264 ORM/configuration controls, 50 Google SDK and 146 OpenBao/provider
-checks, two exports and three genuine fresh PostgreSQL recovery checks. Local and GitHub
-wheel/sdist hashes are identical. Repeat archives, SBOM, installed-file inspection
-and dependency consistency pass. The frozen audit reports 39 packages, zero known
-vulnerabilities and zero adverse statuses; this is not proof of absence of unknown
-vulnerabilities or independent review. Earlier CI is retained in
-[history](history/implementation-2026-10.md#complete-ci-at-c4cba97-2026-10-30).
-The separate explicit performance profile below fails latency targets; a green
-default CI run does not qualify performance.
-
-Documentation consolidation is `26e882b`; shared init/Doctor is `15ffdb3` and
-shared application configuration is `09c635a`; lifecycle integration is `b92cfc7`.
-Google KMS is `bda4fb3`; AppRole is `743b5e9`; shared rotations are `ccf7d12`.
-Doctor authentication diagnostics are `7e7d1c5`; native audit is `a2d8230`.
-Shared online capture and tenant configuration are `1e316c4`; lifecycle/runtime
-authentication diagnostics are `98f742b`. Container retirement is `e55733d`; static Python inventory is `c4cba97`.
-ORM process ownership is `b01d665`; single-record UPDATE/DELETE RETURNING are
-`95a35a5` and `a477fd6`. These are covered by complete CI.
+The installed wheel passes 15 code-inventory and 313 ORM/configuration controls,
+50 Google SDK and 147 OpenBao/provider checks, three exports and four genuine
+fresh PostgreSQL recovery checks. Local and GitHub wheel/sdist hashes are identical.
+Repeat archives, SBOM, installed-file inspection and dependency consistency pass.
+The frozen audit reports 39 packages, zero known vulnerabilities and zero adverse
+statuses; this is not proof of absence of unknown vulnerabilities or independent
+review. [Earlier CI](_reset/github-point-delete-returning-boundary-20261030.json)
+remains retained. The separate performance profile fails latency targets; passing
+default CI does not qualify performance.
 
 The 34-objective [ledger](BUILD_CHECKLIST.md#objective-ledger) retains seven
 bounded VERIFIED entries, 23 PARTIAL entries, one SPECIFIED, one BLOCKED, one
 IMPLEMENTED and one ONGOING. These are implementation labels, not production
-completion. Remaining work includes simpler manifest/host integration, broader
-ORM/query/type coverage and lower-leakage research, complete static/dynamic route
-inventory, versioned upgrades, authenticated deployment/failover authority,
-retained-backup obligations and controlled destruction, production provider
-identity/audit/HA, combined disaster drills, and performance acceptance.
-Independent human review remains unavailable; selected live cloud cells need
-authorized accounts. All 34 objectives stay in scope and all seven production
-gates remain UNKNOWN.
+completion. Remaining work includes broader manifest/host integration,
+ORM/query/type coverage and lower-leakage research, complete route inventory,
+versioned upgrades, authenticated deployment/failover authority, retained-backup
+obligations and controlled destruction, production provider identity/audit/HA,
+combined disaster drills, and performance acceptance. Independent human review
+remains unavailable; selected live cloud cells need authorized accounts.
+All 34 objectives remain in scope and all seven production gates remain UNKNOWN.
+
+## Disable search while retaining encryption
+
+**VERIFIED locally, source and installed wheel:** the
+[bidirectional modification boundary](_reset/modification-storage-boundary-20261030.json)
+adds equality → storage-only changes for existing nonunique TEXT/VARCHAR fields.
+The shared encrypted transition engine authenticates and reseals changed values,
+removes their owned search indexes atomically, preserves other ciphertext and
+constraints, resumes committed chunks, and cancels staging under source authority.
+NULLs, native indexes and current edits survive deprotection. Re-enabling search
+uses the same workflow. Uniqueness changes still refuse before database access.
+
+Saved modification proposals now work with read-only, key-free `cryptalis status`.
+It reports recorded progress and `verification: NOT_PERFORMED`; wrong pins refuse,
+and preparation cannot serve as ACTIVE Doctor evidence.
+
+The final source run passes 93 controls after earlier 47- and 74-control runs.
+Initial missing-feature failures for reverse modification and CLI status remain
+archived. The final installed wheel passes 368 application/status controls,
+15 Doctor checks, 50 Google adapter checks and 148 real OpenBao/provider checks.
+Four exports and five genuine fresh PostgreSQL recovery checks pass, covering
+both search directions, tamper refusal, current edits, removal and native
+operation with Cryptalis imports blocked. The source-only reverse-profile export
+and restore also pass. All final source/installed inventories bind the same 309
+Python files; source and imported runtime bytes remain stable. Repeat builds,
+SBOM, artifact inspection and dependency consistency pass.
+
+This is a bounded lifecycle extension. Disabling current search tokens cannot
+erase historical leakage or retained copies and does not retire keys. Modification
+on already-adopted sources, broader field/schema/codec/package evolution,
+production deployment authority and independent qualification remain open.
+All seven production gates remain UNKNOWN.
 
 ## Modification query preflight
 

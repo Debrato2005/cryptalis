@@ -161,7 +161,8 @@ class Qualification:
                 'tests/test_application_rotation.py', 'tests/test_application_online.py',
                 'tests/test_application_modification.py', 'tests/test_modification_boundaries.py',
                 'tests/test_modification_contexts.py', 'tests/test_modification_recovery.py',
-                'tests/test_modification_queries.py',
+                'tests/test_modification_queries.py', 'tests/test_modification_storage.py',
+                'tests/test_modification_status_cli.py', 'tests/test_rotation_status_cli.py',
                 'tests/test_point_update_returning.py', 'tests/test_point_update_returning_more.py',
                 'tests/test_point_update_returning_boundary.py', 'tests/test_point_delete_returning.py',
                 'tests/test_point_delete_returning_more.py', 'tests/test_point_delete_returning_boundary.py',
@@ -209,16 +210,17 @@ class Qualification:
                         or receipt['runtime_binding']['mode'] != 'installed-wheel'
                         or receipt['runtime_binding']['wheel_sha256'] != digest):
                     raise CheckFailed(1)
-            self.run('installed modified-field genuine fresh recovery', [str(python),
-                'scripts/fresh_cluster_qualification.py', '--workdir', str(self.workdir / 'modification-fresh'),
-                '--modification', '--installed-wheel', str(wheel)], environment=environment)
-            for phase in ('export', 'restore'):
-                receipt = json.loads((self.workdir / f'modification-fresh/{phase}-receipt.json').read_text())
-                if (receipt['exit_code'] != 0 or receipt['counts'] != {'passed': 1}
-                        or receipt['pytest_report_counts']['collection']
-                        or receipt['runtime_binding']['mode'] != 'installed-wheel'
-                        or receipt['runtime_binding']['wheel_sha256'] != digest):
-                    raise CheckFailed(1)
+            for profile, dirname in (('enable', 'modification-fresh'), ('disable', 'storage-modification-fresh')):
+                self.run('installed modified-field ' + profile + ' genuine fresh recovery', [str(python),
+                    'scripts/fresh_cluster_qualification.py', '--workdir', str(self.workdir / dirname),
+                    '--modification', profile, '--installed-wheel', str(wheel)], environment=environment)
+                for phase in ('export', 'restore'):
+                    receipt = json.loads((self.workdir / f'{dirname}/{phase}-receipt.json').read_text())
+                    if (receipt['exit_code'] != 0 or receipt['counts'] != {'passed': 1}
+                            or receipt['pytest_report_counts']['collection']
+                            or receipt['runtime_binding']['mode'] != 'installed-wheel'
+                            or receipt['runtime_binding']['wheel_sha256'] != digest):
+                        raise CheckFailed(1)
         finally:
             if cluster is not None:
                 primary_failure = sys.exc_info()[0] is not None
@@ -250,6 +252,8 @@ class Qualification:
                 ('application-fresh/restore-receipt.json', 'installed-application-restore-receipt.json'),
                 ('modification-fresh/export-receipt.json', 'installed-modification-export-receipt.json'),
                 ('modification-fresh/restore-receipt.json', 'installed-modification-restore-receipt.json'),
+                ('storage-modification-fresh/export-receipt.json', 'installed-storage-modification-export-receipt.json'),
+                ('storage-modification-fresh/restore-receipt.json', 'installed-storage-modification-restore-receipt.json'),
                 ('fresh/integer-32-journey-receipt.json', 'installed-journey-receipt.json')):
             self.stage(self.workdir / relative, name)
         # Only successfully inspected release artifacts are eligible for upload.
