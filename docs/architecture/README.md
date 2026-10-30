@@ -102,9 +102,10 @@ class is required. See [security](../security.md#cryptographic-format) for CF1 a
 ## Public surface
 
 [ApplicationConfig](../application.md) shares key-free declaration facts across
-initialization, diagnosis, planning and attachment while requiring explicit
-operation authority. Attachment obtains its lock from the supplied trusted plan
-and rejects manifest disagreement before database/key access.
+initialization, diagnosis, planning, application, attachment and decrypt-back/removal
+while requiring explicit operation authority. Attachment obtains its lock from
+the supplied trusted plan. Lifecycle and attachment methods reject manifest or
+host-evidence disagreement before database/key access and reuse existing executors.
 
 The current CLI is authoritative through `cryptalis --help`. Use the
 [operator walkthrough](../walkthrough-migration.md) for init, planning, apply,

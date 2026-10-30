@@ -14,7 +14,7 @@ contains verified GitHub archive digests and the actual source/installed receipt
 
 The complete default source run passes 3,138 test calls and eighteen subtests.
 Twelve call skips, 63 setup skips and sixteen collection skips remain explicit;
-all 3,213 selected items complete. All 282 Python hashes match the local checkout,
+all 3,213 selected items complete. All 282 Python hashes match the recorded checkout,
 and source/imported-runtime stability passes. The original source-role fixture
 failure at `2d53867` remains fixed; no skipped cell is treated as qualified.
 
@@ -29,8 +29,8 @@ The separate explicit performance profile below fails latency targets; a green
 default CI run does not qualify performance.
 
 Documentation consolidation is `26e882b`; shared init/Doctor is `15ffdb3` and
-shared application configuration is `09c635a`. This evidence follow-up preserves
-their executable hashes.
+shared application configuration is `09c635a`. The later lifecycle extension
+below has a separate local verification boundary.
 
 The 34-objective [ledger](BUILD_CHECKLIST.md#objective-ledger) retains seven
 bounded VERIFIED entries, 23 PARTIAL entries, one SPECIFIED, one BLOCKED, one
@@ -46,21 +46,25 @@ gates remain UNKNOWN.
 
 ## Shared application configuration
 
-**VERIFIED in local and GitHub source/installed checks:** [ApplicationConfig](application.md)
+**VERIFIED locally, source and installed wheel:** [ApplicationConfig](application.md)
 shares one key-free declaration/mapping/evidence configuration across init, Doctor,
-planning and sync/async SQLAlchemy/SQLModel attachment. Planning rejects failed or
-unavailable sample admission before key resolution. Runtime attachment rejects
-manifest or writer/search-evidence drift before database/key access. Explicit
-host pins, tenant authentication, maintenance and removal approvals remain required.
+planning, apply/resume, status, attachment and decrypt-back/removal. Manifest and
+writer/search-evidence drift refuses before database/key access, including reverse
+operations against the protected source. Existing lifecycle executors and explicit
+host pins, maintenance, plaintext and removal approvals remain authoritative.
 
-The [retained boundary](_reset/application-config-boundary-20261030.json) records
-231 affected source checks, 79 installed ORM/configuration checks, 69 real
+The [lifecycle boundary](_reset/application-lifecycle-boundary-20261030.json) records
+146 passing affected source checks with one explicit skip, 96 installed
+ORM/configuration checks, 69 real
 OpenBao/provider checks, one export and one genuine fresh PostgreSQL recovery.
-The restored target uses the shared configuration with its explicit restore binding.
-Repeat artifacts, SBOM, installed-file inspection and dependency consistency pass;
-all 282 Python hashes and runtime bytes are stable. The complete GitHub run above
-additionally verifies this implementation. Sample inspection does not establish
-full application coverage. All production gates remain UNKNOWN.
+Original and restored applications preserve their latest values through removal.
+A failed second chunk retains its first committed chunk and resumes without
+replacing that ciphertext. Missing pin/maintenance/plaintext/removal authority
+refuses before database or key access. Repeat artifacts, SBOM, installed-file
+inspection and dependency consistency pass; all 282 Python hashes and runtime
+bytes are stable. The full remote run above covers the prior configuration slice;
+this lifecycle extension still awaits complete CI. Sample inspection does not
+establish full application coverage. All production gates remain UNKNOWN.
 
 ## Current performance boundary
 
@@ -82,7 +86,7 @@ records limits. Performance acceptance remains open.
 
 | Area | Implemented boundary | Contract / instructions |
 |---|---|---|
-| Application setup | One key-free configuration for diagnosis, planning and pinned runtime attachment | [Application configuration](application.md) |
+| Application setup | One key-free configuration for diagnosis, planning, apply/resume, attachment and current-value removal | [Application configuration](application.md) |
 | Manifest | Bounded JSON declaration, mapping/schema validation, generated locks and semantic diff | [Manifest](manifest.md) |
 | Crypto | CF1 AES-256-GCM-SIV, random nonces, HKDF, independent HMAC search roots and authenticated context | [Security](security.md) |
 | ORM/search | Bounded sync/async SQLAlchemy and optional SQLModel; exact/IN/uniqueness and explicitly admitted forms | [Compatibility matrix](compatibility.md#full-capability-matrix) |

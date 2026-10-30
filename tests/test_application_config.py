@@ -17,7 +17,7 @@ from cryptalis.application import ApplicationConfig, ConfigurationInvalid
 from cryptalis.crypto import Keyring
 from cryptalis.manifest.compiler import SearchReview, Writer, WriterInventory
 from cryptalis.migration import TransitionFailure
-from test_deprotection import consent, d, native_rows, proposal, reverse
+from test_deprotection import consent, d, least_privilege_role, native_rows, proposal
 from test_migration import application, engine, frames, keys, publish, run, FIELD_ID, TABLE_ID, TENANT
 from test_operational_cli import invoke
 from test_owned_sequences import _snapshot
@@ -58,7 +58,15 @@ def test_shared_configuration_native_values_search_edit_and_removal(adapter, asy
         assert _snapshot(app) == before
         statement = select(app.Customer.id, app.Customer.name).where(app.Customer.tenant_id == TENANT).order_by(app.Customer.id)
         with Session(app.runtime) as native: expected = list(native.execute(statement))
-        run(app); publish(app)
+        assert configured.apply(app.owner, deployment=(app.plan, app.pin), keys=keys,
+            approval=app.approval, until='EXPANDED').phase == 'EXPANDED'
+        assert configured.status(app.owner, deployment=(app.plan, app.pin)).phase == 'EXPANDED'
+        assert configured.apply(app.owner, deployment=(app.plan, app.pin), keys=keys,
+            approval=app.approval, chunk_size=2).phase == 'PENDING'
+        app.pin = replace(app.pin, phase='ACTIVATING')
+        assert configured.apply(app.owner, deployment=(app.plan, app.pin), keys=keys,
+            approval=app.approval, until='ACTIVE').phase == 'ACTIVE'
+        app.pin = replace(app.pin, phase='ACTIVE')
         assert all(type(value) is bytes or value is None for value in frames(app, True).values())
         def exercise_sync():
             factory = configured.attach(app.runtime, keys=keys, deployment=(app.plan, app.pin), adapter=adapter)
@@ -95,16 +103,131 @@ def test_shared_configuration_native_values_search_edit_and_removal(adapter, asy
         else: exercise_sync()
         expected_values = dict(app.source)
         expected_values[UUID(int=101)] = (TENANT, 'current encrypted edit')
-        removal_plan = proposal(app)
-        assert reverse(app, removal_plan).phase == 'PLAINTEXT_PENDING'
+        removal_plan = configured.plan_deprotection(app.owner, deployment=(app.plan, app.pin),
+            keys=keys, plaintext_runtime_role=least_privilege_role(app), backfill_rows_per_second=1000,
+            verify_rows_per_second=1000, temporary_bytes_per_row=700, wal_bytes_per_row=700)
+        approval, pin = consent(removal_plan)
+        assert configured.status(app.owner, deployment=(removal_plan, pin)).phase == 'PREPARED'
+        assert configured.decrypt_back(app.owner, deployment=(removal_plan, pin), keys=keys,
+            approval=app.approval, consent=approval, until='EXPANDED').phase == 'EXPANDED'
+        assert configured.decrypt_back(app.owner, deployment=(removal_plan, pin), keys=keys,
+            approval=app.approval, consent=approval, chunk_size=2).phase == 'PLAINTEXT_PENDING'
         approval, pin = consent(removal_plan, 'PLAINTEXT_ACTIVATING')
-        d.apply(removal_plan, app.owner, keys=keys, pin=pin, approval=app.approval,
-                consent=approval, until='PLAINTEXT_ACTIVE')
+        configured.decrypt_back(app.owner, deployment=(removal_plan, pin), keys=keys,
+            approval=app.approval, consent=approval, until='PLAINTEXT_ACTIVE')
         removal = d.RemovalApproval(removal_plan.target_id, removal_plan.operation_id, removal_plan.digest,
             'native fixture current values verified', 'public fixture custody retained', True)
-        assert d.remove(removal_plan, app.owner, pin=replace(pin, phase='REMOVING'), approval=app.approval,
-            removal=removal, consent=approval).phase == 'REMOVED'
+        assert configured.remove(app.owner, deployment=(removal_plan, replace(pin, phase='REMOVING')),
+            approval=app.approval, removal=removal, consent=approval).phase == 'REMOVED'
+        status = configured.status(app.owner, deployment=(removal_plan, replace(pin, phase='REMOVED')))
+        assert status.phase == 'REMOVED' and status.runtime_metadata_matches
+        assert status.verification == 'NOT_PERFORMED'
         assert native_rows(app) == expected_values
+
+
+@pytest.mark.parametrize('operation', ['apply', 'status', 'plan_deprotection',
+                                     'decrypt_back', 'reverse_status', 'remove'])
+@pytest.mark.parametrize('fault', ['manifest', 'inventory'])
+def test_lifecycle_configuration_drift_refuses_before_database_or_keys(operation, fault):
+    with application() as app:
+        configured = config(app)
+        run(app); publish(app)
+        reverse_plan = proposal(app)
+        exposure, reverse_pin = consent(reverse_plan)
+        plain_role = reverse_plan.document['plaintext_runtime_role']
+        if fault == 'manifest':
+            declaration = json.loads(configured.manifest)
+            declaration['domain_id'] = str(uuid4())
+            configured = replace(configured, manifest=json.dumps(declaration).encode())
+        else:
+            configured = replace(configured, writers=WriterInventory(False, ()))
+        def forbidden(*args, **kwargs): pytest.fail('configuration drift reached database or keys')
+        actions = {
+            'apply': lambda: configured.apply(app.owner, deployment=(app.plan, app.pin),
+                keys=forbidden, approval=app.approval),
+            'status': lambda: configured.status(app.owner, deployment=(app.plan, app.pin)),
+            'plan_deprotection': lambda: configured.plan_deprotection(app.owner,
+                deployment=(app.plan, app.pin), keys=forbidden, plaintext_runtime_role=plain_role,
+                backfill_rows_per_second=1000, verify_rows_per_second=1000,
+                temporary_bytes_per_row=700, wal_bytes_per_row=700),
+            'decrypt_back': lambda: configured.decrypt_back(app.owner,
+                deployment=(reverse_plan, reverse_pin), keys=forbidden,
+                approval=app.approval, consent=exposure),
+            'reverse_status': lambda: configured.status(app.owner, deployment=(reverse_plan, reverse_pin)),
+            'remove': lambda: configured.remove(app.owner, deployment=(reverse_plan, reverse_pin),
+                approval=app.approval, consent=exposure, removal=None),
+        }
+        event.listen(app.owner, 'engine_connect', forbidden)
+        try:
+            with pytest.raises(ConfigurationInvalid) as failure:
+                actions[operation]()
+            assert failure.value.code == ('Application.ManifestMismatch' if fault == 'manifest'
+                                           else 'Application.HostEvidenceMismatch')
+        finally:
+            event.remove(app.owner, 'engine_connect', forbidden)
+
+
+def test_configured_apply_retains_committed_chunks_and_resumes_after_failure(monkeypatch):
+    from cryptalis import migration
+    with application() as app:
+        configured = config(app)
+        original = migration._backfill_chunk
+        calls = 0
+        def interrupt_second_chunk(*args, **kwargs):
+            nonlocal calls
+            calls += 1
+            if calls == 2:
+                raise TransitionFailure('injected_chunk_failure', app.plan.operation_id)
+            return original(*args, **kwargs)
+        with monkeypatch.context() as interrupted:
+            interrupted.setattr(migration, '_backfill_chunk', interrupt_second_chunk)
+            with pytest.raises(TransitionFailure, match='injected_chunk_failure'):
+                configured.apply(app.owner, deployment=(app.plan, app.pin), keys=keys,
+                    approval=app.approval, chunk_size=2)
+        observed = configured.status(app.owner, deployment=(app.plan, app.pin))
+        assert observed.committed_rows == 2 and observed.committed_chunks == 1
+        saved = frames(app)
+        assert configured.apply(app.owner, deployment=(app.plan, app.pin), keys=keys,
+            approval=app.approval, chunk_size=2).phase == 'PENDING'
+        after = frames(app, True)
+        assert all(after[identity] == value for identity, value in saved.items() if value is not None)
+        app.pin = replace(app.pin, phase='ACTIVATING')
+        configured.apply(app.owner, deployment=(app.plan, app.pin), keys=keys,
+            approval=app.approval, until='ACTIVE')
+        app.pin = replace(app.pin, phase='ACTIVE')
+        factory = configured.attach(app.runtime, keys=keys, deployment=(app.plan, app.pin))
+        with factory(tenant_id=TENANT) as session:
+            values = {row.id: (row.tenant_id, row.name) for row in session.scalars(select(app.Customer))}
+        assert values == app.source
+
+
+@pytest.mark.parametrize('fault', ['pin', 'maintenance', 'plaintext', 'removal'])
+def test_shared_lifecycle_never_infers_host_authority(fault):
+    with application() as app:
+        configured = config(app)
+        run(app); publish(app)
+        reverse_plan = proposal(app)
+        exposure, reverse_pin = consent(reverse_plan)
+        def forbidden(*args, **kwargs): pytest.fail('missing authority reached database or keys')
+        event.listen(app.owner, 'engine_connect', forbidden)
+        try:
+            with pytest.raises(TransitionFailure) as failure:
+                if fault == 'pin':
+                    configured.apply(app.owner, deployment=(app.plan, replace(app.pin, plan_digest='0' * 64)),
+                        keys=forbidden, approval=app.approval)
+                elif fault == 'maintenance':
+                    configured.apply(app.owner, deployment=(app.plan, app.pin), keys=forbidden, approval=None)
+                elif fault == 'plaintext':
+                    configured.decrypt_back(app.owner, deployment=(reverse_plan, reverse_pin),
+                        keys=forbidden, approval=app.approval, consent=None)
+                else:
+                    configured.remove(app.owner, deployment=(reverse_plan, reverse_pin),
+                        approval=app.approval, consent=exposure, removal=None)
+            assert failure.value.code == {
+                'pin': 'external_policy_mismatch', 'maintenance': 'maintenance_approval_required',
+                'plaintext': 'plaintext_approval_required', 'removal': 'removal_approval_required'}[fault]
+        finally:
+            event.remove(app.owner, 'engine_connect', forbidden)
 
 
 @pytest.mark.parametrize('fault', ['domain', 'field', 'queries', 'deployment', 'adapter',

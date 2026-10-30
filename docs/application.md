@@ -2,7 +2,8 @@
 
 `ApplicationConfig` keeps one explicit manifest, ORM registry, writer inventory,
 search review set and optional SELECT sample set. Reuse it for initialization,
-Doctor, protection planning and runtime attachment. It contains no engine,
+Doctor, protection planning/application, runtime attachment and verified removal.
+It contains no engine,
 credentials, keyring, deployment pin or maintenance approval.
 
 Use [compatibility](compatibility.md) to choose protected fields and supported
@@ -88,6 +89,35 @@ objects remain compatible; their optional `declaration=None` does not add this
 intent binding. Query inspection is also available directly through
 `migration.plan(..., queries=(...))`.
 
+## Apply, inspect and resume
+
+Use the same configuration and the host's current plan/pin:
+
+```python
+progress = protection.apply(
+    owner_engine,
+    deployment=(plan, prepared_pin),
+    keys=tenant_keys,
+    approval=maintenance_approval,
+)
+observed = protection.status(owner_engine, deployment=(plan, prepared_pin))
+```
+
+`apply` uses the existing protection executor and defaults to `PENDING`, with
+writers still stopped. Repeating it with the same operation and current host pin
+resumes committed progress. `chunk_size` retains the existing bounds. After the
+host publishes its matching `ACTIVATING` pin, an explicit `until="ACTIVE"` call
+finishes activation. The configuration never creates or publishes a pin.
+Online capture, rotations and tenant provisioning retain their dedicated
+[lifecycle procedures](lifecycle.md); this method does not choose an executor for them.
+
+`status` reads protection or decrypt-back progress without keys or writes. It
+checks recorded metadata, not current cryptographic values or provider readiness;
+its verification field remains `NOT_PERFORMED`. Status cannot authorize publication.
+For an adopted source, status accepts `(plan, active_pin, restore_binding)`.
+Protection apply accepts only `(plan, pin)`; it cannot resume the original
+migration on a restored target by silently ignoring the restore binding.
+
 ## Attach the application
 
 After the [protection transition and host publication](walkthrough-migration.md)
@@ -116,7 +146,65 @@ behavior. Unsupported adapter names refuse. An adopted target can supply the
 existing `(plan, active_pin, restore_binding)` tuple; the normal restore authority
 checks remain mandatory.
 
+## Decrypt current values and remove protection
+
+```python
+reverse = protection.plan_deprotection(
+    owner_engine,
+    deployment=(plan, active_pin),
+    keys=tenant_keys,
+    plaintext_runtime_role=approved_plaintext_role,
+    backfill_rows_per_second=measured_backfill_rate,
+    verify_rows_per_second=measured_verify_rate,
+    temporary_bytes_per_row=measured_temporary_cost,
+    wal_bytes_per_row=measured_wal_cost,
+)
+progress = protection.decrypt_back(
+    owner_engine,
+    deployment=(reverse, reverse_prepared_pin),
+    keys=tenant_keys,
+    approval=maintenance_approval,
+    consent=plaintext_approval,
+)
+```
+
+Reverse planning is read-only and grants no plaintext consent. For an adopted
+source, pass its third `restore_binding` value during planning; the reverse
+artifact retains that binding. `decrypt_back` restores authenticated **current**
+values, including edits since protection, and defaults to `PLAINTEXT_PENDING`.
+It can resume the same operation. Plaintext staging/WAL/backup exposure requires
+the explicit `PlaintextApproval`. The host must publish the matching
+`PLAINTEXT_ACTIVATING` pin before `until="PLAINTEXT_ACTIVE"` can finish activation.
+
+After verifying the ordinary application and retained recovery obligations:
+
+```python
+removed = protection.remove(
+    owner_engine,
+    deployment=(reverse, removing_pin),
+    approval=maintenance_approval,
+    consent=plaintext_approval,
+    removal=removal_approval,
+)
+```
+
+`remove` requires the existing `RemovalApproval`, plaintext-active database state
+and `REMOVING` host pin. It retires eligible database objects and verifies native
+metadata. It does not uninstall the package, destroy keys or delete backups.
+Package removal follows the [complete removal procedure](lifecycle.md#deprotect-and-remove).
+`status(owner_engine, deployment=(reverse, removed_pin))` can inspect the terminal
+state; unavailable retired progress counters remain `None`.
+
+All these methods compare the configuration's canonical manifest and writer/search
+evidence to the trusted plan before database or key access. Reverse operations
+compare against the original protected source. A wrong plan type or configuration
+drift raises `ConfigurationInvalid`; pin, approval, schema, key and integrity
+failures retain the underlying typed lifecycle errors. No method invents authority
+or creates a second transition state machine.
+
 This shared configuration reduces repeated setup. Tenant authentication, provider
 credentials, deployment publication, writer exclusion, plaintext-removal consent
-and retained-backup ownership remain explicit host responsibilities. Other lifecycle
-commands retain their [approved context inputs](host-contexts.md).
+and retained-backup ownership remain explicit host responsibilities. CLI lifecycle
+commands retain their [approved context inputs](host-contexts.md). Direct lifecycle
+methods use a synchronous owner engine, including for applications whose runtime
+attachment is asynchronous; engine ownership stays with the caller.
