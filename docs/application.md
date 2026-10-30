@@ -2,7 +2,8 @@
 
 `ApplicationConfig` keeps one explicit manifest, ORM registry, writer inventory,
 search review set and optional SELECT sample set. Reuse it for initialization,
-Doctor, protection planning/application, runtime attachment, three rotations and verified removal.
+Doctor, protection planning/application, online capture, tenant onboarding,
+runtime attachment, three rotations and verified removal.
 It contains no engine,
 credentials, keyring, deployment pin or maintenance approval.
 
@@ -108,8 +109,9 @@ writers still stopped. Repeating it with the same operation and current host pin
 resumes committed progress. `chunk_size` retains the existing bounds. After the
 host publishes its matching `ACTIVATING` pin, an explicit `until="ACTIVE"` call
 finishes activation. The configuration never creates or publishes a pin.
-Online capture, rotations and tenant provisioning retain their dedicated
-[lifecycle procedures](lifecycle.md); this method does not choose an executor for them.
+Online capture, rotations and tenant preparation use the explicit methods below;
+`apply(..., until="ACTIVE")` activates their sealed or published successors under
+the matching host pin. It never chooses a preparation executor implicitly.
 
 `status` reads protection or decrypt-back progress without keys or writes. It
 checks recorded metadata, not current cryptographic values or provider readiness;
@@ -117,6 +119,88 @@ its verification field remains `NOT_PERFORMED`. Status cannot authorize publicat
 For an adopted source, status accepts `(plan, active_pin, restore_binding)`.
 Protection apply accepts only `(plan, pin)`; it cannot resume the original
 migration on a restored target by silently ignoring the restore binding.
+
+## Protect while native writers continue
+
+`plan_online` uses the same declaration, mapping, writer/search evidence and query
+samples as ordinary planning. Supply the ordinary four measured cost/rate inputs,
+`keys`, `runtime_role`, `target_id`, and the separate native `source_role`.
+`native_tenants=None` selects the existing fixed-scope contract. An explicit tuple
+of approved UUIDs selects bounded tenant-scoped capture, including empty approved
+scopes. The host supplies custody for every approved scope; future unknown tenants
+are refused. This API defaults `max_rows`/`max_bytes` to 1,000 rows and 64 MiB;
+the executor's existing ceilings remain 5,000 rows and 1 GiB.
+
+```python
+capture = protection.plan_online(
+    owner_engine, source_role=native_writer_role,
+    native_tenants=approved_native_tenants, **planning_authority,
+)
+progress = protection.capture_online(
+    owner_engine, deployment=(capture, capture_pin), keys=tenant_keys,
+    approval=online_approval, max_chunks=10,
+)
+```
+
+Here `planning_authority` contains the explicit inputs listed above, and
+`online_approval` is the existing `OnlineApproval`: owner/DDL writer exclusion,
+plaintext-capture consent and an approved pause bound. Native values remain
+authoritative while capture runs. Repeating `capture_online` resumes committed
+chunks. `status` accepts `(capture, pin)` and remains key-free.
+
+Before cutover, use `capture_online(..., fence=True)` to install the durable
+native-writer fence, then finish bounded catch-up with further calls. An empty
+backlog alone does not authorize switching. `seal_online` verifies current values
+and returns an immutable successor for the host to retain. `switch_online` takes
+the same capture deployment and the exact `successor`; it verifies again and
+transfers access, leaving protection PENDING. Publish the matching successor pin,
+then use `apply(..., until="ACTIVE")` and attach a fresh runtime engine.
+
+All execution calls retain `keys` and `approval`; `abort_online` needs only the
+capture deployment and approval. It preserves native edits and removes eligible
+capture/shadow state before cutover. It cannot undo an active protected deployment.
+`workers` and `target_chunk_seconds` forward the existing optional bounded worker
+controls; thread-safe host custody is required for multiple workers. These methods
+do not supply production fencing or a verified downtime bound. The
+[online lifecycle contract](lifecycle.md) remains authoritative.
+
+## Add an approved empty tenant
+
+Use `plan_tenant` against the ACTIVE source deployment with the approved typed
+`tenant_id`, its `key_policy` Keyring, existing `keys` and a measured
+`verify_rows_per_second`. A restored source may include its explicit third tuple
+element, the restore binding. This is maintenance onboarding of an empty scope,
+not automatic authorization of a signup request or tenant moves during capture.
+
+```python
+proposal = protection.plan_tenant(
+    owner_engine, deployment=(source, active_pin), keys=tenant_keys,
+    tenant_id=approved_tenant_id, key_policy=approved_tenant_keyring,
+    verify_rows_per_second=measured_verify_rate,
+)
+successor = proposal.activation_plan  # Retain before publication or effects.
+progress = protection.provision_tenant(
+    owner_engine, proposal=proposal, deployment=(successor, prepared_pin),
+    keys=tenant_keys, approval=maintenance_approval,
+)
+```
+
+The exact successor must match the proposal. Preparation fences writers and
+preserves ciphertext while leaving publication PENDING. `status` observes that
+successor; `apply(..., until="ACTIVE")` uses its matching ACTIVATING pin. Retire
+the old attached engine/factory and restart with a fresh registry and engine bound
+to the new policy; new attachments refuse a stale deployment pin. Existing workers retain their
+original authority until the host drains/stops them; automatic cross-process
+fencing is not supplied. No attachment is silently upgraded.
+After removal, restart with ordinary native mappings as well; an attached registry
+is not converted back into a plaintext application mapping in place.
+
+Before activation, `abort_tenant` accepts the proposal, republished source ACTIVE
+deployment, source `keys` and maintenance approval. It does not require the
+unpublished tenant's custody. Existing nonempty scopes, wrong contexts/pins,
+stale data, changed intent and missing authority refuse. The
+[tenant maintenance contract](lifecycle.md#add-an-empty-tenant-policy-under-maintenance)
+defines the full verification and retained-custody limits.
 
 ## Attach the application
 

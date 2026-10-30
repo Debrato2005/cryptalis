@@ -172,7 +172,10 @@ still disposes the owned engine. Legacy contexts default to no declaration bindi
 
 Direct Python [rotation methods](application.md#rotate-keys-and-change-custody)
 reuse this intent with explicit source/target policies and host deployment pins.
-The CLI contexts above retain their existing separate authority inputs.
+The [online capture and tenant methods](application.md#protect-while-native-writers-continue)
+share the same intent while retaining source/target roles, approved tenant scopes
+and separate capture/maintenance/publication authority. The CLI contexts above
+retain their existing separate authority inputs.
 
 Planning inspects any supplied queries against the compiled lock before resolving
 key policies. Invalid sample containers and incompatible samples refuse with typed

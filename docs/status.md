@@ -6,32 +6,33 @@ Use the [documentation map](README.md) to find contracts and procedures.
 
 ## Current complete CI qualification
 
-**VERIFIED at `ccf7d12858e9e6d8e9ee23b2e1dd17788bbf9cba`:** GitHub
-[run 41014333321](https://github.com/Debrato2005/cryptalis/actions/runs/41014333321)
+**VERIFIED at `a2d8230a72c2c19b0ab3006b0a38cf28cc47df84`:** GitHub
+[run 41018215391](https://github.com/Debrato2005/cryptalis/actions/runs/41018215391)
 passes both Source / PostgreSQL 16 and Reproducible artifacts / installed recovery.
-The [retained CI boundary](_reset/github-application-rotations-boundary-20261030.json)
+The [retained CI boundary](_reset/github-openbao-audit-boundary-20261030.json)
 contains verified GitHub archive digests and the actual source/installed receipts.
 
-The complete default source run passes 3,254 test calls and eighteen subtests.
-Twelve call skips, 73 setup skips and seventeen collection skips remain explicit;
-all 3,339 selected items complete. All 287 Python hashes match the recorded checkout,
+The complete default source run passes 3,255 test calls and eighteen subtests.
+Twelve call skips, 76 setup skips and seventeen collection skips remain explicit;
+all 3,343 selected items complete. All 287 Python hashes match the recorded checkout,
 and source/imported-runtime stability passes. The original source-role fixture
 failure at `2d53867` remains fixed; no skipped cell is treated as qualified.
 
-The installed wheel passes 105 ORM/configuration controls, 50 Google SDK and 115 OpenBao/provider
+The installed wheel passes 105 ORM/configuration controls, 50 Google SDK and 119 OpenBao/provider
 checks, two exports and three genuine fresh PostgreSQL recovery checks. Local and GitHub
 wheel/sdist hashes are identical. Repeat archives, SBOM, installed-file inspection
 and dependency consistency pass. The frozen audit reports 39 packages, zero known
 vulnerabilities and zero adverse statuses; this is not proof of absence of unknown
 vulnerabilities or independent review. Earlier CI is retained in
-[history](history/implementation-2026-10.md#complete-ci-at-743b5e9-2026-10-30).
+[history](history/implementation-2026-10.md#complete-ci-at-7e7d1c5-2026-10-30).
 The separate explicit performance profile below fails latency targets; a green
 default CI run does not qualify performance.
 
 Documentation consolidation is `26e882b`; shared init/Doctor is `15ffdb3` and
 shared application configuration is `09c635a`; lifecycle integration is `b92cfc7`.
 Google KMS is `bda4fb3`; AppRole is `743b5e9`; shared rotations are `ccf7d12`.
-The subsequent Doctor authentication diagnostic has a separate local boundary.
+Doctor authentication diagnostics are `7e7d1c5`; native audit is `a2d8230`.
+The subsequent online configuration extension has a separate local boundary.
 
 The 34-objective [ledger](BUILD_CHECKLIST.md#objective-ledger) retains seven
 bounded VERIFIED entries, 23 PARTIAL entries, one SPECIFIED, one BLOCKED, one
@@ -81,6 +82,24 @@ pin-code assertions, two service test timing failures and an omitted restore
 prerequisite remain archived with corrections. A separate 45s source Doctor startup
 timeout has no established cause; its isolated rerun is retained separately. The final source and installed
 checks pass. Complete remote CI above also verifies this extension; all gates stay UNKNOWN.
+
+The subsequent [online/tenant boundary](_reset/application-online-boundary-20261030.json)
+extends that same configuration through native capture, key-free progress,
+fencing/catch-up, sealing/switching, pre-cutover cancellation and approved empty
+scope publication/cancellation. Committed chunks survive custody failure; current
+native edits and NULLs survive capture, protected edits and verified removal.
+The real AppRole/OpenBao journey also verifies equality/IN and tenant uniqueness.
+
+Verification passes nine focused source checks, 65 surrounding regressions with
+two explicit skips, 120 native provider checks, 114 installed application checks,
+50 Google checks, two exports and three fresh-restore checks. All 288 Python
+hashes and runtime bytes are stable; repeat artifacts, SBOM and installation pass.
+Four failed source runs retain incorrect fixture assumptions about pending guards,
+error types, repeated attachment and old-worker queries. The final journey uses
+stale-pin startup refusal and fresh native mappings after removal. Existing
+workers still require host drain/restart; no automatic process fencing is claimed.
+The two regression skips require a separate restore target and pre-provisioning
+reader. Complete remote CI still covers the preceding audit boundary.
 
 ## Google Cloud KMS SDK boundary
 
@@ -135,12 +154,12 @@ and caller leases unchanged. Local verification passes 76 source checks, 105
 installed application checks, 50 Google checks, 117 OpenBao/provider checks, two
 exports and three fresh-restore checks. All 287 Python hashes and runtime bytes
 are stable; repeat artifacts and installation checks pass. Native AppRole refusal
-and subsequent recovery are exercised. Complete remote CI still covers the
-earlier boundary; this does not establish production audit or custody.
+and subsequent recovery are exercised. Complete remote CI above also verifies
+this boundary; it does not establish production audit or custody.
 
 ## Native OpenBao audit boundary
 
-**VERIFIED locally, source and installed wheel:** the isolated runner configures
+**VERIFIED locally and in complete GitHub CI:** the isolated runner configures
 native file audit without unsafe API creation. The [audit boundary](_reset/openbao-audit-boundary-20261030.json)
 records 119 passing real OpenBao/provider checks, 105 installed application
 checks, 50 Google checks, two exports and three fresh-restore checks. Native
@@ -159,8 +178,8 @@ Raw audit records, service logs, credentials and snapshots remain private. This
 single-file boundary does not qualify external shipping, redundant sinks,
 disk exhaustion, all-sink failure, production audit custody or HA. Native
 unaudited paths and visible metadata remain explicit in the
-[procedure](openbao.md#native-audit-configuration). Complete remote CI still
-covers the earlier boundary. All production gates remain UNKNOWN.
+[procedure](openbao.md#native-audit-configuration). Complete remote CI above also
+verifies this boundary. All production gates remain UNKNOWN.
 
 ## Current performance boundary
 
@@ -185,7 +204,7 @@ records limits. Performance acceptance remains open.
 
 | Area | Implemented boundary | Contract / instructions |
 |---|---|---|
-| Application setup | One key-free configuration for diagnosis, planning, protection, three rotations, attachment and current-value removal | [Application configuration](application.md) |
+| Application setup | One key-free configuration for diagnosis, protection/capture, tenant onboarding, rotations, attachment and removal | [Application configuration](application.md) |
 | Manifest | Bounded JSON declaration, mapping/schema validation, generated locks and semantic diff | [Manifest](manifest.md) |
 | Crypto | CF1 AES-256-GCM-SIV, random nonces, HKDF, independent HMAC search roots and authenticated context | [Security](security.md) |
 | ORM/search | Bounded sync/async SQLAlchemy and optional SQLModel; exact/IN/uniqueness and explicitly admitted forms | [Compatibility matrix](compatibility.md#full-capability-matrix) |

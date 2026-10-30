@@ -6901,3 +6901,62 @@ Documentation consolidation is `26e882b`; shared init/Doctor is `15ffdb3` and
 shared application configuration is `09c635a`; lifecycle integration is `b92cfc7`.
 Google KMS is `bda4fb3`; AppRole is `743b5e9`. The later shared rotation API
 below has a separate local verification boundary.
+
+## Complete CI at ccf7d12: 2026-10-30
+
+**VERIFIED at `ccf7d12858e9e6d8e9ee23b2e1dd17788bbf9cba`:** GitHub
+[run 41014333321](https://github.com/Debrato2005/cryptalis/actions/runs/41014333321)
+passes both Source / PostgreSQL 16 and Reproducible artifacts / installed recovery.
+The [retained CI boundary](../_reset/github-application-rotations-boundary-20261030.json)
+contains verified GitHub archive digests and the actual source/installed receipts.
+
+The complete default source run passes 3,254 test calls and eighteen subtests.
+Twelve call skips, 73 setup skips and seventeen collection skips remain explicit;
+all 3,339 selected items complete. All 287 Python hashes match the recorded checkout,
+and source/imported-runtime stability passes. The original source-role fixture
+failure at `2d53867` remains fixed; no skipped cell is treated as qualified.
+
+The installed wheel passes 105 ORM/configuration controls, 50 Google SDK and 115 OpenBao/provider
+checks, two exports and three genuine fresh PostgreSQL recovery checks. Local and GitHub
+wheel/sdist hashes are identical. Repeat archives, SBOM, installed-file inspection
+and dependency consistency pass. The frozen audit reports 39 packages, zero known
+vulnerabilities and zero adverse statuses; this is not proof of absence of unknown
+vulnerabilities or independent review. Earlier CI is retained in
+[history](implementation-2026-10.md#complete-ci-at-743b5e9-2026-10-30).
+The separate explicit performance profile below fails latency targets; a green
+default CI run does not qualify performance.
+
+Documentation consolidation is `26e882b`; shared init/Doctor is `15ffdb3` and
+shared application configuration is `09c635a`; lifecycle integration is `b92cfc7`.
+Google KMS is `bda4fb3`; AppRole is `743b5e9`; shared rotations are `ccf7d12`.
+The subsequent Doctor authentication diagnostic has a separate local boundary.
+
+## Complete CI at 7e7d1c5: 2026-10-30
+
+**VERIFIED at `7e7d1c5a46195a4f97e8b57825f3c096af0446e3`:** GitHub
+[run 41016345855](https://github.com/Debrato2005/cryptalis/actions/runs/41016345855)
+passes both Source / PostgreSQL 16 and Reproducible artifacts / installed recovery.
+The [retained CI boundary](../_reset/github-doctor-authentication-boundary-20261030.json)
+contains verified GitHub archive digests and the actual source/installed receipts.
+
+The complete default source run passes 3,255 test calls and eighteen subtests.
+Twelve call skips, 74 setup skips and seventeen collection skips remain explicit;
+all 3,341 selected items complete. All 287 Python hashes match the recorded checkout,
+and source/imported-runtime stability passes. The original source-role fixture
+failure at `2d53867` remains fixed; no skipped cell is treated as qualified.
+
+The installed wheel passes 105 ORM/configuration controls, 50 Google SDK and 117 OpenBao/provider
+checks, two exports and three genuine fresh PostgreSQL recovery checks. Local and GitHub
+wheel/sdist hashes are identical. Repeat archives, SBOM, installed-file inspection
+and dependency consistency pass. The frozen audit reports 39 packages, zero known
+vulnerabilities and zero adverse statuses; this is not proof of absence of unknown
+vulnerabilities or independent review. Earlier CI is retained in
+[history](implementation-2026-10.md#complete-ci-at-ccf7d12-2026-10-30).
+The separate explicit performance profile below fails latency targets; a green
+default CI run does not qualify performance.
+
+Documentation consolidation is `26e882b`; shared init/Doctor is `15ffdb3` and
+shared application configuration is `09c635a`; lifecycle integration is `b92cfc7`.
+Google KMS is `bda4fb3`; AppRole is `743b5e9`; shared rotations are `ccf7d12`.
+Doctor authentication diagnostics are `7e7d1c5`. Native audit at `a2d8230` and
+the subsequent online configuration extension have separate local boundaries.

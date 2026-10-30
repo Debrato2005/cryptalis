@@ -27,6 +27,11 @@ Rollback, deprotect, search changes, and key transformations reuse this path.
 
 ## Bounded online initial protection
 
+[ApplicationConfig](application.md#protect-while-native-writers-continue) binds the
+online planner, capture/status, sealing/switching and cancellation to the same
+manifest and evidence used by attachment. It delegates to the existing executor
+and retains the explicit role, tenant and publication boundaries below.
+
 The [authenticated tenant HTTP journey](history/implementation-2026-10.md#verified-continuation-checkpoint-2026-10-28)
 extends local P2 evidence to an unchanged original application's approved owner
 cohort. Source and actual-wheel runs stop the source cluster before initializing
@@ -172,6 +177,10 @@ for protection and attachment. It delegates to the executors below and retains
 their separate staging, external publication and cancellation authority.
 
 ### Add an empty tenant policy under maintenance
+
+The shared [tenant API](application.md#add-an-approved-empty-tenant) binds planning,
+preparation and source-only cancellation to one manifest. Successor activation
+uses the existing shared `apply` method and the matching external pin.
 
 `cryptalis.tenancy.plan` accepts an ACTIVE source and actual source pin, an exact
 new UUID and host-held Keyring, declared source keys and a verification rate.

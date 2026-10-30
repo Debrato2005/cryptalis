@@ -101,8 +101,11 @@ class ApplicationConfig:
                      chunk_size=chunk_size, until=until)
 
     def status(self, engine, *, deployment):
-        """Observe protection, rotation staging or removal without keys or effects."""
-        from . import deprotection, migration, rotation
+        """Observe protection, online capture, rotation or removal without keys."""
+        from . import deprotection, migration, online, rotation
+        if type(deployment) is tuple and len(deployment) == 2 and type(deployment[0]) is online.OnlineProtectionPlan:
+            self._online_deployment(deployment)
+            return online.status(deployment[0], engine, pin=deployment[1])
         if (type(deployment) is tuple and len(deployment) == 2
                 and type(deployment[0]) in (rotation.PayloadRotationPlan, rotation.SearchRotationPlan)):
             purpose = self._rotation_deployment(deployment)
@@ -147,6 +150,89 @@ class ApplicationConfig:
         self._deployment(deployment, reverse=True)
         plan, pin = deployment
         return remove(plan, engine, pin=pin, approval=approval, consent=consent, removal=removal)
+
+    def plan_online(self, engine, *, keys, source_role, runtime_role, target_id,
+                    backfill_rows_per_second, verify_rows_per_second,
+                    temporary_bytes_per_row, wal_bytes_per_row,
+                    max_rows=1000, max_bytes=64*1024*1024, native_tenants=None):
+        """Plan bounded native-write capture with explicit roles and tenant scopes."""
+        from .online import plan
+        return plan(self.manifest, self.mapping, engine, writers=self.writers,
+            search_reviews=self.search_reviews, queries=self.queries, keys=keys,
+            source_role=source_role, runtime_role=runtime_role, target_id=target_id,
+            backfill_rows_per_second=backfill_rows_per_second, verify_rows_per_second=verify_rows_per_second,
+            temporary_bytes_per_row=temporary_bytes_per_row, wal_bytes_per_row=wal_bytes_per_row,
+            max_rows=max_rows, max_bytes=max_bytes, native_tenants=native_tenants)
+
+    def capture_online(self, engine, *, deployment, keys, approval, max_chunks=1,
+                       fence=False, workers=1, target_chunk_seconds=None):
+        """Apply/resume bounded capture; an empty backlog does not authorize cutover."""
+        from .online import apply
+        self._online_deployment(deployment)
+        return apply(deployment[0], engine, keys=keys, pin=deployment[1], approval=approval,
+            max_chunks=max_chunks, fence=fence, workers=workers, target_chunk_seconds=target_chunk_seconds)
+
+    def seal_online(self, engine, *, deployment, keys, approval):
+        """Verify fenced current values and return the exact successor to retain."""
+        from .online import seal
+        self._online_deployment(deployment)
+        return seal(deployment[0], engine, keys=keys, pin=deployment[1], approval=approval)
+
+    def switch_online(self, engine, *, deployment, successor, keys, approval):
+        """Transfer native access under capture authority; return the PENDING plan."""
+        from .migration import MigrationPlan
+        from .online import switch
+        self._online_deployment(deployment)
+        if type(successor) is not MigrationPlan:
+            raise ConfigurationInvalid('Application.InvalidDeployment')
+        self._intent(successor)
+        return switch(deployment[0], engine, successor=successor, keys=keys,
+                      pin=deployment[1], approval=approval)
+
+    def abort_online(self, engine, *, deployment, approval):
+        """Remove uncommitted protection/capture while preserving native edits."""
+        from .online import abort
+        self._online_deployment(deployment)
+        return abort(deployment[0], engine, pin=deployment[1], approval=approval)
+
+    def plan_tenant(self, engine, *, deployment, keys, tenant_id, key_policy, verify_rows_per_second):
+        """Plan one explicitly approved empty tenant; never infer signup authority."""
+        from .tenancy import plan
+        self._deployment(deployment, allow_restore=True)
+        source, pin, *restored = deployment
+        return plan(source, engine, source_pin=pin, keys=keys, tenant_id=tenant_id,
+            key_policy=key_policy, verify_rows_per_second=verify_rows_per_second,
+            restore=restored[0] if restored else None)
+
+    def provision_tenant(self, engine, *, proposal, deployment, keys, approval):
+        """Fence writers and retain the exact tenant successor as PENDING."""
+        from .tenancy import apply
+        self._tenant_deployment(proposal, deployment)
+        return apply(proposal, engine, keys=keys, pin=deployment[1], approval=approval)
+
+    def abort_tenant(self, engine, *, proposal, deployment, keys, approval):
+        """Cancel a pending tenant addition under republished source authority."""
+        from .tenancy import abort
+        self._tenant_deployment(proposal, deployment, source=True)
+        return abort(proposal, engine, keys=keys, pin=deployment[1], approval=approval)
+
+    def _online_deployment(self, deployment):
+        from .migration import DeploymentPin
+        from .online import OnlineProtectionPlan
+        if (type(deployment) is not tuple or len(deployment) != 2
+                or type(deployment[0]) is not OnlineProtectionPlan or type(deployment[1]) is not DeploymentPin):
+            raise ConfigurationInvalid('Application.InvalidDeployment')
+        self._intent(deployment[0])
+
+    def _tenant_deployment(self, proposal, deployment, *, source=False):
+        from .tenancy import TenantProvisionPlan
+        if type(proposal) is not TenantProvisionPlan:
+            raise ConfigurationInvalid('Application.InvalidTenantPlan')
+        self._intent(proposal.source)
+        self._deployment(deployment)
+        expected = proposal.source if source else proposal.activation_plan
+        if deployment[0].artifact != expected.artifact:
+            raise ConfigurationInvalid('Application.InvalidDeployment')
 
     def plan_rewrap(self, engine, *, deployment, keys, target_keys, verify_rows_per_second):
         """Plan a custody change with unchanged roots and ciphertext."""
