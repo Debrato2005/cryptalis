@@ -169,6 +169,55 @@ protected audit storage, production disaster recovery or controlled destruction.
 Independent security review and all applicable release gates remain
 required. See [security](security.md#optional-openbao-transit-adapter).
 
+## Native audit configuration
+
+Enable audit devices in the OpenBao server configuration before serving workloads.
+The native service starts without audit by default. Use the
+[declarative audit stanza](https://openbao.org/docs/configuration/audit/); this does
+not require enabling unsafe API audit creation or granting runtime audit privileges.
+For a private file destination:
+
+```hcl
+audit "file" "cryptalis-audit" {
+  options {
+    file_path = "/private/audit/openbao.jsonl"
+    mode = "0600"
+    format = "json"
+    log_raw = "false"
+    hmac_accessor = "true"
+  }
+}
+```
+
+Provision the private directory for the service identity. Keep the same stanza
+on every applicable node; removing it disables the device on reload. Runtime
+credentials need no audit listing, hash, creation or removal permissions. Hash
+comparison through `sys/audit-hash` belongs to a separate authorized investigator.
+Cryptalis does not install or administer production audit devices.
+
+Native HMAC obscures the tested string fields, including root plaintext, wrapping
+context, ciphertext, login credentials, tokens and accessors. It does not make an
+audit record confidential: paths, operations, timing, policy names and numeric
+values remain visible. Native tuning can add exceptions. Protect and retain raw
+records as sensitive material; public qualification receipts exclude them.
+Request IDs join request/response pairs, but do not prove external delivery,
+tamper resistance, complete history or exactly-once effects after a timeout.
+
+The native [audit contract](https://openbao.org/docs/audit/) excludes some endpoints,
+including initialization, sealing/unsealing, health and Raft joining. It recommends
+multiple devices: at least one working nonblocking device can accept an audited
+request, while a blocking device can stall requests. These are native service
+guarantees, not a verified production topology or an instantaneous revocation of
+already cached Cryptalis roots. A single local file does not qualify redundant
+sinks, external shipping, disk exhaustion or all-sink failure behavior.
+
+For [file rotation](https://openbao.org/docs/audit/file/), preserve the old file and
+send SIGHUP so the service reopens its configured path. Do not disable/recreate a
+device to rotate its file: that loses the old device's HMAC comparison identity.
+Native reopen and independent snapshot recovery are exercised by the isolated
+runner; production retention, access control, alerting and audit continuity during
+failover remain host obligations requiring separate evidence.
+
 ## Repeatable local qualification
 
 The Linux qualification runner requires a working local Docker daemon, the
@@ -183,10 +232,10 @@ wrapper before it creates a service. It does not create or substitute PostgreSQL
 
 The work directory must not exist; its parent must exist. The runner creates a
 digest-pinned OpenBao 2.7.2 container, a short-lived private test CA, TLS keys,
-single-node Raft storage and test initialization credentials. It pins a loopback
+single-node Raft storage, private native audit file and test initialization credentials. It pins a loopback
 port across restart, drops container capabilities and uses a read-only container
 root with one private writable mount. It runs the protocol, actual-service,
-concurrency, outage/lease/sealed-restart, independent snapshot recovery and
+concurrency, audit HMAC/correlation/reopen, outage/lease/sealed-restart, independent snapshot recovery and
 PostgreSQL lifecycle checks. A
 passing result requires no skips. Service setup uses a longer timeout than
 runtime key operations; ambiguous initialization failure is not retried.
@@ -201,7 +250,7 @@ retained for inspection; no automatic key deletion is performed. The report
 records cleanup failures even when another failure occurred first. Only
 `tests.json` and `qualification.json` are public evidence candidates. Never
 upload the complete work directory, initialization JSON, TLS private key,
-service logs or database credentials. The single-share test unseal arrangement
+service logs, raw audit records or database credentials. The single-share test unseal arrangement
 is unsuitable for production.
 
 The snapshot drill creates a second instance with new TLS credentials and empty

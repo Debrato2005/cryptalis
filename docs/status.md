@@ -138,6 +138,30 @@ are stable; repeat artifacts and installation checks pass. Native AppRole refusa
 and subsequent recovery are exercised. Complete remote CI still covers the
 earlier boundary; this does not establish production audit or custody.
 
+## Native OpenBao audit boundary
+
+**VERIFIED locally, source and installed wheel:** the isolated runner configures
+native file audit without unsafe API creation. The [audit boundary](_reset/openbao-audit-boundary-20261030.json)
+records 119 passing real OpenBao/provider checks, 105 installed application
+checks, 50 Google checks, two exports and three fresh-restore checks. Native
+hash comparisons verify credential/root/context/wrapper fields, request IDs,
+visible metadata and runtime audit-administration denial. File reopen preserves
+history and hash identity. Independent snapshot recovery retains the device salt,
+produces target audit records and leaves stopped-source records unchanged.
+
+All 287 Python hashes and imported runtime bytes remain stable. Repeat artifacts,
+SBOM, installed-file inspection and dependency consistency pass. The initial
+incorrect audit field assertion and premature request before writable Raft
+leadership remain retained; the harness now waits for explicit native health and
+leader readiness after unseal. Runtime provider retries remain disabled.
+
+Raw audit records, service logs, credentials and snapshots remain private. This
+single-file boundary does not qualify external shipping, redundant sinks,
+disk exhaustion, all-sink failure, production audit custody or HA. Native
+unaudited paths and visible metadata remain explicit in the
+[procedure](openbao.md#native-audit-configuration). Complete remote CI still
+covers the earlier boundary. All production gates remain UNKNOWN.
+
 ## Current performance boundary
 
 Further optimization is deferred until functional objectives are implemented,
