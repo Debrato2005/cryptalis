@@ -648,7 +648,18 @@ def test_restored_cluster_completes_adopted_lifecycle(tmp_path, monkeypatch, cap
     observed = _run_cli(*doctor_arguments(paths), '--restore-binding', str(binding_path))
     assert observed.returncode == 0 and observed.stderr == ''
     checks(json.loads(observed.stdout), 'PASS')
-    sessions = attach(mapping, runtime, lock=source.lock_bytes, keys=keys, deployment=(source, pin, binding))
+    # Original host facts come from the retained, host-pinned source artifact.
+    # Shared configuration must preserve the existing independent restore authority.
+    from cryptalis.application import ApplicationConfig
+    from cryptalis.manifest.compiler import SearchReview, Writer, WriterInventory
+    locked = source.document['lock']
+    configuration = ApplicationConfig(manifest=_canonical(locked['declaration']), mapping=mapping,
+        writers=WriterInventory(locked['writer_inventory']['complete'], tuple(
+            Writer(uuid.UUID(w['table_id']), w['name'], w['route'], w['excluded'], w['evidence'])
+            for w in locked['writer_inventory']['writers'])),
+        search_reviews=tuple(SearchReview(uuid.UUID(review['field_id']), review['small_domain'], review['evidence'])
+                             for review in locked['search_reviews']))
+    sessions = configuration.attach(runtime, keys=keys, deployment=(source, pin, binding))
     with sessions(tenant_id=TENANT) as session:
         observed = {str(row.id): [str(row.tenant_id), row.name] for row in session.scalars(select(Customer))}
         found = [row.id for row in session.scalars(

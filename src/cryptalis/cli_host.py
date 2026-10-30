@@ -32,6 +32,8 @@ class PlanningContext:
     verify_rows_per_second: float
     temporary_bytes_per_row: int
     wal_bytes_per_row: int
+    declaration: bytes | None = None
+    queries: tuple = ()
 
 
 @dataclass(frozen=True, repr=False)

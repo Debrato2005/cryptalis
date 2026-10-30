@@ -671,6 +671,21 @@ unknown host-code effects and Doctor's tuple remain unchanged. See the
 [verified checkpoint](history/implementation-2026-10.md#operational-cli-search-rotation-2026-10-24).
 Source and installed genuine adopted-target verification pass.
 
+### Shared application intent
+
+`ApplicationConfig` stores only canonical declaration and host-supplied mapping,
+writer/search evidence and optional SELECT samples. It stores no keys or operation
+authority. Its runtime attachment requires a supplied plan/pin and compares the
+manifest and current writer/search evidence before connecting or invoking a key
+resolver; incomplete or changed evidence refuses. Existing target, schema,
+logging, tenant and restore checks still apply. Its planning context similarly
+binds the CLI input declaration. No pin, scope, approval or provider is inferred.
+
+Supplied planning queries use the same structural admission as Doctor before
+key-policy resolution. Incompatible or unobserved admission blocks planning;
+values are not executed or reported. This does not prove full application-route
+coverage. Host factories and the application's ORM registry remain trusted code.
+
 ### Initialization CLI trust boundary
 
 **IMPLEMENTED, bounded source and installed verification:** declaration bytes are explicit public host input.

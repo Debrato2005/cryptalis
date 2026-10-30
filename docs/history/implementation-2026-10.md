@@ -6686,3 +6686,18 @@ cold-provider Doctor and independent snapshot recovery are committed and pushed.
 The subsequent documentation consolidation is `26e882b`. The shared-host
 implementation below changes executable code and has its own verification boundary.
 Earlier interrupted/cancelled runs remain incomplete evidence.
+
+## Shared initialization and Doctor context
+
+**VERIFIED locally, current source and installed wheel:** one key-free
+`InitializationContext` now serves both `init` and `doctor --initialization-context`.
+Optional SELECT samples are structurally admitted without execution. Doctor writes
+no artifact; init refuses publication for a failed sample. Invalid/conflicting
+inputs, unsafe engines, inspection failure, cleanup and output failure stay visible.
+
+The [retained boundary](../_reset/shared-host-boundary-20261030.json) binds 160 focused
+source checks, 63 installed ORM/init/Doctor checks, 69 real OpenBao/provider checks,
+and one genuine PostgreSQL export plus one fresh-target recovery. Repeat archives,
+SBOM, installed files and dependency consistency pass. The first source attempt's
+new test assertion failure is retained with the correction. The complete GitHub
+source run above additionally verifies this implementation. No production gate changes.

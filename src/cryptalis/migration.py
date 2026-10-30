@@ -655,7 +655,7 @@ def _with_row_keys(keys, tenant, p, material, operation):
 
 def plan(manifest, mapping, engine, *, writers, search_reviews=(), keys, runtime_role,
          target_id, backfill_rows_per_second, verify_rows_per_second,
-         temporary_bytes_per_row=None, wal_bytes_per_row=None, layout=None):
+         temporary_bytes_per_row=None, wal_bytes_per_row=None, layout=None, queries=()):
     """Read-only compiler admission plus target, keys, scope, and cost estimates.
 
     Rates and per-row costs are explicit host observations/estimates, not
@@ -666,7 +666,16 @@ def plan(manifest, mapping, engine, *, writers, search_reviews=(), keys, runtime
     rates = (backfill_rows_per_second, verify_rows_per_second)
     if any(not _finite_number(r) or r <= 0 for r in rates):
         raise TransitionFailure('missing_measured_rates')
+    if type(queries) is not tuple or len(queries) > 128:
+        raise TransitionFailure('invalid_query_samples')
     proposal = compile_protection(manifest, mapping, engine, writers=writers, search_reviews=search_reviews, layout=layout)
+    if queries:
+        from cryptalis.doctor import _query_samples
+        report = {'status': 'UNKNOWN', 'checks': {'query_routes': 'UNKNOWN'}, 'issues': []}
+        _query_samples(report, proposal, mapping, engine, queries)
+        outcome = report['checks']['query_samples']
+        if outcome != 'PASS':
+            raise TransitionFailure('query_samples_incompatible' if outcome == 'FAIL' else 'query_inspection_unavailable')
     if any(type(cost) is not int or not 1<=cost<2**53 for cost in (temporary_bytes_per_row,wal_bytes_per_row)):
         raise TransitionFailure('missing_measured_storage_or_wal_costs')
     lock = json.loads(proposal.lock_bytes)

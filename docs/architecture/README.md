@@ -34,7 +34,7 @@ unsupported expressions fail before effects.
 | ORM adapter | `sqlalchemy.py`, `_sqlalchemy_*.py`, `sqlmodel.py`: prepared row context, guarded writes, admitted query mapping and authenticated results; [compatibility](../compatibility.md) |
 | Crypto and providers | `crypto/`: typed CF1, HKDF/HMAC, exact admitted roots, provider wrap/unwrap and bounded process caches; [security](../security.md) |
 | Transition engine | `migration.py`, `rotation.py`, `deprotection.py`, `_online.py`: plan, chunk, verify, switch, publication admission and current-data exit; [lifecycle](../lifecycle.md) |
-| Public orchestration | `cli.py`, `_cli_operations.py`, `cli_host.py`, `doctor.py`: reuse the same underlying checks with explicit host inputs |
+| Public orchestration | `application.py`, `cli.py`, `_cli_operations.py`, `cli_host.py`, `doctor.py`: reuse the same underlying checks with explicit host inputs |
 
 PostgreSQL supplies transactions, native constraints, indexes and cooperating
 locks. Providers supply root custody. The host supplies tenant authentication,
@@ -100,6 +100,11 @@ class is required. See [security](../security.md#cryptographic-format) for CF1 a
 [lifecycle](../lifecycle.md) for schema conversion, rotation and verified removal.
 
 ## Public surface
+
+[ApplicationConfig](../application.md) shares key-free declaration facts across
+initialization, diagnosis, planning and attachment while requiring explicit
+operation authority. Attachment obtains its lock from the supplied trusted plan
+and rejects manifest disagreement before database/key access.
 
 The current CLI is authoritative through `cryptalis --help`. Use the
 [operator walkthrough](../walkthrough-migration.md) for init, planning, apply,

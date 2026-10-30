@@ -119,7 +119,7 @@ class Qualification:
                 '--receipt', str(self.workdir / 'installed-sqlmodel-receipt.json'), '--',
                 'tests/test_sqlmodel_bridge.py', 'tests/test_sqlmodel_async.py',
                 'tests/test_single_tenant_update.py', 'tests/test_single_tenant_delete.py',
-                'tests/test_initialization_cli.py', '-q'],
+                'tests/test_initialization_cli.py', 'tests/test_application_config.py', '-q'],
                 environment=environment)
             receipt = json.loads((self.workdir / 'installed-sqlmodel-receipt.json').read_text())
             if (receipt['exit_code'] != 0 or receipt['counts'].get('passed', 0) == 0
