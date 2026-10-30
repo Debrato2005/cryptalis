@@ -160,7 +160,9 @@ class Qualification:
                 'tests/test_initialization_cli.py', 'tests/test_application_config.py',
                 'tests/test_application_rotation.py', 'tests/test_application_online.py',
                 'tests/test_point_update_returning.py', 'tests/test_point_update_returning_more.py',
-                'tests/test_point_update_returning_boundary.py', '-q'],
+                'tests/test_point_update_returning_boundary.py', 'tests/test_point_delete_returning.py',
+                'tests/test_point_delete_returning_more.py', 'tests/test_point_delete_returning_boundary.py',
+                'tests/test_uuid_point_boundary.py', '-q'],
                 environment=environment)
             receipt = json.loads((self.workdir / 'installed-sqlmodel-receipt.json').read_text())
             if (receipt['exit_code'] != 0 or receipt['counts'].get('passed', 0) == 0

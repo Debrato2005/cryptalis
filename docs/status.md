@@ -4,6 +4,18 @@ Cryptalis implements a bounded research prototype. **No production release or co
 This page owns current verification and release gates; the [34-objective ledger](BUILD_CHECKLIST.md) owns remaining work.
 Use the [documentation map](README.md) to find contracts and procedures.
 
+**Latest hosted run: FAIL at `95a35a5`.**
+[Run 41044177765](https://github.com/Debrato2005/cryptalis/actions/runs/41044177765)
+passes installed qualification but fails fifteen UUID result-boundary cases:
+the test fixture constructs an incomplete operation object. The
+[retained failure](_reset/github-point-update-returning-failed-boundary-20261030.json)
+records 3,368 passing calls, eighteen subtests and the explicit failures/skips.
+The fixture now uses the real operation defaults and all 24 boundary checks
+enter installed CI. The [local repair boundary](_reset/point-delete-returning-ci-fix-boundary-20261030.json)
+passes 67 source controls and 264 installed application controls, with final
+provider/recovery checks passing. A subsequent full hosted run remains required;
+the last complete passing run is below.
+
 ## Current complete CI qualification
 
 **VERIFIED at `b01d66599456583520ed3a0b73822907c07ec70d`:** GitHub
@@ -47,6 +59,37 @@ identity/audit/HA, combined disaster drills, and performance acceptance.
 Independent human review remains unavailable; selected live cloud cells need
 authorized accounts. All 34 objectives stay in scope and all seven production
 gates remain UNKNOWN.
+
+## Single-record DELETE RETURNING
+
+**VERIFIED locally, source and installed wheel:** the
+[retained boundary](_reset/point-delete-returning-boundary-20261030.json) records
+307 affected PostgreSQL checks passing, including
+43 new native-oracle and failure controls for
+scalar/tuple/entity DELETE RETURNING, sync/async and SQLModel, fixed tenancy,
+typed values, signed record IDs, NULLs, identity state, foreign-key failures,
+savepoint recovery and current-value removal. Provider callbacks and final
+driver mutation refuse before DELETE; corrupt results, wrong context, missing
+row identity and expired keys refuse plaintext release and require rollback.
+All 300 Python hashes and runtime bytes remain stable during each run. Between
+the combined source run and final installed run, the only change corrects the
+`attach()` docstring; the exact replacement and diff are retained.
+
+The final wheel after the [CI fixture repair](_reset/point-delete-returning-ci-fix-boundary-20261030.json)
+passes 264 application controls, 15 Doctor checks, 50 Google
+adapter checks, 146 OpenBao/provider checks, two exports and three genuine fresh
+PostgreSQL recovery checks. Native AppRole/OpenBao custody exercises UPDATE and
+DELETE RETURNING through verified current-survivor removal. Reproducible builds,
+SBOM, installed inspection and dependency consistency pass. The initial six
+protected refusals and three invalid observer-order fixtures remain archived.
+The UUID fixture/installed-inventory repair changes no product bytes from the
+preceding 240-case installed run; all 67 final source controls pass with the
+final 300-file inventory.
+
+The route reuses the existing record permit, driver proof and projection reader.
+Deleted values retain SELECT's authentication/freshness limits; public outputs
+have no cryptographic integrity claim. The [compatibility matrix](compatibility.md#full-capability-matrix)
+owns exact admission. All seven production gates remain UNKNOWN.
 
 ## Single-record UPDATE RETURNING
 

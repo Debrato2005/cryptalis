@@ -168,6 +168,17 @@ explicitly single-tenant tables. Its immutable permit and compiled/driver proof
 must still bind the exact record identity and native target. Only the physical
 tenant equality/bind is absent; a missing or changed record predicate refuses.
 
+DELETE RETURNING uses that same permit to freeze the current output roots and
+entity/column shape before synchronous or awaited key preparation. It reuses the
+UPDATE projection reader and exact compiled SQL/bind/projection-constant proof.
+Every protected output requires the requested non-NULL record identity, field
+and tenant, even when the payload is NULL. There is no new-frame proof for a
+deleted value; SELECT's replay, NULL and result-completeness limits still apply.
+Public outputs have no cryptographic integrity guarantee. Native identity-map
+state follows `synchronize_session=False`; authenticated returned data does not
+mark an existing object deleted. If result authentication or key expiry fails
+after DELETE, roll back the transaction or savepoint before continuing.
+
 For finite VARCHAR targets, each affected native group uses a private
 parameterized CASE with public constants. Omitted columns retain their existing
 frames. The carrier contains no protected plaintext. The adapter captures the

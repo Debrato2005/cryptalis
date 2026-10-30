@@ -18,7 +18,7 @@ from types import SimpleNamespace
 from uuid import UUID, uuid4
 
 import pytest
-from sqlalchemy import select, update
+from sqlalchemy import delete, select, update
 
 from cryptalis.crypto import (DevelopmentKeyProvider, KeyContext, KeyPolicy, Keyring,
     KeyUnavailable, WrappedRoot, create_root, open_text, seal_text)
@@ -746,8 +746,14 @@ def test_real_provider_protect_search_edit_and_verified_plaintext_exit(live, mon
                 {'name': 'live provider returning'}, execution_options={'synchronize_session': False})
             assert returned.scalar_one() == 'live provider returning'
             session.commit()
+            deleted = session.execute(delete(app.Customer).where(app.Customer.id == UUID(int=102),
+                app.Customer.tenant_id == fixture.TENANT).returning(app.Customer.name),
+                execution_options={'synchronize_session': False})
+            assert deleted.scalar_one() == app.source[UUID(int=102)][1]
+            session.commit()
         expected = dict(app.source)
         expected[UUID(int=101)] = (fixture.TENANT, 'live provider returning')
+        del expected[UUID(int=102)]
         bodies = fixture.frames(app, True)
         assert bodies[UUID(int=100)] is None
         assert all(value is None or b'live provider returning' not in value for value in bodies.values())

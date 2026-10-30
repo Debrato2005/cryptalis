@@ -116,7 +116,7 @@ parent/child transaction evidence and remaining qualification work.
 | Mapped dictionary INSERT with RETURNING | SUPPORTED | Native direct-column tuples/scalars and inserted mapped entities, including public-only columns. Preserve result keys/types, grouping, paging and optional input ordering. Entity results retain identity-map loading and refresh. Authenticate each protected output against its own exact prepared input. Label/expression/alias, loader-option and caller return_defaults forms remain unadmitted |
 | Scoped mapped dictionary UPDATE | SUPPORTED | Attached sync/async admitted storage types, typed IDs, nonempty list of dictionaries and synchronize_session=False. Tenant-column tables require explicit tenant equality. Declared single-tenant tables use the fixed table UUID and no caller WHERE. Preserve native omission/NULL, grouping, repeated IDs, row-count checks and transactions. Core and RETURNING routes remain unadmitted |
 | Single-record mapped UPDATE with RETURNING | SUPPORTED | Attached sync/async `Session.execute`, exact record and tenant equality (or declared fixed scope), one nonempty external assignment dictionary using native physical column keys, and `synchronize_session=False`. Direct returned columns/scalars/tuples and mapped entities retain native labels, types, identity behavior and transactions. Authenticate protected outputs; changed protected values must match the exact newly prepared frame. Embedded `.values()`, Core, expressions/labels/aliases, identity/tenant assignment, automatic/fetch synchronization and executemany RETURNING remain unadmitted |
-| Scoped mapped single-record DELETE | SUPPORTED | Attached sync/async execute, exact typed record equality and either tenant equality or explicit fixed table-UUID scope. No external parameters or RETURNING; require synchronize_session=False. Preserve native row counts and transactions. Unsupported custom AST classes refuse before execution |
+| Scoped mapped single-record DELETE | SUPPORTED | Attached sync/async execute, exact typed record equality and either tenant equality or explicit fixed table-UUID scope. No external parameters; require synchronize_session=False. Without RETURNING, preserve native row counts. Direct-column scalar/tuple and mapped-entity RETURNING preserves native keys, types, identity state and transactions; protected values authenticate against the requested row, field and tenant. Unsupported custom AST classes refuse before execution |
 | Unprotected-table mapped DELETE | SUPPORTED | One physical table mapped in the attached registry, with no protected fields. Native equality/AND predicates with fixed typed literals only. Default/auto/evaluate/False synchronization. No Core, RETURNING, fetch synchronization or custom AST |
 | Equality `==` and `IN` | SUPPORTED | Declared full tenant/domain-bound HMAC term. Preserve typed binds and native NULL/empty-list truth tables |
 | Simple negative equality `!=`, `NOT IN`, and NULL presence | SUPPORTED | Reuse the authenticated term for values and a SQL NULL check for storage-only fields. Preserve native three-valued truth, NULL elements, empty lists, and outer-join NULL extension. General Boolean NOT remains unadmitted |
@@ -188,8 +188,13 @@ equalities and `execution_options={"synchronize_session": False}`. Explicit
 single-tenant tables instead require only exact record equality, with session
 scope equal to their declared table UUID. The route admits one
 application-assigned UUID or int64 record.
-It returns native row counts. Core DELETE, external parameter dictionaries,
-RETURNING, inheritance, version counters and other predicate shapes refuse.
+Without RETURNING it returns native row counts. RETURNING accepts direct columns
+or the mapped entity, including public-only outputs, through the ordinary Result.
+Protected outputs require a real row identity and authenticate with SELECT's
+freshness/completeness limits; they are not newly prepared frames. Result failure
+can follow SQL execution and requires rollback. Core DELETE, external parameter
+dictionaries, labelled/expression/alias outputs, loader options, automatic/fetch
+synchronization, inheritance, version counters and other predicate shapes refuse.
 Ordinary ORM flush DELETE retains its existing native lifecycle contract.
 Both routes require native compiler nodes. Custom AST classes refuse before SQL.
 The [DELETE checkpoint](history/implementation-2026-10.md#mapped-delete-admission-checkpoint-2026-10-23)
