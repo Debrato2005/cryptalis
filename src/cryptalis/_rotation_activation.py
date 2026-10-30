@@ -23,6 +23,9 @@ def _costs(p,copy,copy_wal):
 
 
 def _activation(p,observations,copy,copy_wal):
+    if p.purpose == 'profile':
+        from cryptalis.modification import activation
+        return activation(p, observations, copy, copy_wal)
     source=p.source
     source_document=r._generation_source_document(source,p.restore_binding,p.purpose)
     document={key:source_document[key] for key in _BASE}
@@ -46,7 +49,7 @@ def _activation(p,observations,copy,copy_wal):
 
 
 def _binding(p,a):
-    if type(p) not in (r.PayloadRotationPlan,r.SearchRotationPlan) or type(a) is not m.MigrationPlan:
+    if type(p) not in s._plan_types() or type(a) is not m.MigrationPlan:
         raise m.TransitionFailure('rotation_activation_binding_mismatch')
     d=a.document
     try:
@@ -121,7 +124,12 @@ def _copy(c,p,a):
 def _switch(c,p,a,state,observed):
     op=s._operation(p)
     m._lock_tables(c,a)
+    if p.purpose == 'profile':
+        from cryptalis.modification import replace_storage_contract
+        replace_storage_contract(c, p, a, before_copy=True)
     metrics=_copy(c,p,a)
+    if p.purpose == 'profile':
+        replace_storage_contract(c, p, a, before_copy=False)
     for model in p.source.document['lock']['models']:
         for field in model['fields']:
             c.exec_driver_sql(f'ALTER TABLE {m._table(c,model)} DROP COLUMN {m._quote(c,s._shadow(field))}')

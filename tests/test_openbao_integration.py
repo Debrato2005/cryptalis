@@ -770,6 +770,48 @@ def test_real_provider_protect_search_edit_and_verified_plaintext_exit(live, mon
         assert reverse.native_rows(app) == expected
 
 
+def test_real_approle_modification_search_and_current_value_removal(live, monkeypatch):
+    import test_migration as fixture
+    from test_application_modification import configured_change
+    from test_deprotection import app_pin, native_rows
+    from test_payload_rotation_execution import operation_pin
+    from test_search_retained_readers import remove_current
+
+    provider, policies = live.make(token=workload_credentials(live).token), {}
+    def resolve(tenant):
+        if tenant not in policies:
+            wrappers = tuple(create_root(provider, KeyContext(fixture.DOMAIN, tenant, purpose, uuid4(), 1))
+                             for purpose in ('payload', 'search'))
+            policies[tenant] = KeyPolicy(fixture.DOMAIN, tenant, wrappers, 1, 1)
+        return Keyring(policies[tenant], {provider.provider_id: provider})
+    monkeypatch.setattr(fixture, 'keys', resolve)
+    with fixture.application(unique=False, queries=[]) as app:
+        configured = configured_change(app)
+        fixture.run(app); fixture.publish(app)
+        proposal = configured.plan_modification(app.owner, deployment=(app.plan, app.pin), keys=resolve,
+            backfill_rows_per_second=1000, verify_rows_per_second=1000,
+            temporary_bytes_per_row=1024, wal_bytes_per_row=2048, max_batch_rows=2)
+        deployment = proposal, operation_pin(proposal)
+        assert configured.prepare_modification(app.owner, deployment=deployment, keys=resolve,
+            approval=app.approval).phase == 'BACKFILLED'
+        successor = configured.seal_modification(app.owner, deployment=deployment, keys=resolve,
+            approval=app.approval, copy_rows_per_second=1000, copy_wal_bytes_per_row=2048)
+        configured.switch_modification(app.owner, proposal=proposal,
+            deployment=(successor, app_pin(successor, 'PREPARED')), keys=resolve, approval=app.approval)
+        configured.apply(app.owner, deployment=(successor, app_pin(successor, 'ACTIVATING')),
+            keys=resolve, approval=app.approval, until='ACTIVE')
+        app.plan, app.pin = successor, app_pin(successor, 'ACTIVE')
+        factory = configured.attach(app.runtime, deployment=(app.plan, app.pin), keys=resolve)
+        with factory(tenant_id=fixture.TENANT) as session:
+            assert session.scalar(select(app.Customer.id).where(app.Customer.name == '雪😀')) == UUID(int=102)
+            session.get(app.Customer, UUID(int=101)).name = 'latest provider-backed profile edit'
+            session.commit()
+        remove_current(app, resolve)
+        expected = dict(app.source)
+        expected[UUID(int=101)] = fixture.TENANT, 'latest provider-backed profile edit'
+        assert native_rows(app) == expected
+
+
 def test_real_approle_three_rotations_and_current_value_removal(live, monkeypatch):
     import test_migration as fixture
     from test_application_config import config

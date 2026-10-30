@@ -4,33 +4,30 @@ Cryptalis implements a bounded research prototype. **No production release or co
 This page owns current verification and release gates; the [34-objective ledger](BUILD_CHECKLIST.md) owns remaining work.
 Use the [documentation map](README.md) to find contracts and procedures.
 
-**Latest hosted run: FAIL at `95a35a5`.**
-[Run 41044177765](https://github.com/Debrato2005/cryptalis/actions/runs/41044177765)
-passes installed qualification but fails fifteen UUID result-boundary cases:
-the test fixture constructs an incomplete operation object. The
+**Latest hosted run: PASS at `a477fd6`.** Both jobs in
+[run 41047596731](https://github.com/Debrato2005/cryptalis/actions/runs/41047596731)
+pass. The fifteen UUID fixture failures at `95a35a5` are repaired without a
+runtime fallback; all 24 boundary checks now enter installed CI. The
 [retained failure](_reset/github-point-update-returning-failed-boundary-20261030.json)
-records 3,368 passing calls, eighteen subtests and the explicit failures/skips.
-The fixture now uses the real operation defaults and all 24 boundary checks
-enter installed CI. The [local repair boundary](_reset/point-delete-returning-ci-fix-boundary-20261030.json)
-passes 67 source controls and 264 installed application controls, with final
-provider/recovery checks passing. A subsequent full hosted run remains required;
-the last complete passing run is below.
+and [local repair](_reset/point-delete-returning-ci-fix-boundary-20261030.json)
+remain available. The active-field modification below has separate local evidence and is outside
+this hosted CI boundary.
 
 ## Current complete CI qualification
 
-**VERIFIED at `b01d66599456583520ed3a0b73822907c07ec70d`:** GitHub
-[run 41037120145](https://github.com/Debrato2005/cryptalis/actions/runs/41037120145)
+**VERIFIED at `a477fd643f81697ac4d0051a0523ee89043912b1`:** GitHub
+[run 41047596731](https://github.com/Debrato2005/cryptalis/actions/runs/41047596731)
 passes both Source / PostgreSQL 16 and Reproducible artifacts / installed recovery.
-The [retained CI boundary](_reset/github-orm-fork-boundary-20261030.json)
+The [retained CI boundary](_reset/github-point-delete-returning-boundary-20261030.json)
 contains verified GitHub archive digests and the actual source/installed receipts.
 
-The complete default source run passes 3,314 test calls and eighteen subtests.
+The complete default source run passes 3,426 test calls and eighteen subtests.
 Twelve call skips, 82 setup skips and seventeen collection skips remain explicit;
-all 3,408 selected items complete. All 294 Python hashes match the recorded checkout,
+all 3,520 selected items complete. All 300 Python hashes match the recorded checkout,
 and source/imported-runtime stability passes. The original source-role fixture
 failure at `2d53867` remains fixed; no skipped cell is treated as qualified.
 
-The installed wheel passes 15 native code-inventory and 128 ORM/configuration controls, 50 Google SDK and 146 OpenBao/provider
+The installed wheel passes 15 native code-inventory and 264 ORM/configuration controls, 50 Google SDK and 146 OpenBao/provider
 checks, two exports and three genuine fresh PostgreSQL recovery checks. Local and GitHub
 wheel/sdist hashes are identical. Repeat archives, SBOM, installed-file inspection
 and dependency consistency pass. The frozen audit reports 39 packages, zero known
@@ -46,7 +43,8 @@ Google KMS is `bda4fb3`; AppRole is `743b5e9`; shared rotations are `ccf7d12`.
 Doctor authentication diagnostics are `7e7d1c5`; native audit is `a2d8230`.
 Shared online capture and tenant configuration are `1e316c4`; lifecycle/runtime
 authentication diagnostics are `98f742b`. Container retirement is `e55733d`; static Python inventory is `c4cba97`.
-ORM process ownership is `b01d665`. These are covered by complete CI.
+ORM process ownership is `b01d665`; single-record UPDATE/DELETE RETURNING are
+`95a35a5` and `a477fd6`. These are covered by complete CI.
 
 The 34-objective [ledger](BUILD_CHECKLIST.md#objective-ledger) retains seven
 bounded VERIFIED entries, 23 PARTIAL entries, one SPECIFIED, one BLOCKED, one
@@ -59,6 +57,39 @@ identity/audit/HA, combined disaster drills, and performance acceptance.
 Independent human review remains unavailable; selected live cloud cells need
 authorized accounts. All 34 objectives stay in scope and all seven production
 gates remain UNKNOWN.
+
+## Active-field search modification
+
+**VERIFIED locally, source and installed wheel:** the
+[retained boundary](_reset/application-modification-boundary-20261030.json)
+covers enabling equality/IN search on existing ACTIVE storage-only TEXT/VARCHAR
+through the shared encrypted transition engine. Forty-three new controls cover
+native values and NULLs, fixed/scoped tenants, async/SQLModel, unchanged fields,
+key readiness, authority and staging tampering, exact byte limits, atomic index
+failure, process termination and lost COMMIT replies. Later root/payload/search
+rotations and online access-contract/tenant-publication composition pass.
+The [application route](application.md#modify-active-fields) and
+[lifecycle contract](lifecycle.md#enable-exact-search-on-active-encrypted-text)
+define the admitted change and explicit host responsibilities.
+
+The shared source run records 247 passes, one explicit installed previous-reader
+skip and one fixture failure from reusing an attached runtime after publication.
+The final control passes with fresh native mappings and engine. The exact fixture
+diff is retained; product bytes are identical between that broad run and final
+qualification. Earlier failed attempts remain archived. All 306 Python hashes and
+runtime bytes stay stable during each run.
+
+The installed wheel passes 307 application checks, including all 43 new controls,
+15 Doctor checks, 50 Google adapter checks and 147 actual OpenBao/provider checks.
+Three exports and four genuine fresh PostgreSQL recovery checks pass, including
+modified-profile tamper refusal, explicit adoption, current-value removal and an
+import-denied native process. Source fresh export/recovery also passes. Repeat
+builds, SBOM, installed inspection and dependency consistency pass.
+
+This route preserves preapproved key policies and requires maintenance. General
+manifest/type/package upgrades, modification from already-adopted lineage,
+supplied query-sample planning and production pause/resource qualification remain
+open. All seven production gates remain UNKNOWN; optimization stays deferred.
 
 ## Single-record DELETE RETURNING
 
@@ -127,7 +158,7 @@ reader and driver checks correct those boundaries. A later counterexample caught
 a missing row identity accepted for unchanged protected NULL outputs; that is now
 rejected while SELECT outer-join behavior is preserved. Native assignment-key,
 SQLModel argument and missing-row error assumptions were also corrected.
-This extension is separate from the complete hosted CI revision above.
+Complete hosted CI above covers this extension.
 All production gates remain UNKNOWN; performance optimization remains deferred.
 
 ## ORM process ownership
@@ -378,11 +409,11 @@ records limits. Performance acceptance remains open.
 
 | Area | Implemented boundary | Contract / instructions |
 |---|---|---|
-| Application setup | One key-free configuration for diagnosis, protection/capture, tenant onboarding, rotations, attachment and removal | [Application configuration](application.md) |
+| Application setup | One key-free configuration for diagnosis, protection/capture, tenant onboarding, active-field changes, rotations, attachment and removal | [Application configuration](application.md) |
 | Manifest | Bounded JSON declaration, mapping/schema validation, generated locks and semantic diff | [Manifest](manifest.md) |
 | Crypto | CF1 AES-256-GCM-SIV, random nonces, HKDF, independent HMAC search roots and authenticated context | [Security](security.md) |
 | ORM/search | Bounded sync/async SQLAlchemy and optional SQLModel; exact/IN/uniqueness and explicitly admitted forms | [Compatibility matrix](compatibility.md#full-capability-matrix) |
-| Lifecycle | Maintenance and bounded initial online protection, resumable verification, three rotations, current-data reverse/removal, fresh restore/adoption | [Lifecycle](lifecycle.md), [operator walkthrough](walkthrough-migration.md) |
+| Lifecycle | Maintenance and bounded initial online protection, resumable verification, bounded active-field changes, three rotations, current-data reverse/removal, fresh restore/adoption | [Lifecycle](lifecycle.md), [operator walkthrough](walkthrough-migration.md) |
 | Providers | Development custody, optional AWS/Google SDK adapters, local OpenBao AppRole/TLS/outage/revocation/snapshot evidence | [OpenBao](openbao.md), [Google](google-kms.md); no production custody qualification |
 | Doctor | Pre-adoption schema/supplied SELECT checks, ACTIVE deployment admission, explicit cold-provider access | [Diagnosis](walkthrough-migration.md#diagnose-before-adoption), [provider checks](openbao.md) |
 

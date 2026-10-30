@@ -3,7 +3,7 @@
 `ApplicationConfig` keeps one explicit manifest, ORM registry, writer inventory,
 search review set and optional SELECT sample set. Reuse it for initialization,
 Doctor, protection planning/application, online capture, tenant onboarding,
-runtime attachment, three rotations and verified removal.
+runtime attachment, active-field modification, three rotations and verified removal.
 It contains no engine,
 credentials, keyring, deployment pin or maintenance approval.
 
@@ -297,6 +297,48 @@ target; the existing restore proof and lineage remain mandatory. No method
 retires old wrappers, destroys provider keys or removes retained-backup readers.
 Provider calls may have native audit/cost effects. Failed AppRole authentication
 remains uncertain even while creating an inactive rewrap candidate.
+
+## Modify active fields
+
+To enable equality/IN search on an already protected storage-only TEXT/VARCHAR
+field, create a new configuration with the updated manifest and search review.
+The [modification contract](lifecycle.md#enable-exact-search-on-active-encrypted-text)
+defines the bounded change and retained host responsibilities. Set `queries=()`
+for this planning route; supplied SELECT sample validation is not yet admitted.
+
+```python
+proposal = changed.plan_modification(
+    owner_engine, deployment=current_deployment, keys=tenant_keys,
+    backfill_rows_per_second=measured_backfill_rate,
+    verify_rows_per_second=measured_verify_rate,
+    temporary_bytes_per_row=measured_temporary_cost,
+    wal_bytes_per_row=measured_wal_cost,
+)
+# Retain proposal and obtain its exact PREPARED host pin.
+changed.prepare_modification(
+    owner_engine, deployment=proposal_deployment,
+    keys=tenant_keys, approval=maintenance,
+)
+successor = changed.seal_modification(
+    owner_engine, deployment=proposal_deployment,
+    keys=tenant_keys, approval=maintenance,
+    copy_rows_per_second=measured_copy_rate,
+    copy_wal_bytes_per_row=measured_copy_wal,
+)
+# Retain successor before cutover; obtain its exact PREPARED host pin.
+changed.switch_modification(
+    owner_engine, proposal=proposal, deployment=successor_deployment,
+    keys=tenant_keys, approval=maintenance,
+)
+```
+
+Inspect preparation with `changed.status`; repeat `prepare_modification` to resume.
+After cutover, publish the successor through the existing ACTIVATING → ACTIVE
+sequence and attach with `changed`. A database phase does not publish host
+authority. To cancel preparation before cutover, call `changed.abort_modification`
+with the proposal, source keys, maintenance approval and explicitly republished
+source ACTIVE deployment. Normal current-value removal remains available after
+activation. This route does not implement arbitrary schema or package upgrades.
 
 ## Decrypt current values and remove protection
 

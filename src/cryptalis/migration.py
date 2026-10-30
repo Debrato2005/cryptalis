@@ -153,7 +153,7 @@ def _search_activation_estimates(rows,backfill,verify,copy,copy_wal):
     return costs
 
 
-_GENERATION_ROTATIONS=('payload_rotation','search_rotation')
+_FRAME_ROTATIONS=('payload_rotation','search_rotation','profile_rotation')
 
 
 @dataclass(frozen=True)
@@ -162,6 +162,10 @@ class MigrationPlan:
     def __post_init__(self):
         try:
             doc = _decode_transition_json(self.artifact)
+            if doc.get('format') in ('cryptalis.transition/v17', 'cryptalis.transition/v18'):
+                from cryptalis.modification import validate_activation
+                validate_activation(doc, self.artifact)
+                return
             if doc.get('format') in ('cryptalis.transition/v15', 'cryptalis.transition/v16'):
                 from cryptalis.tenancy import _validate_activation
                 _validate_activation(doc, self.artifact)
@@ -301,7 +305,7 @@ class MigrationPlan:
         if self.document['kind'] == 'rewrap':
             return (f'Estimated root-rewrap verification pause: {costs["writer_pause_seconds_estimate"]} s '
                     f'for {costs["rows"]} rows. Payload and search bytes stay unchanged. ' + costs['limits'])
-        if self.document['kind'] in _GENERATION_ROTATIONS:
+        if self.document['kind'] in _FRAME_ROTATIONS:
             return (f'Estimated {self.document["kind"].removesuffix("_rotation")}-rotation copy and verification pause: {costs["writer_pause_seconds_estimate"]} s '
                     f'for {costs["rows"]} rows. Atomic copy WAL estimate: {costs["copy_wal_bytes_estimate"]} bytes. '
                     + costs['limits'])
@@ -825,13 +829,13 @@ def _state(c,p,pin,*,allow_aborted=False):
     exists=c.exec_driver_sql('SELECT pg_catalog.to_regclass(%s)',(_journal(c,p),)).scalar_one()
     if exists is None:
         if online: raise TransitionFailure('missing_online_successor', p.operation_id)
-        if kind in _GENERATION_ROTATIONS:
+        if kind in _FRAME_ROTATIONS:
             raise TransitionFailure('missing_'+kind.removesuffix('_rotation')+'_successor', p.operation_id)
         if pin.phase != 'PREPARED': raise TransitionFailure('restored_or_missing_transition',p.operation_id)
         return None
     row=c.exec_driver_sql(f'SELECT plan_digest, state FROM {_journal(c,p)} WHERE operation_id=%s',(p.operation_id,)).one_or_none()
     if row is None and online: raise TransitionFailure('missing_online_successor', p.operation_id)
-    if row is None and kind in _GENERATION_ROTATIONS:
+    if row is None and kind in _FRAME_ROTATIONS:
         raise TransitionFailure('missing_'+kind.removesuffix('_rotation')+'_successor', p.operation_id)
     if row is None or row[0] != p.digest: raise TransitionFailure('journal_identity_mismatch',p.operation_id)
     state=row[1]
@@ -841,12 +845,12 @@ def _state(c,p,pin,*,allow_aborted=False):
         if state.get('phase') not in ('PENDING', 'ACTIVE'):
             raise TransitionFailure('online_successor_state_changed', p.operation_id)
         _check_predecessors(c, p)
-    if kind in ('rewrap', 'tenant_provision')+_GENERATION_ROTATIONS:
+    if kind in ('rewrap', 'tenant_provision')+_FRAME_ROTATIONS:
         proof_key = kind+'_plan_digest'
         if (state.get('phase') not in ('PENDING', 'ACTIVE')
                 or state.get(proof_key) != p.document[proof_key]):
             raise TransitionFailure(kind+'_state_changed', p.operation_id)
-        if kind in _GENERATION_ROTATIONS:
+        if kind in _FRAME_ROTATIONS:
             try:
                 if (set(state)!={'phase','models',proof_key,'cutover_measurements'}
                         or type(state['models']) is not dict
@@ -1311,7 +1315,7 @@ def _activate(c,p,state,pin,keys):
     elif p.document['kind'] == 'tenant_provision':
         from cryptalis.tenancy import verify_target
         verify_target(c, p, keys)
-    elif p.document['kind'] in _GENERATION_ROTATIONS:
+    elif p.document['kind'] in _FRAME_ROTATIONS:
         from cryptalis._rotation_activation import verify_target
         verify_target(c, p, keys)
     for model in p.document['lock']['models']:
@@ -1340,11 +1344,11 @@ def apply(p,engine,*,keys,pin,approval,chunk_size=1000,until='PENDING'):
         raise TransitionFailure('online_executor_required', p.operation_id)
     if p.document['kind'] in ('rewrap', 'tenant_provision') and (until != 'ACTIVE' or pin.phase not in ('ACTIVATING', 'ACTIVE')):
         raise TransitionFailure(p.document['kind']+'_executor_required', p.operation_id)
-    if p.document['kind'] in _GENERATION_ROTATIONS and (until != 'ACTIVE' or pin.phase not in ('ACTIVATING', 'ACTIVE')):
+    if p.document['kind'] in _FRAME_ROTATIONS and (until != 'ACTIVE' or pin.phase not in ('ACTIVATING', 'ACTIVE')):
         raise TransitionFailure(p.document['kind']+'_executor_required', p.operation_id)
     with _executor(p,engine,pin,approval) as c:
         state=_state(c,p,pin); c.commit()
-        if state is not None and state['phase'] == 'ACTIVE' and (online or p.document['kind'] in ('rewrap', 'tenant_provision')+_GENERATION_ROTATIONS) and pin.phase == 'ACTIVATING':
+        if state is not None and state['phase'] == 'ACTIVE' and (online or p.document['kind'] in ('rewrap', 'tenant_provision')+_FRAME_ROTATIONS) and pin.phase == 'ACTIVATING':
             # A journal phase cannot replace the host's publication evidence.
             with c.begin():
                 _lock_tables(c,p,verification=True)
@@ -1364,7 +1368,7 @@ def apply(p,engine,*,keys,pin,approval,chunk_size=1000,until='PENDING'):
             if online: raise TransitionFailure('missing_online_successor', p.operation_id)
             if p.document['kind'] == 'tenant_provision':
                 raise TransitionFailure('missing_tenant_provision_successor', p.operation_id)
-            if p.document['kind'] in _GENERATION_ROTATIONS:
+            if p.document['kind'] in _FRAME_ROTATIONS:
                 raise TransitionFailure('missing_'+p.document['kind'].removesuffix('_rotation')+'_successor', p.operation_id)
             with c.begin(): state=_expand(c,p)
         while PHASES.index(state['phase'])<PHASES.index(until):
