@@ -947,6 +947,7 @@ def _status_command(arguments: argparse.Namespace) -> int:
         from cryptalis.deprotection import DeprotectionPlan, status as reverse_status
         from cryptalis.rotation import (PayloadRotationPlan, SearchRotationPlan,
                                         status_payload_rotation, status_search_rotation)
+        from cryptalis.modification import ModificationPlan, FORMAT as MODIFICATION_FORMAT
         from cryptalis.manifest.parser import decode_manifest_json
         from cryptalis.restore import RestoreBinding
         from uuid import UUID
@@ -967,6 +968,8 @@ def _status_command(arguments: argparse.Namespace) -> int:
         reverse = artifact_format == 'cryptalis.reverse/v1'
         preparation_type = next((candidate for candidate in (PayloadRotationPlan, SearchRotationPlan)
             if artifact_format in (candidate.format, candidate.restore_format)), None)
+        if artifact_format == MODIFICATION_FORMAT:
+            preparation_type = ModificationPlan
         preparation = preparation_type is not None
         if doctor and (reverse or preparation):
             raise ValueError('Doctor requires an active protection artifact')
@@ -1029,7 +1032,10 @@ def _status_command(arguments: argparse.Namespace) -> int:
         if doctor:
             diagnose_deployment(plan, engine, pin=pin, restore=binding)
         elif preparation:
-            inspect_preparation = status_payload_rotation if plan.purpose=='payload' else status_search_rotation
+            if type(plan) is ModificationPlan:
+                from cryptalis._rotation_transition import status as inspect_preparation
+            else:
+                inspect_preparation = status_payload_rotation if plan.purpose=='payload' else status_search_rotation
             observed = inspect_preparation(plan, engine, pin=pin)
         else:
             observed = reverse_status(plan, engine, pin=pin) if reverse else status(plan, engine, pin=pin, restore=binding)
@@ -1037,7 +1043,7 @@ def _status_command(arguments: argparse.Namespace) -> int:
         operational = bool(error.cleanup_errors) or error.code in ('operation_failed_requires_inspection',
             'database_effect_requires_inspection', 'connection_cleanup_requires_inspection')
         denied = error.code in ('external_policy_mismatch', 'wrong_database_target',
-            'payload_operation_pin_mismatch', 'search_operation_pin_mismatch',
+            'payload_operation_pin_mismatch', 'search_operation_pin_mismatch', 'profile_operation_pin_mismatch',
             'restore_binding_mismatch', 'restore_binding_required', 'restored_definition_restatement_unsupported',
             'invalid_plan', 'invalid_reverse_plan', 'external_reverse_policy_mismatch')
         reason, remedy = {

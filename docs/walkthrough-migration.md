@@ -559,13 +559,14 @@ assert observed.verification == "NOT_PERFORMED"
 ### Inspect rotation preparation
 
 **IMPLEMENTED, bounded:** the same command accepts preparation proposal P in
-either exact format: `cryptalis.payload-rotation/v1` or
-`cryptalis.search-rotation/v1`. It calls the existing
-`rotation.status_payload_rotation` or `rotation.status_search_rotation` API.
+payload/search rotation formats and `cryptalis.modification/v1`. It reuses the
+existing transition status checks. Modification status accepts either search
+enablement or disablement; it does not authenticate frames or prepare keys.
 
 ```bash
 cryptalis status payload-preparation.json --pin preparation-pin.json --database-url-file /private/connection.txt --json
 cryptalis status search-preparation.json --pin preparation-pin.json --database-url-file /private/connection.txt --json
+cryptalis status modification.json --pin preparation-pin.json --database-url-file /private/connection.txt --json
 ```
 
 Supply the pin for that exact P: its operation ID and digest identify P, and
@@ -575,9 +576,9 @@ application publication. Recorded phases are PREPARED, EXPANDED, BACKFILLED,
 or ABORTED. No P row exists yet in PREPARED. Cutover to the sealed successor
 supersedes P; inspect the successor artifact after cutover.
 
-Output uses `scope: payload_rotation_preparation` or
-`scope: search_rotation_preparation`, with P's `operation_id` and its
-`source_operation_id`. Every admitted recorded phase returns exit 3,
+Output uses `scope: payload_rotation_preparation`,
+`scope: search_rotation_preparation`, or `scope: profile_rotation_preparation`,
+with P's `operation_id` and its `source_operation_id`. Every admitted recorded phase returns exit 3,
 `runtime_metadata_matches: false`, and `verification: NOT_PERFORMED`.
 `effects: NONE` and `authority: HOST_SUPPLIED_PIN` remain explicit.
 BACKFILLED reports recorded progress, not fresh frame authentication or

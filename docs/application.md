@@ -300,8 +300,12 @@ remains uncertain even while creating an inactive rewrap candidate.
 
 ## Modify active fields
 
-To enable equality/IN search on an already protected storage-only TEXT/VARCHAR
-field, create a new configuration with the updated manifest and search review.
+To enable or disable equality/IN search on already protected TEXT/VARCHAR fields,
+create a new configuration with the updated manifest. Enabling requires the
+search review and leakage acceptance. Disabling sets `queries: []` and
+`accept_leakage: []` and removes that field’s search review; uniqueness changes
+are refused. Remove disabled predicates from the application’s query samples.
+Existing key policies and retained-backup obligations remain unchanged.
 The [modification contract](lifecycle.md#enable-exact-search-on-active-encrypted-text)
 defines the bounded change and retained host responsibilities. Keep the optional
 `queries` tuple: planning checks those SELECT structures against the proposed
@@ -343,6 +347,10 @@ authority. To cancel preparation before cutover, call `changed.abort_modificatio
 with the proposal, source keys, maintenance approval and explicitly republished
 source ACTIVE deployment. Normal current-value removal remains available after
 activation. This route does not implement arbitrary schema or package upgrades.
+
+Saved modification proposals can be inspected with the same read-only
+[`cryptalis status` command](walkthrough-migration.md#inspect-rotation-preparation).
+Recorded progress is not fresh verification or publication authority.
 
 ## Decrypt current values and remove protection
 

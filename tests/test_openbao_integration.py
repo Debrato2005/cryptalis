@@ -770,8 +770,10 @@ def test_real_provider_protect_search_edit_and_verified_plaintext_exit(live, mon
         assert reverse.native_rows(app) == expected
 
 
-def test_real_approle_modification_search_and_current_value_removal(live, monkeypatch):
+@pytest.mark.parametrize('search', [True, False])
+def test_real_approle_modification_search_and_current_value_removal(live, monkeypatch, search):
     import test_migration as fixture
+    from test_modification_storage import storage_change
     from test_application_modification import configured_change
     from test_deprotection import app_pin, native_rows
     from test_payload_rotation_execution import operation_pin
@@ -785,8 +787,8 @@ def test_real_approle_modification_search_and_current_value_removal(live, monkey
             policies[tenant] = KeyPolicy(fixture.DOMAIN, tenant, wrappers, 1, 1)
         return Keyring(policies[tenant], {provider.provider_id: provider})
     monkeypatch.setattr(fixture, 'keys', resolve)
-    with fixture.application(unique=False, queries=[]) as app:
-        configured = configured_change(app)
+    with fixture.application(unique=False, queries=[] if search else ['equality']) as app:
+        configured = configured_change(app) if search else storage_change(app)
         fixture.run(app); fixture.publish(app)
         proposal = configured.plan_modification(app.owner, deployment=(app.plan, app.pin), keys=resolve,
             backfill_rows_per_second=1000, verify_rows_per_second=1000,
@@ -803,7 +805,9 @@ def test_real_approle_modification_search_and_current_value_removal(live, monkey
         app.plan, app.pin = successor, app_pin(successor, 'ACTIVE')
         factory = configured.attach(app.runtime, deployment=(app.plan, app.pin), keys=resolve)
         with factory(tenant_id=fixture.TENANT) as session:
-            assert session.scalar(select(app.Customer.id).where(app.Customer.name == '雪😀')) == UUID(int=102)
+            assert session.get(app.Customer, UUID(int=102)).name == '雪😀'
+            if search:
+                assert session.scalar(select(app.Customer.id).where(app.Customer.name == '雪😀')) == UUID(int=102)
             session.get(app.Customer, UUID(int=101)).name = 'latest provider-backed profile edit'
             session.commit()
         remove_current(app, resolve)

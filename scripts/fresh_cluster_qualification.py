@@ -131,7 +131,7 @@ def main():
     parser.add_argument('--public-slots', action='store_true',
                         help='Qualify explicit original-column slot preservation and restored slot authority.')
     profiles = parser.add_mutually_exclusive_group()
-    profiles.add_argument('--modification', action='store_true',
+    profiles.add_argument('--modification', nargs='?', const='enable', choices=('enable', 'disable'),
                           help='Qualify active-field search modification, fresh adoption and package-free exit.')
     profiles.add_argument('--application-config', action='store_true',
                           help='Qualify shared configuration, rotation planning and current-value removal after restore.')
@@ -252,7 +252,7 @@ def main():
     if args.restore_lease:
         profile += '; restored-target lease controls'
     if args.modification:
-        profile += '; active-field search modification and package-free restored exit'
+        profile += '; active-field search ' + args.modification + ' and package-free restored exit'
     if args.column_name != 'name':
         profile += '; keyword column ' + args.column_name
     export = run_pytest(export_receipt, 'Fresh-cluster source export; primary cluster' + profile,
@@ -264,6 +264,7 @@ def main():
                          else 'tests/test_fresh_cluster_export.py'),
                         {'CRYPTALIS_SMOLINK_FRESH_EXPORT': str(workdir) if args.smolink else '',
                          'CRYPTALIS_FRESH_CLUSTER_DIR': str(workdir),
+                         'CRYPTALIS_FRESH_MODIFICATION': args.modification or '',
                          'CRYPTALIS_FRESH_INTEGER_BITS': str(args.integer or 0),
                          'CRYPTALIS_FRESH_COLUMN_NAME': args.column_name,
                          'CRYPTALIS_FRESH_DATE': '1' if args.date else '0',
@@ -317,6 +318,8 @@ def main():
     elif args.modification:
         plan = json.loads(base64.b64decode(manifest['plan'], validate=True))
         if (manifest.get('application_profile') != 'active-search-modification'
+                or manifest.get('search_enabled') is not (args.modification == 'enable')
+                or plan['lock']['models'][0]['fields'][0]['queries'] != (['equality'] if args.modification == 'enable' else [])
                 or plan.get('format') != 'cryptalis.transition/v17' or plan.get('kind') != 'profile_rotation'):
             raise SystemExit('FreshCluster.ProfileMismatch: modified profile successor is missing.')
     elif args.date:

@@ -1,6 +1,6 @@
 """Explicit search-profile changes through the shared encrypted transition engine.
 
-The first admitted change enables exact search on existing storage-only text.
+Admitted changes enable or disable exact search on existing encrypted text.
 It preserves custody and physical/value identities. The host approves leakage,
 retains proposal/successor artifacts and publishes the successor separately.
 """
@@ -40,29 +40,34 @@ def _target_lock(source_lock, manifest, *, writers, search_reviews):
         if host != source_lock['writer_inventory'] or len(desired['models']) != len(expected['models']):
             raise ValueError
         changed = 0
+        removed_reviews = set()
         for old_model, new_model, compiled in zip(expected['models'], desired['models'], target['models'], strict=True):
             if len(old_model['fields']) != len(new_model['fields']):
                 raise ValueError
             for old, new, field in zip(old_model['fields'], new_model['fields'], compiled['fields'], strict=True):
                 if old == new:
                     continue
-                if (old['queries'] or new['queries'] != ['equality'] or
-                        new['accept_leakage'] != ['equality'] or field['source']['type'] not in ('text', 'varchar')):
+                if ((old['queries'], new['queries']) not in (([], ['equality']), (['equality'], [])) or
+                        new['accept_leakage'] != new['queries'] or field['source']['type'] not in ('text', 'varchar')):
                     raise ValueError
-                old.update(queries=['equality'], accept_leakage=['equality'])
+                old.update(queries=new['queries'], accept_leakage=new['accept_leakage'])
                 if old != new:
                     raise ValueError
                 native = next(c for c in compiled['source_schema']['columns'] if c['name'] == field['column'])
-                if not compiler._exact_search_collation(native):
+                if new['queries'] and not compiler._exact_search_collation(native):
                     raise ValueError
-                field.update(queries=['equality'], representation='cf1-packed-equality/v1')
+                if not new['queries']:
+                    removed_reviews.add(field['field_id'])
+                field.update(queries=new['queries'], representation=(
+                    'cf1-packed-equality/v1' if new['queries'] else 'cf1-storage/v1'))
                 field['descriptor']['representation'] = field['representation']
                 field['descriptor_digest'] = compiler._digest(field['descriptor'])
                 changed += 1
         if not changed or expected != desired:
             raise ValueError
         retained = {review['field_id']: review for review in reviews}
-        if any(retained.get(review['field_id']) != review for review in source_lock['search_reviews']):
+        if any(retained.get(review['field_id']) != review for review in source_lock['search_reviews']
+               if review['field_id'] not in removed_reviews):
             raise ValueError
         target.update(declaration=desired, writer_inventory=host, search_reviews=reviews)
         target['ddl'] = compiler._ddl(target, _DIALECT)
@@ -212,11 +217,16 @@ class ModificationPlan:
                     r._counter(value)
             r._payload_inputs(costs['backfill_rows_per_second'], costs['verify_rows_per_second'],
                 costs['temporary_bytes_per_row'], costs['wal_bytes_per_row'], limits)
-            for observed in document['models'].values():
+            for old_model, target_model in zip(source.document['lock']['models'], document['target_lock']['models'], strict=True):
+                observed = document['models'][old_model['table_id']]
                 rows, total, largest = observed['rows'], observed['logical_bytes'], observed['largest_row_logical_bytes']
+                growth = [r._frame_growth(old, new) for old, new in zip(old_model['fields'], target_model['fields'], strict=True)]
+                minimum = max(0, observed['frame_bytes'] + rows * sum(min(0, size) for size in growth))
+                maximum = observed['frame_bytes'] + rows * sum(max(0, size) for size in growth)
                 if (largest > limits['max_bytes'] or (not rows and any(observed[key] for key in sizes)) or
                         (rows and not 0 < largest <= total <= rows * largest) or
-                        not observed['frame_bytes'] <= observed['target_frame_bytes'] <= total):
+                        observed['frame_bytes'] > total or
+                        not minimum <= observed['target_frame_bytes'] <= min(maximum, total)):
                     raise ValueError
             if costs != r._payload_estimates(document['models'], document['key_policies'],
                     costs['backfill_rows_per_second'], costs['verify_rows_per_second'],
@@ -273,7 +283,7 @@ def plan(source, engine, *, source_pin, manifest, mapping, writers, search_revie
             state = m._state(connection, source, source_pin)
             for old_model, new_model in zip(source.document['lock']['models'], target['models'], strict=True):
                 for old, new in zip(old_model['fields'], new_model['fields'], strict=True):
-                    if old['descriptor'] == new['descriptor']:
+                    if old['descriptor'] == new['descriptor'] or not new['queries']:
                         continue
                     collision = connection.exec_driver_sql('SELECT EXISTS(SELECT 1 FROM pg_catalog.pg_class c '
                         'JOIN pg_catalog.pg_namespace n ON n.oid=c.relnamespace '
@@ -356,10 +366,15 @@ def replace_storage_contract(connection, proposal, successor, *, before_copy):
             constraint = m._quote(connection, field['payload_column'] + '_frame')
             if before_copy:
                 connection.exec_driver_sql(f'ALTER TABLE {table} DROP CONSTRAINT {constraint}')
+                if old['queries']:
+                    index = m._quote(connection, model['schema']) + '.' + m._quote(connection, old['payload_column'] + '_eq')
+                    connection.exec_driver_sql(f'DROP INDEX {index}')
                 continue
             public = {**field, 'payload_column': field['column']}
             connection.exec_driver_sql(f'ALTER TABLE {table} ADD CONSTRAINT {constraint} '
                                       f'CHECK ({m._frame_check(connection, public)})')
+            if not field['queries']:
+                continue
             tenant = m._quote(connection, model['tenancy']['column']) + ', ' if 'column' in model['tenancy'] else ''
             index = m._quote(connection, field['payload_column'] + '_eq')
             column = m._quote(connection, field['column'])

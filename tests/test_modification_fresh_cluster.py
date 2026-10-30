@@ -14,6 +14,7 @@ from sqlalchemy.orm import registry
 
 from cryptalis import deprotection as d, migration as m, restore as recovery
 from test_application_modification import configured_change, propose, activate_change
+from test_modification_storage import storage_change
 from test_deprotection import app_pin, consent
 from test_migration import application, engine, keys, publish, run, TENANT
 
@@ -30,8 +31,9 @@ def wire(values):
 
 def test_export_modified_backup():
     directory = Path(os.environ['CRYPTALIS_FRESH_CLUSTER_DIR'])
-    with application(unique=False, queries=[]) as app:
-        configured = configured_change(app)
+    search = os.environ.get('CRYPTALIS_FRESH_MODIFICATION', 'enable') == 'enable'
+    with application(unique=False, queries=[] if search else ['equality']) as app:
+        configured = configured_change(app) if search else storage_change(app)
         expected = {identity: value for identity, (_, value) in app.source.items()}
         source = wire(expected)
         dump(directory / 'plain.sql', app.schema, environment('CRYPTALIS_TEST_DATABASE_URL'))
@@ -45,7 +47,7 @@ def test_export_modified_backup():
         dump(directory / 'protected.sql', app.schema, environment('CRYPTALIS_TEST_DATABASE_URL'))
         owner = psycopg.conninfo.conninfo_to_dict(os.environ['CRYPTALIS_TEST_DATABASE_URL'])
         runtime = psycopg.conninfo.conninfo_to_dict(os.environ['CRYPTALIS_TEST_RUNTIME_DATABASE_URL'])
-        manifest = dict(application_profile='active-search-modification', schema=app.schema,
+        manifest = dict(application_profile='active-search-modification', search_enabled=search, schema=app.schema,
             database=owner['dbname'], owner_role=owner['user'], runtime_role=runtime['user'],
             source=source, expected=wire(expected), plan=base64.b64encode(app.plan.artifact).decode(),
             pin=dict(target_id=str(app.pin.target_id), operation_id=str(app.pin.operation_id),
@@ -94,7 +96,8 @@ def test_restore_modified_backup_authenticate_and_remove_current_values():
         factory = configured.attach(runtime, deployment=(source, pin, binding), keys=keys)
         with factory(tenant_id=TENANT) as session:
             assert wire({row.id: row.name for row in session.scalars(select(Customer))}) == manifest['expected']
-            assert session.scalar(select(Customer.id).where(Customer.name == 'latest before modified backup')) == UUID(int=101)
+            if manifest['search_enabled']:
+                assert session.scalar(select(Customer.id).where(Customer.name == 'latest before modified backup')) == UUID(int=101)
             session.get(Customer, UUID(int=101)).name = 'latest after restored modification'
             session.commit()
         reverse = configured.plan_deprotection(owner, deployment=(source, pin, binding), keys=keys,
