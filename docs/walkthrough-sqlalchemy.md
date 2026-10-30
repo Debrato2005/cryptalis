@@ -131,6 +131,12 @@ UUID as the session scope. Existing loaded objects remain stale under
 row. Native assignment errors can still occur for a missing record during SQL
 evaluation; roll back the failed transaction or savepoint before retrying.
 
+Omit `.returning(...)` when only the affected-row count is needed. The same
+single-record update then returns native `result.rowcount` (zero or one), with
+`result.returns_rows` false. Reading rows from that result raises SQLAlchemy's
+normal `ResourceClosedError`. Identity-map and transaction behavior remain the
+same; even assigning the existing value counts a matched record.
+
 Use direct or explicitly named returned columns, or the mapped entity. Computed
 expressions, table aliases, `.values()` assignments, identity/tenant changes, and multirow
 executemany RETURNING are outside this route. It uses the existing encryption

@@ -2164,8 +2164,6 @@ def _capture_update(owner, mapper, statement, parameters, tenant):
     if point:
         permit, _, _ = owner.record_context(statement, tenant, update=True)
         returning = owner.returning_signature(statement, table)
-        if not returning:
-            raise UnsupportedProtectedOperation()
     else:
         owner.update_context(statement, table, tenant, generated=False)
     columns = {prop.key: prop.columns[0] for prop in mapper.column_attrs
