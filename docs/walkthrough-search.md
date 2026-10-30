@@ -26,13 +26,29 @@ Use the [product protection transition](walkthrough-migration.md) for existing d
 The B-tree indexes the full 32-byte keyed term inside each frame, with tenant first when declared.
 Payload and term change in one ORM write. Native unique indexes arbitrate concurrent writes; duplicates raise `IntegrityError`.
 NULL stays NULL. NULLs remain distinct for uniqueness. Empty IN matches no rows; NULL in IN keeps native three-valued truth.
-AND/OR, mapped aliases, ordinary text binds and explicit late values are admitted.
-Simple negative equality, NOT IN and NULL-presence predicates retain the bounded
+AND/OR/NOT, mapped aliases, ordinary text binds and explicit late values are admitted.
+Negative equality, NOT IN and NULL-presence predicates retain the bounded
 grammar in [compatibility](compatibility.md#full-capability-matrix).
 Protected joins, derived tables, ranges, patterns, ordering, general protected
 grouping/DISTINCT and aggregates other than admitted counts reject.
 Custom codecs, callables, generated parameter-name overrides and conflicting named defaults without explicit values also reject.
 Protected compilation is per operation; plain queries retain SQLAlchemy caching.
+
+Compose supported predicates normally:
+
+```python
+from sqlalchemy import and_, not_
+
+statement = select(Customer).where(not_(and_(
+    Customer.email.in_(excluded_emails),
+    Customer.email.is_not(None),
+)))
+with sessions(tenant_id=authenticated_tenant) as session:
+    matches = session.scalars(statement).all()
+```
+
+PostgreSQL's NULL rules still apply. Cryptalis keeps generated tenant guards
+outside negation; wrapping an unsupported protected operation in NOT still fails.
 
 ## Count reports
 

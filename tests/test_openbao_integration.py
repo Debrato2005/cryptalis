@@ -716,6 +716,7 @@ def test_independent_snapshot_restores_cold_roots_with_source_fenced(live):
 
 @pytest.mark.parametrize('labelled', [False, True])
 def test_real_provider_protect_search_edit_and_verified_plaintext_exit(live, monkeypatch, labelled):
+    from sqlalchemy import and_, not_
     live.provider = live.make(token=workload_credentials(live).token)
     import test_migration as fixture
     import test_deprotection as reverse
@@ -762,6 +763,10 @@ def test_real_provider_protect_search_edit_and_verified_plaintext_exit(live, mon
                 execution_options={'synchronize_session': False})
             assert counted.rowcount == 1 and counted.returns_rows is False
             session.commit()
+            negated = not_(and_(app.Customer.name != 'live provider counted update',
+                               app.Customer.name.is_not(None)))
+            assert set(session.scalars(select(app.Customer.id).where(negated))) == {
+                UUID(int=100), UUID(int=10000)}
         expected = dict(app.source)
         expected[UUID(int=101)] = (fixture.TENANT, 'live provider returning')
         expected[UUID(int=10000)] = (fixture.TENANT, 'live provider counted update')

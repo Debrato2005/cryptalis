@@ -3,7 +3,7 @@ from dataclasses import replace
 from uuid import UUID
 
 import pytest
-from sqlalchemy import event, select
+from sqlalchemy import and_, event, not_, select
 from sqlalchemy.orm import Session, aliased
 
 from cryptalis.migration import TransitionFailure
@@ -21,7 +21,8 @@ def options():
 
 def test_target_query_samples_are_inspected_before_keys_and_match_native_after_publication(monkeypatch):
     with application(unique=False, queries=[]) as app:
-        selection = select(app.Customer.id).where(app.Customer.name.in_(['雪😀', 'é'])).order_by(app.Customer.id)
+        selection = select(app.Customer.id).where(not_(and_(app.Customer.name.not_in(['雪😀', 'é']),
+            app.Customer.name.is_not(None)))).order_by(app.Customer.id)
         with Session(app.runtime) as session: expected = session.scalars(selection).all()
         other = aliased(app.Customer)
         configured = replace(configured_change(app), queries=(selection, select(other.name).where(
