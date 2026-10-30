@@ -308,7 +308,7 @@ Plausible framing with invalid AEAD can pass PostgreSQL's CHECK and later fail a
 Replay, NULL substitution, deletion and hostile global uniqueness remain outside the returned-row authentication guarantee.
 Small-domain and leakage reviews remain trusted host assertions. They do not stop authorized chosen-input enumeration.
 The [slice 4 receipt](_reset/slice4-verification.json) records tests, isolated regression removals and local claim boundaries.
-All seven gates remain UNKNOWN. No production provider or independent review exists.
+All seven gates remain UNKNOWN. No provider deployment is production-qualified; independent human review remains unavailable.
 
 ## Trust boundaries
 
@@ -338,7 +338,7 @@ Chosen inserts, repeated queries, and auxiliary distributions remain important l
 | Application compromise/RCE, broken authorization, host plaintext logs/caches/exports | Outside confidentiality boundary. The process legitimately holds plaintext and cached material |
 | Key/provider/workload credential compromise | Can recover permitted roots. Least privilege reduces scope but cannot save those values |
 | Raw/alternate writers | The intended guarded paths must reject. Complete prototype coverage is unproved. Unknown separate writers block adoption. Schema checks cannot cryptographically certify arbitrary bytes |
-| Old deployment or database restore | The intended current deployment pin must block recognized stale generations. Only a policy model ran. Operator quarantine and worker termination remain required |
+| Old deployment or database restore | The intended current deployment pin must block recognized stale generations. Local pin checks do not prove deployment-wide authority. Operator quarantine and worker termination remain required |
 | Invisible RAM clone or immediate arbitrary-process revocation | Outside the claim. Cache expiry does not recall plaintext or copied keys |
 | Plaintext in pre-protection WAL/backups/logs | Remains exposed until its actual custody/retention disposition |
 
@@ -1306,7 +1306,8 @@ remains row linkage, NULL presence, write/access patterns and result volumes.
 Public literal defaults are configuration, not secrets. No date equality,
 frequency, range or order representation is inferred. Operational planning and
 locked expansion count unsupported source dates without decoding or reporting
-private values, then refuse before effects. Online capture remains text-only.
+private values, then refuse before effects. Bounded online capture admits Date
+under the same storage-only codec and source-domain checks.
 Full type admission, external application/cost evidence and independent human
 composition review remain required.
 

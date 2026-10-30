@@ -6,32 +6,28 @@ Use the [documentation map](README.md) to find contracts and procedures.
 
 ## Current complete CI qualification
 
-**VERIFIED at `dd5ac01467712b2a2e451706b188bd53417eabb7`:** GitHub
-[run 40955279799](https://github.com/Debrato2005/cryptalis/actions/runs/40955279799)
-completed successfully on 2026-10-29 UTC. Both Source / PostgreSQL 16 and
-Reproducible artifacts / installed recovery passed. Historical checkpoints are in the [evidence history](history/implementation-2026-10.md).
+**VERIFIED at `15ffdb39a28ea0b9e254f68a76443fa399886a54`:** GitHub
+[run 40994737233](https://github.com/Debrato2005/cryptalis/actions/runs/40994737233)
+passes both Source / PostgreSQL 16 and Reproducible artifacts / installed recovery.
+The [retained CI boundary](_reset/github-shared-host-boundary-20261030.json)
+contains verified GitHub archive digests and the actual source/installed receipts.
 
-The complete default source run passes 3,103 test calls and eighteen subtests.
+The complete default source run passes 3,122 test calls and eighteen subtests.
 Twelve call skips, 63 setup skips and sixteen collection skips remain explicit;
-all 3,178 selected items complete. All six source-role wrapper checks pass,
-resolving the three fixture failures in run 40947951794 at `2d53867`.
-Three role probes, all 280 Python hashes at that revision, source stability and imported
-runtime stability pass. The [retained CI boundary](_reset/github-current-boundary-20261030.json)
-includes the actual source and installed receipts, with archive digests verified
-against GitHub artifact metadata. No skipped cell is treated as qualified.
+all 3,197 selected items complete. All 280 Python hashes match the local checkout,
+and source/imported-runtime stability passes. The original source-role fixture
+failure at `2d53867` remains fixed; no skipped cell is treated as qualified.
 
-The installed wheel passes 69 OpenBao/provider/Doctor checks, 29 ORM controls,
-one export and one genuine fresh PostgreSQL recovery. Both the local environment
-and GitHub runner produce identical wheel and sdist hashes. Selected-extra SBOM,
-installed file/CLI inspection and dependency consistency pass. The frozen audit
-reports 26 packages, no known vulnerabilities and no adverse statuses. This
-does not establish absence of unknown vulnerabilities or independent review.
+The installed wheel passes 63 ORM/init/Doctor controls, 69 real OpenBao/provider
+checks, one export and one genuine fresh PostgreSQL recovery. Local and GitHub
+wheel/sdist hashes are identical. Repeat archives, SBOM, installed-file inspection
+and dependency consistency pass. The frozen audit reports 26 packages, zero known
+vulnerabilities and zero adverse statuses; this is not proof of absence of unknown
+vulnerabilities or independent review. Earlier CI is retained in [history](history/implementation-2026-10.md#complete-ci-at-dd5ac01-2026-10-30).
 
-The credentials fixture fix is `fa5045a`; OpenBao, operational qualification,
-cold-provider Doctor and independent snapshot recovery are committed and pushed.
-The subsequent documentation consolidation is `26e882b`. The shared-host
-implementation below changes executable code and has its own verification boundary.
-Earlier interrupted/cancelled runs remain incomplete evidence.
+Documentation consolidation is `26e882b`; the shared-host implementation is
+`15ffdb3`. The final requirements/routing/evidence follow-up changes documentation
+only and preserves the tested executable hashes.
 
 The 34-objective [ledger](BUILD_CHECKLIST.md#objective-ledger) retains seven
 bounded VERIFIED entries, 23 PARTIAL entries, one SPECIFIED, one BLOCKED, one
@@ -57,9 +53,8 @@ The [retained boundary](_reset/shared-host-boundary-20261030.json) binds 160 foc
 source checks, 63 installed ORM/init/Doctor checks, 69 real OpenBao/provider checks,
 and one genuine PostgreSQL export plus one fresh-target recovery. Repeat archives,
 SBOM, installed files and dependency consistency pass. The first source attempt's
-new test assertion failure is retained with the correction. Full default CI for
-this implementation has not yet completed; the complete run above is its earlier
-base. No production gate changes.
+new test assertion failure is retained with the correction. The complete GitHub
+source run above additionally verifies this implementation. No production gate changes.
 
 ## Capability summary
 
@@ -95,7 +90,7 @@ passes, unavailable tests and AI reviews do not replace any requirement below.
 
 ## Evidence routing
 
-- [Latest complete CI receipt](_reset/github-current-boundary-20261030.json): exact source and installed bindings, counts, skips and artifact digests.
+- [Latest complete CI receipt](_reset/github-shared-host-boundary-20261030.json): exact source and installed bindings, counts, skips and artifact digests.
 - [Implementation history](history/implementation-2026-10.md): earlier bounded capabilities, failures and measurements.
 - [Decision history](history/decisions-2026-10.md): rationale and superseded choices.
 - [Research index](research/README.md): external sources and historical review material.
