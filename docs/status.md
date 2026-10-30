@@ -6,28 +6,31 @@ Use the [documentation map](README.md) to find contracts and procedures.
 
 ## Current complete CI qualification
 
-**VERIFIED at `15ffdb39a28ea0b9e254f68a76443fa399886a54`:** GitHub
-[run 40994737233](https://github.com/Debrato2005/cryptalis/actions/runs/40994737233)
+**VERIFIED at `09c635aa9b665d1f5e34f3ca25b618af548cd866`:** GitHub
+[run 41002748166](https://github.com/Debrato2005/cryptalis/actions/runs/41002748166)
 passes both Source / PostgreSQL 16 and Reproducible artifacts / installed recovery.
-The [retained CI boundary](_reset/github-shared-host-boundary-20261030.json)
+The [retained CI boundary](_reset/github-application-config-boundary-20261030.json)
 contains verified GitHub archive digests and the actual source/installed receipts.
 
-The complete default source run passes 3,122 test calls and eighteen subtests.
+The complete default source run passes 3,138 test calls and eighteen subtests.
 Twelve call skips, 63 setup skips and sixteen collection skips remain explicit;
-all 3,197 selected items complete. All 280 Python hashes match the local checkout,
+all 3,213 selected items complete. All 282 Python hashes match the local checkout,
 and source/imported-runtime stability passes. The original source-role fixture
 failure at `2d53867` remains fixed; no skipped cell is treated as qualified.
 
-The installed wheel passes 63 ORM/init/Doctor controls, 69 real OpenBao/provider
+The installed wheel passes 79 ORM/configuration controls, 69 real OpenBao/provider
 checks, one export and one genuine fresh PostgreSQL recovery. Local and GitHub
 wheel/sdist hashes are identical. Repeat archives, SBOM, installed-file inspection
 and dependency consistency pass. The frozen audit reports 26 packages, zero known
 vulnerabilities and zero adverse statuses; this is not proof of absence of unknown
-vulnerabilities or independent review. Earlier CI is retained in [history](history/implementation-2026-10.md#complete-ci-at-dd5ac01-2026-10-30).
+vulnerabilities or independent review. Earlier CI is retained in
+[history](history/implementation-2026-10.md#complete-ci-at-15ffdb3-2026-10-30).
+The separate explicit performance profile below fails latency targets; a green
+default CI run does not qualify performance.
 
-Documentation consolidation is `26e882b`; the shared-host implementation is
-`15ffdb3`. The requirements/routing/evidence follow-up preserved those executable hashes.
-The subsequent application configuration implementation below has a separate boundary.
+Documentation consolidation is `26e882b`; shared init/Doctor is `15ffdb3` and
+shared application configuration is `09c635a`. This evidence follow-up preserves
+their executable hashes.
 
 The 34-objective [ledger](BUILD_CHECKLIST.md#objective-ledger) retains seven
 bounded VERIFIED entries, 23 PARTIAL entries, one SPECIFIED, one BLOCKED, one
@@ -43,7 +46,7 @@ gates remain UNKNOWN.
 
 ## Shared application configuration
 
-**VERIFIED locally, source and installed wheel:** [ApplicationConfig](application.md)
+**VERIFIED in local and GitHub source/installed checks:** [ApplicationConfig](application.md)
 shares one key-free declaration/mapping/evidence configuration across init, Doctor,
 planning and sync/async SQLAlchemy/SQLModel attachment. Planning rejects failed or
 unavailable sample admission before key resolution. Runtime attachment rejects
@@ -55,9 +58,25 @@ The [retained boundary](_reset/application-config-boundary-20261030.json) record
 OpenBao/provider checks, one export and one genuine fresh PostgreSQL recovery.
 The restored target uses the shared configuration with its explicit restore binding.
 Repeat artifacts, SBOM, installed-file inspection and dependency consistency pass;
-all 282 Python hashes and runtime bytes are stable. Complete CI above is the prior
-base; the new implementation still awaits its own full remote run. Sample inspection
-does not establish full application coverage. All production gates remain UNKNOWN.
+all 282 Python hashes and runtime bytes are stable. The complete GitHub run above
+additionally verifies this implementation. Sample inspection does not establish
+full application coverage. All production gates remain UNKNOWN.
+
+## Current performance boundary
+
+At `09c635a`, the matched warm 10k native/protected profile fails all six added-p95
+read targets. Scalar/tuple point, equality and IN-20 add 4.898, 7.206 and 20.788 ms;
+full-entity paths add 4.249, 7.504 and 9.262 ms. Targets remain 3/3/8 ms.
+Indexed-column storage passes at 1.52483× against the 2× target. These are 100-pair
+observations on a shared local host, not a deterministic regression diagnosis.
+
+Diagnostic profiling identifies repeated query admission and expression traversal
+as a material CPU cost. A per-admission scratch-cache candidate still failed all
+targets and increased every paired median; it was discarded. The
+[retained boundary](_reset/application-performance-boundary-20261030.json) keeps
+both failed observations, the instrumented run, plugin and candidate patch.
+The [dated analysis](history/implementation-2026-10.md#current-admission-cost-investigation-2026-10-30)
+records limits. Performance acceptance remains open.
 
 ## Capability summary
 
@@ -94,7 +113,7 @@ passes, unavailable tests and AI reviews do not replace any requirement below.
 
 ## Evidence routing
 
-- [Latest complete CI receipt](_reset/github-shared-host-boundary-20261030.json): exact source and installed bindings, counts, skips and artifact digests.
+- [Latest complete CI receipt](_reset/github-application-config-boundary-20261030.json): exact source and installed bindings, counts, skips and artifact digests.
 - [Implementation history](history/implementation-2026-10.md): earlier bounded capabilities, failures and measurements.
 - [Decision history](history/decisions-2026-10.md): rationale and superseded choices.
 - [Research index](research/README.md): external sources and historical review material.

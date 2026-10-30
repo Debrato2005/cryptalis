@@ -6701,3 +6701,71 @@ and one genuine PostgreSQL export plus one fresh-target recovery. Repeat archive
 SBOM, installed files and dependency consistency pass. The first source attempt's
 new test assertion failure is retained with the correction. The complete GitHub
 source run above additionally verifies this implementation. No production gate changes.
+
+## Complete CI at 15ffdb3: 2026-10-30
+
+**VERIFIED at `15ffdb39a28ea0b9e254f68a76443fa399886a54`:** GitHub
+[run 40994737233](https://github.com/Debrato2005/cryptalis/actions/runs/40994737233)
+passes both Source / PostgreSQL 16 and Reproducible artifacts / installed recovery.
+The [retained CI boundary](../_reset/github-shared-host-boundary-20261030.json)
+contains verified GitHub archive digests and the actual source/installed receipts.
+
+The complete default source run passes 3,122 test calls and eighteen subtests.
+Twelve call skips, 63 setup skips and sixteen collection skips remain explicit;
+all 3,197 selected items complete. All 280 Python hashes match the local checkout,
+and source/imported-runtime stability passes. The original source-role fixture
+failure at `2d53867` remains fixed; no skipped cell is treated as qualified.
+
+The installed wheel passes 63 ORM/init/Doctor controls, 69 real OpenBao/provider
+checks, one export and one genuine fresh PostgreSQL recovery. Local and GitHub
+wheel/sdist hashes are identical. Repeat archives, SBOM, installed-file inspection
+and dependency consistency pass. The frozen audit reports 26 packages, zero known
+vulnerabilities and zero adverse statuses; this is not proof of absence of unknown
+vulnerabilities or independent review. Earlier CI is retained in [history](implementation-2026-10.md#complete-ci-at-dd5ac01-2026-10-30).
+
+Documentation consolidation is `26e882b`; the shared-host implementation is
+`15ffdb3`. The requirements/routing/evidence follow-up preserved those executable hashes.
+The subsequent application configuration implementation below has a separate boundary.
+
+## Current admission cost investigation: 2026-10-30
+
+**Measured at `09c635a`; latency targets FAIL.** The existing
+`tests/profile_current_application.py` compares native and protected PostgreSQL
+16 runtime-role reads after verified migration and ACTIVE attachment. It checks
+identical values/types for 10,000 synthetic rows, alternates read order, warms ten
+pairs and records 100 pairs per workload. The
+[boundary](../_reset/application-performance-boundary-20261030.json) retains raw
+samples and wrapper receipts, including all three exit-1 outcomes.
+
+| Workload | Baseline added p95 ms | Discarded candidate ms | Target ms |
+|---|---:|---:|---:|
+| Point scalar | 4.898 | 4.871 | 3 |
+| Equality tuple | 7.206 | 6.925 | 3 |
+| IN-20 tuple | 20.788 | 11.059 | 8 |
+| Point entity | 4.249 | 4.360 | 3 |
+| Equality entity | 7.504 | 7.807 | 3 |
+| IN-20 entity | 9.262 | 10.427 | 8 |
+
+Both observations meet the isolated column-plus-equality-index target at
+1.52483× native. Whole-fixture Python CPU is 7.037 seconds baseline and 7.136
+seconds candidate; it includes setup, migration and cleanup. All six paired
+median additions are higher in the candidate. A lower IN-20 p95 alone is not
+evidence of improvement; neither observation controls shared-host load.
+
+An ignored diagnostic pytest plugin profiles only read calls and records function
+names/counts/times, not query values. It preserves the profile function and native
+oracle. Its exact source hash is retained. Across 110 reads, attached point
+admission runs 330 times and accounts for 2.864 ms/read of cumulative instrumented
+time; equality admission accounts for 5.552 ms/read and IN-20 for 7.913 ms/read.
+Lineage walks, type admission and generated-search classification are material
+contributors. Cumulative times overlap and must not be summed. Instrumented
+timings do not qualify uninstrumented latency.
+
+The candidate retained lineage/protected-expression and negative generated-node
+facts only within each admission pass. It did not show consistent benefit and
+was removed from source; its patch is retained for reproducibility, without a
+security-qualification claim. All three admission boundaries remain unchanged.
+Further work must measure a concrete traversal change with fresh adversarial and
+native-oracle coverage. This profile does not explain the older full-entity page
+anomaly or qualify cold/remote providers, concurrency, async, writes or larger
+datasets. All production gates remain UNKNOWN.
