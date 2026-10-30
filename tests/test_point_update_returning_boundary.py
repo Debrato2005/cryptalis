@@ -11,6 +11,7 @@ from test_bulk_returning_boundary import descriptor, leased_factory
 from test_driver_event_boundary import raw_calls
 from test_migration import application, frames, keys, publish, run, TENANT
 from test_point_update_returning import statement
+from test_point_update_returning_more import assignments
 from test_rewrap_plan import _snapshot
 
 
@@ -84,7 +85,8 @@ def test_provider_callback_cannot_change_captured_point_request(fault, monkeypat
 
 
 @pytest.mark.parametrize('fault', ['sql', 'payload', 'identity', 'projection_constant'])
-def test_point_driver_mutation_refuses_before_native_update(fault, monkeypatch):
+@pytest.mark.parametrize('embedded', [False, True])
+def test_point_driver_mutation_refuses_before_native_update(fault, monkeypatch, embedded):
     with application(rows=3) as app:
         factory = protect(app)
         injected = []
@@ -105,7 +107,7 @@ def test_point_driver_mutation_refuses_before_native_update(fault, monkeypatch):
         try:
             with factory(tenant_id=TENANT) as session, raw_calls(monkeypatch, app.schema, 'UPDATE') as sent:
                 with pytest.raises(CryptoFailure):
-                    session.execute(statement(app, UUID(int=101), 'scalar'), {'name': 'PUBLIC updated'},
+                    session.execute(*assignments(statement(app, UUID(int=101), 'scalar'), {'name': 'PUBLIC updated'}, embedded),
                         execution_options={'synchronize_session': False}).all()
                 assert injected == [True] and sent == []
                 session.rollback()
@@ -117,7 +119,8 @@ def test_point_driver_mutation_refuses_before_native_update(fault, monkeypatch):
 @pytest.mark.parametrize('fault', ['wrong_record', 'wrong_tenant', 'old_frame', 'fresh_frame',
     'null_frame', 'null_identity', 'malformed'])
 @pytest.mark.parametrize('labelled', [False, True])
-def test_returning_authenticates_context_and_exact_new_frame(fault, monkeypatch, labelled):
+@pytest.mark.parametrize('embedded', [False, True])
+def test_returning_authenticates_context_and_exact_new_frame(fault, monkeypatch, labelled, embedded):
     with application(rows=3) as app:
         factory = protect(app)
         query = statement(app, UUID(int=101), 'scalar')
@@ -150,7 +153,7 @@ def test_returning_authenticates_context_and_exact_new_frame(fault, monkeypatch,
                 patch.setattr(psycopg.Cursor, 'fetchall', mutate)
                 with factory(tenant_id=TENANT) as session:
                     with pytest.raises(AuthenticationFailed):
-                        session.execute(query, {'name': 'PUBLIC updated'},
+                        session.execute(*assignments(query, {'name': 'PUBLIC updated'}, embedded),
                             execution_options={'synchronize_session': False}).all()
                     session.rollback()
             assert injected == [True]

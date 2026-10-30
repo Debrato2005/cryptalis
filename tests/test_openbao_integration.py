@@ -744,8 +744,9 @@ def test_real_provider_protect_search_edit_and_verified_plaintext_exit(live, mon
             session.commit()
             assert session.scalar(select(app.Customer.id).where(app.Customer.name == 'live provider edit')) == row.id
             returned = session.execute(update(app.Customer).where(app.Customer.id == row.id,
-                app.Customer.tenant_id == fixture.TENANT).returning(app.Customer.name.label('display_name') if labelled else app.Customer.name),
-                {'name': 'live provider returning'}, execution_options={'synchronize_session': False})
+                app.Customer.tenant_id == fixture.TENANT).values(name='live provider returning').returning(
+                    app.Customer.name.label('display_name') if labelled else app.Customer.name),
+                execution_options={'synchronize_session': False})
             assert returned.scalar_one() == 'live provider returning'
             session.commit()
             deleted = session.execute(delete(app.Customer).where(app.Customer.id == UUID(int=102),
@@ -759,7 +760,7 @@ def test_real_provider_protect_search_edit_and_verified_plaintext_exit(live, mon
             assert inserted.scalar_one() == 'live provider insert'
             session.commit()
             counted = session.execute(update(app.Customer).where(app.Customer.id == UUID(int=10000),
-                app.Customer.tenant_id == fixture.TENANT), {'name': 'live provider counted update'},
+                app.Customer.tenant_id == fixture.TENANT).values(name='live provider counted update'),
                 execution_options={'synchronize_session': False})
             assert counted.rowcount == 1 and counted.returns_rows is False
             session.commit()

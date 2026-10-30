@@ -30,6 +30,7 @@ from sqlalchemy.sql.functions import FunctionElement, count
 from sqlalchemy.sql.selectable import Alias, CTE, FromClause, Select, Join, Subquery
 from sqlalchemy.sql.dml import Insert, Update, Delete
 from sqlalchemy.types import JSON, NullType, TypeDecorator, TypeEngine, UserDefinedType
+from sqlalchemy.util import immutabledict
 
 from ._sqlalchemy_guard import install_guard
 from ._sqlalchemy_functions import admit_function
@@ -143,6 +144,7 @@ class _UpdateRequest:
     rows: tuple = field(repr=False)
     point: object = field(default=None, repr=False)
     returning: tuple | None = field(default=None, repr=False)
+    literal_values: bool = False
 
 
 @dataclass(frozen=True)
@@ -802,6 +804,20 @@ class _Attachment:
                       UnsafeDriverEvent, self.prepare_many, self._check_process)
         native_compiler = engine.dialect.statement_compiler
         class StorageCompiler(native_compiler):
+            def _label_returning_column(compiler, statement, column, populate_result_map,
+                                        column_clause_args=None, **kw):
+                reader = _returning_column(self, column)
+                if reader is not None:
+                    self._check()
+                    # Keep the ORM's original projection as a result key while
+                    # the native compiler installs the authenticated reader.
+                    column_clause_args = dict(column_clause_args or {})
+                    column_clause_args['result_map_targets'] = (
+                        column, *column_clause_args.get('result_map_targets', ()))
+                    column = reader
+                return super()._label_returning_column(statement, column, populate_result_map,
+                                                       column_clause_args, **kw)
+
             def _search_projection(compiler, expression, kw):
                 if not isinstance(compiler.current_executable, Select) or not self.protected(expression):
                     return None
@@ -1133,7 +1149,7 @@ class _Attachment:
             permit = expected
         return permit, tuple(binds)
 
-    def record_context(self, statement, tenant, expected=None, *, update=False):
+    def record_context(self, statement, tenant, expected=None, *, update=False, literal_values=False):
         native = Update if update else Delete
         _delete_node(statement, native)
         if type(tenant) is not UUID:
@@ -1155,7 +1171,9 @@ class _Attachment:
                 statement.table.name != table.name or statement.table.schema != table.schema or
                 not all(column.key in statement.table.c and statement.table.c[column.key].shares_lineage(column)
                         for column in table.c) or statement._return_defaults or
-                update and (statement._values or getattr(statement, '_ordered_values', None)) or
+                update and (statement._values and not literal_values or
+                            getattr(statement, '_ordered_values', None) or
+                            getattr(statement, '_maintain_values_ordering', False)) or
                 statement._with_options or statement._prefixes or statement._hints or
                 statement._independent_ctes or statement.dialect_kwargs):
             raise UnsupportedProtectedOperation()
@@ -2000,27 +2018,23 @@ def _unprotected_delete(state):
         _operation.reset(token)
 
 
-def _returning_statement(owner, statement):
-    def returning_type(node):
-        if isinstance(node, Label):
-            element = returning_type(node._element)
-            if element is not None:
-                # A native Label snapshots its element's type. Rebinding only
-                # the annotated mapper column leaves that snapshot plaintext.
-                clone = node._clone()
-                clone._reset_memoizations()
-                clone._element = element
-                clone.type = element.type
-                return clone
-        if isinstance(node, Column) and owner.protected(node):
-            native = _delete_node(node, Column, allow_type_annotation=True)
-            # Native ORM DML can retain annotated mapper columns. Preserve
-            # labels and ORM annotations while choosing the owned reader.
-            clone = node._annotate({})
-            clone.type = native.type
+def _returning_column(owner, node):
+    if isinstance(node, Label):
+        element = _returning_column(owner, node._element)
+        if element is not None:
+            # A native Label snapshots its element's type. Rebinding only
+            # the annotated mapper column leaves that snapshot plaintext.
+            clone = node._clone()
+            clone._reset_memoizations()
+            clone._element = element
+            clone.type = element.type
             return clone
-        return None
-    return visitors.replacement_traverse(statement, {}, returning_type)
+    if isinstance(node, Column) and owner.protected(node):
+        native = _delete_node(node, Column, allow_type_annotation=True)
+        clone = node._annotate({})
+        clone.type = native.type
+        return clone
+    return None
 
 
 def _scoped_delete(state):
@@ -2054,7 +2068,7 @@ def _scoped_delete(state):
     token = _operation.set(operation)
     try:
         if permit.returning_shape:
-            state.statement = _returning_statement(owner, statement)
+            state.statement = statement._generate()
         return state.invoke_statement()
     finally:
         state.statement = statement
@@ -2141,7 +2155,7 @@ def _bulk_insert(state):
     token = _operation.set(operation)
     try:
         if returning is not None:
-            state.statement = _returning_statement(owner, statement)
+            state.statement = statement._generate()
         if failed_index is not None:
             # Preserve native constraint precedence before this known length
             # error. An empty list would instead insert DEFAULT VALUES.
@@ -2182,11 +2196,45 @@ def _bulk_insert(state):
         _operation.reset(token)
 
 
+def _update_literals(owner, statement, columns):
+    """Capture native CRUD literals; their SQL nodes never reach the driver."""
+    if type(statement._values) is not immutabledict or not statement._values:
+        raise UnsupportedProtectedOperation()
+    physical = {column.key: column for column in columns.values()}
+    values = {}
+    for target, bind in statement._values.items():
+        if type(target) is str:
+            column = physical.get(target)
+            if column is None:
+                raise UnsupportedProtectedOperation()
+        else:
+            column = _delete_node(target, Column, allow_type_annotation=True)
+            if physical.get(column.key) is not column:
+                raise UnsupportedProtectedOperation()
+            owner.select_types(select(target))
+        _delete_node(bind, BindParameter)
+        if (column.key in values or type(bind.type) is not NullType or
+                bind._is_crud is not True or bind.unique is not True or
+                bind.required is not False or bind.callable is not None or
+                bind.expanding is not False or bind.literal_execute is not False):
+            raise UnsupportedProtectedOperation()
+        owner.bind_type(bind.type, selecting=True)
+        for name in ('bind_processor', 'result_processor', 'literal_processor', 'dialect_impl', 'adapt'):
+            method = getattr(bind.type, name)
+            if (type(method) is not MethodType or method.__self__ is not bind.type or
+                    method.__func__ is not getattr(NullType, name)):
+                raise UnsupportedProtectedOperation()
+        values[_delete_name_state(column.key)[0]] = bind.value
+    return values
+
+
 def _capture_update(owner, mapper, statement, parameters, tenant):
-    point = type(parameters) is dict
+    literal_values = parameters is None
+    point = literal_values or type(parameters) is dict
     if (mapper is None or getattr(mapper, 'class_', None) not in owner.models or
             mapper is not inspect(mapper.class_) or mapper.version_id_col is not None or
-            type(parameters) not in (list, dict) or not parameters or type(tenant) is not UUID):
+            not literal_values and (type(parameters) not in (list, dict) or not parameters) or
+            type(tenant) is not UUID):
         raise UnsupportedProtectedOperation()
     bindings = owner.models[mapper.class_]
     first = bindings[0]
@@ -2194,7 +2242,7 @@ def _capture_update(owner, mapper, statement, parameters, tenant):
     tenant = UUID(bytes=tenant.bytes)
     permit = returning = None
     if point:
-        permit, _, _ = owner.record_context(statement, tenant, update=True)
+        permit, _, _ = owner.record_context(statement, tenant, update=True, literal_values=literal_values)
         returning = owner.returning_signature(statement, table)
     else:
         owner.update_context(statement, table, tenant, generated=False)
@@ -2202,6 +2250,8 @@ def _capture_update(owner, mapper, statement, parameters, tenant):
                if len(prop.columns) == 1 and isinstance(prop.columns[0], ColumnClause) and
                prop.columns[0].table is table and table.c.get(prop.columns[0].key) is prop.columns[0] and
                mapper.get_property_by_column(prop.columns[0]) is prop}
+    if literal_values:
+        parameters = _update_literals(owner, statement, columns)
     originals = parameters
     if point:
         # Native single-statement external parameters use physical column keys;
@@ -2234,11 +2284,12 @@ def _capture_update(owner, mapper, statement, parameters, tenant):
                for attribute, column in columns.items() if attribute not in row):
             raise UnsupportedProtectedOperation()
         rows.append(tuple(row.items()))
-    return _UpdateRequest(mapper, table, tenant, tuple(columns.items()), tuple(rows), permit, returning)
+    return _UpdateRequest(mapper, table, tenant, tuple(columns.items()), tuple(rows), permit, returning, literal_values)
 
 
 def _same_update_request(original, current):
     if (original.mapper is not current.mapper or original.table is not current.table or
+            original.literal_values != current.literal_values or
             original.returning != current.returning or (original.point is None) != (current.point is None) or
             original.point is not None and original.point.identity != current.point.identity or
             original.point is not None and original.point.returning_shape != current.point.returning_shape or
@@ -2315,7 +2366,12 @@ def _bulk_update(state):
         state.parameters = ({columns[key].key: value for key, value in rows[0].items() if key != first.record_attribute}
                             if request.point is not None else rows)
         if request.point is not None:
-            state.statement = _returning_statement(owner, statement)
+            state.statement = statement._generate()
+            if request.literal_values:
+                if state.statement is statement:
+                    raise UnsupportedProtectedOperation()
+                state.statement._values = None
+                state.statement._reset_memoizations()
         result = state.invoke_statement()
         if operation.bulk_position != len(operation.bulk_inputs):
             raise UnsupportedProtectedOperation()

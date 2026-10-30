@@ -165,6 +165,7 @@ class Qualification:
                 'tests/test_modification_status_cli.py', 'tests/test_rotation_status_cli.py',
                 'tests/test_point_returning_labels.py',
                 'tests/test_point_update_rows.py',
+                'tests/test_point_update_values.py', 'tests/test_point_update_values_boundary.py',
                 'tests/test_boolean_negation.py', 'tests/test_sqlalchemy_negative_predicates.py',
                 'tests/test_sqlalchemy_counts.py', 'tests/test_sqlalchemy_distinct.py',
                 'tests/test_doctor_preflight.py::test_supplied_select_shapes_use_runtime_admission_without_keys_rows_or_mapping_changes',
