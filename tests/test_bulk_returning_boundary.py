@@ -7,7 +7,7 @@ from uuid import UUID
 
 import psycopg
 import pytest
-from sqlalchemy import event, select
+from sqlalchemy import event, insert, select
 
 from cryptalis.crypto import (AuthenticationFailed, FieldDescriptor, Keyring,
                               KeyUnavailable, open_text, seal_text)
@@ -112,7 +112,8 @@ def test_page_one_observer_cannot_change_a_future_page_buffer(monkeypatch):
     'null_identity', 'outside_input', 'fresh_same_context', 'wrong_frame',
     'nonnull_to_null', 'null_to_nonnull', 'tenant',
 ])
-def test_returning_packed_companion_must_match_exact_prepared_input(fault, monkeypatch):
+@pytest.mark.parametrize('projection', ['scalar', 'columns'])
+def test_returning_packed_companion_must_match_exact_prepared_input(fault, projection, monkeypatch):
     with native_application(False) as app:
         factory = protect(app)
         field = descriptor(app)
@@ -132,8 +133,9 @@ def test_returning_packed_companion_must_match_exact_prepared_input(fault, monke
             fetched = native_fetchall(cursor)
             if armed and not injected and fetched:
                 first = fetched[0]
-                assert type(first[0]) is list and len(first[0]) == 3
-                packed = list(first[0])
+                packed_index = next(index for index, value in enumerate(first)
+                                    if type(value) is list and len(value) == 3)
+                packed = list(first[packed_index])
                 if fault == 'null_identity':
                     packed = [None, None, str(TENANT)]
                 elif fault == 'outside_input':
@@ -151,7 +153,7 @@ def test_returning_packed_companion_must_match_exact_prepared_input(fault, monke
                     packed[0] = alternate.hex()
                 else:
                     packed[2] = str(UUID(int=9999))
-                fetched[0] = (packed, *first[1:])
+                fetched[0] = (*first[:packed_index], packed, *first[packed_index + 1:])
                 injected.append(True)
             return fetched
 
@@ -163,7 +165,9 @@ def test_returning_packed_companion_must_match_exact_prepared_input(fault, monke
                     # ORM bulk execution eagerly consumes native RETURNING.
                     # No partial Result reaches the caller on proof failure.
                     with pytest.raises(AuthenticationFailed):
-                        session.execute(statement(app, False), rows,
+                        query = (statement(app, False) if projection == 'scalar' else
+                                 insert(app.Customer).returning(app.Customer.name, app.Customer.id, app.Customer.name))
+                        session.execute(query, rows,
                                         execution_options={'render_nulls': True})
                     session.rollback()
                 assert armed and injected == [True]

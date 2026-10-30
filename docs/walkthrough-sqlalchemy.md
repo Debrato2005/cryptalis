@@ -56,7 +56,7 @@ The native bulk Result returns no rows and adds no objects to the identity map.
 `render_nulls=True` retains native explicit-NULL grouping.
 Rollback and nested savepoint cleanup retain native behavior.
 
-Request one direct protected mapped column when the caller needs inserted values:
+Request direct mapped columns when the caller needs inserted values:
 
 ```python
 with sessions(tenant_id=authenticated_tenant) as session:
@@ -78,7 +78,12 @@ plaintext that already passed authentication, even after its key lease expires.
 Any later key use must pass its lease check. Roll back after a result failure before retry.
 The INSERT can succeed before result authentication.
 
-Tuple/entity RETURNING, labels, expressions, aliases, loader options,
+Use `.returning(Customer.id, Customer.note, Customer.name)` and `.all()` for
+multi-column Rows. Public and protected columns can be mixed. Repeated protected
+columns retain native result keys and each value requires the prepared-input proof.
+The result still adds no objects to the identity map.
+
+Entity RETURNING, labels, expressions, aliases, loader options,
 caller `return_defaults()`, upserts, Core INSERT, statement-embedded values, INSERT SELECT,
 SQL expressions in rows and the legacy bulk methods remain unadmitted.
 A used callable, context-sensitive, SQL or server default also refuses.

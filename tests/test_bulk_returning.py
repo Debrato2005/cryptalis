@@ -208,7 +208,7 @@ def test_bulk_returning_one_protected_column_matches_native_rows_and_scalars(
                             json.dumps(observed['values'], ensure_ascii=False))
 
 
-@pytest.mark.parametrize('fault', ['tuple', 'entity', 'label', 'expression', 'defaults', 'loader_options'])
+@pytest.mark.parametrize('fault', ['foreign_column', 'entity', 'label', 'expression', 'defaults', 'loader_options'])
 def test_bulk_returning_unadmitted_results_refuse_before_keys_or_data_sql(fault):
     with native_application(False) as app:
         resolutions, data_sql = [], []
@@ -221,7 +221,7 @@ def test_bulk_returning_unadmitted_results_refuse_before_keys_or_data_sql(fault)
         resolutions.clear()
         base = insert(app.Customer)
         statements = {
-            'tuple': base.returning(app.Customer.id, app.Customer.name),
+            'foreign_column': base.returning(app.Customer.id, app.table.alias().c.name),
             'entity': base.returning(app.Customer),
             'label': base.returning(app.Customer.name.label('renamed')),
             'expression': base.returning(func.lower(app.Customer.name)),

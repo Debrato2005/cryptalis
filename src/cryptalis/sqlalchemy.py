@@ -321,7 +321,8 @@ class _ReadText(TypeDecorator):
         self.tenant = operation.tenant
         self.points = tuple(value for column, value in operation.points if column.compare(record_column))
         self.returning_frames = None
-        if operation.bulk_returning is binding:
+        if (operation.bulk_returning is not None and binding.column.table is operation.bulk_insert
+                and binding.column.key in operation.bulk_returning):
             if not operation.bulk_batch:
                 raise UnsupportedProtectedOperation()
             frames = {}
@@ -743,6 +744,10 @@ class _Attachment:
             model = next(m for m in self.document["models"] if m["model"] == binding.model.__name__)
             binding.column.table.schema = model["schema"]
             binding.column.type = _Payload(binding, self)
+        self.returning_columns = {
+            id(column): (column, column.table, _delete_name_state(column.name), _delete_name_state(column.key))
+            for model in self.models for column in inspect(model).local_table.c
+        }
         self.fingerprint = self._fingerprint()
         for model in self.models:
             # ORM flush uses a mapper cache that engine.clear_compiled_cache()
@@ -799,21 +804,35 @@ class _Attachment:
     def returning_binding(self, statement, bulk):
         if not statement._returning:
             return None
-        if (len(statement._returning) != 1 or statement._with_options or
+        if (statement._with_options or
                 type(statement._sort_by_parameter_order) is not bool):
             raise UnsupportedProtectedOperation()
-        return self.returning_column(statement._returning[0], bulk)
+        columns = tuple(self.returning_column(column, bulk) for column in statement._returning)
+        self.select_types(select(*statement._returning))
+        return columns
 
     def returning_column(self, column, bulk):
-        if not isinstance(column, ColumnClause) or column.is_literal or column.table is not bulk:
+        if not isinstance(column, ColumnClause) or column.is_literal is not False:
             raise UnsupportedProtectedOperation()
-        # ORM annotations can retain native types. Resolve the owned physical
-        # column by lineage, as for SELECT; native compilation deannotates it.
-        bindings = [binding for binding in self.bindings if binding.column.table is bulk and
-                    column.shares_lineage(binding.column)]
-        if len(bindings) != 1:
+        original = column
+        if type(column) is annotated_classes.get(Column):
+            dispatch = column._compiler_dispatch
+            if (type(dispatch) is not MethodType or dispatch.__self__ is not column
+                    or dispatch.__func__ is not Annotated._compiler_dispatch):
+                raise UnsupportedProtectedOperation()
+            original = Annotated._deannotate(column)
+        original = _delete_node(original, Column)
+        captured = self.returning_columns.get(id(original))
+        # ORM annotations can retain the pre-attachment native type. SQLAlchemy
+        # rebuilds RETURNING from this exact physical column during bulk setup.
+        if (captured is None or captured[0] is not original or captured[1] is not bulk or
+                captured[2:] != (_delete_name_state(original.name), _delete_name_state(original.key)) or
+                original.is_literal is not False or column.table is not bulk or original.table is not bulk or
+                bulk.c.get(original.key) is not original or
+                any(_delete_name_state(getattr(column, name)) != _delete_name_state(getattr(original, name))
+                    for name in ('name', 'key'))):
             raise UnsupportedProtectedOperation()
-        return bindings[0]
+        return original.key
 
     @classmethod
     def identity_type(cls, dtype, *, uuid_only=False):
@@ -1158,23 +1177,25 @@ class _Attachment:
             operation = _operation.get()
             current = operation is not None and operation.owner is self and operation.bulk_insert is bulk
             if statement._return_defaults:
-                binding = operation.bulk_returning if current else None
-                primary = inspect(binding.model).primary_key if binding is not None else ()
+                returning = operation.bulk_returning if current else None
+                primary = tuple(bulk.primary_key) if returning is not None else ()
                 defaults = statement._return_defaults_columns or ()
                 supplemental = statement._supplemental_returning or ()
-                if (binding is None or len(defaults) != len(primary) or
+                if (returning is None or len(defaults) != len(primary) or
                         any(not isinstance(left, ColumnClause) or left.is_literal or left.table is not bulk or
                             not left.shares_lineage(right) for left, right in zip(defaults, primary)) or
                         statement._with_options or type(statement._sort_by_parameter_order) is not bool):
                     raise UnsupportedProtectedOperation()
                 if statement._returning:
-                    if supplemental or self.returning_binding(statement, bulk) is not binding:
+                    if supplemental or self.returning_binding(statement, bulk) != returning:
                         raise UnsupportedProtectedOperation()
-                elif len(supplemental) != 1 or self.returning_column(supplemental[0], bulk) is not binding:
-                    raise UnsupportedProtectedOperation()
+                else:
+                    if tuple(self.returning_column(column, bulk) for column in supplemental) != returning:
+                        raise UnsupportedProtectedOperation()
+                    self.select_types(select(*supplemental))
             else:
-                binding = self.returning_binding(statement, bulk)
-                if current and binding is not operation.bulk_returning:
+                returning = self.returning_binding(statement, bulk)
+                if current and returning != operation.bulk_returning:
                     raise UnsupportedProtectedOperation()
             return
         if not isinstance(statement, Select):

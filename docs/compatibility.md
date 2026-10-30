@@ -61,7 +61,7 @@ Rollback/removal transforms current data through decrypt-back until explicit fin
 | Text storage/read/write, entity/scalar projection, SQL NULL | SUPPORTED | Randomized authenticated payload. Preserve exact str, empty text, NULL, native ORM state, and expected row/tenant context |
 | Boolean storage/read/write, entity/table/scalar projection, SQL NULL | SUPPORTED | Typed authenticated one-byte values, native Boolean input processing and literal client defaults. No Boolean equality term. [Bounded evidence](status.md#boolean-storage-checkpoint-2026-10-23) |
 | Mapped dictionary INSERT without RETURNING | SUPPORTED | Attached sync/async `Session.execute(insert(Model), list[dict])`, explicit typed IDs and tenant scope, copied attribute dictionaries, native NULL/grouping, autoflush, uniqueness and transaction behavior. Other bulk routes remain unadmitted |
-| Mapped dictionary INSERT with one protected scalar RETURNING | SUPPORTED | Exactly one direct protected mapped column. Preserve native Row/scalar keys/types, grouping, paging, parameter-order requests and empty identity map. Authenticate against exact prepared input. Tuple/entity, label/expression/alias, loader-option and caller return_defaults forms remain unadmitted |
+| Mapped dictionary INSERT with direct-column RETURNING | SUPPORTED | One or more direct mapped columns, including public columns and repeated protected columns. Preserve native Row/scalar keys/types, grouping, paging, parameter-order requests and empty identity map. Authenticate each protected value against its exact prepared input. Entity, label/expression/alias, loader-option and caller return_defaults forms remain unadmitted |
 | Scoped mapped dictionary UPDATE | SUPPORTED | Attached sync/async TEXT, VARCHAR and Boolean targets, explicit tenant-column equality, typed IDs, nonempty list of dictionaries and synchronize_session=False. Preserve native omission/NULL, grouping, repeated IDs, zero matches and transactions. Single-tenant, Core and RETURNING routes remain unadmitted |
 | Scoped mapped single-record DELETE | SUPPORTED | Attached sync/async execute, exact typed tenant and application-record equalities, no external parameters or RETURNING, and synchronize_session=False. Preserve native row counts and transactions. Unsupported custom AST classes refuse before execution |
 | Unprotected-table mapped DELETE | SUPPORTED | One physical table mapped in the attached registry, with no protected fields. Native equality/AND predicates with fixed typed literals only. Default/auto/evaluate/False synchronization. No Core, RETURNING, fetch synchronization or custom AST |
@@ -173,7 +173,7 @@ Register unchanged engine-instance cursor observers after attachment.
 Preexisting, class-level and connection-local cursor hooks refuse. Changes to
 captured SQL, binary bytes or typed primitive/identity binds also refuse before
 the driver. Native ORM RETURNING pages for unprotected server defaults retain
-their native results. The bounded protected scalar route also validates native
+their native results. The bounded direct-column route also validates native
 page inputs and freezes each exact generated page before cursor callbacks.
 It preserves native ordering without an input-order promise unless requested.
 Its result proof does not establish hostile-database result completeness or ordering.

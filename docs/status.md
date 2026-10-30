@@ -10,9 +10,43 @@ No PostgreSQL/provider/runtime cell, production key provider, independent review
 VERIFIED below refers only to the named checks and their exact revisions.
 All other contract and promotion requirements are SPECIFIED. All seven full gates remain UNKNOWN.
 
+## Direct-column INSERT RETURNING: 2026-10-31
+
+**VERIFIED, bounded local source cell:** mapped dictionary INSERT accepts direct
+public and protected column tuples, including repeated columns. Native result
+keys, Row/scalar values, grouping, paging and parameter-order requests are retained.
+Each protected field requires its own exact prepared-input frame proof. Literal
+columns, altered projections, custom column dispatch and unadmitted expressions
+refuse before driver execution. Entity RETURNING remains unfinished.
+
+The reviewed slice passes 242 PostgreSQL checks across INSERT, returned-frame
+tampering, sync/async TEXT/VARCHAR, multiple protected fields, signed bigint
+identities, the adapter, search and driver boundaries. The literal-column review
+finding was reproduced before repair. The [receipt](_reset/returning-columns-20261031.json)
+records source hashes and the exact selection. Python 3.13.12, SQLAlchemy 2.1.3,
+psycopg 3.3.6 and the recovered PostgreSQL 16.2 cell are the evidence boundary.
+No installed-wheel or production qualification follows.
+
+The [full regression](_reset/returning-columns-full-20261031.json) stops after
+five failures: the unavailable native ICU case and four TCP-only lost-reply proxy
+cases on the Unix-socket target. It records 1,252 passes, 21 skips and 18 subtests.
+The full suite is not green. A preceding run exhausted the recovered cluster's
+20 connection slots (1,250 failures, 65 setup errors, 1,494 passes); the local
+limit was restored to PostgreSQL's default 100 before this diagnostic run.
+
+Development resumed under the user's autonomous completion instruction. The
+working branch is `codex/product-completion-20261031`. The locked development
+environment is `/tmp/cryptalis-goal-venv`; the original `.venv` launcher points to
+a missing interpreter. The preserved test database now uses its documented
+private Unix socket. Database, roles and passwords were retained. Original test
+locators have private backups outside the repository. The recovered PostgreSQL
+binary was built `--without-icu`; its nondeterministic-collation test cannot
+establish refusal evidence in this cell. All 34 objectives remain in scope and
+all seven production gates remain UNKNOWN.
+
 ## Preservation checkpoint and operator pause: 2026-10-24
 
-**Operator pause.** Resume only after the explicit instruction **Continue Cryptalis**. Implementation `8b6bccc` adds approved tenants to online capture. It includes restored adoption, all rotations and current-data native exit. Its [qualification boundary](_reset/online-tenants-boundary-20261024.json) records 452 source checks and 18 installed online checks. The installed original HTTP application also passes export and fresh recovery.
+**Historical operator pause; ended by the user's 2026-10-31 autonomous completion instruction.** Implementation `8b6bccc` adds approved tenants to online capture. It includes restored adoption, all rotations and current-data native exit. Its [qualification boundary](_reset/online-tenants-boundary-20261024.json) records 452 source checks and 18 installed online checks. The installed original HTTP application also passes export and fresh recovery.
 
 All 47 release inputs still match the reproducible wheel. The push audit removes one trailing blank line from a test. Its Python AST stays identical. Product bytes stay unchanged.
 
