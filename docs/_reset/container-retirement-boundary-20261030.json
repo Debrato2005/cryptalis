@@ -1,0 +1,229 @@
+{
+  "format": "cryptalis.container-retirement-boundary/v1",
+  "base_revision": "98f742b56c08975adeea5dcf153c33702dd215cb",
+  "source_identity": "worktree-b2d3325645d3bcd0",
+  "source_files": 290,
+  "source_checks": {
+    "test_calls": {
+      "passed": 146
+    },
+    "subtest_calls": {},
+    "setup": {
+      "passed": 146
+    },
+    "teardown": {
+      "passed": 146
+    },
+    "collection": {},
+    "selected_items": 146
+  },
+  "source_and_runtime_unchanged": true,
+  "artifacts": {
+    "cryptalis-0.1.0-py3-none-any.whl": "f9e93185c4932d69d85e71c0d40b3222256bf37e8ba9c589ef52eadd04535d28",
+    "cryptalis-0.1.0.tar.gz": "58a2b504b2040e38d6e6ae7d7ac92be7ed019564afb44b5b62560e8bf2b2051e"
+  },
+  "reproducible": true,
+  "release_steps": [
+    {
+      "name": "reproducible wheel sdist SBOM inspection",
+      "outcome": "PASS",
+      "exit_code": 0,
+      "elapsed_seconds": 2.548959477004246
+    },
+    {
+      "name": "export locked hashed wheel-test dependencies",
+      "outcome": "PASS",
+      "exit_code": 0,
+      "elapsed_seconds": 0.02572599000268383
+    },
+    {
+      "name": "create isolated wheel interpreter",
+      "outcome": "PASS",
+      "exit_code": 0,
+      "elapsed_seconds": 0.014907053002389148
+    },
+    {
+      "name": "install hashed dependencies",
+      "outcome": "PASS",
+      "exit_code": 0,
+      "elapsed_seconds": 3.0188526269994327
+    },
+    {
+      "name": "install exact inspected wheel",
+      "outcome": "PASS",
+      "exit_code": 0,
+      "elapsed_seconds": 0.06354023399762809
+    },
+    {
+      "name": "installed dependency consistency",
+      "outcome": "PASS",
+      "exit_code": 0,
+      "elapsed_seconds": 0.02443803600181127
+    },
+    {
+      "name": "installed file and CLI inspection",
+      "outcome": "PASS"
+    },
+    {
+      "name": "installed ORM and shared initialization/Doctor context",
+      "outcome": "PASS",
+      "exit_code": 0,
+      "elapsed_seconds": 124.08178088200657
+    },
+    {
+      "name": "installed Google SDK protocol and PostgreSQL lifecycle",
+      "outcome": "PASS",
+      "exit_code": 0,
+      "elapsed_seconds": 11.406947272000252
+    },
+    {
+      "name": "installed OpenBao TLS outage and PostgreSQL lifecycle",
+      "outcome": "PASS",
+      "exit_code": 0,
+      "elapsed_seconds": 130.37874207999994
+    },
+    {
+      "name": "installed shared configuration on genuine fresh recovery",
+      "outcome": "PASS",
+      "exit_code": 0,
+      "elapsed_seconds": 15.350681130999874
+    },
+    {
+      "name": "installed keyword public-slot genuine fresh recovery",
+      "outcome": "PASS",
+      "exit_code": 0,
+      "elapsed_seconds": 13.119023945000663
+    }
+  ],
+  "boundary": "Digest/name/read-only-root/bind-mount admission, confirmed stop, private native log retention, file and directory synchronization, then container removal without force or volumes. Native snapshot recovery hashes all stopped-target private files before/after removal. Fault controls preserve private files and make identity, stop, log, file/directory sync and removal failures visible.",
+  "production_gates": "UNKNOWN",
+  "limits": [
+    "Initial native 145-pass run precedes directory synchronization; final native and installed suites include its additional fault control.",
+    "Removing disposable container shells is not key retirement or cryptographic destruction. Raft data, TLS keys, unseal/initialization material, snapshots, audit records and logs remain private and retained.",
+    "A failure before acknowledged container creation may still require host inspection. Host/filesystem durability, production resource capacity, HA and external review remain unqualified.",
+    "No raw native logs, credentials, snapshots or private service directories are included in public evidence."
+  ],
+  "installed_checks": {
+    "installed-sqlmodel-receipt.json": {
+      "test_calls": {
+        "passed": 114
+      },
+      "subtest_calls": {},
+      "setup": {
+        "passed": 114
+      },
+      "teardown": {
+        "passed": 114
+      },
+      "collection": {},
+      "selected_items": 114
+    },
+    "installed-google-kms-receipt.json": {
+      "test_calls": {
+        "passed": 50
+      },
+      "subtest_calls": {},
+      "setup": {
+        "passed": 50
+      },
+      "teardown": {
+        "passed": 50
+      },
+      "collection": {},
+      "selected_items": 50
+    },
+    "installed-openbao-tests.json": {
+      "test_calls": {
+        "passed": 146
+      },
+      "subtest_calls": {},
+      "setup": {
+        "passed": 146
+      },
+      "teardown": {
+        "passed": 146
+      },
+      "collection": {},
+      "selected_items": 146
+    },
+    "installed-application-export-receipt.json": {
+      "test_calls": {
+        "passed": 1
+      },
+      "subtest_calls": {},
+      "setup": {
+        "passed": 1
+      },
+      "teardown": {
+        "passed": 1
+      },
+      "collection": {},
+      "selected_items": 1
+    },
+    "installed-application-restore-receipt.json": {
+      "test_calls": {
+        "passed": 2
+      },
+      "subtest_calls": {},
+      "setup": {
+        "passed": 2
+      },
+      "teardown": {
+        "passed": 2
+      },
+      "collection": {},
+      "selected_items": 2
+    },
+    "installed-export-receipt.json": {
+      "test_calls": {
+        "passed": 1
+      },
+      "subtest_calls": {},
+      "setup": {
+        "passed": 1
+      },
+      "teardown": {
+        "passed": 1
+      },
+      "collection": {},
+      "selected_items": 1
+    },
+    "installed-restore-receipt.json": {
+      "test_calls": {
+        "passed": 1
+      },
+      "subtest_calls": {},
+      "setup": {
+        "passed": 1
+      },
+      "teardown": {
+        "passed": 1
+      },
+      "collection": {},
+      "selected_items": 1
+    }
+  },
+  "archive": {
+    "path": "docs/_reset/container-retirement-receipts-20261030.tar.gz",
+    "sha256": "6b5c069d4299bd96d10a41f7e265f98544d04b0b44ecfbb5721356cc3d2ce04a",
+    "members": [
+      "native/tests.json",
+      "native/qualification.json",
+      "prior-native/tests.json",
+      "prior-native/qualification.json",
+      "installed/install-receipt.json",
+      "installed/installed-application-export-receipt.json",
+      "installed/installed-application-restore-receipt.json",
+      "installed/installed-export-receipt.json",
+      "installed/installed-google-kms-receipt.json",
+      "installed/installed-journey-receipt.json",
+      "installed/installed-openbao-qualification.json",
+      "installed/installed-openbao-tests.json",
+      "installed/installed-restore-receipt.json",
+      "installed/installed-sqlmodel-receipt.json",
+      "installed/release-receipt.json",
+      "installed/sbom.cdx.json",
+      "installed/status.json"
+    ]
+  }
+}

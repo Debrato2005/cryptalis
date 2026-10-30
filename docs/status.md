@@ -201,6 +201,22 @@ unaudited paths and visible metadata remain explicit in the
 [procedure](openbao.md#native-audit-configuration). Complete remote CI above also
 verifies this boundary. All production gates remain UNKNOWN.
 
+The later [container-retirement boundary](_reset/container-retirement-boundary-20261030.json)
+verifies safe disposal of qualification container shells after confirmed shutdown
+and private log retention. File and directory synchronization precede removal;
+image/name/mount mismatch, stop, logging, sync and removal failures remain visible.
+Native snapshot recovery verifies every stopped-target private file remains
+unchanged after shell removal. Raft storage, keys, audit logs and snapshots remain
+retained. This prevents Docker `vfs` image copies exhausting repeated local runs;
+it does not implement provider-key destruction.
+
+Final source and installed provider suites each pass 146 checks; the earlier
+145-pass source boundary predates directory synchronization. Installed verification
+also passes 114 application checks, 50 Google checks, two exports and three
+fresh-restore checks. All 290 Python hashes and imported runtime bytes are stable;
+repeat artifacts, SBOM, installed inspection and dependency consistency pass.
+Complete hosted CI above covers the preceding online configuration commit.
+
 ## Current performance boundary
 
 Further optimization is deferred until functional objectives are implemented,
