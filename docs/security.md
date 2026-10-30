@@ -125,6 +125,12 @@ A valid fresh frame for the same context still refuses if this operation did
 not prepare it. This stronger write-result check does not establish general
 read freshness or completeness.
 
+Explicit output names bind their native label metadata alongside that same
+physical column identity. The prepared-frame lookup resolves the column beneath
+the label, so naming an INSERT output cannot bypass input membership. The shared
+return rewrite binds both the label and column to the owned authenticated reader
+and restores the caller's original statement after execution or failure.
+
 Native supplemental RETURNING can authenticate
 during `execute()`, so later iteration can read already authenticated plaintext.
 An expired lease refuses at actual key use without a provider refresh.

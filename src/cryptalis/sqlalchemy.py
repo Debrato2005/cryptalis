@@ -362,7 +362,9 @@ class _ReadText(TypeDecorator):
                 if sealed.binding is binding:
                     self.returning_frames = MappingProxyType({sealed.record: frozenset((sealed.body,))})
                     break
-        elif operation.bulk_returning is not None and id(binding.column) in operation.bulk_returning:
+        elif operation.bulk_returning is not None and any(
+                (identity[-1] if type(identity) is tuple else identity) == id(binding.column)
+                for identity in operation.bulk_returning):
             if not operation.bulk_batch:
                 raise UnsupportedProtectedOperation()
             frames = {}
@@ -893,8 +895,6 @@ class _Attachment:
                     raise UnsupportedProtectedOperation()
                 columns.extend(root.c)
             else:
-                if isinstance(statement, Insert) and isinstance(root, Label):
-                    raise UnsupportedProtectedOperation()
                 columns.append(root)
         # Read the current roots. SQLAlchemy's _all_selected_columns cache can
         # retain an earlier RETURNING list after a callback changes the AST.
@@ -2078,6 +2078,8 @@ def _bulk_insert(state):
         rows.append(row)
     operation = _Operation(owner, session._keys(), session._tenant, session,
                            bulk_insert=table, bulk_returning=returning)
+    if owner.returning_signature(statement, table) != returning:
+        raise UnsupportedProtectedOperation()
     failed_index = None
     for index, row in enumerate(rows):
         record = row[first.record_attribute]
@@ -2106,6 +2108,8 @@ def _bulk_insert(state):
     state.update_execution_options(compiled_cache=None)
     token = _operation.set(operation)
     try:
+        if returning is not None:
+            state.statement = _returning_statement(owner, statement)
         if failed_index is not None:
             # Preserve native constraint precedence before this known length
             # error. An empty list would instead insert DEFAULT VALUES.
@@ -2138,6 +2142,7 @@ def _bulk_insert(state):
         state.parameters = rows
         return state.invoke_statement()
     finally:
+        state.statement = statement
         state.parameters = original_parameters
         operation.bulk_seals.clear()
         operation.bulk_batch = ()

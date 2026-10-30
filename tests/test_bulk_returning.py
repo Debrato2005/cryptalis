@@ -37,8 +37,9 @@ def returning_rows():
     ]
 
 
-def statement(app, ordered):
-    return insert(app.Customer).returning(app.Customer.name, sort_by_parameter_order=ordered)
+def statement(app, ordered, *, labelled=False):
+    output = app.Customer.name.label('display_name') if labelled else app.Customer.name
+    return insert(app.Customer).returning(output, sort_by_parameter_order=ordered)
 
 
 @contextmanager
@@ -223,7 +224,7 @@ def test_bulk_returning_unadmitted_results_refuse_before_keys_or_data_sql(fault)
         statements = {
             'tuple': base.returning(app.Customer.id, app.Customer.name),
             'entity': base.returning(app.Customer),
-            'label': base.returning(app.Customer.name.label('renamed')),
+            'label': base.returning(func.lower(app.Customer.name).label('renamed')),
             'expression': base.returning(func.lower(app.Customer.name)),
             'defaults': base.return_defaults(),
             'loader_options': base.returning(app.Customer.name).options(load_only(app.Customer.name)),

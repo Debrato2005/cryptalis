@@ -105,13 +105,15 @@ def test_native_tuple_and_entity_returning_pages_identity_and_refresh(dtype, val
         assert sorted(actual) == sorted((row['id'], row['name'], row.get('label')) for row in rows)
 
 
-@pytest.mark.parametrize('kind', ['tuple', 'entity'])
+@pytest.mark.parametrize('kind', ['tuple', 'entity', 'labels'])
 def test_multiple_protected_returning_outputs_authenticate_each_frame(adapter_app, kind, monkeypatch):
     app = adapter_app
     factory = adapter_factory(app, True)
     inputs = [dict(id=UUID(int=9000), tenant_id=ADAPTER_TENANT, name='public', rank=1,
                    note='first field', secret='second field')]
     columns = (app.Customer,) if kind == 'entity' else (app.Customer.note, app.Customer.secret)
+    if kind == 'labels':
+        columns = tuple(column.label(column.key) for column in columns)
     query = insert(app.Customer).returning(*columns)
     with factory(tenant_id=ADAPTER_TENANT) as session:
         result = session.execute(query, inputs)

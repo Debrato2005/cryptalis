@@ -112,7 +112,8 @@ def test_page_one_observer_cannot_change_a_future_page_buffer(monkeypatch):
     'null_identity', 'outside_input', 'fresh_same_context', 'wrong_frame',
     'nonnull_to_null', 'null_to_nonnull', 'tenant',
 ])
-def test_returning_packed_companion_must_match_exact_prepared_input(fault, monkeypatch):
+@pytest.mark.parametrize('labelled', [False, True])
+def test_returning_packed_companion_must_match_exact_prepared_input(fault, monkeypatch, labelled):
     with native_application(False) as app:
         factory = protect(app)
         field = descriptor(app)
@@ -163,7 +164,7 @@ def test_returning_packed_companion_must_match_exact_prepared_input(fault, monke
                     # ORM bulk execution eagerly consumes native RETURNING.
                     # No partial Result reaches the caller on proof failure.
                     with pytest.raises(AuthenticationFailed):
-                        session.execute(statement(app, False), rows,
+                        session.execute(statement(app, False, labelled=labelled), rows,
                                         execution_options={'render_nulls': True})
                     session.rollback()
                 assert armed and injected == [True]
@@ -171,7 +172,7 @@ def test_returning_packed_companion_must_match_exact_prepared_input(fault, monke
             event.remove(app.runtime, 'after_cursor_execute', arm)
         assert rows == original and _snapshot(app) == before
         with factory(tenant_id=TENANT) as session:
-            assert session.execute(statement(app, False), rows,
+            assert session.execute(statement(app, False, labelled=labelled), rows,
                 execution_options={'render_nulls': True}).scalars().all() == [value]
             session.commit()
 

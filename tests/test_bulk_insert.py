@@ -8,7 +8,7 @@ from uuid import UUID
 
 import psycopg
 import pytest
-from sqlalchemy import bindparam, event, insert, literal, select
+from sqlalchemy import bindparam, event, func, insert, literal, select
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.exc import DBAPIError, IntegrityError, ResourceClosedError
 from sqlalchemy.ext.asyncio import create_async_engine
@@ -291,7 +291,7 @@ def test_bulk_unadmitted_shapes_and_contexts_refuse_before_driver():
         event.listen(app.runtime, 'before_cursor_execute', collect)
         try:
             with factory(tenant_id=TENANT) as session:
-                statements = [insert(app.Customer).returning(app.Customer.id.label('renamed')), insert(app.table),
+                statements = [insert(app.Customer).returning(func.lower(app.Customer.name).label('renamed')), insert(app.table),
                     insert(app.Customer).values(name='statement value'),
                     pg_insert(app.Customer).on_conflict_do_nothing(),
                     insert(app.Customer).from_select(['id', 'tenant_id', 'name', 'label'],

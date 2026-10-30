@@ -4,34 +4,34 @@ Cryptalis implements a bounded research prototype. **No production release or co
 This page owns current verification and release gates; the [34-objective ledger](BUILD_CHECKLIST.md) owns remaining work.
 Use the [documentation map](README.md) to find contracts and procedures.
 
-**Latest complete hosted run: PASS at `84b521e`.** Both jobs in
-[run 41065730900](https://github.com/Debrato2005/cryptalis/actions/runs/41065730900)
-pass, including bidirectional nonunique text search changes and saved-proposal
-status. The original `2d53867` source-role failure and later UUID fixture failures
+**Latest complete hosted run: PASS at `8acfeb9`.** Both jobs in
+[run 41074641616](https://github.com/Debrato2005/cryptalis/actions/runs/41074641616)
+pass, including named point UPDATE/DELETE results and bidirectional text search
+changes. The original `2d53867` source-role failure and later UUID fixture failures
 remain repaired. [Retained failure](_reset/github-point-update-returning-failed-boundary-20261030.json)
 and [repair evidence](_reset/point-delete-returning-ci-fix-boundary-20261030.json)
 remain available.
 
 ## Current complete CI qualification
 
-**VERIFIED at `84b521ecd024450e88e48a89f837ee2ce9cd2fa0`:** GitHub
-[run 41065730900](https://github.com/Debrato2005/cryptalis/actions/runs/41065730900)
+**VERIFIED at `8acfeb9e11e75ea6d7ac9b63a350ec3f19bf1a94`:** GitHub
+[run 41074641616](https://github.com/Debrato2005/cryptalis/actions/runs/41074641616)
 passes Source / PostgreSQL 16 and Reproducible artifacts / installed recovery.
-The [retained CI boundary](_reset/github-modification-storage-boundary-20261030.json)
+The [retained CI boundary](_reset/github-returning-labels-boundary-20261030.json)
 binds GitHub archive digests and actual source/installed receipts to this revision.
 
-The complete default source run passes 3,509 test calls and eighteen subtests.
-Twelve call skips, 85 setup skips and eighteen collection skips remain explicit;
-all 3,606 selected items complete. All 309 Python hashes match the recorded checkout,
+The complete default source run passes 3,577 test calls and eighteen subtests.
+Twelve call skips, 86 setup skips and eighteen collection skips remain explicit;
+all 3,675 selected items complete. All 310 Python hashes match the recorded checkout,
 and source/imported-runtime stability passes. No skipped cell is qualified.
 
-The installed wheel passes 15 code-inventory and 368 ORM/configuration/status
-controls, 50 Google SDK and 148 OpenBao/provider checks, four exports and five
+The installed wheel passes 15 code-inventory and 436 ORM/configuration/status
+controls, 50 Google SDK and 149 OpenBao/provider checks, four exports and five
 genuine fresh PostgreSQL recovery checks. Local and GitHub wheel/sdist hashes
 are identical. Repeat archives, SBOM, installed-file inspection and dependency
 consistency pass. The frozen audit reports 39 packages, zero known vulnerabilities
 and zero adverse statuses; this is not proof of absence of unknown vulnerabilities
-or independent review. [Earlier CI](_reset/github-modification-queries-boundary-20261030.json)
+or independent review. [Earlier CI](_reset/github-modification-storage-boundary-20261030.json)
 remains retained. The separate performance profile fails latency targets;
 passing default CI does not qualify performance.
 
@@ -46,38 +46,40 @@ combined disaster drills, and performance acceptance. Independent human review
 remains unavailable; selected live cloud cells need authorized accounts.
 All 34 objectives remain in scope and all seven production gates remain UNKNOWN.
 
-## Named single-record RETURNING results
+<a id="named-single-record-returning-results"></a>
+## Named RETURNING results
 
 **VERIFIED locally, source and installed wheel:** the
-[retained boundary](_reset/returning-labels-boundary-20261030.json) covers explicitly
-named direct columns in admitted single-record UPDATE/DELETE RETURNING. Native result
-names, quoted and duplicate names, supported value types, NULLs, missing rows,
-savepoints and later result consumption are preserved across SQLAlchemy and
-SQLModel sync/async paths. Fixed tenancy and renamed attributes retain current
-values through removal. Computed, anonymous and forged labels remain refused;
-INSERT labels remain unadmitted.
+[named INSERT boundary](_reset/insert-labels-boundary-20261030.json) extends
+direct-column output names to mapped dictionary INSERT, using the same admission and
+owned readers as the [verified point UPDATE/DELETE boundary](_reset/returning-labels-boundary-20261030.json).
+Native result names, quoting, duplicate names, supported types, NULL grouping,
+paging and savepoints retain their SQLAlchemy/SQLModel sync/async behavior.
+Inserted mapped entities can accompany named outputs without losing identity.
 
-The adapter captures native label identity, type and quoting before key access,
-rechecks output shape after callbacks, and binds protected outputs to owned
-authenticated readers without modifying the caller's statement. Forced-unquoted
-names must also satisfy the native dialect's identifier rules. Returned-frame
-tampering, including wrong record/tenant and substituted same-context frames,
-retains its refusal checks. No cryptographic format or manifest changes.
+Every protected INSERT output must still match its exact prepared input frame
+and record. Naming a field cannot bypass this proof. Swapped protected columns,
+fresh same-context ciphertext, wrong record/tenant and NULL substitution refuse.
+The adapter captures native label identity, type and quoting before keys,
+rechecks the original signature immediately after provider callbacks, and
+rewrites labels to owned readers while restoring the caller's original statement.
+Computed, anonymous, forged and aliased outputs remain unadmitted. No crypto
+format, search representation or deployment authority changes.
 
-The earlier source run passed 184 controls. The final 176-check source selection
-includes the affected fixed/scoped DELETE modules. Installed attempt one
-passed 435 controls and failed one obsolete direct-label refusal fixture. That
-fixture and its full-suite counterpart now reject computed labels, preserving
-negative coverage alongside the new positive cases. Only those two test files
-changed between attempts; product bytes and built wheel/sdist are identical.
-Earlier implementation and test failures remain retained.
+The broad source run passes 204 checks. Four final focused controls pass after
+adding the multi-protected-output test to the installed selection; only the
+qualification script differs, with identical product and test bytes. The initial
+missing-feature failure and the first implementation's provider-type mutation
+failure remain retained. The latter passed 98 other controls; the final code
+rejects the changed type before rewriting can normalize it.
 
-The final installed wheel passes 436 application checks, 15 Doctor checks,
+The final installed wheel passes 491 application controls, 15 Doctor checks,
 50 Google adapter checks, 149 real OpenBao/provider checks, four exports and five
-genuine fresh PostgreSQL recovery checks. All 310 source hashes match the final
-source run; source and imported runtime bytes remain stable. Repeat builds,
-SBOM, installed-file inspection and dependency consistency pass. This adds no
-production or performance qualification; all seven production gates remain UNKNOWN.
+genuine fresh PostgreSQL recovery checks. The OpenBao journey inserts named
+values and verifies them through current-data removal. All final source/installed
+inventories bind the same 311 Python files, with stable imported runtime bytes.
+Reproducible artifacts, SBOM, installed-file inspection and dependency consistency
+pass. All seven production gates remain UNKNOWN.
 
 ## Bounded capability evidence
 
@@ -154,7 +156,7 @@ passes, unavailable tests and AI reviews do not replace any requirement below.
 
 ## Evidence routing
 
-- [Latest complete CI receipt](_reset/github-modification-storage-boundary-20261030.json): exact source and installed bindings, counts, skips and artifact digests.
+- [Latest complete CI receipt](_reset/github-returning-labels-boundary-20261030.json): exact source and installed bindings, counts, skips and artifact digests.
 - [Implementation history](history/implementation-2026-10.md): earlier bounded capabilities, failures and measurements.
 - [Decision history](history/decisions-2026-10.md): rationale and superseded choices.
 - [Research index](research/README.md): external sources and historical review material.

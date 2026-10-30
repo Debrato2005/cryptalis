@@ -88,6 +88,22 @@ The native bulk Result returns no rows and adds no objects to the identity map.
 `render_nulls=True` retains native explicit-NULL grouping.
 Rollback and nested savepoint cleanup retain native behavior.
 
+To return inserted values, add direct columns, named columns or the mapped entity:
+
+```python
+result = session.execute(
+    insert(Customer).returning(Customer.note.label("display_note"),
+                               sort_by_parameter_order=True),
+    params=[{"id": first_uuid, "tenant_id": authenticated_tenant, "note": "first"}],
+)
+assert result.scalar_one() == "first"
+session.commit()
+```
+
+The optional ordering flag uses native input ordering across pages. Each protected
+result must authenticate and match its exact prepared input. SQLModel `exec` uses
+the same `params=` keyword; async execution and commit use `await`.
+
 For one record with returned values, pass a single assignment dictionary:
 
 ```python
