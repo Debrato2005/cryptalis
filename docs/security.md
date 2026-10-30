@@ -81,8 +81,14 @@ driver parameters after SQLAlchemy cursor events, including exact payload
 bytes, identity and tenant, against the admitted batch. Late parameter or SQL
 replacement refuses before driver dispatch. This boundary does not make
 arbitrary host plugins trustworthy or qualify other write routes.
-For one protected scalar RETURNING, the processor also requires a real input
+For each protected field in RETURNING, the processor also requires a real input
 identity and exact prepared ciphertext or NULL for that native group.
+Before entity loading, raw cursor rows bind every returned identity/tenant slot
+to each protected carrier. The input-ID check also applies when all protected
+attributes are deferred. A valid frame for another input row cannot populate
+the wrong identity-map entry. Caller replacements must retain the native ORM
+projection, including through supplemental RETURNING. All cursor fetch paths
+use the row check before they expose a returned batch.
 SELECT's outer-join NULL-identity rule does not apply to inserted rows.
 A valid fresh frame for the same context still refuses if this operation did
 not prepare it. This stronger write-result check does not establish general

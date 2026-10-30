@@ -134,6 +134,12 @@ class _UpdateRequest:
 
 
 @dataclass(frozen=True)
+class _Returning:
+    columns: tuple
+    projection: tuple
+
+
+@dataclass(frozen=True)
 class _Binding:
     column: object
     attribute: str
@@ -322,7 +328,7 @@ class _ReadText(TypeDecorator):
         self.points = tuple(value for column, value in operation.points if column.compare(record_column))
         self.returning_frames = None
         if (operation.bulk_returning is not None and binding.column.table is operation.bulk_insert
-                and binding.column.key in operation.bulk_returning):
+                and binding.column.key in operation.bulk_returning.columns):
             if not operation.bulk_batch:
                 raise UnsupportedProtectedOperation()
             frames = {}
@@ -755,7 +761,7 @@ class _Attachment:
             inspect(model).base_mapper._compiled_cache.clear()
         engine.clear_compiled_cache()
         install_guard(engine, UnsupportedProtectedOperation, self.before_execute, self.check_cursor,
-                      UnsafeDriverEvent, self.prepare_many)
+                      UnsafeDriverEvent, self.prepare_many, self.result_rows)
         native_compiler = engine.dialect.statement_compiler
         class StorageCompiler(native_compiler):
             def get_select_precolumns(compiler, select, **kw):
@@ -807,9 +813,31 @@ class _Attachment:
         if (statement._with_options or
                 type(statement._sort_by_parameter_order) is not bool):
             raise UnsupportedProtectedOperation()
-        columns = tuple(self.returning_column(column, bulk) for column in statement._returning)
-        self.select_types(select(*statement._returning))
-        return columns
+        return self.returning_projection(statement._returning, bulk)
+
+    def returning_projection(self, expressions, bulk):
+        columns, projection = [], []
+        for expression in expressions:
+            if isinstance(expression, FromClause):
+                table = _delete_node(expression, Table)
+                mapper = expression._annotations.get('parententity')
+                if (table is not bulk or not any(mapper is inspect(model) for model in self.models) or
+                        mapper.local_table is not bulk or mapper.persist_selectable is not bulk or
+                        mapper.inherits is not None or mapper.version_id_col is not None):
+                    raise UnsupportedProtectedOperation()
+                projection.append(('entity', mapper))
+                for prop in mapper.column_attrs:
+                    if len(prop.columns) != 1:
+                        raise UnsupportedProtectedOperation()
+                    key = self.returning_column(prop.columns[0], bulk)
+                    if not prop.deferred:
+                        columns.append(key)
+            else:
+                key = self.returning_column(expression, bulk)
+                columns.append(key)
+                projection.append(('column', key))
+        self.select_types(select(*expressions))
+        return _Returning(tuple(dict.fromkeys(columns)), tuple(projection))
 
     def returning_column(self, column, bulk):
         if not isinstance(column, ColumnClause) or column.is_literal is not False:
@@ -1190,7 +1218,7 @@ class _Attachment:
                     if supplemental or self.returning_binding(statement, bulk) != returning:
                         raise UnsupportedProtectedOperation()
                 else:
-                    if tuple(self.returning_column(column, bulk) for column in supplemental) != returning:
+                    if tuple(dict.fromkeys(self.returning_column(column, bulk) for column in supplemental)) != returning.columns:
                         raise UnsupportedProtectedOperation()
                     self.select_types(select(*supplemental))
             else:
@@ -1471,6 +1499,73 @@ class _Attachment:
         self.check_bulk_parameters(operation, context, parameters)
         return True
 
+    def result_rows(self, context):
+        """Bind returned public identities to each authenticated field carrier.
+
+        This runs on raw rows before native ORM loading. The field processor
+        still verifies exact prepared ciphertext, context, keys and value type.
+        """
+        operation = _operation.get()
+        if (operation is None or operation.owner is not self or operation.bulk_returning is None or
+                context.compiled is None or not isinstance(context.compiled.statement, Insert)):
+            return None
+        results = context.compiled._result_columns
+        def positions(column):
+            return tuple(index for index, result in enumerate(results)
+                if any(isinstance(value, ColumnClause) and value.table is column.table and
+                       value.shares_lineage(column) for value in result.objects))
+        checks = []
+        entity = any(kind == 'entity' for kind, _ in operation.bulk_returning.projection)
+        input_context = None
+        if entity:
+            first = next(binding for binding in self.bindings if binding.column.table is operation.bulk_insert)
+            records = positions(first.record)
+            tenants = positions(first.tenant) if first.tenant is not None else ()
+            if not records or not operation.bulk_batch:
+                raise UnsupportedProtectedOperation()
+            input_context = (records, tenants,
+                             UUID if first.descriptor.record_codec == 'uuid16/v1' else int,
+                             frozenset(row[first.record.key] for row in operation.bulk_batch), operation.tenant)
+        for index, result in enumerate(results):
+            if type(result.type) is not _ReadText:
+                continue
+            binding = result.type.binding
+            records = positions(binding.record)
+            tenants = positions(binding.tenant) if binding.tenant is not None else ()
+            if entity and not records:
+                raise UnsupportedProtectedOperation()
+            if records or tenants:
+                checks.append((index, binding.descriptor.record_codec, records, tenants))
+        if not checks and input_context is None:
+            return None
+        checks = tuple(checks)
+        def validate(rows):
+            try:
+                for row in rows:
+                    if input_context is not None:
+                        records, tenants, record_type, admitted, scope = input_context
+                        record = row[records[0]]
+                        if (type(record) is not record_type or record not in admitted or
+                                any(type(row[position]) is not record_type or row[position] != record for position in records) or
+                                any(type(row[position]) is not UUID or row[position] != scope for position in tenants)):
+                            raise AuthenticationFailed()
+                    for index, codec, records, tenants in checks:
+                        packed = row[index]
+                        if type(packed) is not list or len(packed) != 3:
+                            raise AuthenticationFailed()
+                        record = UUID(packed[1]) if codec == 'uuid16/v1' else packed[1]
+                        tenant = UUID(packed[2])
+                        record_type = UUID if codec == 'uuid16/v1' else int
+                        if (type(record) is not record_type or
+                                any(type(row[position]) is not record_type or row[position] != record for position in records) or
+                                any(type(row[position]) is not UUID or row[position] != tenant for position in tenants)):
+                            raise AuthenticationFailed()
+            except CryptoFailure:
+                raise
+            except Exception:
+                raise AuthenticationFailed() from None
+        return validate
+
     def check_cursor(self, context, statement, parameters, native_page=False):
         if context.compiled is None:
             raise UnsupportedProtectedOperation()
@@ -1520,6 +1615,13 @@ class _Attachment:
             self.check_update_parameters(operation, context, parameters if context.executemany else [parameters])
             return
         if operation.bulk_insert is not None and isinstance(context.compiled.statement, Insert):
+            returning = operation.bulk_returning
+            if returning is not None and any(kind == 'entity' for kind, _ in returning.projection):
+                state = context.compiled.compile_state
+                native = getattr(state, 'select_statement', None)
+                if (getattr(state, 'from_statement_ctx', None) is None or native is None or
+                        self.returning_projection(native._raw_columns, operation.bulk_insert) != returning):
+                    raise UnsupportedProtectedOperation()
             if native_page:
                 if operation.bulk_returning is None:
                     raise UnsupportedProtectedOperation()
@@ -1807,10 +1909,10 @@ def _bulk_insert(state):
     owner.admit(statement, bulk=table)
     returning = owner.returning_binding(statement, table)
     options = state.execution_options
-    if (set(options) - {'render_nulls', 'autoflush', 'dml_strategy', 'prebuffer_rows',
+    if (set(options) - {'render_nulls', 'autoflush', 'dml_strategy', 'prebuffer_rows', 'populate_existing',
                        '_sa_orm_insert_options', '_result_disable_adapt_to_context'} or
             any(type(options[name]) is not bool for name in
-                ('render_nulls', 'autoflush', 'prebuffer_rows') if name in options) or
+                ('render_nulls', 'autoflush', 'prebuffer_rows', 'populate_existing') if name in options) or
             options.get('dml_strategy', 'bulk') not in ('auto', 'bulk')):
         raise UnsupportedProtectedOperation()
     native = options.get('_sa_orm_insert_options')

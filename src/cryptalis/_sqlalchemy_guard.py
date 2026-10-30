@@ -50,9 +50,10 @@ class _Cursor:
         self._pending = None
         self._completed = None
         self._native_page = None
+        self._rows_check = None
 
     def __getattr__(self, name):
-        if name in ("description", "rowcount", "arraysize", "fetchone", "fetchmany", "fetchall", "close", "closed", "statusmessage"):
+        if name in ("description", "rowcount", "arraysize", "close", "closed", "statusmessage"):
             return getattr(self._raw, name)
         raise self._error()
 
@@ -68,19 +69,42 @@ class _Cursor:
 
     def execute(self, *args, **kwargs):
         self._check()
+        self._rows_check = None
         self._raw.execute(*args, **kwargs)
         return self
 
     def executemany(self, *args, **kwargs):
         self._check()
+        self._rows_check = None
         self._raw.executemany(*args, **kwargs)
         return self
+
+    def fetchone(self):
+        row = self._raw.fetchone()
+        if self._rows_check is not None and row is not None:
+            self._rows_check((row,))
+        return row
+
+    def fetchmany(self, *args, **kwargs):
+        rows = self._raw.fetchmany(*args, **kwargs)
+        if self._rows_check is not None:
+            self._rows_check(rows)
+        return rows
+
+    def fetchall(self):
+        rows = self._raw.fetchall()
+        if self._rows_check is not None:
+            self._rows_check(rows)
+        return rows
 
     def copy(self, *args, **kwargs):
         raise self._error()
 
     def __iter__(self):
-        return iter(self._raw)
+        for row in self._raw:
+            if self._rows_check is not None:
+                self._rows_check((row,))
+            yield row
 
     def __enter__(self):
         self._raw.__enter__()
@@ -119,7 +143,7 @@ class _Connection:
         raise self._error()
 
 
-def install_guard(engine, error, before_execute, check_cursor, listener_error, prepare_many):
+def install_guard(engine, error, before_execute, check_cursor, listener_error, prepare_many, result_rows):
     """Install only after target validation and draining idle native handles."""
     event.listen(engine, "before_execute", before_execute, retval=True)
 
@@ -137,6 +161,7 @@ def install_guard(engine, error, before_execute, check_cursor, listener_error, p
         if not first(context) or type(cursor) is not _Cursor or type(statement) is not str:
             raise listener_error()
         cursor._completed = None
+        cursor._rows_check = None
         cursor._pending = context, statement, values(parameters)
         return statement, parameters
 
@@ -147,8 +172,13 @@ def install_guard(engine, error, before_execute, check_cursor, listener_error, p
     def completed(connection, cursor, statement, parameters, context, executemany):
         seen, cursor._completed = cursor._completed, None
         pending, cursor._pending = cursor._pending, None
-        if seen is not context or pending is not None:
+        if seen is not context or pending is not None or not after_first(context):
             raise listener_error()
+        cursor._rows_check = result_rows(context)
+
+    def after_first(context):
+        listeners = tuple(context.root_connection.dispatch.after_cursor_execute)
+        return listeners and listeners[0] is completed and listeners.count(completed) == 1
 
     # Dialect callbacks can return True before our dispatch handler. Require
     # actual guarded execution before SQLAlchemy reports ORM/result success.
@@ -197,7 +227,7 @@ def install_guard(engine, error, before_execute, check_cursor, listener_error, p
         expected, cursor._pending = cursor._pending, None
         page, cursor._native_page = cursor._native_page, None
         sent = values(parameters)
-        if (expected is None or expected[0] is not context or not first(context) or type(statement) is not str or
+        if (expected is None or expected[0] is not context or not first(context) or not after_first(context) or type(statement) is not str or
                 expected[1] != statement or expected[2] != sent):
             raise listener_error()
         if page is not None and (page[0] is not context or page[1] != statement or page[2] != sent):

@@ -112,7 +112,7 @@ def test_page_one_observer_cannot_change_a_future_page_buffer(monkeypatch):
     'null_identity', 'outside_input', 'fresh_same_context', 'wrong_frame',
     'nonnull_to_null', 'null_to_nonnull', 'tenant',
 ])
-@pytest.mark.parametrize('projection', ['scalar', 'columns'])
+@pytest.mark.parametrize('projection', ['scalar', 'columns', 'entity'])
 def test_returning_packed_companion_must_match_exact_prepared_input(fault, projection, monkeypatch):
     with native_application(False) as app:
         factory = protect(app)
@@ -166,6 +166,7 @@ def test_returning_packed_companion_must_match_exact_prepared_input(fault, proje
                     # No partial Result reaches the caller on proof failure.
                     with pytest.raises(AuthenticationFailed):
                         query = (statement(app, False) if projection == 'scalar' else
+                                 insert(app.Customer).returning(app.Customer) if projection == 'entity' else
                                  insert(app.Customer).returning(app.Customer.name, app.Customer.id, app.Customer.name))
                         session.execute(query, rows,
                                         execution_options={'render_nulls': True})

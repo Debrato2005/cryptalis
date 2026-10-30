@@ -10,6 +10,37 @@ No PostgreSQL/provider/runtime cell, production key provider, independent review
 VERIFIED below refers only to the named checks and their exact revisions.
 All other contract and promotion requirements are SPECIFIED. All seven full gates remain UNKNOWN.
 
+## ORM entity INSERT RETURNING: 2026-10-31
+
+**VERIFIED, bounded local source cell:** mapped dictionary INSERT can return the
+exact attached single-table entity, mixed entity/column results and repeated
+entities. Native sync/async TEXT/VARCHAR results, identity reuse, Boolean
+`populate_existing`, expiration and rollback pass their native oracles. Deferred
+protected fields retain authenticated lazy loading. Aliased, inherited/versioned,
+computed and loader-option entity forms remain unadmitted.
+
+The affected selection passes 289 checks. A separate AI source review identified
+independent public-identity tampering and a supplemental-RETURNING shape bypass;
+both were reproduced against PostgreSQL before repair. Raw cursor fetches now
+correlate public ID/tenant slots with each protected carrier before ORM loading.
+Input membership also applies when every protected field is deferred. Final
+native compilation must retain the requested ORM projection. The
+[receipt](_reset/entity-returning-20261031.json) binds the exact selection and
+source hashes. This is local source evidence, not installed-artifact, independent
+human review or production qualification.
+
+The [full source regression](_reset/entity-returning-full-20261031.json) passes
+2,856 tests and 18 subtests in 563.19 pytest seconds. Pytest reports 38 skips
+across collection/setup/call boundaries and 48 existing DISTINCT-ON deprecation
+warnings. Both private-role probes pass. Source hashes remain unchanged during
+the run. Skipped external, optional and ICU cells remain unqualified.
+
+The preceding lifecycle verification repair is pushed as `ce8da05`. The standard
+`.venv` now contains the locked Python 3.13.12 environment. Its broken Python 3.12
+predecessor is preserved under ignored `.research-tools`. Existing PostgreSQL 16
+tools are discoverable through user-local launcher links. All 34 objectives and
+all seven UNKNOWN production gates are retained.
+
 ## Unix-socket lifecycle fault verification: 2026-10-31
 
 **VERIFIED, bounded local source cell:** the existing real PostgreSQL fault proxy
@@ -50,9 +81,9 @@ The full suite is not green. A preceding run exhausted the recovered cluster's
 limit was restored to PostgreSQL's default 100 before this diagnostic run.
 
 Development resumed under the user's autonomous completion instruction. The
-working branch is `codex/product-completion-20261031`. The locked development
-environment is `/tmp/cryptalis-goal-venv`; the original `.venv` launcher points to
-a missing interpreter. The preserved test database now uses its documented
+working branch is `codex/product-completion-20261031`. The initial restored development
+environment was `/tmp/cryptalis-goal-venv`; the standard `.venv` was subsequently
+restored from the same lock, with its broken predecessor preserved. The preserved test database now uses its documented
 private Unix socket. Database, roles and passwords were retained. Original test
 locators have private backups outside the repository. The recovered PostgreSQL
 binary was built `--without-icu`; its nondeterministic-collation test cannot

@@ -11,7 +11,7 @@ import pytest
 from sqlalchemy import event, func, insert, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
-from sqlalchemy.orm import Session, load_only, registry
+from sqlalchemy.orm import Session, aliased, load_only, registry
 
 from cryptalis.crypto import CryptoFailure
 from cryptalis.sqlalchemy import attach
@@ -42,14 +42,14 @@ def statement(app, ordered):
 
 
 @contextmanager
-def fresh_mapping(app):
+def fresh_mapping(app, *, properties=None):
     # Native RETURNING cached plaintext annotations. Attach a fresh mapping
     # through public APIs, before that mapping has statements or sessions.
     previous_mapping, previous_model = app.mapping, app.Customer
     mapping = registry(metadata=app.table.metadata)
     class Customer:
         pass
-    mapping.map_imperatively(Customer, app.table)
+    mapping.map_imperatively(Customer, app.table, properties=properties)
     app.mapping, app.Customer = mapping, Customer
     try:
         yield
@@ -208,7 +208,7 @@ def test_bulk_returning_one_protected_column_matches_native_rows_and_scalars(
                             json.dumps(observed['values'], ensure_ascii=False))
 
 
-@pytest.mark.parametrize('fault', ['foreign_column', 'entity', 'label', 'expression', 'defaults', 'loader_options'])
+@pytest.mark.parametrize('fault', ['foreign_column', 'aliased_entity', 'label', 'expression', 'defaults', 'loader_options'])
 def test_bulk_returning_unadmitted_results_refuse_before_keys_or_data_sql(fault):
     with native_application(False) as app:
         resolutions, data_sql = [], []
@@ -222,7 +222,7 @@ def test_bulk_returning_unadmitted_results_refuse_before_keys_or_data_sql(fault)
         base = insert(app.Customer)
         statements = {
             'foreign_column': base.returning(app.Customer.id, app.table.alias().c.name),
-            'entity': base.returning(app.Customer),
+            'aliased_entity': base.returning(aliased(app.Customer)),
             'label': base.returning(app.Customer.name.label('renamed')),
             'expression': base.returning(func.lower(app.Customer.name)),
             'defaults': base.return_defaults(),

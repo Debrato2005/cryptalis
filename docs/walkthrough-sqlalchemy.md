@@ -83,7 +83,23 @@ multi-column Rows. Public and protected columns can be mixed. Repeated protected
 columns retain native result keys and each value requires the prepared-input proof.
 The result still adds no objects to the identity map.
 
-Entity RETURNING, labels, expressions, aliases, loader options,
+Request the attached entity when the caller needs ORM objects:
+
+```python
+with sessions(tenant_id=authenticated_tenant) as session:
+    inserted = session.scalars(insert(Customer).returning(Customer), rows).all()
+    session.commit()
+```
+
+Entity objects enter the native identity map. Mixed entity/column results and
+repeated entities retain native result behavior. Existing identities retain
+their loaded values unless Boolean `populate_existing=True` is supplied in
+`execution_options`. Expiration, authenticated lazy reads and rollback retain
+native behavior. Before ORM loading, returned IDs must belong to this INSERT,
+and public identity columns must match each authenticated field carrier. This
+also prevents an unloaded protected field from using a forged identity later.
+
+Labels, expressions, aliases, inherited/versioned entities, loader options,
 caller `return_defaults()`, upserts, Core INSERT, statement-embedded values, INSERT SELECT,
 SQL expressions in rows and the legacy bulk methods remain unadmitted.
 A used callable, context-sensitive, SQL or server default also refuses.
