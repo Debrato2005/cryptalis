@@ -1,5 +1,24 @@
 # Query compatibility
 
+[Documentation map](README.md) · [Current evidence](status.md)
+
+- [Support vocabulary](#support-vocabulary)
+- [Supported stack](#supported-stack)
+- [Compatibility promise](#compatibility-promise)
+- [Full capability matrix](#full-capability-matrix)
+- [Native function admission](#native-function-admission)
+- [Query semantics](#query-semantics)
+- [Signed integer storage](#signed-integer-storage)
+- [Internal DATE storage candidate](#internal-date-storage-candidate)
+- [Optional SQLModel bridge](#optional-sqlmodel-bridge)
+- [Portable DDL](#portable-ddl)
+- [Capability admission](#capability-admission)
+- [Performance targets and recorded costs](#performance-targets-and-recorded-costs)
+- [Database evidence](#database-evidence)
+- [Native identifier deparser admission](#native-identifier-deparser-admission)
+- [Persisted Date reader compatibility](#persisted-date-reader-compatibility)
+
+
 **SPECIFIED:** selected scope and query contract. **No production cell is qualified.**
 SUPPORTED selects design scope. IMPLEMENTED means code exists, with its boundary stated.
 VERIFIED means named evidence exercises the stated property on its recorded revision and cell. It does not imply release qualification.
@@ -65,7 +84,7 @@ Rollback/removal transforms current data through decrypt-back until explicit fin
 |---|---|---|
 | Text storage/read/write, entity/scalar projection, SQL NULL | SUPPORTED | Randomized authenticated payload. Preserve exact str, empty text, NULL, native ORM state, and expected row/tenant context |
 | COUNT of a directly protected column | SUPPORTED | Bounded local implementation of native non-NULL counts, optional output labels, aliases, public grouping and public FILTER predicates. Non-distinct windows admit public partitions/order and native bounds. Custom dispatch and protected argument/filter/partition/order expressions refuse |
-| Boolean storage/read/write, entity/table/scalar projection, SQL NULL | SUPPORTED | Typed authenticated one-byte values, native Boolean input processing and literal client defaults. No Boolean equality term. [Bounded evidence](status.md#boolean-storage-checkpoint-2026-10-23) |
+| Boolean storage/read/write, entity/table/scalar projection, SQL NULL | SUPPORTED | Typed authenticated one-byte values, native Boolean input processing and literal client defaults. No Boolean equality term. [Bounded evidence](history/implementation-2026-10.md#boolean-storage-checkpoint-2026-10-23) |
 | Date storage/read/write and SQL NULL | SUPPORTED | Exact Python date values in years 1 through 9999; typed four-byte ordinal and lock/v8. Storage-only, native sync/async values and latest-value removal. Non-finite/BC/out-of-range source dates refuse before migration effects |
 | UUID value storage/read/write and SQL NULL | SUPPORTED | Exact standard native UUID mappings and Python UUID inputs, including nil; sixteen authenticated network-order bytes and lock/v9. Storage-only; defaults, coercions and custom mappings refuse. Public record/tenant UUIDs keep their separate context contract |
 | Signed integer storage/read/write and SQL NULL | SUPPORTED | Exact int2/int4/int8 mappings and width-bound Python ints, literal client defaults, native failure/transaction behavior and typed fixed-width CF1. Storage-only; the fixed authentication overhead is published in the local cost profile |
@@ -100,13 +119,13 @@ list of typed-ID dictionaries and session scope equal to its declared table
 UUID. Caller WHERE clauses refuse for that route. Native missing-record
 row-count failures remain `StaleDataError`; roll back the transaction or savepoint
 before retry.
-See also the [online scalar UPDATE evidence](status.md#single-tenant-mapped-update-2026-10-29).
+See also the [online scalar UPDATE evidence](history/implementation-2026-10.md#single-tenant-mapped-update-2026-10-29).
 The adapter rejects extra predicates, embedded values, version counters,
 dynamic defaults, read-only mapped properties, SQL-producing type hooks and
 type variants. Ordinary Python public-field bind processors remain native.
 The ordered input ledger checks each emitted group and complete consumption.
-The [bulk UPDATE checkpoint](status.md#scoped-mapped-bulk-update-checkpoint-2026-10-23) owns the earlier TEXT evidence.
-The [VARCHAR checkpoint](status.md#native-varchar-mapped-update-checkpoint-2026-10-23)
+The [bulk UPDATE checkpoint](history/implementation-2026-10.md#scoped-mapped-bulk-update-checkpoint-2026-10-23) owns the earlier TEXT evidence.
+The [VARCHAR checkpoint](history/implementation-2026-10.md#native-varchar-mapped-update-checkpoint-2026-10-23)
 adds finite VARCHAR targets and records native plan behavior.
 
 Admitted plaintext fields retain native query semantics, including ranges, order,
@@ -133,9 +152,9 @@ NULL result. This lookup admission does not admit string identities for writes.
 Entity and table projections expand into the same admitted node snapshot.
 Each selected column and its descendants receive the existing type, lineage
 and protected-expression checks. Protected outputs retain authenticated decryption.
-The [expanded SELECT checkpoint](status.md#expanded-select-projection-checkpoint-2026-10-23)
+The [expanded SELECT checkpoint](history/implementation-2026-10.md#expanded-select-projection-checkpoint-2026-10-23)
 owns current projection evidence. The earlier
-[SELECT type checkpoint](status.md#finite-select-type-admission-checkpoint-2026-10-23)
+[SELECT type checkpoint](history/implementation-2026-10.md#finite-select-type-admission-checkpoint-2026-10-23)
 owns its recorded native refusal and compatibility evidence.
 Tenant-scoped uniqueness uses PostgreSQL's original qualified NULL behavior. Unqualified partial/compound or NULLS NOT DISTINCT variants must reject at plan time.
 
@@ -148,7 +167,7 @@ It returns native row counts. Core DELETE, external parameter dictionaries,
 RETURNING, inheritance, version counters and other predicate shapes refuse.
 Ordinary ORM flush DELETE retains its existing native lifecycle contract.
 Both routes require native compiler nodes. Custom AST classes refuse before SQL.
-The [DELETE checkpoint](status.md#mapped-delete-admission-checkpoint-2026-10-23)
+The [DELETE checkpoint](history/implementation-2026-10.md#mapped-delete-admission-checkpoint-2026-10-23)
 owns the exact native controls and remaining limits.
 
 A separate mapped DELETE route admits only unprotected tables in the same
@@ -165,7 +184,7 @@ not admit general public DML.
 Protection planning and attachment require native row-context codecs without
 dialect-specific type variants. Attachment repeats configuration admission before
 host key resolution and SQL, including changes to identity flags or type hooks. The real native SQL transformation controls and 105-case planning
-regression are recorded in the [identity planning checkpoint](status.md#identity-variant-planning-checkpoint-2026-10-23).
+regression are recorded in the [identity planning checkpoint](history/implementation-2026-10.md#identity-variant-planning-checkpoint-2026-10-23).
 
 ## Native function admission
 
@@ -194,12 +213,12 @@ collation as its column. This admits byte-exact equality and uniqueness only;
 it supplies no locale-sensitive ordering, normalization or pattern semantics.
 User-defined names and nondeterministic collations remain unadmitted.
 Existing readers reject new default-collation search locks before use.
-The [searchable application checkpoint](status.md#searchable-sqlmodel-application-checkpoint-2026-10-23)
+The [searchable application checkpoint](history/implementation-2026-10.md#searchable-sqlmodel-application-checkpoint-2026-10-23)
 records the bounded native and unchanged-application evidence.
 Nondeterministic collations, citext, bpchar padding, locale-sensitive operators, custom types and changed normalizers remain outside the current text profile.
 Each required profile needs exact equivalence and separate admission. This does not require every locale or arbitrary host hook.
 The compiler rejects a constraint or mapping it cannot preserve exactly. Generic CHECK/FK/default/collation preservation is UNKNOWN.
-[Lifecycle](lifecycle.md#integrated-lifecycle-checkpoint-2026-10-07) bounds the current verifier's source-index and scoped-uniqueness evidence.
+[Lifecycle](history/technical-observations-2026-10.md#integrated-lifecycle-checkpoint-2026-10-07) bounds the current verifier's source-index and scoped-uniqueness evidence.
 A searchable small domain fails planning because enumeration can label equality classes. No arbitrary size threshold substitutes for leakage evidence.
 
 The attached driver boundary requires its capture callback first and unique.
@@ -244,8 +263,8 @@ coercion constants preserve custom/generic timing, stale-row behavior and earlie
 INSERT constraints without private numeric binds. Range failures retain typed
 IntegerRangeExceeded and SQLSTATE 22003. Local storage admission retains the
 published fixed-overhead cost; production qualification remains UNKNOWN. See
-the [installed checkpoint](status.md#integer-installed-lifecycle-checkpoint-2026-10-24).
-The newer [default/state checkpoint](status.md#integer-literal-default-installed-checkpoint-2026-10-24)
+the [installed checkpoint](history/implementation-2026-10.md#integer-installed-lifecycle-checkpoint-2026-10-24).
+The newer [default/state checkpoint](history/implementation-2026-10.md#integer-literal-default-installed-checkpoint-2026-10-24)
 adds native default semantics and fixes attribute expiration after valid flushes.
 
 ## Internal DATE storage candidate
@@ -294,7 +313,7 @@ collation and dialect implementation must match the finite contract.
 Subclasses, changed SQL hooks, variants and changed implementations refuse.
 The native String and existing expression checks still apply after normalization.
 This exception admits no other custom protected type or query grammar.
-The [SQLModel checkpoint](status.md#optional-sqlmodel-template-checkpoint-2026-10-23)
+The [SQLModel checkpoint](history/implementation-2026-10.md#optional-sqlmodel-template-checkpoint-2026-10-23)
 owns exact runtime and pinned application evidence.
 
 ## Portable DDL
@@ -313,9 +332,9 @@ The final index needs framing checks for suite, flags, admitted generations, min
 A declared single-tenant table needs no synthetic public tenant column.
 Generated/separate equality terms are compiler choices for admitted constraints. They do not admit protected joins or FKs.
 Shape checks reject malformed bytes, but cannot certify encryption without keys.
-[Database prerequisites](../README.md#database-prerequisites) state migration/runtime role boundaries.
+[Database prerequisites](local-development.md#prerequisites) state migration/runtime role boundaries.
 Exact generated CHECK/default/collation DDL preservation and deployment writer exclusion remain UNKNOWN.
-The [slice 3 runtime checkpoint](status.md#restricted-runtime-role-completion-2026-10-08) verifies local non-owning CRUD and tested persistent DDL/ownership denials.
+The [slice 3 runtime checkpoint](history/implementation-2026-10.md#restricted-runtime-role-completion-2026-10-08) verifies local non-owning CRUD and tested persistent DDL/ownership denials.
 
 ## Capability admission
 
@@ -330,7 +349,7 @@ The six-gate grouping and conservative unadmitted grammar assumptions are record
 
 ## Performance targets and recorded costs
 
-The [current warm 10k observation](status.md#sdk-protocol-and-early-tenant-admission-checkpoint-2026-10-28)
+The [current warm 10k observation](history/implementation-2026-10.md#sdk-protocol-and-early-tenant-admission-checkpoint-2026-10-28)
 over `d7f2dba` reports added p95 of 1.8042 ms point, 3.5577 ms equality and
 3.7962 ms IN-20. Equality misses 3 ms; isolated indexed-column storage measures
 1.4976×. This is one local synchronous warm-provider cell with 40 samples per
@@ -338,18 +357,18 @@ workload. It does not supersede older cells, prove a deterministic regression,
 or qualify production performance. A slower admission-cache experiment was
 reverted; all three security admission checks remain.
 
-The [integer observation](status.md#integer-storage-cost-observation-2026-10-24)
+The [integer observation](history/implementation-2026-10.md#integer-storage-cost-observation-2026-10-24)
 records three storage-only 10k fixtures. All six scalar/entity point observations
 meet 3 ms locally. Column bytes measure 22.5×/11.75×/6.375× native for int2/int4/int8.
 No equality index is admitted, so this does not evaluate the 2× indexed-column
 target. Public-ID batches do not qualify encrypted-value IN. The later
-[local admission decision](decisions.md#local-integer-storage-admission-2026-10-28)
+[local admission decision](history/decisions-2026-10.md#local-integer-storage-admission-2026-10-28)
 accepts these storage-only costs for the assignment. Production performance
 remains UNKNOWN.
 
 The latest SQLModel integration profile has an initial six-target latency failure
 and a passing unchanged-source follow-up. The cause remains UNKNOWN. The
-[current checkpoint](status.md#optional-sqlmodel-template-checkpoint-2026-10-23)
+[current checkpoint](history/implementation-2026-10.md#optional-sqlmodel-template-checkpoint-2026-10-23)
 retains both observations and the prior-revision comparison. Production performance
 qualification remains UNKNOWN.
 
@@ -358,7 +377,7 @@ SELECT type admission, all six added-p95 targets pass. Scalar/tuple point,
 equality and IN-20 measure 1.5218, 2.2998 and 3.7486 ms. Entity values measure
 1.4839, 2.0060 and 2.9876 ms. Isolated storage measures 1.52483× native.
 The 100-pair warm synchronous TEXT profile keeps 150 Python hashes stable.
-The [post-admission checkpoint](status.md#post-admission-10k-profile-checkpoint-2026-10-23) owns exact scope, process observations and receipts.
+The [post-admission checkpoint](history/implementation-2026-10.md#post-admission-10k-profile-checkpoint-2026-10-23) owns exact scope, process observations and receipts.
 Older scale observations below retain their original revision boundaries.
 
 
@@ -373,7 +392,7 @@ Older scale observations below retain their original revision boundaries.
 | Maintenance pause | Undecided (D). No approved number |
 
 **VERIFIED, current bounded projection cell:** the
-[pinned 10,000-row checkpoint](status.md#current-pinned-performance-checkpoint-2026-10-23)
+[pinned 10,000-row checkpoint](history/implementation-2026-10.md#current-pinned-performance-checkpoint-2026-10-23)
 measures warm synchronous TEXT with unique 53-byte names and public local keys.
 Added p95 is 1.6294 ms for a point scalar, 2.0107 ms for equality tuples and
 2.5330 ms for IN-20 tuples. Isolated column/index storage is 1.5248× native.
@@ -392,7 +411,7 @@ The subsequent prepared million-row profile completes the product transition
 and meets all six local targets. Entity added p95 is 2.4646/2.1569/2.5735 ms
 for point/equality/IN-20, with isolated storage at 1.4372× native.
 Its stable 137-file receipts include bounded row lease recovery and explicit
-fixture maintenance before planning. The [current checkpoint](status.md#current-pinned-performance-checkpoint-2026-10-23)
+fixture maintenance before planning. The [current checkpoint](history/implementation-2026-10.md#current-pinned-performance-checkpoint-2026-10-23)
 owns raw evidence and process resource limits. Remote/concurrent/platform
 qualification and the historical page-query cause remain UNKNOWN.
 
@@ -411,85 +430,6 @@ The page-query anomaly has an unknown cause. Slice 4 source inspection corrects 
 The historical receipt is retired as current-product cost evidence. The measurements and unexplained historical cause remain preserved.
 Separate expression admission, statement compilation/cache behavior, driver/database time, row decoding, and materialization in the matched workload.
 No encrypted range/prefix/order capability follows from these plaintext queries.
-
-### Slice 3 local profile: 2026-10-08
-
-**VERIFIED, bounded package adapter:** `.venv/bin/python tests/profile_sqlalchemy_adapter.py`.
-The [hashed receipt](_reset/slice3-performance.json) records 5,000 synthetic rows, 100-row pages, and 40 paired samples.
-The local cell uses Python 3.12.3, SQLAlchemy 2.1.3, psycopg 3.3.6, cryptography 50.0.2, PostgreSQL 16.15, and warm local keys.
-Both paths use identical data and application-generated UUIDs. Queries consume and compare native values and types.
-Protected fixtures are seeded through ordinary attached ORM writes. Empty fixture conversion to `bytea` is test setup, not product apply.
-The final main-thread run followed the full suite and cache proof, with no concurrent Cryptalis checks.
-Shared-host activity remains uncontrolled. The receipt retains earlier runs and their limits.
-
-| Current bounded workload | Native p50/p95 ms | Attached p50/p95 ms | Added p95 ms |
-|---|---:|---:|---:|
-| Point entity | 0.435 / 0.618 | 1.715 / 2.903 | 2.285 |
-| Unprotected range/prefix/page projection | 1.428 / 1.906 | 2.238 / 2.810 | 0.904 |
-
-The point result is within the 3 ms added-p95 target in this local run. It does not qualify the deployment target.
-Earlier runs vary with shared-host activity and code changes. The receipt retains those observations without deployment qualification.
-Both plaintext page paths recorded 60 compilation-cache hits and one miss.
-Protected entity statements disable compilation caching to prevent retention of another operation's tenant, point, or prepared keys.
-Native unprotected compilation caching remains enabled.
-
-Ten extra cProfile page queries separate exclusive Python time into categories.
-Attached admission/guard cost 0.285 ms/query, compilation/cache 0.017 ms, driver/database 1.956 ms,
-and decoding/materialization 0.065 ms. Native compilation/cache cost 0.015 ms, driver/database 1.590 ms,
-and decoding/materialization 0.048 ms. Dispatch, key preparation, and other ORM/engine work remain separate in the receipt.
-Profiling changes timings. Cumulative calls overlap; exclusive categories do not.
-Driver time combines network wait and PostgreSQL work; those parts are not independently separated.
-This small plaintext profile does not explain the historical million-row anomaly. Its cause remains **UNKNOWN**.
-No equality/IN, isolated storage/index, sustained-write, remote-provider, or async performance qualification was performed.
-Adoption in this fixture used one manifest, one attach call, authenticated tenant scope, and application-assigned IDs.
-No business-query or model declarations changed between native and attached paths.
-The later runtime checkpoint verifies separate credentials and fixture grants; deployment enforcement remains unverified.
-
-### Slice 4 local million-row profile: 2026-10-08
-
-**VERIFIED, local warm synchronous cell only:** the [receipt](_reset/slice4-performance.json) binds the final source hashes to 1,000,000 rows per path.
-Both native and attached applications use the restricted runtime login, application UUIDs, identical 53-byte synthetic text and fully consumed results.
-Owner credentials perform only fixture setup, ANALYZE, storage inspection and independent plan inspection. No extension is required.
-Each workload has 10 warmups and 100 alternating paired samples. Entity samples expunge the identity map and materialize fresh objects.
-Added p95 means attached p95 minus native p95; the receipt also records paired median differences and p99 estimates.
-
-| Current workload | Native p50/p95 ms | Attached p50/p95 ms | Added p95 ms |
-|---|---:|---:|---:|
-| Point entity | 0.476 / 0.790 | 2.245 / 3.126 | 2.336 |
-| Equality entity | 0.383 / 0.821 | 2.255 / 3.382 | 2.561 |
-| IN-20 entities | 1.116 / 1.543 | 3.300 / 4.548 | 3.005 |
-| Plain projection, range/prefix, broad OFFSET, 100 rows | 49.050 / 111.791 | 64.975 / 134.355 | 22.564 |
-| Protected entities, plaintext range/prefix, five rows | 0.540 / 0.776 | 2.927 / 3.976 | 3.199 |
-
-Point/equality and IN-20 meet their selected added-p95 targets in this run. No target was invented for either page workload.
-The isolated protected column plus equality index is **1.4928×** the matched plaintext column plus equality index, below the 2× target.
-The plaintext index is on name; the protected index is on tenant plus full term, as selected by the compiler. Whole-relation ratios are not the target denominator.
-PostgreSQL plans used the generated expression index for equality and IN-20. There is no hidden filtering or result refill.
-Both plain-projection paths recorded 109 cache hits and one miss; protected projections/predicates disable caching.
-The receipt separates admission, compilation, key/term preparation, driver/database wait, decoding and other ORM work for all five workloads.
-Server plans also record buffer reads and execution time; larger protected heaps affect ordinary plaintext page scans.
-These observations do not establish the cause of the old 127/24 ms receipt. Its full-entity query and former plaintext-only label are retired as current-product evidence.
-The current structural control differs in IDs, tenancy, distribution, selectivity and schema; historical causality remains UNKNOWN.
-
-An earlier diagnostic equality run missed 3 ms at 3.565 ms added p95. Profiling removed repeated generated-node comparisons and unnecessary compilation.
-The final source retained all admission checks and regression controls. Shared-host activity is uncontrolled; the earlier measurement remains in the receipt.
-Seeding observed about 29,873 native and 10,648 attached rows/s. One 2,000-row chunk reached key expiry, rolled back and recovered with fresh keys.
-An independent elapsed-expiry test checks no SQL/rows before recovery. Expiry limits were unchanged; a second profile retry failure would stop the run.
-1,000 committed updates in ten batches observed about 7,493 native and 3,654 attached rows/s. This is an observation, not a write budget or load qualification.
-Cold/remote providers, async costs, sustained-load/platform qualification and deployment admission remain unverified. All seven full gates remain UNKNOWN.
-
-### Historical storage and transition costs
-
-The customer relation/index total rose from 192,692,224 to 350,707,712 bytes, plus 11,100,160 bytes of operation/chunk tables.
-That whole-relation total does not establish the per-column 2× target. Isolated protected-column/index evidence remains UNKNOWN.
-Protection/verification took 128.821 s. Observed pause with VACUUM/ANALYZE was 130.380 s. Neither value is an approved pause budget.
-Observed WAL/temp deltas and CPU/RSS are in the receipt. Unrelated activity can affect cluster/database deltas.
-
-The [10,000-row cost receipt](../spikes/revamp/results/gate-write-cost.json) also measures an earlier adapter revision before the latest DISTINCT change.
-It records paired results and 400 committed updates. It cannot establish current-revision performance or sustained write qualification.
-The receipt's historical `current_adapter` labels remain unchanged provenance.
-Database-only surrogate array measurements are INTERNAL ONLY, separate from actual CF1 and whole-backend costs.
-Their bundle storage ratios do not establish the admitted equality column's target.
 
 ## Database evidence
 
@@ -516,14 +456,14 @@ constraint dependency and full frame policy. A dump-restored flattened form
 still requires its exact inspected restatement; equivalent arbitrary SQL is
 not admitted. Search indexes retain exact structural admission and use native
 `pg_catalog.quote_ident` for the expected expression spelling. See the
-[identifier checkpoint](status.md#postgresql-identifier-admission-correction-2026-10-28)
+[identifier checkpoint](history/implementation-2026-10.md#postgresql-identifier-admission-correction-2026-10-28)
 for the exact tested cells and remaining qualification limits.
 
 The same installed identifier-fix wheel also passes genuine int4 `integer`
 keyword fresh recovery in both layouts. The existing integer harness verifies
 exact restatement admission, latest edits, native types and package-free removal.
 This does not extend that fresh-recovery claim to keyword text or other names.
-See the [fresh checkpoint](status.md#keyword-identifier-fresh-recovery-2026-10-28).
+See the [fresh checkpoint](history/implementation-2026-10.md#keyword-identifier-fresh-recovery-2026-10-28).
 
 ## Persisted Date reader compatibility
 
@@ -536,4 +476,4 @@ ordinal profile. Changing codecs is a representation change in the semantic
 diff; automatic conversion of an ACTIVE deployment remains unimplemented.
 An actual retained ordinal backup passes new source and installed-reader
 recovery through latest-data removal. See the
-[combined checkpoint](status.md#consolidated-implementation-checkpoint-2026-10-29).
+[combined checkpoint](history/implementation-2026-10.md#consolidated-implementation-checkpoint-2026-10-29).

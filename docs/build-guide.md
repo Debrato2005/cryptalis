@@ -7,7 +7,7 @@ Keep meaningful service-mode PostgreSQL 16 evidence before dependent integration
 Internal development checkpoints do not qualify a partial public release.
 Local test success does not mark a full gate PASS or qualify production.
 Use the [competitive capability matrix](research/capability-matrix.md) to select high-value work.
-The [manual workflow](../ENGINEERING_PLAYBOOK.md#manual-workflow) remains the default for source and tests.
+The [manual workflow](../ENGINEERING_PLAYBOOK.md#implementation-workflow) remains the default for source and tests.
 Do not describe spike code as product code. [Status](status.md) owns recorded evidence and revision limits.
 
 ## Seven deciding gates
@@ -18,6 +18,14 @@ Build slices are dependency steps, not these seven full qualification gates.
 Provider/policy qualification requires selected real authorities. Independent review remains `external-review-required` and UNKNOWN.
 Reuse PostgreSQL, SQLAlchemy, library crypto, providers, and the existing deployment system. Do not invent another service.
 
+## Current implementation priority
+
+The baseline slices below are dependency and acceptance contracts, not a claim
+that implementation starts at slice 1 again. The current code already has bounded
+implementations of all seven. Continue from the [objective ledger](BUILD_CHECKLIST.md#next-critical-path):
+simplify host integration without weakening explicit authority, then verify the
+affected native application journey. [Status](status.md) identifies the tested base.
+
 ## Ordered build slices
 
 These slices retain the original text-first baseline. Current bounded type
@@ -25,7 +33,7 @@ admission includes native text/VARCHAR and storage-only Boolean with standard
 mappings. Boolean uses `cryptalis.context/v2`, `boolean-u8/v1` and lock/v4.
 Its literal client defaults retain native omission/None behavior. Custom
 converters and Boolean search remain unadmitted. See the
-[Boolean checkpoint](status.md#boolean-storage-checkpoint-2026-10-23) and
+[Boolean checkpoint](history/implementation-2026-10.md#boolean-storage-checkpoint-2026-10-23) and
 [type contract](compatibility.md#supported-stack).
 Other required types remain first-release work under the full SRS and all 34 objectives.
 
@@ -92,7 +100,7 @@ Do not describe it or the million-row receipt as current-adapter service evidenc
 | Failure cases | Missing/reordered rows, tag/context/term/index mutation, duplicate normalization, SQL/provider faults, real bounded disk/WAL/temp exhaustion, timeout, wrong target, stale plan/policy, unavailable host provenance |
 | Definition of done | Completed chunks survive faults. Failed chunks remain atomic. Verification mutants prevent switch. Ambiguous effects remain PENDING/UNKNOWN with a concrete remedy. Publication/provider external gaps stay UNKNOWN |
 
-Generic CHECK/FK/default/collation preservation needs executable deciding evidence. The current spike verifies source index definitions, validity/readiness, and fixture-scoped uniqueness only.
+Generic CHECK/FK/default/collation preservation needs executable deciding evidence. Current capture/restoration mechanisms and their limits are specified in the lifecycle contract and tied to receipts in status.
 Pause budgets remain D. Measurements and explicit operator approvals do not create an approved numeric ceiling.
 
 ### 6. Decrypt-back and remove
@@ -151,118 +159,9 @@ Receipts retain the original pytest exit code and the changed source paths.
 Review those changes before a new run. Do not overwrite the failed receipt.
 This check compares two snapshots and does not detect an intervening edit that is restored.
 
-### Optional current performance profile
 
-`tests/profile_current_application.py` runs only when explicitly selected.
-It compares native and pinned ACTIVE applications through their runtime roles.
-It defaults to 10,000 rows, with 100 paired samples per workload and isolated column/index storage.
-`CRYPTALIS_PERFORMANCE_ROWS` also accepts 100000 or 1000000 for separate scale observations.
-Choose new absolute receipt paths. Existing receipts remain immutable.
+## Qualification commands
 
-```bash
-CRYPTALIS_PERFORMANCE_RECEIPT=/tmp/cryptalis-performance-new.json \
-  .venv/bin/python scripts/test_postgres.py \
-  --receipt /tmp/cryptalis-performance-wrapper-new.json \
-  -- -q -s tests/profile_current_application.py
-```
-
-After seeding, the profile runs named-table `VACUUM (ANALYZE)` on each owned
-fixture before product planning. This uses a separate 120-second statement
-limit and restores the previous setting. Product lease and lock limits stay unchanged.
-PostgreSQL requires [VACUUM outside a transaction block](https://www.postgresql.org/docs/16/sql-vacuum.html).
-
-The profile writes raw samples and target PASS/FAIL before any target assertion.
-An observed target miss fails this explicit run. The seven production gates stay UNKNOWN.
-The receipt states its scalar/tuple/entity, warm synchronous TEXT and public-key limits.
-Process CPU and peak RSS include setup/cleanup and pytest imports.
-The process retains the generated input list and creates temporary sets and
-seed serialization. Its peak is not a streaming-backfill or adapter memory bound.
-They do not measure database-server resources.
-Historical profiler helpers supply calculations only. Do not run their direct CLI
-as a substitute for the mandatory wrapper or the current lifecycle/pin path.
-
-### Receipt outcome fields
-
-Receipts also record `pytest_report_counts`. It separates ordinary `test_calls`,
-`subtest_calls`, `setup`, `teardown`, and failed/skipped `collection` reports.
-Each bucket counts final raw pytest outcomes. `selected_items` counts collected
-items after selection, including items whose setup prevents a call.
-Keep these buckets separate. Their sum is not a test count.
-
-Expected failures retain raw skipped outcomes. Non-strict unexpected passes
-retain raw passed outcomes. These fields do not reproduce terminal categories.
-The legacy `counts` and `modules` retain their original call/error aggregation,
-which includes subtest calls and omits collection/setup skips.
-The counter checks run with pytest 9.1.1 and its built-in pytest/unittest subtests.
-Other versions and external report plugins remain unverified.
-
-### Pinned external application check
-
-`tests/test_smolink_application.py` extracts Smolink revision
-`498d24bae999ed53ad85e1c1f1a09ea7fa151aa4` from a local checkout with Git.
-It never imports the checkout's working files or settings file.
-It checks source hashes and import origins before recording adoption evidence.
-
-Use a separate Python 3.13 interpreter with Smolink's dependencies and Cryptalis.
-Install no package into the application checkout for this test.
-Supply an available `redis-server` executable. The test starts a disposable server
-on a private Unix socket. PostgreSQL access still uses both fresh private files
-through the mandatory wrapper.
-
-```bash
-CRYPTALIS_SMOLINK_CHECKOUT=/path/to/smolink \
-  /path/to/python3.13 scripts/test_postgres.py -- tests/test_smolink_application.py -q
-```
-
-An explicit opt-in fails if its interpreter, packages, source revision, or services
-are unavailable. Without the opt-in, the ordinary suite skips this external test.
-The [status record](status.md#pinned-smolink-adoption-2026-10-22) names the two tested
-dependency cells and their limits. The workload protects only `Url.destination`.
-HTTP covers URL creation and refusal cases. Repository and ORM calls cover other CRUD operations.
-The host replaces the session dependency and supplies protection policy and maintenance authority.
-
-### Automated application qualification matrix
-
-Run the online HTTP row through `scripts/online_qualification.py --http`.
-Use `--http-fresh` for its protected export, source-cluster shutdown and new-cluster recovery.
-Run the other selected rows through `scripts/fresh_cluster_qualification.py`.
-The fresh-cluster harness runs export and isolated restore through `scripts/test_postgres.py`.
-The online harness creates three private role files on an isolated cluster and probes all three before the application test.
-The `fresh_cluster_qualification.py` phases reload two private files and probe both roles.
-All `online_qualification.py` phases reload three private files and probe all three roles.
-If a probe fails, stop. Do not retry or substitute a database.
-Use the pinned snapshots and the exact dependency cell recorded in status.
-Keep each work directory new. The installed qualification runner must resolve
-Cryptalis imports from the reviewed wheel instead of the source checkout.
-
-| Row | Profile | Application journey | Evidence boundary |
-|---|---|---|---|
-| Tenant-scoped online lifecycle | `online_qualification.py -- tests/test_online_tenants.py -q` | Native capture and tenant moves, scoped uniqueness, protected backup, source-schema decommission, adoption, all rotations and current-data native exit | Synthetic mixed-scope SQLAlchemy fixture; second database on the same cluster; in-process development custody. Source and installed evidence remain separate |
-| Original online HTTP fresh recovery | `online_qualification.py --http-fresh` | Online adoption, protected backup, checked source shutdown, fresh restore/adoption, root/payload/search rotations, original HTTP and latest-value native exit | 26 unchanged files, three freshly probed roles per cluster, reconstructible public custody. No production fencing or pause claim |
-| Original HTTP online adoption | `online_qualification.py --http` | Concurrent original signup, native HTTP during capture, fenced cutover, protected HTTP/search, latest-value reverse and package-free HTTP restart | 26 unchanged pinned files. Three roles. No backup/rotation repeat or production downtime qualification |
-| Original HTTP/authentication | `--sqlmodel-http` | Native routes, Doctor, protection, search, backup, fresh adoption, root/payload/search rotation, latest-value removal, package-free HTTP restart | 26 pinned files. TestClient and loopback SMTP. Explicit single tenancy and public fixture keys |
-| Original SQLModel CRUD | `--sqlmodel-public-slots` | Three protected fields, public slots, fresh adoption, direct restore-binding search rotation, native exit | Six pinned files. Positive control for the shared harness |
-| Original Smolink | `--smolink` | Async URL routes/repository operations, protected backup, fresh adoption, rotations and native exit | Separate pinned revision and historical qualification. No new execution claim follows from the HTTP row |
-
-Supply `CRYPTALIS_SQLMODEL_HTTP_SOURCE` for the HTTP row.
-Supply `CRYPTALIS_SQLMODEL_APP_SOURCE` for the CRUD row.
-Supply `CRYPTALIS_SMOLINK_CHECKOUT` and a local Redis executable for Smolink.
-
-```bash
-CRYPTALIS_SQLMODEL_HTTP_SOURCE=/path/to/pinned-http-snapshot \
-  /path/to/python3.13 scripts/fresh_cluster_qualification.py \
-  --sqlmodel-http --workdir /tmp/cryptalis-http-fresh-new-run
-```
-
-The integer recovery row also accepts `--integer 32 --column-name integer`.
-This keeps the Python property while exercising PostgreSQL's keyword identifier
-spelling through payload rotation, backup, fresh adoption and current-data exit.
-Add `--public-slots` for original column-position preservation and
-`--installed-wheel /path/to/reviewed.whl` to bind both phases to that artifact.
-Use its installed interpreter with an empty `PYTHONPATH`. See the
-[keyword recovery boundary](status.md#keyword-identifier-fresh-recovery-2026-10-28).
-
-The earlier original HTTP CLI journey owns initialization and five actual
-SIGKILL/resume checkpoints. The new HTTP fresh row owns genuine restore and
-post-adoption authentication. Neither row proves every step or an external KMS.
-Retain these separate boundaries when reporting the full developer journey.
+Use [local development](local-development.md) for source, installed and provider checks.
+The [qualification matrix](qualification.md) owns optional original-application and fresh-cluster profiles
+and [receipt outcome fields](qualification.md#receipt-outcome-fields).
