@@ -125,7 +125,7 @@ def test_fixed_scope_delete_shape_and_authority_refusals_precede_keys_and_sql():
             calls.clear()
             for selected, parameters in ((delete(app.Customer), None),
                     (statement(app).where(app.Customer.public == 'extra'), None),
-                    (statement(app).returning(app.Customer.record), None),
+                    (statement(app).returning(app.Customer.record.label('unsupported')), None),
                     (delete(app.table).where(app.table.c.id == UUID(int=101)), None),
                     (statement(app), {}), (statement(app), []),
                     (statement(app, 'not a typed UUID'), None)):

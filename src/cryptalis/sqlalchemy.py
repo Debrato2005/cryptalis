@@ -354,7 +354,8 @@ class _ReadText(TypeDecorator):
         self.keys = operation.keys
         self.tenant = operation.tenant
         self.points = tuple(value for column, value in operation.points if column.compare(record_column))
-        self.require_record = operation.point_update is not None or operation.bulk_returning is not None
+        self.require_record = (operation.point_update is not None or operation.bulk_returning is not None
+                               or operation.scoped_delete is not None)
         self.returning_frames = None
         if operation.point_update is not None:
             for sealed in operation.bulk_seals.values():
@@ -883,7 +884,7 @@ class _Attachment:
         if not statement._returning:
             return None
         ordered = getattr(statement, '_sort_by_parameter_order', False)
-        if statement._with_options or type(ordered) is not bool or isinstance(statement, Update) and ordered:
+        if statement._with_options or type(ordered) is not bool or not isinstance(statement, Insert) and ordered:
             raise UnsupportedProtectedOperation()
         columns = []
         for root in statement._returning:
@@ -1105,7 +1106,7 @@ class _Attachment:
         if (not isinstance(statement, native) or first.tenant is None and tenant != first.descriptor.table_id or
                 statement.table.name != table.name or statement.table.schema != table.schema or
                 not all(column.key in statement.table.c and statement.table.c[column.key].shares_lineage(column)
-                        for column in table.c) or (not update and statement._returning) or statement._return_defaults or
+                        for column in table.c) or statement._return_defaults or
                 update and (statement._values or getattr(statement, '_ordered_values', None)) or
                 statement._with_options or statement._prefixes or statement._hints or
                 statement._independent_ctes or statement.dialect_kwargs):
@@ -1155,9 +1156,10 @@ class _Attachment:
                 scope is not None and scope.key == record.key):
             raise UnsupportedProtectedOperation()
         identity = UUID(bytes=record.value.bytes) if type(record.value) is UUID else record.value
+        self.returning_signature(statement, table)
         shape = tuple(('entity', id(_delete_node(root, Table))) if isinstance(root, Table) else
                       ('column', self.returning_column_identity(root, table))
-                      for root in statement._returning) if update else ()
+                      for root in statement._returning)
         permit = _RecordPermit(table, first.record, first.tenant, identity, UUID(bytes=tenant.bytes), shape)
         if expected is not None:
             if (permit.table is not expected.table or permit.record is not expected.record or
@@ -1469,6 +1471,11 @@ class _Attachment:
         if operation.scoped_delete is not None and isinstance(statement, Delete):
             if multiparams or params:
                 raise UnsupportedProtectedOperation()
+            if operation.scoped_delete.returning_shape:
+                permit, scope, record = self.record_context(statement, operation.tenant, operation.scoped_delete)
+                operation.bulk_batch = ({record.key: permit.identity},)
+                operation.update_carrier = self.prepare_write_carrier(connection, statement,
+                    [{}], scope, record, bindings=(), returning=True)
             return statement, multiparams, params
         if operation.bulk_update is not None and isinstance(statement, Update):
             groups = multiparams if multiparams else [params]
@@ -1642,6 +1649,13 @@ class _Attachment:
         if operation.scoped_delete is not None and isinstance(context.compiled.statement, Delete):
             permit, scope, record = self.record_context(context.compiled.statement, operation.tenant,
                                                        operation.scoped_delete)
+            if permit.returning_shape:
+                carrier = operation.update_carrier
+                if (context.executemany or carrier is None or context.compiled.statement is not carrier.statement
+                        or statement != str(context.compiled) or statement != carrier.sql):
+                    raise UnsupportedProtectedOperation()
+                self.check_update_parameters(operation, context, [parameters])
+                return
             names = [context.compiled.bind_names.get(bind) for bind in (scope, record) if bind is not None]
             if (context.executemany or statement != str(context.compiled) or any(type(name) is not str for name in names) or
                     len(set(names)) != len(names) or len(context.compiled.bind_names) != len(names) or
@@ -1693,7 +1707,8 @@ class _Attachment:
             names, scope_key, record_key = (dict(native_names),
                 _update_bind_name(scope.key) if scope is not None else None, _update_bind_name(record.key))
             constants = {}
-        first = next((binding for binding in self.bindings if binding.column.table is operation.bulk_update), None)
+        table = operation.scoped_delete.table if operation.scoped_delete is not None else operation.bulk_update
+        first = next((binding for binding in self.bindings if binding.column.table is table), None)
         fixed_scope = first is not None and first.tenant is None and operation.tenant == first.descriptor.table_id
         if ((scope_key is None and not (operation.flushing or fixed_scope) or scope_key is not None and scope_key not in names) or record_key not in names or
                 any(type(name) is not str for name in names.values()) or
@@ -1931,6 +1946,19 @@ def _unprotected_delete(state):
         _operation.reset(token)
 
 
+def _returning_statement(owner, statement):
+    def returning_type(node):
+        if isinstance(node, Column) and owner.protected(node):
+            native = _delete_node(node, Column, allow_type_annotation=True)
+            # Native ORM DML can retain annotated mapper columns. Preserve
+            # labels and ORM annotations while choosing the owned reader.
+            clone = node._annotate({})
+            clone.type = native.type
+            return clone
+        return None
+    return visitors.replacement_traverse(statement, {}, returning_type)
+
+
 def _scoped_delete(state):
     session, statement = state.session, state.statement
     owner, mapper = session._owner, state.bind_mapper
@@ -1956,12 +1984,18 @@ def _scoped_delete(state):
     if session._tenant != permit.tenant:
         raise UnsupportedProtectedOperation()
     owner.record_context(statement, permit.tenant, permit)
-    operation = _Operation(owner, material, permit.tenant, session, scoped_delete=permit)
+    operation = _Operation(owner, material, permit.tenant, session, scoped_delete=permit,
+                           points=((permit.record, permit.identity),))
     state.update_execution_options(compiled_cache=None)
     token = _operation.set(operation)
     try:
+        if permit.returning_shape:
+            state.statement = _returning_statement(owner, statement)
         return state.invoke_statement()
     finally:
+        state.statement = statement
+        operation.bulk_batch = ()
+        operation.update_carrier = None
         _operation.reset(token)
 
 
@@ -2214,18 +2248,7 @@ def _bulk_update(state):
         state.parameters = ({columns[key].key: value for key, value in rows[0].items() if key != first.record_attribute}
                             if request.point is not None else rows)
         if request.point is not None:
-            def returning_type(node):
-                if isinstance(node, Column) and owner.protected(node):
-                    native = _delete_node(node, Column, allow_type_annotation=True)
-                    # ORM UPDATE RETURNING retains annotated mapper columns,
-                    # unlike SELECT and bulk INSERT's native column adapter.
-                    # Preserve result labels/ORM annotations on a fresh clone,
-                    # while selecting the owned authenticated payload reader.
-                    clone = node._annotate({})
-                    clone.type = native.type
-                    return clone
-                return None
-            state.statement = visitors.replacement_traverse(statement, {}, returning_type)
+            state.statement = _returning_statement(owner, statement)
         result = state.invoke_statement()
         if operation.bulk_position != len(operation.bulk_inputs):
             raise UnsupportedProtectedOperation()
@@ -2367,7 +2390,7 @@ def attach(mapping: registry, engine: Engine | AsyncEngine, *, lock: bytes, keys
     execute(), exact record/tenant equality, synchronize_session=False, and one
     external assignment dictionary keyed by physical column keys. Mapped DELETE requires execute()
     with explicit record equality, the declared tenant scope and
-    synchronize_session=False, without RETURNING.
+    synchronize_session=False. RETURNING admits direct columns or the mapped entity.
 
     ``deployment`` is ``(plan, pin)`` or ``(plan, pin, restore_binding)``. The
     third element is an adopted ``cryptalis.restore/v1`` binding when the

@@ -229,7 +229,7 @@ def test_unadmitted_delete_shapes_refuse_before_key_preparation_or_sql(fault):
         elif fault == 'or': statement = delete(app.Customer).where(or_(
             app.Customer.tenant_id == TENANT, app.Customer.id == UUID(int=101)))
         elif fault == 'extra': statement = statement.where(app.Customer.label == 'label-101')
-        elif fault == 'returning': statement = statement.returning(app.Customer.id)
+        elif fault == 'returning': statement = statement.returning(app.Customer.id.label('unsupported'))
         elif fault == 'core': statement = delete(app.table).where(
             app.table.c.tenant_id == TENANT, app.table.c.id == UUID(int=101))
         elif fault == 'params': parameters = {'public_extra': UUID(int=101)}

@@ -156,8 +156,18 @@ with sessions(tenant_id=declared_table_uuid) as session:
     session.commit()
 ```
 
-Native `result.rowcount` is zero or one. Do not supply external parameter
-dictionaries, RETURNING or additional predicates for this route.
+Without RETURNING, native `result.rowcount` is zero or one. To receive the deleted
+values, add `.returning(Customer.id, Customer.note)` and consume the ordinary
+Result with `.one_or_none()`, `.all()` or `.scalars()`. Returning the mapped entity
+is also supported. For a tenant-column table, include exact tenant equality
+alongside the record equality. Async execution uses `await`; SQLModel async
+`exec` uses the same statement.
+
+Loaded objects retain native stale identity state with
+`synchronize_session=False`. Protected returned values authenticate before
+release; an error can occur after DELETE executed, so roll back before retrying
+or committing. Do not supply external parameter dictionaries, additional
+predicates, labelled/aliased/expression outputs or automatic/fetch synchronization.
 
 Request one direct protected mapped column when the caller needs inserted values:
 
