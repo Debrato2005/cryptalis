@@ -15,7 +15,7 @@ The complete default source run passes 3,103 test calls and eighteen subtests.
 Twelve call skips, 63 setup skips and sixteen collection skips remain explicit;
 all 3,178 selected items complete. All six source-role wrapper checks pass,
 resolving the three fixture failures in run 40947951794 at `2d53867`.
-Three role probes, all 280 current Python hashes, source stability and imported
+Three role probes, all 280 Python hashes at that revision, source stability and imported
 runtime stability pass. The [retained CI boundary](_reset/github-current-boundary-20261030.json)
 includes the actual source and installed receipts, with archive digests verified
 against GitHub artifact metadata. No skipped cell is treated as qualified.
@@ -29,8 +29,9 @@ does not establish absence of unknown vulnerabilities or independent review.
 
 The credentials fixture fix is `fa5045a`; OpenBao, operational qualification,
 cold-provider Doctor and independent snapshot recovery are committed and pushed.
-The final evidence update changes documentation only, with all tested executable
-hashes preserved. Earlier interrupted/cancelled runs remain incomplete evidence.
+The subsequent documentation consolidation is `26e882b`. The shared-host
+implementation below changes executable code and has its own verification boundary.
+Earlier interrupted/cancelled runs remain incomplete evidence.
 
 The 34-objective [ledger](BUILD_CHECKLIST.md#objective-ledger) retains seven
 bounded VERIFIED entries, 23 PARTIAL entries, one SPECIFIED, one BLOCKED, one
@@ -43,6 +44,22 @@ identity/audit/HA, combined disaster drills, and performance acceptance.
 Independent human review remains unavailable; selected live cloud cells need
 authorized accounts. All 34 objectives stay in scope and all seven production
 gates remain UNKNOWN.
+
+## Shared initialization and Doctor context
+
+**VERIFIED locally, current source and installed wheel:** one key-free
+`InitializationContext` now serves both `init` and `doctor --initialization-context`.
+Optional SELECT samples are structurally admitted without execution. Doctor writes
+no artifact; init refuses publication for a failed sample. Invalid/conflicting
+inputs, unsafe engines, inspection failure, cleanup and output failure stay visible.
+
+The [retained boundary](_reset/shared-host-boundary-20261030.json) binds 160 focused
+source checks, 63 installed ORM/init/Doctor checks, 69 real OpenBao/provider checks,
+and one genuine PostgreSQL export plus one fresh-target recovery. Repeat archives,
+SBOM, installed files and dependency consistency pass. The first source attempt's
+new test assertion failure is retained with the correction. Full default CI for
+this implementation has not yet completed; the complete run above is its earlier
+base. No production gate changes.
 
 ## Capability summary
 

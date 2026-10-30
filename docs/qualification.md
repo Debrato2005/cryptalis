@@ -3,6 +3,14 @@
 Use [local development](local-development.md) for prerequisites and the full CI commands.
 This page owns optional application/profile selection. Skips and old receipts do not qualify current code.
 
+## Installed baseline
+
+The release harness runs the built wheel through ORM/DML controls and the shared
+initialization/Doctor context, including refusals, read-only database observations,
+cleanup and output failure. These checks run on a fresh PostgreSQL 16 cluster.
+Real OpenBao and independent PostgreSQL recovery follow in separate stages.
+Use [local development](local-development.md#automated-checks) for the complete command.
+
 ### Receipt outcome fields
 
 Receipts also record `pytest_report_counts`. It separates ordinary `test_calls`,

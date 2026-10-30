@@ -113,12 +113,13 @@ class Qualification:
             credentials = provision(port, password, manifest, manifest['database'] + '_native')
             home = write_home(primary, port, manifest, credentials, source_database=manifest['database'])
             environment = dict(os.environ, CRYPTALIS_TEST_CONFIG_DIR=str(home), PYTHONPATH='')
-            self.run('installed SQLModel bridges and fixed-scope DML', [str(python),
+            self.run('installed ORM and shared initialization/Doctor context', [str(python),
                 'scripts/test_postgres.py', '--installed-wheel', str(wheel), '--source-role',
-                '--scope', 'Installed SQLModel bridges and single-tenant UPDATE/DELETE with native lifecycle and failure controls',
+                '--scope', 'Installed ORM DML and shared key-free init/Doctor context with native failure controls',
                 '--receipt', str(self.workdir / 'installed-sqlmodel-receipt.json'), '--',
                 'tests/test_sqlmodel_bridge.py', 'tests/test_sqlmodel_async.py',
-                'tests/test_single_tenant_update.py', 'tests/test_single_tenant_delete.py', '-q'],
+                'tests/test_single_tenant_update.py', 'tests/test_single_tenant_delete.py',
+                'tests/test_initialization_cli.py', '-q'],
                 environment=environment)
             receipt = json.loads((self.workdir / 'installed-sqlmodel-receipt.json').read_text())
             if (receipt['exit_code'] != 0 or receipt['counts'].get('passed', 0) == 0

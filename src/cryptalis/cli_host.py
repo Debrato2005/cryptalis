@@ -3,7 +3,7 @@
 Factories supply a fresh, owned synchronous PostgreSQL psycopg Engine with
 transactional connections. The command disposes it on every outcome. This
 ownership assertion is a host responsibility, not proof of deployment fencing.
-Doctor uses its separate key-free context contract.
+Initialization and pre-adoption Doctor can share a key-free context.
 """
 from collections.abc import Callable
 from dataclasses import dataclass
@@ -274,11 +274,13 @@ class SearchAbortContext:
 
 @dataclass(frozen=True, repr=False)
 class InitializationContext:
+    """Explicit declaration and optional SELECT samples; no keys or approvals."""
     engine: Engine
     mapping: registry
     declaration: bytes
     writers: WriterInventory
     search_reviews: tuple[SearchReview, ...]
+    queries: tuple = ()
 
 
 @dataclass(frozen=True, repr=False)

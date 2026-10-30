@@ -184,6 +184,9 @@ def _parser() -> argparse.ArgumentParser:
     modes = doctor.add_mutually_exclusive_group(required=True)
     modes.add_argument('plan', type=Path, nargs='?', help='Published protection or rotation activation artifact.')
     modes.add_argument('--pre-adoption', type=Path, metavar='MANIFEST', help='Inspect a native schema before adoption.')
+    modes.add_argument('--initialization-context', metavar='MODULE:FACTORY',
+        help='Reuse the key-free InitializationContext used by init. Inspect its declaration, '
+             'schema and optional SELECT samples without writing an artifact.')
     modes.add_argument('--provider-context', metavar='MODULE:FACTORY',
         help='Explicit trusted synchronous factory returning a tuple of at most 16 Keyrings. '
              'Check cold provider access without database access or changing caller caches.')
@@ -697,6 +700,13 @@ def _operational_command(arguments):
 
 
 def _doctor_command(arguments):
+    if arguments.initialization_context is not None:
+        if any(value is not None for value in (arguments.host_context, arguments.pin,
+                arguments.restore_binding, arguments.database_url_file)):
+            raise _CommandFailure('Supply only the initialization-context factory for this pre-adoption diagnosis.',
+                family='CLI', code='InvalidArguments', operation='cli', stage='arguments', cause='ArgumentError')
+        from cryptalis._cli_operations import run_init
+        return run_init(arguments, diagnostic=True)
     if arguments.provider_context is not None:
         reference = arguments.provider_context.split(':')
         if (arguments.host_context is not None or arguments.pin is not None

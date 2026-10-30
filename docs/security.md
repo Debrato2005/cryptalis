@@ -678,7 +678,12 @@ Enforce their type, size and strict parse before canonicalization. Use the exist
 read-only compiler through Doctor preflight. Do not infer tenancy, runtime roles,
 keys, providers, pins or deployment authority. No application values or keys enter inspection.
 
-Publish only after manifest_schema PASS. Preserve all unobserved UNKNOWN results
+Publish only after manifest_schema PASS and PASS for every supplied query sample.
+The shared `doctor --initialization-context` route uses the same key-free
+inspection and engine validation without artifact publication. Refuse conflicting
+command modes before host loading. Bound samples to 128 SELECT objects and inspect
+structure without executing queries or printing values. Complete route inventory
+and host authentication remain unobserved. Preserve all unobserved UNKNOWN results
 and the aggregate UNKNOWN status. Qualify effects NONE as compiler inspection only.
 Host import/factory effects remain UNKNOWN. On output, fsync or cleanup failure,
 preserve known inspection and artifact facts without inventing a database result,
