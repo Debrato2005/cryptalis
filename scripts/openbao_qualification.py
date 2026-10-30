@@ -1,7 +1,7 @@
 """Run real OpenBao qualification against an already authorized PostgreSQL target.
 
 Creates private, isolated, digest-pinned Docker services on loopback. Retains
-their keys/storage, stops the services on exit, and never provisions or substitutes
+their keys/storage and logs, removes stopped container shells on exit, and never provisions or substitutes
 PostgreSQL. Never archive the private work directory as public evidence.
 """
 import argparse
@@ -10,6 +10,7 @@ import ipaddress
 import json
 import os
 from pathlib import Path
+import re
 import socket
 import subprocess
 import sys
@@ -30,15 +31,52 @@ class QualificationFailure(Exception):
     pass
 
 
-def docker(*arguments):
+def docker(*arguments, output=None):
     environment = dict(os.environ)
     for name in ('DOCKER_HOST', 'DOCKER_CONTEXT', 'DOCKER_TLS', 'DOCKER_TLS_VERIFY', 'DOCKER_CERT_PATH'):
         environment.pop(name, None)
+    streams = dict(capture_output=True, text=True) if output is None else dict(stdout=output, stderr=subprocess.STDOUT)
     result = subprocess.run(['docker', '--host=unix:///var/run/docker.sock', *arguments],
-                            env=environment, capture_output=True, text=True, timeout=180)
+                            env=environment, timeout=180, **streams)
     if result.returncode:
         raise QualificationFailure('DockerCommandFailed')
-    return result.stdout.strip()
+    return result.stdout.strip() if output is None else None
+
+
+def retire_container(workdir, container):
+    """Retain private logs and bind storage before removing our stopped shell.
+
+    Any identity, stop, log-write or removal failure remains visible. Never use
+    force/volume removal, and never remove a container when log retention fails.
+    """
+    if not re.fullmatch(r'cryptalis-bao-[0-9a-f]{32}', container):
+        raise QualificationFailure('ContainerIdentityMismatch')
+    inspected = json.loads(docker('inspect', container))
+    if len(inspected) != 1:
+        raise QualificationFailure('ContainerIdentityMismatch')
+    item = inspected[0]
+    mounts = item['Mounts']
+    if (item['Name'] != '/' + container or item['Config']['Image'] != IMAGE
+            or not item['HostConfig']['ReadonlyRootfs'] or len(mounts) != 1
+            or mounts[0]['Type'] != 'bind' or mounts[0]['Destination'] != '/bao/work'
+            or Path(mounts[0]['Source']) != workdir.resolve()
+            or not re.fullmatch(r'[0-9a-f]{64}', item['Id'])):
+        raise QualificationFailure('ContainerIdentityMismatch')
+    identity = item['Id']
+    docker('stop', '--time', '15', identity)
+    if docker('inspect', '--format', '{{.State.Status}}', identity) != 'exited':
+        raise QualificationFailure('ContainerShutdownUnavailable')
+    with (workdir / 'container.log').open('xb') as stream:
+        os.chmod(workdir / 'container.log', 0o600)
+        docker('logs', identity, output=stream)
+        stream.flush()
+        os.fsync(stream.fileno())
+    directory = os.open(workdir, os.O_RDONLY | os.O_DIRECTORY)
+    try:
+        os.fsync(directory)
+    finally:
+        os.close(directory)
+    docker('rm', identity)
 
 
 def write_private(path, content):
@@ -184,7 +222,7 @@ def main():
             *options, '--source-role', '--receipt', str(workdir / 'tests.json'),
             '--scope', 'OpenBao 2.7.2 isolated TLS/Raft, native private audit, outage/restart, independent snapshot recovery and PostgreSQL lifecycle',
             '--', 'tests/test_openbao_protocol.py', 'tests/test_openbao_approle.py', 'tests/test_openbao_integration.py',
-            'tests/test_doctor_provider.py', 'tests/test_provider_authentication_lifecycle.py',
+            'tests/test_doctor_provider.py', 'tests/test_provider_authentication_lifecycle.py', 'tests/test_openbao_harness.py',
             '-q', '--tb=short'], cwd=ROOT, env=environment)
         if result.returncode:
             raise QualificationFailure('TestsFailed')
@@ -198,7 +236,7 @@ def main():
     finally:
         if created:
             try:
-                docker('stop', '--time', '15', container)
+                retire_container(workdir, container)
                 cleanup = 'PASS'
             except Exception:
                 cleanup = 'FAIL'
@@ -207,6 +245,7 @@ def main():
     report = dict(format='cryptalis.openbao-qualification/v1', image=IMAGE,
                   status='FAIL' if failure else 'PASS',
                   cleanup=cleanup,
+                  container_retention='stopped shell removed only after private logs are saved; bind-mounted files retained',
                   failure=str(failure) if isinstance(failure, QualificationFailure)
                   else type(failure).__name__ if failure else None,
                   storage='single-node Raft with independent snapshot target; private keys and files retained',

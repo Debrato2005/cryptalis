@@ -599,7 +599,7 @@ def test_independent_snapshot_restores_cold_roots_with_source_fenced(live):
     p = live.make(token=workload.token)
     sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'scripts'))
     try:
-        from openbao_qualification import docker, service_files, start_container, wait_available, wait_active, write_private
+        from openbao_qualification import docker, service_files, start_container, wait_available, wait_active, write_private, retire_container
     finally:
         sys.path.pop(0)
     # Keep snapshots and bootstrap secrets outside pytest's temporary cleanup.
@@ -695,6 +695,15 @@ def test_independent_snapshot_restores_cold_roots_with_source_fenced(live):
         finally:
             if created:
                 docker('stop', '--time', '15', target_container)
+                import hashlib
+                retained = {p: hashlib.sha256(p.read_bytes()).digest()
+                            for p in workdir.rglob('*') if p.is_file()}
+                retire_container(workdir, target_container)
+                assert docker('ps', '-a', '--filter', 'name=' + target_container, '--format', '{{.Names}}') == ''
+                assert all(p.is_file() and hashlib.sha256(p.read_bytes()).digest() == digest
+                           for p, digest in retained.items())
+                assert (workdir / 'container.log').stat().st_mode & 0o777 == 0o600
+                assert (workdir / 'container.log').stat().st_size > 0
                 target_stopped = True
             # Never restart source authority if target shutdown failed.
             if source_stopped and target_stopped:

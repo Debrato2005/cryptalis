@@ -259,9 +259,14 @@ to bind every imported Cryptalis module to the inspected artifact. Release CI
 uses this route and exports an SBOM with both `--extra openbao` and
 `--extra sqlmodel`. Default SBOM exports continue to cover the base package only.
 
-The services stop on exit. The private directory, service keys and containers are
-retained for inspection; no automatic key deletion is performed. The report
-records cleanup failures even when another failure occurred first. Only
+The services stop on exit. After checking the exact image, read-only root and
+private bind mount, the runner saves private `container.log` output and removes
+the stopped container shell without force or volume removal. This avoids repeated
+full image copies exhausting a Docker `vfs` host. The private directory, Raft
+state, service keys, audit records and snapshots remain available for inspection;
+no automatic key deletion is performed. A stop, log-retention or removal failure
+remains a cleanup failure even when another failure occurred first. Removal does
+not proceed when log retention fails. Only
 `tests.json` and `qualification.json` are public evidence candidates. Never
 upload the complete work directory, initialization JSON, TLS private key,
 service logs, raw audit records or database credentials. The single-share test unseal arrangement

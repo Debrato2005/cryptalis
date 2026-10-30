@@ -9,6 +9,9 @@ The release harness runs the built wheel through ORM/DML controls and the shared
 initialization/Doctor context, including refusals, read-only database observations,
 cleanup and output failure. These checks run on a fresh PostgreSQL 16 cluster.
 Real OpenBao and independent PostgreSQL recovery follow in separate stages.
+The [provider runner](openbao.md#repeatable-local-qualification) retains private
+service logs and recovery files before removing stopped container shells; cleanup
+failure prevents a passing qualification result.
 The installed shared configuration runs all three rotation workflows, native
 write capture, empty-tenant publication/cancellation and current-value removal.
 The actual OpenBao journey also covers capture/onboarding through AppRole;
