@@ -6,31 +6,32 @@ Use the [documentation map](README.md) to find contracts and procedures.
 
 ## Current complete CI qualification
 
-**VERIFIED at `b92cfc7b2fdc808bc27bb5a95ee4b1c5f8c78ff2`:** GitHub
-[run 41005389139](https://github.com/Debrato2005/cryptalis/actions/runs/41005389139)
+**VERIFIED at `bda4fb33e4904785d14ab4da6eb8069e7558735f`:** GitHub
+[run 41007938176](https://github.com/Debrato2005/cryptalis/actions/runs/41007938176)
 passes both Source / PostgreSQL 16 and Reproducible artifacts / installed recovery.
-The [retained CI boundary](_reset/github-application-lifecycle-boundary-20261030.json)
+The [retained CI boundary](_reset/github-google-kms-boundary-20261030.json)
 contains verified GitHub archive digests and the actual source/installed receipts.
 
-The complete default source run passes 3,155 test calls and eighteen subtests.
-Twelve call skips, 63 setup skips and sixteen collection skips remain explicit;
-all 3,230 selected items complete. All 282 Python hashes match the recorded checkout,
+The complete default source run passes 3,204 test calls and eighteen subtests.
+Twelve call skips, 63 setup skips and seventeen collection skips remain explicit;
+all 3,279 selected items complete. All 285 Python hashes match the recorded checkout,
 and source/imported-runtime stability passes. The original source-role fixture
 failure at `2d53867` remains fixed; no skipped cell is treated as qualified.
 
-The installed wheel passes 96 ORM/configuration controls, 69 real OpenBao/provider
+The installed wheel passes 96 ORM/configuration controls, 49 Google SDK and 69 real OpenBao/provider
 checks, one export and one genuine fresh PostgreSQL recovery. Local and GitHub
 wheel/sdist hashes are identical. Repeat archives, SBOM, installed-file inspection
-and dependency consistency pass. The frozen audit reports 26 packages, zero known
+and dependency consistency pass. The frozen audit reports 39 packages, zero known
 vulnerabilities and zero adverse statuses; this is not proof of absence of unknown
 vulnerabilities or independent review. Earlier CI is retained in
-[history](history/implementation-2026-10.md#complete-ci-at-09c635a-2026-10-30).
+[history](history/implementation-2026-10.md#complete-ci-at-b92cfc7-2026-10-30).
 The separate explicit performance profile below fails latency targets; a green
 default CI run does not qualify performance.
 
 Documentation consolidation is `26e882b`; shared init/Doctor is `15ffdb3` and
 shared application configuration is `09c635a`; lifecycle integration is `b92cfc7`.
-The subsequent Google provider below has a separate local verification boundary.
+Google KMS is `bda4fb3`. The later AppRole change below has a separate local
+verification boundary.
 
 The 34-objective [ledger](BUILD_CHECKLIST.md#objective-ledger) retains seven
 bounded VERIFIED entries, 23 PARTIAL entries, one SPECIFIED, one BLOCKED, one
@@ -66,7 +67,7 @@ lifecycle extension. Sample inspection does not establish full application cover
 
 ## Google Cloud KMS SDK boundary
 
-**VERIFIED locally, SDK protocol and real PostgreSQL:** the optional
+**VERIFIED locally and in complete CI, SDK protocol and real PostgreSQL:** the optional
 [Google provider](google-kms.md) supports context-bound root wrap/unwrap, async
 preparation, verified rewrap, CRC32C, explicit version/level checks, bounded calls
 without automatic retries, fork refusal and redacted errors. Its decrypt-version
@@ -82,9 +83,33 @@ one invalid test-file selection remain in the archive with their corrections.
 
 Google checks use the actual SDK/protobuf with a local opaque-handle transport.
 The authorized-live test remains a collection skip: no Google account, billing,
-IAM or custody verification is claimed. Complete remote CI above predates this
-provider. Production identity/audit/HA, combined recovery, controlled retirement
+IAM or custody verification is claimed. Production identity/audit/HA,
+combined recovery, controlled retirement
 and independent review remain open. All production gates stay UNKNOWN.
+
+## OpenBao workload authentication
+
+**VERIFIED locally, source and installed wheel:** [AppRole authentication](openbao.md#approle-workload-authentication)
+supplies fresh short-lived Transit tokens from explicitly supplied workload
+credentials. Exact policy, role name, service-token TTL, current SecretID binding
+and finite role SecretID lifetime are checked before release. Ambient token
+discovery, automatic retries, fork reuse and unsafe role drift refuse. A failed
+login or validation retains UNKNOWN native effects because a token may exist.
+
+The [retained boundary](_reset/openbao-approle-boundary-20261030.json) records 232
+source checks, 114 installed real OpenBao/protocol checks, 96 installed application
+checks, 50 Google checks and fresh PostgreSQL export/recovery. All 286 Python
+hashes and imported runtime bytes are stable. Repeat archives, SBOM and installed
+checks pass. Native controls prove the policy denies key administration and
+SecretID minting; single-use credentials refuse replay and recover with a fresh
+callback value. AppRole drives current-value PostgreSQL removal and independent
+Raft snapshot recovery with the source service offline. The old authentication
+endpoint fails during that recovery. Complete remote CI above predates AppRole.
+
+Host credential delivery, historical SecretID retirement, policy contents, audit
+sinks, production HA and combined deployment recovery remain unqualified. Current
+role inspection cannot prove past settings or prevent future administrator edits.
+All seven production gates remain UNKNOWN.
 
 ## Current performance boundary
 
@@ -114,7 +139,7 @@ records limits. Performance acceptance remains open.
 | Crypto | CF1 AES-256-GCM-SIV, random nonces, HKDF, independent HMAC search roots and authenticated context | [Security](security.md) |
 | ORM/search | Bounded sync/async SQLAlchemy and optional SQLModel; exact/IN/uniqueness and explicitly admitted forms | [Compatibility matrix](compatibility.md#full-capability-matrix) |
 | Lifecycle | Maintenance and bounded initial online protection, resumable verification, three rotations, current-data reverse/removal, fresh restore/adoption | [Lifecycle](lifecycle.md), [operator walkthrough](walkthrough-migration.md) |
-| Providers | Development custody, optional AWS/Google SDK adapters, actual local OpenBao TLS/outage/revocation/snapshot evidence | [OpenBao](openbao.md), [Google](google-kms.md); no production custody qualification |
+| Providers | Development custody, optional AWS/Google SDK adapters, local OpenBao AppRole/TLS/outage/revocation/snapshot evidence | [OpenBao](openbao.md), [Google](google-kms.md); no production custody qualification |
 | Doctor | Pre-adoption schema/supplied SELECT checks, ACTIVE deployment admission, explicit cold-provider access | [Diagnosis](walkthrough-migration.md#diagnose-before-adoption), [provider checks](openbao.md) |
 
 SUPPORTED selects an admitted design scope. VERIFIED applies only to the named
@@ -140,7 +165,7 @@ passes, unavailable tests and AI reviews do not replace any requirement below.
 
 ## Evidence routing
 
-- [Latest complete CI receipt](_reset/github-application-lifecycle-boundary-20261030.json): exact source and installed bindings, counts, skips and artifact digests.
+- [Latest complete CI receipt](_reset/github-google-kms-boundary-20261030.json): exact source and installed bindings, counts, skips and artifact digests.
 - [Implementation history](history/implementation-2026-10.md): earlier bounded capabilities, failures and measurements.
 - [Decision history](history/decisions-2026-10.md): rationale and superseded choices.
 - [Research index](research/README.md): external sources and historical review material.

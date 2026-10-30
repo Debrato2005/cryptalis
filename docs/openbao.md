@@ -9,7 +9,7 @@ this provider are not production-security-qualified.
 An operator provisions a Transit key before application startup. Use a generated
 `aes256-gcm96` key with derivation, export, plaintext backup and deletion disabled.
 Pin a specific version. Do not grant the application key administration, export,
-backup, token minting or `create` on the encrypt endpoint. For a mount `transit`
+backup, token administration or `create` on the encrypt endpoint. For a mount `transit`
 and key `cryptalis`, the runtime policy needs only:
 
 ```hcl
@@ -50,6 +50,74 @@ Supply this provider through the existing key-policy resolver used by planning,
 attachment and lifecycle operations. No application model or query changes are
 required specifically for OpenBao. Provider credentials are not manifest fields.
 Full automatic setup and host-factory simplification remain separate work.
+
+## AppRole workload authentication
+
+`OpenBaoAppRoleToken` obtains a fresh bounded service token from an existing
+AppRole and plugs into the provider's existing callback. It suppresses hvac's
+ambient token discovery, verifies the issued role name and exact policy set,
+rejects additional identity policies, and bounds the token lease. It then reads
+the exact role using that token and requires SecretID binding, a finite positive
+role SecretID TTL and matching service-token policies before returning the token.
+Unknown or unreadable role configuration refuses authentication.
+
+The operator configures an AppRole with `bind_secret_id=true`, a finite
+`secret_id_ttl`, `token_type=service`, `token_num_uses=0`,
+`token_no_default_policy=true`, and token TTL/maximum/explicit maximum within the
+application's approved bound. Add only the exact role-read permission to the
+Transit policy above, for example:
+
+```hcl
+path "auth/approle/role/cryptalis-runtime" { capabilities = ["read"] }
+```
+
+Deliver RoleID and expiring SecretID through the host's credential mechanism;
+the runtime cannot generate its own SecretIDs or change its role. A one-use
+SecretID needs a fresh delivered value for each login. Existing old SecretIDs,
+delivery security, native policy contents, CIDR restrictions and their retirement
+remain host duties. A current role read cannot prove the history of earlier
+credentials or prevent a later administrator change.
+
+```python
+from cryptalis.crypto.openbao import OpenBaoAppRoleToken
+
+authentication = OpenBaoAppRoleToken(
+    endpoint="https://bao.example.com:8200",
+    role_name="cryptalis-runtime",
+    role_id=approved_role_id,
+    secret_id=current_workload_secret_id,  # Synchronous callback; never logged.
+    policies=("cryptalis-runtime",),
+    max_token_ttl=60,
+)
+# Pass token=authentication when constructing OpenBaoTransitKeyProvider.
+```
+
+Set the same explicit CA trust and endpoint on the authenticator and provider.
+The authenticator caches no token, renews none and performs no automatic retry.
+It owns and closes each login/role-inspection SDK session; root caching remains
+Keyring's responsibility. Create it afresh after fork. It never enables an auth
+method, creates a role, mints a SecretID or changes policy.
+
+`ProviderAuthenticationUnavailable` is a `KeyUnavailable` subtype, with
+`effects="UNKNOWN"` and `retryable=False`. A login or failed response check may
+already have issued a native token. Inspect credentials, policy and service
+issuance before retry. The safe error survives root creation, Keyring sync/async
+preparation and supported cross-provider rewrap without exposing its raw cause.
+Plaintext keys and issued credentials have no verified Python zeroization claim.
+
+The real local suite exercises least-privilege AppRole access, used-up SecretID
+refusal and callback recovery, incorrect identities, policy/lease drift, disabled
+SecretID binding, unbounded SecretID lifetime, missing role-read permission and
+the native PostgreSQL protection/edit/removal journey. These checks do not
+qualify production workload identity, secure credential distribution or HA.
+
+The isolated Raft snapshot journey also restores AppRole authentication to a
+new TLS endpoint while the source service remains stopped. The original
+authentication endpoint refuses; fresh target authentication recovers cold roots
+and authenticated values. This does not qualify production credential delivery
+or combined database/provider disaster recovery.
+
+## Diagnose current provider access
 
 To check current provider access, return the application's existing policy
 keyrings from a trusted synchronous host factory:

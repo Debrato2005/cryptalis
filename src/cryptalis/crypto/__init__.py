@@ -4,12 +4,12 @@ from .cf1 import FieldDescriptor, MAX_TEXT_BYTES, open_text, seal_text, open_val
 from .keys import (
     AuthenticationFailed, CryptoBackendUnavailable, CryptoFailure, DevelopmentKeyProvider, InvalidContext,
     InvalidFrame, InvalidText, InvalidValue, KeyContext, KeyPolicy, KeyProvider, Keyring,
-    KeyUnavailable, PreparedKeys, RepresentationMismatch, WrappedRoot, create_root,
+    KeyUnavailable, PreparedKeys, ProviderAuthenticationUnavailable, RepresentationMismatch, WrappedRoot, create_root,
 )
 
 __all__ = [
     "AuthenticationFailed", "CryptoBackendUnavailable", "CryptoFailure", "DevelopmentKeyProvider", "FieldDescriptor",
     "InvalidContext", "InvalidFrame", "InvalidText", "InvalidValue", "KeyContext", "KeyPolicy", "KeyProvider",
-    "Keyring", "KeyUnavailable", "MAX_TEXT_BYTES", "PreparedKeys", "RepresentationMismatch",
+    "Keyring", "KeyUnavailable", "MAX_TEXT_BYTES", "PreparedKeys", "ProviderAuthenticationUnavailable", "RepresentationMismatch",
     "WrappedRoot", "create_root", "open_text", "seal_text", "open_value", "seal_value",
 ]

@@ -222,6 +222,18 @@ def test_verified_cross_provider_rewrap_and_wrong_root_refusal(target):
     destination.unwrap = original
 
 
+def test_rewrap_preserves_unknown_authentication_effects_without_raw_cause():
+    from cryptalis.crypto import ProviderAuthenticationUnavailable
+    service = provider(); wrapped = service.wrap(ROOT, CONTEXT)
+    destination = DevelopmentKeyProvider()
+    def failed(*args): raise ProviderAuthenticationUnavailable() from RuntimeError(SECRET)
+    destination.wrap = failed
+    with pytest.raises(ProviderAuthenticationUnavailable) as error:
+        service.rewrap(wrapped, destination, CONTEXT)
+    assert error.value.effects == 'UNKNOWN' and error.value.retryable is False
+    assert SECRET not in ''.join(traceback.format_exception(error.value))
+
+
 def test_async_cancel_discards_late_sdk_result_and_requires_fresh_preparation():
     transport = ProtocolTransport(); service = provider(transport)
     wrapped = service.wrap(ROOT, CONTEXT)

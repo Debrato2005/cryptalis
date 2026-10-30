@@ -21,7 +21,7 @@ from sqlalchemy import select
 
 from cryptalis.crypto import (DevelopmentKeyProvider, KeyContext, KeyPolicy, Keyring,
     KeyUnavailable, WrappedRoot, create_root, open_text, seal_text)
-from cryptalis.crypto.openbao import OpenBaoTransitKeyProvider
+from cryptalis.crypto.openbao import OpenBaoAppRoleToken, OpenBaoTransitKeyProvider
 from test_cf1 import descriptor
 
 CONTEXT = KeyContext(UUID(int=1), UUID(int=4), 'payload', UUID(int=907), 1)
@@ -71,6 +71,103 @@ def live(service):
         args.update(changes)
         return OpenBaoTransitKeyProvider(**args)
     return SimpleNamespace(provider=make(), make=make, name=name, service=service)
+
+
+def workload_credentials(live, **role_changes):
+    s = live.service
+    mount = 'cryptalis-approle-' + uuid4().hex
+    s.admin.sys.enable_auth_method('approle', path=mount)
+    policy = '\n'.join(f'path "{s.mount}/{operation}/{live.name}" {{ capabilities = ["{capability}"] }}'
+        for operation, capability in [('keys', 'read'), ('encrypt', 'update'), ('decrypt', 'update')])
+    policy += f'\npath "auth/{mount}/role/application" {{ capabilities = ["read"] }}'
+    s.admin.sys.create_or_update_policy(mount, policy)
+    settings = dict(bind_secret_id=True, secret_id_ttl='10m', secret_id_num_uses=0,
+        token_ttl='60s', token_max_ttl='60s', token_explicit_max_ttl='60s',
+        token_policies=[mount], token_no_default_policy=True, token_type='service', token_num_uses=0)
+    settings.update(role_changes)
+    s.admin.auth.approle.create_or_update_approle('application', mount_point=mount, **settings)
+    role_id = s.admin.auth.approle.read_role_id('application', mount_point=mount)['data']['role_id']
+    def issue():
+        return s.admin.auth.approle.generate_secret_id('application', mount_point=mount)['data']['secret_id']
+    current = [issue()]
+    def make(**changes):
+        config = dict(endpoint=s.config['endpoint'], ca_cert=s.config['ca_cert'], role_name='application', role_id=role_id,
+            secret_id=lambda: current[0], policies=(mount,), mount=mount, max_token_ttl=60, timeout=3)
+        config.update(changes)
+        return OpenBaoAppRoleToken(**config)
+    return SimpleNamespace(token=make(), make=make, current=current, issue=issue, mount=mount,
+                           role_id=role_id, policy=policy)
+
+
+def test_real_approle_uses_only_supplied_credentials_and_narrow_policy(live, monkeypatch):
+    s = live.service
+    workload = workload_credentials(live)
+    monkeypatch.setattr(s.hvac.utils, 'get_token_from_env',
+                        lambda: pytest.fail('AppRole used ambient token discovery'))
+    p = live.make(token=workload.token)
+    wrapper = p.wrap(ROOT, CONTEXT)
+    assert p.unwrap(wrapper, CONTEXT) == ROOT
+    assert asyncio.run(p.unwrap_async(wrapper, CONTEXT)) == ROOT
+    runtime = s.hvac.Client(url=s.config['endpoint'], verify=s.config['ca_cert'],
+        token=workload.token(), allow_redirects=False, timeout=3)
+    try:
+        for path, values in [(f'{s.mount}/keys/forbidden', {'type': 'aes256-gcm96'}),
+                             (f'{s.mount}/keys/{live.name}/rotate', {})]:
+            with pytest.raises(s.hvac.exceptions.Forbidden): runtime.write(path, **values)
+        with pytest.raises(s.hvac.exceptions.Forbidden):
+            runtime.read(f'{s.mount}/export/encryption-key/{live.name}')
+        with pytest.raises(s.hvac.exceptions.Forbidden):
+            runtime.auth.approle.generate_secret_id('application', mount_point=workload.mount)
+    finally: runtime.session.close()
+
+
+def test_real_single_use_secret_refuses_replay_and_current_callback_recovers(live):
+    from cryptalis.crypto import ProviderAuthenticationUnavailable
+    workload = workload_credentials(live, secret_id_num_uses=1)
+    p = live.make(token=workload.token)
+    wrapper = p.wrap(ROOT, CONTEXT)
+    with pytest.raises(ProviderAuthenticationUnavailable) as error: p.unwrap(wrapper, CONTEXT)
+    assert error.value.effects == 'UNKNOWN' and error.value.retryable is False
+    workload.current[0] = workload.issue()
+    assert p.unwrap(wrapper, CONTEXT) == ROOT
+
+
+@pytest.mark.parametrize('fault', ['wrong_role', 'wrong_secret', 'extra_policy', 'long_lease',
+                                 'unbound_secret', 'unbounded_secret', 'unreadable_role'])
+def test_real_approle_wrong_authority_and_policy_drift_refuse(live, fault):
+    from cryptalis.crypto import ProviderAuthenticationUnavailable
+    workload = workload_credentials(live)
+    good = live.make(token=workload.token)
+    wrapper = good.wrap(ROOT, CONTEXT)
+    if fault == 'wrong_role': candidate = workload.make(role_id=str(uuid4()))
+    elif fault == 'wrong_secret': candidate = workload.make(secret_id=lambda: str(uuid4()))
+    elif fault == 'extra_policy': candidate = workload.make(policies=('different-runtime-policy',))
+    elif fault == 'long_lease': candidate = workload.make(max_token_ttl=1)
+    else:
+        if fault == 'unreadable_role':
+            live.service.admin.sys.create_or_update_policy(workload.mount,
+                '\n'.join(workload.policy.splitlines()[:-1]))
+        else:
+            live.service.admin.auth.approle.create_or_update_approle('application',
+                mount_point=workload.mount,
+                **({'bind_secret_id': False, 'secret_id_bound_cidrs': ['0.0.0.0/0']} if fault == 'unbound_secret'
+                   else {'secret_id_ttl': '0s'}))
+        native = live.service.hvac.Client(url=live.service.config['endpoint'], token='',
+            verify=live.service.config['ca_cert'], allow_redirects=False, timeout=3)
+        try:
+            observed = native.auth.approle.login(role_id=workload.role_id,
+                secret_id=str(uuid4()) if fault == 'unbound_secret' else workload.current[0],
+                mount_point=workload.mount, use_token=False)
+            assert observed['auth']['token_policies'] == [workload.mount]
+        finally: native.session.close()
+        candidate = workload.token
+    with pytest.raises(ProviderAuthenticationUnavailable) as error:
+        live.make(token=candidate).unwrap(wrapper, CONTEXT)
+    assert error.value.effects == 'UNKNOWN'
+    if fault in ('unbound_secret', 'unbounded_secret', 'unreadable_role'):
+        replacement = workload_credentials(live)
+        good = live.make(token=replacement.token)
+    assert good.unwrap(wrapper, CONTEXT) == ROOT
 
 
 def test_real_transit_randomized_wrapping_and_cf1_sync_async(live):
@@ -318,6 +415,8 @@ def test_independent_snapshot_restores_cold_roots_with_source_fenced(live):
     if not source_container:
         pytest.skip('snapshot recovery requires the isolated qualification harness')
     assert re.fullmatch(r'cryptalis-bao-[0-9a-f]{32}', source_container)
+    workload = workload_credentials(live)
+    p = live.make(token=workload.token)
     sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'scripts'))
     try:
         from openbao_qualification import docker, service_files, start_container, wait_available, write_private
@@ -358,7 +457,8 @@ def test_independent_snapshot_restores_cold_roots_with_source_fenced(live):
         client.sys.submit_unseal_key(initialized['keys'][0])
         client.token = initialized['root_token']
         assert s.mount + '/' not in client.sys.list_mounted_secrets_engines()
-        recovered = live.make(endpoint=endpoint, ca_cert=str(workdir / 'ca.pem'))
+        recovered = live.make(endpoint=endpoint, ca_cert=str(workdir / 'ca.pem'),
+            token=workload.make(endpoint=endpoint, ca_cert=str(workdir / 'ca.pem')))
         with pytest.raises(KeyUnavailable):
             recovered.unwrap(wrapper, CONTEXT)
         # Default restore refuses a different seal; malformed force input also refuses.
@@ -384,6 +484,11 @@ def test_independent_snapshot_restores_cold_roots_with_source_fenced(live):
         client.sys.submit_unseal_key(source_initialization['keys'][0])
         client.token = source_initialization['root_token']
         assert client.read(f'{s.mount}/keys/after-snapshot') is None
+        # The original auth endpoint is still fenced; it cannot silently supply
+        # credentials for the independently restored authority.
+        with pytest.raises(KeyUnavailable):
+            live.make(endpoint=endpoint, ca_cert=str(workdir / 'ca.pem'),
+                      token=workload.token).unwrap(wrapper, CONTEXT)
         cold = Keyring(policy, {p.provider_id: recovered})
         assert check_keys((cold,))['checks']['cold_key_preparation'] == 'PASS'
         assert not cold._cache
@@ -406,6 +511,7 @@ def test_independent_snapshot_restores_cold_roots_with_source_fenced(live):
 
 
 def test_real_provider_protect_search_edit_and_verified_plaintext_exit(live, monkeypatch):
+    live.provider = live.make(token=workload_credentials(live).token)
     import test_migration as fixture
     import test_deprotection as reverse
     from cryptalis.sqlalchemy import attach

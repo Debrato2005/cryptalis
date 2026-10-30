@@ -1,0 +1,215 @@
+{
+  "format": "cryptalis.openbao-approle-boundary/v1",
+  "base_revision": "bda4fb33e4904785d14ab4da6eb8069e7558735f",
+  "source_identity": "worktree-f9d727aaa2f1659f",
+  "source_files": 286,
+  "source_checks": {
+    "test_calls": {
+      "passed": 232
+    },
+    "subtest_calls": {},
+    "setup": {
+      "passed": 232
+    },
+    "teardown": {
+      "passed": 232
+    },
+    "collection": {},
+    "selected_items": 232
+  },
+  "source_and_runtime_unchanged": true,
+  "artifacts": {
+    "cryptalis-0.1.0-py3-none-any.whl": "bd9cfd2ba4aacbb91f735d8874708b5c8309fcd3092550e5a8452055b9e39669",
+    "cryptalis-0.1.0.tar.gz": "575063c2ce87f03c53cec1e4dd2141bb060bc15b4a797cccef90ddf40a995893"
+  },
+  "reproducible": true,
+  "release_steps": [
+    {
+      "name": "reproducible wheel sdist SBOM inspection",
+      "outcome": "PASS",
+      "exit_code": 0,
+      "elapsed_seconds": 1.2696639589994447
+    },
+    {
+      "name": "export locked hashed wheel-test dependencies",
+      "outcome": "PASS",
+      "exit_code": 0,
+      "elapsed_seconds": 0.024132854996423703
+    },
+    {
+      "name": "create isolated wheel interpreter",
+      "outcome": "PASS",
+      "exit_code": 0,
+      "elapsed_seconds": 0.017770254002243746
+    },
+    {
+      "name": "install hashed dependencies",
+      "outcome": "PASS",
+      "exit_code": 0,
+      "elapsed_seconds": 0.1654532980028307
+    },
+    {
+      "name": "install exact inspected wheel",
+      "outcome": "PASS",
+      "exit_code": 0,
+      "elapsed_seconds": 0.04483391199755715
+    },
+    {
+      "name": "installed dependency consistency",
+      "outcome": "PASS",
+      "exit_code": 0,
+      "elapsed_seconds": 0.019226557000365574
+    },
+    {
+      "name": "installed file and CLI inspection",
+      "outcome": "PASS"
+    },
+    {
+      "name": "installed ORM and shared initialization/Doctor context",
+      "outcome": "PASS",
+      "exit_code": 0,
+      "elapsed_seconds": 52.89596219699888
+    },
+    {
+      "name": "installed Google SDK protocol and PostgreSQL lifecycle",
+      "outcome": "PASS",
+      "exit_code": 0,
+      "elapsed_seconds": 7.269690362001711
+    },
+    {
+      "name": "installed OpenBao TLS outage and PostgreSQL lifecycle",
+      "outcome": "PASS",
+      "exit_code": 0,
+      "elapsed_seconds": 71.45170765300281
+    },
+    {
+      "name": "installed keyword public-slot genuine fresh recovery",
+      "outcome": "PASS",
+      "exit_code": 0,
+      "elapsed_seconds": 12.973891715999343
+    }
+  ],
+  "source_provenance": {
+    "url": "https://openbao.org/docs/api/auth/approle/",
+    "retrieved": "2026-10-30",
+    "sha256": "43eb5a751156643473349a7ecc86d1520e15ed9103fc0d209dce2e5ea01f076b",
+    "sdk": "hvac 2.4.0"
+  },
+  "archive": {
+    "path": "docs/_reset/openbao-approle-receipts-20261030.tar.gz",
+    "sha256": "73f4f39581825d6e10d478d12ae9ca101c0ba4a15ca05889d0c9b05cc604a653",
+    "members": [
+      "source/approle-protocol-first.json",
+      "source/approle-protocol-final.json",
+      "source/approle-source-final.json",
+      "installed-final/install-receipt.json",
+      "installed-final/installed-export-receipt.json",
+      "installed-final/installed-google-kms-receipt.json",
+      "installed-final/installed-journey-receipt.json",
+      "installed-final/installed-openbao-qualification.json",
+      "installed-final/installed-openbao-tests.json",
+      "installed-final/installed-restore-receipt.json",
+      "installed-final/installed-sqlmodel-receipt.json",
+      "installed-final/release-receipt.json",
+      "installed-final/sbom.cdx.json",
+      "installed-final/status.json",
+      "approle-service-first/qualification.json",
+      "approle-service-first/tests.json",
+      "approle-service-final/qualification.json",
+      "approle-service-final/tests.json",
+      "installed-before-snapshot/install-receipt.json",
+      "installed-before-snapshot/installed-export-receipt.json",
+      "installed-before-snapshot/installed-google-kms-receipt.json",
+      "installed-before-snapshot/installed-journey-receipt.json",
+      "installed-before-snapshot/installed-openbao-qualification.json",
+      "installed-before-snapshot/installed-openbao-tests.json",
+      "installed-before-snapshot/installed-restore-receipt.json",
+      "installed-before-snapshot/installed-sqlmodel-receipt.json",
+      "installed-before-snapshot/release-receipt.json",
+      "installed-before-snapshot/sbom.cdx.json",
+      "installed-before-snapshot/status.json",
+      "provenance/openbao-approle-official.md"
+    ]
+  },
+  "boundary": "Actual AppRole authentication and exact native policy on isolated TLS/Raft OpenBao; source-fenced independent snapshot recovery and native PostgreSQL protection/current-value removal.",
+  "failures_retained": [],
+  "limits": [
+    "No production deployment, workload credential-delivery, audit sink or HA qualification.",
+    "Role inspection observes current configuration, not historical SecretID settings or future administrator changes.",
+    "Authentication failure may follow native token issuance; effects remain UNKNOWN with no automatic retry.",
+    "No key, backup or credential destruction; no live AWS/Google qualification.",
+    "All seven production gates remain UNKNOWN; measured performance failures remain unresolved."
+  ],
+  "installed_checks": {
+    "installed-sqlmodel-receipt.json": {
+      "test_calls": {
+        "passed": 96
+      },
+      "subtest_calls": {},
+      "setup": {
+        "passed": 96
+      },
+      "teardown": {
+        "passed": 96
+      },
+      "collection": {},
+      "selected_items": 96
+    },
+    "installed-google-kms-receipt.json": {
+      "test_calls": {
+        "passed": 50
+      },
+      "subtest_calls": {},
+      "setup": {
+        "passed": 50
+      },
+      "teardown": {
+        "passed": 50
+      },
+      "collection": {},
+      "selected_items": 50
+    },
+    "installed-openbao-tests.json": {
+      "test_calls": {
+        "passed": 114
+      },
+      "subtest_calls": {},
+      "setup": {
+        "passed": 114
+      },
+      "teardown": {
+        "passed": 114
+      },
+      "collection": {},
+      "selected_items": 114
+    },
+    "installed-export-receipt.json": {
+      "test_calls": {
+        "passed": 1
+      },
+      "subtest_calls": {},
+      "setup": {
+        "passed": 1
+      },
+      "teardown": {
+        "passed": 1
+      },
+      "collection": {},
+      "selected_items": 1
+    },
+    "installed-restore-receipt.json": {
+      "test_calls": {
+        "passed": 1
+      },
+      "subtest_calls": {},
+      "setup": {
+        "passed": 1
+      },
+      "teardown": {
+        "passed": 1
+      },
+      "collection": {},
+      "selected_items": 1
+    }
+  }
+}

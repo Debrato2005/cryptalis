@@ -1,0 +1,159 @@
+{
+  "format": "cryptalis.github-ci-boundary/v1",
+  "run_id": 41007938176,
+  "url": "https://github.com/Debrato2005/cryptalis/actions/runs/41007938176",
+  "head_sha": "bda4fb33e4904785d14ab4da6eb8069e7558735f",
+  "conclusion": "success",
+  "source_job": 123906970008,
+  "release_job": 123906970263,
+  "source_checks": {
+    "test_calls": {
+      "passed": 3204,
+      "skipped": 12
+    },
+    "subtest_calls": {
+      "passed": 18
+    },
+    "setup": {
+      "passed": 3216,
+      "skipped": 63
+    },
+    "teardown": {
+      "passed": 3279
+    },
+    "collection": {
+      "skipped": 17
+    },
+    "selected_items": 3279
+  },
+  "source_files": 285,
+  "source_and_runtime_unchanged": true,
+  "source_hashes_match_recorded_git_revision": true,
+  "artifacts": {
+    "cryptalis-0.1.0-py3-none-any.whl": "66922b0a9638c5ef714039d167d620d421de4fc8350bf7e1d8669e67a72963c6",
+    "cryptalis-0.1.0.tar.gz": "c66dd767b35812b4a9c4a3264d8fc19f4798c456bbc3386eef6a7ea0dcb9a5d9"
+  },
+  "local_and_github_artifacts_identical": true,
+  "frozen_audit": {
+    "schema": {
+      "version": "preview"
+    },
+    "summary": {
+      "audited_packages": 39,
+      "vulnerabilities": 0,
+      "adverse_statuses": 0
+    },
+    "vulnerabilities": [],
+    "adverse_statuses": []
+  },
+  "github_archives": [
+    {
+      "id": 12956714071,
+      "sha256": "1dcecc0e3008d678e710f544db64538b7666fd1c97da825bb350abc0b3baeee1"
+    },
+    {
+      "id": 12955963932,
+      "sha256": "06a5284eafdc43b29756469b94098943f4677a34b04461dae3daabd9e477e4b9"
+    }
+  ],
+  "archive": {
+    "path": "docs/_reset/github-google-kms-receipts-20261030.tar.gz",
+    "sha256": "0e9ac2437fd565e0b19ced8cc242425f5577bd325ce7ca150e41ea0da9381a5b",
+    "members": [
+      "source/admission.json",
+      "source/dependency-audit.json",
+      "source/job-status.json",
+      "source/qualification/source-receipt.json",
+      "source/qualification/status.json",
+      "release/install-receipt.json",
+      "release/installed-export-receipt.json",
+      "release/installed-google-kms-receipt.json",
+      "release/installed-journey-receipt.json",
+      "release/installed-openbao-qualification.json",
+      "release/installed-openbao-tests.json",
+      "release/installed-restore-receipt.json",
+      "release/installed-sqlmodel-receipt.json",
+      "release/job-status.json",
+      "release/release-receipt.json",
+      "release/sbom.cdx.json",
+      "release/status.json"
+    ]
+  },
+  "production_gates": "UNKNOWN",
+  "limits": [
+    "Explicit skipped cells and failed separate performance observations remain unqualified.",
+    "The following AppRole change has a separate local boundary; this CI revision predates it."
+  ],
+  "installed_checks": {
+    "installed-sqlmodel-receipt.json": {
+      "test_calls": {
+        "passed": 96
+      },
+      "subtest_calls": {},
+      "setup": {
+        "passed": 96
+      },
+      "teardown": {
+        "passed": 96
+      },
+      "collection": {},
+      "selected_items": 96
+    },
+    "installed-google-kms-receipt.json": {
+      "test_calls": {
+        "passed": 49
+      },
+      "subtest_calls": {},
+      "setup": {
+        "passed": 49
+      },
+      "teardown": {
+        "passed": 49
+      },
+      "collection": {},
+      "selected_items": 49
+    },
+    "installed-openbao-tests.json": {
+      "test_calls": {
+        "passed": 69
+      },
+      "subtest_calls": {},
+      "setup": {
+        "passed": 69
+      },
+      "teardown": {
+        "passed": 69
+      },
+      "collection": {},
+      "selected_items": 69
+    },
+    "installed-export-receipt.json": {
+      "test_calls": {
+        "passed": 1
+      },
+      "subtest_calls": {},
+      "setup": {
+        "passed": 1
+      },
+      "teardown": {
+        "passed": 1
+      },
+      "collection": {},
+      "selected_items": 1
+    },
+    "installed-restore-receipt.json": {
+      "test_calls": {
+        "passed": 1
+      },
+      "subtest_calls": {},
+      "setup": {
+        "passed": 1
+      },
+      "teardown": {
+        "passed": 1
+      },
+      "collection": {},
+      "selected_items": 1
+    }
+  }
+}

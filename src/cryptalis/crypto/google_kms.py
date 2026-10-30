@@ -16,7 +16,8 @@ import re
 from types import CoroutineType
 from uuid import UUID
 
-from .keys import InvalidContext, KeyContext, KeyProvider, KeyUnavailable, WrappedRoot, tuple_bytes
+from .keys import (InvalidContext, KeyContext, KeyProvider, KeyUnavailable,
+                   ProviderAuthenticationUnavailable, WrappedRoot, tuple_bytes)
 
 
 _VERSION = re.compile(
@@ -158,5 +159,7 @@ class GoogleKmsKeyProvider:
                     or not compare_digest(root, recovered) or new_provider.provider_id != identity):
                 raise KeyUnavailable()
             return result
+        except ProviderAuthenticationUnavailable:
+            raise ProviderAuthenticationUnavailable() from None
         except Exception:
             raise KeyUnavailable() from None
