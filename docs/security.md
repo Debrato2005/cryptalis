@@ -1058,6 +1058,26 @@ leases can outlive credential revocation; cold Doctor checks bypass those leases
 No local AppRole observation qualifies production distribution, HA, provider audit
 or independent review.
 
+### OpenBao native audit boundary
+
+The isolated runner enables a private declarative file audit device with native
+HMAC enabled and mode 0600. Native `sys/audit-hash` comparisons bind observed
+AppRole and Transit request/response fields to the supplied credentials, context,
+root and wrapper; request IDs correlate pairs. Runtime credentials cannot list,
+hash, create or disable devices. No custom logging cipher or audit service is added.
+The [operator procedure](openbao.md#native-audit-configuration) owns configuration,
+file reopen and retention instructions.
+
+This is bounded local evidence. Audit metadata and non-string values can remain
+visible, and some native endpoints bypass auditing. The host must protect raw
+records and the device identity; HMAC alone does not establish tamper resistance
+or delivery. Reopen retains the original file and device salt. Snapshot recovery
+checks the restored salt and new target records while source records remain
+unchanged with the source service stopped. It does not establish complete or
+durable production history, HA, redundant sinks or all-sink failure behavior.
+Raw logs, initialization material and snapshots stay private. Production audit,
+credential distribution, backup custody and independent review remain UNKNOWN.
+
 ### Implemented CF1 primitives and local custody
 
 `cryptalis.crypto` exports `FieldDescriptor`, `seal_text`, `open_text`, `KeyProvider`,

@@ -1,0 +1,243 @@
+{
+  "format": "cryptalis.openbao-audit-boundary/v1",
+  "base_revision": "7e7d1c5a46195a4f97e8b57825f3c096af0446e3",
+  "source_identity": "worktree-0d618df8bb81af33",
+  "source_files": 287,
+  "source_checks": {
+    "test_calls": {
+      "passed": 119
+    },
+    "subtest_calls": {},
+    "setup": {
+      "passed": 119
+    },
+    "teardown": {
+      "passed": 119
+    },
+    "collection": {},
+    "selected_items": 119
+  },
+  "source_and_runtime_unchanged": true,
+  "artifacts": {
+    "cryptalis-0.1.0-py3-none-any.whl": "4e196b04f1a0d12346a839faf65c1443c778098f45f905821ea8b1dbb4951daa",
+    "cryptalis-0.1.0.tar.gz": "e367ab56be3df5b7358a5e44b8cb292166f5caffb74003dd50748ba2a85856c9"
+  },
+  "reproducible": true,
+  "release_steps": [
+    {
+      "name": "reproducible wheel sdist SBOM inspection",
+      "outcome": "PASS",
+      "exit_code": 0,
+      "elapsed_seconds": 1.262857513000199
+    },
+    {
+      "name": "export locked hashed wheel-test dependencies",
+      "outcome": "PASS",
+      "exit_code": 0,
+      "elapsed_seconds": 0.02030029800516786
+    },
+    {
+      "name": "create isolated wheel interpreter",
+      "outcome": "PASS",
+      "exit_code": 0,
+      "elapsed_seconds": 0.022368674995959736
+    },
+    {
+      "name": "install hashed dependencies",
+      "outcome": "PASS",
+      "exit_code": 0,
+      "elapsed_seconds": 1.1513821499975165
+    },
+    {
+      "name": "install exact inspected wheel",
+      "outcome": "PASS",
+      "exit_code": 0,
+      "elapsed_seconds": 0.04394656600197777
+    },
+    {
+      "name": "installed dependency consistency",
+      "outcome": "PASS",
+      "exit_code": 0,
+      "elapsed_seconds": 0.018713067001954187
+    },
+    {
+      "name": "installed file and CLI inspection",
+      "outcome": "PASS"
+    },
+    {
+      "name": "installed ORM and shared initialization/Doctor context",
+      "outcome": "PASS",
+      "exit_code": 0,
+      "elapsed_seconds": 61.56046816599701
+    },
+    {
+      "name": "installed Google SDK protocol and PostgreSQL lifecycle",
+      "outcome": "PASS",
+      "exit_code": 0,
+      "elapsed_seconds": 6.4558293010049965
+    },
+    {
+      "name": "installed OpenBao TLS outage and PostgreSQL lifecycle",
+      "outcome": "PASS",
+      "exit_code": 0,
+      "elapsed_seconds": 106.0891971029996
+    },
+    {
+      "name": "installed shared configuration on genuine fresh recovery",
+      "outcome": "PASS",
+      "exit_code": 0,
+      "elapsed_seconds": 17.988581012003124
+    },
+    {
+      "name": "installed keyword public-slot genuine fresh recovery",
+      "outcome": "PASS",
+      "exit_code": 0,
+      "elapsed_seconds": 17.91211518300406
+    }
+  ],
+  "archive": {
+    "path": "docs/_reset/openbao-audit-receipts-20261030.tar.gz",
+    "sha256": "7015dafe1789ec05c614857dafa0698f9c830f02939e33e3c0213c46272eebef",
+    "members": [
+      "source/tests.json",
+      "source/qualification.json",
+      "failed-source/tests.json",
+      "failed-source/qualification.json",
+      "installed/install-receipt.json",
+      "installed/installed-application-export-receipt.json",
+      "installed/installed-application-restore-receipt.json",
+      "installed/installed-export-receipt.json",
+      "installed/installed-google-kms-receipt.json",
+      "installed/installed-journey-receipt.json",
+      "installed/installed-openbao-qualification.json",
+      "installed/installed-openbao-tests.json",
+      "installed/installed-restore-receipt.json",
+      "installed/installed-sqlmodel-receipt.json",
+      "installed/release-receipt.json",
+      "installed/sbom.cdx.json",
+      "installed/status.json",
+      "research/provenance.json"
+    ]
+  },
+  "boundary": "Declarative private native audit; exact native HMAC comparison for AppRole credentials, token/accessor and Transit root/context/wrapper; request/response correlation, visible metadata, runtime audit-administration denial, file reopen with history retained, restored salt and independent target audit while source is stopped.",
+  "failures_retained": [
+    {
+      "run": "failed-source",
+      "passed": 117,
+      "failed": 2,
+      "observations": [
+        "Incorrect fixture expected lease_duration; native audit field is token_ttl.",
+        "Fresh snapshot target was unsealed before Raft became writable. Native audit salt persistence refused readonly storage; request failed closed."
+      ],
+      "correction": "Use native token_ttl and explicitly await active writable-leader readiness through read-only health/leader endpoints. No provider operation retry or relaxed audit requirement."
+    }
+  ],
+  "production_gates": "UNKNOWN",
+  "limits": [
+    "Single local file; no redundant sink, external shipping, durable custody, disk exhaustion or all-sink failure qualification.",
+    "Visible metadata and native unaudited paths remain; HMAC does not establish confidentiality or tamper resistance for the full record.",
+    "Raw audit files, native server logs, service credentials and snapshots remain private and are excluded from this archive.",
+    "Official configuration/API documentation was retrieved; two native source requests returned 404. No copied native implementation or independent security review.",
+    "No cloud/HA/production workload distribution or controlled retirement qualification; earlier performance failures remain."
+  ],
+  "installed_checks": {
+    "installed-sqlmodel-receipt.json": {
+      "test_calls": {
+        "passed": 105
+      },
+      "subtest_calls": {},
+      "setup": {
+        "passed": 105
+      },
+      "teardown": {
+        "passed": 105
+      },
+      "collection": {},
+      "selected_items": 105
+    },
+    "installed-google-kms-receipt.json": {
+      "test_calls": {
+        "passed": 50
+      },
+      "subtest_calls": {},
+      "setup": {
+        "passed": 50
+      },
+      "teardown": {
+        "passed": 50
+      },
+      "collection": {},
+      "selected_items": 50
+    },
+    "installed-openbao-tests.json": {
+      "test_calls": {
+        "passed": 119
+      },
+      "subtest_calls": {},
+      "setup": {
+        "passed": 119
+      },
+      "teardown": {
+        "passed": 119
+      },
+      "collection": {},
+      "selected_items": 119
+    },
+    "installed-application-export-receipt.json": {
+      "test_calls": {
+        "passed": 1
+      },
+      "subtest_calls": {},
+      "setup": {
+        "passed": 1
+      },
+      "teardown": {
+        "passed": 1
+      },
+      "collection": {},
+      "selected_items": 1
+    },
+    "installed-application-restore-receipt.json": {
+      "test_calls": {
+        "passed": 2
+      },
+      "subtest_calls": {},
+      "setup": {
+        "passed": 2
+      },
+      "teardown": {
+        "passed": 2
+      },
+      "collection": {},
+      "selected_items": 2
+    },
+    "installed-export-receipt.json": {
+      "test_calls": {
+        "passed": 1
+      },
+      "subtest_calls": {},
+      "setup": {
+        "passed": 1
+      },
+      "teardown": {
+        "passed": 1
+      },
+      "collection": {},
+      "selected_items": 1
+    },
+    "installed-restore-receipt.json": {
+      "test_calls": {
+        "passed": 1
+      },
+      "subtest_calls": {},
+      "setup": {
+        "passed": 1
+      },
+      "teardown": {
+        "passed": 1
+      },
+      "collection": {},
+      "selected_items": 1
+    }
+  }
+}

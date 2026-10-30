@@ -82,6 +82,24 @@ def wait_available(client):
             time.sleep(0.1)
 
 
+def wait_active(client):
+    """Unseal is not writable-leader readiness; poll only native read endpoints."""
+    deadline = time.monotonic() + 30
+    while True:
+        try:
+            health = client.sys.read_health_status(method='GET')
+            leader = client.sys.read_leader_status()
+            if (isinstance(health, dict) and health.get('initialized') is True
+                    and health.get('sealed') is False and health.get('standby') is False
+                    and leader.get('is_self') is True):
+                return
+        except Exception:
+            pass
+        if time.monotonic() >= deadline:
+            raise QualificationFailure('ActiveServiceUnavailable') from None
+        time.sleep(0.1)
+
+
 def service_files(workdir):
     certificates(workdir)
     (workdir / 'data').mkdir(mode=0o700)
@@ -97,6 +115,16 @@ listener "tcp" {
 }
 api_addr = "https://127.0.0.1:8200"
 cluster_addr = "https://127.0.0.1:8201"
+audit "file" "cryptalis-audit" {
+  description = "Private local qualification audit; never publish raw records"
+  options {
+    file_path = "/bao/work/audit.jsonl"
+    mode = "0600"
+    format = "json"
+    log_raw = "false"
+    hmac_accessor = "true"
+  }
+}
 ''')
 
 
@@ -142,17 +170,19 @@ def main():
             initialized = client.sys.initialize(secret_shares=1, secret_threshold=1)
             write_private(workdir / 'initialization.json', json.dumps(initialized).encode())
             client.sys.submit_unseal_key(initialized['keys'][0])
+            wait_active(client)
         finally:
             client.session.close()
         config = dict(endpoint=endpoint, ca_cert=str(workdir / 'ca.pem'),
                       admin_token_file=str(workdir / 'initialization.json'),
-                      isolated_container=container)
+                      isolated_container=container,
+                      audit_file=str(workdir / 'audit.jsonl'), audit_device='cryptalis-audit')
         config_path = workdir / 'test-config.json'
         write_private(config_path, json.dumps(config).encode())
         environment = dict(os.environ, CRYPTALIS_OPENBAO_TEST_CONFIG=str(config_path))
         result = subprocess.run([sys.executable, str(ROOT / 'scripts/test_postgres.py'),
             *options, '--source-role', '--receipt', str(workdir / 'tests.json'),
-            '--scope', 'OpenBao 2.7.2 isolated TLS/Raft, outage/restart, independent snapshot recovery and PostgreSQL lifecycle',
+            '--scope', 'OpenBao 2.7.2 isolated TLS/Raft, native private audit, outage/restart, independent snapshot recovery and PostgreSQL lifecycle',
             '--', 'tests/test_openbao_protocol.py', 'tests/test_openbao_approle.py', 'tests/test_openbao_integration.py',
             'tests/test_doctor_provider.py',
             '-q', '--tb=short'], cwd=ROOT, env=environment)
@@ -181,6 +211,7 @@ def main():
                   else type(failure).__name__ if failure else None,
                   storage='single-node Raft with independent snapshot target; private keys and files retained',
                   tls='private test CA; certificate and hostname verification enabled',
+                  audit='declarative private JSON file; native HMAC and reopen controls; raw records retained privately',
                   gate='UNKNOWN')
     write_private(workdir / 'qualification.json', json.dumps(report, indent=2).encode())
     print(json.dumps(report, sort_keys=True))

@@ -5,6 +5,7 @@ ca_cert, and admin_token_file (OpenBao initialization JSON). Never use productio
 Keys and mounts are retained; tests do not delete or export service key material.
 """
 import asyncio
+import base64
 import json
 import os
 from pathlib import Path
@@ -97,6 +98,118 @@ def workload_credentials(live, **role_changes):
         return OpenBaoAppRoleToken(**config)
     return SimpleNamespace(token=make(), make=make, current=current, issue=issue, mount=mount,
                            role_id=role_id, policy=policy)
+
+
+def audit_records(path):
+    path = Path(path)
+    info = path.lstat()
+    assert stat.S_ISREG(info.st_mode) and info.st_uid == os.geteuid() and stat.S_IMODE(info.st_mode) == 0o600
+    return [json.loads(line) for line in path.read_text().splitlines()]
+
+
+def audit_pair(records, path):
+    requests = [r for r in records if r['type'] == 'request' and r['request']['path'] == path]
+    assert len(requests) == 1, 'ExpectedOneAuditedRequest'
+    request, = requests
+    responses = [r for r in records if r['type'] == 'response' and r['request']['id'] == request['request']['id']]
+    assert len(responses) == 1, 'ExpectedOneMatchingAuditedResponse'
+    return request, responses[0]
+
+
+def test_native_audit_correlates_approle_and_transit_with_verified_hmac(live):
+    s = live.service
+    if not s.config.get('audit_file'):
+        pytest.skip('native audit inspection requires the isolated qualification harness')
+    device = s.config['audit_device']
+    entry = s.admin.sys.list_enabled_audit_devices()['data'][device + '/']
+    assert entry['type'] == 'file'
+    assert all(entry['options'][key] == value for key, value in
+        [('log_raw', 'false'), ('hmac_accessor', 'true'), ('mode', '0600'), ('format', 'json')])
+    workload = workload_credentials(live)
+    token = workload.token()
+    accessor = s.admin.auth.token.lookup(token)['data']['accessor']
+    p = live.make(token=lambda: token)
+    wrapper = p.wrap(ROOT, CONTEXT)
+    assert p.unwrap(wrapper, CONTEXT) == ROOT
+    records = audit_records(s.config['audit_file'])
+    login, logged_in = audit_pair(records, f'auth/{workload.mount}/login')
+    encrypt, encrypted = audit_pair(records, f'{s.mount}/encrypt/{live.name}')
+    decrypt, decrypted = audit_pair(records, f'{s.mount}/decrypt/{live.name}')
+    # This native oracle proves the recorded fields correspond to supplied values;
+    # merely observing an absent plaintext or an hmac-looking prefix is insufficient.
+    def hashed(value):
+        return s.admin.sys.calculate_hash(device, value)['data']['hash']
+    plaintext = base64.b64encode(ROOT).decode('ascii')
+    aad = p._aad(CONTEXT)
+    ciphertext = wrapper.sealed.decode('ascii')
+    assert login['request']['data']['role_id'] == hashed(workload.role_id)
+    assert login['request']['data']['secret_id'] == hashed(workload.current[0])
+    assert logged_in['response']['auth']['client_token'] == hashed(token)
+    assert logged_in['response']['auth']['accessor'] == hashed(accessor)
+    assert encrypt['request']['client_token'] == hashed(token)
+    assert encrypt['request']['client_token_accessor'] == hashed(accessor)
+    assert encrypt['request']['data']['plaintext'] == hashed(plaintext)
+    assert encrypt['request']['data']['associated_data'] == hashed(aad)
+    assert encrypted['response']['data']['ciphertext'] == hashed(ciphertext)
+    assert decrypt['request']['data']['ciphertext'] == hashed(ciphertext)
+    assert decrypt['request']['data']['associated_data'] == hashed(aad)
+    assert decrypted['response']['data']['plaintext'] == hashed(plaintext)
+    # Paths, operations, policies, time, numeric versions and durations are visible.
+    assert encrypt['request']['operation'] == 'update' and encrypt['time']
+    assert encrypt['request']['data']['key_version'] == 1
+    assert logged_in['response']['auth']['policies'] == [workload.mount]
+    assert logged_in['response']['auth']['token_ttl'] == 60
+    raw = Path(s.config['audit_file']).read_text()
+    if any(secret in raw for secret in (plaintext, aad, ciphertext, token, accessor,
+                                        workload.role_id, workload.current[0])):
+        raise AssertionError('AuditCleartextLeak')
+    runtime = s.hvac.Client(url=s.config['endpoint'], verify=s.config['ca_cert'], token=token,
+        allow_redirects=False, timeout=3)
+    try:
+        with pytest.raises(s.hvac.exceptions.Forbidden):
+            runtime.sys.list_enabled_audit_devices()
+        with pytest.raises(s.hvac.exceptions.Forbidden):
+            runtime.sys.calculate_hash(device, plaintext)
+        with pytest.raises(s.hvac.exceptions.Forbidden):
+            runtime.sys.disable_audit_device(device)
+        with pytest.raises(s.hvac.exceptions.Forbidden):
+            runtime.sys.enable_audit_device('file', path='forbidden-audit', options={'file_path':'discard'})
+    finally:
+        runtime.session.close()
+    assert device + '/' in s.admin.sys.list_enabled_audit_devices()['data']
+
+
+def test_native_audit_reopen_preserves_old_records_and_hash_identity(live):
+    s = live.service
+    if not s.config.get('audit_file') or not s.config.get('isolated_container'):
+        pytest.skip('native audit reopen requires the isolated qualification harness')
+    import sys
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'scripts'))
+    try:
+        from openbao_qualification import docker
+    finally:
+        sys.path.pop(0)
+    device, path = s.config['audit_device'], Path(s.config['audit_file'])
+    wrapper = live.provider.wrap(ROOT, CONTEXT)
+    ciphertext = wrapper.sealed.decode('ascii')
+    expected = s.admin.sys.calculate_hash(device, ciphertext)['data']['hash']
+    rotated = path.with_name('audit-before-reopen.jsonl')
+    assert not rotated.exists()
+    path.rename(rotated)  # Preserve the old file; never delete or truncate audit history.
+    docker('kill', '--signal=HUP', s.config['isolated_container'])
+    deadline = time.monotonic() + 10
+    while not path.exists():
+        assert time.monotonic() < deadline, 'AuditReopenUnavailable'
+        time.sleep(0.05)
+    before = rotated.read_bytes()
+    assert live.provider.unwrap(wrapper, CONTEXT) == ROOT
+    request, response = audit_pair(audit_records(path), f'{s.mount}/decrypt/{live.name}')
+    assert request['request']['data']['ciphertext'] == expected
+    assert response['response']['data']['plaintext'] == s.admin.sys.calculate_hash(
+        device, base64.b64encode(ROOT).decode('ascii'))['data']['hash']
+    assert s.admin.sys.calculate_hash(device, ciphertext)['data']['hash'] == expected
+    assert rotated.read_bytes() == before
+    audit_pair(audit_records(rotated), f'{s.mount}/encrypt/{live.name}')
 
 
 def test_real_approle_uses_only_supplied_credentials_and_narrow_policy(live, monkeypatch):
@@ -418,7 +531,7 @@ def test_isolated_service_outage_expiry_and_sealed_restart_recovery(live):
     import sys
     sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'scripts'))
     try:
-        from openbao_qualification import docker
+        from openbao_qualification import docker, wait_active
     finally:
         sys.path.pop(0)
     assert re.fullmatch(r'cryptalis-bao-[0-9a-f]{32}', container)
@@ -466,6 +579,7 @@ def test_isolated_service_outage_expiry_and_sealed_restart_recovery(live):
         finally:
             initialization = private_json(s.config['admin_token_file'])
             s.admin.sys.submit_unseal_key(initialization['keys'][0])
+            wait_active(s.admin)
     assert p.unwrap(wrapper, CONTEXT) == ROOT
     assert open_text(frame, field, CONTEXT.tenant_id, record, ring.prepare()) == 'outage value'
 
@@ -484,7 +598,7 @@ def test_independent_snapshot_restores_cold_roots_with_source_fenced(live):
     p = live.make(token=workload.token)
     sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'scripts'))
     try:
-        from openbao_qualification import docker, service_files, start_container, wait_available, write_private
+        from openbao_qualification import docker, service_files, start_container, wait_available, wait_active, write_private
     finally:
         sys.path.pop(0)
     # Keep snapshots and bootstrap secrets outside pytest's temporary cleanup.
@@ -496,6 +610,7 @@ def test_independent_snapshot_restores_cold_roots_with_source_fenced(live):
     field, record = descriptor(), UUID(int=5)
     frame = seal_text('independent provider recovery', field, CONTEXT.tenant_id, record,
                       Keyring(policy, {p.provider_id: p}).prepare())
+    audit_hash = s.admin.sys.calculate_hash(s.config['audit_device'], wrapper.sealed.decode('ascii'))['data']['hash']
     with s.admin.sys.take_raft_snapshot() as response:
         chunks, size = [], 0
         for chunk in response.iter_content(65536):
@@ -520,6 +635,7 @@ def test_independent_snapshot_restores_cold_roots_with_source_fenced(live):
         initialized = client.sys.initialize(secret_shares=1, secret_threshold=1)
         write_private(workdir / 'bootstrap-initialization.json', json.dumps(initialized).encode())
         client.sys.submit_unseal_key(initialized['keys'][0])
+        wait_active(client)
         client.token = initialized['root_token']
         assert s.mount + '/' not in client.sys.list_mounted_secrets_engines()
         recovered = live.make(endpoint=endpoint, ca_cert=str(workdir / 'ca.pem'),
@@ -535,6 +651,7 @@ def test_independent_snapshot_restores_cold_roots_with_source_fenced(live):
         docker('stop', '--time', '10', source_container)
         source_stopped = True
         assert docker('inspect', '--format', '{{.State.Running}}', source_container) == 'false'
+        source_audit = Path(s.config['audit_file']).read_bytes()
         with pytest.raises(KeyUnavailable):
             p.unwrap(wrapper, CONTEXT)
         # Force is confined to this proven-empty disposable target, never an existing service.
@@ -547,6 +664,7 @@ def test_independent_snapshot_restores_cold_roots_with_source_fenced(live):
             recovered.unwrap(wrapper, CONTEXT)
         source_initialization = private_json(s.config['admin_token_file'])
         client.sys.submit_unseal_key(source_initialization['keys'][0])
+        wait_active(client)
         client.token = source_initialization['root_token']
         assert client.read(f'{s.mount}/keys/after-snapshot') is None
         # The original auth endpoint is still fenced; it cannot silently supply
@@ -559,6 +677,16 @@ def test_independent_snapshot_restores_cold_roots_with_source_fenced(live):
         assert not cold._cache
         assert open_text(frame, field, CONTEXT.tenant_id, record, cold.prepare()) == 'independent provider recovery'
         assert docker('inspect', '--format', '{{.State.Running}}', source_container) == 'false'
+        assert Path(s.config['audit_file']).read_bytes() == source_audit
+        assert client.sys.calculate_hash(s.config['audit_device'], wrapper.sealed.decode('ascii'))['data']['hash'] == audit_hash
+        target_records = audit_records(workdir / 'audit.jsonl')
+        requests = [r for r in target_records if r['type'] == 'request'
+                    and r['request']['path'] == f'{s.mount}/decrypt/{live.name}']
+        assert len(requests) == 2  # Cold Doctor and the application's fresh preparation.
+        for request in requests:
+            assert request['request']['data']['ciphertext'] == audit_hash
+            assert len([r for r in target_records if r['type'] == 'response'
+                        and r['request']['id'] == request['request']['id']]) == 1
     finally:
         try:
             if client is not None:
@@ -572,6 +700,7 @@ def test_independent_snapshot_restores_cold_roots_with_source_fenced(live):
                 docker('start', source_container)
                 assert wait_available(s.admin)
                 s.admin.sys.submit_unseal_key(private_json(s.config['admin_token_file'])['keys'][0])
+                wait_active(s.admin)
     assert p.unwrap(wrapper, CONTEXT)
 
 
