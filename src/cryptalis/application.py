@@ -101,8 +101,13 @@ class ApplicationConfig:
                      chunk_size=chunk_size, until=until)
 
     def status(self, engine, *, deployment):
-        """Observe protection or decrypt-back progress without keys or effects."""
-        from . import deprotection, migration
+        """Observe protection, rotation staging or removal without keys or effects."""
+        from . import deprotection, migration, rotation
+        if (type(deployment) is tuple and len(deployment) == 2
+                and type(deployment[0]) in (rotation.PayloadRotationPlan, rotation.SearchRotationPlan)):
+            purpose = self._rotation_deployment(deployment)
+            operation = rotation.status_payload_rotation if purpose == 'payload' else rotation.status_search_rotation
+            return operation(deployment[0], engine, pin=deployment[1])
         reverse = (type(deployment) is tuple and len(deployment) == 2
                    and type(deployment[0]) is deprotection.DeprotectionPlan)
         self._deployment(deployment, reverse=reverse, allow_restore=not reverse)
@@ -143,15 +148,118 @@ class ApplicationConfig:
         plan, pin = deployment
         return remove(plan, engine, pin=pin, approval=approval, consent=consent, removal=removal)
 
+    def plan_rewrap(self, engine, *, deployment, keys, target_keys, verify_rows_per_second):
+        """Plan a custody change with unchanged roots and ciphertext."""
+        from .rotation import plan_rewrap
+        self._deployment(deployment, allow_restore=True)
+        source, pin, *restored = deployment
+        return plan_rewrap(source, engine, source_pin=pin, keys=keys, target_keys=target_keys,
+            verify_rows_per_second=verify_rows_per_second, restore=restored[0] if restored else None)
+
+    def rewrap(self, engine, *, proposal, deployment, keys, target_keys, approval):
+        """Verify a rewrap and commit its exact successor as PENDING; no publication."""
+        from .rotation import apply_rewrap
+        self._rewrap_deployment(proposal, deployment)
+        return apply_rewrap(proposal, engine, keys=keys, target_keys=target_keys,
+                            pin=deployment[1], approval=approval)
+
+    def abort_rewrap(self, engine, *, proposal, deployment, keys, approval):
+        """Cancel pending custody changes under the republished source authority."""
+        from .rotation import abort_rewrap
+        self._rewrap_deployment(proposal, deployment, source=True)
+        return abort_rewrap(proposal, engine, keys=keys, pin=deployment[1], approval=approval)
+
+    def plan_rotation(self, engine, *, purpose, deployment, keys, target_keys,
+                      backfill_rows_per_second, verify_rows_per_second,
+                      temporary_bytes_per_row, wal_bytes_per_row,
+                      max_batch_rows=1000, max_batch_bytes=64*1024*1024):
+        """Plan an explicit payload or search generation change; no database effects."""
+        from . import rotation
+        if type(purpose) is not str or purpose not in ('payload', 'search'):
+            raise ConfigurationInvalid('Application.InvalidRotationPurpose')
+        self._deployment(deployment, allow_restore=True)
+        source, pin, *restored = deployment
+        operation = rotation.plan_payload_rotation if purpose == 'payload' else rotation.plan_search_rotation
+        return operation(source, engine, source_pin=pin, keys=keys, target_keys=target_keys,
+            backfill_rows_per_second=backfill_rows_per_second, verify_rows_per_second=verify_rows_per_second,
+            temporary_bytes_per_row=temporary_bytes_per_row, wal_bytes_per_row=wal_bytes_per_row,
+            max_batch_rows=max_batch_rows, max_batch_bytes=max_batch_bytes,
+            restore=restored[0] if restored else None)
+
+    def prepare_rotation(self, engine, *, deployment, keys, target_keys, approval,
+                         until='BACKFILLED', max_chunks=None):
+        """Stage or resume authenticated chunks without switching public data."""
+        from . import rotation
+        purpose = self._rotation_deployment(deployment)
+        operation = rotation.apply_payload_rotation if purpose == 'payload' else rotation.apply_search_rotation
+        return operation(deployment[0], engine, keys=keys, target_keys=target_keys,
+            pin=deployment[1], approval=approval, until=until, max_chunks=max_chunks)
+
+    def seal_rotation(self, engine, *, deployment, keys, target_keys, approval,
+                      copy_rows_per_second, copy_wal_bytes_per_row):
+        """Verify staged bytes and return the exact artifact for host retention."""
+        from . import rotation
+        purpose = self._rotation_deployment(deployment)
+        operation = rotation.seal_payload_rotation if purpose == 'payload' else rotation.seal_search_rotation
+        return operation(deployment[0], engine, keys=keys, target_keys=target_keys,
+            pin=deployment[1], approval=approval, copy_rows_per_second=copy_rows_per_second,
+            copy_wal_bytes_per_row=copy_wal_bytes_per_row)
+
+    def switch_rotation(self, engine, *, proposal, deployment, keys, target_keys, approval):
+        """Switch verified ciphertext under the sealed successor's PREPARED pin."""
+        from . import rotation
+        purpose = self._rotation_proposal(proposal)
+        self._deployment(deployment)
+        operation = rotation.switch_payload_rotation if purpose == 'payload' else rotation.switch_search_rotation
+        return operation(proposal, deployment[0], engine, keys=keys, target_keys=target_keys,
+                         pin=deployment[1], approval=approval)
+
+    def abort_rotation(self, engine, *, proposal, deployment, keys, approval):
+        """Cancel staging using source custody and the republished source pin."""
+        from . import rotation
+        purpose = self._rotation_proposal(proposal)
+        self._deployment(deployment)
+        if deployment[0].artifact != proposal.source.artifact:
+            raise ConfigurationInvalid('Application.InvalidDeployment')
+        operation = rotation.abort_payload_rotation if purpose == 'payload' else rotation.abort_search_rotation
+        return operation(proposal, engine, keys=keys, source_pin=deployment[1], approval=approval)
+
+    def _rewrap_deployment(self, proposal, deployment, *, source=False):
+        from .rotation import RewrapPlan
+        if type(proposal) is not RewrapPlan:
+            raise ConfigurationInvalid('Application.InvalidRotationPlan')
+        self._intent(proposal.source)
+        self._deployment(deployment)
+        expected = proposal.source if source else proposal.activation_plan
+        if deployment[0].artifact != expected.artifact:
+            raise ConfigurationInvalid('Application.InvalidDeployment')
+
+    def _rotation_deployment(self, deployment):
+        from .migration import DeploymentPin
+        if (type(deployment) is not tuple or len(deployment) != 2
+                or type(deployment[1]) is not DeploymentPin):
+            raise ConfigurationInvalid('Application.InvalidDeployment')
+        return self._rotation_proposal(deployment[0])
+
+    def _rotation_proposal(self, proposal):
+        from .rotation import PayloadRotationPlan, SearchRotationPlan
+        if type(proposal) not in (PayloadRotationPlan, SearchRotationPlan):
+            raise ConfigurationInvalid('Application.InvalidRotationPlan')
+        self._intent(proposal.source)
+        return 'payload' if type(proposal) is PayloadRotationPlan else 'search'
+
     def _deployment(self, deployment, *, reverse=False, allow_restore=False):
         from .migration import DeploymentPin, MigrationPlan
         from .deprotection import DeprotectionPlan
-        from .manifest.compiler import _canonical, _host_evidence
         plan_type = DeprotectionPlan if reverse else MigrationPlan
         if (type(deployment) is not tuple or len(deployment) not in ((2, 3) if allow_restore else (2,))
                 or type(deployment[0]) is not plan_type or type(deployment[1]) is not DeploymentPin):
             raise ConfigurationInvalid('Application.InvalidDeployment')
         plan = deployment[0].source if reverse else deployment[0]
+        self._intent(plan)
+
+    def _intent(self, plan):
+        from .manifest.compiler import _canonical, _host_evidence
         lock = plan.document['lock']
         declared = parse_protection_declaration(_canonical(lock['declaration']))
         if declared.canonical_bytes() != self.manifest:

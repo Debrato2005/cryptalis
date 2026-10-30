@@ -7,7 +7,7 @@ promise root zeroization or cancellation of a blocking provider call.
 from hmac import compare_digest
 from uuid import UUID
 
-from .keys import KeyPolicy, Keyring, KeyUnavailable, WrappedRoot
+from .keys import KeyPolicy, Keyring, KeyUnavailable, ProviderAuthenticationUnavailable, WrappedRoot
 
 
 def prepare_rewrap(source: Keyring, target) -> KeyPolicy:
@@ -53,5 +53,7 @@ def prepare_rewrap(source: Keyring, target) -> KeyPolicy:
                               context.purpose, context.generation)
         return KeyPolicy(policy.domain_id, policy.tenant_id, tuple(replacements),
                          policy.payload_generation, policy.search_generation)
+    except ProviderAuthenticationUnavailable:
+        raise ProviderAuthenticationUnavailable() from None
     except Exception:
         raise KeyUnavailable() from None

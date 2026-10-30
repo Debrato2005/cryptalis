@@ -676,6 +676,34 @@ def test_restored_cluster_completes_adopted_lifecycle(tmp_path, monkeypatch, cap
         session.commit()
     runtime.dispose()
     assert configuration.status(owner, deployment=(source, pin, binding)).runtime_metadata_matches
+    # Rotation planning must carry the explicit restored target, preserve current
+    # edits and retain old readers without changing database or publication state.
+    from cryptalis.crypto import DevelopmentKeyProvider, KeyContext, Keyring, create_root
+    from cryptalis.crypto._rewrap import prepare_rewrap
+    original_ring = keys(TENANT)
+    provider = DevelopmentKeyProvider()
+    target = Keyring(prepare_rewrap(original_ring, provider), {provider.provider_id: provider})
+    before = configuration.status(owner, deployment=(source, pin, binding))
+    rewrap = configuration.plan_rewrap(owner, deployment=(source, pin, binding),
+        keys=keys, target_keys=target, verify_rows_per_second=1000)
+    assert rewrap.document['restore'] == binding.document
+    assert rewrap.activation_plan.document['restore_lineage'][-1] == binding.document
+    for purpose in ('payload', 'search'):
+        if purpose == 'search' and original_ring.policy.search_generation is None:
+            continue  # Storage-only profiles have no search generation to rotate.
+        generation = max(w.context.generation for w in original_ring.policy.wrappers
+                         if w.context.purpose == purpose) + 1
+        wrapper = create_root(provider, KeyContext(original_ring.policy.domain_id, TENANT,
+                              purpose, uuid.uuid4(), generation))
+        target = Keyring(replace(original_ring.policy, wrappers=original_ring.policy.wrappers + (wrapper,),
+                         **{purpose + '_generation': generation}),
+                         {**original_ring._providers, provider.provider_id: provider})
+        staged = configuration.plan_rotation(owner, purpose=purpose, deployment=(source, pin, binding),
+            keys=keys, target_keys=target, backfill_rows_per_second=1000, verify_rows_per_second=1000,
+            temporary_bytes_per_row=1024, wal_bytes_per_row=2048)
+        assert staged.document['restore'] == binding.document
+        assert staged.source.artifact == source.artifact
+    assert configuration.status(owner, deployment=(source, pin, binding)) == before
     proposal = configuration.plan_deprotection(owner, deployment=(source, pin, binding), keys=keys,
                       plaintext_runtime_role=os.environ['CRYPTALIS_FRESH_PLAINTEXT_ROLE'],
                       backfill_rows_per_second=1000, verify_rows_per_second=1000,

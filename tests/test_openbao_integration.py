@@ -363,10 +363,15 @@ def test_isolated_service_outage_expiry_and_sealed_restart_recovery(live):
         sys.path.pop(0)
     assert re.fullmatch(r'cryptalis-bao-[0-9a-f]{32}', container)
     wrapper = p.wrap(ROOT, CONTEXT)
+    # The native container stop has a 10s grace period. Use a longer explicit
+    # lease so that shutdown time cannot itself consume the intended warm case.
+    # Still wait for actual expiry and prove both held and fresh access refuse.
+    lease_seconds = 30
     ring = Keyring(KeyPolicy(CONTEXT.domain_id, CONTEXT.tenant_id, (wrapper,), 1),
-                   {p.provider_id: p}, max_age=5)
+                   {p.provider_id: p}, max_age=lease_seconds)
     field, record = descriptor(), UUID(int=5)
     frame = seal_text('outage value', field, CONTEXT.tenant_id, record, ring.prepare())
+    prepared_at = time.monotonic()
     docker('stop', '--time', '10', container)
     try:
         with pytest.raises(KeyUnavailable):
@@ -374,7 +379,7 @@ def test_isolated_service_outage_expiry_and_sealed_restart_recovery(live):
         # Bounded cache availability is explicit; no remote retry or plaintext fallback.
         prepared = ring.prepare()
         assert open_text(frame, field, CONTEXT.tenant_id, record, prepared) == 'outage value'
-        time.sleep(5.1)
+        time.sleep(max(0, prepared_at + lease_seconds - time.monotonic()) + 0.1)
         with pytest.raises(KeyUnavailable):
             open_text(frame, field, CONTEXT.tenant_id, record, prepared)
         with pytest.raises(KeyUnavailable):
@@ -553,3 +558,26 @@ def test_real_provider_protect_search_edit_and_verified_plaintext_exit(live, mon
         assert deprotection.remove(plan, app.owner, pin=replace(pin, phase='REMOVING'),
                     approval=app.approval, removal=removal, consent=consent).phase == 'REMOVED'
         assert reverse.native_rows(app) == expected
+
+
+def test_real_approle_three_rotations_and_current_value_removal(live, monkeypatch):
+    import test_migration as fixture
+    from test_application_config import config
+    from test_application_rotation import exercise_rotations
+
+    p, policies = live.make(token=workload_credentials(live).token), {}
+    def resolve(tenant):
+        if tenant not in policies:
+            wrappers = tuple(create_root(p, KeyContext(fixture.DOMAIN, tenant, purpose, uuid4(), 1))
+                             for purpose in ('payload', 'search'))
+            policies[tenant] = KeyPolicy(fixture.DOMAIN, tenant, wrappers, 1, 1)
+        return Keyring(policies[tenant], {p.provider_id: p})
+    monkeypatch.setattr(fixture, 'keys', resolve)
+    with fixture.application() as app:
+        configured = config(app)
+        fixture.run(app); fixture.publish(app)
+        # A new native wrapping version is real custody evolution; retain v1 for
+        # recovery and bind v2 to a separately configured logical provider.
+        live.service.admin.write(f'{live.service.mount}/keys/{live.name}/rotate')
+        destination = live.make(token=p._token, provider_id=uuid4(), key_version=2)
+        exercise_rotations(app, configured, resolve, destination)

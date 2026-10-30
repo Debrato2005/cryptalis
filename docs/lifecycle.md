@@ -166,6 +166,11 @@ The integrated checkpoint records the original application's narrow rollback/rem
 
 ## Changes and rotation
 
+The [shared application configuration](application.md#rotate-keys-and-change-custody)
+binds all three rotation workflows to the same manifest and host evidence used
+for protection and attachment. It delegates to the executors below and retains
+their separate staging, external publication and cancellation authority.
+
 ### Add an empty tenant policy under maintenance
 
 `cryptalis.tenancy.plan` accepts an ACTIVE source and actual source pin, an exact

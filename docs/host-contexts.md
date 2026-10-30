@@ -170,6 +170,10 @@ and `queries` fields. A supplied declaration must match the CLI manifest after
 canonicalization before database or key access. Invalid or mismatched intent
 still disposes the owned engine. Legacy contexts default to no declaration binding.
 
+Direct Python [rotation methods](application.md#rotate-keys-and-change-custody)
+reuse this intent with explicit source/target policies and host deployment pins.
+The CLI contexts above retain their existing separate authority inputs.
+
 Planning inspects any supplied queries against the compiled lock before resolving
 key policies. Invalid sample containers and incompatible samples refuse with typed
 errors; unavailable inspection remains an operational failure. No plan artifact
