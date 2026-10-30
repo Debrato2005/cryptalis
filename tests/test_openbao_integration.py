@@ -24,6 +24,7 @@ from cryptalis.crypto import (DevelopmentKeyProvider, KeyContext, KeyPolicy, Key
     KeyUnavailable, WrappedRoot, create_root, open_text, seal_text)
 from cryptalis.crypto.openbao import OpenBaoAppRoleToken, OpenBaoTransitKeyProvider
 from test_cf1 import descriptor
+from test_application_online import app, tenant_app, exercise_online
 
 CONTEXT = KeyContext(UUID(int=1), UUID(int=4), 'payload', UUID(int=907), 1)
 ROOT = bytes(range(32))  # Public test vector; production roots use create_root.
@@ -770,3 +771,16 @@ def test_real_approle_three_rotations_and_current_value_removal(live, monkeypatc
         live.service.admin.write(f'{live.service.mount}/keys/{live.name}/rotate')
         destination = live.make(token=p._token, provider_id=uuid4(), key_version=2)
         exercise_rotations(app, configured, resolve, destination)
+
+
+def test_real_approle_online_capture_tenant_publication_and_removal(live, tenant_app):
+    p = live.make(token=workload_credentials(live).token)
+    domain = UUID(tenant_app.tenant_plan.document['lock']['domain_id'])
+    rings = {}
+    def resolve(tenant):
+        if tenant not in rings:
+            wrappers = tuple(create_root(p, KeyContext(domain, tenant, purpose, uuid4(), 1))
+                             for purpose in ('payload', 'search'))
+            rings[tenant] = Keyring(KeyPolicy(domain, tenant, wrappers, 1, 1), {p.provider_id: p})
+        return rings[tenant]
+    exercise_online(tenant_app, resolve)
