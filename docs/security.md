@@ -151,6 +151,15 @@ request. Protected annotated outputs select the owned authenticated reader on
 a fresh expression clone. Native projection constants are captured separately
 from caller assignments and checked at final dispatch.
 
+Explicit direct-column labels retain that same authority. Admission binds the
+physical column, native dispatch, type and exact label name/quoting before keys;
+final dispatch repeats the captured output shape even for internally generated
+assignment-coercion statements. Unsafe forced-unquoted names refuse using the
+native dialect's identifier quoting rules. A native Label caches its element's
+type, so the return rewrite clones and rebinds both label and column to the owned
+authenticated reader, clearing stale expression memoization. It does not mutate
+the caller's statement or treat a label as a different cryptographic field.
+
 Each changed protected output must equal this operation's exact prepared frame
 or NULL. Every protected RETURNING output requires a real record identity, even
 when its payload is NULL; SELECT's outer-join NULL representation cannot stand

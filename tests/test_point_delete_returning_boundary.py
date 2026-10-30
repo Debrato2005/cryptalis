@@ -29,7 +29,7 @@ def test_unadmitted_delete_returning_refuses_before_keys_and_driver(fault, monke
             return keys(tenant)
         factory = protect(app, resolve)
         output = app.Customer.name
-        if fault == 'label': output = output.label('unsupported')
+        if fault == 'label': output = func.lower(output).label('unsupported')
         elif fault == 'expression': output = func.lower(output)
         elif fault == 'alias': output = app.table.alias().c.name
         query = delete(app.Customer).where(app.Customer.id == UUID(int=101),
@@ -94,10 +94,15 @@ def test_final_delete_driver_changes_are_refused_before_execution(fault, monkeyp
         assert _snapshot(app) == before
 
 
-@pytest.mark.parametrize('fault', ['record', 'tenant', 'ciphertext', 'malformed'])
-def test_delete_returning_rejects_tampered_authenticated_values_and_rolls_back(fault, monkeypatch):
+@pytest.mark.parametrize('fault', ['record', 'tenant', 'ciphertext', 'malformed', 'null_identity'])
+@pytest.mark.parametrize('labelled', [False, True])
+def test_delete_returning_rejects_tampered_authenticated_values_and_rolls_back(fault, monkeypatch, labelled):
     with application(rows=3) as app:
         factory = protect(app)
+        query = statement(app, UUID(int=101))
+        if labelled:
+            query = delete(app.Customer).where(app.Customer.id == UUID(int=101),
+                app.Customer.tenant_id == TENANT).returning(app.Customer.name.label('display_name'))
         native, armed, injected = psycopg.Cursor.fetchall, [], []
         def arm(connection, cursor, sql, parameters, context, many):
             if sql.lstrip().upper().startswith('DELETE '): armed.append(True)
@@ -108,6 +113,7 @@ def test_delete_returning_rejects_tampered_authenticated_values_and_rolls_back(f
                 if fault == 'record': packed[1] = str(UUID(int=102))
                 elif fault == 'tenant': packed[2] = str(UUID(int=999))
                 elif fault == 'ciphertext': packed[0] = ('ff' if packed[0][:2] != 'ff' else '00') + packed[0][2:]
+                elif fault == 'null_identity': packed = [None, None, None]
                 else: packed.pop()
                 rows[0] = (packed,)
                 injected.append(True)
@@ -119,7 +125,7 @@ def test_delete_returning_rejects_tampered_authenticated_values_and_rolls_back(f
                 patch.setattr(psycopg.Cursor, 'fetchall', mutate)
                 with factory(tenant_id=TENANT) as session:
                     with pytest.raises(CryptoFailure):
-                        session.execute(statement(app, UUID(int=101)), execution_options={'synchronize_session': False}).all()
+                        session.execute(query, execution_options={'synchronize_session': False}).all()
                     session.rollback()
             assert injected == [True]
         finally:

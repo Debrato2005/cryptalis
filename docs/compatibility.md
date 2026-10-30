@@ -115,8 +115,8 @@ parent/child transaction evidence and remaining qualification work.
 | Mapped dictionary INSERT without RETURNING | SUPPORTED | Attached sync/async `Session.execute(insert(Model), list[dict])`, explicit typed IDs and tenant scope, copied attribute dictionaries, native NULL/grouping, autoflush, uniqueness and transaction behavior. Other bulk routes remain unadmitted |
 | Mapped dictionary INSERT with RETURNING | SUPPORTED | Native direct-column tuples/scalars and inserted mapped entities, including public-only columns. Preserve result keys/types, grouping, paging and optional input ordering. Entity results retain identity-map loading and refresh. Authenticate each protected output against its own exact prepared input. Label/expression/alias, loader-option and caller return_defaults forms remain unadmitted |
 | Scoped mapped dictionary UPDATE | SUPPORTED | Attached sync/async admitted storage types, typed IDs, nonempty list of dictionaries and synchronize_session=False. Tenant-column tables require explicit tenant equality. Declared single-tenant tables use the fixed table UUID and no caller WHERE. Preserve native omission/NULL, grouping, repeated IDs, row-count checks and transactions. Core and RETURNING routes remain unadmitted |
-| Single-record mapped UPDATE with RETURNING | SUPPORTED | Attached sync/async `Session.execute`, exact record and tenant equality (or declared fixed scope), one nonempty external assignment dictionary using native physical column keys, and `synchronize_session=False`. Direct returned columns/scalars/tuples and mapped entities retain native labels, types, identity behavior and transactions. Authenticate protected outputs; changed protected values must match the exact newly prepared frame. Embedded `.values()`, Core, expressions/labels/aliases, identity/tenant assignment, automatic/fetch synchronization and executemany RETURNING remain unadmitted |
-| Scoped mapped single-record DELETE | SUPPORTED | Attached sync/async execute, exact typed record equality and either tenant equality or explicit fixed table-UUID scope. No external parameters; require synchronize_session=False. Without RETURNING, preserve native row counts. Direct-column scalar/tuple and mapped-entity RETURNING preserves native keys, types, identity state and transactions; protected values authenticate against the requested row, field and tenant. Unsupported custom AST classes refuse before execution |
+| Single-record mapped UPDATE with RETURNING | SUPPORTED | Attached sync/async `Session.execute`, exact record and tenant equality (or declared fixed scope), one nonempty external assignment dictionary using native physical column keys, and `synchronize_session=False`. Direct or explicitly named returned columns/scalars/tuples and mapped entities retain native result keys, types, identity behavior and transactions. Authenticate protected outputs; changed protected values must match the exact newly prepared frame. Embedded `.values()`, Core, computed expressions/aliases, identity/tenant assignment, automatic/fetch synchronization and executemany RETURNING remain unadmitted |
+| Scoped mapped single-record DELETE | SUPPORTED | Attached sync/async execute, exact typed record equality and either tenant equality or explicit fixed table-UUID scope. No external parameters; require synchronize_session=False. Without RETURNING, preserve native row counts. Direct or explicitly named column scalar/tuple and mapped-entity RETURNING preserves native keys, types, identity state and transactions; protected values authenticate against the requested row, field and tenant. Unsupported custom AST classes refuse before execution |
 | Unprotected-table mapped DELETE | SUPPORTED | One physical table mapped in the attached registry, with no protected fields. Native equality/AND predicates with fixed typed literals only. Default/auto/evaluate/False synchronization. No Core, RETURNING, fetch synchronization or custom AST |
 | Equality `==` and `IN` | SUPPORTED | Declared full tenant/domain-bound HMAC term. Preserve typed binds and native NULL/empty-list truth tables |
 | Simple negative equality `!=`, `NOT IN`, and NULL presence | SUPPORTED | Reuse the authenticated term for values and a SQL NULL check for storage-only fields. Preserve native three-valued truth, NULL elements, empty lists, and outer-join NULL extension. General Boolean NOT remains unadmitted |
@@ -188,17 +188,30 @@ equalities and `execution_options={"synchronize_session": False}`. Explicit
 single-tenant tables instead require only exact record equality, with session
 scope equal to their declared table UUID. The route admits one
 application-assigned UUID or int64 record.
-Without RETURNING it returns native row counts. RETURNING accepts direct columns
-or the mapped entity, including public-only outputs, through the ordinary Result.
+Without RETURNING it returns native row counts. RETURNING accepts direct columns,
+explicitly named direct-column labels, or the mapped entity, including public-only
+outputs, through the ordinary Result.
 Protected outputs require a real row identity and authenticate with SELECT's
 freshness/completeness limits; they are not newly prepared frames. Result failure
 can follow SQL execution and requires rollback. Core DELETE, external parameter
-dictionaries, labelled/expression/alias outputs, loader options, automatic/fetch
+dictionaries, computed-expression/alias outputs, loader options, automatic/fetch
 synchronization, inheritance, version counters and other predicate shapes refuse.
 Ordinary ORM flush DELETE retains its existing native lifecycle contract.
 Both routes require native compiler nodes. Custom AST classes refuse before SQL.
 The [DELETE checkpoint](history/implementation-2026-10.md#mapped-delete-admission-checkpoint-2026-10-23)
 owns the exact native controls and remaining limits.
+
+Named labels on point UPDATE/DELETE outputs use native `column.label("name")`.
+Explicit names preserve PostgreSQL/SQLAlchemy result keys, duplicate names,
+quoting and native identifier truncation. A label cannot change the source column,
+its admitted type or the authenticated record context. Computed expressions,
+anonymous names, custom label dispatch and changed label metadata refuse.
+Forced-unquoted names are accepted only when the native dialect would leave
+the plain name unquoted; SQL fragments or names requiring quotes refuse before
+keys or SQL. Default/explicit quoting retains native identifier handling.
+The adapter rebinds the label and its mapper column to the same owned reader;
+the original statement remains unchanged. INSERT RETURNING labels remain
+unadmitted in this checkpoint.
 
 A separate mapped DELETE route admits only unprotected tables in the same
 attached registry and metadata. Use direct column equality to fixed UUID, int,
