@@ -119,7 +119,7 @@ parent/child transaction evidence and remaining qualification work.
 | Scoped mapped single-record DELETE | SUPPORTED | Attached sync/async execute, exact typed record equality and either tenant equality or explicit fixed table-UUID scope. No external parameters; require synchronize_session=False. Without RETURNING, preserve native row counts. Direct or explicitly named column scalar/tuple and mapped-entity RETURNING preserves native keys, types, identity state and transactions; protected values authenticate against the requested row, field and tenant. Unsupported custom AST classes refuse before execution |
 | Unprotected-table mapped DELETE | SUPPORTED | One physical table mapped in the attached registry, with no protected fields. Native equality/AND predicates with fixed typed literals only. Default/auto/evaluate/False synchronization. No Core, RETURNING, fetch synchronization or custom AST |
 | Equality `==` and `IN` | SUPPORTED | Declared full tenant/domain-bound HMAC term. Preserve typed binds and native NULL/empty-list truth tables |
-| Simple negative equality `!=`, `NOT IN`, and NULL presence | SUPPORTED | Reuse the authenticated term for values and a SQL NULL check for storage-only fields. Preserve native three-valued truth, NULL elements, empty lists, and outer-join NULL extension. General Boolean NOT remains unadmitted |
+| Negative equality `!=`, `NOT IN`, NULL presence and Boolean NOT | SUPPORTED | Native AND/OR/NOT compositions of admitted comparisons reuse existing full terms and SQL NULL checks. Normalize negation before adding positive tenant guards. Preserve three-valued truth, NULL elements, empty lists and outer-join NULL extension. Storage-only fields admit NULL predicates only; unsupported leaves and custom Boolean renderers refuse |
 | Tenant-scoped uniqueness | SUPPORTED | Full term plus tenant scope in a race-safe native unique index. Explicit single-tenant declaration supplies its one scope |
 | Comparisons `<`, `<=`, `>`, `>=`, BETWEEN/ranges | CURRENTLY UNADMITTED | No admitted range representation |
 | ORDER BY and sorted pagination on protected values | CURRENTLY UNADMITTED | No admitted order representation. Ciphertext ordering is forbidden |
@@ -131,7 +131,7 @@ parent/child transaction evidence and remaining qualification work.
 | DISTINCT with each protected source's public primary key selected | SUPPORTED | Native entity/table/direct-tuple behavior, public ordering/pagination, labels and duplicate join rows. Also admits storage-only fields. Each record ID must match the protected column's exact source alias |
 | General DISTINCT, DISTINCT ON, protected GROUP BY | CURRENTLY UNADMITTED | Multiple outputs, caller DISTINCT ON, protected grouping, ordering and pagination require separate admission. Randomized-payload comparison changes logical semantics |
 | Joins/FKs on protected fields | CURRENTLY UNADMITTED | No admitted shared search-domain or protected-FK contract |
-| Field-to-field equality, general Boolean NOT, other unadmitted functions/operators | CURRENTLY UNADMITTED | Approved scope does not independently admit these shapes |
+| Field-to-field equality and other unadmitted functions/operators | CURRENTLY UNADMITTED | Boolean composition does not independently admit a new protected leaf, join or function |
 | Other protected types, JSON predicates, unqualified custom protected types | CURRENTLY UNADMITTED | Text and storage-only Boolean, Date and signed integers have bounded admission. The exact pinned SQLModel AutoString exception retains native String admission |
 | Opaque raw SQL/COPY protected writes and unknown external writers | UNSUPPORTED BY DESIGN | Reject guarded routes. Plan blocks protection unless the deployment excludes separate routes |
 | Research range/prefix arrays, order candidates, scoped aggregate helpers, internal binary projections | INTERNAL ONLY | Experiments and adapter machinery, not public query capabilities |
@@ -246,7 +246,23 @@ not admit protected aggregates or general encrypted advanced queries.
 
 Compare every admitted shape with the same native PostgreSQL application.
 Test typed/reversed/late binds, AND/OR compositions of admitted predicates, aliases, projections, pagination, and outer joins through unprotected keys.
-Preserve SQL UNKNOWN. Preserve NULL elements, empty `IN` lists, and `NOT IN` three-valued truth. Simple negative forms may add the authenticated tenant scope through an OR with an absent outer-join record key. General Boolean NOT that could invert that scope is rejected. Reject an unadmitted nested operator before SQL.
+Preserve SQL UNKNOWN, NULL elements, empty `IN` lists and `NOT IN` three-valued
+truth. Native Boolean NOT over AND/OR compositions is normalized over the
+original admitted comparisons before search rewriting. Only the comparisons are
+inverted; generated tenant guards stay positive. NULL and negative-membership
+guards retain the absent outer-join record exception. Public subexpressions keep
+their native semantics. No new token, index, leakage profile or manifest setting
+is introduced. Native Boolean container dispatch and annotated structure must
+remain intact. Unsupported nested leaves, protected ON conditions and ambiguous
+record-point predicates remain rejected. This is bounded prototype support;
+the production qualification gates remain UNKNOWN.
+
+Predicate projections retain native positional, string-label and original
+expression-key access through SQLAlchemy results. The owned compiler translates
+their protected SQL while preserving the original projection objects used by
+the ORM. It uses the same checked binds, terms and positive tenant guards as
+WHERE rewriting. Custom label renderers and changed annotated label structure
+refuse before SQL.
 NULL payloads remain SQL NULL. Empty strings encrypt normally. Reject PostgreSQL-forbidden NUL text before SQL.
 Strict UTF-8 never changes composed/decomposed text or silently casefolds it.
 

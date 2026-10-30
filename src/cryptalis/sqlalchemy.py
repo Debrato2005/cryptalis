@@ -35,7 +35,7 @@ from ._sqlalchemy_guard import install_guard
 from ._sqlalchemy_functions import admit_function
 from ._sqlalchemy_aggregate import count_shape, distinct_projection, identity_distinct
 from ._sqlmodel_types import autostring_impl
-from ._sqlalchemy_search import equality_expression, rewrite_search, search_shape, validate_search_storage
+from ._sqlalchemy_search import boolean_children, equality_expression, rewrite_predicate, rewrite_search, search_shape, validate_search_storage
 from .crypto import CryptoFailure, AuthenticationFailed, FieldDescriptor, Keyring, KeyUnavailable, MAX_TEXT_BYTES, open_value, seal_value
 from .crypto.cf1 import _encode
 from .crypto.keys import InvalidText, InvalidValue, RepresentationMismatch, ProviderAuthenticationUnavailable
@@ -802,6 +802,32 @@ class _Attachment:
                       UnsafeDriverEvent, self.prepare_many, self._check_process)
         native_compiler = engine.dialect.statement_compiler
         class StorageCompiler(native_compiler):
+            def _search_projection(compiler, expression, kw):
+                if not isinstance(compiler.current_executable, Select) or not self.protected(expression):
+                    return None
+                operation = self._check()
+                if operation.generated(expression):
+                    return None
+                generated = rewrite_predicate(self, expression, compiler.current_executable, operation)
+                result_map = kw.get('add_to_result_map')
+                if result_map is not None:
+                    def retain_expression(key, name, objects, dtype):
+                        return result_map(key, name, (expression, *objects), dtype)
+                    kw['add_to_result_map'] = retain_expression
+                return compiler.process(generated, **kw)
+
+            def visit_binary(compiler, binary, **kw):
+                rendered = compiler._search_projection(binary, kw)
+                return super().visit_binary(binary, **kw) if rendered is None else rendered
+
+            def visit_unary(compiler, unary, **kw):
+                rendered = compiler._search_projection(unary, kw) if unary.operator is operators.inv else None
+                return super().visit_unary(unary, **kw) if rendered is None else rendered
+
+            def visit_expression_clauselist(compiler, expression, **kw):
+                rendered = compiler._search_projection(expression, kw)
+                return super().visit_expression_clauselist(expression, **kw) if rendered is None else rendered
+
             def visit_function(compiler, function, add_to_result_map=None, **kw):
                 catalog = admit_function(function, _delete_node, UnsupportedProtectedOperation)
                 aggregate = count_shape(self, function, compiler.current_executable)
@@ -1369,12 +1395,17 @@ class _Attachment:
                         if (physical is not None and origin.name == binding.column.name and physical.name == target.name and
                                 physical.schema in (None, target.schema) and not origin.shares_lineage(binding.column)):
                             raise UnsupportedProtectedOperation()
-            # Parentheses carry no new operation. Their children still pass
-            # every admission check below; do not reject native AND/OR grouping.
+            # Validate native Boolean dispatch as well as every protected leaf.
+            # Replacing a custom container would change native SQL semantics.
+            if isinstance(node, Label) and self.protected(node):
+                native = _delete_node(node, Label)
+                if any(getattr(node, name) is not getattr(native, name)
+                       for name in ('name', 'key', 'type', '_element')):
+                    raise UnsupportedProtectedOperation()
+            boolean = boolean_children(node) if id(node) not in count_nodes and self.protected(node) else None
             if (id(node) not in count_nodes and self.protected(node)
                     and not isinstance(node, (Select, FromClause, ColumnClause, Label, Grouping))):
-                boolean = isinstance(node, BooleanClauseList) and node.operator in (operators.and_, operators.or_)
-                if not boolean and search_shape(self, node) is None:
+                if boolean is None and search_shape(self, node) is None:
                     raise UnsupportedProtectedOperation()
             if isinstance(node, Select):
                 for output in node.selected_columns:
@@ -1412,8 +1443,9 @@ class _Attachment:
                         predicate = ungroup(predicate)
                         if operation is not None and operation.owner is self and operation.generated(predicate):
                             continue
-                        if isinstance(predicate, BooleanClauseList) and predicate.operator in (operators.and_, operators.or_):
-                            predicates.extend(predicate.clauses)
+                        boolean = boolean_children(predicate) if self.protected(predicate) else None
+                        if boolean is not None:
+                            predicates.extend(boolean)
                         elif self.protected(predicate) and search_shape(self, predicate) is None:
                             raise UnsupportedProtectedOperation()
                 for child in children:

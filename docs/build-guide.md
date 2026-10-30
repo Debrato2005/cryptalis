@@ -85,7 +85,7 @@ Do not describe it or the million-row receipt as current-adapter service evidenc
 | Dependencies | Slices 1–3, independent search roots, qualified exact text/collation and NULL semantics, built-in equality indexes |
 | Invariants | Match native result membership/types/pagination. No hidden filtering/refill. Preserve tenant separation and atomic payload/term updates |
 | Tests | PostgreSQL typed/reverse/late binds, AND/OR, aliases, NULL/empty/mixed-NULL IN, single-tenant and multi-tenant uniqueness races, duplicate backfill and indexed million-row plans. Measure matched end-to-end p95 and isolated column/index storage |
-| Failure cases | Missing leakage opt-in, small domains, unsupported inequality/NOT IN/joins/DISTINCT/aggregates/order/patterns, wrong tenant, stale terms, duplicate target values, malformed companions |
+| Failure cases | Missing leakage opt-in, small domains, protected operations outside the current compatibility matrix, wrong tenant, stale terms, duplicate target values, malformed companions and custom predicate renderers |
 | Definition of done | Differential query/constraint tests pass. Meet added p95 ≤ 3 ms point/equality, ≤ 8 ms IN-20, and ≤ 2× column-plus-equality-index storage targets. Record sustained-write observations without inventing a throughput budget |
 
 [Compatibility](compatibility.md#performance-targets-and-recorded-costs) records the earlier latency misses. A microbenchmark cannot replace matched application measurements.

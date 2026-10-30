@@ -85,7 +85,7 @@ def test_invalid_manifest_refuses_before_database_access(app, monkeypatch):
 
 
 def test_supplied_select_shapes_use_runtime_admission_without_keys_rows_or_mapping_changes(app, monkeypatch):
-    from sqlalchemy import select
+    from sqlalchemy import and_, not_, select
     from sqlalchemy.orm import aliased
     from cryptalis.sqlalchemy import _Attachment
     database, mapping, Customer, schema = app
@@ -100,7 +100,8 @@ def test_supplied_select_shapes_use_runtime_admission_without_keys_rows_or_mappi
                              statement, re.IGNORECASE)
     other = aliased(Customer)
     queries = (select(Customer), select(other.email).where(other.email.in_(['PRIVATE_QUERY_VALUE', None])),
-               select(Customer.id).where(Customer.email.is_(None)))
+               select(Customer.id).where(not_(and_(Customer.email != 'PRIVATE_QUERY_VALUE',
+                                                  Customer.email.is_not(None)))))
     event.listen(database, 'before_cursor_execute', readonly)
     try:
         report = preflight(json.dumps(declaration()).encode(), mapping, database,

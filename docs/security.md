@@ -334,6 +334,19 @@ The [corrective checkpoint](history/implementation-2026-10.md#corrective-audit-c
 
 **IMPLEMENTED, bounded prototype:** exact-text equality/IN uses full HMAC terms from the independently keyed CF1 header.
 Simple negative equality and `NOT IN` reuse the same terms; NULL presence uses a SQL NULL check and needs no equality representation.
+Native Boolean NOT over admitted AND/OR predicates uses SQL's three-valued
+De Morgan identities and explicit inverse comparison operators before tenant
+guards are added. Negation never applies to a generated guard. Native container
+renderers and annotated elements/operators/types are checked; unsupported
+protected leaves still refuse. Caller-mutable inverse metadata cannot select a
+different rewrite. Public subexpressions retain their native SQL. This extends
+the existing equality/NULL grammar without another representation or key.
+Selected predicate objects remain the ORM's result keys. Their SQL is rewritten
+by the owned compiler through the same checked search path; protected query
+values still become keyed terms before driver dispatch. Complete generated
+subtrees are scoped to the current operation so recursive compilation cannot
+rewrite or invert their tenant guards. Native label dispatch and effective
+annotation structure are checked before keys and at subsequent admission.
 Each comparison includes declared tenant scope. Native B-tree expression indexes enforce declared uniqueness during races.
 Payload and term are one bytea value. Public framing checks refuse malformed shape; they cannot prove AEAD authenticity.
 Attachment checks exact index/check definitions under `pg_catalog` search-path resolution, including validity, keys and operator classes.

@@ -11,10 +11,12 @@ from sqlalchemy import (
     SmallInteger,
     Text,
     Uuid,
+    and_,
     bindparam,
     event,
     func,
     inspect,
+    not_,
     or_,
     select,
 )
@@ -40,6 +42,7 @@ def count_cases(app):
     yield select(func.count(model.name)).where(_scope(app), model.rank < 0), 0
     yield select(func.count(model.name)).where(_scope(app), model.rank == 0), 0
     yield select(func.count(model.name)).where(_scope(app), model.name == 'repeat'), 2
+    yield select(func.count(model.name)).where(_scope(app), not_(and_(model.name == 'repeat', model.rank >= 0))), 5
 
 
 @pytest.mark.parametrize('protected', [False, True], ids=['native', 'attached'])
@@ -130,7 +133,9 @@ def test_single_tenant_distinct_counts_use_logical_values_including_empty_and_un
                  (select(func.count(other.name.distinct()).label('distinct_names')), 5),
                  (select(func.count(model.name.distinct())).where(model.rank < 0), 0),
                  (select(func.count(model.name.distinct())).where(model.rank == 9), 0),
-                 (select(func.count(model.name.distinct())).where(model.name == 'repeat'), 1))
+                 (select(func.count(model.name.distinct())).where(model.name == 'repeat'), 1),
+                 (select(func.count(model.name.distinct())).where(not_(and_(
+                     model.name != 'repeat', model.name.is_not(None)))), 1))
         grouped = select(model.rank, func.count(model.name.distinct())).group_by(model.rank).order_by(model.rank)
         expected_groups = [(0, 1), (1, 1), (2, 1), (3, 2), (9, 0)]
         observed = []
