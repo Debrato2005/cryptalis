@@ -6984,3 +6984,51 @@ vulnerabilities or independent review. Earlier CI is retained in
 [history](#complete-ci-at-7e7d1c5-2026-10-30).
 The separate explicit performance profile below fails latency targets; a green
 default CI run does not qualify performance.
+
+## Complete CI at 1e316c4: 2026-10-30
+
+**VERIFIED at `1e316c49cc473f562e2c495a2631d4ef84e85e62`:** GitHub
+[run 41021249836](https://github.com/Debrato2005/cryptalis/actions/runs/41021249836)
+passes both Source / PostgreSQL 16 and Reproducible artifacts / installed recovery.
+The [retained CI boundary](../_reset/github-application-online-boundary-20261030.json)
+contains verified GitHub archive digests and the actual source/installed receipts.
+
+The complete default source run passes 3,264 test calls and eighteen subtests.
+Twelve call skips, 77 setup skips and seventeen collection skips remain explicit;
+all 3,353 selected items complete. All 288 Python hashes match the recorded checkout,
+and source/imported-runtime stability passes. The original source-role fixture
+failure at `2d53867` remains fixed; no skipped cell is treated as qualified.
+
+The installed wheel passes 114 ORM/configuration controls, 50 Google SDK and 120 OpenBao/provider
+checks, two exports and three genuine fresh PostgreSQL recovery checks. Local and GitHub
+wheel/sdist hashes are identical. Repeat archives, SBOM, installed-file inspection
+and dependency consistency pass. The frozen audit reports 39 packages, zero known
+vulnerabilities and zero adverse statuses; this is not proof of absence of unknown
+vulnerabilities or independent review. Earlier CI is retained in
+[history](#complete-ci-at-a2d8230-2026-10-30).
+The separate explicit performance profile below fails latency targets; a green
+default CI run does not qualify performance.
+
+## Complete CI at 98f742b: 2026-10-30
+
+**VERIFIED at `98f742b56c08975adeea5dcf153c33702dd215cb`:** GitHub
+[run 41024498617](https://github.com/Debrato2005/cryptalis/actions/runs/41024498617)
+passes both Source / PostgreSQL 16 and Reproducible artifacts / installed recovery.
+The [retained CI boundary](../_reset/github-provider-authentication-boundary-20261030.json)
+contains verified GitHub archive digests and the actual source/installed receipts.
+
+The complete default source run passes 3,279 test calls and eighteen subtests.
+Twelve call skips, 79 setup skips and seventeen collection skips remain explicit;
+all 3,370 selected items complete. All 289 Python hashes match the recorded checkout,
+and source/imported-runtime stability passes. The original source-role fixture
+failure at `2d53867` remains fixed; no skipped cell is treated as qualified.
+
+The installed wheel passes 114 ORM/configuration controls, 50 Google SDK and 137 OpenBao/provider
+checks, two exports and three genuine fresh PostgreSQL recovery checks. Local and GitHub
+wheel/sdist hashes are identical. Repeat archives, SBOM, installed-file inspection
+and dependency consistency pass. The frozen audit reports 39 packages, zero known
+vulnerabilities and zero adverse statuses; this is not proof of absence of unknown
+vulnerabilities or independent review. Earlier CI is retained in
+[history](#complete-ci-at-1e316c4-2026-10-30).
+The separate explicit performance profile below fails latency targets; a green
+default CI run does not qualify performance.

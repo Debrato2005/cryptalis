@@ -113,8 +113,11 @@ resume/abort, rotation, diagnosis, status and removal. The
 [host context reference](../host-contexts.md) defines explicit factory inputs.
 A future command spelling is not a currently implemented command.
 
-Doctor separates schema/supplied-query inspection, ACTIVE runtime admission and
-explicit cold-provider preparation. Each scope reports unobserved properties as
+Doctor separates static Python call inventory through a native scanner,
+schema/supplied-query inspection, ACTIVE runtime admission and explicit
+cold-provider preparation. The scanner is an isolated optional host tool; it
+provides candidates and never replaces runtime admission or complete writer
+inventory. Each scope reports unobserved properties as
 UNKNOWN and supplies no deployment authority. Lifecycle status is observation,
 not value verification or permission to publish.
 

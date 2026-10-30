@@ -37,13 +37,17 @@ class Qualification:
         temporary.write_text(json.dumps(self.status, indent=2) + '\n')
         temporary.replace(self.evidence / 'status.json')
 
-    def run(self, name, command, *, environment=None):
+    def run(self, name, command, *, environment=None, output=None):
         step = {'name': name, 'outcome': 'RUNNING'}
         self.status['steps'].append(step)
         self.save()
         print('CI step:', name, flush=True)
         started = time.monotonic()
-        result = subprocess.run(command, cwd=ROOT, env=environment)
+        if output is None:
+            result = subprocess.run(command, cwd=ROOT, env=environment)
+        else:
+            with output.open('xb') as stream:
+                result = subprocess.run(command, cwd=ROOT, env=environment, stdout=stream)
         step.update(exit_code=result.returncode, elapsed_seconds=time.monotonic() - started,
                     outcome='PASS' if result.returncode == 0 else 'FAIL')
         self.save()
@@ -103,6 +107,28 @@ class Qualification:
         step['outcome'] = 'PASS'
         self.save()
         (self.workdir / 'install.json').write_text(json.dumps(inspection, indent=2) + '\n')
+        # Keep the native scanner toolchain
+        # outside the application and provider interpreter and dependency lock.
+        scanner_dependencies = self.workdir / 'scanner-dependencies.txt'
+        self.run('export isolated locked scanner dependencies', ['uv', 'export', '--project', 'tools/scanner',
+            '--locked', '--no-emit-project', '--no-dev', '--format', 'requirements-txt',
+            '--output-file', str(scanner_dependencies)])
+        scanner_environment = self.workdir / 'scanner'
+        self.run('create isolated scanner interpreter', ['uv', 'venv', '--python', sys.executable,
+            str(scanner_environment)])
+        self.run('install hashed scanner dependencies', ['uv', 'pip', 'sync', '--python',
+            str(scanner_environment / 'bin/python'), '--require-hashes', '--only-binary', ':all:',
+            str(scanner_dependencies)])
+        self.run('export scanner SBOM', ['uv', 'export', '--project', 'tools/scanner', '--locked',
+            '--no-emit-project', '--no-dev', '--format', 'cyclonedx1.5',
+            '--output-file', str(self.workdir / 'scanner-sbom.cdx.json')])
+        self.run('audit frozen scanner toolchain', ['uv', 'audit', '--project', 'tools/scanner', '--frozen',
+            '--output-format', 'json'], output=self.workdir / 'scanner-audit.json')
+        (self.workdir / 'scanner-toolchain.json').write_text(json.dumps(dict(
+            format='cryptalis.scanner-toolchain/v1', version='0.51.0', isolated=True,
+            lock_sha256=hashlib.sha256((ROOT / 'tools/scanner/uv.lock').read_bytes()).hexdigest(),
+            requirements_sha256=hashlib.sha256(scanner_dependencies.read_bytes()).hexdigest(),
+            production_gate='UNKNOWN'), indent=2) + '\n')
         cluster = None
         try:
             primary = self.workdir / 'primary'
@@ -113,6 +139,18 @@ class Qualification:
             credentials = provision(port, password, manifest, manifest['database'] + '_native')
             home = write_home(primary, port, manifest, credentials, source_database=manifest['database'])
             environment = dict(os.environ, CRYPTALIS_TEST_CONFIG_DIR=str(home), PYTHONPATH='')
+            scanner_scope = dict(environment, CRYPTALIS_TEST_SCANNER=str(scanner_environment / 'bin/ast-grep'))
+            self.run('installed Doctor native code inventory', [str(python), 'scripts/test_postgres.py',
+                '--installed-wheel', str(wheel), '--source-role',
+                '--scope', 'Installed Doctor with isolated native ast-grep, privacy and process/omission controls',
+                '--receipt', str(self.workdir / 'installed-code-receipt.json'), '--',
+                'tests/test_doctor_code.py', 'tests/test_doctor_code_native.py', '-q'], environment=scanner_scope)
+            receipt = json.loads((self.workdir / 'installed-code-receipt.json').read_text())
+            if (receipt['exit_code'] != 0 or set(receipt['counts']) != {'passed'}
+                    or receipt['pytest_report_counts']['collection']
+                    or receipt['runtime_binding']['mode'] != 'installed-wheel'
+                    or receipt['runtime_binding']['wheel_sha256'] != digest):
+                raise CheckFailed(1)
             self.run('installed ORM and shared initialization/Doctor context', [str(python),
                 'scripts/test_postgres.py', '--installed-wheel', str(wheel), '--source-role',
                 '--scope', 'Installed ORM DML and shared key-free init/Doctor context with native failure controls',
@@ -182,6 +220,10 @@ class Qualification:
                 ('source/receipt.json', 'source-receipt.json'),
                 ('release.json', 'release-receipt.json'), ('install.json', 'install-receipt.json'),
                 ('installed-sqlmodel-receipt.json', 'installed-sqlmodel-receipt.json'),
+                ('installed-code-receipt.json', 'installed-code-receipt.json'),
+                ('scanner-toolchain.json', 'scanner-toolchain.json'),
+                ('scanner-sbom.cdx.json', 'scanner-sbom.cdx.json'),
+                ('scanner-audit.json', 'scanner-audit.json'),
                 ('installed-google-kms-receipt.json', 'installed-google-kms-receipt.json'),
                 ('openbao/tests.json', 'installed-openbao-tests.json'),
                 ('openbao/qualification.json', 'installed-openbao-qualification.json'),

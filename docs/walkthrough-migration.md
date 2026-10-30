@@ -364,6 +364,41 @@ The [pinned template checkpoint](history/implementation-2026-10.md#optional-sqlm
 covers unchanged CRUD modules for one storage-only field.
 HTTP routes, authentication, full startup and deployment remain outside that checkpoint.
 
+## Inventory Python code routes
+
+Install the optional native scanner separately from the application. In a source
+checkout, the pinned tool environment is reproducible:
+
+```console
+uv sync --project tools/scanner --locked
+cryptalis doctor --code-root ./app --scanner ./tools/scanner/.venv/bin/ast-grep --json
+```
+
+For a package installation, supply a trusted ast-grep 0.51.0 executable with
+`--scanner`; omitting that option resolves `ast-grep` on PATH. This mode needs no
+manifest, host factory, database URL, credentials or keys. Select application
+source directories deliberately: ignore files are disabled within the selected
+root, so vendored/generated Python inside it is also eligible for native scanning.
+Native `ast-grep-ignore` comments can still suppress matches; every report states
+this limitation. The command uses fixed packaged rules and ignores project scanner configuration.
+It performs no source rewrite or application import.
+
+The report lists relative paths, one-based lines and candidate kinds. Review each
+against the manifest and writer inventory, including jobs, scripts, direct SQL
+and COPY. A matching method may belong to an unrelated object. Aliased imports
+are visible as imports; arbitrary alias calls are not resolved. No match does
+not mean no writer exists. `status`, code validity and full route coverage remain
+UNKNOWN even when scanner execution passes. Native parser recovery is not a
+Python syntax oracle. [The security contract](security.md)
+retains these evidence limits and process bounds.
+
+Exit 0 means the requested scan completed. Invalid argument combinations return
+2; unavailable/incomplete inspection and output failure return 4 with safe issue
+codes. A native parser recovery observation retains other candidates but returns
+4. Resolve the reported issue before repeating. Do not use the report as approval
+to migrate or attach: continue with manifest/schema and supplied-query diagnosis
+below, then verify actual admitted application journeys.
+
 ## Diagnose before adoption
 
 Reuse the key-free factory already used for initialization:

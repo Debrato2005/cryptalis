@@ -39,6 +39,9 @@ NETWORK_TERMS = ("import socket", "import subprocess", "import urllib", "import 
 # URL syntax parsing has no transport side effects. This exact reviewed import
 # does not admit urllib.request, other modules, or appended executable text.
 REVIEWED_IMPORTS = {("crypto/openbao.py", "from urllib.parse import urlsplit")}
+# Doctor's fixed local scan/version argv is the sole package subprocess boundary.
+# This exact import does not admit other modules, appended code or transport imports.
+REVIEWED_IMPORTS.add(("_doctor_code.py", "import subprocess"))
 
 
 def run(args, cwd=ROOT):
@@ -212,6 +215,7 @@ def source_hashes():
     paths = [ROOT / "pyproject.toml", ROOT / "LICENSE", ROOT / "README.md",
              ROOT / "scripts" / "release_check.py",
              ROOT / "scripts" / "test_release_check.py",
+             ROOT / "src/cryptalis/_doctor_routes.json",
              ROOT / "qualification/build-backend/requirements.in",
              ROOT / "qualification/build-backend/requirements.txt"]
     paths += sorted((ROOT / "src").rglob("*.py"))

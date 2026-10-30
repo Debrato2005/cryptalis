@@ -14,7 +14,7 @@ Use this page to find the owner of a question; use [status](status.md) for curre
 | Integrate an application | [Shared application configuration](application.md) → [SQLAlchemy/SQLModel attachment](walkthrough-sqlalchemy.md) → [search examples](walkthrough-search.md) |
 | Protect, rotate, recover or remove data | [Operator walkthrough](walkthrough-migration.md), with [host context inputs](host-contexts.md) |
 | Configure external key custody | [OpenBao setup, AppRole and diagnosis](openbao.md), [Google KMS setup and qualification](google-kms.md), [provider contract](security.md#key-hierarchy-and-providers) |
-| Diagnose adoption or runtime issues | [Doctor before adoption](walkthrough-migration.md#diagnose-before-adoption), [ACTIVE diagnosis](walkthrough-migration.md#diagnose-an-active-deployment), [cold-provider checks](openbao.md) |
+| Diagnose adoption or runtime issues | [Static Python route inventory](walkthrough-migration.md#inventory-python-code-routes), [Doctor before adoption](walkthrough-migration.md#diagnose-before-adoption), [ACTIVE diagnosis](walkthrough-migration.md#diagnose-an-active-deployment), [cold-provider checks](openbao.md) |
 | Run tests or a local demonstration | [Local development](local-development.md) → [optional qualification profiles](qualification.md) |
 | See what is verified or missing | [Current status](status.md) → [34-objective ledger](BUILD_CHECKLIST.md) |
 | Continue implementation | [Build sequence](build-guide.md) → [engineering playbook](../ENGINEERING_PLAYBOOK.md) |

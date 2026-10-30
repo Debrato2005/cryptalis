@@ -6,25 +6,25 @@ Use the [documentation map](README.md) to find contracts and procedures.
 
 ## Current complete CI qualification
 
-**VERIFIED at `1e316c49cc473f562e2c495a2631d4ef84e85e62`:** GitHub
-[run 41021249836](https://github.com/Debrato2005/cryptalis/actions/runs/41021249836)
+**VERIFIED at `e55733d474601cf738e2ef7708c125669a3bbaf7`:** GitHub
+[run 41026688561](https://github.com/Debrato2005/cryptalis/actions/runs/41026688561)
 passes both Source / PostgreSQL 16 and Reproducible artifacts / installed recovery.
-The [retained CI boundary](_reset/github-application-online-boundary-20261030.json)
+The [retained CI boundary](_reset/github-container-retirement-boundary-20261030.json)
 contains verified GitHub archive digests and the actual source/installed receipts.
 
-The complete default source run passes 3,264 test calls and eighteen subtests.
-Twelve call skips, 77 setup skips and seventeen collection skips remain explicit;
-all 3,353 selected items complete. All 288 Python hashes match the recorded checkout,
+The complete default source run passes 3,288 test calls and eighteen subtests.
+Twelve call skips, 79 setup skips and seventeen collection skips remain explicit;
+all 3,379 selected items complete. All 290 Python hashes match the recorded checkout,
 and source/imported-runtime stability passes. The original source-role fixture
 failure at `2d53867` remains fixed; no skipped cell is treated as qualified.
 
-The installed wheel passes 114 ORM/configuration controls, 50 Google SDK and 120 OpenBao/provider
+The installed wheel passes 114 ORM/configuration controls, 50 Google SDK and 146 OpenBao/provider
 checks, two exports and three genuine fresh PostgreSQL recovery checks. Local and GitHub
 wheel/sdist hashes are identical. Repeat archives, SBOM, installed-file inspection
 and dependency consistency pass. The frozen audit reports 39 packages, zero known
 vulnerabilities and zero adverse statuses; this is not proof of absence of unknown
 vulnerabilities or independent review. Earlier CI is retained in
-[history](history/implementation-2026-10.md#complete-ci-at-a2d8230-2026-10-30).
+[history](history/implementation-2026-10.md#complete-ci-at-98f742b-2026-10-30).
 The separate explicit performance profile below fails latency targets; a green
 default CI run does not qualify performance.
 
@@ -32,7 +32,9 @@ Documentation consolidation is `26e882b`; shared init/Doctor is `15ffdb3` and
 shared application configuration is `09c635a`; lifecycle integration is `b92cfc7`.
 Google KMS is `bda4fb3`; AppRole is `743b5e9`; shared rotations are `ccf7d12`.
 Doctor authentication diagnostics are `7e7d1c5`; native audit is `a2d8230`.
-Shared online capture and tenant configuration are `1e316c4`.
+Shared online capture and tenant configuration are `1e316c4`; lifecycle/runtime
+authentication diagnostics are `98f742b`. Container retirement is `e55733d`
+and is also covered by complete CI.
 
 The 34-objective [ledger](BUILD_CHECKLIST.md#objective-ledger) retains seven
 bounded VERIFIED entries, 23 PARTIAL entries, one SPECIFIED, one BLOCKED, one
@@ -45,6 +47,34 @@ identity/audit/HA, combined disaster drills, and performance acceptance.
 Independent human review remains unavailable; selected live cloud cells need
 authorized accounts. All 34 objectives stay in scope and all seven production
 gates remain UNKNOWN.
+
+## Static Python route inventory
+
+**VERIFIED locally, source and installed wheel:** the
+[Doctor code boundary](_reset/doctor-code-boundary-20261030.json) adds
+`doctor --code-root` and `doctor.scan_routes` through an isolated, pinned ast-grep
+native tool. Reports identify candidate paths/lines/kinds without source literals,
+application imports, SQL or keys. Project scanner configuration and custom parser
+libraries are excluded. Version, protocol, output, timeout and child-process
+failures remain explicit. Native inline suppressions and incomplete parser
+visibility are stated; coverage and runtime properties always remain UNKNOWN.
+The [operator route](walkthrough-migration.md#inventory-python-code-routes) owns usage.
+
+Verification passes 66 source checks, 15 installed code-inventory checks, 114
+installed application checks, 50 Google checks, 146 OpenBao/provider checks, two
+exports and three fresh-restore checks. All 293 Python hashes and runtime bytes
+are stable; packaged rules match the inspected wheel. Repeat artifacts, SBOM and
+installed inspection pass. The scanner has its own hashed lock, SBOM and a frozen
+one-package audit with zero known advisories. The application/provider lock is
+unchanged. This does not independently audit the bundled native engine.
+
+The retained attempts include two incorrect native-tool expectations, a test
+fixture quoting error, rejection of the first subprocess import, and a discarded
+scanner dependency set with five known advisories. The final exact local-process
+import exception retains transport/other-module rejection; 17 offline artifact
+controls pass. An actual source scan returns 340 candidate locations across 28
+files with UNKNOWN coverage. Complete hosted CI above covers the preceding
+container-retirement commit; no production gate is promoted.
 
 ## Shared application configuration
 
@@ -159,7 +189,7 @@ this boundary; it does not establish production audit or custody.
 
 ## Authentication across lifecycle and runtime
 
-**VERIFIED locally, source and installed wheel:** the
+**VERIFIED locally and in complete GitHub CI:** the
 [lifecycle authentication boundary](_reset/provider-authentication-lifecycle-boundary-20261030.json)
 preserves native authentication identity through source/target resolvers, approved
 online tenants, ORM session preparation, late planning and rotation refresh after
@@ -175,7 +205,7 @@ imported runtime bytes are stable; repeat artifacts, SBOM, installed inspection
 and dependency consistency pass. Two failed source runs preserve twelve reproduced
 failures; intermediate 67-pass source and 127-pass native runs retain their earlier
 hashes and three unselected CLI restore-profile skips. Complete hosted CI above
-covers the preceding online configuration commit. No production gate is promoted.
+also verifies this authentication boundary. No production gate is promoted.
 
 ## Native OpenBao audit boundary
 
@@ -215,7 +245,7 @@ Final source and installed provider suites each pass 146 checks; the earlier
 also passes 114 application checks, 50 Google checks, two exports and three
 fresh-restore checks. All 290 Python hashes and imported runtime bytes are stable;
 repeat artifacts, SBOM, installed inspection and dependency consistency pass.
-Complete hosted CI above covers the preceding online configuration commit.
+Complete hosted CI above also verifies this container-retirement boundary.
 
 ## Current performance boundary
 
