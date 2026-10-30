@@ -1,5 +1,49 @@
 # Implementation status
 
+## Asynchronous SQLModel and cached projections: 2026-10-31
+
+The [final full source regression](_reset/sqlmodel-async-full-20261031.json)
+passes **3,091 tests and 18 subtests**, with 38 explicit skips and 48 existing
+DISTINCT ON deprecation warnings. Source hashes remain unchanged throughout
+the run. The [reproducible artifact receipt](_reset/sqlmodel-async-release-20261031.json)
+verifies the wheel/sdist, SBOM, dependency metadata, CLI and 46 installed files.
+All [64 installed API/projection checks](_reset/sqlmodel-async-installed-20261031.json)
+pass in a clean optional-SQLModel environment.
+
+A separate reviewed gap remains: direct cached alias columns can retain a native
+result codec. This checkpoint covers labels and parentheses, not that path.
+The next correction must authenticate those direct alias results too.
+
+The [initial full run](_reset/sqlmodel-async-full-initial-20261031.json) stopped
+after five label-admission regressions, with 2,554 passes, 36 skips and 18
+subtests. Native computed and mapper-generated labels need their own metadata
+handling. The correction preserves that behavior while retaining direct-field
+codec checks; all [289 affected controls](_reset/sqlmodel-async-affected-20261031.json)
+pass. The initial failed run is not current full-suite qualification.
+
+**VERIFIED, bounded:** SQLModel 0.0.48 asynchronous attachment uses its native
+AsyncSession/Session.exec result handling through the existing SQLAlchemy
+admission and awaited key-preparation path. Sixteen native API and sync bridge
+checks pass: CRUD, scalar/tuple/entity results, labeled bulk RETURNING, scoped
+dictionary UPDATE, scoped DELETE, rollback, and actual provider cancellation
+before autoflush with successful recovery. The plain installation retains its
+typed no-effect missing-dependency control.
+
+The new native comparison exposed cached SELECT labels that returned CF1 bytes
+through a stale native codec. Direct labels and transparent parentheses now use
+the owned authenticated decoder without changing caller expressions. Forty-eight
+TEXT/VARCHAR sync/async comparisons pass across aliases, search rewrites,
+original label lookup, grouped ORM labels and Core parenthesized columns.
+The cursor guard permits native buffered async soft-close without releasing a
+row or protocol handle.
+
+Receipts: [SQLModel API and cancellation](_reset/sqlmodel-async-20261031.json),
+[cached projection comparisons](_reset/select-transparent-20261031.json), and
+[base dependency absence](_reset/sqlmodel-absence-20261031.json). These are local
+Python 3.13.12, SQLAlchemy 2.1.3 and PostgreSQL 16.2 source observations. They do
+not qualify an independent asynchronous HTTP deployment, production provider,
+other runtime cell or any production gate. All seven gates remain UNKNOWN.
+
 ## Native labeled INSERT RETURNING: 2026-10-31
 
 **VERIFIED, bounded:** attached mapped dictionary INSERT supports native direct

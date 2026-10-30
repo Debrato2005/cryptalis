@@ -19,6 +19,7 @@ from sqlalchemy.dialects import postgresql as _postgresql_types
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, AsyncSessionTransaction
 from sqlalchemy.exc import DBAPIError, DontWrapMixin
 from sqlalchemy.orm import Session, registry
+from sqlalchemy.orm.attributes import InstrumentedAttribute, QueryableAttribute
 from sqlalchemy.orm.attributes import NO_VALUE
 from sqlalchemy.sql import operators, visitors
 from sqlalchemy.sql.annotation import Annotated, annotated_classes
@@ -290,6 +291,36 @@ def _delete_node(node, native):
     return node
 
 
+def _column_label(label):
+    label = _delete_node(label, Label)
+    column = label.element
+    quote = getattr(label.name, 'quote', None)
+    _update_bind_name(label.name)
+    if (column is not label._element or
+            label.type is not column.type or type(label._alt_names) is not tuple or label._alt_names or
+            quote is not None and type(quote) is not bool or
+            any(getattr(label, name) is not label.name for name in ('key', '_tq_label', '_tq_key_label'))):
+        raise UnsupportedProtectedOperation()
+    return column
+
+
+def _projection_column(expression):
+    if type(expression) is InstrumentedAttribute:
+        expression = QueryableAttribute.__clause_element__(expression)
+    if isinstance(expression, Label):
+        # Native computed/mapper labels can group expressions and use their
+        # own property keys. Only a direct column needs this codec proof.
+        label = _delete_node(expression, Label)
+        column = _projection_column(label.element)
+        if column is None:
+            return None
+        _column_label(expression)
+        return column
+    if isinstance(expression, Grouping):
+        return _projection_column(_delete_node(expression, Grouping).element)
+    return expression if isinstance(expression, ColumnClause) else None
+
+
 _INVALID_UUID_POINT = object()
 
 
@@ -416,7 +447,7 @@ class _Payload(TypeDecorator):
         if operation is None or operation.owner is not self.owner:
             raise UnsupportedProtectedOperation()
         original = column
-        while isinstance(original, Label):
+        while isinstance(original, (Label, Grouping)):
             original = original.element
         table = getattr(original, "table", None)
         if table is None or self.binding.record.key not in table.c:
@@ -764,6 +795,24 @@ class _Attachment:
                       UnsafeDriverEvent, self.prepare_many, self.result_rows)
         native_compiler = engine.dialect.statement_compiler
         class StorageCompiler(native_compiler):
+            def _label_select_column(compiler, statement, column, populate_result_map,
+                                     asfrom, column_clause_args, *args, **kw):
+                operation = _operation.get()
+                if (operation is not None and operation.owner is self and isinstance(statement, Select) and
+                        isinstance(column, (Label, Grouping))):
+                    element = _projection_column(column)
+                    binding = next((binding for binding in self.bindings
+                                    if element is not None and element.shares_lineage(binding.column)), None)
+                    if binding is not None:
+                        original = column
+                        column = column._clone()
+                        column.type = binding.column.type
+                        column_clause_args = dict(column_clause_args)
+                        column_clause_args['result_map_targets'] = (
+                            column_clause_args.get('result_map_targets', ()) + (original,))
+                return super()._label_select_column(statement, column, populate_result_map,
+                    asfrom, column_clause_args, *args, **kw)
+
             def _label_returning_column(compiler, statement, column, populate_result_map,
                                        column_clause_args=None, **kw):
                 operation = _operation.get()
@@ -868,13 +917,7 @@ class _Attachment:
 
     def returning_column(self, column, bulk):
         if isinstance(column, Label):
-            label = _delete_node(column, Label)
-            column = label.element
-            if (column is not label._element or label.type is not column.type or
-                    type(label._alt_names) is not tuple or label._alt_names or
-                    any(getattr(label, name) is not label.name
-                    for name in ('key', '_tq_label', '_tq_key_label'))):
-                raise UnsupportedProtectedOperation()
+            column = _projection_column(column)
         if not isinstance(column, ColumnClause) or column.is_literal is not False:
             raise UnsupportedProtectedOperation()
         original = column
@@ -965,6 +1008,8 @@ class _Attachment:
                                 seen.add(id(child))
                                 nodes.append(child)
             for node in nodes:
+                if isinstance(node, (Label, Grouping)):
+                    _projection_column(node)
                 if isinstance(node, BindParameter) and node.literal_execute:
                     raise UnsupportedProtectedOperation()
                 dtype = getattr(node, 'type', None)
@@ -2190,8 +2235,10 @@ class _AsyncTransaction(AsyncSessionTransaction):
 
 
 class _AsyncSession(AsyncSession):
+    _sync_session = _Session
+
     def __init__(self, *args, **kwargs):
-        super().__init__(*args, sync_session_class=_Session, _asynchronous=True, **kwargs)
+        super().__init__(*args, sync_session_class=self._sync_session, _asynchronous=True, **kwargs)
 
     async def _prepare(self):
         session = self.sync_session
@@ -2204,8 +2251,9 @@ class _AsyncSession(AsyncSession):
         return _AsyncTransaction(self, nested=True)
 
 
-def _async_method(name):
-    native = getattr(AsyncSession, name)
+def _async_method(name, native=None):
+    if native is None:
+        native = getattr(AsyncSession, name)
     @wraps(native)
     async def method(self, *args, **kwargs):
         statement = args[0] if args else kwargs.get('statement')
@@ -2215,7 +2263,7 @@ def _async_method(name):
             session._owner._check_configuration()
             session._owner.admit(statement)
         if isinstance(statement, Delete):
-            if name != 'execute':
+            if name not in ('execute', 'exec'):
                 raise UnsupportedProtectedOperation()
             session = self.sync_session
             session._owner._check_configuration()
@@ -2226,7 +2274,7 @@ def _async_method(name):
             else:
                 permit, _, _ = session._owner.delete_context(statement, session._tenant)
         if isinstance(statement, Update):
-            if name != 'execute':
+            if name not in ('execute', 'exec'):
                 raise UnsupportedProtectedOperation()
             session = self.sync_session
             session._owner._check_configuration()
@@ -2260,6 +2308,7 @@ for _name in ("execute", "scalar", "scalars", "stream", "stream_scalars", "get",
 
 class _Factory:
     _sync_session = _Session
+    _async_session = _AsyncSession
 
     def __init__(self, owner):
         self._owner = owner
@@ -2268,7 +2317,7 @@ class _Factory:
         if any(k in options for k in ("bind", "binds", "class_", "sync_session_class", "_owner", "_asynchronous")):
             raise UnsupportedProtectedOperation()
         self._owner._ring(tenant_id)
-        cls = _AsyncSession if isinstance(self._owner.engine, AsyncEngine) else self._sync_session
+        cls = self._async_session if isinstance(self._owner.engine, AsyncEngine) else self._sync_session
         return cls(bind=self._owner.engine, _owner=self._owner, tenant_id=tenant_id, **options)
 
 

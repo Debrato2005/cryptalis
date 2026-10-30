@@ -318,13 +318,15 @@ def _point_predicate(Customer, identity, mode, calls):
 
 
 @pytest.mark.parametrize("asynchronous", [False, True], ids=["sync", "async"])
-@pytest.mark.parametrize("projection", ["entity", "scalar"])
+@pytest.mark.parametrize("projection", ["entity", "scalar", "label"])
 @pytest.mark.parametrize("first_form", ["grouped", "callable"])
 def test_requested_row_variants_use_native_oracle_and_reject_substituted_rows(app, asynchronous, projection, first_form):
     """Native SQL identifies a requested row; a different valid frame must never pass."""
     Customer = app.Customer
     identity, other = uuid4(), uuid4()
     selected = Customer if projection == "entity" else Customer.note
+    if projection == 'label':
+        selected = selected.label('protected value')
     # Independent native SQLAlchemy engine remains outside attachment guards.
     oracle = create_engine("postgresql+psycopg://", hide_parameters=True,
                            creator=lambda: psycopg.connect(os.environ["CRYPTALIS_TEST_DATABASE_URL"]))

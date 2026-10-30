@@ -214,11 +214,13 @@ adds native default semantics and fixes attribute expiration after valid flushes
 
 ## Optional SQLModel bridge
 
-An explicit `cryptalis.sqlmodel.attach` bridge admits synchronous PostgreSQL
+An explicit `cryptalis.sqlmodel.attach` bridge admits synchronous and asynchronous PostgreSQL
 sessions on SQLModel 0.0.48. It uses the same manifest, authenticated tenant
 scope, key policy and deployment pin. The returned session inherits native
-`Session.exec` and keeps native scalar, tuple and entity results.
-Missing dependencies, unsupported versions and async engines refuse before
+`Session.exec` and keeps native scalar, tuple and entity results. Await attachment
+for an AsyncEngine. Its native async `exec` uses the same admission and awaited
+key preparation as the SQLAlchemy adapter, before native autoflush or execution.
+Missing dependencies, unsupported versions and invalid locks refuse before
 connection or key work. The ordinary SQLAlchemy attachment keeps its existing interface.
 
 Only the exact pinned AutoString type can normalize to its checked native String
@@ -229,6 +231,9 @@ The native String and existing expression checks still apply after normalization
 This exception admits no other custom protected type or query grammar.
 The [SQLModel checkpoint](status.md#optional-sqlmodel-template-checkpoint-2026-10-23)
 owns exact runtime and pinned application evidence.
+The [async source checkpoint](status.md#asynchronous-sqlmodel-and-cached-projections-2026-10-31)
+records the bounded native async API and projection evidence. It does not
+qualify an asynchronous deployment of the independent HTTP applications.
 
 ## Portable DDL
 

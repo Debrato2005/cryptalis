@@ -100,6 +100,15 @@ A valid fresh frame for the same context still refuses if this operation did
 not prepare it. This stronger write-result check does not establish general
 read freshness or completeness.
 
+SELECT also uses the owned physical codec for direct labels and transparent
+parenthesized columns. A cached native type cannot return a CF1 frame as a
+public byte value. The native mapped attribute resolves to its column without
+calling an arbitrary clause provider. Search rewriting retains the caller's
+direct projection identity, and the compiler changes only its SQL codec.
+The result processor still authenticates the field, tenant and record context.
+Buffered asynchronous Core results permit only native cursor soft-close;
+that operation releases no row or protocol handle.
+
 Native supplemental RETURNING can authenticate
 during `execute()`, so later iteration can read already authenticated plaintext.
 An expired lease refuses at actual key use without a provider refresh.

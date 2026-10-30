@@ -367,15 +367,19 @@ Attachment returns a factory called as `sessions(tenant_id=tenant_uuid)`. Await 
 The compiler lock must be trusted by the host. Physical protected columns must already be `bytea`.
 This call does not perform a schema/data transition. Attach before application sessions or model use.
 The optional `cryptalis.sqlmodel.attach` uses the same arguments for synchronous
-PostgreSQL sessions on SQLModel 0.0.48. It inherits native `Session.exec` and
-normalizes only the checked exact AutoString mapping to native String.
+and asynchronous PostgreSQL sessions on SQLModel 0.0.48. Await attachment for an
+AsyncEngine. It inherits native `Session.exec`, awaits key preparation outside
+synchronous hooks, and normalizes only the checked exact AutoString mapping to
+native String.
 The [compatibility contract](../compatibility.md#optional-sqlmodel-bridge)
 defines its refusals. The [checkpoint](../status.md#optional-sqlmodel-template-checkpoint-2026-10-23)
 owns its bounded runtime and application evidence.
+The [async source checkpoint](../status.md#asynchronous-sqlmodel-and-cached-projections-2026-10-31)
+bounds the additional API evidence separately from independent HTTP deployments.
 
 The engine must use PostgreSQL/psycopg, `echo=False`, and `hide_parameters=True`. Attachment refuses unsafe logging settings before it opens a connection or resolves a key, and it requires no checked-out connections at activation.
-Ordinary ORM flush writes, mapped dictionary INSERT with optional single protected
-scalar RETURNING, direct
+Ordinary ORM flush writes, mapped dictionary INSERT with direct column, native
+label and exact attached-entity RETURNING, direct
 projections and declared equality/IN are implemented. Simple negative equality,
 `NOT IN`, and NULL presence are admitted with native truth. Core writes, other
 bulk routes and unadmitted grammar reject.

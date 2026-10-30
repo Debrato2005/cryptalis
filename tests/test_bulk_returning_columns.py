@@ -6,7 +6,7 @@ from types import MethodType
 
 import psycopg
 import pytest
-from sqlalchemy import event, insert, String
+from sqlalchemy import event, insert, select, String
 from sqlalchemy.sql.elements import Label, quoted_name
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import Session
@@ -144,7 +144,8 @@ def test_late_column_projection_change_refuses_before_driver(fault, monkeypatch)
 
 
 @pytest.mark.parametrize('fault', ['subclass', 'dispatch', 'name_type', 'quote', 'key', 'type', 'targets', 'cached_element'])
-def test_custom_returning_labels_refuse_before_keys_and_driver(fault, monkeypatch):
+@pytest.mark.parametrize('route', ['insert', 'select'])
+def test_custom_direct_labels_refuse_before_keys_and_driver(fault, route, monkeypatch):
     with native_application(False) as app:
         resolutions = []
         def resolve(tenant):
@@ -173,11 +174,14 @@ def test_custom_returning_labels_refuse_before_keys_and_driver(fault, monkeypatc
         else:
             value.element  # Cache the original direct column.
             value._element = app.Customer.label.__clause_element__()
-        with raw_calls(monkeypatch, app.schema, 'INSERT') as sent:
+        with raw_calls(monkeypatch, app.schema, route.upper()) as sent:
             with factory(tenant_id=TENANT) as session:
                 resolutions.clear()
                 with pytest.raises(CryptoFailure):
-                    session.execute(insert(app.Customer).returning(value), returning_rows())
+                    if route == 'insert':
+                        session.execute(insert(app.Customer).returning(value), returning_rows())
+                    else:
+                        session.execute(select(value))
                 session.rollback()
             assert sent == [] and resolutions == []
         assert _snapshot(app) == before

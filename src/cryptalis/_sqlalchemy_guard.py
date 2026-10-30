@@ -97,6 +97,14 @@ class _Cursor:
             self._rows_check(rows)
         return rows
 
+    async def _async_soft_close(self):
+        # Native SQLAlchemy closes a buffered async cursor before returning a
+        # Core CursorResult. This releases no row or protocol handle.
+        close = getattr(self._raw, '_async_soft_close', None)
+        if close is None:
+            raise self._error()
+        await close()
+
     def copy(self, *args, **kwargs):
         raise self._error()
 
