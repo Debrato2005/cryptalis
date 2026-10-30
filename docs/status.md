@@ -1,5 +1,20 @@
 # Implementation status
 
+## Packaged RETURNING and Doctor checkpoint: 2026-10-31
+
+**VERIFIED, bounded:** revision `a8a9c30` builds identical wheel and source
+archives twice. Archive inspection, wheel RECORD, dependency metadata, license,
+CycloneDX SBOM and 46 installed-file comparisons pass. The independent virtual
+environment imports the wheel and starts its CLI. All 113 selected PostgreSQL
+ORM RETURNING and Python/CLI Doctor checks pass from that installation.
+
+The [artifact receipt](_reset/release-installed-20261031.json) and
+[installed application receipt](_reset/installed-journey-20261031.json) bind the
+exact source and artifact bytes. This is local Python 3.13.12/PostgreSQL 16.2
+evidence. Optional SQLModel and production provider cells are not qualified.
+Independent rebuild/review, signed provenance and all seven release gates remain
+UNKNOWN. No publication occurred.
+
 **IMPLEMENTED:** research prototype with a product manifest compiler, CF1 typed storage primitives, a local development provider,
 bounded sync/async SQLAlchemy storage/search, a PostgreSQL maintenance protection transition, an in-place
 decrypt-back/removal path for that transition format, and an approved fresh-cluster protected-backup
