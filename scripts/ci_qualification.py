@@ -153,9 +153,9 @@ class Qualification:
                 raise CheckFailed(1)
             self.run('installed ORM and shared initialization/Doctor context', [str(python),
                 'scripts/test_postgres.py', '--installed-wheel', str(wheel), '--source-role',
-                '--scope', 'Installed ORM DML and shared key-free init/Doctor context with native failure controls',
+                '--scope', 'Installed ORM DML, fork isolation and shared key-free init/Doctor context with native failure controls',
                 '--receipt', str(self.workdir / 'installed-sqlmodel-receipt.json'), '--',
-                'tests/test_sqlmodel_bridge.py', 'tests/test_sqlmodel_async.py',
+                'tests/test_sqlmodel_bridge.py', 'tests/test_sqlmodel_async.py', 'tests/test_sqlalchemy_fork.py',
                 'tests/test_single_tenant_update.py', 'tests/test_single_tenant_delete.py',
                 'tests/test_initialization_cli.py', 'tests/test_application_config.py',
                 'tests/test_application_rotation.py', 'tests/test_application_online.py', '-q'],

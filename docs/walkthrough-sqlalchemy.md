@@ -19,6 +19,11 @@ Use the [product protection transition](walkthrough-migration.md) before attachm
 Use the [decrypt-back/removal contract](lifecycle.md#deprotect-and-remove) for the current protected transition format.
 Supply a trusted compiler lock, admitted tenant keyrings and an engine with parameter logging hidden.
 Attach before sessions or model use. Close existing connections first.
+For worker processes, create mappings, engine, key providers and attachment in
+each worker's initialization. A forked child must not reuse or close the parent's
+sessions. `ForkedRuntime` requires fresh initialization, including when a key
+resolver can supply fresh child keys. See [process ownership](compatibility.md#process-ownership)
+for supported entrypoints and the memory/driver limits.
 Attach before cursor listeners. Register engine-instance observers after
 attachment. They must leave driver SQL and parameters unchanged.
 Class-level and connection-local cursor hooks are unadmitted because they can

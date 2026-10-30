@@ -78,6 +78,30 @@ This path does not guarantee zero changes and adds no command or mode.
 Adoption costs a manifest, one attach call, typed replacements for opaque protected writers, and application-generated primary keys.
 Rollback/removal transforms current data through decrypt-back until explicit finalization retires its recovery dependencies.
 
+## Process ownership
+
+An attachment belongs to the process that created it. After POSIX `fork`, its
+session factory, supported sync/async query and transaction entrypoints, cached
+`Session.get`, and guarded driver operations raise `ForkedRuntime`. This check
+precedes key resolution. The attached engine's `connect` and `raw_connection`
+entrypoints refuse before native pool locks. Captured guarded driver methods
+check ownership when called, including commit, rollback and close.
+
+Initialize fresh mappings, engine, providers/keyrings, attachment and sessions
+inside each child. Fresh keys alone do not authorize an inherited engine or
+session. Close parent-owned sessions in the parent. Native
+`engine.dispose(close=False)` can detach an inherited pool without closing its
+connections, but it does not transfer Cryptalis attachment ownership. Use a
+fresh runtime; do not retry an inherited call. Ordinary cleanup in the owning
+process does not require provider access.
+
+These checks do not revoke copied Python objects, already buffered results,
+plaintext, keys or private native handles. They do not qualify arbitrary engine
+wrappers, process start methods, fork during native driver execution, or general
+multiprocess throughput. The host must keep live connections and sessions out of
+cross-process application work. [Status](status.md) owns the bounded native
+parent/child transaction evidence and remaining qualification work.
+
 ## Full capability matrix
 
 | Operation | Classification | Contract or reason for rejection |

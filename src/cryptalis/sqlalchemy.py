@@ -10,6 +10,7 @@ from datetime import date
 from functools import wraps
 from hashlib import sha256
 import json
+import os
 import re
 from types import MappingProxyType, MethodType
 from uuid import UUID
@@ -59,6 +60,11 @@ class UnsupportedProtectedOperation(CryptoFailure):
 class PolicyMismatch(CryptoFailure):
     stage = "attachment validation"
     remedy = "Check the trusted lock, bytea target, search index/check, tenant key policy, mapping, and guarded engine configuration. Attach before application use."
+
+
+class ForkedRuntime(PolicyMismatch):
+    stage = "runtime process ownership"
+    remedy = "Create mappings, engine, providers, keys, attachment and sessions in the child process. Do not use or close inherited sessions or driver handles."
 
 
 class UnsafeEngineLogging(PolicyMismatch):
@@ -546,6 +552,7 @@ def _points(statement, parameters):
 
 class _Attachment:
     def __init__(self, mapping, engine, document, keys, deployment=None):
+        self._pid = os.getpid()
         self.mapping, self.engine, self.document, self.keys = mapping, engine, document, keys
         self.deployment = deployment
         self.bindings = []
@@ -778,7 +785,7 @@ class _Attachment:
             inspect(model).base_mapper._compiled_cache.clear()
         engine.clear_compiled_cache()
         install_guard(engine, UnsupportedProtectedOperation, self.before_execute, self.check_cursor,
-                      UnsafeDriverEvent, self.prepare_many)
+                      UnsafeDriverEvent, self.prepare_many, self._check_process)
         native_compiler = engine.dialect.statement_compiler
         class StorageCompiler(native_compiler):
             def visit_function(compiler, function, add_to_result_map=None, **kw):
@@ -843,7 +850,12 @@ class _Attachment:
         except Exception:
             raise PolicyMismatch() from None
 
+    def _check_process(self):
+        if os.getpid() != self._pid:
+            raise ForkedRuntime()
+
     def _check_configuration(self):
+        self._check_process()
         engine = self.engine.sync_engine if isinstance(self.engine, AsyncEngine) else self.engine
         if (self._fingerprint() != self.fingerprint or engine.echo or not engine.hide_parameters or
                 engine.get_execution_options().get("schema_translate_map")):
@@ -1724,6 +1736,7 @@ class _Session(Session):
         self._prepared = None
 
     def _keys(self):
+        self._owner._check_process()
         if self._asynchronous:
             if self._prepared is None:
                 raise KeyUnavailable()
@@ -1761,6 +1774,23 @@ class _Session(Session):
             _operation.reset(token)
 
 
+def _session_process_method(name):
+    native = getattr(_Session, name)
+    @wraps(native)
+    def method(self, *args, **kwargs):
+        # Check before identity-cache hits, key resolvers, pool locks or native
+        # transaction cleanup. Cleanup in the owning process needs no keys.
+        self._owner._check_process()
+        return native(self, *args, **kwargs)
+    return method
+
+
+for _name in ("execute", "scalar", "scalars", "get", "get_one", "flush", "commit",
+              "rollback", "close", "reset", "invalidate", "connection", "begin",
+              "begin_nested", "refresh", "merge", "delete"):
+    setattr(_Session, _name, _session_process_method(_name))
+
+
 @event.listens_for(_Session, "before_flush")
 def _before_flush(session, context, instances):
     operation = _operation.get()
@@ -1772,6 +1802,7 @@ def _before_flush(session, context, instances):
 @event.listens_for(_Session, "do_orm_execute", retval=True)
 def _execute(state):
     session = state.session
+    session._owner._check_process()
     if isinstance(state.statement, Insert):
         return _bulk_insert(state)
     if isinstance(state.statement, Update):
@@ -2119,6 +2150,7 @@ class _AsyncTransaction(AsyncSessionTransaction):
         return await super().start(is_ctxmanager)
 
     async def __aexit__(self, *args):
+        self.session.sync_session._owner._check_process()
         if args[0] is None:
             await self.session._prepare()
         return await super().__aexit__(*args)
@@ -2126,6 +2158,10 @@ class _AsyncTransaction(AsyncSessionTransaction):
     async def commit(self):
         await self.session._prepare()
         return await super().commit()
+
+    async def rollback(self):
+        self.session.sync_session._owner._check_process()
+        return await super().rollback()
 
 
 class _AsyncSession(AsyncSession):
@@ -2139,9 +2175,11 @@ class _AsyncSession(AsyncSession):
         session._prepared = await session._owner.prepare_async(session._tenant)
 
     def begin(self):
+        self.sync_session._owner._check_process()
         return _AsyncTransaction(self)
 
     def begin_nested(self):
+        self.sync_session._owner._check_process()
         return _AsyncTransaction(self, nested=True)
 
 
@@ -2149,6 +2187,7 @@ def _async_method(name, *, native=None):
     native = getattr(AsyncSession, name) if native is None else native
     @wraps(native)
     async def method(self, *args, **kwargs):
+        self.sync_session._owner._check_process()
         statement = args[0] if args else kwargs.get('statement')
         permit = request = delete_tenant = None
         if isinstance(statement, Select):
@@ -2247,6 +2286,7 @@ def attach(mapping: registry, engine: Engine | AsyncEngine, *, lock: bytes, keys
     if isinstance(engine, AsyncEngine):
         async def asynchronous():
             try:
+                owner._check_process()
                 if engine.sync_engine.pool.checkedout():
                     raise PolicyMismatch()
                 async with engine.connect() as connection:

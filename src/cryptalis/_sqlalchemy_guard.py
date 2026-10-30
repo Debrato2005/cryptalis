@@ -3,6 +3,7 @@
 from contextvars import ContextVar
 from datetime import date, datetime, time, timedelta
 from decimal import Decimal
+from functools import wraps
 from uuid import UUID
 from sqlalchemy import event
 
@@ -34,35 +35,51 @@ def _snapshot(value, binary):
     return type(value), id(value), value
 
 
+def _checked(value, check_process):
+    if not callable(value):
+        return value
+    @wraps(value)
+    def invoke(*args, **kwargs):
+        # Capturing a bound native method before fork must not bypass ownership.
+        check_process()
+        return value(*args, **kwargs)
+    return invoke
+
+
 class _Info:
-    def __init__(self, raw, error):
-        self._raw, self._error = raw, error
+    def __init__(self, raw, error, check_process):
+        self._raw, self._error, self._check_process = raw, error, check_process
 
     def __getattr__(self, name):
+        self._check_process()
         if name in ("parameter_status", "transaction_status", "server_version", "encoding", "backend_pid", "status"):
-            return getattr(self._raw, name)
+            return _checked(getattr(self._raw, name), self._check_process)
         raise self._error()
 
 
 class _Cursor:
-    def __init__(self, raw, connection, error):
+    def __init__(self, raw, connection, error, check_process):
         self._raw, self._connection, self._error = raw, connection, error
+        self._check_process = check_process
         self._pending = None
         self._completed = None
         self._native_page = None
 
     def __getattr__(self, name):
+        self._check_process()
         if name in ("description", "rowcount", "arraysize", "fetchone", "fetchmany", "fetchall", "close", "closed", "statusmessage"):
-            return getattr(self._raw, name)
+            return _checked(getattr(self._raw, name), self._check_process)
         raise self._error()
 
     def __setattr__(self, name, value):
         if name == "arraysize":
+            self._check_process()
             self._raw.arraysize = value
         else:
             object.__setattr__(self, name, value)
 
     def _check(self):
+        self._check_process()
         if _driver_permit.get() not in (self, self._connection):
             raise self._error()
 
@@ -77,50 +94,67 @@ class _Cursor:
         return self
 
     def copy(self, *args, **kwargs):
+        self._check_process()
         raise self._error()
 
     def __iter__(self):
-        return iter(self._raw)
+        self._check_process()
+        return self
+
+    def __next__(self):
+        self._check_process()
+        return next(self._raw)
 
     def __enter__(self):
+        self._check_process()
         self._raw.__enter__()
         return self
 
     def __exit__(self, *args):
+        self._check_process()
         return self._raw.__exit__(*args)
 
 
 class _Connection:
-    def __init__(self, raw, error):
+    def __init__(self, raw, error, check_process):
         object.__setattr__(self, "_raw", raw)
         object.__setattr__(self, "_error", error)
+        object.__setattr__(self, "_check_process", check_process)
 
     def __getattr__(self, name):
+        self._check_process()
         if name == "info":
-            return _Info(self._raw.info, self._error)
+            return _Info(self._raw.info, self._error, self._check_process)
         if name == "_connection":
             # Async dialect driver_connection must not expose its underlying
             # psycopg AsyncConnection. Only the native adapter uses that handle.
             return self
         if name in ("commit", "rollback", "close", "closed", "broken", "autocommit", "isolation_level", "read_only", "deferrable"):
-            return getattr(self._raw, name)
+            return _checked(getattr(self._raw, name), self._check_process)
         raise self._error()
 
     def __setattr__(self, name, value):
+        self._check_process()
         if name in ("autocommit", "isolation_level", "read_only", "deferrable"):
             setattr(self._raw, name, value)
         else:
             raise self._error()
 
     def cursor(self, *args, **kwargs):
-        return _Cursor(self._raw.cursor(*args, **kwargs), self, self._error)
+        self._check_process()
+        return _Cursor(self._raw.cursor(*args, **kwargs), self, self._error, self._check_process)
 
     def execute(self, *args, **kwargs):
+        self._check_process()
         raise self._error()
 
 
-def install_guard(engine, error, before_execute, check_cursor, listener_error, prepare_many):
+def install_guard(engine, error, before_execute, check_cursor, listener_error, prepare_many, check_process):
     """Install only after target validation and draining idle native handles."""
+    # Refuse the attached engine's public entrypoints before pool mutexes. A
+    # fresh engine plus a fresh mapping/attachment is required in a child.
+    engine.connect = _checked(engine.connect, check_process)
+    engine.raw_connection = _checked(engine.raw_connection, check_process)
     event.listen(engine, "before_execute", before_execute, retval=True)
 
     def first(context):
@@ -205,7 +239,8 @@ def install_guard(engine, error, before_execute, check_cursor, listener_error, p
         check_cursor(context, statement, parameters, native_page=page is not None)
 
     def wrap(raw, entry):
-        entry.dbapi_connection = _Connection(raw, error)
+        check_process()
+        entry.dbapi_connection = _Connection(raw, error, check_process)
 
     event.listen(engine.pool, "connect", wrap)
 
