@@ -8,7 +8,7 @@ owns the contract and [status](../status.md) owns verified capability claims.
 | OpenBao Transit | MPL-2.0 software, no cloud per-key/API fee. Operators fund and secure infrastructure, authentication, unsealing, audit, backup and availability. API supplies AEAD AAD, explicit versions and nonexportable keys. | Preferred self-hosted option; implement optional adapter and real local tests. |
 | Vault Transit | Mature matching envelope API. Current source uses BSL 1.1 with an additional-use grant; evaluate deployment terms separately. Self-hosting still has operational costs. | Do not add a duplicate adapter or claim compatibility without a distinct requirement and tested service version. |
 | AWS KMS | Existing adapter pins full key ARN and EncryptionContext. Published customer-key storage is $1/month; the first two rotations each add $1/month. 20,000 eligible requests/month are free; exclusions apply. | Retain optional adapter. Live cloud/IAM evidence remains unavailable; no resources provisioned. |
-| Google Cloud KMS | Software active-version pricing is about $0.06/month; cryptographic operations $0.03/10,000. Free-key eligibility is Autokey-specific. Billing enrollment is required. Managed envelope encryption fits existing roots. | Suitable future managed option; defer an adapter until an authorized live cell and workload requirement justify it. |
+| Google Cloud KMS | Software active-version pricing is about $0.06/month; cryptographic operations $0.03/10,000. Free-key eligibility is Autokey-specific. Billing enrollment is required. Managed envelope encryption fits existing roots. | The full SRS requires Google support: an optional SDK adapter and authorized-live procedure are now implemented. Live custody/IAM remains unavailable; no billable resource is provisioned. [Boundary](../google-kms.md). |
 | Azure Key Vault | Managed wrapping with software/HSM options. The retrieved pricing page rendered numeric prices as `$-`; exact pricing is UNKNOWN for this retrieval. | No Azure-specific requirement or live account; no adapter added. |
 | Local development provider | Existing ephemeral in-process test provider; no remote custody, operational isolation or durable key recovery. | Development only; cannot qualify production. |
 
@@ -64,3 +64,30 @@ Local service tests can establish real cryptographic and API behavior without
 cloud charges. They cannot replace independent review or production HA/recovery acceptance,
 production identity controls, provider-side audit verification or destruction
 proof covering backups and all retained copies.
+
+## Google SDK implementation sources: 2026-10-30
+
+The full-SRS directive requires completing an adapter even when its live account
+is unavailable; this supersedes the earlier account-dependent implementation
+deferral. It does not authorize cloud billing or promote provider qualification.
+No price was revalidated in this SDK-focused follow-up; the table retains its
+2026-10-29 pricing boundary.
+
+- [Encrypt API](https://docs.cloud.google.com/kms/docs/reference/rest/v1/projects.locations.keyRings.cryptoKeys/encrypt):
+  accepts a CryptoKeyVersion, returns its name, ciphertext CRC32C and verification
+  flags for plaintext/AAD checksums.
+- [Decrypt API](https://docs.cloud.google.com/kms/docs/reference/rest/v1/projects.locations.keyRings.cryptoKeys/decrypt):
+  requires the parent CryptoKey; the server selects the version. Its response
+  supplies plaintext/checksum and protection level, but no version name.
+- [Integrity guidance](https://docs.cloud.google.com/kms/docs/data-integrity-guidelines):
+  verify request receipt flags, returned resource names where available, and
+  output CRC32C; do not persist unencrypted plaintext checksums.
+- Installed official `google-cloud-kms` 3.18.0 client/transport/protobuf definitions
+  and `google-crc32c` 1.9.0 were inspected. Both distributions declare Apache-2.0.
+  The lock retains exact distribution hashes; no upstream source was copied into
+  the adapter. The SDK's real request conversion is exercised with a local test
+  transport, without invoking Application Default Credentials or live RPCs.
+
+The first scraper calls omitted its required objective parameter and retrieved
+nothing; corrected calls returned the three official pages. Local source evidence
+and the exact dependency lock support the implementation, not a live-service claim.

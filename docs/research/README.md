@@ -5,7 +5,7 @@
 
 [Key-provider selection](key-provider-selection.md) compares OpenBao, Vault,
 AWS, Google, Azure and development custody using official API, license and
-pricing evidence. It records the optional OpenBao implementation decision.
+pricing evidence. It records the optional OpenBao and Google SDK implementation decisions.
 
 [Metadata preservation and lock evolution](metadata-preservation-and-format-evolution.md)
 records verified catalog gaps and format-evolution options. It is research evidence, not an

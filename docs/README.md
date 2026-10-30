@@ -13,7 +13,7 @@ Use this page to find the owner of a question; use [status](status.md) for curre
 | Declare protected data | [Manifest reference](manifest.md) → [supported operations](compatibility.md#full-capability-matrix) |
 | Integrate an application | [Shared application configuration](application.md) → [SQLAlchemy/SQLModel attachment](walkthrough-sqlalchemy.md) → [search examples](walkthrough-search.md) |
 | Protect, rotate, recover or remove data | [Operator walkthrough](walkthrough-migration.md), with [host context inputs](host-contexts.md) |
-| Configure external key custody | [OpenBao setup and diagnosis](openbao.md), [provider contract](security.md#key-hierarchy-and-providers) |
+| Configure external key custody | [OpenBao setup and diagnosis](openbao.md), [Google KMS setup and qualification](google-kms.md), [provider contract](security.md#key-hierarchy-and-providers) |
 | Diagnose adoption or runtime issues | [Doctor before adoption](walkthrough-migration.md#diagnose-before-adoption), [ACTIVE diagnosis](walkthrough-migration.md#diagnose-an-active-deployment), [cold-provider checks](openbao.md) |
 | Run tests or a local demonstration | [Local development](local-development.md) → [optional qualification profiles](qualification.md) |
 | See what is verified or missing | [Current status](status.md) → [34-objective ledger](BUILD_CHECKLIST.md) |
@@ -32,7 +32,7 @@ Use this page to find the owner of a question; use [status](status.md) for curre
 | [Security](security.md) | Trust boundaries, cryptography, keys, leakage and failure guarantees |
 | [Compatibility](compatibility.md) | Exact admitted operations/types/platforms, semantic promises and performance targets |
 | [Lifecycle](lifecycle.md) | Migration/rotation/restore/removal state and authority contracts |
-| [Application configuration](application.md) | Shared key-free intent, planning and attachment API |
+| [Application configuration](application.md) | Shared key-free intent, protection, attachment and current-value removal API |
 | [Host contexts](host-contexts.md) | Explicit trusted inputs to the operational CLI |
 | [Walkthroughs](walkthrough-migration.md) | Procedures and examples that use those contracts |
 | [Status](status.md) | Latest executable verification and seven production-gate requirements |

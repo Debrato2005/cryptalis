@@ -71,7 +71,7 @@ class Qualification:
         artifacts = self.workdir / 'artifacts'
         self.run('reproducible wheel sdist SBOM inspection', [sys.executable,
             'scripts/release_check.py', '--output', str(artifacts),
-            '--extra', 'openbao', '--extra', 'sqlmodel',
+            '--extra', 'openbao', '--extra', 'sqlmodel', '--extra', 'gcp',
             '--receipt', str(self.workdir / 'release.json')])
         wheels = list(artifacts.glob('cryptalis-*.whl'))
         if len(wheels) != 1:
@@ -128,6 +128,17 @@ class Qualification:
                     or receipt['runtime_binding']['mode'] != 'installed-wheel'
                     or receipt['runtime_binding']['wheel_sha256'] != digest):
                 raise CheckFailed(1)
+            self.run('installed Google SDK protocol and PostgreSQL lifecycle', [str(python),
+                'scripts/test_postgres.py', '--installed-wheel', str(wheel), '--source-role',
+                '--scope', 'Google SDK local protocol transport and real PostgreSQL; no live cloud custody',
+                '--receipt', str(self.workdir / 'installed-google-kms-receipt.json'), '--',
+                'tests/test_google_kms.py', '-q'], environment=environment)
+            receipt = json.loads((self.workdir / 'installed-google-kms-receipt.json').read_text())
+            if (receipt['exit_code'] != 0 or receipt['counts'].get('passed', 0) == 0
+                    or set(receipt['counts']) != {'passed'} or receipt['pytest_report_counts']['collection']
+                    or receipt['runtime_binding']['mode'] != 'installed-wheel'
+                    or receipt['runtime_binding']['wheel_sha256'] != digest):
+                raise CheckFailed(1)
             self.run('installed OpenBao TLS outage and PostgreSQL lifecycle', [str(python),
                 'scripts/openbao_qualification.py', '--workdir', str(self.workdir / 'openbao'),
                 '--installed-wheel', str(wheel)], environment=environment)
@@ -160,6 +171,7 @@ class Qualification:
                 ('source/receipt.json', 'source-receipt.json'),
                 ('release.json', 'release-receipt.json'), ('install.json', 'install-receipt.json'),
                 ('installed-sqlmodel-receipt.json', 'installed-sqlmodel-receipt.json'),
+                ('installed-google-kms-receipt.json', 'installed-google-kms-receipt.json'),
                 ('openbao/tests.json', 'installed-openbao-tests.json'),
                 ('openbao/qualification.json', 'installed-openbao-qualification.json'),
                 ('fresh/export-receipt.json', 'installed-export-receipt.json'),
