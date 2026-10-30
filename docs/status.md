@@ -6,25 +6,25 @@ Use the [documentation map](README.md) to find contracts and procedures.
 
 ## Current complete CI qualification
 
-**VERIFIED at `e55733d474601cf738e2ef7708c125669a3bbaf7`:** GitHub
-[run 41026688561](https://github.com/Debrato2005/cryptalis/actions/runs/41026688561)
+**VERIFIED at `c4cba97748f99f6de9707f53cb88d09687d28ea0`:** GitHub
+[run 41032832780](https://github.com/Debrato2005/cryptalis/actions/runs/41032832780)
 passes both Source / PostgreSQL 16 and Reproducible artifacts / installed recovery.
-The [retained CI boundary](_reset/github-container-retirement-boundary-20261030.json)
+The [retained CI boundary](_reset/github-doctor-code-boundary-20261030.json)
 contains verified GitHub archive digests and the actual source/installed receipts.
 
-The complete default source run passes 3,288 test calls and eighteen subtests.
-Twelve call skips, 79 setup skips and seventeen collection skips remain explicit;
-all 3,379 selected items complete. All 290 Python hashes match the recorded checkout,
+The complete default source run passes 3,300 test calls and eighteen subtests.
+Twelve call skips, 82 setup skips and seventeen collection skips remain explicit;
+all 3,394 selected items complete. All 293 Python hashes match the recorded checkout,
 and source/imported-runtime stability passes. The original source-role fixture
 failure at `2d53867` remains fixed; no skipped cell is treated as qualified.
 
-The installed wheel passes 114 ORM/configuration controls, 50 Google SDK and 146 OpenBao/provider
+The installed wheel passes 15 native code-inventory and 114 ORM/configuration controls, 50 Google SDK and 146 OpenBao/provider
 checks, two exports and three genuine fresh PostgreSQL recovery checks. Local and GitHub
 wheel/sdist hashes are identical. Repeat archives, SBOM, installed-file inspection
 and dependency consistency pass. The frozen audit reports 39 packages, zero known
 vulnerabilities and zero adverse statuses; this is not proof of absence of unknown
 vulnerabilities or independent review. Earlier CI is retained in
-[history](history/implementation-2026-10.md#complete-ci-at-98f742b-2026-10-30).
+[history](history/implementation-2026-10.md#complete-ci-at-e55733d-2026-10-30).
 The separate explicit performance profile below fails latency targets; a green
 default CI run does not qualify performance.
 
@@ -33,8 +33,8 @@ shared application configuration is `09c635a`; lifecycle integration is `b92cfc7
 Google KMS is `bda4fb3`; AppRole is `743b5e9`; shared rotations are `ccf7d12`.
 Doctor authentication diagnostics are `7e7d1c5`; native audit is `a2d8230`.
 Shared online capture and tenant configuration are `1e316c4`; lifecycle/runtime
-authentication diagnostics are `98f742b`. Container retirement is `e55733d`
-and is also covered by complete CI.
+authentication diagnostics are `98f742b`. Container retirement is `e55733d`; static Python inventory is `c4cba97`.
+Both are covered by complete CI.
 
 The 34-objective [ledger](BUILD_CHECKLIST.md#objective-ledger) retains seven
 bounded VERIFIED entries, 23 PARTIAL entries, one SPECIFIED, one BLOCKED, one
@@ -48,9 +48,36 @@ Independent human review remains unavailable; selected live cloud cells need
 authorized accounts. All 34 objectives stay in scope and all seven production
 gates remain UNKNOWN.
 
-## Static Python route inventory
+## ORM process ownership
 
 **VERIFIED locally, source and installed wheel:** the
+[retained fork boundary](_reset/orm-fork-boundary-20261030.json) records 63 focused
+PostgreSQL checks passing for sync/async
+fork refusal, driver events, the SQLModel bridge, UUID identity, inherited key
+mutexes and provider-failure cleanup. Fourteen fork cases cover inherited
+factories, queries, cached gets, transactions, captured guarded driver methods,
+and attached-engine entry while the parent pool mutex is held. Fresh child
+runtimes read and commit encrypted values; independent native observations show
+the parent's pending write remains uncommitted and its rollback remains usable.
+
+The installed wheel passes 128 application checks including all fourteen fork
+cases, 15 native Doctor checks, 50 Google SDK checks, 146 OpenBao/provider checks,
+two exports and three genuine fresh PostgreSQL recovery checks. All 294 Python
+hashes and runtime bytes remain stable; repeat-built artifacts, SBOM, installed
+inspection and dependency consistency pass. Seventeen offline artifact controls
+pass. The initial seven reproduced failures and missing-row fixture correction
+remain archived with subsequent successful runs.
+
+The [process contract](compatibility.md#process-ownership) requires fresh mappings,
+engine, provider/keyring and attachment per child. Copied Python objects, buffered
+results, plaintext/keys and private handles are not revoked or erased. General
+process throughput, fork during native driver execution and authenticated host
+fencing remain open. This extension has not yet been included in the complete
+hosted CI revision above; all production gates remain UNKNOWN.
+
+## Static Python route inventory
+
+**VERIFIED locally and in complete GitHub CI:** the
 [Doctor code boundary](_reset/doctor-code-boundary-20261030.json) adds
 `doctor --code-root` and `doctor.scan_routes` through an isolated, pinned ast-grep
 native tool. Reports identify candidate paths/lines/kinds without source literals,
@@ -73,8 +100,7 @@ fixture quoting error, rejection of the first subprocess import, and a discarded
 scanner dependency set with five known advisories. The final exact local-process
 import exception retains transport/other-module rejection; 17 offline artifact
 controls pass. An actual source scan returns 340 candidate locations across 28
-files with UNKNOWN coverage. Complete hosted CI above covers the preceding
-container-retirement commit; no production gate is promoted.
+files with UNKNOWN coverage. Complete hosted CI above covers this boundary; no production gate is promoted.
 
 ## Shared application configuration
 

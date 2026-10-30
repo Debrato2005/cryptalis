@@ -1349,7 +1349,12 @@ All seven full gates remain UNKNOWN.
 Sync and async preparation publish keys only after every required root passes checks.
 Cancellation rejects late provider material, including when a provider suppresses cancellation.
 Inherited providers, keyrings, and prepared keys refuse use after fork.
-The child must construct a fresh provider and prepare fresh roots.
+Attached ORM runtimes also enforce [process ownership](compatibility.md#process-ownership)
+before supported operations, cached gets, key resolvers and attached-engine pool
+entry. Guarded driver callbacks retain that check when captured before fork.
+The child must construct a fresh runtime and prepare fresh roots. This refuses
+inherited operations; it does not erase inherited Python memory or recall values
+already returned to the application.
 Python immutable bytes do not give a verified zeroization guarantee.
 Failures have safe codes, operation IDs, stages, retry indicators, effect states, and remedies.
 Raw provider and cryptographic exception text does not enter those diagnostics.

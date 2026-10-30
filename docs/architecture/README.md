@@ -72,6 +72,11 @@ one session factory; preserve native mapping, identity/history, Result and
 transaction behavior for admitted operations. The host authenticates tenant
 scope and authorizes the query; attachment does not invent a tenant filter.
 
+A runtime attachment is process-owned. Its session and guarded-driver boundaries
+refuse inherited operations before key resolution or attached-engine pool entry;
+worker startup builds a fresh runtime. [Process ownership](../compatibility.md#process-ownership)
+defines the admitted scope and copied-memory limits.
+
 A scalar type processor cannot establish row identity or perform remote key I/O
 inside synchronous result hooks. The adapter prepares exact row-bound frames
 before writes and asynchronous provider work before synchronous hooks. It checks

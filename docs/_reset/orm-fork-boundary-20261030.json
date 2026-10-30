@@ -1,0 +1,291 @@
+{
+  "format": "cryptalis.orm-fork-boundary/v1",
+  "base_revision": "c4cba97748f99f6de9707f53cb88d09687d28ea0",
+  "source_identity": "worktree-8e183a64b0e88cfd",
+  "source_files": 294,
+  "source_checks": {
+    "test_calls": {
+      "passed": 63
+    },
+    "subtest_calls": {},
+    "setup": {
+      "passed": 63
+    },
+    "teardown": {
+      "passed": 63
+    },
+    "collection": {},
+    "selected_items": 63
+  },
+  "source_and_runtime_unchanged": true,
+  "artifacts": {
+    "cryptalis-0.1.0-py3-none-any.whl": "ed20adf47ad1a9cb77bb8d9bfdcf46b0ef13688324a79fb22c008cc29ba327c0",
+    "cryptalis-0.1.0.tar.gz": "f0cb3ae318c9d3afdac9ce679691a853ea9b6dfe0c9c4f48f6746d976ec2abaa"
+  },
+  "reproducible": true,
+  "release_steps": [
+    {
+      "name": "reproducible wheel sdist SBOM inspection",
+      "outcome": "PASS",
+      "exit_code": 0,
+      "elapsed_seconds": 1.874106262002897
+    },
+    {
+      "name": "export locked hashed wheel-test dependencies",
+      "outcome": "PASS",
+      "exit_code": 0,
+      "elapsed_seconds": 0.02439819499704754
+    },
+    {
+      "name": "create isolated wheel interpreter",
+      "outcome": "PASS",
+      "exit_code": 0,
+      "elapsed_seconds": 0.022783396998420358
+    },
+    {
+      "name": "install hashed dependencies",
+      "outcome": "PASS",
+      "exit_code": 0,
+      "elapsed_seconds": 1.2797609490007744
+    },
+    {
+      "name": "install exact inspected wheel",
+      "outcome": "PASS",
+      "exit_code": 0,
+      "elapsed_seconds": 0.06203531500068493
+    },
+    {
+      "name": "installed dependency consistency",
+      "outcome": "PASS",
+      "exit_code": 0,
+      "elapsed_seconds": 0.029124767999746837
+    },
+    {
+      "name": "installed file and CLI inspection",
+      "outcome": "PASS"
+    },
+    {
+      "name": "export isolated locked scanner dependencies",
+      "outcome": "PASS",
+      "exit_code": 0,
+      "elapsed_seconds": 0.045409490005113184
+    },
+    {
+      "name": "create isolated scanner interpreter",
+      "outcome": "PASS",
+      "exit_code": 0,
+      "elapsed_seconds": 0.021485541001311503
+    },
+    {
+      "name": "install hashed scanner dependencies",
+      "outcome": "PASS",
+      "exit_code": 0,
+      "elapsed_seconds": 0.48238996299915016
+    },
+    {
+      "name": "export scanner SBOM",
+      "outcome": "PASS",
+      "exit_code": 0,
+      "elapsed_seconds": 0.028038384996762034
+    },
+    {
+      "name": "audit frozen scanner toolchain",
+      "outcome": "PASS",
+      "exit_code": 0,
+      "elapsed_seconds": 0.7510027149983216
+    },
+    {
+      "name": "installed Doctor native code inventory",
+      "outcome": "PASS",
+      "exit_code": 0,
+      "elapsed_seconds": 10.403266818000702
+    },
+    {
+      "name": "installed ORM and shared initialization/Doctor context",
+      "outcome": "PASS",
+      "exit_code": 0,
+      "elapsed_seconds": 109.0684856920052
+    },
+    {
+      "name": "installed Google SDK protocol and PostgreSQL lifecycle",
+      "outcome": "PASS",
+      "exit_code": 0,
+      "elapsed_seconds": 8.615838630001235
+    },
+    {
+      "name": "installed OpenBao TLS outage and PostgreSQL lifecycle",
+      "outcome": "PASS",
+      "exit_code": 0,
+      "elapsed_seconds": 111.31352464299562
+    },
+    {
+      "name": "installed shared configuration on genuine fresh recovery",
+      "outcome": "PASS",
+      "exit_code": 0,
+      "elapsed_seconds": 12.293807266993099
+    },
+    {
+      "name": "installed keyword public-slot genuine fresh recovery",
+      "outcome": "PASS",
+      "exit_code": 0,
+      "elapsed_seconds": 13.089424382000288
+    }
+  ],
+  "boundary": "Attachment PID ownership refuses inherited supported sync/async session operations, cached gets, attached engine pool entry and guarded driver methods captured before fork. Fresh child runtimes read and commit encrypted values while independent native observers see the parent transaction remain uncommitted; the parent remains usable and can roll back.",
+  "production_gates": "UNKNOWN",
+  "failures_retained": [
+    "Initial seven-case native run reproduced inherited factory/query/cache/commit/rollback/close and captured driver commit succeeding without refusal.",
+    "First implementation refused all seven inherited routes, then the fresh-child fixture failed because it requested a missing row. The fixture now creates the existing empty-text row it reads.",
+    "Expanded sync/driver/SQLModel async run passed 35 checks; held-pool-mutex and async child bootstrap run passed 14. Final async cache probe names the actual cached model and the final combined source run passes 63."
+  ],
+  "limits": [
+    "POSIX fork on the selected Linux/PostgreSQL16/psycopg/SQLAlchemy stack; no general process-start/platform/throughput qualification.",
+    "Fresh child mappings, engines, providers/keyrings and attachment are required. Fresh keys alone do not authorize inherited state.",
+    "Inherited Python memory, buffered results, plaintext/keys and private native handles are not revoked or erased. Fork during native driver execution and arbitrary engine wrappers remain outside this evidence.",
+    "Refusal does not provide authenticated host fencing, immediate revocation, production qualification or independent review.",
+    "Full prior hosted CI is c4cba97748f99f6de9707f53cb88d09687d28ea0; this boundary binds the local source and installed wheel until a subsequent hosted run is verified."
+  ],
+  "installed_checks": {
+    "installed-code-receipt.json": {
+      "test_calls": {
+        "passed": 15
+      },
+      "subtest_calls": {},
+      "setup": {
+        "passed": 15
+      },
+      "teardown": {
+        "passed": 15
+      },
+      "collection": {},
+      "selected_items": 15
+    },
+    "installed-sqlmodel-receipt.json": {
+      "test_calls": {
+        "passed": 128
+      },
+      "subtest_calls": {},
+      "setup": {
+        "passed": 128
+      },
+      "teardown": {
+        "passed": 128
+      },
+      "collection": {},
+      "selected_items": 128
+    },
+    "installed-google-kms-receipt.json": {
+      "test_calls": {
+        "passed": 50
+      },
+      "subtest_calls": {},
+      "setup": {
+        "passed": 50
+      },
+      "teardown": {
+        "passed": 50
+      },
+      "collection": {},
+      "selected_items": 50
+    },
+    "installed-openbao-tests.json": {
+      "test_calls": {
+        "passed": 146
+      },
+      "subtest_calls": {},
+      "setup": {
+        "passed": 146
+      },
+      "teardown": {
+        "passed": 146
+      },
+      "collection": {},
+      "selected_items": 146
+    },
+    "installed-application-export-receipt.json": {
+      "test_calls": {
+        "passed": 1
+      },
+      "subtest_calls": {},
+      "setup": {
+        "passed": 1
+      },
+      "teardown": {
+        "passed": 1
+      },
+      "collection": {},
+      "selected_items": 1
+    },
+    "installed-application-restore-receipt.json": {
+      "test_calls": {
+        "passed": 2
+      },
+      "subtest_calls": {},
+      "setup": {
+        "passed": 2
+      },
+      "teardown": {
+        "passed": 2
+      },
+      "collection": {},
+      "selected_items": 2
+    },
+    "installed-export-receipt.json": {
+      "test_calls": {
+        "passed": 1
+      },
+      "subtest_calls": {},
+      "setup": {
+        "passed": 1
+      },
+      "teardown": {
+        "passed": 1
+      },
+      "collection": {},
+      "selected_items": 1
+    },
+    "installed-restore-receipt.json": {
+      "test_calls": {
+        "passed": 1
+      },
+      "subtest_calls": {},
+      "setup": {
+        "passed": 1
+      },
+      "teardown": {
+        "passed": 1
+      },
+      "collection": {},
+      "selected_items": 1
+    }
+  },
+  "archive": {
+    "path": "docs/_reset/orm-fork-receipts-20261030.tar.gz",
+    "sha256": "14ab25d2ac3036f2e2fc486743165adf2e6f26f7a8b83c6313d211cb11639a32",
+    "members": [
+      "source/final.json",
+      "source/red.json",
+      "prior-source/1.json",
+      "prior-source/2.json",
+      "prior-source/3.json",
+      "source/artifact-controls.log",
+      "installed/install-receipt.json",
+      "installed/installed-application-export-receipt.json",
+      "installed/installed-application-restore-receipt.json",
+      "installed/installed-code-receipt.json",
+      "installed/installed-export-receipt.json",
+      "installed/installed-google-kms-receipt.json",
+      "installed/installed-journey-receipt.json",
+      "installed/installed-openbao-qualification.json",
+      "installed/installed-openbao-tests.json",
+      "installed/installed-restore-receipt.json",
+      "installed/installed-sqlmodel-receipt.json",
+      "installed/release-receipt.json",
+      "installed/sbom.cdx.json",
+      "installed/scanner-audit.json",
+      "installed/scanner-sbom.cdx.json",
+      "installed/scanner-toolchain.json",
+      "installed/status.json"
+    ]
+  }
+}
