@@ -88,6 +88,38 @@ The native bulk Result returns no rows and adds no objects to the identity map.
 `render_nulls=True` retains native explicit-NULL grouping.
 Rollback and nested savepoint cleanup retain native behavior.
 
+For one record with returned values, pass a single assignment dictionary:
+
+```python
+from sqlalchemy import update
+
+result = session.execute(
+    update(Customer)
+    .where(Customer.id == app_assigned_uuid,
+           Customer.tenant_id == authenticated_tenant)
+    .returning(Customer.id, Customer.note),
+    {"note": "updated"},
+    execution_options={"synchronize_session": False},
+)
+returned = result.one_or_none()
+session.commit()
+```
+
+The dictionary uses physical column keys, as native single-statement UPDATE
+does. RETURNING labels retain mapped attribute names. Use `await` for async
+execution and commit; SQLModel async `exec` takes the dictionary as `params=...`.
+For a declared single-tenant table, omit the tenant predicate and use its table
+UUID as the session scope. Existing loaded objects remain stale under
+`synchronize_session=False`; refresh them when needed. Missing records return no
+row. Native assignment errors can still occur for a missing record during SQL
+evaluation; roll back the failed transaction or savepoint before retrying.
+
+Use direct returned columns or the mapped entity. SQL expressions, labelled or
+aliased outputs, `.values()` assignments, identity/tenant changes, and multirow
+executemany RETURNING are outside this route. It uses the existing encryption
+and declared search representation; it adds no search capability or production
+qualification. See [status](status.md) for exact verification.
+
 For mapped dictionary UPDATE on an explicitly single-tenant table, use its
 declared table UUID as session scope and let SQLAlchemy select each typed
 primary key:

@@ -18,7 +18,7 @@ from types import SimpleNamespace
 from uuid import UUID, uuid4
 
 import pytest
-from sqlalchemy import select
+from sqlalchemy import select, update
 
 from cryptalis.crypto import (DevelopmentKeyProvider, KeyContext, KeyPolicy, Keyring,
     KeyUnavailable, WrappedRoot, create_root, open_text, seal_text)
@@ -741,11 +741,16 @@ def test_real_provider_protect_search_edit_and_verified_plaintext_exit(live, mon
             row.name = 'live provider edit'
             session.commit()
             assert session.scalar(select(app.Customer.id).where(app.Customer.name == 'live provider edit')) == row.id
+            returned = session.execute(update(app.Customer).where(app.Customer.id == row.id,
+                app.Customer.tenant_id == fixture.TENANT).returning(app.Customer.name),
+                {'name': 'live provider returning'}, execution_options={'synchronize_session': False})
+            assert returned.scalar_one() == 'live provider returning'
+            session.commit()
         expected = dict(app.source)
-        expected[UUID(int=101)] = (fixture.TENANT, 'live provider edit')
+        expected[UUID(int=101)] = (fixture.TENANT, 'live provider returning')
         bodies = fixture.frames(app, True)
         assert bodies[UUID(int=100)] is None
-        assert all(value is None or b'live provider edit' not in value for value in bodies.values())
+        assert all(value is None or b'live provider returning' not in value for value in bodies.values())
         plan = reverse.proposal(app)
         assert reverse.reverse(app, plan).phase == 'PLAINTEXT_PENDING'
         assert reverse.native_rows(app) == expected
