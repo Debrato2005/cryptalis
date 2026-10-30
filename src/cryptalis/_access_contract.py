@@ -20,6 +20,7 @@ SUCCESSOR_FORMATS = {
     ('search_rotation', True): 'cryptalis.transition/v14',
     ('tenant_provision', False): 'cryptalis.transition/v15',
     ('tenant_provision', True): 'cryptalis.transition/v16',
+    ('profile_rotation', False): 'cryptalis.transition/v18',
 }
 
 

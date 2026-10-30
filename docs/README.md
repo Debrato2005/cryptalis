@@ -32,7 +32,7 @@ Use this page to find the owner of a question; use [status](status.md) for curre
 | [Security](security.md) | Trust boundaries, cryptography, keys, leakage and failure guarantees |
 | [Compatibility](compatibility.md) | Exact admitted operations/types/platforms, semantic promises and performance targets |
 | [Lifecycle](lifecycle.md) | Migration/rotation/restore/removal state and authority contracts |
-| [Application configuration](application.md) | Shared key-free intent, protection/capture, tenant onboarding, attachment, rotations and removal API |
+| [Application configuration](application.md) | Shared key-free intent, protection/capture, tenant onboarding, active-field changes, attachment, rotations and removal API |
 | [Host contexts](host-contexts.md) | Explicit trusted inputs to the operational CLI |
 | [Walkthroughs](walkthrough-migration.md) | Procedures and examples that use those contracts |
 | [Status](status.md) | Latest executable verification and seven production-gate requirements |

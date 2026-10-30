@@ -162,3 +162,10 @@ These declarations do not prove enforcement.
 `InspectionUnavailable` gives a safe SQLSTATE and a remedy. Raw driver text and SQL binds do not enter these error messages.
 A previous lock must match its declaration, native facts, context descriptors, originals, DDL, and reader requirements before diff.
 A lock hash detects change. It does not authenticate deployment authority.
+
+For an already ACTIVE deployment, do not compile the ciphertext column as a new
+plaintext source. The [active-field modification route](application.md#modify-active-fields)
+accepts the original trusted deployment plus updated intent, preserves the native
+schema obligations and stages a verified successor. Its first admitted change
+enables equality search on storage-only TEXT/VARCHAR; other schema/profile
+changes require their own lifecycle implementation and evidence.

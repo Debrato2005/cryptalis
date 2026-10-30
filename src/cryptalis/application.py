@@ -102,7 +102,12 @@ class ApplicationConfig:
 
     def status(self, engine, *, deployment):
         """Observe protection, online capture, rotation or removal without keys."""
-        from . import deprotection, migration, online, rotation
+        from . import deprotection, migration, modification, online, rotation
+        if (type(deployment) is tuple and len(deployment) == 2
+                and type(deployment[0]) is modification.ModificationPlan):
+            self._modification_deployment(deployment)
+            from ._rotation_transition import status
+            return status(deployment[0], engine, pin=deployment[1])
         if type(deployment) is tuple and len(deployment) == 2 and type(deployment[0]) is online.OnlineProtectionPlan:
             self._online_deployment(deployment)
             return online.status(deployment[0], engine, pin=deployment[1])
@@ -310,6 +315,70 @@ class ApplicationConfig:
         operation = rotation.abort_payload_rotation if purpose == 'payload' else rotation.abort_search_rotation
         return operation(proposal, engine, keys=keys, source_pin=deployment[1], approval=approval)
 
+    def plan_modification(self, engine, *, deployment, keys, backfill_rows_per_second,
+                          verify_rows_per_second, temporary_bytes_per_row, wal_bytes_per_row,
+                          max_batch_rows=1000, max_batch_bytes=64 * 1024 * 1024):
+        """Plan an explicitly declared search capability on existing encrypted text."""
+        from .migration import DeploymentPin, MigrationPlan
+        from .modification import plan
+        if (type(deployment) is not tuple or len(deployment) != 2 or
+                type(deployment[0]) is not MigrationPlan or type(deployment[1]) is not DeploymentPin):
+            raise ConfigurationInvalid('Application.InvalidDeployment')
+        if self.queries:
+            raise ConfigurationInvalid('Application.ModificationQuerySamplesNotAdmitted')
+        return plan(deployment[0], engine, source_pin=deployment[1], manifest=self.manifest,
+            mapping=self.mapping, writers=self.writers, search_reviews=self.search_reviews, keys=keys,
+            backfill_rows_per_second=backfill_rows_per_second, verify_rows_per_second=verify_rows_per_second,
+            temporary_bytes_per_row=temporary_bytes_per_row, wal_bytes_per_row=wal_bytes_per_row,
+            max_batch_rows=max_batch_rows, max_batch_bytes=max_batch_bytes)
+
+    def prepare_modification(self, engine, *, deployment, keys, approval,
+                             until='BACKFILLED', max_chunks=None):
+        """Prepare or resume encrypted target rows while source authority is retained."""
+        self._modification_deployment(deployment)
+        from ._rotation_transition import apply
+        return apply(deployment[0], engine, keys=keys, target_keys=keys, pin=deployment[1],
+                     approval=approval, until=until, max_chunks=max_chunks)
+
+    def seal_modification(self, engine, *, deployment, keys, approval,
+                          copy_rows_per_second, copy_wal_bytes_per_row):
+        """Verify and retain the exact successor before publication or cutover."""
+        self._modification_deployment(deployment)
+        from ._rotation_activation import seal
+        return seal(deployment[0], engine, keys=keys, target_keys=keys, pin=deployment[1], approval=approval,
+                    copy_rows_per_second=copy_rows_per_second, copy_wal_bytes_per_row=copy_wal_bytes_per_row)
+
+    def switch_modification(self, engine, *, proposal, deployment, keys, approval):
+        """Atomically switch verified ciphertext and its declared search structures."""
+        self._modification_proposal(proposal)
+        self._deployment(deployment)
+        from ._rotation_activation import switch
+        return switch(proposal, deployment[0], engine, keys=keys, target_keys=keys,
+                      pin=deployment[1], approval=approval)
+
+    def abort_modification(self, engine, *, proposal, deployment, keys, approval):
+        """Cancel staging under the explicitly republished source ACTIVE authority."""
+        from .migration import DeploymentPin, MigrationPlan
+        self._modification_proposal(proposal)
+        if (type(deployment) is not tuple or len(deployment) != 2 or
+                type(deployment[0]) is not MigrationPlan or type(deployment[1]) is not DeploymentPin or
+                deployment[0].artifact != proposal.source.artifact):
+            raise ConfigurationInvalid('Application.InvalidDeployment')
+        from ._rotation_transition import abort
+        return abort(proposal, engine, keys=keys, source_pin=deployment[1], approval=approval)
+
+    def _modification_proposal(self, proposal):
+        from .modification import ModificationPlan
+        if type(proposal) is not ModificationPlan:
+            raise ConfigurationInvalid('Application.InvalidModificationPlan')
+        self._intent_lock(proposal.document['target_lock'])
+
+    def _modification_deployment(self, deployment):
+        from .migration import DeploymentPin
+        if (type(deployment) is not tuple or len(deployment) != 2 or type(deployment[1]) is not DeploymentPin):
+            raise ConfigurationInvalid('Application.InvalidDeployment')
+        self._modification_proposal(deployment[0])
+
     def _rewrap_deployment(self, proposal, deployment, *, source=False):
         from .rotation import RewrapPlan
         if type(proposal) is not RewrapPlan:
@@ -345,8 +414,10 @@ class ApplicationConfig:
         self._intent(plan)
 
     def _intent(self, plan):
+        self._intent_lock(plan.document['lock'])
+
+    def _intent_lock(self, lock):
         from .manifest.compiler import _canonical, _host_evidence
-        lock = plan.document['lock']
         declared = parse_protection_declaration(_canonical(lock['declaration']))
         if declared.canonical_bytes() != self.manifest:
             raise ConfigurationInvalid('Application.ManifestMismatch')

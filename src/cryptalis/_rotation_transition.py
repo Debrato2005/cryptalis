@@ -20,8 +20,26 @@ from cryptalis.crypto._search_rotation import prepare_search_rotation_batch
 PHASES = ('PREPARED','EXPANDED','BACKFILLED')
 
 
+def _plan_types():
+    from cryptalis.modification import ModificationPlan
+    return (r.PayloadRotationPlan, r.SearchRotationPlan, ModificationPlan)
+
+
+def _target_model(p, model):
+    if p.purpose != 'profile':
+        return model
+    return next(item for item in p.document['target_lock']['models'] if item['table_id'] == model['table_id'])
+
+
+def _same_roots(p, source, target):
+    if p.purpose == 'profile':
+        from cryptalis.modification import same_roots
+        return same_roots(source, target)
+    return (r._same_payload_roots if p.purpose == 'payload' else r._same_search_roots)(source, target)
+
+
 def _pin(p,pin):
-    if (type(p) not in (r.PayloadRotationPlan,r.SearchRotationPlan) or type(pin) is not m.DeploymentPin
+    if (type(p) not in _plan_types() or type(pin) is not m.DeploymentPin
             or (pin.target_id,pin.operation_id,pin.plan_digest) != (p.source.target_id,p.operation_id,p.digest)
             or pin.phase not in PHASES):
         raise m.TransitionFailure(getattr(p,'purpose','rotation')+'_operation_pin_mismatch')
@@ -143,7 +161,11 @@ def _inspect(c,p,op,state):
 
 
 def _prepare(p,keys,target_keys):
-    policies,prepared=r._prepare_generation(p.source,keys,target_keys,p.purpose)
+    if p.purpose == 'profile':
+        from cryptalis.modification import prepare_keys
+        policies, prepared = prepare_keys(p.source, p.document['target_lock'], keys, target_keys)
+    else:
+        policies,prepared=r._prepare_generation(p.source,keys,target_keys,p.purpose)
     if policies!=p.document['key_policies']:
         raise m.TransitionFailure(f'{p.purpose}_rotation_policy_changed',p.operation_id)
     return prepared
@@ -174,7 +196,7 @@ def _row_crypto(p,keys,target_keys,prepared,tenant):
         if m._policy(target)!=p.document['key_policies'][str(tenant)]['target']:
             raise m.TransitionFailure(f'{p.purpose}_rotation_policy_changed',p.operation_id)
         pair=source.prepare(),target.prepare()
-        (r._same_payload_roots if p.purpose=='payload' else r._same_search_roots)(*pair)
+        _same_roots(p, *pair)
         prepared[tenant]=pair
         return operation(*pair)
     return run
@@ -184,7 +206,8 @@ def _observe_source(c,p,keys,prepared=None):
     if prepared is None:
         prepared={UUID(tenant):m._ring(keys,UUID(tenant),p.source).prepare()
                   for tenant in p.source.document['key_policies']}
-    observed=r._observe_active(c,p.source,keys,prepared=prepared,batch_limits=p.document['batch_limits'])
+    observed=r._observe_active(c,p.source,keys,prepared=prepared,batch_limits=p.document['batch_limits'],
+        target_models=p.document['target_lock']['models'] if p.purpose == 'profile' else None)
     expected={table:{key:value for key,value in item.items() if key!='schema'}
               for table,item in p.document['models'].items()}
     if observed!=expected:raise m.TransitionFailure(f'{p.purpose}_source_changed',p.operation_id)
@@ -224,10 +247,13 @@ def _progress_check(c,p,model,progress):
     count=c.exec_driver_sql(f'SELECT count(*) FROM {m._table(c,model)}'+prefix,params).scalar_one()
     if count!=progress['rows']:raise m.TransitionFailure(f'{p.purpose}_progress_changed',p.operation_id)
     conditions=[]
-    for field in model['fields']:
+    for field, target in zip(model['fields'], _target_model(p, model)['fields'], strict=True):
         old,new=m._quote(c,field['column']),m._quote(c,_shadow(field))
+        growth = r._frame_growth(field, target)
+        expected_length = (f'CASE WHEN {old} IS NULL THEN 0 ELSE pg_catalog.octet_length({old})+{growth} END'
+                           if growth else f'coalesce(pg_catalog.octet_length({old}),0)')
         conditions.append(f'(({old} IS NULL) <> ({new} IS NULL) OR '
-            f'coalesce(pg_catalog.octet_length({old}),0)<>coalesce(pg_catalog.octet_length({new}),0))')
+            f'{expected_length}<>coalesce(pg_catalog.octet_length({new}),0))')
     invalid=c.exec_driver_sql(f'SELECT EXISTS(SELECT 1 FROM {m._table(c,model)}'+prefix+
         ' AND ('+' OR '.join(conditions)+'))',params).scalar_one()
     suffix=f'{record}>%s AND ' if cursor is not None else ''
@@ -252,16 +278,18 @@ def _verify_prefix(c,p,state,prepared,*,keys,target_keys):
     """
     observations={}
     for model in p.source.document['lock']['models']:
+        target_model = _target_model(p, model)
         progress=state['models'][model['table_id']]
         _progress_check(c,p,model,progress)
         paired=deepcopy(model)
         for field in paired['fields']:field['payload_column']=_shadow(field)
         descriptors=[FieldDescriptor.from_compiled(f['descriptor'],f['descriptor_digest']) for f in model['fields']]
+        targets = [FieldDescriptor.from_compiled(f['descriptor'], f['descriptor_digest']) for f in target_model['fields']]
         remaining,after=progress['rows'],None
         membership,frames=hashlib.sha256(),hashlib.sha256()
         while remaining:
             limits={**p.document['batch_limits'],'max_rows':min(p.document['batch_limits']['max_rows'],remaining)}
-            rows=r._payload_stream(c,paired,after,limits,payloads=True)
+            rows=r._payload_stream(c,paired,after,limits,payloads=True,target_model=target_model)
             if not rows:raise m.TransitionFailure(f'{p.purpose}_progress_changed',p.operation_id)
             rows.reverse()
             while rows:
@@ -280,15 +308,18 @@ def _verify_prefix(c,p,state,prepared,*,keys,target_keys):
                     old,new=pairs[index]
                     pairs[index]=None
                     source,target=prepared[tenant]
-                    _generation(old,field,source,p);_generation(new,field,target,p)
+                    target_field = target_model['fields'][index]
+                    _generation(old,field,source,p);_generation(new,target_field,target,p)
                     header=None if old is None else (old[:6]+old[10:46 if field['queries'] else 14]
                         if p.purpose=='payload' else old[:10])
-                    storage=None if old is None or p.purpose=='payload' or field['queries'] else hashlib.sha256(old).digest()
+                    retain = (p.purpose == 'profile' and field['descriptor'] == target_field['descriptor']
+                              or p.purpose == 'search' and not field['queries'])
+                    storage = hashlib.sha256(old).digest() if old is not None and retain else None
                     value=crypto(lambda source,target: open_value(old,descriptors[index],tenant,record,source))
                     old=None
-                    actual=crypto(lambda source,target: open_value(new,descriptors[index],tenant,record,target))
+                    actual=crypto(lambda source,target: open_value(new,targets[index],tenant,record,target))
                     if (type(value)!=type(actual) or value!=actual or
-                            (new is not None and header!=(new[:6]+new[10:46 if field['queries'] else 14]
+                            (p.purpose != 'profile' and new is not None and header!=(new[:6]+new[10:46 if field['queries'] else 14]
                                 if p.purpose=='payload' else new[:10]))
                             or (storage is not None and storage!=hashlib.sha256(new).digest())):
                         raise m.TransitionFailure(f'{p.purpose}_value_verification_failed',p.operation_id)
@@ -299,14 +330,15 @@ def _verify_prefix(c,p,state,prepared,*,keys,target_keys):
                 after=str(record);remaining-=1
         if after!=progress['cursor']:raise m.TransitionFailure(f'{p.purpose}_progress_changed',p.operation_id)
         observations[model['table_id']]=dict(rows=progress['rows'],membership=membership.hexdigest(),frames=frames.hexdigest())
-    for pair in prepared.values():(r._same_payload_roots if p.purpose=='payload' else r._same_search_roots)(*pair)
+    for pair in prepared.values(): _same_roots(p, *pair)
     return observations
 
 
 def _chunk(c,p,op,state,prepared,*,keys,target_keys):
     for model in p.source.document['lock']['models']:
+        target_model = _target_model(p, model)
         progress=state['models'][model['table_id']]
-        rows=r._payload_stream(c,model,progress['cursor'],p.document['batch_limits'])
+        rows=r._payload_stream(c,model,progress['cursor'],p.document['batch_limits'],target_model=target_model)
         if not rows:continue
         record=m._quote(c,model['record']['column'])
         lower=_cursor(model,progress['cursor'])
@@ -327,15 +359,22 @@ def _chunk(c,p,op,state,prepared,*,keys,target_keys):
             for index,descriptor in enumerate(descriptors):
                 raw=row[offset+index]
                 frame=None if raw is None else bytes(raw)
-                transformed=crypto(lambda source,target: transform(((row[0],frame),),descriptor,tenant,
-                    source=source,target=target,max_rows=p.document['batch_limits']['max_rows'],
-                    max_bytes=p.document['batch_limits']['max_bytes']))
-                output[row[0]].append(transformed[0][1])
+                if p.purpose == 'profile':
+                    from cryptalis.modification import transform_value
+                    _generation(frame, model['fields'][index], prepared[tenant][0], p)
+                    transformed = crypto(lambda source,target: transform_value(frame, model['fields'][index],
+                        target_model['fields'][index], tenant, row[0], source, target))
+                    output[row[0]].append(transformed)
+                else:
+                    transformed=crypto(lambda source,target: transform(((row[0],frame),),descriptor,tenant,
+                        source=source,target=target,max_rows=p.document['batch_limits']['max_rows'],
+                        max_bytes=p.document['batch_limits']['max_bytes']))
+                    output[row[0]].append(transformed[0][1])
         statement=f'UPDATE {m._table(c,model)} SET '+','.join(
             m._quote(c,_shadow(f))+'=%s' for f in model['fields'])+f' WHERE {record}=%s'
         result=c.exec_driver_sql(statement,[tuple(output[row[0]])+(row[0],) for row in rows])
         if result.rowcount!=len(rows):raise m.TransitionFailure(f'{p.purpose}_chunk_membership_changed',p.operation_id)
-        for pair in prepared.values():(r._same_payload_roots if p.purpose=='payload' else r._same_search_roots)(*pair)
+        for pair in prepared.values(): _same_roots(p, *pair)
         progress.update(cursor=str(rows[-1][0]),rows=progress['rows']+len(rows),chunks=progress['chunks']+1)
         m._save(c,op,state)
         return True
@@ -381,7 +420,7 @@ def apply(p,engine,*,keys,target_keys,pin,approval,until,max_chunks):
                 if max_chunks is not None and chunks>=max_chunks:break
         result=m._progress(op,state)
     try:
-        for pair in prepared.values():(r._same_payload_roots if p.purpose=='payload' else r._same_search_roots)(*pair)
+        for pair in prepared.values(): _same_roots(p, *pair)
     except Exception as exc:
         raise m._safe_failure(exc,p.operation_id,()) from None
     return result
@@ -409,7 +448,7 @@ def status(p,engine,*,pin):
 
 
 def abort(p,engine,*,keys,source_pin,approval):
-    if type(p) not in (r.PayloadRotationPlan,r.SearchRotationPlan):raise m.TransitionFailure('invalid_rotation_plan')
+    if type(p) not in _plan_types():raise m.TransitionFailure('invalid_rotation_plan')
     source=p.source
     m._admit(source,source_pin)
     if source_pin.phase!='ACTIVE':raise m.TransitionFailure('source_pin_must_be_active',p.operation_id)

@@ -20,6 +20,7 @@ retains its original choices and evidence limits. It is not the current support 
 |---|---|---|
 | Typed storage, reader versions, query and DML admission | [Manifest](manifest.md), [compatibility](compatibility.md) | [Dated choices](history/decisions-2026-10.md); both Date codec families remain exact and distinct |
 | Online capture, public slots, tenant provisioning and three rotations | [Lifecycle](lifecycle.md) | Reuse atomic journal/verification/publication; preserve current edits and retained readers |
+| Active storage-only text to equality search | [Lifecycle](lifecycle.md#enable-exact-search-on-active-encrypted-text) | Explicit leakage/domain admission, unchanged preapproved key policies, larger bounded encrypted staging and atomic check/index replacement; reuse rotation recovery/publication |
 | Context factories, operational CLI and Doctor | [Host contexts](host-contexts.md), [operator procedures](walkthrough-migration.md) | Explicit authority and safe diagnostics; no hidden publication or tenant inference |
 | Provider choice | [OpenBao](openbao.md), [provider comparison](research/key-provider-selection.md) | Optional real OpenBao for self-hosted custody; retain optional AWS; no cloud purchase or vendor dependence required |
 | Test and artifact binding | [Engineering playbook](../ENGINEERING_PLAYBOOK.md), [local checks](local-development.md) | Private role probes, exact runtime/source hashes, frozen builds and explicit skips |

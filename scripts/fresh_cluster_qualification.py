@@ -131,6 +131,8 @@ def main():
     parser.add_argument('--public-slots', action='store_true',
                         help='Qualify explicit original-column slot preservation and restored slot authority.')
     profiles = parser.add_mutually_exclusive_group()
+    profiles.add_argument('--modification', action='store_true',
+                          help='Qualify active-field search modification, fresh adoption and package-free exit.')
     profiles.add_argument('--application-config', action='store_true',
                           help='Qualify shared configuration, rotation planning and current-value removal after restore.')
     profiles.add_argument('--reverse-cli', action='store_true',
@@ -175,6 +177,8 @@ def main():
     profiles.add_argument('--search-rotation', action='store_true',
                           help='Qualify backup recovery after search rotation and a later protected edit.')
     args = parser.parse_args()
+    if args.modification and (args.varchar or args.restore_lease or args.public_slots):
+        parser.error('--modification uses the original TEXT profile and current-value exit.')
     if args.application_config and (args.varchar or args.restore_lease or args.public_slots):
         parser.error('--application-config uses the original TEXT fixture and shared configuration lifecycle.')
     if args.column_name != 'name' and not args.integer:
@@ -247,10 +251,13 @@ def main():
                '; search-rotation profile' if args.search_rotation else '')
     if args.restore_lease:
         profile += '; restored-target lease controls'
+    if args.modification:
+        profile += '; active-field search modification and package-free restored exit'
     if args.column_name != 'name':
         profile += '; keyword column ' + args.column_name
     export = run_pytest(export_receipt, 'Fresh-cluster source export; primary cluster' + profile,
-                        ('tests/test_date_fresh_cluster.py::test_export_date_backup_after_rotations' if args.date else
+                        ('tests/test_modification_fresh_cluster.py::test_export_modified_backup' if args.modification else
+                         'tests/test_date_fresh_cluster.py::test_export_date_backup_after_rotations' if args.date else
                          'tests/test_sqlmodel_searchable_export.py' if (args.sqlmodel_searchable or args.sqlmodel_direct_search or args.sqlmodel_public_slots or args.sqlmodel_http) else
                          'tests/test_fresh_boolean_export.py' if args.boolean or args.integer or args.uuid else
                          'tests/test_smolink_application.py' if args.smolink
@@ -307,6 +314,11 @@ def main():
                 or plan.get('kind') != 'payload_rotation'
                 or plan.get('lock', {}).get('schema') != 'cryptalis.lock/v9'):
             raise SystemExit('FreshCluster.ProfileMismatch: UUID payload successor is missing.')
+    elif args.modification:
+        plan = json.loads(base64.b64decode(manifest['plan'], validate=True))
+        if (manifest.get('application_profile') != 'active-search-modification'
+                or plan.get('format') != 'cryptalis.transition/v17' or plan.get('kind') != 'profile_rotation'):
+            raise SystemExit('FreshCluster.ProfileMismatch: modified profile successor is missing.')
     elif args.date:
         plan = json.loads(base64.b64decode(manifest['plan'], validate=True))
         if (manifest.get('application_profile') != 'date-storage' or plan.get('kind') != 'search_rotation'
@@ -366,7 +378,8 @@ def main():
         credentials = provision(port, password, manifest, plain_database)
         home = write_home(workdir, port, manifest, credentials)
         restore = run_pytest(restore_receipt, 'Fresh-cluster protected-backup recovery and adoption; isolated cluster' + profile,
-                             (('tests/test_fresh_cluster_restore.py::test_protected_backup_recovers_values_with_retained_keys',
+                             ('tests/test_modification_fresh_cluster.py::test_restore_modified_backup_authenticate_and_remove_current_values' if args.modification else
+                              ('tests/test_fresh_cluster_restore.py::test_protected_backup_recovers_values_with_retained_keys',
                                'tests/test_fresh_cluster_restore.py::test_restored_cluster_completes_adopted_lifecycle') if args.application_config else
                               'tests/test_date_fresh_cluster.py::test_restore_date_authentication_explicit_adoption_latest_exit' if args.date else
                               'tests/test_search_operational_cli.py::test_genuine_adopted_search_cli_seals_saved_activation_and_latest_native_exit' if args.search_cli else

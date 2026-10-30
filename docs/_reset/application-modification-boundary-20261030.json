@@ -1,0 +1,358 @@
+{
+  "format": "cryptalis.application-modification-boundary/v1",
+  "base_revision": "a477fd643f81697ac4d0051a0523ee89043912b1",
+  "broad_source_identity": "worktree-f535e96fc42f6c30",
+  "final_source_identity": "worktree-c19df518a810d574",
+  "source_files": 306,
+  "broad_source_checks": {
+    "test_calls": {
+      "passed": 247,
+      "failed": 1,
+      "skipped": 1
+    },
+    "subtest_calls": {},
+    "setup": {
+      "passed": 249
+    },
+    "teardown": {
+      "passed": 249
+    },
+    "collection": {},
+    "selected_items": 249
+  },
+  "final_source_checks": {
+    "test_calls": {
+      "passed": 1
+    },
+    "subtest_calls": {},
+    "setup": {
+      "passed": 1
+    },
+    "teardown": {
+      "passed": 1
+    },
+    "collection": {},
+    "selected_items": 1
+  },
+  "source_and_runtime_unchanged_during_each_run": true,
+  "product_bytes_identical_between_broad_source_and_final": true,
+  "changed_paths": [
+    "tests/test_modification_contexts.py"
+  ],
+  "correction": "After tenant publication, the fixture constructs a fresh native mapping and engine. Existing attachment/driver guards stay unchanged. The failed control passes separately and in the complete installed application selection.",
+  "artifacts": {
+    "cryptalis-0.1.0-py3-none-any.whl": "f2c18f2ff4a517d137805636c1f979d70f3badd34e9b16bb9b3c2807cc5dd878",
+    "cryptalis-0.1.0.tar.gz": "8bf4cf491c0b0a142c17f40696e77691cd576a291ee24e1179d3bc4f82345381"
+  },
+  "reproducible": true,
+  "release_steps": [
+    {
+      "name": "reproducible wheel sdist SBOM inspection",
+      "outcome": "PASS",
+      "exit_code": 0,
+      "elapsed_seconds": 1.5321050960046705
+    },
+    {
+      "name": "export locked hashed wheel-test dependencies",
+      "outcome": "PASS",
+      "exit_code": 0,
+      "elapsed_seconds": 0.03856453699700069
+    },
+    {
+      "name": "create isolated wheel interpreter",
+      "outcome": "PASS",
+      "exit_code": 0,
+      "elapsed_seconds": 0.017711158994643483
+    },
+    {
+      "name": "install hashed dependencies",
+      "outcome": "PASS",
+      "exit_code": 0,
+      "elapsed_seconds": 1.1495864329990582
+    },
+    {
+      "name": "install exact inspected wheel",
+      "outcome": "PASS",
+      "exit_code": 0,
+      "elapsed_seconds": 0.07395527300104732
+    },
+    {
+      "name": "installed dependency consistency",
+      "outcome": "PASS",
+      "exit_code": 0,
+      "elapsed_seconds": 0.03559032799967099
+    },
+    {
+      "name": "installed file and CLI inspection",
+      "outcome": "PASS"
+    },
+    {
+      "name": "export isolated locked scanner dependencies",
+      "outcome": "PASS",
+      "exit_code": 0,
+      "elapsed_seconds": 0.03441688200109638
+    },
+    {
+      "name": "create isolated scanner interpreter",
+      "outcome": "PASS",
+      "exit_code": 0,
+      "elapsed_seconds": 0.06850707999547012
+    },
+    {
+      "name": "install hashed scanner dependencies",
+      "outcome": "PASS",
+      "exit_code": 0,
+      "elapsed_seconds": 0.47554053999920143
+    },
+    {
+      "name": "export scanner SBOM",
+      "outcome": "PASS",
+      "exit_code": 0,
+      "elapsed_seconds": 0.03941730900260154
+    },
+    {
+      "name": "audit frozen scanner toolchain",
+      "outcome": "PASS",
+      "exit_code": 0,
+      "elapsed_seconds": 0.6552822340017883
+    },
+    {
+      "name": "installed Doctor native code inventory",
+      "outcome": "PASS",
+      "exit_code": 0,
+      "elapsed_seconds": 8.789677426000708
+    },
+    {
+      "name": "installed ORM and shared initialization/Doctor context",
+      "outcome": "PASS",
+      "exit_code": 0,
+      "elapsed_seconds": 290.599303752002
+    },
+    {
+      "name": "installed Google SDK protocol and PostgreSQL lifecycle",
+      "outcome": "PASS",
+      "exit_code": 0,
+      "elapsed_seconds": 6.481916518001526
+    },
+    {
+      "name": "installed OpenBao TLS outage and PostgreSQL lifecycle",
+      "outcome": "PASS",
+      "exit_code": 0,
+      "elapsed_seconds": 129.18038458399678
+    },
+    {
+      "name": "installed shared configuration on genuine fresh recovery",
+      "outcome": "PASS",
+      "exit_code": 0,
+      "elapsed_seconds": 13.851804259997152
+    },
+    {
+      "name": "installed keyword public-slot genuine fresh recovery",
+      "outcome": "PASS",
+      "exit_code": 0,
+      "elapsed_seconds": 13.747314781001478
+    },
+    {
+      "name": "installed modified-field genuine fresh recovery",
+      "outcome": "PASS",
+      "exit_code": 0,
+      "elapsed_seconds": 15.241149444998882
+    }
+  ],
+  "boundary": "Enable equality/IN on existing ACTIVE storage-only TEXT/VARCHAR with explicit leakage/domain review and unchanged approved keys. Reuse encrypted staging, source/target authentication, aggregate byte bounds, resume/abort, sealed host authority and atomic frame-check/equality-index cutover. Preserve unchanged ciphertext, NULLs, fixed/scoped tenancy, online access contracts and native schema obligations. Subsequent three rotations, empty-tenant publication, actual OpenBao custody, fresh backup adoption and current-value package-free exit are exercised.",
+  "failures_retained": [
+    "The initial test reproduces the absent ApplicationConfig modification route.",
+    "Source 3: four fixed-scope session fixture calls omit the required explicit table context. Corrected to the declared table UUID.",
+    "Source 5: tenant provisioning intentionally requires a scoped access contract; the fixture attempted it on maintenance protection. Moved the composition check to the real online scoped fixture.",
+    "Source 6: 247 passing calls, one explicit installed previous-reader skip and one reused-engine refusal. Source 7 also refuses a reused protected mapping. Source 8 uses fresh mapping/engine and passes; no product admission was weakened."
+  ],
+  "production_gates": "UNKNOWN",
+  "limits": [
+    "Only [] to [equality] on existing TEXT/VARCHAR; no uniqueness, field/type/context/layout, root-policy or general package/format upgrade change.",
+    "All affected scopes need already approved search roots. No automatic policy/root generation, workload identity, host authentication or publication.",
+    "Explicit-schema mappings only; supplied query samples and modification from already-adopted source lineage refuse. Fresh restore after modification is separately verified.",
+    "Writers remain stopped under maintenance during staging/cutover/publication. Terminal verification and index build are unbounded by chunk limits; no online-modification/pause qualification.",
+    "Logical byte budgets are not Python/driver/database RSS, WAL or temporary-capacity guarantees.",
+    "Native local OpenBao evidence is not production custody, HA, provider disaster recovery or independent review.",
+    "Existing latency failures and all seven UNKNOWN production gates remain. Hosted CI must verify the subsequent pushed revision."
+  ],
+  "installed_checks": {
+    "installed-code-receipt.json": {
+      "test_calls": {
+        "passed": 15
+      },
+      "subtest_calls": {},
+      "setup": {
+        "passed": 15
+      },
+      "teardown": {
+        "passed": 15
+      },
+      "collection": {},
+      "selected_items": 15
+    },
+    "installed-sqlmodel-receipt.json": {
+      "test_calls": {
+        "passed": 307
+      },
+      "subtest_calls": {},
+      "setup": {
+        "passed": 307
+      },
+      "teardown": {
+        "passed": 307
+      },
+      "collection": {},
+      "selected_items": 307
+    },
+    "installed-google-kms-receipt.json": {
+      "test_calls": {
+        "passed": 50
+      },
+      "subtest_calls": {},
+      "setup": {
+        "passed": 50
+      },
+      "teardown": {
+        "passed": 50
+      },
+      "collection": {},
+      "selected_items": 50
+    },
+    "installed-openbao-tests.json": {
+      "test_calls": {
+        "passed": 147
+      },
+      "subtest_calls": {},
+      "setup": {
+        "passed": 147
+      },
+      "teardown": {
+        "passed": 147
+      },
+      "collection": {},
+      "selected_items": 147
+    },
+    "installed-application-export-receipt.json": {
+      "test_calls": {
+        "passed": 1
+      },
+      "subtest_calls": {},
+      "setup": {
+        "passed": 1
+      },
+      "teardown": {
+        "passed": 1
+      },
+      "collection": {},
+      "selected_items": 1
+    },
+    "installed-application-restore-receipt.json": {
+      "test_calls": {
+        "passed": 2
+      },
+      "subtest_calls": {},
+      "setup": {
+        "passed": 2
+      },
+      "teardown": {
+        "passed": 2
+      },
+      "collection": {},
+      "selected_items": 2
+    },
+    "installed-export-receipt.json": {
+      "test_calls": {
+        "passed": 1
+      },
+      "subtest_calls": {},
+      "setup": {
+        "passed": 1
+      },
+      "teardown": {
+        "passed": 1
+      },
+      "collection": {},
+      "selected_items": 1
+    },
+    "installed-restore-receipt.json": {
+      "test_calls": {
+        "passed": 1
+      },
+      "subtest_calls": {},
+      "setup": {
+        "passed": 1
+      },
+      "teardown": {
+        "passed": 1
+      },
+      "collection": {},
+      "selected_items": 1
+    },
+    "installed-modification-export-receipt.json": {
+      "test_calls": {
+        "passed": 1
+      },
+      "subtest_calls": {},
+      "setup": {
+        "passed": 1
+      },
+      "teardown": {
+        "passed": 1
+      },
+      "collection": {},
+      "selected_items": 1
+    },
+    "installed-modification-restore-receipt.json": {
+      "test_calls": {
+        "passed": 1
+      },
+      "subtest_calls": {},
+      "setup": {
+        "passed": 1
+      },
+      "teardown": {
+        "passed": 1
+      },
+      "collection": {},
+      "selected_items": 1
+    }
+  },
+  "archive": {
+    "path": "docs/_reset/application-modification-receipts-20261030.tar.gz",
+    "sha256": "8021a6ebe3aee319da2a72748e7ff7d624ce796186d7576f47852a30a9859040",
+    "members": [
+      "source/red.json",
+      "source/attempt-1.json",
+      "source/attempt-2.json",
+      "source/attempt-3.json",
+      "source/attempt-4.json",
+      "source/attempt-5.json",
+      "source/attempt-6.json",
+      "source/attempt-7.json",
+      "source/attempt-8.json",
+      "source/fixture-correction.diff",
+      "source-fresh/export-receipt.json",
+      "source-fresh/restore-receipt.json",
+      "installed/install-receipt.json",
+      "installed/installed-application-export-receipt.json",
+      "installed/installed-application-restore-receipt.json",
+      "installed/installed-code-receipt.json",
+      "installed/installed-export-receipt.json",
+      "installed/installed-google-kms-receipt.json",
+      "installed/installed-journey-receipt.json",
+      "installed/installed-modification-export-receipt.json",
+      "installed/installed-modification-restore-receipt.json",
+      "installed/installed-openbao-qualification.json",
+      "installed/installed-openbao-tests.json",
+      "installed/installed-restore-receipt.json",
+      "installed/installed-sqlmodel-receipt.json",
+      "installed/release-receipt.json",
+      "installed/sbom.cdx.json",
+      "installed/scanner-audit.json",
+      "installed/scanner-sbom.cdx.json",
+      "installed/scanner-toolchain.json",
+      "installed/status.json"
+    ]
+  }
+}
