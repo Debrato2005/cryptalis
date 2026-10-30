@@ -5,13 +5,17 @@ from .manifest.parser import ManifestInvalid
 
 
 def _query_samples(report, plan, mapping, engine, queries):
-    """Reuse SELECT admission without attachment, execution or key resolution."""
+    """Reuse statement admission without attachment, execution or key resolution."""
+    from sqlalchemy import inspect
     from sqlalchemy.sql import Select
+    from sqlalchemy.sql.dml import Insert
     from .crypto.cf1 import FieldDescriptor
     from .manifest.parser import decode_manifest_json
-    from .sqlalchemy import _Attachment, _Binding, UnsupportedProtectedOperation
+    from .sqlalchemy import (_Attachment, _Binding, UnsupportedProtectedOperation,
+                             _delete_name_state, _delete_node)
 
-    samples = report['query_samples'] = {'scope': 'supplied_select_structures', 'submitted': len(queries),
+    scope = 'supplied_statement_structures' if any(isinstance(query, Insert) for query in queries) else 'supplied_select_structures'
+    samples = report['query_samples'] = {'scope': scope, 'submitted': len(queries),
         'execution': 'NOT_PERFORMED', 'items': []}
     try:
         owner = _Attachment(mapping, engine, decode_manifest_json(plan.lock_bytes), None)
@@ -25,17 +29,33 @@ def _query_samples(report, plan, mapping, engine, queries):
                     FieldDescriptor.from_compiled(field['descriptor'], field['descriptor_digest']),
                     record, mapper.get_property_by_column(record).key, tenant,
                     mapper.get_property_by_column(tenant).key if tenant is not None else None, mapper.class_))
+            owner.models[mapper.class_] = tuple(binding for binding in owner.bindings if binding.model is mapper.class_)
+        owner.returning_columns = {
+            id(column): (column, column.table, _delete_name_state(column.name), _delete_name_state(column.key))
+            for model in owner.models for column in inspect(model).local_table.c
+        }
         for index, query in enumerate(queries):
+            item = {'index': index}
+            if isinstance(query, Insert):
+                item.update(kind='insert', parameters='NOT_INSPECTED')
             try:
-                if not isinstance(query, Select):
+                if isinstance(query, Select):
+                    owner.admit(query)
+                elif isinstance(query, Insert):
+                    _delete_node(query, Insert)
+                    mapper = query._propagate_attrs.get('plugin_subject')
+                    if not any(mapper is inspect(model) for model in owner.models):
+                        raise UnsupportedProtectedOperation()
+                    owner.admit(query, bulk=mapper.local_table)
+                else:
                     raise UnsupportedProtectedOperation()
-                owner.admit(query)
             except UnsupportedProtectedOperation:
-                samples['items'].append({'index': index, 'status': 'FAIL'})
+                item['status'] = 'FAIL'
                 report['issues'].append({'code': 'Query.UnsupportedStructure', 'location': f'queries[{index}]',
-                    'remedy': 'Use an admitted SELECT structure. Check other operations in an affected runtime journey.'})
+                    'remedy': 'Use an admitted SELECT or mapped INSERT structure. Check row inputs and other operations in an affected runtime journey.'})
             else:
-                samples['items'].append({'index': index, 'status': 'STRUCTURE_ADMITTED'})
+                item['status'] = 'STRUCTURE_ADMITTED'
+            samples['items'].append(item)
     except Exception:
         report['checks']['query_samples'] = 'UNKNOWN'
         if any(item['status'] == 'FAIL' for item in samples['items']):
@@ -50,11 +70,12 @@ def _query_samples(report, plan, mapping, engine, queries):
 
 
 def preflight(manifest, mapping, engine, *, writers, search_reviews=(), queries=()):
-    """Report schema and optional SELECT structures without rows or keys.
+    """Report schema and optional SELECT/INSERT structures without rows or keys.
 
     A schema PASS is not permission to apply protection. Provider access,
     route coverage and external operational requirements remain UNKNOWN. Supply
-    at most 128 SELECT samples as a tuple. Their values are not executed or reported.
+    at most 128 SELECT or mapped INSERT samples as a tuple. INSERT parameters
+    are not inspected. Samples are never executed and their values are not reported.
     """
     report = {
         'format': 'cryptalis.doctor/v1', 'scope': 'pre_adoption',
@@ -67,7 +88,7 @@ def preflight(manifest, mapping, engine, *, writers, search_reviews=(), queries=
     if type(queries) is not tuple or len(queries) > 128:
         report['status'] = report['checks']['query_routes'] = 'FAIL'
         report['issues'] = [{'code': 'Query.InvalidSamples', 'location': 'queries',
-            'remedy': 'Supply a tuple of at most 128 SELECT samples.'}]
+            'remedy': 'Supply a tuple of at most 128 SELECT or mapped INSERT samples.'}]
         return report
     try:
         plan = compile_protection(manifest, mapping, engine, writers=writers,

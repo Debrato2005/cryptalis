@@ -154,3 +154,57 @@ def test_query_inspection_failure_stays_unknown_and_redacted(app, monkeypatch):
     assert report['checks']['manifest_schema'] == 'PASS'
     assert report['issues'][0]['code'] == 'Query.InspectionUnavailable'
     assert 'PRIVATE_' not in json.dumps(report)
+
+
+def test_mapped_insert_samples_use_runtime_structure_checks_without_rows_keys_or_type_changes(app, monkeypatch):
+    from sqlalchemy import insert, select
+    from cryptalis.sqlalchemy import _Attachment
+    database, mapping, Customer, schema = app
+    before, original_type = snapshot(app), Customer.email.type
+    def forbidden(*args, **kwargs):
+        pytest.fail('INSERT diagnosis attempted attachment or key resolution')
+    for method in ('activate', 'validate', '_ring'):
+        monkeypatch.setattr(_Attachment, method, forbidden)
+    def readonly(connection, cursor, statement, parameters, context, many):
+        assert connection.get_execution_options()['postgresql_readonly'] is True
+        assert not re.search(r'\bFROM\s+(?:"?' + re.escape(schema) + r'"?\.)?"?customer\b',
+                             statement, re.IGNORECASE)
+    queries = (insert(Customer), insert(Customer).returning(Customer.id, Customer.email),
+               insert(Customer).returning(Customer), select(Customer.id))
+    event.listen(database, 'before_cursor_execute', readonly)
+    try:
+        report = preflight(json.dumps(declaration()).encode(), mapping, database,
+                           writers=inventory(), search_reviews=reviews(), queries=queries)
+    finally:
+        event.remove(database, 'before_cursor_execute', readonly)
+    assert report['checks']['query_samples'] == 'PASS'
+    assert report['status'] == report['checks']['query_routes'] == 'UNKNOWN'
+    assert report['checks']['provider_keys'] == report['checks']['writer_exclusion'] == 'UNKNOWN'
+    assert report['query_samples']['scope'] == 'supplied_statement_structures'
+    assert report['query_samples']['execution'] == 'NOT_PERFORMED'
+    assert [item['status'] for item in report['query_samples']['items']] == ['STRUCTURE_ADMITTED'] * 4
+    assert [item['parameters'] for item in report['query_samples']['items'][:3]] == ['NOT_INSPECTED'] * 3
+    assert Customer.email.type is original_type and snapshot(app) == before
+
+
+@pytest.mark.parametrize('shape', ['core', 'values', 'defaults', 'expression', 'alias', 'loader'])
+def test_unadmitted_insert_samples_fail_safely_without_sql_or_value_disclosure(app, shape):
+    from sqlalchemy import func, insert
+    from sqlalchemy.orm import aliased, load_only
+    database, mapping, Customer, _ = app
+    before = snapshot(app)
+    samples = {
+        'core': insert(Customer.__table__),
+        'values': insert(Customer).values(email='PRIVATE_INSERT_VALUE'),
+        'defaults': insert(Customer).return_defaults(),
+        'expression': insert(Customer).returning(func.lower(Customer.email)),
+        'alias': insert(Customer).returning(aliased(Customer)),
+        'loader': insert(Customer).returning(Customer).options(load_only(Customer.email)),
+    }
+    report = preflight(json.dumps(declaration()).encode(), mapping, database,
+                       writers=inventory(), search_reviews=reviews(), queries=(samples[shape],))
+    assert report['status'] == report['checks']['query_samples'] == 'FAIL'
+    assert report['issues'][0]['code'] == 'Query.UnsupportedStructure'
+    assert report['query_samples']['items'][0]['parameters'] == 'NOT_INSPECTED'
+    assert 'PRIVATE_' not in json.dumps(report)
+    assert snapshot(app) == before

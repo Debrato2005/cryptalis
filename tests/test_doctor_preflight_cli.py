@@ -249,6 +249,42 @@ def test_native_query_samples_have_explicit_cli_results_and_preserve_schema(app,
     assert snapshot(app) == before
 
 
+@pytest.mark.parametrize('shape', ['plain', 'columns', 'entity'])
+def test_native_insert_samples_have_explicit_uninspected_parameter_cli_results(app, native_inputs, shape):
+    before = snapshot(app)
+    expression = {
+        'plain': 'insert(Customer)',
+        'columns': 'insert(Customer).returning(Customer.id, Customer.email)',
+        'entity': 'insert(Customer).returning(Customer)',
+    }[shape]
+    module = native_inputs[0]
+    module.write_text(module.read_text().replace('    return mapping, writers, reviews',
+        '    from sqlalchemy import insert\n    return mapping, writers, reviews, (' + expression + ',)'))
+    result = invoke(native_inputs)
+    assert result.returncode == 0 and result.stderr == ''
+    report = json.loads(result.stdout)
+    assert report['query_samples']['scope'] == 'supplied_statement_structures'
+    assert report['query_samples']['execution'] == 'NOT_PERFORMED'
+    assert report['query_samples']['items'] == [dict(index=0, kind='insert',
+        parameters='NOT_INSPECTED', status='STRUCTURE_ADMITTED')]
+    assert report['status'] == report['checks']['query_routes'] == 'UNKNOWN'
+    assert report['checks']['provider_keys'] == report['checks']['writer_exclusion'] == 'UNKNOWN'
+    assert report['host_configuration_effects'] == 'UNKNOWN'
+    assert snapshot(app) == before
+
+
+def test_unsupported_insert_cli_sample_never_discloses_embedded_values(app, native_inputs):
+    before = snapshot(app)
+    module = native_inputs[0]
+    module.write_text(module.read_text().replace('    return mapping, writers, reviews',
+        "    from sqlalchemy import insert\n    return mapping, writers, reviews, (insert(Customer).values(email='PRIVATE_INSERT_VALUE'),)"))
+    result = invoke(native_inputs)
+    report = error(result, 3, 'QueryIncompatible')
+    assert report['checks']['query_samples'] == report['checks']['query_routes'] == 'FAIL'
+    assert 'PRIVATE_INSERT_VALUE' not in result.stdout + result.stderr
+    assert snapshot(app) == before
+
+
 def test_query_inspection_outage_has_nonzero_unknown_cli_result(native_inputs, monkeypatch, capsys):
     from cryptalis.sqlalchemy import _Attachment
     module = native_inputs[0]

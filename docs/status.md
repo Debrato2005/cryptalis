@@ -10,6 +10,24 @@ No PostgreSQL/provider/runtime cell, production key provider, independent review
 VERIFIED below refers only to the named checks and their exact revisions.
 All other contract and promotion requirements are SPECIFIED. All seven full gates remain UNKNOWN.
 
+## Pre-adoption INSERT diagnostics: 2026-10-31
+
+**VERIFIED, bounded local source cell:** Python and CLI pre-adoption Doctor can
+inspect ordinary mapped INSERT structures, direct-column RETURNING and the
+admitted entity RETURNING forms alongside SELECT samples. The inspection
+reuses runtime structural admission. It executes no samples, reads no
+application rows, resolves no keys and replaces no mapped types. Core inserts,
+embedded values, caller defaults, expressions, aliases and loader-option samples
+receive safe structural refusals.
+
+INSERT items explicitly report parameters NOT_INSPECTED. Successful structural
+checks leave query-route coverage, provider access, writer exclusion and overall
+health UNKNOWN. This is not permission to execute a write. The
+[105-check receipt](_reset/doctor-insert-20261031.json) includes actual CLI
+success/refusal, output privacy, unchanged native schema/types and existing
+Doctor, initialization and protection CLI controls. No production gate changes.
+The preceding internal equality candidate is pushed as `57e58a6`.
+
 ## Internal NULL-safe equality candidate: 2026-10-31
 
 **IMPLEMENTED, INTERNAL ONLY:** an internal qualification profile rewrites

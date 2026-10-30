@@ -727,7 +727,7 @@ def _preflight_command(arguments):
             or not isinstance(context[1], WriterInventory) or type(context[2]) is not tuple
             or any(not isinstance(review, SearchReview) for review in context[2])
             or len(context) == 4 and (type(context[3]) is not tuple or len(context[3]) > 128)):
-        raise _preflight_failure(_CommandFailure('Return (registry, WriterInventory, tuple[SearchReview]) with an optional fourth tuple of at most 128 SELECT samples. Supply no keys or engine.',
+        raise _preflight_failure(_CommandFailure('Return (registry, WriterInventory, tuple[SearchReview]) with an optional fourth tuple of at most 128 SELECT or mapped INSERT samples. Supply no keys or engine.',
             family='Doctor', code='HostContextInvalid', operation=operation,
             stage='host_context', cause='InvalidContext')) from None
 
