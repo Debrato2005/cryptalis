@@ -37,6 +37,14 @@ No format, cryptographic or core protocol changes. See the
 [status checkpoint](history/implementation-2026-10.md#operational-cli-protection-workflow-2026-10-24).
 These dependencies do not supply host business authorization. No additional authority, workflow, or diagnostic service is required.
 
+Across these lifecycle runners, `ProviderAuthenticationUnavailable` is an
+operational failure (exit 4), with `retryable: false`. Its JSON error separates
+database `effects` (`effects_scope: database`) from `provider_effects: UNKNOWN`.
+Read-only planning can leave the database unchanged while native authentication
+has already issued a token. Inspect credential/role state and native issuance as
+well as any journal before retry. Cleanup failures preserve this primary error
+under `related_error`. Host factory effects remain separately UNKNOWN.
+
 ### Reverse and removal CLI
 
 **IMPLEMENTED, bounded source and installed verification:** `plan --reverse SOURCE --out REVERSE` calls

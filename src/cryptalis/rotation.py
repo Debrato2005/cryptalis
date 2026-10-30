@@ -12,7 +12,7 @@ from uuid import UUID, uuid4
 
 from cryptalis import migration as m
 from cryptalis.crypto.cf1 import FieldDescriptor, open_value
-from cryptalis.crypto.keys import KeyContext, Keyring, KeyUnavailable
+from cryptalis.crypto.keys import KeyContext, Keyring, KeyUnavailable, ProviderAuthenticationUnavailable
 from cryptalis.crypto._payload_rotation import MAX_BATCH_BYTES, MAX_BATCH_ROWS
 
 
@@ -441,6 +441,8 @@ def _prepare_generation(source, keys, target_keys, purpose):
         old = m._ring(keys,identity,source)
         try:
             new = target_keys(identity) if callable(target_keys) else target_keys
+        except ProviderAuthenticationUnavailable:
+            raise ProviderAuthenticationUnavailable() from None
         except Exception:
             raise KeyUnavailable() from None
         if not isinstance(new,Keyring):
@@ -674,6 +676,8 @@ def _prepare_rewrap(source, keys, target_keys, expected=None):
         old = m._ring(keys, tenant, source)
         try:
             new = target_keys(tenant) if callable(target_keys) else target_keys
+        except ProviderAuthenticationUnavailable:
+            raise ProviderAuthenticationUnavailable() from None
         except Exception:
             raise KeyUnavailable() from None
         if not isinstance(new, Keyring):

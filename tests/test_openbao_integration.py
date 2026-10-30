@@ -784,3 +784,41 @@ def test_real_approle_online_capture_tenant_publication_and_removal(live, tenant
             rings[tenant] = Keyring(KeyPolicy(domain, tenant, wrappers, 1, 1), {p.provider_id: p})
         return rings[tenant]
     exercise_online(tenant_app, resolve)
+
+
+def test_real_approle_lifecycle_authentication_failure_preserves_state_and_resumes(live, tmp_path, monkeypatch, capsys):
+    import test_migration as fixture
+    from cryptalis import migration as m
+    from test_operational_cli import host, inputs, invoke
+    from test_provider_authentication_lifecycle import authentication_error
+    workload = workload_credentials(live)
+    authentication, calls, policies = [workload.token], [], {}
+    def token():
+        calls.append(True)
+        return authentication[0]()
+    p = live.make(token=token)
+    def resolve(tenant):
+        if tenant not in policies:
+            wrappers = tuple(create_root(p, KeyContext(fixture.DOMAIN, tenant, purpose, uuid4(), 1))
+                             for purpose in ('payload', 'search'))
+            policies[tenant] = KeyPolicy(fixture.DOMAIN, tenant, wrappers, 1, 1)
+        return Keyring(policies[tenant], {p.provider_id: p})
+    monkeypatch.setattr(fixture, 'keys', resolve)
+    with fixture.application() as app:
+        fixture.run(app, until='EXPANDED')
+        path, _ = inputs(app, tmp_path)
+        reference, _, observed = host(app, monkeypatch, resolver=resolve)
+        authentication[0] = workload.make(max_token_ttl=1)
+        calls.clear()
+        result = invoke(capsys, 'apply', str(path), '--host-context', reference, '--json')
+        authentication_error(result, effects='INSPECT_JOURNAL')
+        assert len(calls) == 1 and observed['dispose'] == 1
+        if workload.current[0] in result[2]:
+            raise AssertionError('SecretIDExposure')
+        state = m.status(app.plan, app.owner, pin=app.pin)
+        assert state.phase == 'EXPANDED' and state.committed_rows == 0
+        authentication[0] = workload.token
+        code, output, error = invoke(capsys, 'apply', str(path), '--host-context', reference, '--json')
+        assert code == 0 and error == '' and json.loads(output)['phase'] == 'PENDING'
+        fixture.publish(app)
+        assert m.status(app.plan, app.owner, pin=app.pin).phase == 'ACTIVE'

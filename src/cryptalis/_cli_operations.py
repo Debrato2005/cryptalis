@@ -12,6 +12,8 @@ import tempfile
 from types import CoroutineType
 from uuid import UUID
 
+from cryptalis.crypto import ProviderAuthenticationUnavailable
+
 
 _HOST = re.compile(r'[A-Za-z_][A-Za-z0-9_]*(?:\.[A-Za-z_][A-Za-z0-9_]*)*:[A-Za-z_][A-Za-z0-9_]*\Z')
 _CODE = re.compile(r'[A-Za-z][A-Za-z0-9_.:,-]{0,127}\Z')
@@ -41,7 +43,7 @@ _SEARCH_DENIED = _DENIED | frozenset(('invalid_search_rotation_plan', 'search_op
     'search_rotation_requires_searchable_fields'))
 _OPERATIONAL = frozenset(('database_effect_requires_inspection', 'operation_failed_requires_inspection',
     'connection_cleanup_requires_inspection', 'KeyUnavailable', 'CryptoBackendUnavailable',
-    'query_inspection_unavailable'))
+    'ProviderAuthenticationUnavailable', 'query_inspection_unavailable'))
 
 
 def _known_result(failure, result):
@@ -62,6 +64,10 @@ def _failure(operation, code, stage, *, exit_code=2, result=None, primary=None):
         _known_result(failure, result)
     if primary is not None:
         failure.error['related_error'] = primary.error
+    if code == 'ProviderAuthenticationUnavailable':
+        failure.error.update(effects_scope='database', provider_effects='UNKNOWN')
+        failure.error['remedy'] += (' ' + ProviderAuthenticationUnavailable.remedy
+                                    + ' A token may already have been issued.')
     return failure
 
 
@@ -357,7 +363,9 @@ def run(arguments):
         elif not planning:
             failure.error.update(operation_id=str(plan.operation_id), effects='INSPECT_JOURNAL')
         raise
-    except m.TransitionFailure as error:
+    except (m.TransitionFailure, ProviderAuthenticationUnavailable) as error:
+        if isinstance(error, ProviderAuthenticationUnavailable):
+            error = m.TransitionFailure('ProviderAuthenticationUnavailable')
         code = error.code if type(error.code) is str and _CODE.fullmatch(error.code) else 'TransitionRejected'
         operational = bool(error.cleanup_errors) or code in _OPERATIONAL
         failure = _failure(operation, code, 'transition', exit_code=4 if operational else 2 if code in _DENIED else 3,
@@ -717,7 +725,9 @@ def _run_policy_transition(arguments, purpose):
             _publish(arguments.out, proposal.artifact, result, operation)
     except _CommandFailure as failure:
         raise annotate(failure)
-    except m.TransitionFailure as error:
+    except (m.TransitionFailure, ProviderAuthenticationUnavailable) as error:
+        if isinstance(error, ProviderAuthenticationUnavailable):
+            error = m.TransitionFailure('ProviderAuthenticationUnavailable')
         code = error.code if type(error.code) is str and _CODE.fullmatch(error.code) else 'TransitionRejected'
         operational = bool(error.cleanup_errors) or code in _OPERATIONAL
         denied = _TENANT_DENIED if tenant else _REWRAP_DENIED
@@ -959,7 +969,9 @@ def run_generation(arguments, purpose):
             result['artifact_result'] = dict(artifact)
     except _CommandFailure as failure:
         raise annotate(failure)
-    except m.TransitionFailure as error:
+    except (m.TransitionFailure, ProviderAuthenticationUnavailable) as error:
+        if isinstance(error, ProviderAuthenticationUnavailable):
+            error = m.TransitionFailure('ProviderAuthenticationUnavailable')
         code = error.code if type(error.code) is str and _CODE.fullmatch(error.code) else 'TransitionRejected'
         operational = bool(error.cleanup_errors) or code in _OPERATIONAL
         failure = _failure(operation, code, 'transition', exit_code=4 if operational else 2 if code in denied else 3)
