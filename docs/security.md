@@ -1,5 +1,26 @@
 # Security and leakage
 
+[Documentation map](README.md) · [Current evidence](status.md)
+
+- [Online protection trust boundary](#online-protection-trust-boundary)
+- [Slice 3 storage enforcement: 2026-10-08](#slice-3-storage-enforcement-2026-10-08)
+- [Slice 4 search enforcement: 2026-10-08](#slice-4-search-enforcement-2026-10-08)
+- [Trust boundaries](#trust-boundaries)
+- [Threat limits](#threat-limits)
+- [Key hierarchy and providers](#key-hierarchy-and-providers)
+- [Operational CLI trust boundary](#operational-cli-trust-boundary)
+- [Owned-sequence admission](#owned-sequence-admission)
+- [Expression-statistics admission](#expression-statistics-admission)
+- [Public-slot authority](#public-slot-authority)
+- [Cryptographic format](#cryptographic-format)
+- [Capability leakage](#capability-leakage)
+- [Public failure contract](#public-failure-contract)
+- [Human review](#human-review)
+- [Internal storage-only DATE boundary](#internal-storage-only-date-boundary)
+- [Internal storage-only integer boundary](#internal-storage-only-integer-boundary)
+- [Internal integer literal defaults](#internal-integer-literal-defaults)
+
+
 **SPECIFIED:** security contract, not an audit. [Status](status.md) owns executable evidence.
 IMPLEMENTED has the exact boundary in status. The package includes a bounded storage attachment; full runtime qualification remains UNKNOWN.
 VERIFIED means only the named recorded checks. All unlabelled requirements below are SPECIFIED.
@@ -17,9 +38,9 @@ again under locks before adding authority. Publication and cancellation require
 their actual host pins. Restored addition retains explicit restore lineage.
 The HTTP integration checks the retained current artifact before opening a
 scoped factory; this does not promise revocation of arbitrary in-flight workers.
-See the [bounded checkpoint](status.md#maintenance-tenant-policy-provisioning-2026-10-28).
+See the [bounded checkpoint](history/implementation-2026-10.md#maintenance-tenant-policy-provisioning-2026-10-28).
 
-The [owner-scoped HTTP checkpoint](status.md#verified-continuation-checkpoint-2026-10-28)
+The [owner-scoped HTTP checkpoint](history/implementation-2026-10.md#verified-continuation-checkpoint-2026-10-28)
 keeps global account authentication native. Its explicit host adapter validates
 the original JWT/account authority before selecting an approved owner policy.
 Public owner metadata is authorized, then locked and rechecked before payload
@@ -60,29 +81,6 @@ During capture, native values remain authoritative. A non-owner write for an una
 P2 uses the unchanged `cryptalis.transition/v8` activation artifact and access-contract successor chain. Empty tenant policies remain in the artifact through restore and all rotations. The host still excludes owner and DDL writers. This source change adds no live KMS or production pause qualification. All seven production gates remain UNKNOWN.
 
 
-## Current local enforcement evidence: 2026-10-07
-
-**VERIFIED, recorded spike revision:** the [integrated checkpoint](status.md#current-integrated-checkpoint-2026-10-07) guards inspected SQLAlchemy executions at the DBAPI method boundary.
-Its raw/COPY/protocol-handle denials occur before driver execution; an independent privileged connection remains outside that boundary.
-Missing, unknown or unexcluded writer inventory blocks local transformation. The migrator-owned fixture does not qualify a non-owning runtime role.
-A hostile returned row that is valid for another identity fails the captured host-requested point check before value release.
-The recorded candidate also rejects changed typed field/domain/tenant/record context, descriptor/header mutations, malformed bounds and retired generations without fallback.
-Same-context replay, SQL-NULL presence substitution and omitted rows remain the threat limits below.
-
-New development roots and the local wrapping key are random and memory-only; the older experiments retain public lab roots.
-Local cold/warm/expired/outage and rewrap tests are functional evidence only.
-
-A Linux test forks while the keyring mutex is locked. The child refuses
-inherited sync/async preparation without deadlock. Fresh child keys work.
-The parent retains its prepared keys. The
-[fork checkpoint](status.md#keyring-held-mutex-fork-checkpoint-2026-10-23) bounds this evidence.
-
-These controls do not qualify other process/runtime cells, remote-provider
-cancellation, native deletion or production custody. No production provider or
-deployment procedure is designated.
-Independent human cryptographic/security review is unavailable: `external-review-required` remains UNKNOWN.
-Frozen independent admitted text/ID vectors, exact collation evidence, and nonce/usage bounds remain required before security qualification.
-
 ## Slice 3 storage enforcement: 2026-10-08
 
 **IMPLEMENTED, bounded 2026-10-27 evidence:** a typed SELECT must not authorize
@@ -94,7 +92,7 @@ ordinary admitted calls in `pg_catalog` so mutable search-path resolution cannot
 select a different function. Keep native special SQL expression syntax and
 all protected-lineage restrictions. This does not exclude separate credentials,
 privileged schema changes or deliberately compromised host code. The
-[function checkpoint](status.md#finite-native-select-functions-2026-10-27)
+[function checkpoint](history/implementation-2026-10.md#finite-native-select-functions-2026-10-27)
 records the native controls and remaining qualification boundary.
 
 **IMPLEMENTED, bounded prototype:** admitted ORM writes prepare row-bound CF1 frames before SQL.
@@ -261,7 +259,7 @@ Changed storage/context mappings, translated targets, and catalog mismatches rej
 Attachment refuses checked-out native connections before pool replacement. Same-named tables in separate schemas retain distinct row preparation.
 Real async database cancellation propagates and permits explicit rollback and later-session recovery.
 Cancellation during awaited key preparation leaves PostgreSQL unchanged and permits a later write.
-[Status](status.md#slice-3-checkpoint-2026-10-08) and its hashed receipt define the exact evidence boundary.
+[Status](history/implementation-2026-10.md#slice-3-checkpoint-2026-10-08) and its hashed receipt define the exact evidence boundary.
 **VERIFIED, separate restricted runtime login:** sync/async attachment CRUD matches native SQLAlchemy in owned PostgreSQL 16.15 schemas.
 Runtime grants are schema `USAGE`, customer CRUD, and article `SELECT` for native relationship lookup during deletion.
 The role has no ownership, fixture-owner inheritance, grant options, or schema `CREATE`.
@@ -281,7 +279,7 @@ Same-context replay, SQL NULL substitution, hostile omitted rows, and host autho
 ## Slice 4 search enforcement: 2026-10-08
 
 Earlier slice 3/4 row-isolation tests omit grouped and callable primary-key binds.
-The [corrective checkpoint](status.md#corrective-audit-checkpoint-2026-10-09) records their repair and the revised evidence boundary.
+The [corrective checkpoint](history/implementation-2026-10.md#corrective-audit-checkpoint-2026-10-09) records their repair and the revised evidence boundary.
 
 **IMPLEMENTED, bounded prototype:** exact-text equality/IN uses full HMAC terms from the independently keyed CF1 header.
 Simple negative equality and `NOT IN` reuse the same terms; NULL presence uses a SQL NULL check and needs no equality representation.
@@ -369,13 +367,13 @@ Bound runtime factories require an exact UUID and membership in the pinned
 policy map before invoking the host key resolver. A custom string identity cannot
 select a pinned policy. Host authentication and authorization remain required;
 this membership check does not replace them. The
-[early-admission checkpoint](status.md#sdk-protocol-and-early-tenant-admission-checkpoint-2026-10-28)
+[early-admission checkpoint](history/implementation-2026-10.md#sdk-protocol-and-early-tenant-admission-checkpoint-2026-10-28)
 records the source and installed controls.
 Direct rewrap must confirm that the target unwraps the replacement to the exact
 original immutable 32-byte root under the same context. Pin and recheck the
 target provider identity; compare recovered root bytes in constant time.
 Wrapper metadata alone is insufficient. AWS and development direct methods have
-bounded local [recovery-proof evidence](status.md#direct-provider-rewrap-recovery-proof-2026-10-27).
+bounded local [recovery-proof evidence](history/implementation-2026-10.md#direct-provider-rewrap-recovery-proof-2026-10-27).
 This proof requires target decrypt authority and can add one provider request.
 It does not publish the replacement, retire source custody or prove deletion.
 The wrapper records pinned provider identity and nonsecret scope, purpose, root identity, and generation.
@@ -487,7 +485,7 @@ A successful sample check does not prove bind-time behavior, query results,
 complete route coverage or safe writes. Unknown host-code effects remain explicit.
 Doctor reports known query incompatibilities before migration. Runtime admission remains
 mandatory after protection and does not trust a diagnostic result as authority. See the
-[installed checkpoint](status.md#installed-application-query-diagnostics-2026-10-24).
+[installed checkpoint](history/implementation-2026-10.md#installed-application-query-diagnostics-2026-10-24).
 The pre-adoption CLI accepts an explicit trusted host factory for the registry,
 writer inventory and search reviews. It owns the private connection and uses
 this same compiler. Host import/factory effects remain UNKNOWN; only compiler
@@ -604,7 +602,7 @@ Inspect the operation and current host pin before retry. An error does not prove
 Doctor retains its strict key-free tuple and inspection scope. These contexts
 do not waive core planner, tenant, runtime-role or lifecycle admission. See the
 [specified workflow](walkthrough-migration.md#plan-and-apply-protection-through-the-cli)
-and [status](status.md#operational-cli-protection-workflow-2026-10-24).
+and [status](history/implementation-2026-10.md#operational-cli-protection-workflow-2026-10-24).
 
 ### Reverse CLI authority
 
@@ -618,7 +616,7 @@ conflicting flags before host loading. An unreturned execution result requires
 INSPECT_JOURNAL. Preserve known progress after output or cleanup failure.
 No plaintext, credentials, raw host exceptions or context representations enter
 reports. Host-code effects remain UNKNOWN. Doctor's key-free tuple stays unchanged. See the
-[verified checkpoint](status.md#operational-cli-reverse-and-removal-2026-10-24).
+[verified checkpoint](history/implementation-2026-10.md#operational-cli-reverse-and-removal-2026-10-24).
 Source and installed genuine fresh-target verification pass.
 
 ### Root-rewrap CLI artifact and authority boundary
@@ -636,7 +634,7 @@ after success or cancellation. Source ACTIVE cancellation authority and successo
 publication authority remain separate. The CLI creates no provider, keys, host pin,
 consent or fencing. Host-code effects and retained-backup obligations retain their
 existing limits. Payload/search CLI admission remains future work. See the
-[verified checkpoint](status.md#operational-cli-root-rewrap-2026-10-24).
+[verified checkpoint](history/implementation-2026-10.md#operational-cli-root-rewrap-2026-10-24).
 Source and installed genuine adopted-target verification pass.
 
 ### Payload CLI artifact retention
@@ -654,7 +652,7 @@ are gone. Losing every external A copy loses the proof current APIs require.
 Do not reconstruct A from database assertions or treat key-free status as fresh
 verification. Existing source-only cancellation, target-only activation, host authority,
 provider and Doctor boundaries remain unchanged. Host-code effects remain UNKNOWN. See the
-[verified checkpoint](status.md#operational-cli-payload-rotation-2026-10-24).
+[verified checkpoint](history/implementation-2026-10.md#operational-cli-payload-rotation-2026-10-24).
 Source and installed genuine adopted-target verification pass.
 
 ### Search CLI admission
@@ -670,7 +668,7 @@ switch and externally retained A after switch. Key-free status reports NOT_PERFO
 not fresh value verification. Source-only cancellation, target-only publication,
 unknown host-code effects and Doctor's tuple remain unchanged. See the
 [payload retention contract](#payload-cli-artifact-retention) and
-[verified checkpoint](status.md#operational-cli-search-rotation-2026-10-24).
+[verified checkpoint](history/implementation-2026-10.md#operational-cli-search-rotation-2026-10-24).
 Source and installed genuine adopted-target verification pass.
 
 ### Initialization CLI trust boundary
@@ -685,7 +683,7 @@ and the aggregate UNKNOWN status. Qualify effects NONE as compiler inspection on
 Host import/factory effects remain UNKNOWN. On output, fsync or cleanup failure,
 preserve known inspection and artifact facts without inventing a database result,
 operation UUID or transition phase. Existing private publication and safe diagnostics apply. See the
-[verified checkpoint](status.md#operational-cli-initialization-2026-10-24).
+[verified checkpoint](history/implementation-2026-10.md#operational-cli-initialization-2026-10-24).
 Source and installed initialization verification pass.
 
 ### Public key-policy metadata boundary
@@ -697,16 +695,16 @@ access; prepare no keys and contact no providers. The report never emits sealed
 wrappers. Keep availability, material correctness, completeness and recovery
 UNKNOWN. Allow independent retained-backup declarations under the same operation.
 No report grants deletion or retirement rights. See the
-[checkpoint](status.md#pinned-public-key-policy-status-2026-10-24).
+[checkpoint](history/implementation-2026-10.md#pinned-public-key-policy-status-2026-10-24).
 
 ### Retained-backup declaration boundary
 
 **IMPLEMENTED, source and installed verified:** declared hashes prove no file availability, recovery or
 retirement authority. Never prepare keys. Empty metadata and absent journals settle no
 external obligations. Host-code effects remain UNKNOWN. The
-[integrated checkpoint](status.md#integrated-defensive-hardening-2026-10-24)
+[integrated checkpoint](history/implementation-2026-10.md#integrated-defensive-hardening-2026-10-24)
 includes genuine fresh-cluster metadata controls. See the
-[decision](decisions.md#declared-retained-backup-status-references-2026-10-24).
+[decision](history/decisions-2026-10.md#declared-retained-backup-status-references-2026-10-24).
 
 ### HTTP operational journey limits
 
@@ -720,7 +718,7 @@ The import-denied original HTTP child verifies latest native data and does not t
 This local ASGI/TestClient qualification supplies no browser, deployment, external-mail,
 live-custody or production evidence. Status of external retained obligations needs explicit
 host inventory/provenance. Wrappers or an empty journal cannot prove no obligations. See the
-[qualification checkpoint](status.md#original-http-operational-cli-journey-2026-10-24).
+[qualification checkpoint](history/implementation-2026-10.md#original-http-operational-cli-journey-2026-10-24).
 
 ### Synchronous KMS method boundary
 
@@ -728,7 +726,7 @@ host inventory/provenance. Wrappers or an empty journal cannot prove no obligati
 methods fail client construction with InvalidContext before invocation. Synchronous
 SDK behavior, key ARN, context and response checks remain unchanged. No live AWS
 qualification follows. See the
-[integrated checkpoint](status.md#integrated-defensive-hardening-2026-10-24).
+[integrated checkpoint](history/implementation-2026-10.md#integrated-defensive-hardening-2026-10-24).
 
 ### Protected-search dispatch admission
 
@@ -736,7 +734,7 @@ qualification follows. See the
 before protected predicate rewriting and key resolution. Async SELECT admission
 must precede key preparation. Native FALSE controls and ordinary query parity
 separate safe refusal from changed SQL semantics. See the
-[integrated checkpoint](status.md#integrated-defensive-hardening-2026-10-24).
+[integrated checkpoint](history/implementation-2026-10.md#integrated-defensive-hardening-2026-10-24).
 
 ## Owned-sequence admission
 
@@ -760,7 +758,7 @@ lineage. The binding changes no source identity, host publication authority or
 key custody. Old locks still refuse late sequences. This admission does not allow
 server-generated record IDs or protected server defaults. Production gates remain UNKNOWN.
 See the [lifecycle contract](lifecycle.md#owned-sequence-preservation-and-restored-identity-2026-10-24)
-and [current evidence](status.md#owned-sequence-preservation-and-restore-2026-10-24).
+and [current evidence](history/implementation-2026-10.md#owned-sequence-preservation-and-restore-2026-10-24).
 
 ## Expression-statistics admission
 
@@ -775,8 +773,8 @@ paths, unchanged-state refusal and exact repair. Affected-source and revised
 installed controls pass, including repair through native exit and both fresh-cluster
 profiles. The current status owns the exact scope.
 This changes no artifact version, key policy, privilege grant or host authority.
-See the [decision](decisions.md#expression-statistics-admission-across-layouts-2026-10-24)
-and [current evidence](status.md#legacy-expression-statistics-admission-2026-10-24).
+See the [decision](history/decisions-2026-10.md#expression-statistics-admission-across-layouts-2026-10-24)
+and [current evidence](history/implementation-2026-10.md#legacy-expression-statistics-admission-2026-10-24).
 
 ## Public-slot authority
 
@@ -794,7 +792,7 @@ flat lineage. Sequence maps remain mandatory and exact. V1/v2 bindings cannot
 waive v6 slot checks. Legacy metadata comparison remains unchanged. CF1, tenant,
 key-policy and publication authority do not change. See the
 [lifecycle contract](lifecycle.md#public-column-slot-layout-2026-10-24) and
-[verification boundary](status.md#public-column-slot-preservation-2026-10-24).
+[verification boundary](history/implementation-2026-10.md#public-column-slot-preservation-2026-10-24).
 
 ## Cryptographic format
 
@@ -829,7 +827,7 @@ AAD. Text context/v1 bytes and derivation remain unchanged. SQL NULL remains
 visible SQL NULL. No Boolean equality term is admitted: the two-value domain
 retains its enumeration risk. Lock/v4 requires the Boolean reader and rejects
 older readers before use. Non-NULL Boolean frames have exactly 43 bytes.
-The [Boolean checkpoint](status.md#boolean-storage-checkpoint-2026-10-23) states
+The [Boolean checkpoint](history/implementation-2026-10.md#boolean-storage-checkpoint-2026-10-23) states
 the independent vectors, native controls and lifecycle evidence.
 These checks do not supply independent human cryptographic review or production qualification.
 
@@ -1040,7 +1038,7 @@ Pending cancellation requires the republished source ACTIVE pin and authenticate
 source policy, retained roots, frames, schema and lineage before guard removal.
 The target provider need not remain available. A terminal retry inspects current
 source authority and cannot revive a source superseded by a later operation.
-See [lifecycle](lifecycle.md#changes-and-rotation) and [status](status.md#active-root-rewrap-checkpoint-2026-10-23).
+See [lifecycle](lifecycle.md#changes-and-rotation) and [status](history/implementation-2026-10.md#active-root-rewrap-checkpoint-2026-10-23).
 
 Adopted-target root rewrap retains the explicit original binding in rewrap/v2
 and flat inherited restore lineage in transition/v5. Binding identity, original
@@ -1052,8 +1050,8 @@ It needs no target provider and cannot replay old data on a terminal retry.
 The [17-control source profile](_reset/fresh-cluster-restore-20261024-4.json)
 supplies no new cryptographic or host authority. See the
 [lifecycle contract](lifecycle.md#adopted-target-root-rewrap-2026-10-24),
-[format decision](decisions.md#adopted-target-root-rewrap-2026-10-24) and
-[current evidence](status.md#adopted-target-root-rewrap-2026-10-24).
+[format decision](history/decisions-2026-10.md#adopted-target-root-rewrap-2026-10-24) and
+[current evidence](history/implementation-2026-10.md#adopted-target-root-rewrap-2026-10-24).
 
 Payload rotation after adopted lineage starts from the current ACTIVE v5/v6
 successor and its own host pin. The unchanged `cryptalis.payload-rotation/v1` proposal embeds
@@ -1067,27 +1065,27 @@ cancellation preserves later source edits and cannot revive a superseded source.
 The [12 native fresh-target controls](_reset/fresh-cluster-restore-20261024-11.json)
 pass, as do the source VARCHAR and installed TEXT profiles. The final installed
 Smolink journey and full regression retain their exact
-[status boundaries](status.md#payload-rotation-after-adopted-lineage-2026-10-24).
+[status boundaries](history/implementation-2026-10.md#payload-rotation-after-adopted-lineage-2026-10-24).
 Search rotation with lineage follows its [successor contract](lifecycle.md#search-rotation-after-adopted-lineage-2026-10-24).
 Direct restore-binding generation planning follows its
 [separate contract](lifecycle.md#generation-planning-from-a-restore-binding-2026-10-24). Deploy readers that admit the embedded
 source and v6 before publication. CF1, host approval/fencing, retained-reader
 obligations and key-retirement permissions do not change. All seven production
-gates remain UNKNOWN. See the [format decision](decisions.md#adopted-target-payload-rotation-2026-10-24).
+gates remain UNKNOWN. See the [format decision](history/decisions-2026-10.md#adopted-target-payload-rotation-2026-10-24).
 
 Adopted search rotation uses the current lineage-bearing source and its own pin.
 Search-rotation/v1 retains the embedded source; v7 retains every v4 search proof
 and the admitted restore lineage. All 11 native mixed-field controls pass, including refusal and recovery paths.
 Source TEXT/VARCHAR, installed TEXT, affected and ordinary installed application
 checks pass within their recorded boundaries. See the
-[current boundary](status.md#search-rotation-after-adopted-lineage-2026-10-24).
+[current boundary](history/implementation-2026-10.md#search-rotation-after-adopted-lineage-2026-10-24).
 The crypto, index representation, journal and host-authority contracts do not change.
 
 Direct generation planning can embed the existing restore binding in an exact
 purpose/v2 proposal. Pure identity, original custody, frame/probe, owner and
 lineage checks precede provider work. The evaluated target does not replace the
 original source identity or host pin. Existing cancellation and publication
-authority rules remain required. The [current checkpoint](status.md#direct-restore-binding-generation-planning-2026-10-24)
+authority rules remain required. The [current checkpoint](history/implementation-2026-10.md#direct-restore-binding-generation-planning-2026-10-24)
 records 19 native controls, including changed CHECK and disabled-guard refusal
 before providers. Source VARCHAR, affected-suite and ordinary installed application
 checks also pass. All 19 installed direct controls and the original six-file
@@ -1210,7 +1208,7 @@ The child must construct a fresh provider and prepare fresh roots.
 Python immutable bytes do not give a verified zeroization guarantee.
 Failures have safe codes, operation IDs, stages, retry indicators, effect states, and remedies.
 Raw provider and cryptographic exception text does not enter those diagnostics.
-The [slice 2 checkpoint](status.md#slice-2-checkpoint-2026-10-08) records the exact evidence boundary.
+The [slice 2 checkpoint](history/implementation-2026-10.md#slice-2-checkpoint-2026-10-08) records the exact evidence boundary.
 
 Full-width terms avoid intentional false positives. Exact query claims remain conditional on HMAC collision resistance and intact indexed representations.
 Recomputing a term from returned plaintext does not detect a collision with a different value. AEAD cannot repair that semantic error.
@@ -1321,8 +1319,8 @@ process interruption, tamper refusal, both layouts and native removal. These
 checks do not qualify a provider or replace independent composition review.
 All six capability gates remain unpassed. The installed wheel also passes all
 six integer width/layout fresh-cluster journeys. See the
-[checkpoint](status.md#integer-installed-lifecycle-checkpoint-2026-10-24) and
-[contract](decisions.md#storage-only-postgresql-integer-contract-2026-10-24).
+[checkpoint](history/implementation-2026-10.md#integer-installed-lifecycle-checkpoint-2026-10-24) and
+[contract](history/decisions-2026-10.md#storage-only-postgresql-integer-contract-2026-10-24).
 
 
 ## Internal integer literal defaults
@@ -1338,5 +1336,5 @@ Valid ORM writes use sealed native bind values. A known range failure alone
 selects the owned public coercion expression. Native async loaded state,
 rollback and error-order controls pass in the bounded source and installed cells.
 All six integer width/layout fresh-cluster default journeys also pass. See the
-[checkpoint](status.md#integer-literal-default-installed-checkpoint-2026-10-24).
+[checkpoint](history/implementation-2026-10.md#integer-literal-default-installed-checkpoint-2026-10-24).
 All six type-admission gates remain unpassed.

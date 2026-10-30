@@ -88,4 +88,4 @@ no representative performance or pause target. The current product still drops
 and renames columns. A versioned layout, restored-slot authority and product
 lifecycle evidence remain pending. The retained-native alternative remains
 unpromoted. All seven production gates remain UNKNOWN. See the
-[current checkpoint](../status.md#native-column-identity-oracle-2026-10-24).
+[current checkpoint](../history/implementation-2026-10.md#native-column-identity-oracle-2026-10-24).

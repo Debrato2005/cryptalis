@@ -10,7 +10,7 @@ No dependency installation or production source change is required in the record
 The older experiments below use public lab keys. The new `integration_*` candidate uses random memory-only development roots
 and actual bounded CF1 text frames. Both are research fixtures for the authorized disposable database.
 No production provider, deployment procedure or independent human review is available; all seven full gates remain UNKNOWN.
-The [current status](../../docs/status.md#current-integrated-checkpoint-2026-10-07) and
+The [current status](../../docs/history/implementation-2026-10.md#current-integrated-checkpoint-2026-10-07) and
 [semantic audit](../../docs/research/revamp-evidence.md#integrated-continuation-and-semantic-audit-2026-10-07) distinguish tested invariants from pending requirements.
 
 With the private environment already supplied, run a required suite from the repository root:

@@ -1,12 +1,15 @@
 # Single-tenant mapped UPDATE implementation plan
 
+> Historical plan. Current work is routed by the [objective ledger](../../BUILD_CHECKLIST.md) and [documentation map](../../README.md). Task-time instructions below do not override current user authorization.
+
+
 > **For agentic workers:** Use superpowers:executing-plans for this one slice.
 
 **Goal:** Preserve native mapped dictionary UPDATE on declared single-tenant tables.
 **Architecture:** Extend the existing request, compiler and driver admission. Keep
 SQLAlchemy responsible for grouping, primary-key predicates and row-count errors.
 **Tech stack:** Python 3.12+, SQLAlchemy 2.1.3, psycopg 3, PostgreSQL 16.
-**Spec:** [Canonical decision](../../decisions.md#single-tenant-mapped-dictionary-update-2026-10-29).
+**Spec:** [Canonical decision](../../history/decisions-2026-10.md#single-tenant-mapped-dictionary-update-2026-10-29).
 
 ## Global constraints
 
@@ -47,7 +50,7 @@ The native RED fails at single-tenant admission. The new module then passes 28
 checks; affected source regression passes 508 with six retained-reader skips.
 The installed wheel passes 93 checks. Repeat artifacts and 47 installed files
 pass the existing release inspection. Exact receipts and limits are in the
-[status checkpoint](../../status.md#single-tenant-mapped-update-2026-10-29).
+[status checkpoint](../../history/implementation-2026-10.md#single-tenant-mapped-update-2026-10-29).
 
 The fresh reviewer found no blocking defect or required code change. This slice
 does not independently inject async fixed-scope failures or mutate the generated

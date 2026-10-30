@@ -1,5 +1,8 @@
 # Comprehensive release continuation implementation plan
 
+> Historical plan. Current work is routed by the [objective ledger](../../BUILD_CHECKLIST.md) and [documentation map](../../README.md). Task-time instructions below do not override current user authorization.
+
+
 > **For agentic workers:** Use the subagent-driven-development workflow. The user explicitly authorizes autonomous parallel implementation, verification, commits and non-forced Git pushes.
 
 **Goal:** Resume audited checkpoint `5d6ff65`, preserve all 34 objectives and seven qualification gates, and remove substantive product and qualification blockers.

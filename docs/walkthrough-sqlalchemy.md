@@ -1,10 +1,10 @@
 # SQLAlchemy storage attachment
 
-**IMPLEMENTED:** bounded sync/async text attachment; research prototype.
-All seven gates remain **UNKNOWN**. No production provider or independent review exists.
+**IMPLEMENTED:** bounded sync/async attachment for the [admitted types and operations](compatibility.md).
+All seven production gates remain **UNKNOWN**; no provider deployment is production-qualified.
 [Status](status.md) owns revision-bound tests and the corrective row-isolation evidence.
 
-The adapter prepares row-bound CF1 frames before SQL and keeps ORM attributes as text or NULL.
+The adapter prepares row-bound CF1 frames before SQL and preserves admitted Python value types and NULL.
 Read projections carry field, tenant and row context. Authentication precedes value release.
 Host-requested primary-key constraints must match returned identity. Unsupported forms fail before SQL.
 Async key preparation runs before synchronous hooks. Protected SELECT caching is disabled.
@@ -99,7 +99,7 @@ Async sessions use the same statements with awaited execution and commit.
 Loaded objects retain native stale state until refresh or expiration. Use
 rollback or the enclosing savepoint to recover from errors. UPDATE expressions,
 Core statements and RETURNING remain unadmitted. The
-[online scalar checkpoint](status.md#single-tenant-mapped-update-2026-10-29)
+[online scalar checkpoint](history/implementation-2026-10.md#single-tenant-mapped-update-2026-10-29)
 adds current-value removal evidence across the admitted storage types.
 
 Delete one record from the same explicitly single-tenant table with its exact
