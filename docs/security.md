@@ -149,7 +149,7 @@ types refuse before SQL and key preparation in both sync and async execution.
 The adapter captures the request before key preparation and checks it again
 afterward. Public Python bind processors remain native.
 
-Single-record UPDATE RETURNING reuses that ledger and driver proof with one
+Single-record UPDATE reuses that ledger and driver proof with one
 explicit record/tenant permit and one assignment dictionary. The current
 RETURNING roots and entity/column shape are inspected before keys and again
 after key resolution; a memoized ORM column list cannot authorize a changed
@@ -165,6 +165,11 @@ native dialect's identifier quoting rules. A native Label caches its element's
 type, so the return rewrite clones and rebinds both label and column to the owned
 authenticated reader, clearing stale expression memoization. It does not mutate
 the caller's statement or treat a label as a different cryptographic field.
+
+When RETURNING is absent, the same captured point request, prepared assignments
+and final driver proof remain mandatory. Its captured output shape is empty;
+provider or later callbacks cannot add returned columns. The native result
+contains an affected-row count and no protected values.
 
 Each changed protected output must equal this operation's exact prepared frame
 or NULL. Every protected RETURNING output requires a real record identity, even

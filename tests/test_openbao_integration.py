@@ -757,9 +757,14 @@ def test_real_provider_protect_search_edit_and_verified_plaintext_exit(live, mon
                 [dict(id=UUID(int=10000), tenant_id=fixture.TENANT, name='live provider insert')])
             assert inserted.scalar_one() == 'live provider insert'
             session.commit()
+            counted = session.execute(update(app.Customer).where(app.Customer.id == UUID(int=10000),
+                app.Customer.tenant_id == fixture.TENANT), {'name': 'live provider counted update'},
+                execution_options={'synchronize_session': False})
+            assert counted.rowcount == 1 and counted.returns_rows is False
+            session.commit()
         expected = dict(app.source)
         expected[UUID(int=101)] = (fixture.TENANT, 'live provider returning')
-        expected[UUID(int=10000)] = (fixture.TENANT, 'live provider insert')
+        expected[UUID(int=10000)] = (fixture.TENANT, 'live provider counted update')
         del expected[UUID(int=102)]
         bodies = fixture.frames(app, True)
         assert bodies[UUID(int=100)] is None

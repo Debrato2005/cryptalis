@@ -28,8 +28,9 @@ CASES = [
 
 def query(app, kind):
     columns = (app.Customer,) if kind == 'entity' else (app.Customer.name, app.Customer.label)
-    return update(app.Customer).where(app.Customer.id == UUID(int=100),
-        app.Customer.tenant_id == TENANT).returning(*columns)
+    statement = update(app.Customer).where(app.Customer.id == UUID(int=100),
+        app.Customer.tenant_id == TENANT)
+    return statement if kind is None else statement.returning(*columns)
 
 
 def consume(app, session, result, kind, expected):
@@ -92,17 +93,21 @@ def test_native_returning_types_entities_transactions_and_async(dtype, value, st
 
 @pytest.mark.parametrize('dtype,bad,sqlstate', [(String(4, collation='C'), 'abcde', '22001'),
                                              (SmallInteger(), 32768, '22003')])
-def test_missing_rows_and_assignment_failures_preserve_native_transaction_state(dtype, bad, sqlstate):
+@pytest.mark.parametrize('returning', [False, True])
+def test_missing_rows_and_assignment_failures_preserve_native_transaction_state(dtype, bad, sqlstate, returning):
     with application(rows=2, value_type=dtype, protected_values=(None, None), queries=[]) as app:
         def scenario(factory=None):
             with (factory(tenant_id=TENANT) if factory else Session(app.runtime)) as session:
                 observations = []
                 for identity in (UUID(int=9999), UUID(int=100)):
                     statement = update(app.Customer).where(app.Customer.id == identity,
-                        app.Customer.tenant_id == TENANT).returning(app.Customer.name)
+                        app.Customer.tenant_id == TENANT)
+                    if returning:
+                        statement = statement.returning(app.Customer.name)
                     try:
-                        rows = session.execute(statement, {'name': bad},
-                            execution_options={'synchronize_session': False}).all()
+                        result = session.execute(statement, {'name': bad},
+                            execution_options={'synchronize_session': False})
+                        rows = result.all() if returning else result.rowcount
                     except (CryptoFailure, DBAPIError) as error:
                         code = getattr(error, 'sqlstate', None) or getattr(getattr(error, 'orig', None), 'sqlstate', None)
                         assert code == sqlstate
@@ -204,7 +209,8 @@ def test_fixed_scope_renamed_outputs_match_native_and_survive_current_value_remo
 
 
 @pytest.mark.parametrize('fault,code', [('unique', '23505'), ('not_null', '23502')])
-def test_native_constraint_failure_savepoint_recovery_and_autoflush(fault, code):
+@pytest.mark.parametrize('returning', [False, True])
+def test_native_constraint_failure_savepoint_recovery_and_autoflush(fault, code, returning):
     from sqlalchemy.exc import IntegrityError
     with application(rows=3, value_nullable=False, protected_values=('first', 'second', 'third')) as app:
         def scenario(factory=None):
@@ -212,15 +218,23 @@ def test_native_constraint_failure_savepoint_recovery_and_autoflush(fault, code)
                 session.get(app.Customer, UUID(int=102)).label = 'PUBLIC outer edit'
                 savepoint = session.begin_nested()  # Native autoflush preserves the outer edit.
                 values = {'name': 'second' if fault == 'unique' else None}
+                selected = query(app, 'tuple' if returning else None)
                 with pytest.raises(IntegrityError) as failed:
-                    session.execute(query(app, 'tuple'), values,
-                        execution_options={'synchronize_session': False}).all()
+                    result = session.execute(selected, values,
+                        execution_options={'synchronize_session': False})
+                    if returning:
+                        result.all()
                 assert failed.value.orig.sqlstate == code
                 savepoint.rollback()
                 assert session.get(app.Customer, UUID(int=100)).name == 'first'
                 assert session.get(app.Customer, UUID(int=102)).label == 'PUBLIC outer edit'
-                assert session.execute(query(app, 'tuple'), {'name': 'PUBLIC retry'},
-                    execution_options={'synchronize_session': False}).one()[0] == 'PUBLIC retry'
+                retried = session.execute(selected, {'name': 'PUBLIC retry'},
+                    execution_options={'synchronize_session': False})
+                if returning:
+                    assert retried.one()[0] == 'PUBLIC retry'
+                else:
+                    assert retried.rowcount == 1
+                    assert session.scalar(select(app.Customer.name).where(app.Customer.id == UUID(int=100))) == 'PUBLIC retry'
                 session.rollback()
                 assert session.get(app.Customer, UUID(int=100)).name == 'first'
         scenario()
@@ -235,7 +249,8 @@ from test_sqlalchemy_adapter import (app as adapter_app, db, factory as adapter_
 
 
 @pytest.mark.parametrize('adapter_app', [{'bigint': True}], indirect=True)
-def test_signed_int64_records_and_multiple_protected_outputs_match_native(adapter_app):
+@pytest.mark.parametrize('returning', [False, True])
+def test_signed_int64_records_and_multiple_protected_outputs_match_native(adapter_app, returning):
     from sqlalchemy.orm import registry
     app = adapter_app
     identities = (-2**63, -1, 0, 2**63 - 1)
@@ -248,14 +263,21 @@ def test_signed_int64_records_and_multiple_protected_outputs_match_native(adapte
             observed = []
             for identity in identities:
                 statement = update(app.Customer).where(app.Customer.id == identity,
-                    app.Customer.tenant_id == ADAPTER_TENANT).returning(
-                        app.Customer.id, app.Customer.note, app.Customer.secret)
+                    app.Customer.tenant_id == ADAPTER_TENANT)
+                if returning:
+                    statement = statement.returning(app.Customer.id, app.Customer.note, app.Customer.secret)
                 values = {'note': f'PUBLIC {identity}'}
                 if identity == 0: values['secret'] = None
                 result = session.execute(statement, values,
                     execution_options={'synchronize_session': False})
-                row = result.one()
-                assert tuple(result.keys()) == ('id', 'note', 'secret') and type(row[0]) is int
+                if returning:
+                    row = result.one()
+                    assert tuple(result.keys()) == ('id', 'note', 'secret')
+                else:
+                    assert result.rowcount == 1 and result.returns_rows is False
+                    row = session.execute(select(app.Customer.id, app.Customer.note, app.Customer.secret).where(
+                        app.Customer.id == identity, app.Customer.tenant_id == ADAPTER_TENANT)).one()
+                assert type(row[0]) is int
                 assert row == (identity, f'PUBLIC {identity}', None if identity == 0 else 'unchanged secret')
                 observed.append(tuple(row))
             session.rollback()
