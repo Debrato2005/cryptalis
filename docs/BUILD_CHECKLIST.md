@@ -47,7 +47,7 @@ the current contract owners define acceptance, without dropping any objective.
 | OBJ-LIFE-05 | Decrypt-back current edits; preserve schema behavior; package-free exit | VERIFIED, bounded | Verified current-value decrypt-back, native metadata/constraint restoration, owned sequences and opt-in public slots; genuine restored-target and original-application package-free exits. [Lifecycle](lifecycle.md) and [history](history/implementation-2026-10.md). | Broader external application/schema coverage, retained-native objects and retained-copy obligations. |
 | OBJ-LIFE-06 | Rollback, restore, stale pin refusal, RPO/RTO, disaster drills | PARTIAL | Stale-pin/target refusals, process/COMMIT interruption recovery, genuine fresh-cluster adoption, provider failure controls and latest-value package-free exit. [Restore contract](lifecycle.md). | Host-authenticated fencing/quarantine, RPO/RTO measurement |
 | OBJ-LIFE-07 | Three separate rotation workflows | PARTIAL | Distinct root rewrap, payload rotation and search reindex; adoption lineage, source-only cancellation, process/COMMIT recovery, publication and current-value removal controls. [Rotation contract](lifecycle.md). | Combined provider/database rotation and recovery under production authority; retained-wrapper retirement. |
-| OBJ-LIFE-08 | Production KMS with outage/revocation/cost evidence | PARTIAL | Optional OpenBao Transit: actual TLS, context binding, token/version revocation, outage, sealed restart and source-fenced Raft snapshot recovery from source/installed wheel. [Provider evidence](openbao.md). | Hardened deployment, workload identity, audit, HA, production backup custody, combined disaster recovery, controlled destruction and independent review. |
+| OBJ-LIFE-08 | Production KMS with outage/revocation/cost evidence | PARTIAL | Optional AWS and Google SDK adapters; Google SDK/CRC32C plus native PostgreSQL controls and explicit live-account skip. OpenBao Transit has actual TLS, context binding, token/version revocation, outage, sealed restart and source-fenced Raft snapshot recovery from source/installed wheel. [Provider evidence](openbao.md). | Hardened deployment, workload identity, audit, HA, production backup custody, combined disaster recovery, controlled destruction and independent review. |
 | OBJ-LIFE-09 | Install, upgrade, decommission, clean uninstall | PARTIAL | Importable package; approved in-database removal retires reverse-owned objects after decrypt-back; a package-free restarted application process performs native CRUD | Versioned upgrade/removal and broader external application evidence |
 | OBJ-DX-01 | Minimal model/query changes; one manifest and one attach | IMPLEMENTED | Manifest compiler, SQLAlchemy/SQLModel attachment, shared key-free application configuration for init/Doctor/planning/apply/status/attachment/current-value removal and operational plan/apply/resume/status commands; unchanged original application journeys with explicit host authority. [Host inputs](host-contexts.md). | Simplify online capture, rotation, tenant provisioning and versioned upgrade workflows while keeping authority explicit. |
 | OBJ-DX-02 | Read-only `cryptalis doctor` with explicit UNKNOWN results | PARTIAL | Read-only manifest/schema/query preflight through shared application configuration, pre-key planning query admission, ACTIVE database diagnosis and cold-provider checks that preserve caller leases. Explicit UNKNOWN for unobserved boundaries. [Doctor routes](README.md#choose-a-route). | Broader query/write route inventory, provider workload identity/audit and operational prerequisites |
@@ -74,11 +74,12 @@ the current contract owners define acceptance, without dropping any objective.
    security admission; refusal alone is not completion.
 3. Complete versioned upgrade/rollback, deployment fencing, retained-copy
    inventory, combined database/provider recovery and controlled retirement.
-4. Measure current hot/cold/concurrent provider, write, migration and resource
-   costs against approved budgets; do not promote historical measurements.
-5. Obtain independent crypto/security/database review and production identity,
-   audit, HA, recovery and release-provenance evidence. Live cloud accounts are
-   needed only for selected cloud-provider cells.
+4. Complete provider workload identity, audit, HA, recovery and release-provenance
+   evidence; obtain independent crypto/security/database review. Live cloud
+   accounts are needed only for selected cloud-provider cells.
+5. After functional closure, optimize and measure hot/cold/concurrent provider,
+   write, migration and resource costs against approved budgets. Preserve the
+   existing performance failures; do not promote historical measurements.
 
 The [build guide](build-guide.md) owns the execution sequence and verification
 commands. [Historical imports](history/imports-2026-10.md) retain provenance.

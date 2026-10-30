@@ -6,31 +6,31 @@ Use the [documentation map](README.md) to find contracts and procedures.
 
 ## Current complete CI qualification
 
-**VERIFIED at `09c635aa9b665d1f5e34f3ca25b618af548cd866`:** GitHub
-[run 41002748166](https://github.com/Debrato2005/cryptalis/actions/runs/41002748166)
+**VERIFIED at `b92cfc7b2fdc808bc27bb5a95ee4b1c5f8c78ff2`:** GitHub
+[run 41005389139](https://github.com/Debrato2005/cryptalis/actions/runs/41005389139)
 passes both Source / PostgreSQL 16 and Reproducible artifacts / installed recovery.
-The [retained CI boundary](_reset/github-application-config-boundary-20261030.json)
+The [retained CI boundary](_reset/github-application-lifecycle-boundary-20261030.json)
 contains verified GitHub archive digests and the actual source/installed receipts.
 
-The complete default source run passes 3,138 test calls and eighteen subtests.
+The complete default source run passes 3,155 test calls and eighteen subtests.
 Twelve call skips, 63 setup skips and sixteen collection skips remain explicit;
-all 3,213 selected items complete. All 282 Python hashes match the recorded checkout,
+all 3,230 selected items complete. All 282 Python hashes match the recorded checkout,
 and source/imported-runtime stability passes. The original source-role fixture
 failure at `2d53867` remains fixed; no skipped cell is treated as qualified.
 
-The installed wheel passes 79 ORM/configuration controls, 69 real OpenBao/provider
+The installed wheel passes 96 ORM/configuration controls, 69 real OpenBao/provider
 checks, one export and one genuine fresh PostgreSQL recovery. Local and GitHub
 wheel/sdist hashes are identical. Repeat archives, SBOM, installed-file inspection
 and dependency consistency pass. The frozen audit reports 26 packages, zero known
 vulnerabilities and zero adverse statuses; this is not proof of absence of unknown
 vulnerabilities or independent review. Earlier CI is retained in
-[history](history/implementation-2026-10.md#complete-ci-at-15ffdb3-2026-10-30).
+[history](history/implementation-2026-10.md#complete-ci-at-09c635a-2026-10-30).
 The separate explicit performance profile below fails latency targets; a green
 default CI run does not qualify performance.
 
 Documentation consolidation is `26e882b`; shared init/Doctor is `15ffdb3` and
-shared application configuration is `09c635a`. The later lifecycle extension
-below has a separate local verification boundary.
+shared application configuration is `09c635a`; lifecycle integration is `b92cfc7`.
+The subsequent Google provider below has a separate local verification boundary.
 
 The 34-objective [ledger](BUILD_CHECKLIST.md#objective-ledger) retains seven
 bounded VERIFIED entries, 23 PARTIAL entries, one SPECIFIED, one BLOCKED, one
@@ -46,7 +46,7 @@ gates remain UNKNOWN.
 
 ## Shared application configuration
 
-**VERIFIED locally, source and installed wheel:** [ApplicationConfig](application.md)
+**VERIFIED locally and in complete GitHub CI:** [ApplicationConfig](application.md)
 shares one key-free declaration/mapping/evidence configuration across init, Doctor,
 planning, apply/resume, status, attachment and decrypt-back/removal. Manifest and
 writer/search-evidence drift refuses before database/key access, including reverse
@@ -55,18 +55,41 @@ host pins, maintenance, plaintext and removal approvals remain authoritative.
 
 The [lifecycle boundary](_reset/application-lifecycle-boundary-20261030.json) records
 146 passing affected source checks with one explicit skip, 96 installed
-ORM/configuration checks, 69 real
-OpenBao/provider checks, one export and one genuine fresh PostgreSQL recovery.
+ORM/configuration checks, 69 real OpenBao/provider checks, one export and one genuine fresh PostgreSQL recovery.
 Original and restored applications preserve their latest values through removal.
 A failed second chunk retains its first committed chunk and resumes without
 replacing that ciphertext. Missing pin/maintenance/plaintext/removal authority
 refuses before database or key access. Repeat artifacts, SBOM, installed-file
 inspection and dependency consistency pass; all 282 Python hashes and runtime
-bytes are stable. The full remote run above covers the prior configuration slice;
-this lifecycle extension still awaits complete CI. Sample inspection does not
-establish full application coverage. All production gates remain UNKNOWN.
+bytes are stable. The complete remote run above additionally verifies this
+lifecycle extension. Sample inspection does not establish full application coverage. All production gates remain UNKNOWN.
+
+## Google Cloud KMS SDK boundary
+
+**VERIFIED locally, SDK protocol and real PostgreSQL:** the optional
+[Google provider](google-kms.md) supports context-bound root wrap/unwrap, async
+preparation, verified rewrap, CRC32C, explicit version/level checks, bounded calls
+without automatic retries, fork refusal and redacted errors. Its decrypt-version
+visibility limit is explicit; no ciphertext or header selects provider authority.
+
+The [retained boundary](_reset/google-kms-boundary-20261030.json) records 174 passing
+source checks, 49 installed Google checks, 96 installed application/ORM checks,
+69 real OpenBao checks and genuine fresh PostgreSQL export/recovery. All 285
+Python files and runtime bytes remain stable. Repeat archives, SBOM, install and
+dependency checks pass. The frozen audit covers 39 packages with zero known
+vulnerabilities/adverse statuses. The initial erroneous cancellation assertion and
+one invalid test-file selection remain in the archive with their corrections.
+
+Google checks use the actual SDK/protobuf with a local opaque-handle transport.
+The authorized-live test remains a collection skip: no Google account, billing,
+IAM or custody verification is claimed. Complete remote CI above predates this
+provider. Production identity/audit/HA, combined recovery, controlled retirement
+and independent review remain open. All production gates stay UNKNOWN.
 
 ## Current performance boundary
+
+Further optimization is deferred until functional objectives are implemented,
+following the current user priority. Existing failures and targets remain recorded.
 
 At `09c635a`, the matched warm 10k native/protected profile fails all six added-p95
 read targets. Scalar/tuple point, equality and IN-20 add 4.898, 7.206 and 20.788 ms;
@@ -91,7 +114,7 @@ records limits. Performance acceptance remains open.
 | Crypto | CF1 AES-256-GCM-SIV, random nonces, HKDF, independent HMAC search roots and authenticated context | [Security](security.md) |
 | ORM/search | Bounded sync/async SQLAlchemy and optional SQLModel; exact/IN/uniqueness and explicitly admitted forms | [Compatibility matrix](compatibility.md#full-capability-matrix) |
 | Lifecycle | Maintenance and bounded initial online protection, resumable verification, three rotations, current-data reverse/removal, fresh restore/adoption | [Lifecycle](lifecycle.md), [operator walkthrough](walkthrough-migration.md) |
-| Providers | Development custody, optional AWS SDK adapter, actual local OpenBao TLS/outage/revocation/snapshot evidence | [OpenBao](openbao.md); no production custody qualification |
+| Providers | Development custody, optional AWS/Google SDK adapters, actual local OpenBao TLS/outage/revocation/snapshot evidence | [OpenBao](openbao.md), [Google](google-kms.md); no production custody qualification |
 | Doctor | Pre-adoption schema/supplied SELECT checks, ACTIVE deployment admission, explicit cold-provider access | [Diagnosis](walkthrough-migration.md#diagnose-before-adoption), [provider checks](openbao.md) |
 
 SUPPORTED selects an admitted design scope. VERIFIED applies only to the named
@@ -117,7 +140,7 @@ passes, unavailable tests and AI reviews do not replace any requirement below.
 
 ## Evidence routing
 
-- [Latest complete CI receipt](_reset/github-application-config-boundary-20261030.json): exact source and installed bindings, counts, skips and artifact digests.
+- [Latest complete CI receipt](_reset/github-application-lifecycle-boundary-20261030.json): exact source and installed bindings, counts, skips and artifact digests.
 - [Implementation history](history/implementation-2026-10.md): earlier bounded capabilities, failures and measurements.
 - [Decision history](history/decisions-2026-10.md): rationale and superseded choices.
 - [Research index](research/README.md): external sources and historical review material.

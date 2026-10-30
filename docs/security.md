@@ -949,6 +949,31 @@ key-policy admission do not change.
 The [AWS encryption-context reference](https://docs.aws.amazon.com/kms/latest/developerguide/encrypt_context.html)
 explains service matching and logging. No caller-supplied context names are accepted.
 
+### Optional Google Cloud KMS adapter
+
+`crypto.google_kms.GoogleKmsKeyProvider` uses a host-owned synchronous Google SDK
+client and the existing wrapped-root/Keyring contract. The optional `gcp` extra
+pins the SDK and maintained CRC32C library. A full encryption-version resource and
+explicit SOFTWARE/HSM level are bound into AAD alongside the provider/domain/
+tenant/purpose/root/generation context. It verifies encryption response identity,
+both request-checksum flags and output checksums; missing checksums refuse.
+Only 32-byte plaintext roots are admitted. CRC32C is corruption detection, not
+cryptographic authentication. No plaintext checksum is persisted.
+
+Decrypt names the pinned parent CryptoKey; Google selects its version and does
+not return that version's identity. The authenticated version label in AAD does
+not create an independent native-version observation. Native deletion/revocation,
+workload identity and all retained recovery routes require live qualification.
+The host owns credential scope, authenticated transport, protected SDK logging
+and client lifetime. The adapter disables automatic SDK retries, applies a bounded
+per-call timeout, refuses inherited processes and drops late canceled results
+through Keyring. Rewrap verifies source/destination root equality. There is no
+automatic key administration, local fallback or root-zeroization claim.
+
+[Setup and live qualification](google-kms.md) separates actual SDK/protobuf tests
+with a local protocol transport from an explicitly authorized live account.
+Real PostgreSQL application tests with that transport do not prove cloud custody.
+
 ### Optional OpenBao Transit adapter
 
 `cryptalis.crypto.openbao.OpenBaoTransitKeyProvider` implements the same

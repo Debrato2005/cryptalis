@@ -24,7 +24,11 @@ The baseline slices below are dependency and acceptance contracts, not a claim
 that implementation starts at slice 1 again. The current code already has bounded
 implementations of all seven. Continue from the [objective ledger](BUILD_CHECKLIST.md#next-critical-path):
 simplify host integration without weakening explicit authority, then verify the
-affected native application journey. [Status](status.md) identifies the tested base.
+affected native application journey. Complete functional objectives before further
+optimization work. Preserve measured performance failures and their acceptance
+targets; optimize after the functional requirements are implemented. Correctness,
+security and required verification remain active throughout. [Status](status.md)
+identifies the tested base.
 
 ## Ordered build slices
 
