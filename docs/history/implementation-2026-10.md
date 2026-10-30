@@ -6769,3 +6769,21 @@ Further work must measure a concrete traversal change with fresh adversarial and
 native-oracle coverage. This profile does not explain the older full-entity page
 anomaly or qualify cold/remote providers, concurrency, async, writes or larger
 datasets. All production gates remain UNKNOWN.
+
+## Shared application configuration checkpoint: 2026-10-30
+
+**VERIFIED in local and GitHub source/installed checks:** [ApplicationConfig](../application.md)
+shares one key-free declaration/mapping/evidence configuration across init, Doctor,
+planning and sync/async SQLAlchemy/SQLModel attachment. Planning rejects failed or
+unavailable sample admission before key resolution. Runtime attachment rejects
+manifest or writer/search-evidence drift before database/key access. Explicit
+host pins, tenant authentication, maintenance and removal approvals remain required.
+
+The [retained boundary](../_reset/application-config-boundary-20261030.json) records
+231 affected source checks, 79 installed ORM/configuration checks, 69 real
+OpenBao/provider checks, one export and one genuine fresh PostgreSQL recovery.
+The restored target uses the shared configuration with its explicit restore binding.
+Repeat artifacts, SBOM, installed-file inspection and dependency consistency pass;
+all 282 Python hashes and runtime bytes are stable. The complete GitHub run above
+additionally verifies this implementation. Sample inspection does not establish
+full application coverage. All production gates remain UNKNOWN.

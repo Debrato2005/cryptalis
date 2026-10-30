@@ -675,11 +675,17 @@ Source and installed genuine adopted-target verification pass.
 
 `ApplicationConfig` stores only canonical declaration and host-supplied mapping,
 writer/search evidence and optional SELECT samples. It stores no keys or operation
-authority. Its runtime attachment requires a supplied plan/pin and compares the
-manifest and current writer/search evidence before connecting or invoking a key
-resolver; incomplete or changed evidence refuses. Existing target, schema,
+authority. Its attachment, apply/status, reverse planning, decrypt-back and removal
+require a supplied plan/pin and compare the manifest and current writer/search
+evidence before connecting or invoking a key resolver; incomplete or changed
+evidence refuses. Reverse operations compare the protected source's facts.
+Existing target, schema,
 logging, tenant and restore checks still apply. Its planning context similarly
 binds the CLI input declaration. No pin, scope, approval or provider is inferred.
+Lifecycle methods delegate to existing executors. Maintenance, plaintext exposure
+and removal approvals remain separate; status is not current value verification.
+Restored sources carry an explicit binding into reverse planning, retained in the
+reverse artifact. Protection apply refuses a third restore-tuple element.
 
 Supplied planning queries use the same structural admission as Doctor before
 key-policy resolution. Incompatible or unobserved admission blocks planning;

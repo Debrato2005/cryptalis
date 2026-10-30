@@ -82,14 +82,76 @@ class ApplicationConfig:
         Await the result for an AsyncEngine. Select adapter='sqlmodel' for native
         SQLModel Session.exec behavior. Existing adapter checks remain authoritative.
         """
-        from .migration import DeploymentPin, MigrationPlan
-        from .manifest.compiler import _canonical, _host_evidence
-        if (type(deployment) is not tuple or len(deployment) not in (2, 3)
-                or type(deployment[0]) is not MigrationPlan or type(deployment[1]) is not DeploymentPin):
-            raise ConfigurationInvalid('Application.InvalidDeployment')
+        self._deployment(deployment, allow_restore=True)
         if type(adapter) is not str or adapter not in ('sqlalchemy', 'sqlmodel'):
             raise ConfigurationInvalid('Application.InvalidAdapter')
         plan = deployment[0]
+        if adapter == 'sqlmodel':
+            from .sqlmodel import attach
+        else:
+            from .sqlalchemy import attach
+        return attach(self.mapping, engine, lock=plan.lock_bytes, keys=keys, deployment=deployment)
+
+    def apply(self, engine, *, deployment, keys, approval, chunk_size=1000, until='PENDING'):
+        """Apply or resume protection; publication remains an explicit host step."""
+        from .migration import apply
+        self._deployment(deployment)
+        plan, pin = deployment
+        return apply(plan, engine, keys=keys, pin=pin, approval=approval,
+                     chunk_size=chunk_size, until=until)
+
+    def status(self, engine, *, deployment):
+        """Observe protection or decrypt-back progress without keys or effects."""
+        from . import deprotection, migration
+        reverse = (type(deployment) is tuple and len(deployment) == 2
+                   and type(deployment[0]) is deprotection.DeprotectionPlan)
+        self._deployment(deployment, reverse=reverse, allow_restore=not reverse)
+        plan, pin, *restored = deployment
+        if reverse:
+            return deprotection.status(plan, engine, pin=pin)
+        return migration.status(plan, engine, pin=pin, restore=restored[0] if restored else None)
+
+    def plan_deprotection(self, engine, *, deployment, keys, plaintext_runtime_role,
+                          backfill_rows_per_second, verify_rows_per_second,
+                          temporary_bytes_per_row, wal_bytes_per_row):
+        """Plan restoration of current values; this grants no plaintext consent."""
+        from .deprotection import plan
+        self._deployment(deployment, allow_restore=True)
+        source, pin, *restored = deployment
+        return plan(source, engine, source_pin=pin, keys=keys,
+            plaintext_runtime_role=plaintext_runtime_role,
+            backfill_rows_per_second=backfill_rows_per_second, verify_rows_per_second=verify_rows_per_second,
+            temporary_bytes_per_row=temporary_bytes_per_row, wal_bytes_per_row=wal_bytes_per_row,
+            restore=restored[0] if restored else None)
+
+    def decrypt_back(self, engine, *, deployment, keys, approval, consent,
+                     chunk_size=1000, until='PLAINTEXT_PENDING'):
+        """Resume verified current-value decryption under explicit exposure consent."""
+        from .deprotection import apply
+        self._deployment(deployment, reverse=True)
+        plan, pin = deployment
+        return apply(plan, engine, keys=keys, pin=pin, approval=approval, consent=consent,
+                     chunk_size=chunk_size, until=until)
+
+    def remove(self, engine, *, deployment, approval, consent, removal):
+        """Retire eligible database objects after approved plaintext activation.
+
+        This does not uninstall the package, retire keys or erase retained backups.
+        """
+        from .deprotection import remove
+        self._deployment(deployment, reverse=True)
+        plan, pin = deployment
+        return remove(plan, engine, pin=pin, approval=approval, consent=consent, removal=removal)
+
+    def _deployment(self, deployment, *, reverse=False, allow_restore=False):
+        from .migration import DeploymentPin, MigrationPlan
+        from .deprotection import DeprotectionPlan
+        from .manifest.compiler import _canonical, _host_evidence
+        plan_type = DeprotectionPlan if reverse else MigrationPlan
+        if (type(deployment) is not tuple or len(deployment) not in ((2, 3) if allow_restore else (2,))
+                or type(deployment[0]) is not plan_type or type(deployment[1]) is not DeploymentPin):
+            raise ConfigurationInvalid('Application.InvalidDeployment')
+        plan = deployment[0].source if reverse else deployment[0]
         lock = plan.document['lock']
         declared = parse_protection_declaration(_canonical(lock['declaration']))
         if declared.canonical_bytes() != self.manifest:
@@ -98,8 +160,3 @@ class ApplicationConfig:
         writers, reviews = _host_evidence(declared, self.writers, self.search_reviews, issues)
         if issues or writers != lock['writer_inventory'] or reviews != lock['search_reviews']:
             raise ConfigurationInvalid('Application.HostEvidenceMismatch')
-        if adapter == 'sqlmodel':
-            from .sqlmodel import attach
-        else:
-            from .sqlalchemy import attach
-        return attach(self.mapping, engine, lock=plan.lock_bytes, keys=keys, deployment=deployment)

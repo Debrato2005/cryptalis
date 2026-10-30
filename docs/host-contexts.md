@@ -32,8 +32,8 @@ private output and atomic durable publication. Protection execution accepts prot
 Resume and abort bind the requested operation before host loading. The default
 target is PENDING. ACTIVE requires the supplied ACTIVATING host pin and maintenance
 approval. The CLI cannot authenticate or infer host authority. Doctor's key-free
-configuration tuple remains separate. Other lifecycle commands remain required future
-work. No format, cryptographic or core protocol changes. See the
+configuration tuple remains separate. Other lifecycle contexts are defined below.
+No format, cryptographic or core protocol changes. See the
 [status checkpoint](history/implementation-2026-10.md#operational-cli-protection-workflow-2026-10-24).
 These dependencies do not supply host business authorization. No additional authority, workflow, or diagnostic service is required.
 
