@@ -70,7 +70,10 @@ def invoke(directory, body, *options):
         str(Path(cryptalis.__file__).resolve().parent.parent), str(directory))))
     return subprocess.run([sys.executable, '-m', 'cryptalis', 'doctor',
         '--provider-context=provider_host:context', '--json', *options],
-        env=environment, capture_output=True, text=True, timeout=15)
+        # A provider may make two independently bounded 10s HTTPS requests.
+        # This process watchdog also covers interpreter/host initialization;
+        # it is not a provider latency acceptance target.
+        env=environment, capture_output=True, text=True, timeout=45)
 
 
 @pytest.mark.parametrize('body,code,status', [

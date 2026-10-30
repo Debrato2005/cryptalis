@@ -119,7 +119,8 @@ class Qualification:
                 '--receipt', str(self.workdir / 'installed-sqlmodel-receipt.json'), '--',
                 'tests/test_sqlmodel_bridge.py', 'tests/test_sqlmodel_async.py',
                 'tests/test_single_tenant_update.py', 'tests/test_single_tenant_delete.py',
-                'tests/test_initialization_cli.py', 'tests/test_application_config.py', '-q'],
+                'tests/test_initialization_cli.py', 'tests/test_application_config.py',
+                'tests/test_application_rotation.py', '-q'],
                 environment=environment)
             receipt = json.loads((self.workdir / 'installed-sqlmodel-receipt.json').read_text())
             if (receipt['exit_code'] != 0 or receipt['counts'].get('passed', 0) == 0
@@ -142,6 +143,16 @@ class Qualification:
             self.run('installed OpenBao TLS outage and PostgreSQL lifecycle', [str(python),
                 'scripts/openbao_qualification.py', '--workdir', str(self.workdir / 'openbao'),
                 '--installed-wheel', str(wheel)], environment=environment)
+            self.run('installed shared configuration on genuine fresh recovery', [str(python),
+                'scripts/fresh_cluster_qualification.py', '--workdir', str(self.workdir / 'application-fresh'),
+                '--application-config', '--installed-wheel', str(wheel)], environment=environment)
+            for phase in ('export', 'restore'):
+                receipt = json.loads((self.workdir / f'application-fresh/{phase}-receipt.json').read_text())
+                if (receipt['exit_code'] != 0 or receipt['counts'] != {'passed': 1 if phase == 'export' else 2}
+                        or receipt['pytest_report_counts']['collection']
+                        or receipt['runtime_binding']['mode'] != 'installed-wheel'
+                        or receipt['runtime_binding']['wheel_sha256'] != digest):
+                    raise CheckFailed(1)
             self.run('installed keyword public-slot genuine fresh recovery', [str(python),
                 'scripts/fresh_cluster_qualification.py', '--workdir', str(self.workdir / 'fresh'),
                 '--integer', '32', '--column-name', 'integer', '--public-slots',
@@ -176,6 +187,8 @@ class Qualification:
                 ('openbao/qualification.json', 'installed-openbao-qualification.json'),
                 ('fresh/export-receipt.json', 'installed-export-receipt.json'),
                 ('fresh/restore-receipt.json', 'installed-restore-receipt.json'),
+                ('application-fresh/export-receipt.json', 'installed-application-export-receipt.json'),
+                ('application-fresh/restore-receipt.json', 'installed-application-restore-receipt.json'),
                 ('fresh/integer-32-journey-receipt.json', 'installed-journey-receipt.json')):
             self.stage(self.workdir / relative, name)
         # Only successfully inspected release artifacts are eligible for upload.

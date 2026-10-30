@@ -6,32 +6,32 @@ Use the [documentation map](README.md) to find contracts and procedures.
 
 ## Current complete CI qualification
 
-**VERIFIED at `bda4fb33e4904785d14ab4da6eb8069e7558735f`:** GitHub
-[run 41007938176](https://github.com/Debrato2005/cryptalis/actions/runs/41007938176)
+**VERIFIED at `743b5e9e70ef91a4353bbee8daf6329d313a20f7`:** GitHub
+[run 41011079692](https://github.com/Debrato2005/cryptalis/actions/runs/41011079692)
 passes both Source / PostgreSQL 16 and Reproducible artifacts / installed recovery.
-The [retained CI boundary](_reset/github-google-kms-boundary-20261030.json)
+The [retained CI boundary](_reset/github-approle-boundary-20261030.json)
 contains verified GitHub archive digests and the actual source/installed receipts.
 
-The complete default source run passes 3,204 test calls and eighteen subtests.
-Twelve call skips, 63 setup skips and seventeen collection skips remain explicit;
-all 3,279 selected items complete. All 285 Python hashes match the recorded checkout,
+The complete default source run passes 3,242 test calls and eighteen subtests.
+Twelve call skips, 72 setup skips and seventeen collection skips remain explicit;
+all 3,326 selected items complete. All 286 Python hashes match the recorded checkout,
 and source/imported-runtime stability passes. The original source-role fixture
 failure at `2d53867` remains fixed; no skipped cell is treated as qualified.
 
-The installed wheel passes 96 ORM/configuration controls, 49 Google SDK and 69 real OpenBao/provider
+The installed wheel passes 96 ORM/configuration controls, 50 Google SDK and 114 OpenBao/provider
 checks, one export and one genuine fresh PostgreSQL recovery. Local and GitHub
 wheel/sdist hashes are identical. Repeat archives, SBOM, installed-file inspection
 and dependency consistency pass. The frozen audit reports 39 packages, zero known
 vulnerabilities and zero adverse statuses; this is not proof of absence of unknown
 vulnerabilities or independent review. Earlier CI is retained in
-[history](history/implementation-2026-10.md#complete-ci-at-b92cfc7-2026-10-30).
+[history](history/implementation-2026-10.md#complete-ci-at-bda4fb3-2026-10-30).
 The separate explicit performance profile below fails latency targets; a green
 default CI run does not qualify performance.
 
 Documentation consolidation is `26e882b`; shared init/Doctor is `15ffdb3` and
 shared application configuration is `09c635a`; lifecycle integration is `b92cfc7`.
-Google KMS is `bda4fb3`. The later AppRole change below has a separate local
-verification boundary.
+Google KMS is `bda4fb3`; AppRole is `743b5e9`. The later shared rotation API
+below has a separate local verification boundary.
 
 The 34-objective [ledger](BUILD_CHECKLIST.md#objective-ledger) retains seven
 bounded VERIFIED entries, 23 PARTIAL entries, one SPECIFIED, one BLOCKED, one
@@ -65,6 +65,23 @@ inspection and dependency consistency pass; all 282 Python hashes and runtime
 bytes are stable. The complete remote run above additionally verifies this
 lifecycle extension. Sample inspection does not establish full application coverage. All production gates remain UNKNOWN.
 
+The later [rotation boundary](_reset/application-rotations-boundary-20261030.json)
+adds shared manifest checks to root rewrap, payload rotation and search reindex,
+their staging/status/sealing/switching, and source-only cancellation. Native
+oracles verify unchanged rewrap ciphertext, payload rotation's stable terms,
+search rotation's changed terms, resumed chunks, uniqueness and current-value
+removal. The installed wheel passes 105 application/ORM checks, 50 Google checks,
+115 OpenBao/provider checks, two exports and three fresh-restore checks. The
+native service journey rewraps from OpenBao version 1 to 2 using AppRole.
+
+The separate restored-TEXT journey authenticates the backup, carries explicit
+restore authority through all three rotation plans, preserves current edits and
+completes removal. All 287 Python hashes and runtime bytes are stable. Initial
+pin-code assertions, two service test timing failures and an omitted restore
+prerequisite remain archived with corrections. A separate 45s source Doctor startup
+timeout has no established cause; its isolated rerun is retained separately. The final source and installed
+checks pass. This extension still awaits complete remote CI; all gates stay UNKNOWN.
+
 ## Google Cloud KMS SDK boundary
 
 **VERIFIED locally and in complete CI, SDK protocol and real PostgreSQL:** the optional
@@ -89,7 +106,7 @@ and independent review remain open. All production gates stay UNKNOWN.
 
 ## OpenBao workload authentication
 
-**VERIFIED locally, source and installed wheel:** [AppRole authentication](openbao.md#approle-workload-authentication)
+**VERIFIED locally and in complete GitHub CI:** [AppRole authentication](openbao.md#approle-workload-authentication)
 supplies fresh short-lived Transit tokens from explicitly supplied workload
 credentials. Exact policy, role name, service-token TTL, current SecretID binding
 and finite role SecretID lifetime are checked before release. Ambient token
@@ -104,7 +121,7 @@ checks pass. Native controls prove the policy denies key administration and
 SecretID minting; single-use credentials refuse replay and recover with a fresh
 callback value. AppRole drives current-value PostgreSQL removal and independent
 Raft snapshot recovery with the source service offline. The old authentication
-endpoint fails during that recovery. Complete remote CI above predates AppRole.
+endpoint fails during that recovery. Complete remote CI above also verifies AppRole.
 
 Host credential delivery, historical SecretID retirement, policy contents, audit
 sinks, production HA and combined deployment recovery remain unqualified. Current
@@ -134,7 +151,7 @@ records limits. Performance acceptance remains open.
 
 | Area | Implemented boundary | Contract / instructions |
 |---|---|---|
-| Application setup | One key-free configuration for diagnosis, planning, apply/resume, attachment and current-value removal | [Application configuration](application.md) |
+| Application setup | One key-free configuration for diagnosis, planning, protection, three rotations, attachment and current-value removal | [Application configuration](application.md) |
 | Manifest | Bounded JSON declaration, mapping/schema validation, generated locks and semantic diff | [Manifest](manifest.md) |
 | Crypto | CF1 AES-256-GCM-SIV, random nonces, HKDF, independent HMAC search roots and authenticated context | [Security](security.md) |
 | ORM/search | Bounded sync/async SQLAlchemy and optional SQLModel; exact/IN/uniqueness and explicitly admitted forms | [Compatibility matrix](compatibility.md#full-capability-matrix) |
@@ -165,7 +182,7 @@ passes, unavailable tests and AI reviews do not replace any requirement below.
 
 ## Evidence routing
 
-- [Latest complete CI receipt](_reset/github-google-kms-boundary-20261030.json): exact source and installed bindings, counts, skips and artifact digests.
+- [Latest complete CI receipt](_reset/github-approle-boundary-20261030.json): exact source and installed bindings, counts, skips and artifact digests.
 - [Implementation history](history/implementation-2026-10.md): earlier bounded capabilities, failures and measurements.
 - [Decision history](history/decisions-2026-10.md): rationale and superseded choices.
 - [Research index](research/README.md): external sources and historical review material.

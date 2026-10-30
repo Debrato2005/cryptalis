@@ -48,7 +48,8 @@ def run_pytest(receipt, scope, module, extra_env, *, installed_wheel=None):
     runtime_options = ([] if installed_wheel is None else
                        ['--installed-wheel', str(installed_wheel.resolve())])
     command = [sys.executable, str(ROOT / 'scripts' / 'test_postgres.py'),
-               *runtime_options, '--receipt', str(receipt), '--scope', scope, '--', module, '-q']
+               *runtime_options, '--receipt', str(receipt), '--scope', scope, '--',
+               *((module,) if isinstance(module, str) else module), '-q']
     result = subprocess.run(command, cwd=ROOT, env=dict(os.environ, **extra_env))
     if result.returncode != 0:
         raise SystemExit(f'pytest step failed: {module}')
@@ -130,6 +131,8 @@ def main():
     parser.add_argument('--public-slots', action='store_true',
                         help='Qualify explicit original-column slot preservation and restored slot authority.')
     profiles = parser.add_mutually_exclusive_group()
+    profiles.add_argument('--application-config', action='store_true',
+                          help='Qualify shared configuration, rotation planning and current-value removal after restore.')
     profiles.add_argument('--reverse-cli', action='store_true',
                           help='Qualify saved reverse planning and approved CLI removal on an adopted target.')
     profiles.add_argument('--rewrap-cli', action='store_true',
@@ -172,6 +175,8 @@ def main():
     profiles.add_argument('--search-rotation', action='store_true',
                           help='Qualify backup recovery after search rotation and a later protected edit.')
     args = parser.parse_args()
+    if args.application_config and (args.varchar or args.restore_lease or args.public_slots):
+        parser.error('--application-config uses the original TEXT fixture and shared configuration lifecycle.')
     if args.column_name != 'name' and not args.integer:
         parser.error('--column-name integer requires --integer.')
     if args.sqlmodel_http and (args.varchar or args.restore_lease or args.public_slots or args.owned_sequences):
@@ -216,7 +221,8 @@ def main():
     export_receipt = workdir / 'export-receipt.json'
     restore_receipt = workdir / 'restore-receipt.json'
 
-    profile = ('; staged search CLI sealing and publication on an adopted target' if args.search_cli else
+    profile = ('; shared configuration, rotation planning and current-value removal on an adopted target' if args.application_config else
+               '; staged search CLI sealing and publication on an adopted target' if args.search_cli else
                '; staged payload CLI sealing and publication on an adopted target' if args.payload_cli else
                '; root-rewrap CLI cancellation and publication on an adopted target' if args.rewrap_cli else
                '; saved reverse-plan and approved removal CLI on an adopted target' if args.reverse_cli else
@@ -360,7 +366,9 @@ def main():
         credentials = provision(port, password, manifest, plain_database)
         home = write_home(workdir, port, manifest, credentials)
         restore = run_pytest(restore_receipt, 'Fresh-cluster protected-backup recovery and adoption; isolated cluster' + profile,
-                             ('tests/test_date_fresh_cluster.py::test_restore_date_authentication_explicit_adoption_latest_exit' if args.date else
+                             (('tests/test_fresh_cluster_restore.py::test_protected_backup_recovers_values_with_retained_keys',
+                               'tests/test_fresh_cluster_restore.py::test_restored_cluster_completes_adopted_lifecycle') if args.application_config else
+                              'tests/test_date_fresh_cluster.py::test_restore_date_authentication_explicit_adoption_latest_exit' if args.date else
                               'tests/test_search_operational_cli.py::test_genuine_adopted_search_cli_seals_saved_activation_and_latest_native_exit' if args.search_cli else
                               'tests/test_payload_operational_cli.py::test_genuine_adopted_payload_cli_seals_saved_activation_and_latest_native_exit' if args.payload_cli else
                               'tests/test_rewrap_operational_cli.py::test_genuine_adopted_rewrap_cli_preserves_binding_and_byte_identity' if args.rewrap_cli else

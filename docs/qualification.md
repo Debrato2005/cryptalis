@@ -9,6 +9,11 @@ The release harness runs the built wheel through ORM/DML controls and the shared
 initialization/Doctor context, including refusals, read-only database observations,
 cleanup and output failure. These checks run on a fresh PostgreSQL 16 cluster.
 Real OpenBao and independent PostgreSQL recovery follow in separate stages.
+The installed shared configuration runs all three rotation workflows and
+current-value removal. A dedicated `fresh_cluster_qualification.py --application-config`
+profile restores a retained TEXT backup, plans rotations against its explicit
+restore binding and removes protection after current edits. CI runs this profile
+as well as the keyword/public-slot recovery profile and retains separate receipts.
 Use [local development](local-development.md#automated-checks) for the complete command.
 
 ### Receipt outcome fields

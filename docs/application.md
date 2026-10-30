@@ -2,7 +2,7 @@
 
 `ApplicationConfig` keeps one explicit manifest, ORM registry, writer inventory,
 search review set and optional SELECT sample set. Reuse it for initialization,
-Doctor, protection planning/application, runtime attachment and verified removal.
+Doctor, protection planning/application, runtime attachment, three rotations and verified removal.
 It contains no engine,
 credentials, keyring, deployment pin or maintenance approval.
 
@@ -145,6 +145,74 @@ session factory. Select `adapter="sqlmodel"` for SQLModel's native `Session.exec
 behavior. Unsupported adapter names refuse. An adopted target can supply the
 existing `(plan, active_pin, restore_binding)` tuple; the normal restore authority
 checks remain mandatory.
+
+## Rotate keys and change custody
+
+Use the same configuration with explicit source and target key-policy resolvers.
+Cryptalis preserves the three different [rotation contracts](lifecycle.md#changes-and-rotation):
+
+| Operation | Shared configuration | Effect |
+|---|---|---|
+| Root rewrap | `plan_rewrap`, `rewrap`, `abort_rewrap` | Verify the same roots under changed wrapping custody; preserve payload and search bytes |
+| Payload generation | `plan_rotation(purpose="payload")` | Stage new authenticated payloads while retaining search terms |
+| Search generation | `plan_rotation(purpose="search")` | Stage new search terms and resealed payloads; preserve native uniqueness |
+
+Rewrap uses an exact successor artifact:
+
+```python
+proposal = protection.plan_rewrap(
+    owner_engine, deployment=(active_plan, active_pin), keys=source_keys,
+    target_keys=target_keys, verify_rows_per_second=measured_verify_rate,
+)
+successor = proposal.activation_plan
+# Retain proposal/successor outside PostgreSQL; obtain this exact PREPARED pin.
+protection.rewrap(
+    owner_engine, proposal=proposal, deployment=(successor, successor_prepared_pin),
+    keys=source_keys, target_keys=target_keys, approval=maintenance_approval,
+)
+```
+
+For a generation change, `plan_rotation` takes the four measured rates/costs from
+`plan`, explicit `purpose`, source `deployment`, `keys` and `target_keys`.
+Optional `max_batch_rows` and `max_batch_bytes` bound logical staging work.
+Use `(proposal, preparation_pin)` to prepare/resume, inspect or seal it:
+
+```python
+progress = protection.prepare_rotation(
+    owner_engine, deployment=(proposal, preparation_pin), keys=source_keys,
+    target_keys=target_keys, approval=maintenance_approval,
+)
+successor = protection.seal_rotation(
+    owner_engine, deployment=(proposal, preparation_pin), keys=source_keys,
+    target_keys=target_keys, approval=maintenance_approval,
+    copy_rows_per_second=measured_copy_rate, copy_wal_bytes_per_row=measured_copy_wal,
+)
+# Retain the exact sealed artifact before obtaining its PREPARED pin.
+protection.switch_rotation(
+    owner_engine, proposal=proposal, deployment=(successor, successor_prepared_pin),
+    keys=source_keys, target_keys=target_keys, approval=maintenance_approval,
+)
+```
+
+`prepare_rotation` defaults to `BACKFILLED`; `max_chunks` allows a bounded partial
+run and `status` reports its durable progress without claiming fresh verification.
+Committed chunks resume without resealing. Sealing returns verified observations,
+not publication authority. Rewrap and generation switch both leave `PENDING` with
+writers stopped. After external publication, use `apply` with the successor's
+`ACTIVATING` pin and `until="ACTIVE"`, then attach through the current host pin.
+
+To cancel eligible staging, use `abort_rotation` with `proposal`, the original
+source `deployment`, source `keys` and maintenance `approval`. Pending rewrap uses
+`abort_rewrap` with the same source inputs. Both require the host to republish its
+source ACTIVE authority first; neither needs target keys. A completed generation
+switch cannot use staging cancellation. The underlying executor rejects stale
+pins, mismatched successors, missing approval and unsafe state.
+
+Planning accepts `(source_plan, source_pin, restore_binding)` on a restored
+target; the existing restore proof and lineage remain mandatory. No method
+retires old wrappers, destroys provider keys or removes retained-backup readers.
+Provider calls may have native audit/cost effects. Failed AppRole authentication
+remains uncertain even while creating an inactive rewrap candidate.
 
 ## Decrypt current values and remove protection
 
