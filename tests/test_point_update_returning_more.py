@@ -26,6 +26,10 @@ CASES = [
 ]
 
 
+def assignments(statement, values, embedded):
+    return (statement.values(**values), None) if embedded else (statement, values)
+
+
 def query(app, kind):
     columns = (app.Customer,) if kind == 'entity' else (app.Customer.name, app.Customer.label)
     statement = update(app.Customer).where(app.Customer.id == UUID(int=100),
@@ -47,12 +51,13 @@ def consume(app, session, result, kind, expected):
 @pytest.mark.parametrize('dtype,value,stored', CASES)
 @pytest.mark.parametrize('kind', ['tuple', 'entity'])
 @pytest.mark.parametrize('mode', ['sync', 'async'])
-def test_native_returning_types_entities_transactions_and_async(dtype, value, stored, kind, mode):
+@pytest.mark.parametrize('embedded', [False, True])
+def test_native_returning_types_entities_transactions_and_async(dtype, value, stored, kind, mode, embedded):
     with application(rows=2, value_type=dtype, protected_values=(None, None), queries=[]) as app:
         values = {'name': value, 'label': 'public'}
         def sync(factory=None):
             with (factory(tenant_id=TENANT) if factory else Session(app.runtime)) as session:
-                obj = consume(app, session, session.execute(query(app, kind), values,
+                obj = consume(app, session, session.execute(*assignments(query(app, kind), values, embedded),
                     execution_options={'synchronize_session': False}), kind, stored)
                 if obj is not None:
                     assert session.get(app.Customer, UUID(int=100)) is obj
@@ -68,7 +73,7 @@ def test_native_returning_types_entities_transactions_and_async(dtype, value, st
                 factory = await attach(app.mapping, runtime, lock=app.plan.lock_bytes, keys=keys,
                     deployment=(app.plan, app.pin)) if protected else None
                 async with (factory(tenant_id=TENANT) if factory else AsyncSession(runtime)) as session:
-                    result = await session.execute(query(app, kind), values,
+                    result = await session.execute(*assignments(query(app, kind), values, embedded),
                         execution_options={'synchronize_session': False})
                     obj = consume(app, session, result, kind, stored)
                     if obj is not None:
@@ -94,7 +99,8 @@ def test_native_returning_types_entities_transactions_and_async(dtype, value, st
 @pytest.mark.parametrize('dtype,bad,sqlstate', [(String(4, collation='C'), 'abcde', '22001'),
                                              (SmallInteger(), 32768, '22003')])
 @pytest.mark.parametrize('returning', [False, True])
-def test_missing_rows_and_assignment_failures_preserve_native_transaction_state(dtype, bad, sqlstate, returning):
+@pytest.mark.parametrize('embedded', [False, True])
+def test_missing_rows_and_assignment_failures_preserve_native_transaction_state(dtype, bad, sqlstate, returning, embedded):
     with application(rows=2, value_type=dtype, protected_values=(None, None), queries=[]) as app:
         def scenario(factory=None):
             with (factory(tenant_id=TENANT) if factory else Session(app.runtime)) as session:
@@ -105,7 +111,7 @@ def test_missing_rows_and_assignment_failures_preserve_native_transaction_state(
                     if returning:
                         statement = statement.returning(app.Customer.name)
                     try:
-                        result = session.execute(statement, {'name': bad},
+                        result = session.execute(*assignments(statement, {'name': bad}, embedded),
                             execution_options={'synchronize_session': False})
                         rows = result.all() if returning else result.rowcount
                     except (CryptoFailure, DBAPIError) as error:
@@ -210,7 +216,8 @@ def test_fixed_scope_renamed_outputs_match_native_and_survive_current_value_remo
 
 @pytest.mark.parametrize('fault,code', [('unique', '23505'), ('not_null', '23502')])
 @pytest.mark.parametrize('returning', [False, True])
-def test_native_constraint_failure_savepoint_recovery_and_autoflush(fault, code, returning):
+@pytest.mark.parametrize('embedded', [False, True])
+def test_native_constraint_failure_savepoint_recovery_and_autoflush(fault, code, returning, embedded):
     from sqlalchemy.exc import IntegrityError
     with application(rows=3, value_nullable=False, protected_values=('first', 'second', 'third')) as app:
         def scenario(factory=None):
@@ -220,7 +227,7 @@ def test_native_constraint_failure_savepoint_recovery_and_autoflush(fault, code,
                 values = {'name': 'second' if fault == 'unique' else None}
                 selected = query(app, 'tuple' if returning else None)
                 with pytest.raises(IntegrityError) as failed:
-                    result = session.execute(selected, values,
+                    result = session.execute(*assignments(selected, values, embedded),
                         execution_options={'synchronize_session': False})
                     if returning:
                         result.all()
@@ -228,7 +235,7 @@ def test_native_constraint_failure_savepoint_recovery_and_autoflush(fault, code,
                 savepoint.rollback()
                 assert session.get(app.Customer, UUID(int=100)).name == 'first'
                 assert session.get(app.Customer, UUID(int=102)).label == 'PUBLIC outer edit'
-                retried = session.execute(selected, {'name': 'PUBLIC retry'},
+                retried = session.execute(*assignments(selected, {'name': 'PUBLIC retry'}, embedded),
                     execution_options={'synchronize_session': False})
                 if returning:
                     assert retried.one()[0] == 'PUBLIC retry'
@@ -250,7 +257,8 @@ from test_sqlalchemy_adapter import (app as adapter_app, db, factory as adapter_
 
 @pytest.mark.parametrize('adapter_app', [{'bigint': True}], indirect=True)
 @pytest.mark.parametrize('returning', [False, True])
-def test_signed_int64_records_and_multiple_protected_outputs_match_native(adapter_app, returning):
+@pytest.mark.parametrize('embedded', [False, True])
+def test_signed_int64_records_and_multiple_protected_outputs_match_native(adapter_app, returning, embedded):
     from sqlalchemy.orm import registry
     app = adapter_app
     identities = (-2**63, -1, 0, 2**63 - 1)
@@ -268,7 +276,7 @@ def test_signed_int64_records_and_multiple_protected_outputs_match_native(adapte
                     statement = statement.returning(app.Customer.id, app.Customer.note, app.Customer.secret)
                 values = {'note': f'PUBLIC {identity}'}
                 if identity == 0: values['secret'] = None
-                result = session.execute(statement, values,
+                result = session.execute(*assignments(statement, values, embedded),
                     execution_options={'synchronize_session': False})
                 if returning:
                     row = result.one()

@@ -131,6 +131,29 @@ UUID as the session scope. Existing loaded objects remain stale under
 row. Native assignment errors can still occur for a missing record during SQL
 evaluation; roll back the failed transaction or savepoint before retrying.
 
+You can instead put ordinary scalar assignments on the statement and omit
+the external dictionary:
+
+```python
+result = session.execute(
+    update(Customer)
+    .where(Customer.id == app_assigned_uuid,
+           Customer.tenant_id == authenticated_tenant)
+    .values(note="updated")
+    .returning(Customer.id, Customer.note),
+    execution_options={"synchronize_session": False},
+)
+returned = result.one_or_none()
+session.commit()
+```
+
+Keywords use mapped attribute names; `.values({Customer.note: "updated"})`
+also works. Python `None` retains native NULL behavior. Cryptalis captures and
+rechecks the assignments around key preparation, encrypts protected values,
+and executes an owned statement copy. The original statement remains reusable.
+Do not combine this form with external parameters or explicit SQL expressions,
+`bindparam`, callable values, or ordered assignments.
+
 Omit `.returning(...)` when only the affected-row count is needed. The same
 single-record update then returns native `result.rowcount` (zero or one), with
 `result.returns_rows` false. Reading rows from that result raises SQLAlchemy's
@@ -138,7 +161,7 @@ normal `ResourceClosedError`. Identity-map and transaction behavior remain the
 same; even assigning the existing value counts a matched record.
 
 Use direct or explicitly named returned columns, or the mapped entity. Computed
-expressions, table aliases, `.values()` assignments, identity/tenant changes, and multirow
+expressions, table aliases, identity/tenant changes, and multirow
 executemany RETURNING are outside this route. It uses the existing encryption
 and declared search representation; it adds no search capability or production
 qualification. See [status](status.md) for exact verification.

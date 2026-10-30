@@ -4,34 +4,34 @@ Cryptalis implements a bounded research prototype. **No production release or co
 This page owns current verification and release gates; the [34-objective ledger](BUILD_CHECKLIST.md) owns remaining work.
 Use the [documentation map](README.md) to find contracts and procedures.
 
-**Latest complete hosted run: PASS at `5ab27a8`.** Both jobs in
-[run 41082443226](https://github.com/Debrato2005/cryptalis/actions/runs/41082443226)
-pass, including point UPDATE row counts, named DML results and bidirectional text search
-changes. The original `2d53867` source-role failure and later UUID fixture failures
+**Latest complete hosted run: PASS at `2900173`.** Both jobs in
+[run 41095408264](https://github.com/Debrato2005/cryptalis/actions/runs/41095408264)
+pass, including Boolean NOT with tenant guards, original predicate-result keys,
+point UPDATE row counts and named DML results. The original `2d53867` source-role failure and later UUID fixture failures
 remain repaired. [Retained failure](_reset/github-point-update-returning-failed-boundary-20261030.json)
 and [repair evidence](_reset/point-delete-returning-ci-fix-boundary-20261030.json)
 remain available.
 
 ## Current complete CI qualification
 
-**VERIFIED at `5ab27a82badf6c9555d812214ad4cf0a0d1f464f`:** GitHub
-[run 41082443226](https://github.com/Debrato2005/cryptalis/actions/runs/41082443226)
+**VERIFIED at `290017371aed0caf79b9d59eb2bed6d2829acdc2`:** GitHub
+[run 41095408264](https://github.com/Debrato2005/cryptalis/actions/runs/41095408264)
 passes Source / PostgreSQL 16 and Reproducible artifacts / installed recovery.
-The [retained CI boundary](_reset/github-point-update-rows-boundary-20261030.json)
+The [retained CI boundary](_reset/github-boolean-negation-boundary-20261030.json)
 binds GitHub archive digests and actual source/installed receipts to this revision.
 
-The complete default source run passes 3,641 test calls and eighteen subtests.
+The complete default source run passes 3,700 test calls and eighteen subtests.
 Twelve call skips, 86 setup skips and eighteen collection skips remain explicit;
-all 3,739 selected items complete. All 312 Python hashes match the recorded checkout,
+all 3,798 selected items complete. All 313 Python hashes match the recorded checkout,
 and source/imported-runtime stability passes. No skipped cell is qualified.
 
-The installed wheel passes 15 code-inventory and 516 ORM/configuration/status
+The installed wheel passes 15 code-inventory and 676 ORM/configuration/status
 controls, 50 Google SDK and 149 OpenBao/provider checks, four exports and five
 genuine fresh PostgreSQL recovery checks. Local and GitHub wheel/sdist hashes
 are identical. Repeat archives, SBOM, installed-file inspection and dependency
 consistency pass. The frozen audit reports 39 packages, zero known vulnerabilities
 and zero adverse statuses; this is not proof of absence of unknown vulnerabilities
-or independent review. [Earlier CI](_reset/github-insert-labels-boundary-20261030.json)
+or independent review. [Earlier CI](_reset/github-point-update-rows-boundary-20261030.json)
 remains retained. The separate performance profile fails latency targets;
 passing default CI does not qualify performance.
 
@@ -51,43 +51,45 @@ All 34 objectives remain in scope and all seven production gates remain UNKNOWN.
 ## Current ORM boundary
 
 **VERIFIED locally, source and installed wheel:** the
-[Boolean NOT boundary](_reset/boolean-negation-boundary-20261030.json) extends
-native AND/OR compositions of admitted equality, membership and NULL predicates.
-Negation is normalized before tenant guards are added. Native and protected
-truth, values, pagination, Unicode, aliases, empty/mixed-NULL lists and absent
-outer-join rows match across SQLAlchemy/SQLModel sync/async and fixed/scoped
-tenancy. Storage-only NULL predicates require no search representation.
+[point UPDATE values boundary](_reset/point-update-values-boundary-20261030.json)
+admits ordinary scalar `.values(...)` assignments for one exact typed record,
+with explicit tenant equality or declared fixed scope. Mapped keywords and
+mapped/physical column dictionaries use the existing prepared encryption and
+final driver checks. External parameters must be omitted for this form.
 
-Native Boolean container dispatch and annotated structure must remain intact.
-Before-key and provider-time mutations refuse before the driver. Counts,
-DISTINCT and predicate projections retain original expression-key access. The
-owned compiler uses the same checked search rewrite while preserving the ORM
-projection objects. Query-sample inspection in Doctor and modification planning
-uses no keys or application rows. The real OpenBao
-journey exercises NOT after writes and verifies current values through removal.
-No new crypto, token, index, key or lifecycle mechanism is introduced.
+Assignments are captured before key preparation and rechecked afterward,
+including async preparation. An owned statement copy receives encrypted values;
+the caller's original statement remains reusable. Native SQLAlchemy/SQLModel
+sync/async journeys preserve affected-row counts, NULL, supported types, stale
+identity/refresh behavior, savepoints, SQLSTATE failures and current-value
+removal. The real OpenBao journey exercises returned and non-returned updates.
 
-The final source run passes 342 controls, including original-expression result
-lookup, native positive controls for observed plaintext query binds, protected
-negative controls, and label-renderer refusals. Earlier receipts retain the
-initial missing capability, custom-renderer bypasses, twelve aggregate
-regressions and eight predicate-result-key failures. Those cases pass in the
-final source run. The first installed candidate's selected suite also remains
-retained, with its missing result-key coverage stated explicitly.
+The owned compiler selects authenticated RETURNING readers while preserving
+original ORM projection objects. INSERT and point UPDATE/DELETE results retain
+lookup by the caller's original label objects and native string keys. Existing
+record/tenant and exact prepared-frame authentication remain enforced.
 
-Installed qualification reruns 676 application controls, 15 Doctor checks,
+The final focused source run passes 55 new workflow and boundary checks. The
+broader run passes 444 controls and retains four INSERT fixture failures from
+an UPDATE-only synchronization option; that fixture is corrected in the final
+run. Product and script hashes are identical between those two runs. Earlier
+receipts retain the missing capability, native column-key normalization, ordered
+assignment guard and original-label lookup failures and their subsequent fixes.
+
+Installed qualification passes 783 application controls, 15 Doctor checks,
 50 Google checks, 149 real OpenBao/provider checks, four exports and five genuine
-fresh PostgreSQL recovery checks. All final inventories bind the same 313 Python
+fresh PostgreSQL recovery checks. All final inventories bind the same 315 Python
 files, with stable source and imported runtime bytes. Reproducible artifacts,
 SBOM, installed-file inspection and dependency consistency pass.
 
-[Point UPDATE row counts](_reset/point-update-rows-boundary-20261030.json),
+[Boolean NOT and predicate-result keys](_reset/boolean-negation-boundary-20261030.json),
+[point UPDATE row counts](_reset/point-update-rows-boundary-20261030.json),
 [named INSERT results](_reset/insert-labels-boundary-20261030.json) and
 [named point UPDATE/DELETE results](_reset/returning-labels-boundary-20261030.json)
-retain their native types, NULLs, identity behavior, transaction failures and
-prepared-frame authentication. Embedded assignments, upserts, broader DML,
-protected joins/grouping and unsupported search leaves remain open. All seven
-production gates remain UNKNOWN; performance and independent review are unqualified.
+retain their bounded contracts. Mixed embedded/external assignments, explicit
+SQL/bind expressions, ordered assignments, upserts, broader DML, protected
+joins/grouping and unsupported search leaves remain open. All seven production
+gates remain UNKNOWN; performance and independent review are unqualified.
 
 ## Bounded capability evidence
 
@@ -164,7 +166,7 @@ passes, unavailable tests and AI reviews do not replace any requirement below.
 
 ## Evidence routing
 
-- [Latest complete CI receipt](_reset/github-insert-labels-boundary-20261030.json): exact source and installed bindings, counts, skips and artifact digests.
+- [Latest complete CI receipt](_reset/github-boolean-negation-boundary-20261030.json): exact source and installed bindings, counts, skips and artifact digests.
 - [Implementation history](history/implementation-2026-10.md): earlier bounded capabilities, failures and measurements.
 - [Decision history](history/decisions-2026-10.md): rationale and superseded choices.
 - [Research index](research/README.md): external sources and historical review material.
