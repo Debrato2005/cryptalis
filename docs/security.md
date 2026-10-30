@@ -89,6 +89,12 @@ attributes are deferred. A valid frame for another input row cannot populate
 the wrong identity-map entry. Caller replacements must retain the native ORM
 projection, including through supplemental RETURNING. All cursor fetch paths
 use the row check before they expose a returned batch.
+Direct native column labels retain their original expression identity, name and
+quote policy. The RETURNING compiler uses the owned physical column type for
+authenticated decoding, while native ORM result metadata retains the caller's
+label. Cached pre-attachment plaintext types cannot expose ciphertext as a
+public result. Changed label dispatch, type, alias metadata or projection
+identity refuses. These checks also cover labeled identity and tenant slots.
 SELECT's outer-join NULL-identity rule does not apply to inserted rows.
 A valid fresh frame for the same context still refuses if this operation did
 not prepare it. This stronger write-result check does not establish general

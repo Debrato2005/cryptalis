@@ -2,10 +2,12 @@
 import asyncio
 from copy import deepcopy
 import os
+from types import MethodType
 
 import psycopg
 import pytest
-from sqlalchemy import event, insert
+from sqlalchemy import event, insert, String
+from sqlalchemy.sql.elements import Label, quoted_name
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import Session
 
@@ -23,24 +25,29 @@ from test_sqlalchemy_adapter import (app as adapter_app, db, factory as adapter_
 from sqlalchemy.orm import registry
 
 
-def returning(app, ordered, public_only):
+def returning(app, ordered, public_only, labels='none'):
     model = app.Customer
     columns = ((model.id, model.label, model.tenant_id) if public_only else
                (model.id, model.name, model.label, model.tenant_id, model.name))
+    if labels != 'none':
+        columns = tuple(column.label(f'output {index}' if labels == 'named' else None)
+                        for index, column in enumerate(columns))
     return insert(model).returning(*columns, sort_by_parameter_order=ordered)
 
 
-def consume(result, session):
+def consume(result, session, expressions=()):
     names = tuple(result.keys())
     rows = result.all()
     assert len(session.identity_map) == 0
-    return names, [tuple(row) for row in rows], [type(row) for row in rows]
+    return (names, [tuple(row) for row in rows], [type(row) for row in rows],
+            [tuple(row._mapping[expression] for expression in expressions) for row in rows])
 
 
 @pytest.mark.parametrize('public_only', [False, True], ids=['mixed-columns', 'public-columns'])
+@pytest.mark.parametrize('labels', ['none', 'named', 'anonymous'])
 @pytest.mark.parametrize('ordered', [False, True], ids=['native-order', 'input-order'])
 @pytest.mark.parametrize('mode,varchar', [('sync', False), ('sync', True), ('async', False), ('async', True)])
-def test_multiple_returning_columns_match_native_rows_and_stored_values(mode, varchar, ordered, public_only):
+def test_multiple_returning_columns_match_native_rows_and_stored_values(mode, varchar, ordered, public_only, labels):
     with native_application(varchar) as app:
         inputs = returning_rows()
         original = deepcopy(inputs)
@@ -51,7 +58,9 @@ def test_multiple_returning_columns_match_native_rows_and_stored_values(mode, va
             observer = observe_inserts(app.runtime, pages, sent)
             try:
                 with (Session(app.runtime) if factory is None else factory(tenant_id=TENANT)) as session:
-                    observed = consume(session.execute(returning(app, ordered, public_only), inputs), session)
+                    query = returning(app, ordered, public_only, labels)
+                    expressions = query._returning if labels != 'none' else ()
+                    observed = consume(session.execute(query, inputs), session, expressions)
                     stored = [tuple(row) for row in session.execute(stored_selection(app))]
                     session.commit() if factory is not None else session.rollback()
             finally:
@@ -71,7 +80,9 @@ def test_multiple_returning_columns_match_native_rows_and_stored_values(mode, va
                 observer = observe_inserts(engine.sync_engine, pages, sent)
                 try:
                     async with (factory(tenant_id=TENANT) if protected else AsyncSession(engine)) as session:
-                        observed = consume(await session.execute(returning(app, ordered, public_only), inputs), session)
+                        query = returning(app, ordered, public_only, labels)
+                        expressions = query._returning if labels != 'none' else ()
+                        observed = consume(await session.execute(query, inputs), session, expressions)
                         stored = [tuple(row) for row in (await session.execute(stored_selection(app))).all()]
                         await session.commit() if protected else await session.rollback()
                 finally:
@@ -94,8 +105,11 @@ def test_multiple_returning_columns_match_native_rows_and_stored_values(mode, va
                 actual = asyncio.run(async_observation(True))
         assert actual == expected
         assert inputs == original
-        assert expected[0][0] == (('id', 'label', 'tenant_id') if public_only else
-                                  ('id', 'name', 'label', 'tenant_id', 'name'))
+        if labels == 'none':
+            assert expected[0][0] == (('id', 'label', 'tenant_id') if public_only else
+                                      ('id', 'name', 'label', 'tenant_id', 'name'))
+        elif labels == 'named':
+            assert expected[0][0] == tuple(f'output {index}' for index in range(3 if public_only else 5))
         if ordered:
             assert [row[0] for row in expected[0][1]] == [row['id'] for row in inputs]
 
@@ -126,6 +140,91 @@ def test_late_column_projection_change_refuses_before_driver(fault, monkeypatch)
                 assert changed and sent == []
         finally:
             event.remove(app.runtime, 'before_execute', change)
+        assert _snapshot(app) == before
+
+
+@pytest.mark.parametrize('fault', ['subclass', 'dispatch', 'name_type', 'quote', 'key', 'type', 'targets', 'cached_element'])
+def test_custom_returning_labels_refuse_before_keys_and_driver(fault, monkeypatch):
+    with native_application(False) as app:
+        resolutions = []
+        def resolve(tenant):
+            resolutions.append(tenant)
+            return keys(tenant)
+        factory = protect(app, resolver=resolve)
+        before = _snapshot(app)
+        value = app.Customer.name.label('returned')
+        if fault == 'subclass':
+            class CustomLabel(Label):
+                pass
+            value = CustomLabel('returned', app.Customer.name)
+        elif fault == 'dispatch':
+            value._compiler_dispatch = MethodType(lambda self, *args, **kw: 'name::text', value)
+        elif fault in ('name_type', 'quote'):
+            class CustomName(str):
+                pass
+            name = CustomName('returned') if fault == 'name_type' else quoted_name('returned', 'invalid')
+            value.name = value.key = value._tq_label = value._tq_key_label = name
+        elif fault == 'key':
+            value.key = 'different'
+        elif fault == 'type':
+            value.type = String()
+        elif fault == 'targets':
+            value._alt_names = (app.Customer.id,)
+        else:
+            value.element  # Cache the original direct column.
+            value._element = app.Customer.label.__clause_element__()
+        with raw_calls(monkeypatch, app.schema, 'INSERT') as sent:
+            with factory(tenant_id=TENANT) as session:
+                resolutions.clear()
+                with pytest.raises(CryptoFailure):
+                    session.execute(insert(app.Customer).returning(value), returning_rows())
+                session.rollback()
+            assert sent == [] and resolutions == []
+        assert _snapshot(app) == before
+
+
+@pytest.mark.parametrize('fault', ['name', 'quote', 'key', 'type', 'column', 'equivalent', 'defaults'])
+def test_late_labeled_projection_change_refuses_before_driver(fault, monkeypatch):
+    with native_application(False) as app:
+        factory = protect(app)
+        before, changed = _snapshot(app), []
+        model = app.Customer
+        value = model.name.label('returned')
+        original = (value.name, value.key, value.type, value.element)
+
+        def change(connection, current, multiparams, params, options):
+            if current.is_insert:
+                changed.append(True)
+                if fault == 'defaults':
+                    current = insert(model).return_defaults(*app.table.primary_key,
+                                                           supplemental_cols=[model.name])
+                else:
+                    replacement = current._returning[0]._clone()
+                    if fault in ('name', 'quote'):
+                        name = 'changed' if fault == 'name' else quoted_name('returned', False)
+                        replacement.name = replacement.key = replacement._tq_label = replacement._tq_key_label = name
+                    elif fault == 'key':
+                        replacement.key = 'changed'
+                    elif fault == 'type':
+                        replacement.type = String()
+                    elif fault == 'column':
+                        replacement = model.label.label('returned')
+                    else:
+                        replacement = model.name.label('returned')
+                    current = insert(model).returning(replacement)
+            return current, multiparams, params
+
+        event.listen(app.runtime, 'before_execute', change, retval=True)
+        try:
+            with raw_calls(monkeypatch, app.schema, 'INSERT') as sent:
+                with factory(tenant_id=TENANT) as session:
+                    with pytest.raises(CryptoFailure):
+                        session.execute(insert(model).returning(value), returning_rows())
+                    session.rollback()
+                assert changed and sent == []
+        finally:
+            event.remove(app.runtime, 'before_execute', change)
+        assert (value.name, value.key, value.type, value.element) == original
         assert _snapshot(app) == before
 
 

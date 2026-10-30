@@ -1,5 +1,24 @@
 # Implementation status
 
+## Native labeled INSERT RETURNING: 2026-10-31
+
+**VERIFIED, bounded:** attached mapped dictionary INSERT supports native direct
+column labels, named or anonymous, in scalar/column and entity projections.
+Native sync/async TEXT and VARCHAR comparisons preserve values, Row keys,
+lookup by the original Label object, paging, requested ordering and transactions.
+The compiler changes only the SQL projection codec; caller labels remain
+unchanged. Each protected value retains its exact prepared-frame proof. Raw
+rows correlate labeled identity/tenant slots before native ORM loading.
+
+Custom label dispatch, names, quote flags, type overrides, result aliases and
+stale element caches refuse before effects. Late replacement, including an
+equivalent new Label or supplemental-default substitution, refuses before raw
+INSERT. Read-only Python/CLI Doctor samples admit the same direct labels and
+keep parameters NOT_INSPECTED. The [311-check receipt](_reset/returning-labels-20261031.json)
+records the affected DML/driver/Doctor regression. Computed expressions and
+aliased entities remain unadmitted. OBJ-QUERY-04 remains PARTIAL; no production
+qualification or gate promotion is implied.
+
 ## Packaged RETURNING and Doctor checkpoint: 2026-10-31
 
 **VERIFIED, bounded:** revision `a8a9c30` builds identical wheel and source

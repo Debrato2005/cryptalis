@@ -249,13 +249,14 @@ def test_native_query_samples_have_explicit_cli_results_and_preserve_schema(app,
     assert snapshot(app) == before
 
 
-@pytest.mark.parametrize('shape', ['plain', 'columns', 'entity'])
+@pytest.mark.parametrize('shape', ['plain', 'columns', 'entity', 'labeled'])
 def test_native_insert_samples_have_explicit_uninspected_parameter_cli_results(app, native_inputs, shape):
     before = snapshot(app)
     expression = {
         'plain': 'insert(Customer)',
         'columns': 'insert(Customer).returning(Customer.id, Customer.email)',
         'entity': 'insert(Customer).returning(Customer)',
+        'labeled': "insert(Customer).returning(Customer.email.label('protected value'))",
     }[shape]
     module = native_inputs[0]
     module.write_text(module.read_text().replace('    return mapping, writers, reviews',

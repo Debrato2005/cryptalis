@@ -291,7 +291,7 @@ def test_bulk_unadmitted_shapes_and_contexts_refuse_before_driver():
         event.listen(app.runtime, 'before_cursor_execute', collect)
         try:
             with factory(tenant_id=TENANT) as session:
-                statements = [insert(app.Customer).returning(app.Customer.id.label('renamed')), insert(app.table),
+                statements = [insert(app.Customer).returning(literal('computed').label('renamed')), insert(app.table),
                     insert(app.Customer).values(name='statement value'),
                     pg_insert(app.Customer).on_conflict_do_nothing(),
                     insert(app.Customer).from_select(['id', 'tenant_id', 'name', 'label'],

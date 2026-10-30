@@ -170,7 +170,8 @@ def test_mapped_insert_samples_use_runtime_structure_checks_without_rows_keys_or
         assert not re.search(r'\bFROM\s+(?:"?' + re.escape(schema) + r'"?\.)?"?customer\b',
                              statement, re.IGNORECASE)
     queries = (insert(Customer), insert(Customer).returning(Customer.id, Customer.email),
-               insert(Customer).returning(Customer), select(Customer.id))
+               insert(Customer).returning(Customer),
+               insert(Customer).returning(Customer.email.label('protected value')), select(Customer.id))
     event.listen(database, 'before_cursor_execute', readonly)
     try:
         report = preflight(json.dumps(declaration()).encode(), mapping, database,
@@ -182,8 +183,8 @@ def test_mapped_insert_samples_use_runtime_structure_checks_without_rows_keys_or
     assert report['checks']['provider_keys'] == report['checks']['writer_exclusion'] == 'UNKNOWN'
     assert report['query_samples']['scope'] == 'supplied_statement_structures'
     assert report['query_samples']['execution'] == 'NOT_PERFORMED'
-    assert [item['status'] for item in report['query_samples']['items']] == ['STRUCTURE_ADMITTED'] * 4
-    assert [item['parameters'] for item in report['query_samples']['items'][:3]] == ['NOT_INSPECTED'] * 3
+    assert [item['status'] for item in report['query_samples']['items']] == ['STRUCTURE_ADMITTED'] * 5
+    assert [item['parameters'] for item in report['query_samples']['items'][:4]] == ['NOT_INSPECTED'] * 4
     assert Customer.email.type is original_type and snapshot(app) == before
 
 

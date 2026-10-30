@@ -26,7 +26,9 @@ from test_sqlalchemy_adapter import (app as adapter_app, db, factory as adapter_
 def statement(app, projection, ordered):
     model = app.Customer
     columns = {'entity': (model,), 'mixed': (model.name, model, model.label),
-               'repeated': (model, model, model.name)}[projection]
+               'repeated': (model, model, model.name),
+               'labeled': (model.name.label('protected value'), model,
+                           model.id.label('record reference'), model.tenant_id.label('tenant reference'))}[projection]
     return insert(model).returning(*columns, sort_by_parameter_order=ordered)
 
 
@@ -55,7 +57,7 @@ def consume(result, session, model, projection):
     return names, observed
 
 
-@pytest.mark.parametrize('projection', ['entity', 'mixed', 'repeated'])
+@pytest.mark.parametrize('projection', ['entity', 'mixed', 'repeated', 'labeled'])
 @pytest.mark.parametrize('ordered', [False, True])
 @pytest.mark.parametrize('mode,varchar', [('sync', False), ('sync', True), ('async', False), ('async', True)])
 def test_entity_returning_matches_native_objects_results_and_committed_reads(mode, varchar, ordered, projection):
@@ -218,7 +220,8 @@ def test_entity_second_protected_field_requires_its_own_prepared_frame(adapter_a
 
 @pytest.mark.parametrize('fault', ['id', 'tenant', 'swap_companions'])
 @pytest.mark.parametrize('mode', ['sync', 'async'])
-def test_entity_identity_columns_must_match_authenticated_frame_context(fault, mode, monkeypatch):
+@pytest.mark.parametrize('projection', ['entity', 'labeled_columns', 'labeled_entity'])
+def test_entity_identity_columns_must_match_authenticated_frame_context(fault, mode, projection, monkeypatch):
     with native_application(False) as app:
         if mode == 'sync':
             factory = protect(app)
@@ -227,9 +230,21 @@ def test_entity_identity_columns_must_match_authenticated_frame_context(fault, m
             publish(app)
         before, changed = _snapshot(app), []
 
+        def query():
+            model = app.Customer
+            columns = (model.name.label('returned_name'), model.id.label('returned_id'),
+                       model.tenant_id.label('returned_tenant_id'))
+            if projection == 'entity':
+                columns = (model,)
+            elif projection == 'labeled_entity':
+                columns = (model, *columns)
+            return insert(model).returning(*columns)
+
         def change_identity(cursor, rows):
             if rows and not changed and cursor.statusmessage.startswith('INSERT '):
                 field = {'id': 'id', 'tenant': 'tenant_id', 'swap_companions': 'name'}[fault]
+                if projection != 'entity':
+                    field = 'returned_' + field
                 index = next(index for index, column in enumerate(cursor.description) if column.name == field)
                 first = list(rows[0])
                 if fault == 'swap_companions':
@@ -253,7 +268,7 @@ def test_entity_identity_columns_must_match_authenticated_frame_context(fault, m
                 patch.setattr(psycopg.Cursor, 'fetchall', fetchall)
                 with factory(tenant_id=TENANT) as session:
                     with pytest.raises(AuthenticationFailed):
-                        session.execute(insert(app.Customer).returning(app.Customer), inputs)
+                        session.execute(query(), inputs)
                     assert len(session.identity_map) == 0
                     session.rollback()
         else:
@@ -270,7 +285,7 @@ def test_entity_identity_columns_must_match_authenticated_frame_context(fault, m
                         patch.setattr(psycopg.AsyncCursor, 'fetchall', fetchall)
                         async with factory(tenant_id=TENANT) as session:
                             with pytest.raises(AuthenticationFailed):
-                                await session.execute(insert(app.Customer).returning(app.Customer), inputs)
+                                await session.execute(query(), inputs)
                             assert len(session.identity_map) == 0
                             await session.rollback()
                 finally:

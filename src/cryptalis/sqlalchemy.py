@@ -764,6 +764,26 @@ class _Attachment:
                       UnsafeDriverEvent, self.prepare_many, self.result_rows)
         native_compiler = engine.dialect.statement_compiler
         class StorageCompiler(native_compiler):
+            def _label_returning_column(compiler, statement, column, populate_result_map,
+                                       column_clause_args=None, **kw):
+                operation = _operation.get()
+                if (operation is not None and operation.owner is self and
+                        operation.bulk_insert is not None and isinstance(statement, Insert) and
+                        isinstance(column, Label)):
+                    key = self.returning_column(column, operation.bulk_insert)
+                    original = column
+                    column = column._clone()
+                    column._element = operation.bulk_insert.c[key]
+                    column.type = column._element.type
+                    column.__dict__.pop('element', None)
+                    # Keep the caller's Label in native ORM result metadata.
+                    # Only the SQL projection uses the owned physical codec.
+                    column_clause_args = dict(column_clause_args or {})
+                    column_clause_args['result_map_targets'] = (
+                        column_clause_args.get('result_map_targets', ()) + (original,))
+                return super()._label_returning_column(statement, column, populate_result_map,
+                    column_clause_args, **kw)
+
             def get_select_precolumns(compiler, select, **kw):
                 modifier = super().get_select_precolumns(select, **kw)
                 # PostgreSQL's public compiler hook emits only DISTINCT here.
@@ -835,11 +855,26 @@ class _Attachment:
             else:
                 key = self.returning_column(expression, bulk)
                 columns.append(key)
-                projection.append(('column', key))
+                if isinstance(expression, Label):
+                    name = expression.name
+                    quote = getattr(name, 'quote', None)
+                    if quote is not None and type(quote) is not bool:
+                        raise UnsupportedProtectedOperation()
+                    projection.append(('label', (key, id(expression), type(name), _update_bind_name(name), quote)))
+                else:
+                    projection.append(('column', key))
         self.select_types(select(*expressions))
         return _Returning(tuple(dict.fromkeys(columns)), tuple(projection))
 
     def returning_column(self, column, bulk):
+        if isinstance(column, Label):
+            label = _delete_node(column, Label)
+            column = label.element
+            if (column is not label._element or label.type is not column.type or
+                    type(label._alt_names) is not tuple or label._alt_names or
+                    any(getattr(label, name) is not label.name
+                    for name in ('key', '_tq_label', '_tq_key_label'))):
+                raise UnsupportedProtectedOperation()
         if not isinstance(column, ColumnClause) or column.is_literal is not False:
             raise UnsupportedProtectedOperation()
         original = column
@@ -1511,9 +1546,11 @@ class _Attachment:
             return None
         results = context.compiled._result_columns
         def positions(column):
+            def physical(value):
+                return value.element if isinstance(value, Label) else value
             return tuple(index for index, result in enumerate(results)
                 if any(isinstance(value, ColumnClause) and value.table is column.table and
-                       value.shares_lineage(column) for value in result.objects))
+                       value.shares_lineage(column) for value in map(physical, result.objects)))
         checks = []
         entity = any(kind == 'entity' for kind, _ in operation.bulk_returning.projection)
         input_context = None
@@ -1616,7 +1653,7 @@ class _Attachment:
             return
         if operation.bulk_insert is not None and isinstance(context.compiled.statement, Insert):
             returning = operation.bulk_returning
-            if returning is not None and any(kind == 'entity' for kind, _ in returning.projection):
+            if returning is not None:
                 state = context.compiled.compile_state
                 native = getattr(state, 'select_statement', None)
                 if (getattr(state, 'from_statement_ctx', None) is None or native is None or
