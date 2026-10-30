@@ -714,7 +714,8 @@ def test_independent_snapshot_restores_cold_roots_with_source_fenced(live):
     assert p.unwrap(wrapper, CONTEXT)
 
 
-def test_real_provider_protect_search_edit_and_verified_plaintext_exit(live, monkeypatch):
+@pytest.mark.parametrize('labelled', [False, True])
+def test_real_provider_protect_search_edit_and_verified_plaintext_exit(live, monkeypatch, labelled):
     live.provider = live.make(token=workload_credentials(live).token)
     import test_migration as fixture
     import test_deprotection as reverse
@@ -742,12 +743,12 @@ def test_real_provider_protect_search_edit_and_verified_plaintext_exit(live, mon
             session.commit()
             assert session.scalar(select(app.Customer.id).where(app.Customer.name == 'live provider edit')) == row.id
             returned = session.execute(update(app.Customer).where(app.Customer.id == row.id,
-                app.Customer.tenant_id == fixture.TENANT).returning(app.Customer.name),
+                app.Customer.tenant_id == fixture.TENANT).returning(app.Customer.name.label('display_name') if labelled else app.Customer.name),
                 {'name': 'live provider returning'}, execution_options={'synchronize_session': False})
             assert returned.scalar_one() == 'live provider returning'
             session.commit()
             deleted = session.execute(delete(app.Customer).where(app.Customer.id == UUID(int=102),
-                app.Customer.tenant_id == fixture.TENANT).returning(app.Customer.name),
+                app.Customer.tenant_id == fixture.TENANT).returning(app.Customer.name.label('display_name') if labelled else app.Customer.name),
                 execution_options={'synchronize_session': False})
             assert deleted.scalar_one() == app.source[UUID(int=102)][1]
             session.commit()

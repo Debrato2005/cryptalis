@@ -39,7 +39,7 @@ def test_invalid_point_returning_refuses_before_resolver_or_native_update(fault,
         elif fault == 'id_type': query = statement(app, str(UUID(int=101)), 'scalar')
         elif fault == 'core': query = update(app.table).where(app.table.c.id == UUID(int=101), app.table.c.tenant_id == TENANT).returning(app.table.c.name)
         elif fault in ('entity_alias', 'label', 'expression'):
-            output = app.table.alias().c.name if fault == 'entity_alias' else app.Customer.name.label('renamed') if fault == 'label' else func.lower(app.Customer.name)
+            output = app.table.alias().c.name if fault == 'entity_alias' else func.lower(app.Customer.name).label('renamed') if fault == 'label' else func.lower(app.Customer.name)
             query = update(app.Customer).where(app.Customer.id == UUID(int=101), app.Customer.tenant_id == TENANT).returning(output)
         elif fault == 'embedded': query = query.values(name='PUBLIC embedded')
         elif fault == 'value_expression': values['name'] = literal('PUBLIC expression')
@@ -116,9 +116,14 @@ def test_point_driver_mutation_refuses_before_native_update(fault, monkeypatch):
 
 @pytest.mark.parametrize('fault', ['wrong_record', 'wrong_tenant', 'old_frame', 'fresh_frame',
     'null_frame', 'null_identity', 'malformed'])
-def test_returning_authenticates_context_and_exact_new_frame(fault, monkeypatch):
+@pytest.mark.parametrize('labelled', [False, True])
+def test_returning_authenticates_context_and_exact_new_frame(fault, monkeypatch, labelled):
     with application(rows=3) as app:
         factory = protect(app)
+        query = statement(app, UUID(int=101), 'scalar')
+        if labelled:
+            query = update(app.Customer).where(app.Customer.id == UUID(int=101),
+                app.Customer.tenant_id == TENANT).returning(app.Customer.name.label('display_name'))
         old = frames(app, True)[UUID(int=101)]
         fresh = seal_text('PUBLIC updated', descriptor(app), TENANT, UUID(int=101), keys(TENANT).prepare())
         native_fetch, armed, injected = psycopg.Cursor.fetchall, [], []
@@ -145,7 +150,7 @@ def test_returning_authenticates_context_and_exact_new_frame(fault, monkeypatch)
                 patch.setattr(psycopg.Cursor, 'fetchall', mutate)
                 with factory(tenant_id=TENANT) as session:
                     with pytest.raises(AuthenticationFailed):
-                        session.execute(statement(app, UUID(int=101), 'scalar'), {'name': 'PUBLIC updated'},
+                        session.execute(query, {'name': 'PUBLIC updated'},
                             execution_options={'synchronize_session': False}).all()
                     session.rollback()
             assert injected == [True]

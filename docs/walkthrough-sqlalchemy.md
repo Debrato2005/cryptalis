@@ -106,16 +106,17 @@ session.commit()
 ```
 
 The dictionary uses physical column keys, as native single-statement UPDATE
-does. RETURNING labels retain mapped attribute names. Use `await` for async
-execution and commit; SQLModel async `exec` takes the dictionary as `params=...`.
+does. Returned column names normally follow mapped attributes; use
+`Customer.note.label("display_note")` for an explicit result name. Use `await`
+for async execution and commit; SQLModel `exec` takes the dictionary as `params=...`.
 For a declared single-tenant table, omit the tenant predicate and use its table
 UUID as the session scope. Existing loaded objects remain stale under
 `synchronize_session=False`; refresh them when needed. Missing records return no
 row. Native assignment errors can still occur for a missing record during SQL
 evaluation; roll back the failed transaction or savepoint before retrying.
 
-Use direct returned columns or the mapped entity. SQL expressions, labelled or
-aliased outputs, `.values()` assignments, identity/tenant changes, and multirow
+Use direct or explicitly named returned columns, or the mapped entity. Computed
+expressions, table aliases, `.values()` assignments, identity/tenant changes, and multirow
 executemany RETURNING are outside this route. It uses the existing encryption
 and declared search representation; it adds no search capability or production
 qualification. See [status](status.md) for exact verification.
@@ -157,7 +158,7 @@ with sessions(tenant_id=declared_table_uuid) as session:
 ```
 
 Without RETURNING, native `result.rowcount` is zero or one. To receive the deleted
-values, add `.returning(Customer.id, Customer.note)` and consume the ordinary
+values, add `.returning(Customer.id, Customer.note.label("display_note"))` and consume the ordinary
 Result with `.one_or_none()`, `.all()` or `.scalars()`. Returning the mapped entity
 is also supported. For a tenant-column table, include exact tenant equality
 alongside the record equality. Async execution uses `await`; SQLModel async

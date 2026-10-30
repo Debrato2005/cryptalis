@@ -163,6 +163,7 @@ class Qualification:
                 'tests/test_modification_contexts.py', 'tests/test_modification_recovery.py',
                 'tests/test_modification_queries.py', 'tests/test_modification_storage.py',
                 'tests/test_modification_status_cli.py', 'tests/test_rotation_status_cli.py',
+                'tests/test_point_returning_labels.py',
                 'tests/test_point_update_returning.py', 'tests/test_point_update_returning_more.py',
                 'tests/test_point_update_returning_boundary.py', 'tests/test_point_delete_returning.py',
                 'tests/test_point_delete_returning_more.py', 'tests/test_point_delete_returning_boundary.py',

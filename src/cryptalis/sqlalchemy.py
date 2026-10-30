@@ -893,6 +893,8 @@ class _Attachment:
                     raise UnsupportedProtectedOperation()
                 columns.extend(root.c)
             else:
+                if isinstance(statement, Insert) and isinstance(root, Label):
+                    raise UnsupportedProtectedOperation()
                 columns.append(root)
         # Read the current roots. SQLAlchemy's _all_selected_columns cache can
         # retain an earlier RETURNING list after a callback changes the AST.
@@ -901,6 +903,20 @@ class _Attachment:
         return signature
 
     def returning_column_identity(self, column, bulk):
+        label_name = None
+        if isinstance(column, Label):
+            label = _delete_node(column, Label)
+            label_name = _delete_name_state(column.name)
+            if (label_name is None or label_name != _delete_name_state(label.name) or
+                    label_name != _delete_name_state(column.key) or
+                    column.element is not label.element or column.type is not label.type or
+                    column._element is not label._element or label.element is not label._element or
+                    label.type is not label.element.type or not label_name[0] or '\x00' in label_name[0]):
+                raise UnsupportedProtectedOperation()
+            if (label_name[1] is False and
+                    self.engine.dialect.identifier_preparer.quote(label_name[0]) != label_name[0]):
+                raise UnsupportedProtectedOperation()
+            column = label.element
         if not isinstance(column, ColumnClause) or column.is_literal or column.table is not bulk:
             raise UnsupportedProtectedOperation()
         native = _delete_node(column, Column if isinstance(column, Column) else ColumnClause,
@@ -911,7 +927,13 @@ class _Attachment:
         if type(native.type) is not _Payload:
             self.select_dispatch(native.type)
             self.bind_type(native.type, selecting=True)
-        return id(native)
+        return id(native) if label_name is None else ('label', label_name, id(native))
+
+    def returning_shape(self, statement, table):
+        self.returning_signature(statement, table)
+        return tuple(('entity', id(_delete_node(root, Table))) if isinstance(root, Table) else
+                     ('column', self.returning_column_identity(root, table))
+                     for root in statement._returning)
 
     @classmethod
     def identity_type(cls, dtype, *, uuid_only=False):
@@ -1156,10 +1178,7 @@ class _Attachment:
                 scope is not None and scope.key == record.key):
             raise UnsupportedProtectedOperation()
         identity = UUID(bytes=record.value.bytes) if type(record.value) is UUID else record.value
-        self.returning_signature(statement, table)
-        shape = tuple(('entity', id(_delete_node(root, Table))) if isinstance(root, Table) else
-                      ('column', self.returning_column_identity(root, table))
-                      for root in statement._returning)
+        shape = self.returning_shape(statement, table)
         permit = _RecordPermit(table, first.record, first.tenant, identity, UUID(bytes=tenant.bytes), shape)
         if expected is not None:
             if (permit.table is not expected.table or permit.record is not expected.record or
@@ -1251,6 +1270,9 @@ class _Attachment:
             if operation.bulk_update is not bulk:
                 raise UnsupportedProtectedOperation()
             if operation.update_carrier is not None and statement is operation.update_carrier.statement:
+                if (operation.point_update is not None and
+                        self.returning_shape(statement, bulk) != operation.point_update.returning_shape):
+                    raise UnsupportedProtectedOperation()
                 return
             if operation.point_update is not None:
                 self.record_context(statement, operation.tenant, operation.point_update, update=True)
@@ -1948,6 +1970,16 @@ def _unprotected_delete(state):
 
 def _returning_statement(owner, statement):
     def returning_type(node):
+        if isinstance(node, Label):
+            element = returning_type(node._element)
+            if element is not None:
+                # A native Label snapshots its element's type. Rebinding only
+                # the annotated mapper column leaves that snapshot plaintext.
+                clone = node._clone()
+                clone._reset_memoizations()
+                clone._element = element
+                clone.type = element.type
+                return clone
         if isinstance(node, Column) and owner.protected(node):
             native = _delete_node(node, Column, allow_type_annotation=True)
             # Native ORM DML can retain annotated mapper columns. Preserve
