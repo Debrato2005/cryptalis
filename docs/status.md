@@ -10,6 +10,21 @@ No PostgreSQL/provider/runtime cell, production key provider, independent review
 VERIFIED below refers only to the named checks and their exact revisions.
 All other contract and promotion requirements are SPECIFIED. All seven full gates remain UNKNOWN.
 
+## Unix-socket lifecycle fault verification: 2026-10-31
+
+**VERIFIED, bounded local source cell:** the existing real PostgreSQL fault proxy
+now forwards to the same configured Unix socket as well as TCP targets. It keeps
+the actual SCRAM handshake and terminal COMMIT/DDL reply-loss checks. The focused
+migration, pause and collation selection passes 68 checks with one explicit ICU
+skip. A recovered ICU catalog entry no longer counts as binary capability; only
+the exact native `0A000` no-ICU refusal skips that fixture. Other setup failures
+still fail. The [receipt](_reset/socket-faults-20261031.json) binds the source and
+test selection. ICU refusal qualification remains unavailable in this cell.
+
+The preceding RETURNING slice is pushed as `da62695` on
+`codex/product-completion-20261031`. Full regression must be repeated after this
+verification repair. All seven production gates remain UNKNOWN.
+
 ## Direct-column INSERT RETURNING: 2026-10-31
 
 **VERIFIED, bounded local source cell:** mapped dictionary INSERT accepts direct

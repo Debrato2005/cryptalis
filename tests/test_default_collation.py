@@ -88,7 +88,17 @@ def test_native_source_collation_mismatch_remains_a_typed_refusal(fault):
                 supported = c.exec_driver_sql("SELECT count(*) FROM pg_catalog.pg_collation WHERE collprovider='i'").scalar_one()
                 if not supported:
                     pytest.skip('native PostgreSQL build has no ICU nondeterministic collation support')
-                c.exec_driver_sql(f'CREATE COLLATION "{schema}".nondeterministic (provider=icu,locale=\'und\',deterministic=false)')
+                from sqlalchemy.exc import DBAPIError
+                try:
+                    with c.begin_nested():
+                        c.exec_driver_sql(f'CREATE COLLATION "{schema}".nondeterministic (provider=icu,locale=\'und\',deterministic=false)')
+                except DBAPIError as failure:
+                    # Recovered catalog rows do not prove the current server
+                    # binary supports ICU. Admit only this exact native refusal.
+                    if (failure.orig.sqlstate == '0A000' and
+                            failure.orig.diag.message_primary == 'ICU is not supported in this build'):
+                        pytest.skip('native PostgreSQL build has no ICU nondeterministic collation support')
+                    raise
                 collation = f'"{schema}".nondeterministic'
             else: collation = 'pg_catalog."default"'
             c.exec_driver_sql(f'CREATE TABLE "{schema}".subject (id uuid PRIMARY KEY, value text COLLATE {collation})')

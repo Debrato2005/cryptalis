@@ -1,5 +1,6 @@
 """Real PostgreSQL fault injection: discard one already-committed reply."""
 from contextlib import contextmanager
+from pathlib import Path
 import socket
 import threading
 import psycopg
@@ -23,7 +24,14 @@ def lost_commit_reply(url, commit_number=None, drop_after_sql=None, pause_after_
         client=None; server=None
         try:
             client,_=listener.accept()
-            server=socket.create_connection((info['host'],int(info['port'])),timeout=10)
+            if info['host'].startswith('/'):
+                # Keep the configured target. PostgreSQL's Unix socket name
+                # uses the port identifier even when no TCP listener exists.
+                server=socket.socket(socket.AF_UNIX,socket.SOCK_STREAM)
+                server.settimeout(10)
+                server.connect(str(Path(info['host']) / ('.s.PGSQL.' + info['port'])))
+            else:
+                server=socket.create_connection((info['host'],int(info['port'])),timeout=10)
             # Client SSL is disabled for this test-only local transport.
             length=receive(client,4); packet=receive(client,int.from_bytes(length,'big')-4)
             server.sendall(length+packet)
