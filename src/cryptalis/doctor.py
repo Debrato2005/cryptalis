@@ -11,7 +11,7 @@ def check_keys(keyrings=()):
     Caller caches and their lease deadlines are unchanged. A successful check
     establishes access only at observation time, not complete provider health.
     """
-    from .crypto.keys import Keyring
+    from .crypto.keys import Keyring, ProviderAuthenticationUnavailable
 
     report = {
         'format': 'cryptalis.doctor/v1', 'scope': 'cold_provider_access',
@@ -32,6 +32,12 @@ def check_keys(keyrings=()):
     for index, ring in enumerate(keyrings):
         try:
             ring.check_access()
+        except ProviderAuthenticationUnavailable:
+            state = 'FAIL'
+            report['effects'] = 'UNKNOWN'
+            report['issues'].append({'code': 'Provider.AuthenticationUnavailable',
+                'location': f'keyrings[{index}]', 'retryable': False,
+                'remedy': 'Inspect workload credentials, role policy and native token issuance before retry; authentication may already have issued a token.'})
         except Exception:
             state = 'FAIL'
             report['issues'].append({'code': 'Provider.KeyUnavailable', 'location': f'keyrings[{index}]',
