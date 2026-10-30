@@ -242,14 +242,25 @@ class ModificationPlan:
 
 def plan(source, engine, *, source_pin, manifest, mapping, writers, search_reviews, keys,
          backfill_rows_per_second, verify_rows_per_second, temporary_bytes_per_row, wal_bytes_per_row,
-         max_batch_rows=1000, max_batch_bytes=64 * 1024 * 1024):
+         max_batch_rows=1000, max_batch_bytes=64 * 1024 * 1024, queries=()):
     m._admit(source, source_pin)
     if source_pin.phase != 'ACTIVE':
         raise m.TransitionFailure('source_pin_must_be_active', source.operation_id)
     if source.document.get('restore_lineage'):
         raise m.TransitionFailure('restored_modification_not_admitted', source.operation_id)
+    if type(queries) is not tuple or len(queries) > 128:
+        raise m.TransitionFailure('invalid_query_samples', source.operation_id)
     target = _target_lock(source.document['lock'], manifest, writers=writers, search_reviews=search_reviews)
     _mapping(target, mapping)
+    if queries:
+        from cryptalis.doctor import _query_samples
+        candidate = compiler.ProtectionPlan(m._canonical(target), ())
+        report = {'status': 'UNKNOWN', 'checks': {'query_routes': 'UNKNOWN'}, 'issues': []}
+        _query_samples(report, candidate, mapping, engine, queries)
+        outcome = report['checks']['query_samples']
+        if outcome != 'PASS':
+            raise m.TransitionFailure('query_samples_incompatible' if outcome == 'FAIL'
+                                      else 'query_inspection_unavailable', source.operation_id)
     limits = dict(max_rows=max_batch_rows, max_bytes=max_batch_bytes)
     r._payload_inputs(backfill_rows_per_second, verify_rows_per_second,
                       temporary_bytes_per_row, wal_bytes_per_row, limits)

@@ -303,8 +303,12 @@ remains uncertain even while creating an inactive rewrap candidate.
 To enable equality/IN search on an already protected storage-only TEXT/VARCHAR
 field, create a new configuration with the updated manifest and search review.
 The [modification contract](lifecycle.md#enable-exact-search-on-active-encrypted-text)
-defines the bounded change and retained host responsibilities. Set `queries=()`
-for this planning route; supplied SELECT sample validation is not yet admitted.
+defines the bounded change and retained host responsibilities. Keep the optional
+`queries` tuple: planning checks those SELECT structures against the proposed
+target lock before database access or key resolution. Samples are never executed,
+and their literals do not enter the retained proposal. Unsupported structures or
+unavailable inspection refuse planning; admitted structure is not complete route
+coverage or proof of runtime parameter validity.
 
 ```python
 proposal = changed.plan_modification(
