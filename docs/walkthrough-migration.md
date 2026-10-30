@@ -186,12 +186,13 @@ Terminal verification scans current data. Index creation, public-slot conversion
 ## Initialize an explicit declaration through the CLI
 
 **IMPLEMENTED, bounded source and installed verification:** make the trusted host factory return
-`InitializationContext(engine, mapping, declaration, writers, search_reviews)`.
+`InitializationContext(engine, mapping, declaration, writers, search_reviews, queries=())`.
 Supply public declaration bytes and a fresh owned inspection engine. Create no
 keys, provider, pin, target ID, runtime role or plan for this command.
 
 Run `init --host-context MODULE:FACTORY --out DECLARATION` with optional `--json`.
-Use a new private output path. Schema PASS permits canonical publication.
+Use a new private output path. Schema PASS and PASS for any supplied query
+samples permit canonical publication.
 Keep aggregate and unobserved checks UNKNOWN. Retain the saved file and report.
 After an output or cleanup error, inspect the artifact facts before retry.
 Continue through existing planning with separate explicit planning authority.
@@ -363,6 +364,24 @@ covers unchanged CRUD modules for one storage-only field.
 HTTP routes, authentication, full startup and deployment remain outside that checkpoint.
 
 ## Diagnose before adoption
+
+Reuse the key-free factory already used for initialization:
+
+```console
+cryptalis doctor --initialization-context myapp.cryptalis_config:initialization --json
+cryptalis init --host-context myapp.cryptalis_config:initialization --out cryptalis.json --json
+```
+
+The factory returns a fresh `InitializationContext` with the explicit declaration,
+mapping, owned inspection engine, writer inventory and search reviews. Optionally
+set `queries=(select(Customer).where(Customer.email == example_email),)` to check
+bounded SELECT structures. Samples are not executed or printed. Doctor creates
+no artifact; init saves canonical intent only after schema and supplied-query
+admission. Neither command loads keys or grants migration authority. Actual host
+code effects and unsupplied route coverage remain UNKNOWN.
+
+If the declaration and connection file are already separate, the existing form
+remains available:
 
 **IMPLEMENTED, bounded:** supply the protection declaration, private inspection
 connection file and an explicit trusted host factory:

@@ -393,13 +393,17 @@ def run(arguments):
     return 0
 
 
-def run_init(arguments):
-    """Inspect explicit declaration intent and save its canonical bytes."""
-    from cryptalis.cli import _CommandFailure, _write_output
-    operation = 'initialization'
+def run_init(arguments, *, diagnostic=False):
+    """Share key-free admission; only initialization publishes a declaration."""
+    from cryptalis.cli import _CommandFailure, _write_output, _preflight_failure
+    operation = 'deployment.preflight' if diagnostic else 'initialization'
     engine = inspection = artifact = None
 
     def annotate(failure):
+        if diagnostic:
+            failure.error.update(family='Doctor', remedy='Inspect the declaration, schema/query observations, '
+                'host configuration and output delivery before repeating diagnosis.')
+            return _preflight_failure(failure, inspection)
         failure.error.pop('known_result', None)
         failure.error.update(effects='NONE', effects_scope='compiler_inspection', host_configuration_effects='UNKNOWN',
             remedy='Inspect the declaration, schema inspection and artifact facts before retry. Existing files are never replaced.')
@@ -422,11 +426,12 @@ def run_init(arguments):
         raise annotate(_failure(operation, 'DependenciesUnavailable', 'load_runtime', exit_code=4)) from None
 
     try:
-        if type(arguments.host_context) is not str or _HOST.fullmatch(arguments.host_context) is None:
+        reference = arguments.initialization_context if diagnostic else arguments.host_context
+        if type(reference) is not str or _HOST.fullmatch(reference) is None:
             raise _failure(operation, 'InvalidInput', 'inputs')
-        if os.path.lexists(arguments.out):
+        if not diagnostic and os.path.lexists(arguments.out):
             raise _failure(operation, 'ArtifactExists', 'inputs')
-        context = _load_host(arguments.host_context, operation)
+        context = _load_host(reference, operation)
         engine = _owned_engine(context, Engine)
         with _quiet():
             if type(context) is not InitializationContext or engine is None:
@@ -439,22 +444,32 @@ def run_init(arguments):
                     or type(context.search_reviews) is not tuple or type(context.declaration) is not bytes
                     or any(not isinstance(review, SearchReview) for review in context.search_reviews)):
                 raise _failure(operation, 'HostContextInvalid', 'host_context')
+            if type(context.queries) is not tuple or len(context.queries) > 128:
+                raise _failure(operation, 'Query.InvalidSamples', 'host_context')
             if len(context.declaration) > MAX_DOCUMENT_BYTES:
                 raise _failure(operation, 'Manifest.Invalid', 'declaration')
             canonical = parse_protection_declaration(context.declaration).canonical_bytes()
-            artifact = dict(scope='initialization_artifact', manifest_digest=hashlib.sha256(canonical).hexdigest(),
-                artifact_published=False, artifact_reused=False, artifact_directory_durable=False,
-                artifact_temporary_retained=False, effects='NONE')
+            if not diagnostic:
+                artifact = dict(scope='initialization_artifact', manifest_digest=hashlib.sha256(canonical).hexdigest(),
+                    artifact_published=False, artifact_reused=False, artifact_directory_durable=False,
+                    artifact_temporary_retained=False, effects='NONE')
             inspection = preflight(canonical, context.mapping, engine, writers=context.writers,
-                                   search_reviews=context.search_reviews)
+                                   search_reviews=context.search_reviews, queries=context.queries)
             if inspection['checks']['manifest_schema'] != 'PASS':
                 incompatible = inspection['checks']['manifest_schema'] == 'FAIL'
                 raise _failure(operation, 'SchemaIncompatible' if incompatible else 'InspectionUnavailable',
-                               'inspection', exit_code=2 if incompatible else 4)
-        _publish(arguments.out, canonical, artifact, operation, artifact_only=True)
-        result = dict(scope='initialization', status=inspection['status'], manifest_digest=artifact['manifest_digest'],
-            inspection=inspection, effects='NONE', effects_scope='compiler_inspection',
-            host_configuration_effects='UNKNOWN', artifact_result=dict(artifact))
+                               'inspection', exit_code=(3 if diagnostic else 2) if incompatible else 4)
+            if inspection['checks'].get('query_samples', 'PASS') != 'PASS':
+                incompatible = inspection['checks']['query_samples'] == 'FAIL'
+                raise _failure(operation, 'QueryIncompatible' if incompatible else 'QueryInspectionUnavailable',
+                    'query_inspection', exit_code=(3 if diagnostic else 2) if incompatible else 4)
+        if diagnostic:
+            result = dict(inspection, effects_scope='compiler_inspection', host_configuration_effects='UNKNOWN')
+        else:
+            _publish(arguments.out, canonical, artifact, operation, artifact_only=True)
+            result = dict(scope='initialization', status=inspection['status'], manifest_digest=artifact['manifest_digest'],
+                inspection=inspection, effects='NONE', effects_scope='compiler_inspection',
+                host_configuration_effects='UNKNOWN', artifact_result=dict(artifact))
     except _CommandFailure as failure:
         raise annotate(failure)
     except ManifestInvalid:

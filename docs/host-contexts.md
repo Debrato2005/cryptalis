@@ -165,20 +165,31 @@ Source and installed genuine adopted-target verification pass.
 
 **IMPLEMENTED, bounded source and installed verification:** `init --host-context MODULE:FACTORY --out DECLARATION`
 accepts an exact frozen, repr-disabled `InitializationContext` with required
-`engine`, `mapping`, `declaration: bytes`, `writers` and `search_reviews` fields.
+`engine`, `mapping`, `declaration: bytes`, `writers` and `search_reviews` fields,
+plus optional `queries=()` containing at most 128 SELECT samples.
 Use the existing fresh owned PostgreSQL/psycopg engine with safe logging and disposal.
 Reject an existing output or symlink before host loading.
 
 Apply the existing byte bound and strict parser before canonicalization. Reuse
 `doctor.preflight` with no keys or application-row inspection. Publish canonical bytes
-only after manifest_schema PASS. Use exclusive private publication with file/parent
+only after manifest_schema PASS and PASS for any supplied query samples. Use exclusive private publication with file/parent
 fsync. Report SHA-256 of the exact saved canonical bytes.
 
 Successful scope is `initialization`, with status UNKNOWN and the unchanged embedded
 `doctor/v1` report with scope `pre_adoption`. Six unobserved checks and aggregate status remain UNKNOWN.
 The artifact result has no transition phase or operation UUID. Compiler inspection
 effects are NONE, while host-code effects remain UNKNOWN. No planning, key or
-deployment authority follows. Doctor's strict key-free tuple remains unchanged. See the
+deployment authority follows.
+
+`doctor --initialization-context MODULE:FACTORY` reuses this exact context and
+inspection path. It writes no declaration artifact and accepts no plan, pin,
+restore binding, separate connection file or second host context. The host must
+return a fresh engine each time. Schema/query incompatibility exits 3; unavailable
+inspection, cleanup or output exits 4; invalid inputs exit 2. A successful bounded
+inspection exits 0 while aggregate and unobserved checks remain UNKNOWN.
+Query samples are structurally inspected, never executed or included in output.
+They do not establish complete route coverage or runtime authorization.
+The existing `--pre-adoption` tuple-based form remains supported. See the
 [verified checkpoint](history/implementation-2026-10.md#operational-cli-initialization-2026-10-24).
 Source and installed initialization verification pass.
 

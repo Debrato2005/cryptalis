@@ -2,12 +2,12 @@
 
 **SPECIFIED:** target one comprehensive production-grade first public release for the full SRS and all 34 objectives.
 Use the seven baseline slices below as dependency steps, not the complete release scope.
-Prioritize complete application journeys and independent workstreams within available agent capacity.
+Prioritize complete application journeys. Delegate only when current user or applicable instructions authorize it.
 Keep meaningful service-mode PostgreSQL 16 evidence before dependent integration.
 Internal development checkpoints do not qualify a partial public release.
 Local test success does not mark a full gate PASS or qualify production.
 Use the [competitive capability matrix](research/capability-matrix.md) to select high-value work.
-The [manual workflow](../ENGINEERING_PLAYBOOK.md#implementation-workflow) remains the default for source and tests.
+The [implementation workflow](../ENGINEERING_PLAYBOOK.md#implementation-workflow) governs source and tests under current authorization.
 Do not describe spike code as product code. [Status](status.md) owns recorded evidence and revision limits.
 
 ## Seven deciding gates
@@ -28,14 +28,11 @@ affected native application journey. [Status](status.md) identifies the tested b
 
 ## Ordered build slices
 
-These slices retain the original text-first baseline. Current bounded type
-admission includes native text/VARCHAR and storage-only Boolean with standard
-mappings. Boolean uses `cryptalis.context/v2`, `boolean-u8/v1` and lock/v4.
-Its literal client defaults retain native omission/None behavior. Custom
-converters and Boolean search remain unadmitted. See the
-[Boolean checkpoint](history/implementation-2026-10.md#boolean-storage-checkpoint-2026-10-23) and
-[type contract](compatibility.md#supported-stack).
-Other required types remain first-release work under the full SRS and all 34 objectives.
+These slices retain the original text-first dependency order. Current admitted
+storage includes TEXT/VARCHAR, Boolean, signed integers, finite Date and UUID.
+Exact codecs, query support and evidence limits belong to the
+[type contract](compatibility.md#supported-stack). Remaining types and query
+capabilities stay in the full first-release objective ledger.
 
 ### 1. Manifest compiler
 
