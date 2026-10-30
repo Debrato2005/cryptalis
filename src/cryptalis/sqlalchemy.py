@@ -37,7 +37,7 @@ from ._sqlmodel_types import autostring_impl
 from ._sqlalchemy_search import equality_expression, rewrite_search, search_shape, validate_search_storage
 from .crypto import CryptoFailure, AuthenticationFailed, FieldDescriptor, Keyring, KeyUnavailable, MAX_TEXT_BYTES, open_value, seal_value
 from .crypto.cf1 import _encode
-from .crypto.keys import InvalidText, InvalidValue, RepresentationMismatch
+from .crypto.keys import InvalidText, InvalidValue, RepresentationMismatch, ProviderAuthenticationUnavailable
 from .manifest.compiler import _LOCK_SCHEMAS, _compiled_default, _value_default, _native_text_length, _previous_lock, _value_mapping_matches, _fixed_value_width
 from .manifest.parser import decode_manifest_json
 
@@ -641,6 +641,8 @@ class _Attachment:
             raise PolicyMismatch()
         try:
             ring = self.keys if isinstance(self.keys, Keyring) else self.keys(tenant)
+        except ProviderAuthenticationUnavailable:
+            raise ProviderAuthenticationUnavailable() from None
         except Exception:
             raise KeyUnavailable() from None
         if (not isinstance(ring, Keyring) or ring.policy.tenant_id != tenant or

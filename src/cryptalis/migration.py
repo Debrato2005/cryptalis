@@ -20,7 +20,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.dialects import postgresql
 
 from cryptalis.crypto.cf1 import FieldDescriptor, seal_value, open_value
-from cryptalis.crypto.keys import CryptoFailure, Keyring, KeyUnavailable
+from cryptalis.crypto.keys import CryptoFailure, Keyring, KeyUnavailable, ProviderAuthenticationUnavailable
 from cryptalis.crypto._payload_rotation import MAX_BATCH_BYTES, MAX_BATCH_ROWS
 from cryptalis.manifest.compiler import (compile_protection, _schema_facts, _canonical, _previous_lock,
                                           unrecorded_column_metadata, protected_extended_statistics,
@@ -68,10 +68,16 @@ class TransitionFailure(RuntimeError):
     def __init__(self, code, operation_id=None, sqlstate=None, *, cleanup_errors=()):
         self.code, self.operation_id, self.sqlstate = code, operation_id, sqlstate
         self.cleanup_errors = tuple(cleanup_errors)
+        provider_detail = ''
+        if code == 'ProviderAuthenticationUnavailable':
+            self.provider_effects, self.retryable = 'UNKNOWN', False
+            provider_detail = (' Provider effects=UNKNOWN. ' + ProviderAuthenticationUnavailable.remedy
+                               + ' A token may already have been issued.')
         cleanup = ''.join(f' cleanup={stage}:{cause}:{state or "UNKNOWN"};'
                           for stage,cause,state in self.cleanup_errors)
         super().__init__(f'{code}; operation={operation_id or "unstarted"}; SQLSTATE={sqlstate or "UNKNOWN"}. '
-                         'Keep writers stopped. Inspect this operation and the external current policy before resume.' + cleanup)
+                         'Keep writers stopped. Inspect this operation and the external current policy before resume.'
+                         + provider_detail + cleanup)
 
 
 @dataclass(frozen=True)

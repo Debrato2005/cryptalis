@@ -11,7 +11,7 @@ from types import SimpleNamespace
 from uuid import UUID
 
 from cryptalis import migration as m, rotation as r
-from cryptalis.crypto import Keyring, KeyUnavailable
+from cryptalis.crypto import Keyring, KeyUnavailable, ProviderAuthenticationUnavailable
 from cryptalis.crypto.cf1 import FieldDescriptor, open_value
 from cryptalis.crypto._payload_rotation import prepare_payload_rotation_batch
 from cryptalis.crypto._search_rotation import prepare_search_rotation_batch
@@ -165,6 +165,8 @@ def _row_crypto(p,keys,target_keys,prepared,tenant):
         source=m._ring(keys,tenant,p.source)
         try:
             target=target_keys(tenant) if callable(target_keys) else target_keys
+        except ProviderAuthenticationUnavailable:
+            raise ProviderAuthenticationUnavailable() from None
         except Exception:
             raise KeyUnavailable() from None
         if not isinstance(target,Keyring):

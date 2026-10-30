@@ -105,6 +105,20 @@ issuance before retry. The safe error survives root creation, Keyring sync/async
 preparation and supported cross-provider rewrap without exposing its raw cause.
 Plaintext keys and issued credentials have no verified Python zeroization claim.
 
+Lifecycle execution retains this code in `TransitionFailure`, with
+`provider_effects="UNKNOWN"`, `retryable=False` and native-issuance guidance.
+The existing `effects="INSPECT_JOURNAL"` still describes database progress.
+Protection, removal, rotation and tenant CLI runners classify this as operational
+exit 4, with `effects_scope="database"` and separate `provider_effects="UNKNOWN"`.
+Read-only planning may report database `effects="NONE"` without claiming that
+authentication had no effect. Inspect both custody and journal state before an
+operator-directed retry. Cleanup failures retain the primary authentication
+diagnostic as `related_error`; failed planning does not publish a proposal.
+Source/target resolver calls, approved online tenants, ORM session preparation and
+rotation refresh after lease expiry preserve the typed authentication identity.
+Direct resolver failures outside a lifecycle transition raise the safe
+`ProviderAuthenticationUnavailable` itself; the CLI normalizes both forms.
+
 The real local suite exercises least-privilege AppRole access, used-up SecretID
 refusal and callback recovery, incorrect identities, policy/lease drift, disabled
 SecretID binding, unbounded SecretID lifetime, missing role-read permission and

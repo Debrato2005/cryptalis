@@ -184,7 +184,7 @@ def main():
             *options, '--source-role', '--receipt', str(workdir / 'tests.json'),
             '--scope', 'OpenBao 2.7.2 isolated TLS/Raft, native private audit, outage/restart, independent snapshot recovery and PostgreSQL lifecycle',
             '--', 'tests/test_openbao_protocol.py', 'tests/test_openbao_approle.py', 'tests/test_openbao_integration.py',
-            'tests/test_doctor_provider.py',
+            'tests/test_doctor_provider.py', 'tests/test_provider_authentication_lifecycle.py',
             '-q', '--tb=short'], cwd=ROOT, env=environment)
         if result.returncode:
             raise QualificationFailure('TestsFailed')

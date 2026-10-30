@@ -1055,6 +1055,12 @@ Authentication failure can follow native token issuance. The typed
 retry while preserving redaction through root creation, Keyring and rewrap.
 No failure result proves that a native token was never issued. Existing root
 leases can outlive credential revocation; cold Doctor checks bypass those leases.
+Lifecycle sanitization preserves the authentication code, explicit UNKNOWN provider
+effects and no-automatic-retry guidance. CLI database-effect observations do not
+cover provider issuance: an authentication failure during read-only planning can
+leave the database unchanged and still have native effects. Cleanup failures keep
+the related authentication diagnostic. The [host reference](host-contexts.md)
+defines the operational exit and effect fields.
 No local AppRole observation qualifies production distribution, HA, provider audit
 or independent review.
 
