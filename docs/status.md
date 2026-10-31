@@ -4,11 +4,25 @@ Cryptalis implements a bounded research prototype. **No production release or co
 This page owns current verification and release gates; the [34-objective ledger](BUILD_CHECKLIST.md) owns remaining work.
 Use the [documentation map](README.md) to find contracts and procedures.
 
-**Latest complete hosted run: PASS at `2900173`.** Both jobs in
-[run 41095408264](https://github.com/Debrato2005/cryptalis/actions/runs/41095408264)
-pass, including Boolean NOT with tenant guards, original predicate-result keys,
-point UPDATE row counts and named DML results. The original `2d53867` source-role failure and later UUID fixture failures
-remain repaired. [Retained failure](_reset/github-point-update-returning-failed-boundary-20261030.json)
+**Latest complete hosted run: PASS at `99ea473`.** Both jobs in
+[run 41228365042](https://github.com/Debrato2005/cryptalis/actions/runs/41228365042)
+pass for the consolidated branch content, now integrated into `main`.
+The preceding [run 41227354271](https://github.com/Debrato2005/cryptalis/actions/runs/41227354271)
+at `bc94495` records the parallel source job taking about 9 minutes and passing
+3,622 test calls and 18 subtests, with 12 call
+skips, 41 setup skips and 8 collection skips across 3,675 selected items. No skipped cell is
+qualified, and all seven production gates remain UNKNOWN.
+
+Test pruning is **not fully proven safe**. A [mutation check](history/completion-2026-10-31.md#partial-mutation-check-of-the-pruned-suite-2026-10-31)
+was stopped by low memory with 10 of 26 sabotaged checks unresolved.
+
+The previous `1c7b8e0` run on `main`, [41192438108](https://github.com/Debrato2005/cryptalis/actions/runs/41192438108),
+passes 4,216 test calls and 18 subtests with 12 call skips, 86 setup skips and 18 collection
+skips across 4,314 selected items, which closes the missing clean full-source rerun noted below.
+
+The earlier `2900173` run below keeps its retained receipts. The original `2d53867`
+source-role failure and later UUID fixture failures remain repaired.
+[Retained failure](_reset/github-point-update-returning-failed-boundary-20261030.json)
 and [repair evidence](_reset/point-delete-returning-ci-fix-boundary-20261030.json)
 remain available.
 
@@ -26,12 +40,13 @@ The inspected installed wheel passes **653 checks**, with three explicit skips,
 including native SDKs, HTTPS OpenBao, ORM/SQLModel and packaged Doctor behavior.
 Full-run, repaired-module and installed receipts bind identical runtime bytes.
 The reproducible artifact check verifies hashed build inputs, SBOM, CLI and 55
-installed files. No clean full-source rerun follows the test-only repair.
-Historical hosted results below retain their own revisions; main-history merge
+installed files. No clean local full-source rerun follows the test-only repair;
+hosted run 41192438108 above supplies that full run. Historical hosted results below
+retain their own revisions; main-history merge
 `19657a6` also passes [hosted CI](https://github.com/Debrato2005/cryptalis/actions/runs/41186233396).
 Skipped cells and all seven production gates remain UNKNOWN.
 
-## Current complete CI qualification
+## Retained complete CI qualification
 
 **VERIFIED at `290017371aed0caf79b9d59eb2bed6d2829acdc2`:** GitHub
 [run 41095408264](https://github.com/Debrato2005/cryptalis/actions/runs/41095408264)
@@ -154,10 +169,11 @@ records limits. Performance acceptance remains open.
 
 | Area | Implemented boundary | Contract / instructions |
 |---|---|---|
+| Front door | `Project`: a manifest, key provider and state directory drive the whole lifecycle, with resume after a crash | [Project](application.md#project-the-small-api), [evidence](history/completion-2026-10-31.md#project-front-door-2026-10-31) |
 | Application setup | One key-free configuration for diagnosis, protection/capture, tenant onboarding, active-field changes, rotations, attachment and removal | [Application configuration](application.md) |
 | Manifest | Bounded JSON declaration, mapping/schema validation, generated locks and semantic diff | [Manifest](manifest.md) |
 | Crypto | CF1 AES-256-GCM-SIV, random nonces, HKDF, independent HMAC search roots and authenticated context | [Security](security.md) |
-| ORM/search | Bounded sync/async SQLAlchemy and optional SQLModel; exact/IN/uniqueness and explicitly admitted forms | [Compatibility matrix](compatibility.md#full-capability-matrix) |
+| ORM/search | Bounded sync/async SQLAlchemy and optional SQLModel; exact/IN/uniqueness, opt-in [range and sorting](compatibility.md#order-search) on integers and dates, and explicitly admitted forms | [Compatibility matrix](compatibility.md#full-capability-matrix) |
 | Lifecycle | Maintenance and bounded initial online protection, resumable verification, bounded active-field changes, three rotations, current-data reverse/removal, fresh restore/adoption | [Lifecycle](lifecycle.md), [operator walkthrough](walkthrough-migration.md) |
 | Providers | Development custody, optional AWS/Google SDK adapters, local OpenBao AppRole/TLS/outage/revocation/snapshot evidence | [OpenBao](openbao.md), [Google](google-kms.md); no production custody qualification |
 | Doctor | Pre-adoption schema/supplied SELECT checks, ACTIVE deployment admission, explicit cold-provider access | [Diagnosis](walkthrough-migration.md#diagnose-before-adoption), [provider checks](openbao.md) |

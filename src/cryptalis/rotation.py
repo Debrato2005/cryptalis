@@ -461,14 +461,6 @@ def _prepare_generation(source, keys, target_keys, purpose):
     return policies, prepared
 
 
-def _prepare_payload(source,keys,target_keys):
-    return _prepare_generation(source,keys,target_keys,'payload')
-
-
-def _prepare_search(source,keys,target_keys):
-    return _prepare_generation(source,keys,target_keys,'search')
-
-
 def _frame_growth(field, target):
     return (74 if target['queries'] else 42) - (74 if field['queries'] else 42)
 
@@ -616,11 +608,6 @@ def switch_payload_rotation(proposal,activation,engine,*,keys,target_keys,pin,ap
     return switch(proposal,activation,engine,keys=keys,target_keys=target_keys,pin=pin,approval=approval)
 
 
-def _verify_payload_target(c,activation,keys):
-    from cryptalis._rotation_activation import verify_target
-    return verify_target(c,activation,keys)
-
-
 def apply_search_rotation(proposal,engine,*,keys,target_keys,pin,approval,until='BACKFILLED',max_chunks=None):
     """Stage encrypted chunks under P. This operation cannot publish or switch."""
     _require_proposal(proposal,'search')
@@ -657,11 +644,6 @@ def switch_search_rotation(proposal,activation,engine,*,keys,target_keys,pin,app
     _require_proposal(proposal,'search')
     from cryptalis._rotation_activation import switch
     return switch(proposal,activation,engine,keys=keys,target_keys=target_keys,pin=pin,approval=approval)
-
-
-def _verify_search_target(c,activation,keys):
-    from cryptalis._rotation_activation import verify_target
-    return verify_target(c,activation,keys)
 
 
 def _same_roots(source, target):

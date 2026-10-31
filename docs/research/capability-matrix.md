@@ -72,6 +72,23 @@ Local SDK application profiles now cover synchronous and asynchronous operation;
 live external key custody remains unqualified. These are internal checkpoints.
 The earlier source boundary and all seven UNKNOWN production gates remain explicit.
 
+## Current integration evidence: 2026-10-31
+
+The matrix below keeps its 2026-10-23 findings. Since then, `Project` removed most of
+the setup gap in the manifest-first row: a manifest, key provider and state directory
+now drive the lifecycle, including recovery on a genuinely restored cluster. Tenant
+addition works on every tenant-column deployment, though it still pauses writers. One
+session spans all single-tenant tables.
+
+The range and ordering row below is also out of date on the Cryptalis side: opt-in
+[order search](../compatibility.md#order-search) now covers integers and dates with
+native-byte OPE. A 2026-10-31 check of CipherStash's [core concepts](https://cipherstash.com/docs/reference/eql/core-concepts)
+and [leakage table](https://cipherstash.com/docs/concepts/searchable-encryption) confirms OPE is
+its default and block-ORE needs a superuser operator class. Its `_ord` domain also offers
+`MIN`/`MAX`, which Cryptalis refuses. [MongoDB](https://www.mongodb.com/docs/manual/core/queryable-encryption/fundamentals/encrypt-and-query/)
+documents range fields with metadata-collection costs and its docs do not mention sorting. Other
+competitor findings are unchanged.
+
 ## Capability and acceptance matrix
 
 Each row retains its objective IDs. “Needed” is proposed work requiring the

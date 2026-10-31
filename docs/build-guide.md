@@ -22,9 +22,9 @@ Reuse PostgreSQL, SQLAlchemy, library crypto, providers, and the existing deploy
 
 The baseline slices below are dependency and acceptance contracts, not a claim
 that implementation starts at slice 1 again. The current code already has bounded
-implementations of all seven. Continue from the [objective ledger](BUILD_CHECKLIST.md#next-critical-path):
-simplify host integration without weakening explicit authority, then verify the
-affected native application journey. Complete functional objectives before further
+implementations of all seven. Continue from the [objective ledger](BUILD_CHECKLIST.md#next-critical-path)
+and keep changes small: see [KISS](decisions.md#consolidated-requirements-and-kiss-2026-10-31).
+Verify the affected native application journey. Complete functional objectives before further
 optimization work. Preserve measured performance failures and their acceptance
 targets; optimize after the functional requirements are implemented. Correctness,
 security and required verification remain active throughout. [Status](status.md)
@@ -141,7 +141,7 @@ Prioritize this complete journey in pinned independent applications before publi
 3. Exercise key expiry, wrong keys, corrupted frames and unsupported operations. Complete all rotations, interrupt/resume migration and restore a backup on a fresh cluster.
 4. Decrypt latest committed values and retire eligible generated database objects. Uninstall Cryptalis, restart the original application and compare native values, schema semantics and behavior.
 
-Preserve existing tests. Add focused lower-level checks for security invariants
+Preserve essential cryptographic and failure tests. Add focused lower-level checks for security invariants
 and deterministic failures that application E2E cannot establish. Run focused
 checks after changes, integrated E2E after meaningful milestones and broader
 regressions at release gates.

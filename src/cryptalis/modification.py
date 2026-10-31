@@ -47,19 +47,21 @@ def _target_lock(source_lock, manifest, *, writers, search_reviews):
             for old, new, field in zip(old_model['fields'], new_model['fields'], compiled['fields'], strict=True):
                 if old == new:
                     continue
-                if ((old['queries'], new['queries']) not in (([], ['equality']), (['equality'], [])) or
-                        new['accept_leakage'] != new['queries'] or field['source']['type'] not in ('text', 'varchar')):
+                orderable = compiler._orderable(field['source'])
+                search = ['equality', 'order'] if orderable else ['equality']
+                if ((old['queries'], new['queries']) not in (([], search), (search, [])) or
+                        new['accept_leakage'] != new['queries'] or
+                        not orderable and field['source']['type'] not in ('text', 'varchar')):
                     raise ValueError
                 old.update(queries=new['queries'], accept_leakage=new['accept_leakage'])
                 if old != new:
                     raise ValueError
                 native = next(c for c in compiled['source_schema']['columns'] if c['name'] == field['column'])
-                if new['queries'] and not compiler._exact_search_collation(native):
+                if new['queries'] and not orderable and not compiler._exact_search_collation(native):
                     raise ValueError
                 if not new['queries']:
                     removed_reviews.add(field['field_id'])
-                field.update(queries=new['queries'], representation=(
-                    'cf1-packed-equality/v1' if new['queries'] else 'cf1-storage/v1'))
+                field.update(queries=new['queries'], representation=compiler._representation(new['queries']))
                 field['descriptor']['representation'] = field['representation']
                 field['descriptor_digest'] = compiler._digest(field['descriptor'])
                 changed += 1
@@ -71,6 +73,7 @@ def _target_lock(source_lock, manifest, *, writers, search_reviews):
             raise ValueError
         target.update(declaration=desired, writer_inventory=host, search_reviews=reviews)
         target['ddl'] = compiler._ddl(target, _DIALECT)
+        target['required_readers'] = compiler._required_readers(target['models'])
         compiler._previous_lock(m._canonical(target), target, _DIALECT)
     except (KeyError, TypeError, ValueError, StopIteration):
         raise m.TransitionFailure('unsupported_manifest_modification') from None

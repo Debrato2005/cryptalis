@@ -30,7 +30,7 @@ _REWRAP_DENIED = _DENIED | frozenset(('invalid_rewrap_plan', 'rewrap_prepublicat
     'matching_external_publication_required', 'rewrap_executor_required'))
 _TENANT_DENIED = _DENIED | frozenset(('invalid_tenant_provision_plan', 'typed_tenant_uuid_required',
     'tenant_policy_already_declared', 'tenant_policy_limit', 'tenant_policy_context_mismatch',
-    'tenant_provision_requires_scoped_access_contract', 'tenant_provision_prepublication_pin_required',
+    'tenant_provision_requires_scoped_table', 'tenant_provision_prepublication_pin_required',
     'tenant_provision_executor_required', 'matching_external_publication_required'))
 _PAYLOAD_DENIED = _DENIED | frozenset(('invalid_payload_rotation_plan', 'payload_operation_pin_mismatch',
     'invalid_payload_apply_bound', 'invalid_payload_batch_bound', 'payload_activation_binding_mismatch',

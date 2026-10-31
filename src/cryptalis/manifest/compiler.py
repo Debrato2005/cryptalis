@@ -238,6 +238,19 @@ def _date_mapping_matches(column, native):
                     ('collation', 'collation_name', 'collation_schema', 'deterministic', 'provider')))
 
 
+def _orderable(source):
+    return source['type'] in _INTEGER_TYPES or source['type'] == 'date'
+
+
+def _representation(queries):
+    return ('cf1-packed-order/v1' if 'order' in queries else
+            'cf1-packed-equality/v1' if queries else 'cf1-storage/v1')
+
+
+def _index_ops(source):
+    return f"pg_catalog.{source['type']}_ops" if _orderable(source) else 'pg_catalog.text_ops'
+
+
 def _fixed_value_width(source):
     return {'bool': 1, 'int2': 2, 'int4': 4, 'int8': 8, 'date': 4, 'uuid': 16}.get(source['type'])
 
@@ -268,6 +281,7 @@ def _required_readers(models):
     return sorted({'cf1/v1'} | {f['descriptor'].get('value_codec', f['descriptor'].get('text_codec')) for m in models for f in m['fields']}
                   | {m['record']['codec'] for m in models}
                   | {'uuid16/v1' for m in models if 'column' in m['tenancy']}
+                  | ({'cf1-order/v1'} if any('order' in f['queries'] for m in models for f in m['fields']) else set())
                   | ({'pg-varchar/v1'} if any(f['source']['type'] == 'varchar'
                      for m in models for f in m['fields']) else set())
                   | ({'pg-integer-default/v1'} if any(f['source']['type'] in _INTEGER_TYPES and
@@ -467,22 +481,6 @@ def protected_extended_statistics(connection, schema, table, names):
         JOIN pg_catalog.pg_attribute a ON a.attrelid=t.oid
              AND a.attnum = ANY (s.stxkeys::int2[])
         WHERE n.nspname=:schema AND t.relname=:table
-    """, schema=schema, table=table) if row["column"] in wanted})
-
-
-def protected_owned_sequences(connection, schema, table, names):
-    """Return sequences owned by a protected column."""
-    wanted = set(names)
-    return sorted({row["name"] for row in _rows(connection, """
-        SELECT s.relname AS name, a.attname AS column
-        FROM pg_catalog.pg_depend d
-        JOIN pg_catalog.pg_class s ON s.oid=d.objid AND s.relkind='S'
-        JOIN pg_catalog.pg_class t ON t.oid=d.refobjid
-        JOIN pg_catalog.pg_namespace n ON n.oid=t.relnamespace
-        JOIN pg_catalog.pg_attribute a ON a.attrelid=t.oid AND a.attnum=d.refobjsubid
-        WHERE d.classid='pg_catalog.pg_class'::regclass
-          AND d.refclassid='pg_catalog.pg_class'::regclass
-          AND d.deptype IN ('a', 'i') AND n.nspname=:schema AND t.relname=:table
     """, schema=schema, table=table) if row["column"] in wanted})
 
 
@@ -899,12 +897,15 @@ def _compile_model(model, mapper, facts, issues, schema):
         if (_server_generation(column, actual)
                 or column.onupdate is not None):
             refuse("protected_default", field.name, "Remove protected defaults and generated values. Assign values through admitted writes.")
-        if _fixed_value_width(actual) is not None and field.queries:
+        if field.queries and ('order' in field.queries) != _orderable(actual):
+            refuse("unsupported_query", field.name, "Declare order search on integer and date fields only. "
+                   "They admit no other search; use storage-only protection otherwise.")
+        elif _fixed_value_width(actual) is not None and field.queries and not _orderable(actual):
             refuse("unsupported_query", field.name, "Use storage-only protection for this native value domain.")
         # Native deterministic default equality is byte-exact, like native C.
         # Names outside pg_catalog do not inherit either qualified identity.
         mapped_collation = getattr(column.type, "collation", None)
-        if field.queries and (not _exact_search_collation(actual) or
+        if field.queries and not _orderable(actual) and (not _exact_search_collation(actual) or
                 mapped_collation != ("C" if actual["collation"] == "pg_catalog.C" else None)):
             refuse("unsupported_collation", field.name,
                    "Match explicit native C or implicit deterministic database-default text equivalence.")
@@ -925,7 +926,7 @@ def _compile_model(model, mapper, facts, issues, schema):
                        and index["live"] and not index["partial"] and not index["expression"]
                        and index["total_columns"] == index["key_columns"]
                        and not index["exclusion"] and not index["replica_identity"])
-            expected_ops = ["pg_catalog.text_ops"] if model.tenant_column is None else ["pg_catalog.uuid_ops", "pg_catalog.text_ops"]
+            expected_ops = [_index_ops(actual)] if model.tenant_column is None else ["pg_catalog.uuid_ops", _index_ops(actual)]
             expected_collations = [actual["collation"]] if model.tenant_column is None else [None, actual["collation"]]
             if index["unique"]:
                 if (not base_ok or index["columns"] != expected_scope or index["nulls_not_distinct"]
@@ -937,7 +938,7 @@ def _compile_model(model, mapper, facts, issues, schema):
                 if "unique" not in field.queries:
                     refuse("undeclared_uniqueness", field.name, "Declare unique and accept its leakage. Existing uniqueness cannot disappear.")
             elif (not base_ok or index["columns"] != [column.name]
-                  or index["opclasses"] != ["pg_catalog.text_ops"] or index["collations"] != [actual["collation"]]
+                  or index["opclasses"] != [_index_ops(actual)] or index["collations"] != [actual["collation"]]
                   or "equality" not in field.queries):
                 refuse("unsupported_index", field.name, "Use an ordinary equality index, or exclude the field from this index.")
         for constraint in table.constraints:
@@ -947,7 +948,7 @@ def _compile_model(model, mapper, facts, issues, schema):
                     refuse("mapping_mismatch", field.name, "Restore the mapped unique constraint in the native schema before planning.")
         if "unique" in field.queries and not unique_indexes:
             refuse("missing_uniqueness", field.name, "Create and qualify the native tenant-scoped unique constraint before protection.")
-        representation = "cf1-packed-equality/v1" if field.queries else "cf1-storage/v1"
+        representation = _representation(field.queries)
         descriptor = _descriptor(None, str(model.table_id), str(field.field_id), record_codec,
                                  "uuid16/v1" if model.tenant_column is not None else "single-tenant-uuid/v1", representation,
                                  _value_codec(actual))
@@ -1099,9 +1100,9 @@ def _previous_lock(raw, current, engine):
                 boolean = field['source']['type'] == 'bool'
                 if field['source']['type'] == 'uuid' and (not uuid_lock or intent.queries):
                     raise ValueError
-                if field['source']['type'] in _INTEGER_TYPES and (not integer_lock or intent.queries):
+                if field['source']['type'] in _INTEGER_TYPES and (not integer_lock or intent.queries and 'order' not in intent.queries):
                     raise ValueError
-                if field['source']['type'] == 'date' and (not date_lock or intent.queries):
+                if field['source']['type'] == 'date' and (not date_lock or intent.queries and 'order' not in intent.queries):
                     raise ValueError
                 members = set('name column field_id queries representation payload_column unique_indexes original source descriptor descriptor_digest'.split())
                 if boolean:
@@ -1117,7 +1118,7 @@ def _previous_lock(raw, current, engine):
                     raise ValueError
                 if field["queries"] != list(intent.queries) or not isinstance(field["column"], str):
                     raise ValueError
-                representation = "cf1-packed-equality/v1" if intent.queries else "cf1-storage/v1"
+                representation = _representation(intent.queries)
                 codec = _value_codec(field['source'])
                 if field['source']['type'] == 'date':
                     codec = field['descriptor'].get('value_codec')
@@ -1248,20 +1249,20 @@ def _validate_prior_source(model, *, varchar=False, boolean=False, integer=False
             require(not field['queries'])
         elif integer and source['type'] in _INTEGER_TYPES:
             require(_integer_mapping_matches(Column('value', _INTEGER_TYPES[source['type']][0]()), source))
-            require(not field['queries'])
+            require(not field['queries'] or 'order' in field['queries'])
         elif uuid_values and source['type'] == 'uuid':
             require(_uuid_mapping_matches(Column('value', Uuid()), source))
             require(not field['queries'])
         elif date_values and source['type'] == 'date':
             require(_date_mapping_matches(Column('value', Date()), source))
-            require(not field['queries'])
+            require(not field['queries'] or 'order' in field['queries'])
         else:
             require(source['type'] == 'text' or varchar and source['type'] == 'varchar')
             _native_text_length(source)
         require(field["column"] not in (pk["name"], tenant_name))
         require(not any(source[k] for k in ("identity", "generated", "default_digest")))
         require(field["source"] == {"type": source['type'], "nullable": source["nullable"], "collation": source["collation"]})
-        if field["queries"]:
+        if field["queries"] and not _orderable(source):
             require(_exact_search_collation(source))
         affected = [i for i in facts["indexes"] if field["column"] in i["columns"] + i["dependency_columns"]]
         require(field["unique_indexes"] == [i["name"] for i in affected if i["unique"]])
@@ -1278,9 +1279,9 @@ def _validate_prior_source(model, *, varchar=False, boolean=False, integer=False
             require(not any(index[k] for k in ("primary", "exclusion", "nulls_not_distinct", "replica_identity", "partial", "expression")))
             require(index["total_columns"] == index["key_columns"])
             require(index["columns"] == (scope if index["unique"] else [field["column"]]))
-            ops = (["pg_catalog.uuid_ops"] if tenant_name is not None else []) + ["pg_catalog.text_ops"]
+            ops = (["pg_catalog.uuid_ops"] if tenant_name is not None else []) + [_index_ops(source)]
             collations = ([None] if tenant_name is not None else []) + [source["collation"]]
-            require(index["opclasses"] == (ops if index["unique"] else ["pg_catalog.text_ops"]))
+            require(index["opclasses"] == (ops if index["unique"] else [_index_ops(source)]))
             require(index["collations"] == (collations if index["unique"] else [source["collation"]]))
         for key, items in (("constraints", facts["constraints"]), ("indexes", facts["indexes"])):
             originals = field["original"][key]

@@ -143,9 +143,9 @@ Roll back after a result failure. SQL can succeed before result authentication.
 
 The scoped mapped bulk UPDATE route keeps an ordered immutable input ledger.
 Owned physical column lineage binds the explicit tenant and generated record
-predicates. Declared single-tenant tables instead require the manifest's fixed
-table UUID as the session scope, no caller predicate, and the exact generated
-record predicate. Admission checks that scope before statement key preparation
+predicates. Declared single-tenant tables instead use their own fixed table UUID as
+the scope, whatever tenant the session names, with no caller predicate and the exact
+generated record predicate. Admission checks that scope before statement key preparation
 and during compilation. An absent tenant bind does not authorize a tenant-column
 table. Each native group must consume the corresponding inputs before
 execution. Exact prepared frames, typed scope/record binds and final driver
@@ -797,6 +797,18 @@ key-policy resolution. Incompatible or unobserved admission blocks planning;
 values are not executed or reported. This does not prove full application-route
 coverage. Host factories and the application's ORM registry remain trusted code.
 
+### Project state directory
+
+`Project` keeps wrapped roots, plans and phases in its state directory, which is the
+deployment authority. Keep it outside database backups so a restored old database
+cannot authorize itself. It holds no plaintext keys or values, and a stolen copy opens
+nothing without the provider. Anyone who can write it can change that authority, so
+`Project` refuses a symlink, another owner, or group or world write. It does not
+authenticate the file's contents; treat write access as host-level trust. Losing it
+loses the wrapped roots unless you back it up, and that backup is needed to recover
+older database backups. Statements such as `writers_stopped` are recorded host
+assertions, not checks.
+
 ### Initialization CLI trust boundary
 
 **IMPLEMENTED, bounded source and installed verification:** declaration bytes are explicit public host input.
@@ -1440,7 +1452,8 @@ No key-commitment guarantee is claimed. Exact-key resolution and cross-key attac
 
 ## Capability leakage
 
-Storage/equality/IN/tenant-uniqueness leakage below is the accepted SPECIFIED boundary.
+Storage/equality/IN/tenant-uniqueness leakage below is the accepted SPECIFIED boundary,
+along with the opt-in `order` capability.
 Advanced representations add no accepted public capability or leakage opt-in until [six-gate admission](compatibility.md#capability-admission).
 
 | Representation | What PostgreSQL can learn |
@@ -1450,9 +1463,27 @@ Advanced representations add no accepted public capability or leakage opt-in unt
 | Tenant-scoped uniqueness | Also existence/membership from uniqueness conflicts within that tenant |
 | Shared equality join, INTERNAL ONLY | Also linkage between the explicitly shared fields/tables |
 | Tree range, INTERNAL ONLY | Also node membership, frequency, ancestor/intersection relationships, query covers, and structure/access/volume patterns. Known bounds or queries can label ranges |
-| Native-order OPE candidate, INTERNAL ONLY | Also complete relative order and equality. Auxiliary distributions and sorting can recover values. Construction-specific leakage needs review |
+| Order search, opt-in per field | Also complete relative order and equality within the tenant and field, the position of the first differing digit between any two values, range boundaries and sort access. Auxiliary distributions and sorting can recover values, especially in dense domains |
 | Prefix, INTERNAL ONLY | Also shared prefix membership, length through term count, prefix relationships, query repetition, and chosen-input labels |
 | Text token candidate, INTERNAL ONLY | Also word/token relationships and frequency. Positions/ranking require further representations and leakage |
+
+**Order terms.** `order` uses the CLWW order encoding (Chenette, Lewi, Weis and Wu, FSE
+2016) in a form that compares as plain bytes, as CipherStash's default does. Each byte is a
+keyed offset for the digits so far plus the next digit, with no wrap. Keys derive per tenant,
+field and search generation, so terms do not compare across tenants and search rotation
+replaces them. Digits are single bits, or two bits for int8 so the term fits 32 bytes, which
+also reveals the digit difference at the first divergence. A byte of 0 or 255 reveals its bit,
+with probability about 1 in 255 per position. One term is stored per field. CipherStash warns
+that holding both an ORE and an OPE term under one keystream reveals values; that cannot arise
+here.
+
+This is not semantic security against the dump in the threat model. A sorting attack with a
+similar auxiliary distribution can recover values, and dense domains fare worst. Opt in only
+where sorting justifies that. Reading a value authenticates its term, so a tampered term
+fails on read, but a hostile database can still return rows in a wrong order or omit them
+when the column is not read; the existing completeness limit applies. No published sorting
+attack has been run against this representation and no independent cryptographer has reviewed
+it. G-CRYPTO and G-QUERY remain UNKNOWN.
 
 A static keyed tree is not MongoDB's full structured-encryption protocol or a forward/backward-private SSE scheme.
 It has no ORAM/PIR or opaque-field claim. No home-grown primitive is introduced, but the composition still requires expert review.

@@ -223,15 +223,6 @@ def _restatement_key(item):
             item['definition'])
 
 
-def admitted_frame(binding, model, field):
-    """Return the adopted restatement for a field frame check, or None."""
-    name = '_cryptalis_' + UUID(field['field_id']).hex + '_frame'
-    for item in binding.document['restatements']:
-        if item['model'] == model['table_id'] and item['name'] == name:
-            return item
-    return None
-
-
 def _validate_binding_frames(document, binding):
     """Require exact known frame checks and their recorded rejection probes."""
     fields = {(model['table_id'], field['payload_column'] + '_frame'): field

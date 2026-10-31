@@ -25,6 +25,44 @@ retains its original choices and evidence limits. It is not the current support 
 | Provider choice | [OpenBao](openbao.md), [provider comparison](research/key-provider-selection.md) | Optional real OpenBao for self-hosted custody; retain optional AWS; no cloud purchase or vendor dependence required |
 | Test and artifact binding | [Engineering playbook](../ENGINEERING_PLAYBOOK.md), [local checks](local-development.md) | Private role probes, exact runtime/source hashes, frozen builds and explicit skips |
 
+## Consolidated requirements and KISS: 2026-10-31
+
+The [18 consolidated requirements](requirements.md) are the primary product
+obligation. Python SDK-first remains the architecture, with no mandatory proxy.
+A self-hosted gateway, subject-level shredding and tamper-evident auditing remain
+research until their contracts and guarantees are approved and verified.
+
+Simplicity is now a deciding criterion, not a preference:
+
+- Prefer the smallest change that meets a requirement. Reuse existing executors,
+  PostgreSQL features and mature libraries before adding a mechanism.
+- Remove code with no product use instead of keeping it for possible later use.
+- New abstractions must remove more developer work than they add internal code.
+- Safety is not simplified away. Authenticated encryption, fail-closed refusal and
+  visible security decisions stay. Requirement 2 hides mechanics, not decisions.
+
+When stuck, check how CipherStash and other established systems solve the problem
+before inventing an approach. The [capability matrix](research/capability-matrix.md)
+holds dated findings to reuse.
+
+## Order search: 2026-10-31
+
+Requirement 5 asks for range and ordering. The owner delegated the choice and asked for the
+best complete option. **Selected: native-byte OPE, opt-in per field, on signed integers and
+dates.** It is the only candidate giving range and `ORDER BY` from one term on stock
+PostgreSQL, with no superuser, and it matches CipherStash's default.
+
+| Rejected | Reason |
+|---|---|
+| Keyed tree paths | Cannot sort, and cost 32 to 64 terms per value. Still reveal structure in a dump |
+| Block ORE | Needs a superuser operator class, so it fails on most managed PostgreSQL. Offers little once terms are comparable and indexed |
+| Bloom or bucket candidates | Require hidden post-filtering, which is forbidden |
+
+The cost is direct: a dump reveals the order, equality and frequency of opted-in fields, which
+is a real concession under the requirement 4 threat model. It is never a default. The term
+stays 32 bytes so frame layout, index shape and lifecycle code stay unchanged. Admission
+gates and independent review evidence remain [UNKNOWN](status.md#missing-evidence-and-promotion-criteria).
+
 ## Comprehensive first public release: 2026-10-23
 
 Target one comprehensive, production-grade first public release covering the full
@@ -43,7 +81,7 @@ security invariants remain unchanged.
 Use the living [competitive capability matrix](research/capability-matrix.md) to
 choose high-value work and reuse dated source evidence. Prioritize independent
 real-application E2E journeys. Keep focused crypto, concurrency and deterministic
-failure checks where E2E cannot establish the invariant. Preserve existing tests
+failure checks where E2E cannot establish the invariant. Preserve essential tests
 and admission gates. Measure completed capabilities, real application journeys
 and resolved production requirements. Test totals, commits and slice counts do
 not establish completion. All seven production gates need their own evidence

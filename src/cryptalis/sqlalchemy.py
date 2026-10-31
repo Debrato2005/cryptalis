@@ -37,7 +37,7 @@ from ._sqlalchemy_guard import install_guard
 from ._sqlalchemy_functions import admit_function
 from ._sqlalchemy_aggregate import count_shape, distinct_projection, identity_distinct
 from ._sqlmodel_types import autostring_impl
-from ._sqlalchemy_search import boolean_children, equality_expression, rewrite_predicate, rewrite_search, search_shape, validate_search_storage
+from ._sqlalchemy_search import between_predicate, boolean_children, equality_expression, order_shape, rewrite_predicate, rewrite_search, search_shape, validate_search_storage
 from .crypto import CryptoFailure, AuthenticationFailed, FieldDescriptor, Keyring, KeyUnavailable, MAX_TEXT_BYTES, open_value, seal_value
 from .crypto.cf1 import _encode
 from .crypto.keys import InvalidText, InvalidValue, RepresentationMismatch, ProviderAuthenticationUnavailable
@@ -56,7 +56,7 @@ _NATIVE_TYPE_DISPATCH = frozenset(
 
 class UnsupportedProtectedOperation(CryptoFailure):
     stage = "SQLAlchemy admission"
-    remedy = "Use the attached factory, ordinary ORM writes, direct projections, and declared equality/IN with ordinary text binds. Remove unsupported SQL or bind codecs."
+    remedy = "Use the attached factory, ordinary ORM writes, direct projections, and declared search with ordinary binds. Remove unsupported SQL or bind codecs."
 
 
 class PolicyMismatch(CryptoFailure):
@@ -206,6 +206,15 @@ class _Sealed:
     tenant: object = field(default=None, repr=False)
 
 
+def _scope(binding, tenant):
+    """A single-tenant table's scope is the table itself; others use the session's tenant."""
+    if binding.tenant is None:
+        return binding.descriptor.table_id
+    if tenant is None:
+        raise UnsupportedProtectedOperation()
+    return tenant
+
+
 @dataclass
 class _Operation:
     owner: object
@@ -234,6 +243,12 @@ class _Operation:
     @property
     def bulk_table(self):
         return self.bulk_insert if self.bulk_insert is not None else self.bulk_update
+
+    def scope(self, binding):
+        return _scope(binding, self.tenant)
+
+    def keys_for(self, binding):
+        return self.keys[self.scope(binding)]
 
     def generated(self, node):
         if self.search_identities.get(id(node)) is node:
@@ -388,8 +403,8 @@ class _ReadText(TypeDecorator):
     def __init__(self, binding, operation, record_column):
         super().__init__()
         self.binding = binding
-        self.keys = operation.keys
-        self.tenant = operation.tenant
+        self.keys = operation.keys_for(binding)
+        self.tenant = operation.scope(binding)
         self.points = tuple(value for column, value in operation.points if column.compare(record_column))
         self.require_record = (operation.point_update is not None or operation.bulk_returning is not None
                                or operation.scoped_delete is not None)
@@ -617,7 +632,7 @@ class _Attachment:
         return any(isinstance(node, ColumnClause) and lineage.intersection(node.proxy_set)
                    for node in visitors.iterate(expression))
 
-    def _admit_textual_references(self, statement):
+    def _admit_textual_references(self, statement, admitted_orders=()):
         # Label references have no column lineage. Check every local occurrence,
         # not just outer ORDER/GROUP clauses; nested SELECTs own their namespace.
         selected_roots = tuple(statement._all_selected_columns)
@@ -653,7 +668,8 @@ class _Attachment:
                 yield from references(child, within_columns, input_first or not transparent)
 
         for root, within_columns, input_first in roots:
-            if any(root is clause for clause in order_roots + group_roots) and self.protected(root):
+            if (any(root is clause for clause in order_roots + group_roots) and self.protected(root)
+                    and id(root) not in admitted_orders):
                 raise UnsupportedProtectedOperation()
             for textual, within_columns, input_first in references(root, within_columns, input_first):
                 if resolution is None:
@@ -721,11 +737,26 @@ class _Attachment:
                 raise PolicyMismatch()
         return ring
 
+    def _scopes(self, tenant):
+        # The session's own tenant first: an invalid one refuses before any key access.
+        fixed = sorted({binding.descriptor.table_id for binding in self.bindings if binding.tenant is None})
+        return tuple(dict.fromkeys(([] if tenant is None else [tenant]) + fixed))
+
+    def check_session(self, tenant):
+        scopes = self._scopes(tenant)
+        if not scopes:
+            raise PolicyMismatch()
+        for scope in scopes:
+            self._ring(scope)
+
+    def scope_of(self, table, tenant):
+        return _scope(next(binding for binding in self.bindings if binding.column.table is table), tenant)
+
     def prepare(self, tenant):
-        return self._ring(tenant).prepare()
+        return {scope: self._ring(scope).prepare() for scope in self._scopes(tenant)}
 
     async def prepare_async(self, tenant):
-        return await self._ring(tenant).prepare_async()
+        return {scope: await self._ring(scope).prepare_async() for scope in self._scopes(tenant)}
 
     def validate(self, connection):
         if tuple(connection.dispatch.before_cursor_execute):
@@ -788,7 +819,7 @@ class _Attachment:
                     raise PolicyMismatch()
                 if field["queries"]:
                     if (not isinstance(field["queries"], list) or not field["queries"] or
-                            not set(field["queries"]) <= {"equality", "unique"}):
+                            not set(field["queries"]) <= {"equality", "order", "unique"}):
                         raise PolicyMismatch()
                     admitted = None
                     if self.deployment is not None:
@@ -1229,8 +1260,6 @@ class _Attachment:
     def record_context(self, statement, tenant, expected=None, *, update=False, literal_values=False):
         native = Update if update else Delete
         _delete_node(statement, native)
-        if type(tenant) is not UUID:
-            raise UnsupportedProtectedOperation()
         if expected is None:
             mapper = statement._propagate_attrs.get('plugin_subject')
             if (mapper is None or getattr(mapper, 'class_', None) not in self.models or
@@ -1244,7 +1273,10 @@ class _Attachment:
         else:
             table = expected.table
             first = next(binding for binding in self.bindings if binding.column.table is table)
-        if (not isinstance(statement, native) or first.tenant is None and tenant != first.descriptor.table_id or
+        tenant = _scope(first, tenant)
+        if type(tenant) is not UUID:
+            raise UnsupportedProtectedOperation()
+        if (not isinstance(statement, native) or
                 statement.table.name != table.name or statement.table.schema != table.schema or
                 not all(column.key in statement.table.c and statement.table.c[column.key].shares_lineage(column)
                         for column in table.c) or statement._return_defaults or
@@ -1324,8 +1356,6 @@ class _Attachment:
         bindings = [binding for binding in self.bindings if binding.column.table is table]
         first = bindings[0]
         scoped = first.tenant is not None
-        if not scoped and (type(tenant) is not UUID or tenant != first.descriptor.table_id):
-            raise UnsupportedProtectedOperation()
         self.bind_type(first.record.type)
         if scoped:
             self.bind_type(first.tenant.type)
@@ -1454,6 +1484,13 @@ class _Attachment:
                 if shape is not None:
                     count_roots.add(id(shape[0]))
                     count_nodes.update(id(part) for part in visitors.iterate(shape[0]))
+        order_nodes = set()
+        current = _operation.get()
+        for clause in statement._order_by_clauses:
+            if self.protected(clause) and (
+                    current is not None and current.owner is self and current.generated(clause)
+                    or order_shape(self, clause, statement) is not None):
+                order_nodes.update(id(part) for part in visitors.iterate(clause))
         safe_count_stars = set()
         for node in nodes:
             operation = _operation.get()
@@ -1499,10 +1536,11 @@ class _Attachment:
                 if any(getattr(node, name) is not getattr(native, name)
                        for name in ('name', 'key', 'type', '_element')):
                     raise UnsupportedProtectedOperation()
-            boolean = boolean_children(node) if id(node) not in count_nodes and self.protected(node) else None
-            if (id(node) not in count_nodes and self.protected(node)
+            shaped = id(node) in count_nodes or id(node) in order_nodes
+            boolean = boolean_children(node) if not shaped and self.protected(node) else None
+            if (not shaped and self.protected(node)
                     and not isinstance(node, (Select, FromClause, ColumnClause, Label, Grouping))):
-                if boolean is None and search_shape(self, node) is None:
+                if boolean is None and search_shape(self, node) is None and between_predicate(self, node) is None:
                     raise UnsupportedProtectedOperation()
             if isinstance(node, Select):
                 for output in node.selected_columns:
@@ -1518,7 +1556,8 @@ class _Attachment:
                 # ORM join predicates appear as direct public children before
                 # they become Join objects. Consume only WHERE/projection
                 # occurrences; an additional protected ON occurrence refuses.
-                eligible = list(node.selected_columns)
+                eligible = list(node.selected_columns) + [
+                    clause for clause in node._order_by_clauses if id(clause) in order_nodes]
                 children = tuple(node.get_children())
                 where = node.whereclause
                 if where is not None:
@@ -1543,7 +1582,8 @@ class _Attachment:
                         boolean = boolean_children(predicate) if self.protected(predicate) else None
                         if boolean is not None:
                             predicates.extend(boolean)
-                        elif self.protected(predicate) and search_shape(self, predicate) is None:
+                        elif (self.protected(predicate) and search_shape(self, predicate) is None
+                              and between_predicate(self, predicate) is None):
                             raise UnsupportedProtectedOperation()
                 for child in children:
                     if self.protected(child) and not isinstance(child, FromClause):
@@ -1551,7 +1591,7 @@ class _Attachment:
                         if match is None:
                             raise UnsupportedProtectedOperation()
                         eligible.pop(match)
-                self._admit_textual_references(node)
+                self._admit_textual_references(node, order_nodes)
 
     def prepare_rows(self, session, operation):
         for obj in tuple(session.new) + tuple(session.dirty) + tuple(session.deleted):
@@ -1574,7 +1614,7 @@ class _Attachment:
                     tenant = getattr(obj, first.tenant_attribute)
             if record is NO_VALUE or record is None or tenant is NO_VALUE:
                 raise UnsupportedProtectedOperation()
-            if tenant != operation.tenant:
+            if tenant != operation.scope(first):
                 raise AuthenticationFailed()
             operation.rows[(first.column.table.schema, first.column.table.name, record)] = tenant
             if obj in session.deleted:
@@ -1601,7 +1641,7 @@ class _Attachment:
                     sealed = _Sealed(_INTEGER_UPDATE_INVALID if type(failure) is IntegerRangeExceeded else None,
                                      operation, binding, failure, record, tenant)
                 else:
-                    body = seal_value(stored, binding.descriptor, tenant, record, operation.keys)
+                    body = seal_value(stored, binding.descriptor, tenant, record, operation.keys_for(binding))
                     sealed = _Sealed(body, operation, binding, record=record, tenant=tenant)
                 operation.prepared[(binding.column.table.schema, binding.column.table.name, record, binding.column.key)] = (value, sealed)
 
@@ -1803,7 +1843,7 @@ class _Attachment:
             input_context = (records, tenants,
                              UUID if first.descriptor.record_codec == 'uuid16/v1' else int,
                              frozenset((point.identity,)) if point is not None else
-                             frozenset(row[first.record.key] for row in operation.bulk_batch), operation.tenant)
+                             frozenset(row[first.record.key] for row in operation.bulk_batch), operation.scope(first))
         for index, result in enumerate(results):
             if type(result.type) is not _ReadText:
                 continue
@@ -1939,7 +1979,7 @@ class _Attachment:
             constants = {}
         table = operation.scoped_delete.table if operation.scoped_delete is not None else operation.bulk_update
         first = next((binding for binding in self.bindings if binding.column.table is table), None)
-        fixed_scope = first is not None and first.tenant is None and operation.tenant == first.descriptor.table_id
+        fixed_scope = first is not None and first.tenant is None
         if ((scope_key is None and not (operation.flushing or fixed_scope) or scope_key is not None and scope_key not in names) or record_key not in names or
                 any(type(name) is not str for name in names.values()) or
                 len(names) != len(native_names) or len(set(names.values())) != len(names)):
@@ -1977,7 +2017,7 @@ class _Attachment:
                     owned = (prepared is not None and prepared[1] is value) if operation.flushing else operation.bulk_seals.get(id(value)) is value
                     if (not owned or value.permit is not operation or
                             group[name] is not value or value.record != admitted[record_key] or
-                            value.tenant != operation.tenant or
+                            value.tenant != operation.scope(value.binding) or
                             (sent[name] is not None if value.body is None else
                              type(sent[name]) is not binary or type(sent[name].obj) is not bytes or sent[name].obj != value.body)):
                         raise UnsupportedProtectedOperation()
@@ -2025,7 +2065,7 @@ class _Attachment:
             record = group.get(first.record.key)
             tenant = group.get(first.tenant.key) if first.tenant is not None else first.descriptor.table_id
             first.descriptor._record(tenant, record)
-            if (tenant != operation.tenant or
+            if (tenant != operation.scope(first) or
                     (first.column.table.schema, first.column.table.name, record) not in operation.rows):
                 raise UnsupportedProtectedOperation()
             for binding in bindings:
@@ -2122,7 +2162,8 @@ def _execute(state):
             return _unprotected_delete(state)
         return _scoped_delete(state)
     session._owner.admit(state.statement)
-    parameters = state.parameters if isinstance(state.parameters, dict) else {}
+    # SQLAlchemy 2.1 keeps statement.params(...) values on the statement, not its binds.
+    parameters = {**state.statement._params, **(state.parameters if isinstance(state.parameters, dict) else {})}
     protected_read = any(session._owner.protected(c) for c in state.statement.selected_columns)
     operation = _Operation(session._owner, session._keys(), session._tenant, session,
                            points=_points(state.statement, parameters) if protected_read else (), parameters=parameters)
@@ -2217,7 +2258,7 @@ def _scoped_delete(state):
             native._synchronize_session is not False):
         raise UnsupportedProtectedOperation()
     material = session._keys()
-    if session._tenant != permit.tenant:
+    if owner.scope_of(permit.table, session._tenant) != permit.tenant:
         raise UnsupportedProtectedOperation()
     owner.record_context(statement, permit.tenant, permit)
     operation = _Operation(owner, material, permit.tenant, session, scoped_delete=permit,
@@ -2272,7 +2313,7 @@ def _bulk_insert(state):
         record = row.get(first.record_attribute)
         tenant = row.get(first.tenant_attribute) if first.tenant is not None else first.descriptor.table_id
         first.descriptor._record(tenant, record)
-        if tenant != session._tenant:
+        if tenant != _scope(first, session._tenant):
             raise AuthenticationFailed()
         for attribute, column in columns.items():
             omitted = attribute not in row or (row[attribute] is None and not render_nulls
@@ -2305,7 +2346,7 @@ def _bulk_insert(state):
                     failed_index = index
                 sealed = _Sealed(None, operation, binding, failure, record, tenant)
             else:
-                sealed = _Sealed(seal_value(stored, binding.descriptor, tenant, record, operation.keys),
+                sealed = _Sealed(seal_value(stored, binding.descriptor, tenant, record, operation.keys_for(binding)),
                                  operation, binding, record=record, tenant=tenant)
             operation.bulk_seals[id(sealed)] = sealed
             row[binding.attribute] = sealed
@@ -2392,12 +2433,14 @@ def _capture_update(owner, mapper, statement, parameters, tenant):
     point = literal_values or type(parameters) is dict
     if (mapper is None or getattr(mapper, 'class_', None) not in owner.models or
             mapper is not inspect(mapper.class_) or mapper.version_id_col is not None or
-            not literal_values and (type(parameters) not in (list, dict) or not parameters) or
-            type(tenant) is not UUID):
+            not literal_values and (type(parameters) not in (list, dict) or not parameters)):
         raise UnsupportedProtectedOperation()
     bindings = owner.models[mapper.class_]
     first = bindings[0]
     table = first.column.table
+    tenant = _scope(first, tenant)
+    if type(tenant) is not UUID:
+        raise UnsupportedProtectedOperation()
     tenant = UUID(bytes=tenant.bytes)
     permit = returning = None
     if point:
@@ -2509,7 +2552,7 @@ def _bulk_update(state):
                                      _INTEGER_UPDATE_INVALID if type(failure) is IntegerRangeExceeded else None,
                                      operation, binding, failure, record, tenant)
                 else:
-                    body = seal_value(stored, binding.descriptor, tenant, record, operation.keys)
+                    body = seal_value(stored, binding.descriptor, tenant, record, operation.keys_for(binding))
                     sealed = _Sealed(body, operation, binding, record=record, tenant=tenant)
                 operation.bulk_seals[id(sealed)] = sealed
                 row[binding.attribute] = sealed
@@ -2630,7 +2673,7 @@ def _async_method(name, *, native=None):
                 if isinstance(permit, _UnprotectedDeletePermit):
                     session._owner.unprotected_delete_context(statement, permit)
                 else:
-                    if session._tenant != permit.tenant:
+                    if session._owner.scope_of(permit.table, session._tenant) != permit.tenant:
                         raise UnsupportedProtectedOperation()
                     session._owner.record_context(statement, permit.tenant, permit)
             if request is not None:
@@ -2654,10 +2697,10 @@ class _Factory:
     def __init__(self, owner):
         self._owner = owner
 
-    def __call__(self, *, tenant_id, **options):
+    def __call__(self, *, tenant_id=None, **options):
         if any(k in options for k in ("bind", "binds", "class_", "sync_session_class", "_owner", "_asynchronous")):
             raise UnsupportedProtectedOperation()
-        self._owner._ring(tenant_id)
+        self._owner.check_session(tenant_id)
         cls = self._async_session if isinstance(self._owner.engine, AsyncEngine) else self._sync_session
         return cls(bind=self._owner.engine, _owner=self._owner, tenant_id=tenant_id, **options)
 

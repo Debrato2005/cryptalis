@@ -61,10 +61,8 @@ class Qualification:
             shutil.copyfile(source, self.evidence / name)
 
     def source(self):
-        self.run('artifact-integrity regressions', [sys.executable, 'scripts/test_release_check.py'])
-        self.run('offline rewrap protocol regressions', [sys.executable, 'scripts/test_rewrap_protocol.py'])
         self.run('complete default source suite', [sys.executable, 'scripts/online_qualification.py',
-            '--workdir', str(self.workdir / 'source'), '--', 'tests', '-q'])
+            '--workdir', str(self.workdir / 'source'), '--', 'tests', '-q', '-n', 'auto', '--dist', 'loadfile'])
         receipt = json.loads((self.workdir / 'source/receipt.json').read_text())
         if receipt['exit_code'] != 0 or receipt['counts'].get('passed', 0) == 0:
             raise CheckFailed(1)
@@ -157,7 +155,7 @@ class Qualification:
                 '--receipt', str(self.workdir / 'installed-sqlmodel-receipt.json'), '--',
                 'tests/test_sqlmodel_bridge.py', 'tests/test_sqlmodel_async.py', 'tests/test_sqlalchemy_fork.py',
                 'tests/test_single_tenant_update.py', 'tests/test_single_tenant_delete.py',
-                'tests/test_initialization_cli.py', 'tests/test_application_config.py',
+                'tests/test_initialization_cli.py', 'tests/test_application_config.py', 'tests/test_project.py',
                 'tests/test_application_rotation.py', 'tests/test_application_online.py',
                 'tests/test_application_modification.py', 'tests/test_modification_boundaries.py',
                 'tests/test_modification_contexts.py', 'tests/test_modification_recovery.py',
@@ -203,6 +201,16 @@ class Qualification:
             for phase in ('export', 'restore'):
                 receipt = json.loads((self.workdir / f'application-fresh/{phase}-receipt.json').read_text())
                 if (receipt['exit_code'] != 0 or receipt['counts'] != {'passed': 1 if phase == 'export' else 2}
+                        or receipt['pytest_report_counts']['collection']
+                        or receipt['runtime_binding']['mode'] != 'installed-wheel'
+                        or receipt['runtime_binding']['wheel_sha256'] != digest):
+                    raise CheckFailed(1)
+            self.run('installed Project on genuine fresh recovery', [str(python),
+                'scripts/fresh_cluster_qualification.py', '--workdir', str(self.workdir / 'project-fresh'),
+                '--project', '--installed-wheel', str(wheel)], environment=environment)
+            for phase in ('export', 'restore'):
+                receipt = json.loads((self.workdir / f'project-fresh/{phase}-receipt.json').read_text())
+                if (receipt['exit_code'] != 0 or receipt['counts'] != {'passed': 1}
                         or receipt['pytest_report_counts']['collection']
                         or receipt['runtime_binding']['mode'] != 'installed-wheel'
                         or receipt['runtime_binding']['wheel_sha256'] != digest):

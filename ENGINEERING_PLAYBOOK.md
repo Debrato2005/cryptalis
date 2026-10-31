@@ -56,6 +56,10 @@ changes; an explicit instruction to continue building does. Authorization for
 ordinary verified commits/pushes persists across slices. Historical one-file or
 one-slice instructions do not override the active request.
 
+Follow [KISS](docs/decisions.md#consolidated-requirements-and-kiss-2026-10-31):
+pick the smallest change that meets the requirement, reuse what exists and delete
+what has no product use.
+
 1. Select an unresolved objective and its current contract owner.
 2. Inspect the source and relevant existing evidence; choose an observable result.
 3. Add a meaningful failure/native-oracle check when the behavior requires one.
@@ -103,6 +107,11 @@ Choose the highest real boundary that exposes the property.
 | Focused unit | Independent crypto vectors, bounded decoders, canonicalization, exact normalization, state-machine edges and deterministic algorithms |
 
 Use end-to-end evidence first, integration next, then selective units.
+Do not add tests of test tooling, private functions or artifact shapes. Keep crypto vectors and
+real failure scenarios. A native PostgreSQL oracle is the preferred proof: run the query on
+the plaintext table, then require the same rows through Cryptalis.
+Run the suite in parallel with `-n auto --dist loadfile`. Tests use unique schemas, so they
+share one database. Keep a test parallel-safe: no fixed schema names or cluster-wide changes.
 Do not test each function, private layout, getters, imports or constants merely to increase coverage.
 A test must survive reasonable internal refactors and protect a meaningful property or regression.
 Use real PostgreSQL and exact provider semantics where the claim depends on them.

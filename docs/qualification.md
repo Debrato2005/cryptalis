@@ -35,6 +35,10 @@ native mappings are rebuilt for plaintext application reads after removal. A ded
 profile restores a retained TEXT backup, plans rotations against its explicit
 restore binding and removes protection after current edits. CI runs this profile
 as well as the keyword/public-slot recovery profile and retains separate receipts.
+`fresh_cluster_qualification.py --project` does the same through
+[`Project`](application.md#project-the-small-api): `recover`, reads, search, an edit, payload
+rotation, decrypt and remove. CI runs it against the built wheel. Use the default work
+directory or a short path: PostgreSQL's socket path is limited to 107 characters.
 Use [local development](local-development.md#automated-checks) for the complete command.
 
 ### Receipt outcome fields

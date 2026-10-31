@@ -9,7 +9,7 @@ import json
 import os
 from dataclasses import dataclass
 from datetime import date, timedelta
-from hmac import compare_digest
+from hmac import compare_digest, digest as hmac_digest
 from uuid import UUID
 
 from cryptography.exceptions import InvalidTag
@@ -27,6 +27,8 @@ _MAGIC = b"CF1\x00\x01"
 _INTEGER_WIDTHS = {"pg-int2-be/v1": 2, "pg-int4-be/v1": 4, "pg-int8-be/v1": 8}
 _DATE_CODEC = "pg-date-days-be/v1"
 _DATE_EPOCH = date(2000, 1, 1)
+_ORDER_REPRESENTATION = "cf1-packed-order/v1"
+_ORDER_CODECS = (*_INTEGER_WIDTHS, _DATE_CODEC)
 _DESCRIPTOR_MEMBERS = frozenset(("schema", "domain_id", "table_id", "field_id", "text_codec",
                                "normalizer", "null_policy", "record_codec", "tenant_codec", "representation"))
 
@@ -47,9 +49,10 @@ class FieldDescriptor:
             _identity(identity)
         if (self.record_codec not in ("uuid16/v1", "int64-be/v1") or
                 self.tenant_codec not in ("uuid16/v1", "single-tenant-uuid/v1") or
-                self.representation not in ("cf1-storage/v1", "cf1-packed-equality/v1") or
+                self.representation not in ("cf1-storage/v1", "cf1-packed-equality/v1", _ORDER_REPRESENTATION) or
                 self.value_codec not in ("utf8-exact/v1", "boolean-u8/v1", _DATE_CODEC, "date-ordinal-u32/v1", "uuid-bytes16/v1", *_INTEGER_WIDTHS) or
-                self.value_codec != "utf8-exact/v1" and self.representation != "cf1-storage/v1" or
+                self.representation == "cf1-packed-equality/v1" and self.value_codec != "utf8-exact/v1" or
+                self.representation == _ORDER_REPRESENTATION and self.value_codec not in _ORDER_CODECS or
                 type(self.digest) is not bytes or len(self.digest) != 32):
             raise InvalidContext()
 
@@ -84,7 +87,12 @@ class FieldDescriptor:
 
     @property
     def equality(self):
-        return self.representation == "cf1-packed-equality/v1"
+        """Whether frames carry a search term; order terms also answer equality."""
+        return self.representation != "cf1-storage/v1"
+
+    @property
+    def ordered(self):
+        return self.representation == _ORDER_REPRESENTATION
 
     def _record(self, tenant, record):
         _native_uuid(tenant)
@@ -110,6 +118,32 @@ def _encode(value):
     return encoded
 
 
+def _encode_value(value, field):
+    if field.value_codec == "boolean-u8/v1":
+        if type(value) is not bool:
+            raise InvalidValue()
+        return b"\x01" if value else b"\x00"
+    if field.value_codec == 'uuid-bytes16/v1':
+        if type(value) is not UUID:
+            raise InvalidValue()
+        return value.bytes
+    if field.value_codec == 'date-ordinal-u32/v1':
+        if type(value) is not date:
+            raise InvalidValue()
+        return value.toordinal().to_bytes(4, 'big')
+    if field.value_codec == _DATE_CODEC:
+        if type(value) is not date:
+            raise InvalidValue()
+        return (value - _DATE_EPOCH).days.to_bytes(4, 'big', signed=True)
+    if field.value_codec in _INTEGER_WIDTHS:
+        width = _INTEGER_WIDTHS[field.value_codec]
+        bound = 1 << (8 * width - 1)
+        if type(value) is not int or not -bound <= value < bound:
+            raise InvalidValue()
+        return value.to_bytes(width, 'big', signed=True)
+    return _encode(value)
+
+
 def _derive(material, info):
     c = material.context
     salt = hashlib.sha256(tuple_bytes(b"CF1/root", c.domain_id.bytes, c.tenant_id.bytes,
@@ -117,7 +151,35 @@ def _derive(material, info):
     return HKDF(algorithm=hashes.SHA256(), length=32, salt=salt, info=info).derive(material.root)
 
 
+def _order_term(encoded, field, material):
+    """CLWW order encoding (Chenette et al., FSE 2016) that compares as plain bytes.
+
+    Each output byte is a keyed offset for the digits so far plus the next digit.
+    Two values share every byte up to their first differing digit, where the smaller
+    digit gives the smaller byte. No modular wrap occurs, so bytea order equals value
+    order. A fixed 32 bytes keeps the frame layout and index of an equality term.
+    int8 uses 2-bit digits to fit; narrower types use single bits.
+    """
+    key = _derive(material, tuple_bytes(b"CF1/search-key", field.field_id.bytes, field.value_codec.encode("ascii"),
+                                        b"identity/v1", b"order"))
+    width = 8 * len(encoded)
+    # Flipping the sign bit makes two's complement compare as unsigned.
+    number = int.from_bytes(encoded, "big") ^ (1 << (width - 1))
+    bits = 2 if width == 64 else 1
+    digits = width // bits
+    prefix = bytearray()
+    term = bytearray()
+    for position in range(digits):
+        digit = (number >> (bits * (digits - 1 - position))) & ((1 << bits) - 1)
+        offset = int.from_bytes(hmac_digest(key, tuple_bytes(b"order", bytes(prefix)), "sha256")[:8], "big")
+        term.append(offset % (257 - (1 << bits)) + digit)
+        prefix.append(digit)
+    return bytes(term).ljust(32, b"\x00")
+
+
 def _term(encoded, field, material):
+    if field.ordered:
+        return _order_term(encoded, field, material)
     key = _derive(material, tuple_bytes(b"CF1/search-key", field.field_id.bytes,
                                        b"utf8-exact/v1", b"identity/v1", b"equality"))
     mac = hmac.HMAC(key, hashes.SHA256())
@@ -137,7 +199,7 @@ def equality_term(value: str | None, field: FieldDescriptor, tenant: UUID,
         raise InvalidContext()
     generation = keys.policy.search_generation
     material = keys._resolve(field.domain_id, tenant, "search", generation)
-    result = None if value is None else _term(_encode(value), field, material)
+    result = None if value is None else _term(_encode_value(value, field), field, material)
     keys._resolve(field.domain_id, tenant, "search", generation)
     return result
 
@@ -164,30 +226,7 @@ def seal_value(value: str | bool | int | date | UUID | None, field: FieldDescrip
     payload = keys._resolve(field.domain_id, tenant, "payload", payload_generation)
     if value is None:
         return None
-    if field.value_codec == "boolean-u8/v1":
-        if type(value) is not bool:
-            raise InvalidValue()
-        encoded = b"\x01" if value else b"\x00"
-    elif field.value_codec == 'uuid-bytes16/v1':
-        if type(value) is not UUID:
-            raise InvalidValue()
-        encoded = value.bytes
-    elif field.value_codec == 'date-ordinal-u32/v1':
-        if type(value) is not date:
-            raise InvalidValue()
-        encoded = value.toordinal().to_bytes(4, 'big')
-    elif field.value_codec == _DATE_CODEC:
-        if type(value) is not date:
-            raise InvalidValue()
-        encoded = (value - _DATE_EPOCH).days.to_bytes(4, 'big', signed=True)
-    elif field.value_codec in _INTEGER_WIDTHS:
-        width = _INTEGER_WIDTHS[field.value_codec]
-        bound = 1 << (8 * width - 1)
-        if type(value) is not int or not -bound <= value < bound:
-            raise InvalidValue()
-        encoded = value.to_bytes(width, 'big', signed=True)
-    else:
-        encoded = _encode(value)
+    encoded = _encode_value(value, field)
     search_generation = 0
     term = b""
     if field.equality:

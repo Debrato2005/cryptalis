@@ -1,4 +1,72 @@
-# Shared application configuration
+# Application API
+
+Start with `Project`. Use `ApplicationConfig` only when your host needs its own
+publication system or per-step control.
+
+## Project: the small API
+
+`Project` needs a manifest, your ORM registry, a key provider and a private state
+directory. It generates wrapped roots, retains plans, publishes pins and resumes
+after a crash. It adds no cryptography, SQL or transition logic: every call drives
+the executors described below.
+
+```python
+from cryptalis import Project
+
+project = Project("cryptalis.json", Base.registry,
+                  provider=my_key_provider, state_dir="/etc/myapp/cryptalis")
+```
+
+| Call | What it does |
+|---|---|
+| `doctor(engine)` | Read-only check. Before protection, pass the owner engine: schema and query samples, no keys. Afterwards, pass the runtime engine: attachment metadata and cold provider access |
+| `protect(owner, runtime_role=, writers_stopped=, search_reviewed=)` | Encrypt existing rows with writers stopped |
+| `protect_online(owner, runtime_role=, source_role=, writers_excluded=, accept_plaintext_capture=True)` | Encrypt existing rows while the native application keeps writing, until the final fence |
+| `attach(engine)` | Return the session factory. Await it for an `AsyncEngine`. Use `adapter="sqlmodel"` for SQLModel |
+| `status(owner)` | Recorded progress, or `None` before protection starts |
+| `rotate(owner, "payload" \| "search", writers_stopped=)` | New payload key, or new search key and terms |
+| `rotate(owner, "wrapping", provider=new, writers_stopped=)` | Move the same roots to another provider; stored bytes do not change |
+| `modify(owner, writers_stopped=, search_reviewed=)` | Apply a changed manifest's search settings |
+| `add_tenant(owner, tenant_id, writers_stopped=)` | Add one empty tenant with its own keys. Restart workers afterwards |
+| `recover(owner, host=, quarantine=, source_fenced=True)` | Adopt a database restored from backup |
+| `decrypt(owner, plaintext_role=, writers_stopped=, accept_plaintext=True, retained_backups=)` | Restore current values to plaintext columns |
+| `remove(owner, writers_stopped=, application_verified=, old_workers_stopped=True)` | Drop generated objects after `decrypt`. Uninstall the package last |
+| `abort(owner, writers_stopped=)` | Cancel an unfinished operation. A completed switch refuses; resume it instead |
+
+Repeat a lifecycle call that failed to resume it. Repeating a finished call reports the
+result, except `rotate`, which starts a new rotation. An unfinished operation blocks
+`attach` and other lifecycle calls until you finish or abort it, with a
+`ProjectError` that says what to do. `owner` is a synchronous engine with the schema
+owner's credentials; `runtime_role` is your application's separate role.
+
+**Decisions stay visible.** String arguments such as `writers_stopped` and
+`search_reviewed` are your statements. Cryptalis cannot verify them. They are required
+and recorded in the plan. `search_reviewed` is needed only when the manifest declares
+search on a field.
+
+**State directory.** It is the deployment authority, so keep it outside database
+backups: a restored old database then cannot authorize itself. It holds wrapped roots,
+plans and phases, never plaintext keys or values. It must be owner-writable only;
+`ProjectError` refuses anything else. Every worker must read the same state, for
+example from your deployment artifact or a shared volume, and must restart after a
+lifecycle change. Run one lifecycle operation at a time. Losing the state directory
+loses access to the wrapped roots, so back it up.
+
+**Estimates.** Pause estimates use conservative defaults of 1,000 rows per second.
+`protect` refuses if the estimate exceeds `max_pause_seconds` (default one hour). Pass
+measured values through `Project(..., estimates={...})`. They are estimates, not
+guarantees.
+
+**Limits.** `writers_stopped` covers one attached application. For several writer
+routes, pass `Project(..., writers=WriterInventory(...))`. `add_tenant` pauses writers
+and verifies every frame, so it suits occasional onboarding rather than signup traffic.
+`recover` needs a real restored copy and the state directory copy from the time of that
+backup, because state records only the latest plan. The
+[fresh-cluster harness](qualification.md) runs it on a genuinely restored cluster with
+`--project`. `modify` is not available on a restored target until another lifecycle
+change has run there. Compatibility limits and all seven production gates apply unchanged.
+
+## Shared application configuration
 
 `ApplicationConfig` keeps one explicit manifest, ORM registry, writer inventory,
 search review set and optional SELECT sample set. Reuse it for initialization,

@@ -5,7 +5,10 @@
 
 
 
-The [operator walkthrough](walkthrough-migration.md) owns executable procedures.
+Most applications should start with [`Project`](application.md#project-the-small-api),
+which needs none of these inputs. This reference is for hosts that drive each step
+themselves through the CLI. The [operator walkthrough](walkthrough-migration.md) owns
+executable procedures.
 This reference owns trusted factory/context inputs; the source definitions are
 [cli_host.py](../src/cryptalis/cli_host.py). Host code is not sandboxed.
 No context supplies implicit tenant, deployment, maintenance or destruction authority.
