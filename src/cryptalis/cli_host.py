@@ -74,6 +74,42 @@ class RemovalContext:
 
 
 @dataclass(frozen=True, repr=False)
+class TenantPlanningContext:
+    """One host-approved typed scope and trusted policy, never CLI-selected keys."""
+    engine: Engine
+    source_keys: Keyring | Callable[[UUID], Keyring]
+    source_pin: DeploymentPin
+    tenant_id: UUID
+    key_policy: Keyring
+    verify_rows_per_second: float
+    restore: RestoreBinding | None
+
+
+@dataclass(frozen=True, repr=False)
+class TenantApplyContext:
+    engine: Engine
+    keys: Keyring | Callable[[UUID], Keyring]
+    pin: DeploymentPin
+    approval: MaintenanceApproval
+
+
+@dataclass(frozen=True, repr=False)
+class TenantActivationContext:
+    engine: Engine
+    keys: Keyring | Callable[[UUID], Keyring]
+    pin: DeploymentPin
+    approval: MaintenanceApproval
+
+
+@dataclass(frozen=True, repr=False)
+class TenantAbortContext:
+    engine: Engine
+    source_keys: Keyring | Callable[[UUID], Keyring]
+    source_pin: DeploymentPin
+    approval: MaintenanceApproval
+
+
+@dataclass(frozen=True, repr=False)
 class RewrapPlanningContext:
     engine: Engine
     source_keys: Keyring | Callable[[UUID], Keyring]

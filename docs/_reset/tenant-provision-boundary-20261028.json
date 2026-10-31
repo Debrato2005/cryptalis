@@ -1,0 +1,393 @@
+{
+  "format": "cryptalis.tenant-provision-qualification/v1",
+  "base_revision": "d328b36b36b8b3e2a5e800bf384ab938e9baa4e3",
+  "archive": {
+    "path": "docs/_reset/tenant-provision-receipts-20261028.tar.gz",
+    "sha256": "c972c8f0c4a107a3d8d95ce99952b2bce8f59e3026ec9b4abff997aa41ac1b7a",
+    "members": {
+      "installed/restored-application.json": "1a1051bf36d40044939b2c116e7c2f592c6e12747d8a57862a1ef4b7643b8e95",
+      "installed/restored-receipt.json": "ce7b2866f3ba16eb4a383248dea84b7f088240ace34e67ec4a152a63e9871d35",
+      "installed/source-application.json": "28931cee569bf95e32e287d764483fd3bb9b672c2c1d3faead65ecb09ead45dc",
+      "installed/source-receipt.json": "dc7ac50e2aa7d4cb9b1a28d0fc37e5c6418e8819bc8bd96506c604abaf810719",
+      "old-reader.json": "6199a4753e84e3e5d4db1244e272a69710c9fab69ec01138a7805e79cb479e93",
+      "qualified-state.json": "22093f869d77493baa2b68ea5ed543cb8aedda72ab053ca87bf15b91f8428659",
+      "release.json": "5be51672a22dd9a6461a651f26e290030aa7643d1e62fea0262535b3c994b656",
+      "source/restored-application.json": "1a1051bf36d40044939b2c116e7c2f592c6e12747d8a57862a1ef4b7643b8e95",
+      "source/restored-receipt.json": "2bd8b00912e2f64cd5e173e85a4f21285ed50506d5c64bb2437e41fb56beeac5",
+      "source/source-application.json": "28931cee569bf95e32e287d764483fd3bb9b672c2c1d3faead65ecb09ead45dc",
+      "source/source-receipt.json": "82610ffabc35daec7bfe9fb905dcd0af7a9038a3efd1d05041d5e502851190cc",
+      "state.json": "a01c97b517189770023867a0137882083cc9ef5ed91c34f6e5a1f9bae4a4f3eb"
+    }
+  },
+  "runs": [
+    {
+      "member": "installed/restored-receipt.json",
+      "exit_code": 0,
+      "pytest_report_counts": {
+        "test_calls": {
+          "passed": 1
+        },
+        "subtest_calls": {},
+        "setup": {
+          "passed": 1
+        },
+        "teardown": {
+          "passed": 1
+        },
+        "collection": {},
+        "selected_items": 1
+      },
+      "runtime_binding": {
+        "mode": "installed-wheel",
+        "runtime_root": "/workspace/.cryptalis-cloud/wheel-tenant-venv/lib/python3.13/site-packages/cryptalis",
+        "module_count": 44,
+        "modules_sha256": "1236debcde96a5c8c05d8487cb461e0acc86ece945afb0211ab05b9c2215016f",
+        "wheel": "/workspace/.cryptalis-cloud/tenant-provision-artifacts/cryptalis-0.1.0-py3-none-any.whl",
+        "wheel_sha256": "72d4ccde3fefc016cf8e07f5219c7eb0690321884efcd3ac2396e5f26cc4aa19"
+      },
+      "runtime_binding_stability": {
+        "unchanged": true,
+        "after": {
+          "mode": "installed-wheel",
+          "runtime_root": "/workspace/.cryptalis-cloud/wheel-tenant-venv/lib/python3.13/site-packages/cryptalis",
+          "module_count": 44,
+          "modules_sha256": "1236debcde96a5c8c05d8487cb461e0acc86ece945afb0211ab05b9c2215016f",
+          "wheel": "/workspace/.cryptalis-cloud/tenant-provision-artifacts/cryptalis-0.1.0-py3-none-any.whl",
+          "wheel_sha256": "72d4ccde3fefc016cf8e07f5219c7eb0690321884efcd3ac2396e5f26cc4aa19"
+        }
+      },
+      "source_stability": {
+        "unchanged": true,
+        "changed_paths": []
+      },
+      "elapsed_seconds": 21.547680226009106
+    },
+    {
+      "member": "installed/source-receipt.json",
+      "exit_code": 0,
+      "pytest_report_counts": {
+        "test_calls": {
+          "passed": 1
+        },
+        "subtest_calls": {},
+        "setup": {
+          "passed": 1
+        },
+        "teardown": {
+          "passed": 1
+        },
+        "collection": {},
+        "selected_items": 1
+      },
+      "runtime_binding": {
+        "mode": "installed-wheel",
+        "runtime_root": "/workspace/.cryptalis-cloud/wheel-tenant-venv/lib/python3.13/site-packages/cryptalis",
+        "module_count": 44,
+        "modules_sha256": "1236debcde96a5c8c05d8487cb461e0acc86ece945afb0211ab05b9c2215016f",
+        "wheel": "/workspace/.cryptalis-cloud/tenant-provision-artifacts/cryptalis-0.1.0-py3-none-any.whl",
+        "wheel_sha256": "72d4ccde3fefc016cf8e07f5219c7eb0690321884efcd3ac2396e5f26cc4aa19"
+      },
+      "runtime_binding_stability": {
+        "unchanged": true,
+        "after": {
+          "mode": "installed-wheel",
+          "runtime_root": "/workspace/.cryptalis-cloud/wheel-tenant-venv/lib/python3.13/site-packages/cryptalis",
+          "module_count": 44,
+          "modules_sha256": "1236debcde96a5c8c05d8487cb461e0acc86ece945afb0211ab05b9c2215016f",
+          "wheel": "/workspace/.cryptalis-cloud/tenant-provision-artifacts/cryptalis-0.1.0-py3-none-any.whl",
+          "wheel_sha256": "72d4ccde3fefc016cf8e07f5219c7eb0690321884efcd3ac2396e5f26cc4aa19"
+        }
+      },
+      "source_stability": {
+        "unchanged": true,
+        "changed_paths": []
+      },
+      "elapsed_seconds": 33.28348455199739
+    },
+    {
+      "member": "old-reader.json",
+      "exit_code": 0,
+      "pytest_report_counts": {
+        "test_calls": {
+          "passed": 1
+        },
+        "subtest_calls": {},
+        "setup": {
+          "passed": 1
+        },
+        "teardown": {
+          "passed": 1
+        },
+        "collection": {},
+        "selected_items": 1
+      },
+      "runtime_binding": {
+        "mode": "source",
+        "runtime_root": "/workspace/cryptalis/src/cryptalis",
+        "module_count": 44,
+        "modules_sha256": "1236debcde96a5c8c05d8487cb461e0acc86ece945afb0211ab05b9c2215016f",
+        "wheel": null,
+        "wheel_sha256": null
+      },
+      "runtime_binding_stability": {
+        "unchanged": true,
+        "after": {
+          "mode": "source",
+          "runtime_root": "/workspace/cryptalis/src/cryptalis",
+          "module_count": 44,
+          "modules_sha256": "1236debcde96a5c8c05d8487cb461e0acc86ece945afb0211ab05b9c2215016f",
+          "wheel": null,
+          "wheel_sha256": null
+        }
+      },
+      "source_stability": {
+        "unchanged": true,
+        "changed_paths": []
+      },
+      "elapsed_seconds": 3.0973959650000324
+    },
+    {
+      "member": "qualified-state.json",
+      "exit_code": 0,
+      "pytest_report_counts": {
+        "test_calls": {
+          "passed": 13
+        },
+        "subtest_calls": {},
+        "setup": {
+          "passed": 13
+        },
+        "teardown": {
+          "passed": 13
+        },
+        "collection": {},
+        "selected_items": 13
+      },
+      "runtime_binding": {
+        "mode": "source",
+        "runtime_root": "/workspace/.cryptalis-cloud/tenant-provision-qualified/src/cryptalis",
+        "module_count": 44,
+        "modules_sha256": "1236debcde96a5c8c05d8487cb461e0acc86ece945afb0211ab05b9c2215016f",
+        "wheel": null,
+        "wheel_sha256": null
+      },
+      "runtime_binding_stability": {
+        "unchanged": true,
+        "after": {
+          "mode": "source",
+          "runtime_root": "/workspace/.cryptalis-cloud/tenant-provision-qualified/src/cryptalis",
+          "module_count": 44,
+          "modules_sha256": "1236debcde96a5c8c05d8487cb461e0acc86ece945afb0211ab05b9c2215016f",
+          "wheel": null,
+          "wheel_sha256": null
+        }
+      },
+      "source_stability": {
+        "unchanged": true,
+        "changed_paths": []
+      },
+      "elapsed_seconds": 18.784631689995877
+    },
+    {
+      "member": "source/restored-receipt.json",
+      "exit_code": 0,
+      "pytest_report_counts": {
+        "test_calls": {
+          "passed": 1
+        },
+        "subtest_calls": {},
+        "setup": {
+          "passed": 1
+        },
+        "teardown": {
+          "passed": 1
+        },
+        "collection": {},
+        "selected_items": 1
+      },
+      "runtime_binding": {
+        "mode": "source",
+        "runtime_root": "/workspace/.cryptalis-cloud/tenant-provision-qualified/src/cryptalis",
+        "module_count": 44,
+        "modules_sha256": "1236debcde96a5c8c05d8487cb461e0acc86ece945afb0211ab05b9c2215016f",
+        "wheel": null,
+        "wheel_sha256": null
+      },
+      "runtime_binding_stability": {
+        "unchanged": true,
+        "after": {
+          "mode": "source",
+          "runtime_root": "/workspace/.cryptalis-cloud/tenant-provision-qualified/src/cryptalis",
+          "module_count": 44,
+          "modules_sha256": "1236debcde96a5c8c05d8487cb461e0acc86ece945afb0211ab05b9c2215016f",
+          "wheel": null,
+          "wheel_sha256": null
+        }
+      },
+      "source_stability": {
+        "unchanged": true,
+        "changed_paths": []
+      },
+      "elapsed_seconds": 15.180464678996941
+    },
+    {
+      "member": "source/source-receipt.json",
+      "exit_code": 0,
+      "pytest_report_counts": {
+        "test_calls": {
+          "passed": 1
+        },
+        "subtest_calls": {},
+        "setup": {
+          "passed": 1
+        },
+        "teardown": {
+          "passed": 1
+        },
+        "collection": {},
+        "selected_items": 1
+      },
+      "runtime_binding": {
+        "mode": "source",
+        "runtime_root": "/workspace/.cryptalis-cloud/tenant-provision-qualified/src/cryptalis",
+        "module_count": 44,
+        "modules_sha256": "1236debcde96a5c8c05d8487cb461e0acc86ece945afb0211ab05b9c2215016f",
+        "wheel": null,
+        "wheel_sha256": null
+      },
+      "runtime_binding_stability": {
+        "unchanged": true,
+        "after": {
+          "mode": "source",
+          "runtime_root": "/workspace/.cryptalis-cloud/tenant-provision-qualified/src/cryptalis",
+          "module_count": 44,
+          "modules_sha256": "1236debcde96a5c8c05d8487cb461e0acc86ece945afb0211ab05b9c2215016f",
+          "wheel": null,
+          "wheel_sha256": null
+        }
+      },
+      "source_stability": {
+        "unchanged": true,
+        "changed_paths": []
+      },
+      "elapsed_seconds": 22.850540879997425
+    },
+    {
+      "member": "state.json",
+      "exit_code": 0,
+      "pytest_report_counts": {
+        "test_calls": {
+          "passed": 207,
+          "skipped": 1
+        },
+        "subtest_calls": {},
+        "setup": {
+          "passed": 208
+        },
+        "teardown": {
+          "passed": 208
+        },
+        "collection": {},
+        "selected_items": 208
+      },
+      "runtime_binding": {
+        "mode": "source",
+        "runtime_root": "/workspace/cryptalis/src/cryptalis",
+        "module_count": 44,
+        "modules_sha256": "1236debcde96a5c8c05d8487cb461e0acc86ece945afb0211ab05b9c2215016f",
+        "wheel": null,
+        "wheel_sha256": null
+      },
+      "runtime_binding_stability": {
+        "unchanged": true,
+        "after": {
+          "mode": "source",
+          "runtime_root": "/workspace/cryptalis/src/cryptalis",
+          "module_count": 44,
+          "modules_sha256": "1236debcde96a5c8c05d8487cb461e0acc86ece945afb0211ab05b9c2215016f",
+          "wheel": null,
+          "wheel_sha256": null
+        }
+      },
+      "source_stability": {
+        "unchanged": true,
+        "changed_paths": []
+      },
+      "elapsed_seconds": 180.37500199901115
+    }
+  ],
+  "artifacts": {
+    "cryptalis-0.1.0-py3-none-any.whl": "72d4ccde3fefc016cf8e07f5219c7eb0690321884efcd3ac2396e5f26cc4aa19",
+    "cryptalis-0.1.0.tar.gz": "6f51044441419eec4338fdb69ccc829541a095f12bc1d9cadb6c50e637fcca7b"
+  },
+  "release_inputs": {
+    "pyproject.toml": "12b974f7fc65c0e80f79107cff3dbfebecdbbcb0016fb007314f8bdbecf3eacd",
+    "LICENSE": "7f5a6a6ca9e6e2d6e75ec8530612396f3eebd2659c79a6ca123bf30a933f23df",
+    "README.md": "94ff3dad4de8be3586e83cf1e0ccf49b6eaae16fae4ad29ba880df0de59d7de3",
+    "scripts/release_check.py": "712dacf635cbf00fabfc4e2e2120e23781abf838aac0ebb88bc642f9c288a0c9",
+    "scripts/test_release_check.py": "fd52a1a034dbbe506086a15689d8537ce7a040ceb005b64906f6291acd793922",
+    "qualification/build-backend/requirements.in": "89b4db9efc7dc2fea83d5d20b18b26a9a06826dbc8c75edcfcc8f0fe65345010",
+    "qualification/build-backend/requirements.txt": "92b4ea5dbc312ccc4b86686f772e5deae8aecf9eb1c7ab1df2aec023da199d25",
+    "src/cryptalis/__init__.py": "c1a82f9f958187e4b5423d11df5a035b17d75b34a0947af6be4aac436cd2fed2",
+    "src/cryptalis/__main__.py": "9967032819ce6f18e02a40d033958d5f4f7c328faf8693bc07ecc42a1a525707",
+    "src/cryptalis/_access_contract.py": "f650d64bb95c14dbfd623dd34b1754aa5dbc20434ce01aa63c2cfbdea137141b",
+    "src/cryptalis/_cli_operations.py": "b5c2adab3a5924e6346d54d11b51fb1bf059663cede9bd58cace3827b2cec2ab",
+    "src/cryptalis/_key_policy_status.py": "053d81b7eaa49c12d3baa6d71fe49c61b85fd1178119a9be170b45939da05cce",
+    "src/cryptalis/_retained_obligations.py": "ef4b05cf9f7b40874b405d666be4f17be1c537cda0dbbfacf7131ba1c956050a",
+    "src/cryptalis/_rotation_activation.py": "d18cf3c13d58ad4758e234f949124c777948de854191ab8051069f9f2fb8c056",
+    "src/cryptalis/_rotation_transition.py": "db3576a50e9e017c1c3370683fa3ba914c1586639201a425a82b90bcce52af88",
+    "src/cryptalis/_sqlalchemy_functions.py": "d5ca5cb022859e34b872c8a4c5a9764852b778594449d6c0ef2399c4bf7aa333",
+    "src/cryptalis/_sqlalchemy_guard.py": "d979c187c6dfc0171903b8c6c128ad903488916b0047b03f15f7ba9f0785233d",
+    "src/cryptalis/_sqlalchemy_search.py": "8cae06fe308fa3806596832fafab529e2298f292732756c558209a1ebdeff51e",
+    "src/cryptalis/_sqlmodel_types.py": "591940a3fac58d084ad85ed236ee7d3dbe103772afef43bde187473cb54e4c92",
+    "src/cryptalis/cli.py": "d221a0f3b1ab1bd903fda77a0aa5f558e77e20b81d6b5ba73622f11790307c0e",
+    "src/cryptalis/cli_host.py": "2561e0aedf0998f5a3aa1729cec12ec71b82ec2d017814805d69a2709d7e2562",
+    "src/cryptalis/contracts/__init__.py": "7a621ddfa3ed2dd543a3495b8cedaed3f892fc6b1fae0b6e8d04285741bd8660",
+    "src/cryptalis/contracts/active_state.py": "b22608114fda5f49b2fa054fef24763bc9735c37612edfce0b13e16ca0df7532",
+    "src/cryptalis/contracts/development_authority.py": "1fe8519fe06fd0121829b92e04f1b5be2b8b72e39f3b8eecc3d60b6e168810d7",
+    "src/cryptalis/contracts/transition.py": "407c8028827ac7660cf6c4d3d4cfae30ca2dacf69ca80749e4e52f07d5c3d923",
+    "src/cryptalis/crypto/__init__.py": "d2e5aba93eac500134274385c5d56deade8e973549f17b31e36da45932283c10",
+    "src/cryptalis/crypto/_candidate_envelope.py": "9c28cb84a85123130328b2273eb27786a95f7953a41f0ec27f1c11100e28e55f",
+    "src/cryptalis/crypto/_candidate_scalar.py": "b97a21a29b4bc9453af8c4c0a8f22b4860892b85854b5d1196ebca2f5094269a",
+    "src/cryptalis/crypto/_candidate_wrap.py": "18cd89777178a5938848c51d47b48603dab902f57e83a6b330a8643f92748dc4",
+    "src/cryptalis/crypto/_payload_rotation.py": "ac0728663ce3e426a965d7876760923ecb86682c8b7150f372b07689309aa920",
+    "src/cryptalis/crypto/_rewrap.py": "797d1789c983e8c4eba36a792c8d4b5c00cba734bd25b61d6a970f1711be734b",
+    "src/cryptalis/crypto/_search_rotation.py": "b2ec5f65ba77a8d44068b20beefb3d367e02f532fe8cb8d060929d476c535ae9",
+    "src/cryptalis/crypto/aws_kms.py": "361486029b46a396adfa9ac18070f09d4aacb053226a6da7eef439f823433bd6",
+    "src/cryptalis/crypto/cf1.py": "e196fb74744d781bd4beb121f571037ec9d5bc65190bba521f2327c8a6434fa0",
+    "src/cryptalis/crypto/keys.py": "7510d2f8babc85380bb56789816616364cac3d486bb697a5d2a2387ce4303bcc",
+    "src/cryptalis/deprotection.py": "9eac66148c1e1670559f55983e88dd0bec9d2fa161bf36bf46b677f18e3b33bb",
+    "src/cryptalis/doctor.py": "c317667b84b84356800afb0aec9faea687959f059a3e30bdcd28dee29a1208f3",
+    "src/cryptalis/manifest/__init__.py": "d2dc8653181d66161df9d9eb29ea79fb36b38fd93848d4da4a25184cda6885cd",
+    "src/cryptalis/manifest/canonical.py": "6fe7e3d22cece14e5d85de912acdaf782a5421bfaa5c4dd796f78ab5bd4c2ec8",
+    "src/cryptalis/manifest/compiler.py": "2a9b03a14839eab98dff28f9f6a54345682e4537dcb43ec2c7339583a89e14e2",
+    "src/cryptalis/manifest/declaration.py": "348d8e9c4605a28924166e3c1f88bd23f0b6b3ebaae402f52cf0d2c3403ca6b8",
+    "src/cryptalis/manifest/descriptor.py": "739d0438451c47746850c6aa488add4cfd7782ddeebd743741cccd290d2ce20d",
+    "src/cryptalis/manifest/header.py": "6e450d8565e3d7c19ecedd6c6b3120715ea5c7ee3b1ee439fef9e5080bb5eb6a",
+    "src/cryptalis/manifest/parser.py": "43fd17656e0717b24c6e93689d3c619994a527ea65e11b2394e4eb66219877f6",
+    "src/cryptalis/migration.py": "b122a81403ce07a95e22c76ce478d194e3dcfe42b50586f77b4434b938a362a3",
+    "src/cryptalis/online.py": "919c538424428e583865e4bd28e70029cb4d39c2fbcb94499ee3db9d5884d0ef",
+    "src/cryptalis/restore.py": "a296f4e5e6c5289a1c6ef7b17dc3e10085fde8d3ce8ada995986e33dde1f2494",
+    "src/cryptalis/rotation.py": "abdb6c34c0d74a1b7bd1d621e0e8021b75dc1e7f8425771ffffb5e2817bb4a65",
+    "src/cryptalis/sqlalchemy.py": "5440636dcf1e07adf9557e11e07df88771d1327a2b15fcc93995422f368eb240",
+    "src/cryptalis/sqlmodel.py": "ff21af5afc8e03b611237f497737746539d8acff60d4c20358782a016746a76b",
+    "src/cryptalis/tenancy.py": "07d31992b329e5390c74ffec0f94ae9a16ea74e85ebc4f8aa71fe4f0a7414f64"
+  },
+  "clean_install": {
+    "package": "/workspace/.cryptalis-cloud/wheel-tenant-venv/lib/python3.13/site-packages/cryptalis/__init__.py",
+    "verified_files": 48,
+    "cli": "passed",
+    "wheel_sha256": "72d4ccde3fefc016cf8e07f5219c7eb0690321884efcd3ac2396e5f26cc4aa19"
+  },
+  "review": "Tenant-only independent agent review: no actionable findings; no human qualification",
+  "scope": "Explicit maintenance approval, O(N) authentication/global writer pause, Python API; not scalable online signup or live custody",
+  "gates": {
+    "G-ADAPTER": "UNKNOWN",
+    "G-CRYPTO": "UNKNOWN",
+    "G-QUERY": "UNKNOWN",
+    "G-LIFECYCLE": "UNKNOWN",
+    "G-PROVIDER": "UNKNOWN",
+    "G-POLICY": "UNKNOWN",
+    "G-RELEASE": "UNKNOWN"
+  }
+}

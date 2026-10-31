@@ -1,0 +1,296 @@
+{
+  "format": "cryptalis.single-tenant-delete-checkpoint/v1",
+  "base_revision": "f7514b942ba4a13dbab0c4a884123f911a942b2e",
+  "archive": {
+    "path": "docs/_reset/single-tenant-delete-receipts-20261029.tar.gz",
+    "sha256": "17e0a00516f812c9f8f48bba5d65aad0701924de03805e1e387a19b47a38dd37",
+    "members": {
+      "source/red.json": "bbae6076c79aaaa31ecfb40885d02661d90afcd5ae73d7fbdbffe13ac315186d",
+      "source/focused.json": "0e8b3680aecf95b716c992c67900293b76fa98be0011d8543d91d650902ec3e7",
+      "source/affected.json": "e2b4595ed3d255e5fbbf631c44c182fd18938784b236687d43ef606aa6ca1b46",
+      "release/status.json": "353173ed569b1aa020fd5c4e9bf40b7a2cd246aaf60ffbb6102df276301aa17d",
+      "release/release-receipt.json": "57ffd8a557cf3986d298364354f37f08784259a14d188c33952db589dcafc7f9",
+      "release/install-receipt.json": "00076182af0486e897ae72b2f4c19112a44fc9f09afe0e6b52aa09877609f5ff",
+      "release/installed-sqlmodel-receipt.json": "c750f527ba59820b6c613102405db05e37fcd705e7b6a1768dd1a7424f37cf79",
+      "release/installed-export-receipt.json": "73330be5c0041bf448558cc0621f317939f1b9cf939d01f925f56a369660d227",
+      "release/installed-restore-receipt.json": "b5113684c775454c8f3d117ae2b3c7004e851172e7f436644f61cacc5c7ce456",
+      "release/installed-journey-receipt.json": "078e251374529f74ea839d62c6fdceb3b3d784418e7dec1ae998d811ecb21218"
+    }
+  },
+  "source_red": {
+    "counts": {
+      "failed": 4,
+      "passed": 2
+    },
+    "pytest_report_counts": {
+      "test_calls": {
+        "failed": 4,
+        "passed": 2
+      },
+      "subtest_calls": {},
+      "setup": {
+        "passed": 6
+      },
+      "teardown": {
+        "passed": 6
+      },
+      "collection": {},
+      "selected_items": 6
+    },
+    "exit_code": 1,
+    "source_stability": {
+      "unchanged": true,
+      "changed_paths": []
+    },
+    "runtime_binding": {
+      "mode": "source",
+      "runtime_root": "/workspace/cryptalis-update/src/cryptalis",
+      "module_count": 45,
+      "modules_sha256": "fc25fdb61c6705444b1fe9516fe81c2545f7f5734ea8530716ce39fed907d5a7",
+      "wheel": null,
+      "wheel_sha256": null
+    },
+    "runtime_binding_stability": {
+      "unchanged": true,
+      "after": {
+        "mode": "source",
+        "runtime_root": "/workspace/cryptalis-update/src/cryptalis",
+        "module_count": 45,
+        "modules_sha256": "fc25fdb61c6705444b1fe9516fe81c2545f7f5734ea8530716ce39fed907d5a7",
+        "wheel": null,
+        "wheel_sha256": null
+      }
+    },
+    "elapsed_seconds": 6.651488011000083
+  },
+  "source_focused": {
+    "counts": {
+      "passed": 6
+    },
+    "pytest_report_counts": {
+      "test_calls": {
+        "passed": 6
+      },
+      "subtest_calls": {},
+      "setup": {
+        "passed": 6
+      },
+      "teardown": {
+        "passed": 6
+      },
+      "collection": {},
+      "selected_items": 6
+    },
+    "exit_code": 0,
+    "source_stability": {
+      "unchanged": true,
+      "changed_paths": []
+    },
+    "runtime_binding": {
+      "mode": "source",
+      "runtime_root": "/workspace/cryptalis-update/src/cryptalis",
+      "module_count": 45,
+      "modules_sha256": "f76f2929415d3498afee2e9a509a8d7e12b5cce55dbb53c53a808aa1360fbd0b",
+      "wheel": null,
+      "wheel_sha256": null
+    },
+    "runtime_binding_stability": {
+      "unchanged": true,
+      "after": {
+        "mode": "source",
+        "runtime_root": "/workspace/cryptalis-update/src/cryptalis",
+        "module_count": 45,
+        "modules_sha256": "f76f2929415d3498afee2e9a509a8d7e12b5cce55dbb53c53a808aa1360fbd0b",
+        "wheel": null,
+        "wheel_sha256": null
+      }
+    },
+    "elapsed_seconds": 6.89156722000007
+  },
+  "source_affected": {
+    "counts": {
+      "passed": 140
+    },
+    "pytest_report_counts": {
+      "test_calls": {
+        "passed": 140
+      },
+      "subtest_calls": {},
+      "setup": {
+        "passed": 140
+      },
+      "teardown": {
+        "passed": 140
+      },
+      "collection": {},
+      "selected_items": 140
+    },
+    "exit_code": 0,
+    "source_stability": {
+      "unchanged": true,
+      "changed_paths": []
+    },
+    "runtime_binding": {
+      "mode": "source",
+      "runtime_root": "/workspace/cryptalis-update/src/cryptalis",
+      "module_count": 45,
+      "modules_sha256": "f76f2929415d3498afee2e9a509a8d7e12b5cce55dbb53c53a808aa1360fbd0b",
+      "wheel": null,
+      "wheel_sha256": null
+    },
+    "runtime_binding_stability": {
+      "unchanged": true,
+      "after": {
+        "mode": "source",
+        "runtime_root": "/workspace/cryptalis-update/src/cryptalis",
+        "module_count": 45,
+        "modules_sha256": "f76f2929415d3498afee2e9a509a8d7e12b5cce55dbb53c53a808aa1360fbd0b",
+        "wheel": null,
+        "wheel_sha256": null
+      }
+    },
+    "elapsed_seconds": 58.712192232999996
+  },
+  "installed": {
+    "counts": {
+      "passed": 29
+    },
+    "pytest_report_counts": {
+      "test_calls": {
+        "passed": 29
+      },
+      "subtest_calls": {},
+      "setup": {
+        "passed": 29
+      },
+      "teardown": {
+        "passed": 29
+      },
+      "collection": {},
+      "selected_items": 29
+    },
+    "exit_code": 0,
+    "source_stability": {
+      "unchanged": true,
+      "changed_paths": []
+    },
+    "runtime_binding": {
+      "mode": "installed-wheel",
+      "runtime_root": "/tmp/cryptalis-single-delete-ci-release/installed/lib/python3.12/site-packages/cryptalis",
+      "module_count": 45,
+      "modules_sha256": "f76f2929415d3498afee2e9a509a8d7e12b5cce55dbb53c53a808aa1360fbd0b",
+      "wheel": "/tmp/cryptalis-single-delete-ci-release/artifacts/cryptalis-0.1.0-py3-none-any.whl",
+      "wheel_sha256": "cd0f74b40ae7ecf3cb67eeee334e5f2ed0f5894e1a9cd36f3e53b5adbb432ad2"
+    },
+    "runtime_binding_stability": {
+      "unchanged": true,
+      "after": {
+        "mode": "installed-wheel",
+        "runtime_root": "/tmp/cryptalis-single-delete-ci-release/installed/lib/python3.12/site-packages/cryptalis",
+        "module_count": 45,
+        "modules_sha256": "f76f2929415d3498afee2e9a509a8d7e12b5cce55dbb53c53a808aa1360fbd0b",
+        "wheel": "/tmp/cryptalis-single-delete-ci-release/artifacts/cryptalis-0.1.0-py3-none-any.whl",
+        "wheel_sha256": "cd0f74b40ae7ecf3cb67eeee334e5f2ed0f5894e1a9cd36f3e53b5adbb432ad2"
+      }
+    },
+    "elapsed_seconds": 18.057099983999933
+  },
+  "fresh_export": {
+    "counts": {
+      "passed": 1
+    },
+    "pytest_report_counts": {
+      "test_calls": {
+        "passed": 1
+      },
+      "subtest_calls": {},
+      "setup": {
+        "passed": 1
+      },
+      "teardown": {
+        "passed": 1
+      },
+      "collection": {},
+      "selected_items": 1
+    },
+    "exit_code": 0,
+    "source_stability": {
+      "unchanged": true,
+      "changed_paths": []
+    },
+    "runtime_binding": {
+      "mode": "installed-wheel",
+      "runtime_root": "/tmp/cryptalis-single-delete-ci-release/installed/lib/python3.12/site-packages/cryptalis",
+      "module_count": 45,
+      "modules_sha256": "f76f2929415d3498afee2e9a509a8d7e12b5cce55dbb53c53a808aa1360fbd0b",
+      "wheel": "/tmp/cryptalis-single-delete-ci-release/artifacts/cryptalis-0.1.0-py3-none-any.whl",
+      "wheel_sha256": "cd0f74b40ae7ecf3cb67eeee334e5f2ed0f5894e1a9cd36f3e53b5adbb432ad2"
+    },
+    "runtime_binding_stability": {
+      "unchanged": true,
+      "after": {
+        "mode": "installed-wheel",
+        "runtime_root": "/tmp/cryptalis-single-delete-ci-release/installed/lib/python3.12/site-packages/cryptalis",
+        "module_count": 45,
+        "modules_sha256": "f76f2929415d3498afee2e9a509a8d7e12b5cce55dbb53c53a808aa1360fbd0b",
+        "wheel": "/tmp/cryptalis-single-delete-ci-release/artifacts/cryptalis-0.1.0-py3-none-any.whl",
+        "wheel_sha256": "cd0f74b40ae7ecf3cb67eeee334e5f2ed0f5894e1a9cd36f3e53b5adbb432ad2"
+      }
+    },
+    "elapsed_seconds": 4.248918776999972
+  },
+  "fresh_restore": {
+    "counts": {
+      "passed": 1
+    },
+    "pytest_report_counts": {
+      "test_calls": {
+        "passed": 1
+      },
+      "subtest_calls": {},
+      "setup": {
+        "passed": 1
+      },
+      "teardown": {
+        "passed": 1
+      },
+      "collection": {},
+      "selected_items": 1
+    },
+    "exit_code": 0,
+    "source_stability": {
+      "unchanged": true,
+      "changed_paths": []
+    },
+    "runtime_binding": {
+      "mode": "installed-wheel",
+      "runtime_root": "/tmp/cryptalis-single-delete-ci-release/installed/lib/python3.12/site-packages/cryptalis",
+      "module_count": 45,
+      "modules_sha256": "f76f2929415d3498afee2e9a509a8d7e12b5cce55dbb53c53a808aa1360fbd0b",
+      "wheel": "/tmp/cryptalis-single-delete-ci-release/artifacts/cryptalis-0.1.0-py3-none-any.whl",
+      "wheel_sha256": "cd0f74b40ae7ecf3cb67eeee334e5f2ed0f5894e1a9cd36f3e53b5adbb432ad2"
+    },
+    "runtime_binding_stability": {
+      "unchanged": true,
+      "after": {
+        "mode": "installed-wheel",
+        "runtime_root": "/tmp/cryptalis-single-delete-ci-release/installed/lib/python3.12/site-packages/cryptalis",
+        "module_count": 45,
+        "modules_sha256": "f76f2929415d3498afee2e9a509a8d7e12b5cce55dbb53c53a808aa1360fbd0b",
+        "wheel": "/tmp/cryptalis-single-delete-ci-release/artifacts/cryptalis-0.1.0-py3-none-any.whl",
+        "wheel_sha256": "cd0f74b40ae7ecf3cb67eeee334e5f2ed0f5894e1a9cd36f3e53b5adbb432ad2"
+      }
+    },
+    "elapsed_seconds": 4.697274980999964
+  },
+  "artifacts": {
+    "cryptalis-0.1.0-py3-none-any.whl": "cd0f74b40ae7ecf3cb67eeee334e5f2ed0f5894e1a9cd36f3e53b5adbb432ad2",
+    "cryptalis-0.1.0.tar.gz": "d24c2c0b571210b16a976ff2781195f0bc666aed1cb762a5269b62dd885e71ef"
+  },
+  "review": "Separate agent source review found no actionable defect; not independent human review.",
+  "limits": [
+    "All seven production gates UNKNOWN.",
+    "The complete default source suite running in the original worktree covers the preceding async bridge, not fixed-scope UPDATE/DELETE changes.",
+    "Fresh recovery covers an existing integer/public-slot lifecycle, not a complete independent single-tenant application."
+  ]
+}

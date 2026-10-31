@@ -178,7 +178,8 @@ class RewrapPlan:
         ancestors = document.get('predecessors', [])
         ancestors.append({'operation_id': str(source.operation_id), 'plan_digest': source.digest})
         for name in ('payload_rotation_plan_digest','payload_rotation_observations','payload_batch_limits',
-                     'search_rotation_plan_digest','search_rotation_observations','search_batch_limits'):
+                     'search_rotation_plan_digest','search_rotation_observations','search_batch_limits',
+                     'tenant_provision', 'tenant_provision_plan_digest', 'tenant_provision_observations'):
             document.pop(name,None)
         document.update(format='cryptalis.transition/v5' if lineage else 'cryptalis.transition/v2', kind='rewrap',
             operation_id=str(self.operation_id), predecessors=ancestors, rewrap_plan_digest=self.digest,

@@ -110,6 +110,15 @@ Use deliberate generators/seeds and meaningful bounds, not arbitrary case-count 
 Tests passing once and high coverage do not establish production safety.
 
 Run focused checks that exercise the changed contract.
+The mandatory wrapper defaults to source binding for this checkout. Use
+`--installed-wheel PATH` only for the inspected artifact installed in the
+selected interpreter. Both qualification harnesses propagate that option.
+The wrapper records runtime root/module hashes, checks them before and after
+pytest, and refuses wrong-checkout, changed-runtime or unadmitted-origin results.
+`--runtime-binding-only` checks identity without database access or pytest.
+Fresh-cluster export/restore receipts live in that run's new private work
+directory. Archive the selected receipts explicitly; never archive private
+credential files or database dumps as routine public evidence.
 Broaden checks when failures, new changes or unresolved risks justify them.
 Record commands, versions, environment, outcomes, scope and limits.
 Do not label an unrun or unavailable check successful.
@@ -150,6 +159,12 @@ A release requires these independently reviewable artifacts:
 6. Dependency inventory, locked hashes, SBOM, inspected built artifacts, provenance and a verified publication identity.
 
 The release process uses mature PyPA, Sigstore, CycloneDX and provenance tools.
+`scripts/release_check.py` pins its isolated PEP 517 backend through
+`qualification/build-backend/requirements.txt`, requires its hashes and records
+the exact build inputs. Regenerate that lock with standard uv tooling when
+deliberately updating the backend. Offline artifact checks require the admitted
+backend to be cached by a prior constrained build. A contradictory ambient
+isolation setting must fail; it must never silently bypass backend verification.
 Maintainers use phishing-resistant authentication where available, protected recovery methods and separate release identities.
 Use PyPI Trusted Publishing with an exact repository/workflow and protected release environment.
 Build in an isolated job without publication authority or production credentials.

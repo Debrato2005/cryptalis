@@ -1,0 +1,85 @@
+{
+  "status": "VERIFIED only for named local cells",
+  "base_revision": "13db286ab3a8e75cad9dc7b1b10a571468745902",
+  "change": "Two application qualification profiles; public cli.main in-process, no product implementation changes",
+  "owned_file_sha256": {
+    "tests/profile_sqlmodel_http_tenant_application.py": "06345ce03511e16078f896195ad6bf74c29cf5c46fadc20f534cc66ca58e610b",
+    "tests/profile_sqlmodel_http_tenant_restore.py": "50e7a6847e6b47836aef224d069ae7e5a2d5642dbf25120d4a80641985c3532f"
+  },
+  "installed_wheel_sha256": "c1ac937ace1e1f079a854d4bdfa0f8db96ab1edeea3a71c4536cc7fa5517e50f",
+  "integrated_installed": {
+    "source": {
+      "passed": 1
+    },
+    "restored": {
+      "passed": 1
+    },
+    "unchanged_application_files": 26,
+    "retained_latest_items": 11,
+    "retained_owners": 10,
+    "provisioning_format": "cryptalis.transition/v16",
+    "publication": {
+      "method": "CLI",
+      "format": "cryptalis.transition/v16",
+      "phases": [
+        "PREPARED",
+        "PENDING",
+        "ACTIVE"
+      ],
+      "malformed_before_host": true,
+      "premature_publication_before_keys": true,
+      "proposal_digest": "a0c811cb894e60d30dd084a64b8e344a8abfafbe4a2dcdc7c355158c69c4f7de",
+      "activation_digest": "8437c5d86abc6f260151c28b66ad3786f901283ce0d34edf18bb074a3c0fffb8",
+      "retained_sha256": {
+        "host-successor-active.json": "9cdd25de3415c393a1b4eadd6342eed55bb1d1642bec76dac344050b15e9f56e",
+        "host-activating.json": "651b5b5cb673af81f82bf008dfb258075898b19d8bc10f7df5fd0988cc229978",
+        "malformed.json": "7ff4a0e7037ae217a82b4857adc89743c0a6d04a8f458857599dc270d7b0a717",
+        "activation.json": "8437c5d86abc6f260151c28b66ad3786f901283ce0d34edf18bb074a3c0fffb8",
+        "host-prepared.json": "75b202b9833f6aa3b373dc1c9d7adfc6e817de56c7cc8a75e1cde9349e8f6f6b",
+        "proposal.json": "a0c811cb894e60d30dd084a64b8e344a8abfafbe4a2dcdc7c355158c69c4f7de",
+        "host-active.json": "b61cefd8bb3f4d600b5eebbc557914472828349fdbe1ec8a14b5d1dd15543f9f",
+        "source.json": "fe0712814892d3a62ef80557f9b840117ab86d9b8ceccc48459d54f89e6b0d27"
+      },
+      "owned_engines": 4,
+      "pin_authority": "explicit local fixture host; independently retained ACTIVE/PREPARED/ACTIVATING/ACTIVE versions"
+    }
+  },
+  "preceding_github_ci": {
+    "commit": "13db286ab3a8e75cad9dc7b1b10a571468745902",
+    "run": 40755510001,
+    "conclusion": "success",
+    "url": "https://github.com/Debrato2005/cryptalis/actions/runs/40755510001"
+  },
+  "archive": "tenant-cli-fresh-receipts-20261029.tar.gz",
+  "archive_sha256": "082a0b185570528f5dacf6d1c70a4c46795edafabe7ba9f5c5fe8039437d6402",
+  "members_sha256": {
+    "initial-diagnostic/restored/receipt.json": "7df90e4acd29458e54b8e3e2d49713ef64176a774c28e00267bf14bb8e5c86a9",
+    "initial-diagnostic/source/application.json": "28931cee569bf95e32e287d764483fd3bb9b672c2c1d3faead65ecb09ead45dc",
+    "initial-diagnostic/source/receipt.json": "023f276252f4758cbf455e8c06ef5f6ed3b413b1b8c9adbafe51113d8e30185a",
+    "initial-red/restored/receipt.json": "339d08019878a12f29dd6a62b8241ac9e62a73246b6c05760441dede59bf6d24",
+    "initial-red/source/application.json": "28931cee569bf95e32e287d764483fd3bb9b672c2c1d3faead65ecb09ead45dc",
+    "initial-red/source/receipt.json": "304bae44287fbfc994c33669ef872b1e9b310276dec5d7c2c4dfba5a1db53c02",
+    "integrated-installed/restored/application.json": "0dbc9470071cb5f6742879f2eb2995fde6f57c79b0946d92a0911267ca511236",
+    "integrated-installed/restored/receipt.json": "9df129db7b466e89fbeec23a69cc1a81e45baf8d590d0d31671ce5c3025f8f0f",
+    "integrated-installed/source/application.json": "28931cee569bf95e32e287d764483fd3bb9b672c2c1d3faead65ecb09ead45dc",
+    "integrated-installed/source/receipt.json": "1849062bdd1d856cb4adc93107c2fa3990fa2c45dbcf2477743f5e2f1aeeabc1",
+    "isolated-installed/restored/application.json": "8fbd326fc109c5ba4680658294ee1fd32e646da42f8f9a91bc080880a4667088",
+    "isolated-installed/restored/receipt.json": "de18d16ad2eaca9c1b6716519a7b8eaf0beeb927d53db62cc9178df6208496b1",
+    "isolated-installed/source/application.json": "28931cee569bf95e32e287d764483fd3bb9b672c2c1d3faead65ecb09ead45dc",
+    "isolated-installed/source/receipt.json": "851f610d427538f9d8be274e3b1043d2080d73def69caae412eca166e1b8b478",
+    "isolated-source/restored/application.json": "20f9b820938ea50ce2e901f7d596032f36fd3b55d86b448f396e78a84863eb94",
+    "isolated-source/restored/receipt.json": "912c04ecf7fceb06637e61492dec417f7b7d97a3e21011848c26fc10a8479663",
+    "isolated-source/source/application.json": "28931cee569bf95e32e287d764483fd3bb9b672c2c1d3faead65ecb09ead45dc",
+    "isolated-source/source/receipt.json": "8c1dd76b7637110927b5e790262a4803624d16e7a22bcfef876ea3d9c3467ffd",
+    "report.md": "0343426396f50a589a28b9324de421caca3ebb1c940ec64108faca865e43764c",
+    "summary.json": "416d77877de3d4c329df3c7a8a761381ac7af4fc2d27715a5299704994ea8494"
+  },
+  "qualification_limits": [
+    "O(N) verification and global writer pause",
+    "fixture host publishes pins; production publication/fencing not qualified",
+    "public reconstructible fixture keys; live custody not qualified",
+    "independent agent review is not independent human assurance"
+  ],
+  "objectives": 34,
+  "production_gates": "all seven UNKNOWN"
+}

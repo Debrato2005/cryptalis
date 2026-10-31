@@ -25,6 +25,10 @@ _DENIED = frozenset(('external_policy_mismatch', 'wrong_database_target', 'inval
     'restore_binding_mismatch', 'restore_binding_required'))
 _REWRAP_DENIED = _DENIED | frozenset(('invalid_rewrap_plan', 'rewrap_prepublication_pin_required',
     'matching_external_publication_required', 'rewrap_executor_required'))
+_TENANT_DENIED = _DENIED | frozenset(('invalid_tenant_provision_plan', 'typed_tenant_uuid_required',
+    'tenant_policy_already_declared', 'tenant_policy_limit', 'tenant_policy_context_mismatch',
+    'tenant_provision_requires_scoped_access_contract', 'tenant_provision_prepublication_pin_required',
+    'tenant_provision_executor_required', 'matching_external_publication_required'))
 _PAYLOAD_DENIED = _DENIED | frozenset(('invalid_payload_rotation_plan', 'payload_operation_pin_mismatch',
     'invalid_payload_apply_bound', 'invalid_payload_batch_bound', 'payload_activation_binding_mismatch',
     'rotation_activation_binding_mismatch', 'payload_switch_requires_prepared_or_pending_pin',
@@ -91,7 +95,8 @@ def _load_host(specification, operation):
 def _owned_engine(context, engine_type):
     from cryptalis import cli_host as h
     contexts = (h.PlanningContext, h.ApplyContext, h.ReversePlanningContext, h.ReverseApplyContext,
-        h.RemovalContext, h.RewrapPlanningContext, h.RewrapApplyContext,
+        h.RemovalContext, h.TenantPlanningContext, h.TenantApplyContext,
+        h.TenantActivationContext, h.TenantAbortContext, h.RewrapPlanningContext, h.RewrapApplyContext,
         h.RewrapActivationContext, h.RewrapAbortContext, h.PayloadPlanningContext,
         h.PayloadApplyContext, h.PayloadStatusContext, h.PayloadSealingContext,
         h.PayloadSwitchContext, h.PayloadActivationContext, h.PayloadAbortContext, h.SearchPlanningContext,
@@ -189,6 +194,8 @@ def run(arguments):
     """Compose protection, current-value reverse or approved removal APIs."""
     if arguments.command == 'init':
         return run_init(arguments)
+    if arguments.command == 'tenants':
+        return _run_policy_transition(arguments, 'tenant_provision')
     if arguments.command == 'keys':
         return (run_generation(arguments, arguments.rotation_kind) if arguments.rotation_kind in ('payload', 'search')
                 else run_rewrap(arguments))
@@ -529,10 +536,10 @@ def _sync_activation(path, expected, artifact, operation):
                 primary=primary if isinstance(primary, _CommandFailure) else None) from None
 
 
-def _rewrap_summary(successor, proposal=None, progress=None):
+def _policy_summary(successor, proposal=None, progress=None, *, purpose):
     result = _summary(successor, progress)
-    result.update(scope='rewrap_plan' if progress is None else 'rewrap_transition',
-        proposal_digest=proposal.digest if proposal is not None else successor.document['rewrap_plan_digest'],
+    result.update(scope=purpose + ('_plan' if progress is None else '_transition'),
+        proposal_digest=proposal.digest if proposal is not None else successor.document[purpose + '_plan_digest'],
         activation_plan_digest=successor.digest,
         source_operation_id=successor.document['predecessors'][-1]['operation_id'])
     if proposal is not None and progress is None:
@@ -542,11 +549,18 @@ def _rewrap_summary(successor, proposal=None, progress=None):
 
 def run_rewrap(arguments):
     """Compose the existing root-rewrap lifecycle without inferring authority."""
+    return _run_policy_transition(arguments, 'rewrap')
+
+
+def _run_policy_transition(arguments, purpose):
+    """Retain exact policy successors before host or database effects."""
     from cryptalis.cli import _CommandFailure, _read_local_file, _write_output
-    operation = 'rewrap.' + str(getattr(arguments, 'rewrap_action', 'invalid'))
+    tenant = purpose == 'tenant_provision'
+    action = getattr(arguments, 'tenant_action' if tenant else 'rewrap_action', None)
+    operation = purpose + '.' + str(action)
     try:
         from sqlalchemy.engine import Engine
-        from cryptalis import migration as m, rotation as r, cli_host as h
+        from cryptalis import migration as m, rotation as r, tenancy as t, cli_host as h
         from cryptalis.crypto.keys import Keyring
         from cryptalis.manifest.parser import MAX_DOCUMENT_BYTES, ManifestInvalid
         from cryptalis.restore import RestoreBinding
@@ -555,9 +569,10 @@ def run_rewrap(arguments):
 
     proposal = successor = engine = result = artifact = None
     attempted = False
-    action = getattr(arguments, 'rewrap_action', None)
     try:
-        if (arguments.keys_command != 'rotate' or arguments.rotation_kind != 'rewrap'
+        command_valid = ((arguments.command == 'tenants' and arguments.tenant_command == 'provision')
+            if tenant else (arguments.keys_command == 'rotate' and arguments.rotation_kind == 'rewrap'))
+        if (not command_valid
                 or action not in ('plan', 'apply', 'activate', 'abort')
                 or type(arguments.host_context) is not str or _HOST.fullmatch(arguments.host_context) is None):
             raise ValueError
@@ -571,10 +586,10 @@ def run_rewrap(arguments):
             source = m.MigrationPlan(raw)
         elif action == 'activate':
             successor = m.MigrationPlan(raw)
-            if successor.document['kind'] != 'rewrap':
+            if successor.document['kind'] != purpose:
                 raise ValueError
         else:
-            proposal = r.RewrapPlan(raw)
+            proposal = t.TenantProvisionPlan(raw) if tenant else r.RewrapPlan(raw)
             successor = proposal.activation_plan
             if action == 'apply':
                 if arguments.resume is not None and (
@@ -610,7 +625,7 @@ def run_rewrap(arguments):
 
     try:
         if action == 'apply':
-            artifact = dict(scope='rewrap_activation_artifact', operation_id=str(successor.operation_id),
+            artifact = dict(scope=purpose + '_activation_artifact', operation_id=str(successor.operation_id),
                 plan_digest=successor.digest, artifact_published=False, artifact_reused=False,
                 artifact_directory_durable=False, artifact_temporary_retained=False, effects='NONE')
             if os.path.lexists(arguments.out):
@@ -622,15 +637,18 @@ def run_rewrap(arguments):
         context = _load_host(arguments.host_context, operation)
         engine = _owned_engine(context, Engine)
         with _quiet():
-            expected = {'plan': h.RewrapPlanningContext, 'apply': h.RewrapApplyContext,
-                        'activate': h.RewrapActivationContext, 'abort': h.RewrapAbortContext}[action]
+            expected = ({'plan': h.TenantPlanningContext, 'apply': h.TenantApplyContext,
+                         'activate': h.TenantActivationContext, 'abort': h.TenantAbortContext} if tenant else
+                        {'plan': h.RewrapPlanningContext, 'apply': h.RewrapApplyContext,
+                         'activate': h.RewrapActivationContext, 'abort': h.RewrapAbortContext})[action]
             if type(context) is not expected or engine is None:
                 raise _failure(operation, 'HostContextInvalid', 'host_context')
             if (engine.dialect.name != 'postgresql' or engine.dialect.driver != 'psycopg'
                     or engine.dialect.is_async or (engine.echo is not False and engine.echo is not None)
                     or engine.hide_parameters is not True):
                 raise _failure(operation, 'UnsafeEngine', 'host_context')
-            resolvers = ((context.source_keys,) if action == 'abort' else
+            resolvers = (((context.source_keys,) if action in ('plan', 'abort') else (context.keys,)) if tenant else
+                         (context.source_keys,) if action == 'abort' else
                          (context.target_keys,) if action == 'activate' else
                          (context.source_keys, context.target_keys))
             for keys in resolvers:
@@ -643,23 +661,30 @@ def run_rewrap(arguments):
                 if context.restore is not None and type(context.restore) is not RestoreBinding:
                     raise _failure(operation, 'HostContextInvalid', 'host_context')
                 attempted = True
-                proposal = r.plan_rewrap(source, engine, source_pin=context.source_pin,
-                    keys=context.source_keys, target_keys=context.target_keys,
-                    verify_rows_per_second=context.verify_rows_per_second, restore=context.restore)
+                if tenant:
+                    proposal = t.plan(source, engine, source_pin=context.source_pin, keys=context.source_keys,
+                        tenant_id=context.tenant_id, key_policy=context.key_policy,
+                        verify_rows_per_second=context.verify_rows_per_second, restore=context.restore)
+                else:
+                    proposal = r.plan_rewrap(source, engine, source_pin=context.source_pin,
+                        keys=context.source_keys, target_keys=context.target_keys,
+                        verify_rows_per_second=context.verify_rows_per_second, restore=context.restore)
                 successor = proposal.activation_plan
-                result = _rewrap_summary(successor, proposal)
+                result = _policy_summary(successor, proposal, purpose=purpose)
             else:
                 attempted = True
                 if action == 'apply':
-                    progress = r.apply_rewrap(proposal, engine, keys=context.source_keys,
-                        target_keys=context.target_keys, pin=context.pin, approval=context.approval)
+                    progress = (t.apply(proposal, engine, keys=context.keys, pin=context.pin, approval=context.approval)
+                        if tenant else r.apply_rewrap(proposal, engine, keys=context.source_keys,
+                            target_keys=context.target_keys, pin=context.pin, approval=context.approval))
                 elif action == 'activate':
-                    progress = m.apply(successor, engine, keys=context.target_keys,
+                    progress = m.apply(successor, engine, keys=context.keys if tenant else context.target_keys,
                                        pin=context.pin, approval=context.approval, until='ACTIVE')
                 else:
-                    progress = r.abort_rewrap(proposal, engine, keys=context.source_keys,
-                                             pin=context.source_pin, approval=context.approval)
-                result = _rewrap_summary(successor, proposal, progress)
+                    abort = t.abort if tenant else r.abort_rewrap
+                    progress = abort(proposal, engine, keys=context.source_keys,
+                                     pin=context.source_pin, approval=context.approval)
+                result = _policy_summary(successor, proposal, progress, purpose=purpose)
                 if artifact is not None:
                     result['artifact_result'] = dict(artifact)
         if action == 'plan':
@@ -669,7 +694,8 @@ def run_rewrap(arguments):
     except m.TransitionFailure as error:
         code = error.code if type(error.code) is str and _CODE.fullmatch(error.code) else 'TransitionRejected'
         operational = bool(error.cleanup_errors) or code in _OPERATIONAL
-        failure = _failure(operation, code, 'transition', exit_code=4 if operational else 2 if code in _REWRAP_DENIED else 3)
+        denied = _TENANT_DENIED if tenant else _REWRAP_DENIED
+        failure = _failure(operation, code, 'transition', exit_code=4 if operational else 2 if code in denied else 3)
         failure.error['sqlstate'] = error.sqlstate if type(error.sqlstate) is str and _SQLSTATE.fullmatch(error.sqlstate) else None
         if error.cleanup_errors:
             failure.error['cleanup_errors'] = [dict(stage=stage if stage in ('rollback', 'invalidate', 'close', 'driver_close')

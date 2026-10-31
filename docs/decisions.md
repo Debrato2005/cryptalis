@@ -4,6 +4,280 @@
 It does not preserve old IDs as implementation obligations. Historical dispositions remain in [archived revamp evidence](research/revamp-evidence.md).
 [Status](status.md) owns IMPLEMENTED/VERIFIED claims. All seven full gates remain UNKNOWN.
 
+## Preserve verified branch work: 2026-10-30
+
+Consolidate release continuation `c434625` with single-tenant UPDATE `2291ce9`
+through an ordinary merge, preserving both histories and existing main ancestry.
+Keep the shared UPDATE admission and the continuation's explicit missing-binding
+driver refusal. Retain complementary online scalar and maintenance/SQLModel
+tests; neither test module replaces the other. Preserve all security and format
+changes from continuation, including strict coexistence of the two Date codecs.
+Keep historical receipts immutable and add current merge evidence separately.
+The user requests this verified merge on main, then a pause for instructions.
+
+## Additive maintenance tenant authority: 2026-10-28
+
+Use a strict immutable tenant-provision proposal and v15/v16 successor rather
+than mutating an ACTIVE policy map. Add one explicitly approved empty tenant;
+preserve old policy digests and representation bytes. Reuse existing maintenance
+locks, durable guards, reciprocal journal transitions, external publication and
+inspected cancellation. Retain lineage through rotations and restored adoption.
+The first implementation deliberately retains O(N) source authentication and a
+global writer pause. It adds no policy service, new cipher or implicit signup
+authority. Production scalability and qualification remain separate work.
+
+## Tenant resolution and interrupted-work preservation: 2026-10-28
+
+Admit only exact UUID tenant scope and reject absent pinned membership before
+host key lookup. Preserve ordinary and approved nil-UUID behavior. Keep the
+separate actual-SDK profile transport-free and bind its versions/model/input
+hashes; local Stubber evidence does not qualify live custody.
+
+Do not merge incomplete policy/count changes when specialist execution is
+blocked. Preserve their exact Git state in an explicitly unverified branch and
+bundle. Keep current executable source and artifact evidence separate. Resume
+from that branch without repeating completed research or promoting unrun gates.
+Do not integrate a slower cache merely to chase a latency target; retain the
+measured miss and all existing admission boundaries.
+
+## Runtime evidence and tenant host boundary: 2026-10-28
+
+Require test receipts to identify the code actually imported. Source mode binds
+the checkout; installed mode binds every Cryptalis Python module to the inspected
+wheel. Reject mismatches before pytest and changed identities afterward. Keep
+diagnostic modes mutually exclusive. Qualification receipts belong to one new
+private run directory so parallel profiles cannot race for global filenames.
+
+The original tenant HTTP fixture may use explicit host adapters while preserving
+all original source bytes. Authenticate the original global User first, require
+an approved owner cohort, then authorize and lock/recheck public Item metadata.
+The administrator uses one exact native metadata page and authorized scoped
+payload reads. Account cascades remain in one transaction. This is measured
+application-specific integration, not a new generic runtime or policy service.
+New-owner policy provisioning remains required work; explicit refusal does not
+complete it. Source/wheel E2E and agent reviews never promote production gates.
+
+## Exact storage-only DATE candidate: 2026-10-27
+
+Extend the existing typed storage path with native DATE, without introducing
+an ordered encryption construction or timestamp/time-zone equivalence claims.
+Admit exact Python date/NULL and literal date client defaults within the native
+0001-01-01 through 9999-12-31 domain. Refuse unsupported source dates by count
+during operational planning and again under lock before transition effects.
+Use existing context/v2 with four signed big-endian days from 2000-01-01.
+DATE-bearing locks select v8 and exact codec/default reader tags. Preserve old
+v1-v7 selection and keep online capture restricted to TEXT/VARCHAR.
+Both layouts use the common rotation, restore and current-data exit engine.
+No DATE search or production/type admission follows; independent external-app,
+cost and review obligations remain.
+
+## Finite SELECT function authority: 2026-10-27
+
+Typed SELECT syntax does not establish that a database function is read-only.
+Use a finite native function class/name/namespace/dispatch admission table.
+Compile ordinary admitted calls with explicit `pg_catalog` resolution, retaining
+native special expressions and all protected-lineage checks. Preserve standard
+count/public-expression/window/cancellation behavior through native controls.
+Unknown database functions require separate admission and fail before keys or
+driver effects. No SQL parser, general purity inference or extra database service
+is introduced. Writer inventory and production exclusion remain separate obligations.
+
+## Direct provider custody transfer proof: 2026-10-27
+
+Require direct provider rewrap to prove target recovery of the original root,
+in addition to exact wrapper context and stable provider identity. Use existing
+provider unwrap and constant-time comparison; add no new format or primitive.
+Retain source custody on refusal. The extra unwrap requires target decrypt
+permission and can incur one provider request. Higher-level rotation retains
+its existing independent preparation and publication checks. Local protocol
+tests and agent review do not qualify external custody or deletion.
+
+## Frozen isolated build inputs: 2026-10-27
+
+Pin the existing uv build backend to an exact version and retain standard
+hash constraints under `qualification/build-backend`. Release checks force
+isolated PEP 517, require backend hashes and disable ambient configuration
+discovery. Contradictory environment settings must fail before artifact creation.
+Record tool/interpreter identity and the constraint digest with artifact evidence.
+Offline checks require the admitted backend in the normal uv cache. Preserve
+runtime pins and all existing release requirements. Same-cell reproducibility
+and agent review do not establish independent provenance or production safety.
+## Reconcile reviewed Date artifact families: 2026-10-29
+
+Preserve both authenticated Date codecs without reinterpreting v8 artifacts.
+New compilation uses the signed PostgreSQL-epoch `pg-date-days-be/v1` profile,
+including its exact literal client defaults. Prior ordinal descriptors use
+`date-ordinal-u32/v1`, their own digest and their own required-reader tag; these
+historical locks do not admit Date defaults. Reconstruct prior descriptors only
+through the finite codec allowlist and retain exact source/declaration/schema
+validation. A semantic diff must identify a codec change as a representation
+change. It must not imply an implemented automatic active codec conversion.
+UUID value storage keeps strict v9/`uuid-bytes16/v1` admission. The unmerged
+COUNT candidate's v9 is not a qualified artifact or an accepted alternate format.
+The [integration checkpoint](status.md#consolidated-implementation-checkpoint-2026-10-29)
+records actual old-backup recovery and the remaining gate boundaries.
+
+## Single-tenant mapped dictionary UPDATE: 2026-10-29
+
+Extend mapped dictionary UPDATE to tables declared `single_tenant: true`.
+Use the manifest's fixed table UUID as the session and payload scope. Admit
+`Session.execute(update(Model), list_of_dicts)` with typed application record
+IDs and `synchronize_session=False`. The caller supplies no WHERE predicate;
+SQLAlchemy supplies the exact primary-key predicate for each native group.
+Tenant-column tables still require their explicit tenant equality.
+
+Reuse the immutable input ledger, prepared frames, native grouping and final
+driver checks. Do not synthesize a tenant column or infer scope from data.
+Check fixed scope before statement key preparation and again at compilation.
+Keep native missing-record row-count failures, stale identity-map state,
+refresh, autoflush, rollback and savepoint behavior. Retain typed VARCHAR and
+integer overflow handling without plaintext binds. Core updates, expressions,
+RETURNING, extra predicates and automatic session synchronization remain
+unadmitted. This adds no format, representation, provider or dependency.
+
+The selected approach extends existing admission. A separate write executor
+would duplicate its security boundary; a manufactured WHERE condition would
+change native row-count behavior. Local PostgreSQL differential and failure
+controls must precede a VERIFIED claim. Production gates remain UNKNOWN.
+
+## Bounded parallel crypto and adaptive online batches: 2026-10-28
+
+Allow one through sixteen opt-in cryptographic workers during online capture.
+Keep one SQL writer, the existing executor lock and atomic payload/journal
+commits. Workers receive already locked native rows, perform no SQL, use separate
+per-thread preparation caches and preserve input order. Join workers before
+leaving the executor. Host key resolvers/providers must permit concurrent calls.
+One worker remains the default.
+
+An optional target chunk duration may adjust the next row count between half
+and twice the previous count, within the plan's existing maximum. Measure the
+whole chunk, including inspection and database work. The byte ceiling remains
+unchanged. This is a tuning target, not a promised pause or resource bound.
+Resume keeps committed bytes and restarts tuning from the approved row maximum.
+This implements parallel row cryptography, not multiple database executors.
+
+## Mapped dictionary INSERT tuple and entity RETURNING: 2026-10-28
+
+Extend the existing scalar RETURNING route to native direct-column tuples and
+the exact inserted mapped entity. Authenticate each protected output against
+its own prepared input frame and expected row/tenant context. Keep native Row
+keys, scalar consumption, entity identity/refresh behavior, heterogeneous groups,
+page boundaries, optional parameter ordering and rollback. Public fields retain
+native result processing. Validate the complete expanded output list before
+keys and again at compilation. Aliases, expressions, loader options and caller
+return_defaults remain unadmitted. No plaintext binds or per-row follow-up reads.
+
+## Online capture for admitted storage scalars: 2026-10-28
+
+Extend dirty-row capture to storage-only Boolean, int2/int4/int8, finite Date and
+UUID values. Native source writes stay authoritative until the durable fence.
+Use each codec's fixed width to bound a chunk before fetching values. A captured
+Date outside Python's finite range must raise the existing typed boundary error
+before sealing or committing that chunk. Preserve capture, byte-stable completed
+rows, resume, publication, role transfer, abort and latest-value native removal.
+The final write pause and host writer exclusion remain required. This adds no
+search representation or dependency.
+
+## Native UUID value storage: 2026-10-28
+
+Add storage-only PostgreSQL UUID values with exact standard native UUID mappings
+and Python UUID inputs. This protects ordinary UUID-valued fields; primary-key
+and tenant context columns remain public and retain their separate codecs.
+Use `uuid-bytes16/v1`, typed context/v2 and lock/v9. Encode exactly sixteen
+network-order UUID bytes, including the nil UUID. Authenticate before decoding.
+Non-NULL frames have exactly 58 bytes. Earlier readers must refuse before SQL.
+
+Keep string coercions, UUID field defaults, custom mappings and UUID search
+unadmitted in this addition. Carry current values through protection, native
+sync/async operations, rotations, fresh recovery and decrypt-back. No new
+cryptographic primitive or runtime dependency is required.
+
+## Native date storage: 2026-10-28
+
+Add storage-only PostgreSQL DATE with exact native SQLAlchemy Date mappings and
+Python date values in years 1 through 9999. SQL NULL stays SQL NULL. Do not infer
+dates from strings, timestamps, time zones or custom processors. Refuse date
+defaults and date search intent in this addition. Existing NULL predicates and
+direct non-NULL counts remain available.
+
+Encode the Gregorian ordinal as four unsigned big-endian bytes under
+`date-ordinal-u32/v1` and the existing typed context/v2. Authenticate before
+decoding. A non-NULL frame is exactly 46 bytes. Use lock/v8 and an explicit
+required reader, so prior readers refuse before database/provider access.
+Existing codecs and artifact versions keep their exact bytes.
+
+The protection planner must reject non-finite dates, BC values and years beyond
+9999 before migration effects. Recheck the value contract during backfill.
+Preserve native Date values through protection, current-value updates, root and
+payload rotation, protected backup adoption and latest-value native removal.
+This local addition does not qualify a production gate.
+
+## Local integer storage admission: 2026-10-28
+
+Admit storage-only signed int2/int4/int8 with the existing exact mappings,
+typed codecs, literal defaults and native error/transaction contracts. Keep
+integer search, ordering and arithmetic unadmitted. This changes local type
+admission, not the stored bytes or production qualification.
+
+Accept and publish the fixed CF1 overhead for the college workload. The current
+10,000-row profiles measure column-only ratios of 22.5x, 11.75x and 6.375x for
+int2/int4/int8. The equality-index storage target does not apply to storage-only
+fields. All eight scalar/entity point observations, including Date, meet the
+3 ms added-p95 target in this local run. Retain raw samples and observed tails;
+these observations do not establish a concurrent or production budget.
+
+## DISTINCT with selected record identities: 2026-10-28
+
+Keep native DISTINCT when every protected output is a direct column and its
+source's primary key is also selected. A matching public record identity already
+distinguishes different source rows. Repeated join rows contain the same stored
+frame/context, so native comparison preserves duplicate elimination.
+
+This route can admit entity/table projections and direct tuples with
+storage-only fields. Retain ordinary public ordering and pagination. Require
+the exact physical source alias and record name; another alias's ID is not proof.
+Keep caller DISTINCT ON and protected ordering/grouping under their separate
+contracts. Payload authentication remains unchanged.
+
+## Direct protected DISTINCT projection: 2026-10-28
+
+Admit DISTINCT of one directly selected equality-enabled protected field within
+one provable tenant scope. Native output labels and table aliases remain valid.
+Use PostgreSQL DISTINCT ON the existing full-width term, then authenticate the
+chosen row's existing payload/context carrier before returning its value.
+SQL NULL remains one distinct logical value. No additional stored term is needed.
+
+Keep DISTINCT ON supplied by callers, multiple output columns, grouping/HAVING,
+ordering, LIMIT/OFFSET/FETCH and row locks unadmitted in this addition. Unordered
+DISTINCT promises the same logical value set; it does not promise PostgreSQL's
+incidental output order. Reject storage-only fields and global cross-tenant
+deduplication. Preserve the existing public DISTINCT contract separately.
+
+## Bounded protected counts: 2026-10-28
+
+For the local assignment candidate, implement `COUNT(protected_column)` as a
+native non-NULL count. Stored SQL NULL remains SQL NULL, so the operation needs
+no decryption or additional search representation. Admit only a direct column
+argument to native SQLAlchemy `count`, optionally labeled as a selected result.
+Keep custom function/argument rendering and other protected expressions refused.
+Grouping by admitted public fields retains native PostgreSQL behavior.
+
+Implement `COUNT(DISTINCT protected_text)` separately for equality fields.
+Count the existing full-width equality term, preserving SQL NULL
+and empty-input behavior. This requires the field's existing equality leakage
+acceptance; it creates no new stored term. Do not silently count randomized
+payloads or combine tenant-scoped terms into a global distinct count.
+On tenant-column tables, require a native direct tenant equality to a bound value
+in a mandatory WHERE conjunction, or group by the counted source's exact tenant
+column. Do not infer scope from another alias, an OR predicate or a custom
+renderer. Each distinct group must contain only one tenant's terms.
+Native FILTER predicates over public fields also preserve count semantics.
+Admit non-distinct count windows with public partition/order expressions and
+native frame bounds. Keep protected filter/partition/order expressions and
+DISTINCT windows refused. Global multi-tenant distinct counts, protected grouping
+and general aggregates remain separate work. These local additions do not qualify
+production gates or remove objectives from the ledger.
+
 ## Online capture and access transfer: 2026-10-24
 
 **APPROVED, bounded implementation:** keep the existing maintenance path and add
@@ -122,17 +396,66 @@ Their absolute guarantees are also removed: immediate arbitrary-worker denial, a
 whole-result publication, subject cryptographic erasure, and hostile-database completeness/freshness.
 A removed mechanism cannot retain its old guarantee through wording alone.
 
+## Fixed-scope mapped single-record DELETE: 2026-10-29
+
+Extend the existing mapped single-record DELETE route to explicitly single-tenant
+tables. Require exactly one direct typed application-record equality and session
+scope equal to the descriptor's fixed table UUID. Keep tenant-column tables on
+their existing tenant-plus-record grammar. Admit neither a missing record
+predicate nor a fabricated tenant predicate.
+
+Reuse the immutable deletion permit, pre/post-preparation admission and exact
+compiled/final driver checks. Fixed scope removes only the physical tenant bind;
+the target table, record, identity type and policy authority remain mandatory.
+Retain native row counts, autoflush, transactions and rollback. External
+parameters, Core DELETE, RETURNING and synchronization other than False remain
+unadmitted. This adds no crypto, format, leakage or lifecycle contract.
+
+## Fixed-scope mapped dictionary UPDATE: 2026-10-29
+
+Extend the existing mapped dictionary UPDATE route to explicitly single-tenant
+tables. Use bare `update(Model)` and a nonempty list of dictionaries with exact
+application-assigned primary keys. The session scope must equal the descriptor's
+fixed table UUID. Admit no caller WHERE clause, synthetic tenant column or
+synthetic predicate. Retain the existing explicit tenant-equality grammar for
+tenant-column tables.
+
+Reuse the immutable input ledger, per-record preparation, final driver checks
+and existing VARCHAR/integer failure carriers. A missing tenant bind is valid
+only for this verified fixed scope or the existing ORM flush route. Native
+primary-key row-count checks must still raise `StaleDataError` on a missing row,
+with native partial effects and rollback/savepoint behavior. Keep RETURNING,
+Core UPDATE and synchronization other than False unadmitted. No format, crypto,
+leakage or key-authority change follows from this extension.
+
+## Async SQLModel bridge: 2026-10-29
+
+Extend the exact SQLModel 0.0.48 bridge to PostgreSQL AsyncEngine. Await the
+existing SQLAlchemy attachment and use its guarded async session with the
+SQLModel guarded synchronous session. Wrap native SQLModel `AsyncSession.exec`
+with the same async statement admission and key preparation as `execute`.
+Native `exec` enters its synchronous session directly; inheriting it alone
+would bypass async preparation and is not sufficient.
+
+Retain native scalar, tuple and entity results, transaction behavior and the
+existing query/write grammar. Cancellation during provider preparation must
+not dispatch SQL. Repeat existing UPDATE/DELETE admission after awaited key
+preparation. Keep caller session-class and binding overrides refused.
+This changes no crypto format, key authority, dependency or leakage contract.
+Local source and installed evidence remain separate from production gates.
+
 ## Optional exact SQLModel bridge: 2026-10-23
 
-Add an explicit optional SQLModel attachment for synchronous PostgreSQL only.
+Add an explicit optional SQLModel attachment for synchronous PostgreSQL.
+The later async bridge decision extends this original boundary.
 Pin SQLModel 0.0.48 and retain the four base runtime pins. Normalize only its
 exact stock AutoString through shared native type admission. Reject changed
 hooks, subclasses, variants and other unsupported protected types.
 Reuse native `Session.exec` and existing SQLAlchemy transaction/result guards.
 Keep the ordinary SQLAlchemy attachment behavior unchanged.
 
-Reject top-level SQLModel absence, unsupported version tags and async SQLModel
-attachment before database or key work. Internal package import failures retain
+Reject top-level SQLModel absence and unsupported version tags before database
+or key work. Internal package import failures retain
 their native failure behavior. Keep CF1, readers, tenancy, key authority and
 leakage contracts unchanged. Pinned external CRUD evidence remains separate
 from full application, authentication, deployment and broader ORM qualification.
@@ -1587,7 +1910,9 @@ current artifact and qualification. No production gate changes.
 
 **IMPLEMENTED, internal candidate:** add signed native int2, int4 and int8
 storage with exact SmallInteger, Integer and BigInteger mappings. No protected
-integer equality, ordering, range, arithmetic, aggregate or join is admitted.
+integer equality, ordering, range, arithmetic, aggregate or join was admitted at
+this checkpoint. The later [bounded count decision](#bounded-protected-counts-2026-10-28)
+admits direct non-NULL COUNT without changing integer storage admission.
 Keep strict built-in int values and SQL NULL. Refuse bool, subclasses and other
 Python coercions. Native width bounds remain exact.
 
@@ -1699,3 +2024,15 @@ its bounded implementation and application journey.
 
 The [installed checkpoint](status.md#installed-application-query-diagnostics-2026-10-24) verifies the bounded query diagnostic and matching CLI
 child package. It does not qualify a complete scanner or deployment authority.
+
+## Exact native identifier spelling: 2026-10-28
+
+Retain exact SQL catalog admission while accepting the native preparer's quoted
+spelling of the declared column. Require the CHECK's exact single-column
+dependency before accepting these known variants. Preserve nested-only ordinary
+admission and the exact explicit restatement required for flattened restore
+forms. Obtain search-index identifier spelling from a bound native `quote_ident`
+in the existing catalog query. Do not strip quotes or normalize arbitrary SQL.
+The [checkpoint](status.md#postgresql-identifier-admission-correction-2026-10-28)
+records the bounded source, installed and refusal evidence. This corrects native
+PostgreSQL identifier compatibility without changing encryption or promoting gates.

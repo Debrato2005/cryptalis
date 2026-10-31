@@ -227,6 +227,30 @@ def _parser() -> argparse.ArgumentParser:
         help='Trusted synchronous factory returning a key-free RemovalContext with current host approvals.')
     remove.add_argument('--json', action='store_true', dest='machine_json', help='Write one JSON object.')
     remove.set_defaults(handler=_operational_command)
+    tenants = commands.add_parser('tenants', help='Run host-approved tenant maintenance operations.', allow_abbrev=False)
+    tenant_commands = tenants.add_subparsers(dest='tenant_command', required=True)
+    provision = tenant_commands.add_parser('provision', help='Add one approved empty tenant policy with a global writer pause.',
+        allow_abbrev=False)
+    tenant_actions = provision.add_subparsers(dest='tenant_action', required=True)
+    for action, description in (
+            ('plan', 'Verify current frames and save one host-approved tenant policy proposal.'),
+            ('apply', 'Retain the exact successor and commit the approved policy as PENDING.'),
+            ('activate', 'Publish a saved successor under actual host ACTIVATING authority.'),
+            ('abort', 'Cancel a pending addition under republished source ACTIVE authority.')):
+        command = tenant_actions.add_parser(action, help=description, allow_abbrev=False)
+        command.add_argument('source' if action == 'plan' else 'plan', type=Path,
+            help='Source protection artifact.' if action == 'plan' else
+                 'Saved successor artifact.' if action == 'activate' else 'Saved tenant policy proposal.')
+        command.add_argument('--host-context', required=True, metavar='MODULE:FACTORY',
+            help='Trusted synchronous factory returning the exact Tenant context, approved UUID and key policy.')
+        if action in ('plan', 'apply'):
+            command.add_argument('--out', type=Path, required=True,
+                help='New private proposal artifact.' if action == 'plan' else 'Durable exact successor artifact.')
+        if action == 'apply':
+            command.add_argument('--resume', type=UUID, metavar='OPERATION',
+                help='Inspect and resume this operation using an exact private successor artifact.')
+        command.add_argument('--json', action='store_true', dest='machine_json', help='Write one JSON object.')
+        command.set_defaults(handler=_operational_command)
     keys = commands.add_parser('keys', help='Run explicitly authorized key lifecycle operations.', allow_abbrev=False)
     key_commands = keys.add_subparsers(dest='keys_command', required=True)
     rotate = key_commands.add_parser('rotate', help='Rotate admitted key custody.', allow_abbrev=False)

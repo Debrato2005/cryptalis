@@ -34,6 +34,28 @@ with sessions(tenant_id=authenticated_tenant) as session:
 # AsyncEngine: await attach(...); use async with and await Session methods.
 ```
 
+SQLModel 0.0.48 uses its optional attachment with native `exec` results:
+
+```python
+from cryptalis.sqlmodel import attach
+from sqlmodel import select
+
+sessions = await attach(Base.registry, async_engine, lock=plan.lock_bytes,
+                        keys=tenant_keys.__getitem__, deployment=(plan, active_pin))
+async with sessions(tenant_id=authenticated_tenant) as session:
+    customer = (await session.exec(
+        select(Customer).where(Customer.id == app_assigned_uuid)
+    )).one()
+    customer.note = "updated"
+    await session.commit()
+```
+
+Call async `exec` with `await`; consume its buffered native result normally.
+Use ordinary async SQLAlchemy methods for streaming and transaction operations.
+The same query, tenant and writer restrictions apply. For a synchronous engine,
+omit `await` and use the synchronous session context. The [SQLModel contract](compatibility.md#optional-sqlmodel-bridge)
+states dependency and mapping admission.
+
 Storage-only locks reject protected search. [Equality/IN/uniqueness](walkthrough-search.md) require declared capabilities.
 Opaque SQL, COPY, protocol handles, Core writes and unsupported expressions reject.
 The attached session admits ordinary mapped dictionary INSERT without RETURNING:
@@ -55,6 +77,63 @@ its declared table UUID as the session scope. Caller dictionaries stay unchanged
 The native bulk Result returns no rows and adds no objects to the identity map.
 `render_nulls=True` retains native explicit-NULL grouping.
 Rollback and nested savepoint cleanup retain native behavior.
+
+Update one tenant-scoped record with literal mapped assignments:
+
+```python
+from sqlalchemy import update
+
+with sessions(tenant_id=authenticated_tenant) as session:
+    result = session.execute(
+        update(Customer).where(Customer.tenant_id == authenticated_tenant,
+                               Customer.id == first_uuid).values(note="updated"),
+        execution_options={"synchronize_session": False},
+    )
+    session.commit()
+```
+
+The native cursor row count is zero or one. Loaded objects retain their old
+values until refresh or expiration. This form accepts no external parameters,
+RETURNING, expressions, ordered assignments or identity/tenant changes.
+
+For mapped dictionary UPDATE on an explicitly single-tenant table, use its
+declared table UUID as session scope and let SQLAlchemy select each typed
+primary key:
+
+```python
+from sqlalchemy import update
+
+with sessions(tenant_id=declared_table_uuid) as session:
+    session.execute(update(Customer),
+                    [{"id": first_uuid, "note": "updated"}],
+                    execution_options={"synchronize_session": False})
+    session.commit()
+```
+
+Supply no WHERE clause for this fixed-scope route. A missing primary key retains
+native `StaleDataError`; roll back before retry. Tenant-column tables use the
+separate explicit tenant-equality form in the [UPDATE contract](compatibility.md#full-capability-matrix).
+Async sessions use the same statements with awaited execution and commit.
+Loaded objects retain native stale state until refresh or expiration. Use
+rollback or the enclosing savepoint to recover from errors. UPDATE expressions,
+Core statements and RETURNING remain unadmitted. The
+[online scalar checkpoint](status.md#single-tenant-mapped-update-2026-10-29)
+adds current-value removal evidence across the admitted storage types.
+
+Delete one record from the same explicitly single-tenant table with its exact
+typed primary key:
+
+```python
+from sqlalchemy import delete
+
+with sessions(tenant_id=declared_table_uuid) as session:
+    result = session.execute(delete(Customer).where(Customer.id == first_uuid),
+                             execution_options={"synchronize_session": False})
+    session.commit()
+```
+
+Native `result.rowcount` is zero or one. Do not supply external parameter
+dictionaries, RETURNING or additional predicates for this route.
 
 Request direct mapped columns when the caller needs inserted values:
 
@@ -99,7 +178,7 @@ native behavior. Before ORM loading, returned IDs must belong to this INSERT,
 and public identity columns must match each authenticated field carrier. This
 also prevents an unloaded protected field from using a forged identity later.
 
-Labels, expressions, aliases, inherited/versioned entities, loader options,
+Expressions, aliases, inherited/versioned entities, loader options,
 caller `return_defaults()`, upserts, Core INSERT, statement-embedded values, INSERT SELECT,
 SQL expressions in rows and the legacy bulk methods remain unadmitted.
 A used callable, context-sensitive, SQL or server default also refuses.
