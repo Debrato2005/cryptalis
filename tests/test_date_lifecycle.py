@@ -13,7 +13,7 @@ from sqlalchemy import Date, select
 from cryptalis import deprotection as d, migration as m, rotation as r
 from cryptalis.sqlalchemy import attach
 from test_deprotection import app_pin, consent, least_privilege_role
-from test_migration import application, frames, keys, publish, run, TENANT, TABLE_ID
+from test_migration import application, frames, keys, publish, run, TENANT, TABLE_ID, FIELD_ID
 from test_date_storage import VALUES
 from rewrap_worker import target_keys as rewrapped_keys
 from payload_rotation_worker import rotated_keys
@@ -26,8 +26,8 @@ def date_keys(tenant):
 
 @contextmanager
 def date_application(*, public_slots=False, value_type=None, values=VALUES, value_default=date.min,
-                     owned_sequences=False):
-    """Retain storage-only DATE alongside independently declared searchable text."""
+                     owned_sequences=False, value_queries=()):
+    """Retain a native scalar alongside independently declared searchable text."""
     from cryptalis.manifest.compiler import SearchReview, Writer, WriterInventory, _canonical
     label_id = UUID(int=1211)
     def setup(connection, schema, role):
@@ -35,7 +35,8 @@ def date_application(*, public_slots=False, value_type=None, values=VALUES, valu
         if owned_sequences:
             from test_owned_sequences import install_sequence
             install_sequence(connection, schema, role)
-    with application(value_type=Date() if value_type is None else value_type, queries=[], protected_values=values,
+    with application(value_type=Date() if value_type is None else value_type,
+                     queries=list(value_queries), unique='unique' in value_queries, protected_values=values,
                      value_default=value_default, setup=setup) as app:
         # ORM INSERT applies the native client default to None; create SQL NULL
         # through a subsequent native UPDATE so both values enter migration.
@@ -49,7 +50,9 @@ def date_application(*, public_slots=False, value_type=None, values=VALUES, valu
         app.plan = m.plan(_canonical(declaration), app.mapping, app.owner,
             layout='preserve-public-slots/v1' if public_slots else None,
             writers=WriterInventory(True, (Writer(TABLE_ID, 'app', 'sqlalchemy', evidence='public DATE/text fixture'),)),
-            search_reviews=(SearchReview(label_id, False, 'synthetic distinct public labels'),), keys=keys,
+            search_reviews=((SearchReview(FIELD_ID, False, 'synthetic reviewed scalar equality population'),)
+                            if value_queries else ()) +
+                           (SearchReview(label_id, False, 'synthetic distinct public labels'),), keys=keys,
             runtime_role=app.role, target_id=app.plan.target_id, backfill_rows_per_second=1000,
             verify_rows_per_second=1000, temporary_bytes_per_row=1024, wal_bytes_per_row=2048)
         app.pin = app_pin(app.plan, 'PREPARED')
@@ -92,7 +95,9 @@ def rotate_all(app):
             approval=app.approval, until='ACTIVE').phase == 'ACTIVE'
         app.plan, app.pin = activation, app_pin(activation, 'ACTIVE')
         after = frames(app, True)
-        if purpose == 'search':
+        searched = bool(next(field for field in app.plan.document['lock']['models'][0]['fields']
+                             if field['field_id'] == str(FIELD_ID))['queries'])
+        if purpose == 'search' and not searched:
             assert after == before
         else:
             assert all(after[key] != value if value is not None else after[key] is None

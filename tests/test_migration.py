@@ -50,7 +50,7 @@ def keys(tenant):
 
 
 def independent_open(body, descriptor, tenant, record, payload_context=None, *, field_id=FIELD_ID,
-                     payload_root=None, search_root=None, return_bytes=False):
+                     payload_root=None, search_root=None, return_bytes=False, search_bytes=None):
     """Separate HKDF/HMAC/framing path; same qualified AEAD primitive only."""
     if body is None:
         return None
@@ -78,8 +78,11 @@ def independent_open(body, descriptor, tenant, record, payload_context=None, *, 
     aad = pack(b'CF1/payload', DOMAIN.bytes, tenant.bytes, field_id.bytes, record.bytes, digest, header)
     value = AESGCMSIV(key).decrypt(body[size:size+12], body[size+12:], aad)
     if equality:
-        search_key = derive('search', pack(b'CF1/search-key', field_id.bytes, b'utf8-exact/v1', b'identity/v1', b'equality'))
-        assert hmac.compare_digest(header[14:46], hmac.digest(search_key, pack(b'equality', value), 'sha256'))
+        codec = descriptor.get('value_codec', descriptor.get('text_codec')).encode('ascii')
+        search_key = derive('search', pack(b'CF1/search-key', field_id.bytes, codec,
+                                         descriptor['normalizer'].encode('ascii'), b'equality'))
+        assert hmac.compare_digest(header[14:46], hmac.digest(search_key,
+            pack(b'equality', value if search_bytes is None else search_bytes), 'sha256'))
     return value if return_bytes else value.decode('utf8')
 
 

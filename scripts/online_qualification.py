@@ -24,13 +24,13 @@ def main():
                          help='Recover the online HTTP backup on a new cluster, rotate keys and restore native operation.')
     profiles.add_argument('--tenant-http-fresh', action='store_true',
                          help='Recover authenticated owner-scoped original HTTP CRUD/admin cascades on a fresh cluster.')
-    profiles.add_argument('--fresh-scalar', choices=('date', 'timestamp', 'timestamptz', 'numeric', 'uuid', 'boolean', 'int16', 'int32', 'int64'),
+    profiles.add_argument('--fresh-scalar', choices=('date', 'timestamp', 'timestamptz', 'numeric', 'numeric-equality', 'uuid', 'boolean', 'int16', 'int32', 'int64'),
                          help='Qualify typed storage, rotations, fresh restore and package-free exit.')
     parser.add_argument('--public-slots', action='store_true', help='Preserve public slots in scalar recovery.')
     parser.add_argument('pytest_args', nargs=argparse.REMAINDER)
     args = parser.parse_args()
     if args.public_slots and (not args.fresh_scalar or args.fresh_scalar == 'boolean'):
-        parser.error('--public-slots requires --fresh-scalar date/timestamp/timestamptz/numeric/uuid/int16/int32/int64')
+        parser.error('--public-slots requires --fresh-scalar date/timestamp/timestamptz/numeric/numeric-equality/uuid/int16/int32/int64')
     if args.fresh_scalar and args.pytest_args:
         parser.error('--fresh-scalar runs its fixed export/restore profile; omit pytest arguments')
     args.workdir.mkdir(mode=0o700, parents=True, exist_ok=False)

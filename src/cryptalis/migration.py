@@ -25,7 +25,7 @@ from cryptalis.crypto._payload_rotation import MAX_BATCH_BYTES, MAX_BATCH_ROWS
 from cryptalis.manifest.compiler import (compile_protection, _schema_facts, _canonical, _previous_lock,
                                           unrecorded_column_metadata, protected_extended_statistics,
                                           sequence_metadata, source_metadata, _metadata_diff, _catalog_path,
-                                          _native_text_length, _fixed_value_width)
+                                          _native_text_length, _fixed_value_width, _LOCK_SCHEMAS)
 from cryptalis.manifest.parser import ManifestInvalid, _decode_json
 
 JOURNAL = '_cryptalis_journal'
@@ -429,7 +429,7 @@ def _observed_source_metadata(c, p, model, *, sequences=None):
 
 
 def _preserves_public_slot_lock(lock):
-    return lock['schema'] in ('cryptalis.lock/v6', 'cryptalis.lock/v7', 'cryptalis.lock/v8', 'cryptalis.lock/v9', 'cryptalis.lock/v10', 'cryptalis.lock/v11', 'cryptalis.lock/v12') and lock.get('layout') == 'preserve-public-slots/v1'
+    return lock['schema'] in _LOCK_SCHEMAS[5:] and lock.get('layout') == 'preserve-public-slots/v1'
 
 
 def _preserves_public_slots(p):

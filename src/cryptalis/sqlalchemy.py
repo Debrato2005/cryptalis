@@ -43,7 +43,7 @@ from .crypto import CryptoFailure, AuthenticationFailed, FieldDescriptor, Keyrin
 from .crypto.cf1 import _encode
 from .crypto.keys import InvalidText, InvalidValue, RepresentationMismatch, ProviderAuthenticationUnavailable
 from ._timestamp import aware_default, aware_value, datetime_state
-from .manifest.compiler import _LOCK_SCHEMAS, _compiled_default, _value_default, _native_text_length, _previous_lock, _value_mapping_matches, _fixed_value_width
+from .manifest.compiler import _LOCK_SCHEMAS, _compiled_default, _default_matches, _value_default, _native_text_length, _previous_lock, _value_mapping_matches, _fixed_value_width
 from .manifest.parser import decode_manifest_json
 
 
@@ -513,6 +513,14 @@ class _Payload(TypeDecorator):
     def __init__(self, binding, owner):
         super().__init__()
         self.binding, self.owner = binding, owner
+        self.source_type = binding.column.type
+
+    def coerce_compared_value(self, op, value):
+        if self.binding.descriptor.value_codec == 'pg-numeric-decimal/v1':
+            # Native Numeric infers integer casts from literal/IN values. Keep
+            # that typing when the mapped storage changes to encrypted bytea.
+            return self.source_type.coerce_compared_value(op, value)
+        return super().coerce_compared_value(op, value)
 
     def process_bind_param(self, value, dialect):
         operation = _operation.get()
@@ -844,12 +852,7 @@ class _Attachment:
                 boolean = source['type'] == 'bool'
                 try:
                     actual_default = _value_default(column, field['descriptor'].get('value_codec', 'utf8-exact/v1'))
-                    expected_default = _compiled_default(field)
-                    default_matches = type(actual_default) is type(expected_default) and actual_default == expected_default
-                    if field['source']['type'] == 'timestamptz' and actual_default is not None:
-                        default_matches = aware_default(actual_default) == field['application_default']
-                    if type(actual_default) is Decimal and type(expected_default) is Decimal:
-                        default_matches = actual_default.as_tuple() == expected_default.as_tuple()
+                    default_matches = _default_matches(actual_default, field)
                 except ValueError:
                     raise PolicyMismatch() from None
                 if (not isinstance(actual["type"], LargeBinary) or not _value_mapping_matches(column, source) or

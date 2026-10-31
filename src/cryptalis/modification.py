@@ -51,18 +51,21 @@ def _target_lock(source_lock, manifest, *, writers, search_reviews):
                 search = ['equality', 'order'] if orderable else ['equality']
                 if ((old['queries'], new['queries']) not in (([], search), (search, [])) or
                         new['accept_leakage'] != new['queries'] or
-                        not orderable and field['source']['type'] not in ('text', 'varchar')):
+                        not orderable and field['source']['type'] not in ('text', 'varchar', 'numeric')):
                     raise ValueError
                 old.update(queries=new['queries'], accept_leakage=new['accept_leakage'])
                 if old != new:
                     raise ValueError
                 native = next(c for c in compiled['source_schema']['columns'] if c['name'] == field['column'])
-                if new['queries'] and not orderable and not compiler._exact_search_collation(native):
+                if new['queries'] and field['source']['type'] in ('text', 'varchar') and not compiler._exact_search_collation(native):
                     raise ValueError
                 if not new['queries']:
                     removed_reviews.add(field['field_id'])
                 field.update(queries=new['queries'], representation=compiler._representation(new['queries']))
-                field['descriptor']['representation'] = field['representation']
+                descriptor = field['descriptor']
+                field['descriptor'] = compiler._descriptor(descriptor['domain_id'], descriptor['table_id'],
+                    descriptor['field_id'], descriptor['record_codec'], descriptor['tenant_codec'],
+                    field['representation'], descriptor.get('value_codec', descriptor.get('text_codec')))
                 field['descriptor_digest'] = compiler._digest(field['descriptor'])
                 changed += 1
         if not changed or expected != desired:
@@ -72,6 +75,8 @@ def _target_lock(source_lock, manifest, *, writers, search_reviews):
                if review['field_id'] not in removed_reviews):
             raise ValueError
         target.update(declaration=desired, writer_inventory=host, search_reviews=reviews)
+        target['schema'] = compiler._lock_schema(target['models'], target.get('layout'),
+                                                legacy=source_lock['schema'] == 'cryptalis.lock/v1')
         target['ddl'] = compiler._ddl(target, _DIALECT)
         target['required_readers'] = compiler._required_readers(target['models'])
         compiler._previous_lock(m._canonical(target), target, _DIALECT)
@@ -132,7 +137,8 @@ def _mapping(lock, mapping):
                         column.nullable != field['source']['nullable'] or
                         not compiler._value_mapping_matches(column, facts[column.name]) or
                         compiler._server_generation(column, facts[column.name]) or column.onupdate is not None or
-                        compiler._value_default(column, compiler._value_codec(field['source'])) != compiler._compiled_default(field)):
+                        not compiler._default_matches(compiler._value_default(column,
+                            compiler._value_codec(field['source'])), field)):
                     raise ValueError
     except (KeyError, TypeError, ValueError, AttributeError):
         raise m.TransitionFailure('modification_mapping_mismatch') from None

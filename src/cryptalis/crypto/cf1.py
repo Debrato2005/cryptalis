@@ -56,7 +56,7 @@ class FieldDescriptor:
                 self.tenant_codec not in ("uuid16/v1", "single-tenant-uuid/v1") or
                 self.representation not in ("cf1-storage/v1", "cf1-packed-equality/v1", _ORDER_REPRESENTATION) or
                 self.value_codec not in ("utf8-exact/v1", "boolean-u8/v1", _DATE_CODEC, _TIMESTAMP_CODEC, _TIMESTAMPTZ_CODEC, _NUMERIC_CODEC, "date-ordinal-u32/v1", "uuid-bytes16/v1", *_INTEGER_WIDTHS) or
-                self.representation == "cf1-packed-equality/v1" and self.value_codec != "utf8-exact/v1" or
+                self.representation == "cf1-packed-equality/v1" and self.value_codec not in ("utf8-exact/v1", _NUMERIC_CODEC) or
                 self.representation == _ORDER_REPRESENTATION and self.value_codec not in _ORDER_CODECS or
                 type(self.digest) is not bytes or len(self.digest) != 32):
             raise InvalidContext()
@@ -75,8 +75,10 @@ class FieldDescriptor:
                 raise InvalidContext()
             codec = document["value_codec" if typed else "text_codec"]
             allowed_codecs = ("boolean-u8/v1", _DATE_CODEC, _TIMESTAMP_CODEC, _TIMESTAMPTZ_CODEC, _NUMERIC_CODEC, "date-ordinal-u32/v1", "uuid-bytes16/v1", *_INTEGER_WIDTHS) if typed else ("utf8-exact/v1",)
+            normalizer = ('pg-numeric-equality/v1' if codec == _NUMERIC_CODEC and
+                          document['representation'] == 'cf1-packed-equality/v1' else 'identity/v1')
             if ((document["schema"], document["normalizer"], document["null_policy"]) != (
-                    "cryptalis.context/v2" if typed else "cryptalis.context/v1", "identity/v1", "sql-null/v1")
+                    "cryptalis.context/v2" if typed else "cryptalis.context/v1", normalizer, "sql-null/v1")
                     or codec not in allowed_codecs):
                 raise InvalidContext()
             canonical = json.dumps(document, ensure_ascii=False, sort_keys=True, separators=(",", ":"), allow_nan=False).encode("utf8")
@@ -126,8 +128,6 @@ def _encode(value):
 def _encode_value(value, field):
     if field.value_codec == _NUMERIC_CODEC:
         from .._numeric import numeric_value
-        if type(value) is not Decimal:
-            raise InvalidValue()
         return format(numeric_value(value), 'f').encode('ascii')
     if field.value_codec in (_TIMESTAMP_CODEC, _TIMESTAMPTZ_CODEC):
         if field.value_codec == _TIMESTAMPTZ_CODEC:
@@ -199,8 +199,18 @@ def _order_term(encoded, field, material):
 def _term(encoded, field, material):
     if field.ordered:
         return _order_term(encoded, field, material)
+    codec, normalizer = b'utf8-exact/v1', b'identity/v1'
+    if field.value_codec == _NUMERIC_CODEC:
+        from .._numeric import numeric_search_bytes
+        if not 1 <= len(encoded) <= 147457:
+            raise InvalidValue()
+        try:
+            encoded = numeric_search_bytes(Decimal(encoded.decode('ascii')))
+        except (UnicodeError, ValueError, InvalidOperation):
+            raise InvalidValue() from None
+        codec, normalizer = _NUMERIC_CODEC.encode('ascii'), b'pg-numeric-equality/v1'
     key = _derive(material, tuple_bytes(b"CF1/search-key", field.field_id.bytes,
-                                       b"utf8-exact/v1", b"identity/v1", b"equality"))
+                                       codec, normalizer, b"equality"))
     mac = hmac.HMAC(key, hashes.SHA256())
     mac.update(tuple_bytes(b"equality", encoded))
     return mac.finalize()
@@ -237,7 +247,7 @@ def _aad(field, tenant, record, header):
                        record, field.digest, header)
 
 
-def seal_value(value: str | bool | int | date | datetime | UUID | None, field: FieldDescriptor, tenant: UUID,
+def seal_value(value: str | bool | int | date | datetime | Decimal | UUID | None, field: FieldDescriptor, tenant: UUID,
               record: UUID | int, keys: PreparedKeys) -> bytes | None:
     """Seal the pinned value codec with active keys and a fresh OS nonce."""
     typed = _context(field, tenant, record, keys)

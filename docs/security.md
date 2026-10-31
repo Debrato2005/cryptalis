@@ -1644,11 +1644,25 @@ precision failure behavior without sending the private decimal to PostgreSQL.
 
 Storage-only numeric fields reveal the existing row linkage, NULL presence,
 frame length and access/write patterns. Variable decimal length can disclose
-integer/fractional digit counts; this slice adds no numeric search term or
-ordering capability. [Compatibility](compatibility.md#numeric-storage) owns the
+integer/fractional digit counts. [Compatibility](compatibility.md#numeric-storage) owns the
 admitted inputs and operations. The native oracle follows
 [PostgreSQL 16 NUMERIC semantics](https://www.postgresql.org/docs/16/datatype-numeric.html#DATATYPE-NUMERIC-DECIMAL).
 Independent composition review and all seven production gates remain UNKNOWN.
+
+Numeric equality uses the existing packed CF1 full HMAC term, with its own
+`pg-numeric-equality/v1` normalizer/KDF domain and lock/v13 reader. Search bytes
+are the sign, coefficient with trailing zeroes removed, `e` and adjusted decimal
+exponent; all zeroes use `0`. The canonicalizer performs no arithmetic under the
+host Decimal context. Stored payload bytes retain the native scale. The frame
+authenticates both the original payload and the term; authenticated reads
+recompute that term before release.
+
+Explicit equality acceptance exposes within-field/tenant equality, frequency,
+NULLs and access patterns. Small numeric domains remain subject to enumeration
+and require the existing host domain review. Uniqueness relies on the existing
+full-HMAC collision assumption and native PostgreSQL concurrency enforcement.
+No numeric ordering representation, new primitive or independent review is
+supplied. Removing current terms cannot retract leakage from earlier copies.
 
 ## Internal storage-only integer boundary
 
