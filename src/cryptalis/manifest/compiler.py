@@ -265,7 +265,7 @@ def _timestamp_mapping_matches(column, native):
 
 
 def _orderable(source):
-    return source['type'] in _INTEGER_TYPES or source['type'] == 'date'
+    return source['type'] in _INTEGER_TYPES or source['type'] in ('date', 'timestamp')
 
 
 def _representation(queries):
@@ -310,6 +310,8 @@ def _required_readers(models):
                   | {m['record']['codec'] for m in models}
                   | {'uuid16/v1' for m in models if 'column' in m['tenancy']}
                   | ({'cf1-order/v1'} if any('order' in f['queries'] for m in models for f in m['fields']) else set())
+                  | ({'pg-timestamp-order/v1'} if any(f['source']['type'] == 'timestamp' and
+                     'order' in f['queries'] for m in models for f in m['fields']) else set())
                   | ({'pg-varchar/v1'} if any(f['source']['type'] == 'varchar'
                      for m in models for f in m['fields']) else set())
                   | ({'pg-integer-default/v1'} if any(f['source']['type'] in _INTEGER_TYPES and
@@ -928,7 +930,7 @@ def _compile_model(model, mapper, facts, issues, schema):
                 or column.onupdate is not None):
             refuse("protected_default", field.name, "Remove protected defaults and generated values. Assign values through admitted writes.")
         if field.queries and ('order' in field.queries) != _orderable(actual):
-            refuse("unsupported_query", field.name, "Declare order search on integer and date fields only. "
+            refuse("unsupported_query", field.name, "Declare order search on integer, date and naive timestamp fields only. "
                    "They admit no other search; use storage-only protection otherwise.")
         elif _fixed_value_width(actual) is not None and field.queries and not _orderable(actual):
             refuse("unsupported_query", field.name, "Use storage-only protection for this native value domain.")
@@ -1132,7 +1134,7 @@ def _previous_lock(raw, current, engine):
                 boolean = field['source']['type'] == 'bool'
                 if field['source']['type'] == 'uuid' and (not uuid_lock or intent.queries):
                     raise ValueError
-                if field['source']['type'] == 'timestamp' and (not timestamp_lock or intent.queries):
+                if field['source']['type'] == 'timestamp' and (not timestamp_lock or intent.queries and 'order' not in intent.queries):
                     raise ValueError
                 if field['source']['type'] in _INTEGER_TYPES and (not integer_lock or intent.queries and 'order' not in intent.queries):
                     raise ValueError
@@ -1293,7 +1295,7 @@ def _validate_prior_source(model, *, varchar=False, boolean=False, integer=False
             require(not field['queries'] or 'order' in field['queries'])
         elif timestamp_values and source['type'] == 'timestamp':
             require(_timestamp_mapping_matches(Column('value', DateTime()), source))
-            require(not field['queries'])
+            require(not field['queries'] or 'order' in field['queries'])
         else:
             require(source['type'] == 'text' or varchar and source['type'] == 'varchar')
             _native_text_length(source)

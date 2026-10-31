@@ -5,20 +5,22 @@ same rows in the same order through Cryptalis, across the whole lifecycle.
 """
 import asyncio
 from contextlib import contextmanager
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta
 import hashlib
 import hmac
 import json
 import os
 import random
+import subprocess
 from types import SimpleNamespace
 from uuid import UUID, uuid4
 
 import psycopg
 import pytest
-from sqlalchemy import (BigInteger, Boolean, Column, Date, Index, Integer, MetaData, SmallInteger, Table, Text, Uuid,
+from sqlalchemy import (BigInteger, Boolean, Column, Date, DateTime, Index, Integer, MetaData, SmallInteger, Table, Text, Uuid,
                         and_, bindparam, func, not_, or_, select)
 from sqlalchemy.ext.asyncio import create_async_engine
+from sqlalchemy.dialects.postgresql import TIMESTAMP
 from sqlalchemy.orm import registry, sessionmaker
 
 from cryptalis import Project
@@ -28,14 +30,16 @@ from cryptalis.sqlalchemy import UnsupportedProtectedOperation
 from test_migration import engine
 
 DOMAIN, TABLE_ID = UUID(int=9300), UUID(int=9301)
-FIELD_IDS = {'small': UUID(int=9302), 'amount': UUID(int=9303), 'big': UUID(int=9304), 'due': UUID(int=9305)}
+FIELD_IDS = {'small': UUID(int=9302), 'amount': UUID(int=9303), 'big': UUID(int=9304), 'due': UUID(int=9305), 'moment': UUID(int=9306)}
 TENANT, OTHER = UUID(int=9310), UUID(int=9311)
 STOPPED = 'Fixture writers are stopped; the attached application is the only writer.'
 REVIEWED = 'Fixture values are not enumerable; order, equality and frequency leakage are accepted.'
 COLUMNS = tuple(FIELD_IDS)
 PIVOTS = {'small': (-1, 0, 7, 32767, -32768), 'amount': (-1, 0, 12345, 2**31 - 1, -2**31),
           'big': (-1, 0, 2**40, 2**63 - 1, -2**63),
-          'due': (date(2000, 1, 1), date(1999, 12, 31), date(2026, 10, 31), date.max, date.min)}
+          'due': (date(2000, 1, 1), date(1999, 12, 31), date(2026, 10, 31), date.max, date.min),
+          'moment': (datetime(2000, 1, 1), datetime(1999, 12, 31, 23, 59, 59, 999999),
+                     datetime(2000, 1, 1, microsecond=1), datetime.max, datetime.min)}
 
 
 def values(column, rng):
@@ -47,15 +51,17 @@ def values(column, rng):
         return rng.choice(bounds)
     if column == 'due':
         return date(2000, 1, 1) + timedelta(days=rng.randint(-4000, 12000))
+    if column == 'moment':
+        return datetime(2000, 1, 1) + timedelta(days=rng.randint(-4000, 12000), microseconds=rng.randint(0, 86399999999))
     width = {'small': 15, 'amount': 31, 'big': 63}[column]
     return rng.randint(-2**width, 2**width - 1) if rng.random() < .5 else rng.randint(-20, 20)
 
 
-def mapping_for(schema, indexed=True):
+def mapping_for(schema, indexed=True, timestamp_type=DateTime):
     mapping = registry(metadata=MetaData(schema=schema))
     table = Table('invoice', mapping.metadata, Column('id', Uuid, primary_key=True, autoincrement=False),
                   Column('tenant_id', Uuid, nullable=False), Column('small', SmallInteger), Column('amount', Integer),
-                  Column('big', BigInteger), Column('due', Date), Column('label', Text))
+                  Column('big', BigInteger), Column('due', Date), Column('moment', timestamp_type), Column('label', Text))
     if indexed:
         Index('native_amount', table.c.amount)
     class Invoice: pass
@@ -71,7 +77,7 @@ def manifest(search=('equality', 'order')):
 
 
 @contextmanager
-def invoices(tmp_path, *, search=('equality', 'order')):
+def invoices(tmp_path, *, search=('equality', 'order'), timestamp_type=DateTime):
     owner = engine('CRYPTALIS_TEST_DATABASE_URL')
     schema = 'cryptalis_order_' + uuid4().hex
     runtime = engine('CRYPTALIS_TEST_RUNTIME_DATABASE_URL')
@@ -81,14 +87,14 @@ def invoices(tmp_path, *, search=('equality', 'order')):
     provider = DevelopmentKeyProvider()
     keep, initial = [], search
     def process(provider=provider, search=search):
-        mapping, Invoice = mapping_for(schema, indexed=bool(initial))
+        mapping, Invoice = mapping_for(schema, indexed=bool(initial), timestamp_type=timestamp_type)
         fresh = engine('CRYPTALIS_TEST_RUNTIME_DATABASE_URL')
         created.append(fresh)
         keep.append((mapping, Invoice))
         return SimpleNamespace(Invoice=Invoice, runtime=fresh, mapping=mapping,
             project=Project(manifest(search), mapping, provider=provider, state_dir=tmp_path))
     try:
-        mapping, Invoice = mapping_for(schema, indexed=bool(search))
+        mapping, Invoice = mapping_for(schema, indexed=bool(search), timestamp_type=timestamp_type)
         with owner.begin() as connection:
             connection.exec_driver_sql(f'CREATE SCHEMA "{schema}"')
             connection.exec_driver_sql(f'GRANT USAGE ON SCHEMA "{schema}" TO "{role}"')
@@ -166,8 +172,9 @@ def frames(app, name='amount'):
             f'SELECT id, tenant_id, {name} FROM "{app.schema}".invoice')}
 
 
-def test_protected_results_match_native_through_the_whole_lifecycle(tmp_path):
-    with invoices(tmp_path) as app:
+@pytest.mark.parametrize('timestamp_type', [DateTime(), TIMESTAMP(precision=6)])
+def test_protected_results_match_native_through_the_whole_lifecycle(tmp_path, timestamp_type):
+    with invoices(tmp_path, timestamp_type=timestamp_type) as app:
         expected = native_answers(app)
         assert sum(map(len, expected.values())) > 5000 and len(expected) > 300
         protect(app.process(), app)
@@ -189,8 +196,9 @@ def test_protected_results_match_native_through_the_whole_lifecycle(tmp_path):
 
         # New and edited rows join the same order; compare with the same edits applied natively.
         process = app.process()
-        edits = {UUID(int=10001): {'amount': -2**31, 'due': date.min, 'small': None, 'big': 2**63 - 1}}
-        added = dict(id=UUID(int=20000), tenant_id=TENANT, label='label-new', small=7, amount=12345, big=2**40, due=date(2026, 10, 31))
+        edits = {UUID(int=10001): {'amount': -2**31, 'due': date.min, 'small': None, 'big': 2**63 - 1, 'moment': datetime.min}}
+        added = dict(id=UUID(int=20000), tenant_id=TENANT, label='label-new', small=7, amount=12345, big=2**40,
+                     due=date(2026, 10, 31), moment=datetime(2026, 11, 1, 12, 34, 56, 123456))
         with process.project.attach(process.runtime)(tenant_id=TENANT) as session:
             row = session.get(process.Invoice, UUID(int=10001))
             for name, value in edits[UUID(int=10001)].items():
@@ -263,10 +271,11 @@ def test_keyset_pagination_walks_all_rows_in_native_order(tmp_path):
         assert seen == wanted
 
 
-def test_range_and_sort_use_the_generated_index(tmp_path):
+@pytest.mark.parametrize('column', ['amount', 'moment'])
+def test_range_and_sort_use_the_generated_index(tmp_path, column):
     with invoices(tmp_path) as app:
         protect(app.process(), app)
-        column, index = 'amount', '_cryptalis_' + FIELD_IDS['amount'].hex + '_eq'
+        index = '_cryptalis_' + FIELD_IDS[column].hex + '_eq'
         with app.owner.begin() as connection:
             connection.exec_driver_sql('SET LOCAL enable_seqscan = off')
             connection.exec_driver_sql('SET LOCAL enable_bitmapscan = off')
@@ -340,7 +349,8 @@ def test_order_term_matches_an_independent_implementation_and_sorts_across_bound
 
 
 @pytest.mark.parametrize('field_type,search', [(Text(collation='C'), ('equality', 'order')), (Boolean(), ('equality', 'order')),
-                                               (Uuid(), ('equality', 'order')), (Integer(), ('equality',))])
+                                               (Uuid(), ('equality', 'order')), (Integer(), ('equality',)),
+                                               (DateTime(), ('equality',))])
 def test_planning_refuses_order_on_unsupported_types_and_equality_alone_on_numbers(tmp_path, field_type, search):
     owner = engine('CRYPTALIS_TEST_DATABASE_URL')
     schema = 'cryptalis_order_' + uuid4().hex
@@ -363,6 +373,28 @@ def test_planning_refuses_order_on_unsupported_types_and_equality_alone_on_numbe
         with owner.begin() as connection:
             connection.exec_driver_sql(f'DROP SCHEMA IF EXISTS "{schema}" CASCADE')
         owner.dispose()
+
+
+@pytest.mark.parametrize('bind_type', [DateTime(timezone=True), TIMESTAMP(timezone=True)])
+def test_timestamp_order_refuses_timezone_cast_binds_with_different_native_semantics(tmp_path, bind_type):
+    with invoices(tmp_path) as app:
+        Invoice, factory = app.native
+        identity = UUID(int=31000)
+        with factory() as session:
+            session.add(Invoice(id=identity, tenant_id=TENANT, moment=datetime(2020, 3, 8, 3)))
+            session.commit()
+            session.connection().exec_driver_sql("SET LOCAL TIME ZONE 'America/New_York'")
+            statement = (select(Invoice.id).where(Invoice.id == identity, Invoice.tenant_id == TENANT,
+                Invoice.moment < bindparam('cutoff', datetime(2020, 3, 8, 2, 30), type_=bind_type)))
+            assert list(session.scalars(statement)) == [identity]
+        protect(app.process(), app)
+        process = app.process()
+        Invoice = process.Invoice
+        with process.project.attach(process.runtime)(tenant_id=TENANT) as session:
+            statement = (select(Invoice.id).where(Invoice.id == identity, Invoice.tenant_id == TENANT,
+                Invoice.moment < bindparam('cutoff', datetime(2020, 3, 8, 2, 30), type_=bind_type)))
+            with pytest.raises(UnsupportedProtectedOperation):
+                session.execute(statement).all()
 
 
 def test_unsupported_order_queries_refuse_loudly(tmp_path):
@@ -393,6 +425,32 @@ def test_unsupported_order_queries_refuse_loudly(tmp_path):
                     session.execute(statement).all()
                 assert isinstance(failure.value, InvalidValue) or isinstance(getattr(failure.value, 'orig', None), InvalidValue)
                 session.rollback()
+
+
+@pytest.mark.parametrize('ordered', [False, True])
+def test_timestamp_order_refuses_a_retained_storage_only_reader(tmp_path, ordered):
+    from test_migration import application
+    reader = os.environ.get('CRYPTALIS_TIMESTAMP_ORDER_PREVIOUS_READER_PYTHON')
+    if not reader:
+        pytest.skip('supply the retained installed v10 timestamp storage reader')
+    with application(rows=1, unique=False, value_type=DateTime(), queries=['equality', 'order'] if ordered else [],
+                     protected_values=(datetime(2000, 1, 1),)) as app:
+        artifact = tmp_path / 'plan.json'
+        artifact.write_bytes(app.plan.artifact)
+        child = subprocess.run([reader, '-I', '-c', '''
+from pathlib import Path
+import sys
+from cryptalis.migration import MigrationPlan, TransitionFailure
+try:
+    MigrationPlan(Path(sys.argv[1]).read_bytes()).document
+except TransitionFailure as failure:
+    assert sys.argv[2] == 'ordered' and failure.code == 'invalid_plan'
+else:
+    assert sys.argv[2] == 'storage'
+print('reader boundary passed')
+''', str(artifact), 'ordered' if ordered else 'storage'], capture_output=True, text=True, timeout=30)
+        assert child.returncode == 0, 'previous-reader control failed; diagnostics withheld'
+        assert child.stdout.strip() == 'reader boundary passed'
 
 
 def test_order_search_can_be_added_to_and_removed_from_a_protected_field(tmp_path):

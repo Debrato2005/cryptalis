@@ -30,7 +30,7 @@ _DATE_EPOCH = date(2000, 1, 1)
 _TIMESTAMP_CODEC = 'pg-timestamp-us-be/v1'
 _TIMESTAMP_EPOCH = datetime(2000, 1, 1)
 _ORDER_REPRESENTATION = "cf1-packed-order/v1"
-_ORDER_CODECS = (*_INTEGER_WIDTHS, _DATE_CODEC)
+_ORDER_CODECS = (*_INTEGER_WIDTHS, _DATE_CODEC, _TIMESTAMP_CODEC)
 _DESCRIPTOR_MEMBERS = frozenset(("schema", "domain_id", "table_id", "field_id", "text_codec",
                                "normalizer", "null_policy", "record_codec", "tenant_codec", "representation"))
 
