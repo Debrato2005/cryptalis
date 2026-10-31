@@ -1,0 +1,231 @@
+{
+  "accepted": {
+    "fresh-public-slots/export-receipt.json": {
+      "outcomes": {
+        "collection": {},
+        "selected_items": 1,
+        "setup": {
+          "passed": 1
+        },
+        "subtest_calls": {},
+        "teardown": {
+          "passed": 1
+        },
+        "test_calls": {
+          "passed": 1
+        }
+      },
+      "runtime_binding": {
+        "mode": "installed-wheel",
+        "module_count": 43,
+        "modules_sha256": "c7c0b9ae7edf8af17671c0477eda72c24a37132b11abacec9afdc619368a8de6",
+        "runtime_root": "/tmp/cryptalis-numeric-search-installed-20261101/lib/python3.12/site-packages/cryptalis",
+        "wheel": "/tmp/cryptalis-numeric-search-artifacts-20261101/cryptalis-0.1.0-py3-none-any.whl",
+        "wheel_sha256": "5134a52a1fbda238439058d6d6f81a3a601a07e032fb721ba4c167da85fbce1e"
+      }
+    },
+    "fresh-public-slots/restore-receipt.json": {
+      "outcomes": {
+        "collection": {},
+        "selected_items": 1,
+        "setup": {
+          "passed": 1
+        },
+        "subtest_calls": {},
+        "teardown": {
+          "passed": 1
+        },
+        "test_calls": {
+          "passed": 1
+        }
+      },
+      "runtime_binding": {
+        "mode": "installed-wheel",
+        "module_count": 43,
+        "modules_sha256": "c7c0b9ae7edf8af17671c0477eda72c24a37132b11abacec9afdc619368a8de6",
+        "runtime_root": "/tmp/cryptalis-numeric-search-installed-20261101/lib/python3.12/site-packages/cryptalis",
+        "wheel": "/tmp/cryptalis-numeric-search-artifacts-20261101/cryptalis-0.1.0-py3-none-any.whl",
+        "wheel_sha256": "5134a52a1fbda238439058d6d6f81a3a601a07e032fb721ba4c167da85fbce1e"
+      }
+    },
+    "fresh/export-receipt.json": {
+      "outcomes": {
+        "collection": {},
+        "selected_items": 1,
+        "setup": {
+          "passed": 1
+        },
+        "subtest_calls": {},
+        "teardown": {
+          "passed": 1
+        },
+        "test_calls": {
+          "passed": 1
+        }
+      },
+      "runtime_binding": {
+        "mode": "installed-wheel",
+        "module_count": 43,
+        "modules_sha256": "c7c0b9ae7edf8af17671c0477eda72c24a37132b11abacec9afdc619368a8de6",
+        "runtime_root": "/tmp/cryptalis-numeric-search-installed-20261101/lib/python3.12/site-packages/cryptalis",
+        "wheel": "/tmp/cryptalis-numeric-search-artifacts-20261101/cryptalis-0.1.0-py3-none-any.whl",
+        "wheel_sha256": "5134a52a1fbda238439058d6d6f81a3a601a07e032fb721ba4c167da85fbce1e"
+      }
+    },
+    "fresh/restore-receipt.json": {
+      "outcomes": {
+        "collection": {},
+        "selected_items": 1,
+        "setup": {
+          "passed": 1
+        },
+        "subtest_calls": {},
+        "teardown": {
+          "passed": 1
+        },
+        "test_calls": {
+          "passed": 1
+        }
+      },
+      "runtime_binding": {
+        "mode": "installed-wheel",
+        "module_count": 43,
+        "modules_sha256": "c7c0b9ae7edf8af17671c0477eda72c24a37132b11abacec9afdc619368a8de6",
+        "runtime_root": "/tmp/cryptalis-numeric-search-installed-20261101/lib/python3.12/site-packages/cryptalis",
+        "wheel": "/tmp/cryptalis-numeric-search-artifacts-20261101/cryptalis-0.1.0-py3-none-any.whl",
+        "wheel_sha256": "5134a52a1fbda238439058d6d6f81a3a601a07e032fb721ba4c167da85fbce1e"
+      }
+    },
+    "installed/receipt.json": {
+      "outcomes": {
+        "collection": {},
+        "selected_items": 134,
+        "setup": {
+          "passed": 134
+        },
+        "subtest_calls": {},
+        "teardown": {
+          "passed": 134
+        },
+        "test_calls": {
+          "passed": 132,
+          "skipped": 2
+        }
+      },
+      "runtime_binding": {
+        "mode": "installed-wheel",
+        "module_count": 43,
+        "modules_sha256": "c7c0b9ae7edf8af17671c0477eda72c24a37132b11abacec9afdc619368a8de6",
+        "runtime_root": "/tmp/cryptalis-numeric-search-installed-20261101/lib/python3.12/site-packages/cryptalis",
+        "wheel": "/tmp/cryptalis-numeric-search-artifacts-20261101/cryptalis-0.1.0-py3-none-any.whl",
+        "wheel_sha256": "5134a52a1fbda238439058d6d6f81a3a601a07e032fb721ba4c167da85fbce1e"
+      }
+    },
+    "source/receipt.json": {
+      "outcomes": {
+        "collection": {
+          "skipped": 1
+        },
+        "selected_items": 405,
+        "setup": {
+          "passed": 405
+        },
+        "subtest_calls": {},
+        "teardown": {
+          "passed": 405
+        },
+        "test_calls": {
+          "passed": 397,
+          "skipped": 8
+        }
+      },
+      "runtime_binding": {
+        "mode": "source",
+        "module_count": 43,
+        "modules_sha256": "c7c0b9ae7edf8af17671c0477eda72c24a37132b11abacec9afdc619368a8de6",
+        "runtime_root": "/home/debrato/Projects/cryptalis/src/cryptalis",
+        "wheel": null,
+        "wheel_sha256": null
+      }
+    }
+  },
+  "archive": {
+    "members": {
+      "after-helpers-installed/output.log": "c932f780197b155be13831d9bd01c978ff9348bc61b934c4899669cc203a630a",
+      "after-helpers-installed/receipt.json": "4c958f58f03aa72c67bcb81f51b31345b34e2db62210fac90d42d871f37f72bb",
+      "after-helpers-source/output.log": "22e0c903caf056b96eb206579eaf5499dab2e233ca5ce2b64b19709d4e7029dd",
+      "after-helpers-source/receipt.json": "4348766c7e3384d6b62f2f145518cc5c62fce3e8f2c992f679df31a42ffbe05c",
+      "build.json": "89a47b1e987ccc1c2fbe57a73e8d106c3852642a027ddffebeb21a68b64ac46d",
+      "capture-noop/output.log": "c6ac4b439e03f9afc9810a9ff60fadb13536ca9d222393fe9215e5c270381ff7",
+      "capture-noop/receipt.json": "df8dfb9437b37965fe6a73e478b990766ddb1fdf487fe898e646d3d2e538c11c",
+      "capture/output.log": "6a3652c224402204ec70a325b3fe35eddaeff4a4fdaaa9f47511baa8e63b789a",
+      "capture/receipt.json": "6f0e33be6fe66977eb575faf29ae6b2e19b793853883ae865353348f1b66a495",
+      "first-inference/receipt.json": "7268a87fb738e1f68add077231fc4855f04d442a8acc78fdba79d3a89a2d3118",
+      "fresh-public-slots/export-receipt.json": "e6fe75eb06dd0f9ad69ac0c3ed8227182328821fce8b967ce19769144b0b1051",
+      "fresh-public-slots/numeric-equality-journey-receipt.json": "756beb677bb76a7f3579aa197c12baca761cafe87cff61432d512cd69525d212",
+      "fresh-public-slots/restore-receipt.json": "7128206c496bc6584b670f251538a4438aab8ce1e6b0c1d85135d3e471e1f5ac",
+      "fresh/export-receipt.json": "aad72768eeab5fce4bd33d10e14e19dd9314dba78697e5c608324c670bebf497",
+      "fresh/numeric-equality-journey-receipt.json": "46d1c8c6251a07e5bb7540959d30abee5fd3190a6fb2e96fae9c994ca936fdab",
+      "fresh/restore-receipt.json": "0d976c64e6fc05ae90d15eacdbad8254a84491fb172b03ff52e0d225d9773aef",
+      "installation.json": "e598d6d61bd593e1ebd5df6b14dd45b99f708409a03987c8451c8bcecda278c2",
+      "installed/output.log": "7149c6ce095005b3b43937a503a76d17fe3e38407d42780eb1b74bf711daa017",
+      "installed/receipt.json": "fd84dcf0a0b899e518f7291430ea30db140d2f6fc4a136d85178ea21df2ebf6c",
+      "refusal/receipt.json": "1b263a2914aeca558e5773148218b19e2ace2d9fe06d123fdfb901f26039c15f",
+      "regression-helpers/output.log": "a558835f43f408fb8e6b1b47ce2f836c4fa85ef17babefc7ac52a206ae8aedab",
+      "regression-helpers/receipt.json": "b857087200a984ddf05b68815280acc5bf3cd5cf38411e6cd86fffbcfcd94d7f",
+      "sbom.cdx.json": "37db9bf101151ee1d87c064051abac8f31d671cbed1d44dab34b4d6f05ffa399",
+      "source/output.log": "2b02d5df130eff73b036330eda0af0ccdef2a5cf80fd0c827b53ea8903e316f9",
+      "source/receipt.json": "245d826d75900e44c08f492f57a3c271018898f09c06cfbcbcdce1cfdfe06f16"
+    },
+    "path": "numeric-search-receipts-20261101.tar.gz",
+    "sha256": "5d487573372d5b8b8c92cefd512bfc480afa87b61d0700789d912234ecda0d3e"
+  },
+  "artifacts": {
+    "cryptalis-0.1.0-py3-none-any.whl": "5134a52a1fbda238439058d6d6f81a3a601a07e032fb721ba4c167da85fbce1e",
+    "cryptalis-0.1.0.tar.gz": "d8e043bbcce38c032f563e72a27f7e50fca7d8c452b608882f312a979e744c57"
+  },
+  "base_revision": "be836b0466b6cfc91f54a7b8c65cefc54b3c0634",
+  "clean_install": {
+    "cli": "passed",
+    "package": "/tmp/cryptalis-numeric-search-installed-20261101/lib/python3.12/site-packages/cryptalis/__init__.py",
+    "verified_files": 48,
+    "wheel_sha256": "5134a52a1fbda238439058d6d6f81a3a601a07e032fb721ba4c167da85fbce1e"
+  },
+  "date": "2026-11-01",
+  "format": "cryptalis.numeric-search-boundary/v1",
+  "limits": [
+    "Affected source regression only; complete current hosted suite remains pending",
+    "Eight source call skips, one collection skip and two installed call skips remain unqualified; new actual v12 controls executed",
+    "Numeric order/ranges/arithmetic, nonfinite support, broader coercions and SQL grammar remain required work",
+    "Invalid/unadmitted query binds fail locally; this does not qualify native invalid-bind SQLSTATE/timing parity",
+    "No new performance acceptance, production provider/deployment authority, RPO/RTO or independent human review; all seven production gates UNKNOWN"
+  ],
+  "lock_schema": "cryptalis.lock/v13",
+  "previous_reader": {
+    "boundary": "Actual isolated installed v12 reader accepts numeric storage and refuses v13 search before SQL",
+    "revision": "be836b0466b6cfc91f54a7b8c65cefc54b3c0634"
+  },
+  "reproducible": true,
+  "required_reader": "pg-numeric-equality/v1",
+  "retained_failures": [
+    "Initial mapping refusal; first implementation receipt records one failure but terminal output is unavailable",
+    "Read-only compilation identified loss of native RHS typing after attachment; numeric comparison typing now delegates to the original mapping",
+    "Native ORM equivalent Decimal assignment is a no-op, so the capture fixture now makes an actual value change",
+    "Shared rotation helper selected the label instead of the scalar field; it now selects the stable field identity",
+    "Online fixture attempted seal before draining bounded catch-up; final case verifies refusal, FENCED inspection and resume",
+    "Online all-row fixture included a redundant primary-key IS NOT NULL outside admitted grammar; it now uses a direct SELECT"
+  ],
+  "review": "Read-only AI review; no additional actionable defect found after repairs. Not independent human review.",
+  "scope": [
+    "Finite NUMERIC equality, IN/NOT IN, SQL NULL, aliases, Boolean and predicate projections, native scoped uniqueness and races",
+    "Search ignores scale/signed zero; authenticated payload scale and native assignment rounding remain exact",
+    "Original inferred/mixed/expanded integer bind casts; Numeric metadata leaves query pivots unrounded; explicit casts refuse",
+    "Native trim_scale canonical terms checked by separate HKDF/HMAC/framing decoder using the same AEAD backend",
+    "Sync/async CRUD, transactions/savepoints, DISTINCT representatives and counts, native digit bounds and host Decimal traps",
+    "Both layouts through all three rotations and latest-value native exit",
+    "Separate equality enable/disable/reenable and online capture/refusal/resume profiles",
+    "Both installed fresh-cluster export/restore/adoption, tamper refusal, native metadata and import-denied restart"
+  ],
+  "source_identity": "worktree-aea14053ea5ce4ec",
+  "source_python_files_verified": 306
+}

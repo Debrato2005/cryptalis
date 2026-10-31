@@ -14,7 +14,7 @@ from zoneinfo import ZoneInfo
 import psycopg
 import pytest
 from sqlalchemy import Column, Date, DateTime, MetaData, Numeric, Table, Text, Uuid, select
-from sqlalchemy.orm import registry
+from sqlalchemy.orm import Session, registry
 
 from cryptalis import migration as m, restore as recovery
 from cryptalis.sqlalchemy import attach
@@ -23,11 +23,13 @@ from test_migration import engine, frames, publish, run, TENANT
 
 TIMESTAMP_PROFILE = os.environ.get('CRYPTALIS_FRESH_TIMESTAMP') == '1'
 TIMESTAMPTZ_PROFILE = os.environ.get('CRYPTALIS_FRESH_TIMESTAMPTZ') == '1'
-NUMERIC_PROFILE = os.environ.get('CRYPTALIS_FRESH_NUMERIC') == '1'
+NUMERIC_EQUALITY_PROFILE = os.environ.get('CRYPTALIS_FRESH_NUMERIC_EQUALITY') == '1'
+NUMERIC_PROFILE = os.environ.get('CRYPTALIS_FRESH_NUMERIC') == '1' or NUMERIC_EQUALITY_PROFILE
 NATIVE_TYPE = Decimal if NUMERIC_PROFILE else datetime if TIMESTAMP_PROFILE or TIMESTAMPTZ_PROFILE else date
 MAPPED_TYPE = (Numeric(8, 2) if NUMERIC_PROFILE else DateTime(timezone=True) if TIMESTAMPTZ_PROFILE else
                DateTime() if TIMESTAMP_PROFILE else Date())
-PROFILE = ('timestamptz-storage' if TIMESTAMPTZ_PROFILE else 'numeric-storage' if NUMERIC_PROFILE else
+PROFILE = ('numeric-equality' if NUMERIC_EQUALITY_PROFILE else
+           'timestamptz-storage' if TIMESTAMPTZ_PROFILE else 'numeric-storage' if NUMERIC_PROFILE else
            'timestamp-storage' if TIMESTAMP_PROFILE else 'date-storage')
 if TIMESTAMPTZ_PROFILE:
     from test_timestamptz_storage import DEFAULT, EDIT as UPDATED, VALUES as AWARE_VALUES, runtime_engine
@@ -50,6 +52,12 @@ def wire(values):
                 if value is not None else None for key, value in values.items()}
     return {str(key): (format(value, 'f') if NUMERIC_PROFILE else value.isoformat())
             if value is not None else None for key, value in values.items()}
+
+
+def numeric_queries(session, model):
+    from test_numeric_search import observe
+    pivots = tuple(Decimal(value) for value in ('1.2300', '1.235', '-0.000', '999999.990'))
+    return json.loads(json.dumps(observe(session, model, pivots), default=str))
 
 
 def numeric_restart(schema, expected, directory):
@@ -133,7 +141,8 @@ def test_export_date_backup_after_rotations():
                None, Decimal('-999999.99')) if NUMERIC_PROFILE else
               TIMESTAMP_VALUES if TIMESTAMP_PROFILE else DATE_VALUES)
     with date_application(public_slots=public_slots, value_type=MAPPED_TYPE,
-                          values=values, value_default=DEFAULT, owned_sequences=TIMESTAMPTZ_PROFILE) as app:
+                          values=values, value_default=DEFAULT, owned_sequences=TIMESTAMPTZ_PROFILE,
+                          value_queries=('equality',) if NUMERIC_EQUALITY_PROFILE else ()) as app:
         sequence = None
         if TIMESTAMPTZ_PROFILE:
             from test_owned_sequences import facts, next_value
@@ -148,6 +157,18 @@ def test_export_date_backup_after_rotations():
             with psycopg.connect(os.environ['CRYPTALIS_TEST_RUNTIME_DATABASE_URL'],
                                  options='-c timezone=America/New_York') as connection:
                 source = dict(connection.execute(f'SELECT id,name FROM "{app.schema}".customer').fetchall())
+        native_queries = final_queries = None
+        if NUMERIC_EQUALITY_PROFILE:
+            with Session(app.runtime) as session:
+                native_queries = numeric_queries(session, app.Customer)
+                savepoint = session.begin_nested()
+                session.get(app.Customer, UUID(int=101)).name = UPDATED
+                session.delete(session.get(app.Customer, UUID(int=106)))
+                session.add(app.Customer(id=UUID(int=999), tenant_id=TENANT))
+                session.flush()
+                final_queries = numeric_queries(session, app.Customer)
+                savepoint.rollback()
+                session.rollback()
         dump(workdir / 'plain.sql', app.schema, environment('CRYPTALIS_TEST_DATABASE_URL'))
         run(app); publish(app)
         rotate_all(app)
@@ -160,10 +181,14 @@ def test_export_date_backup_after_rotations():
                               deployment=(app.plan, app.pin))
             with sessions(tenant_id=TENANT) as session:
                 assert wire({row.id: row.name for row in session.scalars(select(app.Customer))}) == wire(source)
+                if NUMERIC_EQUALITY_PROFILE:
+                    assert numeric_queries(session, app.Customer) == native_queries
                 session.get(app.Customer, UUID(int=101)).name = UPDATED
                 session.delete(session.get(app.Customer, UUID(int=106)))
                 session.add(app.Customer(id=UUID(int=999), tenant_id=TENANT))
                 session.commit()
+                if NUMERIC_EQUALITY_PROFILE:
+                    assert numeric_queries(session, app.Customer) == final_queries
         finally:
             if TIMESTAMPTZ_PROFILE:
                 runtime.dispose()
@@ -189,6 +214,8 @@ def test_export_date_backup_after_rotations():
         if TIMESTAMPTZ_PROFILE:
             manifest['aware_sequence_facts'] = sequence
             manifest['aware_sequence_next'] = 115
+        if NUMERIC_EQUALITY_PROFILE:
+            manifest['numeric_query_results'] = final_queries
     (workdir / 'restore-manifest.json').write_text(json.dumps(manifest, indent=2, sort_keys=True) + '\n')
 
 
@@ -256,11 +283,16 @@ def test_restore_date_authentication_explicit_adoption_latest_exit():
             actual = {row.id: row.name for row in session.scalars(select(Customer))}
             assert wire(actual) == manifest['expected']
             assert all(value is None or type(value) is NATIVE_TYPE for value in actual.values())
+            if NUMERIC_EQUALITY_PROFILE:
+                assert numeric_queries(session, Customer) == manifest['numeric_query_results']
             row = session.get(Customer, UUID(int=999))
             row.name = RESTORED_EDIT
             session.commit()
             session.refresh(row)
             actual[UUID(int=999)] = row.name
+            if NUMERIC_EQUALITY_PROFILE:
+                assert session.scalar(select(Customer.id).where(Customer.tenant_id == TENANT,
+                    Customer.name == Decimal('-98765.4300'))) == UUID(int=999)
         app = SimpleNamespace(owner=owner, plan=source, pin=pin, approval=approval)
         remove_date(app, restore=binding, plaintext_role=os.environ['CRYPTALIS_FRESH_PLAINTEXT_ROLE'])
         if TIMESTAMPTZ_PROFILE:

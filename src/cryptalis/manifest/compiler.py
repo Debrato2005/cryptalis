@@ -30,7 +30,7 @@ from cryptalis.crypto.keys import InvalidValue
 
 
 _PUBLIC_SLOTS_LAYOUT = "preserve-public-slots/v1"
-_LOCK_SCHEMAS = tuple(f'cryptalis.lock/v{version}' for version in range(1, 13))
+_LOCK_SCHEMAS = tuple(f'cryptalis.lock/v{version}' for version in range(1, 14))
 _INTEGER_TYPES = {'int2': (SmallInteger, postgresql.SMALLINT),
                   'int4': (Integer, postgresql.INTEGER), 'int8': (BigInteger, postgresql.BIGINT)}
 
@@ -256,6 +256,17 @@ def _compiled_default(field):
     return value
 
 
+def _default_matches(actual, field):
+    expected = _compiled_default(field)
+    if type(actual) is not type(expected):
+        return False
+    if actual is not None and field['source']['type'] == 'timestamptz':
+        return aware_default(actual) == field['application_default']
+    if type(actual) is Decimal:
+        return actual.as_tuple() == expected.as_tuple()
+    return actual == expected
+
+
 def _value_mapping_matches(column, native):
     return (_text_mapping_matches(column, native) or _boolean_mapping_matches(column, native)
             or _integer_mapping_matches(column, native) or _date_mapping_matches(column, native)
@@ -377,6 +388,8 @@ def _required_readers(models):
                   | ({'cf1-order/v1'} if any('order' in f['queries'] for m in models for f in m['fields']) else set())
                   | ({'pg-timestamp-order/v1'} if any(f['source']['type'] == 'timestamp' and
                      'order' in f['queries'] for m in models for f in m['fields']) else set())
+                  | ({'pg-numeric-equality/v1'} if any(f['source']['type'] == 'numeric' and
+                     f['queries'] for m in models for f in m['fields']) else set())
                   | ({'pg-varchar/v1'} if any(f['source']['type'] == 'varchar'
                      for m in models for f in m['fields']) else set())
                   | ({'pg-integer-default/v1'} if any(f['source']['type'] in _INTEGER_TYPES and
@@ -385,6 +398,28 @@ def _required_readers(models):
                      'application_default' in f for m in models for f in m['fields']) else set())
                   | ({'pg-timestamp-default/v1'} if any(f['source']['type'] == 'timestamp' and
                      'application_default' in f for m in models for f in m['fields']) else set()))
+
+
+def _lock_schema(models, layout, *, legacy=False):
+    kinds = {field['source']['type'] for model in models for field in model['fields']}
+    if any(field['source']['type'] == 'numeric' and field['queries']
+           for model in models for field in model['fields']):
+        return 'cryptalis.lock/v13'
+    for kind, version in (('timestamptz', 12), ('numeric', 11), ('timestamp', 10),
+                          ('uuid', 9), ('date', 8)):
+        if kind in kinds:
+            return f'cryptalis.lock/v{version}'
+    if kinds & _INTEGER_TYPES.keys():
+        return 'cryptalis.lock/v7'
+    if layout is not None:
+        return 'cryptalis.lock/v6'
+    if any(model.get('source_metadata', {}).get('owned_sequences') for model in models):
+        return 'cryptalis.lock/v5'
+    if 'bool' in kinds:
+        return 'cryptalis.lock/v4'
+    if 'varchar' in kinds:
+        return 'cryptalis.lock/v3'
+    return 'cryptalis.lock/v1' if legacy else 'cryptalis.lock/v2'
 
 
 def _digest(document: object) -> str:
@@ -997,12 +1032,12 @@ def _compile_model(model, mapper, facts, issues, schema):
         if field.queries and ('order' in field.queries) != _orderable(actual):
             refuse("unsupported_query", field.name, "Declare order search on integer, date and timestamp fields only. "
                    "They admit no other search; use storage-only protection otherwise.")
-        elif (_fixed_value_width(actual) is not None or actual['type'] == 'numeric') and field.queries and not _orderable(actual):
+        elif _fixed_value_width(actual) is not None and field.queries and not _orderable(actual):
             refuse("unsupported_query", field.name, "Use storage-only protection for this native value domain.")
         # Native deterministic default equality is byte-exact, like native C.
         # Names outside pg_catalog do not inherit either qualified identity.
         mapped_collation = getattr(column.type, "collation", None)
-        if field.queries and not _orderable(actual) and (not _exact_search_collation(actual) or
+        if field.queries and actual['type'] in ('text', 'varchar') and (not _exact_search_collation(actual) or
                 mapped_collation != ("C" if actual["collation"] == "pg_catalog.C" else None)):
             refuse("unsupported_collation", field.name,
                    "Match explicit native C or implicit deterministic database-default text equivalence.")
@@ -1097,6 +1132,8 @@ def _descriptor(domain_id, table_id, field_id, record_codec, tenant_codec, repre
         descriptor['value_codec'] = value_codec
     elif value_codec != 'utf8-exact/v1':
         raise ValueError
+    if value_codec == 'pg-numeric-decimal/v1' and representation == 'cf1-packed-equality/v1':
+        descriptor['normalizer'] = 'pg-numeric-equality/v1'
     return descriptor
 
 
@@ -1127,6 +1164,7 @@ def _previous_lock(raw, current, engine):
         timestamp_lock = old.get('schema') in _LOCK_SCHEMAS[9:]
         numeric_lock = old.get('schema') in _LOCK_SCHEMAS[10:]
         timestamptz_lock = old.get('schema') in _LOCK_SCHEMAS[11:]
+        numeric_search_lock = old.get('schema') in _LOCK_SCHEMAS[12:]
         date_lock = old.get('schema') in _LOCK_SCHEMAS[7:]
         integer_lock = old.get('schema') in _LOCK_SCHEMAS[6:]
         public_slots = old.get('schema') == 'cryptalis.lock/v6' or integer_lock and old.get('layout') is not None
@@ -1211,7 +1249,8 @@ def _previous_lock(raw, current, engine):
                     raise ValueError
                 if field['source']['type'] == 'timestamptz' and (not timestamptz_lock or intent.queries and 'order' not in intent.queries):
                     raise ValueError
-                if field['source']['type'] == 'numeric' and (not numeric_lock or intent.queries):
+                if field['source']['type'] == 'numeric' and (not numeric_lock or
+                        intent.queries and (not numeric_search_lock or set(intent.queries) - {'equality', 'unique'})):
                     raise ValueError
                 if field['source']['type'] in _INTEGER_TYPES and (not integer_lock or intent.queries and 'order' not in intent.queries):
                     raise ValueError
@@ -1253,7 +1292,7 @@ def _previous_lock(raw, current, engine):
             if any(not isinstance(model["source_schema"][key], list) for key in ("columns", "constraints", "indexes", "dependencies")):
                 raise ValueError
             _validate_prior_source(model, varchar=old['schema'] in _LOCK_SCHEMAS[2:],
-                                   boolean=old['schema'] in _LOCK_SCHEMAS[3:], integer=integer_lock, date_values=date_lock, uuid_values=uuid_lock, timestamp_values=timestamp_lock, numeric_values=numeric_lock, timestamptz_values=timestamptz_lock)
+                                   boolean=old['schema'] in _LOCK_SCHEMAS[3:], integer=integer_lock, date_values=date_lock, uuid_values=uuid_lock, timestamp_values=timestamp_lock, numeric_values=numeric_lock, timestamptz_values=timestamptz_lock, numeric_search=numeric_search_lock)
             if public_slots:
                 slots = [column['attnum'] for column in model['source_schema']['columns']]
                 if (any(type(slot) is not int or not 0 < slot < 32768 for slot in slots)
@@ -1268,18 +1307,7 @@ def _previous_lock(raw, current, engine):
         host, domain_reviews = _host_evidence(declaration, writers, reviews, errors)
         if errors or inventory != host or domain_reviews != old["search_reviews"] or old["ddl"] != _ddl(old, engine):
             raise ValueError
-        varchar = any(f['source']['type'] == 'varchar' for model in old['models'] for f in model['fields'])
-        boolean = any(f['source']['type'] == 'bool' for model in old['models'] for f in model['fields'])
-        sequences = bool(sequence_oids)
-        integer = any(f['source']['type'] in _INTEGER_TYPES for model in old['models'] for f in model['fields'])
-        date_values = any(f['source']['type'] == 'date' for model in old['models'] for f in model['fields'])
-        uuids = any(f['source']['type'] == 'uuid' for model in old['models'] for f in model['fields'])
-        timestamps = any(f['source']['type'] == 'timestamp' for model in old['models'] for f in model['fields'])
-        numerics = any(f['source']['type'] == 'numeric' for model in old['models'] for f in model['fields'])
-        aware_timestamps = any(f['source']['type'] == 'timestamptz' for model in old['models'] for f in model['fields'])
-        expected_schema = ('cryptalis.lock/v12' if aware_timestamps else 'cryptalis.lock/v11' if numerics else 'cryptalis.lock/v10' if timestamps else 'cryptalis.lock/v9' if uuids else 'cryptalis.lock/v8' if date_values else 'cryptalis.lock/v7' if integer else 'cryptalis.lock/v6' if public_slots else 'cryptalis.lock/v5' if sequences else 'cryptalis.lock/v4' if boolean
-                           else 'cryptalis.lock/v3' if varchar else old['schema']
-                           if old['schema'] == 'cryptalis.lock/v1' else 'cryptalis.lock/v2')
+        expected_schema = _lock_schema(old['models'], old.get('layout'), legacy=old['schema'] == 'cryptalis.lock/v1')
         if old['schema'] != expected_schema:
             raise ValueError
         if old["required_readers"] != _required_readers(old['models']):
@@ -1336,7 +1364,7 @@ def _validate_catalog_facts(facts):
     return columns
 
 
-def _validate_prior_source(model, *, varchar=False, boolean=False, integer=False, date_values=False, uuid_values=False, timestamp_values=False, numeric_values=False, timestamptz_values=False):
+def _validate_prior_source(model, *, varchar=False, boolean=False, integer=False, date_values=False, uuid_values=False, timestamp_values=False, numeric_values=False, timestamptz_values=False, numeric_search=False):
     """Check a prior snapshot's shape and admitted facts without trusting its hash."""
     def require(condition):
         if not condition:
@@ -1381,7 +1409,7 @@ def _validate_prior_source(model, *, varchar=False, boolean=False, integer=False
         elif numeric_values and source['type'] == 'numeric':
             parameters = numeric_parameters(source['typmod'])
             require(_numeric_mapping_matches(Column('value', Numeric(*parameters) if parameters else Numeric()), source))
-            require(not field['queries'])
+            require(not field['queries'] or numeric_search and not set(field['queries']) - {'equality', 'unique'})
         else:
             require(source['type'] == 'text' or varchar and source['type'] == 'varchar')
             _native_text_length(source)
@@ -1391,7 +1419,7 @@ def _validate_prior_source(model, *, varchar=False, boolean=False, integer=False
         if source['type'] == 'numeric':
             expected_source['typmod'] = source['typmod']
         require(field['source'] == expected_source)
-        if field["queries"] and not _orderable(source):
+        if field["queries"] and source['type'] in ('text', 'varchar'):
             require(_exact_search_collation(source))
         affected = [i for i in facts["indexes"] if field["column"] in i["columns"] + i["dependency_columns"]]
         require(field["unique_indexes"] == [i["name"] for i in affected if i["unique"]])
@@ -1553,23 +1581,15 @@ def compile_protection(raw: bytes, mapping: Registry, engine: Engine, *,
         raise InspectionUnavailable(sqlstate) from None
     if issues:
         raise PlanningRejected(issues)
-    varchar = any(f['source']['type'] == 'varchar' for model in models for f in model['fields'])
-    boolean = any(f['source']['type'] == 'bool' for model in models for f in model['fields'])
-    sequences = any(model['source_metadata']['owned_sequences'] for model in models)
-    integer = any(f['source']['type'] in _INTEGER_TYPES for model in models for f in model['fields'])
-    date_values = any(f['source']['type'] == 'date' for model in models for f in model['fields'])
-    uuids = any(f['source']['type'] == 'uuid' for model in models for f in model['fields'])
-    timestamps = any(f['source']['type'] == 'timestamp' for model in models for f in model['fields'])
-    numerics = any(f['source']['type'] == 'numeric' for model in models for f in model['fields'])
-    aware_timestamps = any(f['source']['type'] == 'timestamptz' for model in models for f in model['fields'])
-    if not sequences and layout is None and not integer and not date_values and not uuids and not timestamps and not numerics and not aware_timestamps:
+    lock_schema = _lock_schema(models, layout)
+    if lock_schema in ('cryptalis.lock/v2', 'cryptalis.lock/v3', 'cryptalis.lock/v4'):
         for model in models:
             del model['source_metadata']['owned_sequences']
-    document = {"schema": "cryptalis.lock/v12" if aware_timestamps else "cryptalis.lock/v11" if numerics else "cryptalis.lock/v10" if timestamps else "cryptalis.lock/v9" if uuids else "cryptalis.lock/v8" if date_values else "cryptalis.lock/v7" if integer else "cryptalis.lock/v6" if layout is not None else "cryptalis.lock/v5" if sequences else "cryptalis.lock/v4" if boolean else "cryptalis.lock/v3" if varchar else "cryptalis.lock/v2", "profile": "cf1",
+    document = {"schema": lock_schema, "profile": "cf1",
                 "domain_id": str(declaration.domain_id), "database": {"major": 16, "encoding": "UTF8"},
                 "declaration": json.loads(declaration.canonical_bytes()), "models": models,
                 "writer_inventory": host, "search_reviews": reviews}
-    if layout is not None or integer or date_values or uuids or timestamps or numerics or aware_timestamps:
+    if layout is not None or lock_schema in _LOCK_SCHEMAS[6:]:
         document['layout'] = layout
     document["ddl"] = _ddl(document, engine)
     document["required_readers"] = _required_readers(models)

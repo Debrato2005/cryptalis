@@ -171,7 +171,7 @@ parent/child transaction evidence and remaining qualification work.
 | UUID value storage/read/write and SQL NULL | SUPPORTED | Exact standard native UUID mappings and Python UUID inputs, including nil; sixteen authenticated network-order bytes and lock/v9. Storage-only; defaults, coercions and custom mappings refuse. Public record/tenant UUIDs keep their separate context contract |
 | Timestamp storage/read/write and SQL NULL | SUPPORTED, bounded | Standard timestamp without time zone at default precision or explicit precision 6; exact naive Python datetime values in years 1–9999, literal client defaults, lock/v10 and [the timestamp boundary](#timestamp-storage). Explicit opt-in order admits comparisons and sorting; timezone-aware values and precision rounding remain unadmitted |
 | Aware timestamp storage/read/write and SQL NULL | SUPPORTED, bounded | Standard DateTime/TIMESTAMP with timezone=True at default precision or precision 6; exact aware datetime with standard timezone/ZoneInfo, lock/v12 and [aware timestamp boundary](#aware-timestamp-storage). Preserve native connection timezone, offset and fold; opt-in order, ranges and direct MIN/MAX use UTC instants |
-| Numeric storage/read/write and SQL NULL | SUPPORTED, bounded | Standard Numeric/NUMERIC with asdecimal=True; finite Decimal or exact Python int inputs, unconstrained or declared precision/scale, native rounding, literal defaults and lock/v11. [Numeric boundary](#numeric-storage); search, arithmetic and nonfinite values remain unadmitted |
+| Numeric storage/read/write and SQL NULL | SUPPORTED, bounded | Standard Numeric/NUMERIC with asdecimal=True; finite Decimal or exact Python int inputs, unconstrained or declared precision/scale, native rounding, literal defaults and lock/v11. [Numeric boundary](#numeric-storage); explicit equality/IN and scoped uniqueness use lock/v13. Numeric order, arithmetic and nonfinite values remain unadmitted |
 | Signed integer storage/read/write and SQL NULL | SUPPORTED | Exact int2/int4/int8 mappings and width-bound Python ints, literal client defaults, native failure/transaction behavior and typed fixed-width CF1. Storage-only unless the field declares [`order`](#order-search); the fixed authentication overhead is published in the local cost profile |
 | Mapped dictionary INSERT without RETURNING | SUPPORTED | Attached sync/async `Session.execute(insert(Model), list[dict])`, explicit typed IDs and tenant scope, copied attribute dictionaries, native NULL/grouping, autoflush, uniqueness and transaction behavior. Other bulk routes remain unadmitted |
 | Mapped dictionary INSERT with RETURNING | SUPPORTED | Native direct or explicitly named column tuples/scalars and inserted mapped entities, including public-only columns. Preserve result keys/types, grouping, paging and optional input ordering. Entity results retain identity-map loading and refresh. Authenticate each protected output against its own exact prepared input. Computed expression/alias, loader-option and caller return_defaults forms remain unadmitted |
@@ -416,9 +416,32 @@ zeroes, with at most 131072 integer digits and 16383 fractional digits. Initial
 planning and locked expansion refuse nonfinite source values. Online capture
 refuses a nonfinite dirty row without committing that chunk and preserves
 read-only progress inspection. Existing NULL-presence and direct-count grammar
-is retained. Numeric equality/range/order search, arithmetic, other aggregates
-and nonfinite values remain implementation work. This admission supplies no
-production qualification.
+is retained. This admission supplies no production qualification.
+
+### Numeric equality search
+
+Declared equality supports `==`, `!=`, IN, NOT IN, SQL NULL, admitted Boolean
+composition, aliases, direct DISTINCT and COUNT DISTINCT. Scoped uniqueness
+uses PostgreSQL's native unique index over the full blind-index term. Every
+searchable field requires equality leakage acceptance and a host review that
+its domain is not small. Numeric order/ranges, arithmetic and nonfinite values
+remain implementation work.
+
+Search equality ignores fractional scale and signed zero, so `1.2` and `1.20`
+match while reads retain the stored scale. Query Decimal pivots remain unrounded;
+the column's declared precision/scale applies to assignment. Native integer bind
+types round Decimal pivots to an integer and enforce their signed width, including
+expanded IN values. Standard Numeric/NUMERIC, integer and inferred NULL bind
+types are admitted for exact Decimal/int values; explicit casts and other
+coercions refuse. Invalid query values fail locally before SQL. Direct DISTINCT
+returns an authenticated original representative; its scale among numerically
+equal rows is unspecified, as with native PostgreSQL.
+
+Lock/v13 pins the search normalizer and reader separately from the unchanged
+numeric payload codec. Existing rotations, profile changes, recovery and native
+exit preserve that distinction. Disabling equality removes current terms and
+their index; historical equality leakage remains. Uniqueness profile changes
+remain unadmitted.
 
 ## Internal DATE storage candidate
 

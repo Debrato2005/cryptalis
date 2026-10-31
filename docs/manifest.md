@@ -25,7 +25,8 @@ lists each protected field with the search leakage you accepted.
 Prefix limits, shared-join domains and arbitrary normalizers remain unadmitted.
 Boolean, signed integer, finite Date, UUID, naive/aware timestamp and finite numeric storage use pinned value codecs.
 Integer, date and admitted timestamp fields admit [`order`](compatibility.md#order-search) search only;
-Boolean, UUID and numeric fields admit no search.
+Numeric fields admit equality, IN and scoped uniqueness with explicit equality
+leakage acceptance and a search-domain review. Boolean and UUID fields admit no search.
 The compiler rejects unsupported types, server-generated keys, small-domain searchable fields, missing tenant scope, and unsupported writers at plan time.
 Searchable small domains remain unsafe because enumeration can label their equality classes. No invented cardinality threshold supplies evidence.
 The planner does not infer every application query. Attached staging tests expose query-level incompatibilities.
@@ -80,7 +81,8 @@ their existing format selection and bytes. The explicit public-slot layout emits
 and requires its exact pg-int2/int4/int8-be/v1 codec readers. Date plans emit `cryptalis.lock/v8`; UUID plans emit `cryptalis.lock/v9`.
 Naive timestamp plans emit `cryptalis.lock/v10`. Numeric plans emit
 `cryptalis.lock/v11`; aware timestamp plans emit `cryptalis.lock/v12`.
-Current readers accept v1 through v12; older readers refuse
+Numeric equality plans emit `cryptalis.lock/v13` and require
+`pg-numeric-equality/v1`. Current readers accept v1 through v13; older readers refuse
 unknown formats before effects.
 Older operational readers refuse the embedded v5 lock before effects.
 The [VARCHAR decision](history/decisions-2026-10.md#native-varchar-text-admission-2026-10-22) defines assignment and reader boundaries.
@@ -150,7 +152,10 @@ Canonical Decimal strings or typed `{"integer":"…"}` literal defaults preserve
 type, sign, exponent and fractional scale before refresh. Numeric fields
 pin their source typmod as well as the original catalog snapshot, so attachment,
 verification and native exit retain declared precision and scale. Numeric
-fields are storage-only; [numeric admission](compatibility.md#numeric-storage)
+search uses packed equality frames with normalizer `pg-numeric-equality/v1`.
+It ignores scale and signed zero only in the search term; authenticated payloads
+retain native fractional scale. Storage-only descriptors retain `identity/v1`
+and their original bytes. [Numeric admission](compatibility.md#numeric-storage)
 defines exact input bounds and failures.
 Signed integer storage also uses context/v2. Its pinned codecs encode int2/int4/int8
 as 2/4/8 signed big-endian bytes. Current Date plans use `pg-date-days-be/v1`
@@ -194,6 +199,7 @@ A lock hash detects change. It does not authenticate deployment authority.
 For an already ACTIVE deployment, do not compile the ciphertext column as a new
 plaintext source. The [active-field modification route](application.md#modify-active-fields)
 accepts the original trusted deployment plus updated intent, preserves the native
-schema obligations and stages a verified successor. Its first admitted change
-enables equality search on storage-only TEXT/VARCHAR; other schema/profile
-changes require their own lifecycle implementation and evidence.
+schema obligations and stages a verified successor. It enables or disables
+equality search on storage-only TEXT/VARCHAR and finite NUMERIC, and admits the
+existing order-profile changes. Other changes require their own lifecycle
+implementation and evidence.

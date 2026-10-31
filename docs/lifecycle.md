@@ -176,12 +176,12 @@ binds all three rotation workflows to the same manifest and host evidence used
 for protection and attachment. It delegates to the executors below and retains
 their separate staging, external publication and cancellation authority.
 
-### Change exact search on active encrypted text
+### Change exact search on active encrypted fields
 
 <a id="enable-exact-search-on-active-encrypted-text"></a>
 
 The active-field modification route admits both `queries: []` to
-`queries: ["equality"]` and the reverse on existing TEXT/VARCHAR fields. Enabling
+`queries: ["equality"]` and the reverse on existing TEXT/VARCHAR or finite NUMERIC fields. Enabling
 search requires explicit equality leakage acceptance and a non-small-domain host
 review. Disabling requires empty `queries` and `accept_leakage`, and removal of
 that field’s search review. Reviews for unchanged searchable fields remain exact.
@@ -189,6 +189,9 @@ A field with uniqueness cannot become storage-only through this route. The trans
 uses the existing CF1 representations and cryptographic primitives. All other field, record,
 tenant, native-schema, layout and writer-inventory declarations remain identical.
 Uniqueness changes and general type/codec/package upgrades remain open work.
+Numeric enablement selects lock/v13 and the numeric equality normalizer;
+disabling the last numeric search selects the lock version required by remaining
+fields, retaining the unchanged numeric payload codec and source typmod.
 
 The source must be ACTIVE with its exact host pin. Source custody must already
 include an approved search root for every target searchable scope, including

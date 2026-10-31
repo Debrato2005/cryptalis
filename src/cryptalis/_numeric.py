@@ -69,6 +69,19 @@ def numeric_sql_type(typmod):
     return 'pg_catalog.numeric' + (f'({parameters[0]},{parameters[1]})' if parameters else '')
 
 
+def numeric_search_bytes(value):
+    """Native numeric equality ignores scale, exponent spelling and zero sign."""
+    value = numeric_value(value)
+    if value.is_zero():
+        return b'0'
+    sign, digits, exponent = value.as_tuple()
+    end = len(digits)
+    while digits[end - 1] == 0:
+        end -= 1
+    return ((b'-' if sign else b'') + bytes(digit + 48 for digit in digits[:end])
+            + b'e' + str(exponent + len(digits) - end).encode('ascii'))
+
+
 def validate_numeric(value, typmod):
     """Authenticated storage must already have the pinned native scale and range."""
     if value is not None:

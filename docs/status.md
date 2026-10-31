@@ -4,15 +4,16 @@ Cryptalis implements a bounded research prototype. **No production release or co
 This page owns current verification and release gates; the [34-objective ledger](BUILD_CHECKLIST.md) owns remaining work.
 Use the [documentation map](README.md) to find contracts and procedures.
 
-**Latest complete hosted pass: `fa55aef`.** Both jobs in
-[run 41244022521](https://github.com/Debrato2005/cryptalis/actions/runs/41244022521)
-pass for NUMERIC storage and the compiler-test repair, before the subsequent
-aware timestamp slice. The full source run passes 3,738 test calls and 18 subtests.
-Eighteen call skips, 41 setup skips and eight collection skips remain explicit.
-The installed recovery job passes and its wheel/sdist exactly match the retained
-local numeric artifacts. [Exact hosted boundary](_reset/github-numeric-green-20261101.json).
-The preceding [source failure and repair](_reset/numeric-compiler-ci-boundary-20261101.json)
-remain retained. All seven production gates stay UNKNOWN.
+**Latest complete hosted pass: `be836b0`.** Both jobs in
+[run 41245812702](https://github.com/Debrato2005/cryptalis/actions/runs/41245812702)
+pass for aware timestamps and UTC order. The full source run passes 3,800 test
+calls and 18 subtests. Twenty call skips, 41 setup skips and eight collection
+skips remain explicit. All 303 recorded Python files match that revision and
+source/runtime stability passes. The installed recovery job passes; wheel and
+sdist match the retained local timestamp artifacts.
+[Exact hosted boundary](_reset/github-timestamptz-green-20261101.json).
+The preceding [numeric source failure and repair](_reset/numeric-compiler-ci-boundary-20261101.json)
+remain retained.
 
 **Earlier complete hosted pass: `54218cf`.** Both jobs in
 [run 41239335699](https://github.com/Debrato2005/cryptalis/actions/runs/41239335699)
@@ -49,6 +50,33 @@ source-role failure and later UUID fixture failures remain repaired.
 and [repair evidence](_reset/point-delete-returning-ci-fix-boundary-20261030.json)
 remain available.
 
+## Finite NUMERIC equality, IN and scoped uniqueness
+
+**VERIFIED, bounded source and installed wheel:** finite NUMERIC search uses
+full HMAC terms under lock/v13 and `pg-numeric-equality/v1`. Equality ignores
+scale and signed zero; authenticated payloads retain native fractional scale.
+Native oracles cover unrounded query pivots, inferred/mixed/expanded integer
+bind casts, NULL logic, aliases, predicate results, DISTINCT representatives and
+counts, sync/async CRUD, savepoints and concurrent uniqueness. PostgreSQL
+canonical bytes also match a separate HMAC/framing path using the same AEAD
+backend.
+
+The affected source regression passes 397 calls, with eight call skips and one
+collection skip. The clean Python 3.12 wheel passes 132 calls with two skips.
+Actual v12 reader controls execute: numeric storage is accepted and v13 search
+refuses before SQL. All rotations and current-value native exit pass in both layouts. Separate
+profiles verify enable/disable/reenable and online capture with incomplete-catch-up
+refusal, inspection and resume. Both installed fresh-cluster layouts pass
+export, isolated adoption, tamper refusal, current edits, removal and an
+import-denied native restart. All final inventories match the same 306 Python
+files and 43-module runtime. Repeat artifacts, SBOM, 48 installed files and CLI
+inspection pass. [Exact boundary](_reset/numeric-search-boundary-20261101.json)
+retains failures, test repairs, scopes and skips.
+
+The complete hosted run for this slice is pending. Numeric order/ranges,
+arithmetic, nonfinite values, broader coercions, performance acceptance and
+independent human review remain open. All seven production gates stay UNKNOWN.
+
 ## Native aware timestamp storage and order
 
 **VERIFIED, bounded source and installed wheel:** timezone-bearing DateTime and
@@ -67,7 +95,7 @@ refusal/OID binding, current counter/value removal and an import-denied native
 restart. All final receipts bind identical 43-module runtime bytes. Reproducible
 artifacts, SBOM, 48 installed files and CLI inspection pass.
 [Exact boundary](_reset/timestamptz-boundary-20261101.json) retains failures and
-limits. A complete hosted run for this new slice is pending. Naive coercions,
+limits. The complete hosted run is recorded above. Naive coercions,
 custom tzinfo, other precisions, broader queries, performance and independent
 review remain open; all seven production gates remain UNKNOWN.
 

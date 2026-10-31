@@ -1,12 +1,18 @@
 # Slice 4: equality, IN and tenant-scoped uniqueness
 
-**IMPLEMENTED:** bounded sync/async search attachment for exact text on PostgreSQL 16.
+**IMPLEMENTED:** bounded sync/async equality search for exact text and finite NUMERIC on PostgreSQL 16.
 This is a research prototype. All seven gates remain **UNKNOWN**. No provider deployment is production-qualified; independent human review remains unavailable. See [status](status.md).
 
 Declare `queries: ["equality"]`, or `["equality", "unique"]`, in the manifest.
 Supply the matching `accept_leakage` entries and a host `SearchReview` for each field.
 Known small domains and absent reviews reject. This is host admission, not automatic classification.
 Use application-assigned IDs and an authenticated tenant UUID. Exact UTF-8 text uses the admitted deterministic native C or implicit database-default collation; no normalization occurs.
+
+Finite NUMERIC uses the same queries with exact `Decimal` or Python int values.
+Equality ignores scale, so `Decimal('1.2')` matches stored `Decimal('1.20')`.
+Assignment to `Numeric(8, 2)` rounds `1.235` to `1.24`; a query pivot of `1.235`
+remains unrounded and does not match `1.24`. See the exact
+[numeric bind contract](compatibility.md#numeric-equality-search).
 
 ```python
 from sqlalchemy import bindparam, select
@@ -29,7 +35,7 @@ NULL stays NULL. NULLs remain distinct for uniqueness. Empty IN matches no rows;
 AND/OR/NOT, mapped aliases, ordinary text binds and explicit late values are admitted.
 Negative equality, NOT IN and NULL-presence predicates retain the bounded
 grammar in [compatibility](compatibility.md#full-capability-matrix).
-[Order search](compatibility.md#order-search) adds ranges, sorting and direct MIN/MAX on integer, date and naive timestamp
+[Order search](compatibility.md#order-search) adds ranges, sorting and direct MIN/MAX on integer, date and naive/aware timestamp
 fields that opt in. Protected joins, derived tables, patterns, general protected
 grouping/DISTINCT and aggregates outside the admitted count and order-extrema grammar reject.
 Custom codecs, callables, generated parameter-name overrides and conflicting named defaults without explicit values also reject.

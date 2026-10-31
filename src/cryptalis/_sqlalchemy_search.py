@@ -1,7 +1,7 @@
 """Bounded equality and order admission, deferred terms, and native index validation."""
 
-from sqlalchemy import BigInteger, Boolean, Date, DateTime, Integer, LargeBinary, SmallInteger, String, Table, Text, TEXT, Unicode, UnicodeText, Uuid, VARCHAR, and_, or_, bindparam, func, literal, literal_column, type_coerce
-from sqlalchemy.dialects.postgresql import TIMESTAMP
+from sqlalchemy import BigInteger, Boolean, Date, DateTime, Integer, LargeBinary, Numeric, SmallInteger, String, Table, Text, TEXT, Unicode, UnicodeText, Uuid, VARCHAR, and_, or_, bindparam, func, literal, literal_column, type_coerce
+from sqlalchemy.dialects.postgresql import BIGINT, INTEGER, SMALLINT, NUMERIC, TIMESTAMP
 from sqlalchemy.sql import operators, visitors
 from sqlalchemy.sql.elements import BinaryExpression, BindParameter, BooleanClauseList, ColumnClause, Grouping, Label, Null, UnaryExpression
 from sqlalchemy.sql.functions import count
@@ -17,23 +17,40 @@ from ._sqlalchemy_aggregate import _one_tenant, count_shape, distinct_projection
 _NULL_SAFE = (operators.is_distinct_from, operators.is_not_distinct_from)
 _ORDER_OPERATORS = (operators.lt, operators.le, operators.gt, operators.ge)
 _SORT_MODIFIERS = (operators.asc_op, operators.desc_op, operators.nulls_first_op, operators.nulls_last_op)
+_INTEGER_BIND_WIDTHS = {SmallInteger: 16, SMALLINT: 16, Integer: 32, INTEGER: 32,
+                        BigInteger: 64, BIGINT: 64}
 
 
 class _SearchValue(TypeDecorator):
     impl = LargeBinary
     cache_ok = False
 
-    def __init__(self, binding, operation):
+    def __init__(self, binding, operation, original_type):
         super().__init__()
         self.binding, self.keys, self.tenant = binding, operation.keys_for(binding), operation.scope(binding)
+        self.integer_width = _INTEGER_BIND_WIDTHS.get(type(original_type))
 
     def process_bind_param(self, value, dialect):
+        if (value is not None and self.integer_width is not None and
+                self.binding.descriptor.value_codec == 'pg-numeric-decimal/v1'):
+            from ._numeric import numeric_typmod, numeric_value
+            from .crypto.keys import InvalidValue
+            value = numeric_value(value, numeric_typmod(1000, 0))
+            bound = 1 << (self.integer_width - 1)
+            if not -bound <= value < bound:
+                raise InvalidValue()
         return equality_term(value, self.binding.descriptor, self.tenant, self.keys)
 
 
 def ordinary_bind(owner, value, binding=None):
     if getattr(value.type, '_variant_mapping', None):
         return False
+    numeric = lambda b: b.descriptor.value_codec == 'pg-numeric-decimal/v1' and b.descriptor.equality
+    if binding is not None and numeric(binding):
+        return type(value.type) in (Numeric, NUMERIC, NullType, *_INTEGER_BIND_WIDTHS)
+    if binding is None and type(value.type) in (Numeric, NUMERIC, *_INTEGER_BIND_WIDTHS):
+        if any(numeric(b) for b in owner.bindings):
+            return True
     if type(value.type) in (DateTime, TIMESTAMP):
         if binding is not None:
             if value.type.timezone is not (binding.descriptor.value_codec == 'pg-timestamptz-us-be/v1'):
@@ -301,7 +318,7 @@ def _predicate_replacer(owner, statement, operation, projections):
             # across fields and native expressions, which use different codecs.
             supplied = value.key in operation.parameters
             prepared = bindparam(None, value=operation.parameters[value.key] if supplied else value.value,
-                                 type_=_SearchValue(binding, operation), required=False if supplied else value.required,
+                                 type_=_SearchValue(binding, operation, value.type), required=False if supplied else value.required,
                                  expanding=value.expanding, callable_=None if supplied else value.callable)
             predicate = BinaryExpression(term, prepared, node.operator)
         if binding.tenant is not None:

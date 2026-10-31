@@ -368,7 +368,7 @@ remains uncertain even while creating an inactive rewrap candidate.
 
 ## Modify active fields
 
-To enable or disable equality/IN search on already protected TEXT/VARCHAR fields,
+To enable or disable equality/IN search on already protected TEXT/VARCHAR or finite NUMERIC fields,
 create a new configuration with the updated manifest. Enabling requires the
 search review and leakage acceptance. Disabling sets `queries: []` and
 `accept_leakage: []` and removes that field’s search review; uniqueness changes
