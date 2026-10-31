@@ -24,6 +24,7 @@ build-backend = "uv_build"
 dev = [
     "packaging>=26.3",
     "pytest",
+    "pytest-xdist>=3",
 ]
 
 [tool.pytest.ini_options]

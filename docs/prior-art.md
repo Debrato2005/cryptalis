@@ -35,8 +35,8 @@ No competitor was installed, audited, benchmarked, or reproduced end to end.
 | Packed term/payload | Same equality with a built-in substring expression index | Select default physical option. Generated/separate terms remain compiler choices for constraints |
 | Truncated beacon/Bloom | Candidate membership with deliberate false positives | Reject transparent exact predicates and UNIQUE. Never hide postfilter/refill behavior |
 | Coarse buckets | Range candidates needing boundary checks | Reject exact public comparisons unless a different explicit contract proves complete results |
-| Full keyed binary-tree path | Exact finite-domain interval membership without a boundary postfilter | Retain INTERNAL ONLY range candidate. It leaks structure and expands writes. No ordering claim |
-| Native-byte OPE | Exact byte-order comparisons after a qualified order codec | Retain viable research path. Complete order leakage, license and independent review block admission |
+| Full keyed binary-tree path | Exact finite-domain interval membership without a boundary postfilter | Not selected: it cannot sort, leaks structure and costs 32 to 64 terms per value |
+| Native-byte OPE | Exact byte-order comparisons after a qualified order codec | Select for opt-in [`order`](compatibility.md#order-search): range and sorting from one term on stock PostgreSQL. Complete order leakage is disclosed; independent review remains required |
 | Custom-comparator ORE | Published order comparisons | Reject database mechanism under stock rule. It needs an excluded operator/type |
 | Complete prefix arrays | Exact qualified literal prefix | Retain INTERNAL ONLY prefix candidate with length bounds and opt-in. Not arbitrary LIKE/ILIKE |
 | Ngrams/trigrams/Bloom text | Candidate containment, not exact substrings/phrase/regex | Reject transparent claims. The local counterexample proves a semantic mismatch |

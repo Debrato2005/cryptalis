@@ -237,7 +237,7 @@ uses the existing shared `apply` method and the matching external pin.
 
 `cryptalis.tenancy.plan` accepts an ACTIVE source and actual source pin, an exact
 new UUID and host-held Keyring, declared source keys and a verification rate.
-The source must carry a scoped-table access contract. Existing/fixed scopes,
+The source must declare a tenant-column table. Existing/fixed scopes,
 wrong policy contexts, occupied membership and unsupported authority refuse.
 Existing policies, lock, schema and frames remain unchanged.
 

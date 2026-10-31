@@ -29,7 +29,8 @@ NULL stays NULL. NULLs remain distinct for uniqueness. Empty IN matches no rows;
 AND/OR/NOT, mapped aliases, ordinary text binds and explicit late values are admitted.
 Negative equality, NOT IN and NULL-presence predicates retain the bounded
 grammar in [compatibility](compatibility.md#full-capability-matrix).
-Protected joins, derived tables, ranges, patterns, ordering, general protected
+[Order search](compatibility.md#order-search) adds ranges and sorting on integer and date
+fields that opt in. Protected joins, derived tables, patterns, general protected
 grouping/DISTINCT and aggregates other than admitted counts reject.
 Custom codecs, callables, generated parameter-name overrides and conflicting named defaults without explicit values also reject.
 Protected compilation is per operation; plain queries retain SQLAlchemy caching.

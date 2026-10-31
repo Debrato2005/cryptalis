@@ -454,7 +454,8 @@ class Results:
         # Keep report references and partition their final raw outcomes here.
         counts = {name: {} for name in (
             'test_calls', 'subtest_calls', 'setup', 'teardown', 'collection')}
-        counts['selected_items'] = len(session.items)
+        # A parallel controller collects nothing; each selected test still reports.
+        counts['selected_items'] = len(session.items) or len({report.nodeid for report in self._reports})
         for report in self._reports:
             if report.when == 'call':
                 category = ('subtest_calls' if isinstance(report, self._subtest_report_type)

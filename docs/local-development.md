@@ -11,7 +11,9 @@ exercise the implemented prototype. They do not complete every objective in the
 - A normal, non-root operating-system account. PostgreSQL refuses `initdb` as root.
 
 The development interpreter defaults to Python 3.12 through `.python-version`,
-matching CI. Use uv's `--python` option for another supported interpreter.
+matching CI. Use uv's `--python` option for another supported interpreter. An existing
+`.venv` on a different interpreter is replaced unless you pass it, for example
+`uv sync --frozen --all-extras --python .venv/bin/python`.
 
 On Ubuntu 24.04, the server tools are available from the distribution:
 

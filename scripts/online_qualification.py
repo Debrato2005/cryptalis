@@ -45,7 +45,7 @@ def main():
         selected = (['tests/profile_sqlmodel_http_tenant_application.py','-q'] if args.tenant_http_fresh else
                     ['tests/profile_online_http_application.py','-q'] if args.http or args.http_fresh else
                     ['tests/test_online_protection.py','tests/test_online_recovery.py','tests/test_online_multitable.py','tests/test_online_tenants.py',
-                     'tests/test_online_access.py','tests/test_postgres_source_role.py','-q'])
+                     'tests/test_online_access.py','-q'])
     fresh = args.http_fresh or args.tenant_http_fresh
     backup_variable = ('CRYPTALIS_TENANT_HTTP_BACKUP_DIR' if args.tenant_http_fresh else 'CRYPTALIS_ONLINE_HTTP_BACKUP_DIR')
     report_variable = ('CRYPTALIS_TENANT_HTTP_REPORT' if args.tenant_http_fresh else 'CRYPTALIS_ONLINE_HTTP_REPORT')

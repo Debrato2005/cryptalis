@@ -25,9 +25,8 @@ def _identity(source, tenant):
     models = source.document['lock']['models']
     fixed = {model['table_id'] for model in models if 'column' not in model['tenancy']}
     policies = source.document['key_policies']
-    if (source.document.get('access_contract') is None
-            or not any('column' in model['tenancy'] for model in models)):
-        raise m.TransitionFailure('tenant_provision_requires_scoped_access_contract', source.operation_id)
+    if not any('column' in model['tenancy'] for model in models):
+        raise m.TransitionFailure('tenant_provision_requires_scoped_table', source.operation_id)
     if str(tenant) in policies or str(tenant) in fixed:
         raise m.TransitionFailure('tenant_policy_already_declared', source.operation_id)
     if len(set(policies) - fixed) >= MAX_TENANTS:
@@ -68,9 +67,11 @@ def _validate_activation(document, artifact):
     base = dict(document)
     for name in ('tenant_provision', PROOF, OBSERVATIONS):
         base.pop(name)
-    base.update(format='cryptalis.transition/v12' if document['format'].endswith('/v16')
-        else 'cryptalis.transition/v9', kind='rewrap', rewrap_plan_digest=document[PROOF],
-        rewrap_observations=document[OBSERVATIONS])
+    # Online-protected sources carry an access contract; maintenance sources do not.
+    adopted, scoped = document['format'].endswith('/v16'), 'access_contract' in document
+    base.update(format='cryptalis.transition/v' + str({(False, True): 9, (True, True): 12,
+                                                       (False, False): 2, (True, False): 5}[adopted, scoped]),
+        kind='rewrap', rewrap_plan_digest=document[PROOF], rewrap_observations=document[OBSERVATIONS])
     m.MigrationPlan(m._canonical(base))
     observed = document[OBSERVATIONS]
     if document['scopes'] != [{'table_id': model['table_id'],

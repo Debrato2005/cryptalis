@@ -2,6 +2,9 @@
 
 [Documentation map](README.md) · [Current evidence](status.md)
 
+Most applications should use [`Project`](application.md#project-the-small-api), which runs
+these steps in one call each. This walkthrough is for hosts that need per-step control.
+
 - [Online initial protection](#online-initial-protection)
 - [Initialize an explicit declaration through the CLI](#initialize-an-explicit-declaration-through-the-cli)
 - [Plan and apply protection through the CLI](#plan-and-apply-protection-through-the-cli)

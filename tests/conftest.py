@@ -8,7 +8,8 @@ from sqlalchemy.exc import DBAPIError
 
 
 def pytest_sessionstart(session):
-    if "_cryptalis_test_preflight" not in sys.modules:
+    # Parallel workers are started by a controller that has already passed the wrapper.
+    if not hasattr(session.config, "workerinput") and "_cryptalis_test_preflight" not in sys.modules:
         raise pytest.UsageError("Run tests through .venv/bin/python scripts/test_postgres.py -- [pytest arguments].")
 
 

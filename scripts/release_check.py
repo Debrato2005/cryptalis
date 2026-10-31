@@ -214,7 +214,6 @@ def build(directory):
 def source_hashes():
     paths = [ROOT / "pyproject.toml", ROOT / "LICENSE", ROOT / "README.md",
              ROOT / "scripts" / "release_check.py",
-             ROOT / "scripts" / "test_release_check.py",
              ROOT / "src/cryptalis/_doctor_routes.json",
              ROOT / "qualification/build-backend/requirements.in",
              ROOT / "qualification/build-backend/requirements.txt"]

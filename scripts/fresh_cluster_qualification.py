@@ -133,6 +133,8 @@ def main():
     profiles = parser.add_mutually_exclusive_group()
     profiles.add_argument('--modification', nargs='?', const='enable', choices=('enable', 'disable'),
                           help='Qualify active-field search modification, fresh adoption and package-free exit.')
+    profiles.add_argument('--project', action='store_true',
+                          help='Qualify cryptalis.Project recovery, rotation and removal after restore.')
     profiles.add_argument('--application-config', action='store_true',
                           help='Qualify shared configuration, rotation planning and current-value removal after restore.')
     profiles.add_argument('--reverse-cli', action='store_true',
@@ -225,7 +227,8 @@ def main():
     export_receipt = workdir / 'export-receipt.json'
     restore_receipt = workdir / 'restore-receipt.json'
 
-    profile = ('; shared configuration, rotation planning and current-value removal on an adopted target' if args.application_config else
+    profile = ('; Project recovery, rotation and removal on an adopted target' if args.project else
+               '; shared configuration, rotation planning and current-value removal on an adopted target' if args.application_config else
                '; staged search CLI sealing and publication on an adopted target' if args.search_cli else
                '; staged payload CLI sealing and publication on an adopted target' if args.payload_cli else
                '; root-rewrap CLI cancellation and publication on an adopted target' if args.rewrap_cli else
@@ -256,7 +259,8 @@ def main():
     if args.column_name != 'name':
         profile += '; keyword column ' + args.column_name
     export = run_pytest(export_receipt, 'Fresh-cluster source export; primary cluster' + profile,
-                        ('tests/test_modification_fresh_cluster.py::test_export_modified_backup' if args.modification else
+                        ('tests/test_project_fresh_cluster.py::test_export_project_source' if args.project else
+                         'tests/test_modification_fresh_cluster.py::test_export_modified_backup' if args.modification else
                          'tests/test_date_fresh_cluster.py::test_export_date_backup_after_rotations' if args.date else
                          'tests/test_sqlmodel_searchable_export.py' if (args.sqlmodel_searchable or args.sqlmodel_direct_search or args.sqlmodel_public_slots or args.sqlmodel_http) else
                          'tests/test_fresh_boolean_export.py' if args.boolean or args.integer or args.uuid else
@@ -381,7 +385,8 @@ def main():
         credentials = provision(port, password, manifest, plain_database)
         home = write_home(workdir, port, manifest, credentials)
         restore = run_pytest(restore_receipt, 'Fresh-cluster protected-backup recovery and adoption; isolated cluster' + profile,
-                             ('tests/test_modification_fresh_cluster.py::test_restore_modified_backup_authenticate_and_remove_current_values' if args.modification else
+                             ('tests/test_project_fresh_cluster.py::test_recover_project_on_fresh_cluster' if args.project else
+                              'tests/test_modification_fresh_cluster.py::test_restore_modified_backup_authenticate_and_remove_current_values' if args.modification else
                               ('tests/test_fresh_cluster_restore.py::test_protected_backup_recovers_values_with_retained_keys',
                                'tests/test_fresh_cluster_restore.py::test_restored_cluster_completes_adopted_lifecycle') if args.application_config else
                               'tests/test_date_fresh_cluster.py::test_restore_date_authentication_explicit_adoption_latest_exit' if args.date else

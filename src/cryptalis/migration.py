@@ -1020,7 +1020,7 @@ def _frame_check(c,f):
     magic='434631000101' if eq else '434631000100'
     op='<>' if eq else '='
     width = _fixed_value_width(f['source'])
-    minimum, maximum = (42 + width, 42 + width) if width is not None else (overhead, 16777216+overhead)
+    minimum, maximum = (overhead + width, overhead + width) if width is not None else (overhead, 16777216+overhead)
     return f"{col} IS NULL OR (pg_catalog.octet_length({col}) BETWEEN {minimum} AND {maximum} AND pg_catalog.substring({col},1,6)=pg_catalog.decode('{magic}','hex') AND pg_catalog.substring({col},7,4)<>pg_catalog.decode('00000000','hex') AND pg_catalog.substring({col},11,4){op}pg_catalog.decode('00000000','hex'))"
 
 

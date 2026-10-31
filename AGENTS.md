@@ -1,7 +1,8 @@
 # Repository instructions
 
-Cryptalis is an unqualified research prototype targeting the full SRS and all
-34 objectives. Read [current status](docs/status.md) before claiming capability.
+Cryptalis is an unqualified research prototype targeting the
+[product requirements](docs/requirements.md) and all 34 objectives. Follow KISS:
+do not overengineer. Read [current status](docs/status.md) before claiming capability.
 SUPPORTED is admitted design scope; VERIFIED is revision-bound evidence. Neither
 is production qualification. Missing security evidence is UNKNOWN.
 

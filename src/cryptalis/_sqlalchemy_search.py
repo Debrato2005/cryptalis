@@ -1,18 +1,21 @@
-"""Bounded equality admission, deferred terms, and native index validation."""
+"""Bounded equality and order admission, deferred terms, and native index validation."""
 
-from sqlalchemy import Boolean, LargeBinary, String, Text, TEXT, Unicode, UnicodeText, Uuid, VARCHAR, and_, or_, bindparam, func, literal, literal_column, type_coerce
+from sqlalchemy import BigInteger, Boolean, Date, Integer, LargeBinary, SmallInteger, String, Text, TEXT, Unicode, UnicodeText, Uuid, VARCHAR, and_, or_, bindparam, func, literal, literal_column, type_coerce
 from sqlalchemy.sql import operators, visitors
 from sqlalchemy.sql.elements import BinaryExpression, BindParameter, BooleanClauseList, ColumnClause, Grouping, Label, Null, UnaryExpression
 from sqlalchemy.sql.functions import count
+from sqlalchemy.sql.selectable import Select
 from sqlalchemy.types import NullType, TypeDecorator
 
 from .crypto.cf1 import equality_term
 from .manifest.compiler import _catalog_path, _fixed_value_width
 from ._sqlmodel_types import autostring_impl
-from ._sqlalchemy_aggregate import count_shape, distinct_projection, identity_distinct
+from ._sqlalchemy_aggregate import _one_tenant, count_shape, distinct_projection, identity_distinct
 
 
 _NULL_SAFE = (operators.is_distinct_from, operators.is_not_distinct_from)
+_ORDER_OPERATORS = (operators.lt, operators.le, operators.gt, operators.ge)
+_SORT_MODIFIERS = (operators.asc_op, operators.desc_op, operators.nulls_first_op, operators.nulls_last_op)
 
 
 class _SearchValue(TypeDecorator):
@@ -21,7 +24,7 @@ class _SearchValue(TypeDecorator):
 
     def __init__(self, binding, operation):
         super().__init__()
-        self.binding, self.keys, self.tenant = binding, operation.keys, operation.tenant
+        self.binding, self.keys, self.tenant = binding, operation.keys_for(binding), operation.scope(binding)
 
     def process_bind_param(self, value, dialect):
         return equality_term(value, self.binding.descriptor, self.tenant, self.keys)
@@ -34,6 +37,9 @@ def ordinary_bind(owner, value):
         optional_string = autostring_impl(value.type) is not None
     except ValueError:
         return False
+    if type(value.type) in (Integer, SmallInteger, BigInteger, Date):
+        # The field codec refuses any value the column could not hold.
+        return any(binding.descriptor.ordered for binding in owner.bindings)
     return (optional_string or type(value.type) in (String, Text, TEXT, Unicode, UnicodeText, VARCHAR, NullType) or
             any(type(value.type) is type(binding.column.type) for binding in owner.bindings))
 
@@ -61,7 +67,9 @@ def search_shape(owner, expression, *, _nullsafe_candidate=False):
     null = expression.operator in (operators.is_, operators.is_not, *null_safe) and isinstance(right, Null)
     if not null and not bindings[0].descriptor.equality:
         return None
-    if not null and not (expression.operator in (operators.eq, operators.ne, operators.in_op, operators.not_in_op, *null_safe) and isinstance(right, BindParameter)):
+    ordered = expression.operator in _ORDER_OPERATORS and bindings[0].descriptor.ordered
+    if not null and not ((ordered or expression.operator in (operators.eq, operators.ne, operators.in_op, operators.not_in_op, *null_safe))
+                         and isinstance(right, BindParameter)):
         return None
     if not null and not ordinary_bind(owner, right):
         return None
@@ -72,6 +80,38 @@ def search_shape(owner, expression, *, _nullsafe_candidate=False):
     if expression.operator in _NULL_SAFE and isinstance(right, BindParameter) and right.expanding:
         return None
     return bindings[0], left, right, null
+
+
+def between_predicate(owner, expression):
+    """Return native BETWEEN as its defining comparisons, or None when not admitted."""
+    if (not isinstance(expression, BinaryExpression) or expression.modifiers.get('symmetric')
+            or expression.operator not in (operators.between_op, operators.not_between_op)):
+        return None
+    lower, upper = expression.right.clauses
+    within = expression.operator is operators.between_op
+    first = BinaryExpression(expression.left, lower, operators.ge if within else operators.lt, type_=expression.type)
+    second = BinaryExpression(expression.left, upper, operators.le if within else operators.gt, type_=expression.type)
+    if search_shape(owner, first) is None or search_shape(owner, second) is None:
+        return None
+    return and_(first, second) if within else or_(first, second)
+
+
+def order_shape(owner, clause, selection):
+    """One direct order-searchable column under native sort modifiers and one tenant.
+
+    Terms use per-tenant keys, so they sort meaningfully only within one tenant.
+    """
+    from .sqlalchemy import _delete_node
+    root = clause
+    while isinstance(root, UnaryExpression) and root.operator is None and root.modifier in _SORT_MODIFIERS:
+        _delete_node(root, UnaryExpression)
+        root = root.element
+    if not isinstance(root, ColumnClause) or root.is_literal or selection._group_by_clauses or selection._distinct:
+        return None
+    bindings = [binding for binding in owner.bindings if root.shares_lineage(binding.column)]
+    if len(bindings) != 1 or not bindings[0].descriptor.ordered or not _one_tenant(selection, root, bindings[0].tenant):
+        return None
+    return bindings[0], root
 
 
 def equality_expression(column):
@@ -116,7 +156,9 @@ def _normalize_negation(owner, expression):
     """
     inverse = {operators.eq: operators.ne, operators.ne: operators.eq,
                operators.in_op: operators.not_in_op, operators.not_in_op: operators.in_op,
-               operators.is_: operators.is_not, operators.is_not: operators.is_}
+               operators.is_: operators.is_not, operators.is_not: operators.is_,
+               operators.lt: operators.ge, operators.ge: operators.lt,
+               operators.gt: operators.le, operators.le: operators.gt}
 
     def normalize(node, negate=False):
         if not owner.protected(node):
@@ -129,6 +171,9 @@ def _normalize_negation(owner, expression):
         if isinstance(node, BooleanClauseList):
             conjunction = (node.operator is operators.and_) != negate
             return (and_ if conjunction else or_)(*(normalize(child, negate) for child in children))
+        between = between_predicate(owner, node)
+        if between is not None:
+            return normalize(between, negate)
         if search_shape(owner, node) is None:
             from .sqlalchemy import UnsupportedProtectedOperation
             raise UnsupportedProtectedOperation()
@@ -158,9 +203,11 @@ def rewrite_search(owner, statement, operation):
     for node in visitors.iterate(statement):
         if isinstance(node, BindParameter):
             inputs.setdefault(node.key, {})[id(node)] = node
-        shape = search_shape(owner, node)
-        if shape is not None and not shape[3]:
-            search_keys.add(shape[2].key)
+        between = between_predicate(owner, node)
+        for candidate in (node,) if between is None else between.clauses:
+            shape = search_shape(owner, candidate)
+            if shape is not None and not shape[3]:
+                search_keys.add(shape[2].key)
     ambiguous = any(len(inputs[key]) > 1 and key not in operation.parameters for key in search_keys)
     codec_collision = any(not ordinary_bind(owner, value) or value.callable is not None
                           for key in search_keys for value in inputs[key].values())
@@ -169,7 +216,27 @@ def rewrite_search(owner, statement, operation):
         from .sqlalchemy import UnsupportedProtectedOperation
         raise UnsupportedProtectedOperation()
 
-    return visitors.replacement_traverse(statement, {}, _predicate_replacer(owner, statement, operation, projections))
+    rewritten = visitors.replacement_traverse(statement, {}, _predicate_replacer(owner, statement, operation, projections))
+    if isinstance(statement, Select) and any(owner.protected(clause) for clause in statement._order_by_clauses):
+        # Rewrite the sort list directly. A bare sort column can be the very object
+        # selected as output, so replacing it during traversal would corrupt results.
+        clauses = [plain if term is None else term for term, plain in (
+            (_order_term_clause(owner, original, statement, operation), plain)
+            for original, plain in zip(statement._order_by_clauses, rewritten._order_by_clauses, strict=True))]
+        rewritten = rewritten.order_by(None).order_by(*clauses)
+    return rewritten
+
+
+def _order_term_clause(owner, clause, selection, operation):
+    shape = order_shape(owner, clause, selection) if owner.protected(clause) else None
+    if shape is None:
+        return None
+    column = shape[1]
+    rewritten = visitors.replacement_traverse(clause, {}, lambda part: equality_expression(part) if part is column else None)
+    nodes = tuple(visitors.iterate(rewritten))
+    operation.search_nodes.extend(nodes)
+    operation.search_identities.update((id(node), node) for node in nodes)
+    return rewritten
 
 
 def rewrite_predicate(owner, expression, statement, operation):
@@ -198,6 +265,9 @@ def _predicate_replacer(owner, statement, operation, projections):
             # Rewrite only the normalized subtree. A separate whole-statement
             # clone would discard aggregate/projection expression result keys.
             return visitors.replacement_traverse(_normalize_negation(owner, node), {}, replace)
+        between = between_predicate(owner, node)
+        if between is not None:
+            return visitors.replacement_traverse(between, {}, replace)
         shape = search_shape(owner, node)
         if shape is None:
             return None
@@ -218,7 +288,7 @@ def _predicate_replacer(owner, statement, operation, projections):
             predicate = BinaryExpression(term, prepared, node.operator)
         if binding.tenant is not None:
             tenant_column = column.table.c[binding.tenant.key]
-            scope = tenant_column == literal(operation.tenant, Uuid())
+            scope = tenant_column == literal(operation.scope(binding), Uuid())
             if null or node.operator in (operators.not_in_op, *_NULL_SAFE):
                 # Empty NOT IN is TRUE even on a null-extended row.
                 # NULL-safe predicates can also be TRUE on an absent row.
@@ -307,7 +377,7 @@ def _frame_expressions(field, quote):
                              quote.__self__.quote_identifier(field['column'])))
     overhead = 74 if field['queries'] else 42
     width = _fixed_value_width(field['source'])
-    minimum, maximum = (42 + width, 42 + width) if width is not None else (overhead, 16777216 + overhead)
+    minimum, maximum = (overhead + width, overhead + width) if width is not None else (overhead, 16777216 + overhead)
     magic = '434631000101' if field['queries'] else '434631000100'
     comparison = '<>' if field['queries'] else '='
     forms = []

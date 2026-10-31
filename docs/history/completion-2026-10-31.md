@@ -2,6 +2,119 @@
 
 Historical revision-bound evidence, before final branch consolidation.
 
+## Partial mutation check of the pruned suite: 2026-10-31
+
+After pruning, each of 26 safety checks was disabled in turn and the suite run in parallel,
+stopping at the first failure. **INCOMPLETE:** the system stopped the run for low memory after 19.
+
+Sixteen were caught by a related test, including the read-time term check, tenant checks on read,
+write and search, the deployment pin, verification before switch and the schema contract.
+
+Three are not proven: sealed value tenant at the driver, parameter logging refusal and the
+one-tenant rule for sorting. Each was stopped about two minutes in by an unrelated rotation test, so
+that test may be flaky under load and the sabotage itself may never have been detected.
+
+Seven did not finish: malformed plan refusal, plaintext consent, removal approval, restore
+approval, small search domain refusal, state file privacy and invalid session tenant first.
+Malformed plan refusal matters most, because `test_plan_admission` was deleted in this pruning.
+
+The kill also left the malformed-plan sabotage in the working tree. It was never committed and was
+restored. The script edited the checkout in place, which a hard kill can leave behind; a repeat must
+use a separate copy.
+
+## Parallel tests and removal of brittle checks: 2026-10-31
+
+The owner asked to drop brittle tests in favor of end-to-end evidence and to run tests in
+parallel. The suite now runs with pytest-xdist, one file per worker, on one database because
+tests use unique schemas. Locally, 12 workers finish in about 2 minutes 40 seconds; the serial
+hosted run took about 25 minutes.
+
+Removed: tests of the test tooling and their scripts, the old manifest-format command and its
+tests, the crypto demo, malformed-artifact shape tests, a fake-clock restore lease suite that
+proved timing-sensitive under load, and direct private-function calls in rotation preparation.
+Independent rotation vectors stay. Forged-journal, hidden-plaintext and other real-PostgreSQL
+attack tests stay even where their names read like unit tests. `cryptalis manifest inspect` now
+reads the real manifest and reports accepted leakage.
+
+About 3,530 cases remain from roughly 1,250 functions, most on real PostgreSQL. Test counts are
+not the measure of completion.
+
+## Order search on integers and dates: 2026-10-31
+
+**VERIFIED, bounded:** opt-in `order` adds `<`, `<=`, `>`, `>=`, `BETWEEN`, `NOT` and `ORDER BY`
+on int2, int4, int8 and date fields. See the [decision](../decisions.md#order-search-2026-10-31).
+
+`tests/test_order_search.py` runs over 300 queries and more than 5,000 result rows on native
+PostgreSQL first, then requires identical rows in identical order through Cryptalis. That holds
+sync and async, after search and payload rotation, with new edits, and after decrypt and
+removal. Further checks cover keyset pagination, index use with sequential scans disabled,
+unrelated terms across tenants, tampered-term refusal, adding and removing search on a protected
+field, and planning and query refusals. One essential vector recomputes the stored term through
+a separate derivation. `fresh_cluster_qualification.py --project` covers order frames after a
+real restore. The affected regression passes 1,212 checks with 15 skips on local PostgreSQL 16.2.
+
+The native oracle caught a wrong-result bug before commit: a bare `order_by(column)` reuses the
+selected column object, and an identity-based rewrite returned the search term as the value. The
+sort list is now rewritten directly. `statement.params()` values were also invisible to search
+rewriting, which failed loudly; they are now read.
+
+No published sorting attack was run and no independent review occurred. MIN/MAX refuse.
+All seven production gates remain UNKNOWN.
+
+## One session across single-tenant tables: 2026-10-31
+
+**VERIFIED, bounded:** a session could not write two protected single-tenant tables,
+because every row was compared to one session tenant while each such table's tenant is
+its own UUID. A session now prepares keys per scope, and each column uses its table's
+scope. The CF1 format and per-table keys are unchanged. `sessions()` works without a
+tenant when single-tenant tables exist, and refuses otherwise.
+
+Behavior change: a session naming tenant T can reach declared single-tenant tables,
+which earlier refused. Tenant-column data keeps its checks. Local PostgreSQL 16.2
+regressions covering sync/async adapter, search, DML and SQLModel paths pass, including
+reads, writes, joins and deletes across two tables and a mixed tenant-column manifest.
+
+## Project front door: 2026-10-31
+
+**VERIFIED, bounded:** `cryptalis.Project` takes a manifest, key provider and state
+directory, and drives doctor, protect, online protect, attach, three rotations,
+search modification, tenant addition, recovery, decrypt, removal and abort through
+the existing executors. It adds no cryptography, SQL or transition logic.
+
+Local PostgreSQL 16.2 checks in `tests/test_project.py` cover the complete journey
+through fresh simulated processes, sync and async attachment, stored-frame inspection,
+native exit with the latest edit, and refusals. Crash cases fail at every state save
+for protect, the three rotations, modify, tenant addition, decrypt and remove, both
+before and after the save is durable, and each resumes to correct values. Status is
+checked at every recorded step of an unfinished operation, and abort for each operation
+before its switch. The online tests need the separate source role, which is unavailable
+locally, so they run only in hosted CI.
+`fresh_cluster_qualification.py --project` restores a `Project` dump into a separately
+initialized PostgreSQL 16 cluster, then runs `recover`, reads, search, an edit, payload
+rotation, decrypt and remove, and compares the latest values natively. Hosted CI repeats
+it against the built wheel. Development custody and a public fixed-key provider are used,
+so real provider restart and production custody are not established here.
+
+Tenant addition no longer requires an online-protection access contract. That limit
+blocked onboarding for every maintenance-protected deployment. Adding an empty tenant
+changes no grants, and runtime privileges keep their own checks. The successor format
+stays v15/v16 and validates against its plain base when no contract exists. Later
+payload and wrapping rotation and decrypt on such a deployment pass.
+
+## KISS removal of unused modules: 2026-10-31
+
+Removed code no product entry point reaches, under requirement 16: the `contracts`
+package (ActiveState, development authority, transition admission), the F1/W1/scalar
+`_candidate_*` parsers, `manifest/descriptor.py`, six unreferenced functions, their
+tests and their example fixtures. These were early research structures; CF1, the
+lock and the transition engine replaced them. Git history retains them. No admitted
+behavior changes. `crypto/_rewrap.py` stays: it builds a rewrap target for hosts.
+
+Evidence: a static import walk from the product entry points now finds only
+`_rewrap` outside them, and 344 focused manifest, CLI, rotation, restore, compiler
+and runtime-binding checks pass locally on PostgreSQL 16.2. The full suite runs in
+hosted CI on the pushed branch.
+
 ## Main-history consolidation: 2026-10-31
 
 **VERIFIED, bounded:** integration retains main `f082cf3` (including merged

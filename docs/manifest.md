@@ -14,14 +14,18 @@ The public manifest uses bounded JSON. Its field-intent declaration is independe
 | `profile` | Selected library crypto profile. No arbitrary algorithms or executable normalizers |
 | `models`, `fields` | Names resolve within the supplied registry. No imports from strings. Unlisted fields retain native behavior |
 | `protect` | True requests protection. Removal requests a verified transition, never automatic plaintext writes |
-| `queries` | Empty means storage-only. `equality` includes `IN`. `unique` implies tenant-scoped equality |
+| `queries` | Empty means storage-only. `equality` includes `IN`. `unique` implies tenant-scoped equality. `order` adds range and sorting on integer and date fields, and implies equality |
 | `accept_leakage` | Required matching acceptance for every search capability. Missing acceptance blocks plan |
 | `tenancy` | Exactly `{"column": "attribute_name"}` or `{"single_tenant": true}` per protected table |
 | Mapping facts | Text codec, deterministic exact collation, nullability, application-assigned PK, tenant scope, constraint scope, and writer inventory |
 
-Range bounds, prefix limits, shared-join domains and arbitrary normalizers remain unadmitted.
+`cryptalis manifest inspect cryptalis.json` validates a manifest without a database and
+lists each protected field with the search leakage you accepted.
+
+Prefix limits, shared-join domains and arbitrary normalizers remain unadmitted.
 Boolean, signed integer, finite Date and UUID storage use pinned value codecs.
-Their search operators remain unadmitted.
+Integer and date fields admit [`order`](compatibility.md#order-search) search only; Boolean
+and UUID fields admit no search.
 The compiler rejects unsupported types, server-generated keys, small-domain searchable fields, missing tenant scope, and unsupported writers at plan time.
 Searchable small domains remain unsafe because enumeration can label their equality classes. No invented cardinality threshold supplies evidence.
 The planner does not infer every application query. Attached staging tests expose query-level incompatibilities.

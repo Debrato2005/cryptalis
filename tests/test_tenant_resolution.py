@@ -46,4 +46,6 @@ def test_pinned_unknown_or_custom_tenant_refuses_before_host_key_lookup(tenant_a
     with sessions(tenant_id=TENANT) as session:
         assert session.scalar(select(app.TenantCustomer.name).where(
             app.TenantCustomer.id == UUID(int=1001))) == 'same-name'
-    assert resolutions and all(type(scope) is UUID and scope == TENANT for scope in resolutions)
+    # A session reaches its own tenant and declared shared tables, never another tenant's keys.
+    shared = {UUID(model['table_id']) for model in successor.document['lock']['models'] if 'column' not in model['tenancy']}
+    assert TENANT in resolutions and all(type(scope) is UUID and (scope == TENANT or scope in shared) for scope in resolutions)

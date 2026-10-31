@@ -1,8 +1,8 @@
 # SQLAlchemy storage attachment
 
-Use [shared application configuration](application.md) to reuse one manifest and
-registry across planning, Doctor and attachment. The lower-level attachment
-interface below remains supported.
+Most applications attach through [`Project`](application.md#project-the-small-api):
+`SessionLocal = project.attach(engine)`. The lower-level attachment below is for hosts
+that publish their own plans and pins. Sessions behave the same either way.
 
 
 **IMPLEMENTED:** bounded sync/async attachment for the [admitted types and operations](compatibility.md).
@@ -31,6 +31,8 @@ precede the guard. `UnsafeDriverEvent` reports invalid order or changed driver
 SQL/values. Remove the hook or move an unchanged observer to the engine after
 attachment. Roll back before retry. Do not use `insert=True` to reorder it.
 The host authenticates tenant scope and authorizes queries; attachment adds no tenant filter.
+Applications with only single-tenant tables call `sessions()`; see
+[session tenant scope](compatibility.md#session-tenant-scope).
 Assign row IDs and declared tenant values before flush. A Python default does not replace assignment.
 
 ```python
@@ -82,8 +84,7 @@ with sessions(tenant_id=authenticated_tenant) as session:
 ```
 
 Supply a nonempty list of ordinary dictionaries with mapped attribute names.
-Assign every ID and declared tenant explicitly. A single-tenant mapping uses
-its declared table UUID as the session scope. Caller dictionaries stay unchanged.
+Assign every ID and declared tenant explicitly. Caller dictionaries stay unchanged.
 The native bulk Result returns no rows and adds no objects to the identity map.
 `render_nulls=True` retains native explicit-NULL grouping.
 Rollback and nested savepoint cleanup retain native behavior.
@@ -125,8 +126,7 @@ The dictionary uses physical column keys, as native single-statement UPDATE
 does. Returned column names normally follow mapped attributes; use
 `Customer.note.label("display_note")` for an explicit result name. Use `await`
 for async execution and commit; SQLModel `exec` takes the dictionary as `params=...`.
-For a declared single-tenant table, omit the tenant predicate and use its table
-UUID as the session scope. Existing loaded objects remain stale under
+For a declared single-tenant table, omit the tenant predicate. Existing loaded objects remain stale under
 `synchronize_session=False`; refresh them when needed. Missing records return no
 row. Native assignment errors can still occur for a missing record during SQL
 evaluation; roll back the failed transaction or savepoint before retrying.
@@ -166,9 +166,8 @@ executemany RETURNING are outside this route. It uses the existing encryption
 and declared search representation; it adds no search capability or production
 qualification. See [status](status.md) for exact verification.
 
-For mapped dictionary UPDATE on an explicitly single-tenant table, use its
-declared table UUID as session scope and let SQLAlchemy select each typed
-primary key:
+For mapped dictionary UPDATE on an explicitly single-tenant table, let SQLAlchemy
+select each typed primary key:
 
 ```python
 from sqlalchemy import update

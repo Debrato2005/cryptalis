@@ -33,8 +33,8 @@ unsupported expressions fail before effects.
 | Manifest compiler | `manifest/`: declaration, mapping/schema inspection, stable descriptors, lock, DDL and semantic diff; [reference](../manifest.md) |
 | ORM adapter | `sqlalchemy.py`, `_sqlalchemy_*.py`, `sqlmodel.py`: prepared row context, guarded writes, admitted query mapping and authenticated results; [compatibility](../compatibility.md) |
 | Crypto and providers | `crypto/`: typed CF1, HKDF/HMAC, exact admitted roots, provider wrap/unwrap and bounded process caches; [security](../security.md) |
-| Transition engine | `migration.py`, `rotation.py`, `deprotection.py`, `_online.py`: plan, chunk, verify, switch, publication admission and current-data exit; [lifecycle](../lifecycle.md) |
-| Public orchestration | `application.py`, `cli.py`, `_cli_operations.py`, `cli_host.py`, `doctor.py`: reuse the same underlying checks with explicit host inputs |
+| Transition engine | `migration.py`, `rotation.py`, `deprotection.py`, `online.py`: plan, chunk, verify, switch, publication admission and current-data exit; [lifecycle](../lifecycle.md) |
+| Public orchestration | `project.py` (the small front door), `application.py`, `cli.py`, `_cli_operations.py`, `cli_host.py`, `doctor.py`: reuse the same underlying checks with explicit host inputs |
 
 PostgreSQL supplies transactions, native constraints, indexes and cooperating
 locks. Providers supply root custody. The host supplies tenant authentication,

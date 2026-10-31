@@ -96,10 +96,10 @@ def _items(value: object) -> list:
 
 def _capabilities(value: object) -> set[str]:
     if not isinstance(value, list) or any(
-        not isinstance(item, str) or item not in ("equality", "unique")
+        not isinstance(item, str) or item not in ("equality", "order", "unique")
         for item in value
     ):
-        raise ManifestInvalid("Queries and leakage acceptance permit only equality and unique")
+        raise ManifestInvalid("Queries and leakage acceptance permit only equality, order and unique")
     if len(value) != len(set(value)):
         raise ManifestInvalid("Capability lists must not contain duplicates")
     return set(value)
@@ -156,10 +156,10 @@ def parse_protection_declaration(raw: bytes) -> ProtectionDeclaration:
             if field["protect"] is not True:
                 raise ManifestInvalid("Use protect true. Removal requires a verified transition")
             queries = _capabilities(field["queries"])
-            if "unique" in queries:
+            if "unique" in queries or "order" in queries:
                 queries.add("equality")
             if _capabilities(field["accept_leakage"]) != queries:
-                raise ManifestInvalid("Accept exactly the declared search leakage. Unique requires equality")
+                raise ManifestInvalid("Accept exactly the declared search leakage. Unique and order require equality")
             fields.append(ProtectedField(field_name, field_id, tuple(sorted(queries))))
         models.append(
             ProtectedModel(name, table_id, tenant_column, tuple(sorted(fields, key=lambda f: f.name)))

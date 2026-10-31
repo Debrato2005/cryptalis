@@ -1,5 +1,6 @@
 import argparse
 import errno
+import hashlib
 import io
 import json
 import os
@@ -10,15 +11,7 @@ from pathlib import Path
 from typing import BinaryIO, Literal, NoReturn, TextIO, cast
 from uuid import UUID, uuid4
 
-from cryptalis.manifest.canonical import digest_manifest_json
-from cryptalis.manifest.header import (
-    _MAX_HISTORY_BYTES,
-    _MAX_HISTORY_DOCUMENTS,
-    ManifestHeader,
-    decode_manifest_header,
-    validate_manifest_history,
-    validate_manifest_parent_link,
-)
+from cryptalis.manifest.declaration import parse_protection_declaration
 from cryptalis.manifest.parser import MAX_DOCUMENT_BYTES, ManifestInvalid
 
 _INVALID_PATH_ERRNOS = frozenset(
@@ -83,26 +76,6 @@ class _ArgumentParser(argparse.ArgumentParser):
         ) from argparse.ArgumentError(None, message)
 
 
-class _SingleParent(argparse.Action):
-    def __call__(
-        self,
-        parser: argparse.ArgumentParser,
-        namespace: argparse.Namespace,
-        values: object,
-        option_string: str | None = None,
-    ) -> None:
-        if getattr(namespace, self.dest) is not None:
-            raise _CommandFailure(
-                "The parent option must occur only once.",
-                family="CLI",
-                code="InvalidArguments",
-                operation="cli",
-                stage="arguments",
-                cause="DuplicateParent",
-            )
-        setattr(namespace, self.dest, values)
-
-
 def _parser() -> argparse.ArgumentParser:
     parser = _ArgumentParser(
         prog="cryptalis",
@@ -127,17 +100,11 @@ def _parser() -> argparse.ArgumentParser:
     )
     inspect = manifest_commands.add_parser(
         "inspect",
-        help="Inspect one manifest without changing it.",
+        help="Show protected fields and accepted search leakage without changing anything.",
         allow_abbrev=False,
     )
     inspect.add_argument(
         "path", type=Path, help="Path to the manifest JSON file."
-    )
-    inspect.add_argument(
-        "--parent",
-        type=Path,
-        action=_SingleParent,
-        help="Check the link to one supplied local parent manifest.",
     )
     inspect.add_argument(
         "--json",
@@ -146,24 +113,6 @@ def _parser() -> argparse.ArgumentParser:
         help="Write one machine-readable JSON object.",
     )
     inspect.set_defaults(handler=_inspect_command)
-    history = manifest_commands.add_parser(
-        "inspect-history",
-        help="Inspect a supplied genesis-to-head history without authentication.",
-        allow_abbrev=False,
-    )
-    history.add_argument(
-        "paths",
-        type=Path,
-        nargs="+",
-        help="Local manifest files in genesis-to-head order.",
-    )
-    history.add_argument(
-        "--json",
-        action="store_true",
-        dest="machine_json",
-        help="Write one machine-readable JSON object.",
-    )
-    history.set_defaults(handler=_inspect_history_command)
     status = commands.add_parser('status', help='Inspect protection, rotation preparation or reverse progress without changes.',
                                  allow_abbrev=False)
     status.add_argument('plan', type=Path, help='Protection, rotation preparation or reverse plan artifact.')
@@ -409,45 +358,6 @@ def _read_local_file(
             raise failure from error
 
 
-def _header(
-    raw: bytes, input_role: Literal["child", "parent"]
-) -> ManifestHeader:
-    try:
-        return decode_manifest_header(raw)
-    except ManifestInvalid as error:
-        raise _CommandFailure(
-            f"The {input_role} manifest JSON or identity header is invalid.",
-            stage="header",
-            input_role=input_role,
-            cause="ManifestInvalid",
-        ) from error
-
-
-def _result(raw: bytes, parent_raw: bytes | None = None) -> dict[str, object]:
-    header = _header(raw, "child")
-    if parent_raw is not None:
-        _header(parent_raw, "parent")
-        try:
-            header = validate_manifest_parent_link(raw, parent_raw)
-        except ManifestInvalid as error:
-            raise _CommandFailure(
-                "The supplied manifest parent link is invalid.",
-                stage="parent_link",
-                input_role="pair",
-                cause="ManifestInvalid",
-            ) from error
-    return {
-        "scope": (
-            "manifest_header" if parent_raw is None else "manifest_parent_link"
-        ),
-        "schema_version": header.schema_version,
-        "manifest_id": str(header.manifest_id),
-        "revision": header.revision,
-        "parent_digest": header.parent_digest,
-        "digest": digest_manifest_json(raw),
-    }
-
-
 def _output_failure(
     error: OSError | ValueError | None,
     stage: str,
@@ -513,29 +423,6 @@ def _write_output(
         raise failure from error
 
 
-def _write_result(result: dict[str, object], machine_json: bool) -> None:
-    if machine_json:
-        text = json.dumps(result, sort_keys=True, separators=(",", ":"))
-    else:
-        parent_digest = result["parent_digest"]
-        parent_text = "null" if parent_digest is None else str(parent_digest)
-        text = (
-            f"scope: {result['scope']}\n"
-            f"schema_version: {result['schema_version']}\n"
-            f"manifest_id: {result['manifest_id']}\n"
-            f"revision: {result['revision']}\n"
-            f"parent_digest: {parent_text}\n"
-            f"digest: {result['digest']}"
-        )
-        if result["scope"] == "manifest_history":
-            text += (
-                f"\ndocument_count: {result['document_count']}"
-                f"\ngenesis_digest: {result['genesis_digest']}"
-                "\nauthenticated: false"
-            )
-    _write_output(text + "\n", sys.stdout, "stdout")
-
-
 def _write_error(failure: _CommandFailure, machine_json: bool) -> None:
     error = {**failure.error, "correlation_id": str(uuid4())}
     if machine_json:
@@ -579,72 +466,27 @@ def _write_error(failure: _CommandFailure, machine_json: bool) -> None:
 
 
 def _inspect_command(arguments: argparse.Namespace) -> int:
-    raw = _read_local_file(arguments.path, "child")
-    parent_raw = (
-        None
-        if arguments.parent is None
-        else _read_local_file(arguments.parent, "parent")
-    )
-    result = _result(raw, parent_raw)
-    _write_result(result, arguments.machine_json)
-    return 0
-
-
-def _inspect_history_command(arguments: argparse.Namespace) -> int:
-    operation = "manifest.inspect_history"
-    if len(arguments.paths) > _MAX_HISTORY_DOCUMENTS:
-        raise _CommandFailure(
-            "Supply at most 4096 manifest history files.",
-            stage="history_limits",
-            input_role="history",
-            cause="DocumentLimit",
-            operation=operation,
-        )
-
-    documents: list[bytes] = []
-    remaining = _MAX_HISTORY_BYTES
-    for path in arguments.paths:
-        # The sentinel byte detects overflow without reading another full file.
-        raw = _read_local_file(
-            path,
-            "history",
-            max_bytes=min(MAX_DOCUMENT_BYTES, remaining),
-            operation=operation,
-        )
-        if len(raw) > remaining:
-            raise _CommandFailure(
-                "The complete manifest history must not exceed 16 MiB.",
-                stage="history_limits",
-                input_role="history",
-                cause="ByteLimit",
-                operation=operation,
-            )
-        remaining -= len(raw)
-        documents.append(raw)
-
+    raw = _read_local_file(arguments.path, "manifest")
     try:
-        header = validate_manifest_history(tuple(documents))
+        declaration = parse_protection_declaration(raw)
     except ManifestInvalid as error:
         raise _CommandFailure(
-            "Supply a valid manifest history in genesis-to-head order.",
-            stage="history",
-            input_role="history",
+            "The manifest is invalid. Follow the manifest reference.",
+            stage="declaration",
+            input_role="manifest",
             cause="ManifestInvalid",
-            operation=operation,
         ) from error
-
-    result: dict[str, object] = {
-        "scope": "manifest_history",
-        "schema_version": header.schema_version,
-        "manifest_id": str(header.manifest_id),
-        "revision": header.revision,
-        "parent_digest": header.parent_digest,
-        "digest": digest_manifest_json(documents[-1]),
-        "document_count": len(documents),
-        "genesis_digest": digest_manifest_json(documents[0]),
-        "authenticated": False,
-    }
-    _write_result(result, arguments.machine_json)
+    fields = [{"model": model.model, "field": field.name, "search": list(field.queries)}
+              for model in declaration.models for field in model.fields]
+    result = {"scope": "manifest", "domain_id": str(declaration.domain_id), "fields": fields,
+              "digest": hashlib.sha256(declaration.canonical_bytes()).hexdigest()}
+    if arguments.machine_json:
+        text = json.dumps(result, sort_keys=True, separators=(",", ":"))
+    else:
+        text = "\n".join([f"domain_id: {result['domain_id']}", f"digest: {result['digest']}",
+                          *(f"{item['model']}.{item['field']}: {', '.join(item['search']) or 'storage only'}"
+                            for item in fields)])
+    _write_output(text + "\n", sys.stdout, "stdout")
     return 0
 
 

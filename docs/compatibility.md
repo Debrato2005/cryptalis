@@ -40,14 +40,16 @@ All normative sections here are SPECIFIED. Recorded-cost sections are VERIFIED o
 
 ## Supported stack
 
-Python 3.12+, SQLAlchemy 2.x, psycopg 3 sync and async, PostgreSQL 16.
+Python 3.12+, SQLAlchemy 2.1.3, psycopg 3.3.6 sync and async, PostgreSQL 16.
+The package pins these exact driver and ORM versions because the adapter's admission
+checks depend on SQLAlchemy internals. Other versions are unverified.
 The text family includes native PostgreSQL text and VARCHAR, with matching standard mappings.
 Native Boolean storage has a separate pinned codec and standard Boolean mapping.
 Native signed int2/int4/int8 storage uses exact SmallInteger/Integer/BigInteger
 mappings, typed fixed-width values and admitted literal client defaults.
 Native DATE storage admits exact standard Date mappings and Python date values
-in years 1 through 9999. Date search, defaults, string/timestamp coercions and
-custom mappings refuse; NULL presence and direct COUNT retain their grammar.
+in years 1 through 9999. Date search other than [`order`](#order-search), defaults,
+string/timestamp coercions and custom mappings refuse; NULL presence and direct COUNT retain their grammar.
 Literal Boolean client defaults retain native INSERT omission/None behavior.
 UPDATE with None retains native nullability errors and rollback. Custom converters refuse admission.
 An explicit [SQLModel bridge](#optional-sqlmodel-bridge) admits one exact pinned
@@ -77,6 +79,43 @@ Attach rejects unsupported queries. Application tests on staging expose query-le
 This path does not guarantee zero changes and adds no command or mode.
 Adoption costs a manifest, one attach call, typed replacements for opaque protected writers, and application-generated primary keys.
 Rollback/removal transforms current data through decrypt-back until explicit finalization retires its recovery dependencies.
+
+## Order search
+
+Declare `queries: ["equality", "order"]` and the same `accept_leakage` on a signed
+integer or date field. Queries then use ordinary SQLAlchemy:
+
+```python
+select(Invoice).where(Invoice.tenant_id == tenant, Invoice.amount >= 100).order_by(Invoice.amount.desc()).limit(20)
+```
+
+Results match native PostgreSQL for `<`, `<=`, `>`, `>=`, `BETWEEN`, `NOT`, `==`, `!=`, `IN`,
+`IS NULL`, sorting with `NULLS FIRST`/`LAST`, and pagination. Range filters apply within
+the session's tenant. A sort needs explicit tenant equality in `WHERE` on a tenant-column
+table, because each tenant has its own keys and terms sort only within one tenant. A
+single-tenant table needs nothing extra.
+
+These refuse: sorting under an expression, in a subquery, with `DISTINCT` or `GROUP BY`;
+comparing two fields; arithmetic; `MIN`/`MAX`; and order on text, Boolean or UUID fields.
+A value the column cannot hold, such as `small > 100000` on a `SmallInteger`, raises
+`InvalidValue` instead of being compared as something else.
+
+**A database dump reveals the order, equality and frequency of these fields.** See
+[leakage](security.md#capability-leakage) before opting in, and prefer storage-only or
+equality for sensitive values such as dates of birth. Measured locally: about 36 to 58 µs
+to seal or read a value, 76 to 82 bytes per frame plus a B-tree entry for its 32-byte term.
+These are single-machine observations, not qualified budgets.
+
+## Session tenant scope
+
+A session's `tenant_id` applies only to tables with a tenant column. A single-tenant
+table's scope is the table itself, so one session can use every such table, each under
+its own keys. An application with no tenant-column tables calls `sessions()`. A session
+with no tenant refuses tenant-column values before key use.
+
+A session for tenant T can therefore read and write single-tenant tables, because they
+are declared global. Tenant-column data keeps its checks. Your application still
+decides who may read what; Cryptalis does not replace that authorization.
 
 ## Process ownership
 
@@ -109,9 +148,9 @@ parent/child transaction evidence and remaining qualification work.
 | Text storage/read/write, entity/scalar projection, SQL NULL | SUPPORTED | Randomized authenticated payload. Preserve exact str, empty text, NULL, native ORM state, and expected row/tenant context |
 | COUNT of a directly protected column | SUPPORTED | Bounded local implementation of native non-NULL counts, optional output labels, aliases, public grouping and public FILTER predicates. Non-distinct windows admit public partitions/order and native bounds. Custom dispatch and protected argument/filter/partition/order expressions refuse |
 | Boolean storage/read/write, entity/table/scalar projection, SQL NULL | SUPPORTED | Typed authenticated one-byte values, native Boolean input processing and literal client defaults. No Boolean equality term. [Bounded evidence](history/implementation-2026-10.md#boolean-storage-checkpoint-2026-10-23) |
-| Date storage/read/write and SQL NULL | SUPPORTED | Exact Python date values in years 1 through 9999; pinned four-byte Date codec and lock/v8. Storage-only, native sync/async values and latest-value removal. Non-finite/BC/out-of-range source dates refuse before migration effects |
+| Date storage/read/write and SQL NULL | SUPPORTED | Exact Python date values in years 1 through 9999; pinned four-byte Date codec and lock/v8. Storage-only unless the field declares [`order`](#order-search), native sync/async values and latest-value removal. Non-finite/BC/out-of-range source dates refuse before migration effects |
 | UUID value storage/read/write and SQL NULL | SUPPORTED | Exact standard native UUID mappings and Python UUID inputs, including nil; sixteen authenticated network-order bytes and lock/v9. Storage-only; defaults, coercions and custom mappings refuse. Public record/tenant UUIDs keep their separate context contract |
-| Signed integer storage/read/write and SQL NULL | SUPPORTED | Exact int2/int4/int8 mappings and width-bound Python ints, literal client defaults, native failure/transaction behavior and typed fixed-width CF1. Storage-only; the fixed authentication overhead is published in the local cost profile |
+| Signed integer storage/read/write and SQL NULL | SUPPORTED | Exact int2/int4/int8 mappings and width-bound Python ints, literal client defaults, native failure/transaction behavior and typed fixed-width CF1. Storage-only unless the field declares [`order`](#order-search); the fixed authentication overhead is published in the local cost profile |
 | Mapped dictionary INSERT without RETURNING | SUPPORTED | Attached sync/async `Session.execute(insert(Model), list[dict])`, explicit typed IDs and tenant scope, copied attribute dictionaries, native NULL/grouping, autoflush, uniqueness and transaction behavior. Other bulk routes remain unadmitted |
 | Mapped dictionary INSERT with RETURNING | SUPPORTED | Native direct or explicitly named column tuples/scalars and inserted mapped entities, including public-only columns. Preserve result keys/types, grouping, paging and optional input ordering. Entity results retain identity-map loading and refresh. Authenticate each protected output against its own exact prepared input. Computed expression/alias, loader-option and caller return_defaults forms remain unadmitted |
 | Scoped mapped dictionary UPDATE | SUPPORTED | Attached sync/async admitted storage types, typed IDs, nonempty list of dictionaries and synchronize_session=False. Tenant-column tables require explicit tenant equality. Declared single-tenant tables use the fixed table UUID and no caller WHERE. Preserve native omission/NULL, grouping, repeated IDs, row-count checks and transactions. Core and RETURNING routes remain unadmitted |
@@ -121,11 +160,11 @@ parent/child transaction evidence and remaining qualification work.
 | Equality `==` and `IN` | SUPPORTED | Declared full tenant/domain-bound HMAC term. Preserve typed binds and native NULL/empty-list truth tables |
 | Negative equality `!=`, `NOT IN`, NULL presence and Boolean NOT | SUPPORTED | Native AND/OR/NOT compositions of admitted comparisons reuse existing full terms and SQL NULL checks. Normalize negation before adding positive tenant guards. Preserve three-valued truth, NULL elements, empty lists and outer-join NULL extension. Storage-only fields admit NULL predicates only; unsupported leaves and custom Boolean renderers refuse |
 | Tenant-scoped uniqueness | SUPPORTED | Full term plus tenant scope in a race-safe native unique index. Explicit single-tenant declaration supplies its one scope |
-| Comparisons `<`, `<=`, `>`, `>=`, BETWEEN/ranges | CURRENTLY UNADMITTED | No admitted range representation |
-| ORDER BY and sorted pagination on protected values | CURRENTLY UNADMITTED | No admitted order representation. Ciphertext ordering is forbidden |
+| Comparisons `<`, `<=`, `>`, `>=`, BETWEEN/ranges | SUPPORTED, `order` fields | Signed integer and date fields that declare and accept [`order`](#order-search). Native three-valued truth with AND/OR/NOT. Other fields refuse |
+| ORDER BY and sorted pagination on protected values | SUPPORTED, `order` fields | Direct column with ascending, descending and NULLS modifiers in the outermost SELECT, within one provable tenant. LIMIT/OFFSET and keyset pagination work. Other fields refuse |
 | LIKE, ILIKE, prefix/startswith, contains, suffix | CURRENTLY UNADMITTED | No admitted pattern/text grammar or representation |
 | Regex, fuzzy/similarity, full text | CURRENTLY UNADMITTED | No admitted exact query or text-search contract |
-| SUM, AVG, MIN, MAX, arithmetic | CURRENTLY UNADMITTED | Selected payload/equality format does not implement these operations |
+| SUM, AVG, MIN, MAX, arithmetic | CURRENTLY UNADMITTED | Selected formats do not implement these operations. For MIN or MAX on an `order` field, sort and use `LIMIT 1` |
 | COUNT DISTINCT on an equality field | SUPPORTED | Bounded local implementation counts existing full-width equality terms within one tenant per group. Require explicit single tenancy, direct tenant equality in WHERE, or GROUP BY the exact tenant column. SQL NULL is excluded; native expression/label result keys are retained. Storage-only fields and global multi-tenant distinct counts refuse |
 | DISTINCT of one direct protected equality field | SUPPORTED | Existing full-width terms within one provable tenant scope; authenticate the representative payload. Labels, aliases and SQL NULL retain native value-set semantics. No output-order promise |
 | DISTINCT with each protected source's public primary key selected | SUPPORTED | Native entity/table/direct-tuple behavior, public ordering/pagination, labels and duplicate join rows. Also admits storage-only fields. Each record ID must match the protected column's exact source alias |
@@ -134,14 +173,13 @@ parent/child transaction evidence and remaining qualification work.
 | Field-to-field equality and other unadmitted functions/operators | CURRENTLY UNADMITTED | Boolean composition does not independently admit a new protected leaf, join or function |
 | Other protected types, JSON predicates, unqualified custom protected types | CURRENTLY UNADMITTED | Text and storage-only Boolean, Date and signed integers have bounded admission. The exact pinned SQLModel AutoString exception retains native String admission |
 | Opaque raw SQL/COPY protected writes and unknown external writers | UNSUPPORTED BY DESIGN | Reject guarded routes. Plan blocks protection unless the deployment excludes separate routes |
-| Research range/prefix arrays, order candidates, scoped aggregate helpers, internal binary projections | INTERNAL ONLY | Experiments and adapter machinery, not public query capabilities |
+| Research range/prefix arrays, scoped aggregate helpers, internal binary projections | INTERNAL ONLY | Experiments and adapter machinery, not public query capabilities |
 
 For mapped bulk UPDATE, use `update(Model).where(Model.tenant_id == tenant)`
 with `execution_options={"synchronize_session": False}` and typed IDs in each
 input dictionary. The single predicate must be direct typed tenant equality.
 For an explicitly single-tenant table, use bare `update(Model)` with the same
-list of typed-ID dictionaries and session scope equal to its declared table
-UUID. Caller WHERE clauses refuse for that route. Native missing-record
+list of typed-ID dictionaries. Caller WHERE clauses refuse for that route. Native missing-record
 row-count failures remain `StaleDataError`; roll back the transaction or savepoint
 before retry.
 See also the [online scalar UPDATE evidence](history/implementation-2026-10.md#single-tenant-mapped-update-2026-10-29).
@@ -185,8 +223,7 @@ Tenant-scoped uniqueness uses PostgreSQL's original qualified NULL behavior. Unq
 
 For scoped mapped DELETE, use `delete(Model)` with exact typed tenant and record
 equalities and `execution_options={"synchronize_session": False}`. Explicit
-single-tenant tables instead require only exact record equality, with session
-scope equal to their declared table UUID. The route admits one
+single-tenant tables instead require only exact record equality. The route admits one
 application-assigned UUID or int64 record.
 Without RETURNING it returns native row counts. RETURNING accepts direct columns,
 explicitly named direct-column labels, or the mapped entity, including public-only
