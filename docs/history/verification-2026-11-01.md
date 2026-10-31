@@ -71,3 +71,5 @@ unchanged. All 12 local Doctor checks pass. The
 [receipts](../_reset/doctor-timeout-race-receipts-20261101.tar.gz) retain the
 hosted failure, exact runtime hash and scoped local repair. Full hosted
 requalification is pending; no production gate changes.
+
+The subsequent complete [hosted run at `1aee8b9`](https://github.com/Debrato2005/cryptalis/actions/runs/41236215265) passes both source and installed/artifact jobs; [retained job metadata](../_reset/github-doctor-timeout-green-20261101.json) closes that pending hosted observation.

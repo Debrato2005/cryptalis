@@ -4,16 +4,13 @@ Cryptalis implements a bounded research prototype. **No production release or co
 This page owns current verification and release gates; the [34-objective ledger](BUILD_CHECKLIST.md) owns remaining work.
 Use the [documentation map](README.md) to find contracts and procedures.
 
-**Latest hosted run: FAIL at `10b3c78`.** The
-[source run](https://github.com/Debrato2005/cryptalis/actions/runs/41232706573)
-passes 3,622 tests and 18 subtests but fails one Doctor process-observation check:
-the killed child disappears during a procfs read. The
-[test-only repair](_reset/doctor-timeout-race-boundary-20261101.json) passes all
-12 local Doctor checks; full hosted requalification remains pending.
-
-**Latest complete hosted PASS remains `af0166a`.** Both jobs in
-[run 41230895270](https://github.com/Debrato2005/cryptalis/actions/runs/41230895270)
-pass on `main` before the subsequent test-only pruning audit.
+**Latest complete hosted run: PASS at `1aee8b9`.** Both jobs in
+[run 41236215265](https://github.com/Debrato2005/cryptalis/actions/runs/41236215265)
+pass before the subsequent timestamp slice. The earlier
+[failed run at `10b3c78`](https://github.com/Debrato2005/cryptalis/actions/runs/41232706573)
+retains the Doctor procfs observation race; the
+[test-only repair](_reset/doctor-timeout-race-boundary-20261101.json) passes local
+checks and the complete hosted rerun. [Hosted result](_reset/github-doctor-timeout-green-20261101.json).
 The preceding [run 41227354271](https://github.com/Debrato2005/cryptalis/actions/runs/41227354271)
 at `bc94495` records the parallel source job taking about 9 minutes and passing
 3,622 test calls and 18 subtests, with 12 call
@@ -37,6 +34,20 @@ source-role failure and later UUID fixture failures remain repaired.
 [Retained failure](_reset/github-point-update-returning-failed-boundary-20261030.json)
 and [repair evidence](_reset/point-delete-returning-ci-fix-boundary-20261030.json)
 remain available.
+
+## Native naive timestamp storage
+
+**VERIFIED, bounded source and installed wheel:** standard timestamp without time
+zone at default precision or explicit precision 6 now uses the existing CF1 and
+lifecycle paths. Native comparisons cover sync/async CRUD, literal defaults,
+RETURNING, all rotations, both layouts and latest-value removal. Source and
+installed online scalar profiles each pass 18 checks; the installed scalar/CF1
+regression passes 233 checks with eight explicit skips. Genuine fresh recovery
+and an import-denied native restart pass for Timestamp and the existing Date
+profile. [Exact boundary](_reset/timestamp-boundary-20261101.json) and
+[observations](history/types-2026-11.md) retain failures and source/runtime hashes.
+Timestamp queries, aware values and other precision/default forms remain open.
+No production gate changes; all seven remain UNKNOWN.
 
 ## Local Git consolidation: 2026-10-31
 

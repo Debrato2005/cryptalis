@@ -461,6 +461,8 @@ def _expand(c, p):
                            + '.' + m._quote(c, native['collation_name']))
             if m._fixed_value_width(native) is not None:
                 native_type = 'pg_catalog.' + native['type']
+                if native['type'] == 'timestamp' and native['typmod'] == '6':
+                    native_type += '(6)'
             else:
                 limit = _native_text_length(native)
                 native_type = 'pg_catalog.text' if native['type'] == 'text' else 'pg_catalog.varchar' + (f'({limit})' if limit is not None else '')

@@ -6,7 +6,7 @@ does not migrate schemas or qualify external writers. Research prototype.
 
 from contextvars import ContextVar
 from dataclasses import dataclass, field
-from datetime import date
+from datetime import date, datetime
 from functools import wraps
 from hashlib import sha256
 import json
@@ -170,6 +170,10 @@ class _Binding:
 
 
 def _assignment(value, binding):
+    if binding.descriptor.value_codec == 'pg-timestamp-us-be/v1':
+        if value is not None and (type(value) is not datetime or value.tzinfo is not None):
+            raise InvalidValue()
+        return value
     if binding.descriptor.value_codec == 'uuid-bytes16/v1':
         if value is not None and type(value) is not UUID:
             raise InvalidValue()

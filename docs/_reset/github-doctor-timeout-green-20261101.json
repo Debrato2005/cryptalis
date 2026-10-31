@@ -1,0 +1,15 @@
+{
+  "conclusion": "success",
+  "headSha": "1aee8b9523572bb2b82ebfe851170aabf519db76",
+  "jobs": [
+    {
+      "conclusion": "success",
+      "name": "Source / PostgreSQL 16"
+    },
+    {
+      "conclusion": "success",
+      "name": "Reproducible artifacts / installed recovery"
+    }
+  ],
+  "url": "https://github.com/Debrato2005/cryptalis/actions/runs/41236215265"
+}

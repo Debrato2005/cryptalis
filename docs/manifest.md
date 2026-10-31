@@ -78,7 +78,8 @@ Plans with admitted owned sequences emit `cryptalis.lock/v5`. Other plans retain
 their existing format selection and bytes. The explicit public-slot layout emits
 `cryptalis.lock/v6`. Signed integer storage emits `cryptalis.lock/v7`
 and requires its exact pg-int2/int4/int8-be/v1 codec readers. Date plans emit `cryptalis.lock/v8`; UUID plans emit `cryptalis.lock/v9`.
-Current readers accept v1 through v9; older readers refuse unknown formats before effects.
+Naive timestamp plans emit `cryptalis.lock/v10`. Current readers accept v1 through
+v10; older readers refuse unknown formats before effects.
 Older operational readers refuse the embedded v5 lock before effects.
 The [VARCHAR decision](history/decisions-2026-10.md#native-varchar-text-admission-2026-10-22) defines assignment and reader boundaries.
 Its exact top-level members are
@@ -151,6 +152,12 @@ The exact Date domains and native controls are in [compatibility](compatibility.
 UUID values store sixteen
 network-order bytes under `uuid-bytes16/v1` and lock/v9. Nil UUID values are valid;
 the public record and tenant UUID codecs keep their separate context role.
+Timestamp values use `pg-timestamp-us-be/v1`: eight signed big-endian microseconds
+from 2000-01-01 under context/v2 and lock/v10. The input is an exact naive Python
+datetime; literal client defaults use a canonical ISO string with six fractional
+digits and require `pg-timestamp-default/v1`. This does not reinterpret Date or
+UUID frames or admit timezone conversions. [Timestamp admission](compatibility.md#timestamp-storage)
+owns supported precision and source-domain limits.
 All other CF1 authenticated context and nonce rules remain unchanged. The
 [local scalar checkpoints](history/implementation-2026-10.md#native-uuid-value-storage-2026-10-28)
 retain their source, artifact and cost boundaries.

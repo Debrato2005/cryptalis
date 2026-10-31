@@ -1,0 +1,198 @@
+{
+  "base_revision": "10b3c785bc92e8d864c1fdea64bd107f75cfe644",
+  "ci_repair_parent": "1aee8b9",
+  "scope": "Finite naive timestamp without time zone, precision default/6, lock/v10; no production qualification",
+  "current_runtime_modules_sha256": "ea99de5ef0e680be192a78cbbf86b1a8354142206a3affc500562829a6b595b9",
+  "current_receipts": {
+    "cryptalis-timestamp-installed-regression-20261101.json": {
+      "test_outcomes": {
+        "test_calls": {
+          "passed": 233,
+          "skipped": 8
+        },
+        "subtest_calls": {},
+        "setup": {
+          "passed": 241
+        },
+        "teardown": {
+          "passed": 241
+        },
+        "collection": {},
+        "selected_items": 241
+      },
+      "runtime_root": "/tmp/cryptalis-timestamp-installed-20261101/lib/python3.12/site-packages/cryptalis"
+    },
+    "cryptalis-timestamp-online-reviewed-20261101/receipt.json": {
+      "test_outcomes": {
+        "test_calls": {
+          "passed": 18
+        },
+        "subtest_calls": {},
+        "setup": {
+          "passed": 18
+        },
+        "teardown": {
+          "passed": 18
+        },
+        "collection": {},
+        "selected_items": 18
+      },
+      "runtime_root": "/home/debrato/Projects/cryptalis/src/cryptalis"
+    },
+    "cryptalis-timestamp-installed-capture-20261101/receipt.json": {
+      "test_outcomes": {
+        "test_calls": {
+          "passed": 18
+        },
+        "subtest_calls": {},
+        "setup": {
+          "passed": 18
+        },
+        "teardown": {
+          "passed": 18
+        },
+        "collection": {},
+        "selected_items": 18
+      },
+      "runtime_root": "/tmp/cryptalis-timestamp-installed-20261101/lib/python3.12/site-packages/cryptalis"
+    },
+    "cryptalis-timestamp-installed-online-20261101/recovery/export-receipt.json": {
+      "test_outcomes": {
+        "test_calls": {
+          "passed": 1
+        },
+        "subtest_calls": {},
+        "setup": {
+          "passed": 1
+        },
+        "teardown": {
+          "passed": 1
+        },
+        "collection": {},
+        "selected_items": 1
+      },
+      "runtime_root": "/tmp/cryptalis-timestamp-installed-20261101/lib/python3.12/site-packages/cryptalis"
+    },
+    "cryptalis-timestamp-installed-online-20261101/recovery/restore-receipt.json": {
+      "test_outcomes": {
+        "test_calls": {
+          "passed": 1
+        },
+        "subtest_calls": {},
+        "setup": {
+          "passed": 1
+        },
+        "teardown": {
+          "passed": 1
+        },
+        "collection": {},
+        "selected_items": 1
+      },
+      "runtime_root": "/tmp/cryptalis-timestamp-installed-20261101/lib/python3.12/site-packages/cryptalis"
+    },
+    "cryptalis-date-installed-compat-20261101/recovery/export-receipt.json": {
+      "test_outcomes": {
+        "test_calls": {
+          "passed": 1
+        },
+        "subtest_calls": {},
+        "setup": {
+          "passed": 1
+        },
+        "teardown": {
+          "passed": 1
+        },
+        "collection": {},
+        "selected_items": 1
+      },
+      "runtime_root": "/tmp/cryptalis-timestamp-installed-20261101/lib/python3.12/site-packages/cryptalis"
+    },
+    "cryptalis-date-installed-compat-20261101/recovery/restore-receipt.json": {
+      "test_outcomes": {
+        "test_calls": {
+          "passed": 1
+        },
+        "subtest_calls": {},
+        "setup": {
+          "passed": 1
+        },
+        "teardown": {
+          "passed": 1
+        },
+        "collection": {},
+        "selected_items": 1
+      },
+      "runtime_root": "/tmp/cryptalis-timestamp-installed-20261101/lib/python3.12/site-packages/cryptalis"
+    }
+  },
+  "archive": "timestamp-receipts-20261101.tar.gz",
+  "archive_sha256": "32c00638be501681eb770bc60ea7390716cfedfd53eaae870ac467fc02eeefce",
+  "wheel_sha256": "f39f1ce333fe2a00e3c05f395792c13adc21035ec1cb4340de9e03ee6615bb7b",
+  "source_sha256": {
+    "pyproject.toml": "a89710a3a3ba924682dd201d214d47c99a27586087b0dd81e4cdfe2707baa1f0",
+    "LICENSE": "7f5a6a6ca9e6e2d6e75ec8530612396f3eebd2659c79a6ca123bf30a933f23df",
+    "README.md": "30e3e2eff93c3256221300d09288046d1327d394d38f1c204523dc34caeb4647",
+    "scripts/release_check.py": "452dbd5b573dec6020a0ec5b1d44cb9710efb2c6e6f70bd6234c44c83026c86e",
+    "src/cryptalis/_doctor_routes.json": "18577fb92043bfa16c9c9cf1ffce3269a69b618198d588a5ef92e4eb24da05b0",
+    "qualification/build-backend/requirements.in": "89b4db9efc7dc2fea83d5d20b18b26a9a06826dbc8c75edcfcc8f0fe65345010",
+    "qualification/build-backend/requirements.txt": "92b4ea5dbc312ccc4b86686f772e5deae8aecf9eb1c7ab1df2aec023da199d25",
+    "src/cryptalis/__init__.py": "f21d0fdc685765436dc2d47d418a89f27b21983d3f2b3acd542672a36afb94c2",
+    "src/cryptalis/__main__.py": "9967032819ce6f18e02a40d033958d5f4f7c328faf8693bc07ecc42a1a525707",
+    "src/cryptalis/_access_contract.py": "3a8ba1ba958e44c08576c174eced5459dba434eaea39da96e5264749d24237b4",
+    "src/cryptalis/_cli_operations.py": "e701df9f2ee8fd86816f50208b7d22847ac145c823273e87c4f33d6a3c338ce9",
+    "src/cryptalis/_doctor_code.py": "f4a8b58987618c4d12a1ab70f5a48ba4dbbdb5b486ed4d16c0e505a7c39901d5",
+    "src/cryptalis/_key_policy_status.py": "053d81b7eaa49c12d3baa6d71fe49c61b85fd1178119a9be170b45939da05cce",
+    "src/cryptalis/_retained_obligations.py": "ef4b05cf9f7b40874b405d666be4f17be1c537cda0dbbfacf7131ba1c956050a",
+    "src/cryptalis/_rotation_activation.py": "5f0cfddb5a19d38def14153a87fdc685e563a9e993f447fa0d336c024904ad7a",
+    "src/cryptalis/_rotation_transition.py": "77a253ec6c8d85361a4046e422f6c033383e29efa6fcb97409894bdb202c2851",
+    "src/cryptalis/_sqlalchemy_aggregate.py": "1842d7b3f5c0e0f63633255191f87b93b76d19f527f9ced762d90e8784a70dc4",
+    "src/cryptalis/_sqlalchemy_functions.py": "d5ca5cb022859e34b872c8a4c5a9764852b778594449d6c0ef2399c4bf7aa333",
+    "src/cryptalis/_sqlalchemy_guard.py": "bfc8ff5913bb1961d0e588ae831d683c59f9e13c9419e54f305277a4349ee9c7",
+    "src/cryptalis/_sqlalchemy_search.py": "d5e22f19e5ecbd3daa04979cbfa5e57e2c40207618a190503b104b352419eb0f",
+    "src/cryptalis/_sqlmodel_types.py": "591940a3fac58d084ad85ed236ee7d3dbe103772afef43bde187473cb54e4c92",
+    "src/cryptalis/application.py": "3d9e1d7ae21dfbf036c2dd50975ed7b76b1f5947c4ce1021e136465c982420fb",
+    "src/cryptalis/cli.py": "cb7dee133cb3845453883438fa390a366aa8c9105c73c204ced8a6ff0a57b22c",
+    "src/cryptalis/cli_host.py": "bd92ec025af76ca7bd6f5ef634d46e88a47ed96bd1ed548ebc18d6486a75979a",
+    "src/cryptalis/crypto/__init__.py": "751e8ce173d722d8e8c61d5d2e06a359fda5fe609495aa0472cee7544fb0f392",
+    "src/cryptalis/crypto/_payload_rotation.py": "ac0728663ce3e426a965d7876760923ecb86682c8b7150f372b07689309aa920",
+    "src/cryptalis/crypto/_rewrap.py": "91dcc25d156b3c8df89de095949f4747a837056964375d652a46bcd53f05f473",
+    "src/cryptalis/crypto/_search_rotation.py": "b2ec5f65ba77a8d44068b20beefb3d367e02f532fe8cb8d060929d476c535ae9",
+    "src/cryptalis/crypto/aws_kms.py": "6b489ab273d640d4fb84f8f0b18a869d1a9406a22d3fffa83f05622a5f48ff25",
+    "src/cryptalis/crypto/cf1.py": "5ac2d4970fddaaa5312d83c397c5ee17427c1a807e60abb7b0d51191765a1749",
+    "src/cryptalis/crypto/google_kms.py": "771373cfecbc6ce18e8cf581a9679b98ae37136ca6ba58452296d8a6bfac860f",
+    "src/cryptalis/crypto/keys.py": "d4fd0378d036e41085ab4141993721c2138221fe39cd08990fdba4e9f88f3bbd",
+    "src/cryptalis/crypto/openbao.py": "e7c581da2a2a87e00ba69fa2677c64d53c2a0aa7f4c2b6408108e9ca45573905",
+    "src/cryptalis/deprotection.py": "1c142025ac739cc3ebddc0bb2c7cb3e267aafb22e8f962c56235a28f5c3f1667",
+    "src/cryptalis/doctor.py": "f75a7ab8f1b2a656f3ba6fb2d6895ee28a4f1f95c7aa54998073509966e49a7b",
+    "src/cryptalis/manifest/__init__.py": "d2dc8653181d66161df9d9eb29ea79fb36b38fd93848d4da4a25184cda6885cd",
+    "src/cryptalis/manifest/compiler.py": "dec5954c07279fd0a567d33f7ec29401fba3d292cbb3c84cc1794e752e74d504",
+    "src/cryptalis/manifest/declaration.py": "670e34297f1f472578d1589dc6337fc42de508cc70ef1153ac72b7322ae82b93",
+    "src/cryptalis/manifest/parser.py": "43fd17656e0717b24c6e93689d3c619994a527ea65e11b2394e4eb66219877f6",
+    "src/cryptalis/migration.py": "0a5ec03703b207bfa489d168ca10aa1f192805797b10037fc45463e8c48bc63b",
+    "src/cryptalis/modification.py": "08a6777df1751eb17894c25b8d69c1337f90831c3aa54ee0b5ab087de8cbc454",
+    "src/cryptalis/online.py": "4ff8ebd5be55523abe6645604471b42cc91c43e1acbe7bc96d887911e1376cba",
+    "src/cryptalis/project.py": "5d6d7e497f56bca706fffe5d0fd0c1fd0a8cf4dcd83fc94d6f3ce790885a90c7",
+    "src/cryptalis/restore.py": "9fb7202de3b9ec655d06ac9c6cba85f40ac45521163427842b18f154efb594fd",
+    "src/cryptalis/rotation.py": "fa7f09203842548dd69afcac853ce411714b148a022b54f0f6853a7d84054fbe",
+    "src/cryptalis/sqlalchemy.py": "a5d4550ee3ac04da71cb1d9f8d637ae74abad5dec04d5ac660875c59f8de4b43",
+    "src/cryptalis/sqlmodel.py": "120acf57857eb4e979d4827752ed9ef3d857354455e3b07ff09f23abbc7fca3e",
+    "src/cryptalis/tenancy.py": "00b17be821fc6b797d475304a295b93389e618b69fad2f4055adfec29fb81c14"
+  },
+  "retained_failures": [
+    "initial unsupported type",
+    "native default fixture expectation",
+    "explicit precision lost during removal",
+    "restored datetime module/class confusion",
+    "online source type admission missing",
+    "original-slot precision loss",
+    "post-plan Date/timestamp domain drift before capture"
+  ],
+  "review": "Read-only AI review found original-slot precision and online expansion gaps; native regressions reproduced both; final review has no material findings. Not independent human review.",
+  "limits": [
+    "No clean full-source rerun for this slice; affected source and installed scalar/CF1 suites plus independent online/fresh profiles.",
+    "Eight scalar-suite skips remain explicit; the retained v9 reader positive/refusal controls ran.",
+    "Earlier source regression precedes the final online-check relocation; current installed regression and final online/fresh profiles bind identical current runtime bytes.",
+    "Timestamp search, timezone-aware values, other precisions and non-literal defaults remain implementation work."
+  ],
+  "production_gates": "UNKNOWN"
+}

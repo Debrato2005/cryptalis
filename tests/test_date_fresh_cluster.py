@@ -1,6 +1,6 @@
 """Genuine fresh-cluster DATE adoption authenticates before current-data exit."""
 import base64
-from datetime import date
+from datetime import date, datetime
 import json
 import os
 from pathlib import Path
@@ -9,13 +9,18 @@ from uuid import UUID
 
 import psycopg
 import pytest
-from sqlalchemy import Column, Date, MetaData, Table, Text, Uuid, select
+from sqlalchemy import Column, Date, DateTime, MetaData, Table, Text, Uuid, select
 from sqlalchemy.orm import registry
 
 from cryptalis import migration as m, restore as recovery
 from cryptalis.sqlalchemy import attach
 from test_date_lifecycle import date_application, date_keys, native_restart, remove_date, rotate_all
 from test_migration import engine, frames, publish, run, TENANT
+
+TIMESTAMP_PROFILE = os.environ.get('CRYPTALIS_FRESH_TIMESTAMP') == '1'
+NATIVE_TYPE = datetime if TIMESTAMP_PROFILE else date
+MAPPED_TYPE = DateTime if TIMESTAMP_PROFILE else Date
+PROFILE = 'timestamp-storage' if TIMESTAMP_PROFILE else 'date-storage'
 
 if 'CRYPTALIS_FRESH_CLUSTER_DIR' not in os.environ:
     pytest.skip('run through scripts/fresh_cluster_qualification.py --date', allow_module_level=True)
@@ -31,7 +36,11 @@ def wire(values):
 def test_export_date_backup_after_rotations():
     workdir = Path(os.environ['CRYPTALIS_FRESH_CLUSTER_DIR'])
     public_slots = os.environ.get('CRYPTALIS_FRESH_PUBLIC_SLOTS') == '1'
-    with date_application(public_slots=public_slots) as app:
+    from test_date_storage import VALUES as DATE_VALUES
+    from test_timestamp_storage import VALUES as TIMESTAMP_VALUES
+    with date_application(public_slots=public_slots, value_type=MAPPED_TYPE(),
+                          values=TIMESTAMP_VALUES if TIMESTAMP_PROFILE else DATE_VALUES,
+                          value_default=NATIVE_TYPE.min) as app:
         source_slots = None
         if public_slots:
             from test_public_slots import slots
@@ -43,19 +52,19 @@ def test_export_date_backup_after_rotations():
         sessions = attach(app.mapping, app.runtime, lock=app.plan.lock_bytes, keys=date_keys,
                           deployment=(app.plan, app.pin))
         with sessions(tenant_id=TENANT) as session:
-            session.get(app.Customer, UUID(int=101)).name = date.max
+            session.get(app.Customer, UUID(int=101)).name = NATIVE_TYPE.max
             session.delete(session.get(app.Customer, UUID(int=106)))
             session.add(app.Customer(id=UUID(int=999), tenant_id=TENANT))
             session.commit()
         expected = dict(source)
-        expected[UUID(int=101)] = date.max
-        expected[UUID(int=999)] = date.min
+        expected[UUID(int=101)] = NATIVE_TYPE.max
+        expected[UUID(int=999)] = NATIVE_TYPE.min
         del expected[UUID(int=106)]
-        assert all(value is None or len(value) == 46 for value in frames(app, True).values())
+        assert all(value is None or len(value) == (50 if TIMESTAMP_PROFILE else 46) for value in frames(app, True).values())
         dump(workdir / 'protected.sql', app.schema, environment('CRYPTALIS_TEST_DATABASE_URL'))
         owner = psycopg.conninfo.conninfo_to_dict(os.environ['CRYPTALIS_TEST_DATABASE_URL'])
         runtime = psycopg.conninfo.conninfo_to_dict(os.environ['CRYPTALIS_TEST_RUNTIME_DATABASE_URL'])
-        manifest = {'application_profile': 'date-storage', 'application_default': date.min.isoformat(),
+        manifest = {'application_profile': PROFILE, 'application_default': NATIVE_TYPE.min.isoformat(),
             'public_slots': public_slots, 'source_public_slots': source_slots,
             'database': owner['dbname'], 'owner_role': owner['user'], 'runtime_role': runtime['user'],
             'schema': app.schema, 'source': wire(source), 'expected': wire(expected),
@@ -68,7 +77,7 @@ def test_export_date_backup_after_rotations():
 def test_restore_date_authentication_explicit_adoption_latest_exit():
     directory = Path(os.environ['CRYPTALIS_FRESH_CLUSTER_DIR'])
     manifest = json.loads((directory / 'restore-manifest.json').read_text())
-    assert manifest['application_profile'] == 'date-storage'
+    assert manifest['application_profile'] == PROFILE
     schema = manifest['schema']
     restore_dump(directory / 'plain.sql', os.environ['CRYPTALIS_FRESH_PLAIN_DATABASE'])
     with psycopg.connect(os.environ['CRYPTALIS_TEST_DATABASE_URL'],
@@ -81,7 +90,7 @@ def test_restore_date_authentication_explicit_adoption_latest_exit():
     owner, runtime = engine('CRYPTALIS_TEST_DATABASE_URL'), engine('CRYPTALIS_TEST_RUNTIME_DATABASE_URL')
     mapping = registry(metadata=MetaData(schema=schema))
     table = Table('customer', mapping.metadata, Column('id', Uuid, primary_key=True, autoincrement=False),
-        Column('tenant_id', Uuid, nullable=False), Column('name', Date, default=date.min), Column('label', Text))
+        Column('tenant_id', Uuid, nullable=False), Column('name', MAPPED_TYPE, default=NATIVE_TYPE.min), Column('label', Text))
     class Customer: pass
     mapping.map_imperatively(Customer, table)
     approval = m.MaintenanceApproval('source schema removed; isolated fresh target excludes all writers', 3600)
@@ -105,10 +114,10 @@ def test_restore_date_authentication_explicit_adoption_latest_exit():
         with sessions(tenant_id=TENANT) as session:
             actual = {row.id: row.name for row in session.scalars(select(Customer))}
             assert wire(actual) == manifest['expected']
-            assert all(value is None or type(value) is date for value in actual.values())
-            session.get(Customer, UUID(int=999)).name = date(2026, 10, 27)
+            assert all(value is None or type(value) is NATIVE_TYPE for value in actual.values())
+            session.get(Customer, UUID(int=999)).name = NATIVE_TYPE(2026, 10, 27)
             session.commit()
-        actual[UUID(int=999)] = date(2026, 10, 27)
+        actual[UUID(int=999)] = NATIVE_TYPE(2026, 10, 27)
         app = SimpleNamespace(owner=owner, plan=source, pin=pin, approval=approval)
         remove_date(app, restore=binding, plaintext_role=os.environ['CRYPTALIS_FRESH_PLAINTEXT_ROLE'])
         if manifest['public_slots']:
@@ -117,10 +126,10 @@ def test_restore_date_authentication_explicit_adoption_latest_exit():
                     'WHERE attrelid=pg_catalog.to_regclass(%s) AND attnum>0 AND NOT attisdropped ORDER BY attnum',
                     (f'"{schema}".customer',)).all()
             assert [list(row) for row in slots] == manifest['source_public_slots']
-        native_restart(schema, actual, directory=directory)
-        (directory / 'date-journey-receipt.json').write_text(json.dumps({
+        native_restart(schema, actual, directory=directory, timestamp=TIMESTAMP_PROFILE)
+        (directory / ('timestamp-journey-receipt.json' if TIMESTAMP_PROFILE else 'date-journey-receipt.json')).write_text(json.dumps({
             'source_plan_digest': source.digest, 'restore_adoption_id': binding.document['adoption_id'],
-            'profile': 'DATE storage, three rotations, fresh PostgreSQL16 adoption, latest-value removal',
+            'profile': PROFILE + ', three rotations, fresh PostgreSQL16 adoption, latest-value removal',
             'tampered_frame': 'refused before adoption', 'package_free_restart': 'passed',
             'gates': 'all seven UNKNOWN'}, indent=2) + '\n')
     finally:
