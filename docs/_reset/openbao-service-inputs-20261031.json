@@ -1,0 +1,22 @@
+{
+  "format": "cryptalis.local-service-inputs/v1",
+  "release_url": "https://github.com/openbao/openbao/releases/tag/v2.7.2",
+  "release_metadata_url": "https://api.github.com/repos/openbao/openbao/releases/tags/v2.7.2",
+  "release_tag": "v2.7.2",
+  "published_at": "2026-10-26T20:24:37Z",
+  "asset_url": "https://github.com/openbao/openbao/releases/download/v2.7.2/openbao_2.7.2_linux_amd64.tar.gz",
+  "asset_digest": "sha256:582b1f3c2fdc5afd443b2d57a225ef654de75adea609fdb66731fd582a9cbc96",
+  "observed_asset_sha256": "582b1f3c2fdc5afd443b2d57a225ef654de75adea609fdb66731fd582a9cbc96",
+  "binary_sha256": "9c5f36287c673f386e1533e9c044169a248e4ee50dd54810fa766e95bd41b788",
+  "version": "OpenBao v2.7.2 (9e0a0d3c3504a0a00b45e61355afac5e35c78379)",
+  "license_url": "https://github.com/openbao/openbao/blob/v2.7.2/LICENSE",
+  "license_sha256": "d6b1a865f1c8c697d343bd4e0ce61025f91898486a1f00d727f32e8644af77d3",
+  "sdk": {
+    "hvac": "2.4.0",
+    "requests": "2.34.2",
+    "urllib3": "2.8.0"
+  },
+  "retrieval": "2026-10-31; successful direct HTTPS GitHub API and official release asset; digest matched; archive data-filter extraction",
+  "profile": "ephemeral loopback HTTP/in-memory service; native SDK; no production custody or signature/provenance qualification",
+  "gates": "all seven UNKNOWN"
+}

@@ -1,5 +1,38 @@
 # Implementation status
 
+## Native OpenBao Transit provider: 2026-10-31
+
+**VERIFIED, bounded:** the optional OpenBao provider implements the existing
+wrap/unwrap/async/rewrap protocol through a supplied native hvac Transit client.
+It pins the authority, named key and explicit version; the service authenticates
+the complete root context as AEAD additional data. Metadata and response checks
+fail closed. It performs no credential discovery, key administration or retries.
+The [security contract](security.md#optional-openbao-transit-adapter) defines
+the exact context encoding, admitted key configuration and host obligations.
+
+The [150-check source receipt](_reset/openbao-source-20261031.json) includes a
+real OpenBao 2.7.2 service and hvac 2.4.0, authenticated context/tag alteration,
+randomized wrappers, pinned old-version use after rotation, cross-provider
+rewrap, least-privilege token revocation/recovery and canceled late responses.
+The PostgreSQL journey protects existing values, searches, preserves a later
+edit through decrypt-back, removes Cryptalis objects, and reads all current
+values through a fresh native ORM. Existing AWS, CF1, fork and provider-failure
+controls also pass. Source hashes remain unchanged during the run.
+
+All [68 installed checks](_reset/openbao-installed-20261031.json) pass from a
+clean wheel environment. The [artifact receipt](_reset/openbao-artifact-20261031.json)
+verifies reproducible wheel/sdist, SBOM, 47 installed files and CLI. The
+[service input record](_reset/openbao-service-inputs-20261031.json) retains
+official release identity, download digest and native SDK versions. The failed
+initial PostgreSQL probe stopped before collection; the same stopped disposable
+cluster was explicitly recovered before a new run. No database was substituted.
+
+This profile uses disposable in-memory OpenBao storage and loopback HTTP.
+Production TLS/workload identity, durable custody, native deletion, independent
+recovery and independent review remain unqualified. All seven gates remain
+UNKNOWN. The previous full-suite checkpoint is still `172f8c7`; this slice has
+focused source and installed evidence, not a new full-suite qualification.
+
 ## Cached direct alias projections: 2026-10-31
 
 **VERIFIED, bounded:** native ORM and Core alias columns created before

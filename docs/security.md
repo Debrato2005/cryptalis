@@ -851,6 +851,67 @@ key-policy admission do not change.
 The [AWS encryption-context reference](https://docs.aws.amazon.com/kms/latest/developerguide/encrypt_context.html)
 explains service matching and logging. No caller-supplied context names are accepted.
 
+### Optional OpenBao Transit adapter
+
+**IMPLEMENTED:** `cryptalis.crypto.openbao.OpenBaoTransitKeyProvider` accepts a
+caller-supplied synchronous `hvac` Transit client. It adds no mandatory SDK
+dependency. The host configures the authenticated endpoint, namespace,
+credentials, TLS, timeouts and bounded SDK retries. For example:
+
+```python
+from cryptalis.crypto.openbao import OpenBaoTransitKeyProvider
+
+provider = OpenBaoTransitKeyProvider(
+    configured_native_client.secrets.transit,
+    provider_id=provider_uuid,
+    mount_point="transit",
+    key_name="cryptalis-roots",
+    key_version=1,
+)
+```
+
+Mount segments and key names use bounded ASCII letters, digits, underscores
+and hyphens. A mount can contain multiple segments. The version must be an
+explicit positive 31-bit integer. Assign a distinct provider UUID to each
+authority and key version. A Transit name is not an immutable identifier:
+service administration and prevention of key replacement remain host duties.
+
+Before each cryptographic request, the adapter checks the named key's metadata:
+`aes256-gcm96`, non-derived, non-exportable, no plaintext backup or deletion,
+the pinned version present, and encryption/decryption enabled. Non-derived keys
+cannot use convergent encryption. OpenBao generates each nonce. The adapter
+supplies neither a nonce nor a derivation context and never creates, rotates,
+exports, deletes or changes a service key.
+
+Native AEAD `associated_data` receives a base64 CF1 length-prefixed tuple:
+`CF1/openbao-transit-wrap/v1`, provider UUID bytes, ASCII mount, ASCII key name,
+four-byte unsigned key version, domain UUID bytes, tenant UUID bytes, ASCII
+purpose, root UUID bytes and four-byte unsigned generation. UUID bytes use the
+existing CF1 order. Each integer uses big-endian order. The tuple is public
+metadata. Every context and authority component is authenticated by the native
+service. No new payload format or root cryptography is introduced.
+
+Wrappers retain the bounded native `vault:vN:` ciphertext, with the exact pinned
+version and canonical base64. Its binary body stays opaque. Decrypt responses
+must contain exactly 32 root bytes. Wrong contexts, unsafe metadata, malformed
+responses and SDK failures produce redacted typed failures without adapter
+retries or fallback. Async preparation uses a worker thread; cancellation
+prevents late keyring publication but cannot stop an already dispatched request.
+Inherited providers refuse after fork. Python bytes have no verified zeroization
+guarantee. Generic rewrap preserves the root under the selected replacement
+provider; it grants no authority to retire the old key.
+
+The [OpenBao Transit API](https://openbao.org/docs/api/secret/transit/) defines
+the AEAD, key-version and metadata contract. The
+[native hvac Transit API](https://python-hvac.org/en/stable/usage/secrets_engines/transit.html)
+defines the supplied SDK interface. Local OpenBao 2.7.2/hvac 2.4.0 checks cover
+native tamper refusal, version pinning, restricted credentials, revocation,
+recovery, cancellation and PostgreSQL protect/search/current-value removal.
+The service uses disposable in-memory storage and loopback HTTP for this test
+profile. These checks do not qualify production TLS, workload identity, durable
+custody, native deletion, retained-backup recovery or independent review.
+All seven gates remain UNKNOWN.
+
 ### Implemented CF1 primitives and local custody
 
 `cryptalis.crypto` exports `FieldDescriptor`, `seal_text`, `open_text`, `KeyProvider`,
