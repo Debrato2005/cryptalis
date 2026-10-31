@@ -1471,7 +1471,7 @@ Advanced representations add no accepted public capability or leakage opt-in unt
 2016) in a form that compares as plain bytes, as CipherStash's default does. Each byte is a
 keyed offset for the digits so far plus the next digit, with no wrap. Keys derive per tenant,
 field and search generation, so terms do not compare across tenants and search rotation
-replaces them. Digits are single bits, or two bits for int8 so the term fits 32 bytes, which
+replaces them. Digits are single bits, or two bits for int8 and timestamp microseconds so the term fits 32 bytes, which
 also reveals the digit difference at the first divergence. A byte of 0 or 255 reveals its bit,
 with probability about 1 in 255 per position. One term is stored per field. CipherStash warns
 that holding both an ORE and an OPE term under one keystream reveals values; that cannot arise
@@ -1575,7 +1575,12 @@ progress. Both exit layouts retain explicit native precision.
 
 Storage-only timestamps disclose the existing row linkage, SQL NULL presence,
 frame length and access/write patterns. No timestamp search term or order
-representation is generated. [Compatibility](compatibility.md#timestamp-storage)
+representation is generated. An explicitly declared timestamp `order` profile uses
+the same signed 64-bit CLWW representation and exposes its documented order,
+equality and frequency leakage. It requires `pg-timestamp-order/v1`; storage-only
+fields do not acquire that capability. Timezone-bearing bind types refuse before
+rewriting because dropping their native cast could change comparison semantics.
+[Compatibility](compatibility.md#timestamp-storage)
 owns the admitted operations. Independent composition review and all seven
 production gates remain UNKNOWN.
 

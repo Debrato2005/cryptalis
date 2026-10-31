@@ -1,0 +1,114 @@
+{
+  "archive": {
+    "members": {
+      "cryptalis-timestamp-order-bind-red-20261101.json": "3fe5ad701e58a9024e70c979d58246d63fcea2fd651a8635670f78e9f1bd2194",
+      "cryptalis-timestamp-order-final-source-20261101.json": "f892c2d3e20095e2d82bd7dc13cb0f2f6191bee1135341e1b08b2ae8b4f382ed",
+      "cryptalis-timestamp-order-initial-20261101.json": "9df5c7e35dbf5f30096d96aa89a163a16d4e3a9a38707fbd3bd7b6f4879074e1",
+      "cryptalis-timestamp-order-installed-20261101.json": "9f160ff321dcbd57cf6141da05f1acb1d3abc7f6bd1b2b58d4371d00f857de6b",
+      "cryptalis-timestamp-order-red-20261101.json": "8014b1273fc77ca811e94a300be9c13e6b6962f1c44c6bdba5ba4bebdbc42737",
+      "cryptalis-timestamp-order-regression-20261101.json": "e98728852959d5b11af6ea82add683a1dcaee0d3f92fb9b516248a8d5319a09c",
+      "online/receipt.json": "71a1ccf9a916a959d77c5aa01169cace31d321ed4d9611b49d32114f9405fb9c",
+      "release.json": "6c7a6ea3c08538831ef6697b3be333a454828dbc331bce00ef179ffff70a3ff1",
+      "sbom.cdx.json": "d2bd16eaa2f170edc404152f7993e8d954afd8f0785e6aa87de8c2c8e4ca836b",
+      "timestamp-storage-ci.json": "770cc1ec09febfaf5034ec8394337a2e7b24cbfdb57c3b8ca3d98d7e297342e4"
+    },
+    "name": "timestamp-order-receipts-20261101.tar.gz",
+    "sha256": "6079813aec0074505434bdde01a97234eb9f7687d0453be309cedc2121bfcef1"
+  },
+  "artifacts": {
+    "cryptalis-0.1.0-py3-none-any.whl": "2656be282c6193c97b2ab89cbd82619a49b981e20850525bf8258df7cf616d86",
+    "cryptalis-0.1.0.tar.gz": "bb073e0993c538d54811b010fa4231652867ae3b7110e14af5957e502a985a43"
+  },
+  "base_revision": "d828a941dbad0686f3970ea1d48018abb9deccce",
+  "current_receipts": {
+    "cryptalis-timestamp-order-final-source-20261101.json": {
+      "outcomes": {
+        "collection": {},
+        "selected_items": 73,
+        "setup": {
+          "passed": 73
+        },
+        "subtest_calls": {},
+        "teardown": {
+          "passed": 73
+        },
+        "test_calls": {
+          "passed": 71,
+          "skipped": 2
+        }
+      },
+      "runtime_binding": {
+        "mode": "source",
+        "module_count": 41,
+        "modules_sha256": "5cbb92e364c3d144e91a95a17f070b9482c0f511d7a9d28a5c4dba7e066a9a89",
+        "runtime_root": "/home/debrato/Projects/cryptalis/src/cryptalis",
+        "wheel": null,
+        "wheel_sha256": null
+      }
+    },
+    "cryptalis-timestamp-order-installed-20261101.json": {
+      "outcomes": {
+        "collection": {},
+        "selected_items": 40,
+        "setup": {
+          "passed": 40
+        },
+        "subtest_calls": {},
+        "teardown": {
+          "passed": 40
+        },
+        "test_calls": {
+          "passed": 40
+        }
+      },
+      "runtime_binding": {
+        "mode": "installed-wheel",
+        "module_count": 41,
+        "modules_sha256": "5cbb92e364c3d144e91a95a17f070b9482c0f511d7a9d28a5c4dba7e066a9a89",
+        "runtime_root": "/tmp/cryptalis-timestamp-order-installed-20261101/lib/python3.12/site-packages/cryptalis",
+        "wheel": "/tmp/cryptalis-timestamp-order-inspected-20261101/cryptalis-0.1.0-py3-none-any.whl",
+        "wheel_sha256": "2656be282c6193c97b2ab89cbd82619a49b981e20850525bf8258df7cf616d86"
+      }
+    },
+    "online/receipt.json": {
+      "outcomes": {
+        "collection": {},
+        "selected_items": 20,
+        "setup": {
+          "passed": 20
+        },
+        "subtest_calls": {},
+        "teardown": {
+          "passed": 20
+        },
+        "test_calls": {
+          "passed": 20
+        }
+      },
+      "runtime_binding": {
+        "mode": "source",
+        "module_count": 41,
+        "modules_sha256": "5cbb92e364c3d144e91a95a17f070b9482c0f511d7a9d28a5c4dba7e066a9a89",
+        "runtime_root": "/home/debrato/Projects/cryptalis/src/cryptalis",
+        "wheel": null,
+        "wheel_sha256": null
+      }
+    }
+  },
+  "limits": [
+    "Two source skips retain unavailable older Date reader controls",
+    "Fresh timestamp order recovery not newly exercised in this slice",
+    "Read-only AI review is not independent human review",
+    "Published sorting attack remains unexecuted",
+    "All seven production gates UNKNOWN"
+  ],
+  "required_reader": "pg-timestamp-order/v1",
+  "retained_failures": [
+    "Initial timestamp query admission refusal",
+    "Missing timestamp bind admission",
+    "Invalid order-only leakage fixture",
+    "Native DST timezone-cast semantic counterexample before refusal guard"
+  ],
+  "runtime_modules_sha256": "5cbb92e364c3d144e91a95a17f070b9482c0f511d7a9d28a5c4dba7e066a9a89",
+  "scope": "Naive timestamp opt-in CLWW order with exact native comparison/sort semantics; no production qualification"
+}

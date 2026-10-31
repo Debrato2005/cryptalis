@@ -43,8 +43,10 @@ def app(request):
     source = _engine(required[2])
     schema = 'cryptalis_online_' + uuid4().hex
     mapping = registry(metadata=MetaData(schema=schema))
-    dtype, values = getattr(request, 'param', (Text(collation='C'), ('body-10', 'body-20', 'body-30')))
+    parameters = getattr(request, 'param', (Text(collation='C'), ('body-10', 'body-20', 'body-30')))
+    dtype, values = parameters[:2]
     scalar = not isinstance(dtype, Text)
+    queries = parameters[2] if len(parameters) == 3 else [] if scalar else ['equality']
     table = Table('customer', mapping.metadata,
         Column('id', Uuid, primary_key=True, autoincrement=False),
         Column('body', dtype, nullable=True),
@@ -81,15 +83,15 @@ def app(request):
             'domain_id': str(DOMAIN), 'models': [{'model': 'Customer', 'table_id': str(TABLE_ID),
                 'tenancy': {'single_tenant': True}, 'fields': [
                     {'name': 'body', 'field_id': str(FIELD_ID), 'protect': True,
-                     'queries': [] if scalar else ['equality'], 'accept_leakage': [] if scalar else ['equality']},
+                     'queries': list(queries), 'accept_leakage': list(queries)},
                     {'name': 'label', 'field_id': str(UUID(int=FIELD_ID.int + 1)), 'protect': True,
                      'queries': [], 'accept_leakage': []}]}]}
         inventory = WriterInventory(True, (Writer(TABLE_ID, 'native application', 'sqlalchemy',
             evidence='independent source-role ORM sessions over the declared table'),))
         proposal = online.plan(json.dumps(declaration).encode(), mapping, owner,
             source_role=source_role, writers=inventory, max_rows=1, max_bytes=4096,
-            search_reviews=() if scalar else (SearchReview(FIELD_ID, False,
-                'Disposable opaque fixture values; equality and frequency leakage accepted.'),),
+            search_reviews=(SearchReview(FIELD_ID, False,
+                'Disposable fixture values; declared order, equality and frequency leakage accepted.'),) if queries else (),
             keys=keys, runtime_role=target_role, target_id=uuid4(),
             backfill_rows_per_second=1000, verify_rows_per_second=1000,
             temporary_bytes_per_row=2000, wal_bytes_per_row=4000)

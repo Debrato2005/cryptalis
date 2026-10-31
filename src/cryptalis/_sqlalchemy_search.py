@@ -1,6 +1,7 @@
 """Bounded equality and order admission, deferred terms, and native index validation."""
 
-from sqlalchemy import BigInteger, Boolean, Date, Integer, LargeBinary, SmallInteger, String, Text, TEXT, Unicode, UnicodeText, Uuid, VARCHAR, and_, or_, bindparam, func, literal, literal_column, type_coerce
+from sqlalchemy import BigInteger, Boolean, Date, DateTime, Integer, LargeBinary, SmallInteger, String, Text, TEXT, Unicode, UnicodeText, Uuid, VARCHAR, and_, or_, bindparam, func, literal, literal_column, type_coerce
+from sqlalchemy.dialects.postgresql import TIMESTAMP
 from sqlalchemy.sql import operators, visitors
 from sqlalchemy.sql.elements import BinaryExpression, BindParameter, BooleanClauseList, ColumnClause, Grouping, Label, Null, UnaryExpression
 from sqlalchemy.sql.functions import count
@@ -33,11 +34,14 @@ class _SearchValue(TypeDecorator):
 def ordinary_bind(owner, value):
     if getattr(value.type, '_variant_mapping', None):
         return False
+    if type(value.type) in (DateTime, TIMESTAMP) and value.type.timezone is not False:
+        # A native timestamptz cast can change comparison semantics across DST.
+        return False
     try:
         optional_string = autostring_impl(value.type) is not None
     except ValueError:
         return False
-    if type(value.type) in (Integer, SmallInteger, BigInteger, Date):
+    if type(value.type) in (Integer, SmallInteger, BigInteger, Date, DateTime, TIMESTAMP):
         # The field codec refuses any value the column could not hold.
         return any(binding.descriptor.ordered for binding in owner.bindings)
     return (optional_string or type(value.type) in (String, Text, TEXT, Unicode, UnicodeText, VARCHAR, NullType) or

@@ -53,6 +53,5 @@ def test_timestamp_native_binary_vectors_and_independent_frames(monkeypatch):
                 struct.pack('>q', -63082281600000001), struct.pack('>q', 252455616000000000)):
         with pytest.raises(InvalidValue):
             cf1.open_value(independent_frame(raw, field, nonce), field, TENANT, RECORD, material)
-    for representation in ('cf1-packed-equality/v1', 'cf1-packed-order/v1'):
-        with pytest.raises(InvalidContext):
-            descriptor(dict(document(64), value_codec='pg-timestamp-us-be/v1', representation=representation))
+    with pytest.raises(InvalidContext):
+        descriptor(dict(document(64), value_codec='pg-timestamp-us-be/v1', representation='cf1-packed-equality/v1'))

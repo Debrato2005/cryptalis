@@ -4,9 +4,11 @@ Cryptalis implements a bounded research prototype. **No production release or co
 This page owns current verification and release gates; the [34-objective ledger](BUILD_CHECKLIST.md) owns remaining work.
 Use the [documentation map](README.md) to find contracts and procedures.
 
-**Latest complete hosted run: PASS at `1aee8b9`.** Both jobs in
-[run 41236215265](https://github.com/Debrato2005/cryptalis/actions/runs/41236215265)
-pass before the subsequent timestamp slice. The earlier
+**Latest complete hosted run: PASS at `d828a94`.** Both jobs in
+[run 41238374566](https://github.com/Debrato2005/cryptalis/actions/runs/41238374566)
+pass for naive timestamp storage, before the subsequent timestamp order slice.
+The preceding [run 41236215265](https://github.com/Debrato2005/cryptalis/actions/runs/41236215265)
+also passes at `1aee8b9`. The earlier
 [failed run at `10b3c78`](https://github.com/Debrato2005/cryptalis/actions/runs/41232706573)
 retains the Doctor procfs observation race; the
 [test-only repair](_reset/doctor-timeout-race-boundary-20261101.json) passes local
@@ -46,7 +48,14 @@ regression passes 233 checks with eight explicit skips. Genuine fresh recovery
 and an import-denied native restart pass for Timestamp and the existing Date
 profile. [Exact boundary](_reset/timestamp-boundary-20261101.json) and
 [observations](history/types-2026-11.md) retain failures and source/runtime hashes.
-Timestamp queries, aware values and other precision/default forms remain open.
+Explicit opt-in timestamp order now passes 71 focused source checks (two
+explicit skips), 40 installed checks and 20 source online scalar checks. Native
+comparisons include microsecond boundaries, ranges, sorting, pagination, async,
+rotations, profile changes and current-value removal. An actual retained v10
+storage reader accepts storage plans and refuses timestamp order before SQL.
+Timezone-bearing bind casts refuse after a native DST counterexample.
+[Order evidence](_reset/timestamp-order-boundary-20261101.json).
+Aware values and other precision/default forms remain open.
 No production gate changes; all seven remain UNKNOWN.
 
 ## Local Git consolidation: 2026-10-31

@@ -16,6 +16,7 @@ SCALARS = [(Boolean(), (False, True, None)), (SmallInteger(), (-32768, 32767, No
            (Integer(), (-2**31, 2**31-1, None)), (BigInteger(), (-2**63, 2**63-1, None)),
            (Date(), (date.min, date.max, None)),
            (DateTime(), (datetime.min, datetime.max, None)),
+           (DateTime(), (datetime.min, datetime.max, None), ('equality', 'order')),
            (Uuid(), (UUID(int=0), UUID(int=2**128-1), None))]
 
 
@@ -36,6 +37,11 @@ def test_online_scalar_current_values_resume_abort_or_native_exit(app, abort):
     expected[UUID(int=10)] = expected[UUID(int=20)][0], expected[UUID(int=10)][1]
     del expected[UUID(int=30)]
     assert _source_rows(app) == expected
+    ordered = 'order' in app.plan.document['lock']['models'][0]['fields'][0]['queries']
+    if ordered:
+        with app.source_factory() as session:
+            native_order = list(session.scalars(select(app.Customer.id).where(app.Customer.body >= datetime.min)
+                                               .order_by(app.Customer.body, app.Customer.id)))
     assert _payloads(app, app.plan)[UUID(int=10)] == (None, None)
     assert before != (None, None)
     online.apply(app.plan, app.owner, keys=keys, pin=app.pin, approval=app.approval, max_chunks=1)
@@ -60,6 +66,9 @@ def test_online_scalar_current_values_resume_abort_or_native_exit(app, abort):
                      deployment=(successor, _pin(successor, 'ACTIVE')))
     with factory(tenant_id=TABLE_ID) as session:
         assert {row.id: (row.body, row.label) for row in session.scalars(select(app.Customer))} == expected
+        if ordered:
+            assert list(session.scalars(select(app.Customer.id).where(app.Customer.body >= datetime.min)
+                                        .order_by(app.Customer.body, app.Customer.id))) == native_order
         session.get(app.Customer, UUID(int=20)).body = None
         session.commit()
     expected[UUID(int=20)] = None, expected[UUID(int=20)][1]

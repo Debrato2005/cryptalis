@@ -85,7 +85,7 @@ Rollback/removal transforms current data through decrypt-back until explicit fin
 ## Order search
 
 Declare `queries: ["equality", "order"]` and the same `accept_leakage` on a signed
-integer or date field. Queries then use ordinary SQLAlchemy:
+integer, date or admitted naive timestamp field. Queries then use ordinary SQLAlchemy:
 
 ```python
 select(Invoice).where(Invoice.tenant_id == tenant, Invoice.amount >= 100).order_by(Invoice.amount.desc()).limit(20)
@@ -101,6 +101,8 @@ These refuse: sorting under an expression, in a subquery, with `DISTINCT` or `GR
 comparing two fields; arithmetic; `MIN`/`MAX`; and order on text, Boolean or UUID fields.
 A value the column cannot hold, such as `small > 100000` on a `SmallInteger`, raises
 `InvalidValue` instead of being compared as something else.
+Timestamp comparisons reject explicitly timezone-bearing bind types: PostgreSQL's
+timezone cast can change their meaning across daylight-saving transitions.
 
 **A database dump reveals the order, equality and frequency of these fields.** See
 [leakage](security.md#capability-leakage) before opting in, and prefer storage-only or
@@ -152,7 +154,7 @@ parent/child transaction evidence and remaining qualification work.
 | Boolean storage/read/write, entity/table/scalar projection, SQL NULL | SUPPORTED | Typed authenticated one-byte values, native Boolean input processing and literal client defaults. No Boolean equality term. [Bounded evidence](history/implementation-2026-10.md#boolean-storage-checkpoint-2026-10-23) |
 | Date storage/read/write and SQL NULL | SUPPORTED | Exact Python date values in years 1 through 9999; pinned four-byte Date codec and lock/v8. Storage-only unless the field declares [`order`](#order-search), native sync/async values and latest-value removal. Non-finite/BC/out-of-range source dates refuse before migration effects |
 | UUID value storage/read/write and SQL NULL | SUPPORTED | Exact standard native UUID mappings and Python UUID inputs, including nil; sixteen authenticated network-order bytes and lock/v9. Storage-only; defaults, coercions and custom mappings refuse. Public record/tenant UUIDs keep their separate context contract |
-| Timestamp storage/read/write and SQL NULL | SUPPORTED, bounded | Standard timestamp without time zone at default precision or explicit precision 6; exact naive Python datetime values in years 1–9999, literal client defaults, lock/v10 and [the timestamp boundary](#timestamp-storage). Search, timezone-aware values and precision rounding remain unadmitted |
+| Timestamp storage/read/write and SQL NULL | SUPPORTED, bounded | Standard timestamp without time zone at default precision or explicit precision 6; exact naive Python datetime values in years 1–9999, literal client defaults, lock/v10 and [the timestamp boundary](#timestamp-storage). Explicit opt-in order admits comparisons and sorting; timezone-aware values and precision rounding remain unadmitted |
 | Signed integer storage/read/write and SQL NULL | SUPPORTED | Exact int2/int4/int8 mappings and width-bound Python ints, literal client defaults, native failure/transaction behavior and typed fixed-width CF1. Storage-only unless the field declares [`order`](#order-search); the fixed authentication overhead is published in the local cost profile |
 | Mapped dictionary INSERT without RETURNING | SUPPORTED | Attached sync/async `Session.execute(insert(Model), list[dict])`, explicit typed IDs and tenant scope, copied attribute dictionaries, native NULL/grouping, autoflush, uniqueness and transaction behavior. Other bulk routes remain unadmitted |
 | Mapped dictionary INSERT with RETURNING | SUPPORTED | Native direct or explicitly named column tuples/scalars and inserted mapped entities, including public-only columns. Preserve result keys/types, grouping, paging and optional input ordering. Entity results retain identity-map loading and refresh. Authenticate each protected output against its own exact prepared input. Computed expression/alias, loader-option and caller return_defaults forms remain unadmitted |
@@ -163,7 +165,7 @@ parent/child transaction evidence and remaining qualification work.
 | Equality `==` and `IN` | SUPPORTED | Declared full tenant/domain-bound HMAC term. Preserve typed binds and native NULL/empty-list truth tables |
 | Negative equality `!=`, `NOT IN`, NULL presence and Boolean NOT | SUPPORTED | Native AND/OR/NOT compositions of admitted comparisons reuse existing full terms and SQL NULL checks. Normalize negation before adding positive tenant guards. Preserve three-valued truth, NULL elements, empty lists and outer-join NULL extension. Storage-only fields admit NULL predicates only; unsupported leaves and custom Boolean renderers refuse |
 | Tenant-scoped uniqueness | SUPPORTED | Full term plus tenant scope in a race-safe native unique index. Explicit single-tenant declaration supplies its one scope |
-| Comparisons `<`, `<=`, `>`, `>=`, BETWEEN/ranges | SUPPORTED, `order` fields | Signed integer and date fields that declare and accept [`order`](#order-search). Native three-valued truth with AND/OR/NOT. Other fields refuse |
+| Comparisons `<`, `<=`, `>`, `>=`, BETWEEN/ranges | SUPPORTED, `order` fields | Signed integer, date and naive timestamp fields that declare and accept [`order`](#order-search). Native three-valued truth with AND/OR/NOT. Other fields refuse |
 | ORDER BY and sorted pagination on protected values | SUPPORTED, `order` fields | Direct column with ascending, descending and NULLS modifiers in the outermost SELECT, within one provable tenant. LIMIT/OFFSET and keyset pagination work. Other fields refuse |
 | LIKE, ILIKE, prefix/startswith, contains, suffix | CURRENTLY UNADMITTED | No admitted pattern/text grammar or representation |
 | Regex, fuzzy/similarity, full text | CURRENTLY UNADMITTED | No admitted exact query or text-search contract |
@@ -413,14 +415,18 @@ mappings, strings, dates and aware datetime inputs refuse explicitly.
 `pg-timestamp-us-be/v1` uses eight signed big-endian microseconds from
 2000-01-01. Lock/v10 pins this codec and, for literal defaults only,
 `pg-timestamp-default/v1`. Earlier type combinations retain their lock versions.
+Opt-in order additionally requires `pg-timestamp-order/v1`; a retained storage-only
+v10 reader rejects this combination before database access.
 Operational planning and locked initial expansion reject infinities, BC and
 out-of-range years before schema effects. Values introduced during online capture
 are checked before driver decoding and leave failed chunks atomic. Read-only
 status remains available to inspect already committed progress.
 
-This slice admits storage, NULL presence and the existing direct-count grammar.
-Timestamp comparisons, search, ordering, arithmetic, grouping and protected joins
-remain implementation work. Both layouts preserve current values and explicit
+Storage-only fields admit NULL presence and the existing direct-count grammar.
+Explicit [order search](#order-search) also admits equality, ranges, sorting and
+pagination using the existing signed 64-bit term encoding. Equality-only search,
+timezone conversion, arithmetic, grouping and protected joins remain implementation
+work. Both layouts preserve current values and explicit
 precision on exit. [PostgreSQL's native temporal contract](https://www.postgresql.org/docs/16/datatype-datetime.html)
 and the [native oracle](../tests/test_timestamp_storage.py) define the bounded
 semantics; no production cell or security gate is qualified.

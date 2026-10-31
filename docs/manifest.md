@@ -14,7 +14,7 @@ The public manifest uses bounded JSON. Its field-intent declaration is independe
 | `profile` | Selected library crypto profile. No arbitrary algorithms or executable normalizers |
 | `models`, `fields` | Names resolve within the supplied registry. No imports from strings. Unlisted fields retain native behavior |
 | `protect` | True requests protection. Removal requests a verified transition, never automatic plaintext writes |
-| `queries` | Empty means storage-only. `equality` includes `IN`. `unique` implies tenant-scoped equality. `order` adds range and sorting on integer and date fields, and implies equality |
+| `queries` | Empty means storage-only. `equality` includes `IN`. `unique` implies tenant-scoped equality. `order` adds range and sorting on integer, date and naive timestamp fields, and implies equality |
 | `accept_leakage` | Required matching acceptance for every search capability. Missing acceptance blocks plan |
 | `tenancy` | Exactly `{"column": "attribute_name"}` or `{"single_tenant": true}` per protected table |
 | Mapping facts | Text codec, deterministic exact collation, nullability, application-assigned PK, tenant scope, constraint scope, and writer inventory |
@@ -24,7 +24,7 @@ lists each protected field with the search leakage you accepted.
 
 Prefix limits, shared-join domains and arbitrary normalizers remain unadmitted.
 Boolean, signed integer, finite Date and UUID storage use pinned value codecs.
-Integer and date fields admit [`order`](compatibility.md#order-search) search only; Boolean
+Integer, date and naive timestamp fields admit [`order`](compatibility.md#order-search) search only; Boolean
 and UUID fields admit no search.
 The compiler rejects unsupported types, server-generated keys, small-domain searchable fields, missing tenant scope, and unsupported writers at plan time.
 Searchable small domains remain unsafe because enumeration can label their equality classes. No invented cardinality threshold supplies evidence.
@@ -156,7 +156,8 @@ Timestamp values use `pg-timestamp-us-be/v1`: eight signed big-endian microsecon
 from 2000-01-01 under context/v2 and lock/v10. The input is an exact naive Python
 datetime; literal client defaults use a canonical ISO string with six fractional
 digits and require `pg-timestamp-default/v1`. This does not reinterpret Date or
-UUID frames or admit timezone conversions. [Timestamp admission](compatibility.md#timestamp-storage)
+UUID frames or admit timezone conversions. Timestamp order additionally pins
+`pg-timestamp-order/v1`, with explicit order/equality leakage acceptance. [Timestamp admission](compatibility.md#timestamp-storage)
 owns supported precision and source-domain limits.
 All other CF1 authenticated context and nonce rules remain unchanged. The
 [local scalar checkpoints](history/implementation-2026-10.md#native-uuid-value-storage-2026-10-28)
