@@ -12,11 +12,14 @@ import tempfile
 from types import CoroutineType
 from uuid import UUID
 
+from cryptalis.crypto import ProviderAuthenticationUnavailable
+
 
 _HOST = re.compile(r'[A-Za-z_][A-Za-z0-9_]*(?:\.[A-Za-z_][A-Za-z0-9_]*)*:[A-Za-z_][A-Za-z0-9_]*\Z')
 _CODE = re.compile(r'[A-Za-z][A-Za-z0-9_.:,-]{0,127}\Z')
 _SQLSTATE = re.compile(r'[0-9A-Z]{5}\Z')
 _DENIED = frozenset(('external_policy_mismatch', 'wrong_database_target', 'invalid_plan',
+    'invalid_query_samples', 'query_samples_incompatible',
     'maintenance_approval_required', 'writer_exclusion_or_pause_not_approved',
     'invalid_target_or_runtime_role', 'invalid_apply_bound', 'missing_measured_rates',
     'missing_measured_storage_or_wal_costs', 'unsafe_runtime_role', 'maintenance_requires_table_owner',
@@ -39,7 +42,8 @@ _SEARCH_DENIED = _DENIED | frozenset(('invalid_search_rotation_plan', 'search_op
     'matching_external_publication_required', 'search_rotation_executor_required',
     'search_rotation_requires_searchable_fields'))
 _OPERATIONAL = frozenset(('database_effect_requires_inspection', 'operation_failed_requires_inspection',
-    'connection_cleanup_requires_inspection', 'KeyUnavailable', 'CryptoBackendUnavailable'))
+    'connection_cleanup_requires_inspection', 'KeyUnavailable', 'CryptoBackendUnavailable',
+    'ProviderAuthenticationUnavailable', 'query_inspection_unavailable'))
 
 
 def _known_result(failure, result):
@@ -60,6 +64,10 @@ def _failure(operation, code, stage, *, exit_code=2, result=None, primary=None):
         _known_result(failure, result)
     if primary is not None:
         failure.error['related_error'] = primary.error
+    if code == 'ProviderAuthenticationUnavailable':
+        failure.error.update(effects_scope='database', provider_effects='UNKNOWN')
+        failure.error['remedy'] += (' ' + ProviderAuthenticationUnavailable.remedy
+                                    + ' A token may already have been issued.')
     return failure
 
 
@@ -311,8 +319,17 @@ def run(arguments):
                             or type(context.search_reviews) is not tuple
                             or any(not isinstance(review, SearchReview) for review in context.search_reviews)):
                         raise _failure(operation, 'HostContextInvalid', 'host_context')
+                    if context.declaration is not None:
+                        if type(context.declaration) is not bytes:
+                            raise _failure(operation, 'HostContextInvalid', 'host_context')
+                        try:
+                            declaration = parse_protection_declaration(context.declaration).canonical_bytes()
+                        except ManifestInvalid:
+                            raise _failure(operation, 'HostContextInvalid', 'host_context') from None
+                        if declaration != parse_protection_declaration(raw).canonical_bytes():
+                            raise _failure(operation, 'ManifestMismatch', 'host_context')
                     plan = m.plan(raw, context.mapping, engine, writers=context.writers,
-                        search_reviews=context.search_reviews, keys=context.keys,
+                        search_reviews=context.search_reviews, queries=context.queries, keys=context.keys,
                         runtime_role=context.runtime_role, target_id=context.target_id,
                         backfill_rows_per_second=context.backfill_rows_per_second,
                         verify_rows_per_second=context.verify_rows_per_second,
@@ -346,7 +363,9 @@ def run(arguments):
         elif not planning:
             failure.error.update(operation_id=str(plan.operation_id), effects='INSPECT_JOURNAL')
         raise
-    except m.TransitionFailure as error:
+    except (m.TransitionFailure, ProviderAuthenticationUnavailable) as error:
+        if isinstance(error, ProviderAuthenticationUnavailable):
+            error = m.TransitionFailure('ProviderAuthenticationUnavailable')
         code = error.code if type(error.code) is str and _CODE.fullmatch(error.code) else 'TransitionRejected'
         operational = bool(error.cleanup_errors) or code in _OPERATIONAL
         failure = _failure(operation, code, 'transition', exit_code=4 if operational else 2 if code in _DENIED else 3,
@@ -393,13 +412,17 @@ def run(arguments):
     return 0
 
 
-def run_init(arguments):
-    """Inspect explicit declaration intent and save its canonical bytes."""
-    from cryptalis.cli import _CommandFailure, _write_output
-    operation = 'initialization'
+def run_init(arguments, *, diagnostic=False):
+    """Share key-free admission; only initialization publishes a declaration."""
+    from cryptalis.cli import _CommandFailure, _write_output, _preflight_failure
+    operation = 'deployment.preflight' if diagnostic else 'initialization'
     engine = inspection = artifact = None
 
     def annotate(failure):
+        if diagnostic:
+            failure.error.update(family='Doctor', remedy='Inspect the declaration, schema/query observations, '
+                'host configuration and output delivery before repeating diagnosis.')
+            return _preflight_failure(failure, inspection)
         failure.error.pop('known_result', None)
         failure.error.update(effects='NONE', effects_scope='compiler_inspection', host_configuration_effects='UNKNOWN',
             remedy='Inspect the declaration, schema inspection and artifact facts before retry. Existing files are never replaced.')
@@ -422,11 +445,12 @@ def run_init(arguments):
         raise annotate(_failure(operation, 'DependenciesUnavailable', 'load_runtime', exit_code=4)) from None
 
     try:
-        if type(arguments.host_context) is not str or _HOST.fullmatch(arguments.host_context) is None:
+        reference = arguments.initialization_context if diagnostic else arguments.host_context
+        if type(reference) is not str or _HOST.fullmatch(reference) is None:
             raise _failure(operation, 'InvalidInput', 'inputs')
-        if os.path.lexists(arguments.out):
+        if not diagnostic and os.path.lexists(arguments.out):
             raise _failure(operation, 'ArtifactExists', 'inputs')
-        context = _load_host(arguments.host_context, operation)
+        context = _load_host(reference, operation)
         engine = _owned_engine(context, Engine)
         with _quiet():
             if type(context) is not InitializationContext or engine is None:
@@ -439,22 +463,32 @@ def run_init(arguments):
                     or type(context.search_reviews) is not tuple or type(context.declaration) is not bytes
                     or any(not isinstance(review, SearchReview) for review in context.search_reviews)):
                 raise _failure(operation, 'HostContextInvalid', 'host_context')
+            if type(context.queries) is not tuple or len(context.queries) > 128:
+                raise _failure(operation, 'Query.InvalidSamples', 'host_context')
             if len(context.declaration) > MAX_DOCUMENT_BYTES:
                 raise _failure(operation, 'Manifest.Invalid', 'declaration')
             canonical = parse_protection_declaration(context.declaration).canonical_bytes()
-            artifact = dict(scope='initialization_artifact', manifest_digest=hashlib.sha256(canonical).hexdigest(),
-                artifact_published=False, artifact_reused=False, artifact_directory_durable=False,
-                artifact_temporary_retained=False, effects='NONE')
+            if not diagnostic:
+                artifact = dict(scope='initialization_artifact', manifest_digest=hashlib.sha256(canonical).hexdigest(),
+                    artifact_published=False, artifact_reused=False, artifact_directory_durable=False,
+                    artifact_temporary_retained=False, effects='NONE')
             inspection = preflight(canonical, context.mapping, engine, writers=context.writers,
-                                   search_reviews=context.search_reviews)
+                                   search_reviews=context.search_reviews, queries=context.queries)
             if inspection['checks']['manifest_schema'] != 'PASS':
                 incompatible = inspection['checks']['manifest_schema'] == 'FAIL'
                 raise _failure(operation, 'SchemaIncompatible' if incompatible else 'InspectionUnavailable',
-                               'inspection', exit_code=2 if incompatible else 4)
-        _publish(arguments.out, canonical, artifact, operation, artifact_only=True)
-        result = dict(scope='initialization', status=inspection['status'], manifest_digest=artifact['manifest_digest'],
-            inspection=inspection, effects='NONE', effects_scope='compiler_inspection',
-            host_configuration_effects='UNKNOWN', artifact_result=dict(artifact))
+                               'inspection', exit_code=(3 if diagnostic else 2) if incompatible else 4)
+            if inspection['checks'].get('query_samples', 'PASS') != 'PASS':
+                incompatible = inspection['checks']['query_samples'] == 'FAIL'
+                raise _failure(operation, 'QueryIncompatible' if incompatible else 'QueryInspectionUnavailable',
+                    'query_inspection', exit_code=(3 if diagnostic else 2) if incompatible else 4)
+        if diagnostic:
+            result = dict(inspection, effects_scope='compiler_inspection', host_configuration_effects='UNKNOWN')
+        else:
+            _publish(arguments.out, canonical, artifact, operation, artifact_only=True)
+            result = dict(scope='initialization', status=inspection['status'], manifest_digest=artifact['manifest_digest'],
+                inspection=inspection, effects='NONE', effects_scope='compiler_inspection',
+                host_configuration_effects='UNKNOWN', artifact_result=dict(artifact))
     except _CommandFailure as failure:
         raise annotate(failure)
     except ManifestInvalid:
@@ -691,7 +725,9 @@ def _run_policy_transition(arguments, purpose):
             _publish(arguments.out, proposal.artifact, result, operation)
     except _CommandFailure as failure:
         raise annotate(failure)
-    except m.TransitionFailure as error:
+    except (m.TransitionFailure, ProviderAuthenticationUnavailable) as error:
+        if isinstance(error, ProviderAuthenticationUnavailable):
+            error = m.TransitionFailure('ProviderAuthenticationUnavailable')
         code = error.code if type(error.code) is str and _CODE.fullmatch(error.code) else 'TransitionRejected'
         operational = bool(error.cleanup_errors) or code in _OPERATIONAL
         denied = _TENANT_DENIED if tenant else _REWRAP_DENIED
@@ -933,7 +969,9 @@ def run_generation(arguments, purpose):
             result['artifact_result'] = dict(artifact)
     except _CommandFailure as failure:
         raise annotate(failure)
-    except m.TransitionFailure as error:
+    except (m.TransitionFailure, ProviderAuthenticationUnavailable) as error:
+        if isinstance(error, ProviderAuthenticationUnavailable):
+            error = m.TransitionFailure('ProviderAuthenticationUnavailable')
         code = error.code if type(error.code) is str and _CODE.fullmatch(error.code) else 'TransitionRejected'
         operational = bool(error.cleanup_errors) or code in _OPERATIONAL
         failure = _failure(operation, code, 'transition', exit_code=4 if operational else 2 if code in denied else 3)

@@ -6,7 +6,8 @@ from uuid import UUID
 
 import psycopg
 import pytest
-from sqlalchemy import DefaultClause, bindparam, event, select, text
+from sqlalchemy import DefaultClause, bindparam, delete, event, insert, select, text, update
+from sqlalchemy.sql.elements import Grouping
 from sqlalchemy.ext.asyncio import create_async_engine
 from sqlalchemy.orm import Session, registry
 
@@ -20,6 +21,60 @@ def protect(app):
     run(app); publish(app)
     return attach(app.mapping, app.runtime, lock=app.plan.lock_bytes,
                   keys=keys, deployment=(app.plan, app.pin))
+
+
+@pytest.mark.parametrize('operation', ['INSERT', 'UPDATE', 'DELETE'])
+def test_grouped_returning_native_failure_has_typed_no_effect_refusal(operation, monkeypatch):
+    from sqlalchemy.exc import NoSuchColumnError
+    from cryptalis.sqlalchemy import UnsupportedProtectedOperation
+    with application(rows=3) as app:
+        label = Grouping(app.Customer.name).label('wrapped')
+        original_type = label.type
+        params, options = None, {'synchronize_session': False}
+        if operation == 'INSERT':
+            query = insert(app.Customer).returning(label)
+            params = [{'id': UUID(int=1000), 'tenant_id': TENANT, 'name': 'private grouped'}]
+            options = {}
+        else:
+            query = (update if operation == 'UPDATE' else delete)(app.Customer).where(
+                app.Customer.tenant_id == TENANT, app.Customer.id == UUID(int=101))
+            if operation == 'UPDATE':
+                query = query.values(name='private grouped')
+            query = query.returning(label)
+        with Session(app.runtime) as session:
+            with pytest.raises(NoSuchColumnError):
+                session.execute(query, params, execution_options=options)
+            session.rollback()
+        factory = protect(app)
+        monkeypatch.setattr(factory._owner, 'prepare',
+                            lambda tenant: pytest.fail('unsupported output prepared keys'))
+        with raw_calls(monkeypatch, app.schema, operation) as calls:
+            with factory(tenant_id=TENANT) as session:
+                with pytest.raises(UnsupportedProtectedOperation):
+                    session.execute(query, params, execution_options=options)
+                session.rollback()
+            assert calls == []
+        assert label.type is original_type
+
+
+def test_native_async_buffer_iteration_keeps_guarded_row_checks():
+    from collections import deque
+    from sqlalchemy.dialects.postgresql.psycopg import AsyncAdapt_psycopg_cursor
+    from cryptalis._sqlalchemy_guard import _Cursor
+    from cryptalis.crypto import AuthenticationFailed
+    from cryptalis.sqlalchemy import UnsupportedProtectedOperation
+    raw = object.__new__(AsyncAdapt_psycopg_cursor)
+    raw._rows = deque([(1,), (2,)])
+    assert list(raw) == [(1,), (2,)]
+    raw._rows = deque([(1,), (2,)])
+    cursor = _Cursor(raw, None, UnsupportedProtectedOperation, lambda: None)
+    def reject(rows):
+        raise AuthenticationFailed()
+    cursor._rows_check = reject
+    with pytest.raises(AuthenticationFailed):
+        next(iter(cursor))
+    cursor._rows_check = None
+    assert list(cursor) == [(2,)]
 
 
 @contextmanager

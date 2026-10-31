@@ -1,0 +1,149 @@
+{
+  "format": "cryptalis.application-performance-boundary/v1",
+  "base_revision": "09c635aa9b665d1f5e34f3ca25b618af548cd866",
+  "baseline_identity": "be122efc17ae4b54dbae3024a34088d8cc20b6f127662c4e75055277296ac98e",
+  "candidate_identity": "7bd057f0aa2540d3d2a705926f2e2eef36adf5ebaf923482a625c848c6085941",
+  "baseline_targets": {
+    "equality": {
+      "added_p95_ms": 7.206434,
+      "maximum_added_p95_ms": 3,
+      "status": "FAIL"
+    },
+    "equality_entities": {
+      "added_p95_ms": 7.503728000000001,
+      "maximum_added_p95_ms": 3,
+      "status": "FAIL"
+    },
+    "in20": {
+      "added_p95_ms": 20.788256,
+      "maximum_added_p95_ms": 8,
+      "status": "FAIL"
+    },
+    "in20_entities": {
+      "added_p95_ms": 9.261506,
+      "maximum_added_p95_ms": 8,
+      "status": "FAIL"
+    },
+    "isolated_storage": {
+      "maximum_ratio": 2,
+      "observed_ratio": 1.5248304624388875,
+      "status": "PASS"
+    },
+    "point": {
+      "added_p95_ms": 4.898428,
+      "maximum_added_p95_ms": 3,
+      "status": "FAIL"
+    },
+    "point_entities": {
+      "added_p95_ms": 4.249041,
+      "maximum_added_p95_ms": 3,
+      "status": "FAIL"
+    }
+  },
+  "candidate_targets": {
+    "equality": {
+      "added_p95_ms": 6.924643,
+      "maximum_added_p95_ms": 3,
+      "status": "FAIL"
+    },
+    "equality_entities": {
+      "added_p95_ms": 7.807459000000001,
+      "maximum_added_p95_ms": 3,
+      "status": "FAIL"
+    },
+    "in20": {
+      "added_p95_ms": 11.058981,
+      "maximum_added_p95_ms": 8,
+      "status": "FAIL"
+    },
+    "in20_entities": {
+      "added_p95_ms": 10.426622,
+      "maximum_added_p95_ms": 8,
+      "status": "FAIL"
+    },
+    "isolated_storage": {
+      "maximum_ratio": 2,
+      "observed_ratio": 1.5248304624388875,
+      "status": "PASS"
+    },
+    "point": {
+      "added_p95_ms": 4.8712610000000005,
+      "maximum_added_p95_ms": 3,
+      "status": "FAIL"
+    },
+    "point_entities": {
+      "added_p95_ms": 4.360062,
+      "maximum_added_p95_ms": 3,
+      "status": "FAIL"
+    }
+  },
+  "baseline_process": {
+    "cpu_seconds_including_fixture_setup_and_cleanup": 7.036616500000001,
+    "elapsed_seconds_including_fixture_setup_and_cleanup": 9.392444336997869,
+    "peak_rss_scope": "Process lifetime peak, including earlier pytest imports; not database-server memory.",
+    "process_peak_rss": 94572,
+    "process_peak_rss_unit": "KiB"
+  },
+  "candidate_process": {
+    "cpu_seconds_including_fixture_setup_and_cleanup": 7.135725762,
+    "elapsed_seconds_including_fixture_setup_and_cleanup": 9.590384871000424,
+    "peak_rss_scope": "Process lifetime peak, including earlier pytest imports; not database-server memory.",
+    "process_peak_rss": 94708,
+    "process_peak_rss_unit": "KiB"
+  },
+  "paired_median_added_ms": {
+    "equality": {
+      "baseline": 4.1302,
+      "candidate": 4.1939
+    },
+    "equality_entities": {
+      "baseline": 4.4943,
+      "candidate": 5.5466
+    },
+    "in20": {
+      "baseline": 5.862,
+      "candidate": 7.3682
+    },
+    "in20_entities": {
+      "baseline": 6.235,
+      "candidate": 7.1763
+    },
+    "point": {
+      "baseline": 2.662,
+      "candidate": 3.0187
+    },
+    "point_entities": {
+      "baseline": 3.0896,
+      "candidate": 3.2024
+    }
+  },
+  "decision": "Candidate discarded: all six latency targets still fail, paired medians are higher, and total process CPU does not improve.",
+  "archive": {
+    "path": "docs/_reset/application-performance-receipts-20261030.tar.gz",
+    "sha256": "b00051244f4ce32ae3586fb58ae1386c5374086a216aac5fb3a709bfcdce676f",
+    "members": {
+      "application-config-performance-10k.json": "8eef60c7350b4aba4603e8c9f1bc19d82363e9cb0662fd1a6f9ce9c72606f678",
+      "application-config-performance-10k-wrapper.json": "7e5b4ef27bb62e4a7e9c59c0b766ce28964ee0c4d92f662b02d9aae0cde88f96",
+      "application-config-profiled-performance.json": "815e39128cefa52499d7ec93f19a4f6f32d6d73a5a89ace6d65d56e96c9c85b2",
+      "application-config-profiled-wrapper.json": "e6eda42c550595f1ab97f15ed701d010693ff80b4d0b4b2d045cbbdbeb8a4412",
+      "application-query-cost.json": "c77dc93ce7bb39c13bff3c1fa9b983b449f2c2baeb29eaa4c773a91b6ce27ea3",
+      "query_cost_plugin.py": "8e121b0e81fe1f418d57786c995f3243438ce2bc1fd30e20f0641ca51a0427c0",
+      "admission-cache-performance-10k.json": "32baab92350615ac902c72cfe0c56ecb8e774633e452f291784bcc6f624ed778",
+      "admission-cache-performance-10k-wrapper.json": "3efaf2aa43f62dcb64f8f5d8ea7f215debcc4fd24261b77a1eee210473319a9b",
+      "admission-cache-candidate.patch": "a6cbaad2bf45b61770a76658eb11b8cc11001bc720b28125c075c5ea357aa19c"
+    }
+  },
+  "diagnosis": "cProfile identifies repeated admission/expression traversal as a material CPU cost. Instrumented timings are diagnostic only; cumulative function times overlap.",
+  "limits": [
+    "Single local host; uncontrolled shared-host load; only 100 measured pairs.",
+    "Only the recorded row count is measured; this does not qualify larger datasets.",
+    "Warm in-process public fixture provider; no custody, cold or remote provider claim.",
+    "No async, VARCHAR, concurrent load, write-throughput or maintenance-pause qualification.",
+    "Migration uses existing fixture rate/storage/WAL assumptions; those are not measurements from this profile.",
+    "Isolated storage counts only the public name column and its equality index; relation totals are context.",
+    "One baseline and one candidate observation do not establish a deterministic regression or speedup.",
+    "The cause of prior unexplained plaintext-filter/full-entity page overhead remains UNKNOWN.",
+    "The discarded candidate has performance parity observations, not a security-regression qualification."
+  ],
+  "production_gates": "UNKNOWN"
+}

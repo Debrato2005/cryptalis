@@ -11,7 +11,7 @@ from uuid import uuid4
 
 import psycopg
 import pytest
-from sqlalchemy import create_engine, event
+from sqlalchemy import create_engine, event, select
 
 from cryptalis import cli
 from cryptalis.crypto import Keyring
@@ -94,7 +94,8 @@ def host(app, monkeypatch, **options):
             owned.echo = True
         return InitializationContext(engine=owned, mapping=app.mapping, declaration=configuration['declaration'],
             writers=WriterInventory(True, (Writer(TABLE_ID, 'app', 'sqlalchemy', evidence='owned native fixture'),)),
-            search_reviews=(SearchReview(FIELD_ID, False, 'public synthetic unbounded fixture names'),))
+            search_reviews=(SearchReview(FIELD_ID, False, 'public synthetic unbounded fixture names'),),
+            queries=configuration.get('queries', ()))
     module.factory = factory
     monkeypatch.setitem(sys.modules, module.__name__, module)
     return module.__name__ + ':factory', configuration, observed
@@ -102,6 +103,113 @@ def host(app, monkeypatch, **options):
 
 def command(reference, output):
     return ('init', '--host-context', reference, '--out', str(output), '--json')
+
+
+def test_doctor_and_init_share_key_free_host_and_query_samples(tmp_path, monkeypatch, capsys):
+    with application() as app:
+        reference, _, observed = host(app, monkeypatch,
+            queries=(select(app.Customer).where(app.Customer.name == 'PRIVATE_QUERY_VALUE'),))
+        before = _snapshot(app)
+        def forbidden(*args, **kwargs):
+            pytest.fail('pre-adoption inspection must not prepare keys')
+        with monkeypatch.context() as no_keys:
+            no_keys.setattr(Keyring, 'prepare', forbidden)
+            code, text, error = invoke(capsys, 'doctor', '--initialization-context', reference, '--json')
+            assert code == 0 and error == '' and 'PRIVATE_QUERY_VALUE' not in text
+            diagnostic = json.loads(text)
+            assert diagnostic['checks']['manifest_schema'] == diagnostic['checks']['query_samples'] == 'PASS'
+            assert diagnostic['status'] == diagnostic['checks']['query_routes'] == 'UNKNOWN'
+            assert diagnostic['effects'] == 'NONE' and diagnostic['host_configuration_effects'] == 'UNKNOWN'
+            assert 'artifact_result' not in diagnostic and list(tmp_path.iterdir()) == []
+            output = tmp_path / 'declaration.json'
+            code, text, error = invoke(capsys, *command(reference, output))
+        assert code == 0 and error == ''
+        assert json.loads(text)['inspection']['checks'] == diagnostic['checks']
+        assert output.read_bytes() == parse_protection_declaration(
+            json.dumps(app.plan.document['lock']['declaration']).encode()).canonical_bytes()
+        assert observed['factory'] == observed['dispose'] == 2 and _snapshot(app) == before
+
+
+@pytest.mark.parametrize('diagnostic', [True, False])
+@pytest.mark.parametrize('fault', ['query', 'query_list', 'query_limit'])
+def test_shared_host_query_refusals_never_publish_or_change_data(tmp_path, monkeypatch, capsys, diagnostic, fault):
+    with application() as app:
+        unsupported = select(app.Customer).where(app.Customer.name.like('PRIVATE_QUERY_VALUE%'))
+        queries = (unsupported,) if fault == 'query' else ([unsupported] if fault == 'query_list' else (unsupported,) * 129)
+        reference, _, observed = host(app, monkeypatch, queries=queries)
+        before = _snapshot(app)
+        arguments = ('doctor', '--initialization-context', reference, '--json') if diagnostic else command(reference, tmp_path / 'refused.json')
+        code, text, error = invoke(capsys, *arguments)
+        result = json.loads(error)['error']
+        assert code == (3 if diagnostic and fault == 'query' else 2) and text == ''
+        assert result['code'] == ('QueryIncompatible' if fault == 'query' else 'Query.InvalidSamples')
+        assert 'PRIVATE_QUERY_VALUE' not in error and observed['dispose'] == 1
+        if fault != 'query': assert observed['connect'] == 0
+        else:
+            report = result if diagnostic else result['inspection']
+            assert report['checks']['manifest_schema'] == 'PASS' and report['checks']['query_samples'] == 'FAIL'
+        assert list(tmp_path.iterdir()) == [] and _snapshot(app) == before
+
+
+@pytest.mark.parametrize('fault', ['wrong_context', 'echo', 'cleanup_failure', 'wrong_password'])
+def test_shared_doctor_context_failures_remain_read_only_and_redacted(tmp_path, monkeypatch, capsys, fault):
+    with application() as app:
+        reference, _, observed = host(app, monkeypatch, **{fault: True})
+        before = _snapshot(app)
+        code, text, error = invoke(capsys, 'doctor', '--initialization-context', reference, '--json')
+        result = json.loads(error)['error']
+        assert code == (2 if fault in ('wrong_context', 'echo') else 4) and text == ''
+        assert 'PRIVATE_OPERATIONAL_HOST_OR_PROVIDER' not in error
+        assert result['effects'] == 'NONE' and result['host_configuration_effects'] == 'UNKNOWN'
+        assert result['family'] == 'Doctor' and observed['dispose'] == 1
+        assert 'artifact_result' not in result and list(tmp_path.iterdir()) == []
+        if fault == 'cleanup_failure': assert result['checks']['manifest_schema'] == 'PASS'
+        if fault in ('wrong_context', 'echo'): assert observed['connect'] == 0
+        assert _snapshot(app) == before
+
+
+@pytest.mark.parametrize('option', ['--host-context', '--database-url-file', '--pin', '--restore-binding', '--pre-adoption', '--provider-context'])
+def test_shared_doctor_context_conflicts_refuse_before_host(monkeypatch, capsys, option):
+    module = ModuleType('doctor_conflict_' + uuid4().hex)
+    called = []
+    module.factory = lambda: called.append(True)
+    monkeypatch.setitem(sys.modules, module.__name__, module)
+    code, text, error = invoke(capsys, 'doctor', '--initialization-context', module.__name__ + ':factory',
+        option, 'unused:value', '--json')
+    assert code == 2 and text == '' and json.loads(error)['error']['code'] == 'InvalidArguments'
+    assert called == []
+
+
+def test_shared_doctor_cleanup_preserves_failed_query_observation(monkeypatch, capsys):
+    with application() as app:
+        reference, _, observed = host(app, monkeypatch, cleanup_failure=True,
+            queries=(select(app.Customer).where(app.Customer.name.like('PRIVATE_QUERY_VALUE%')),))
+        before = _snapshot(app)
+        code, text, error = invoke(capsys, 'doctor', '--initialization-context', reference, '--json')
+        result = json.loads(error)['error']
+        assert code == 4 and text == '' and result['code'] == 'CleanupUnavailable'
+        assert result['checks']['query_samples'] == 'FAIL'
+        assert result['related_error']['code'] == 'QueryIncompatible'
+        assert 'PRIVATE_QUERY_VALUE' not in error and 'PRIVATE_OPERATIONAL_HOST_OR_PROVIDER' not in error
+        assert observed['dispose'] == 1 and _snapshot(app) == before
+
+
+def test_shared_doctor_output_failure_retains_observed_schema(monkeypatch, capsys):
+    with application() as app:
+        reference, _, observed = host(app, monkeypatch)
+        before = _snapshot(app)
+        class BrokenOutput:
+            def write(self, value): raise BrokenPipeError(errno.EPIPE, 'PRIVATE_OUTPUT_DETAIL')
+            def flush(self): pass
+        with monkeypatch.context() as broken:
+            broken.setattr(sys, 'stdout', BrokenOutput())
+            code = cli.main(['doctor', '--initialization-context', reference, '--json'])
+        capture = capsys.readouterr()
+        result = json.loads(capture.err)['error']
+        assert code == 4 and capture.out == '' and result['code'] == 'OutputUnavailable'
+        assert result['checks']['manifest_schema'] == 'PASS' and result['status'] == 'UNKNOWN'
+        assert 'PRIVATE_OUTPUT_DETAIL' not in capture.err and 'artifact_result' not in result
+        assert observed['dispose'] == 1 and _snapshot(app) == before
 
 
 def phase_free(diagnostic):

@@ -1,6 +1,39 @@
 # Protect an existing text column
 
-**IMPLEMENTED research prototype.** No production provider or independent review exists.
+[Documentation map](README.md) · [Current evidence](status.md)
+
+- [Online initial protection](#online-initial-protection)
+- [Initialize an explicit declaration through the CLI](#initialize-an-explicit-declaration-through-the-cli)
+- [Plan and apply protection through the CLI](#plan-and-apply-protection-through-the-cli)
+- [Plan and execute current-value plaintext reverse through the CLI](#plan-and-execute-current-value-plaintext-reverse-through-the-cli)
+- [Rewrap root custody through the CLI](#rewrap-root-custody-through-the-cli)
+- [Rotate payload generation through the CLI](#rotate-payload-generation-through-the-cli)
+- [Rotate search generation through the CLI](#rotate-search-generation-through-the-cli)
+- [Qualify original HTTP across the CLI lifecycle](#qualify-original-http-across-the-cli-lifecycle)
+- [Declare retained-backup status references](#declare-retained-backup-status-references)
+- [Use the optional SQLModel bridge](#use-the-optional-sqlmodel-bridge)
+- [Diagnose before adoption](#diagnose-before-adoption)
+- [Diagnose an active deployment](#diagnose-an-active-deployment)
+- [Inspect committed progress](#inspect-committed-progress)
+- [Change root-wrapping custody](#change-root-wrapping-custody)
+- [Plan payload-key rotation](#plan-payload-key-rotation)
+- [Stage or cancel payload-key rotation](#stage-or-cancel-payload-key-rotation)
+- [Seal and publish payload-key rotation](#seal-and-publish-payload-key-rotation)
+- [Rotate payload keys after adopted lineage](#rotate-payload-keys-after-adopted-lineage)
+- [Recover a payload-rotation backup](#recover-a-payload-rotation-backup)
+- [Search-key rotation contract](#search-key-rotation-contract)
+- [Rotate search keys after adopted lineage](#rotate-search-keys-after-adopted-lineage)
+- [Plan generation rotation from a restore binding](#plan-generation-rotation-from-a-restore-binding)
+- [Preserve an admitted owned sequence](#preserve-an-admitted-owned-sequence)
+- [Select public-slot preservation](#select-public-slot-preservation)
+- [Measured throughput](#measured-throughput)
+- [Native VARCHAR mappings](#native-varchar-mappings)
+- [Inspect pinned public key-policy metadata](#inspect-pinned-public-key-policy-metadata)
+- [Internal integer storage construction](#internal-integer-storage-construction)
+- [Internal literal integer client defaults](#internal-literal-integer-client-defaults)
+
+
+**IMPLEMENTED research prototype.** No provider deployment is production-qualified; independent human review remains unavailable.
 All seven gates remain UNKNOWN. Use the authorized disposable PostgreSQL 16 cell.
 
 1. Keep the native text mapping as `Text`, `String(n)`, or `VARCHAR(n)`. Assign primary keys in the application.
@@ -152,29 +185,30 @@ Call `seal` after catch-up. Save its returned successor artifact durably before 
 
 Before switch, `abort` removes capture objects and shadows. It preserves all committed native edits, whether the operation fenced writers or not. After switch, use the existing current-data reverse transition to return to plaintext. The access contract records the original source role for that transition. Keep P and A for rotations and restored-target operations. Their successors retain the same access contract. Finish with the existing package-free native exit.
 
-Terminal verification scans current data. Index creation, public-slot conversion, lock drain, and host publication can extend the pause. Measure and approve these costs. This path makes no global near-zero-downtime claim. Its source and installed evidence appears in [status](status.md#bounded-online-initial-protection-2026-10-24). All seven production gates remain UNKNOWN.
+Terminal verification scans current data. Index creation, public-slot conversion, lock drain, and host publication can extend the pause. Measure and approve these costs. This path makes no global near-zero-downtime claim. Its source and installed evidence appears in [status](history/implementation-2026-10.md#bounded-online-initial-protection-2026-10-24). All seven production gates remain UNKNOWN.
 
 ## Initialize an explicit declaration through the CLI
 
 **IMPLEMENTED, bounded source and installed verification:** make the trusted host factory return
-`InitializationContext(engine, mapping, declaration, writers, search_reviews)`.
+`InitializationContext(engine, mapping, declaration, writers, search_reviews, queries=())`.
 Supply public declaration bytes and a fresh owned inspection engine. Create no
 keys, provider, pin, target ID, runtime role or plan for this command.
 
 Run `init --host-context MODULE:FACTORY --out DECLARATION` with optional `--json`.
-Use a new private output path. Schema PASS permits canonical publication.
+Use a new private output path. Schema PASS and PASS for any supplied query
+samples permit canonical publication.
 Keep aggregate and unobserved checks UNKNOWN. Retain the saved file and report.
 After an output or cleanup error, inspect the artifact facts before retry.
 Continue through existing planning with separate explicit planning authority.
 Initialization adds no transition or process-interruption checkpoint by itself. See the
-[architecture contract](architecture/README.md#initialization-cli) and
-[verified checkpoint](status.md#operational-cli-initialization-2026-10-24).
+[architecture contract](host-contexts.md#initialization-cli) and
+[verified checkpoint](history/implementation-2026-10.md#operational-cli-initialization-2026-10-24).
 Source and installed initialization verification pass.
 
 ## Plan and apply protection through the CLI
 
 The source and actual installed wheel pass the bounded workflow in
-[status](status.md#operational-cli-protection-workflow-2026-10-24).
+[status](history/implementation-2026-10.md#operational-cli-protection-workflow-2026-10-24).
 Use an explicit trusted factory through `--host-context MODULE:FACTORY`. Return
 `PlanningContext` for `plan` and `ApplyContext` for `apply`. Give every invocation
 a fresh owned engine. Do not reuse Doctor's key-free tuple for these operations.
@@ -196,9 +230,9 @@ workflow below adds bounded source evidence. Rotation CLI work remains required.
 Output or cleanup errors can follow artifact publication or committed progress.
 Preserve the original artifact and `known_result`. Inspect the operation and
 current host pin before retry. An error does not prove rollback.
-See the [architecture](architecture/README.md#operational-protection-cli),
+See the [architecture](host-contexts.md#operational-protection-cli),
 [security boundary](security.md#operational-cli-trust-boundary) and
-[status](status.md#operational-cli-protection-workflow-2026-10-24).
+[status](history/implementation-2026-10.md#operational-cli-protection-workflow-2026-10-24).
 
 ## Plan and execute current-value plaintext reverse through the CLI
 
@@ -220,8 +254,8 @@ and the same approvals. A missing journal alone proves no successful removal.
 Keep the original artifact and inspect journal/host state after an unknown outcome.
 These commands do not delete keys or establish backup retirement. Rotation CLI
 commands remain required future work. See the
-[architecture contract](architecture/README.md#reverse-and-removal-cli) and
-[verified checkpoint](status.md#operational-cli-reverse-and-removal-2026-10-24).
+[architecture contract](host-contexts.md#reverse-and-removal-cli) and
+[verified checkpoint](history/implementation-2026-10.md#operational-cli-reverse-and-removal-2026-10-24).
 Source and installed genuine fresh-target verification pass.
 
 ## Rewrap root custody through the CLI
@@ -244,8 +278,8 @@ For cancellation, stop writers and republish the source ACTIVE boundary.
 Use `RewrapAbortContext` for `keys rotate rewrap abort P`. Supply source custody
 and source authority. Abort accepts only pending transitions. Keep P/A after
 completion or cancellation. These commands create no keys or authority. See the
-[architecture contract](architecture/README.md#root-rewrap-cli) and
-[verified checkpoint](status.md#operational-cli-root-rewrap-2026-10-24).
+[architecture contract](host-contexts.md#root-rewrap-cli) and
+[verified checkpoint](history/implementation-2026-10.md#operational-cli-root-rewrap-2026-10-24).
 Source and installed genuine adopted-target verification pass.
 
 ## Rotate payload generation through the CLI
@@ -266,8 +300,8 @@ Use `activate A` with target custody and independent ACTIVATING/ACTIVE authority
 Use `abort P` only before switch, with source custody and republished source ACTIVE authority.
 After switch, P-status and resealing refuse. Keep A for later recovery and exit.
 No journal reconstruction can replace a lost A. Search CLI remains required later. See the
-[architecture contract](architecture/README.md#payload-rotation-cli) and
-[verified checkpoint](status.md#operational-cli-payload-rotation-2026-10-24).
+[architecture contract](host-contexts.md#payload-rotation-cli) and
+[verified checkpoint](history/implementation-2026-10.md#operational-cli-payload-rotation-2026-10-24).
 Source and installed genuine adopted-target verification pass.
 
 ## Rotate search generation through the CLI
@@ -286,8 +320,8 @@ original application and genuine source/installed fresh-target scenarios pass wi
 the recorded boundary. Existing payload evidence alone does not verify
 this command family. See the
 [payload procedure](#rotate-payload-generation-through-the-cli),
-[architecture contract](architecture/README.md#search-rotation-cli) and
-[verified checkpoint](status.md#operational-cli-search-rotation-2026-10-24).
+[architecture contract](host-contexts.md#search-rotation-cli) and
+[verified checkpoint](history/implementation-2026-10.md#operational-cli-search-rotation-2026-10-24).
 
 ## Qualify original HTTP across the CLI lifecycle
 
@@ -298,15 +332,15 @@ CLI artifacts and independent host pins. Keep the existing five SIGKILL checkpoi
 Complete requests and mail before maintenance. Reload the entire original dependency/router
 graph with each new mapping and runtime factory. Override only `get_db`.
 Finish with original HTTP in a child that denies Cryptalis imports. It does not test mail. See the
-[acceptance boundary](architecture/README.md#original-http-operational-qualification) and
-[qualification checkpoint](status.md#original-http-operational-cli-journey-2026-10-24).
+[acceptance boundary](host-contexts.md#original-http-operational-qualification) and
+[qualification checkpoint](history/implementation-2026-10.md#original-http-operational-cli-journey-2026-10-24).
 
 ## Declare retained-backup status references
 
 **IMPLEMENTED, source and installed verified:** add `--host-context MODULE:FACTORY` to status with the
-[exact context](architecture/README.md#retained-backup-status-metadata). Keep declared hashes separate
+[exact context](host-contexts.md#retained-backup-status-metadata). Keep declared hashes separate
 from database observations. Genuine fresh-cluster checks pass within the
-[integrated checkpoint](status.md#integrated-defensive-hardening-2026-10-24). The command does
+[integrated checkpoint](history/implementation-2026-10.md#integrated-defensive-hardening-2026-10-24). The command does
 not inspect referenced files or prove recovery.
 
 ## Use the optional SQLModel bridge
@@ -325,15 +359,69 @@ with sessions(tenant_id=tenant_uuid) as session:
     user = session.exec(select(User).where(User.id == record_id)).one()
 ```
 
-The optional bridge supports SQLModel 0.0.48 with synchronous PostgreSQL only.
+The optional bridge supports SQLModel 0.0.48 with synchronous and asynchronous PostgreSQL.
 It preserves native SQLModel validation, client defaults, NULL, refresh and
 `Session.exec` result shapes in the tested cell. Missing dependencies, other
-versions and async engines refuse before connection or key work.
-The [pinned template checkpoint](status.md#optional-sqlmodel-template-checkpoint-2026-10-23)
+versions refuse before connection or key work. For an AsyncEngine, await attachment
+and use the returned async session factory; see the [bridge contract](compatibility.md#optional-sqlmodel-bridge).
+The [pinned template checkpoint](history/implementation-2026-10.md#optional-sqlmodel-template-checkpoint-2026-10-23)
 covers unchanged CRUD modules for one storage-only field.
 HTTP routes, authentication, full startup and deployment remain outside that checkpoint.
 
+## Inventory Python code routes
+
+Install the optional native scanner separately from the application. In a source
+checkout, the pinned tool environment is reproducible:
+
+```console
+uv sync --project tools/scanner --locked
+cryptalis doctor --code-root ./app --scanner ./tools/scanner/.venv/bin/ast-grep --json
+```
+
+For a package installation, supply a trusted ast-grep 0.51.0 executable with
+`--scanner`; omitting that option resolves `ast-grep` on PATH. This mode needs no
+manifest, host factory, database URL, credentials or keys. Select application
+source directories deliberately: ignore files are disabled within the selected
+root, so vendored/generated Python inside it is also eligible for native scanning.
+Native `ast-grep-ignore` comments can still suppress matches; every report states
+this limitation. The command uses fixed packaged rules and ignores project scanner configuration.
+It performs no source rewrite or application import.
+
+The report lists relative paths, one-based lines and candidate kinds. Review each
+against the manifest and writer inventory, including jobs, scripts, direct SQL
+and COPY. A matching method may belong to an unrelated object. Aliased imports
+are visible as imports; arbitrary alias calls are not resolved. No match does
+not mean no writer exists. `status`, code validity and full route coverage remain
+UNKNOWN even when scanner execution passes. Native parser recovery is not a
+Python syntax oracle. [The security contract](security.md)
+retains these evidence limits and process bounds.
+
+Exit 0 means the requested scan completed. Invalid argument combinations return
+2; unavailable/incomplete inspection and output failure return 4 with safe issue
+codes. A native parser recovery observation retains other candidates but returns
+4. Resolve the reported issue before repeating. Do not use the report as approval
+to migrate or attach: continue with manifest/schema and supplied-query diagnosis
+below, then verify actual admitted application journeys.
+
 ## Diagnose before adoption
+
+Reuse the key-free factory already used for initialization:
+
+```console
+cryptalis doctor --initialization-context myapp.cryptalis_config:initialization --json
+cryptalis init --host-context myapp.cryptalis_config:initialization --out cryptalis.json --json
+```
+
+The factory returns a fresh `InitializationContext` with the explicit declaration,
+mapping, owned inspection engine, writer inventory and search reviews. Optionally
+set `queries=(select(Customer).where(Customer.email == example_email),)` to check
+bounded SELECT structures. Samples are not executed or printed. Doctor creates
+no artifact; init saves canonical intent only after schema and supplied-query
+admission. Neither command loads keys or grants migration authority. Actual host
+code effects and unsupplied route coverage remain UNKNOWN.
+
+If the declaration and connection file are already separate, the existing form
+remains available:
 
 **IMPLEMENTED, bounded:** supply the protection declaration, private inspection
 connection file and an explicit trusted host factory:
@@ -355,7 +443,7 @@ or native execution semantics. Known sample refusal exits 3 with QueryIncompatib
 Unavailable sample inspection exits 4 with QueryInspectionUnavailable. Resolve both
 before migration. Keep provider, host, writer-exclusion and route coverage claims
 UNKNOWN where the check supplies no evidence. See the
-[installed checkpoint](status.md#installed-application-query-diagnostics-2026-10-24).
+[installed checkpoint](history/implementation-2026-10.md#installed-application-query-diagnostics-2026-10-24).
 
 Use the same explicit declarations as planning. Supply no engine or keys through
 this tuple. The CLI owns its inspection connection and cleanup.
@@ -476,13 +564,14 @@ assert observed.verification == "NOT_PERFORMED"
 ### Inspect rotation preparation
 
 **IMPLEMENTED, bounded:** the same command accepts preparation proposal P in
-either exact format: `cryptalis.payload-rotation/v1` or
-`cryptalis.search-rotation/v1`. It calls the existing
-`rotation.status_payload_rotation` or `rotation.status_search_rotation` API.
+payload/search rotation formats and `cryptalis.modification/v1`. It reuses the
+existing transition status checks. Modification status accepts either search
+enablement or disablement; it does not authenticate frames or prepare keys.
 
 ```bash
 cryptalis status payload-preparation.json --pin preparation-pin.json --database-url-file /private/connection.txt --json
 cryptalis status search-preparation.json --pin preparation-pin.json --database-url-file /private/connection.txt --json
+cryptalis status modification.json --pin preparation-pin.json --database-url-file /private/connection.txt --json
 ```
 
 Supply the pin for that exact P: its operation ID and digest identify P, and
@@ -492,9 +581,9 @@ application publication. Recorded phases are PREPARED, EXPANDED, BACKFILLED,
 or ABORTED. No P row exists yet in PREPARED. Cutover to the sealed successor
 supersedes P; inspect the successor artifact after cutover.
 
-Output uses `scope: payload_rotation_preparation` or
-`scope: search_rotation_preparation`, with P's `operation_id` and its
-`source_operation_id`. Every admitted recorded phase returns exit 3,
+Output uses `scope: payload_rotation_preparation`,
+`scope: search_rotation_preparation`, or `scope: profile_rotation_preparation`,
+with P's `operation_id` and its `source_operation_id`. Every admitted recorded phase returns exit 3,
 `runtime_metadata_matches: false`, and `verification: NOT_PERFORMED`.
 `effects: NONE` and `authority: HOST_SUPPLIED_PIN` remain explicit.
 BACKFILLED reports recorded progress, not fresh frame authentication or
@@ -646,8 +735,8 @@ The [17 fresh-target source controls](_reset/fresh-cluster-restore-20261024-4.js
 pass. Source VARCHAR and installed-wheel TEXT profiles also pass 17 each.
 Status records the full primary and installed application regression boundaries.
 The [lifecycle](lifecycle.md#adopted-target-root-rewrap-2026-10-24) and
-[format decision](decisions.md#adopted-target-root-rewrap-2026-10-24) own the
-full contract. [Status](status.md#adopted-target-root-rewrap-2026-10-24)
+[format decision](history/decisions-2026-10.md#adopted-target-root-rewrap-2026-10-24) own the
+full contract. [Status](history/implementation-2026-10.md#adopted-target-root-rewrap-2026-10-24)
 owns exact evidence and limits.
 
 The existing fresh-cluster harness has separate root-rewrap profiles:
@@ -908,11 +997,11 @@ and an import-denied restart. The [source VARCHAR profile](_reset/fresh-cluster-
 and [installed TEXT wheel](_reset/fresh-cluster-restore-20261024-14.json) also pass 12 each.
 The installed Smolink [source](_reset/fresh-cluster-export-20261024-17.json)
 and [fresh-target](_reset/fresh-cluster-restore-20261024-16.json) stages repeat
-the original application journey. [Status](status.md#payload-rotation-after-adopted-lineage-2026-10-24)
+the original application journey. [Status](history/implementation-2026-10.md#payload-rotation-after-adopted-lineage-2026-10-24)
 records the full regression and exact artifact boundaries. Later search rotation
 uses the [lineage-bearing route](#rotate-search-keys-after-adopted-lineage). External custody, authenticated host publication and all seven gates
 remain unqualified or UNKNOWN. The [lifecycle](lifecycle.md#payload-rotation-after-adopted-lineage-2026-10-24)
-and [format decision](decisions.md#adopted-target-payload-rotation-2026-10-24) own the contract.
+and [format decision](history/decisions-2026-10.md#adopted-target-payload-rotation-2026-10-24) own the contract.
 
 ## Recover a payload-rotation backup
 
@@ -1053,9 +1142,9 @@ replace the successor pin. Direct restore-binding generation planning follows it
 These profiles use approved disposable PostgreSQL 16 targets through
 `scripts/test_postgres.py`. All 11 native mixed-field controls pass.
 Source VARCHAR, affected-suite and ordinary installed application checks also pass.
-The installed TEXT wheel also passes all 11. [Status](status.md#search-rotation-after-adopted-lineage-2026-10-24)
+The installed TEXT wheel also passes all 11. [Status](history/implementation-2026-10.md#search-rotation-after-adopted-lineage-2026-10-24)
 records receipts and limits. The [lifecycle](lifecycle.md#search-rotation-after-adopted-lineage-2026-10-24)
-and [format decision](decisions.md#adopted-target-search-rotation-2026-10-24) own
+and [format decision](history/decisions-2026-10.md#adopted-target-search-rotation-2026-10-24) own
 the contract. This adds no crypto, index, journal or authority format and grants
 no key-retirement permission. All seven production gates remain UNKNOWN.
 
@@ -1071,7 +1160,7 @@ removal/import-denied restart pass in source and installed-wheel runs.
 User.full_name storage bytes and native index identities stay exact through
 search rotation. Fixture-only single-tenant email admission remains required.
 This profile does not add HTTP/JWT/SMTP, browser or deployment qualification.
-See the [application checkpoint](status.md#original-searchable-sqlmodel-adoption-2026-10-24)
+See the [application checkpoint](history/implementation-2026-10.md#original-searchable-sqlmodel-adoption-2026-10-24)
 for exact receipts and the unchanged product boundary.
 
 ## Plan generation rotation from a restore binding
@@ -1091,8 +1180,8 @@ installed application checks also pass. All 19 installed direct controls and
 the original six-file SQLModel direct source/installed journey pass. Its legacy
 installed path also passes. The
 [lifecycle](lifecycle.md#generation-planning-from-a-restore-binding-2026-10-24),
-[format decision](decisions.md#direct-restore-binding-generation-planning-2026-10-24)
-and [status](status.md#direct-restore-binding-generation-planning-2026-10-24)
+[format decision](history/decisions-2026-10.md#direct-restore-binding-generation-planning-2026-10-24)
+and [status](history/implementation-2026-10.md#direct-restore-binding-generation-planning-2026-10-24)
 define the contract and evidence limits. All seven production gates remain UNKNOWN.
 
 The local `--direct-generation` harness profile requires
@@ -1122,8 +1211,8 @@ Source and installed fresh-target profiles each pass four. Both original six-fil
 SQLModel adoption paths pass with the installed wheel. The full source regression
 also passes. The
 [lifecycle contract](lifecycle.md#owned-sequence-preservation-and-restored-identity-2026-10-24),
-[format decision](decisions.md#owned-sequence-metadata-and-restored-identity-2026-10-24)
-and [status](status.md#owned-sequence-preservation-and-restore-2026-10-24) define the current scope.
+[format decision](history/decisions-2026-10.md#owned-sequence-metadata-and-restored-identity-2026-10-24)
+and [status](history/implementation-2026-10.md#owned-sequence-preservation-and-restore-2026-10-24) define the current scope.
 
 ## Select public-slot preservation
 
@@ -1140,7 +1229,7 @@ The installed three-field SQLModel lifecycle and legacy compatibility profiles
 also pass. The full source regression passes. The original three-field application
 still needs fresh-v6/direct-binding qualification. Earlier formats retain DROP/RENAME behavior.
 See the [lifecycle contract](lifecycle.md#public-column-slot-layout-2026-10-24)
-and [recorded evidence](status.md#public-column-slot-preservation-2026-10-24).
+and [recorded evidence](history/implementation-2026-10.md#public-column-slot-preservation-2026-10-24).
 
 ## Measured throughput
 
@@ -1187,9 +1276,9 @@ or reverse artifact; preparation P refuses this option. Add the independent
 `--host-context` when retained-backup declarations are required. The command does
 not prepare keys, contact providers or authorize retirement. Treat DIGEST_MATCH
 as metadata identity only. See the
-[checkpoint](status.md#pinned-public-key-policy-status-2026-10-24).
+[checkpoint](history/implementation-2026-10.md#pinned-public-key-policy-status-2026-10-24).
 
-The [current installed checkpoint](status.md#public-policy-status-installed-qualification-2026-10-24)
+The [current installed checkpoint](history/implementation-2026-10.md#public-policy-status-installed-qualification-2026-10-24)
 verifies public policy metadata and provider-response cleanup together. Keep
 availability and material correctness UNKNOWN after digest agreement.
 
@@ -1208,7 +1297,7 @@ and prepared-plan behavior through public coercion constants. Roll back after
 IntegerRangeExceeded, as the attached failure remedy requires.
 
 This is internal construction, not a qualified public type. See the
-[installed checkpoint](status.md#integer-installed-lifecycle-checkpoint-2026-10-24)
+[installed checkpoint](history/implementation-2026-10.md#integer-installed-lifecycle-checkpoint-2026-10-24)
 for the tested boundary and remaining admission evidence.
 
 
@@ -1223,5 +1312,5 @@ Native pending inserts use the default for omitted or None values. Dictionary
 INSERT keeps native render_nulls behavior. A later explicit None assignment is
 SQL NULL; a non-nullable column raises native 23502. Valid flushes keep the value
 loaded for async access. See the
-[installed checkpoint](status.md#integer-literal-default-installed-checkpoint-2026-10-24)
+[installed checkpoint](history/implementation-2026-10.md#integer-literal-default-installed-checkpoint-2026-10-24)
 for exact evidence and remaining qualification work.

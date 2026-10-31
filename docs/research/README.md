@@ -3,6 +3,10 @@
 [Revamp evidence](revamp-evidence.md) records the current simplified architecture's experiments, decisions and incomplete goal requirements.
 [Prior art](../prior-art.md) links current primary sources. [Status](../status.md) owns runtime claims.
 
+[Key-provider selection](key-provider-selection.md) compares OpenBao, Vault,
+AWS, Google, Azure and development custody using official API, license and
+pricing evidence. It records the optional OpenBao and Google SDK implementation decisions.
+
 [Metadata preservation and lock evolution](metadata-preservation-and-format-evolution.md)
 records verified catalog gaps and format-evolution options. It is research evidence, not an
 approved format or contract.
@@ -31,11 +35,12 @@ Cryptalis runtime. Paid services and LLM extraction stay disabled. Ordinary
 HTTP is the default; use browser rendering only for required JavaScript content.
 Do not bypass authentication, bot challenges or access controls.
 
-The current machine uses the official pinned Crawl4AI 0.9.5 source archive in
+The historical extraction environment used the official pinned Crawl4AI 0.9.5 source archive in
 `.research-tools/source/`, with its complete license retained. Its SHA-256 is
 `7546c104b59c9849233d3788856308d6438e4e479023ff933ca4a5f66264ad7d`.
-The isolated environment, browser files, package state and extraction cache live
+When provisioned, the isolated environment, browser files, package state and extraction cache live
 under ignored `.research-tools/`. They do not change project runtime dependencies.
+This optional tooling is not assumed to exist in a new checkout.
 The helper is [research_extract.py](../../tools/research_extract.py).
 The [setup receipt](../_reset/local-research-extraction-20261023.json) records
 the installed inventory, source hashes, failed setup attempts and successful

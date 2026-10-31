@@ -1,5 +1,26 @@
 # Security and leakage
 
+[Documentation map](README.md) · [Current evidence](status.md)
+
+- [Online protection trust boundary](#online-protection-trust-boundary)
+- [Slice 3 storage enforcement: 2026-10-08](#slice-3-storage-enforcement-2026-10-08)
+- [Slice 4 search enforcement: 2026-10-08](#slice-4-search-enforcement-2026-10-08)
+- [Trust boundaries](#trust-boundaries)
+- [Threat limits](#threat-limits)
+- [Key hierarchy and providers](#key-hierarchy-and-providers)
+- [Operational CLI trust boundary](#operational-cli-trust-boundary)
+- [Owned-sequence admission](#owned-sequence-admission)
+- [Expression-statistics admission](#expression-statistics-admission)
+- [Public-slot authority](#public-slot-authority)
+- [Cryptographic format](#cryptographic-format)
+- [Capability leakage](#capability-leakage)
+- [Public failure contract](#public-failure-contract)
+- [Human review](#human-review)
+- [Internal storage-only DATE boundary](#internal-storage-only-date-boundary)
+- [Internal storage-only integer boundary](#internal-storage-only-integer-boundary)
+- [Internal integer literal defaults](#internal-integer-literal-defaults)
+
+
 **SPECIFIED:** security contract, not an audit. [Status](status.md) owns executable evidence.
 IMPLEMENTED has the exact boundary in status. The package includes a bounded storage attachment; full runtime qualification remains UNKNOWN.
 VERIFIED means only the named recorded checks. All unlabelled requirements below are SPECIFIED.
@@ -17,9 +38,9 @@ again under locks before adding authority. Publication and cancellation require
 their actual host pins. Restored addition retains explicit restore lineage.
 The HTTP integration checks the retained current artifact before opening a
 scoped factory; this does not promise revocation of arbitrary in-flight workers.
-See the [bounded checkpoint](status.md#maintenance-tenant-policy-provisioning-2026-10-28).
+See the [bounded checkpoint](history/implementation-2026-10.md#maintenance-tenant-policy-provisioning-2026-10-28).
 
-The [owner-scoped HTTP checkpoint](status.md#verified-continuation-checkpoint-2026-10-28)
+The [owner-scoped HTTP checkpoint](history/implementation-2026-10.md#verified-continuation-checkpoint-2026-10-28)
 keeps global account authentication native. Its explicit host adapter validates
 the original JWT/account authority before selecting an approved owner policy.
 Public owner metadata is authorized, then locked and rechecked before payload
@@ -60,29 +81,6 @@ During capture, native values remain authoritative. A non-owner write for an una
 P2 uses the unchanged `cryptalis.transition/v8` activation artifact and access-contract successor chain. Empty tenant policies remain in the artifact through restore and all rotations. The host still excludes owner and DDL writers. This source change adds no live KMS or production pause qualification. All seven production gates remain UNKNOWN.
 
 
-## Current local enforcement evidence: 2026-10-07
-
-**VERIFIED, recorded spike revision:** the [integrated checkpoint](status.md#current-integrated-checkpoint-2026-10-07) guards inspected SQLAlchemy executions at the DBAPI method boundary.
-Its raw/COPY/protocol-handle denials occur before driver execution; an independent privileged connection remains outside that boundary.
-Missing, unknown or unexcluded writer inventory blocks local transformation. The migrator-owned fixture does not qualify a non-owning runtime role.
-A hostile returned row that is valid for another identity fails the captured host-requested point check before value release.
-The recorded candidate also rejects changed typed field/domain/tenant/record context, descriptor/header mutations, malformed bounds and retired generations without fallback.
-Same-context replay, SQL-NULL presence substitution and omitted rows remain the threat limits below.
-
-New development roots and the local wrapping key are random and memory-only; the older experiments retain public lab roots.
-Local cold/warm/expired/outage and rewrap tests are functional evidence only.
-
-A Linux test forks while the keyring mutex is locked. The child refuses
-inherited sync/async preparation without deadlock. Fresh child keys work.
-The parent retains its prepared keys. The
-[fork checkpoint](status.md#keyring-held-mutex-fork-checkpoint-2026-10-23) bounds this evidence.
-
-These controls do not qualify other process/runtime cells, remote-provider
-cancellation, native deletion or production custody. No production provider or
-deployment procedure is designated.
-Independent human cryptographic/security review is unavailable: `external-review-required` remains UNKNOWN.
-Frozen independent admitted text/ID vectors, exact collation evidence, and nonce/usage bounds remain required before security qualification.
-
 ## Slice 3 storage enforcement: 2026-10-08
 
 **IMPLEMENTED, bounded 2026-10-27 evidence:** a typed SELECT must not authorize
@@ -94,7 +92,7 @@ ordinary admitted calls in `pg_catalog` so mutable search-path resolution cannot
 select a different function. Keep native special SQL expression syntax and
 all protected-lineage restrictions. This does not exclude separate credentials,
 privileged schema changes or deliberately compromised host code. The
-[function checkpoint](status.md#finite-native-select-functions-2026-10-27)
+[function checkpoint](history/implementation-2026-10.md#finite-native-select-functions-2026-10-27)
 records the native controls and remaining qualification boundary.
 
 **IMPLEMENTED, bounded prototype:** admitted ORM writes prepare row-bound CF1 frames before SQL.
@@ -116,37 +114,27 @@ driver parameters after SQLAlchemy cursor events, including exact payload
 bytes, identity and tenant, against the admitted batch. Late parameter or SQL
 replacement refuses before driver dispatch. This boundary does not make
 arbitrary host plugins trustworthy or qualify other write routes.
-For each protected field in RETURNING, the processor also requires a real input
-identity and exact prepared ciphertext or NULL for that native group.
-Before entity loading, raw cursor rows bind every returned identity/tenant slot
-to each protected carrier. The input-ID check also applies when all protected
-attributes are deferred. A valid frame for another input row cannot populate
-the wrong identity-map entry. Caller replacements must retain the native ORM
-projection, including through supplemental RETURNING. All cursor fetch paths
-use the row check before they expose a returned batch.
-Direct native column labels retain their original expression identity, name and
-quote policy. The RETURNING compiler uses the owned physical column type for
-authenticated decoding, while native ORM result metadata retains the caller's
-label. Cached pre-attachment plaintext types cannot expose ciphertext as a
-public result. Changed label dispatch, type, alias metadata or projection
-identity refuses. These checks also cover labeled identity and tenant slots.
+For scalar, tuple or entity RETURNING, every protected output also requires its
+own real input identity and exact prepared ciphertext or NULL for that native group.
+Swapping protected outputs fails their independent field/context authentication.
+The complete expanded output list must retain exact physical column identities
+and native dispatch before key resolution and again at compilation. Public
+outputs keep native processing and have no added payload-authentication claim.
+Before entity loading, raw cursor checks correlate returned record/tenant slots
+with each protected carrier. INSERT identities must belong to the input batch;
+point UPDATE/DELETE identities must match the frozen permit. The identity check
+also applies when every protected entity field is deferred. Cursor fetch and
+iteration paths retain these checks and process ownership checks.
 SELECT's outer-join NULL-identity rule does not apply to inserted rows.
 A valid fresh frame for the same context still refuses if this operation did
 not prepare it. This stronger write-result check does not establish general
 read freshness or completeness.
 
-SELECT also uses the owned physical codec for direct labels and transparent
-parenthesized columns. A cached native type cannot return a CF1 frame as a
-public byte value. The native mapped attribute resolves to its column without
-calling an arbitrary clause provider. Search rewriting retains the caller's
-direct projection identity, and the compiler changes only its SQL codec.
-Direct cached ORM/Core alias columns use a separate native annotated compiler
-projection too. The caller's cached type stays unchanged. Boolean results retain
-exact False/True/NULL values; an altered frame fails authentication before a
-public value is released.
-The result processor still authenticates the field, tenant and record context.
-Buffered asynchronous Core results permit only native cursor soft-close;
-that operation releases no row or protocol handle.
+Explicit output names bind their native label metadata alongside that same
+physical column identity. The prepared-frame lookup resolves the column beneath
+the label, so naming an INSERT output cannot bypass input membership. The shared
+return rewrite binds both the label and column to the owned authenticated reader
+and restores the caller's original statement after execution or failure.
 
 Native supplemental RETURNING can authenticate
 during `execute()`, so later iteration can read already authenticated plaintext.
@@ -166,10 +154,55 @@ types refuse before SQL and key preparation in both sync and async execution.
 The adapter captures the request before key preparation and checks it again
 afterward. Public Python bind processors remain native.
 
+Single-record UPDATE reuses that ledger and driver proof with one
+explicit record/tenant permit and one assignment dictionary. The current
+RETURNING roots and entity/column shape are inspected before keys and again
+after key resolution; a memoized ORM column list cannot authorize a changed
+request. Protected annotated outputs select the owned authenticated reader on
+a fresh expression clone. Native projection constants are captured separately
+from caller assignments and checked at final dispatch.
+
+Explicit direct-column labels retain that same authority. Admission binds the
+physical column, native dispatch, type and exact label name/quoting before keys;
+final dispatch repeats the captured output shape even for internally generated
+assignment-coercion statements. Unsafe forced-unquoted names refuse using the
+native dialect's identifier quoting rules. A native Label caches its element's
+type, so the return rewrite clones and rebinds both label and column to the owned
+authenticated reader, clearing stale expression memoization. It does not mutate
+the caller's statement or treat a label as a different cryptographic field.
+
+When RETURNING is absent, the same captured point request, prepared assignments
+and final driver proof remain mandatory. Its captured output shape is empty;
+provider or later callbacks cannot add returned columns. The native result
+contains an affected-row count and no protected values.
+
+Each changed protected output must equal this operation's exact prepared frame
+or NULL. Every protected RETURNING output requires a real record identity, even
+when its payload is NULL; SELECT's outer-join NULL representation cannot stand
+in for a returned row. Unchanged protected outputs authenticate against the requested record,
+tenant and field, with the same freshness limits as SELECT. Public outputs have
+no cryptographic integrity claim. Outstanding result processors keep their own
+immutable proof; later operations cannot replace it. Result authentication or
+key expiry can fail after SQL has executed, so the caller must roll back before
+retrying or committing. No plaintext database write or new searchable
+representation is introduced. [Compatibility](compatibility.md#full-capability-matrix)
+owns the precise single-statement grammar and the distinct bulk dictionary form.
+
 The single-record mapped DELETE route has the same fixed-scope authority for
 explicitly single-tenant tables. Its immutable permit and compiled/driver proof
 must still bind the exact record identity and native target. Only the physical
 tenant equality/bind is absent; a missing or changed record predicate refuses.
+
+DELETE RETURNING uses that same permit to freeze the current output roots and
+entity/column shape before synchronous or awaited key preparation. It reuses the
+UPDATE projection reader and exact compiled SQL/bind/projection-constant proof.
+Every protected output requires the requested non-NULL record identity, field
+and tenant, even when the payload is NULL. There is no new-frame proof for a
+deleted value; SELECT's replay, NULL and result-completeness limits still apply.
+Public outputs have no cryptographic integrity guarantee. Native identity-map
+state follows `synchronize_session=False`; authenticated returned data does not
+mark an existing object deleted. If result authentication or key expiry fails
+after DELETE, roll back the transaction or savepoint before continuing.
 
 For finite VARCHAR targets, each affected native group uses a private
 parameterized CASE with public constants. Omitted columns retain their existing
@@ -282,7 +315,7 @@ Changed storage/context mappings, translated targets, and catalog mismatches rej
 Attachment refuses checked-out native connections before pool replacement. Same-named tables in separate schemas retain distinct row preparation.
 Real async database cancellation propagates and permits explicit rollback and later-session recovery.
 Cancellation during awaited key preparation leaves PostgreSQL unchanged and permits a later write.
-[Status](status.md#slice-3-checkpoint-2026-10-08) and its hashed receipt define the exact evidence boundary.
+[Status](history/implementation-2026-10.md#slice-3-checkpoint-2026-10-08) and its hashed receipt define the exact evidence boundary.
 **VERIFIED, separate restricted runtime login:** sync/async attachment CRUD matches native SQLAlchemy in owned PostgreSQL 16.15 schemas.
 Runtime grants are schema `USAGE`, customer CRUD, and article `SELECT` for native relationship lookup during deletion.
 The role has no ownership, fixture-owner inheritance, grant options, or schema `CREATE`.
@@ -302,10 +335,23 @@ Same-context replay, SQL NULL substitution, hostile omitted rows, and host autho
 ## Slice 4 search enforcement: 2026-10-08
 
 Earlier slice 3/4 row-isolation tests omit grouped and callable primary-key binds.
-The [corrective checkpoint](status.md#corrective-audit-checkpoint-2026-10-09) records their repair and the revised evidence boundary.
+The [corrective checkpoint](history/implementation-2026-10.md#corrective-audit-checkpoint-2026-10-09) records their repair and the revised evidence boundary.
 
 **IMPLEMENTED, bounded prototype:** exact-text equality/IN uses full HMAC terms from the independently keyed CF1 header.
 Simple negative equality and `NOT IN` reuse the same terms; NULL presence uses a SQL NULL check and needs no equality representation.
+Native Boolean NOT over admitted AND/OR predicates uses SQL's three-valued
+De Morgan identities and explicit inverse comparison operators before tenant
+guards are added. Negation never applies to a generated guard. Native container
+renderers and annotated elements/operators/types are checked; unsupported
+protected leaves still refuse. Caller-mutable inverse metadata cannot select a
+different rewrite. Public subexpressions retain their native SQL. This extends
+the existing equality/NULL grammar without another representation or key.
+Selected predicate objects remain the ORM's result keys. Their SQL is rewritten
+by the owned compiler through the same checked search path; protected query
+values still become keyed terms before driver dispatch. Complete generated
+subtrees are scoped to the current operation so recursive compilation cannot
+rewrite or invert their tenant guards. Native label dispatch and effective
+annotation structure are checked before keys and at subsequent admission.
 Each comparison includes declared tenant scope. Native B-tree expression indexes enforce declared uniqueness during races.
 Payload and term are one bytea value. Public framing checks refuse malformed shape; they cannot prove AEAD authenticity.
 Attachment checks exact index/check definitions under `pg_catalog` search-path resolution, including validity, keys and operator classes.
@@ -331,7 +377,7 @@ Plausible framing with invalid AEAD can pass PostgreSQL's CHECK and later fail a
 Replay, NULL substitution, deletion and hostile global uniqueness remain outside the returned-row authentication guarantee.
 Small-domain and leakage reviews remain trusted host assertions. They do not stop authorized chosen-input enumeration.
 The [slice 4 receipt](_reset/slice4-verification.json) records tests, isolated regression removals and local claim boundaries.
-All seven gates remain UNKNOWN. No production provider or independent review exists.
+All seven gates remain UNKNOWN. No provider deployment is production-qualified; independent human review remains unavailable.
 
 ## Trust boundaries
 
@@ -361,7 +407,7 @@ Chosen inserts, repeated queries, and auxiliary distributions remain important l
 | Application compromise/RCE, broken authorization, host plaintext logs/caches/exports | Outside confidentiality boundary. The process legitimately holds plaintext and cached material |
 | Key/provider/workload credential compromise | Can recover permitted roots. Least privilege reduces scope but cannot save those values |
 | Raw/alternate writers | The intended guarded paths must reject. Complete prototype coverage is unproved. Unknown separate writers block adoption. Schema checks cannot cryptographically certify arbitrary bytes |
-| Old deployment or database restore | The intended current deployment pin must block recognized stale generations. Only a policy model ran. Operator quarantine and worker termination remain required |
+| Old deployment or database restore | The intended current deployment pin must block recognized stale generations. Local pin checks do not prove deployment-wide authority. Operator quarantine and worker termination remain required |
 | Invisible RAM clone or immediate arbitrary-process revocation | Outside the claim. Cache expiry does not recall plaintext or copied keys |
 | Plaintext in pre-protection WAL/backups/logs | Remains exposed until its actual custody/retention disposition |
 
@@ -390,13 +436,13 @@ Bound runtime factories require an exact UUID and membership in the pinned
 policy map before invoking the host key resolver. A custom string identity cannot
 select a pinned policy. Host authentication and authorization remain required;
 this membership check does not replace them. The
-[early-admission checkpoint](status.md#sdk-protocol-and-early-tenant-admission-checkpoint-2026-10-28)
+[early-admission checkpoint](history/implementation-2026-10.md#sdk-protocol-and-early-tenant-admission-checkpoint-2026-10-28)
 records the source and installed controls.
 Direct rewrap must confirm that the target unwraps the replacement to the exact
 original immutable 32-byte root under the same context. Pin and recheck the
 target provider identity; compare recovered root bytes in constant time.
 Wrapper metadata alone is insufficient. AWS and development direct methods have
-bounded local [recovery-proof evidence](status.md#direct-provider-rewrap-recovery-proof-2026-10-27).
+bounded local [recovery-proof evidence](history/implementation-2026-10.md#direct-provider-rewrap-recovery-proof-2026-10-27).
 This proof requires target decrypt authority and can add one provider request.
 It does not publish the replacement, retire source custody or prove deletion.
 The wrapper records pinned provider identity and nonsecret scope, purpose, root identity, and generation.
@@ -493,6 +539,42 @@ Search rotation with lineage requires a
 [The walkthrough](walkthrough-migration.md#inspect-rotation-preparation)
 owns the full operator contract.
 
+**IMPLEMENTED, bounded static code inventory:** `doctor.scan_routes` and
+`cryptalis doctor --code-root DIRECTORY` invoke an explicitly trusted local
+ast-grep 0.51.0 executable with packaged Python rules. A separate tool environment
+keeps its dependencies out of the application/provider environment. The wrapper
+supplies an empty configuration, disables custom language libraries and uses
+native scan operations without rewrite flags. Application modules, SQL and keys
+are not requested. The selected executable is trusted host code, not a sandbox.
+
+The report contains relative paths, one-based lines and fixed candidate kinds for
+configuration/imports, ORM query/write calls, execution, COPY, driver access and
+SQL text. Method-name matches can refer to unrelated objects; import matches do
+not resolve arbitrary aliases or runtime call targets. They are review candidates,
+not incompatibility findings. Matched source, literal values, native diagnostics
+and exception details are omitted. Native parser recovery observations preserve
+other known candidates and produce an unavailable inspection result.
+
+A successful process establishes only `scanner_execution: PASS`. Code validity,
+complete route inventory, protected query compatibility, writer exclusion, tenant
+isolation and runtime deployment remain UNKNOWN. Native parsers can recover or
+omit invalid regions without reporting an error. Scanned/skipped path counts are
+UNKNOWN because this JSON protocol does not provide them. Ignore-file categories
+are explicitly disabled for the selected directory and a Python glob is applied;
+native `ast-grep-ignore` comments can suppress candidates and this is stated in
+every report. Symlink targets, non-Python writers, generated code, external jobs and dynamic
+routes still require separate inventory. No diagnostic output admits deployment.
+
+The wrapper checks the tool version, uses one native scan thread, bounds combined
+version/scan time to 60 seconds by default (up to 300 through Python), caps stdout
+at 16 MiB and stderr at 1 MiB, and rejects more than 8,192 observations. Truncation,
+unknown rules, invalid paths, parser recovery, failed processes and missing tools
+remain explicit. Timeout/failure terminates the dedicated un-reaped process group
+and never retries automatically. These are process/output bounds, not a native
+parser memory or whole-application performance guarantee. See the
+[procedure](walkthrough-migration.md#inventory-python-code-routes) for installation,
+CLI exits and the separate runtime checks that follow.
+
 **IMPLEMENTED, bounded pre-adoption Doctor:** `cryptalis.doctor.preflight`
 reuses the existing read-only compiler catalog inspection. It accepts no keys
 and reads no application values. Known declaration/schema refusals return
@@ -508,7 +590,7 @@ A successful sample check does not prove bind-time behavior, query results,
 complete route coverage or safe writes. Unknown host-code effects remain explicit.
 Doctor reports known query incompatibilities before migration. Runtime admission remains
 mandatory after protection and does not trust a diagnostic result as authority. See the
-[installed checkpoint](status.md#installed-application-query-diagnostics-2026-10-24).
+[installed checkpoint](history/implementation-2026-10.md#installed-application-query-diagnostics-2026-10-24).
 The pre-adoption CLI accepts an explicit trusted host factory for the registry,
 writer inventory and search reviews. It owns the private connection and uses
 this same compiler. Host import/factory effects remain UNKNOWN; only compiler
@@ -533,6 +615,28 @@ capacity remain UNKNOWN. The aggregate result remains UNKNOWN, with
 unavailable inspection reports UNKNOWN. Current grants can change later.
 This observation neither authenticates host publication nor establishes
 production readiness. See [Doctor diagnosis](walkthrough-migration.md#diagnose-an-active-deployment).
+
+**IMPLEMENTED, explicitly requested cold-provider Doctor:** `doctor.check_keys`
+and `cryptalis doctor --provider-context MODULE:FACTORY` prepare every admitted
+root in each supplied Keyring through a fresh temporary cache. A warm caller
+cache cannot hide a provider refusal. Diagnosis does not populate or extend the
+caller's cache. Existing lease and post-fork refusal rules remain mandatory.
+Recovered roots are not returned or included in diagnostics. Python immutable
+bytes still have no verified zeroization guarantee.
+
+The check reads no application rows and does not authenticate existing frames,
+prove recovery, verify workload authorization, or qualify production custody.
+These checks and aggregate health remain UNKNOWN after successful preparation.
+Failures expose fixed codes and tuple indexes, without exception text, wrapper
+identities, credentials or root bytes. Input is an explicit tuple of at most
+16 exact Keyring instances; each retains its existing finite policy limit.
+All input shape checks precede provider dispatch. Provider access can generate
+remote audit records; the report does not claim no effects. The CLI suppresses
+Python stream output during host import, factory execution and provider calls.
+Trusted host Python, native descriptor writes, callback duration and provider
+side effects are outside that boundary. Per-provider timeouts remain applicable;
+there is no aggregate diagnostic deadline. Empty policy selection proves nothing
+and exits nonzero. The existing schema and ACTIVE diagnostic modes remain key-free.
 
 **IMPLEMENTED, bounded reverse admission:** reverse planning checks the source
 and declared plaintext runtime roles before key work. Reverse execution and
@@ -603,7 +707,7 @@ Inspect the operation and current host pin before retry. An error does not prove
 Doctor retains its strict key-free tuple and inspection scope. These contexts
 do not waive core planner, tenant, runtime-role or lifecycle admission. See the
 [specified workflow](walkthrough-migration.md#plan-and-apply-protection-through-the-cli)
-and [status](status.md#operational-cli-protection-workflow-2026-10-24).
+and [status](history/implementation-2026-10.md#operational-cli-protection-workflow-2026-10-24).
 
 ### Reverse CLI authority
 
@@ -617,7 +721,7 @@ conflicting flags before host loading. An unreturned execution result requires
 INSPECT_JOURNAL. Preserve known progress after output or cleanup failure.
 No plaintext, credentials, raw host exceptions or context representations enter
 reports. Host-code effects remain UNKNOWN. Doctor's key-free tuple stays unchanged. See the
-[verified checkpoint](status.md#operational-cli-reverse-and-removal-2026-10-24).
+[verified checkpoint](history/implementation-2026-10.md#operational-cli-reverse-and-removal-2026-10-24).
 Source and installed genuine fresh-target verification pass.
 
 ### Root-rewrap CLI artifact and authority boundary
@@ -635,7 +739,7 @@ after success or cancellation. Source ACTIVE cancellation authority and successo
 publication authority remain separate. The CLI creates no provider, keys, host pin,
 consent or fencing. Host-code effects and retained-backup obligations retain their
 existing limits. Payload/search CLI admission remains future work. See the
-[verified checkpoint](status.md#operational-cli-root-rewrap-2026-10-24).
+[verified checkpoint](history/implementation-2026-10.md#operational-cli-root-rewrap-2026-10-24).
 Source and installed genuine adopted-target verification pass.
 
 ### Payload CLI artifact retention
@@ -653,7 +757,7 @@ are gone. Losing every external A copy loses the proof current APIs require.
 Do not reconstruct A from database assertions or treat key-free status as fresh
 verification. Existing source-only cancellation, target-only activation, host authority,
 provider and Doctor boundaries remain unchanged. Host-code effects remain UNKNOWN. See the
-[verified checkpoint](status.md#operational-cli-payload-rotation-2026-10-24).
+[verified checkpoint](history/implementation-2026-10.md#operational-cli-payload-rotation-2026-10-24).
 Source and installed genuine adopted-target verification pass.
 
 ### Search CLI admission
@@ -669,8 +773,29 @@ switch and externally retained A after switch. Key-free status reports NOT_PERFO
 not fresh value verification. Source-only cancellation, target-only publication,
 unknown host-code effects and Doctor's tuple remain unchanged. See the
 [payload retention contract](#payload-cli-artifact-retention) and
-[verified checkpoint](status.md#operational-cli-search-rotation-2026-10-24).
+[verified checkpoint](history/implementation-2026-10.md#operational-cli-search-rotation-2026-10-24).
 Source and installed genuine adopted-target verification pass.
+
+### Shared application intent
+
+`ApplicationConfig` stores only canonical declaration and host-supplied mapping,
+writer/search evidence and optional SELECT samples. It stores no keys or operation
+authority. Its attachment, apply/status, reverse planning, decrypt-back and removal
+require a supplied plan/pin and compare the manifest and current writer/search
+evidence before connecting or invoking a key resolver; incomplete or changed
+evidence refuses. Reverse operations compare the protected source's facts.
+Existing target, schema,
+logging, tenant and restore checks still apply. Its planning context similarly
+binds the CLI input declaration. No pin, scope, approval or provider is inferred.
+Lifecycle methods delegate to existing executors. Maintenance, plaintext exposure
+and removal approvals remain separate; status is not current value verification.
+Restored sources carry an explicit binding into reverse planning, retained in the
+reverse artifact. Protection apply refuses a third restore-tuple element.
+
+Supplied planning queries use the same structural admission as Doctor before
+key-policy resolution. Incompatible or unobserved admission blocks planning;
+values are not executed or reported. This does not prove full application-route
+coverage. Host factories and the application's ORM registry remain trusted code.
 
 ### Initialization CLI trust boundary
 
@@ -679,12 +804,17 @@ Enforce their type, size and strict parse before canonicalization. Use the exist
 read-only compiler through Doctor preflight. Do not infer tenancy, runtime roles,
 keys, providers, pins or deployment authority. No application values or keys enter inspection.
 
-Publish only after manifest_schema PASS. Preserve all unobserved UNKNOWN results
+Publish only after manifest_schema PASS and PASS for every supplied query sample.
+The shared `doctor --initialization-context` route uses the same key-free
+inspection and engine validation without artifact publication. Refuse conflicting
+command modes before host loading. Bound samples to 128 SELECT objects and inspect
+structure without executing queries or printing values. Complete route inventory
+and host authentication remain unobserved. Preserve all unobserved UNKNOWN results
 and the aggregate UNKNOWN status. Qualify effects NONE as compiler inspection only.
 Host import/factory effects remain UNKNOWN. On output, fsync or cleanup failure,
 preserve known inspection and artifact facts without inventing a database result,
 operation UUID or transition phase. Existing private publication and safe diagnostics apply. See the
-[verified checkpoint](status.md#operational-cli-initialization-2026-10-24).
+[verified checkpoint](history/implementation-2026-10.md#operational-cli-initialization-2026-10-24).
 Source and installed initialization verification pass.
 
 ### Public key-policy metadata boundary
@@ -696,16 +826,16 @@ access; prepare no keys and contact no providers. The report never emits sealed
 wrappers. Keep availability, material correctness, completeness and recovery
 UNKNOWN. Allow independent retained-backup declarations under the same operation.
 No report grants deletion or retirement rights. See the
-[checkpoint](status.md#pinned-public-key-policy-status-2026-10-24).
+[checkpoint](history/implementation-2026-10.md#pinned-public-key-policy-status-2026-10-24).
 
 ### Retained-backup declaration boundary
 
 **IMPLEMENTED, source and installed verified:** declared hashes prove no file availability, recovery or
 retirement authority. Never prepare keys. Empty metadata and absent journals settle no
 external obligations. Host-code effects remain UNKNOWN. The
-[integrated checkpoint](status.md#integrated-defensive-hardening-2026-10-24)
+[integrated checkpoint](history/implementation-2026-10.md#integrated-defensive-hardening-2026-10-24)
 includes genuine fresh-cluster metadata controls. See the
-[decision](decisions.md#declared-retained-backup-status-references-2026-10-24).
+[decision](history/decisions-2026-10.md#declared-retained-backup-status-references-2026-10-24).
 
 ### HTTP operational journey limits
 
@@ -719,7 +849,7 @@ The import-denied original HTTP child verifies latest native data and does not t
 This local ASGI/TestClient qualification supplies no browser, deployment, external-mail,
 live-custody or production evidence. Status of external retained obligations needs explicit
 host inventory/provenance. Wrappers or an empty journal cannot prove no obligations. See the
-[qualification checkpoint](status.md#original-http-operational-cli-journey-2026-10-24).
+[qualification checkpoint](history/implementation-2026-10.md#original-http-operational-cli-journey-2026-10-24).
 
 ### Synchronous KMS method boundary
 
@@ -727,7 +857,7 @@ host inventory/provenance. Wrappers or an empty journal cannot prove no obligati
 methods fail client construction with InvalidContext before invocation. Synchronous
 SDK behavior, key ARN, context and response checks remain unchanged. No live AWS
 qualification follows. See the
-[integrated checkpoint](status.md#integrated-defensive-hardening-2026-10-24).
+[integrated checkpoint](history/implementation-2026-10.md#integrated-defensive-hardening-2026-10-24).
 
 ### Protected-search dispatch admission
 
@@ -735,7 +865,7 @@ qualification follows. See the
 before protected predicate rewriting and key resolution. Async SELECT admission
 must precede key preparation. Native FALSE controls and ordinary query parity
 separate safe refusal from changed SQL semantics. See the
-[integrated checkpoint](status.md#integrated-defensive-hardening-2026-10-24).
+[integrated checkpoint](history/implementation-2026-10.md#integrated-defensive-hardening-2026-10-24).
 
 ## Owned-sequence admission
 
@@ -759,7 +889,7 @@ lineage. The binding changes no source identity, host publication authority or
 key custody. Old locks still refuse late sequences. This admission does not allow
 server-generated record IDs or protected server defaults. Production gates remain UNKNOWN.
 See the [lifecycle contract](lifecycle.md#owned-sequence-preservation-and-restored-identity-2026-10-24)
-and [current evidence](status.md#owned-sequence-preservation-and-restore-2026-10-24).
+and [current evidence](history/implementation-2026-10.md#owned-sequence-preservation-and-restore-2026-10-24).
 
 ## Expression-statistics admission
 
@@ -774,8 +904,8 @@ paths, unchanged-state refusal and exact repair. Affected-source and revised
 installed controls pass, including repair through native exit and both fresh-cluster
 profiles. The current status owns the exact scope.
 This changes no artifact version, key policy, privilege grant or host authority.
-See the [decision](decisions.md#expression-statistics-admission-across-layouts-2026-10-24)
-and [current evidence](status.md#legacy-expression-statistics-admission-2026-10-24).
+See the [decision](history/decisions-2026-10.md#expression-statistics-admission-across-layouts-2026-10-24)
+and [current evidence](history/implementation-2026-10.md#legacy-expression-statistics-admission-2026-10-24).
 
 ## Public-slot authority
 
@@ -793,7 +923,7 @@ flat lineage. Sequence maps remain mandatory and exact. V1/v2 bindings cannot
 waive v6 slot checks. Legacy metadata comparison remains unchanged. CF1, tenant,
 key-policy and publication authority do not change. See the
 [lifecycle contract](lifecycle.md#public-column-slot-layout-2026-10-24) and
-[verification boundary](status.md#public-column-slot-preservation-2026-10-24).
+[verification boundary](history/implementation-2026-10.md#public-column-slot-preservation-2026-10-24).
 
 ## Cryptographic format
 
@@ -828,7 +958,7 @@ AAD. Text context/v1 bytes and derivation remain unchanged. SQL NULL remains
 visible SQL NULL. No Boolean equality term is admitted: the two-value domain
 retains its enumeration risk. Lock/v4 requires the Boolean reader and rejects
 older readers before use. Non-NULL Boolean frames have exactly 43 bytes.
-The [Boolean checkpoint](status.md#boolean-storage-checkpoint-2026-10-23) states
+The [Boolean checkpoint](history/implementation-2026-10.md#boolean-storage-checkpoint-2026-10-23) states
 the independent vectors, native controls and lifecycle evidence.
 These checks do not supply independent human cryptographic review or production qualification.
 
@@ -924,66 +1054,140 @@ key-policy admission do not change.
 The [AWS encryption-context reference](https://docs.aws.amazon.com/kms/latest/developerguide/encrypt_context.html)
 explains service matching and logging. No caller-supplied context names are accepted.
 
+### Optional Google Cloud KMS adapter
+
+`crypto.google_kms.GoogleKmsKeyProvider` uses a host-owned synchronous Google SDK
+client and the existing wrapped-root/Keyring contract. The optional `gcp` extra
+pins the SDK and maintained CRC32C library. A full encryption-version resource and
+explicit SOFTWARE/HSM level are bound into AAD alongside the provider/domain/
+tenant/purpose/root/generation context. It verifies encryption response identity,
+both request-checksum flags and output checksums; missing checksums refuse.
+Only 32-byte plaintext roots are admitted. CRC32C is corruption detection, not
+cryptographic authentication. No plaintext checksum is persisted.
+
+Decrypt names the pinned parent CryptoKey; Google selects its version and does
+not return that version's identity. The authenticated version label in AAD does
+not create an independent native-version observation. Native deletion/revocation,
+workload identity and all retained recovery routes require live qualification.
+The host owns credential scope, authenticated transport, protected SDK logging
+and client lifetime. The adapter disables automatic SDK retries, applies a bounded
+per-call timeout, refuses inherited processes and drops late canceled results
+through Keyring. Rewrap verifies source/destination root equality. There is no
+automatic key administration, local fallback or root-zeroization claim.
+
+[Setup and live qualification](google-kms.md) separates actual SDK/protobuf tests
+with a local protocol transport from an explicitly authorized live account.
+Real PostgreSQL application tests with that transport do not prove cloud custody.
+
 ### Optional OpenBao Transit adapter
 
-**IMPLEMENTED:** `cryptalis.crypto.openbao.OpenBaoTransitKeyProvider` accepts a
-caller-supplied synchronous `hvac` Transit client. It adds no mandatory SDK
-dependency. The host configures the authenticated endpoint, namespace,
-credentials, TLS, timeouts and bounded SDK retries. For example:
+`cryptalis.crypto.openbao.OpenBaoTransitKeyProvider` implements the same
+`KeyProvider` protocol through optional `hvac==2.4.0`. See the
+[provider setup](openbao.md) and [research decision](research/key-provider-selection.md).
+It does not alter CF1 payload encryption, HKDF, HMAC or the root-policy format.
 
-```python
-from cryptalis.crypto.openbao import OpenBaoTransitKeyProvider
+The provider pins a nonzero UUID, HTTPS endpoint, Transit mount, existing key name
+and positive key version. It admits service-generated `aes256-gcm96` keys with
+derivation, export, plaintext backup and deletion disabled. Each cold operation
+reads key metadata before encrypt/decrypt. Metadata inspection cannot prevent an
+administrator from changing policy after the observation. Operator separation,
+service audit and independent deployment review remain required.
 
-provider = OpenBaoTransitKeyProvider(
-    configured_native_client.secrets.transit,
-    provider_id=provider_uuid,
-    mount_point="transit",
-    key_name="cryptalis-roots",
-    key_version=1,
-)
-```
-
-Mount segments and key names use bounded ASCII letters, digits, underscores
-and hyphens. A mount can contain multiple segments. The version must be an
-explicit positive 31-bit integer. Assign a distinct provider UUID to each
-authority and key version. A Transit name is not an immutable identifier:
-service administration and prevention of key replacement remain host duties.
-
-Before each cryptographic request, the adapter checks the named key's metadata:
-`aes256-gcm96`, non-derived, non-exportable, no plaintext backup or deletion,
-the pinned version present, and encryption/decryption enabled. Non-derived keys
-cannot use convergent encryption. OpenBao generates each nonce. The adapter
-supplies neither a nonce nor a derivation context and never creates, rotates,
-exports, deletes or changes a service key.
-
-Native AEAD `associated_data` receives a base64 CF1 length-prefixed tuple:
+Transit AAD is base64 of the existing length-prefixed `tuple_bytes` encoding of:
 `CF1/openbao-transit-wrap/v1`, provider UUID bytes, ASCII mount, ASCII key name,
-four-byte unsigned key version, domain UUID bytes, tenant UUID bytes, ASCII
-purpose, root UUID bytes and four-byte unsigned generation. UUID bytes use the
-existing CF1 order. Each integer uses big-endian order. The tuple is public
-metadata. Every context and authority component is authenticated by the native
-service. No new payload format or root cryptography is introduced.
+four-byte big-endian key version, domain UUID bytes, tenant UUID bytes, ASCII
+purpose, root UUID bytes and four-byte big-endian generation. The endpoint is a
+trusted transport setting, not logical root identity; a recovered service can
+use the same logical authority at another approved endpoint. Transit generates
+its own nonce. The adapter supplies no nonce, derivation context or batch input.
+The service's versioned ciphertext remains opaque wrapped-root material. Both
+its version prefix and the encrypt response must match the pinned version.
 
-Wrappers retain the bounded native `vault:vN:` ciphertext, with the exact pinned
-version and canonical base64. Its binary body stays opaque. Decrypt responses
-must contain exactly 32 root bytes. Wrong contexts, unsafe metadata, malformed
-responses and SDK failures produce redacted typed failures without adapter
-retries or fallback. Async preparation uses a worker thread; cancellation
-prevents late keyring publication but cannot stop an already dispatched request.
-Inherited providers refuse after fork. Python bytes have no verified zeroization
-guarantee. Generic rewrap preserves the root under the selected replacement
-provider; it grants no authority to retire the old key.
+HTTPS verifies certificates and hostnames. Redirects and SDK retries are disabled.
+The token callback supplies current authentication for each isolated SDK session;
+token acquisition and renewal remain host responsibilities. Individual network
+waits have a finite configured timeout. There is no total-deadline guarantee.
+Malformed replies and provider errors raise redacted `KeyUnavailable`, without
+plaintext fallback. Inherited providers refuse use after fork. Cancellation
+cannot stop a blocking SDK request; Keyring does not publish its late result.
+Rewrap proves target recovery of the identical root before returning a wrapper.
 
-The [OpenBao Transit API](https://openbao.org/docs/api/secret/transit/) defines
-the AEAD, key-version and metadata contract. The
-[native hvac Transit API](https://python-hvac.org/en/stable/usage/secrets_engines/transit.html)
-defines the supplied SDK interface. Local OpenBao 2.7.2/hvac 2.4.0 checks cover
-native tamper refusal, version pinning, restricted credentials, revocation,
-recovery, cancellation and PostgreSQL protect/search/current-value removal.
-The service uses disposable in-memory storage and loopback HTTP for this test
-profile. These checks do not qualify production TLS, workload identity, durable
-custody, native deletion, retained-backup recovery or independent review.
-All seven gates remain UNKNOWN.
+Cached roots retain the existing maximum 300-second lease semantics. Service
+revocation therefore affects cold preparation immediately, and cached material
+when its lease expires; it is not instantaneous process-memory erasure. Raising
+`min_decryption_version` is reversible administration, not destruction. No key
+deletion, backup destruction, production availability, workload identity or
+human cryptographic-review claim follows from local Transit tests.
+
+The local snapshot qualification restores encrypted Raft state into a new,
+previously empty isolated instance with an independent TLS identity and endpoint.
+The source is stopped before restoration. The original unseal material and
+logical provider identity recover the admitted root and authenticate a pre-backup
+CF1 frame. A post-snapshot key is absent. Runtime tokens cannot export or restore
+snapshots. Mismatched-seal normal restore and malformed force-restore input refuse.
+Force restore is restricted to the newly created disposable target in this test;
+there is no product API for restoring arbitrary services. Both instances and
+private snapshot/unseal material are retained, with no concurrent source/target
+authority during recovery. This is local functional evidence, not production
+backup custody, authenticated failover, HA, measured RPO/RTO or destruction proof.
+
+### OpenBao AppRole authentication
+
+Cold-provider Doctor preserves the authentication failure distinction. Its
+`Provider.AuthenticationUnavailable` issue forbids automatic retry and reports
+UNKNOWN effects, including when other supplied keyrings pass. It reports no
+credentials, wrapped-root bytes or raw exception details and leaves caller leases
+unchanged. See the [diagnostic procedure](openbao.md#diagnose-current-provider-access).
+
+`OpenBaoAppRoleToken` is an optional synchronous credential callback. It uses
+verified HTTPS without redirects and an explicit empty SDK token to suppress
+ambient token discovery. It validates role identity, exact issued/effective
+policies, absence of additional identity policies, service-token type, unlimited
+use count within a bounded positive token lease, then reads the exact role with
+the issued token. Disabled SecretID binding, nonpositive role SecretID TTL,
+changed policies or an unavailable role observation refuse token release.
+
+The host supplies RoleID/current SecretID and an explicit policy set, bounded
+lease, endpoint and trust. Credentials are read only when authentication runs;
+none are cached or renewed by the helper. Policy contents, credential delivery,
+previous credential retirement and changes after observation remain host duties.
+Native runtime permissions exclude role/SecretID/key administration and permit
+only the configured Transit operations and exact role read. See
+[configuration and limits](openbao.md#approle-workload-authentication).
+
+Authentication failure can follow native token issuance. The typed
+`ProviderAuthenticationUnavailable` retains UNKNOWN effects and forbids automatic
+retry while preserving redaction through root creation, Keyring and rewrap.
+No failure result proves that a native token was never issued. Existing root
+leases can outlive credential revocation; cold Doctor checks bypass those leases.
+Lifecycle sanitization preserves the authentication code, explicit UNKNOWN provider
+effects and no-automatic-retry guidance. CLI database-effect observations do not
+cover provider issuance: an authentication failure during read-only planning can
+leave the database unchanged and still have native effects. Cleanup failures keep
+the related authentication diagnostic. The [host reference](host-contexts.md)
+defines the operational exit and effect fields.
+No local AppRole observation qualifies production distribution, HA, provider audit
+or independent review.
+
+### OpenBao native audit boundary
+
+The isolated runner enables a private declarative file audit device with native
+HMAC enabled and mode 0600. Native `sys/audit-hash` comparisons bind observed
+AppRole and Transit request/response fields to the supplied credentials, context,
+root and wrapper; request IDs correlate pairs. Runtime credentials cannot list,
+hash, create or disable devices. No custom logging cipher or audit service is added.
+The [operator procedure](openbao.md#native-audit-configuration) owns configuration,
+file reopen and retention instructions.
+
+This is bounded local evidence. Audit metadata and non-string values can remain
+visible, and some native endpoints bypass auditing. The host must protect raw
+records and the device identity; HMAC alone does not establish tamper resistance
+or delivery. Reopen retains the original file and device salt. Snapshot recovery
+checks the restored salt and new target records while source records remain
+unchanged with the source service stopped. It does not establish complete or
+durable production history, HA, redundant sinks or all-sink failure behavior.
+Raw logs, initialization material and snapshots stay private. Production audit,
+credential distribution, backup custody and independent review remain UNKNOWN.
 
 ### Implemented CF1 primitives and local custody
 
@@ -1048,7 +1252,7 @@ Pending cancellation requires the republished source ACTIVE pin and authenticate
 source policy, retained roots, frames, schema and lineage before guard removal.
 The target provider need not remain available. A terminal retry inspects current
 source authority and cannot revive a source superseded by a later operation.
-See [lifecycle](lifecycle.md#changes-and-rotation) and [status](status.md#active-root-rewrap-checkpoint-2026-10-23).
+See [lifecycle](lifecycle.md#changes-and-rotation) and [status](history/implementation-2026-10.md#active-root-rewrap-checkpoint-2026-10-23).
 
 Adopted-target root rewrap retains the explicit original binding in rewrap/v2
 and flat inherited restore lineage in transition/v5. Binding identity, original
@@ -1060,8 +1264,8 @@ It needs no target provider and cannot replay old data on a terminal retry.
 The [17-control source profile](_reset/fresh-cluster-restore-20261024-4.json)
 supplies no new cryptographic or host authority. See the
 [lifecycle contract](lifecycle.md#adopted-target-root-rewrap-2026-10-24),
-[format decision](decisions.md#adopted-target-root-rewrap-2026-10-24) and
-[current evidence](status.md#adopted-target-root-rewrap-2026-10-24).
+[format decision](history/decisions-2026-10.md#adopted-target-root-rewrap-2026-10-24) and
+[current evidence](history/implementation-2026-10.md#adopted-target-root-rewrap-2026-10-24).
 
 Payload rotation after adopted lineage starts from the current ACTIVE v5/v6
 successor and its own host pin. The unchanged `cryptalis.payload-rotation/v1` proposal embeds
@@ -1075,27 +1279,27 @@ cancellation preserves later source edits and cannot revive a superseded source.
 The [12 native fresh-target controls](_reset/fresh-cluster-restore-20261024-11.json)
 pass, as do the source VARCHAR and installed TEXT profiles. The final installed
 Smolink journey and full regression retain their exact
-[status boundaries](status.md#payload-rotation-after-adopted-lineage-2026-10-24).
+[status boundaries](history/implementation-2026-10.md#payload-rotation-after-adopted-lineage-2026-10-24).
 Search rotation with lineage follows its [successor contract](lifecycle.md#search-rotation-after-adopted-lineage-2026-10-24).
 Direct restore-binding generation planning follows its
 [separate contract](lifecycle.md#generation-planning-from-a-restore-binding-2026-10-24). Deploy readers that admit the embedded
 source and v6 before publication. CF1, host approval/fencing, retained-reader
 obligations and key-retirement permissions do not change. All seven production
-gates remain UNKNOWN. See the [format decision](decisions.md#adopted-target-payload-rotation-2026-10-24).
+gates remain UNKNOWN. See the [format decision](history/decisions-2026-10.md#adopted-target-payload-rotation-2026-10-24).
 
 Adopted search rotation uses the current lineage-bearing source and its own pin.
 Search-rotation/v1 retains the embedded source; v7 retains every v4 search proof
 and the admitted restore lineage. All 11 native mixed-field controls pass, including refusal and recovery paths.
 Source TEXT/VARCHAR, installed TEXT, affected and ordinary installed application
 checks pass within their recorded boundaries. See the
-[current boundary](status.md#search-rotation-after-adopted-lineage-2026-10-24).
+[current boundary](history/implementation-2026-10.md#search-rotation-after-adopted-lineage-2026-10-24).
 The crypto, index representation, journal and host-authority contracts do not change.
 
 Direct generation planning can embed the existing restore binding in an exact
 purpose/v2 proposal. Pure identity, original custody, frame/probe, owner and
 lineage checks precede provider work. The evaluated target does not replace the
 original source identity or host pin. Existing cancellation and publication
-authority rules remain required. The [current checkpoint](status.md#direct-restore-binding-generation-planning-2026-10-24)
+authority rules remain required. The [current checkpoint](history/implementation-2026-10.md#direct-restore-binding-generation-planning-2026-10-24)
 records 19 native controls, including changed CHECK and disabled-guard refusal
 before providers. Source VARCHAR, affected-suite and ordinary installed application
 checks also pass. All 19 installed direct controls and the original six-file
@@ -1214,11 +1418,16 @@ All seven full gates remain UNKNOWN.
 Sync and async preparation publish keys only after every required root passes checks.
 Cancellation rejects late provider material, including when a provider suppresses cancellation.
 Inherited providers, keyrings, and prepared keys refuse use after fork.
-The child must construct a fresh provider and prepare fresh roots.
+Attached ORM runtimes also enforce [process ownership](compatibility.md#process-ownership)
+before supported operations, cached gets, key resolvers and attached-engine pool
+entry. Guarded driver callbacks retain that check when captured before fork.
+The child must construct a fresh runtime and prepare fresh roots. This refuses
+inherited operations; it does not erase inherited Python memory or recall values
+already returned to the application.
 Python immutable bytes do not give a verified zeroization guarantee.
 Failures have safe codes, operation IDs, stages, retry indicators, effect states, and remedies.
 Raw provider and cryptographic exception text does not enter those diagnostics.
-The [slice 2 checkpoint](status.md#slice-2-checkpoint-2026-10-08) records the exact evidence boundary.
+The [slice 2 checkpoint](history/implementation-2026-10.md#slice-2-checkpoint-2026-10-08) records the exact evidence boundary.
 
 Full-width terms avoid intentional false positives. Exact query claims remain conditional on HMAC collision resistance and intact indexed representations.
 Recomputing a term from returned plaintext does not detect a collision with a different value. AEAD cannot repair that semantic error.
@@ -1273,6 +1482,7 @@ Engine defaults use `echo=False` and `hide_parameters=True`. Attachment refuses 
 |---|---|
 | Missing or expired key | `KeyUnavailable`, no plaintext fallback |
 | Provider outage, revoked identity or malformed material | `KeyUnavailable` (or `TransitionFailure` carrying that code), no partial commit; retry after provider recovery |
+| AppRole login or role verification unavailable | `ProviderAuthenticationUnavailable`, a `KeyUnavailable` subtype; native token effects UNKNOWN, no automatic retry; inspect credentials, role and issuance |
 | Unsupported query/mapping/writer | `UnsupportedProtectedOperation`, reject the affected path before admitted plaintext SQL |
 | Wrong context or invalid tag | `AuthenticationFailed`, no unauthenticated value |
 | Payload/companion mismatch | `RepresentationMismatch`, fail the operation rather than filter candidates |
@@ -1311,7 +1521,8 @@ remains row linkage, NULL presence, write/access patterns and result volumes.
 Public literal defaults are configuration, not secrets. No date equality,
 frequency, range or order representation is inferred. Operational planning and
 locked expansion count unsupported source dates without decoding or reporting
-private values, then refuse before effects. Online capture remains text-only.
+private values, then refuse before effects. Bounded online capture admits Date
+under the same storage-only codec and source-domain checks.
 Full type admission, external application/cost evidence and independent human
 composition review remain required.
 
@@ -1329,8 +1540,8 @@ process interruption, tamper refusal, both layouts and native removal. These
 checks do not qualify a provider or replace independent composition review.
 All six capability gates remain unpassed. The installed wheel also passes all
 six integer width/layout fresh-cluster journeys. See the
-[checkpoint](status.md#integer-installed-lifecycle-checkpoint-2026-10-24) and
-[contract](decisions.md#storage-only-postgresql-integer-contract-2026-10-24).
+[checkpoint](history/implementation-2026-10.md#integer-installed-lifecycle-checkpoint-2026-10-24) and
+[contract](history/decisions-2026-10.md#storage-only-postgresql-integer-contract-2026-10-24).
 
 
 ## Internal integer literal defaults
@@ -1346,5 +1557,5 @@ Valid ORM writes use sealed native bind values. A known range failure alone
 selects the owned public coercion expression. Native async loaded state,
 rollback and error-order controls pass in the bounded source and installed cells.
 All six integer width/layout fresh-cluster default journeys also pass. See the
-[checkpoint](status.md#integer-literal-default-installed-checkpoint-2026-10-24).
+[checkpoint](history/implementation-2026-10.md#integer-literal-default-installed-checkpoint-2026-10-24).
 All six type-admission gates remain unpassed.

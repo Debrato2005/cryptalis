@@ -1,0 +1,30 @@
+{
+  "format": "cryptalis.consolidation-boundary/v1",
+  "parents": [
+    "19657a69caa91233eb744fbfdbcff7f26d649ef9",
+    "585300c"
+  ],
+  "scope": "Consolidate current main, pushed work and completion fixes; preserve both PR histories, contracts, behavior and receipts",
+  "full_source": {
+    "passed": 4128,
+    "failed": 2,
+    "skipped": 154,
+    "subtests_passed": 18,
+    "failure": "Merged test predicate helper omitted distinct and not_distinct_null branches; no product-code failure",
+    "receipt": "consolidation-full-initial-20261031.json"
+  },
+  "repair": {
+    "product_and_script_bytes_unchanged": true,
+    "restored_predicate_matrix_passed": 169,
+    "receipt": "consolidation-negative-final-20261031.json"
+  },
+  "installed": {
+    "passed": 653,
+    "skipped": 3,
+    "receipt": "consolidation-installed-20261031.json"
+  },
+  "runtime_modules_sha256": "cb184105ffe95df145e93b5fdd7cfecef6c7dcb1de0a58b75b361c84572337fe",
+  "artifact_receipt": "consolidation-artifact-20261031.json",
+  "retained_machine_receipts": "consolidation-receipts-20261031.tar.gz",
+  "limits": "No clean full-source rerun after test-only repair. Full-run, corrected-module and installed checks bind identical product/runtime bytes. Skips and all seven production gates remain UNKNOWN."
+}

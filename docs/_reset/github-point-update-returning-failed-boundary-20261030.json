@@ -1,0 +1,206 @@
+{
+  "format": "cryptalis.github-ci-boundary/v1",
+  "run_id": 41044177765,
+  "url": "https://github.com/Debrato2005/cryptalis/actions/runs/41044177765",
+  "head_sha": "95a35a5cfcbbfd08252202b7c93bafc653732cc0",
+  "conclusion": "failure",
+  "source_job": 124024041947,
+  "release_job": 124024042192,
+  "source_checks": {
+    "test_calls": {
+      "passed": 3368,
+      "skipped": 12,
+      "failed": 15
+    },
+    "subtest_calls": {
+      "passed": 18
+    },
+    "setup": {
+      "passed": 3395,
+      "skipped": 82
+    },
+    "teardown": {
+      "passed": 3477
+    },
+    "collection": {
+      "skipped": 17
+    },
+    "selected_items": 3477
+  },
+  "source_files": 297,
+  "source_and_runtime_unchanged": true,
+  "source_hashes_match_recorded_git_revision": true,
+  "artifacts": {
+    "cryptalis-0.1.0-py3-none-any.whl": "4031d53ad2fcbb892462d02c45dcc0e1c2b734b9eb72b3ab6481746af27d02f9",
+    "cryptalis-0.1.0.tar.gz": "368f9d29f6f91ca54460a83c7f1f18be9bbd02fde8c523bed53333d87f52cc34"
+  },
+  "local_and_github_artifacts_identical": true,
+  "failure": "15 cases in test_uuid_point_boundary.py fail with AttributeError: the hand-built SimpleNamespace fixture lacks point_update. Fourteen invalid UUID point cases and one Boolean/NULL identity case cannot construct their result processor. Negative assertions remain requirements.",
+  "remedy": "Use the real _Operation defaults in the fixture and include all 24 UUID point boundary checks in installed-package CI. Verify source and installed checks; retain hosted CI failure until a subsequent full run passes.",
+  "frozen_audit": {
+    "schema": {
+      "version": "preview"
+    },
+    "summary": {
+      "audited_packages": 39,
+      "vulnerabilities": 0,
+      "adverse_statuses": 0
+    },
+    "vulnerabilities": [],
+    "adverse_statuses": []
+  },
+  "github_archives": [
+    {
+      "id": 12971464845,
+      "sha256": "23fac9490ae3153303a6c67d6224d0a927fc615c23fe30c80744f1ee0e950e49"
+    },
+    {
+      "id": 12971149179,
+      "sha256": "dcd152a9893daa23e72493321085213c8cd98acadd38802858b2ca330e6c4047"
+    }
+  ],
+  "archive": {
+    "path": "docs/_reset/github-point-update-returning-failed-receipts-20261030.tar.gz",
+    "sha256": "b0cb9df0b4d2b7e803b6cb4a9c5120805b0b3c3e5d1df5f5213408128731b00c",
+    "members": [
+      "source/admission.json",
+      "source/dependency-audit.json",
+      "source/job-status.json",
+      "source/qualification/source-receipt.json",
+      "source/qualification/status.json",
+      "release/install-receipt.json",
+      "release/installed-application-export-receipt.json",
+      "release/installed-application-restore-receipt.json",
+      "release/installed-code-receipt.json",
+      "release/installed-export-receipt.json",
+      "release/installed-google-kms-receipt.json",
+      "release/installed-journey-receipt.json",
+      "release/installed-openbao-qualification.json",
+      "release/installed-openbao-tests.json",
+      "release/installed-restore-receipt.json",
+      "release/installed-sqlmodel-receipt.json",
+      "release/job-status.json",
+      "release/release-receipt.json",
+      "release/sbom.cdx.json",
+      "release/scanner-audit.json",
+      "release/scanner-sbom.cdx.json",
+      "release/scanner-toolchain.json",
+      "release/status.json"
+    ]
+  },
+  "production_gates": "UNKNOWN",
+  "installed_checks": {
+    "installed-code-receipt.json": {
+      "test_calls": {
+        "passed": 15
+      },
+      "subtest_calls": {},
+      "setup": {
+        "passed": 15
+      },
+      "teardown": {
+        "passed": 15
+      },
+      "collection": {},
+      "selected_items": 15
+    },
+    "installed-sqlmodel-receipt.json": {
+      "test_calls": {
+        "passed": 197
+      },
+      "subtest_calls": {},
+      "setup": {
+        "passed": 197
+      },
+      "teardown": {
+        "passed": 197
+      },
+      "collection": {},
+      "selected_items": 197
+    },
+    "installed-google-kms-receipt.json": {
+      "test_calls": {
+        "passed": 50
+      },
+      "subtest_calls": {},
+      "setup": {
+        "passed": 50
+      },
+      "teardown": {
+        "passed": 50
+      },
+      "collection": {},
+      "selected_items": 50
+    },
+    "installed-openbao-tests.json": {
+      "test_calls": {
+        "passed": 146
+      },
+      "subtest_calls": {},
+      "setup": {
+        "passed": 146
+      },
+      "teardown": {
+        "passed": 146
+      },
+      "collection": {},
+      "selected_items": 146
+    },
+    "installed-export-receipt.json": {
+      "test_calls": {
+        "passed": 1
+      },
+      "subtest_calls": {},
+      "setup": {
+        "passed": 1
+      },
+      "teardown": {
+        "passed": 1
+      },
+      "collection": {},
+      "selected_items": 1
+    },
+    "installed-restore-receipt.json": {
+      "test_calls": {
+        "passed": 1
+      },
+      "subtest_calls": {},
+      "setup": {
+        "passed": 1
+      },
+      "teardown": {
+        "passed": 1
+      },
+      "collection": {},
+      "selected_items": 1
+    },
+    "installed-application-export-receipt.json": {
+      "test_calls": {
+        "passed": 1
+      },
+      "subtest_calls": {},
+      "setup": {
+        "passed": 1
+      },
+      "teardown": {
+        "passed": 1
+      },
+      "collection": {},
+      "selected_items": 1
+    },
+    "installed-application-restore-receipt.json": {
+      "test_calls": {
+        "passed": 2
+      },
+      "subtest_calls": {},
+      "setup": {
+        "passed": 2
+      },
+      "teardown": {
+        "passed": 2
+      },
+      "collection": {},
+      "selected_items": 2
+    }
+  }
+}

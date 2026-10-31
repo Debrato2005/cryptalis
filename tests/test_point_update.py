@@ -195,7 +195,7 @@ def test_point_update_late_mutation_refuses_before_driver_and_healthy_retry(faul
 
 
 @pytest.mark.parametrize("fault", ["missing_id", "missing_scope", "wrong_scope", "or",
-    "expression", "returning", "tenant_assignment", "id_assignment", "callable",
+    "expression", "tenant_assignment", "id_assignment", "callable",
     "typed_assignment", "ordered", "labeled_target", "core", "parameters"])
 def test_unadmitted_point_shapes_refuse_before_keys_and_sql(fault):
     with application(rows=3) as app:
@@ -217,8 +217,6 @@ def test_unadmitted_point_shapes_refuse_before_keys_and_sql(fault):
                 app.Customer.tenant_id == TENANT)).values(name="x")
         elif fault == "expression":
             clause = clause.values(name=func.upper("x"))
-        elif fault == "returning":
-            clause = clause.returning(app.Customer.name)
         elif fault == "tenant_assignment":
             clause = clause.values(tenant_id=TENANT)
         elif fault == "id_assignment":

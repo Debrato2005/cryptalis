@@ -74,7 +74,18 @@ def _execute(argv):
         proposal_path, pin_path, approval_path, action, pause = argv
         if action not in ('expand', 'chunk', 'resume', 'abort', 'status') or pause not in ('pause', 'exit'):
             raise ValueError()
-        proposal = r.PayloadRotationPlan(Path(proposal_path).read_bytes())
+        artifact = Path(proposal_path).read_bytes()
+        profile = json.loads(artifact).get('format') == 'cryptalis.modification/v1'
+        if profile:
+            from cryptalis.modification import ModificationPlan
+            from cryptalis import _rotation_transition as transition
+            proposal = ModificationPlan(artifact)
+            inspect, cancel, apply = transition.status, transition.abort, transition.apply
+            target = keys
+        else:
+            proposal = r.PayloadRotationPlan(artifact)
+            inspect, cancel, apply = r.status_payload_rotation, r.abort_payload_rotation, r.apply_payload_rotation
+            target = target_keys
         pin_document = json.loads(Path(pin_path).read_text())
         pin_document.update(target_id=UUID(pin_document['target_id']),
                             operation_id=UUID(pin_document['operation_id']))
@@ -82,13 +93,13 @@ def _execute(argv):
         approval = m.MaintenanceApproval(**json.loads(Path(approval_path).read_text()))
         connection_engine = engine('CRYPTALIS_TEST_DATABASE_URL')
         if action == 'status':
-            result = r.status_payload_rotation(proposal, connection_engine, pin=pin)
+            result = inspect(proposal, connection_engine, pin=pin)
         elif action == 'abort':
-            result = r.abort_payload_rotation(proposal, connection_engine, keys=keys,
+            result = cancel(proposal, connection_engine, keys=keys,
                                               source_pin=pin, approval=approval)
         else:
-            result = r.apply_payload_rotation(
-                proposal, connection_engine, keys=keys, target_keys=target_keys,
+            result = apply(
+                proposal, connection_engine, keys=keys, target_keys=target,
                 pin=pin, approval=approval,
                 until='EXPANDED' if action == 'expand' else 'BACKFILLED',
                 max_chunks=1 if action == 'chunk' else None)

@@ -4,9 +4,9 @@ Step 1 runs ``tests/test_fresh_cluster_export.py`` against the primary test
 cluster and writes a plaintext dump, a protected dump, and a manifest.
 Step 2 initializes a new PostgreSQL 16 cluster, creates same-named roles and
 databases, and runs ``tests/test_fresh_cluster_restore.py`` through
-``scripts/test_postgres.py`` with a temporary HOME credential pair.
+``scripts/test_postgres.py`` with an explicit private credential directory.
 Both pytest runs use the mandatory credential wrapper. Passwords stay in the
-temporary HOME and never appear in output.
+private directory and never appear in output.
 
 Usage: .venv/bin/python scripts/fresh_cluster_qualification.py [--workdir PATH]
 """
@@ -48,7 +48,8 @@ def run_pytest(receipt, scope, module, extra_env, *, installed_wheel=None):
     runtime_options = ([] if installed_wheel is None else
                        ['--installed-wheel', str(installed_wheel.resolve())])
     command = [sys.executable, str(ROOT / 'scripts' / 'test_postgres.py'),
-               *runtime_options, '--receipt', str(receipt), '--scope', scope, '--', module, '-q']
+               *runtime_options, '--receipt', str(receipt), '--scope', scope, '--',
+               *((module,) if isinstance(module, str) else module), '-q']
     result = subprocess.run(command, cwd=ROOT, env=dict(os.environ, **extra_env))
     if result.returncode != 0:
         raise SystemExit(f'pytest step failed: {module}')
@@ -130,6 +131,10 @@ def main():
     parser.add_argument('--public-slots', action='store_true',
                         help='Qualify explicit original-column slot preservation and restored slot authority.')
     profiles = parser.add_mutually_exclusive_group()
+    profiles.add_argument('--modification', nargs='?', const='enable', choices=('enable', 'disable'),
+                          help='Qualify active-field search modification, fresh adoption and package-free exit.')
+    profiles.add_argument('--application-config', action='store_true',
+                          help='Qualify shared configuration, rotation planning and current-value removal after restore.')
     profiles.add_argument('--reverse-cli', action='store_true',
                           help='Qualify saved reverse planning and approved CLI removal on an adopted target.')
     profiles.add_argument('--rewrap-cli', action='store_true',
@@ -172,6 +177,10 @@ def main():
     profiles.add_argument('--search-rotation', action='store_true',
                           help='Qualify backup recovery after search rotation and a later protected edit.')
     args = parser.parse_args()
+    if args.modification and (args.varchar or args.restore_lease or args.public_slots):
+        parser.error('--modification uses the original TEXT profile and current-value exit.')
+    if args.application_config and (args.varchar or args.restore_lease or args.public_slots):
+        parser.error('--application-config uses the original TEXT fixture and shared configuration lifecycle.')
     if args.column_name != 'name' and not args.integer:
         parser.error('--column-name integer requires --integer.')
     if args.sqlmodel_http and (args.varchar or args.restore_lease or args.public_slots or args.owned_sequences):
@@ -216,7 +225,8 @@ def main():
     export_receipt = workdir / 'export-receipt.json'
     restore_receipt = workdir / 'restore-receipt.json'
 
-    profile = ('; staged search CLI sealing and publication on an adopted target' if args.search_cli else
+    profile = ('; shared configuration, rotation planning and current-value removal on an adopted target' if args.application_config else
+               '; staged search CLI sealing and publication on an adopted target' if args.search_cli else
                '; staged payload CLI sealing and publication on an adopted target' if args.payload_cli else
                '; root-rewrap CLI cancellation and publication on an adopted target' if args.rewrap_cli else
                '; saved reverse-plan and approved removal CLI on an adopted target' if args.reverse_cli else
@@ -241,16 +251,20 @@ def main():
                '; search-rotation profile' if args.search_rotation else '')
     if args.restore_lease:
         profile += '; restored-target lease controls'
+    if args.modification:
+        profile += '; active-field search ' + args.modification + ' and package-free restored exit'
     if args.column_name != 'name':
         profile += '; keyword column ' + args.column_name
     export = run_pytest(export_receipt, 'Fresh-cluster source export; primary cluster' + profile,
-                        ('tests/test_date_fresh_cluster.py::test_export_date_backup_after_rotations' if args.date else
+                        ('tests/test_modification_fresh_cluster.py::test_export_modified_backup' if args.modification else
+                         'tests/test_date_fresh_cluster.py::test_export_date_backup_after_rotations' if args.date else
                          'tests/test_sqlmodel_searchable_export.py' if (args.sqlmodel_searchable or args.sqlmodel_direct_search or args.sqlmodel_public_slots or args.sqlmodel_http) else
                          'tests/test_fresh_boolean_export.py' if args.boolean or args.integer or args.uuid else
                          'tests/test_smolink_application.py' if args.smolink
                          else 'tests/test_fresh_cluster_export.py'),
                         {'CRYPTALIS_SMOLINK_FRESH_EXPORT': str(workdir) if args.smolink else '',
                          'CRYPTALIS_FRESH_CLUSTER_DIR': str(workdir),
+                         'CRYPTALIS_FRESH_MODIFICATION': args.modification or '',
                          'CRYPTALIS_FRESH_INTEGER_BITS': str(args.integer or 0),
                          'CRYPTALIS_FRESH_COLUMN_NAME': args.column_name,
                          'CRYPTALIS_FRESH_DATE': '1' if args.date else '0',
@@ -301,6 +315,13 @@ def main():
                 or plan.get('kind') != 'payload_rotation'
                 or plan.get('lock', {}).get('schema') != 'cryptalis.lock/v9'):
             raise SystemExit('FreshCluster.ProfileMismatch: UUID payload successor is missing.')
+    elif args.modification:
+        plan = json.loads(base64.b64decode(manifest['plan'], validate=True))
+        if (manifest.get('application_profile') != 'active-search-modification'
+                or manifest.get('search_enabled') is not (args.modification == 'enable')
+                or plan['lock']['models'][0]['fields'][0]['queries'] != (['equality'] if args.modification == 'enable' else [])
+                or plan.get('format') != 'cryptalis.transition/v17' or plan.get('kind') != 'profile_rotation'):
+            raise SystemExit('FreshCluster.ProfileMismatch: modified profile successor is missing.')
     elif args.date:
         plan = json.loads(base64.b64decode(manifest['plan'], validate=True))
         if (manifest.get('application_profile') != 'date-storage' or plan.get('kind') != 'search_rotation'
@@ -360,7 +381,10 @@ def main():
         credentials = provision(port, password, manifest, plain_database)
         home = write_home(workdir, port, manifest, credentials)
         restore = run_pytest(restore_receipt, 'Fresh-cluster protected-backup recovery and adoption; isolated cluster' + profile,
-                             ('tests/test_date_fresh_cluster.py::test_restore_date_authentication_explicit_adoption_latest_exit' if args.date else
+                             ('tests/test_modification_fresh_cluster.py::test_restore_modified_backup_authenticate_and_remove_current_values' if args.modification else
+                              ('tests/test_fresh_cluster_restore.py::test_protected_backup_recovers_values_with_retained_keys',
+                               'tests/test_fresh_cluster_restore.py::test_restored_cluster_completes_adopted_lifecycle') if args.application_config else
+                              'tests/test_date_fresh_cluster.py::test_restore_date_authentication_explicit_adoption_latest_exit' if args.date else
                               'tests/test_search_operational_cli.py::test_genuine_adopted_search_cli_seals_saved_activation_and_latest_native_exit' if args.search_cli else
                               'tests/test_payload_operational_cli.py::test_genuine_adopted_payload_cli_seals_saved_activation_and_latest_native_exit' if args.payload_cli else
                               'tests/test_rewrap_operational_cli.py::test_genuine_adopted_rewrap_cli_preserves_binding_and_byte_identity' if args.rewrap_cli else
@@ -377,7 +401,7 @@ def main():
                               else 'tests/test_adopted_rewrap.py' if args.adopted_rewrap
                               else 'tests/test_restore_lease_fresh.py' if args.restore_lease
                               else 'tests/test_fresh_cluster_restore.py'),
-                             {'HOME': str(home), 'CRYPTALIS_FRESH_CLUSTER_DIR': str(workdir),
+                             {'CRYPTALIS_TEST_CONFIG_DIR': str(home), 'CRYPTALIS_FRESH_CLUSTER_DIR': str(workdir),
                               'CRYPTALIS_FRESH_INTEGER_BITS': str(args.integer or 0),
                               'CRYPTALIS_FRESH_COLUMN_NAME': args.column_name,
                               'CRYPTALIS_FRESH_DATE': '1' if args.date else '0',

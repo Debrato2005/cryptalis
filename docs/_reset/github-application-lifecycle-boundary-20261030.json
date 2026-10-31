@@ -1,0 +1,144 @@
+{
+  "format": "cryptalis.github-ci-boundary/v1",
+  "run_id": 41005389139,
+  "url": "https://github.com/Debrato2005/cryptalis/actions/runs/41005389139",
+  "head_sha": "b92cfc7b2fdc808bc27bb5a95ee4b1c5f8c78ff2",
+  "conclusion": "success",
+  "source_job": 123899009519,
+  "release_job": 123899009304,
+  "source_checks": {
+    "test_calls": {
+      "passed": 3155,
+      "skipped": 12
+    },
+    "subtest_calls": {
+      "passed": 18
+    },
+    "setup": {
+      "passed": 3167,
+      "skipped": 63
+    },
+    "teardown": {
+      "passed": 3230
+    },
+    "collection": {
+      "skipped": 16
+    },
+    "selected_items": 3230
+  },
+  "source_files": 282,
+  "source_and_runtime_unchanged": true,
+  "source_hashes_match_recorded_git_revision": true,
+  "artifacts": {
+    "cryptalis-0.1.0-py3-none-any.whl": "5ad8302ffed64bf8df6f4af5deb7c1c19c15d12d0e6a00bf42b0b048207e4281",
+    "cryptalis-0.1.0.tar.gz": "4e7c81beddef208229a204e4648bf9cb25fee06efe6f36a549e924600b91ad9f"
+  },
+  "local_and_github_artifacts_identical": true,
+  "frozen_audit": {
+    "schema": {
+      "version": "preview"
+    },
+    "summary": {
+      "audited_packages": 26,
+      "vulnerabilities": 0,
+      "adverse_statuses": 0
+    },
+    "vulnerabilities": [],
+    "adverse_statuses": []
+  },
+  "github_archives": [
+    {
+      "id": 12956061584,
+      "sha256": "31ea86503a9abdca3a864e40facf9ec5768a1cac8cdc18a6cfd4bb7ee644e131"
+    },
+    {
+      "id": 12955292618,
+      "sha256": "e98085eb5f090c45769ccc42cb044820ebb3b9ddab4251efee3ccc6c7b6d54d8"
+    }
+  ],
+  "archive": {
+    "path": "docs/_reset/github-application-lifecycle-receipts-20261030.tar.gz",
+    "sha256": "46a1969c5269ab4eb6621af5080201ae5770f4699ff1e7ee08ac043c748e9d5e",
+    "members": [
+      "source/admission.json",
+      "source/dependency-audit.json",
+      "source/job-status.json",
+      "source/qualification/source-receipt.json",
+      "source/qualification/status.json",
+      "release/install-receipt.json",
+      "release/installed-export-receipt.json",
+      "release/installed-journey-receipt.json",
+      "release/installed-openbao-qualification.json",
+      "release/installed-openbao-tests.json",
+      "release/installed-restore-receipt.json",
+      "release/installed-sqlmodel-receipt.json",
+      "release/job-status.json",
+      "release/release-receipt.json",
+      "release/sbom.cdx.json",
+      "release/status.json"
+    ]
+  },
+  "production_gates": "UNKNOWN",
+  "limits": [
+    "Explicit skipped cells and failed separate performance observations remain unqualified.",
+    "The subsequent Google adapter has a separate local boundary; this CI revision predates it."
+  ],
+  "installed_checks": {
+    "installed-sqlmodel-receipt.json": {
+      "test_calls": {
+        "passed": 96
+      },
+      "subtest_calls": {},
+      "setup": {
+        "passed": 96
+      },
+      "teardown": {
+        "passed": 96
+      },
+      "collection": {},
+      "selected_items": 96
+    },
+    "installed-openbao-tests.json": {
+      "test_calls": {
+        "passed": 69
+      },
+      "subtest_calls": {},
+      "setup": {
+        "passed": 69
+      },
+      "teardown": {
+        "passed": 69
+      },
+      "collection": {},
+      "selected_items": 69
+    },
+    "installed-export-receipt.json": {
+      "test_calls": {
+        "passed": 1
+      },
+      "subtest_calls": {},
+      "setup": {
+        "passed": 1
+      },
+      "teardown": {
+        "passed": 1
+      },
+      "collection": {},
+      "selected_items": 1
+    },
+    "installed-restore-receipt.json": {
+      "test_calls": {
+        "passed": 1
+      },
+      "subtest_calls": {},
+      "setup": {
+        "passed": 1
+      },
+      "teardown": {
+        "passed": 1
+      },
+      "collection": {},
+      "selected_items": 1
+    }
+  }
+}

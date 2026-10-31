@@ -1,0 +1,189 @@
+{
+  "format": "cryptalis.github-ci-boundary/v1",
+  "run_id": 41014333321,
+  "url": "https://github.com/Debrato2005/cryptalis/actions/runs/41014333321",
+  "head_sha": "ccf7d12858e9e6d8e9ee23b2e1dd17788bbf9cba",
+  "conclusion": "success",
+  "source_job": 123927122343,
+  "release_job": 123927122054,
+  "source_checks": {
+    "test_calls": {
+      "passed": 3254,
+      "skipped": 12
+    },
+    "subtest_calls": {
+      "passed": 18
+    },
+    "setup": {
+      "passed": 3266,
+      "skipped": 73
+    },
+    "teardown": {
+      "passed": 3339
+    },
+    "collection": {
+      "skipped": 17
+    },
+    "selected_items": 3339
+  },
+  "source_files": 287,
+  "source_and_runtime_unchanged": true,
+  "source_hashes_match_recorded_git_revision": true,
+  "artifacts": {
+    "cryptalis-0.1.0-py3-none-any.whl": "3e36ed3594b918bb0d3cdeee1488603e8da593328e16741c6405e534168f90d5",
+    "cryptalis-0.1.0.tar.gz": "84d24eb27588beb0535faacb545a745cb721a53bb213f50a86dae47cac7acdef"
+  },
+  "local_and_github_artifacts_identical": true,
+  "frozen_audit": {
+    "schema": {
+      "version": "preview"
+    },
+    "summary": {
+      "audited_packages": 39,
+      "vulnerabilities": 0,
+      "adverse_statuses": 0
+    },
+    "vulnerabilities": [],
+    "adverse_statuses": []
+  },
+  "github_archives": [
+    {
+      "id": 12959173849,
+      "sha256": "3a94bb99a78e462bde0660e720f8498f2cc35cdc01b0b4e0cd9d957fc7429207"
+    },
+    {
+      "id": 12959400326,
+      "sha256": "94ad824b6f80b826adda8b5d2db3e5d7f021f59f2044eeeda1d6647d575e533e"
+    }
+  ],
+  "archive": {
+    "path": "docs/_reset/github-application-rotations-receipts-20261030.tar.gz",
+    "sha256": "60b7c84e62c8ddaf3e82a9f4ede34889f1d311773506969305e923cf5b853ed9",
+    "members": [
+      "source/admission.json",
+      "source/dependency-audit.json",
+      "source/job-status.json",
+      "source/qualification/source-receipt.json",
+      "source/qualification/status.json",
+      "release/install-receipt.json",
+      "release/installed-application-export-receipt.json",
+      "release/installed-application-restore-receipt.json",
+      "release/installed-export-receipt.json",
+      "release/installed-google-kms-receipt.json",
+      "release/installed-journey-receipt.json",
+      "release/installed-openbao-qualification.json",
+      "release/installed-openbao-tests.json",
+      "release/installed-restore-receipt.json",
+      "release/installed-sqlmodel-receipt.json",
+      "release/job-status.json",
+      "release/release-receipt.json",
+      "release/sbom.cdx.json",
+      "release/status.json"
+    ]
+  },
+  "production_gates": "UNKNOWN",
+  "limits": [
+    "Explicit skipped cells and failed separate performance observations remain unqualified.",
+    "The following Doctor authentication change has a separate local boundary; this CI revision predates it."
+  ],
+  "installed_checks": {
+    "installed-sqlmodel-receipt.json": {
+      "test_calls": {
+        "passed": 105
+      },
+      "subtest_calls": {},
+      "setup": {
+        "passed": 105
+      },
+      "teardown": {
+        "passed": 105
+      },
+      "collection": {},
+      "selected_items": 105
+    },
+    "installed-google-kms-receipt.json": {
+      "test_calls": {
+        "passed": 50
+      },
+      "subtest_calls": {},
+      "setup": {
+        "passed": 50
+      },
+      "teardown": {
+        "passed": 50
+      },
+      "collection": {},
+      "selected_items": 50
+    },
+    "installed-openbao-tests.json": {
+      "test_calls": {
+        "passed": 115
+      },
+      "subtest_calls": {},
+      "setup": {
+        "passed": 115
+      },
+      "teardown": {
+        "passed": 115
+      },
+      "collection": {},
+      "selected_items": 115
+    },
+    "installed-export-receipt.json": {
+      "test_calls": {
+        "passed": 1
+      },
+      "subtest_calls": {},
+      "setup": {
+        "passed": 1
+      },
+      "teardown": {
+        "passed": 1
+      },
+      "collection": {},
+      "selected_items": 1
+    },
+    "installed-restore-receipt.json": {
+      "test_calls": {
+        "passed": 1
+      },
+      "subtest_calls": {},
+      "setup": {
+        "passed": 1
+      },
+      "teardown": {
+        "passed": 1
+      },
+      "collection": {},
+      "selected_items": 1
+    },
+    "installed-application-export-receipt.json": {
+      "test_calls": {
+        "passed": 1
+      },
+      "subtest_calls": {},
+      "setup": {
+        "passed": 1
+      },
+      "teardown": {
+        "passed": 1
+      },
+      "collection": {},
+      "selected_items": 1
+    },
+    "installed-application-restore-receipt.json": {
+      "test_calls": {
+        "passed": 2
+      },
+      "subtest_calls": {},
+      "setup": {
+        "passed": 2
+      },
+      "teardown": {
+        "passed": 2
+      },
+      "collection": {},
+      "selected_items": 2
+    }
+  }
+}

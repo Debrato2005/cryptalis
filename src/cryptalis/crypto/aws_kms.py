@@ -15,7 +15,8 @@ from hmac import compare_digest
 from types import CoroutineType
 from uuid import UUID
 
-from .keys import InvalidContext, KeyContext, KeyProvider, KeyUnavailable, WrappedRoot
+from .keys import (InvalidContext, KeyContext, KeyProvider, KeyUnavailable,
+                   ProviderAuthenticationUnavailable, WrappedRoot)
 
 
 _KEY_ARN = re.compile(
@@ -152,5 +153,7 @@ class AwsKmsKeyProvider:
                     or new_provider.provider_id != identity):
                 raise KeyUnavailable()
             return result
+        except ProviderAuthenticationUnavailable:
+            raise ProviderAuthenticationUnavailable() from None
         except Exception:
             raise KeyUnavailable() from None

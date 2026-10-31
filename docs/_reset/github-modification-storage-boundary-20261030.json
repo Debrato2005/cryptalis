@@ -1,0 +1,267 @@
+{
+  "format": "cryptalis.github-ci-boundary/v1",
+  "run_id": 41065730900,
+  "url": "https://github.com/Debrato2005/cryptalis/actions/runs/41065730900",
+  "head_sha": "84b521ecd024450e88e48a89f837ee2ce9cd2fa0",
+  "conclusion": "success",
+  "source_job": 124096506448,
+  "release_job": 124096507136,
+  "source_checks": {
+    "test_calls": {
+      "passed": 3509,
+      "skipped": 12
+    },
+    "subtest_calls": {
+      "passed": 18
+    },
+    "setup": {
+      "passed": 3521,
+      "skipped": 85
+    },
+    "teardown": {
+      "passed": 3606
+    },
+    "collection": {
+      "skipped": 18
+    },
+    "selected_items": 3606
+  },
+  "source_files": 309,
+  "source_and_runtime_unchanged": true,
+  "source_hashes_match_recorded_git_revision": true,
+  "artifacts": {
+    "cryptalis-0.1.0-py3-none-any.whl": "fd345d2a38703b88406ea3f231c73d53f4d35efa24b58a588512e05ef7088ec9",
+    "cryptalis-0.1.0.tar.gz": "a8568b00801a5450eef325ef3cf08801f3ff47d9c1b18d485990b380b1ace935"
+  },
+  "local_and_github_artifacts_identical": true,
+  "frozen_audit": {
+    "schema": {
+      "version": "preview"
+    },
+    "summary": {
+      "audited_packages": 39,
+      "vulnerabilities": 0,
+      "adverse_statuses": 0
+    },
+    "vulnerabilities": [],
+    "adverse_statuses": []
+  },
+  "github_archives": [
+    {
+      "id": 12983267456,
+      "sha256": "0354a9aa7a48329a60731ca6a81165fb9c495bc1b6b805640d6a338cac39c2bf"
+    },
+    {
+      "id": 12981759544,
+      "sha256": "eaf68eee6794ffb36226cdeb4eeaeac6d713fb335bd3accf13a07a8bebf86534"
+    }
+  ],
+  "archive": {
+    "path": "docs/_reset/github-modification-storage-receipts-20261030.tar.gz",
+    "sha256": "1c0c1dfd40bdf288bf0b12bf66dcefff719414a99e7f7e08cfd6c7b880f79c86",
+    "members": [
+      "source/admission.json",
+      "source/dependency-audit.json",
+      "source/job-status.json",
+      "source/qualification/source-receipt.json",
+      "source/qualification/status.json",
+      "release/install-receipt.json",
+      "release/installed-application-export-receipt.json",
+      "release/installed-application-restore-receipt.json",
+      "release/installed-code-receipt.json",
+      "release/installed-export-receipt.json",
+      "release/installed-google-kms-receipt.json",
+      "release/installed-journey-receipt.json",
+      "release/installed-modification-export-receipt.json",
+      "release/installed-modification-restore-receipt.json",
+      "release/installed-openbao-qualification.json",
+      "release/installed-openbao-tests.json",
+      "release/installed-restore-receipt.json",
+      "release/installed-sqlmodel-receipt.json",
+      "release/installed-storage-modification-export-receipt.json",
+      "release/installed-storage-modification-restore-receipt.json",
+      "release/job-status.json",
+      "release/release-receipt.json",
+      "release/sbom.cdx.json",
+      "release/scanner-audit.json",
+      "release/scanner-sbom.cdx.json",
+      "release/scanner-toolchain.json",
+      "release/status.json"
+    ]
+  },
+  "production_gates": "UNKNOWN",
+  "limits": [
+    "Explicit skipped cells and failed separate performance observations remain unqualified.",
+    "Bidirectional nonunique text search-profile modification and recorded CLI status are bounded. Named point RETURNING work is outside this pushed revision."
+  ],
+  "installed_checks": {
+    "installed-code-receipt.json": {
+      "test_calls": {
+        "passed": 15
+      },
+      "subtest_calls": {},
+      "setup": {
+        "passed": 15
+      },
+      "teardown": {
+        "passed": 15
+      },
+      "collection": {},
+      "selected_items": 15
+    },
+    "installed-sqlmodel-receipt.json": {
+      "test_calls": {
+        "passed": 368
+      },
+      "subtest_calls": {},
+      "setup": {
+        "passed": 368
+      },
+      "teardown": {
+        "passed": 368
+      },
+      "collection": {},
+      "selected_items": 368
+    },
+    "installed-google-kms-receipt.json": {
+      "test_calls": {
+        "passed": 50
+      },
+      "subtest_calls": {},
+      "setup": {
+        "passed": 50
+      },
+      "teardown": {
+        "passed": 50
+      },
+      "collection": {},
+      "selected_items": 50
+    },
+    "installed-openbao-tests.json": {
+      "test_calls": {
+        "passed": 148
+      },
+      "subtest_calls": {},
+      "setup": {
+        "passed": 148
+      },
+      "teardown": {
+        "passed": 148
+      },
+      "collection": {},
+      "selected_items": 148
+    },
+    "installed-export-receipt.json": {
+      "test_calls": {
+        "passed": 1
+      },
+      "subtest_calls": {},
+      "setup": {
+        "passed": 1
+      },
+      "teardown": {
+        "passed": 1
+      },
+      "collection": {},
+      "selected_items": 1
+    },
+    "installed-restore-receipt.json": {
+      "test_calls": {
+        "passed": 1
+      },
+      "subtest_calls": {},
+      "setup": {
+        "passed": 1
+      },
+      "teardown": {
+        "passed": 1
+      },
+      "collection": {},
+      "selected_items": 1
+    },
+    "installed-application-export-receipt.json": {
+      "test_calls": {
+        "passed": 1
+      },
+      "subtest_calls": {},
+      "setup": {
+        "passed": 1
+      },
+      "teardown": {
+        "passed": 1
+      },
+      "collection": {},
+      "selected_items": 1
+    },
+    "installed-application-restore-receipt.json": {
+      "test_calls": {
+        "passed": 2
+      },
+      "subtest_calls": {},
+      "setup": {
+        "passed": 2
+      },
+      "teardown": {
+        "passed": 2
+      },
+      "collection": {},
+      "selected_items": 2
+    },
+    "installed-modification-export-receipt.json": {
+      "test_calls": {
+        "passed": 1
+      },
+      "subtest_calls": {},
+      "setup": {
+        "passed": 1
+      },
+      "teardown": {
+        "passed": 1
+      },
+      "collection": {},
+      "selected_items": 1
+    },
+    "installed-modification-restore-receipt.json": {
+      "test_calls": {
+        "passed": 1
+      },
+      "subtest_calls": {},
+      "setup": {
+        "passed": 1
+      },
+      "teardown": {
+        "passed": 1
+      },
+      "collection": {},
+      "selected_items": 1
+    },
+    "installed-storage-modification-export-receipt.json": {
+      "test_calls": {
+        "passed": 1
+      },
+      "subtest_calls": {},
+      "setup": {
+        "passed": 1
+      },
+      "teardown": {
+        "passed": 1
+      },
+      "collection": {},
+      "selected_items": 1
+    },
+    "installed-storage-modification-restore-receipt.json": {
+      "test_calls": {
+        "passed": 1
+      },
+      "subtest_calls": {},
+      "setup": {
+        "passed": 1
+      },
+      "teardown": {
+        "passed": 1
+      },
+      "collection": {},
+      "selected_items": 1
+    }
+  }
+}

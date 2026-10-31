@@ -346,7 +346,7 @@ eight-field cases, raw samples, interpreter versions and exact source hashes.
 2. Show a declaration from the [SQLAlchemy walkthrough](walkthrough-sqlalchemy.md).
 3. Explain the equality term and its leakage before showing a search.
 4. Follow protection, a current-data edit, key rotation and decrypt-back.
-5. Show the [recorded online application journey](status.md#original-online-http-fresh-recovery-2026-10-24).
+5. Show the [recorded online application journey](history/implementation-2026-10.md#original-online-http-fresh-recovery-2026-10-24).
 6. Finish with the measured costs and the objective ledger's unfinished work.
 
 Keep the distinction between a design, implemented code and recorded verification

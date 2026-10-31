@@ -1,0 +1,50 @@
+{
+  "format": "cryptalis.doctor-provider/v1",
+  "base_revision": "fa5045ab341339f36a50bc204c7dc94effd44155",
+  "archive": {
+    "path": "docs/_reset/doctor-provider-receipts-20261030.tar.gz",
+    "sha256": "0e74795fae390cc20194c646babe0f9b7359d2d85e95a8863115ff0d5cdf4e8d",
+    "members": {
+      "failed/missing-native-tool.json": "5f7586728da1ae8bed5a14d44dd0d8b6d48e2d423cf20c39e8bff5a3cf845cc2",
+      "release/install-receipt.json": "38ba1be39db78112337a794805f65c14d4adc152dbb2a35021a6047b55836727",
+      "release/installed-export-receipt.json": "8ef3e926ebe1ba5f3ac9d0ed42fb9bbbe16959101aa85d260e3b560025d62f1e",
+      "release/installed-journey-receipt.json": "d3ed08b5943701447e1069f0cb8976096152b6f24980bb02b2c13eb95969198c",
+      "release/installed-openbao-qualification.json": "0e3b9d3d20533823cde2ce471e10cfcc4de47dae849ddec4bc3bc1427ff42936",
+      "release/installed-openbao-tests.json": "270cd92fac43d53e516cb1398ba7c6a320d77c89bcea5892034cb5e3135846b1",
+      "release/installed-restore-receipt.json": "712a25a3ec10c3f47660c8120937ec4a17bf44ef3fec2b150751afb8f86417b2",
+      "release/installed-sqlmodel-receipt.json": "9bab7ced138d13f08fb85a292cd4c2eba897678da81c33d8d4dbbc839bbc5800",
+      "release/release-receipt.json": "36e0c3139ebe6c2c07d452cc1657ad9fa67d2462b9e3691e32ca154d7391bc7d",
+      "release/sbom.cdx.json": "09a738a396b12285a2302957d2909cbbb88e6eb5a3743fea42f58fad26c45d2e",
+      "release/status.json": "de1268b63a7c4b9b4d9bf1538c3b383694425814a156d54f08869bbc2ed7eb55",
+      "source/affected.json": "ae559bea0b5cdab3d9448328d445966096542f7286cf5e7ec78bd6a5cb17a895",
+      "source/provider-qualification.json": "0e3b9d3d20533823cde2ce471e10cfcc4de47dae849ddec4bc3bc1427ff42936",
+      "source/provider-tests.json": "91cf9193dbd1c33bee33c18660b2dcf20ab97d99aa0fe28772747468edcc27fb"
+    }
+  },
+  "source_hash_binding": {
+    "files": 280,
+    "all_current_python_hashes_match": true
+  },
+  "source": {
+    "affected_passed": 176,
+    "real_provider_passed": 68
+  },
+  "release": {
+    "outcome": "PASS",
+    "installed_provider_and_doctor": 68,
+    "installed_orm": 29,
+    "fresh_export": 1,
+    "fresh_restore": 1,
+    "extras": [
+      "openbao",
+      "sqlmodel"
+    ]
+  },
+  "complete_default_source": "Pending GitHub CI; no complete local-source pass claimed.",
+  "gate": "UNKNOWN",
+  "limits": [
+    "Provider diagnosis proves cold preparation only; aggregate health remains UNKNOWN.",
+    "Local TLS/Raft service evidence does not qualify production custody or service disaster recovery.",
+    "All 34 objectives remain in scope; independent human review remains unavailable."
+  ]
+}

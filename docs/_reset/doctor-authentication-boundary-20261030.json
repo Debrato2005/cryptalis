@@ -1,0 +1,227 @@
+{
+  "format": "cryptalis.doctor-authentication-boundary/v1",
+  "base_revision": "ccf7d12858e9e6d8e9ee23b2e1dd17788bbf9cba",
+  "source_identity": "worktree-3194e492092a9fd3",
+  "source_files": 287,
+  "source_checks": {
+    "test_calls": {
+      "passed": 76
+    },
+    "subtest_calls": {},
+    "setup": {
+      "passed": 76
+    },
+    "teardown": {
+      "passed": 76
+    },
+    "collection": {},
+    "selected_items": 76
+  },
+  "source_and_runtime_unchanged": true,
+  "artifacts": {
+    "cryptalis-0.1.0-py3-none-any.whl": "4e196b04f1a0d12346a839faf65c1443c778098f45f905821ea8b1dbb4951daa",
+    "cryptalis-0.1.0.tar.gz": "e367ab56be3df5b7358a5e44b8cb292166f5caffb74003dd50748ba2a85856c9"
+  },
+  "reproducible": true,
+  "release_steps": [
+    {
+      "name": "reproducible wheel sdist SBOM inspection",
+      "outcome": "PASS",
+      "exit_code": 0,
+      "elapsed_seconds": 1.674320648999128
+    },
+    {
+      "name": "export locked hashed wheel-test dependencies",
+      "outcome": "PASS",
+      "exit_code": 0,
+      "elapsed_seconds": 0.04297255400160793
+    },
+    {
+      "name": "create isolated wheel interpreter",
+      "outcome": "PASS",
+      "exit_code": 0,
+      "elapsed_seconds": 0.04260976299701724
+    },
+    {
+      "name": "install hashed dependencies",
+      "outcome": "PASS",
+      "exit_code": 0,
+      "elapsed_seconds": 1.1974588820012286
+    },
+    {
+      "name": "install exact inspected wheel",
+      "outcome": "PASS",
+      "exit_code": 0,
+      "elapsed_seconds": 0.0435983120041783
+    },
+    {
+      "name": "installed dependency consistency",
+      "outcome": "PASS",
+      "exit_code": 0,
+      "elapsed_seconds": 0.04556432100071106
+    },
+    {
+      "name": "installed file and CLI inspection",
+      "outcome": "PASS"
+    },
+    {
+      "name": "installed ORM and shared initialization/Doctor context",
+      "outcome": "PASS",
+      "exit_code": 0,
+      "elapsed_seconds": 73.93556027999875
+    },
+    {
+      "name": "installed Google SDK protocol and PostgreSQL lifecycle",
+      "outcome": "PASS",
+      "exit_code": 0,
+      "elapsed_seconds": 11.04636665200087
+    },
+    {
+      "name": "installed OpenBao TLS outage and PostgreSQL lifecycle",
+      "outcome": "PASS",
+      "exit_code": 0,
+      "elapsed_seconds": 98.43916159200307
+    },
+    {
+      "name": "installed shared configuration on genuine fresh recovery",
+      "outcome": "PASS",
+      "exit_code": 0,
+      "elapsed_seconds": 13.520019085000968
+    },
+    {
+      "name": "installed keyword public-slot genuine fresh recovery",
+      "outcome": "PASS",
+      "exit_code": 0,
+      "elapsed_seconds": 12.121359042001131
+    }
+  ],
+  "archive": {
+    "path": "docs/_reset/doctor-authentication-receipts-20261030.tar.gz",
+    "sha256": "fdb1c77cc2422092bd8b469078523ae1e5dff444a872a3fcd930e6b3fe650e24",
+    "members": [
+      "source/doctor-authentication-source.json",
+      "installed/install-receipt.json",
+      "installed/installed-application-export-receipt.json",
+      "installed/installed-application-restore-receipt.json",
+      "installed/installed-export-receipt.json",
+      "installed/installed-google-kms-receipt.json",
+      "installed/installed-journey-receipt.json",
+      "installed/installed-openbao-qualification.json",
+      "installed/installed-openbao-tests.json",
+      "installed/installed-restore-receipt.json",
+      "installed/installed-sqlmodel-receipt.json",
+      "installed/release-receipt.json",
+      "installed/sbom.cdx.json",
+      "installed/status.json"
+    ]
+  },
+  "boundary": "Doctor Python and public CLI retain explicit authentication failures, uncertain native issuance, safe retry guidance and individual outcomes. Actual AppRole token TTL refusal followed by cold recovery; original application key leases preserved.",
+  "failures_retained": [],
+  "production_gates": "UNKNOWN",
+  "limits": [
+    "A cold access result is current access only, not stored-frame, audit, backup, production custody or deployment qualification.",
+    "No native issuance count or token cleanup guarantee; login can have unknown effects.",
+    "Earlier startup timing failures remain in the rotation checkpoint; this slice does not resolve their unknown cause.",
+    "No live AWS/Google, production audit/HA, controlled destruction or independent security review."
+  ],
+  "installed_checks": {
+    "installed-sqlmodel-receipt.json": {
+      "test_calls": {
+        "passed": 105
+      },
+      "subtest_calls": {},
+      "setup": {
+        "passed": 105
+      },
+      "teardown": {
+        "passed": 105
+      },
+      "collection": {},
+      "selected_items": 105
+    },
+    "installed-google-kms-receipt.json": {
+      "test_calls": {
+        "passed": 50
+      },
+      "subtest_calls": {},
+      "setup": {
+        "passed": 50
+      },
+      "teardown": {
+        "passed": 50
+      },
+      "collection": {},
+      "selected_items": 50
+    },
+    "installed-openbao-tests.json": {
+      "test_calls": {
+        "passed": 117
+      },
+      "subtest_calls": {},
+      "setup": {
+        "passed": 117
+      },
+      "teardown": {
+        "passed": 117
+      },
+      "collection": {},
+      "selected_items": 117
+    },
+    "installed-application-export-receipt.json": {
+      "test_calls": {
+        "passed": 1
+      },
+      "subtest_calls": {},
+      "setup": {
+        "passed": 1
+      },
+      "teardown": {
+        "passed": 1
+      },
+      "collection": {},
+      "selected_items": 1
+    },
+    "installed-application-restore-receipt.json": {
+      "test_calls": {
+        "passed": 2
+      },
+      "subtest_calls": {},
+      "setup": {
+        "passed": 2
+      },
+      "teardown": {
+        "passed": 2
+      },
+      "collection": {},
+      "selected_items": 2
+    },
+    "installed-export-receipt.json": {
+      "test_calls": {
+        "passed": 1
+      },
+      "subtest_calls": {},
+      "setup": {
+        "passed": 1
+      },
+      "teardown": {
+        "passed": 1
+      },
+      "collection": {},
+      "selected_items": 1
+    },
+    "installed-restore-receipt.json": {
+      "test_calls": {
+        "passed": 1
+      },
+      "subtest_calls": {},
+      "setup": {
+        "passed": 1
+      },
+      "teardown": {
+        "passed": 1
+      },
+      "collection": {},
+      "selected_items": 1
+    }
+  }
+}

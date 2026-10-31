@@ -393,8 +393,8 @@ def test_unsupported_search_grammar_never_reaches_driver(mode):
         independent = Table("customer", MetaData(schema=app.schema), Column("id", Uuid),
                             Column("tenant_id", Uuid), Column("name", Text(collation="C")))
         # W4 explicitly admits simple negative equality/IN and null presence.
-        # General Boolean NOT still cannot invert an embedded tenant guard.
-        statements = [select(C).where(not_(and_(C.name == "x", C.rank > 0))), select(C).where(C.name > "x"),
+        # Boolean NOT must not admit an unsupported protected leaf.
+        statements = [select(C).where(not_(and_(C.name.like("x%"), C.rank > 0))), select(C).where(C.name > "x"),
                       select(C).where(C.name.like("x%")), select(C).where(C.name.ilike("x%")),
                       select(C).where(C.name.startswith("x")), select(C).where(C.name.contains("x")),
                       select(C).where(C.name == C.label), select(C).where(C.name == alias.name),

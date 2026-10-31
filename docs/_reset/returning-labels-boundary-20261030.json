@@ -1,0 +1,390 @@
+{
+  "format": "cryptalis.named-point-returning-boundary/v1",
+  "base_revision": "84b521ecd024450e88e48a89f837ee2ce9cd2fa0",
+  "source_identity": "worktree-19a22e77ba00564a",
+  "source_files": 310,
+  "source_checks": {
+    "test_calls": {
+      "passed": 176
+    },
+    "subtest_calls": {},
+    "setup": {
+      "passed": 176
+    },
+    "teardown": {
+      "passed": 176
+    },
+    "collection": {},
+    "selected_items": 176
+  },
+  "source_and_runtime_unchanged": true,
+  "artifacts": {
+    "cryptalis-0.1.0-py3-none-any.whl": "6adeb90863f45b45974068cd2591e6ebe88f30564737c0b84a070087e16f83ef",
+    "cryptalis-0.1.0.tar.gz": "cea0ff6d4352af88ecdef287f5a7a3c883bacdf1ec4825d88f87b341e1e85327"
+  },
+  "reproducible": true,
+  "release_steps": [
+    {
+      "name": "reproducible wheel sdist SBOM inspection",
+      "outcome": "PASS",
+      "exit_code": 0,
+      "elapsed_seconds": 1.6549604149913648
+    },
+    {
+      "name": "export locked hashed wheel-test dependencies",
+      "outcome": "PASS",
+      "exit_code": 0,
+      "elapsed_seconds": 0.028417084002285264
+    },
+    {
+      "name": "create isolated wheel interpreter",
+      "outcome": "PASS",
+      "exit_code": 0,
+      "elapsed_seconds": 0.03658177801116835
+    },
+    {
+      "name": "install hashed dependencies",
+      "outcome": "PASS",
+      "exit_code": 0,
+      "elapsed_seconds": 1.41392176199588
+    },
+    {
+      "name": "install exact inspected wheel",
+      "outcome": "PASS",
+      "exit_code": 0,
+      "elapsed_seconds": 0.06767890600895043
+    },
+    {
+      "name": "installed dependency consistency",
+      "outcome": "PASS",
+      "exit_code": 0,
+      "elapsed_seconds": 0.04387618899636436
+    },
+    {
+      "name": "installed file and CLI inspection",
+      "outcome": "PASS"
+    },
+    {
+      "name": "export isolated locked scanner dependencies",
+      "outcome": "PASS",
+      "exit_code": 0,
+      "elapsed_seconds": 0.038006496004527435
+    },
+    {
+      "name": "create isolated scanner interpreter",
+      "outcome": "PASS",
+      "exit_code": 0,
+      "elapsed_seconds": 0.0172399909934029
+    },
+    {
+      "name": "install hashed scanner dependencies",
+      "outcome": "PASS",
+      "exit_code": 0,
+      "elapsed_seconds": 0.47880425000039395
+    },
+    {
+      "name": "export scanner SBOM",
+      "outcome": "PASS",
+      "exit_code": 0,
+      "elapsed_seconds": 0.02313021798909176
+    },
+    {
+      "name": "audit frozen scanner toolchain",
+      "outcome": "PASS",
+      "exit_code": 0,
+      "elapsed_seconds": 0.8021631930023432
+    },
+    {
+      "name": "installed Doctor native code inventory",
+      "outcome": "PASS",
+      "exit_code": 0,
+      "elapsed_seconds": 7.487984510997194
+    },
+    {
+      "name": "installed ORM and shared initialization/Doctor context",
+      "outcome": "PASS",
+      "exit_code": 0,
+      "elapsed_seconds": 666.6853450529889
+    },
+    {
+      "name": "installed Google SDK protocol and PostgreSQL lifecycle",
+      "outcome": "PASS",
+      "exit_code": 0,
+      "elapsed_seconds": 10.593527516000904
+    },
+    {
+      "name": "installed OpenBao TLS outage and PostgreSQL lifecycle",
+      "outcome": "PASS",
+      "exit_code": 0,
+      "elapsed_seconds": 160.81768791699142
+    },
+    {
+      "name": "installed shared configuration on genuine fresh recovery",
+      "outcome": "PASS",
+      "exit_code": 0,
+      "elapsed_seconds": 28.661680214994703
+    },
+    {
+      "name": "installed keyword public-slot genuine fresh recovery",
+      "outcome": "PASS",
+      "exit_code": 0,
+      "elapsed_seconds": 26.69003050599713
+    },
+    {
+      "name": "installed modified-field enable genuine fresh recovery",
+      "outcome": "PASS",
+      "exit_code": 0,
+      "elapsed_seconds": 26.639037289991393
+    },
+    {
+      "name": "installed modified-field disable genuine fresh recovery",
+      "outcome": "PASS",
+      "exit_code": 0,
+      "elapsed_seconds": 18.088882937008748
+    }
+  ],
+  "boundary": "Explicit named direct-column labels in single-record mapped UPDATE/DELETE RETURNING preserve native names, typed values, NULL, transaction and SQLModel behavior. Label identity/type/dispatch is captured before keys, checked after callbacks and rebound to authenticated readers without changing the caller statement. Forced-unquoted names require the native dialect to consider them safe.",
+  "failure_retained": "Initial missing admission, stale Label type, incorrect SQLModel test parameters, late UPDATE carrier changes and unsafe forced-unquoted names produced retained failures before their fixes. Source5 passed 184 controls. Installed attempt1 then passed 435 controls and failed an obsolete direct-label refusal fixture. That fixture and its full-suite counterpart now reject computed labels; product bytes and built wheel/sdist remain identical to attempt1. Final source and installed results retain all earlier failures.",
+  "fixture_only_changes": [
+    "tests/test_scoped_delete.py",
+    "tests/test_single_tenant_delete.py"
+  ],
+  "failed_and_final_artifacts_identical": true,
+  "failed_installed_checks": {
+    "test_calls": {
+      "passed": 435,
+      "failed": 1
+    },
+    "subtest_calls": {},
+    "setup": {
+      "passed": 436
+    },
+    "teardown": {
+      "passed": 436
+    },
+    "collection": {},
+    "selected_items": 436
+  },
+  "production_gates": "UNKNOWN",
+  "limits": [
+    "Only explicit direct-column labels on admitted point UPDATE/DELETE. Computed, anonymous or forged labels, aliases and broader DML remain unadmitted.",
+    "INSERT labels remain unadmitted until their exact prepared-frame proof is extended and qualified.",
+    "No cryptographic format, manifest representation or deployment authority change. No performance or independent security qualification.",
+    "Hosted CI must qualify the subsequent pushed revision; all seven production gates remain UNKNOWN."
+  ],
+  "installed_checks": {
+    "installed-code-receipt.json": {
+      "test_calls": {
+        "passed": 15
+      },
+      "subtest_calls": {},
+      "setup": {
+        "passed": 15
+      },
+      "teardown": {
+        "passed": 15
+      },
+      "collection": {},
+      "selected_items": 15
+    },
+    "installed-sqlmodel-receipt.json": {
+      "test_calls": {
+        "passed": 436
+      },
+      "subtest_calls": {},
+      "setup": {
+        "passed": 436
+      },
+      "teardown": {
+        "passed": 436
+      },
+      "collection": {},
+      "selected_items": 436
+    },
+    "installed-google-kms-receipt.json": {
+      "test_calls": {
+        "passed": 50
+      },
+      "subtest_calls": {},
+      "setup": {
+        "passed": 50
+      },
+      "teardown": {
+        "passed": 50
+      },
+      "collection": {},
+      "selected_items": 50
+    },
+    "installed-openbao-tests.json": {
+      "test_calls": {
+        "passed": 149
+      },
+      "subtest_calls": {},
+      "setup": {
+        "passed": 149
+      },
+      "teardown": {
+        "passed": 149
+      },
+      "collection": {},
+      "selected_items": 149
+    },
+    "installed-application-export-receipt.json": {
+      "test_calls": {
+        "passed": 1
+      },
+      "subtest_calls": {},
+      "setup": {
+        "passed": 1
+      },
+      "teardown": {
+        "passed": 1
+      },
+      "collection": {},
+      "selected_items": 1
+    },
+    "installed-application-restore-receipt.json": {
+      "test_calls": {
+        "passed": 2
+      },
+      "subtest_calls": {},
+      "setup": {
+        "passed": 2
+      },
+      "teardown": {
+        "passed": 2
+      },
+      "collection": {},
+      "selected_items": 2
+    },
+    "installed-export-receipt.json": {
+      "test_calls": {
+        "passed": 1
+      },
+      "subtest_calls": {},
+      "setup": {
+        "passed": 1
+      },
+      "teardown": {
+        "passed": 1
+      },
+      "collection": {},
+      "selected_items": 1
+    },
+    "installed-restore-receipt.json": {
+      "test_calls": {
+        "passed": 1
+      },
+      "subtest_calls": {},
+      "setup": {
+        "passed": 1
+      },
+      "teardown": {
+        "passed": 1
+      },
+      "collection": {},
+      "selected_items": 1
+    },
+    "installed-modification-export-receipt.json": {
+      "test_calls": {
+        "passed": 1
+      },
+      "subtest_calls": {},
+      "setup": {
+        "passed": 1
+      },
+      "teardown": {
+        "passed": 1
+      },
+      "collection": {},
+      "selected_items": 1
+    },
+    "installed-modification-restore-receipt.json": {
+      "test_calls": {
+        "passed": 1
+      },
+      "subtest_calls": {},
+      "setup": {
+        "passed": 1
+      },
+      "teardown": {
+        "passed": 1
+      },
+      "collection": {},
+      "selected_items": 1
+    },
+    "installed-storage-modification-export-receipt.json": {
+      "test_calls": {
+        "passed": 1
+      },
+      "subtest_calls": {},
+      "setup": {
+        "passed": 1
+      },
+      "teardown": {
+        "passed": 1
+      },
+      "collection": {},
+      "selected_items": 1
+    },
+    "installed-storage-modification-restore-receipt.json": {
+      "test_calls": {
+        "passed": 1
+      },
+      "subtest_calls": {},
+      "setup": {
+        "passed": 1
+      },
+      "teardown": {
+        "passed": 1
+      },
+      "collection": {},
+      "selected_items": 1
+    }
+  },
+  "archive": {
+    "path": "docs/_reset/returning-labels-receipts-20261030.tar.gz",
+    "sha256": "41f903c7f0542992e0338852a0408e90f8ac382bef49ac7582f6fe9b216e5c24",
+    "members": [
+      "source/final.json",
+      "source/returning-labels-red.json",
+      "source/returning-labels-source-1.json",
+      "source/returning-labels-diagnostic-1.json",
+      "source/returning-labels-source-2.json",
+      "source/returning-labels-source-3.json",
+      "source/returning-labels-source-4.json",
+      "source/returning-labels-unquoted-red.json",
+      "source/returning-labels-source-5.json",
+      "failed-installed/install-receipt.json",
+      "failed-installed/installed-code-receipt.json",
+      "failed-installed/installed-sqlmodel-receipt.json",
+      "failed-installed/release-receipt.json",
+      "failed-installed/sbom.cdx.json",
+      "failed-installed/scanner-audit.json",
+      "failed-installed/scanner-sbom.cdx.json",
+      "failed-installed/scanner-toolchain.json",
+      "failed-installed/status.json",
+      "installed/install-receipt.json",
+      "installed/installed-application-export-receipt.json",
+      "installed/installed-application-restore-receipt.json",
+      "installed/installed-code-receipt.json",
+      "installed/installed-export-receipt.json",
+      "installed/installed-google-kms-receipt.json",
+      "installed/installed-journey-receipt.json",
+      "installed/installed-modification-export-receipt.json",
+      "installed/installed-modification-restore-receipt.json",
+      "installed/installed-openbao-qualification.json",
+      "installed/installed-openbao-tests.json",
+      "installed/installed-restore-receipt.json",
+      "installed/installed-sqlmodel-receipt.json",
+      "installed/installed-storage-modification-export-receipt.json",
+      "installed/installed-storage-modification-restore-receipt.json",
+      "installed/release-receipt.json",
+      "installed/sbom.cdx.json",
+      "installed/scanner-audit.json",
+      "installed/scanner-sbom.cdx.json",
+      "installed/scanner-toolchain.json",
+      "installed/status.json"
+    ]
+  }
+}

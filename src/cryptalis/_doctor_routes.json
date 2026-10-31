@@ -1,0 +1,189 @@
+[
+  {
+    "id": "cryptalis-route-configuration",
+    "language": "Python",
+    "severity": "info",
+    "message": "Candidate call or import; review against manifest and writer inventory.",
+    "rule": {
+      "any": [
+        {
+          "pattern": "from sqlalchemy import $$$IMPORTS"
+        },
+        {
+          "pattern": "from sqlalchemy.orm import $$$IMPORTS"
+        },
+        {
+          "pattern": "from sqlalchemy.ext.asyncio import $$$IMPORTS"
+        },
+        {
+          "pattern": "from sqlmodel import $$$IMPORTS"
+        },
+        {
+          "pattern": "$CLIENT.create_engine($$$ARGS)"
+        },
+        {
+          "pattern": "$CLIENT.create_async_engine($$$ARGS)"
+        },
+        {
+          "pattern": "create_engine($$$ARGS)"
+        },
+        {
+          "pattern": "create_async_engine($$$ARGS)"
+        },
+        {
+          "pattern": "sessionmaker($$$ARGS)"
+        },
+        {
+          "pattern": "async_sessionmaker($$$ARGS)"
+        }
+      ]
+    }
+  },
+  {
+    "id": "cryptalis-route-query",
+    "language": "Python",
+    "severity": "info",
+    "message": "Candidate call or import; review against manifest and writer inventory.",
+    "rule": {
+      "any": [
+        {
+          "pattern": "$CLIENT.query($$$ARGS)"
+        },
+        {
+          "pattern": "$CLIENT.scalar($$$ARGS)"
+        },
+        {
+          "pattern": "$CLIENT.scalars($$$ARGS)"
+        },
+        {
+          "pattern": "$CLIENT.exec($$$ARGS)"
+        }
+      ]
+    }
+  },
+  {
+    "id": "cryptalis-route-write",
+    "language": "Python",
+    "severity": "info",
+    "message": "Candidate call or import; review against manifest and writer inventory.",
+    "rule": {
+      "any": [
+        {
+          "pattern": "$CLIENT.add($$$ARGS)"
+        },
+        {
+          "pattern": "$CLIENT.add_all($$$ARGS)"
+        },
+        {
+          "pattern": "$CLIENT.flush($$$ARGS)"
+        },
+        {
+          "pattern": "$CLIENT.merge($$$ARGS)"
+        },
+        {
+          "pattern": "$CLIENT.delete($$$ARGS)"
+        },
+        {
+          "pattern": "$CLIENT.bulk_save_objects($$$ARGS)"
+        },
+        {
+          "pattern": "$CLIENT.bulk_insert_mappings($$$ARGS)"
+        },
+        {
+          "pattern": "$CLIENT.bulk_update_mappings($$$ARGS)"
+        }
+      ]
+    }
+  },
+  {
+    "id": "cryptalis-route-execution",
+    "language": "Python",
+    "severity": "info",
+    "message": "Candidate call or import; review against manifest and writer inventory.",
+    "rule": {
+      "any": [
+        {
+          "pattern": "$CLIENT.execute($$$ARGS)"
+        },
+        {
+          "pattern": "$CLIENT.executemany($$$ARGS)"
+        },
+        {
+          "pattern": "$CLIENT.exec_driver_sql($$$ARGS)"
+        }
+      ]
+    }
+  },
+  {
+    "id": "cryptalis-route-copy",
+    "language": "Python",
+    "severity": "info",
+    "message": "Candidate call or import; review against manifest and writer inventory.",
+    "rule": {
+      "any": [
+        {
+          "pattern": "$CLIENT.copy($$$ARGS)"
+        },
+        {
+          "pattern": "$CLIENT.copy_expert($$$ARGS)"
+        },
+        {
+          "pattern": "$CLIENT.copy_from($$$ARGS)"
+        },
+        {
+          "pattern": "$CLIENT.copy_to($$$ARGS)"
+        }
+      ]
+    }
+  },
+  {
+    "id": "cryptalis-route-driver",
+    "language": "Python",
+    "severity": "info",
+    "message": "Candidate call or import; review against manifest and writer inventory.",
+    "rule": {
+      "any": [
+        {
+          "pattern": "from psycopg import $$$IMPORTS"
+        },
+        {
+          "pattern": "from psycopg_pool import $$$IMPORTS"
+        },
+        {
+          "pattern": "$CLIENT.cursor($$$ARGS)"
+        },
+        {
+          "pattern": "$CLIENT.raw_connection($$$ARGS)"
+        },
+        {
+          "pattern": "$CLIENT.connect($$$ARGS)"
+        }
+      ]
+    }
+  },
+  {
+    "id": "cryptalis-route-text",
+    "language": "Python",
+    "severity": "info",
+    "message": "Candidate call or import; review against manifest and writer inventory.",
+    "rule": {
+      "any": [
+        {
+          "pattern": "$CLIENT.text($$$ARGS)"
+        },
+        {
+          "pattern": "text($$$ARGS)"
+        }
+      ]
+    }
+  },
+  {
+    "id": "cryptalis-parse-recovery",
+    "language": "Python",
+    "severity": "info",
+    "message": "Parser recovery requires source inspection; code validity remains unknown.",
+    "rule": {
+      "kind": "ERROR"
+    }
+  }
+]

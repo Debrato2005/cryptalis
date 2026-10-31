@@ -300,9 +300,8 @@ def test_returning_identity_check_precedes_each_native_cursor_fetch_route(method
     with native_application(False) as app:
         factory = protect(app)
         before, changed = _snapshot(app), []
-        name = '__iter__' if method == 'iteration' else method
+        name = 'fetchone' if method == 'iteration' else method
         native = getattr(psycopg.Cursor, name)
-        native_fetchone = psycopg.Cursor.fetchone
 
         def change(cursor, row):
             index = next(index for index, column in enumerate(cursor.description) if column.name == 'id')
@@ -314,14 +313,10 @@ def test_returning_identity_check_precedes_each_native_cursor_fetch_route(method
         def fetch(cursor, *args, **kwargs):
             values = native(cursor, *args, **kwargs)
             if cursor.statusmessage.startswith('INSERT '):
-                if method == 'fetchone':
+                if method in ('fetchone', 'iteration'):
                     return change(cursor, values) if values is not None else None
                 return [change(cursor, row) for row in values]
             return values
-
-        def iterate(cursor):
-            while (row := native_fetchone(cursor)) is not None:
-                yield change(cursor, row)
 
         def observe(connection, cursor, sql, parameters, context, executemany):
             if sql.lstrip().upper().startswith('INSERT '):
@@ -333,7 +328,7 @@ def test_returning_identity_check_precedes_each_native_cursor_fetch_route(method
         event.listen(app.runtime, 'after_cursor_execute', observe)
         try:
             with monkeypatch.context() as patch:
-                patch.setattr(psycopg.Cursor, name, iterate if method == 'iteration' else fetch)
+                patch.setattr(psycopg.Cursor, name, fetch)
                 with factory(tenant_id=TENANT) as session:
                     with pytest.raises(AuthenticationFailed):
                         session.execute(insert(app.Customer).returning(app.Customer),

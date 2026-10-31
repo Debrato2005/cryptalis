@@ -36,6 +36,12 @@ FORBIDDEN_PREFIXES = ("tests/", "docs/", "examples/", "spikes/")
 NETWORK_TERMS = ("import socket", "import subprocess", "import urllib", "import http",
                  "import requests", "from socket", "from subprocess", "from urllib",
                  "from http", "from requests", "telemetry", "analytics")
+# URL syntax parsing has no transport side effects. This exact reviewed import
+# does not admit urllib.request, other modules, or appended executable text.
+REVIEWED_IMPORTS = {("crypto/openbao.py", "from urllib.parse import urlsplit")}
+# Doctor's fixed local scan/version argv is the sole package subprocess boundary.
+# This exact import does not admit other modules, appended code or transport imports.
+REVIEWED_IMPORTS.add(("_doctor_code.py", "import subprocess"))
 
 
 def run(args, cwd=ROOT):
@@ -188,10 +194,12 @@ def inspect_sdist(path):
 def inspect_source_imports(root):
     findings = []
     for path in sorted(Path(root).rglob("*.py")):
-        text = path.read_text(encoding="utf-8")
+        lines = path.read_text(encoding="utf-8").splitlines()
+        relative = str(path.relative_to(root))
         for term in NETWORK_TERMS:
-            if term in text:
-                findings.append({"file": str(path.relative_to(root)), "term": term})
+            if any(term in line and (relative, line.strip()) not in REVIEWED_IMPORTS
+                   for line in lines):
+                findings.append({"file": relative, "term": term})
     return findings
 
 
@@ -207,6 +215,7 @@ def source_hashes():
     paths = [ROOT / "pyproject.toml", ROOT / "LICENSE", ROOT / "README.md",
              ROOT / "scripts" / "release_check.py",
              ROOT / "scripts" / "test_release_check.py",
+             ROOT / "src/cryptalis/_doctor_routes.json",
              ROOT / "qualification/build-backend/requirements.in",
              ROOT / "qualification/build-backend/requirements.txt"]
     paths += sorted((ROOT / "src").rglob("*.py"))
@@ -268,9 +277,15 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output", type=Path, default=ROOT / "dist")
     parser.add_argument("--receipt", type=Path)
+    parser.add_argument("--extra", action="append", default=[],
+                        help="Include a declared optional extra in the dependency SBOM; repeat as needed.")
     parser.add_argument("--python", type=Path,
                         help="Interpreter of a clean virtual environment with the wheel installed.")
     args = parser.parse_args()
+    project = tomllib.loads((ROOT / "pyproject.toml").read_text())["project"]
+    if set(args.extra) - set(project.get("optional-dependencies", {})):
+        parser.error("--extra must name a declared project extra")
+    extras = sorted(set(args.extra))
     with tempfile.TemporaryDirectory(prefix="cryptalis-release-") as temporary:
         base = Path(temporary)
         first = build(base / "first")
@@ -289,6 +304,7 @@ def main():
         output = copied(first, args.output)
         sbom = Path(args.output) / "sbom.cdx.json"
         run(["uv", "export", "--format", "cyclonedx1.5", "--no-dev", "--locked",
+             *(item for extra in extras for item in ("--extra", extra)),
              "--output-file", str(sbom)])
         document = json.loads(sbom.read_text(encoding="utf-8"))
         if document.get("bomFormat") != "CycloneDX" or document.get("specVersion") != "1.5":
@@ -297,6 +313,10 @@ def main():
         components.add(document.get("metadata", {}).get("component", {}).get("name"))
         if not {"cryptalis", "cryptography", "psycopg", "sqlalchemy"} <= components:
             raise SystemExit("SBOM is missing a runtime component")
+        required_optional = {canonicalize_name(Requirement(dependency).name)
+                             for extra in extras for dependency in project["optional-dependencies"][extra]}
+        if not required_optional <= {canonicalize_name(name) for name in components if name}:
+            raise SystemExit("SBOM is missing a selected optional component")
         checksums = Path(args.output) / "SHA256SUMS"
         lines = [f"{digest(path)}  {path.name}" for path in output]
         checksums.write_text("\n".join(lines) + "\n", encoding="utf-8")
@@ -324,7 +344,8 @@ def main():
             "reproducible": True,
             "wheel": wheel_facts,
             "sdist": sdist_facts,
-            "sbom": {"path": sbom.name, "sha256": digest(sbom), "components": sorted(components)},
+            "sbom": {"path": sbom.name, "sha256": digest(sbom), "components": sorted(components),
+                     "extras": extras},
             "source_scan": {"network_or_telemetry_terms": findings},
             "clean_install": clean,
             "gate": "UNKNOWN",

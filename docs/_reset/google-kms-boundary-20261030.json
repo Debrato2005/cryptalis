@@ -1,0 +1,248 @@
+{
+  "format": "cryptalis.google-kms-boundary/v1",
+  "base_revision": "b92cfc7b2fdc808bc27bb5a95ee4b1c5f8c78ff2",
+  "source_identity": "worktree-abe04d8bc685d2d0",
+  "source_files": 285,
+  "source_checks": {
+    "test_calls": {
+      "passed": 174
+    },
+    "subtest_calls": {},
+    "setup": {
+      "passed": 174
+    },
+    "teardown": {
+      "passed": 174
+    },
+    "collection": {
+      "skipped": 1
+    },
+    "selected_items": 174
+  },
+  "source_and_runtime_unchanged": true,
+  "artifacts": {
+    "cryptalis-0.1.0-py3-none-any.whl": "66922b0a9638c5ef714039d167d620d421de4fc8350bf7e1d8669e67a72963c6",
+    "cryptalis-0.1.0.tar.gz": "c66dd767b35812b4a9c4a3264d8fc19f4798c456bbc3386eef6a7ea0dcb9a5d9"
+  },
+  "reproducible": true,
+  "release_steps": [
+    {
+      "name": "reproducible wheel sdist SBOM inspection",
+      "outcome": "PASS",
+      "exit_code": 0,
+      "elapsed_seconds": 1.1099873370039859
+    },
+    {
+      "name": "export locked hashed wheel-test dependencies",
+      "outcome": "PASS",
+      "exit_code": 0,
+      "elapsed_seconds": 0.017774640997231472
+    },
+    {
+      "name": "create isolated wheel interpreter",
+      "outcome": "PASS",
+      "exit_code": 0,
+      "elapsed_seconds": 0.02023640499828616
+    },
+    {
+      "name": "install hashed dependencies",
+      "outcome": "PASS",
+      "exit_code": 0,
+      "elapsed_seconds": 0.16315983000095002
+    },
+    {
+      "name": "install exact inspected wheel",
+      "outcome": "PASS",
+      "exit_code": 0,
+      "elapsed_seconds": 0.034241045999806374
+    },
+    {
+      "name": "installed dependency consistency",
+      "outcome": "PASS",
+      "exit_code": 0,
+      "elapsed_seconds": 0.01758900000277208
+    },
+    {
+      "name": "installed file and CLI inspection",
+      "outcome": "PASS"
+    },
+    {
+      "name": "installed ORM and shared initialization/Doctor context",
+      "outcome": "PASS",
+      "exit_code": 0,
+      "elapsed_seconds": 50.46782065300067
+    },
+    {
+      "name": "installed Google SDK protocol and PostgreSQL lifecycle",
+      "outcome": "PASS",
+      "exit_code": 0,
+      "elapsed_seconds": 5.908774670999264
+    },
+    {
+      "name": "installed OpenBao TLS outage and PostgreSQL lifecycle",
+      "outcome": "PASS",
+      "exit_code": 0,
+      "elapsed_seconds": 78.8833047750013
+    },
+    {
+      "name": "installed keyword public-slot genuine fresh recovery",
+      "outcome": "PASS",
+      "exit_code": 0,
+      "elapsed_seconds": 13.908483494000393
+    }
+  ],
+  "frozen_audit": {
+    "schema": {
+      "version": "preview"
+    },
+    "summary": {
+      "audited_packages": 39,
+      "vulnerabilities": 0,
+      "adverse_statuses": 0
+    },
+    "vulnerabilities": [],
+    "adverse_statuses": []
+  },
+  "source_provenance": {
+    "format": "cryptalis.google-sdk-source/v1",
+    "retrieved": "2026-10-30",
+    "packages": {
+      "google-cloud-kms": {
+        "version": "3.18.0",
+        "license": "Apache-2.0"
+      },
+      "google-crc32c": {
+        "version": "1.9.0",
+        "license": "Apache-2.0"
+      }
+    },
+    "sdk_sources": [
+      {
+        "path": "lib/python3.12/site-packages/google/cloud/kms_v1/services/key_management_service/client.py",
+        "sha256": "ec46b8f276466fd6e941678c2302063889e84e518249c0e005ef443562a7ffda"
+      },
+      {
+        "path": "lib/python3.12/site-packages/google/cloud/kms_v1/services/key_management_service/transports/base.py",
+        "sha256": "39852126d7c8238f14bea5a7a74c4545fa61341f1680d504929a4d24b8313585"
+      },
+      {
+        "path": "lib/python3.12/site-packages/google/cloud/kms_v1/types/service.py",
+        "sha256": "ae2583b6897eeadd337b0880276c10ba7972daf5b68f11c472210a3e1398ad30"
+      }
+    ],
+    "official_documents": {
+      "google-kms-official-0.md": "ce86b3a9b84269fa0278f4362d39813a3ef1789d2bce3b9cc5581f72d8bde12c",
+      "google-kms-official-1.md": "ce9b25d2d70c0e7e856fd31b078e1aff37e36c9c50a8071943ece3e5b1bc496d",
+      "google-kms-official-2.md": "91b074f485b0ae6d461954233c0427eb0b1ca6c16613dab0181fc1306485e54d"
+    },
+    "limits": [
+      "SDK and documentation evidence; no live Google account, network custody or IAM verification."
+    ]
+  },
+  "archive": {
+    "path": "docs/_reset/google-kms-receipts-20261030.tar.gz",
+    "sha256": "e8581f26d679f7804d9b49e580923bc1c4b1adee2dd2aa1ae0db9ed84fd354c1",
+    "members": [
+      "google-kms-first.json",
+      "google-kms-regression.json",
+      "google-kms-regression-2.json",
+      "google-kms-final.json",
+      "google-kms-dependency-audit.json",
+      "google-kms-provenance.json",
+      "install-receipt.json",
+      "installed-export-receipt.json",
+      "installed-google-kms-receipt.json",
+      "installed-journey-receipt.json",
+      "installed-openbao-qualification.json",
+      "installed-openbao-tests.json",
+      "installed-restore-receipt.json",
+      "installed-sqlmodel-receipt.json",
+      "release-receipt.json",
+      "sbom.cdx.json",
+      "status.json"
+    ]
+  },
+  "boundary": "Actual Google SDK/protobuf and CRC32C with an opaque local protocol transport; real PostgreSQL and installed-package lifecycle.",
+  "failures_retained": [
+    "The first cancellation test passed a Keyring where PreparedKeys was required; corrected to test cold access after cancellation.",
+    "One regression selection referenced nonexistent tests/test_keys.py and executed no tests; corrected selection and final checks pass."
+  ],
+  "limits": [
+    "Live Google collection is explicitly skipped; no account, billable calls, custody or IAM evidence.",
+    "Decrypt responses do not expose native version identity; this limitation is not hidden.",
+    "Provider-native revocation, production audit, HA, combined disaster recovery, controlled destruction and independent review remain open.",
+    "Functional objectives take priority; recorded performance failures remain unresolved and all seven production gates UNKNOWN."
+  ],
+  "installed_checks": {
+    "installed-sqlmodel-receipt.json": {
+      "test_calls": {
+        "passed": 96
+      },
+      "subtest_calls": {},
+      "setup": {
+        "passed": 96
+      },
+      "teardown": {
+        "passed": 96
+      },
+      "collection": {},
+      "selected_items": 96
+    },
+    "installed-google-kms-receipt.json": {
+      "test_calls": {
+        "passed": 49
+      },
+      "subtest_calls": {},
+      "setup": {
+        "passed": 49
+      },
+      "teardown": {
+        "passed": 49
+      },
+      "collection": {},
+      "selected_items": 49
+    },
+    "installed-openbao-tests.json": {
+      "test_calls": {
+        "passed": 69
+      },
+      "subtest_calls": {},
+      "setup": {
+        "passed": 69
+      },
+      "teardown": {
+        "passed": 69
+      },
+      "collection": {},
+      "selected_items": 69
+    },
+    "installed-export-receipt.json": {
+      "test_calls": {
+        "passed": 1
+      },
+      "subtest_calls": {},
+      "setup": {
+        "passed": 1
+      },
+      "teardown": {
+        "passed": 1
+      },
+      "collection": {},
+      "selected_items": 1
+    },
+    "installed-restore-receipt.json": {
+      "test_calls": {
+        "passed": 1
+      },
+      "subtest_calls": {},
+      "setup": {
+        "passed": 1
+      },
+      "teardown": {
+        "passed": 1
+      },
+      "collection": {},
+      "selected_items": 1
+    }
+  }
+}

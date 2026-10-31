@@ -1,0 +1,53 @@
+{
+  "format": "cryptalis.openbao-operations/v1",
+  "base_revision": "2d538675f5179da54d6d9440071fc1dff673b81c",
+  "archive": {
+    "path": "docs/_reset/openbao-operations-receipts-20261030.tar.gz",
+    "sha256": "c0090be1fb02b9b78ede01ba8e236ac731bcf267e9878be2107e23f606893788",
+    "members": {
+      "dependency-audit.json": "1c56bec0c2759391bf94903f7a683114ca2cd02d6ad3230b6d0def910fd8917a",
+      "failed/endpoint-restart-tests.json": "39b58c83bfdc27f030c4d3c9cec6a228587fd5766f28aebd89d90a649dda8312",
+      "failed/endpoint-restart.json": "ee1393b889e8e4783466234371237b57c0179885f8238566fdda6047b184aa7c",
+      "failed/setup-timeout.json": "0a397bebac6941df59fa2af2b8414d2c0465dab1bdb4f562cb2b00645e2ef575",
+      "provider-source/qualification.json": "18fb9b3ad9a1ef3e63b187794cf5803a0b3942471e7900a034428f65a01b4fd1",
+      "provider-source/tests.json": "33d35aa61c7a87b27574251d9b04d8d2fd3588cb57084b4fd22bc330cd463881",
+      "release/install-receipt.json": "26f45817f06f20563bef2e0fd213fb4fb9f67c1e01a3b9641ce0ca7af2d8e390",
+      "release/installed-export-receipt.json": "1397d7fe429266d138b72ae090804a023eb45ced78a1b9e809bc63ca0598612b",
+      "release/installed-journey-receipt.json": "c88f71e2c2005fd520402e6ff50f2d4686e039339e33905e7524bb3b05899c50",
+      "release/installed-openbao-qualification.json": "0e3b9d3d20533823cde2ce471e10cfcc4de47dae849ddec4bc3bc1427ff42936",
+      "release/installed-openbao-tests.json": "5a37736cf624683b9e37122883268950e36a12085d23b700bdc59fceaec8286d",
+      "release/installed-restore-receipt.json": "0595ce34d17c92e41af8be60ac353b4bd05b580d86939dfbb9e7f4c511857d97",
+      "release/installed-sqlmodel-receipt.json": "fb8b204dc4c233d1ae0ec9eebbbed4fc5ddb5fcc91897cfa0567673f8c73212b",
+      "release/release-receipt.json": "94969d12cec52c7ccf383951c9a816d5c83c06302812d6c731bfbd577472d901",
+      "release/sbom.cdx.json": "6541adc5e1ce59bad33243fb1378f87e23b719323bf6415a7ff346e013663367",
+      "release/status.json": "f68b3ce4a7ffdfab4b06066dd04fd7a449cf9721070cd9adca4c1db24a477666"
+    }
+  },
+  "source_hash_binding": {
+    "files": 279,
+    "all_current_python_hashes_match": true
+  },
+  "release": {
+    "outcome": "PASS",
+    "installed_provider": 47,
+    "installed_orm": 29,
+    "fresh_export": 1,
+    "fresh_restore": 1,
+    "extras": [
+      "openbao",
+      "sqlmodel"
+    ]
+  },
+  "complete_default_source": "RUNNING; not included in this boundary",
+  "dependency_audit": {
+    "audited_packages": 26,
+    "vulnerabilities": 0,
+    "adverse_statuses": 0
+  },
+  "gate": "UNKNOWN",
+  "limits": [
+    "Local single-node service; no production, independent snapshot recovery or destruction qualification.",
+    "Source provider selection predates cleanup-report field; final installed selection binds current source.",
+    "All 34 objectives remain in scope; independent human review remains unavailable."
+  ]
+}

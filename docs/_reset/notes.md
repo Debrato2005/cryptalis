@@ -67,7 +67,7 @@ This pass keeps existing local changes and edits only documentation. The user re
 
 ## Step A checkpoint: 2026-10-09
 
-- [Status](../status.md#step-a-protection-measurement-and-lock-checkpoint-2026-10-09) owns phase/profile numbers and limits. Million-row measurement used unchanged Git `0383cec`: 98.126 s backfill, 65.404 s verification, 169.145 s writer pause; expansion blocked the plain reader for 5.496 s.
+- [Status](../history/implementation-2026-10.md#step-a-protection-measurement-and-lock-checkpoint-2026-10-09) owns phase/profile numbers and limits. Million-row measurement used unchanged Git `0383cec`: 98.126 s backfill, 65.404 s verification, 169.145 s writer pause; expansion blocked the plain reader for 5.496 s.
 - Programs-closed confirmation came from the user. WSL exposed 20 CPUs/reported cores, 7.47 GiB RAM, 2 GiB swap and no explicit overrides. Main client CPU dominated; physical per-index writes, isolated database wait seconds and historical variation remain UNKNOWN.
 - Local acquisition fix only: three 100 ms ACCESS EXCLUSIVE attempts, 50 ms gaps, savepoint rollback, explicit cutover upgrade. Session default remains 5 s. Granted-lock duration is not bounded by this timeout.
 - [Full suite](step-a-lock-verification-e137d3240bd453e9.json): 986 passed. [New proofs](step-a-lock-regressions-e137d3240bd453e9.json): baseline three failures/one control pass, fixed four passes, five removals fail/restoration passes. Twenty prior safety removals also retain their proofs.
@@ -81,14 +81,14 @@ This pass keeps existing local changes and edits only documentation. The user re
 - Frozen descriptors now prepare per chunk/pass; tenant keys and per-value context/nonce/generation checks remain unchanged. No global descriptor or key cache was added.
 - [Final checkpoint](step-a-corrective-final-030b935c0581cb72.json): 1,004 passed. Six new, 20 prior and five lock safety removals fail/restoration passes. Original two-table application fails; fixed passes. All five old single-table checkpoint phases resume under the new engine. Independent decoders retain externally supplied expected field IDs.
 - [Latest million-row profile](step-a-optimized-million-1000000-a94d3d18190b80fb.json): 67.804 s backfill, 42.214 s verification, 116.291 s writer pause. Descriptor CPU 17.739→0.030 s; expansion reader wait 6.106 s remains. Paired 20,000-row controls preceded this one new million-row run.
-- [Status](../status.md#step-a-corrective-checkpoint-2026-10-09) owns conditions and limits. Starting load/memory differed; exact server wait and physical index writes remain UNKNOWN. Small-receipt labels contain an instrumentation-variable mistake; their source hashes identify each run. Million-row metadata is corrected.
+- [Status](../history/implementation-2026-10.md#step-a-corrective-checkpoint-2026-10-09) owns conditions and limits. Starting load/memory differed; exact server wait and physical index writes remain UNKNOWN. Small-receipt labels contain an instrumentation-variable mistake; their source hashes identify each run. Million-row metadata is corrected.
 - Stop boundary: corrected Step A, ready for review. Slice 6 begins only in a separate approved run. No concurrency protocol, dual writes, spike changes, commit or push. All seven gates remain UNKNOWN.
 
 ## Membership performance checkpoint: 2026-10-09
 
 - The user approved one identity-only membership correction before Slice 6. Journal bytes, cursor/lock/recovery contracts and full value authentication remain unchanged.
 - [Current suite](audit-verification-31ac368e2bbf3bd3.json): 1,009 passed. [Proof](membership-regressions-31ac368e2bbf3bd3.json): committed source four native failures/one control pass; fixed five passes; three removals fail/restoration passes. Twenty prior safety removals retain their proof.
-- [Status](../status.md#membership-performance-correction-2026-10-09) owns evidence. Paired wide scans fell 302.48→16.92 ms; separate-process traced peak 131.84→0.59 MB. Whole small-transition timing is environmentally variable; no new million-row pause is claimed.
+- [Status](../history/implementation-2026-10.md#membership-performance-correction-2026-10-09) owns evidence. Paired wide scans fell 302.48→16.92 ms; separate-process traced peak 131.84→0.59 MB. Whole small-transition timing is environmentally variable; no new million-row pause is claimed.
 - [Assessment](../research/performance-checkpoint.md) ranks byte-bounded buffers and framing/derivation work. Dirty-identity capture with incremental verification is a proposal requiring explicit writer-fencing/coverage/recovery approval; nothing online was implemented.
 - Current raw/CPU and monotonic clocks differ in rate. Cause, historical variation, server wait attribution, production provider and independent review remain UNKNOWN. All seven gates remain UNKNOWN.
 - Stop boundary: approved corrective checkpoint. Next product slice is 6. No spike changes, installation, commit or push.

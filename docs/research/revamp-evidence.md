@@ -31,7 +31,7 @@ Package removal is last, after the ordinary-schema application and retained back
 | 3. Hierarchy/providers | [Keys](../security.md#key-hierarchy-and-providers) | Local stand-in only |
 | 4. Frame/search representations | [CF1](../security.md#cryptographic-format), [query encodings](../compatibility.md#query-semantics) | Exact proposal; independent vectors/composition review missing |
 | 5. SQLAlchemy integration | [Integration](../architecture/README.md#sqlalchemy-integration) | Public-hook SQLite alternatives tested. PG/async/cascades unqualified |
-| 6. Manifest | [Manifest](../architecture/README.md#manifest), [example](../../README.md#query-intent) | Proposed public schema, compiler not implemented |
+| 6. Manifest | [Manifest](../manifest.md#manifest), [example](../manifest.md) | Proposed public schema, compiler not implemented |
 | 7. Migration/rollback/deprotect | [Lifecycle](../lifecycle.md) | 100-row local transition evidence, full deployment untested |
 | 8. Restore/revocation/destruction | [Restore](../lifecycle.md#restore-and-authority-loss), [destruction](../lifecycle.md#revocation-and-destruction) | Policy model only; retained-copy limits explicit |
 | 9. Full query matrix | [Matrix](../compatibility.md#full-capability-matrix) | Every requested family classified |
@@ -424,7 +424,7 @@ These preservation/regression checks do not close a runtime gate.
 ## Integrated continuation and semantic audit: 2026-10-07
 
 This checkpoint supersedes the earlier incomplete generated-identity/retrofit/lost-reply subsets, while preserving their receipts and scope limits.
-The [current status](../status.md#current-integrated-checkpoint-2026-10-07) owns verdicts.
+The [current status](../history/implementation-2026-10.md#current-integrated-checkpoint-2026-10-07) owns verdicts.
 The [execution ledger](../../spikes/revamp/gate-plan.md) records the three violated invariants and smallest subsystem redesigns.
 No public-package executable or original test was changed. No control plane, SQL parser, custom Result, plaintext query fallback or live rollback mirror was added.
 
