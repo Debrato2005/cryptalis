@@ -322,6 +322,61 @@ def test_rewrap_preserves_root_and_context_with_existing_provider_protocol():
     assert source.unwrap(back, CONTEXT) == ROOT
 
 
+@pytest.mark.parametrize("fault", [
+    "wrong_root", "short_material", "long_material", "mutable_material",
+    "unwrap_outage", "identity_drift",
+])
+@pytest.mark.parametrize("source_factory", [provider, DevelopmentKeyProvider],
+                         ids=["aws-sdk", "development"])
+def test_rewrap_requires_exact_root_recovery_before_returning_target_custody(fault, source_factory):
+    source = source_factory()
+    wrapped = source.wrap(ROOT, CONTEXT)
+
+    class Target(DevelopmentKeyProvider):
+        def wrap(self, root, context):
+            if fault == "wrong_root":
+                root = b"x" * 32
+            return super().wrap(root, context)
+
+        def unwrap(self, wrapper, context):
+            root = super().unwrap(wrapper, context)
+            if fault == "short_material":
+                return root[:-1]
+            if fault == "long_material":
+                return root + b"x"
+            if fault == "mutable_material":
+                return bytearray(root)
+            if fault == "unwrap_outage":
+                raise RuntimeError(SECRET)
+            if fault == "identity_drift":
+                self.provider_id = UUID(int=903)
+            return root
+
+    with pytest.raises(KeyUnavailable) as caught:
+        source.rewrap(wrapped, Target(), CONTEXT)
+    assert_redacted(caught.value)
+    assert source.unwrap(wrapped, CONTEXT) == ROOT
+    healthy = DevelopmentKeyProvider()
+    replacement = source.rewrap(wrapped, healthy, CONTEXT)
+    assert replacement.context == CONTEXT
+    assert healthy.unwrap(replacement, CONTEXT) == ROOT
+
+
+@pytest.mark.parametrize("source_factory", [provider, DevelopmentKeyProvider],
+                         ids=["aws-sdk", "development"])
+def test_rewrap_target_recovery_interruption_propagates_and_source_remains_usable(source_factory):
+    source = source_factory()
+    wrapped = source.wrap(ROOT, CONTEXT)
+
+    class Target(DevelopmentKeyProvider):
+        def unwrap(self, wrapper, context):
+            raise KeyboardInterrupt()
+
+    with pytest.raises(KeyboardInterrupt):
+        source.rewrap(wrapped, Target(), CONTEXT)
+    assert source.unwrap(wrapped, CONTEXT) == ROOT
+
+
 def test_cancelled_thread_result_does_not_warm_keyring():
     async def scenario():
         entered, release, finished = threading.Event(), threading.Event(), threading.Event()

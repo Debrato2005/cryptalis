@@ -1,5 +1,23 @@
 # Implementation status
 
+## Main-history consolidation: 2026-10-31
+
+**VERIFIED, bounded:** integration retains main `f082cf3` (including merged
+PRs #1/#2), completion history and the `5ea671d` single-record UPDATE slice.
+Reporting, scalar storage, fixed-scope writes, both SQLModel suites, cached
+projections, labeled/entity RETURNING proofs and Doctor remain covered.
+The [complete source run](_reset/main-consolidation-full-20261031.json) passes
+3,446 tests and eighteen subtests, with 104 explicit skips and 48 existing
+warnings. Source and imported-runtime hashes remain unchanged.
+
+The [installed run](_reset/main-consolidation-installed-20261031.json) passes
+312 controls with 28 explicit skips. The [artifact receipt](_reset/main-consolidation-artifact-20261031.json)
+verifies reproducible wheel/sdist, hashed backend inputs, SBOM, CLI and 50
+installed files. Source uses Python 3.12.16/PostgreSQL 16.2; the artifact tool
+uses Python 3.13.12. No skipped or external cell is qualified. All seven
+production gates remain UNKNOWN. Separate unmerged `origin/work` history is
+not included in this checkpoint.
+
 ## Single-record mapped UPDATE: 2026-10-31
 
 **VERIFIED, bounded:** mapped `.values(...)` UPDATE with explicit tenant/record
@@ -269,6 +287,950 @@ locators have private backups outside the repository. The recovered PostgreSQL
 binary was built `--without-icu`; its nondeterministic-collation test cannot
 establish refusal evidence in this cell. All 34 objectives remain in scope and
 all seven production gates remain UNKNOWN.
+
+## Verified branch consolidation: 2026-10-30
+
+**VERIFIED, bounded local merge regression:** consolidate `2291ce9` from the
+single-tenant UPDATE branch with release continuation `c434625`, retaining
+`f3de39b` main history. Preserve all continuation security, Date-reader, tenant
+provisioning, async SQLModel, DELETE and release-tooling changes. The overlapping
+UPDATE implementations have equivalent admission. The merge keeps the readable
+scope check and the continuation's explicit missing-binding refusal at the
+driver boundary. Both complementary test modules and historical receipts remain.
+
+The [merged source run](_reset/product-merge-source-20261030.json) passes 364
+test calls. Seven call skips and four collection skips remain explicit for
+unconfigured optional applications/readers and profiles. All 371 selected items
+complete. Three role probes pass; the wrapper binds 45 imported source modules
+and records unchanged source. The selection covers both UPDATE suites, fixed-scope
+DELETE, SQLModel, tenant provisioning/CLI, Date/UUID, CF1, frame identifiers,
+provider-boundary controls, native function admission and online scalar capture.
+
+The [artifact check](_reset/product-merge-release-20261030.json) verifies matching
+repeat wheel/sdist hashes, exact hashed build-backend inputs, RECORD/metadata and
+SBOM. Fifteen artifact-integrity and five offline rewrap protocol checks pass.
+The initial artifact test found a read-only default cache, then an uncached
+offline build backend. Using the configured writable cache and fetching the
+exact hash-constrained backend resolves both environment prerequisites without
+product changes. Fresh source review finds no material merge defect.
+
+This is merge-focused evidence. The earlier complete-source, installed-application
+and fresh-cluster receipts retain their exact boundaries; they are not repeated
+or relabelled as this merge's qualification. All 34 objectives remain in scope
+and all seven production gates remain UNKNOWN.
+
+## Continuation regression and remaining release work: 2026-10-29
+
+**VERIFIED, complete default source corpus at `ff7dfe1`:** 2,997 test calls and
+eighteen subtests pass; twelve call skips, 47 setup skips and sixteen collection
+skips remain explicit. All 3,056 selected items complete. All three role probes
+and source/runtime stability checks pass. Independent comparison binds every
+one of the receipt's 272 Python hashes to that committed async-bridge source.
+The artifact-integrity and offline rewrap checks also pass. The
+[retained boundary](_reset/continuation-regression-boundary-20261029.json)
+records the exact counts, receipts and commit comparison.
+
+This full run precedes the fixed-scope UPDATE and DELETE changes. Their separate
+affected selections pass 216 checks with four skips and 140 checks without skips;
+the combined installed route/bridge selection passes 29 checks without skips.
+Their boundaries below retain code hashes, native oracles, failure controls and
+actual installed fresh recovery. Do not relabel the earlier complete run as
+verification of those later changes.
+
+All 34 objectives remain in scope. The user confirmed that no live KMS test
+account or independent human security reviewer is arranged. Those external
+qualification prerequisites remain blocked; no local test replaces them.
+Range/ordering, text search, structured data, broader SQL and the remaining
+performance/lifecycle qualification are still incomplete. All seven production
+gates remain UNKNOWN.
+
+## Single-tenant mapped single-record DELETE: 2026-10-29
+
+**IMPLEMENTED, bounded PostgreSQL 16.15 source verification:** explicitly
+single-tenant tables accept mapped DELETE with one direct typed record equality,
+fixed table-UUID session authority and `synchronize_session=False`. Tenant-column
+tables retain their existing two-predicate grammar. External parameters, Core
+DELETE, RETURNING and extra caller predicates remain unadmitted.
+
+Six focused native controls pass sync, async and async SQLModel row counts,
+loaded identity state, duplicate/missing IDs, savepoints, rollback, autoflush
+and latest-value decrypt-back/removal. Separate controls refuse wrong authority
+and unsupported shapes before key/SQL effects, reject record mutation during
+awaited preparation and block a late driver-bind replacement before dispatch.
+All three role probes and source/runtime stability checks pass. A separate
+agent source review found no actionable defect; independent human review
+remains required. The [retained boundary](_reset/single-tenant-delete-boundary-20261029.json)
+records 140 affected source checks and 29 installed DML/bridge checks, all
+passing without skips. Source/runtime bindings stay unchanged and three role
+probes pass in each run. Repeat wheel/sdist hashes, 49 installed files and CLI
+startup pass inspection. The existing keyword/public-slot profile passes
+export and actual fresh-cluster recovery. Release CI retains the installed
+selection. That recovery remains an integer lifecycle profile, not an
+independent original fixed-scope application journey.
+
+The same immutable deletion permit binds the physical table, record, typed
+identity and fixed policy scope. Only the unused physical tenant bind is absent.
+No crypto, format, dependency or lifecycle state changes. All seven production
+gates remain UNKNOWN.
+
+## Single-tenant mapped dictionary UPDATE: 2026-10-29
+
+**IMPLEMENTED, bounded PostgreSQL 16.15 source verification:** explicitly
+single-tenant tables now accept bare mapped `update(Model)` with a nonempty
+list of typed primary-key dictionaries and `synchronize_session=False`.
+Session authority must equal the descriptor's fixed table UUID. The native
+table needs no tenant column. Caller WHERE clauses remain refused on this
+route; tenant-column tables retain their explicit equality grammar.
+
+The ten new native differential/lifecycle controls cover sync, async and async
+SQLModel execution, renamed attributes, repeated IDs, heterogeneous groups,
+NULL, refresh, missing-record `StaleDataError`, partial effects and savepoint
+rollback. VARCHAR and integer failures preserve custom/generic prepared-plan
+precedence. Fixed-scope refusal and mutation during awaited preparation precede
+key/SQL effects. Driver binds and latest-value decrypt-back/removal pass.
+The affected source selection passes 216 checks with four explicit call skips;
+all three role probes and source/runtime stability checks pass. Separate agent
+review found no actionable guard defect. This is not independent human review.
+
+The implementation reuses the existing ordered input ledger and failure
+carriers. It adds no format, dependency, search representation or lifecycle
+state. The [retained boundary](_reset/single-tenant-update-boundary-20261029.json)
+also records 23 passing installed checks covering this route and both SQLModel
+bridges, with stable source/runtime bindings and three passing role probes.
+Repeat wheel/sdist hashes match, 49 installed files and CLI startup pass, and
+the existing keyword/public-slot profile passes export and genuine fresh
+recovery. Release CI retains this installed selection. All seven production
+gates remain UNKNOWN.
+
+## Async SQLModel bridge: 2026-10-29
+
+**IMPLEMENTED, bounded PostgreSQL 16.15 source verification:** SQLModel 0.0.48
+now uses the same optional attachment for synchronous and asynchronous engines.
+Await attachment for an AsyncEngine. The returned native SQLModel async session
+prepares keys and checks admitted statements before native `exec` enters its
+synchronous session. Native scalar, tuple and entity results remain unchanged.
+The ordinary SQLAlchemy attachment retains its existing session classes.
+
+The thirteen focused checks cover native-versus-protected CRUD, tuple INSERT
+RETURNING, scoped UPDATE/DELETE, NULL, failed-savepoint recovery, refresh,
+equality/IN through interleaved tenants and latest-value decrypt-back/removal.
+Separate controls refuse protected ordering before provider work, cancel awaited
+preparation before autoflush/SQL, retry after cancellation and refuse UPDATE
+request mutation during preparation. Independent stored-frame and driver-bind
+observations retain the existing plaintext boundary. A separate agent source
+review found no actionable guard defect; this is not independent human review.
+
+The [retained boundary](_reset/async-sqlmodel-boundary-20261029.json) records
+thirteen source checks and thirteen installed-wheel checks, with unchanged
+source/runtime bindings and three passing role probes for each. Initial failed
+controls and fixture corrections remain in the receipt archive. Repeat wheel
+and sdist hashes match; 49 installed files and CLI startup pass inspection.
+The installed wheel also passes keyword/public-slot export and actual
+fresh-cluster recovery. That recovery is an existing integer lifecycle profile,
+not an independent original async SQLModel application.
+
+Release CI now includes the installed sync/async bridge selection and retains
+its sanitized receipt beside installed fresh recovery. The complete default
+source suite is running separately; this checkpoint does not claim its outcome.
+No crypto format, dependency, search representation or provider authority changes.
+All seven production gates remain UNKNOWN.
+
+## Restored tenant CLI application journey: 2026-10-29
+
+**VERIFIED, bounded installed application cell:** the unchanged 45-module wheel
+`c1ac937ace1e1f079a854d4bdfa0f8db96ab1edeea3a71c4536cc7fa5517e50f`
+passes both phases of the original authenticated tenant HTTP fresh-cluster
+journey. After adoption and all three rotations, the restored host uses the
+public `cli.main` entrypoint in-process for tenant provision plan/apply/activate
+with an actual v16 successor. The original signup/JWT and administrator approve
+the exact UUID/Keyring before invoking the CLI. Separately retained host pins
+publish ACTIVE, PREPARED, ACTIVATING and successor ACTIVE authority. The exact
+successor is durable before the apply factory runs. Malformed input refuses
+before host loading; premature activation refuses before key lookup. All four
+owned engines are disposed.
+
+The existing first protected write, stale-host refusal, HTTP edits and cascades,
+latest-data decrypt-back/removal and import-denied native restart still pass.
+The native child reads the latest eleven Items across ten owners. All 26
+original application files remain unchanged. Both installed phases pass without
+skips under stable source/runtime bindings. The isolated source fixture cell
+also passes both phases. Independent scoped agent review accepts the two test
+profile changes; no product implementation changed. The
+[boundary](_reset/tenant-cli-fresh-boundary-20261029.json) retains receipts,
+including the preserved initial failures and exact artifact hashes.
+
+The preceding consolidated checkpoint also passed
+[GitHub CI](https://github.com/Debrato2005/cryptalis/actions/runs/40755510001).
+This is local maintenance provisioning with O(N) verification, a global writer
+pause, reconstructible fixture custody and explicit host publication. It does
+not qualify scalable online provisioning, live custody, production fencing,
+pause budgets or independent human review. All 34 objectives remain in scope
+and all seven production gates remain UNKNOWN.
+
+## Consolidated implementation checkpoint: 2026-10-29
+
+**VERIFIED, bounded source and installed cells:** this checkpoint combines
+reviewed `main` (`f3de39b`) with the pushed continuation (`1a3d934`). It retains
+the provider recovery proof, finite catalog function admission, early tenant
+membership checks, maintenance tenant API/CLI and bound runtime verification,
+alongside reporting/DISTINCT, tuple/entity INSERT results, UUID storage and
+parallel/adaptive scalar capture from PR #1. No objective or gate is removed.
+
+New Date plans use `pg-date-days-be/v1`. Historical `date-ordinal-u32/v1`
+descriptors and required readers remain accepted exactly; v8 alone never chooses
+the decoder. Both formats have separate authenticated descriptor identities.
+The semantic diff reports their representation change; automatic active codec
+conversion is not implemented. Date literals remain supported only by the
+PG-epoch profile. UUID-bearing locks retain v9 and `uuid-bytes16/v1`; the older
+unmerged COUNT-v9 candidate is not product input.
+
+The reproducible wheel is
+`c1ac937ace1e1f079a854d4bdfa0f8db96ab1edeea3a71c4536cc7fa5517e50f`.
+Its 45 modules pass hashed clean installation, installed-file/CLI inspection,
+keyword/public-slot fresh recovery and the original authenticated tenant HTTP
+source/fresh-restored journey. An actual retained ordinal-Date backup from
+PR #1 also passes source and installed recovery on a separate PostgreSQL 16
+cluster: tamper refusal, adoption, latest edit, decrypt-back and package-free
+native restart. Existing HTTP and key-custody fixture boundaries still apply.
+
+The combined catalog compiler preserves native COUNT result keys and finite
+function namespace admission. Exact terminal-Table dispatch is now required for
+COUNT/DISTINCT scope proofs; counterfeit sources refuse before statement keys
+or SQL. Its isolated 56-check matrix passes. Native manually nested table Alias
+DISTINCT retains a separate known clone-admission limitation; ordinary ORM alias
+controls pass. The earlier Date lifecycle helper selected a field by position;
+it now selects the declared field ID. Legacy diagnostic/default expectations
+are reconciled with the current PG-epoch profile, and all 49 correction checks
+pass with four omitted-reader skips. The initial seven failed calls remain
+retained as integration evidence.
+
+One CI workflow replaces the fork workflow and adds reproducible release and
+installed-recovery jobs. It uses SHA-pinned actions, read-only token permission,
+no stored checkout credentials, frozen dependencies and explicit safe evidence
+staging. The local release helper passes. Remote CI remains unverified until
+this checkpoint is pushed. The complete source helper passes: 2,993 test calls
+and eighteen subtests, with twelve call skips, 47 setup skips and sixteen
+collection skips (75 total). All 3,052 selected items are accounted for; source
+and runtime bindings remain unchanged. This is a clean full run for the current
+cell; it does not diagnose the earlier interrupted run. The
+[combined boundary](_reset/consolidated-boundary-20261029.json) archives exact
+receipts and hashes, including the preserved initial failures.
+
+All 34 objectives remain in scope and all seven production gates remain UNKNOWN.
+Live custody, independent human qualification, production workload/pause budgets
+and the remaining query/lifecycle capabilities are still required.
+
+## Tenant-policy maintenance CLI: 2026-10-28
+
+**VERIFIED, bounded source and installed cells:** `cryptalis tenants provision
+plan|apply|activate|abort` now composes the existing maintenance tenant API.
+Exact typed UUID and Keyring approval come only from the trusted host factory.
+Apply durably retains the exact private successor before loading host code or
+attempting database effects. Existing artifacts require the explicit matching
+operation UUID to resume. Activation uses the saved v15/v16 successor and actual
+host ACTIVATING pin; abort requires republished source ACTIVE authority and
+source keys. Safe failures retain artifact facts without inventing database
+progress. Host-owned engines are disposed on success and failure.
+
+The shared policy-transition runner preserves the existing rewrap CLI path.
+The 96-check source CLI/status/Doctor matrix passes, with three existing opt-in
+adopted-profile skips. Both new tenant journeys pass in the integrated source
+and installed wheel. They exercise read-only planning, PENDING/resume, premature
+activation refusal before keys, approved first protected write/equality, exact
+old-row identity, status/Doctor, source-only cancel/repeat and durable-artifact
+retry after host failure. An initial installed invocation omitted the required
+source-role opt-in and skipped both tests; the corrected three-role run passes.
+All receipts retain their exact source/runtime bindings. Independent scoped
+agent review accepts the four changed files.
+
+The reproducible wheel SHA-256 is
+`88de0689f0cff4a3ebec21c6c747d1dfc999b412897f238f121a181393ed8f3b`;
+44 modules, 48 installed files and CLI inspection pass. The
+[boundary](_reset/tenant-cli-boundary-20261028.json) archives exact evidence.
+These CLI journeys exercise normal v15, not a new genuine fresh v16 CLI drill.
+The prior Python/HTTP restored-tenant evidence remains separate. The O(N)
+verification/global writer pause, trusted host effects, external publication and
+custody obligations remain. No production gate or human review is qualified.
+All 34 objectives remain in scope and all seven gates remain UNKNOWN.
+
+## Keyword identifier fresh recovery: 2026-10-28
+
+**VERIFIED, bounded installed and source cells:** the unchanged identifier-fix
+wheel `b560cb8aa830448a7f3d56fecd0c51f71e5e3a6d684d660bd301c98cdc9db7af`
+now passes genuine fresh PostgreSQL 16 recovery with a protected native int4
+column named `integer`, in both replacement and preserved-public-slot layouts.
+Each journey includes payload rotation before backup, native and protected dump
+recovery, corrupt-frame refusal before adoption, an actual exact keyword CHECK
+restatement, typed attached reads, latest protected edits, decrypt-back/removal
+and a new process that denies Cryptalis imports and reads current native int4
+values. The preserved-slot journey also checks exact original column positions.
+
+The existing harness adds bounded `--column-name integer` under `--integer`.
+It independently checks profile, width, physical column, successor kind and lock
+schema before layout checks. The optional fixture name preserves the Python
+property and the default `name` behavior. The default-name source fresh journey
+also passes. All six final export/restore test calls pass without skips, under
+stable source/runtime bindings. The four integrated fixture hashes match the
+recorded qualification inputs. All 54 integrated migration controls pass, and
+independent agent review accepts the final fixture changes. The
+[boundary](_reset/keyword-recovery-boundary-20261028.json) retains exact evidence.
+
+This closes the local installed int4 keyword recovery gap in the preceding
+checkpoint. It does not qualify keyword text fresh recovery, every identifier,
+production fencing, external custody, performance or independent human review.
+The source schemas are removed after export; the primary cluster remains live.
+All 34 objectives remain in scope and all seven production gates remain UNKNOWN.
+
+## PostgreSQL identifier admission correction: 2026-10-28
+
+**VERIFIED, bounded source and installed cells:** protected physical columns
+whose names are PostgreSQL type/function keywords now pass activation and
+search validation. The old validator expected SQLAlchemy's unquoted `integer`
+while PostgreSQL deparsed the same identifier as `"integer"`.
+Known framing forms now include the native preparer's exact quoted spelling.
+The live CHECK must depend on exactly the declared column, retain its complete
+bounds/header/generation expression, be validated and permit inheritance.
+Ordinary admission remains nested-only; restored flattened expressions still
+require the exact separately inspected restatement. Search-index spelling comes
+from bound `pg_catalog.quote_ident` in the existing catalog query, with no extra
+round trip. No CF1, manifest grammar or cryptographic construction changes.
+
+The integrated matrix passes 173 checks, with two missing-reader skips and one
+fresh-fixture collection skip. After combining the catalog lookup, all 16 native
+identifier cases and 75 search controls pass. The final installed wheel passes
+the same 16 identifier cases, reproducible builds, 48 installed-file checks and
+CLI inspection. Its SHA-256 is
+`b560cb8aa830448a7f3d56fecd0c51f71e5e3a6d684d660bd301c98cdc9db7af`.
+Both layouts cover keyword, ordinary, mixed-case and embedded-quote names,
+equality/IN, latest edits and native removal. Changed bounds and additional
+column dependencies refuse before provider access. Native reparse controls
+retain the distinction between original and explicitly admitted restore forms.
+Independent agent review found no actionable defect in this scope.
+
+The [boundary](_reset/frame-identifier-boundary-20261028.json) retains exact
+receipts and source/runtime identities, including the initial collection-path
+error. These checks do not qualify a production compatibility cell, performance
+budget or independent human review. All seven production gates remain UNKNOWN.
+
+## Maintenance tenant-policy provisioning: 2026-10-28
+
+**VERIFIED, bounded source and installed cells:** `cryptalis.tenancy` adds one
+explicitly host-approved empty tenant through the existing maintenance and
+publication lifecycle. Old policy digests, lock, access contract, schema and
+ciphertext bytes remain exact. Planning authenticates current frames; apply
+rechecks empty membership under locks and atomically records source SUPERSEDED
+and successor PENDING with durable guards. Strict successors v15/v16 require
+external retention/publication and the actual ACTIVATING pin. Inspected retry
+and cancellation preserve source authority and data. Physical older readers
+refuse the new formats before execution.
+
+The original HTTP account authenticates but receives 409 before approval, then
+creates its first protected Item after explicit administrator-approved
+publication. A stale host artifact refuses before factory/key lookup. The
+enlarged cohort survives root, payload and search rotation, genuine fresh
+adoption, another restored-target addition and latest-value removal. Both
+import-denied native children HTTP-read eleven latest Items through ten owners.
+All 26 original application files remain unchanged; explicit host integration
+still applies.
+
+The integrated source matrix passes 207 checks with one omitted-reader skip;
+that physical-reader control passes separately. The isolated tenant-only matrix
+passes all 13 controls. Source and actual installed fresh journeys pass with
+stable runtime bindings. The reproducible wheel is
+`72d4ccde3fefc016cf8e07f5219c7eb0690321884efcd3ac2396e5f26cc4aa19`;
+44 modules and installed-file/CLI inspection pass. The
+[boundary](_reset/tenant-provision-boundary-20261028.json) retains exact receipts
+and release inputs. Independent agent review found no actionable tenant defect.
+
+This Python API performs O(N) frame authentication under a global writer pause.
+It does not qualify scalable online signup, arbitrary-process revocation, live
+KMS, operational CLI provisioning, production budgets or independent human
+review. COUNT candidate code is excluded. Execution resumed after the earlier
+quota interruption; the preserved bundle remains historical recovery material.
+All 34 objectives remain in scope and all seven gates remain UNKNOWN.
+
+## SDK protocol and early tenant admission checkpoint: 2026-10-28
+
+**VERIFIED, local source and installed cells:** the isolated
+[AWS SDK cell](../qualification/aws-sdk/README.md) retains boto3 1.42.89 and
+botocore 1.42.97 with exact dependency hashes and service-model identity.
+The 129-check protocol bundle passes, including 22 real SDK serializer/model
+cases. Source and target Stubber queues verify source decrypt, target encrypt
+and target decrypt. Wrong roots, malformed material, wrong key identity and
+disabled-target responses refuse while source custody remains usable.
+Credential discovery and HTTP transport are explicitly denied. No live AWS
+cryptography, IAM, custody, deletion or production-provider qualification follows.
+
+The factory now checks exact UUID type and pinned tenant membership before the
+host key resolver. Previously an unapproved UUID reached that callback before
+refusal, and a UUID subclass with a changed string identity could pass the
+policy comparison. Both native PostgreSQL controls reproduce the old boundary.
+The correction passes 149 affected adapter, context, online-tenant and actual-SDK
+checks, including ordinary approved-scope access. The known-approved nil UUID
+retains its existing online lifecycle coverage.
+
+The current reproducible wheel is
+`d809a9b6a9dc2f3a2f306bb97061c98d3d4038d49a1f7cc6a630496b8eaf5054`.
+All 50 release inputs, 47 installed files and CLI inspection pass. Its installed
+tenant source/fresh-restored journeys both pass with stable source and runtime
+identity. The earlier `4af03c…` wheel and its wider DATE/original-HTTP evidence
+remain preserved at their own boundary. No package publication occurred.
+
+A matched warm 10k profile over the preceding `d7f2dba` product bytes reports
+1.8042 ms added point p95, 3.5577 ms equality and 3.7962 ms IN-20; isolated
+column-plus-equality-index storage is 1.4976× native. Equality **misses** its
+3 ms target. Other stated targets pass in that one local observation. Profiling
+shows repeated traversal at three distinct security admission boundaries.
+A per-admission memoization experiment was slower and was reverted. Host
+variance remains unresolved; no performance fix or production pass is claimed.
+
+The [boundary](_reset/sdk-admission-boundary-20261028.json) binds archived
+receipts, exact inputs, the failed performance observation and the preserved
+unfinished branch. SDK-profile agent review accepted; the final small admission
+fix has root self-review and executable evidence only. Independent human review
+remains required. All seven production gates remain UNKNOWN.
+
+**Execution blocked by account usage limit.** Specialist turns for tenant-policy
+provisioning, count reporting and cache architecture were rejected by the account
+quota. Their unfinished code is preserved as local branch
+`wip/policy-count-unverified-20261028`, commit `7c0dd6b`, and in the
+[verified Git bundle](_reset/policy-count-unverified-20261028.bundle). It is not
+imported, enabled or qualified on the continuation branch. The runtime UUID guard
+was completed separately; broader provisioning and counts remain unfinished.
+See the [resume record](superpowers/plans/2026-10-28-policy-query-resume.md).
+
+## Verified continuation checkpoint: 2026-10-28
+
+**VERIFIED, bounded source and installed cells:** the unchanged 26-file original
+HTTP application now has an owner-scoped Item journey through original JWT/account
+authentication, online capture, administrator pagination, transactional account
+cascades, all three rotations, genuinely fresh recovery and latest-data native
+exit. The host authenticates before selecting an approved owner, then locks and
+rechecks public owner metadata before payload access. Ordinary and administrator
+pages match their public count/order/offset/limit oracles. Both package-free
+children HTTP-read all nine specific latest Items through eight original owners.
+
+Original application bytes are unchanged; integration is not zero-change.
+The fixture replaces the request database dependency, adapts the administrator
+list handler and translates the exact account-cascade delete in one transaction.
+Global User authentication remains native. This profile protects Item title and
+description as storage-only fields. New accounts can authenticate, but new-owner
+Item writes refuse with 409 before key lookup. Dynamic tenant-policy provisioning
+remains unfinished product work. This is not complete arbitrary-signup SaaS adoption.
+
+The separate [HTTP dependency cell](../qualification/http/README.md) replaces the
+earlier Starlette pin and records exact transitive hashes. Python 3.13.5,
+FastAPI 0.162.0 and Starlette 1.10.0 pass the named journeys. The current upstream
+standard-extra/Sentry conflict is documented. Recorded PyPI fields contain no
+advisory entries, but raw retrieval receipts were not retained and OSV returned
+403. A complete dependency security audit remains UNKNOWN.
+
+The reproducible wheel has SHA-256
+`4af03c2cc3b265249be505c87fcef8d8134ee370414c9caa9c166a44d1439ea3`.
+All 50 release inputs match, 47 installed files and CLI inspection pass, and all
+43 runtime module bytes match. The actual wheel passes tenant and original HTTP
+source/fresh-restored phases, including original email equality/IN and rotations.
+It also passes DATE export/restore in both layouts. The TestClient deprecation
+warning remains. No public package was published.
+
+The mandatory wrapper now rejects a wrong source checkout or mismatched installed
+wheel before pytest. It checks candidate bytes before import, suppresses import
+diagnostics, rejects unadmitted loaded module origins, records runtime hashes
+and repeats their checks after pytest. Explicit `--installed-wheel` propagates
+through both qualification harnesses. All 35 affected wrapper controls pass.
+Parallel DATE runs exposed a global receipt-name collision; fresh qualification
+now stores receipts in each new private work directory. Both profiles pass together.
+
+The broad source attempt ended with pytest internal exit 3 after 2,218 passing
+calls and 18 passing subtests, with stable source and no ordinary failed-call
+report. Its final terminal trace was unavailable after executor reattachment;
+the cause remains UNKNOWN. The following recovery module passes three checks,
+and the remaining tail passes 615 with three call skips and four collection
+skips. The separate online matrix passes 18. These are explicit follow-up
+matrices; no clean full-suite pass is claimed and the incomplete receipt is retained.
+
+The [qualification boundary](_reset/release-continuation-boundary-20261028.json)
+binds exact archived receipts, source/runtime hashes, artifact bytes, dependency
+inputs and known failures. Scoped reviews and the final agent code review found
+no remaining actionable findings. Agent review does not supply independent human
+qualification. Advanced encrypted queries, additional type admission, dynamic
+tenant policies, production fencing/budgets, live KMS, independent review and
+controlled publication remain open. All 34 objectives remain in scope. All seven
+production gates remain UNKNOWN; this is a development checkpoint, not the release.
+
+## DATE storage construction and lifecycle: 2026-10-27
+
+**VERIFIED, bounded local source candidate:** exact native Date/DATE mappings
+now use authenticated four-byte days from 2000-01-01 under existing context/v2.
+Values are exact Python date or NULL, from 0001-01-01 through 9999-12-31.
+Literal client defaults use canonical ISO metadata. Strict lock/v8 requires the
+date codec and, only when applicable, default reader tag. Existing v1-v7
+selection remains unchanged; a physical installed v7 reader accepts unchanged
+integer artifacts and refuses DATE before execution.
+
+Operational planning counts infinity/out-of-domain source dates and refuses.
+Expansion repeats that check under table locks before journal or DDL effects.
+Custom mappings, variants, coercions and undeclared date search refuse. No date
+range/order/arithmetic/search or online type admission is added.
+
+The [source receipt](_reset/date-source-20261027.json) records 31 passing checks
+with stable source hashes: independent epoch/authenticated framing controls,
+native default/NULL/ORM/dictionary/async state, refusal controls, both layouts,
+three rotations alongside searchable text, current edits and package-free exit.
+Both genuinely fresh-cluster profiles pass export and restore: default layout
+[export](_reset/fresh-cluster-export-20261027-2.json)/[restore](_reset/fresh-cluster-restore-20261027-2.json),
+and public slots
+[export](_reset/fresh-cluster-export-20261027-3.json)/[restore](_reset/fresh-cluster-restore-20261027-3.json).
+Each uses a distinct initialized target, explicit adoption, typed latest values,
+corruption refusal and native restart. The initial failed restore receipt stays
+preserved; it exposed the missing expected Python date type check, which was fixed.
+
+Scoped independent agent review found no actionable DATE defect. These are
+synthetic fixtures with public reconstructible custody. An unchanged external
+DATE application, installed artifact/cost qualification and independent human
+review remain required. Earlier affected runs with concurrent tenant test edits
+retain their invalid wrapper outcomes; they are not stable verification.
+All 34 objectives remain in scope and all seven gates remain UNKNOWN.
+
+## Finite native SELECT functions: 2026-10-27
+
+**VERIFIED, isolated local adapter cell:** attached SELECT admission now rejects
+unrecognized functions, non-catalog namespaces and custom compiler dispatch
+before key resolution or driver execution. The finite
+[native function table](../src/cryptalis/_sqlalchemy_functions.py) covers ordinary
+public aggregates, string helpers, tested windows and cancellation helpers.
+Admitted ordinary calls compile with explicit `pg_catalog` resolution. Native
+special expressions such as COALESCE retain their syntax. Protected expression
+and search restrictions remain unchanged.
+
+The deciding control reproduced an unknown database-side function reaching
+execution through an attached typed SELECT. That route can perform effects
+outside prepared ORM writes. It now refuses before keys or driver calls.
+A separate positive control first observes a shadowed native function through
+the connection's search path, then proves attached calls use the catalog result.
+Registered concat/rank/dense-rank classes and native NULL/count/window results
+also pass after a scoped review correction.
+
+The [source-bound isolated receipt](_reset/select-functions-source-bound-20261027.json) records 233 passing
+adapter, search, textual-clause, mapped-expression and async-cancellation checks
+with stable source hashes. Forty-eight existing DISTINCT deprecation warnings
+remain. Scoped agent review accepts the final change. Arbitrary application SQL
+functions require separate admission; typed SELECT is not general function-call
+authority. This evidence does not prove deployment-wide writer exclusion or
+independent human security qualification. All seven gates remain UNKNOWN.
+
+The earlier temporary-checkout receipt did not bind imported package location:
+the shared interpreter selected the main checkout's editable package. It is
+retained as historical evidence and superseded for source identity by the
+explicit-PYTHONPATH isolated rerun above. The same correction applies to the
+direct-provider receipt below. The build/archive evidence is unaffected.
+
+## Direct provider rewrap recovery proof: 2026-10-27
+
+**VERIFIED, isolated local protocol cell:** both direct AWS SDK-adapter and
+development-provider `rewrap` methods now unwrap the replacement under the
+original context. They require exactly 32 immutable bytes, compare the original
+root in constant time and recheck the pinned target provider identity before
+returning success. Ordinary failures remain redacted `KeyUnavailable`;
+interruption propagates and the original wrapper remains usable.
+
+Previously, valid wrapper metadata alone could report apparent success even if
+the target wrapped a different root. Fourteen source controls reproduced that
+failure across both providers. The existing higher-level rotation preparation
+already performed its own recovery proof; this change closes the direct API gap.
+
+The [source-bound isolated receipt](_reset/direct-rewrap-source-bound-20261027.json) records 107 passing
+provider, CF1 and rewrap-preparation checks with stable source hashes. Controls
+cover incorrect or malformed recovered material, target outage, identity drift,
+interruption, source retention and healthy retry. Agent review found no remaining
+scoped findings. Direct rewrap now requires target decrypt permission and can add
+one external provider request. No live AWS, custody retirement, deletion,
+independent human review or production-provider qualification was performed.
+All seven gates remain UNKNOWN.
+
+## Resumption and frozen build backend: 2026-10-27
+
+**VERIFIED, isolated local build cell:** explicit `Continue Cryptalis` resumes the
+audited `5d6ff65` checkpoint. Remote main matched that revision before edits.
+The same disposable PostgreSQL 16.15 cluster was stopped on resume. After starting
+it, fresh private owner/runtime/source probes and six targeted online tenant and
+source-role controls passed. These observations do not qualify a production cell.
+
+Release builds now pin `uv_build==0.12.23` and enforce its standard uv-generated
+hash constraints through isolated PEP 517. Explicit build isolation and disabled
+configuration discovery prevent ambient configuration from weakening that claim.
+The receipt records interpreter, uv, backend requirement and constraint digest.
+The runtime dependency lock is unchanged.
+
+An isolated checkout passes all 15 artifact-integrity tests. Wrong backend hashes
+refuse without producing a wheel under default settings and conflicting isolation
+or hash-verification environment settings. Review identified the isolation override
+and an ignored input directory; both are corrected and re-reviewed. The earlier
+offline test failure came from its empty-cache assumption, which had depended on
+uv's internal fast build path. Offline PEP 517 checks now use the warmed admitted
+backend cache and the same constrained invocation.
+
+The [release receipt](_reset/build-backend-20261027.json) records byte-identical
+wheel/sdist rebuilds, archive/RECORD checks and SBOM. This is a build-input
+checkpoint over the audited product source, isolated from concurrent feature
+work. It is not a new production release, signed provenance, refreshed application
+dependency qualification, or independent human review. All seven gates remain UNKNOWN.
+
+## Single-tenant mapped UPDATE: 2026-10-29
+
+**VERIFIED, local PostgreSQL 16.15:** declared single-tenant tables accept mapped
+dictionary UPDATE through sync and async sessions with the manifest's table UUID
+as scope. The caller supplies typed record IDs, no WHERE predicate and
+`synchronize_session=False`. Tenant-column tables retain explicit tenant equality.
+
+The [28-check native differential run](_reset/single-tenant-update-green-20261029.json)
+passes TEXT, VARCHAR, Boolean, int2/int4/int8, finite Date and UUID updates through
+online protection, heterogeneous and repeated-ID groups, NULL/omission, autoflush,
+stale identity-map state, refresh, rollback, commit and latest-value removal.
+Native missing-record row-count errors and VARCHAR/integer overflow preserve
+savepoint recovery. Wrong fixed scope and unsupported requests refuse before
+statement key resolution or driver UPDATE. Changed final IDs, frames and SQL
+refuse before driver execution; exact retry succeeds. A native positive collector
+observes the fixture plaintext; attached UPDATE binds omit it.
+
+The [RED receipt](_reset/single-tenant-update-red-20261029.json) fails at the original
+single-tenant refusal after its native oracle passes. The
+[first implementation run](_reset/single-tenant-update-first-20261029.json) records
+six passes and 22 failures: sixteen reach a misnamed reverse-plan keyword, and
+six inspect retired staging columns in the new test helper. Corrected helpers
+use `source_pin` and current public columns. No product change follows that run.
+The passing receipt records three successful role probes and unchanged source.
+
+The [affected regression](_reset/single-tenant-update-regression-20261029.json)
+passes 508 test calls with six explicit retained-reader skips, including existing
+scoped UPDATE, INSERT/results, scalar, driver, online and adapter controls.
+The [installed-wheel run](_reset/single-tenant-update-installed-20261029.json)
+passes 93 calls, including all 28 new controls and existing scoped UPDATE
+boundaries. Both runs record unchanged source and all three role probes.
+The [release check](_reset/single-tenant-update-release-20261029.json) records
+identical repeat wheel/sdist hashes, metadata/RECORD/SBOM checks, 43 modules and
+47 verified installed files with CLI/import checks in a clean environment.
+These runs use Python 3.12.14, SQLAlchemy 2.1.3 and psycopg 3.3.6.
+
+Fresh read-only code review found no blocking defects. The new pre-key refusal
+and final-driver mutation controls run synchronously. Separate async fixed-scope
+failure injection and direct generated-predicate AST mutation are not established
+by the new module; shared capture/recheck and scoped-update evidence remain
+separate. The complete source corpus, fresh-cluster recovery and production
+qualification were not rerun for this bounded change.
+
+The existing immutable input ledger, generated-record validation, authenticated
+frames and final driver checks remain in use. No format, dependency, key policy
+or leakage representation changes. This local evidence adds no production
+qualification; all seven full gates remain UNKNOWN.
+
+## Expanded source regression boundary: 2026-10-28
+
+**VERIFIED, complete collected source corpus across two ordered runs:**
+2,922 test calls and eighteen subtests pass on unchanged product code. The
+[combined boundary](_reset/expanded-regression-boundary-20261028.json) records
+2,336 prefix items and 624 suffix items, covering all 2,960 selected items.
+Eight call skips, thirty setup skips and fifteen collection skips stay explicit.
+Optional profiles retain their own prerequisites and evidence requirements.
+
+The [initial run](_reset/expanded-regression-initial-20261028.json) stops after
+2,324 passing calls on an obsolete negative control that expects entity DISTINCT
+to refuse. The test now uses multiple protected values without record identities,
+which remains unadmitted. The [187-check affected run](_reset/distinct-legacy-control-20261028.json)
+passes the corrected control and existing adapter/search/report cases.
+The fresh [complete suffix run](_reset/expanded-regression-tail-20261028.json)
+passes all 622 remaining test calls, including the entire corrected adapter file.
+Its five skips include three collection skips already counted in the original
+whole-corpus collection. The 48 warnings retain the existing legacy DISTINCT ON
+deprecation.
+
+All product and other Python hashes match between the initial and suffix runs;
+only that test file changes. Both wrappers report unchanged source during their
+own execution and all three role probes pass. The earlier failed receipt remains
+visible. This verifies the named corpus and local cell; production gates remain UNKNOWN.
+
+## Expanded installed-package checkpoint: 2026-10-28
+
+**VERIFIED, installed wheel:** the [174-check selection](_reset/expanded-installed-20261028.json)
+passes Date/UUID codecs and storage, mixed rotations, both DISTINCT routes,
+counts, tuple/entity INSERT results, result tamper refusal, scalar/parallel online
+capture and Doctor preflight. The configured pre-Date and pre-UUID readers refuse
+their new formats. All three role probes pass and all source hashes stay unchanged.
+
+The [release receipt](_reset/expanded-release-20261028.json) records identical
+repeat wheel/sdist hashes, verified metadata/RECORD, a CycloneDX SBOM, 43 modules,
+47 checked installed files and import/CLI checks in a clean environment.
+The frozen 20-package audit reports no known vulnerabilities. The separate
+[installed audit](_reset/expanded-installed-audit-20261028.json) clears eighteen
+third-party distributions; unpublished Cryptalis has no advisory-service entry
+and is explicitly skipped. Neither audit is an independent code review.
+
+Current-wheel fresh recovery passes for [Boolean](_reset/fresh-cluster-restore-20261028-7.json),
+[UUID with public slots](_reset/fresh-cluster-restore-20261028-8.json) and
+[Date](_reset/fresh-cluster-restore-20261028-9.json), with corresponding exports
+[Boolean](_reset/fresh-cluster-export-20261028-7.json),
+[UUID](_reset/fresh-cluster-export-20261028-8.json) and
+[Date](_reset/fresh-cluster-export-20261028-9.json).
+They authenticate actual source backups, adopt a distinct cluster, decrypt current
+values and restart native reads in a process that denies Cryptalis imports.
+Two initial concurrent exports passed their tests but collided while creating a
+receipt; their incomplete journeys are not claimed as recovery passes. The UUID
+and Date profiles then passed sequentially in new work directories. No role probe failed.
+Full production qualification remains UNKNOWN.
+
+## Parallel crypto and adaptive online batches: 2026-10-28
+
+**VERIFIED, local PostgreSQL 16.15:** the [31-check affected run](_reset/online-workers-20261028.json)
+passes actual four-thread row-crypto overlap, adaptive row limits of 16/8/4/2,
+resume with unchanged completed frames, full current-value authentication,
+native abort values and atomic refusal/retry after a worker failure. Existing
+online scalar, tenant and recovery controls pass in the same run. All three role
+probes pass and source stays unchanged.
+
+`online.apply` accepts `workers=1..16` and optional `target_chunk_seconds`.
+One worker remains the default. SQL writes, row locks and journal commits stay
+serial under one executor lock. Workers perform only cryptography, with separate
+per-thread, per-chunk preparation caches. Parallel use requires thread-safe host
+key resolvers/providers. Pool shutdown joins outstanding work before releasing
+the SQL executor. Tuning never raises the plan's row/byte limits and provides no
+pause guarantee. This establishes functional concurrency, not a speedup or a
+multi-executor database scheduler.
+
+The later [32-check boundary run](_reset/online-workers-boundary-20261028.json)
+also preserves typed invalid-plan refusal before database access. It includes
+the same worker, scalar, tenant and recovery controls after that correction.
+
+## Tuple and entity INSERT RETURNING: 2026-10-28
+
+**VERIFIED, local PostgreSQL 16.15:** mapped dictionary INSERT now returns native
+direct-column tuples, the inserted mapped entity or public-only columns.
+The [129-check affected run](_reset/insert-returning-rows-20261028.json) covers
+sync/async paging, optional input ordering, heterogeneous groups, NULL, original
+column keys, identity-map loading, expiration/refresh and rollback. TEXT,
+Boolean, int4, Date and UUID values pass actual native-versus-protected migrations.
+
+Every protected output authenticates against its own exact prepared input and
+row/tenant context. Swapping either protected field's returned carrier fails.
+The existing scalar tamper, lease, future-page, savepoint and error-precedence
+controls still pass. Custom INSERT or returned-column dispatch refuses before
+keys/SQL. Aliases, labels, expressions, loader options and caller return_defaults
+remain unadmitted. There are no extra per-row reads or new dependencies.
+This is source evidence; the current installed/full-source boundary follows separately.
+
+## Online capture for storage scalars: 2026-10-28
+
+**VERIFIED, local PostgreSQL 16.15:** native Boolean, int2/int4/int8, finite Date
+and UUID writes pass dirty-row capture, lower-key inserts, deletes, interrupted
+resume, durable fencing and either abort or publication plus latest-value native
+exit. The [27-check affected run](_reset/online-scalars-20261028.json) includes
+the existing text, multi-table, tenant, access and recovery controls. All three
+role probes pass and source stays unchanged.
+
+Fixed-width codecs now have fixed chunk-size estimates before value fetch.
+A Date written as infinity after planning raises `date_outside_python_range`
+before that chunk has payload or progress effects. This expands initial online
+type coverage; the final pause, owner-writer exclusion and production gates
+retain their existing requirements.
+
+## Native UUID value storage: 2026-10-28
+
+**VERIFIED, local PostgreSQL 16.15:** UUID values, including nil and the maximum
+UUID, pass protection, sync/async edits, counts and latest-value native removal
+in both column layouts. The [50-check lifecycle run](_reset/uuid-mixed-lifecycle-20261028.json)
+adds all three interrupted/resumed rotations beside searchable text and two
+tenant scopes, plus configured pre-Date and pre-UUID reader refusals before SQL.
+Custom, emulated, string-valued, searchable and defaulted UUID mappings refuse.
+
+The [fresh export](_reset/fresh-cluster-export-20261028-6.json) and
+[fresh recovery](_reset/fresh-cluster-restore-20261028-6.json) pass root/payload
+rotation, tamper refusal, adoption and public-slot native exit. A fresh process
+that denies Cryptalis imports reads exact native UUID values afterward.
+
+The [10,000-row matched cost profile](_reset/scalar-cost-uuid-20261028.json)
+records 100 alternating warm pairs after ten warmups. Added point p95 is
+1.4161 ms for scalars and 1.6965 ms for full entities. The column-only ratio is
+3.6875x, sixteen native bytes versus 59 bytes with the CF1 and bytea headers.
+Both local point observations meet 3 ms. No equality index or indexed-storage
+target applies. The [wrapper](_reset/scalar-cost-uuid-wrapper-20261028.json)
+records unchanged source and all three role probes.
+
+UUID fields use sixteen network-order bytes, context/v2 and lock/v9. Public
+record and tenant UUID codecs stay separate. No new dependency or earlier frame
+bytes change. This source checkpoint does not claim current installed-wheel or
+full-suite qualification. Production gates remain UNKNOWN.
+
+## DISTINCT with selected record identities: 2026-10-28
+
+**VERIFIED, local PostgreSQL 16.15:** entity/table projections and direct tuples
+retain native DISTINCT when every protected source's public primary key is
+selected. Sync/async native controls cover storage-only TEXT, Boolean and Date,
+public ordering/pagination, repeated join rows and original label keys. The
+[146-check affected run](_reset/identity-distinct-20261028.json) includes the
+existing reporting, search, Doctor and SQLModel bridge controls. Another alias's
+ID, renamed ID columns and custom ID renderers refuse before statement keys/SQL.
+
+The compiler retains native DISTINCT because selected record identities already
+distinguish source rows. This needs no equality term and keeps the existing
+authenticated carrier. Logical-value DISTINCT without those IDs retains the
+separate one-field equality contract. Caller DISTINCT ON and protected order/group
+remain unadmitted. No storage or key-derivation change.
+
+## Authenticated direct DISTINCT projection: 2026-10-28
+
+**VERIFIED, local PostgreSQL 16.15:** DISTINCT of one direct protected equality
+field returns native logical value sets and Python types through sync/async
+sessions. Labels retain original result-object keys. Aliases, SQL NULL, empty
+text, duplicate/Unicode values and encrypted WHERE filters pass in the
+[130-check affected run](_reset/distinct-projection-20261028.json).
+A corrupted representative frame raises AuthenticationFailed. Unscoped/multi-tenant,
+custom-rendered and other unadmitted shapes refuse before statement keys or SQL.
+
+The compiler deduplicates existing full-width terms and retains the selected
+row's authenticated context carrier. Ordering, pagination, grouping, caller
+DISTINCT ON, multiple outputs and storage-only fields remain unadmitted in this
+route. Public DISTINCT keeps its separate native contract. A native SELECT
+dispatch check also prevents custom protected SELECT rendering before keys.
+The result relies on the existing full-term collision and hostile-database
+completeness assumptions. No representation, key derivation or dependency changes.
+
+## Finite date storage and scalar cost decision: 2026-10-28
+
+**VERIFIED, installed wheel:** the [92-check selection](_reset/date-installed-20261028.json)
+passes Date storage, mixed rotations, crypto and integer controls. Two retained
+pre-integer reader controls remain skipped. The [artifact receipt](_reset/date-release-20261028.json)
+records repeat-build equality, metadata/RECORD/SBOM checks and 47 verified
+installed files. The installed Date profile also passes a separate-cluster
+public-slot restore and package-free native restart.
+
+**VERIFIED, local PostgreSQL 16.15:** finite native Date values retain exact
+Python types through protection, sync/async reads and edits, counts and native
+removal. The [220-check affected run](_reset/date-source-20261028.json) includes
+independent ordinal/frame controls and source-boundary refusals. Its two skips
+require a separate retained pre-integer reader. The configured pre-date reader
+does refuse lock/v8 before SQL. Non-finite/BC/out-of-range source dates, custom
+mappings, date search and date defaults remain refused.
+
+The [36-check mixed lifecycle run](_reset/date-mixed-lifecycle-20261028.json)
+adds Date beside searchable text across two tenants and tables. Root rewrap,
+payload rotation and search rotation preserve the expected bytes, key authority,
+current values and latest-value native exit. Interrupted chunks resume.
+
+Actual source exports and fresh-cluster recovery pass for both Date layouts:
+[ordinary export](_reset/fresh-cluster-export-20261028.json),
+[ordinary recovery](_reset/fresh-cluster-restore-20261028.json),
+[public-slot export](_reset/fresh-cluster-export-20261028-2.json) and
+[public-slot recovery](_reset/fresh-cluster-restore-20261028-2.json).
+These profiles perform root and payload rotation, tamper refusal, adoption,
+current-data removal and a fresh process that denies Cryptalis imports.
+The shared harness also passes retained Boolean and int64 fresh-recovery controls.
+The recovery profiles use two newly probed roles; the ordinary source selections
+use the three-role isolated harness. No probe failed.
+
+**VERIFIED, current local costs:** four 10,000-row scalar profiles pass native
+result comparisons, actual protection/publication and removal. Each workload
+records 100 alternating measured pairs after ten warmups. All eight scalar/entity
+point observations meet 3 ms added p95. Column-only ratios are 22.5x/11.75x/6.375x
+for int2/int4/int8 and 11.75x for Date. One Date scalar sample reaches 65.41 ms;
+all raw samples remain in the [date receipt](_reset/scalar-cost-date-20261028.json).
+The [wrapper](_reset/scalar-cost-wrapper-20261028.json) binds unchanged source.
+The [local integer admission decision](decisions.md#local-integer-storage-admission-2026-10-28)
+accepts the documented storage-only overhead for the assignment. These fields
+have no equality index; the 2x indexed-column target is not evaluated.
+
+Date uses four unsigned ordinal bytes, context/v2 and lock/v8. No runtime
+dependency or earlier codec/format bytes change. This adds bounded local type
+admission; broader numeric/temporal/JSON contracts remain work. Production gates
+remain UNKNOWN and retain their separate qualification requirements.
+
+The later [66-check ordinal control](_reset/date-ordinal-bounds-20261028.json)
+verifies typed refusal for authenticated unsigned ordinals above Python's signed
+conversion range as well as ordinary invalid dates. The unconfigured retained
+pre-date reader is its one skip; its configured earlier run retains separate proof.
+
+## Local assignment explanation and inspection profile: 2026-10-28
+
+**VERIFIED, full source regression:** the [current PostgreSQL receipt](_reset/reporting-postgres-20261028.json)
+passes 2,824 test calls and 18 subtests in 870.32 seconds. All Python source
+hashes remain unchanged and all three role probes pass. The 37 skips remain
+separate in the receipt: eight call skips, fourteen setup skips and fifteen
+collection skips. The 48 warnings retain the existing legacy DISTINCT ON
+deprecation. This includes the new reporting routes and the existing lifecycle,
+rotation, restore, adapter and diagnostic controls; skipped optional profiles
+retain their own evidence requirements.
+
+**VERIFIED, artifact checks:** the [reporting release receipt](_reset/count-release-20261028.json)
+records identical repeat wheel/sdist hashes, inspected RECORD/dependency metadata,
+CycloneDX SBOM, 43 product modules and 47 checked installed files. The clean
+environment passes import and CLI checks. The frozen 20-package audit reports
+no known vulnerabilities. Runtime pins remain unchanged. Independent review,
+signed provenance and production release qualification remain outside this result.
+
+**VERIFIED, installed wheel:** the reporting/search/Doctor selection passes
+120 checks on PostgreSQL 16.15 through the actual wheel. The
+[installed receipt](_reset/count-installed-20261028.json) records unchanged source
+and three role probes. TEXT, Boolean and all three internal integer widths retain
+native non-NULL counts after real protection. This does not promote the internal
+integer candidate or the production gates.
+
+**VERIFIED, local PostgreSQL 16.15:** matched count fixtures return the same
+non-NULL/distinct totals for native text and attached CF1. The
+[31-sample paired profile](_reset/count-performance-20261028.json) records warm
+synchronous p50/p95 and raw samples at 1,000 and 10,000 rows. Its
+[wrapper receipt](_reset/count-performance-wrapper-20261028.json) retains stable
+source hashes and three role probes. These are new-capability observations,
+not target-branch speedups or production qualification.
+
+**VERIFIED, local PostgreSQL 16.15:** count FILTER predicates over public fields
+and non-distinct count windows over public partitions/order retain native
+results. The [117-check affected run](_reset/window-counts-20261028.json)
+includes empty filtered input, a running ROWS frame, labeled partitioned results,
+filtered distinct counts and custom-window refusal. Protected filter/partition/order
+expressions and DISTINCT windows remain unadmitted.
+
+**VERIFIED, local PostgreSQL 16.15:** public-column DISTINCT and DISTINCT ON work
+with admitted encrypted WHERE predicates. Sync/async native comparisons cover
+aliases, NULL filters and pagination; protected distinct keys and outputs still
+refuse. The [267-check affected run](_reset/public-distinct-20261028.json) includes
+the existing textual-reference controls. It retains 48 existing SQLAlchemy
+deprecation warnings for the legacy DISTINCT ON spelling.
+
+**VERIFIED, local PostgreSQL 16.15:** equality fields support
+`COUNT(DISTINCT column)` through the existing full-width term. The original
+SQLAlchemy count expression remains intact; the engine's compiler renders the
+term operation and preserves native result-object lookup. Sync/async NULL,
+empty-input, duplicate, Unicode, alias and public-grouping controls pass in the
+[103-check affected run](_reset/distinct-counts-20261028.json).
+The [109-check tenant extension](_reset/scoped-distinct-counts-20261028.json)
+also verifies direct bound tenant equality and exact tenant grouping. Wrong-alias,
+OR and custom-rendered scope claims refuse before statement key preparation.
+Storage-only and global multi-tenant distinct counts remain refused.
+
+**VERIFIED, local PostgreSQL 16.15:** direct `COUNT(protected_column)` preserves
+native integer results, NULL/empty-input behavior, aliases, public grouping and
+transaction rollback through sync/async sessions. TEXT and Boolean storage-only
+counts pass after real protection. Custom count renderers and unadmitted wrappers
+refuse before statement key preparation and SQL. The [focused run](_reset/protected-counts-20261028.json)
+passes 97 checks, including the existing search and Doctor controls.
+No payload, key-policy, schema or stored representation changes are required.
+
+**IMPLEMENTED:** protected-column lineage is collected once per expression
+inspection. Native proxy-set intersection semantics remain unchanged, and no
+cross-operation cache is added. The [paired CPU profile](_reset/admission-lineage-20261028.json)
+compares the exact target-branch method with candidate `c9a1049`, including early
+and late matches and public/mixed projections. It records local inspection
+speedups and the early-match trade-off, not end-to-end application improvement.
+The [candidate PostgreSQL run](_reset/assignment-postgres-20261028.json) passes
+2,789 test calls and 18 subtests on Ubuntu CI, with all source hashes unchanged.
+Its eight call skips, fourteen setup skips and fifteen collection skips remain
+recorded separately. This verifies that scoped run, not a production cell.
+The [local artifact check](_reset/assignment-release-20261028.json) passes repeat
+wheel/sdist builds, RECORD inspection and SBOM generation. Clean installation
+was not measured by that check.
+
+The [illustrated assignment guide](professor-guide.md) explains existing features
+and historical performance. The [local run guide](local-development.md) and
+restricted-role CI workflow make the current checks reproducible. Runtime
+dependencies and all 34 objectives remain unchanged. All seven gates stay UNKNOWN.
 
 ## Preservation checkpoint and operator pause: 2026-10-24
 

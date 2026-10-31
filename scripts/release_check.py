@@ -196,14 +196,19 @@ def inspect_source_imports(root):
 
 
 def build(directory):
-    run(["uv", "build", "--out-dir", str(directory), "--no-build-logs"])
+    run(["uv", "build", "--out-dir", str(directory), "--no-build-logs",
+         "--force-pep517", "--build-isolation", "--no-config", "--python", sys.executable,
+         "--build-constraints", str(ROOT / "qualification/build-backend/requirements.txt"),
+         "--require-hashes"])
     return artifacts(directory)
 
 
 def source_hashes():
     paths = [ROOT / "pyproject.toml", ROOT / "LICENSE", ROOT / "README.md",
              ROOT / "scripts" / "release_check.py",
-             ROOT / "scripts" / "test_release_check.py"]
+             ROOT / "scripts" / "test_release_check.py",
+             ROOT / "qualification/build-backend/requirements.in",
+             ROOT / "qualification/build-backend/requirements.txt"]
     paths += sorted((ROOT / "src").rglob("*.py"))
     return {str(path.relative_to(ROOT)): digest(path) for path in paths}
 
@@ -306,6 +311,14 @@ def main():
             "base_revision": run(["git", "rev-parse", "HEAD"]).strip(),
             "fixing_revision": "worktree-" + working[:16],
             "source_sha256": hashes,
+            "build_inputs": {
+                "uv": run(["uv", "--version"]).strip(),
+                "python": sys.version,
+                "backend_requirements": tomllib.loads(
+                    (ROOT / "pyproject.toml").read_text())["build-system"]["requires"],
+                "constraints_sha256": digest(ROOT / "qualification/build-backend/requirements.txt"),
+                "enforcement": "isolated PEP 517 with required build dependency hashes",
+            },
             "dirty": bool(run(["git", "status", "--porcelain"]).strip()),
             "artifacts": {path.name: digest(path) for path in output},
             "reproducible": True,

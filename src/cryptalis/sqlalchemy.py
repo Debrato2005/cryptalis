@@ -6,6 +6,7 @@ does not migrate schemas or qualify external writers. Research prototype.
 
 from contextvars import ContextVar
 from dataclasses import dataclass, field
+from datetime import date
 from functools import wraps
 from hashlib import sha256
 import json
@@ -25,18 +26,20 @@ from sqlalchemy.sql import operators, visitors
 from sqlalchemy.sql.annotation import Annotated, annotated_classes
 from sqlalchemy.sql import sqltypes as _native_types
 from sqlalchemy.sql.elements import BinaryExpression, BindParameter, BooleanClauseList, Cast, ClauseElement, ColumnClause, Grouping, Label, SavepointClause, RollbackToSavepointClause, ReleaseSavepointClause, TextClause, TypeCoerce, UnaryExpression, quoted_name, _anonymous_label, _truncated_label
-from sqlalchemy.sql.functions import FunctionElement
+from sqlalchemy.sql.functions import FunctionElement, count
 from sqlalchemy.sql.selectable import Alias, CTE, FromClause, Select, Join, Subquery
 from sqlalchemy.sql.dml import Insert, Update, Delete
 from sqlalchemy.types import JSON, NullType, TypeDecorator, TypeEngine, UserDefinedType
 
 from ._sqlalchemy_guard import install_guard
+from ._sqlalchemy_functions import admit_function
+from ._sqlalchemy_aggregate import count_shape, distinct_projection, identity_distinct
 from ._sqlmodel_types import autostring_impl
-from ._sqlalchemy_search import rewrite_search, search_shape, validate_search_storage
+from ._sqlalchemy_search import equality_expression, rewrite_search, search_shape, validate_search_storage
 from .crypto import CryptoFailure, AuthenticationFailed, FieldDescriptor, Keyring, KeyUnavailable, MAX_TEXT_BYTES, open_value, seal_value
 from .crypto.cf1 import _encode
 from .crypto.keys import InvalidText, InvalidValue, RepresentationMismatch
-from .manifest.compiler import _compiled_default, _value_default, _native_text_length, _previous_lock, _value_mapping_matches
+from .manifest.compiler import _LOCK_SCHEMAS, _compiled_default, _value_default, _native_text_length, _previous_lock, _value_mapping_matches, _fixed_value_width
 from .manifest.parser import decode_manifest_json
 
 
@@ -152,10 +155,18 @@ class _Binding:
     model: type
     max_characters: int | None = None
     boolean_processor: object = field(default=None, repr=False)
-    application_default: bool | int | None = None
+    application_default: bool | int | date | None = None
 
 
 def _assignment(value, binding):
+    if binding.descriptor.value_codec == 'uuid-bytes16/v1':
+        if value is not None and type(value) is not UUID:
+            raise InvalidValue()
+        return value
+    if binding.descriptor.value_codec in ('pg-date-days-be/v1', 'date-ordinal-u32/v1'):
+        if value is not None and type(value) is not date:
+            raise InvalidValue()
+        return value
     width = {'pg-int2-be/v1': 2, 'pg-int4-be/v1': 4, 'pg-int8-be/v1': 8}.get(binding.descriptor.value_codec)
     if width is not None:
         if value is None:
@@ -269,7 +280,7 @@ def _unprotected_column_state(column):
             dtype, attributes, tuple(methods), column.table)
 
 
-def _delete_node(node, native):
+def _delete_node(node, native, *, allow_type_annotation=False):
     dispatch = getattr(node, '_compiler_dispatch', None)
     if type(dispatch) is not MethodType or dispatch.__self__ is not node:
         raise UnsupportedProtectedOperation()
@@ -281,7 +292,8 @@ def _delete_node(node, native):
         if any(_delete_name_state(getattr(effective, name)) != _delete_name_state(getattr(node, name))
                for name in names):
             raise UnsupportedProtectedOperation()
-        if native is Column and (effective.table is not node.table or effective.type is not node.type):
+        if native is Column and (effective.table is not node.table or
+                not allow_type_annotation and effective.type is not node.type):
             raise UnsupportedProtectedOperation()
         dispatch = node._compiler_dispatch
     if (type(node) is not native or type(dispatch) is not MethodType or dispatch.__self__ is not node or
@@ -319,6 +331,15 @@ def _projection_column(expression):
     if isinstance(expression, Grouping):
         return _projection_column(_delete_node(expression, Grouping).element)
     return expression if isinstance(expression, ColumnClause) else None
+def _select_node(node):
+    if type(node) is annotated_classes.get(Select):
+        return _delete_node(node, Select)
+    dispatch = getattr(node, '_compiler_dispatch', None)
+    if (type(dispatch) is not MethodType or dispatch.__self__ is not node
+            or dispatch.__func__ is not Select._original_compiler_dispatch
+            or Select._compiler_dispatch is not Select._original_compiler_dispatch):
+        raise UnsupportedProtectedOperation()
+    return node
 
 
 _INVALID_UUID_POINT = object()
@@ -571,7 +592,8 @@ class _Attachment:
     def protected(self, expression):
         # ORM annotations can retain a native type from mapping construction.
         # Stable column lineage is authoritative, not a mutable type hint.
-        return any(isinstance(node, ColumnClause) and any(node.shares_lineage(b.column) for b in self.bindings)
+        lineage = {column for binding in self.bindings for column in binding.column.proxy_set}
+        return any(isinstance(node, ColumnClause) and lineage.intersection(node.proxy_set)
                    for node in visitors.iterate(expression))
 
     def _admit_textual_references(self, statement):
@@ -649,7 +671,9 @@ class _Attachment:
 
     def _ring(self, tenant):
         self._check_configuration()
-        if not isinstance(tenant, UUID):
+        if type(tenant) is not UUID:
+            raise PolicyMismatch()
+        if self.deployment is not None and str(tenant) not in self.deployment[0].document['key_policies']:
             raise PolicyMismatch()
         try:
             ring = self.keys if isinstance(self.keys, Keyring) else self.keys(tenant)
@@ -762,7 +786,7 @@ class _Attachment:
                 binding = _Binding(column, mapper.get_property_by_column(column).key, descriptor,
                                    record, mapper.get_property_by_column(record).key, tenant,
                                    mapper.get_property_by_column(tenant).key if tenant is not None else None,
-                                   mapper.class_, None if boolean or source['type'] in ('int2', 'int4', 'int8') else _native_text_length(source),
+                                   mapper.class_, None if _fixed_value_width(source) is not None else _native_text_length(source),
                                    column.type.bind_processor(connection.dialect) if boolean else None,
                                    _compiled_default(field))
                 self.bindings.append(binding)
@@ -835,13 +859,44 @@ class _Attachment:
                         column_clause_args.get('result_map_targets', ()) + (original,))
                 return super()._label_returning_column(statement, column, populate_result_map,
                     column_clause_args, **kw)
+            def visit_function(compiler, function, add_to_result_map=None, **kw):
+                catalog = admit_function(function, _delete_node, UnsupportedProtectedOperation)
+                aggregate = count_shape(self, function, compiler.current_executable)
+                if aggregate is None and isinstance(function, count) and self.protected(function):
+                    raise UnsupportedProtectedOperation()
+                if aggregate is not None and aggregate[3]:
+                    generated = func.count(equality_expression(aggregate[2]).distinct(), type_=function.type)
+                    generated.packagenames = ('pg_catalog',)
+                    result_map = None
+                    if add_to_result_map is not None:
+                        def result_map(key, name, objects, dtype):
+                            return add_to_result_map(key, name, (function, *objects), dtype)
+                    return super().visit_function(generated, add_to_result_map=result_map, **kw)
+                if catalog and function.packagenames != ('pg_catalog',):
+                    original = function
+                    function = function._clone()
+                    function.packagenames = ('pg_catalog',)
+                    if add_to_result_map is not None:
+                        native_map = add_to_result_map
+                        def add_to_result_map(key, name, objects, dtype):
+                            return native_map(key, name, (original, *objects), dtype)
+                return super().visit_function(function, add_to_result_map=add_to_result_map, **kw)
+
+            def visit_substring_func(compiler, function, **kw):
+                return 'pg_catalog.substring' + compiler.function_argspec(function, **kw)
 
             def get_select_precolumns(compiler, select, **kw):
                 modifier = super().get_select_precolumns(select, **kw)
                 # PostgreSQL's public compiler hook emits only DISTINCT here.
                 # Check its modifier, not arbitrary user SQL text.
-                if modifier and (any(self.protected(c) for c in select.selected_columns) or self.protected(select)):
-                    raise UnsupportedProtectedOperation()
+                if modifier and any(self.protected(c) for c in select.selected_columns):
+                    if identity_distinct(self, select) is not None:
+                        return modifier
+                    projection = distinct_projection(self, select)
+                    if projection is None:
+                        raise UnsupportedProtectedOperation()
+                    column = projection[0]
+                    return 'DISTINCT ON (' + compiler.process(equality_expression(column), **kw) + ') '
                 return modifier
         engine.dialect.statement_compiler = StorageCompiler
 
@@ -1134,7 +1189,7 @@ class _Attachment:
         else:
             table = expected.table
             first = next(binding for binding in self.bindings if binding.column.table is table)
-        if (not isinstance(statement, Delete) or first.tenant is None or
+        if (not isinstance(statement, Delete) or first.tenant is None and tenant != first.descriptor.table_id or
                 statement.table.name != table.name or statement.table.schema != table.schema or
                 not all(column.key in statement.table.c and statement.table.c[column.key].shares_lineage(column)
                         for column in table.c) or statement._returning or statement._return_defaults or
@@ -1143,7 +1198,7 @@ class _Attachment:
             raise UnsupportedProtectedOperation()
         _delete_node(table, Table)
         _delete_node(statement.table, Table)
-        for column in (first.record, first.tenant):
+        for column in (first.record,) + ((first.tenant,) if first.tenant is not None else ()):
             self.identity_type(column.type, uuid_only=column is first.tenant)
             self.bind_type(column.type, selecting=True)
         clauses, pending = [], [statement.whereclause]
@@ -1154,7 +1209,7 @@ class _Attachment:
                 pending.extend(reversed(clause.clauses))
             else:
                 clauses.append(clause)
-        if len(clauses) != 2:
+        if len(clauses) != 1 + int(first.tenant is not None):
             raise UnsupportedProtectedOperation()
         scope = record = None
         for clause in clauses:
@@ -1171,7 +1226,7 @@ class _Attachment:
             _delete_node(left, Column)
             _delete_node(right, BindParameter)
             self.bind_type(right.type, selecting=True)
-            if left.shares_lineage(first.tenant) and scope is None:
+            if first.tenant is not None and left.shares_lineage(first.tenant) and scope is None:
                 if type(right.value) is not UUID or right.value != tenant:
                     raise UnsupportedProtectedOperation()
                 scope = right
@@ -1182,7 +1237,8 @@ class _Attachment:
                 record = right
             else:
                 raise UnsupportedProtectedOperation()
-        if scope is None or record is None or scope.key == record.key:
+        if (record is None or first.tenant is not None and scope is None or
+                scope is not None and scope.key == record.key):
             raise UnsupportedProtectedOperation()
         identity = UUID(bytes=record.value.bytes) if type(record.value) is UUID else record.value
         permit = _DeletePermit(table, first.record, first.tenant, identity, UUID(bytes=tenant.bytes))
@@ -1207,11 +1263,13 @@ class _Attachment:
             raise UnsupportedProtectedOperation()
         bindings = [binding for binding in self.bindings if binding.column.table is table]
         first = bindings[0]
-        if first.tenant is None:
+        scoped = first.tenant is not None
+        if not scoped and (type(tenant) is not UUID or tenant != first.descriptor.table_id):
             raise UnsupportedProtectedOperation()
         self.bind_type(first.record.type)
-        self.bind_type(first.tenant.type)
-        clauses, pending = [], [statement.whereclause]
+        if scoped:
+            self.bind_type(first.tenant.type)
+        clauses, pending = [], [] if statement.whereclause is None else [statement.whereclause]
         while pending:
             clause = pending.pop()
             if isinstance(clause, BooleanClauseList) and clause.operator is operators.and_:
@@ -1219,7 +1277,7 @@ class _Attachment:
                 pending.extend(reversed(clause.clauses))
             else:
                 clauses.append(clause)
-        if len(clauses) != (2 if generated else 1):
+        if len(clauses) != int(scoped) + int(generated):
             raise UnsupportedProtectedOperation()
         scope, record = None, None
         for clause in clauses:
@@ -1236,7 +1294,7 @@ class _Attachment:
             self.bind_type(right.type)
             _delete_node(left, Column)
             _delete_node(right, BindParameter)
-            if left.shares_lineage(first.tenant) and scope is None:
+            if scoped and left.shares_lineage(first.tenant) and scope is None:
                 if right.required or type(right.value) is not UUID or right.value != tenant:
                     raise UnsupportedProtectedOperation()
                 scope = right
@@ -1244,7 +1302,7 @@ class _Attachment:
                 record = right
             else:
                 raise UnsupportedProtectedOperation()
-        if scope is None or generated and record is None:
+        if scoped and scope is None or generated and record is None:
             raise UnsupportedProtectedOperation()
         return scope, record
 
@@ -1277,6 +1335,9 @@ class _Attachment:
             self.update_context(statement, bulk, operation.tenant, generated=True)
             return
         if bulk is not None and isinstance(statement, Insert):
+            _delete_node(statement, Insert)
+            if _delete_node(statement.table, Table) is not bulk:
+                raise UnsupportedProtectedOperation()
             if (statement.table.name != bulk.name or statement.table.schema != bulk.schema or
                     not all(column.key in statement.table.c and
                             statement.table.c[column.key].shares_lineage(column) for column in bulk.c) or
@@ -1312,12 +1373,27 @@ class _Attachment:
         if not isinstance(statement, Select):
             raise UnsupportedProtectedOperation()
         nodes = self.select_types(statement)
+        count_nodes, count_roots = set(), set()
+        for selection in (node for node in nodes if isinstance(node, Select)):
+            protected_outputs = any(self.protected(output) for output in selection.selected_columns)
+            if protected_outputs or self.protected(selection):
+                _select_node(selection)
+            if selection._distinct and protected_outputs:
+                if identity_distinct(self, selection) is None and distinct_projection(self, selection) is None:
+                    raise UnsupportedProtectedOperation()
+            for output in selection.selected_columns:
+                shape = count_shape(self, output, selection)
+                if shape is not None:
+                    count_roots.add(id(shape[0]))
+                    count_nodes.update(id(part) for part in visitors.iterate(shape[0]))
         safe_count_stars = set()
         for node in nodes:
             operation = _operation.get()
             generated = operation is not None and operation.owner is self and operation.generated(node)
             if generated:
                 continue
+            if isinstance(node, FunctionElement):
+                admit_function(node, _delete_node, UnsupportedProtectedOperation)
             if isinstance(node, FunctionElement) and node.name == "count":
                 arguments = list(node.clauses)
                 if len(arguments) == 1 and isinstance(arguments[0], ColumnClause) and arguments[0].name == "*":
@@ -1350,11 +1426,18 @@ class _Attachment:
                             raise UnsupportedProtectedOperation()
             # Parentheses carry no new operation. Their children still pass
             # every admission check below; do not reject native AND/OR grouping.
-            if self.protected(node) and not isinstance(node, (Select, FromClause, ColumnClause, Label, Grouping)):
+            if (id(node) not in count_nodes and self.protected(node)
+                    and not isinstance(node, (Select, FromClause, ColumnClause, Label, Grouping))):
                 boolean = isinstance(node, BooleanClauseList) and node.operator in (operators.and_, operators.or_)
                 if not boolean and search_shape(self, node) is None:
                     raise UnsupportedProtectedOperation()
             if isinstance(node, Select):
+                for output in node.selected_columns:
+                    root = output
+                    while isinstance(root, (Label, Grouping)):
+                        root = root.element
+                    if id(root) in count_nodes and id(root) not in count_roots and not isinstance(root, ColumnClause):
+                        raise UnsupportedProtectedOperation()
                 def ungroup(expression):
                     while isinstance(expression, Grouping):
                         expression = expression.element
@@ -1679,12 +1762,13 @@ class _Attachment:
         if operation.scoped_delete is not None and isinstance(context.compiled.statement, Delete):
             permit, scope, record = self.delete_context(context.compiled.statement, operation.tenant,
                                                        operation.scoped_delete)
-            names = [context.compiled.bind_names.get(bind) for bind in (scope, record)]
+            names = [context.compiled.bind_names.get(bind) for bind in (scope, record) if bind is not None]
             if (context.executemany or statement != str(context.compiled) or any(type(name) is not str for name in names) or
-                    names[0] == names[1] or len(context.compiled.bind_names) != 2 or
+                    len(set(names)) != len(names) or len(context.compiled.bind_names) != len(names) or
                     len(context.compiled_parameters) != 1):
                 raise UnsupportedProtectedOperation()
-            expected = dict(zip(names, (permit.tenant, permit.identity)))
+            values = (permit.identity,) if scope is None else (permit.tenant, permit.identity)
+            expected = dict(zip(names, values))
             for group in (context.compiled_parameters[0], parameters):
                 if (type(group) is not dict or set(group) != set(expected) or
                         any(type(group[name]) is not type(value) or group[name] != value
@@ -1727,9 +1811,12 @@ class _Attachment:
         else:
             scope, record = self.update_context(context.compiled.statement, operation.bulk_update,
                                                 operation.tenant, generated=True)
-            names, scope_key, record_key = dict(native_names), _update_bind_name(scope.key), _update_bind_name(record.key)
+            names, scope_key, record_key = (dict(native_names),
+                _update_bind_name(scope.key) if scope is not None else None, _update_bind_name(record.key))
             constants = {}
-        if ((scope_key is None and not operation.flushing or scope_key is not None and scope_key not in names) or record_key not in names or
+        first = next((binding for binding in self.bindings if binding.column.table is operation.bulk_update), None)
+        fixed_scope = first is not None and first.tenant is None and operation.tenant == first.descriptor.table_id
+        if ((scope_key is None and not (operation.flushing or fixed_scope) or scope_key is not None and scope_key not in names) or record_key not in names or
                 any(type(name) is not str for name in names.values()) or
                 len(names) != len(native_names) or len(set(names.values())) != len(names)):
             raise UnsupportedProtectedOperation()
@@ -2109,7 +2196,7 @@ def _capture_update(owner, mapper, statement, parameters, tenant):
     point = parameters is None
     if point:
         _delete_node(statement, Update)
-        if (not statement._values or getattr(statement, '_ordered_values', None) is not None
+        if (first.tenant is None or not statement._values or getattr(statement, '_ordered_values', None) is not None
                 or getattr(statement, '_maintain_values_ordering', False)):
             raise UnsupportedProtectedOperation()
         normalized = statement._generate()
@@ -2283,10 +2370,10 @@ class _AsyncTransaction(AsyncSessionTransaction):
 
 
 class _AsyncSession(AsyncSession):
-    _sync_session = _Session
+    _sync_session_class = _Session
 
     def __init__(self, *args, **kwargs):
-        super().__init__(*args, sync_session_class=self._sync_session, _asynchronous=True, **kwargs)
+        super().__init__(*args, sync_session_class=self._sync_session_class, _asynchronous=True, **kwargs)
 
     async def _prepare(self):
         session = self.sync_session
@@ -2299,9 +2386,8 @@ class _AsyncSession(AsyncSession):
         return _AsyncTransaction(self, nested=True)
 
 
-def _async_method(name, native=None):
-    if native is None:
-        native = getattr(AsyncSession, name)
+def _async_method(name, *, native=None):
+    native = getattr(AsyncSession, name) if native is None else native
     @wraps(native)
     async def method(self, *args, **kwargs):
         statement = args[0] if args else kwargs.get('statement')
@@ -2374,9 +2460,10 @@ def attach(mapping: registry, engine: Engine | AsyncEngine, *, lock: bytes, keys
 
     Schema transition is not performed. The host authenticates the lock and the
     tenant passed to the returned factory. ORM flush and bounded mapped
-    dictionary INSERT, tenant-scoped TEXT UPDATE, and single-record tenant-scoped
-    DELETE writes are admitted. Mapped DELETE requires execute() with explicit
-    tenant/record equality and synchronize_session=False, without RETURNING.
+    dictionary INSERT, fixed- or column-scoped UPDATE, and fixed- or column-scoped
+    single-record DELETE writes are admitted. Mapped DELETE requires execute()
+    with explicit record equality, the declared tenant scope and
+    synchronize_session=False, without RETURNING.
 
     ``deployment`` is ``(plan, pin)`` or ``(plan, pin, restore_binding)``. The
     third element is an adopted ``cryptalis.restore/v1`` binding when the
@@ -2385,7 +2472,7 @@ def attach(mapping: registry, engine: Engine | AsyncEngine, *, lock: bytes, keys
     try:
         document = decode_manifest_json(lock)
         if (not isinstance(mapping, registry) or not isinstance(engine, (Engine, AsyncEngine)) or
-                document["schema"] not in ("cryptalis.lock/v1", "cryptalis.lock/v2", "cryptalis.lock/v3", "cryptalis.lock/v4", "cryptalis.lock/v5", "cryptalis.lock/v6", "cryptalis.lock/v7") or document["profile"] != "cf1"):
+                document["schema"] not in _LOCK_SCHEMAS or document["profile"] != "cf1"):
             raise PolicyMismatch()
         native_engine = engine.sync_engine if isinstance(engine, AsyncEngine) else engine
         if native_engine.echo or not native_engine.hide_parameters:

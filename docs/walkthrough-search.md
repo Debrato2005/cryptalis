@@ -27,9 +27,38 @@ The B-tree indexes the full 32-byte keyed term inside each frame, with tenant fi
 Payload and term change in one ORM write. Native unique indexes arbitrate concurrent writes; duplicates raise `IntegrityError`.
 NULL stays NULL. NULLs remain distinct for uniqueness. Empty IN matches no rows; NULL in IN keeps native three-valued truth.
 AND/OR, mapped aliases, ordinary text binds and explicit late values are admitted.
-Protected joins, derived tables, inequality, NOT IN, patterns, ordering, grouping, DISTINCT and aggregates reject.
+Simple negative equality, NOT IN and NULL-presence predicates retain the bounded
+grammar in [compatibility](compatibility.md#full-capability-matrix).
+Protected joins, derived tables, ranges, patterns, ordering, general protected
+grouping/DISTINCT and aggregates other than admitted counts reject.
 Custom codecs, callables, generated parameter-name overrides and conflicting named defaults without explicit values also reject.
 Protected compilation is per operation; plain queries retain SQLAlchemy caching.
+
+## Count reports
+
+Use the same attached session to count protected values. A direct non-NULL count
+needs no equality representation. A distinct count requires declared equality
+and one provable tenant scope per group:
+
+```python
+from sqlalchemy import func
+
+statement = select(
+    func.count(Customer.email).label("present"),
+    func.count(Customer.email.distinct()).label("different"),
+).where(Customer.tenant_id == authenticated_tenant)
+with sessions(tenant_id=authenticated_tenant) as session:
+    totals = session.execute(statement).one()
+    present, different = totals.present, totals.different
+```
+
+An explicitly single-tenant table needs no tenant-column filter. A tenant-column
+table can instead group by its exact tenant column for separate tenant totals.
+Global cross-tenant distinct counts refuse. Native count FILTER predicates and
+non-distinct windows may use public fields. Counts trust the database's integer
+result and do not authenticate each contributing frame. The
+[illustrated guide](professor-guide.md#count-reports-over-encrypted-values)
+explains that boundary and measured costs.
 
 Run from the project root. The wrapper loads both private files fresh and probes both roles.
 Inherited URLs are ignored. A failed probe stops the run with sanitized diagnostics.

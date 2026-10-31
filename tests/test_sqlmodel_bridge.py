@@ -187,20 +187,19 @@ def test_changed_autostring_mappings_are_refused_before_key_resolution(change, m
             pytest.fail('changed AutoString admitted')
 
 
-def test_optional_bridge_refuses_invalid_async_lock_before_connection_or_key_work():
+def test_optional_async_bridge_refuses_invalid_lock_before_connection_or_key_work():
     from cryptalis.sqlmodel import attach
+    from cryptalis.sqlalchemy import PolicyMismatch
     engine = create_async_engine('postgresql+psycopg://', hide_parameters=True)
     observed = []
     event.listen(engine.sync_engine, 'connect', lambda *args: observed.append('connected'))
-    async def scenario():
-        try:
-            with pytest.raises(CryptoFailure):
-                await attach(registry(), engine, lock=b'', keys=lambda tenant: pytest.fail('key resolution'))
-            assert observed == []
-        finally:
-            await engine.dispose()
-    import asyncio
-    asyncio.run(scenario())
+    try:
+        with pytest.raises(PolicyMismatch):
+            attach(registry(), engine, lock=b'', keys=lambda tenant: pytest.fail('key resolution'))
+        assert observed == []
+    finally:
+        import asyncio
+        asyncio.run(engine.dispose())
 
 
 def test_optional_bridge_refuses_unqualified_version_before_effects(monkeypatch):

@@ -10,6 +10,25 @@ Payload confidentiality depends on uncompromised application and key authority, 
 
 ## Online protection trust boundary
 
+The maintenance tenant-addition API accepts explicit host authority, not an
+unauthenticated signup claim or a database-selected root. It preserves every
+old policy digest and verifies source data, typed new scope and empty membership
+again under locks before adding authority. Publication and cancellation require
+their actual host pins. Restored addition retains explicit restore lineage.
+The HTTP integration checks the retained current artifact before opening a
+scoped factory; this does not promise revocation of arbitrary in-flight workers.
+See the [bounded checkpoint](status.md#maintenance-tenant-policy-provisioning-2026-10-28).
+
+The [owner-scoped HTTP checkpoint](status.md#verified-continuation-checkpoint-2026-10-28)
+keeps global account authentication native. Its explicit host adapter validates
+the original JWT/account authority before selecting an approved owner policy.
+Public owner metadata is authorized, then locked and rechecked before payload
+loading. Global administrator pages select exact public membership before scoped
+reads. Account cascades retain one transaction. These fixture-specific adaptations
+do not create dynamic tenant authority: a new owner without an approved policy
+receives 409 before key lookup. Production identity, policy publication, custody,
+writer exclusion and independent review remain separate requirements.
+
 **IMPLEMENTED, bounded:** initial online capture deliberately retains native
 plaintext in PostgreSQL. Confidentiality begins at the protected representation
 switch, not at capture start. The host must exclude owner and DDL writers while
@@ -66,11 +85,27 @@ Frozen independent admitted text/ID vectors, exact collation evidence, and nonce
 
 ## Slice 3 storage enforcement: 2026-10-08
 
+**IMPLEMENTED, bounded 2026-10-27 evidence:** a typed SELECT must not authorize
+arbitrary database function effects. Admit only the finite native function
+classes, names, namespaces and compiler dispatch in
+[`_sqlalchemy_functions.py`](../src/cryptalis/_sqlalchemy_functions.py).
+Reject unknown functions before key resolution or driver execution. Qualify
+ordinary admitted calls in `pg_catalog` so mutable search-path resolution cannot
+select a different function. Keep native special SQL expression syntax and
+all protected-lineage restrictions. This does not exclude separate credentials,
+privileged schema changes or deliberately compromised host code. The
+[function checkpoint](status.md#finite-native-select-functions-2026-10-27)
+records the native controls and remaining qualification boundary.
+
 **IMPLEMENTED, bounded prototype:** admitted ORM writes prepare row-bound CF1 frames before SQL.
 Public execution hooks substitute those frames without changing mapped plaintext attributes.
 Generated read projections carry the expected record and declared tenant context with the payload.
 The processor verifies host tenant and requested point, then authenticates and decodes each value.
 Keys are prepared outside synchronous async hooks. Protected SELECT compilation caching is disabled.
+The optional async SQLModel `exec` route uses the same awaited preparation and
+statement admission as guarded async SQLAlchemy execution. Its native method
+alone enters the synchronous session directly and cannot supply that boundary.
+Provider-preparation cancellation must propagate before driver dispatch.
 Unprotected SELECTs retain native caching. The host must authenticate the lock and tenant scope.
 Guards reject unsupported grammar, opaque SQL, COPY, protocol handles, and unprepared writes on the attached engine.
 These guards do not constrain independent connections or a compromised application.
@@ -120,12 +155,21 @@ Roll back after a result failure. SQL can succeed before result authentication.
 
 The scoped mapped bulk UPDATE route keeps an ordered immutable input ledger.
 Owned physical column lineage binds the explicit tenant and generated record
-predicates. Each native group must consume the corresponding inputs before
+predicates. Declared single-tenant tables instead require the manifest's fixed
+table UUID as the session scope, no caller predicate, and the exact generated
+record predicate. Admission checks that scope before statement key preparation
+and during compilation. An absent tenant bind does not authorize a tenant-column
+table. Each native group must consume the corresponding inputs before
 execution. Exact prepared frames, typed scope/record binds and final driver
 snapshots then protect dispatch. Read-only properties and SQL-producing bind
 types refuse before SQL and key preparation in both sync and async execution.
 The adapter captures the request before key preparation and checks it again
 afterward. Public Python bind processors remain native.
+
+The single-record mapped DELETE route has the same fixed-scope authority for
+explicitly single-tenant tables. Its immutable permit and compiled/driver proof
+must still bind the exact record identity and native target. Only the physical
+tenant equality/bind is absent; a missing or changed record predicate refuses.
 
 For finite VARCHAR targets, each affected native group uses a private
 parameterized CASE with public constants. Omitted columns retain their existing
@@ -342,6 +386,19 @@ Shared equality joins are INTERNAL ONLY research. They need a common search-doma
 Other fields and tenants derive different keys. There is no universal global token key.
 
 The internal provider contract is `wrap(root, context)`, `unwrap(wrapper, context)`, and `rewrap(wrapper, new_provider, context)`.
+Bound runtime factories require an exact UUID and membership in the pinned
+policy map before invoking the host key resolver. A custom string identity cannot
+select a pinned policy. Host authentication and authorization remain required;
+this membership check does not replace them. The
+[early-admission checkpoint](status.md#sdk-protocol-and-early-tenant-admission-checkpoint-2026-10-28)
+records the source and installed controls.
+Direct rewrap must confirm that the target unwraps the replacement to the exact
+original immutable 32-byte root under the same context. Pin and recheck the
+target provider identity; compare recovered root bytes in constant time.
+Wrapper metadata alone is insufficient. AWS and development direct methods have
+bounded local [recovery-proof evidence](status.md#direct-provider-rewrap-recovery-proof-2026-10-27).
+This proof requires target decrypt authority and can add one provider request.
+It does not publish the replacement, retire source custody or prove deletion.
 The wrapper records pinned provider identity and nonsecret scope, purpose, root identity, and generation.
 The deployment policy selects the exact wrapper. Envelope headers cannot choose provider URLs, credentials, or arbitrary keys.
 AWS KMS, Vault Transit, and GCP KMS have relevant envelope/rewrap APIs, but each adapter needs its own custody and failure evidence.
@@ -746,6 +803,22 @@ It reduces accidental nonce-reuse harm but does not permit fixed runtime nonces 
 AES-GCM requires stronger nonce uniqueness discipline. ChaCha20-Poly1305 also requires nonce discipline.
 Extended-nonce libraries can be alternatives after portability and review. No silent algorithm fallback is allowed.
 Primary algorithm and library evidence is in [prior art](prior-art.md).
+
+**IMPLEMENTED UUID value storage extension:** `uuid-bytes16/v1` stores exactly
+sixteen network-order UUID bytes under typed context/v2, including nil UUIDs.
+Authenticate before decoding. Refuse non-UUID inputs and invalid byte widths.
+Storage-only non-NULL frames have exactly 58 bytes. Lock/v9 requires the new
+reader; earlier readers refuse before SQL. Public record and tenant identity
+codecs stay separate. This adds no search leakage or cryptographic primitive.
+
+**IMPLEMENTED date storage extension:** `date-ordinal-u32/v1` stores an exact
+Gregorian ordinal in four unsigned big-endian bytes under typed context/v2.
+Authenticate before decoding. Refuse invalid widths and ordinals outside
+1 through 3,652,059. Date values have no equality term and non-NULL frames have
+exactly 46 bytes. Lock/v8 requires the date reader. Earlier readers refuse
+before database/provider access. The planner rejects PostgreSQL dates outside
+the finite Python date domain before migration effects. Existing SQL NULL,
+same-context replay and hostile-database completeness limits remain unchanged.
 
 **IMPLEMENTED Boolean storage extension:** the storage-only value
 codec uses `cryptalis.context/v2` and `value_codec: boolean-u8/v1`. Its canonical
@@ -1184,6 +1257,12 @@ Range-structure and prefix-specific published attacks remain unexecuted. None of
 An acknowledgment alone cannot convert missing security evidence to PASS.
 G-PROVIDER, G-POLICY, and independent review requirements remain UNKNOWN. No local provider/policy check qualifies production custody or publication.
 
+Protected counts are database-computed statistics. A non-NULL count observes
+the already visible SQL NULL pattern. Distinct counts reuse declared equality
+classes and require the existing equality leakage acceptance. Neither operation
+authenticates every stored frame or proves result completeness. The hostile
+database limits apply to these results, as they do to ordinary database counts.
+
 ## Public failure contract
 
 Failures expose an operation ID, stage, safe code, retry class, durable progress, and a concrete remedy.
@@ -1218,6 +1297,23 @@ Review the implemented codec/frame/KDF/AAD/search composition, usage bounds, pro
 Also review ORM semantics, migration interruption, and package-free removal.
 AI council review is first-party criticism. It does not replace an independent cryptographer or production evidence.
 The [release gate](../ENGINEERING_PLAYBOOK.md#release-gate) remains mandatory.
+
+## Internal storage-only DATE boundary
+
+The DATE candidate reuses CF1, library AES-256-GCM-SIV and existing key/context
+derivation. It adds only the authenticated `pg-date-days-be/v1` codec: four signed
+big-endian days from 2000-01-01. Decode authenticates first and rejects values
+outside Python's exact date domain. The codec and literal-default reader tags
+are bound in strict lock/v8; old readers must refuse before execution.
+
+DATE storage has fixed length and no search representation. Accepted leakage
+remains row linkage, NULL presence, write/access patterns and result volumes.
+Public literal defaults are configuration, not secrets. No date equality,
+frequency, range or order representation is inferred. Operational planning and
+locked expansion count unsupported source dates without decoding or reporting
+private values, then refuse before effects. Online capture remains text-only.
+Full type admission, external application/cost evidence and independent human
+composition review remain required.
 
 ## Internal storage-only integer boundary
 

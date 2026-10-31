@@ -1,4 +1,4 @@
-"""Optional sync and async PostgreSQL bridge for SQLModel 0.0.48."""
+"""Optional synchronous and asynchronous PostgreSQL bridge for SQLModel 0.0.48."""
 
 try:
     from sqlmodel import Session as _NativeSession
@@ -32,8 +32,11 @@ if _NativeSession is not None:
         pass
 
     class _AsyncSession(_AlchemyAsyncSession, _NativeAsyncSession):
-        _sync_session = _Session
-        exec = _async_method('exec', _NativeAsyncSession.exec)
+        _sync_session_class = _Session
+
+        # Native exec enters a greenlet directly. Reuse execute admission and
+        # awaited preparation before entering SQLModel's native result handling.
+        exec = _async_method('execute', native=_NativeAsyncSession.exec)
 else:
     _Session = None
     _AsyncSession = None
@@ -48,16 +51,15 @@ def attach(mapping, engine, *, lock, keys, deployment=None):
     """Attach with native SQLModel Session.exec scalar and tuple results.
 
     The host supplies the same lock, key policy and tenant scope as for the
-    SQLAlchemy adapter. Await attachment for an AsyncEngine.
+    SQLAlchemy adapter. Await this call for an AsyncEngine.
     """
     if _NativeSession is None:
         raise SQLModelUnavailable()
     if _version != '0.0.48':
         raise SQLModelVersionUnsupported()
-    if isinstance(engine, AsyncEngine):
-        async def attach_async():
-            factory = await _attach(mapping, engine, lock=lock, keys=keys, deployment=deployment)
-            return _Factory(factory._owner)
-        return attach_async()
     factory = _attach(mapping, engine, lock=lock, keys=keys, deployment=deployment)
+    if isinstance(engine, AsyncEngine):
+        async def finish():
+            return _Factory((await factory)._owner)
+        return finish()
     return _Factory(factory._owner)

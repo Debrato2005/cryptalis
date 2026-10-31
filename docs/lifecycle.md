@@ -13,6 +13,16 @@ Rollback, deprotect, search changes, and key transformations reuse this path.
 
 ## Bounded online initial protection
 
+The [authenticated tenant HTTP journey](status.md#verified-continuation-checkpoint-2026-10-28)
+extends local P2 evidence to an unchanged original application's approved owner
+cohort. Source and actual-wheel runs stop the source cluster before initializing
+a distinct restore target, require explicit adoption, exercise all rotations,
+reverse the latest values and restart original HTTP with Cryptalis imports
+refused. Each restarted child reads the specific latest Items under original
+owner authentication. Dynamic tenant-policy provisioning is not implemented.
+These are local, public-fixture-custody observations, not production recovery or
+external fencing qualification.
+
 `cryptalis.online` captures native writes while it prepares an initial text protection plan. P1 requires each protected table to declare itself single-tenant. P2 accepts tenant-column tables with a host-approved tenant set. Tables without a tenant column retain their fixed table UUID scope. P1 behavior and format v1 remain unchanged. Every protected field must use `TEXT` or `VARCHAR`. The online path does not change the existing maintenance path.
 
 Select P2 by supplying `native_tenants` as a tuple of at most 1,024 unique UUID objects. The artifact stores the approved UUID strings in sorted order. The nil UUID is valid. An omitted tuple selects P1. P2's policy map contains exactly one policy for each approved tenant, including empty scopes, plus one fixed table UUID policy for each single-tenant table. UUIDs outside the approved native and fixed scope union fail before the host key resolver. A native row whose UUID matches a fixed scope can resolve that already approved policy before its native-scope refusal. It still cannot pass planning or locked admission. Lock tables and recheck all existing tenant values before journal creation or other DDL.
@@ -168,6 +178,51 @@ The earlier local experiment changed a value after cutover, then recovered that 
 The integrated checkpoint records the original application's narrow rollback/removal evidence. Neither qualifies the full lifecycle gate.
 
 ## Changes and rotation
+
+### Add an empty tenant policy under maintenance
+
+`cryptalis.tenancy.plan` accepts an ACTIVE source and actual source pin, an exact
+new UUID and host-held Keyring, declared source keys and a verification rate.
+The source must carry a scoped-table access contract. Existing/fixed scopes,
+wrong policy contexts, occupied membership and unsupported authority refuse.
+Existing policies, lock, schema and frames remain unchanged.
+
+Retain the immutable proposal and successor outside PostgreSQL. Apply under
+the existing stop/drain/exclusion approval; it repeats source authentication and
+emptiness checks under locks before committing source SUPERSEDED/new PENDING.
+Normal/adopted successors use v15/v16. Publish the actual successor externally,
+then use its ACTIVATING pin with `migration.apply` to reach ACTIVE. A pending
+retry inspects the same operation. Cancellation requires the republished source
+ACTIVE authority and retains an ABORTED successor. Keep the full lineage for
+rotation, restore and current-data removal.
+
+The [verified boundary](status.md#maintenance-tenant-policy-provisioning-2026-10-28)
+covers this Python API with O(N) verification and a global writer pause. It is
+not scalable online tenant signup or a new policy service. Host authentication,
+external custody/publication and production fencing remain separate obligations.
+
+The CLI exposes the same authority through explicit host contexts:
+
+```sh
+cryptalis tenants provision plan active.json --host-context host:tenant_plan --out tenant-proposal.json --json
+cryptalis tenants provision apply tenant-proposal.json --host-context host:tenant_apply --out tenant-successor.json --json
+cryptalis tenants provision activate tenant-successor.json --host-context host:tenant_activate --json
+```
+
+Use `TenantPlanningContext` for the exact approved UUID/Keyring and current
+source authority. Apply and activation require their distinct exact host context
+types. Retain and publish the successor outside the database before activation;
+the CLI does not supply that publication. To retry apply, add `--resume` with its
+exact operation UUID and reuse the exact private successor path. To cancel a
+pending addition, republish source ACTIVE authority and use `tenants provision
+abort tenant-proposal.json --host-context host:tenant_abort --json` with a
+`TenantAbortContext` containing source-only keys. Each factory returns a fresh
+owned synchronous psycopg Engine with parameter hiding and SQL echo disabled.
+The [CLI checkpoint](status.md#tenant-policy-maintenance-cli-2026-10-28)
+records the source/installed v15 boundary. The later
+[fresh application checkpoint](status.md#restored-tenant-cli-application-journey-2026-10-29)
+exercises restored v16 through the installed public CLI entrypoint in-process,
+with independently retained fixture host pins and latest-value native exit.
 
 | Change | Engine action |
 |---|---|

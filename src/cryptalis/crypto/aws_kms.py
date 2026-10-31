@@ -11,6 +11,7 @@ import asyncio
 import inspect
 import os
 import re
+from hmac import compare_digest
 from types import CoroutineType
 from uuid import UUID
 
@@ -143,6 +144,11 @@ class AwsKmsKeyProvider:
             result = new_provider.wrap(root, context)
             if (type(result) is not WrappedRoot or result.context != context
                     or result.provider_id != identity
+                    or new_provider.provider_id != identity):
+                raise KeyUnavailable()
+            recovered = new_provider.unwrap(result, context)
+            if (type(recovered) is not bytes or len(recovered) != 32
+                    or not compare_digest(root, recovered)
                     or new_provider.provider_id != identity):
                 raise KeyUnavailable()
             return result
