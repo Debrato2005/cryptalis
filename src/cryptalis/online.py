@@ -61,7 +61,7 @@ class OnlineProtectionPlan:
                 raise ValueError
             models = d['lock']['models']
             if any((not tenant_scoped and 'column' in model['tenancy']) or any(
-                    field['source']['type'] not in ('text', 'varchar', 'bool', 'int2', 'int4', 'int8', 'date', 'uuid', 'timestamp', 'numeric')
+                    field['source']['type'] not in ('text', 'varchar', 'bool', 'int2', 'int4', 'int8', 'date', 'uuid', 'timestamp', 'timestamptz', 'numeric')
                     for field in model['fields']) for model in models):
                 raise ValueError
             if tenant_scoped:
@@ -330,7 +330,7 @@ def _chunk(c, p, state, keys, *, pool=None, row_limit=None):
         scoped = 'column' in model['tenancy']
         fields = [f['column'] for f in model['fields']]
         names = [model['record']['column']] + ([model['tenancy']['column']] if scoped else []) + fields
-        widths = {'bool': 1, 'int2': 2, 'int4': 4, 'int8': 8, 'date': 4, 'uuid': 16, 'timestamp': 8}
+        widths = {'bool': 1, 'int2': 2, 'int4': 4, 'int8': 8, 'date': 4, 'uuid': 16, 'timestamp': 8, 'timestamptz': 8}
         sizes = '+'.join((str(widths[f['source']['type']]) if f['source']['type'] in widths else
                          'COALESCE(pg_catalog.octet_length('+m._quote(c,f['column'])+
                          ('::pg_catalog.text' if f['source']['type'] == 'numeric' else '')+'),0)') + '+74'
@@ -359,13 +359,11 @@ def _chunk(c, p, state, keys, *, pool=None, row_limit=None):
                     f"{column} IN ('NaN'::pg_catalog.numeric, 'Infinity'::pg_catalog.numeric, '-Infinity'::pg_catalog.numeric))",
                     (selected,)).scalar_one():
                     raise m.TransitionFailure('numeric_source_domain', p.operation_id)
-            if kind in ('date', 'timestamp'):
+            if kind in ('date', 'timestamp', 'timestamptz'):
                 column = m._quote(c, field['column'])
-                lower, upper = (('0001-01-01', '9999-12-31') if kind == 'date' else
-                                ('0001-01-01 00:00:00', '9999-12-31 23:59:59.999999'))
                 if c.exec_driver_sql(f'SELECT EXISTS (SELECT 1 FROM {m._table(c,model)} '
                         f'WHERE {m._quote(c,names[0])}=ANY(%s) AND '
-                        f"({column} < {kind} '{lower}' OR {column} > {kind} '{upper}'))",
+                        f'({m._temporal_domain(column, kind)}))',
                         (selected,)).scalar_one():
                     raise m.TransitionFailure(kind + '_outside_python_range', p.operation_id)
         rows = c.exec_driver_sql('SELECT ' + ','.join(m._quote(c,name) for name in names)

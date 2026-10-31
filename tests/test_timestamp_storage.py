@@ -136,8 +136,8 @@ def test_timestamp_outside_python_domain_refuses_before_effects(at_apply, litera
                 'WHERE table_schema=%s AND column_name LIKE %s', (app.schema, '_cryptalis_%')).scalar_one() == 0
 
 
-@pytest.mark.parametrize('dtype', [DateTime(timezone=True), TIMESTAMP(precision=3)])
-def test_timestamp_unqualified_timezone_and_precision_refuse(dtype):
+@pytest.mark.parametrize('dtype', [TIMESTAMP(precision=3)])
+def test_timestamp_unqualified_precision_refuses(dtype):
     with pytest.raises(PlanningRejected) as refused:
         with application(rows=0, value_type=dtype, queries=[]):
             pytest.fail('unqualified timestamp mapping admitted')

@@ -138,7 +138,7 @@ successor chain. General journal reuse remains unfinished.
 ## Online initial protection
 
 `cryptalis.online` supports bounded initial protection for TEXT/VARCHAR and the
-admitted storage-only Boolean, int2/int4/int8, finite Date, naive timestamp,
+admitted storage-only Boolean, int2/int4/int8, finite Date, naive/aware timestamp,
 finite NUMERIC and UUID mappings.
 Declare single tenancy or supply the approved tenant scopes described below.
 Fixed-width values use their codec widths when bounding a chunk. Text uses its

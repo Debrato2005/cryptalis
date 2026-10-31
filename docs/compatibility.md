@@ -52,6 +52,8 @@ in years 1 through 9999. Date search other than [`order`](#order-search), non-li
 string/timestamp coercions and custom mappings refuse; NULL presence and direct COUNT retain their grammar.
 Native [timestamp storage](#timestamp-storage) admits naive Python datetime values
 at microsecond precision, using standard DateTime or TIMESTAMP mappings.
+Native [aware timestamp storage](#aware-timestamp-storage) admits standard aware
+datetime values and preserves the execution connection's native result timezone.
 Native [numeric storage](#numeric-storage) admits finite Decimal values through
 standard Numeric/NUMERIC mappings with `asdecimal=True`.
 Literal Boolean client defaults retain native INSERT omission/None behavior.
@@ -89,7 +91,7 @@ Rollback/removal transforms current data through decrypt-back until explicit fin
 ## Order search
 
 Declare `queries: ["equality", "order"]` and the same `accept_leakage` on a signed
-integer, date or admitted naive timestamp field. Queries then use ordinary SQLAlchemy:
+integer, date or admitted timestamp field. Queries then use ordinary SQLAlchemy:
 
 ```python
 select(Invoice).where(Invoice.tenant_id == tenant, Invoice.amount >= 100).order_by(Invoice.amount.desc()).limit(20)
@@ -105,7 +107,7 @@ These refuse: sorting under an expression, in a subquery, with `DISTINCT` or `GR
 comparing two fields; arithmetic; and order on text, Boolean or UUID fields.
 A value the column cannot hold, such as `small > 100000` on a `SmallInteger`, raises
 `InvalidValue` instead of being compared as something else.
-Timestamp comparisons reject explicitly timezone-bearing bind types: PostgreSQL's
+Naive timestamp comparisons reject explicitly timezone-bearing bind types: PostgreSQL's
 timezone cast can change their meaning across daylight-saving transitions.
 
 Direct `MIN`/`MAX` projections also use this order profile, within one provable
@@ -168,6 +170,7 @@ parent/child transaction evidence and remaining qualification work.
 | Date storage/read/write and SQL NULL | SUPPORTED | Exact Python date values in years 1 through 9999; pinned four-byte Date codec and lock/v8. Storage-only unless the field declares [`order`](#order-search), native sync/async values and latest-value removal. Non-finite/BC/out-of-range source dates refuse before migration effects |
 | UUID value storage/read/write and SQL NULL | SUPPORTED | Exact standard native UUID mappings and Python UUID inputs, including nil; sixteen authenticated network-order bytes and lock/v9. Storage-only; defaults, coercions and custom mappings refuse. Public record/tenant UUIDs keep their separate context contract |
 | Timestamp storage/read/write and SQL NULL | SUPPORTED, bounded | Standard timestamp without time zone at default precision or explicit precision 6; exact naive Python datetime values in years 1–9999, literal client defaults, lock/v10 and [the timestamp boundary](#timestamp-storage). Explicit opt-in order admits comparisons and sorting; timezone-aware values and precision rounding remain unadmitted |
+| Aware timestamp storage/read/write and SQL NULL | SUPPORTED, bounded | Standard DateTime/TIMESTAMP with timezone=True at default precision or precision 6; exact aware datetime with standard timezone/ZoneInfo, lock/v12 and [aware timestamp boundary](#aware-timestamp-storage). Preserve native connection timezone, offset and fold; opt-in order, ranges and direct MIN/MAX use UTC instants |
 | Numeric storage/read/write and SQL NULL | SUPPORTED, bounded | Standard Numeric/NUMERIC with asdecimal=True; finite Decimal or exact Python int inputs, unconstrained or declared precision/scale, native rounding, literal defaults and lock/v11. [Numeric boundary](#numeric-storage); search, arithmetic and nonfinite values remain unadmitted |
 | Signed integer storage/read/write and SQL NULL | SUPPORTED | Exact int2/int4/int8 mappings and width-bound Python ints, literal client defaults, native failure/transaction behavior and typed fixed-width CF1. Storage-only unless the field declares [`order`](#order-search); the fixed authentication overhead is published in the local cost profile |
 | Mapped dictionary INSERT without RETURNING | SUPPORTED | Attached sync/async `Session.execute(insert(Model), list[dict])`, explicit typed IDs and tenant scope, copied attribute dictionaries, native NULL/grouping, autoflush, uniqueness and transaction behavior. Other bulk routes remain unadmitted |
@@ -179,7 +182,7 @@ parent/child transaction evidence and remaining qualification work.
 | Equality `==` and `IN` | SUPPORTED | Declared full tenant/domain-bound HMAC term. Preserve typed binds and native NULL/empty-list truth tables |
 | Negative equality `!=`, `NOT IN`, NULL presence and Boolean NOT | SUPPORTED | Native AND/OR/NOT compositions of admitted comparisons reuse existing full terms and SQL NULL checks. Normalize negation before adding positive tenant guards. Preserve three-valued truth, NULL elements, empty lists and outer-join NULL extension. Storage-only fields admit NULL predicates only; unsupported leaves and custom Boolean renderers refuse |
 | Tenant-scoped uniqueness | SUPPORTED | Full term plus tenant scope in a race-safe native unique index. Explicit single-tenant declaration supplies its one scope |
-| Comparisons `<`, `<=`, `>`, `>=`, BETWEEN/ranges | SUPPORTED, `order` fields | Signed integer, date and naive timestamp fields that declare and accept [`order`](#order-search). Native three-valued truth with AND/OR/NOT. Other fields refuse |
+| Comparisons `<`, `<=`, `>`, `>=`, BETWEEN/ranges | SUPPORTED, `order` fields | Signed integer, date and admitted timestamp fields that declare and accept [`order`](#order-search). Native three-valued truth with AND/OR/NOT. Other fields refuse |
 | ORDER BY and sorted pagination on protected values | SUPPORTED, `order` fields | Direct column with ascending, descending and NULLS modifiers in the outermost SELECT, within one provable tenant. LIMIT/OFFSET and keyset pagination work. Other fields refuse |
 | LIKE, ILIKE, prefix/startswith, contains, suffix | CURRENTLY UNADMITTED | No admitted pattern/text grammar or representation |
 | Regex, fuzzy/similarity, full text | CURRENTLY UNADMITTED | No admitted exact query or text-search contract |
@@ -475,6 +478,37 @@ work. Both layouts preserve current values and explicit
 precision on exit. [PostgreSQL's native temporal contract](https://www.postgresql.org/docs/16/datatype-datetime.html)
 and the [native oracle](../tests/test_timestamp_storage.py) define the bounded
 semantics; no production cell or security gate is qualified.
+
+## Aware timestamp storage
+
+Standard `DateTime(timezone=True)` and PostgreSQL `TIMESTAMP(timezone=True)`
+admit default precision or explicit precision 6. Inputs are exact Python datetime
+with standard `datetime.timezone` or `zoneinfo.ZoneInfo`, or SQL NULL. The UTC
+instant must fit years 1–9999. Naive inputs, custom tzinfo, fractional-second UTC
+offsets and other storage precisions refuse explicitly.
+
+Lock/v12 pins `pg-timestamptz-us-be/v1`: eight signed big-endian UTC microseconds
+from 2000-01-01. Older codecs and locks keep their meanings. Reads use the same
+public connection timezone as the installed psycopg driver, captured at actual
+execution and retained through delayed result consumption. Local offset and DST
+fold therefore match native results across sync/async sessions and different
+pool connections. Conversion beyond the local Python calendar fails explicitly;
+it does not return a value in a different timezone.
+
+Literal defaults retain local components, offset, timezone key/name and fold in
+the generated lock. Runtime injection preserves the validated mapping's original
+default object before refresh, including uncached ZoneInfo defaults. Server,
+callable and SQL defaults remain unadmitted. Planning and initial locked
+expansion check both UTC and connection-local source bounds; online chunks check
+selected dirty rows before driver decoding. Source and staged verification
+compares UTC instants, avoiding Python's ambiguous-fold equality behavior.
+
+Explicit [`order`](#order-search) admits equality, IN, ranges, sorting and direct
+MIN/MAX by UTC instant. Bind timezone flags must match the protected type;
+naive timezone coercions and explicit cast expressions remain unadmitted.
+This reuses the existing order/equality/frequency leakage opt-in. Grouping,
+arithmetic, broader coercions and other precisions remain implementation work.
+No production gate is qualified.
 
 ## Optional SQLModel bridge
 

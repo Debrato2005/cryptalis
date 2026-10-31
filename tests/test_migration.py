@@ -50,7 +50,7 @@ def keys(tenant):
 
 
 def independent_open(body, descriptor, tenant, record, payload_context=None, *, field_id=FIELD_ID,
-                     payload_root=None, search_root=None):
+                     payload_root=None, search_root=None, return_bytes=False):
     """Separate HKDF/HMAC/framing path; same qualified AEAD primitive only."""
     if body is None:
         return None
@@ -80,7 +80,7 @@ def independent_open(body, descriptor, tenant, record, payload_context=None, *, 
     if equality:
         search_key = derive('search', pack(b'CF1/search-key', field_id.bytes, b'utf8-exact/v1', b'identity/v1', b'equality'))
         assert hmac.compare_digest(header[14:46], hmac.digest(search_key, pack(b'equality', value), 'sha256'))
-    return value.decode('utf8')
+    return value if return_bytes else value.decode('utf8')
 
 
 def engine(variable):

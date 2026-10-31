@@ -42,6 +42,7 @@ from ._sqlalchemy_search import between_predicate, boolean_children, equality_ex
 from .crypto import CryptoFailure, AuthenticationFailed, FieldDescriptor, Keyring, KeyUnavailable, MAX_TEXT_BYTES, open_value, seal_value
 from .crypto.cf1 import _encode
 from .crypto.keys import InvalidText, InvalidValue, RepresentationMismatch, ProviderAuthenticationUnavailable
+from ._timestamp import aware_default, aware_value, datetime_state
 from .manifest.compiler import _LOCK_SCHEMAS, _compiled_default, _value_default, _native_text_length, _previous_lock, _value_mapping_matches, _fixed_value_width
 from .manifest.parser import decode_manifest_json
 
@@ -181,6 +182,9 @@ class _Binding:
 
 
 def _assignment(value, binding):
+    if binding.descriptor.value_codec == 'pg-timestamptz-us-be/v1':
+        aware_value(value)
+        return value
     if binding.descriptor.value_codec == 'pg-numeric-decimal/v1':
         from ._numeric import NumericOverflow, numeric_value
         try:
@@ -426,6 +430,7 @@ class _ReadText(TypeDecorator):
         self.binding = binding
         self.keys = operation.keys_for(binding)
         self.tenant = operation.scope(binding)
+        self.result_timezone = [None] if binding.descriptor.value_codec == 'pg-timestamptz-us-be/v1' else None
         self.points = tuple(value for column, value in operation.points if column.compare(record_column))
         self.require_record = (operation.point_update is not None or operation.bulk_returning is not None
                                or operation.scoped_delete is not None)
@@ -484,6 +489,13 @@ class _ReadText(TypeDecorator):
         except Exception:
             raise AuthenticationFailed() from None
         plain = open_value(payload, descriptor, tenant, record, self.keys)
+        if plain is not None and self.result_timezone is not None:
+            if self.result_timezone[0] is None:
+                raise PolicyMismatch()
+            try:
+                plain = plain.astimezone(self.result_timezone[0])
+            except (OverflowError, ValueError):
+                raise InvalidValue() from None
         if plain is not None and self.binding.max_characters is not None and len(plain) > self.binding.max_characters:
             raise RepresentationMismatch()
         if plain is not None and self.binding.numeric_typmod is not None:
@@ -834,6 +846,8 @@ class _Attachment:
                     actual_default = _value_default(column, field['descriptor'].get('value_codec', 'utf8-exact/v1'))
                     expected_default = _compiled_default(field)
                     default_matches = type(actual_default) is type(expected_default) and actual_default == expected_default
+                    if field['source']['type'] == 'timestamptz' and actual_default is not None:
+                        default_matches = aware_default(actual_default) == field['application_default']
                     if type(actual_default) is Decimal and type(expected_default) is Decimal:
                         default_matches = actual_default.as_tuple() == expected_default.as_tuple()
                 except ValueError:
@@ -868,7 +882,8 @@ class _Attachment:
                                    mapper.get_property_by_column(tenant).key if tenant is not None else None,
                                    mapper.class_, _native_text_length(source) if source['type'] in ('text', 'varchar') else None,
                                    column.type.bind_processor(connection.dialect) if boolean else None,
-                                   _compiled_default(field), source['typmod'] if source['type'] == 'numeric' else None)
+                                   actual_default if source['type'] == 'timestamptz' else _compiled_default(field),
+                                   source['typmod'] if source['type'] == 'numeric' else None)
                 self.bindings.append(binding)
             self.models[mapper.class_] = tuple(b for b in self.bindings if b.model is mapper.class_)
 
@@ -1022,7 +1037,12 @@ class _Attachment:
                 if binding.tenant is not None:
                     self.identity_type(binding.tenant.type, uuid_only=True)
                 actual_default = _value_default(binding.column, binding.descriptor.value_codec)
-                if type(actual_default) is not type(binding.application_default) or actual_default != binding.application_default:
+                if binding.descriptor.value_codec == 'pg-timestamptz-us-be/v1':
+                    if (actual_default is not binding.application_default or
+                            actual_default is not None and
+                            aware_default(actual_default) != aware_default(binding.application_default)):
+                        raise PolicyMismatch()
+                elif type(actual_default) is not type(binding.application_default) or actual_default != binding.application_default:
                     raise PolicyMismatch()
                 if type(actual_default) is Decimal and actual_default.as_tuple() != binding.application_default.as_tuple():
                     raise PolicyMismatch()
@@ -1854,6 +1874,10 @@ class _Attachment:
         This runs on raw rows before native ORM loading. The field processor
         still verifies exact prepared ciphertext, context, keys and value type.
         """
+        if context.compiled is not None:
+            for result in context.compiled._result_columns:
+                if type(result.type) is _ReadText and result.type.result_timezone is not None:
+                    result.type.result_timezone[0] = context.root_connection.connection.driver_connection.info.timezone
         operation = _operation.get()
         if (operation is None or operation.owner is not self or operation.bulk_returning is None or
                 context.compiled is None or not isinstance(context.compiled.statement, (Insert, Update, Delete))):
@@ -2539,7 +2563,9 @@ def _same_update_request(original, current):
     for left, right in zip(original.rows, current.rows):
         if len(left) != len(right) or any(
                 lkey != rkey or lvalue is not rvalue and
-                (type(lvalue) is not type(rvalue) or lvalue != rvalue)
+                (type(lvalue) is not type(rvalue) or
+                 (datetime_state(lvalue) != datetime_state(rvalue) if type(lvalue) is datetime else
+                  lvalue.as_tuple() != rvalue.as_tuple() if type(lvalue) is Decimal else lvalue != rvalue))
                 for (lkey, lvalue), (rkey, rvalue) in zip(left, right)):
             return False
     return True

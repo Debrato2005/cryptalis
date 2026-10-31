@@ -43,7 +43,7 @@ These are local, public-fixture-custody observations, not production recovery or
 external fencing qualification.
 
 `cryptalis.online` captures native writes while it prepares an initial protection plan. P1 requires each protected table to declare itself single-tenant. P2 accepts tenant-column tables with a host-approved tenant set. Tables without a tenant column retain their fixed table UUID scope. P1 behavior and format v1 remain unchanged. Protected fields use admitted `TEXT`/`VARCHAR` or storage-only Boolean, signed
-integers, finite Date, naive timestamp, finite NUMERIC or UUID. The [native scalar journey](../tests/test_online_scalars.py)
+integers, finite Date, naive/aware timestamp, finite NUMERIC or UUID. The [native scalar journey](../tests/test_online_scalars.py)
 covers capture, resume, cancellation and latest-value exit for those scalar types. The online path does not change the existing maintenance path.
 
 Select P2 by supplying `native_tenants` as a tuple of at most 1,024 unique UUID objects. The artifact stores the approved UUID strings in sorted order. The nil UUID is valid. An omitted tuple selects P1. P2's policy map contains exactly one policy for each approved tenant, including empty scopes, plus one fixed table UUID policy for each single-tenant table. UUIDs outside the approved native and fixed scope union fail before the host key resolver. A native row whose UUID matches a fixed scope can resolve that already approved policy before its native-scope refusal. It still cannot pass planning or locked admission. Lock tables and recheck all existing tenant values before journal creation or other DDL.
