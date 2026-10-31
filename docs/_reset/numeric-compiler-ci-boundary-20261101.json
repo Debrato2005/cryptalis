@@ -1,0 +1,96 @@
+{
+  "archive": {
+    "members": {
+      "github-release/install-receipt.json": "e07af174234bc6bfa7b77110a825007eaaf438d42edf20bb9c30f2ac07b8484c",
+      "github-release/installed-application-export-receipt.json": "b880931358b0544b3a6ab052596624de8fc9566829db5231a3862e156dfc40f5",
+      "github-release/installed-application-restore-receipt.json": "0759ce19409e31851d5811d8e45dcaa90b331ca8d0846c058fb6c7061391ad02",
+      "github-release/installed-code-receipt.json": "88b01ae76581a2612dade50da4cbeb6497aa54cf6a14b7b8f17b614236ee1c20",
+      "github-release/installed-export-receipt.json": "2d28b9bdfc56c5e7c459719b0163cd8d046092c4d161791d81444cf3c2c0dd62",
+      "github-release/installed-google-kms-receipt.json": "f35037a6d79b62308b3a87d9b51f821bc2f7aa978ce85159b5a98e03591f4983",
+      "github-release/installed-journey-receipt.json": "78fde62e4c9589a34da5defabdcf42a412e90c84c5be3f3c0f355d18a51ddadb",
+      "github-release/installed-modification-export-receipt.json": "d8b5dbc7aef455c769a6b37c7c4dfd285d7d4c7dc78adff4afa5dcc181b895b5",
+      "github-release/installed-modification-restore-receipt.json": "da546593dd149f986dcf490a4fd99eef7f4c1a76d1abb1807064eccf164e020f",
+      "github-release/installed-openbao-qualification.json": "3f68be32e8842f4e0cbb9d671ec2032215643838dc39a6a12dc4a17d80b3bc6f",
+      "github-release/installed-openbao-tests.json": "a0088a9222fb2d7dd9518dc12f40a0fdb2fcf2cba8cf967d65033da97f95793e",
+      "github-release/installed-restore-receipt.json": "6c7a88d7dc21cc1a95037b5884b0fcb097424f0585f9df3a2e6ad457faa0bbf9",
+      "github-release/installed-sqlmodel-receipt.json": "b72645c24feb2b692b87a3315f542be5bbecf505ed82432331a3c7e5aec7758a",
+      "github-release/installed-storage-modification-export-receipt.json": "427be1746aecd49d5e1a25b446a8467cbd158cf3a8a2ecd1b4f10be2d941f3a1",
+      "github-release/installed-storage-modification-restore-receipt.json": "69f163361220e036d3b78a1b71ce6a53f664ebb8862b0c040cd55a9bd34148e8",
+      "github-release/job-status.json": "577c3c86cd56e33b4f427f76f1f33d5a12883e41c9c0f710520731d24598dd4f",
+      "github-release/release-receipt.json": "f97957b78f691c3509a03562a504a4afff7784866aaaff4afd78f6a530442cf3",
+      "github-release/sbom.cdx.json": "94163a72e2f9f4ad65c26fe73a3763afe13f0eccebcaac39d8053f1c30eecdd6",
+      "github-release/scanner-audit.json": "fffc59b1e5574ddfe75304f0e92479dc2d1fe096799299ed33ee6bbd0ca61803",
+      "github-release/scanner-sbom.cdx.json": "153be0db3d158254a5b8d2a00d774050d5429715a8623c53735bfe1347809c18",
+      "github-release/scanner-toolchain.json": "5495369128cbbedeef00405c7bcd03df6959bd5ba05e0b4115eade767db2a6ed",
+      "github-release/status.json": "21b15ca8281f8fe3d9d91287f88dea54f749551756574b5de75e44e9532e4cc7",
+      "github-source/admission.json": "b518fb4da5c5b8799b4412b5e8f8a9664d2b080dbb1ae7c4e43ff964c23fa7e1",
+      "github-source/dependency-audit.json": "7d505e1e7de9f56f99d4c6383f59b164e2e429f383f45e73cfa741c5fda239cc",
+      "github-source/job-status.json": "8555999977e6d599ddf0fda49baed92a268233c67220592aee986190d2b73014",
+      "github-source/qualification/source-receipt.json": "4373c68242a7e276ff44adab71ccf92858d7e45d534baac3323aa8f09c0e7a6a",
+      "github-source/qualification/status.json": "863a6bb04d9c17ad8c61edd3a7aefa2e94b97e26864ff09cfbefd195af2e723d",
+      "repair/receipt.json": "36ca3854415afa17862073004f1c3a13171406c233e5d5af239a4b9557768b73"
+    },
+    "name": "numeric-compiler-ci-receipts-20261101.tar.gz",
+    "sha256": "2ce8a070f8539323018131b89c99b93408e0696a49db6eb3bce79d4b4def2370"
+  },
+  "artifacts": {
+    "cryptalis-0.1.0-py3-none-any.whl": "826257231d5e7ddc6bc115b402e608f64e9be0ee179e4903634453cb2459d298",
+    "cryptalis-0.1.0.tar.gz": "1006c0eef67d910c99b818ca75075bf404f8dff5e9bc228df0df6a667a21d0a9"
+  },
+  "failure": "test_protection_compiler.py::test_unadmitted_numeric_mapping_raises_a_typed_refusal still expected finite Numeric to be unsupported",
+  "format": "cryptalis.numeric-compiler-ci-boundary/v1",
+  "github_archive_sha256": {
+    "release": "05c0855b078c5df8d26b60a0fb5d0b1e40f799fd40e124dace8d88b525c2c439",
+    "source": "ce39b553e99d3cc54bc407574d8de8a794a21834d5363446b1a06f633fabbcba"
+  },
+  "jobs": {
+    "release": "success",
+    "source": "failure"
+  },
+  "limits": [
+    "Focused compiler repair passes 63 tests, not a complete source rerun",
+    "Hosted rerun required after push",
+    "Skipped cells and all seven production gates remain UNKNOWN"
+  ],
+  "repair": "Retain the compiler refusal test for Numeric(asdecimal=False); finite Decimal storage has native positive E2E coverage",
+  "repair_checkout": "Detached worktree at f6aefa9; only the two-line compiler-test change; product runtime bytes identical to CI",
+  "repair_outcomes": {
+    "collection": {},
+    "selected_items": 63,
+    "setup": {
+      "passed": 63
+    },
+    "subtest_calls": {},
+    "teardown": {
+      "passed": 63
+    },
+    "test_calls": {
+      "passed": 63
+    }
+  },
+  "runtime_modules_sha256": "49604bf6b849fe5334e149d86849f9635df1781faf2010dd52c319c33f81e007",
+  "source_outcomes": {
+    "collection": {
+      "skipped": 8
+    },
+    "selected_items": 3797,
+    "setup": {
+      "passed": 3756,
+      "skipped": 41
+    },
+    "subtest_calls": {
+      "passed": 18
+    },
+    "teardown": {
+      "passed": 3797
+    },
+    "test_calls": {
+      "failed": 1,
+      "passed": 3737,
+      "skipped": 18
+    }
+  },
+  "source_revision": "f6aefa9af4d588f929fad7925d051b6bea7c9f79",
+  "url": "https://github.com/Debrato2005/cryptalis/actions/runs/41242873203",
+  "workflow_run": 41242873203
+}

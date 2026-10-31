@@ -514,11 +514,11 @@ def test_unrelated_schema_literals_do_not_enter_public_lock(app):
     assert b"private-check-marker" not in plan.lock_bytes
 
 
-def test_unadmitted_numeric_mapping_raises_a_typed_refusal(app):
+def test_numeric_float_mapping_raises_a_typed_refusal(app):
     engine, _, _, schema = app
     mapping = registry(metadata=MetaData(schema=schema))
     table = Table("numeric_value", mapping.metadata,
-                  Column("id", Uuid, primary_key=True), Column("email", Numeric))
+                  Column("id", Uuid, primary_key=True), Column("email", Numeric(asdecimal=False)))
     Customer = type("Customer", (), {})
     mapping.map_imperatively(Customer, table)
     mapping.metadata.create_all(engine)
