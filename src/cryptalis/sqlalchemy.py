@@ -2096,17 +2096,49 @@ def _bulk_insert(state):
 def _capture_update(owner, mapper, statement, parameters, tenant):
     if (mapper is None or getattr(mapper, 'class_', None) not in owner.models or
             mapper is not inspect(mapper.class_) or mapper.version_id_col is not None or
-            type(parameters) is not list or not parameters or type(tenant) is not UUID):
+            type(tenant) is not UUID):
         raise UnsupportedProtectedOperation()
     bindings = owner.models[mapper.class_]
     first = bindings[0]
     table = first.column.table
     tenant = UUID(bytes=tenant.bytes)
-    owner.update_context(statement, table, tenant, generated=False)
     columns = {prop.key: prop.columns[0] for prop in mapper.column_attrs
                if len(prop.columns) == 1 and isinstance(prop.columns[0], ColumnClause) and
                prop.columns[0].table is table and table.c.get(prop.columns[0].key) is prop.columns[0] and
                mapper.get_property_by_column(prop.columns[0]) is prop}
+    point = parameters is None
+    if point:
+        _delete_node(statement, Update)
+        if (not statement._values or getattr(statement, '_ordered_values', None) is not None
+                or getattr(statement, '_maintain_values_ordering', False)):
+            raise UnsupportedProtectedOperation()
+        normalized = statement._generate()
+        normalized._values = None
+        scope, record = owner.update_context(normalized, table, tenant, generated=True)
+        if (mapper.inherits is not None or mapper.local_table is not table or
+                len(mapper.primary_key) != 1 or mapper.primary_key[0] is not first.record or
+                scope.key == record.key or record.required or record.literal_execute or
+                scope.literal_execute):
+            raise UnsupportedProtectedOperation()
+        row = {first.record_attribute: record.value}
+        by_column = {column.key: attribute for attribute, column in columns.items()}
+        for column, value in statement._values.items():
+            if not isinstance(column, Column):
+                raise UnsupportedProtectedOperation()
+            key = owner.returning_column(column, table)
+            if key not in by_column or key in (first.record.key, first.tenant.key):
+                raise UnsupportedProtectedOperation()
+            _delete_node(value, BindParameter)
+            if (not isinstance(value, BindParameter) or type(value.type) is not NullType or
+                    value.required or value.callable is not None or value.expanding or value.literal_execute):
+                raise UnsupportedProtectedOperation()
+            owner.bind_type(value.type, selecting=True)
+            row[by_column[key]] = value.value
+        parameters = [row]
+    else:
+        owner.update_context(statement, table, tenant, generated=False)
+    if type(parameters) is not list or not parameters:
+        raise UnsupportedProtectedOperation()
     rows = []
     for original in parameters:
         if (type(original) is not dict or any(type(key) is not str for key in original) or
@@ -2153,15 +2185,17 @@ def _bulk_update(state):
     if not state.is_orm_statement or set(state.bind_arguments) - {'clause', 'mapper'}:
         raise UnsupportedProtectedOperation()
     request = _capture_update(owner, mapper, statement, state.parameters, session._tenant)
+    point = state.parameters is None
+    strategy = 'orm' if point else 'bulk'
     options = state.execution_options
     if (set(options) - {'synchronize_session', 'autoflush', 'prebuffer_rows', 'dml_strategy',
                        '_sa_orm_update_options', '_result_disable_adapt_to_context'} or
             options.get('synchronize_session') is not False or
             any(type(options[name]) is not bool for name in ('autoflush', 'prebuffer_rows') if name in options) or
-            options.get('dml_strategy', 'bulk') not in ('auto', 'bulk')):
+            options.get('dml_strategy', strategy) not in ('auto', strategy)):
         raise UnsupportedProtectedOperation()
     native = options.get('_sa_orm_update_options')
-    if (native is None or native._subject_mapper is not mapper or native._dml_strategy != 'bulk' or
+    if (native is None or native._subject_mapper is not mapper or native._dml_strategy != strategy or
             native._synchronize_session is not False):
         raise UnsupportedProtectedOperation()
     material = session._keys()
@@ -2197,10 +2231,20 @@ def _bulk_update(state):
             ledger.append((record, values))
     operation.bulk_inputs = tuple(ledger)
     original_parameters = state.parameters
+    original_statement = state.statement
+    if point:
+        normalized = statement._generate()
+        normalized._values = None
+        _, record_bind = owner.update_context(normalized, table, tenant, generated=True)
+        record, values = operation.bulk_inputs[0]
+        rows = dict(values)
+        rows[record_bind.key] = record
     state.update_execution_options(compiled_cache=None)
     token = _operation.set(operation)
     try:
         state.parameters = rows
+        if point:
+            state.statement = normalized
         result = state.invoke_statement()
         if operation.bulk_position != len(operation.bulk_inputs):
             raise UnsupportedProtectedOperation()
@@ -2216,6 +2260,7 @@ def _bulk_update(state):
         raise
     finally:
         state.parameters = original_parameters
+        state.statement = original_statement
         operation.bulk_seals.clear()
         operation.bulk_batch = operation.bulk_inputs = ()
         operation.update_carrier = None

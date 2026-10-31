@@ -1,5 +1,22 @@
 # Implementation status
 
+## Single-record mapped UPDATE: 2026-10-31
+
+**VERIFIED, bounded:** mapped `.values(...)` UPDATE with explicit tenant/record
+equality and `synchronize_session=False` now reuses the existing authenticated
+write pipeline. Native sync/async TEXT/VARCHAR cursor row counts, loaded-state
+behavior, NULLs, rollback, unique-savepoint recovery, autoflush and PostgreSQL
+assignment-error timing pass. Original values and identity are checked again
+after provider work; final driver mutations refuse before dispatch. SET targets
+must be direct mapped columns with literal values. RETURNING, expressions,
+ordered assignments and identity/tenant changes remain unadmitted.
+
+The [258-check source receipt](_reset/point-update-source-20261031.json) includes
+affected bulk-update, scoped-DELETE, Boolean and adapter controls. This records
+the branch before integration with newer main history. No new full-suite,
+installed-package or production qualification follows. All seven gates remain
+UNKNOWN.
+
 ## Native OpenBao Transit provider: 2026-10-31
 
 **VERIFIED, bounded:** the optional OpenBao provider implements the existing
