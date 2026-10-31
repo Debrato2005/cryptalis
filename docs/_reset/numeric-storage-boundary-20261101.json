@@ -1,0 +1,212 @@
+{
+  "archive": {
+    "members": {
+      "authenticated-refusal-fixture/receipt.json": "7327f8c6b4f5eb3b7584db1e907e8436d2e30fce5fbb6aff893f74d2d0c1be59",
+      "baseline/receipt.json": "5ceb6d61b4c32ed1b8ea76e3468fbb0c122d93c608777e212e522a026e9a0c9e",
+      "build.json": "175a0fc76e6bbc8ccf288f50febf4ee104febf4fa378a7979679e768c90602cb",
+      "default-encoding-counterexample/receipt.json": "50c36491731807446150356b538baa12b925113ded78dd018a8e1043d894fc8b",
+      "default-encoding-fixed/receipt.json": "d5d8739ef5af39757fd280e6c538b08bc97906de9f93d7f2c62c52df867a4224",
+      "default-state-counterexample/receipt.json": "78b5158ac6b0e5cc83639d7788634bda2e0b80351ab1e8c40b5ffa808a324f24",
+      "empty-regression-selection/receipt.json": "fd965181bef94ee5bba83ce4bdd780c159a581c750ec9ae38788af0047d294be",
+      "extreme-input-initial/receipt.json": "43ba404574f50da1abbcb19c874a9eca75d0a132f5a444056452d72aead0f06f",
+      "focused-fixture-failures/receipt.json": "b28de9bc47ceed9f7224090363d3cc139de9bed01a90679df3f4b73edef259d4",
+      "fresh-public-slots/export-receipt.json": "11322d1b586473c28ffe99928fa01fafa25a5baed37ffda9753424974a56c067",
+      "fresh-public-slots/numeric-journey-receipt.json": "eddd8c703c4d7459cf9275cc6d44600c97db7e35fad550b5c8ca39f12409fbc5",
+      "fresh-public-slots/restore-receipt.json": "28fb0b8c4186ad12dc83acbac530812c1bc2e14b9e6ae2a7b98e8d2539228cfe",
+      "fresh/export-receipt.json": "c81d6b126799c0690911d4ce44398ad44335ed4f2445138539ea19f3eb7d67bb",
+      "fresh/numeric-journey-receipt.json": "9b1d601877b2d73204b00f652ae53595aa021bb345b1c9b0f7892c959c082003",
+      "fresh/restore-receipt.json": "ac8f0a9cb2d7e88cc8bf26ea43384659eff81939d75e8f7805a986912a5cc1e7",
+      "installation.json": "a2715ebaab4c99a32a028e5d125ea3e5e2b0c05d2fc2d60a251f1ba34cd9a792",
+      "installed/receipt.json": "8589dcabcc2d5b195a938ba8b6378bb55b84fba7cf2ec06735ccfd73e2ee24a9",
+      "sbom.cdx.json": "6f726f48db820e244b17338af1b5a0db6156a7e708b4b3ccdc76ce3f0015170e",
+      "source/receipt.json": "c0241f821d5f66a238b324941da48ae84ea773e641254f2dc9d1db5531d7353d",
+      "zero-exponent-counterexample/receipt.json": "dbdb9591f86c0e735b215e67b5c4eee9524dceb69a153093fb862a810e020fff",
+      "zero-exponent-fixed/receipt.json": "7e802ccfd4f263f5e345b5ed6e75da35b0c155cd5edd9ebe4038640e04fddc1d"
+    },
+    "name": "numeric-storage-receipts-20261101.tar.gz",
+    "sha256": "6e720f57e37ed30de35066b1bfb514b28a2f1f2f71db047c0b1ed86c5d395658"
+  },
+  "artifacts": {
+    "cryptalis-0.1.0-py3-none-any.whl": "826257231d5e7ddc6bc115b402e608f64e9be0ee179e4903634453cb2459d298",
+    "cryptalis-0.1.0.tar.gz": "1006c0eef67d910c99b818ca75075bf404f8dff5e9bc228df0df6a667a21d0a9"
+  },
+  "base_revision": "f85911abff82a221feec98bf7c1c381ed21e2462",
+  "current_receipts": {
+    "fresh-public-slots/export-receipt.json": {
+      "outcomes": {
+        "collection": {},
+        "selected_items": 1,
+        "setup": {
+          "passed": 1
+        },
+        "subtest_calls": {},
+        "teardown": {
+          "passed": 1
+        },
+        "test_calls": {
+          "passed": 1
+        }
+      },
+      "runtime_binding": {
+        "mode": "installed-wheel",
+        "module_count": 42,
+        "modules_sha256": "49604bf6b849fe5334e149d86849f9635df1781faf2010dd52c319c33f81e007",
+        "runtime_root": "/tmp/cryptalis-numeric-installed-20261101/lib/python3.12/site-packages/cryptalis",
+        "wheel": "/tmp/cryptalis-numeric-complete-inspected-20261101/cryptalis-0.1.0-py3-none-any.whl",
+        "wheel_sha256": "826257231d5e7ddc6bc115b402e608f64e9be0ee179e4903634453cb2459d298"
+      }
+    },
+    "fresh-public-slots/restore-receipt.json": {
+      "outcomes": {
+        "collection": {},
+        "selected_items": 1,
+        "setup": {
+          "passed": 1
+        },
+        "subtest_calls": {},
+        "teardown": {
+          "passed": 1
+        },
+        "test_calls": {
+          "passed": 1
+        }
+      },
+      "runtime_binding": {
+        "mode": "installed-wheel",
+        "module_count": 42,
+        "modules_sha256": "49604bf6b849fe5334e149d86849f9635df1781faf2010dd52c319c33f81e007",
+        "runtime_root": "/tmp/cryptalis-numeric-installed-20261101/lib/python3.12/site-packages/cryptalis",
+        "wheel": "/tmp/cryptalis-numeric-complete-inspected-20261101/cryptalis-0.1.0-py3-none-any.whl",
+        "wheel_sha256": "826257231d5e7ddc6bc115b402e608f64e9be0ee179e4903634453cb2459d298"
+      }
+    },
+    "fresh/export-receipt.json": {
+      "outcomes": {
+        "collection": {},
+        "selected_items": 1,
+        "setup": {
+          "passed": 1
+        },
+        "subtest_calls": {},
+        "teardown": {
+          "passed": 1
+        },
+        "test_calls": {
+          "passed": 1
+        }
+      },
+      "runtime_binding": {
+        "mode": "installed-wheel",
+        "module_count": 42,
+        "modules_sha256": "49604bf6b849fe5334e149d86849f9635df1781faf2010dd52c319c33f81e007",
+        "runtime_root": "/tmp/cryptalis-numeric-installed-20261101/lib/python3.12/site-packages/cryptalis",
+        "wheel": "/tmp/cryptalis-numeric-complete-inspected-20261101/cryptalis-0.1.0-py3-none-any.whl",
+        "wheel_sha256": "826257231d5e7ddc6bc115b402e608f64e9be0ee179e4903634453cb2459d298"
+      }
+    },
+    "fresh/restore-receipt.json": {
+      "outcomes": {
+        "collection": {},
+        "selected_items": 1,
+        "setup": {
+          "passed": 1
+        },
+        "subtest_calls": {},
+        "teardown": {
+          "passed": 1
+        },
+        "test_calls": {
+          "passed": 1
+        }
+      },
+      "runtime_binding": {
+        "mode": "installed-wheel",
+        "module_count": 42,
+        "modules_sha256": "49604bf6b849fe5334e149d86849f9635df1781faf2010dd52c319c33f81e007",
+        "runtime_root": "/tmp/cryptalis-numeric-installed-20261101/lib/python3.12/site-packages/cryptalis",
+        "wheel": "/tmp/cryptalis-numeric-complete-inspected-20261101/cryptalis-0.1.0-py3-none-any.whl",
+        "wheel_sha256": "826257231d5e7ddc6bc115b402e608f64e9be0ee179e4903634453cb2459d298"
+      }
+    },
+    "installed/receipt.json": {
+      "outcomes": {
+        "collection": {},
+        "selected_items": 150,
+        "setup": {
+          "passed": 150
+        },
+        "subtest_calls": {},
+        "teardown": {
+          "passed": 150
+        },
+        "test_calls": {
+          "passed": 146,
+          "skipped": 4
+        }
+      },
+      "runtime_binding": {
+        "mode": "installed-wheel",
+        "module_count": 42,
+        "modules_sha256": "49604bf6b849fe5334e149d86849f9635df1781faf2010dd52c319c33f81e007",
+        "runtime_root": "/tmp/cryptalis-numeric-installed-20261101/lib/python3.12/site-packages/cryptalis",
+        "wheel": "/tmp/cryptalis-numeric-complete-inspected-20261101/cryptalis-0.1.0-py3-none-any.whl",
+        "wheel_sha256": "826257231d5e7ddc6bc115b402e608f64e9be0ee179e4903634453cb2459d298"
+      }
+    },
+    "source/receipt.json": {
+      "outcomes": {
+        "collection": {},
+        "selected_items": 347,
+        "setup": {
+          "passed": 347
+        },
+        "subtest_calls": {},
+        "teardown": {
+          "passed": 347
+        },
+        "test_calls": {
+          "passed": 337,
+          "skipped": 10
+        }
+      },
+      "runtime_binding": {
+        "mode": "source",
+        "module_count": 42,
+        "modules_sha256": "49604bf6b849fe5334e149d86849f9635df1781faf2010dd52c319c33f81e007",
+        "runtime_root": "/home/debrato/Projects/cryptalis/src/cryptalis",
+        "wheel": null,
+        "wheel_sha256": null
+      }
+    }
+  },
+  "date": "2026-11-01",
+  "format": "cryptalis.numeric-storage-boundary/v1",
+  "lock_schema": "cryptalis.lock/v11",
+  "previous_reader": {
+    "revision": "f85911abff82a221feec98bf7c1c381ed21e2462",
+    "setup": "Separate offline uv installation of a Git archive; actual -I interpreter accepts timestamp control and refuses numeric plans before SQL"
+  },
+  "primary_source": "https://www.postgresql.org/docs/16/datatype-numeric.html#DATATYPE-NUMERIC-DECIMAL",
+  "required_reader": "pg-numeric-decimal/v1",
+  "retained_failures": [
+    "Initial overflow lacked SQLSTATE 22003 and native transaction behavior",
+    "New fixture mistakes: repeated attachment, NULL count, PreparedKeys context manager, lifecycle failure wrapping",
+    "One regression selection named an absent test module and ran no tests; corrected selection retained separately",
+    "Extreme input investigation initially conflated native refusals with supported huge-exponent zero; native CRUD zero canonicalization now passes",
+    "Native default-state oracle found int type, positive exponent and signed-zero changes before refresh",
+    "Negative/large integer default JSON and mutable Decimal capitalization counterexamples; strict typed integer strings and explicit E formatting repair them"
+  ],
+  "scope": "Finite native PostgreSQL NUMERIC storage with exact Decimal and integer inputs; bounded prototype evidence only",
+  "setup_observations": [
+    "Default private configuration lacked the source-role file; FileNotFoundError occurred before any probe. Existing isolated harness provisioned disposable targets with separate roles. All launched PostgreSQL preflights passed."
+  ],
+  "verification_limits": [
+    "Affected source regression only; no complete local full-suite rerun in this slice",
+    "Ten source and four installed skips retain unavailable earlier-reader controls; actual numeric reader control is executed",
+    "Fresh recovery covers NUMERIC(8,2), both layouts, all rotations and import-denied native restart; not a production disaster drill",
+    "Native nonfinite values, numeric search/arithmetic, broader mappings and input coercions remain unfinished product work",
+    "Read-only AI review supplies no independent human cryptographic/security review",
+    "No performance acceptance, deployment fencing or live cloud custody qualification",
+    "All seven production gates remain UNKNOWN"
+  ]
+}

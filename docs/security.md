@@ -1593,6 +1593,35 @@ rewriting because dropping their native cast could change comparison semantics.
 owns the admitted operations. Independent composition review and all seven
 production gates remain UNKNOWN.
 
+## Numeric storage boundary
+
+`pg-numeric-decimal/v1` uses the existing CF1 authenticated encryption and
+context/v2 descriptor binding. It stores finite Decimal values as canonical
+ASCII fixed-point text, retaining fractional zeroes and normalizing negative
+zero. The bounded decoder rejects noncanonical signs, exponents, whitespace and other spellings
+that do not round-trip to the exact canonical bytes. Maximum plaintext length
+is 147457 bytes, including sign and decimal point; existing AEAD authenticates
+the frame before decoding. Lock/v11 requires this reader and pins the native
+precision/scale for runtime and lifecycle validation. Old plans retain their
+original reader versions.
+
+Plaintext rounding uses a private Decimal context with explicit precision,
+rounding, limits and traps. Authenticated values that do not already match the
+pinned native typmod refuse before result release or decrypt-back. Source and
+staged verification compares exact Decimal tuples, including scale. Initial and
+online source-domain checks reject nonfinite values. Literal client defaults
+are public policy and retain the declared Python type and Decimal tuple; keys and row values do
+not enter the manifest. Public overflow constants preserve the tested native
+precision failure behavior without sending the private decimal to PostgreSQL.
+
+Storage-only numeric fields reveal the existing row linkage, NULL presence,
+frame length and access/write patterns. Variable decimal length can disclose
+integer/fractional digit counts; this slice adds no numeric search term or
+ordering capability. [Compatibility](compatibility.md#numeric-storage) owns the
+admitted inputs and operations. The native oracle follows
+[PostgreSQL 16 NUMERIC semantics](https://www.postgresql.org/docs/16/datatype-numeric.html#DATATYPE-NUMERIC-DECIMAL).
+Independent composition review and all seven production gates remain UNKNOWN.
+
 ## Internal storage-only integer boundary
 
 **IMPLEMENTED, bounded source and installed checks:** signed integer codecs use

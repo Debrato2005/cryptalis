@@ -7,6 +7,7 @@ does not migrate schemas or qualify external writers. Research prototype.
 from contextvars import ContextVar
 from dataclasses import dataclass, field
 from datetime import date, datetime
+from decimal import Decimal
 from functools import wraps
 from hashlib import sha256
 import json
@@ -100,6 +101,15 @@ class IntegerRangeExceeded(InvalidValue, DontWrapMixin):
         super().__init__()
 
 
+class NumericRangeExceeded(IntegerRangeExceeded):
+    stage = 'PostgreSQL numeric assignment'
+    remedy = 'Use a finite decimal within the declared native precision and scale. Roll back before retry.'
+
+    def __init__(self):
+        # Reuse the public int8 overflow carrier: both errors have SQLSTATE 22003.
+        super().__init__(8)
+
+
 class BulkIntegerFailureUnavailable(PolicyMismatch):
     stage = 'bulk integer failure'
     remedy = 'Check PostgreSQL 16 integer coercion and transaction state. Roll back before retry.'
@@ -167,9 +177,16 @@ class _Binding:
     max_characters: int | None = None
     boolean_processor: object = field(default=None, repr=False)
     application_default: bool | int | date | None = None
+    numeric_typmod: str | None = None
 
 
 def _assignment(value, binding):
+    if binding.descriptor.value_codec == 'pg-numeric-decimal/v1':
+        from ._numeric import NumericOverflow, numeric_value
+        try:
+            return numeric_value(value, binding.numeric_typmod)
+        except NumericOverflow:
+            raise NumericRangeExceeded() from None
     if binding.descriptor.value_codec == 'pg-timestamp-us-be/v1':
         if value is not None and (type(value) is not datetime or value.tzinfo is not None):
             raise InvalidValue()
@@ -469,6 +486,9 @@ class _ReadText(TypeDecorator):
         plain = open_value(payload, descriptor, tenant, record, self.keys)
         if plain is not None and self.binding.max_characters is not None and len(plain) > self.binding.max_characters:
             raise RepresentationMismatch()
+        if plain is not None and self.binding.numeric_typmod is not None:
+            from ._numeric import validate_numeric
+            validate_numeric(plain, self.binding.numeric_typmod)
         return plain
 
 
@@ -493,7 +513,7 @@ class _Payload(TypeDecorator):
             carrier = operation.update_carrier
             if not ((operation.bulk_update is not None or operation.flushing) and carrier is not None and
                     ((type(value.failure) is VarcharLengthExceeded and value.body is _VARCHAR_UPDATE_INVALID)
-                     or (type(value.failure) is IntegerRangeExceeded and value.body is _INTEGER_UPDATE_INVALID)) and
+                     or (isinstance(value.failure, IntegerRangeExceeded) and value.body is _INTEGER_UPDATE_INVALID)) and
                     any(binding is value.binding for binding in carrier.bindings)):
                 raise value.failure
         return value.body
@@ -814,6 +834,8 @@ class _Attachment:
                     actual_default = _value_default(column, field['descriptor'].get('value_codec', 'utf8-exact/v1'))
                     expected_default = _compiled_default(field)
                     default_matches = type(actual_default) is type(expected_default) and actual_default == expected_default
+                    if type(actual_default) is Decimal and type(expected_default) is Decimal:
+                        default_matches = actual_default.as_tuple() == expected_default.as_tuple()
                 except ValueError:
                     raise PolicyMismatch() from None
                 if (not isinstance(actual["type"], LargeBinary) or not _value_mapping_matches(column, source) or
@@ -844,9 +866,9 @@ class _Attachment:
                 binding = _Binding(column, mapper.get_property_by_column(column).key, descriptor,
                                    record, mapper.get_property_by_column(record).key, tenant,
                                    mapper.get_property_by_column(tenant).key if tenant is not None else None,
-                                   mapper.class_, None if _fixed_value_width(source) is not None else _native_text_length(source),
+                                   mapper.class_, _native_text_length(source) if source['type'] in ('text', 'varchar') else None,
                                    column.type.bind_processor(connection.dialect) if boolean else None,
-                                   _compiled_default(field))
+                                   _compiled_default(field), source['typmod'] if source['type'] == 'numeric' else None)
                 self.bindings.append(binding)
             self.models[mapper.class_] = tuple(b for b in self.bindings if b.model is mapper.class_)
 
@@ -1001,6 +1023,8 @@ class _Attachment:
                     self.identity_type(binding.tenant.type, uuid_only=True)
                 actual_default = _value_default(binding.column, binding.descriptor.value_codec)
                 if type(actual_default) is not type(binding.application_default) or actual_default != binding.application_default:
+                    raise PolicyMismatch()
+                if type(actual_default) is Decimal and actual_default.as_tuple() != binding.application_default.as_tuple():
                     raise PolicyMismatch()
             return tuple((b.column.table.schema, b.column.table.name, column(b.column), column(b.record), column(b.tenant),
                           inspect(b.model).primary_key, inspect(b.model).get_property_by_column(b.column).key,
@@ -1650,7 +1674,7 @@ class _Attachment:
                     if binding.boolean_processor is None and not isinstance(failure, (VarcharLengthExceeded, IntegerRangeExceeded)):
                         raise
                     # Bind processing occurs inside the native flush transaction.
-                    sealed = _Sealed(_INTEGER_UPDATE_INVALID if type(failure) is IntegerRangeExceeded else None,
+                    sealed = _Sealed(_INTEGER_UPDATE_INVALID if isinstance(failure, IntegerRangeExceeded) else None,
                                      operation, binding, failure, record, tenant)
                 else:
                     body = seal_value(stored, binding.descriptor, tenant, record, operation.keys_for(binding))
@@ -1748,8 +1772,8 @@ class _Attachment:
             operation.update_carrier = None
             operation.bulk_batch = ()
             integer_bindings = tuple(b for b in bindings if b.column.key in changed[0] and
-                                     b.descriptor.value_codec in ('pg-int2-be/v1', 'pg-int4-be/v1', 'pg-int8-be/v1'))
-            integer_failure = any(type(value) is _Sealed and type(value.failure) is IntegerRangeExceeded
+                                     b.descriptor.value_codec in ('pg-int2-be/v1', 'pg-int4-be/v1', 'pg-int8-be/v1', 'pg-numeric-decimal/v1'))
+            integer_failure = any(type(value) is _Sealed and isinstance(value.failure, IntegerRangeExceeded)
                                   for group in changed for value in group.values())
             if operation.flushing and integer_bindings and integer_failure:
                 record_bind = bindings[0].record
@@ -1774,14 +1798,14 @@ class _Attachment:
             bindings = tuple(binding for binding in self.bindings
                              if binding.column.table is _operation.get().bulk_update and
                              (binding.max_characters is not None or binding.descriptor.value_codec in
-                              ('pg-int2-be/v1', 'pg-int4-be/v1', 'pg-int8-be/v1')) and binding.column.key in groups[0])
+                              ('pg-int2-be/v1', 'pg-int4-be/v1', 'pg-int8-be/v1', 'pg-numeric-decimal/v1')) and binding.column.key in groups[0])
         if not bindings and not returning:
             return None
         constants, assignments = [], {}
         for binding in bindings:
             body = bindparam(binding.column.key, type_=binding.column.type)
-            if binding.descriptor.value_codec in ('pg-int2-be/v1', 'pg-int4-be/v1', 'pg-int8-be/v1'):
-                width = int(binding.descriptor.value_codec[6])
+            if binding.descriptor.value_codec in ('pg-int2-be/v1', 'pg-int4-be/v1', 'pg-int8-be/v1', 'pg-numeric-decimal/v1'):
+                width = 8 if binding.numeric_typmod is not None else int(binding.descriptor.value_codec[6])
                 dtype = {2: _native_types.SmallInteger, 4: _native_types.Integer, 8: _native_types.BigInteger}[width]
                 sentinel = literal(_INTEGER_UPDATE_INVALID, LargeBinary())
                 public_overflow = literal(str(1 << (8 * width - 1)), String())
@@ -2126,7 +2150,7 @@ class _Session(Session):
                 for row in operation.bulk_batch:
                     for value in row.values():
                         if (type(value) is _Sealed and value.permit is operation and
-                                type(value.failure) is IntegerRangeExceeded):
+                                isinstance(value.failure, IntegerRangeExceeded)):
                             raise value.failure from None
             raise
         finally:
@@ -2354,7 +2378,7 @@ def _bulk_insert(state):
             except (VarcharLengthExceeded, IntegerRangeExceeded, TypeError, ValueError) as failure:
                 if binding.boolean_processor is None and not isinstance(failure, (VarcharLengthExceeded, IntegerRangeExceeded)):
                     raise
-                if type(failure) in (VarcharLengthExceeded, IntegerRangeExceeded) and failed_index is None:
+                if isinstance(failure, (VarcharLengthExceeded, IntegerRangeExceeded)) and failed_index is None:
                     failed_index = index
                 sealed = _Sealed(None, operation, binding, failure, record, tenant)
             else:
@@ -2383,7 +2407,7 @@ def _bulk_insert(state):
                 try:
                     # PG16 assignment coercion, with public constants only.
                     # Abort this transaction/savepoint without plaintext SQL.
-                    if type(failure) is IntegerRangeExceeded:
+                    if isinstance(failure, IntegerRangeExceeded):
                         dtype = {2: _native_types.SmallInteger, 4: _native_types.Integer, 8: _native_types.BigInteger}[failure.width]
                         session.connection().execute(select(cast(literal(str(1 << (8 * failure.width - 1)), String()), dtype())))
                     else:
@@ -2391,10 +2415,10 @@ def _bulk_insert(state):
                             cast(literal('xx'), String()), 5, False)))
                 except DBAPIError as error:
                     if getattr(error.orig, 'sqlstate', None) != failure.sqlstate:
-                        unavailable = BulkIntegerFailureUnavailable if type(failure) is IntegerRangeExceeded else BulkVarcharFailureUnavailable
+                        unavailable = BulkIntegerFailureUnavailable if isinstance(failure, IntegerRangeExceeded) else BulkVarcharFailureUnavailable
                         raise unavailable() from None
                     raise failure from None
-                unavailable = BulkIntegerFailureUnavailable if type(failure) is IntegerRangeExceeded else BulkVarcharFailureUnavailable
+                unavailable = BulkIntegerFailureUnavailable if isinstance(failure, IntegerRangeExceeded) else BulkVarcharFailureUnavailable
                 raise unavailable()
             raise BulkVarcharFailureUnavailable()
         state.parameters = rows
@@ -2561,7 +2585,7 @@ def _bulk_update(state):
                     if binding.boolean_processor is None and not isinstance(failure, (VarcharLengthExceeded, IntegerRangeExceeded)):
                         raise
                     sealed = _Sealed(_VARCHAR_UPDATE_INVALID if type(failure) is VarcharLengthExceeded else
-                                     _INTEGER_UPDATE_INVALID if type(failure) is IntegerRangeExceeded else None,
+                                     _INTEGER_UPDATE_INVALID if isinstance(failure, IntegerRangeExceeded) else None,
                                      operation, binding, failure, record, tenant)
                 else:
                     body = seal_value(stored, binding.descriptor, tenant, record, operation.keys_for(binding))
@@ -2595,7 +2619,7 @@ def _bulk_update(state):
             for row in operation.bulk_batch:
                 for value in row.values():
                     if (type(value) is _Sealed and operation.bulk_seals.get(id(value)) is value and
-                            type(value.failure) in (VarcharLengthExceeded, IntegerRangeExceeded) and
+                            isinstance(value.failure, (VarcharLengthExceeded, IntegerRangeExceeded)) and
                             value.failure.sqlstate == error.orig.sqlstate):
                         raise value.failure from None
         raise

@@ -39,6 +39,29 @@ source-role failure and later UUID fixture failures remain repaired.
 and [repair evidence](_reset/point-delete-returning-ci-fix-boundary-20261030.json)
 remain available.
 
+## Finite native NUMERIC storage
+
+**VERIFIED, bounded source and installed wheel:** standard Numeric/NUMERIC
+storage preserves native finite Decimal values, declared precision/scale,
+rounding, NULLs, literal default state, sync/async CRUD and RETURNING. Native
+oracles cover negative scales, scales larger than precision, full digit bounds,
+savepoints, constraint-error precedence and prepared zero-match behavior.
+Authenticated values incompatible with the pinned typmod refuse before release
+or decrypt-back. Online capture preserves current writes, resume and explicit
+nonfinite-row failure with readable progress.
+
+The affected source regression passes 337 checks with ten explicit older-reader
+skips; the installed Python 3.12 wheel passes 146 with four skips. An actual
+retained v10 reader accepts a timestamp control and refuses numeric before SQL.
+Both installed fresh-recovery layouts pass export, adoption, rotations,
+current-value removal and an import-denied native restart. All final receipts
+bind identical runtime bytes; reproducible artifacts and installation inspection
+pass. [Exact boundary](_reset/numeric-storage-boundary-20261101.json) and
+[observations](history/types-2026-11.md#finite-native-numeric-storage-2026-11-01)
+retain failures, limits and hashes. No complete local full-suite rerun follows
+this slice. Numeric search/arithmetic, nonfinite support and broader mappings
+remain open; performance and all seven production gates remain UNKNOWN.
+
 ## Native naive timestamp storage
 
 **VERIFIED, bounded source and installed wheel:** standard timestamp without time

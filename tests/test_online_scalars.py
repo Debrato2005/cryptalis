@@ -1,9 +1,10 @@
 """Native scalar writes remain current through capture, publication and exit."""
 from datetime import date, datetime
+from decimal import Decimal
 from uuid import UUID
 
 import pytest
-from sqlalchemy import BigInteger, Boolean, Date, DateTime, Integer, SmallInteger, Uuid, func, select
+from sqlalchemy import BigInteger, Boolean, Date, DateTime, Integer, Numeric, SmallInteger, Uuid, func, select
 from sqlalchemy.exc import DBAPIError
 
 from cryptalis import deprotection as d, migration as m, online
@@ -17,6 +18,9 @@ SCALARS = [(Boolean(), (False, True, None)), (SmallInteger(), (-32768, 32767, No
            (Date(), (date.min, date.max, None)),
            (DateTime(), (datetime.min, datetime.max, None)),
            (DateTime(), (datetime.min, datetime.max, None), ('equality', 'order')),
+           (Numeric(), (Decimal('1.2300'), Decimal('-0.005'), None)),
+           (Numeric(8, 2), (Decimal('1.235'), Decimal('-1.235'), None)),
+           (Numeric(2, -3), (Decimal('14500'), Decimal('-14500'), None)),
            (Uuid(), (UUID(int=0), UUID(int=2**128-1), None))]
 
 
@@ -123,3 +127,26 @@ def test_post_plan_temporal_domain_drift_refuses_before_capture_effects(app):
             'WHERE table_schema=%s AND column_name LIKE %s', (app.schema, '_cryptalis_%')).scalar_one() == 0
         assert not connection.exec_driver_sql('SELECT relhastriggers FROM pg_catalog.pg_class '
             'WHERE oid=pg_catalog.to_regclass(%s)', (f'"{app.schema}".customer',)).scalar_one()
+
+
+@pytest.mark.parametrize('app', [(Numeric(), (Decimal('1'), Decimal('2'), None))], indirect=True)
+@pytest.mark.parametrize('literal', ['NaN', 'Infinity', '-Infinity'])
+@pytest.mark.parametrize('capturing', [False, True])
+def test_nonfinite_numeric_capture_refuses_with_progress_visible(app, literal, capturing):
+    if capturing:
+        online.apply(app.plan, app.owner, keys=keys, pin=app.pin, approval=app.approval, max_chunks=1)
+    with app.source.begin() as connection:
+        connection.exec_driver_sql(f'INSERT INTO "{app.schema}".customer(id,body) VALUES (%s,%s::numeric)',
+                                   (UUID(int=5), literal))
+    before = _payloads(app, app.plan) if capturing else None
+    with pytest.raises(m.TransitionFailure) as failure:
+        online.apply(app.plan, app.owner, keys=keys, pin=app.pin, approval=app.approval,
+                     max_chunks=1 if capturing else 0)
+    assert failure.value.code == 'numeric_source_domain'
+    if capturing:
+        assert _payloads(app, app.plan) == before
+        assert online.status(app.plan, app.owner, pin=app.pin).committed_chunks == 1
+    else:
+        with app.owner.connect() as connection:
+            assert connection.exec_driver_sql('SELECT count(*) FROM information_schema.columns '
+                'WHERE table_schema=%s AND column_name LIKE %s', (app.schema, '_cryptalis_%')).scalar_one() == 0

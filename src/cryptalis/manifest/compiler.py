@@ -9,9 +9,10 @@ import json
 from contextlib import contextmanager
 from dataclasses import asdict, dataclass
 from datetime import date, datetime
+from decimal import Decimal, InvalidOperation
 from uuid import UUID, uuid4
 
-from sqlalchemy import BigInteger, Boolean, Column, Date, DateTime, Integer, SmallInteger, String, Table, Text, UUID as SQLUUID, Uuid
+from sqlalchemy import BigInteger, Boolean, Column, Date, DateTime, Integer, Numeric, SmallInteger, String, Table, Text, UUID as SQLUUID, Uuid
 from sqlalchemy import UniqueConstraint, text
 from sqlalchemy.dialects import postgresql
 from sqlalchemy.engine import Engine
@@ -23,10 +24,12 @@ from psycopg import Error as PsycopgError
 from cryptalis.manifest.declaration import parse_protection_declaration
 from cryptalis.manifest.parser import MAX_DOCUMENT_BYTES, ManifestInvalid, decode_manifest_json
 from cryptalis._sqlmodel_types import autostring_impl
+from cryptalis._numeric import numeric_parameters, numeric_typmod, numeric_value
+from cryptalis.crypto.keys import InvalidValue
 
 
 _PUBLIC_SLOTS_LAYOUT = "preserve-public-slots/v1"
-_LOCK_SCHEMAS = tuple(f'cryptalis.lock/v{version}' for version in range(1, 11))
+_LOCK_SCHEMAS = tuple(f'cryptalis.lock/v{version}' for version in range(1, 12))
 _INTEGER_TYPES = {'int2': (SmallInteger, postgresql.SMALLINT),
                   'int4': (Integer, postgresql.INTEGER), 'int8': (BigInteger, postgresql.BIGINT)}
 
@@ -175,6 +178,12 @@ def _value_default(column, codec):
     if column.default is None:
         return None
     from sqlalchemy.sql.schema import ScalarElementColumnDefault
+    if codec == 'pg-numeric-decimal/v1' and type(column.default) is ScalarElementColumnDefault:
+        try:
+            numeric_value(column.default.arg)
+        except InvalidValue:
+            raise ValueError from None
+        return column.default.arg
     if (codec == 'pg-date-days-be/v1' and type(column.default) is ScalarElementColumnDefault
             and type(column.default.arg) is date):
         return column.default.arg
@@ -193,6 +202,26 @@ def _value_default(column, codec):
 
 def _compiled_default(field):
     raw = field.get('application_default')
+    if field['source']['type'] == 'numeric' and raw is not None:
+        integer = type(raw) is dict
+        if integer:
+            if set(raw) != {'integer'}:
+                raise ValueError
+            raw = raw['integer']
+        if type(raw) is not str or not 1 <= len(raw) <= 147480:
+            raise ValueError
+        try:
+            value = Decimal(raw)
+            numeric_value(value)
+        except (InvalidValue, InvalidOperation):
+            raise ValueError from None
+        if integer:
+            if value.as_tuple().exponent != 0 or format(numeric_value(value), 'f') != raw:
+                raise ValueError
+            return int(value)
+        if format(value, 'E') != raw:
+            raise ValueError
+        return value
     if field['source']['type'] == 'timestamp' and raw is not None:
         if type(raw) is not str or len(raw) != 26:
             raise ValueError
@@ -221,7 +250,27 @@ def _compiled_default(field):
 def _value_mapping_matches(column, native):
     return (_text_mapping_matches(column, native) or _boolean_mapping_matches(column, native)
             or _integer_mapping_matches(column, native) or _date_mapping_matches(column, native)
-            or _uuid_mapping_matches(column, native) or _timestamp_mapping_matches(column, native))
+            or _uuid_mapping_matches(column, native) or _timestamp_mapping_matches(column, native)
+            or _numeric_mapping_matches(column, native))
+
+
+def _numeric_mapping_matches(column, native):
+    dtype = column.type
+    if type(dtype) not in (Numeric, postgresql.NUMERIC) or dtype.asdecimal is not True:
+        return False
+    try:
+        typmod = numeric_typmod(dtype.precision, dtype.scale)
+        numeric_parameters(native['typmod'])
+    except (ValueError, KeyError):
+        return False
+    return (not getattr(dtype, '_variant_mapping', None)
+            and all(getattr(getattr(dtype, name), '__func__', None) is getattr(Numeric, name)
+                    for name in ('bind_processor', 'result_processor', 'literal_processor',
+                                 'bind_expression', 'column_expression', 'dialect_impl'))
+            and native['type_schema'] == 'pg_catalog' and native['type'] == 'numeric'
+            and native['typmod'] == typmod
+            and all(native[key] is None for key in
+                    ('collation', 'collation_name', 'collation_schema', 'deterministic', 'provider')))
 
 
 def _uuid_mapping_matches(column, native):
@@ -274,6 +323,8 @@ def _representation(queries):
 
 
 def _index_ops(source):
+    if source['type'] == 'numeric':
+        return 'pg_catalog.numeric_ops'
     return f"pg_catalog.{source['type']}_ops" if _orderable(source) else 'pg_catalog.text_ops'
 
 
@@ -294,6 +345,8 @@ def _integer_mapping_matches(column, native):
 
 
 def _value_codec(source):
+    if source['type'] == 'numeric':
+        return 'pg-numeric-decimal/v1'
     if source['type'] == 'timestamp':
         return 'pg-timestamp-us-be/v1'
     if source['type'] == 'uuid':
@@ -932,7 +985,7 @@ def _compile_model(model, mapper, facts, issues, schema):
         if field.queries and ('order' in field.queries) != _orderable(actual):
             refuse("unsupported_query", field.name, "Declare order search on integer, date and naive timestamp fields only. "
                    "They admit no other search; use storage-only protection otherwise.")
-        elif _fixed_value_width(actual) is not None and field.queries and not _orderable(actual):
+        elif (_fixed_value_width(actual) is not None or actual['type'] == 'numeric') and field.queries and not _orderable(actual):
             refuse("unsupported_query", field.name, "Use storage-only protection for this native value domain.")
         # Native deterministic default equality is byte-exact, like native C.
         # Names outside pg_catalog do not inherit either qualified identity.
@@ -1002,10 +1055,15 @@ def _compile_model(model, mapper, facts, issues, schema):
                        },
                        "source": {"type": actual["type"], "nullable": actual["nullable"], "collation": actual["collation"]},
                        "descriptor": descriptor})
-        if boolean or _fixed_value_width(actual) is not None and application_default is not None:
+        if actual['type'] == 'numeric':
+            fields[-1]['source']['typmod'] = actual['typmod']
+        if boolean or (_fixed_value_width(actual) is not None or actual['type'] == 'numeric') and application_default is not None:
             fields[-1]['application_default'] = (application_default if boolean else
                 application_default.isoformat(timespec='microseconds') if actual['type'] == 'timestamp' else
-                application_default.isoformat() if actual['type'] == 'date' else str(application_default))
+                application_default.isoformat() if actual['type'] == 'date' else
+                {'integer': format(Decimal(application_default), 'f')} if actual['type'] == 'numeric' and type(application_default) is int else
+                format(application_default, 'E') if actual['type'] == 'numeric' else
+                str(application_default))
     for item in facts["constraints"] + facts["indexes"]:
         del item["definition"]
     return {"model": model.model, "table_id": str(model.table_id),
@@ -1020,7 +1078,7 @@ def _descriptor(domain_id, table_id, field_id, record_codec, tenant_codec, repre
             "table_id": table_id, "field_id": field_id, "text_codec": "utf8-exact/v1",
             "normalizer": "identity/v1", "null_policy": "sql-null/v1",
             "record_codec": record_codec, "tenant_codec": tenant_codec, "representation": representation}
-    if value_codec in ('boolean-u8/v1', 'pg-int2-be/v1', 'pg-int4-be/v1', 'pg-int8-be/v1', 'pg-date-days-be/v1', 'date-ordinal-u32/v1', 'uuid-bytes16/v1', 'pg-timestamp-us-be/v1'):
+    if value_codec in ('boolean-u8/v1', 'pg-int2-be/v1', 'pg-int4-be/v1', 'pg-int8-be/v1', 'pg-date-days-be/v1', 'date-ordinal-u32/v1', 'uuid-bytes16/v1', 'pg-timestamp-us-be/v1', 'pg-numeric-decimal/v1'):
         descriptor['schema'] = 'cryptalis.context/v2'
         del descriptor['text_codec']
         descriptor['value_codec'] = value_codec
@@ -1054,6 +1112,7 @@ def _previous_lock(raw, current, engine):
     try:
         uuid_lock = old.get('schema') in _LOCK_SCHEMAS[8:]
         timestamp_lock = old.get('schema') in _LOCK_SCHEMAS[9:]
+        numeric_lock = old.get('schema') in _LOCK_SCHEMAS[10:]
         date_lock = old.get('schema') in _LOCK_SCHEMAS[7:]
         integer_lock = old.get('schema') in _LOCK_SCHEMAS[6:]
         public_slots = old.get('schema') == 'cryptalis.lock/v6' or integer_lock and old.get('layout') is not None
@@ -1136,6 +1195,8 @@ def _previous_lock(raw, current, engine):
                     raise ValueError
                 if field['source']['type'] == 'timestamp' and (not timestamp_lock or intent.queries and 'order' not in intent.queries):
                     raise ValueError
+                if field['source']['type'] == 'numeric' and (not numeric_lock or intent.queries):
+                    raise ValueError
                 if field['source']['type'] in _INTEGER_TYPES and (not integer_lock or intent.queries and 'order' not in intent.queries):
                     raise ValueError
                 if field['source']['type'] == 'date' and (not date_lock or intent.queries and 'order' not in intent.queries):
@@ -1146,7 +1207,7 @@ def _previous_lock(raw, current, engine):
                     if (old['schema'] not in _LOCK_SCHEMAS[3:] or intent.queries
                             or field['application_default'] is not None and type(field['application_default']) is not bool):
                         raise ValueError
-                if (field['source']['type'] in _INTEGER_TYPES or field['source']['type'] in ('date', 'timestamp')) and 'application_default' in field:
+                if (field['source']['type'] in _INTEGER_TYPES or field['source']['type'] in ('date', 'timestamp', 'numeric')) and 'application_default' in field:
                     if _compiled_default(field) is None:
                         raise ValueError
                     members.add('application_default')
@@ -1176,7 +1237,7 @@ def _previous_lock(raw, current, engine):
             if any(not isinstance(model["source_schema"][key], list) for key in ("columns", "constraints", "indexes", "dependencies")):
                 raise ValueError
             _validate_prior_source(model, varchar=old['schema'] in _LOCK_SCHEMAS[2:],
-                                   boolean=old['schema'] in _LOCK_SCHEMAS[3:], integer=integer_lock, date_values=date_lock, uuid_values=uuid_lock, timestamp_values=timestamp_lock)
+                                   boolean=old['schema'] in _LOCK_SCHEMAS[3:], integer=integer_lock, date_values=date_lock, uuid_values=uuid_lock, timestamp_values=timestamp_lock, numeric_values=numeric_lock)
             if public_slots:
                 slots = [column['attnum'] for column in model['source_schema']['columns']]
                 if (any(type(slot) is not int or not 0 < slot < 32768 for slot in slots)
@@ -1198,7 +1259,8 @@ def _previous_lock(raw, current, engine):
         date_values = any(f['source']['type'] == 'date' for model in old['models'] for f in model['fields'])
         uuids = any(f['source']['type'] == 'uuid' for model in old['models'] for f in model['fields'])
         timestamps = any(f['source']['type'] == 'timestamp' for model in old['models'] for f in model['fields'])
-        expected_schema = ('cryptalis.lock/v10' if timestamps else 'cryptalis.lock/v9' if uuids else 'cryptalis.lock/v8' if date_values else 'cryptalis.lock/v7' if integer else 'cryptalis.lock/v6' if public_slots else 'cryptalis.lock/v5' if sequences else 'cryptalis.lock/v4' if boolean
+        numerics = any(f['source']['type'] == 'numeric' for model in old['models'] for f in model['fields'])
+        expected_schema = ('cryptalis.lock/v11' if numerics else 'cryptalis.lock/v10' if timestamps else 'cryptalis.lock/v9' if uuids else 'cryptalis.lock/v8' if date_values else 'cryptalis.lock/v7' if integer else 'cryptalis.lock/v6' if public_slots else 'cryptalis.lock/v5' if sequences else 'cryptalis.lock/v4' if boolean
                            else 'cryptalis.lock/v3' if varchar else old['schema']
                            if old['schema'] == 'cryptalis.lock/v1' else 'cryptalis.lock/v2')
         if old['schema'] != expected_schema:
@@ -1257,7 +1319,7 @@ def _validate_catalog_facts(facts):
     return columns
 
 
-def _validate_prior_source(model, *, varchar=False, boolean=False, integer=False, date_values=False, uuid_values=False, timestamp_values=False):
+def _validate_prior_source(model, *, varchar=False, boolean=False, integer=False, date_values=False, uuid_values=False, timestamp_values=False, numeric_values=False):
     """Check a prior snapshot's shape and admitted facts without trusting its hash."""
     def require(condition):
         if not condition:
@@ -1296,12 +1358,19 @@ def _validate_prior_source(model, *, varchar=False, boolean=False, integer=False
         elif timestamp_values and source['type'] == 'timestamp':
             require(_timestamp_mapping_matches(Column('value', DateTime()), source))
             require(not field['queries'] or 'order' in field['queries'])
+        elif numeric_values and source['type'] == 'numeric':
+            parameters = numeric_parameters(source['typmod'])
+            require(_numeric_mapping_matches(Column('value', Numeric(*parameters) if parameters else Numeric()), source))
+            require(not field['queries'])
         else:
             require(source['type'] == 'text' or varchar and source['type'] == 'varchar')
             _native_text_length(source)
         require(field["column"] not in (pk["name"], tenant_name))
         require(not any(source[k] for k in ("identity", "generated", "default_digest")))
-        require(field["source"] == {"type": source['type'], "nullable": source["nullable"], "collation": source["collation"]})
+        expected_source = {"type": source['type'], "nullable": source["nullable"], "collation": source["collation"]}
+        if source['type'] == 'numeric':
+            expected_source['typmod'] = source['typmod']
+        require(field['source'] == expected_source)
         if field["queries"] and not _orderable(source):
             require(_exact_search_collation(source))
         affected = [i for i in facts["indexes"] if field["column"] in i["columns"] + i["dependency_columns"]]
@@ -1471,14 +1540,15 @@ def compile_protection(raw: bytes, mapping: Registry, engine: Engine, *,
     date_values = any(f['source']['type'] == 'date' for model in models for f in model['fields'])
     uuids = any(f['source']['type'] == 'uuid' for model in models for f in model['fields'])
     timestamps = any(f['source']['type'] == 'timestamp' for model in models for f in model['fields'])
-    if not sequences and layout is None and not integer and not date_values and not uuids and not timestamps:
+    numerics = any(f['source']['type'] == 'numeric' for model in models for f in model['fields'])
+    if not sequences and layout is None and not integer and not date_values and not uuids and not timestamps and not numerics:
         for model in models:
             del model['source_metadata']['owned_sequences']
-    document = {"schema": "cryptalis.lock/v10" if timestamps else "cryptalis.lock/v9" if uuids else "cryptalis.lock/v8" if date_values else "cryptalis.lock/v7" if integer else "cryptalis.lock/v6" if layout is not None else "cryptalis.lock/v5" if sequences else "cryptalis.lock/v4" if boolean else "cryptalis.lock/v3" if varchar else "cryptalis.lock/v2", "profile": "cf1",
+    document = {"schema": "cryptalis.lock/v11" if numerics else "cryptalis.lock/v10" if timestamps else "cryptalis.lock/v9" if uuids else "cryptalis.lock/v8" if date_values else "cryptalis.lock/v7" if integer else "cryptalis.lock/v6" if layout is not None else "cryptalis.lock/v5" if sequences else "cryptalis.lock/v4" if boolean else "cryptalis.lock/v3" if varchar else "cryptalis.lock/v2", "profile": "cf1",
                 "domain_id": str(declaration.domain_id), "database": {"major": 16, "encoding": "UTF8"},
                 "declaration": json.loads(declaration.canonical_bytes()), "models": models,
                 "writer_inventory": host, "search_reviews": reviews}
-    if layout is not None or integer or date_values or uuids or timestamps:
+    if layout is not None or integer or date_values or uuids or timestamps or numerics:
         document['layout'] = layout
     document["ddl"] = _ddl(document, engine)
     document["required_readers"] = _required_readers(models)

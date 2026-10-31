@@ -52,6 +52,8 @@ in years 1 through 9999. Date search other than [`order`](#order-search), non-li
 string/timestamp coercions and custom mappings refuse; NULL presence and direct COUNT retain their grammar.
 Native [timestamp storage](#timestamp-storage) admits naive Python datetime values
 at microsecond precision, using standard DateTime or TIMESTAMP mappings.
+Native [numeric storage](#numeric-storage) admits finite Decimal values through
+standard Numeric/NUMERIC mappings with `asdecimal=True`.
 Literal Boolean client defaults retain native INSERT omission/None behavior.
 UPDATE with None retains native nullability errors and rollback. Custom converters refuse admission.
 An explicit [SQLModel bridge](#optional-sqlmodel-bridge) admits one exact pinned
@@ -166,6 +168,7 @@ parent/child transaction evidence and remaining qualification work.
 | Date storage/read/write and SQL NULL | SUPPORTED | Exact Python date values in years 1 through 9999; pinned four-byte Date codec and lock/v8. Storage-only unless the field declares [`order`](#order-search), native sync/async values and latest-value removal. Non-finite/BC/out-of-range source dates refuse before migration effects |
 | UUID value storage/read/write and SQL NULL | SUPPORTED | Exact standard native UUID mappings and Python UUID inputs, including nil; sixteen authenticated network-order bytes and lock/v9. Storage-only; defaults, coercions and custom mappings refuse. Public record/tenant UUIDs keep their separate context contract |
 | Timestamp storage/read/write and SQL NULL | SUPPORTED, bounded | Standard timestamp without time zone at default precision or explicit precision 6; exact naive Python datetime values in years 1–9999, literal client defaults, lock/v10 and [the timestamp boundary](#timestamp-storage). Explicit opt-in order admits comparisons and sorting; timezone-aware values and precision rounding remain unadmitted |
+| Numeric storage/read/write and SQL NULL | SUPPORTED, bounded | Standard Numeric/NUMERIC with asdecimal=True; finite Decimal or exact Python int inputs, unconstrained or declared precision/scale, native rounding, literal defaults and lock/v11. [Numeric boundary](#numeric-storage); search, arithmetic and nonfinite values remain unadmitted |
 | Signed integer storage/read/write and SQL NULL | SUPPORTED | Exact int2/int4/int8 mappings and width-bound Python ints, literal client defaults, native failure/transaction behavior and typed fixed-width CF1. Storage-only unless the field declares [`order`](#order-search); the fixed authentication overhead is published in the local cost profile |
 | Mapped dictionary INSERT without RETURNING | SUPPORTED | Attached sync/async `Session.execute(insert(Model), list[dict])`, explicit typed IDs and tenant scope, copied attribute dictionaries, native NULL/grouping, autoflush, uniqueness and transaction behavior. Other bulk routes remain unadmitted |
 | Mapped dictionary INSERT with RETURNING | SUPPORTED | Native direct or explicitly named column tuples/scalars and inserted mapped entities, including public-only columns. Preserve result keys/types, grouping, paging and optional input ordering. Entity results retain identity-map loading and refresh. Authenticate each protected output against its own exact prepared input. Computed expression/alias, loader-option and caller return_defaults forms remain unadmitted |
@@ -383,6 +386,36 @@ published fixed-overhead cost; production qualification remains UNKNOWN. See
 the [installed checkpoint](history/implementation-2026-10.md#integer-installed-lifecycle-checkpoint-2026-10-24).
 The newer [default/state checkpoint](history/implementation-2026-10.md#integer-literal-default-installed-checkpoint-2026-10-24)
 adds native default semantics and fixes attribute expiration after valid flushes.
+
+## Numeric storage
+
+Standard SQLAlchemy `Numeric` and PostgreSQL `NUMERIC` mappings require
+`asdecimal=True`. Values are finite exact Python `Decimal`, exact Python `int`
+or SQL NULL. Native unconstrained precision and declared precision 1–1000 with
+scale -1000–1000 are admitted, including negative scales and scales larger than
+precision. Assignment rounds ties away from zero, independently of the host's
+Decimal precision, rounding and traps. Reads preserve PostgreSQL's fractional
+scale and unsigned zero. Floats, strings, Boolean, custom mappings and nonfinite
+values refuse explicitly.
+
+Literal client defaults preserve native omission/None behavior, Python type and
+Decimal tuple before refresh, and native scale after refresh. Other generated
+defaults remain unadmitted. Precision overflow retains
+typed `NumericRangeExceeded`, SQLSTATE `22003`, transaction/savepoint state,
+prepared custom/generic zero-match timing and earlier constraint errors. Public
+overflow constants reproduce native failure without sending private values to
+PostgreSQL. Stored values must already fit the pinned typmod; reads and removal
+refuse authenticated values that would require rounding or a scale change.
+
+Lock/v11 adds `pg-numeric-decimal/v1` and retains the original native typmod.
+The codec stores canonical ASCII fixed-point decimal text, preserving fractional
+zeroes, with at most 131072 integer digits and 16383 fractional digits. Initial
+planning and locked expansion refuse nonfinite source values. Online capture
+refuses a nonfinite dirty row without committing that chunk and preserves
+read-only progress inspection. Existing NULL-presence and direct-count grammar
+is retained. Numeric equality/range/order search, arithmetic, other aggregates
+and nonfinite values remain implementation work. This admission supplies no
+production qualification.
 
 ## Internal DATE storage candidate
 
