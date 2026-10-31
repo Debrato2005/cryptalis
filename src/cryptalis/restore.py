@@ -436,7 +436,7 @@ def _sequence_evidence(c, source, binding=None):
     """Compare every logical fact before admitting restored sequence OIDs."""
     from cryptalis.manifest.compiler import sequence_metadata
     maps, facts = [], {}
-    if source.document['lock']['schema'] not in ('cryptalis.lock/v5', 'cryptalis.lock/v6', 'cryptalis.lock/v7', 'cryptalis.lock/v8', 'cryptalis.lock/v9'):
+    if source.document['lock']['schema'] not in ('cryptalis.lock/v5', 'cryptalis.lock/v6', 'cryptalis.lock/v7', 'cryptalis.lock/v8', 'cryptalis.lock/v9', 'cryptalis.lock/v10'):
         return maps, facts
     for model in source.document['lock']['models']:
         original = sequence_admissions(source.document, model)
@@ -632,6 +632,7 @@ def _scan(c, source, keys):
                             raise m.TransitionFailure('restored_frame_verification_failed',
                                                       source.operation_id) from None
                         expected_type = (bool if descriptors[i].value_codec == 'boolean-u8/v1' else
+                            datetime.datetime if descriptors[i].value_codec == 'pg-timestamp-us-be/v1' else
                             UUID if descriptors[i].value_codec == 'uuid-bytes16/v1' else
                             date if descriptors[i].value_codec in ('pg-date-days-be/v1', 'date-ordinal-u32/v1') else
                             int if descriptors[i].value_codec in ('pg-int2-be/v1', 'pg-int4-be/v1', 'pg-int8-be/v1') else str)

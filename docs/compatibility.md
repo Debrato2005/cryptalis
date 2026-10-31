@@ -48,8 +48,10 @@ Native Boolean storage has a separate pinned codec and standard Boolean mapping.
 Native signed int2/int4/int8 storage uses exact SmallInteger/Integer/BigInteger
 mappings, typed fixed-width values and admitted literal client defaults.
 Native DATE storage admits exact standard Date mappings and Python date values
-in years 1 through 9999. Date search other than [`order`](#order-search), defaults,
+in years 1 through 9999. Date search other than [`order`](#order-search), non-literal defaults,
 string/timestamp coercions and custom mappings refuse; NULL presence and direct COUNT retain their grammar.
+Native [timestamp storage](#timestamp-storage) admits naive Python datetime values
+at microsecond precision, using standard DateTime or TIMESTAMP mappings.
 Literal Boolean client defaults retain native INSERT omission/None behavior.
 UPDATE with None retains native nullability errors and rollback. Custom converters refuse admission.
 An explicit [SQLModel bridge](#optional-sqlmodel-bridge) admits one exact pinned
@@ -150,6 +152,7 @@ parent/child transaction evidence and remaining qualification work.
 | Boolean storage/read/write, entity/table/scalar projection, SQL NULL | SUPPORTED | Typed authenticated one-byte values, native Boolean input processing and literal client defaults. No Boolean equality term. [Bounded evidence](history/implementation-2026-10.md#boolean-storage-checkpoint-2026-10-23) |
 | Date storage/read/write and SQL NULL | SUPPORTED | Exact Python date values in years 1 through 9999; pinned four-byte Date codec and lock/v8. Storage-only unless the field declares [`order`](#order-search), native sync/async values and latest-value removal. Non-finite/BC/out-of-range source dates refuse before migration effects |
 | UUID value storage/read/write and SQL NULL | SUPPORTED | Exact standard native UUID mappings and Python UUID inputs, including nil; sixteen authenticated network-order bytes and lock/v9. Storage-only; defaults, coercions and custom mappings refuse. Public record/tenant UUIDs keep their separate context contract |
+| Timestamp storage/read/write and SQL NULL | SUPPORTED, bounded | Standard timestamp without time zone at default precision or explicit precision 6; exact naive Python datetime values in years 1–9999, literal client defaults, lock/v10 and [the timestamp boundary](#timestamp-storage). Search, timezone-aware values and precision rounding remain unadmitted |
 | Signed integer storage/read/write and SQL NULL | SUPPORTED | Exact int2/int4/int8 mappings and width-bound Python ints, literal client defaults, native failure/transaction behavior and typed fixed-width CF1. Storage-only unless the field declares [`order`](#order-search); the fixed authentication overhead is published in the local cost profile |
 | Mapped dictionary INSERT without RETURNING | SUPPORTED | Attached sync/async `Session.execute(insert(Model), list[dict])`, explicit typed IDs and tenant scope, copied attribute dictionaries, native NULL/grouping, autoflush, uniqueness and transaction behavior. Other bulk routes remain unadmitted |
 | Mapped dictionary INSERT with RETURNING | SUPPORTED | Native direct or explicitly named column tuples/scalars and inserted mapped entities, including public-only columns. Preserve result keys/types, grouping, paging and optional input ordering. Entity results retain identity-map loading and refresh. Authenticate each protected output against its own exact prepared input. Computed expression/alias, loader-option and caller return_defaults forms remain unadmitted |
@@ -387,14 +390,40 @@ The schema-only compiler does not read application values.
 
 Both physical layouts, rotations alongside independently searchable text,
 genuine fresh restore, latest-value reverse/removal and a process that refuses
-Cryptalis imports have local evidence. Protected DATE search, comparisons,
-ordering, arithmetic, aggregates and joins remain unadmitted; existing NULL
-presence grammar is retained. Bounded online capture also covers Date alongside
+Cryptalis imports have local evidence. Date search follows the current
+[`order` contract](#order-search); arithmetic, other aggregates and protected
+joins remain unadmitted. Existing NULL presence grammar is retained.
+Bounded online capture also covers Date alongside
 Boolean, signed integers and UUID; the [native scalar journey](../tests/test_online_scalars.py)
 checks current values, interruption/resume, abort and native exit.
 Broader external DATE applications, deployment cost qualification and all six
 technical admission gates remain required. No full type or production
 qualification follows from this internal candidate.
+
+## Timestamp storage
+
+The admitted native type is `timestamp without time zone`, with default precision
+or explicit precision 6, mapped by standard SQLAlchemy `DateTime(timezone=False)`
+or PostgreSQL `TIMESTAMP(timezone=False, precision=6)`. Values are exact Python
+`datetime` instances with `tzinfo=None`, including microseconds and SQL NULL.
+Literal naive datetime client defaults preserve native INSERT omission/None
+behavior. Server-generated or callable defaults, other precisions, custom
+mappings, strings, dates and aware datetime inputs refuse explicitly.
+
+`pg-timestamp-us-be/v1` uses eight signed big-endian microseconds from
+2000-01-01. Lock/v10 pins this codec and, for literal defaults only,
+`pg-timestamp-default/v1`. Earlier type combinations retain their lock versions.
+Operational planning and locked initial expansion reject infinities, BC and
+out-of-range years before schema effects. Values introduced during online capture
+are checked before driver decoding and leave failed chunks atomic. Read-only
+status remains available to inspect already committed progress.
+
+This slice admits storage, NULL presence and the existing direct-count grammar.
+Timestamp comparisons, search, ordering, arithmetic, grouping and protected joins
+remain implementation work. Both layouts preserve current values and explicit
+precision on exit. [PostgreSQL's native temporal contract](https://www.postgresql.org/docs/16/datatype-datetime.html)
+and the [native oracle](../tests/test_timestamp_storage.py) define the bounded
+semantics; no production cell or security gate is qualified.
 
 ## Optional SQLModel bridge
 

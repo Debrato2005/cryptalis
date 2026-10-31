@@ -61,7 +61,7 @@ class OnlineProtectionPlan:
                 raise ValueError
             models = d['lock']['models']
             if any((not tenant_scoped and 'column' in model['tenancy']) or any(
-                    field['source']['type'] not in ('text', 'varchar', 'bool', 'int2', 'int4', 'int8', 'date', 'uuid')
+                    field['source']['type'] not in ('text', 'varchar', 'bool', 'int2', 'int4', 'int8', 'date', 'uuid', 'timestamp')
                     for field in model['fields']) for model in models):
                 raise ValueError
             if tenant_scoped:
@@ -295,6 +295,7 @@ def _expand(c, p):
         if m._facts(c, model) != model['source_schema']:
             raise m.TransitionFailure('source_schema_changed', p.operation_id)
         m._check_source_metadata(c, p, model)
+        m._check_temporal_source_domain(c, model, p.operation_id)
     if p.document['format'] == TENANT_FORMAT:
         _check_native_tenants(c, p.document['lock']['models'],
                               _tenant_list(p.document['native_tenants']), p.operation_id)
@@ -329,7 +330,7 @@ def _chunk(c, p, state, keys, *, pool=None, row_limit=None):
         scoped = 'column' in model['tenancy']
         fields = [f['column'] for f in model['fields']]
         names = [model['record']['column']] + ([model['tenancy']['column']] if scoped else []) + fields
-        widths = {'bool': 1, 'int2': 2, 'int4': 4, 'int8': 8, 'date': 4, 'uuid': 16}
+        widths = {'bool': 1, 'int2': 2, 'int4': 4, 'int8': 8, 'date': 4, 'uuid': 16, 'timestamp': 8}
         sizes = '+'.join((str(widths[f['source']['type']]) if f['source']['type'] in widths else
                          'COALESCE(pg_catalog.octet_length('+m._quote(c,f['column'])+'),0)') + '+74'
                          for f in model['fields'])
@@ -349,13 +350,16 @@ def _chunk(c, p, state, keys, *, pool=None, row_limit=None):
         # Lock identities and inspect sizes before fetching native values. The
         # row count alone does not bound memory for large text values.
         for field in model['fields']:
-            if field['source']['type'] == 'date':
+            kind = field['source']['type']
+            if kind in ('date', 'timestamp'):
                 column = m._quote(c, field['column'])
+                lower, upper = (('0001-01-01', '9999-12-31') if kind == 'date' else
+                                ('0001-01-01 00:00:00', '9999-12-31 23:59:59.999999'))
                 if c.exec_driver_sql(f'SELECT EXISTS (SELECT 1 FROM {m._table(c,model)} '
                         f'WHERE {m._quote(c,names[0])}=ANY(%s) AND '
-                        f"({column} < DATE '0001-01-01' OR {column} > DATE '9999-12-31'))",
+                        f"({column} < {kind} '{lower}' OR {column} > {kind} '{upper}'))",
                         (selected,)).scalar_one():
-                    raise m.TransitionFailure('date_outside_python_range', p.operation_id)
+                    raise m.TransitionFailure(kind + '_outside_python_range', p.operation_id)
         rows = c.exec_driver_sql('SELECT ' + ','.join(m._quote(c,name) for name in names)
             + f' FROM {m._table(c,model)} WHERE {m._quote(c,names[0])}=ANY(%s)'
             + f' ORDER BY {m._quote(c,names[0])}',(selected,)).all()

@@ -8,7 +8,7 @@ import hashlib
 import json
 import os
 from dataclasses import dataclass
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta
 from hmac import compare_digest, digest as hmac_digest
 from uuid import UUID
 
@@ -27,6 +27,8 @@ _MAGIC = b"CF1\x00\x01"
 _INTEGER_WIDTHS = {"pg-int2-be/v1": 2, "pg-int4-be/v1": 4, "pg-int8-be/v1": 8}
 _DATE_CODEC = "pg-date-days-be/v1"
 _DATE_EPOCH = date(2000, 1, 1)
+_TIMESTAMP_CODEC = 'pg-timestamp-us-be/v1'
+_TIMESTAMP_EPOCH = datetime(2000, 1, 1)
 _ORDER_REPRESENTATION = "cf1-packed-order/v1"
 _ORDER_CODECS = (*_INTEGER_WIDTHS, _DATE_CODEC)
 _DESCRIPTOR_MEMBERS = frozenset(("schema", "domain_id", "table_id", "field_id", "text_codec",
@@ -50,7 +52,7 @@ class FieldDescriptor:
         if (self.record_codec not in ("uuid16/v1", "int64-be/v1") or
                 self.tenant_codec not in ("uuid16/v1", "single-tenant-uuid/v1") or
                 self.representation not in ("cf1-storage/v1", "cf1-packed-equality/v1", _ORDER_REPRESENTATION) or
-                self.value_codec not in ("utf8-exact/v1", "boolean-u8/v1", _DATE_CODEC, "date-ordinal-u32/v1", "uuid-bytes16/v1", *_INTEGER_WIDTHS) or
+                self.value_codec not in ("utf8-exact/v1", "boolean-u8/v1", _DATE_CODEC, _TIMESTAMP_CODEC, "date-ordinal-u32/v1", "uuid-bytes16/v1", *_INTEGER_WIDTHS) or
                 self.representation == "cf1-packed-equality/v1" and self.value_codec != "utf8-exact/v1" or
                 self.representation == _ORDER_REPRESENTATION and self.value_codec not in _ORDER_CODECS or
                 type(self.digest) is not bytes or len(self.digest) != 32):
@@ -69,7 +71,7 @@ class FieldDescriptor:
             if any(type(v) is not str or len(v) > 128 for v in document.values()):
                 raise InvalidContext()
             codec = document["value_codec" if typed else "text_codec"]
-            allowed_codecs = ("boolean-u8/v1", _DATE_CODEC, "date-ordinal-u32/v1", "uuid-bytes16/v1", *_INTEGER_WIDTHS) if typed else ("utf8-exact/v1",)
+            allowed_codecs = ("boolean-u8/v1", _DATE_CODEC, _TIMESTAMP_CODEC, "date-ordinal-u32/v1", "uuid-bytes16/v1", *_INTEGER_WIDTHS) if typed else ("utf8-exact/v1",)
             if ((document["schema"], document["normalizer"], document["null_policy"]) != (
                     "cryptalis.context/v2" if typed else "cryptalis.context/v1", "identity/v1", "sql-null/v1")
                     or codec not in allowed_codecs):
@@ -119,6 +121,12 @@ def _encode(value):
 
 
 def _encode_value(value, field):
+    if field.value_codec == _TIMESTAMP_CODEC:
+        if type(value) is not datetime or value.tzinfo is not None:
+            raise InvalidValue()
+        delta = value - _TIMESTAMP_EPOCH
+        microseconds = (delta.days * 86400 + delta.seconds) * 1000000 + delta.microseconds
+        return microseconds.to_bytes(8, 'big', signed=True)
     if field.value_codec == "boolean-u8/v1":
         if type(value) is not bool:
             raise InvalidValue()
@@ -218,7 +226,7 @@ def _aad(field, tenant, record, header):
                        record, field.digest, header)
 
 
-def seal_value(value: str | bool | int | date | UUID | None, field: FieldDescriptor, tenant: UUID,
+def seal_value(value: str | bool | int | date | datetime | UUID | None, field: FieldDescriptor, tenant: UUID,
               record: UUID | int, keys: PreparedKeys) -> bytes | None:
     """Seal the pinned value codec with active keys and a fresh OS nonce."""
     typed = _context(field, tenant, record, keys)
@@ -249,7 +257,7 @@ def seal_value(value: str | bool | int | date | UUID | None, field: FieldDescrip
 
 
 def open_value(frame: bytes | None, field: FieldDescriptor, tenant: UUID,
-               record: UUID | int, keys: PreparedKeys) -> str | bool | int | date | UUID | None:
+               record: UUID | int, keys: PreparedKeys) -> str | bool | int | date | datetime | UUID | None:
     """Authenticate before decode or release. Header IDs cannot select custody."""
     typed = _context(field, tenant, record, keys)
     if frame is None:
@@ -300,6 +308,13 @@ def open_value(frame: bytes | None, field: FieldDescriptor, tenant: UUID,
             raise InvalidValue()
         try:
             value = _DATE_EPOCH + timedelta(days=int.from_bytes(encoded, 'big', signed=True))
+        except OverflowError:
+            raise InvalidValue() from None
+    elif field.value_codec == _TIMESTAMP_CODEC:
+        if len(encoded) != 8:
+            raise InvalidValue()
+        try:
+            value = _TIMESTAMP_EPOCH + timedelta(microseconds=int.from_bytes(encoded, 'big', signed=True))
         except OverflowError:
             raise InvalidValue() from None
     elif field.value_codec in _INTEGER_WIDTHS:

@@ -1557,6 +1557,28 @@ under the same storage-only codec and source-domain checks.
 Full type admission, external application/cost evidence and independent human
 composition review remain required.
 
+## Timestamp storage boundary
+
+`pg-timestamp-us-be/v1` adds no cipher or key derivation. It encodes naive Python
+datetime values as eight signed big-endian microseconds from 2000-01-01 inside
+the existing CF1 payload. The context/v2 descriptor digest authenticates this
+value codec, and lock/v10 requires its reader. Decode authenticates the complete
+frame before checking exact width and the finite Python datetime range.
+
+The native mapping is timestamp without time zone at default precision or
+explicit precision 6. Literal datetime defaults use `pg-timestamp-default/v1`;
+they are public configuration. Aware values, implicit coercions and other
+precisions refuse. Source bounds are checked during planning and under locks
+before initial maintenance or online schema effects. Later online chunks check
+selected rows before driver decoding, with failed-chunk atomicity and readable
+progress. Both exit layouts retain explicit native precision.
+
+Storage-only timestamps disclose the existing row linkage, SQL NULL presence,
+frame length and access/write patterns. No timestamp search term or order
+representation is generated. [Compatibility](compatibility.md#timestamp-storage)
+owns the admitted operations. Independent composition review and all seven
+production gates remain UNKNOWN.
+
 ## Internal storage-only integer boundary
 
 **IMPLEMENTED, bounded source and installed checks:** signed integer codecs use

@@ -25,14 +25,14 @@ def date_keys(tenant):
 
 
 @contextmanager
-def date_application(*, public_slots=False):
+def date_application(*, public_slots=False, value_type=None, values=VALUES, value_default=date.min):
     """Retain storage-only DATE alongside independently declared searchable text."""
     from cryptalis.manifest.compiler import SearchReview, Writer, WriterInventory, _canonical
     label_id = UUID(int=1211)
     def setup(connection, schema, role):
         connection.exec_driver_sql(f'CREATE INDEX native_label ON "{schema}".customer (label)')
-    with application(value_type=Date(), queries=[], protected_values=VALUES,
-                     value_default=date.min, setup=setup) as app:
+    with application(value_type=Date() if value_type is None else value_type, queries=[], protected_values=values,
+                     value_default=value_default, setup=setup) as app:
         # ORM INSERT applies the native client default to None; create SQL NULL
         # through a subsequent native UPDATE so both values enter migration.
         with app.runtime.begin() as connection:
@@ -116,10 +116,11 @@ def remove_date(app, *, restore=None, plaintext_role=None):
     d.check_removed(proposal, app.owner, pin=app_pin(proposal, 'REMOVED'))
 
 
-def native_restart(schema, expected, *, directory='/tmp'):
+def native_restart(schema, expected, *, directory='/tmp', timestamp=False):
     child = subprocess.run([sys.executable, '-B', '-I', '-c', '''
 import importlib.abc, json, os, sys
-from datetime import date
+from datetime import date, datetime
+native_type = datetime if os.environ['DATE_TIMESTAMP'] == '1' else date
 class Deny(importlib.abc.MetaPathFinder):
     def find_spec(self, fullname, path=None, target=None):
         if fullname == 'cryptalis' or fullname.startswith('cryptalis.'):
@@ -130,17 +131,17 @@ from psycopg import sql
 with psycopg.connect(os.environ['CRYPTALIS_TEST_RUNTIME_DATABASE_URL']) as connection:
     rows = connection.execute(sql.SQL('SELECT id,name FROM {}.customer').format(
         sql.Identifier(os.environ['DATE_SCHEMA']))).fetchall()
-    assert all(value is None or type(value) is date for _, value in rows)
+    assert all(value is None or type(value) is native_type for _, value in rows)
     assert {str(key): value.isoformat() if value is not None else None for key, value in rows} == json.loads(os.environ['DATE_EXPECTED'])
     actual = connection.execute('SELECT a.atttypid::regtype::text FROM pg_catalog.pg_attribute a '
         'WHERE a.attrelid=pg_catalog.to_regclass(%s) AND a.attname=%s',
         ('"' + os.environ['DATE_SCHEMA'] + '".customer', 'name')).fetchone()[0]
-    assert actual == 'date'
+    assert actual == ('timestamp without time zone' if native_type is datetime else 'date')
     connection.execute(sql.SQL('UPDATE {}.customer SET name=%s WHERE id=(SELECT min(id::text)::uuid FROM {}.customer)').format(
-        sql.Identifier(os.environ['DATE_SCHEMA']), sql.Identifier(os.environ['DATE_SCHEMA'])), (date(2001, 1, 1),))
+        sql.Identifier(os.environ['DATE_SCHEMA']), sql.Identifier(os.environ['DATE_SCHEMA'])), (native_type(2001, 1, 1),))
 assert not any(name == 'cryptalis' or name.startswith('cryptalis.') for name in sys.modules)
 print('native DATE package-free restart passed')
-'''], env=dict(os.environ, DATE_SCHEMA=schema, DATE_EXPECTED=json.dumps({str(key):
+'''], env=dict(os.environ, DATE_SCHEMA=schema, DATE_TIMESTAMP='1' if timestamp else '0', DATE_EXPECTED=json.dumps({str(key):
         value.isoformat() if value is not None else None for key, value in expected.items()})),
         cwd=directory, capture_output=True, text=True, timeout=30)
     assert child.returncode == 0, 'native DATE restart failed; diagnostics withheld'

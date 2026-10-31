@@ -429,7 +429,7 @@ def _observed_source_metadata(c, p, model, *, sequences=None):
 
 
 def _preserves_public_slot_lock(lock):
-    return lock['schema'] in ('cryptalis.lock/v6', 'cryptalis.lock/v7', 'cryptalis.lock/v8', 'cryptalis.lock/v9') and lock.get('layout') == 'preserve-public-slots/v1'
+    return lock['schema'] in ('cryptalis.lock/v6', 'cryptalis.lock/v7', 'cryptalis.lock/v8', 'cryptalis.lock/v9', 'cryptalis.lock/v10') and lock.get('layout') == 'preserve-public-slots/v1'
 
 
 def _preserves_public_slots(p):
@@ -500,6 +500,8 @@ def _convert_public_columns(c, p, model, *, plaintext=False):
             native = next(column for column in model['source_schema']['columns'] if column['name'] == field['column'])
             if _fixed_value_width(native) is not None:
                 target = 'pg_catalog.' + native['type']
+                if native['type'] == 'timestamp' and native['typmod'] == '6':
+                    target += '(6)'
             else:
                 limit = _native_text_length(native)
                 target = ('pg_catalog.text' if native['type'] == 'text' else
@@ -695,7 +697,7 @@ def plan(manifest, mapping, engine, *, writers, search_reviews=(), keys, runtime
         _runtime_safety(c, runtime_role, target[-1], lock['models'])
         for model in lock['models']:
             if _facts(c,model) != model['source_schema']: raise TransitionFailure('stale_plan_schema')
-            _check_date_source_domain(c, model)
+            _check_temporal_source_domain(c, model)
             tenant = _quote(c,model['tenancy']['column']) if 'column' in model['tenancy'] else None
             tenants=c.exec_driver_sql(f'SELECT DISTINCT {tenant} FROM {_table(c,model)}').scalars().all() if tenant else [UUID(model['table_id'])]
             for t in tenants:
@@ -1045,16 +1047,19 @@ def _install_guards(c,p):
         c.exec_driver_sql(f'ALTER TABLE {table} ENABLE ALWAYS TRIGGER {_quote(c,trigger)}')
 
 
-def _check_date_source_domain(c, model, operation_id=None):
-    """Count unsupported native dates without asking the driver to decode them."""
+def _check_temporal_source_domain(c, model, operation_id=None):
+    """Refuse native temporal values the admitted Python reader cannot decode."""
     for field in model['fields']:
-        if field['source']['type'] != 'date':
+        kind = field['source']['type']
+        if kind not in ('date', 'timestamp'):
             continue
         column = _quote(c, field['column'])
+        lower, upper = (('0001-01-01', '9999-12-31') if kind == 'date' else
+                        ('0001-01-01 00:00:00', '9999-12-31 23:59:59.999999'))
         outside = c.exec_driver_sql(f'SELECT count(*) FROM {_table(c, model)} WHERE '
-            f"{column} < DATE '0001-01-01' OR {column} > DATE '9999-12-31'").scalar_one()
+            f"{column} < {kind} '{lower}' OR {column} > {kind} '{upper}'").scalar_one()
         if outside:
-            raise TransitionFailure('date_source_domain', operation_id)
+            raise TransitionFailure(kind + '_source_domain', operation_id)
 
 
 def _expand(c,p):
@@ -1062,7 +1067,7 @@ def _expand(c,p):
     for model in p.document['lock']['models']:
         if _facts(c,model)!=model['source_schema']: raise TransitionFailure('source_schema_changed',p.operation_id)
         _check_source_metadata(c,p,model)
-        _check_date_source_domain(c, model, p.operation_id)
+        _check_temporal_source_domain(c, model, p.operation_id)
     c.exec_driver_sql(f'CREATE TABLE {_journal(c,p)} (operation_id uuid PRIMARY KEY, plan_digest text NOT NULL, state jsonb NOT NULL)')
     c.exec_driver_sql(f'REVOKE ALL ON {_journal(c,p)} FROM PUBLIC')
     c.exec_driver_sql(f'GRANT SELECT ON {_journal(c,p)} TO {_quote(c,p.document["runtime_role"])}')
