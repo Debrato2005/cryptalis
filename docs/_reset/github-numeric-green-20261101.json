@@ -1,0 +1,49 @@
+{
+  "artifacts": {
+    "cryptalis-0.1.0-py3-none-any.whl": "826257231d5e7ddc6bc115b402e608f64e9be0ee179e4903634453cb2459d298",
+    "cryptalis-0.1.0.tar.gz": "1006c0eef67d910c99b818ca75075bf404f8dff5e9bc228df0df6a667a21d0a9"
+  },
+  "format": "cryptalis.numeric-green-ci/v1",
+  "github_archive_sha256": {
+    "release": "fa9c624e101ec3a39cf0ee495973dfe2ace52d2a1f628252006a8533354d174b",
+    "source": "ab2efd3e2e672de617fc30f052b29026ee9fa65cd861a92b3648db6743f6661c"
+  },
+  "jobs": {
+    "release": "success",
+    "source": "success"
+  },
+  "production_gates": "UNKNOWN",
+  "receipt_archive": "timestamptz-receipts-20261101.tar.gz",
+  "receipt_archive_sha256": "1efc67148d3150b225c0babdbabb8b94d1fe1e7b7c1fae247dc1814addddd721",
+  "revision": "fa55aef783cb7ae4ba7bbb8bd506c01e52d89d00",
+  "runtime_binding": {
+    "mode": "source",
+    "module_count": 42,
+    "modules_sha256": "49604bf6b849fe5334e149d86849f9635df1781faf2010dd52c319c33f81e007",
+    "runtime_root": "/home/runner/work/cryptalis/cryptalis/src/cryptalis",
+    "wheel": null,
+    "wheel_sha256": null
+  },
+  "source_outcomes": {
+    "collection": {
+      "skipped": 8
+    },
+    "selected_items": 3797,
+    "setup": {
+      "passed": 3756,
+      "skipped": 41
+    },
+    "subtest_calls": {
+      "passed": 18
+    },
+    "teardown": {
+      "passed": 3797
+    },
+    "test_calls": {
+      "passed": 3738,
+      "skipped": 18
+    }
+  },
+  "url": "https://github.com/Debrato2005/cryptalis/actions/runs/41244022521",
+  "workflow_run": 41244022521
+}

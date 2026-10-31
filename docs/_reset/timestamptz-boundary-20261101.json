@@ -1,0 +1,247 @@
+{
+  "archive": {
+    "members": {
+      "binary-oracle-fixture/receipt.json": "87ec42b016acdd6bc58d833f15387a115a6fb28aebc31ea40436766a418f1518",
+      "build.json": "ec5b2386ffc47dc6e72402f9aebfac2c43e26c3770a790fa602503610e6a1546",
+      "calendar-oracle-fixture/receipt.json": "075d19c3f5ec03f8d1cb23a5f98a0979d950de7c42687f54e9000754c76df293",
+      "default-identity/receipt.json": "d439fee2e52e7d95a119939f34df1f81ad57388e39513119d604299e833b1918",
+      "first-storage/receipt.json": "f689eee57a058ec71dcd52a21d0631db1e2b6d822256606113c9e970a1e7e319",
+      "focused/receipt.json": "2e762d330d942084f814f13577d7b373b872cb662e2cb311faec8974fa6bbf14",
+      "fresh-public-slots/export-receipt.json": "710bd22838c211e00c9e5335099dff626d7619678fc263589349dfd8de0f44ed",
+      "fresh-public-slots/restore-receipt.json": "6da295a6163c172ba4114f5a4f8427120d960495cfca8690e249ff4571169ed4",
+      "fresh-public-slots/timestamptz-journey-receipt.json": "57670242a9a6ba157ccb7e90d197be67cb080699b3be1c1f4bc87055f24dfa22",
+      "fresh/export-receipt.json": "b7950c8c1fb628be388eb731954a668b9b5450b8b3a1086e8cee2adeb476e27a",
+      "fresh/restore-receipt.json": "0181d511080d7154d9a7f189b9c13fd381ad2012e9d236097f092bfb39aa0246",
+      "fresh/timestamptz-journey-receipt.json": "ec4de2d003e92e65f89fb16f5d7972ca4d62e71e4e8dc52d6eb59a2d3ff06332",
+      "installation.json": "b5c12ba43aa485f6b497c227fc99d0c006ffd92d7f86c8082586c4d58005c2b6",
+      "installed/receipt.json": "9e92e30a8891d0ffe1332f209bc29f0b7f193dff943585bc627eae98375617e7",
+      "precision-oracle-fixture/receipt.json": "4e5a39651748f3140df10e5f60375fe330b414dd4b0309ec49d1133f7bd6f5c9",
+      "predecessor-ci-release/install-receipt.json": "e07af174234bc6bfa7b77110a825007eaaf438d42edf20bb9c30f2ac07b8484c",
+      "predecessor-ci-release/installed-application-export-receipt.json": "ea98412f1940e2ec7754a7a5e75d30b19d638d2793646f40b259d466bed7e393",
+      "predecessor-ci-release/installed-application-restore-receipt.json": "bc43f6a79605ecd1e9ceafb65ff8a820a702926ab4590edb15710ab96bb66566",
+      "predecessor-ci-release/installed-code-receipt.json": "68073c757498f3856ce158ddda809433b3db92e3eb8f697b7318905225b9cba9",
+      "predecessor-ci-release/installed-export-receipt.json": "f952f3be6aae13026c929223584fb74aaba2bafc919b268f6d8d00aa7bf5f5b8",
+      "predecessor-ci-release/installed-google-kms-receipt.json": "783bb4e6ea2f535b908d8fb9defab9017051006bb56702295027db2043ee757b",
+      "predecessor-ci-release/installed-journey-receipt.json": "2f0bfafe96f05a039411e604b5344f77bca9d803f5d5716686f458d06a9a63e1",
+      "predecessor-ci-release/installed-modification-export-receipt.json": "cbb4136e5f2cdbab9ce0a5e2298f0af31b29b6581347147d7249f1b103e26dc2",
+      "predecessor-ci-release/installed-modification-restore-receipt.json": "91efc3d6f7b59ad7c1ccf67b451762c468abac3a51b7b58c7b46fcb4d3d9d07d",
+      "predecessor-ci-release/installed-openbao-qualification.json": "3f68be32e8842f4e0cbb9d671ec2032215643838dc39a6a12dc4a17d80b3bc6f",
+      "predecessor-ci-release/installed-openbao-tests.json": "fd7966c298430910cf8c447a0a2743528e0b2fef55a56de6d510a50629486362",
+      "predecessor-ci-release/installed-restore-receipt.json": "8fb5ddc9dca6ef612c0e09fb4a3c99686a7901da6f0475b4058fd007e9db4694",
+      "predecessor-ci-release/installed-sqlmodel-receipt.json": "c095f6455cfda079023a6ea7cb8463fe9d8843248d0b13843a6c9b401987804c",
+      "predecessor-ci-release/installed-storage-modification-export-receipt.json": "234e4a41698656e3e2f96118d8cea046f62753ab7b445feecb4cfbdb29c306e2",
+      "predecessor-ci-release/installed-storage-modification-restore-receipt.json": "872698a7c634e85516e140c0c1812d6f8f663d378a8559205ee636c4ab850689",
+      "predecessor-ci-release/job-status.json": "577c3c86cd56e33b4f427f76f1f33d5a12883e41c9c0f710520731d24598dd4f",
+      "predecessor-ci-release/release-receipt.json": "16a08cbade556485af02194548d8198ca6825b362d831d8cd52d0a7c70c78757",
+      "predecessor-ci-release/sbom.cdx.json": "f2d2a06966eedf16046a5db809901716afa3d03c4a86d697eff3a536711a0b24",
+      "predecessor-ci-release/scanner-audit.json": "fffc59b1e5574ddfe75304f0e92479dc2d1fe096799299ed33ee6bbd0ca61803",
+      "predecessor-ci-release/scanner-sbom.cdx.json": "d26bc1d299ce74d0b9988e259844671e68c4dc36ec3c348b7424d3ee7019755b",
+      "predecessor-ci-release/scanner-toolchain.json": "5495369128cbbedeef00405c7bcd03df6959bd5ba05e0b4115eade767db2a6ed",
+      "predecessor-ci-release/status.json": "7d5eb6209a59b3b7d8ab7da845ab83ddb9115ecf48de5f41a974d54baba8b32c",
+      "predecessor-ci-source/admission.json": "b42bdd745a58c549584ab5aec895541d3df970c2da3e9bd56d6df171929252c9",
+      "predecessor-ci-source/dependency-audit.json": "7d505e1e7de9f56f99d4c6383f59b164e2e429f383f45e73cfa741c5fda239cc",
+      "predecessor-ci-source/job-status.json": "577c3c86cd56e33b4f427f76f1f33d5a12883e41c9c0f710520731d24598dd4f",
+      "predecessor-ci-source/qualification/source-receipt.json": "a4cd5bcbf029a0ab0f7f8c8b8bd8bf750824c3948fd9dc5734464007bd6aade1",
+      "predecessor-ci-source/qualification/status.json": "5569ec202efc07a3a626fd3c84394d52606cfc667167463ed203939c9b8040eb",
+      "red/receipt.json": "be73bc5c831baf288258b0985d7ee0cde7a3f26dea4cd78c9ac5e81f2a577f04",
+      "sbom.cdx.json": "660580128370c4d2adb3ed8253c3c4aea1fb3aa50102a52958733b2b9fff55a4",
+      "snapshots/receipt.json": "f82e1d5dc66f9fe25715b7636c49e7dd1e13e0865a1a562c292902a019397cd4",
+      "source/receipt.json": "3257928234a2e6546698a629ed45c9daedeb0cc40596efcfebd8dda77131a7f7"
+    },
+    "name": "timestamptz-receipts-20261101.tar.gz",
+    "sha256": "1efc67148d3150b225c0babdbabb8b94d1fe1e7b7c1fae247dc1814addddd721"
+  },
+  "artifacts": {
+    "cryptalis-0.1.0-py3-none-any.whl": "0579abf166f29026862cf7d582a2085193b69373769c85c2a22db59a20aea850",
+    "cryptalis-0.1.0.tar.gz": "29e92b17fac0cb411d44c3dcf18931f779f38b6cea9030c9e783e8a915451a65"
+  },
+  "base_revision": "fa55aef783cb7ae4ba7bbb8bd506c01e52d89d00",
+  "current_receipts": {
+    "fresh-public-slots/export-receipt.json": {
+      "outcomes": {
+        "collection": {},
+        "selected_items": 1,
+        "setup": {
+          "passed": 1
+        },
+        "subtest_calls": {},
+        "teardown": {
+          "passed": 1
+        },
+        "test_calls": {
+          "passed": 1
+        }
+      },
+      "runtime_binding": {
+        "mode": "installed-wheel",
+        "module_count": 43,
+        "modules_sha256": "924c39a52948ebf033d58c7e5dc3e901338cc8fceee7ad41dee65a72946a3548",
+        "runtime_root": "/tmp/cryptalis-timestamptz-installed-20261101/lib/python3.12/site-packages/cryptalis",
+        "wheel": "/tmp/cryptalis-timestamptz-inspected-20261101/cryptalis-0.1.0-py3-none-any.whl",
+        "wheel_sha256": "0579abf166f29026862cf7d582a2085193b69373769c85c2a22db59a20aea850"
+      }
+    },
+    "fresh-public-slots/restore-receipt.json": {
+      "outcomes": {
+        "collection": {},
+        "selected_items": 1,
+        "setup": {
+          "passed": 1
+        },
+        "subtest_calls": {},
+        "teardown": {
+          "passed": 1
+        },
+        "test_calls": {
+          "passed": 1
+        }
+      },
+      "runtime_binding": {
+        "mode": "installed-wheel",
+        "module_count": 43,
+        "modules_sha256": "924c39a52948ebf033d58c7e5dc3e901338cc8fceee7ad41dee65a72946a3548",
+        "runtime_root": "/tmp/cryptalis-timestamptz-installed-20261101/lib/python3.12/site-packages/cryptalis",
+        "wheel": "/tmp/cryptalis-timestamptz-inspected-20261101/cryptalis-0.1.0-py3-none-any.whl",
+        "wheel_sha256": "0579abf166f29026862cf7d582a2085193b69373769c85c2a22db59a20aea850"
+      }
+    },
+    "fresh/export-receipt.json": {
+      "outcomes": {
+        "collection": {},
+        "selected_items": 1,
+        "setup": {
+          "passed": 1
+        },
+        "subtest_calls": {},
+        "teardown": {
+          "passed": 1
+        },
+        "test_calls": {
+          "passed": 1
+        }
+      },
+      "runtime_binding": {
+        "mode": "installed-wheel",
+        "module_count": 43,
+        "modules_sha256": "924c39a52948ebf033d58c7e5dc3e901338cc8fceee7ad41dee65a72946a3548",
+        "runtime_root": "/tmp/cryptalis-timestamptz-installed-20261101/lib/python3.12/site-packages/cryptalis",
+        "wheel": "/tmp/cryptalis-timestamptz-inspected-20261101/cryptalis-0.1.0-py3-none-any.whl",
+        "wheel_sha256": "0579abf166f29026862cf7d582a2085193b69373769c85c2a22db59a20aea850"
+      }
+    },
+    "fresh/restore-receipt.json": {
+      "outcomes": {
+        "collection": {},
+        "selected_items": 1,
+        "setup": {
+          "passed": 1
+        },
+        "subtest_calls": {},
+        "teardown": {
+          "passed": 1
+        },
+        "test_calls": {
+          "passed": 1
+        }
+      },
+      "runtime_binding": {
+        "mode": "installed-wheel",
+        "module_count": 43,
+        "modules_sha256": "924c39a52948ebf033d58c7e5dc3e901338cc8fceee7ad41dee65a72946a3548",
+        "runtime_root": "/tmp/cryptalis-timestamptz-installed-20261101/lib/python3.12/site-packages/cryptalis",
+        "wheel": "/tmp/cryptalis-timestamptz-inspected-20261101/cryptalis-0.1.0-py3-none-any.whl",
+        "wheel_sha256": "0579abf166f29026862cf7d582a2085193b69373769c85c2a22db59a20aea850"
+      }
+    },
+    "installed/receipt.json": {
+      "outcomes": {
+        "collection": {},
+        "selected_items": 157,
+        "setup": {
+          "passed": 157
+        },
+        "subtest_calls": {},
+        "teardown": {
+          "passed": 157
+        },
+        "test_calls": {
+          "passed": 153,
+          "skipped": 4
+        }
+      },
+      "runtime_binding": {
+        "mode": "installed-wheel",
+        "module_count": 43,
+        "modules_sha256": "924c39a52948ebf033d58c7e5dc3e901338cc8fceee7ad41dee65a72946a3548",
+        "runtime_root": "/tmp/cryptalis-timestamptz-installed-20261101/lib/python3.12/site-packages/cryptalis",
+        "wheel": "/tmp/cryptalis-timestamptz-inspected-20261101/cryptalis-0.1.0-py3-none-any.whl",
+        "wheel_sha256": "0579abf166f29026862cf7d582a2085193b69373769c85c2a22db59a20aea850"
+      }
+    },
+    "source/receipt.json": {
+      "outcomes": {
+        "collection": {},
+        "selected_items": 415,
+        "setup": {
+          "passed": 415
+        },
+        "subtest_calls": {},
+        "teardown": {
+          "passed": 415
+        },
+        "test_calls": {
+          "passed": 407,
+          "skipped": 8
+        }
+      },
+      "runtime_binding": {
+        "mode": "source",
+        "module_count": 43,
+        "modules_sha256": "924c39a52948ebf033d58c7e5dc3e901338cc8fceee7ad41dee65a72946a3548",
+        "runtime_root": "/home/debrato/Projects/cryptalis/src/cryptalis",
+        "wheel": null,
+        "wheel_sha256": null
+      }
+    }
+  },
+  "date": "2026-11-01",
+  "dependency_source_observation": "Installed psycopg 3.3.6 ConnectionInfo.timezone/get_tzinfo and timestamp loaders inspected; linked live docs identify a later development version",
+  "format": "cryptalis.timestamptz-boundary/v1",
+  "limits": [
+    "Affected source regression only; no complete current local full-suite rerun",
+    "Eight source and four installed earlier-reader skips remain; actual v11 control executed",
+    "Naive coercions, custom tzinfo/fractional offsets, other storage precisions and broader SQL grammar remain unfinished",
+    "Fresh recovery is a disposable local drill, not production RPO/RTO or deployment-fencing qualification",
+    "Read-only AI review and same-backend framing oracle do not replace independent cryptographic/security review",
+    "No performance acceptance or new cloud custody evidence; all seven production gates UNKNOWN"
+  ],
+  "lock_schema": "cryptalis.lock/v12",
+  "previous_reader": {
+    "control": "Actual isolated v11 reader accepts Numeric control and refuses aware timestamp before SQL",
+    "revision": "f6aefa9af4d588f929fad7925d051b6bea7c9f79"
+  },
+  "primary_sources": [
+    "https://www.postgresql.org/docs/16/datatype-datetime.html",
+    "https://www.psycopg.org/psycopg3/docs/api/objects.html#psycopg.ConnectionInfo.timezone"
+  ],
+  "required_reader": "pg-timestamptz-us-be/v1",
+  "retained_failures": [
+    "Initial mapping refusal",
+    "Incorrect fixture assumption that TIMESTAMP precision bind metadata itself rounds; native explicit CAST is distinct and remains refused",
+    "Upper UTC-boundary fixture planned under a non-UTC owner timezone; runtime calendar failure oracle corrected",
+    "Binary oracle fixture attempted dict(CursorResult) rather than fetched row pairs"
+  ],
+  "review_repairs": [
+    "DST-fold and Decimal-scale comparisons strengthened in recapture and driver snapshots",
+    "Original validated aware literal default retained, including ZoneInfo.no_cache",
+    "v12 owned-sequence recovery evidence uses the existing compiler version inventory"
+  ],
+  "scope": [
+    "Standard aware datetime storage and opt-in UTC order, ranges, IN and direct extrema",
+    "Native UTC, Asia/Kolkata and America/New_York offsets/folds; actual-connection snapshot survives pool replacement and delayed reads",
+    "Literal default type/zone/name/fold and original uncached ZoneInfo state; typed mutation refusal for fold and Decimal scale",
+    "Online capture/resume/abort and source-domain failure visibility; all rotations and both native exit layouts",
+    "Both installed fresh-cluster journeys include actual owned-sequence drift refusal, OID binding, current counters and import-denied native restart",
+    "Native timestamptz_send payload bytes checked through separate framing/KDF decoder using same AEAD primitive"
+  ]
+}

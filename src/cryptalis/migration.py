@@ -429,7 +429,7 @@ def _observed_source_metadata(c, p, model, *, sequences=None):
 
 
 def _preserves_public_slot_lock(lock):
-    return lock['schema'] in ('cryptalis.lock/v6', 'cryptalis.lock/v7', 'cryptalis.lock/v8', 'cryptalis.lock/v9', 'cryptalis.lock/v10', 'cryptalis.lock/v11') and lock.get('layout') == 'preserve-public-slots/v1'
+    return lock['schema'] in ('cryptalis.lock/v6', 'cryptalis.lock/v7', 'cryptalis.lock/v8', 'cryptalis.lock/v9', 'cryptalis.lock/v10', 'cryptalis.lock/v11', 'cryptalis.lock/v12') and lock.get('layout') == 'preserve-public-slots/v1'
 
 
 def _preserves_public_slots(p):
@@ -503,7 +503,7 @@ def _convert_public_columns(c, p, model, *, plaintext=False):
                 target = numeric_sql_type(native['typmod'])
             elif _fixed_value_width(native) is not None:
                 target = 'pg_catalog.' + native['type']
-                if native['type'] == 'timestamp' and native['typmod'] == '6':
+                if native['type'] in ('timestamp', 'timestamptz') and native['typmod'] == '6':
                     target += '(6)'
             else:
                 limit = _native_text_length(native)
@@ -1051,6 +1051,17 @@ def _install_guards(c,p):
         c.exec_driver_sql(f'ALTER TABLE {table} ENABLE ALWAYS TRIGGER {_quote(c,trigger)}')
 
 
+def _temporal_domain(column, kind):
+    lower, upper = (('0001-01-01', '9999-12-31') if kind == 'date' else
+                    ('0001-01-01 00:00:00', '9999-12-31 23:59:59.999999'))
+    offset = '+00' if kind == 'timestamptz' else ''
+    condition = f"{column} < {kind} '{lower}{offset}' OR {column} > {kind} '{upper}{offset}'"
+    if kind == 'timestamptz':
+        local = f"({column} AT TIME ZONE pg_catalog.current_setting('TimeZone'))"
+        condition += f" OR {local} < timestamp '{lower}' OR {local} > timestamp '{upper}'"
+    return condition
+
+
 def _check_temporal_source_domain(c, model, operation_id=None):
     """Refuse native temporal values the admitted Python reader cannot decode."""
     for field in model['fields']:
@@ -1061,13 +1072,11 @@ def _check_temporal_source_domain(c, model, operation_id=None):
                 f"{column} IN ('NaN'::pg_catalog.numeric, 'Infinity'::pg_catalog.numeric, '-Infinity'::pg_catalog.numeric))").scalar_one():
                 raise TransitionFailure('numeric_source_domain', operation_id)
             continue
-        if kind not in ('date', 'timestamp'):
+        if kind not in ('date', 'timestamp', 'timestamptz'):
             continue
         column = _quote(c, field['column'])
-        lower, upper = (('0001-01-01', '9999-12-31') if kind == 'date' else
-                        ('0001-01-01 00:00:00', '9999-12-31 23:59:59.999999'))
         outside = c.exec_driver_sql(f'SELECT count(*) FROM {_table(c, model)} WHERE '
-            f"{column} < {kind} '{lower}' OR {column} > {kind} '{upper}'").scalar_one()
+                                   + _temporal_domain(column, kind)).scalar_one()
         if outside:
             raise TransitionFailure(kind + '_source_domain', operation_id)
 
@@ -1169,6 +1178,17 @@ def _verify(c,p,state,keys):
     return digests
 
 
+def _same_value(value, source, field):
+    if type(value) is not type(source):
+        return False
+    if value is not None and field['source']['type'] == 'timestamptz':
+        from ._timestamp import aware_value
+        return aware_value(value) == aware_value(source)
+    if value is not None and field['source']['type'] == 'numeric':
+        return value.as_tuple() == source.as_tuple()
+    return value == source
+
+
 def _verify_values(c,p,keys,*,active=False):
     """Authenticate values and frames; callers own schema and membership proof."""
     digests={}
@@ -1191,8 +1211,7 @@ def _verify_values(c,p,keys,*,active=False):
                         if f['source']['type'] == 'numeric':
                             from ._numeric import validate_numeric
                             validate_numeric(value, f['source']['typmod'])
-                        if not active and (type(value)!=type(source) or value!=source or
-                                f['source']['type'] == 'numeric' and value is not None and value.as_tuple()!=source.as_tuple()):
+                        if not active and not _same_value(value, source, f):
                             raise TransitionFailure('value_verification_failed',p.operation_id)
                         frames.append(frame)
                     return frames

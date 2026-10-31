@@ -101,7 +101,7 @@ uv run --frozen --all-extras python scripts/online_qualification.py \
   --workdir /tmp/cryptalis-local-date-recovery --fresh-scalar date --public-slots
 ```
 
-The same entry point supports `timestamp`, `numeric`, `uuid`, `boolean`, `int16`, `int32` and `int64` profiles.
+The same entry point supports `timestamp`, `timestamptz`, `numeric`, `uuid`, `boolean`, `int16`, `int32` and `int64` profiles.
 Each profile uses its fixed export/restore selection and private credentials.
 Use `--public-slots` for dates, timestamps, numeric, UUIDs or integers when checking original column positions.
 

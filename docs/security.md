@@ -1593,6 +1593,34 @@ rewriting because dropping their native cast could change comparison semantics.
 owns the admitted operations. Independent composition review and all seven
 production gates remain UNKNOWN.
 
+## Aware timestamp boundary
+
+`pg-timestamptz-us-be/v1` uses the existing context/v2, CF1 AEAD and exact key
+resolution. Its distinct authenticated codec encodes the UTC instant as eight
+signed big-endian microseconds from 2000-01-01. It does not reinterpret naive
+timestamp bytes or retain a per-row input timezone that native PostgreSQL also
+discards. Standard aware datetime inputs require a finite UTC Python value;
+naive or custom timezone coercions refuse.
+
+The reader authenticates before converting to the actual execution connection's
+psycopg timezone snapshot. Dialect reader copies and delayed results share that
+snapshot, without retaining a connection or obtaining keys during result
+conversion. A missing snapshot or local-calendar overflow fails explicitly.
+Timezone conversion supplies native presentation semantics, not tenant authority.
+Provider recapture and driver parameter snapshots distinguish datetime fold and
+Decimal scale changes that ordinary Python equality can hide. Lifecycle value
+comparison uses UTC instants rather than ambiguous local-clock equality.
+
+Literal default timezone/name/fold tags are public policy. Injection retains the
+validated original immutable default, including uncached IANA timezone objects.
+Initial and captured-row domain checks precede native decoding. Source recovery
+retains v12 owned-sequence and public-slot evidence using the existing metadata
+and adoption contracts. Explicit order uses the same signed 64-bit representation
+and accepted order/equality/frequency leakage; storage-only fields gain no term.
+[Compatibility](compatibility.md#aware-timestamp-storage) owns exact limits.
+No new primitive, provider authority, independent review or production gate is
+qualified by this extension.
+
 ## Numeric storage boundary
 
 `pg-numeric-decimal/v1` uses the existing CF1 authenticated encryption and

@@ -14,7 +14,7 @@ The public manifest uses bounded JSON. Its field-intent declaration is independe
 | `profile` | Selected library crypto profile. No arbitrary algorithms or executable normalizers |
 | `models`, `fields` | Names resolve within the supplied registry. No imports from strings. Unlisted fields retain native behavior |
 | `protect` | True requests protection. Removal requests a verified transition, never automatic plaintext writes |
-| `queries` | Empty means storage-only. `equality` includes `IN`. `unique` implies tenant-scoped equality. `order` adds range and sorting on integer, date and naive timestamp fields, and implies equality |
+| `queries` | Empty means storage-only. `equality` includes `IN`. `unique` implies tenant-scoped equality. `order` adds range and sorting on integer, date and admitted timestamp fields, and implies equality |
 | `accept_leakage` | Required matching acceptance for every search capability. Missing acceptance blocks plan |
 | `tenancy` | Exactly `{"column": "attribute_name"}` or `{"single_tenant": true}` per protected table |
 | Mapping facts | Text codec, deterministic exact collation, nullability, application-assigned PK, tenant scope, constraint scope, and writer inventory |
@@ -23,8 +23,8 @@ The public manifest uses bounded JSON. Its field-intent declaration is independe
 lists each protected field with the search leakage you accepted.
 
 Prefix limits, shared-join domains and arbitrary normalizers remain unadmitted.
-Boolean, signed integer, finite Date, UUID, naive timestamp and finite numeric storage use pinned value codecs.
-Integer, date and naive timestamp fields admit [`order`](compatibility.md#order-search) search only;
+Boolean, signed integer, finite Date, UUID, naive/aware timestamp and finite numeric storage use pinned value codecs.
+Integer, date and admitted timestamp fields admit [`order`](compatibility.md#order-search) search only;
 Boolean, UUID and numeric fields admit no search.
 The compiler rejects unsupported types, server-generated keys, small-domain searchable fields, missing tenant scope, and unsupported writers at plan time.
 Searchable small domains remain unsafe because enumeration can label their equality classes. No invented cardinality threshold supplies evidence.
@@ -79,7 +79,8 @@ their existing format selection and bytes. The explicit public-slot layout emits
 `cryptalis.lock/v6`. Signed integer storage emits `cryptalis.lock/v7`
 and requires its exact pg-int2/int4/int8-be/v1 codec readers. Date plans emit `cryptalis.lock/v8`; UUID plans emit `cryptalis.lock/v9`.
 Naive timestamp plans emit `cryptalis.lock/v10`. Numeric plans emit
-`cryptalis.lock/v11`. Current readers accept v1 through v11; older readers refuse
+`cryptalis.lock/v11`; aware timestamp plans emit `cryptalis.lock/v12`.
+Current readers accept v1 through v12; older readers refuse
 unknown formats before effects.
 Older operational readers refuse the embedded v5 lock before effects.
 The [VARCHAR decision](history/decisions-2026-10.md#native-varchar-text-admission-2026-10-22) defines assignment and reader boundaries.
@@ -167,6 +168,13 @@ digits and require `pg-timestamp-default/v1`. This does not reinterpret Date or
 UUID frames or admit timezone conversions. Timestamp order additionally pins
 `pg-timestamp-order/v1`, with explicit order/equality leakage acceptance. [Timestamp admission](compatibility.md#timestamp-storage)
 owns supported precision and source-domain limits.
+Aware timestamps use distinct `pg-timestamptz-us-be/v1` under context/v2 and
+lock/v12. UTC microsecond payloads preserve the native instant; the driver
+connection supplies the displayed timezone. Literal default tags contain exact
+`iso`, `zone`, `name` and `fold` facts. They preserve standard fixed-offset and
+IANA defaults without replacing their pre-refresh Python state. Custom tzinfo
+and ZoneInfo defaults without a reproducible key refuse. [Aware timestamp admission](compatibility.md#aware-timestamp-storage)
+owns exact inputs, bounds and query behavior.
 All other CF1 authenticated context and nonce rules remain unchanged. The
 [local scalar checkpoints](history/implementation-2026-10.md#native-uuid-value-storage-2026-10-28)
 retain their source, artifact and cost boundaries.

@@ -435,9 +435,9 @@ def sequence_admissions(document, model, binding=None):
 
 def _sequence_evidence(c, source, binding=None):
     """Compare every logical fact before admitting restored sequence OIDs."""
-    from cryptalis.manifest.compiler import sequence_metadata
+    from cryptalis.manifest.compiler import _LOCK_SCHEMAS, sequence_metadata
     maps, facts = [], {}
-    if source.document['lock']['schema'] not in ('cryptalis.lock/v5', 'cryptalis.lock/v6', 'cryptalis.lock/v7', 'cryptalis.lock/v8', 'cryptalis.lock/v9', 'cryptalis.lock/v10', 'cryptalis.lock/v11'):
+    if source.document['lock']['schema'] not in _LOCK_SCHEMAS[4:]:
         return maps, facts
     for model in source.document['lock']['models']:
         original = sequence_admissions(source.document, model)
@@ -637,7 +637,7 @@ def _scan(c, source, keys):
                                                       source.operation_id) from None
                         expected_type = (Decimal if descriptors[i].value_codec == 'pg-numeric-decimal/v1' else
                             bool if descriptors[i].value_codec == 'boolean-u8/v1' else
-                            datetime.datetime if descriptors[i].value_codec == 'pg-timestamp-us-be/v1' else
+                            datetime.datetime if descriptors[i].value_codec in ('pg-timestamp-us-be/v1', 'pg-timestamptz-us-be/v1') else
                             UUID if descriptors[i].value_codec == 'uuid-bytes16/v1' else
                             date if descriptors[i].value_codec in ('pg-date-days-be/v1', 'date-ordinal-u32/v1') else
                             int if descriptors[i].value_codec in ('pg-int2-be/v1', 'pg-int4-be/v1', 'pg-int8-be/v1') else str)

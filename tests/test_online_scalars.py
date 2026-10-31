@@ -1,5 +1,5 @@
 """Native scalar writes remain current through capture, publication and exit."""
-from datetime import date, datetime
+from datetime import date, datetime, timezone
 from decimal import Decimal
 from uuid import UUID
 
@@ -18,6 +18,10 @@ SCALARS = [(Boolean(), (False, True, None)), (SmallInteger(), (-32768, 32767, No
            (Date(), (date.min, date.max, None)),
            (DateTime(), (datetime.min, datetime.max, None)),
            (DateTime(), (datetime.min, datetime.max, None), ('equality', 'order')),
+           (DateTime(timezone=True), (datetime(2000, 1, 1, tzinfo=timezone.utc),
+                                     datetime(2026, 11, 1, tzinfo=timezone.utc), None)),
+           (DateTime(timezone=True), (datetime(2000, 1, 1, tzinfo=timezone.utc),
+                                     datetime(2026, 11, 1, tzinfo=timezone.utc), None), ('equality', 'order')),
            (Numeric(), (Decimal('1.2300'), Decimal('-0.005'), None)),
            (Numeric(8, 2), (Decimal('1.235'), Decimal('-1.235'), None)),
            (Numeric(2, -3), (Decimal('14500'), Decimal('-14500'), None)),
@@ -43,8 +47,10 @@ def test_online_scalar_current_values_resume_abort_or_native_exit(app, abort):
     assert _source_rows(app) == expected
     ordered = 'order' in app.plan.document['lock']['models'][0]['fields'][0]['queries']
     if ordered:
+        aware = app.plan.document['lock']['models'][0]['fields'][0]['source']['type'] == 'timestamptz'
+        lower = datetime.min.replace(tzinfo=timezone.utc) if aware else datetime.min
         with app.source_factory() as session:
-            native_order = list(session.scalars(select(app.Customer.id).where(app.Customer.body >= datetime.min)
+            native_order = list(session.scalars(select(app.Customer.id).where(app.Customer.body >= lower)
                                                .order_by(app.Customer.body, app.Customer.id)))
             native_extrema = tuple(session.execute(select(func.min(app.Customer.body), func.max(app.Customer.body))).one())
             assert tuple(session.execute(select(func.min(app.Customer.body), func.max(app.Customer.body))
@@ -74,7 +80,7 @@ def test_online_scalar_current_values_resume_abort_or_native_exit(app, abort):
     with factory(tenant_id=TABLE_ID) as session:
         assert {row.id: (row.body, row.label) for row in session.scalars(select(app.Customer))} == expected
         if ordered:
-            assert list(session.scalars(select(app.Customer.id).where(app.Customer.body >= datetime.min)
+            assert list(session.scalars(select(app.Customer.id).where(app.Customer.body >= lower)
                                         .order_by(app.Customer.body, app.Customer.id))) == native_order
             assert tuple(session.execute(select(func.min(app.Customer.body), func.max(app.Customer.body))).one()) == native_extrema
             assert tuple(session.execute(select(func.min(app.Customer.body), func.max(app.Customer.body))
@@ -97,11 +103,13 @@ def test_online_scalar_current_values_resume_abort_or_native_exit(app, abort):
 
 
 @pytest.mark.parametrize('app', [(Date(), (date.min, date.max, None)),
-                               (DateTime(), (datetime.min, datetime.max, None))], indirect=True)
+                               (DateTime(), (datetime.min, datetime.max, None)),
+                               (DateTime(timezone=True), (datetime(2000, 1, 1, tzinfo=timezone.utc),
+                                                         datetime(2026, 1, 1, tzinfo=timezone.utc), None))], indirect=True)
 def test_out_of_range_temporal_value_written_during_capture_refuses_atomically(app):
     online.apply(app.plan, app.owner, keys=keys, pin=app.pin, approval=app.approval, max_chunks=1)
     kind = app.plan.document['lock']['models'][0]['fields'][0]['source']['type']
-    assert kind in ('date', 'timestamp')
+    assert kind in ('date', 'timestamp', 'timestamptz')
     with app.source.begin() as connection:
         connection.exec_driver_sql(f'INSERT INTO "{app.schema}".customer(id,body) VALUES (%s,\'infinity\'::{kind})', (UUID(int=5),))
     before = _payloads(app, app.plan)
@@ -113,10 +121,12 @@ def test_out_of_range_temporal_value_written_during_capture_refuses_atomically(a
 
 
 @pytest.mark.parametrize('app', [(Date(), (date.min, date.max, None)),
-                               (DateTime(), (datetime.min, datetime.max, None))], indirect=True)
+                               (DateTime(), (datetime.min, datetime.max, None)),
+                               (DateTime(timezone=True), (datetime(2000, 1, 1, tzinfo=timezone.utc),
+                                                         datetime(2026, 1, 1, tzinfo=timezone.utc), None))], indirect=True)
 def test_post_plan_temporal_domain_drift_refuses_before_capture_effects(app):
     kind = app.plan.document['lock']['models'][0]['fields'][0]['source']['type']
-    assert kind in ('date', 'timestamp')
+    assert kind in ('date', 'timestamp', 'timestamptz')
     with app.source.begin() as connection:
         connection.exec_driver_sql(f'INSERT INTO "{app.schema}".customer(id,body) VALUES (%s,\'infinity\'::{kind})', (UUID(int=5),))
     with pytest.raises(m.TransitionFailure) as failure:

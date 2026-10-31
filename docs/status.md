@@ -4,17 +4,17 @@ Cryptalis implements a bounded research prototype. **No production release or co
 This page owns current verification and release gates; the [34-objective ledger](BUILD_CHECKLIST.md) owns remaining work.
 Use the [documentation map](README.md) to find contracts and procedures.
 
-**Latest hosted run: source FAIL, installed recovery PASS at `f6aefa9`.**
-[Run 41242873203](https://github.com/Debrato2005/cryptalis/actions/runs/41242873203)
-passes reproducible artifacts and installed recovery. The full source run passes
-3,737 test calls and 18 subtests, but one older compiler test still expects
-Numeric storage to be unsupported. Eighteen call skips, 41 setup skips and eight
-collection skips remain explicit. The test now retains refusal of
-`Numeric(asdecimal=False)`. An isolated checkout with identical product bytes
-passes all 63 compiler checks. [Exact failure and repair](_reset/numeric-compiler-ci-boundary-20261101.json).
-A complete hosted rerun remains pending; all seven production gates stay UNKNOWN.
+**Latest complete hosted pass: `fa55aef`.** Both jobs in
+[run 41244022521](https://github.com/Debrato2005/cryptalis/actions/runs/41244022521)
+pass for NUMERIC storage and the compiler-test repair, before the subsequent
+aware timestamp slice. The full source run passes 3,738 test calls and 18 subtests.
+Eighteen call skips, 41 setup skips and eight collection skips remain explicit.
+The installed recovery job passes and its wheel/sdist exactly match the retained
+local numeric artifacts. [Exact hosted boundary](_reset/github-numeric-green-20261101.json).
+The preceding [source failure and repair](_reset/numeric-compiler-ci-boundary-20261101.json)
+remain retained. All seven production gates stay UNKNOWN.
 
-**Latest complete hosted pass: `54218cf`.** Both jobs in
+**Earlier complete hosted pass: `54218cf`.** Both jobs in
 [run 41239335699](https://github.com/Debrato2005/cryptalis/actions/runs/41239335699)
 pass for naive timestamp storage and ordering, before the subsequent MIN/MAX slice.
 The [storage run 41238374566](https://github.com/Debrato2005/cryptalis/actions/runs/41238374566)
@@ -48,6 +48,28 @@ source-role failure and later UUID fixture failures remain repaired.
 [Retained failure](_reset/github-point-update-returning-failed-boundary-20261030.json)
 and [repair evidence](_reset/point-delete-returning-ci-fix-boundary-20261030.json)
 remain available.
+
+## Native aware timestamp storage and order
+
+**VERIFIED, bounded source and installed wheel:** timezone-bearing DateTime and
+TIMESTAMP mappings preserve native UTC instants, actual-connection timezone,
+offset and DST fold. Native comparisons cover sync/async CRUD, RETURNING,
+defaults including uncached ZoneInfo, delayed results across replaced pools,
+order/ranges/IN, aliases and direct MIN/MAX. Fold/scale provider mutations and
+public datetime driver mutations refuse before dispatch. PostgreSQL binary
+payload bytes match a separate framing decoder using the same AEAD primitive.
+
+The affected source regression passes 407 tests with eight explicit earlier-reader
+skips; the installed Python 3.12 wheel passes 153 with four skips. The actual v11
+reader accepts a Numeric control and refuses v12 before SQL. Both installed
+fresh-recovery layouts pass all rotations, tamper refusal, owned-sequence drift
+refusal/OID binding, current counter/value removal and an import-denied native
+restart. All final receipts bind identical 43-module runtime bytes. Reproducible
+artifacts, SBOM, 48 installed files and CLI inspection pass.
+[Exact boundary](_reset/timestamptz-boundary-20261101.json) retains failures and
+limits. A complete hosted run for this new slice is pending. Naive coercions,
+custom tzinfo, other precisions, broader queries, performance and independent
+review remain open; all seven production gates remain UNKNOWN.
 
 ## Finite native NUMERIC storage
 
@@ -90,7 +112,8 @@ rotations, profile changes and current-value removal. An actual retained v10
 storage reader accepts storage plans and refuses timestamp order before SQL.
 Timezone-bearing bind casts refuse after a native DST counterexample.
 [Order evidence](_reset/timestamp-order-boundary-20261101.json).
-Aware values and other precision/default forms remain open.
+Other precision/default forms remain open; aware mappings follow their separate
+[contract](compatibility.md#aware-timestamp-storage).
 No production gate changes; all seven remain UNKNOWN.
 
 ## Direct authenticated MIN/MAX

@@ -25,12 +25,16 @@ def date_keys(tenant):
 
 
 @contextmanager
-def date_application(*, public_slots=False, value_type=None, values=VALUES, value_default=date.min):
+def date_application(*, public_slots=False, value_type=None, values=VALUES, value_default=date.min,
+                     owned_sequences=False):
     """Retain storage-only DATE alongside independently declared searchable text."""
     from cryptalis.manifest.compiler import SearchReview, Writer, WriterInventory, _canonical
     label_id = UUID(int=1211)
     def setup(connection, schema, role):
         connection.exec_driver_sql(f'CREATE INDEX native_label ON "{schema}".customer (label)')
+        if owned_sequences:
+            from test_owned_sequences import install_sequence
+            install_sequence(connection, schema, role)
     with application(value_type=Date() if value_type is None else value_type, queries=[], protected_values=values,
                      value_default=value_default, setup=setup) as app:
         # ORM INSERT applies the native client default to None; create SQL NULL

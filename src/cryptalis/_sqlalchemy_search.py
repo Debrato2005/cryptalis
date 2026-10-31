@@ -31,12 +31,17 @@ class _SearchValue(TypeDecorator):
         return equality_term(value, self.binding.descriptor, self.tenant, self.keys)
 
 
-def ordinary_bind(owner, value):
+def ordinary_bind(owner, value, binding=None):
     if getattr(value.type, '_variant_mapping', None):
         return False
-    if type(value.type) in (DateTime, TIMESTAMP) and value.type.timezone is not False:
-        # A native timestamptz cast can change comparison semantics across DST.
-        return False
+    if type(value.type) in (DateTime, TIMESTAMP):
+        if binding is not None:
+            if value.type.timezone is not (binding.descriptor.value_codec == 'pg-timestamptz-us-be/v1'):
+                return False
+        elif value.type.timezone is not False and not (
+                value.type.timezone is True and any(b.descriptor.value_codec == 'pg-timestamptz-us-be/v1'
+                                                   for b in owner.bindings)):
+            return False
     try:
         optional_string = autostring_impl(value.type) is not None
     except ValueError:
@@ -75,7 +80,7 @@ def search_shape(owner, expression, *, _nullsafe_candidate=False):
     if not null and not ((ordered or expression.operator in (operators.eq, operators.ne, operators.in_op, operators.not_in_op, *null_safe))
                          and isinstance(right, BindParameter)):
         return None
-    if not null and not ordinary_bind(owner, right):
+    if not null and not ordinary_bind(owner, right, bindings[0]):
         return None
     if not null and right.callable is not None:
         return None

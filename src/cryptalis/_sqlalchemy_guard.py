@@ -6,6 +6,7 @@ from decimal import Decimal
 from functools import wraps
 from uuid import UUID
 from sqlalchemy import event
+from ._timestamp import datetime_state
 
 _driver_permit = ContextVar("cryptalis_driver_permit", default=None)
 
@@ -28,6 +29,8 @@ def _snapshot(value, binary):
         return float, value.hex()
     if type(value) is Decimal:
         return Decimal, value.as_tuple()
+    if type(value) is datetime:
+        return datetime, datetime_state(value)
     if type(value) in (type(None), bool, int, str, bytes, UUID, date, datetime, time, timedelta):
         return type(value), value
     # Unknown native adapters are unprotected values. Retain their identity,
@@ -52,7 +55,7 @@ class _Info:
 
     def __getattr__(self, name):
         self._check_process()
-        if name in ("parameter_status", "transaction_status", "server_version", "encoding", "backend_pid", "status"):
+        if name in ("parameter_status", "transaction_status", "server_version", "encoding", "backend_pid", "status", "timezone"):
             return _checked(getattr(self._raw, name), self._check_process)
         raise self._error()
 
