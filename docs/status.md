@@ -4,7 +4,17 @@ Cryptalis implements a bounded research prototype. **No production release or co
 This page owns current verification and release gates; the [34-objective ledger](BUILD_CHECKLIST.md) owns remaining work.
 Use the [documentation map](README.md) to find contracts and procedures.
 
-**Latest complete hosted run: PASS at `54218cf`.** Both jobs in
+**Latest hosted run: source FAIL, installed recovery PASS at `f6aefa9`.**
+[Run 41242873203](https://github.com/Debrato2005/cryptalis/actions/runs/41242873203)
+passes reproducible artifacts and installed recovery. The full source run passes
+3,737 test calls and 18 subtests, but one older compiler test still expects
+Numeric storage to be unsupported. Eighteen call skips, 41 setup skips and eight
+collection skips remain explicit. The test now retains refusal of
+`Numeric(asdecimal=False)`. An isolated checkout with identical product bytes
+passes all 63 compiler checks. [Exact failure and repair](_reset/numeric-compiler-ci-boundary-20261101.json).
+A complete hosted rerun remains pending; all seven production gates stay UNKNOWN.
+
+**Latest complete hosted pass: `54218cf`.** Both jobs in
 [run 41239335699](https://github.com/Debrato2005/cryptalis/actions/runs/41239335699)
 pass for naive timestamp storage and ordering, before the subsequent MIN/MAX slice.
 The [storage run 41238374566](https://github.com/Debrato2005/cryptalis/actions/runs/41238374566)
