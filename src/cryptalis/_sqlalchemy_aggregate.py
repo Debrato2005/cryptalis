@@ -1,6 +1,7 @@
-"""Finite native count projections over directly protected columns."""
-from sqlalchemy import Column, Integer, Table
-from sqlalchemy.sql import operators
+"""Finite native aggregates over directly protected columns."""
+from sqlalchemy import Column, Integer, Table, Text, cast, func, type_coerce
+from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy.sql import operators, visitors
 from sqlalchemy.sql.elements import (
     BinaryExpression,
     BindParameter,
@@ -12,8 +13,9 @@ from sqlalchemy.sql.elements import (
     Label,
     Over,
     UnaryExpression,
+    quoted_name,
 )
-from sqlalchemy.sql.functions import count
+from sqlalchemy.sql.functions import count, min as sql_min, max as sql_max
 from sqlalchemy.sql.selectable import Alias, Select
 
 
@@ -124,6 +126,53 @@ def count_shape(owner, expression, selection=None):
             or expression.clause_expr.element.operator is not operators.comma_op):
         raise UnsupportedProtectedOperation()
     return root, bindings[0], column, distinct
+
+
+def extrema_shape(owner, expression, selection):
+    wrappers = []
+    while isinstance(expression, (Label, Grouping)):
+        wrappers.append((expression, Label if isinstance(expression, Label) else Grouping))
+        expression = expression.element
+    if (not isinstance(expression, (sql_min, sql_max)) or not isinstance(selection, Select)
+            or selection._group_by_clauses or selection._having_criteria or selection._distinct):
+        return None
+    arguments = tuple(expression.clauses)
+    if len(arguments) != 1:
+        return None
+    column = arguments[0]
+    shape = count_shape(owner, count(column), selection)
+    if shape is None or not shape[1].descriptor.ordered or not _one_tenant(selection, column, shape[1].tenant):
+        return None
+    from .sqlalchemy import _delete_node, UnsupportedProtectedOperation
+    native = sql_min if isinstance(expression, sql_min) else sql_max
+    for node, dtype in (*wrappers, (expression, native), (expression.clause_expr, Grouping),
+                        (expression.clause_expr.element, ClauseList)):
+        _delete_node(node, dtype)
+    if (expression.name != ('min' if native is sql_min else 'max') or expression.packagenames
+            or expression._with_ordinality or expression.type is not column.type
+            or expression.clause_expr.element.operator is not operators.comma_op):
+        raise UnsupportedProtectedOperation()
+    return expression, shape[1], column
+
+
+def extrema_projection(shape, operation):
+    """Select one opaque packet with constant aggregate state, then authenticate it."""
+    from ._sqlalchemy_search import equality_expression
+    function, binding, column = shape
+    reader = binding.column.type.column_expression(column)
+    # A fixed 64-character hex prefix preserves byte order under C collation.
+    # Equal terms may choose any packet: all authenticate to the same value.
+    packet = (cast(func.pg_catalog.encode(equality_expression(column), 'hex'), Text())
+              + cast(reader.clause, Text())).collate(quoted_name('pg_catalog."C"', False))
+    chosen = getattr(func.pg_catalog, function.name)(packet, type_=Text())
+    body = cast(func.pg_catalog.substr(chosen, 65), JSONB())
+    empty = func.pg_catalog.jsonb_build_array(None, None,
+        None if binding.tenant is not None else str(binding.descriptor.table_id))
+    result = type_coerce(func.coalesce(body, empty), reader.type)
+    nodes = tuple(visitors.iterate(result))
+    operation.search_nodes.extend(nodes)
+    operation.search_identities.update((id(node), node) for node in nodes)
+    return result
 
 
 def distinct_projection(owner, statement):

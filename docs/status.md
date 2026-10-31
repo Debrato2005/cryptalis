@@ -4,9 +4,11 @@ Cryptalis implements a bounded research prototype. **No production release or co
 This page owns current verification and release gates; the [34-objective ledger](BUILD_CHECKLIST.md) owns remaining work.
 Use the [documentation map](README.md) to find contracts and procedures.
 
-**Latest complete hosted run: PASS at `d828a94`.** Both jobs in
-[run 41238374566](https://github.com/Debrato2005/cryptalis/actions/runs/41238374566)
-pass for naive timestamp storage, before the subsequent timestamp order slice.
+**Latest complete hosted run: PASS at `54218cf`.** Both jobs in
+[run 41239335699](https://github.com/Debrato2005/cryptalis/actions/runs/41239335699)
+pass for naive timestamp storage and ordering, before the subsequent MIN/MAX slice.
+The [storage run 41238374566](https://github.com/Debrato2005/cryptalis/actions/runs/41238374566)
+also passes at `d828a94`.
 The preceding [run 41236215265](https://github.com/Debrato2005/cryptalis/actions/runs/41236215265)
 also passes at `1aee8b9`. The earlier
 [failed run at `10b3c78`](https://github.com/Debrato2005/cryptalis/actions/runs/41232706573)
@@ -57,6 +59,21 @@ Timezone-bearing bind casts refuse after a native DST counterexample.
 [Order evidence](_reset/timestamp-order-boundary-20261101.json).
 Aware values and other precision/default forms remain open.
 No production gate changes; all seven remain UNKNOWN.
+
+## Direct authenticated MIN/MAX
+
+**VERIFIED, bounded source and installed wheel:** direct MIN/MAX on opt-in order
+fields matches native signed integer, Date and naive timestamp results, including
+NULL/empty sets, ranges, aliases, original expression/label keys, async, rotations,
+profile changes and current-value removal. Scope, selected-packet tamper and
+explicit result-conversion controls pass. The source aggregate/search regression
+passes 227 checks; the installed aggregate regression passes 152, and the source
+online scalar profile passes 20. All bind identical runtime bytes. Reproducible
+artifacts and inspected installation pass. [Exact boundary](_reset/extrema-boundary-20261101.json).
+This scans opaque packets in PostgreSQL with constant aggregate state; no speed
+acceptance or new fresh-recovery claim follows. Grouping, window/FILTER forms,
+protected expressions and explicit result-type overrides remain open. All seven
+production gates remain UNKNOWN.
 
 ## Local Git consolidation: 2026-10-31
 

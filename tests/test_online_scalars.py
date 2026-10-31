@@ -3,7 +3,7 @@ from datetime import date, datetime
 from uuid import UUID
 
 import pytest
-from sqlalchemy import BigInteger, Boolean, Date, DateTime, Integer, SmallInteger, Uuid, select
+from sqlalchemy import BigInteger, Boolean, Date, DateTime, Integer, SmallInteger, Uuid, func, select
 from sqlalchemy.exc import DBAPIError
 
 from cryptalis import deprotection as d, migration as m, online
@@ -42,6 +42,9 @@ def test_online_scalar_current_values_resume_abort_or_native_exit(app, abort):
         with app.source_factory() as session:
             native_order = list(session.scalars(select(app.Customer.id).where(app.Customer.body >= datetime.min)
                                                .order_by(app.Customer.body, app.Customer.id)))
+            native_extrema = tuple(session.execute(select(func.min(app.Customer.body), func.max(app.Customer.body))).one())
+            assert tuple(session.execute(select(func.min(app.Customer.body), func.max(app.Customer.body))
+                                         .where(app.Customer.id == UUID(int=0))).one()) == (None, None)
     assert _payloads(app, app.plan)[UUID(int=10)] == (None, None)
     assert before != (None, None)
     online.apply(app.plan, app.owner, keys=keys, pin=app.pin, approval=app.approval, max_chunks=1)
@@ -69,6 +72,9 @@ def test_online_scalar_current_values_resume_abort_or_native_exit(app, abort):
         if ordered:
             assert list(session.scalars(select(app.Customer.id).where(app.Customer.body >= datetime.min)
                                         .order_by(app.Customer.body, app.Customer.id))) == native_order
+            assert tuple(session.execute(select(func.min(app.Customer.body), func.max(app.Customer.body))).one()) == native_extrema
+            assert tuple(session.execute(select(func.min(app.Customer.body), func.max(app.Customer.body))
+                                         .where(app.Customer.id == UUID(int=0))).one()) == (None, None)
         session.get(app.Customer, UUID(int=20)).body = None
         session.commit()
     expected[UUID(int=20)] = None, expected[UUID(int=20)][1]

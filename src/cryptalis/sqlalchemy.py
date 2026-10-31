@@ -35,7 +35,7 @@ from sqlalchemy.util import immutabledict
 
 from ._sqlalchemy_guard import install_guard
 from ._sqlalchemy_functions import admit_function
-from ._sqlalchemy_aggregate import count_shape, distinct_projection, identity_distinct
+from ._sqlalchemy_aggregate import count_shape, distinct_projection, identity_distinct, extrema_shape, extrema_projection
 from ._sqlmodel_types import autostring_impl
 from ._sqlalchemy_search import between_predicate, boolean_children, equality_expression, order_shape, rewrite_predicate, rewrite_search, search_shape, validate_search_storage
 from .crypto import CryptoFailure, AuthenticationFailed, FieldDescriptor, Keyring, KeyUnavailable, MAX_TEXT_BYTES, open_value, seal_value
@@ -880,6 +880,14 @@ class _Attachment:
             def _label_select_column(compiler, statement, column, populate_result_map,
                                      asfrom, column_clause_args, *args, **kw):
                 operation = _operation.get()
+                shape = extrema_shape(self, column, statement) if operation is not None and operation.owner is self else None
+                if shape is not None:
+                    original = column
+                    name = column.name if isinstance(column, Label) else shape[0]._anon_name_label
+                    column = extrema_projection(shape, operation).label(name)
+                    column_clause_args = dict(column_clause_args)
+                    column_clause_args['result_map_targets'] = (
+                        column_clause_args.get('result_map_targets', ()) + (original,))
                 if (operation is not None and operation.owner is self and isinstance(statement, Select) and
                         isinstance(column, (ColumnClause, Label, Grouping))):
                     element = _projection_column(column)
@@ -1484,7 +1492,7 @@ class _Attachment:
                 if identity_distinct(self, selection) is None and distinct_projection(self, selection) is None:
                     raise UnsupportedProtectedOperation()
             for output in selection.selected_columns:
-                shape = count_shape(self, output, selection)
+                shape = count_shape(self, output, selection) or extrema_shape(self, output, selection)
                 if shape is not None:
                     count_roots.add(id(shape[0]))
                     count_nodes.update(id(part) for part in visitors.iterate(shape[0]))

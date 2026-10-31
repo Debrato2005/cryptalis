@@ -1,17 +1,17 @@
 """Bounded equality and order admission, deferred terms, and native index validation."""
 
-from sqlalchemy import BigInteger, Boolean, Date, DateTime, Integer, LargeBinary, SmallInteger, String, Text, TEXT, Unicode, UnicodeText, Uuid, VARCHAR, and_, or_, bindparam, func, literal, literal_column, type_coerce
+from sqlalchemy import BigInteger, Boolean, Date, DateTime, Integer, LargeBinary, SmallInteger, String, Table, Text, TEXT, Unicode, UnicodeText, Uuid, VARCHAR, and_, or_, bindparam, func, literal, literal_column, type_coerce
 from sqlalchemy.dialects.postgresql import TIMESTAMP
 from sqlalchemy.sql import operators, visitors
 from sqlalchemy.sql.elements import BinaryExpression, BindParameter, BooleanClauseList, ColumnClause, Grouping, Label, Null, UnaryExpression
 from sqlalchemy.sql.functions import count
-from sqlalchemy.sql.selectable import Select
+from sqlalchemy.sql.selectable import Alias, Select
 from sqlalchemy.types import NullType, TypeDecorator
 
 from .crypto.cf1 import equality_term
 from .manifest.compiler import _catalog_path, _fixed_value_width
 from ._sqlmodel_types import autostring_impl
-from ._sqlalchemy_aggregate import _one_tenant, count_shape, distinct_projection, identity_distinct
+from ._sqlalchemy_aggregate import _one_tenant, count_shape, distinct_projection, identity_distinct, extrema_shape
 
 
 _NULL_SAFE = (operators.is_distinct_from, operators.is_not_distinct_from)
@@ -257,13 +257,22 @@ def _predicate_replacer(owner, statement, operation, projections):
     from .sqlalchemy import _projection_column
 
     def replace(node):
+        if isinstance(node, Alias):
+            source = node.element
+            while isinstance(source, Alias):
+                source = source.element
+            if isinstance(source, Table):
+                # Retained projections and rewritten predicates must keep the
+                # same exact FROM identity, including nested native aliases.
+                return node
         if isinstance(node, (Label, Grouping)) and _projection_column(node) is not None:
             # A direct projection contains no predicate to rewrite. Preserve
             # the caller's native expression identity in ORM result metadata.
             return node
         # Counts have no search predicates inside their admitted arguments.
         # Keep their identity so ORM result mappings retain expression keys.
-        if id(node) in projections or isinstance(node, count) or count_shape(owner, node, statement) is not None:
+        if (id(node) in projections or isinstance(node, count) or count_shape(owner, node, statement) is not None
+                or extrema_shape(owner, node, statement) is not None):
             return node
         if isinstance(node, UnaryExpression) and node.operator is operators.inv and owner.protected(node):
             # Rewrite only the normalized subtree. A separate whole-statement

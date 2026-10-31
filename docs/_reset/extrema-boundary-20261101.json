@@ -1,0 +1,119 @@
+{
+  "archive": {
+    "members": {
+      "cryptalis-extrema-alias-clones-20261101.json": "e7e28be15eaeadc5f9afd85b5ed1e10a968646877aebc3b7d3fc983883e95181",
+      "cryptalis-extrema-alias-diagnostic-20261101.json": "42e3eae91f8c5025a4c5423bd811edbcee6a1c6cf934aca4097907404ec876f5",
+      "cryptalis-extrema-alias-fixed-20261101.json": "85a63308f169e8522e2ac3c3518207100efe8e5e906f0f723330fadf6e698336",
+      "cryptalis-extrema-alias-shape-20261101.json": "a6336b79e87cf65e8bad2940bae45501b2ee34a2514b0a45ae4b8bcebe41c35f",
+      "cryptalis-extrema-final-source-20261101.json": "e2911d219339d487e4df70678730bd900750b5cb235dccf46cbc46fa2da2c16e",
+      "cryptalis-extrema-float-red-20261101.json": "438229e51d4f3e434bd9a973f70470341ce237984e7fe038088d95aef4f0ce52",
+      "cryptalis-extrema-initial-20261101.json": "8f65e519d3a53bac9cba31680fbb5e8876d0f19198203a94144b0697113aa3d6",
+      "cryptalis-extrema-installed-20261101.json": "d37ec1ebee8d915a99566ee47e784445fdd9ae5d8212f2884fe93315ae292816",
+      "cryptalis-extrema-native-20261101.json": "1462f614253fe858f59264fb2b259c44e311ad3791d9b8f968e7faeedb45fcbd",
+      "cryptalis-extrema-red-20261101.json": "2df7e2b02636ea25bf1ce44c01729356c7d325abe7e66ad098dbff6791c68432",
+      "cryptalis-extrema-result-type-red-20261101.json": "8a086119b2a6e81ee934c13eaa3a4293c7ce9057892838627567ccdc17e45f5d",
+      "cryptalis-extrema-source-20261101.json": "64f9ad102bf7c691e6276280ea5585c67b36d302cadf7d3c935a4a2c47642b5f",
+      "online/receipt.json": "f001e43044ab54a4dadf7ec6a36cefedde2d309272f1a97294fa51fc82c71cd7",
+      "release.json": "465c5d1a705945f2f4a05c715d4e7214e12af92b36013d1679d74097a7fc407c",
+      "sbom.cdx.json": "dfd6c65e3f695643b3ac8d3719f5c6686458438b626366bbc76410741b726bbd",
+      "timestamp-order-ci.json": "72f87189250cd9afcbf7e937ea79d5eb8af37278fde59ca8664c2da4fccbf568"
+    },
+    "name": "extrema-receipts-20261101.tar.gz",
+    "sha256": "a895da17c39d997dd04b40e81ad9cdb62079fe96f5dfcabcf679244103c50776"
+  },
+  "artifacts": {
+    "cryptalis-0.1.0-py3-none-any.whl": "bf0d6f49a5ea14dfa1506c0a45e43e6e7631871890b541192e10d7d4633110fb",
+    "cryptalis-0.1.0.tar.gz": "7cb6fdae467affdb7d3e9d00b7a684890fbced89d3a2192b9817ad0df15fc035"
+  },
+  "base_revision": "54218cf134be9930a2d489e2b7a1cdc2f4dc0264",
+  "current_receipts": {
+    "cryptalis-extrema-final-source-20261101.json": {
+      "outcomes": {
+        "collection": {},
+        "selected_items": 227,
+        "setup": {
+          "passed": 227
+        },
+        "subtest_calls": {},
+        "teardown": {
+          "passed": 227
+        },
+        "test_calls": {
+          "passed": 227
+        }
+      },
+      "runtime_binding": {
+        "mode": "source",
+        "module_count": 41,
+        "modules_sha256": "5c4eb8436030fdd46d6e18737317fc59923ed0018543b3bcc7805457382d6dba",
+        "runtime_root": "/home/debrato/Projects/cryptalis/src/cryptalis",
+        "wheel": null,
+        "wheel_sha256": null
+      }
+    },
+    "cryptalis-extrema-installed-20261101.json": {
+      "outcomes": {
+        "collection": {},
+        "selected_items": 152,
+        "setup": {
+          "passed": 152
+        },
+        "subtest_calls": {},
+        "teardown": {
+          "passed": 152
+        },
+        "test_calls": {
+          "passed": 152
+        }
+      },
+      "runtime_binding": {
+        "mode": "installed-wheel",
+        "module_count": 41,
+        "modules_sha256": "5c4eb8436030fdd46d6e18737317fc59923ed0018543b3bcc7805457382d6dba",
+        "runtime_root": "/tmp/cryptalis-extrema-installed-20261101/lib/python3.12/site-packages/cryptalis",
+        "wheel": "/tmp/cryptalis-extrema-inspected-20261101/cryptalis-0.1.0-py3-none-any.whl",
+        "wheel_sha256": "bf0d6f49a5ea14dfa1506c0a45e43e6e7631871890b541192e10d7d4633110fb"
+      }
+    },
+    "online/receipt.json": {
+      "outcomes": {
+        "collection": {},
+        "selected_items": 20,
+        "setup": {
+          "passed": 20
+        },
+        "subtest_calls": {},
+        "teardown": {
+          "passed": 20
+        },
+        "test_calls": {
+          "passed": 20
+        }
+      },
+      "runtime_binding": {
+        "mode": "source",
+        "module_count": 41,
+        "modules_sha256": "5c4eb8436030fdd46d6e18737317fc59923ed0018543b3bcc7805457382d6dba",
+        "runtime_root": "/home/debrato/Projects/cryptalis/src/cryptalis",
+        "wheel": null,
+        "wheel_sha256": null
+      }
+    }
+  },
+  "limits": [
+    "Grouping, window, FILTER, expressions and result-type overrides unadmitted",
+    "Constant aggregate state but O(rows) scan; no performance qualification",
+    "No new fresh-recovery run for extrema",
+    "Read-only AI review does not replace independent human review",
+    "All seven production gates UNKNOWN"
+  ],
+  "retained_failures": [
+    "Initial MIN/MAX admission refusal",
+    "Invalid public record IS NOT NULL oracle predicate",
+    "Incorrect native Float(asdecimal=True) positive-control expectation; actual Float() conversion established separately",
+    "Explicit Float result conversion lost before result-type guard",
+    "Nested alias source cloned during owned predicate rewrite; fixed by preserving native Alias-to-Table identity"
+  ],
+  "runtime_modules_sha256": "5c4eb8436030fdd46d6e18737317fc59923ed0018543b3bcc7805457382d6dba",
+  "scope": "Direct authenticated MIN/MAX on order-enabled signed integer/date/naive timestamp fields within one provable tenant"
+}

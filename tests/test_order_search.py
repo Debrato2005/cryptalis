@@ -17,11 +17,11 @@ from uuid import UUID, uuid4
 
 import psycopg
 import pytest
-from sqlalchemy import (BigInteger, Boolean, Column, Date, DateTime, Index, Integer, MetaData, SmallInteger, Table, Text, Uuid,
+from sqlalchemy import (BigInteger, Boolean, Column, Date, DateTime, Float, Index, Integer, MetaData, SmallInteger, Table, Text, Uuid,
                         and_, bindparam, func, not_, or_, select)
 from sqlalchemy.ext.asyncio import create_async_engine
 from sqlalchemy.dialects.postgresql import TIMESTAMP
-from sqlalchemy.orm import registry, sessionmaker
+from sqlalchemy.orm import aliased, registry, sessionmaker
 
 from cryptalis import Project
 from cryptalis.crypto import AuthenticationFailed, DevelopmentKeyProvider, InvalidValue
@@ -145,6 +145,9 @@ def queries(Invoice):
         result[f'{name}/sort_public_first'] = base(Invoice.id).order_by(Invoice.label, column, Invoice.id)
         result[f'{name}/sort_unselected'] = base(Invoice.id).where(column.is_not(None)).order_by(column.desc(), Invoice.id)
         result[f'{name}/filter_and_sort'] = base(Invoice.id, column).where(column > PIVOTS[name][0]).order_by(column, Invoice.id).limit(9)
+        for population, predicate in {'all': Invoice.label.is_not(None), 'empty': Invoice.id == UUID(int=0),
+                                      'null': column.is_(None), 'filtered': column >= PIVOTS[name][0]}.items():
+            result[f'{name}/extrema/{population}'] = base(func.min(column), func.max(column), func.count(column)).where(predicate)
     return result
 
 
@@ -397,6 +400,63 @@ def test_timestamp_order_refuses_timezone_cast_binds_with_different_native_seman
                 session.execute(statement).all()
 
 
+def test_extrema_preserve_native_expression_keys_and_aliases(tmp_path):
+    def observe(factory, Invoice):
+        observed = []
+        for index, model in enumerate((Invoice, aliased(Invoice), aliased(Invoice, Invoice.__table__.alias().alias()))):
+            first, last = func.min(model.amount), func.max(model.moment).label('last_seen')
+            with factory() as session:
+                try:
+                    row = session.execute(select(first, last).where(model.tenant_id == TENANT)).one()
+                except UnsupportedProtectedOperation as failure:
+                    failure.add_note(f'Extremum oracle alias depth {index}')
+                    raise
+                observed.append((tuple(row), tuple(row._mapping), row._mapping[first],
+                                 row._mapping[last], row._mapping['last_seen']))
+        return observed
+    with invoices(tmp_path) as app:
+        Invoice, factory = app.native
+        expected = observe(factory, Invoice)
+        protect(app.process(), app)
+        process = app.process()
+        factory = process.project.attach(process.runtime)
+        assert observe(lambda: factory(tenant_id=TENANT), process.Invoice) == expected
+
+
+def test_extrema_refuse_an_explicit_native_result_conversion(tmp_path):
+    with invoices(tmp_path) as app:
+        Invoice, factory = app.native
+        with factory() as session:
+            assert type(session.scalar(select(func.min(Invoice.amount, type_=Float()))
+                                       .where(Invoice.tenant_id == TENANT))) is float
+        protect(app.process(), app)
+        process = app.process()
+        with process.project.attach(process.runtime)(tenant_id=TENANT) as session:
+            with pytest.raises(UnsupportedProtectedOperation):
+                session.scalar(select(func.min(process.Invoice.amount, type_=Float()))
+                               .where(process.Invoice.tenant_id == TENANT))
+
+
+@pytest.mark.parametrize('offset', [20, -1], ids=['term', 'payload'])
+def test_extrema_authenticate_the_selected_packet(tmp_path, offset):
+    with invoices(tmp_path) as app:
+        protect(app.process(), app)
+        target, (tenant, frame) = next((key, value) for key, value in frames(app).items()
+                                     if value[0] == TENANT and value[1] is not None)
+        tampered = bytearray(frame)
+        tampered[offset] ^= 1
+        with app.owner.begin() as connection:
+            connection.exec_driver_sql(f'ALTER TABLE "{app.schema}".invoice DISABLE TRIGGER ALL')
+            connection.exec_driver_sql(f'UPDATE "{app.schema}".invoice SET amount=%s WHERE id=%s', (bytes(tampered), target))
+            connection.exec_driver_sql(f'ALTER TABLE "{app.schema}".invoice ENABLE TRIGGER ALL')
+        process = app.process()
+        Invoice = process.Invoice
+        with process.project.attach(process.runtime)(tenant_id=TENANT) as session:
+            with pytest.raises(AuthenticationFailed):
+                session.execute(select(func.min(Invoice.amount), func.max(Invoice.amount))
+                                .where(Invoice.tenant_id == TENANT, Invoice.id == target)).one()
+
+
 def test_unsupported_order_queries_refuse_loudly(tmp_path):
     with invoices(tmp_path) as app:
         protect(app.process(), app)
@@ -404,13 +464,19 @@ def test_unsupported_order_queries_refuse_loudly(tmp_path):
         Invoice = process.Invoice
         sessions = process.project.attach(process.runtime)
         amount = Invoice.amount
+        other_alias = aliased(Invoice)
         refused = {
             'sort across tenants': select(Invoice.id).order_by(amount),
+            'minimum across tenants': select(func.min(amount)),
+            'maximum across tenants': select(func.max(amount)),
+            'minimum scoped through a different source': select(func.min(amount)).where(other_alias.tenant_id == TENANT),
             'sort under an expression': select(Invoice.id).where(Invoice.tenant_id == TENANT).order_by(func.abs(amount)),
-            'minimum': select(func.min(amount)).where(Invoice.tenant_id == TENANT),
+            'minimum under an expression': select(func.min(amount + 1)).where(Invoice.tenant_id == TENANT),
             'field to field': select(Invoice.id).where(Invoice.tenant_id == TENANT, amount > Invoice.small),
             'arithmetic': select(Invoice.id).where(Invoice.tenant_id == TENANT, amount + 1 > 5),
             'group by': select(amount).where(Invoice.tenant_id == TENANT).group_by(amount).order_by(amount),
+            'grouped minimum': select(func.min(amount)).where(Invoice.tenant_id == TENANT).group_by(Invoice.label),
+            'window maximum': select(func.max(amount).over()).where(Invoice.tenant_id == TENANT),
         }
         with sessions(tenant_id=TENANT) as session:
             for name, statement in refused.items():
@@ -461,6 +527,8 @@ def test_order_search_can_be_added_to_and_removed_from_a_protected_field(tmp_pat
         with before.project.attach(before.runtime)(tenant_id=TENANT) as session:
             with pytest.raises(UnsupportedProtectedOperation):
                 session.execute(select(before.Invoice.id).where(before.Invoice.amount > 0)).all()
+            with pytest.raises(UnsupportedProtectedOperation):
+                session.scalar(select(func.min(before.Invoice.amount)).where(before.Invoice.tenant_id == TENANT))
         ordered = ('equality', 'order')
         assert app.process(search=ordered).project.modify(app.owner, writers_stopped=STOPPED, search_reviewed=REVIEWED).phase == 'ACTIVE'
         process = app.process(search=ordered)
@@ -473,3 +541,5 @@ def test_order_search_can_be_added_to_and_removed_from_a_protected_field(tmp_pat
                 next(row[1] for row in expected['amount/sort/asc'] if row[0] == UUID(int=10001))
             with pytest.raises(UnsupportedProtectedOperation):
                 session.execute(select(process.Invoice.id).where(process.Invoice.amount > 0)).all()
+            with pytest.raises(UnsupportedProtectedOperation):
+                session.scalar(select(func.max(process.Invoice.amount)).where(process.Invoice.tenant_id == TENANT))

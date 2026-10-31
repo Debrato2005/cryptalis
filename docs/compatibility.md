@@ -73,8 +73,10 @@ Different, partial, unauthenticated, or plaintext-fallback data is forbidden.
 Full-term query exactness assumes HMAC collision resistance and intact search representations.
 Payload authentication does not prove hostile-database completeness, freshness, or adversarial global uniqueness.
 
-Unsupported operations on protected fields fail. Users must inspect this list before protecting a field:
-comparisons/ranges, ORDER BY, LIKE/prefix/contains, regex, SUM/AVG/MIN/MAX, general DISTINCT, protected-field joins, and other unadmitted protected types.
+Unsupported operations on protected fields fail. Inspect the capability matrix before
+protecting a field. Ranges, ordering and extrema require explicit order admission;
+patterns, SUM/AVG, general DISTINCT, protected-field joins and other unadmitted
+protected types remain open.
 The recommended adoption path is manifest → plan → staging apply plus the attached application suite → qualified production apply → decrypt-back exit.
 Plan refuses server-generated keys, unsupported types, small-domain searchable fields, missing tenancy, and unsupported writers.
 Attach rejects unsupported queries. Application tests on staging expose query-level incompatibilities before production.
@@ -98,11 +100,20 @@ table, because each tenant has its own keys and terms sort only within one tenan
 single-tenant table needs nothing extra.
 
 These refuse: sorting under an expression, in a subquery, with `DISTINCT` or `GROUP BY`;
-comparing two fields; arithmetic; `MIN`/`MAX`; and order on text, Boolean or UUID fields.
+comparing two fields; arithmetic; and order on text, Boolean or UUID fields.
 A value the column cannot hold, such as `small > 100000` on a `SmallInteger`, raises
 `InvalidValue` instead of being compared as something else.
 Timestamp comparisons reject explicitly timezone-bearing bind types: PostgreSQL's
 timezone cast can change their meaning across daylight-saving transitions.
+
+Direct `MIN`/`MAX` projections also use this order profile, within one provable
+tenant. They preserve native scalar values, labels, aliases and SQL NULL for
+empty/all-NULL inputs. PostgreSQL scans opaque packets with constant aggregate
+state; Cryptalis authenticates the selected packet. This is not an index-speed
+claim. Build expressions after attachment with their default result types;
+explicit result-type conversions, grouping, aggregate FILTER/window forms and
+protected expressions remain unadmitted. Existing hostile-database completeness
+and freshness limits also apply to extrema.
 
 **A database dump reveals the order, equality and frequency of these fields.** See
 [leakage](security.md#capability-leakage) before opting in, and prefer storage-only or
@@ -169,7 +180,8 @@ parent/child transaction evidence and remaining qualification work.
 | ORDER BY and sorted pagination on protected values | SUPPORTED, `order` fields | Direct column with ascending, descending and NULLS modifiers in the outermost SELECT, within one provable tenant. LIMIT/OFFSET and keyset pagination work. Other fields refuse |
 | LIKE, ILIKE, prefix/startswith, contains, suffix | CURRENTLY UNADMITTED | No admitted pattern/text grammar or representation |
 | Regex, fuzzy/similarity, full text | CURRENTLY UNADMITTED | No admitted exact query or text-search contract |
-| SUM, AVG, MIN, MAX, arithmetic | CURRENTLY UNADMITTED | Selected formats do not implement these operations. For MIN or MAX on an `order` field, sort and use `LIMIT 1` |
+| MIN/MAX of one directly protected column | SUPPORTED, `order` fields | One provable tenant, direct projection with the column's default result type, optional label and native aliases. SQL NULL is ignored; empty/all-NULL inputs yield NULL. Authenticate the selected opaque row packet. No grouping, FILTER, window or expression arguments |
+| SUM, AVG, arithmetic | CURRENTLY UNADMITTED | Selected formats do not implement these operations |
 | COUNT DISTINCT on an equality field | SUPPORTED | Bounded local implementation counts existing full-width equality terms within one tenant per group. Require explicit single tenancy, direct tenant equality in WHERE, or GROUP BY the exact tenant column. SQL NULL is excluded; native expression/label result keys are retained. Storage-only fields and global multi-tenant distinct counts refuse |
 | DISTINCT of one direct protected equality field | SUPPORTED | Existing full-width terms within one provable tenant scope; authenticate the representative payload. Labels, aliases and SQL NULL retain native value-set semantics. No output-order promise |
 | DISTINCT with each protected source's public primary key selected | SUPPORTED | Native entity/table/direct-tuple behavior, public ordering/pagination, labels and duplicate join rows. Also admits storage-only fields. Each record ID must match the protected column's exact source alias |
