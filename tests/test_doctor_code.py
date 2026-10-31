@@ -90,8 +90,12 @@ def test_timeout_terminates_child_holding_pipes_after_parent_exits(tmp_path):
     assert report['issues'][0]['code'] == 'Code.ScannerTimeout'
     child = int(child_file.read_text())
     deadline = time.monotonic() + 3
-    while Path(f'/proc/{child}/stat').exists():
-        if Path(f'/proc/{child}/stat').read_text().split()[2] == 'Z': break
+    while True:
+        try:
+            state = Path(f'/proc/{child}/stat').read_text().split()[2]
+        except (FileNotFoundError, ProcessLookupError):
+            break  # The killed child may disappear during the procfs read.
+        if state == 'Z': break
         assert time.monotonic() < deadline, 'scanner child survived timeout'
         time.sleep(0.02)
 

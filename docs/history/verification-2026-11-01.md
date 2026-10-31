@@ -57,3 +57,17 @@ test setup error. Its failed receipt is retained alongside the final passing run
 
 The archive includes recipes, runner scripts and public machine receipts. It
 excludes private role files, database files and raw service logs.
+
+## Doctor timeout observation race
+
+The subsequent hosted source run at `10b3c78` passes 3,622 tests and 18 subtests
+but fails `test_timeout_terminates_child_holding_pipes_after_parent_exits` when
+the terminated child disappears between checking procfs existence and reading
+its state. `ProcessLookupError` is evidence that this process is already gone.
+The test now performs one read and handles both process disappearance errors;
+it still rejects a living child after the deadline. Doctor runtime code is
+unchanged. All 12 local Doctor checks pass. The
+[boundary](../_reset/doctor-timeout-race-boundary-20261101.json) and
+[receipts](../_reset/doctor-timeout-race-receipts-20261101.tar.gz) retain the
+hosted failure, exact runtime hash and scoped local repair. Full hosted
+requalification is pending; no production gate changes.

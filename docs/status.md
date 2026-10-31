@@ -4,7 +4,14 @@ Cryptalis implements a bounded research prototype. **No production release or co
 This page owns current verification and release gates; the [34-objective ledger](BUILD_CHECKLIST.md) owns remaining work.
 Use the [documentation map](README.md) to find contracts and procedures.
 
-**Latest complete hosted run: PASS at `af0166a`.** Both jobs in
+**Latest hosted run: FAIL at `10b3c78`.** The
+[source run](https://github.com/Debrato2005/cryptalis/actions/runs/41232706573)
+passes 3,622 tests and 18 subtests but fails one Doctor process-observation check:
+the killed child disappears during a procfs read. The
+[test-only repair](_reset/doctor-timeout-race-boundary-20261101.json) passes all
+12 local Doctor checks; full hosted requalification remains pending.
+
+**Latest complete hosted PASS remains `af0166a`.** Both jobs in
 [run 41230895270](https://github.com/Debrato2005/cryptalis/actions/runs/41230895270)
 pass on `main` before the subsequent test-only pruning audit.
 The preceding [run 41227354271](https://github.com/Debrato2005/cryptalis/actions/runs/41227354271)

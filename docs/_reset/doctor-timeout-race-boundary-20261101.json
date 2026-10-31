@@ -1,0 +1,17 @@
+{
+  "base_revision": "10b3c785bc92e8d864c1fdea64bd107f75cfe644",
+  "failed_run": "https://github.com/Debrato2005/cryptalis/actions/runs/41232706573",
+  "failure": "Doctor timeout child exited between procfs existence check and stat read; ProcessLookupError",
+  "repair": "Read stat once and accept FileNotFoundError/ProcessLookupError as child exit; retain zombie/deadline checks",
+  "runtime_changed": false,
+  "doctor_runtime_sha256": "f4a8b58987618c4d12a1ab70f5a48ba4dbbdb5b486ed4d16c0e505a7c39901d5",
+  "local_verification": {
+    "passed": 12,
+    "skipped": 0,
+    "scope": "Doctor code inventory and real subprocess lifecycle"
+  },
+  "limits": "Local receipt includes other uncommitted work; Doctor runtime bytes match the failed revision. Full hosted rerun remains pending.",
+  "archive": "doctor-timeout-race-receipts-20261101.tar.gz",
+  "archive_sha256": "0bb5707bf80418dbc603e3013bef610d05393a7e8643948ba0944c86a6768a96",
+  "production_gates": "UNKNOWN"
+}
