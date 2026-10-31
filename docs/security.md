@@ -1485,6 +1485,15 @@ when the column is not read; the existing completeness limit applies. No publish
 attack has been run against this representation and no independent cryptographer has reviewed
 it. G-CRYPTO and G-QUERY remain UNKNOWN.
 
+Direct MIN/MAX on these fields selects one opaque packet in PostgreSQL by its
+fixed-width hex order-term prefix under explicit `pg_catalog."C"` collation.
+The remainder carries the existing ciphertext, record and tenant context;
+the existing reader authenticates it before returning a value. No new term or
+stored representation is introduced. The aggregate scans rows with constant
+state. Ties may choose any authenticated packet with the same value. This does
+not prove a hostile database selected the true extremum or returned complete,
+fresh inputs. Grouping, window/FILTER forms and result-type overrides refuse.
+
 A static keyed tree is not MongoDB's full structured-encryption protocol or a forward/backward-private SSE scheme.
 It has no ORAM/PIR or opaque-field claim. No home-grown primitive is introduced, but the composition still requires expert review.
 The measured frequency attack on 100,000 synthetic skewed names recovered 100% of classes and rows using an independent auxiliary sample.

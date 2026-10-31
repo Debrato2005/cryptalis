@@ -29,11 +29,23 @@ NULL stays NULL. NULLs remain distinct for uniqueness. Empty IN matches no rows;
 AND/OR/NOT, mapped aliases, ordinary text binds and explicit late values are admitted.
 Negative equality, NOT IN and NULL-presence predicates retain the bounded
 grammar in [compatibility](compatibility.md#full-capability-matrix).
-[Order search](compatibility.md#order-search) adds ranges and sorting on integer and date
+[Order search](compatibility.md#order-search) adds ranges, sorting and direct MIN/MAX on integer, date and naive timestamp
 fields that opt in. Protected joins, derived tables, patterns, general protected
-grouping/DISTINCT and aggregates other than admitted counts reject.
+grouping/DISTINCT and aggregates outside the admitted count and order-extrema grammar reject.
 Custom codecs, callables, generated parameter-name overrides and conflicting named defaults without explicit values also reject.
 Protected compilation is per operation; plain queries retain SQLAlchemy caching.
+
+For an order-enabled field, direct extrema keep native empty-input behavior:
+
+```python
+low, high = session.execute(
+    select(func.min(Invoice.amount), func.max(Invoice.amount))
+    .where(Invoice.tenant_id == tenant)
+).one()
+```
+
+These values authenticate through the ordinary reader. One provable tenant is
+required; group/window/FILTER forms and explicit result-type conversions refuse.
 
 Compose supported predicates normally:
 
