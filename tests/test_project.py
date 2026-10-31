@@ -9,16 +9,16 @@ from uuid import UUID, uuid4
 
 import psycopg
 import pytest
-from sqlalchemy import Column, Index, MetaData, Table, Text, Uuid, select
+from sqlalchemy import Column, Index, MetaData, Table, Text, Uuid, event, select
 from sqlalchemy.exc import DBAPIError, IntegrityError
 from sqlalchemy.ext.asyncio import create_async_engine
 from sqlalchemy.orm import registry, sessionmaker
 
 from cryptalis import Project
 from cryptalis.crypto import AuthenticationFailed, DevelopmentKeyProvider, KeyUnavailable
-from cryptalis.migration import TransitionFailure
+from cryptalis.migration import DeploymentPin, MigrationPlan, TransitionFailure
 from cryptalis.project import ProjectError
-from cryptalis.sqlalchemy import PolicyMismatch, UnsupportedProtectedOperation
+from cryptalis.sqlalchemy import PolicyMismatch, UnsupportedProtectedOperation, attach
 from test_deprotection import least_privilege_role, native_rows
 from test_migration import application, engine, frames, TENANT
 from test_online_protection import app as online_app  # noqa: F401  (pytest fixture)
@@ -386,6 +386,22 @@ def test_unsafe_state_and_mismatched_inputs_refuse(tmp_path):
             process.project.status(app.owner)
         state.chmod(0o600)
         document = json.loads(state.read_bytes())
+        recorded_plan = document['plan']
+        malformed = json.loads(recorded_plan)
+        malformed['unexpected_authority'] = True
+        document['plan'] = json.dumps(malformed, sort_keys=True, separators=(',', ':'))
+        state.write_text(json.dumps(document))
+
+        def forbidden(*args, **kwargs):
+            pytest.fail('invalid saved plan reached the database')
+
+        event.listen(app.owner, 'engine_connect', forbidden)
+        try:
+            with pytest.raises(TransitionFailure, match='invalid_plan'):
+                process.project.status(app.owner)
+        finally:
+            event.remove(app.owner, 'engine_connect', forbidden)
+        document['plan'] = recorded_plan
         document['format'] = 'something-else'
         state.write_text(json.dumps(document))
         with pytest.raises(ProjectError, match='StateUnreadable'):
@@ -634,3 +650,25 @@ def test_session_without_a_tenant_refuses_when_nothing_is_single_tenant(tmp_path
         sessions = process.project.attach(process.runtime)
         with pytest.raises(PolicyMismatch):
             sessions()
+
+
+def test_unknown_tenant_refuses_before_any_shared_key_lookup(tmp_path):
+    with _two_tables(tenant_table=True) as (app, owner, runtime, role):
+        project = Project(_two_table_manifest(tenant_table=True), app.mapping,
+                          provider=DevelopmentKeyProvider(), state_dir=tmp_path)
+        project.protect(owner, runtime_role=role, writers_stopped=STOPPED)
+        plan = MigrationPlan(json.loads((tmp_path / 'state.json').read_bytes())['plan'].encode())
+        pin = DeploymentPin(plan.target_id, plan.operation_id, plan.digest, 'ACTIVE')
+        resolutions = []
+
+        def observe(scope):
+            resolutions.append(scope)
+            raise KeyUnavailable()
+
+        monitored = attach(app.mapping, runtime, lock=plan.lock_bytes, keys=observe, deployment=(plan, pin))
+        with pytest.raises(PolicyMismatch):
+            monitored(tenant_id=uuid4())
+        assert resolutions == []
+        with pytest.raises(KeyUnavailable):
+            monitored(tenant_id=TENANT)
+        assert resolutions == [TENANT]

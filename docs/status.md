@@ -4,17 +4,22 @@ Cryptalis implements a bounded research prototype. **No production release or co
 This page owns current verification and release gates; the [34-objective ledger](BUILD_CHECKLIST.md) owns remaining work.
 Use the [documentation map](README.md) to find contracts and procedures.
 
-**Latest complete hosted run: PASS at `99ea473`.** Both jobs in
-[run 41228365042](https://github.com/Debrato2005/cryptalis/actions/runs/41228365042)
-pass for the consolidated branch content, now integrated into `main`.
+**Latest complete hosted run: PASS at `af0166a`.** Both jobs in
+[run 41230895270](https://github.com/Debrato2005/cryptalis/actions/runs/41230895270)
+pass on `main` before the subsequent test-only pruning audit.
 The preceding [run 41227354271](https://github.com/Debrato2005/cryptalis/actions/runs/41227354271)
 at `bc94495` records the parallel source job taking about 9 minutes and passing
 3,622 test calls and 18 subtests, with 12 call
 skips, 41 setup skips and 8 collection skips across 3,675 selected items. No skipped cell is
 qualified, and all seven production gates remain UNKNOWN.
 
-Test pruning is **not fully proven safe**. A [mutation check](history/completion-2026-10-31.md#partial-mutation-check-of-the-pruned-suite-2026-10-31)
-was stopped by low memory with 10 of 26 sabotaged checks unresolved.
+Test pruning is **not fully proven safe**. The [follow-up audit](history/verification-2026-11-01.md)
+replays the ten previously unresolved mutations in an isolated copy. Nine produce
+relevant failures after strengthening saved-plan and tenant-policy regressions.
+The extra sealed-value tenant check survives the selected driver attacks;
+equivalence is not proven and the guard remains. Healthy focused checks pass 79
+tests and 18 subtests; the full Project module passes 70 tests with seven explicit
+skips. [Machine boundary](_reset/pruning-audit-boundary-20261101.json).
 
 The previous `1c7b8e0` run on `main`, [41192438108](https://github.com/Debrato2005/cryptalis/actions/runs/41192438108),
 passes 4,216 test calls and 18 subtests with 12 call skips, 86 setup skips and 18 collection

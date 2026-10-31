@@ -1,0 +1,33 @@
+{
+  "base_revision": "af0166acac6149ff368e7ed04fb99b2978b1d86b",
+  "scope": "Ten previously unresolved pruning mutations; bounded assurance, not production qualification",
+  "baseline_receipt": "round2-final-baseline.json",
+  "project_receipt": "round2-final-healthy-project.json",
+  "outcome": {
+    "caught": 9,
+    "not_detected": 1,
+    "equivalence_proven": false
+  },
+  "survivor": {
+    "name": "sealed value tenant at driver",
+    "tests": "22 native driver-boundary cases pass with this check disabled; retain guard, equivalence not proven"
+  },
+  "test_file": "tests/test_project.py",
+  "test_file_sha256": "145bd4a1c2e10706f8691e2cec3f1e2f8a23df352eaa84c907b83a5ba6037d25",
+  "archive": "pruning-audit-receipts-20261101.tar.gz",
+  "archive_sha256": "e493687f4139abba9e24f158b48b5511dca85f707963c3d63e74176c5f52fd33",
+  "preliminary_failures": [
+    {
+      "scope": "Isolated snapshot setup",
+      "reason": "Git metadata was initially absent; wrapper stopped before pytest. Added the exact base Git revision before retrying."
+    },
+    {
+      "scope": "New regression fixture",
+      "receipt": "final-baseline.json",
+      "reason": "A second attachment to an already guarded engine correctly refused UnsafeDriverEvent; regression moved to a fresh fixture."
+    }
+  ],
+  "isolated_mutations": true,
+  "main_runtime_modified": false,
+  "production_gates": "UNKNOWN"
+}
