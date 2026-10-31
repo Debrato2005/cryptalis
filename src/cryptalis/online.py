@@ -61,7 +61,7 @@ class OnlineProtectionPlan:
                 raise ValueError
             models = d['lock']['models']
             if any((not tenant_scoped and 'column' in model['tenancy']) or any(
-                    field['source']['type'] not in ('text', 'varchar', 'bool', 'int2', 'int4', 'int8', 'date', 'uuid', 'timestamp')
+                    field['source']['type'] not in ('text', 'varchar', 'bool', 'int2', 'int4', 'int8', 'date', 'uuid', 'timestamp', 'numeric')
                     for field in model['fields']) for model in models):
                 raise ValueError
             if tenant_scoped:
@@ -332,7 +332,8 @@ def _chunk(c, p, state, keys, *, pool=None, row_limit=None):
         names = [model['record']['column']] + ([model['tenancy']['column']] if scoped else []) + fields
         widths = {'bool': 1, 'int2': 2, 'int4': 4, 'int8': 8, 'date': 4, 'uuid': 16, 'timestamp': 8}
         sizes = '+'.join((str(widths[f['source']['type']]) if f['source']['type'] in widths else
-                         'COALESCE(pg_catalog.octet_length('+m._quote(c,f['column'])+'),0)') + '+74'
+                         'COALESCE(pg_catalog.octet_length('+m._quote(c,f['column'])+
+                         ('::pg_catalog.text' if f['source']['type'] == 'numeric' else '')+'),0)') + '+74'
                          for f in model['fields'])
         candidates = c.exec_driver_sql('SELECT ' + m._quote(c,names[0]) + ', ' + sizes
             + f' FROM {m._table(c,model)} WHERE {m._quote(c,dirty)} IS DISTINCT FROM FALSE'
@@ -351,6 +352,13 @@ def _chunk(c, p, state, keys, *, pool=None, row_limit=None):
         # row count alone does not bound memory for large text values.
         for field in model['fields']:
             kind = field['source']['type']
+            if kind == 'numeric':
+                column = m._quote(c, field['column'])
+                if c.exec_driver_sql(f'SELECT EXISTS (SELECT 1 FROM {m._table(c,model)} '
+                    f'WHERE {m._quote(c,names[0])}=ANY(%s) AND '
+                    f"{column} IN ('NaN'::pg_catalog.numeric, 'Infinity'::pg_catalog.numeric, '-Infinity'::pg_catalog.numeric))",
+                    (selected,)).scalar_one():
+                    raise m.TransitionFailure('numeric_source_domain', p.operation_id)
             if kind in ('date', 'timestamp'):
                 column = m._quote(c, field['column'])
                 lower, upper = (('0001-01-01', '9999-12-31') if kind == 'date' else

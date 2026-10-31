@@ -28,6 +28,7 @@ refused with a typed failure.
 from dataclasses import dataclass
 from datetime import date
 import datetime
+from decimal import Decimal
 import hashlib
 import json
 from uuid import UUID
@@ -436,7 +437,7 @@ def _sequence_evidence(c, source, binding=None):
     """Compare every logical fact before admitting restored sequence OIDs."""
     from cryptalis.manifest.compiler import sequence_metadata
     maps, facts = [], {}
-    if source.document['lock']['schema'] not in ('cryptalis.lock/v5', 'cryptalis.lock/v6', 'cryptalis.lock/v7', 'cryptalis.lock/v8', 'cryptalis.lock/v9', 'cryptalis.lock/v10'):
+    if source.document['lock']['schema'] not in ('cryptalis.lock/v5', 'cryptalis.lock/v6', 'cryptalis.lock/v7', 'cryptalis.lock/v8', 'cryptalis.lock/v9', 'cryptalis.lock/v10', 'cryptalis.lock/v11'):
         return maps, facts
     for model in source.document['lock']['models']:
         original = sequence_admissions(source.document, model)
@@ -626,12 +627,16 @@ def _scan(c, source, keys):
                                         admitted.search_generation if f['queries'] else 0)):
                                 raise m.TransitionFailure('generation_mismatch', source.operation_id)
                             value = open_value(frame, descriptors[i], tenant, row[0], prepared)
+                            if f['source']['type'] == 'numeric':
+                                from ._numeric import validate_numeric
+                                validate_numeric(value, f['source']['typmod'])
                         except KeyUnavailable:
                             raise
                         except CryptoFailure:
                             raise m.TransitionFailure('restored_frame_verification_failed',
                                                       source.operation_id) from None
-                        expected_type = (bool if descriptors[i].value_codec == 'boolean-u8/v1' else
+                        expected_type = (Decimal if descriptors[i].value_codec == 'pg-numeric-decimal/v1' else
+                            bool if descriptors[i].value_codec == 'boolean-u8/v1' else
                             datetime.datetime if descriptors[i].value_codec == 'pg-timestamp-us-be/v1' else
                             UUID if descriptors[i].value_codec == 'uuid-bytes16/v1' else
                             date if descriptors[i].value_codec in ('pg-date-days-be/v1', 'date-ordinal-u32/v1') else

@@ -23,9 +23,9 @@ The public manifest uses bounded JSON. Its field-intent declaration is independe
 lists each protected field with the search leakage you accepted.
 
 Prefix limits, shared-join domains and arbitrary normalizers remain unadmitted.
-Boolean, signed integer, finite Date and UUID storage use pinned value codecs.
-Integer, date and naive timestamp fields admit [`order`](compatibility.md#order-search) search only; Boolean
-and UUID fields admit no search.
+Boolean, signed integer, finite Date, UUID, naive timestamp and finite numeric storage use pinned value codecs.
+Integer, date and naive timestamp fields admit [`order`](compatibility.md#order-search) search only;
+Boolean, UUID and numeric fields admit no search.
 The compiler rejects unsupported types, server-generated keys, small-domain searchable fields, missing tenant scope, and unsupported writers at plan time.
 Searchable small domains remain unsafe because enumeration can label their equality classes. No invented cardinality threshold supplies evidence.
 The planner does not infer every application query. Attached staging tests expose query-level incompatibilities.
@@ -78,8 +78,9 @@ Plans with admitted owned sequences emit `cryptalis.lock/v5`. Other plans retain
 their existing format selection and bytes. The explicit public-slot layout emits
 `cryptalis.lock/v6`. Signed integer storage emits `cryptalis.lock/v7`
 and requires its exact pg-int2/int4/int8-be/v1 codec readers. Date plans emit `cryptalis.lock/v8`; UUID plans emit `cryptalis.lock/v9`.
-Naive timestamp plans emit `cryptalis.lock/v10`. Current readers accept v1 through
-v10; older readers refuse unknown formats before effects.
+Naive timestamp plans emit `cryptalis.lock/v10`. Numeric plans emit
+`cryptalis.lock/v11`. Current readers accept v1 through v11; older readers refuse
+unknown formats before effects.
 Older operational readers refuse the embedded v5 lock before effects.
 The [VARCHAR decision](history/decisions-2026-10.md#native-varchar-text-admission-2026-10-22) defines assignment and reader boundaries.
 Its exact top-level members are
@@ -143,6 +144,13 @@ Boolean storage uses `cryptalis.context/v2` with `value_codec: boolean-u8/v1`
 instead of `text_codec`. False encodes as byte 00. True encodes as byte 01.
 The descriptor digest binds the value type in the shared authenticated path.
 SQL NULL stays SQL NULL. Boolean equality terms remain unadmitted.
+Finite NUMERIC uses `pg-numeric-decimal/v1` under context/v2 and lock/v11.
+Canonical Decimal strings or typed `{"integer":"…"}` literal defaults preserve their Python
+type, sign, exponent and fractional scale before refresh. Numeric fields
+pin their source typmod as well as the original catalog snapshot, so attachment,
+verification and native exit retain declared precision and scale. Numeric
+fields are storage-only; [numeric admission](compatibility.md#numeric-storage)
+defines exact input bounds and failures.
 Signed integer storage also uses context/v2. Its pinned codecs encode int2/int4/int8
 as 2/4/8 signed big-endian bytes. Current Date plans use `pg-date-days-be/v1`
 and lock/v8: signed four-byte days from the PostgreSQL epoch. Literal client Date

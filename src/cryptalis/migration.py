@@ -429,7 +429,7 @@ def _observed_source_metadata(c, p, model, *, sequences=None):
 
 
 def _preserves_public_slot_lock(lock):
-    return lock['schema'] in ('cryptalis.lock/v6', 'cryptalis.lock/v7', 'cryptalis.lock/v8', 'cryptalis.lock/v9', 'cryptalis.lock/v10') and lock.get('layout') == 'preserve-public-slots/v1'
+    return lock['schema'] in ('cryptalis.lock/v6', 'cryptalis.lock/v7', 'cryptalis.lock/v8', 'cryptalis.lock/v9', 'cryptalis.lock/v10', 'cryptalis.lock/v11') and lock.get('layout') == 'preserve-public-slots/v1'
 
 
 def _preserves_public_slots(p):
@@ -498,7 +498,10 @@ def _convert_public_columns(c, p, model, *, plaintext=False):
             from cryptalis.deprotection import _staging
             shadow = _staging(field)
             native = next(column for column in model['source_schema']['columns'] if column['name'] == field['column'])
-            if _fixed_value_width(native) is not None:
+            if native['type'] == 'numeric':
+                from ._numeric import numeric_sql_type
+                target = numeric_sql_type(native['typmod'])
+            elif _fixed_value_width(native) is not None:
                 target = 'pg_catalog.' + native['type']
                 if native['type'] == 'timestamp' and native['typmod'] == '6':
                     target += '(6)'
@@ -710,7 +713,8 @@ def plan(manifest, mapping, engine, *, writers, search_reviews=(), keys, runtime
             count=c.exec_driver_sql(f'SELECT count(*) FROM {_table(c,model)}').scalar_one()
             sizes = [(f'CASE WHEN {_quote(c, f["column"])} IS NULL THEN 0 ELSE {_fixed_value_width(f["source"])} END'
                       if _fixed_value_width(f['source']) is not None else
-                      f'coalesce(octet_length({_quote(c, f["column"])}),0)') for f in model['fields']]
+                      f'coalesce(octet_length({_quote(c, f["column"])}' +
+                      ('::pg_catalog.text' if f['source']['type'] == 'numeric' else '') + '),0)') for f in model['fields']]
             size=c.exec_driver_sql(f'SELECT coalesce(sum('+ '+'.join(sizes)+f'),0) FROM {_table(c,model)}').scalar_one()
             scopes.append({'table_id':model['table_id'],'estimated_rows':count})
             rows+=count; plaintext_bytes+=size
@@ -1051,6 +1055,12 @@ def _check_temporal_source_domain(c, model, operation_id=None):
     """Refuse native temporal values the admitted Python reader cannot decode."""
     for field in model['fields']:
         kind = field['source']['type']
+        if kind == 'numeric':
+            column = _quote(c, field['column'])
+            if c.exec_driver_sql(f'SELECT EXISTS (SELECT 1 FROM {_table(c,model)} WHERE '
+                f"{column} IN ('NaN'::pg_catalog.numeric, 'Infinity'::pg_catalog.numeric, '-Infinity'::pg_catalog.numeric))").scalar_one():
+                raise TransitionFailure('numeric_source_domain', operation_id)
+            continue
         if kind not in ('date', 'timestamp'):
             continue
         column = _quote(c, field['column'])
@@ -1178,7 +1188,12 @@ def _verify_values(c,p,keys,*,active=False):
                         if frame is not None and (int.from_bytes(frame[6:10],'big')!=admitted.payload_generation or int.from_bytes(frame[10:14],'big')!=(admitted.search_generation if f['queries'] else 0)):
                             raise TransitionFailure('generation_mismatch',p.operation_id)
                         value=open_value(frame,descriptors[i],tenant,row[0],prepared)
-                        if not active and (type(value)!=type(source) or value!=source): raise TransitionFailure('value_verification_failed',p.operation_id)
+                        if f['source']['type'] == 'numeric':
+                            from ._numeric import validate_numeric
+                            validate_numeric(value, f['source']['typmod'])
+                        if not active and (type(value)!=type(source) or value!=source or
+                                f['source']['type'] == 'numeric' and value is not None and value.as_tuple()!=source.as_tuple()):
+                            raise TransitionFailure('value_verification_failed',p.operation_id)
                         frames.append(frame)
                     return frames
                 frames=_with_row_keys(keys,tenant,p,material,verify)

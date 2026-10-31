@@ -459,7 +459,10 @@ def _expand(c, p):
             if native['collation_name']:
                 collate = (' COLLATE ' + m._quote(c, native['collation_schema'])
                            + '.' + m._quote(c, native['collation_name']))
-            if m._fixed_value_width(native) is not None:
+            if native['type'] == 'numeric':
+                from ._numeric import numeric_sql_type
+                native_type = numeric_sql_type(native['typmod'])
+            elif m._fixed_value_width(native) is not None:
                 native_type = 'pg_catalog.' + native['type']
                 if native['type'] == 'timestamp' and native['typmod'] == '6':
                     native_type += '(6)'
@@ -495,6 +498,10 @@ def _backfill_chunk(c, p, state, keys, chunk_size):
             values = m._with_row_keys(keys, tenant, source, material, lambda prepared:
                 [open_value(row[offset + index], descriptor, tenant, row[0], prepared)
                  for index, descriptor in enumerate(descriptors)])
+            for value, field in zip(values, model['fields']):
+                if field['source']['type'] == 'numeric':
+                    from ._numeric import validate_numeric
+                    validate_numeric(value, field['source']['typmod'])
             updates.append(tuple(values) + (row[0],))
         statement = (f'UPDATE {m._table(c, model)} SET '
                      + ','.join(m._quote(c, _staging(field)) + '=%s' for field in model['fields'])
@@ -537,7 +544,9 @@ def _verify(c, p, state, keys):
                         frame = bytes(raw) if raw is not None else None
                         value = open_value(frame, descriptor, tenant, row[0], prepared)
                         staged = row[offset + len(descriptors) + index]
-                        if value != staged:
+                        if (type(value) is not type(staged) or value != staged or
+                                model['fields'][index]['source']['type'] == 'numeric' and value is not None
+                                and value.as_tuple() != staged.as_tuple()):
                             raise m.TransitionFailure('value_verification_failed', p.operation_id)
                         frames.append(frame)
                     return frames
