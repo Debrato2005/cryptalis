@@ -1,8 +1,8 @@
 """Bounded equality admission, deferred terms, and native index validation."""
 
-from sqlalchemy import LargeBinary, String, Text, TEXT, Unicode, UnicodeText, Uuid, VARCHAR, and_, or_, bindparam, func, literal, literal_column, type_coerce
+from sqlalchemy import Boolean, LargeBinary, String, Text, TEXT, Unicode, UnicodeText, Uuid, VARCHAR, and_, or_, bindparam, func, literal, literal_column, type_coerce
 from sqlalchemy.sql import operators, visitors
-from sqlalchemy.sql.elements import BinaryExpression, BindParameter, ColumnClause, Grouping, Label, Null
+from sqlalchemy.sql.elements import BinaryExpression, BindParameter, BooleanClauseList, ColumnClause, Grouping, Label, Null, UnaryExpression
 from sqlalchemy.sql.functions import count
 from sqlalchemy.types import NullType, TypeDecorator
 
@@ -80,12 +80,76 @@ def equality_expression(column):
                                      literal_column("15"), literal_column("32"), type_=LargeBinary())
 
 
+def boolean_children(expression):
+    """Inspect native Boolean containers before rewriting any protected child."""
+    from .sqlalchemy import _delete_node, UnsupportedProtectedOperation
+    if isinstance(expression, BooleanClauseList):
+        native = _delete_node(expression, BooleanClauseList)
+        if (expression.operator not in (operators.and_, operators.or_)
+                or expression.operator is not native.operator
+                or expression.clauses is not native.clauses
+                or type(expression.type) is not Boolean or expression.type is not native.type):
+            raise UnsupportedProtectedOperation()
+        return expression.clauses
+    if isinstance(expression, UnaryExpression):
+        native = _delete_node(expression, UnaryExpression)
+        if (expression.operator is not operators.inv or native.operator is not operators.inv
+                or expression.modifier is not None or native.modifier is not None
+                or expression.element is not native.element
+                or type(expression.type) not in (Boolean, NullType) or expression.type is not native.type):
+            raise UnsupportedProtectedOperation()
+        return (expression.element,)
+    if isinstance(expression, Grouping):
+        native = _delete_node(expression, Grouping)
+        if expression.element is not native.element or expression.type is not native.type:
+            raise UnsupportedProtectedOperation()
+        return (expression.element,)
+    return None
+
+
+def _normalize_negation(owner, expression):
+    """Push NOT through admitted predicates before adding positive tenant guards.
+
+    Use SQL's three-valued De Morgan identities and explicit native operator
+    pairs. Caller-mutable ``negate`` metadata is not rewrite authority.
+    Public subexpressions retain their original SQL under a native NOT wrapper.
+    """
+    inverse = {operators.eq: operators.ne, operators.ne: operators.eq,
+               operators.in_op: operators.not_in_op, operators.not_in_op: operators.in_op,
+               operators.is_: operators.is_not, operators.is_not: operators.is_}
+
+    def normalize(node, negate=False):
+        if not owner.protected(node):
+            return UnaryExpression(node.self_group(), operator=operators.inv) if negate else node
+        children = boolean_children(node)
+        if isinstance(node, Grouping):
+            return normalize(children[0], negate)
+        if isinstance(node, UnaryExpression):
+            return normalize(children[0], not negate)
+        if isinstance(node, BooleanClauseList):
+            conjunction = (node.operator is operators.and_) != negate
+            return (and_ if conjunction else or_)(*(normalize(child, negate) for child in children))
+        if search_shape(owner, node) is None:
+            from .sqlalchemy import UnsupportedProtectedOperation
+            raise UnsupportedProtectedOperation()
+        return BinaryExpression(node.left, node.right, inverse[node.operator], type_=node.type) if negate else node
+
+    return normalize(expression)
+
+
 def rewrite_search(owner, statement, operation):
-    from .sqlalchemy import _projection_column
     identity = identity_distinct(owner, statement)
     distinct = distinct_projection(owner, statement) if identity is None else None
     outputs = tuple(statement.selected_columns) if identity is not None or distinct is not None else ()
     projections = {id(output) for output in outputs}
+    for output in statement.selected_columns:
+        root = output
+        while isinstance(root, (Label, Grouping)):
+            root = root.element
+        if isinstance(root, (BinaryExpression, BooleanClauseList, UnaryExpression)) and owner.protected(root):
+            # Keep the original expression in SQLAlchemy's ORM result metadata.
+            # The owned compiler rewrites its SQL using the same token path.
+            projections.add(id(output))
     # SQLAlchemy merges named placeholders. Multiple definitions without an
     # explicit value have compiler-dependent default precedence, outside this
     # bounded grammar. A shared bind object and supplied values are unambiguous.
@@ -105,6 +169,22 @@ def rewrite_search(owner, statement, operation):
         from .sqlalchemy import UnsupportedProtectedOperation
         raise UnsupportedProtectedOperation()
 
+    return visitors.replacement_traverse(statement, {}, _predicate_replacer(owner, statement, operation, projections))
+
+
+def rewrite_predicate(owner, expression, statement, operation):
+    """Compile an admitted predicate without replacing its public result key."""
+    rewritten = visitors.replacement_traverse(expression, {}, _predicate_replacer(owner, statement, operation, ()))
+    # Include the composed root, so compiler recursion never rewrites a guard.
+    nodes = tuple(visitors.iterate(rewritten))
+    operation.search_nodes.extend(nodes)
+    operation.search_identities.update((id(node), node) for node in nodes)
+    return rewritten
+
+
+def _predicate_replacer(owner, statement, operation, projections):
+    from .sqlalchemy import _projection_column
+
     def replace(node):
         if isinstance(node, (Label, Grouping)) and _projection_column(node) is not None:
             # A direct projection contains no predicate to rewrite. Preserve
@@ -114,6 +194,10 @@ def rewrite_search(owner, statement, operation):
         # Keep their identity so ORM result mappings retain expression keys.
         if id(node) in projections or isinstance(node, count) or count_shape(owner, node, statement) is not None:
             return node
+        if isinstance(node, UnaryExpression) and node.operator is operators.inv and owner.protected(node):
+            # Rewrite only the normalized subtree. A separate whole-statement
+            # clone would discard aggregate/projection expression result keys.
+            return visitors.replacement_traverse(_normalize_negation(owner, node), {}, replace)
         shape = search_shape(owner, node)
         if shape is None:
             return None
@@ -156,7 +240,7 @@ def rewrite_search(owner, statement, operation):
         operation.search_nodes.extend(nodes)
         operation.search_identities.update((id(node), node) for node in nodes)
         return predicate
-    return visitors.replacement_traverse(statement, {}, replace)
+    return replace
 
 
 def validate_search_storage(connection, model, field, *, admitted=None):

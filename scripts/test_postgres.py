@@ -37,6 +37,7 @@ VARIABLES = ("CRYPTALIS_TEST_DATABASE_URL", "CRYPTALIS_TEST_RUNTIME_DATABASE_URL
 FILES = (".cryptalis-test-url", ".cryptalis-test-runtime-url")
 SOURCE_VARIABLE = "CRYPTALIS_TEST_SOURCE_URL"
 SOURCE_FILE = ".cryptalis-test-source-url"
+CONFIG_DIRECTORY = "CRYPTALIS_TEST_CONFIG_DIR"
 ROOT = Path(__file__).resolve().parents[1]
 _RUNTIME_CACHE = None
 
@@ -214,12 +215,40 @@ def runtime_binding(installed_wheel=None):
     }
 
 
+def configuration_directory():
+    """Select an explicit private-file directory without changing HOME."""
+    selected = os.environ.get(CONFIG_DIRECTORY)
+    if selected is None:
+        return Path.home()
+    directory = Path(selected)
+    if not selected or not directory.is_absolute():
+        raise ValueError("Configuration.InvalidDirectory")
+    return directory
+
+
+def _private_url(path):
+    # Check the opened inode: no symlink following, FIFO blocking or unbounded read.
+    descriptor = os.open(path, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK)
+    with os.fdopen(descriptor, "rb") as source:
+        info = os.fstat(source.fileno())
+        if (not stat.S_ISREG(info.st_mode) or info.st_uid != os.geteuid()
+                or info.st_mode & 0o077 or not 0 < info.st_size <= 65536):
+            raise ValueError("Configuration.UnsafeFile")
+        content = source.read(65537)
+        if not 0 < len(content) <= 65536:
+            raise ValueError("Configuration.UnsafeFile")
+    value = content.decode("utf-8").strip()
+    if not value:
+        raise ValueError("Configuration.EmptyFile")
+    return value.replace("postgresql+psycopg://", "postgresql://", 1)
+
+
 def load_urls(*, source_role=False):
     for name in (*VARIABLES, SOURCE_VARIABLE):
         os.environ.pop(name, None)
     files = FILES + ((SOURCE_FILE,) if source_role else ())
-    return tuple((Path.home() / name).read_text().strip().replace(
-        "postgresql+psycopg://", "postgresql://", 1) for name in files)
+    directory = configuration_directory()
+    return tuple(_private_url(directory / name) for name in files)
 
 
 def fingerprints(urls):
@@ -347,11 +376,6 @@ def development_preflight():
         record('git_metadata', 'FAIL', 'Git.InspectionFailed',
                'Inspect the checkout and Git executable before continuing.', 'implementation_defect')
     try:
-        for name in FILES:
-            info = (Path.home() / name).lstat()
-            if (not stat.S_ISREG(info.st_mode) or info.st_uid != os.geteuid()
-                    or info.st_mode & 0o077 or not 0 < info.st_size <= 65536):
-                raise ValueError
         urls = load_urls()
         config = [conninfo_to_dict(url) for url in urls]
         target = lambda value: tuple(value.get(key) for key in ('host', 'hostaddr', 'port', 'dbname', 'service'))
@@ -452,7 +476,7 @@ def main():
     diagnostics = parser.add_mutually_exclusive_group()
     diagnostics.add_argument("--preflight-only", action="store_true")
     parser.add_argument("--source-role", action="store_true",
-                        help="Also require and probe ~/.cryptalis-test-source-url before pytest.")
+                        help="Also require and probe .cryptalis-test-source-url in the private configuration directory.")
     parser.add_argument("--installed-wheel", type=Path,
                         help="Bind imported Cryptalis Python modules to this inspected wheel.")
     diagnostics.add_argument("--runtime-binding-only", action="store_true",

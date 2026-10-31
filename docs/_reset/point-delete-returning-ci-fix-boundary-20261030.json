@@ -1,0 +1,285 @@
+{
+  "format": "cryptalis.point-delete-returning-ci-fix-boundary/v1",
+  "base_revision": "95a35a5cfcbbfd08252202b7c93bafc653732cc0",
+  "source_identity": "worktree-984328d50fbbc938",
+  "source_files": 300,
+  "source_checks": {
+    "test_calls": {
+      "passed": 67
+    },
+    "subtest_calls": {},
+    "setup": {
+      "passed": 67
+    },
+    "teardown": {
+      "passed": 67
+    },
+    "collection": {},
+    "selected_items": 67
+  },
+  "source_and_runtime_unchanged": true,
+  "artifacts": {
+    "cryptalis-0.1.0-py3-none-any.whl": "4f45e4d9e52fac5af6617d29f8d4c348341ccab25389ce01e334f94624e43215",
+    "cryptalis-0.1.0.tar.gz": "d062a52d53406c17142284bd4cf36e777b994f2b875bae144eb932b7b4e1d493"
+  },
+  "reproducible": true,
+  "release_steps": [
+    {
+      "name": "reproducible wheel sdist SBOM inspection",
+      "outcome": "PASS",
+      "exit_code": 0,
+      "elapsed_seconds": 1.3251314259978244
+    },
+    {
+      "name": "export locked hashed wheel-test dependencies",
+      "outcome": "PASS",
+      "exit_code": 0,
+      "elapsed_seconds": 0.023648431000765413
+    },
+    {
+      "name": "create isolated wheel interpreter",
+      "outcome": "PASS",
+      "exit_code": 0,
+      "elapsed_seconds": 0.025407441004063003
+    },
+    {
+      "name": "install hashed dependencies",
+      "outcome": "PASS",
+      "exit_code": 0,
+      "elapsed_seconds": 1.2538024179957574
+    },
+    {
+      "name": "install exact inspected wheel",
+      "outcome": "PASS",
+      "exit_code": 0,
+      "elapsed_seconds": 0.04837994700210402
+    },
+    {
+      "name": "installed dependency consistency",
+      "outcome": "PASS",
+      "exit_code": 0,
+      "elapsed_seconds": 0.019507491000695154
+    },
+    {
+      "name": "installed file and CLI inspection",
+      "outcome": "PASS"
+    },
+    {
+      "name": "export isolated locked scanner dependencies",
+      "outcome": "PASS",
+      "exit_code": 0,
+      "elapsed_seconds": 0.023982985003385693
+    },
+    {
+      "name": "create isolated scanner interpreter",
+      "outcome": "PASS",
+      "exit_code": 0,
+      "elapsed_seconds": 0.01637349699740298
+    },
+    {
+      "name": "install hashed scanner dependencies",
+      "outcome": "PASS",
+      "exit_code": 0,
+      "elapsed_seconds": 0.45983226600219496
+    },
+    {
+      "name": "export scanner SBOM",
+      "outcome": "PASS",
+      "exit_code": 0,
+      "elapsed_seconds": 0.019599234998167958
+    },
+    {
+      "name": "audit frozen scanner toolchain",
+      "outcome": "PASS",
+      "exit_code": 0,
+      "elapsed_seconds": 0.7157122939970577
+    },
+    {
+      "name": "installed Doctor native code inventory",
+      "outcome": "PASS",
+      "exit_code": 0,
+      "elapsed_seconds": 4.984833934002381
+    },
+    {
+      "name": "installed ORM and shared initialization/Doctor context",
+      "outcome": "PASS",
+      "exit_code": 0,
+      "elapsed_seconds": 188.89952227199683
+    },
+    {
+      "name": "installed Google SDK protocol and PostgreSQL lifecycle",
+      "outcome": "PASS",
+      "exit_code": 0,
+      "elapsed_seconds": 6.767262478999328
+    },
+    {
+      "name": "installed OpenBao TLS outage and PostgreSQL lifecycle",
+      "outcome": "PASS",
+      "exit_code": 0,
+      "elapsed_seconds": 127.90137672299898
+    },
+    {
+      "name": "installed shared configuration on genuine fresh recovery",
+      "outcome": "PASS",
+      "exit_code": 0,
+      "elapsed_seconds": 15.394814648003376
+    },
+    {
+      "name": "installed keyword public-slot genuine fresh recovery",
+      "outcome": "PASS",
+      "exit_code": 0,
+      "elapsed_seconds": 14.257689901998674
+    }
+  ],
+  "prior_local_boundary": "docs/_reset/point-delete-returning-boundary-20261030.json",
+  "prior_hosted_failure": "docs/_reset/github-point-update-returning-failed-boundary-20261030.json",
+  "difference_from_prior_installed": [
+    "scripts/ci_qualification.py",
+    "tests/test_uuid_point_boundary.py"
+  ],
+  "product_bytes_identical_to_prior_installed": true,
+  "boundary": "Retain all invalid UUID/NULL identity assertions while constructing their processor fixture with real _Operation defaults. All 24 UUID boundary checks now run in installed CI alongside the 43 DELETE RETURNING controls. Product bytes are unchanged from the preceding installed DELETE boundary.",
+  "production_gates": "UNKNOWN",
+  "limits": [
+    "This fixes the observed hosted fixture failure locally; a later full hosted run remains required.",
+    "All prior DELETE RETURNING capability, authenticated-result, native-fixture, provider and performance limits remain in force."
+  ],
+  "installed_checks": {
+    "installed-code-receipt.json": {
+      "test_calls": {
+        "passed": 15
+      },
+      "subtest_calls": {},
+      "setup": {
+        "passed": 15
+      },
+      "teardown": {
+        "passed": 15
+      },
+      "collection": {},
+      "selected_items": 15
+    },
+    "installed-sqlmodel-receipt.json": {
+      "test_calls": {
+        "passed": 264
+      },
+      "subtest_calls": {},
+      "setup": {
+        "passed": 264
+      },
+      "teardown": {
+        "passed": 264
+      },
+      "collection": {},
+      "selected_items": 264
+    },
+    "installed-google-kms-receipt.json": {
+      "test_calls": {
+        "passed": 50
+      },
+      "subtest_calls": {},
+      "setup": {
+        "passed": 50
+      },
+      "teardown": {
+        "passed": 50
+      },
+      "collection": {},
+      "selected_items": 50
+    },
+    "installed-openbao-tests.json": {
+      "test_calls": {
+        "passed": 146
+      },
+      "subtest_calls": {},
+      "setup": {
+        "passed": 146
+      },
+      "teardown": {
+        "passed": 146
+      },
+      "collection": {},
+      "selected_items": 146
+    },
+    "installed-application-export-receipt.json": {
+      "test_calls": {
+        "passed": 1
+      },
+      "subtest_calls": {},
+      "setup": {
+        "passed": 1
+      },
+      "teardown": {
+        "passed": 1
+      },
+      "collection": {},
+      "selected_items": 1
+    },
+    "installed-application-restore-receipt.json": {
+      "test_calls": {
+        "passed": 2
+      },
+      "subtest_calls": {},
+      "setup": {
+        "passed": 2
+      },
+      "teardown": {
+        "passed": 2
+      },
+      "collection": {},
+      "selected_items": 2
+    },
+    "installed-export-receipt.json": {
+      "test_calls": {
+        "passed": 1
+      },
+      "subtest_calls": {},
+      "setup": {
+        "passed": 1
+      },
+      "teardown": {
+        "passed": 1
+      },
+      "collection": {},
+      "selected_items": 1
+    },
+    "installed-restore-receipt.json": {
+      "test_calls": {
+        "passed": 1
+      },
+      "subtest_calls": {},
+      "setup": {
+        "passed": 1
+      },
+      "teardown": {
+        "passed": 1
+      },
+      "collection": {},
+      "selected_items": 1
+    }
+  },
+  "archive": {
+    "path": "docs/_reset/point-delete-returning-ci-fix-receipts-20261030.tar.gz",
+    "sha256": "0fe816c376896fd93e6048ed02888e0ac9db7691f8be479f2d79d1cd28a1da94",
+    "members": [
+      "source/final.json",
+      "installed/install-receipt.json",
+      "installed/installed-application-export-receipt.json",
+      "installed/installed-application-restore-receipt.json",
+      "installed/installed-code-receipt.json",
+      "installed/installed-export-receipt.json",
+      "installed/installed-google-kms-receipt.json",
+      "installed/installed-journey-receipt.json",
+      "installed/installed-openbao-qualification.json",
+      "installed/installed-openbao-tests.json",
+      "installed/installed-restore-receipt.json",
+      "installed/installed-sqlmodel-receipt.json",
+      "installed/release-receipt.json",
+      "installed/sbom.cdx.json",
+      "installed/scanner-audit.json",
+      "installed/scanner-sbom.cdx.json",
+      "installed/scanner-toolchain.json",
+      "installed/status.json"
+    ]
+  }
+}

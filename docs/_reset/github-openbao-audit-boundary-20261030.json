@@ -1,0 +1,189 @@
+{
+  "format": "cryptalis.github-ci-boundary/v1",
+  "run_id": 41018215391,
+  "url": "https://github.com/Debrato2005/cryptalis/actions/runs/41018215391",
+  "head_sha": "a2d8230a72c2c19b0ab3006b0a38cf28cc47df84",
+  "conclusion": "success",
+  "source_job": 123939264456,
+  "release_job": 123939264808,
+  "source_checks": {
+    "test_calls": {
+      "passed": 3255,
+      "skipped": 12
+    },
+    "subtest_calls": {
+      "passed": 18
+    },
+    "setup": {
+      "passed": 3267,
+      "skipped": 76
+    },
+    "teardown": {
+      "passed": 3343
+    },
+    "collection": {
+      "skipped": 17
+    },
+    "selected_items": 3343
+  },
+  "source_files": 287,
+  "source_and_runtime_unchanged": true,
+  "source_hashes_match_recorded_git_revision": true,
+  "artifacts": {
+    "cryptalis-0.1.0-py3-none-any.whl": "4e196b04f1a0d12346a839faf65c1443c778098f45f905821ea8b1dbb4951daa",
+    "cryptalis-0.1.0.tar.gz": "e367ab56be3df5b7358a5e44b8cb292166f5caffb74003dd50748ba2a85856c9"
+  },
+  "local_and_github_artifacts_identical": true,
+  "frozen_audit": {
+    "schema": {
+      "version": "preview"
+    },
+    "summary": {
+      "audited_packages": 39,
+      "vulnerabilities": 0,
+      "adverse_statuses": 0
+    },
+    "vulnerabilities": [],
+    "adverse_statuses": []
+  },
+  "github_archives": [
+    {
+      "id": 12961585146,
+      "sha256": "df35eb5f66656c722bb9df5946996d02098664ab767dd34aac6beaa84d08ad84"
+    },
+    {
+      "id": 12961105042,
+      "sha256": "bb52314ac310472af1d6b1f8bdb5bd090425e23d69b7ad278fad1451b3101c99"
+    }
+  ],
+  "archive": {
+    "path": "docs/_reset/github-openbao-audit-receipts-20261030.tar.gz",
+    "sha256": "dc3e81a06e2befef5c79675db3e8a79b63f183eb9c331b2d13f3c4324f7570a0",
+    "members": [
+      "source/admission.json",
+      "source/dependency-audit.json",
+      "source/job-status.json",
+      "source/qualification/source-receipt.json",
+      "source/qualification/status.json",
+      "release/install-receipt.json",
+      "release/installed-application-export-receipt.json",
+      "release/installed-application-restore-receipt.json",
+      "release/installed-export-receipt.json",
+      "release/installed-google-kms-receipt.json",
+      "release/installed-journey-receipt.json",
+      "release/installed-openbao-qualification.json",
+      "release/installed-openbao-tests.json",
+      "release/installed-restore-receipt.json",
+      "release/installed-sqlmodel-receipt.json",
+      "release/job-status.json",
+      "release/release-receipt.json",
+      "release/sbom.cdx.json",
+      "release/status.json"
+    ]
+  },
+  "production_gates": "UNKNOWN",
+  "limits": [
+    "Explicit skipped cells and failed separate performance observations remain unqualified.",
+    "The following online configuration change has a separate local boundary; this CI revision predates it."
+  ],
+  "installed_checks": {
+    "installed-sqlmodel-receipt.json": {
+      "test_calls": {
+        "passed": 105
+      },
+      "subtest_calls": {},
+      "setup": {
+        "passed": 105
+      },
+      "teardown": {
+        "passed": 105
+      },
+      "collection": {},
+      "selected_items": 105
+    },
+    "installed-google-kms-receipt.json": {
+      "test_calls": {
+        "passed": 50
+      },
+      "subtest_calls": {},
+      "setup": {
+        "passed": 50
+      },
+      "teardown": {
+        "passed": 50
+      },
+      "collection": {},
+      "selected_items": 50
+    },
+    "installed-openbao-tests.json": {
+      "test_calls": {
+        "passed": 119
+      },
+      "subtest_calls": {},
+      "setup": {
+        "passed": 119
+      },
+      "teardown": {
+        "passed": 119
+      },
+      "collection": {},
+      "selected_items": 119
+    },
+    "installed-export-receipt.json": {
+      "test_calls": {
+        "passed": 1
+      },
+      "subtest_calls": {},
+      "setup": {
+        "passed": 1
+      },
+      "teardown": {
+        "passed": 1
+      },
+      "collection": {},
+      "selected_items": 1
+    },
+    "installed-restore-receipt.json": {
+      "test_calls": {
+        "passed": 1
+      },
+      "subtest_calls": {},
+      "setup": {
+        "passed": 1
+      },
+      "teardown": {
+        "passed": 1
+      },
+      "collection": {},
+      "selected_items": 1
+    },
+    "installed-application-export-receipt.json": {
+      "test_calls": {
+        "passed": 1
+      },
+      "subtest_calls": {},
+      "setup": {
+        "passed": 1
+      },
+      "teardown": {
+        "passed": 1
+      },
+      "collection": {},
+      "selected_items": 1
+    },
+    "installed-application-restore-receipt.json": {
+      "test_calls": {
+        "passed": 2
+      },
+      "subtest_calls": {},
+      "setup": {
+        "passed": 2
+      },
+      "teardown": {
+        "passed": 2
+      },
+      "collection": {},
+      "selected_items": 2
+    }
+  }
+}

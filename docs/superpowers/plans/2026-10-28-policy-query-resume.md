@@ -1,5 +1,8 @@
 # Policy and query continuation: preserved resume point
 
+> Historical plan. Current work is routed by the [objective ledger](../../BUILD_CHECKLIST.md) and [documentation map](../../README.md). Task-time instructions below do not override current user authorization.
+
+
 The verified continuation branch contains the SDK cell and the completed early
 tenant-resolution guard. All 34 objectives and all seven UNKNOWN production
 gates remain. The release is unfinished.

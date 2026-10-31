@@ -1,6 +1,7 @@
 """Compose existing CI checks; stage named public evidence, never cluster files.
 
-Both modes use disposable local PostgreSQL 16 and public fixture roots only.
+Both modes use disposable local PostgreSQL 16. Release also creates an isolated
+OpenBao service whose keys and private files never enter public evidence.
 This helper does not publish artifacts or qualify a production release gate.
 """
 import argparse
@@ -36,13 +37,17 @@ class Qualification:
         temporary.write_text(json.dumps(self.status, indent=2) + '\n')
         temporary.replace(self.evidence / 'status.json')
 
-    def run(self, name, command, *, environment=None):
+    def run(self, name, command, *, environment=None, output=None):
         step = {'name': name, 'outcome': 'RUNNING'}
         self.status['steps'].append(step)
         self.save()
         print('CI step:', name, flush=True)
         started = time.monotonic()
-        result = subprocess.run(command, cwd=ROOT, env=environment)
+        if output is None:
+            result = subprocess.run(command, cwd=ROOT, env=environment)
+        else:
+            with output.open('xb') as stream:
+                result = subprocess.run(command, cwd=ROOT, env=environment, stdout=stream)
         step.update(exit_code=result.returncode, elapsed_seconds=time.monotonic() - started,
                     outcome='PASS' if result.returncode == 0 else 'FAIL')
         self.save()
@@ -70,6 +75,7 @@ class Qualification:
         artifacts = self.workdir / 'artifacts'
         self.run('reproducible wheel sdist SBOM inspection', [sys.executable,
             'scripts/release_check.py', '--output', str(artifacts),
+            '--extra', 'openbao', '--extra', 'sqlmodel', '--extra', 'gcp',
             '--receipt', str(self.workdir / 'release.json')])
         wheels = list(artifacts.glob('cryptalis-*.whl'))
         if len(wheels) != 1:
@@ -101,6 +107,28 @@ class Qualification:
         step['outcome'] = 'PASS'
         self.save()
         (self.workdir / 'install.json').write_text(json.dumps(inspection, indent=2) + '\n')
+        # Keep the native scanner toolchain
+        # outside the application and provider interpreter and dependency lock.
+        scanner_dependencies = self.workdir / 'scanner-dependencies.txt'
+        self.run('export isolated locked scanner dependencies', ['uv', 'export', '--project', 'tools/scanner',
+            '--locked', '--no-emit-project', '--no-dev', '--format', 'requirements-txt',
+            '--output-file', str(scanner_dependencies)])
+        scanner_environment = self.workdir / 'scanner'
+        self.run('create isolated scanner interpreter', ['uv', 'venv', '--python', sys.executable,
+            str(scanner_environment)])
+        self.run('install hashed scanner dependencies', ['uv', 'pip', 'sync', '--python',
+            str(scanner_environment / 'bin/python'), '--require-hashes', '--only-binary', ':all:',
+            str(scanner_dependencies)])
+        self.run('export scanner SBOM', ['uv', 'export', '--project', 'tools/scanner', '--locked',
+            '--no-emit-project', '--no-dev', '--format', 'cyclonedx1.5',
+            '--output-file', str(self.workdir / 'scanner-sbom.cdx.json')])
+        self.run('audit frozen scanner toolchain', ['uv', 'audit', '--project', 'tools/scanner', '--frozen',
+            '--output-format', 'json'], output=self.workdir / 'scanner-audit.json')
+        (self.workdir / 'scanner-toolchain.json').write_text(json.dumps(dict(
+            format='cryptalis.scanner-toolchain/v1', version='0.51.0', isolated=True,
+            lock_sha256=hashlib.sha256((ROOT / 'tools/scanner/uv.lock').read_bytes()).hexdigest(),
+            requirements_sha256=hashlib.sha256(scanner_dependencies.read_bytes()).hexdigest(),
+            production_gate='UNKNOWN'), indent=2) + '\n')
         cluster = None
         try:
             primary = self.workdir / 'primary'
@@ -110,13 +138,43 @@ class Qualification:
                         'database': 'cryptalis_ci'}
             credentials = provision(port, password, manifest, manifest['database'] + '_native')
             home = write_home(primary, port, manifest, credentials, source_database=manifest['database'])
-            environment = dict(os.environ, HOME=str(home), PYTHONPATH='')
-            self.run('installed SQLModel bridges and fixed-scope DML', [str(python),
+            environment = dict(os.environ, CRYPTALIS_TEST_CONFIG_DIR=str(home), PYTHONPATH='')
+            scanner_scope = dict(environment, CRYPTALIS_TEST_SCANNER=str(scanner_environment / 'bin/ast-grep'))
+            self.run('installed Doctor native code inventory', [str(python), 'scripts/test_postgres.py',
+                '--installed-wheel', str(wheel), '--source-role',
+                '--scope', 'Installed Doctor with isolated native ast-grep, privacy and process/omission controls',
+                '--receipt', str(self.workdir / 'installed-code-receipt.json'), '--',
+                'tests/test_doctor_code.py', 'tests/test_doctor_code_native.py', '-q'], environment=scanner_scope)
+            receipt = json.loads((self.workdir / 'installed-code-receipt.json').read_text())
+            if (receipt['exit_code'] != 0 or set(receipt['counts']) != {'passed'}
+                    or receipt['pytest_report_counts']['collection']
+                    or receipt['runtime_binding']['mode'] != 'installed-wheel'
+                    or receipt['runtime_binding']['wheel_sha256'] != digest):
+                raise CheckFailed(1)
+            self.run('installed ORM and shared initialization/Doctor context', [str(python),
                 'scripts/test_postgres.py', '--installed-wheel', str(wheel), '--source-role',
-                '--scope', 'Installed SQLModel bridges and single-tenant UPDATE/DELETE with native lifecycle and failure controls',
+                '--scope', 'Installed ORM DML, fork isolation and shared key-free init/Doctor context with native failure controls',
                 '--receipt', str(self.workdir / 'installed-sqlmodel-receipt.json'), '--',
-                'tests/test_sqlmodel_bridge.py', 'tests/test_sqlmodel_async.py',
-                'tests/test_single_tenant_update.py', 'tests/test_single_tenant_delete.py', '-q'],
+                'tests/test_sqlmodel_bridge.py', 'tests/test_sqlmodel_async.py', 'tests/test_sqlalchemy_fork.py',
+                'tests/test_single_tenant_update.py', 'tests/test_single_tenant_delete.py',
+                'tests/test_initialization_cli.py', 'tests/test_application_config.py',
+                'tests/test_application_rotation.py', 'tests/test_application_online.py',
+                'tests/test_application_modification.py', 'tests/test_modification_boundaries.py',
+                'tests/test_modification_contexts.py', 'tests/test_modification_recovery.py',
+                'tests/test_modification_queries.py', 'tests/test_modification_storage.py',
+                'tests/test_modification_status_cli.py', 'tests/test_rotation_status_cli.py',
+                'tests/test_point_returning_labels.py',
+                'tests/test_point_update_rows.py',
+                'tests/test_point_update_values.py', 'tests/test_point_update_values_boundary.py',
+                'tests/test_boolean_negation.py', 'tests/test_sqlalchemy_negative_predicates.py',
+                'tests/test_sqlalchemy_counts.py', 'tests/test_sqlalchemy_distinct.py',
+                'tests/test_doctor_preflight.py::test_supplied_select_shapes_use_runtime_admission_without_keys_rows_or_mapping_changes',
+                'tests/test_insert_returning_labels.py', 'tests/test_bulk_returning_boundary.py',
+                'tests/test_bulk_returning_rows.py::test_multiple_protected_returning_outputs_authenticate_each_frame',
+                'tests/test_point_update_returning.py', 'tests/test_point_update_returning_more.py',
+                'tests/test_point_update_returning_boundary.py', 'tests/test_point_delete_returning.py',
+                'tests/test_point_delete_returning_more.py', 'tests/test_point_delete_returning_boundary.py',
+                'tests/test_uuid_point_boundary.py', '-q'],
                 environment=environment)
             receipt = json.loads((self.workdir / 'installed-sqlmodel-receipt.json').read_text())
             if (receipt['exit_code'] != 0 or receipt['counts'].get('passed', 0) == 0
@@ -125,6 +183,30 @@ class Qualification:
                     or receipt['runtime_binding']['mode'] != 'installed-wheel'
                     or receipt['runtime_binding']['wheel_sha256'] != digest):
                 raise CheckFailed(1)
+            self.run('installed Google SDK protocol and PostgreSQL lifecycle', [str(python),
+                'scripts/test_postgres.py', '--installed-wheel', str(wheel), '--source-role',
+                '--scope', 'Google SDK local protocol transport and real PostgreSQL; no live cloud custody',
+                '--receipt', str(self.workdir / 'installed-google-kms-receipt.json'), '--',
+                'tests/test_google_kms.py', '-q'], environment=environment)
+            receipt = json.loads((self.workdir / 'installed-google-kms-receipt.json').read_text())
+            if (receipt['exit_code'] != 0 or receipt['counts'].get('passed', 0) == 0
+                    or set(receipt['counts']) != {'passed'} or receipt['pytest_report_counts']['collection']
+                    or receipt['runtime_binding']['mode'] != 'installed-wheel'
+                    or receipt['runtime_binding']['wheel_sha256'] != digest):
+                raise CheckFailed(1)
+            self.run('installed OpenBao TLS outage and PostgreSQL lifecycle', [str(python),
+                'scripts/openbao_qualification.py', '--workdir', str(self.workdir / 'openbao'),
+                '--installed-wheel', str(wheel)], environment=environment)
+            self.run('installed shared configuration on genuine fresh recovery', [str(python),
+                'scripts/fresh_cluster_qualification.py', '--workdir', str(self.workdir / 'application-fresh'),
+                '--application-config', '--installed-wheel', str(wheel)], environment=environment)
+            for phase in ('export', 'restore'):
+                receipt = json.loads((self.workdir / f'application-fresh/{phase}-receipt.json').read_text())
+                if (receipt['exit_code'] != 0 or receipt['counts'] != {'passed': 1 if phase == 'export' else 2}
+                        or receipt['pytest_report_counts']['collection']
+                        or receipt['runtime_binding']['mode'] != 'installed-wheel'
+                        or receipt['runtime_binding']['wheel_sha256'] != digest):
+                    raise CheckFailed(1)
             self.run('installed keyword public-slot genuine fresh recovery', [str(python),
                 'scripts/fresh_cluster_qualification.py', '--workdir', str(self.workdir / 'fresh'),
                 '--integer', '32', '--column-name', 'integer', '--public-slots',
@@ -136,6 +218,17 @@ class Qualification:
                         or receipt['runtime_binding']['mode'] != 'installed-wheel'
                         or receipt['runtime_binding']['wheel_sha256'] != digest):
                     raise CheckFailed(1)
+            for profile, dirname in (('enable', 'modification-fresh'), ('disable', 'storage-modification-fresh')):
+                self.run('installed modified-field ' + profile + ' genuine fresh recovery', [str(python),
+                    'scripts/fresh_cluster_qualification.py', '--workdir', str(self.workdir / dirname),
+                    '--modification', profile, '--installed-wheel', str(wheel)], environment=environment)
+                for phase in ('export', 'restore'):
+                    receipt = json.loads((self.workdir / f'{dirname}/{phase}-receipt.json').read_text())
+                    if (receipt['exit_code'] != 0 or receipt['counts'] != {'passed': 1}
+                            or receipt['pytest_report_counts']['collection']
+                            or receipt['runtime_binding']['mode'] != 'installed-wheel'
+                            or receipt['runtime_binding']['wheel_sha256'] != digest):
+                        raise CheckFailed(1)
         finally:
             if cluster is not None:
                 primary_failure = sys.exc_info()[0] is not None
@@ -154,8 +247,21 @@ class Qualification:
                 ('source/receipt.json', 'source-receipt.json'),
                 ('release.json', 'release-receipt.json'), ('install.json', 'install-receipt.json'),
                 ('installed-sqlmodel-receipt.json', 'installed-sqlmodel-receipt.json'),
+                ('installed-code-receipt.json', 'installed-code-receipt.json'),
+                ('scanner-toolchain.json', 'scanner-toolchain.json'),
+                ('scanner-sbom.cdx.json', 'scanner-sbom.cdx.json'),
+                ('scanner-audit.json', 'scanner-audit.json'),
+                ('installed-google-kms-receipt.json', 'installed-google-kms-receipt.json'),
+                ('openbao/tests.json', 'installed-openbao-tests.json'),
+                ('openbao/qualification.json', 'installed-openbao-qualification.json'),
                 ('fresh/export-receipt.json', 'installed-export-receipt.json'),
                 ('fresh/restore-receipt.json', 'installed-restore-receipt.json'),
+                ('application-fresh/export-receipt.json', 'installed-application-export-receipt.json'),
+                ('application-fresh/restore-receipt.json', 'installed-application-restore-receipt.json'),
+                ('modification-fresh/export-receipt.json', 'installed-modification-export-receipt.json'),
+                ('modification-fresh/restore-receipt.json', 'installed-modification-restore-receipt.json'),
+                ('storage-modification-fresh/export-receipt.json', 'installed-storage-modification-export-receipt.json'),
+                ('storage-modification-fresh/restore-receipt.json', 'installed-storage-modification-restore-receipt.json'),
                 ('fresh/integer-32-journey-receipt.json', 'installed-journey-receipt.json')):
             self.stage(self.workdir / relative, name)
         # Only successfully inspected release artifacts are eligible for upload.

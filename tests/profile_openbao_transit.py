@@ -2,6 +2,7 @@
 
 import asyncio
 import base64
+from contextlib import contextmanager
 from dataclasses import replace
 import importlib.metadata
 import os
@@ -37,7 +38,7 @@ def service(tmp_path_factory):
     with socket.socket() as probe:
         probe.bind(("127.0.0.1", 0))
         port = probe.getsockname()[1]
-    url = f"http://127.0.0.1:{port}"
+    url = f"https://127.0.0.1:{port}"
     token = uuid4().hex
     environment = {k: v for k, v in os.environ.items()
                    if not k.startswith(("BAO_", "VAULT_"))}
@@ -46,18 +47,27 @@ def service(tmp_path_factory):
     def client(credential):
         session = requests.Session()
         session.trust_env = False
+        session.verify = str(ca[0])
         sessions.append(session)
         return hvac.Client(url=url, token=credential, timeout=2,
-                           allow_redirects=False, session=session)
+                           verify=str(ca[0]), allow_redirects=False, session=session)
     with (directory / "private-service.log").open("wb") as log:
         process = subprocess.Popen(
-            [binary, "server", "-dev", "-dev-no-store-token",
+            [binary, "server", "-dev", "-dev-tls", f"-dev-tls-cert-dir={directory}", "-dev-no-store-token",
              f"-dev-listen-address=127.0.0.1:{port}"], env=environment,
             stdout=log, stderr=subprocess.STDOUT,
         )
         try:
-            admin = client(token)
             deadline = time.monotonic() + 15
+            ca = []
+            while not ca:
+                ca = list(directory.glob("*ca.pem"))
+                if process.poll() is not None or time.monotonic() >= deadline:
+                    pytest.fail("local OpenBao TLS initialization failed; inspect private service log")
+                if not ca:
+                    time.sleep(0.05)
+            assert len(ca) == 1
+            admin = client(token)
             while True:
                 if process.poll() is not None:
                     pytest.fail("local OpenBao exited before readiness; inspect private service log")
@@ -70,8 +80,12 @@ def service(tmp_path_factory):
                     pytest.fail("local OpenBao readiness deadline exceeded")
                 time.sleep(0.05)
             admin.sys.enable_secrets_engine("transit", path="cryptalis-test")
+            def provider(name, *, version=1, provider_id=None, credential=None):
+                return OpenBaoTransitKeyProvider(endpoint=url, token=credential or (lambda: token),
+                    provider_id=provider_id or uuid4(), mount="cryptalis-test",
+                    key_name=name, key_version=version, ca_cert=str(ca[0]))
             yield SimpleNamespace(admin=admin, transit=admin.secrets.transit, client=client,
-                                  mount="cryptalis-test", directory=directory)
+                                  provider=provider, mount="cryptalis-test", directory=directory)
         finally:
             process.terminate()
             try:
@@ -91,8 +105,7 @@ def native(service):
         derived=False, convergent_encryption=False, exportable=False,
         allow_plaintext_backup=False,
     )
-    provider = OpenBaoTransitKeyProvider(service.transit, provider_id=uuid4(),
-        mount_point=service.mount, key_name=name, key_version=1)
+    provider = service.provider(name)
     return SimpleNamespace(provider=provider, name=name, service=service)
 
 
@@ -120,8 +133,7 @@ def test_native_rotation_does_not_silently_select_latest_and_rewrap_preserves_ro
     wrapper = bao.wrap(ROOT, CONTEXT)
     service.transit.rotate_key(name=native.name, mount_point=service.mount)
     assert bao.wrap(ROOT, CONTEXT).sealed.startswith(b"vault:v1:")
-    target = OpenBaoTransitKeyProvider(service.transit, provider_id=uuid4(),
-        mount_point=service.mount, key_name=native.name, key_version=2)
+    target = service.provider(native.name, version=2)
     moved = bao.rewrap(wrapper, target, CONTEXT)
     assert moved.sealed.startswith(b"vault:v2:")
     assert target.unwrap(moved, CONTEXT) == ROOT
@@ -144,9 +156,8 @@ def test_native_least_privilege_token_revocation_and_host_recovery(native):
             ttl="60s", renewable=False)["auth"]["client_token"]
     token = credential()
     client = service.client(token)
-    bao = OpenBaoTransitKeyProvider(client.secrets.transit,
-        provider_id=native.provider.provider_id, mount_point=service.mount,
-        key_name=native.name, key_version=1)
+    bao = service.provider(native.name, provider_id=native.provider.provider_id,
+                           credential=lambda: client.token)
     wrapped = bao.wrap(ROOT, CONTEXT)
     ring = Keyring(KeyPolicy(CONTEXT.domain_id, CONTEXT.tenant_id, (wrapped,), 1),
                    {bao.provider_id: bao})
@@ -166,16 +177,22 @@ def test_native_async_cancelled_reply_does_not_publish_late_material(native):
     ring = Keyring(KeyPolicy(CONTEXT.domain_id, CONTEXT.tenant_id, (wrapped,), 1),
                    {bao.provider_id: bao})
     entered, release, finished = threading.Event(), threading.Event(), threading.Event()
-    original = bao._transit.decrypt_data
-    def delayed(**kwargs):
-        try:
-            result = original(**kwargs)
-            entered.set()
-            assert release.wait(5)
-            return result
-        finally:
-            finished.set()
-    bao._transit.decrypt_data = delayed
+    original = bao._client
+    @contextmanager
+    def delayed():
+        with original() as client:
+            class DelayedReply:
+                read = staticmethod(client.read)
+                def write(self, path, **kwargs):
+                    try:
+                        result = client.write(path, **kwargs)
+                        entered.set()
+                        assert release.wait(5)
+                        return result
+                    finally:
+                        finished.set()
+            yield DelayedReply()
+    bao._client = delayed
     async def scenario():
         task = asyncio.create_task(ring.prepare_async())
         try:
@@ -186,15 +203,15 @@ def test_native_async_cancelled_reply_does_not_publish_late_material(native):
         finally:
             release.set()
         assert await asyncio.to_thread(finished.wait, 5)
-        def unavailable(**kwargs):
+        def unavailable():
             raise RuntimeError("service reply unavailable")
-        bao._transit.decrypt_data = unavailable
+        bao._client = unavailable
         with pytest.raises(KeyUnavailable):
             await ring.prepare_async()
     try:
         asyncio.run(scenario())
     finally:
-        bao._transit.decrypt_data = original
+        bao._client = original
         release.set()
     ring.prepare()
 

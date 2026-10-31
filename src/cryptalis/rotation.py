@@ -12,7 +12,7 @@ from uuid import UUID, uuid4
 
 from cryptalis import migration as m
 from cryptalis.crypto.cf1 import FieldDescriptor, open_value
-from cryptalis.crypto.keys import KeyContext, Keyring, KeyUnavailable
+from cryptalis.crypto.keys import KeyContext, Keyring, KeyUnavailable, ProviderAuthenticationUnavailable
 from cryptalis.crypto._payload_rotation import MAX_BATCH_BYTES, MAX_BATCH_ROWS
 
 
@@ -179,6 +179,7 @@ class RewrapPlan:
         ancestors.append({'operation_id': str(source.operation_id), 'plan_digest': source.digest})
         for name in ('payload_rotation_plan_digest','payload_rotation_observations','payload_batch_limits',
                      'search_rotation_plan_digest','search_rotation_observations','search_batch_limits',
+                     'profile_rotation_plan_digest','profile_rotation_observations','profile_batch_limits','profile_source_lock',
                      'tenant_provision', 'tenant_provision_plan_digest', 'tenant_provision_observations'):
             document.pop(name,None)
         document.update(format='cryptalis.transition/v5' if lineage else 'cryptalis.transition/v2', kind='rewrap',
@@ -231,7 +232,8 @@ def _payload_inputs(backfill, verify, temporary, wal, limits):
 def _payload_estimates(models, policies, backfill, verify, temporary, wal):
     rows = sum(model['rows'] for model in models.values())
     frame_bytes = sum(model['frame_bytes'] for model in models.values())
-    costs = dict(rows=rows, source_frame_bytes=frame_bytes, staging_payload_bytes=frame_bytes,
+    costs = dict(rows=rows, source_frame_bytes=frame_bytes,
+        staging_payload_bytes=sum(model.get('target_frame_bytes', model['frame_bytes']) for model in models.values()),
         logical_bytes=sum(model['logical_bytes'] for model in models.values()),
         backfill_rows_per_second=backfill, verify_rows_per_second=verify,
         backfill_seconds_estimate=m._estimate_seconds(rows, backfill),
@@ -441,6 +443,8 @@ def _prepare_generation(source, keys, target_keys, purpose):
         old = m._ring(keys,identity,source)
         try:
             new = target_keys(identity) if callable(target_keys) else target_keys
+        except ProviderAuthenticationUnavailable:
+            raise ProviderAuthenticationUnavailable() from None
         except Exception:
             raise KeyUnavailable() from None
         if not isinstance(new,Keyring):
@@ -465,14 +469,21 @@ def _prepare_search(source,keys,target_keys):
     return _prepare_generation(source,keys,target_keys,'search')
 
 
-def _payload_stream(c, model, after, limits, *, payloads=False):
+def _frame_growth(field, target):
+    return (74 if target['queries'] else 42) - (74 if field['queries'] else 42)
+
+
+def _payload_stream(c, model, after, limits, *, payloads=False, target_model=None):
     """Read lengths first. Retrieve only the prefix within the WHOLE-row budget."""
     identity_bytes = 16 + (8 if model['record']['codec'] == 'int64-be/v1' else 16)
     terms = [str(identity_bytes*len(model['fields']))]
-    for field in model['fields']:
+    for field, target in zip(model['fields'], (target_model or model)['fields'], strict=True):
         column = m._quote(c,field['column'])
+        # Budget two frames at the larger representation plus its plaintext.
+        # The target-only verification must fit the same admitted row budget.
+        growth = 2 * max(0, _frame_growth(field, target))
         terms.append(f'CASE WHEN {column} IS NULL THEN 0 ELSE '
-                     f'3*pg_catalog.octet_length({column})::bigint-{74 if field["queries"] else 42} END')
+                     f'3*pg_catalog.octet_length({column})::bigint-{74 if field["queries"] else 42}+{growth} END')
     record = m._quote(c,model['record']['column'])
     params = ()
     where = ''
@@ -674,6 +685,8 @@ def _prepare_rewrap(source, keys, target_keys, expected=None):
         old = m._ring(keys, tenant, source)
         try:
             new = target_keys(tenant) if callable(target_keys) else target_keys
+        except ProviderAuthenticationUnavailable:
+            raise ProviderAuthenticationUnavailable() from None
         except Exception:
             raise KeyUnavailable() from None
         if not isinstance(new, Keyring):
@@ -692,7 +705,7 @@ def _prepare_rewrap(source, keys, target_keys, expected=None):
     return policies, prepared
 
 
-def _observe_active(c, source, keys, *, prepared=None, peers=None, batch_limits=None):
+def _observe_active(c, source, keys, *, prepared=None, peers=None, batch_limits=None, target_models=None):
     """Authenticate all active frames, including empty-scope key admission."""
     from cryptalis import _access_contract as access
     access.check(c, source)
@@ -701,13 +714,15 @@ def _observe_active(c, source, keys, *, prepared=None, peers=None, batch_limits=
                     for tenant in source.document['key_policies']}
     models = {}
     for model in source.document['lock']['models']:
+        target_model = (next(item for item in target_models if item['table_id'] == model['table_id'])
+                        if target_models is not None else model)
         descriptors = [FieldDescriptor.from_compiled(f['descriptor'], f['descriptor_digest'])
                        for f in model['fields']]
         membership, frames = hashlib.sha256(), hashlib.sha256()
         count, cursor = 0, None
-        frame_bytes, logical_bytes, largest = 0, 0, 0
+        frame_bytes, target_frame_bytes, logical_bytes, largest = 0, 0, 0, 0
         while rows := (m._stream(c,model,after=cursor) if batch_limits is None
-                       else _payload_stream(c,model,cursor,batch_limits)):
+                       else _payload_stream(c,model,cursor,batch_limits, target_model=target_model)):
             for row in rows:
                 scoped = 'column' in model['tenancy']
                 tenant = row[1] if scoped else UUID(model['table_id'])
@@ -733,8 +748,10 @@ def _observe_active(c, source, keys, *, prepared=None, peers=None, batch_limits=
                         identity_bytes = 16 + (8 if model['record']['codec'] == 'int64-be/v1' else 16)
                         row_bytes += identity_bytes
                         if frame is not None:
+                            growth = _frame_growth(field, target_model['fields'][index])
                             frame_bytes += len(frame)
-                            row_bytes += 3*len(frame) - (74 if field['queries'] else 42)
+                            target_frame_bytes += len(frame) + growth
+                            row_bytes += 3*len(frame) - (74 if field['queries'] else 42) + 2 * max(0, growth)
                 frames.update(m._canonical(identity + [frame_digests]))
                 logical_bytes += row_bytes
                 largest = max(largest,row_bytes)
@@ -745,6 +762,8 @@ def _observe_active(c, source, keys, *, prepared=None, peers=None, batch_limits=
         if batch_limits is not None:
             models[model['table_id']].update(frame_bytes=frame_bytes,logical_bytes=logical_bytes,
                                             largest_row_logical_bytes=largest)
+            if target_models is not None:
+                models[model['table_id']]['target_frame_bytes'] = target_frame_bytes
     for materials in (prepared, peers or {}):
         for admitted in materials.values():
             for wrapper in admitted.policy.wrappers:

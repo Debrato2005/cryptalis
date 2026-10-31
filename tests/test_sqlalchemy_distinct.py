@@ -3,7 +3,7 @@ import asyncio
 from types import MethodType
 
 import pytest
-from sqlalchemy import event, func, inspect, or_, select
+from sqlalchemy import and_, event, func, inspect, not_, or_, select
 from sqlalchemy.dialects.postgresql import distinct_on
 from sqlalchemy.orm import aliased
 from test_sqlalchemy_search import (
@@ -26,6 +26,7 @@ def cases(app):
         yield base.with_only_columns(model.name.label('value')), expected
         yield base.where(model.name.in_(['repeat', '雪', None])), {'repeat', '雪'}
         yield base.where(model.name.is_(None)), {None}
+        yield base.where(not_(and_(model.name != 'repeat', model.name.is_not(None)))), {None, 'repeat'}
         yield base.where(model.rank < 0), set()
 
 

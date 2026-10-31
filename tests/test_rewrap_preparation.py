@@ -13,6 +13,21 @@ def prepare(source,target):
  return importlib.import_module('cryptalis.crypto._rewrap').prepare_rewrap(source,target)
 
 
+@pytest.mark.parametrize('failure_at', ['source', 'target_wrap', 'target_unwrap'])
+def test_candidate_retains_uncertain_authentication_effects_without_exposing_cause(failure_at):
+ from cryptalis.crypto import ProviderAuthenticationUnavailable
+ old, ring = setup_keys(equality=True)
+ target = DevelopmentKeyProvider()
+ def unavailable(*args):
+  raise ProviderAuthenticationUnavailable() from RuntimeError('PRIVATE_LOGIN_DETAIL')
+ if failure_at == 'source': old.unwrap = unavailable
+ elif failure_at == 'target_wrap': target.wrap = unavailable
+ else: target.unwrap = unavailable
+ with pytest.raises(ProviderAuthenticationUnavailable) as caught: prepare(ring, target)
+ assert caught.value.effects == 'UNKNOWN' and caught.value.retryable is False
+ assert 'PRIVATE_LOGIN_DETAIL' not in ''.join(traceback.format_exception(caught.value))
+
+
 def test_rewrap_candidate_preserves_frame_search_and_source_policy():
  old,ring=setup_keys(equality=True);source=ring.policy;f=descriptor(equality=True)
  original=seal_text('é e\u0301 雪',f,TENANT,RECORD,ring.prepare())

@@ -1,0 +1,270 @@
+{
+  "format": "cryptalis.application-online-boundary/v1",
+  "base_revision": "a2d8230a72c2c19b0ab3006b0a38cf28cc47df84",
+  "source_identity": "worktree-050b530638f05d5b",
+  "source_files": 288,
+  "source_checks": {
+    "test_calls": {
+      "passed": 9
+    },
+    "subtest_calls": {},
+    "setup": {
+      "passed": 9
+    },
+    "teardown": {
+      "passed": 9
+    },
+    "collection": {},
+    "selected_items": 9
+  },
+  "source_and_runtime_unchanged": true,
+  "artifacts": {
+    "cryptalis-0.1.0-py3-none-any.whl": "03406a6e58fd88afec2baa4ac10da6bdd8415bf2c1bc747bb0b9ce7806f4e98a",
+    "cryptalis-0.1.0.tar.gz": "72aa4865de4885b2c6216ed5def3b858aaf42604defb5616520cd62ea2e9a9d8"
+  },
+  "reproducible": true,
+  "release_steps": [
+    {
+      "name": "reproducible wheel sdist SBOM inspection",
+      "outcome": "PASS",
+      "exit_code": 0,
+      "elapsed_seconds": 1.2497349080003914
+    },
+    {
+      "name": "export locked hashed wheel-test dependencies",
+      "outcome": "PASS",
+      "exit_code": 0,
+      "elapsed_seconds": 0.029564669996034354
+    },
+    {
+      "name": "create isolated wheel interpreter",
+      "outcome": "PASS",
+      "exit_code": 0,
+      "elapsed_seconds": 0.019453495006018784
+    },
+    {
+      "name": "install hashed dependencies",
+      "outcome": "PASS",
+      "exit_code": 0,
+      "elapsed_seconds": 1.0247551839929656
+    },
+    {
+      "name": "install exact inspected wheel",
+      "outcome": "PASS",
+      "exit_code": 0,
+      "elapsed_seconds": 0.049334677001752425
+    },
+    {
+      "name": "installed dependency consistency",
+      "outcome": "PASS",
+      "exit_code": 0,
+      "elapsed_seconds": 0.042933875003654975
+    },
+    {
+      "name": "installed file and CLI inspection",
+      "outcome": "PASS"
+    },
+    {
+      "name": "installed ORM and shared initialization/Doctor context",
+      "outcome": "PASS",
+      "exit_code": 0,
+      "elapsed_seconds": 92.42019277300278
+    },
+    {
+      "name": "installed Google SDK protocol and PostgreSQL lifecycle",
+      "outcome": "PASS",
+      "exit_code": 0,
+      "elapsed_seconds": 8.013566052999522
+    },
+    {
+      "name": "installed OpenBao TLS outage and PostgreSQL lifecycle",
+      "outcome": "PASS",
+      "exit_code": 0,
+      "elapsed_seconds": 110.6866512839988
+    },
+    {
+      "name": "installed shared configuration on genuine fresh recovery",
+      "outcome": "PASS",
+      "exit_code": 0,
+      "elapsed_seconds": 15.201859951004735
+    },
+    {
+      "name": "installed keyword public-slot genuine fresh recovery",
+      "outcome": "PASS",
+      "exit_code": 0,
+      "elapsed_seconds": 14.104225916002179
+    }
+  ],
+  "archive": {
+    "path": "docs/_reset/application-online-receipts-20261030.tar.gz",
+    "sha256": "1e7a29a0e3104146f8aff1dcf4469b1d6a0151152c4252267f180a8eb414824f",
+    "members": [
+      "source/focused.json",
+      "source/regression.json",
+      "native/tests.json",
+      "native/qualification.json",
+      "failed-source/1.json",
+      "failed-source/2.json",
+      "failed-source/3.json",
+      "failed-source/4.json",
+      "installed/install-receipt.json",
+      "installed/installed-application-export-receipt.json",
+      "installed/installed-application-restore-receipt.json",
+      "installed/installed-export-receipt.json",
+      "installed/installed-google-kms-receipt.json",
+      "installed/installed-journey-receipt.json",
+      "installed/installed-openbao-qualification.json",
+      "installed/installed-openbao-tests.json",
+      "installed/installed-restore-receipt.json",
+      "installed/installed-sqlmodel-receipt.json",
+      "installed/release-receipt.json",
+      "installed/sbom.cdx.json",
+      "installed/status.json"
+    ]
+  },
+  "boundary": "Shared manifest/evidence across online planning, capture/status, fencing, sealing/switching, cancellation, approved empty-tenant planning/preparation/cancellation, activation, fresh attachment and current-value removal. Interrupted batches retain committed ciphertext. Real AppRole/OpenBao and PostgreSQL journey preserves native edits, NULLs, equality/IN and tenant uniqueness.",
+  "failures_retained": [
+    "Run 1: pending tenant publication intentionally adds guards; compare ciphertext while pending, then schema after activation. Query rejection uses TransitionFailure(query_samples_incompatible), not PlanningRejected.",
+    "Run 2: attempting a second attachment on an already guarded engine correctly refused UnsafeDriverEvent.",
+    "Run 3: an unscoped old-factory query failed tenant authentication; this does not establish stale-worker fencing. Replace it with an actual stale-pin startup refusal test.",
+    "Run 4: an already attached registry cannot be reused as ordinary native mappings. The final journey attaches once and uses fresh native mappings after removal. Existing workers require host drain/restart, not automatic in-place policy upgrade."
+  ],
+  "production_gates": "UNKNOWN",
+  "limits": [
+    "Regression suite retains two call skips: explicit separate restore target and installed pre-provisioning reader were not selected.",
+    "New configuration methods do not add a state machine, implicit tenant authorization, host policy publication, automatic process fencing or production downtime bound.",
+    "Restored binding routing preserves the existing contract; no new direct shared tenant-method fresh-restore profile is claimed.",
+    "Native/public role schema, ciphertext and value oracles are bounded synthetic applications; broader applications and versioned upgrades remain required.",
+    "Private native service keys, audit records, snapshots and database credentials are excluded from public evidence.",
+    "Independent security review, production custody/HA/recovery, controlled retirement and performance acceptance remain open."
+  ],
+  "regression_checks": {
+    "test_calls": {
+      "passed": 65,
+      "skipped": 2
+    },
+    "subtest_calls": {},
+    "setup": {
+      "passed": 67
+    },
+    "teardown": {
+      "passed": 67
+    },
+    "collection": {},
+    "selected_items": 67
+  },
+  "native_checks": {
+    "test_calls": {
+      "passed": 120
+    },
+    "subtest_calls": {},
+    "setup": {
+      "passed": 120
+    },
+    "teardown": {
+      "passed": 120
+    },
+    "collection": {},
+    "selected_items": 120
+  },
+  "installed_checks": {
+    "installed-sqlmodel-receipt.json": {
+      "test_calls": {
+        "passed": 114
+      },
+      "subtest_calls": {},
+      "setup": {
+        "passed": 114
+      },
+      "teardown": {
+        "passed": 114
+      },
+      "collection": {},
+      "selected_items": 114
+    },
+    "installed-google-kms-receipt.json": {
+      "test_calls": {
+        "passed": 50
+      },
+      "subtest_calls": {},
+      "setup": {
+        "passed": 50
+      },
+      "teardown": {
+        "passed": 50
+      },
+      "collection": {},
+      "selected_items": 50
+    },
+    "installed-openbao-tests.json": {
+      "test_calls": {
+        "passed": 120
+      },
+      "subtest_calls": {},
+      "setup": {
+        "passed": 120
+      },
+      "teardown": {
+        "passed": 120
+      },
+      "collection": {},
+      "selected_items": 120
+    },
+    "installed-application-export-receipt.json": {
+      "test_calls": {
+        "passed": 1
+      },
+      "subtest_calls": {},
+      "setup": {
+        "passed": 1
+      },
+      "teardown": {
+        "passed": 1
+      },
+      "collection": {},
+      "selected_items": 1
+    },
+    "installed-application-restore-receipt.json": {
+      "test_calls": {
+        "passed": 2
+      },
+      "subtest_calls": {},
+      "setup": {
+        "passed": 2
+      },
+      "teardown": {
+        "passed": 2
+      },
+      "collection": {},
+      "selected_items": 2
+    },
+    "installed-export-receipt.json": {
+      "test_calls": {
+        "passed": 1
+      },
+      "subtest_calls": {},
+      "setup": {
+        "passed": 1
+      },
+      "teardown": {
+        "passed": 1
+      },
+      "collection": {},
+      "selected_items": 1
+    },
+    "installed-restore-receipt.json": {
+      "test_calls": {
+        "passed": 1
+      },
+      "subtest_calls": {},
+      "setup": {
+        "passed": 1
+      },
+      "teardown": {
+        "passed": 1
+      },
+      "collection": {},
+      "selected_items": 1
+    }
+  }
+}

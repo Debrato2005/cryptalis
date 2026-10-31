@@ -19,7 +19,7 @@ from psycopg import sql
 from cryptalis import migration as m
 from cryptalis import _access_contract as access
 from cryptalis.crypto.cf1 import FieldDescriptor, seal_value
-from cryptalis.crypto.keys import Keyring, KeyUnavailable
+from cryptalis.crypto.keys import Keyring, KeyUnavailable, ProviderAuthenticationUnavailable
 from cryptalis.crypto._payload_rotation import MAX_BATCH_BYTES, MAX_BATCH_ROWS
 from cryptalis.manifest.declaration import parse_protection_declaration
 
@@ -128,6 +128,8 @@ def plan(manifest, mapping, engine, *, source_role, max_rows=1000,
             if tenant not in rings:
                 try:
                     ring = host_keys(tenant) if callable(host_keys) else host_keys
+                except ProviderAuthenticationUnavailable:
+                    raise ProviderAuthenticationUnavailable() from None
                 except Exception:
                     raise KeyUnavailable() from None
                 if (not isinstance(ring, Keyring) or ring.policy.tenant_id != tenant

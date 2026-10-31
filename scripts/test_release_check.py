@@ -21,7 +21,7 @@ import warnings
 import venv
 import zipfile
 
-from release_check import ROOT, inspect_sdist, inspect_wheel
+from release_check import ROOT, inspect_sdist, inspect_wheel, inspect_source_imports
 from packaging.markers import Marker
 from packaging.requirements import Requirement
 
@@ -89,6 +89,37 @@ def write_sdist(path, extra=()):
 
 
 class ArtifactIntegrityTests(unittest.TestCase):
+    def test_local_doctor_process_import_does_not_admit_transport_or_other_modules(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            path = root / '_doctor_code.py'
+            path.write_text('import subprocess\n')
+            self.assertEqual(inspect_source_imports(root), [])
+            for content in ('import subprocess; import socket\n',
+                            'import subprocess\nimport requests\n',
+                            'from subprocess import run\n'):
+                path.write_text(content)
+                self.assertTrue(inspect_source_imports(root))
+            path.unlink()
+            (root / 'other.py').write_text('import subprocess\n')
+            self.assertTrue(inspect_source_imports(root))
+
+    def test_reviewed_url_parser_does_not_admit_network_imports(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            (root / 'crypto').mkdir()
+            path = root / 'crypto/openbao.py'
+            path.write_text('from urllib.parse import urlsplit\n')
+            self.assertEqual(inspect_source_imports(root), [])
+            for content in ('from urllib.request import urlopen\n',
+                            'from urllib.parse import urlsplit; import socket\n',
+                            'from urllib.parse import urlsplit\nimport requests\n'):
+                path.write_text(content)
+                self.assertTrue(inspect_source_imports(root))
+            path.unlink()
+            (root / 'other.py').write_text('from urllib.parse import urlsplit\n')
+            self.assertTrue(inspect_source_imports(root))
+
     def setUp(self):
         self.temporary = tempfile.TemporaryDirectory(prefix="cryptalis-artifact-test-")
         self.addCleanup(self.temporary.cleanup)

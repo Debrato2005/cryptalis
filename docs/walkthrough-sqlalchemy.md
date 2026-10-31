@@ -1,10 +1,15 @@
 # SQLAlchemy storage attachment
 
-**IMPLEMENTED:** bounded sync/async text attachment; research prototype.
-All seven gates remain **UNKNOWN**. No production provider or independent review exists.
+Use [shared application configuration](application.md) to reuse one manifest and
+registry across planning, Doctor and attachment. The lower-level attachment
+interface below remains supported.
+
+
+**IMPLEMENTED:** bounded sync/async attachment for the [admitted types and operations](compatibility.md).
+All seven production gates remain **UNKNOWN**; no provider deployment is production-qualified.
 [Status](status.md) owns revision-bound tests and the corrective row-isolation evidence.
 
-The adapter prepares row-bound CF1 frames before SQL and keeps ORM attributes as text or NULL.
+The adapter prepares row-bound CF1 frames before SQL and preserves admitted Python value types and NULL.
 Read projections carry field, tenant and row context. Authentication precedes value release.
 Host-requested primary-key constraints must match returned identity. Unsupported forms fail before SQL.
 Async key preparation runs before synchronous hooks. Protected SELECT caching is disabled.
@@ -14,6 +19,11 @@ Use the [product protection transition](walkthrough-migration.md) before attachm
 Use the [decrypt-back/removal contract](lifecycle.md#deprotect-and-remove) for the current protected transition format.
 Supply a trusted compiler lock, admitted tenant keyrings and an engine with parameter logging hidden.
 Attach before sessions or model use. Close existing connections first.
+For worker processes, create mappings, engine, key providers and attachment in
+each worker's initialization. A forked child must not reuse or close the parent's
+sessions. `ForkedRuntime` requires fresh initialization, including when a key
+resolver can supply fresh child keys. See [process ownership](compatibility.md#process-ownership)
+for supported entrypoints and the memory/driver limits.
 Attach before cursor listeners. Register engine-instance observers after
 attachment. They must leave driver SQL and parameters unchanged.
 Class-level and connection-local cursor hooks are unadmitted because they can
@@ -78,23 +88,83 @@ The native bulk Result returns no rows and adds no objects to the identity map.
 `render_nulls=True` retains native explicit-NULL grouping.
 Rollback and nested savepoint cleanup retain native behavior.
 
-Update one tenant-scoped record with literal mapped assignments:
+To return inserted values, add direct columns, named columns or the mapped entity:
+
+```python
+result = session.execute(
+    insert(Customer).returning(Customer.note.label("display_note"),
+                               sort_by_parameter_order=True),
+    params=[{"id": first_uuid, "tenant_id": authenticated_tenant, "note": "first"}],
+)
+assert result.scalar_one() == "first"
+session.commit()
+```
+
+The optional ordering flag uses native input ordering across pages. Each protected
+result must authenticate and match its exact prepared input. SQLModel `exec` uses
+the same `params=` keyword; async execution and commit use `await`.
+
+For one record with returned values, pass a single assignment dictionary:
 
 ```python
 from sqlalchemy import update
 
-with sessions(tenant_id=authenticated_tenant) as session:
-    result = session.execute(
-        update(Customer).where(Customer.tenant_id == authenticated_tenant,
-                               Customer.id == first_uuid).values(note="updated"),
-        execution_options={"synchronize_session": False},
-    )
-    session.commit()
+result = session.execute(
+    update(Customer)
+    .where(Customer.id == app_assigned_uuid,
+           Customer.tenant_id == authenticated_tenant)
+    .returning(Customer.id, Customer.note),
+    {"note": "updated"},
+    execution_options={"synchronize_session": False},
+)
+returned = result.one_or_none()
+session.commit()
 ```
 
-The native cursor row count is zero or one. Loaded objects retain their old
-values until refresh or expiration. This form accepts no external parameters,
-RETURNING, expressions, ordered assignments or identity/tenant changes.
+The dictionary uses physical column keys, as native single-statement UPDATE
+does. Returned column names normally follow mapped attributes; use
+`Customer.note.label("display_note")` for an explicit result name. Use `await`
+for async execution and commit; SQLModel `exec` takes the dictionary as `params=...`.
+For a declared single-tenant table, omit the tenant predicate and use its table
+UUID as the session scope. Existing loaded objects remain stale under
+`synchronize_session=False`; refresh them when needed. Missing records return no
+row. Native assignment errors can still occur for a missing record during SQL
+evaluation; roll back the failed transaction or savepoint before retrying.
+
+You can instead put ordinary scalar assignments on the statement and omit
+the external dictionary:
+
+```python
+result = session.execute(
+    update(Customer)
+    .where(Customer.id == app_assigned_uuid,
+           Customer.tenant_id == authenticated_tenant)
+    .values(note="updated")
+    .returning(Customer.id, Customer.note),
+    execution_options={"synchronize_session": False},
+)
+returned = result.one_or_none()
+session.commit()
+```
+
+Keywords use mapped attribute names; `.values({Customer.note: "updated"})`
+also works. Python `None` retains native NULL behavior. Cryptalis captures and
+rechecks the assignments around key preparation, encrypts protected values,
+and executes an owned statement copy. The original statement remains reusable.
+Do not combine this form with external parameters or explicit SQL expressions,
+`bindparam`, callable values, or ordered assignments.
+
+Omit `.returning(...)` when only the affected-row count is needed. The same
+single-record update then returns native `result.rowcount` (zero or one), with
+`result.returns_rows` false. Reading rows from that result raises SQLAlchemy's
+normal `ResourceClosedError`. Identity-map and transaction behavior remain the
+same; even assigning the existing value counts a matched record.
+
+Use direct or explicitly named returned columns, or the mapped entity. Computed
+expressions, table aliases, identity/tenant changes, and multirow
+executemany RETURNING are outside this route. It uses the existing encryption
+and declared search representation; it adds no search capability or production
+qualification. See [status](status.md) for exact verification.
 
 For mapped dictionary UPDATE on an explicitly single-tenant table, use its
 declared table UUID as session scope and let SQLAlchemy select each typed
@@ -117,7 +187,7 @@ Async sessions use the same statements with awaited execution and commit.
 Loaded objects retain native stale state until refresh or expiration. Use
 rollback or the enclosing savepoint to recover from errors. UPDATE expressions,
 Core statements and RETURNING remain unadmitted. The
-[online scalar checkpoint](status.md#single-tenant-mapped-update-2026-10-29)
+[online scalar checkpoint](history/implementation-2026-10.md#single-tenant-mapped-update-2026-10-29)
 adds current-value removal evidence across the admitted storage types.
 
 Delete one record from the same explicitly single-tenant table with its exact
@@ -132,10 +202,20 @@ with sessions(tenant_id=declared_table_uuid) as session:
     session.commit()
 ```
 
-Native `result.rowcount` is zero or one. Do not supply external parameter
-dictionaries, RETURNING or additional predicates for this route.
+Without RETURNING, native `result.rowcount` is zero or one. To receive the deleted
+values, add `.returning(Customer.id, Customer.note.label("display_note"))` and consume the ordinary
+Result with `.one_or_none()`, `.all()` or `.scalars()`. Returning the mapped entity
+is also supported. For a tenant-column table, include exact tenant equality
+alongside the record equality. Async execution uses `await`; SQLModel async
+`exec` uses the same statement.
 
-Request direct mapped columns when the caller needs inserted values:
+Loaded objects retain native stale identity state with
+`synchronize_session=False`. Protected returned values authenticate before
+release; an error can occur after DELETE executed, so roll back before retrying
+or committing. Do not supply external parameter dictionaries, additional
+predicates, labelled/aliased/expression outputs or automatic/fetch synchronization.
+
+Request one direct protected mapped column when the caller needs inserted values:
 
 ```python
 with sessions(tenant_id=authenticated_tenant) as session:
@@ -157,28 +237,8 @@ plaintext that already passed authentication, even after its key lease expires.
 Any later key use must pass its lease check. Roll back after a result failure before retry.
 The INSERT can succeed before result authentication.
 
-Use `.returning(Customer.id, Customer.note, Customer.name)` and `.all()` for
-multi-column Rows. Public and protected columns can be mixed. Repeated protected
-columns retain native result keys and each value requires the prepared-input proof.
-The result still adds no objects to the identity map.
-
-Request the attached entity when the caller needs ORM objects:
-
-```python
-with sessions(tenant_id=authenticated_tenant) as session:
-    inserted = session.scalars(insert(Customer).returning(Customer), rows).all()
-    session.commit()
-```
-
-Entity objects enter the native identity map. Mixed entity/column results and
-repeated entities retain native result behavior. Existing identities retain
-their loaded values unless Boolean `populate_existing=True` is supplied in
-`execution_options`. Expiration, authenticated lazy reads and rollback retain
-native behavior. Before ORM loading, returned IDs must belong to this INSERT,
-and public identity columns must match each authenticated field carrier. This
-also prevents an unloaded protected field from using a forged identity later.
-
-Expressions, aliases, inherited/versioned entities, loader options,
+Direct tuple/entity RETURNING is also admitted under the [current result contract](compatibility.md#full-capability-matrix).
+Labels, expressions, aliases, loader options,
 caller `return_defaults()`, upserts, Core INSERT, statement-embedded values, INSERT SELECT,
 SQL expressions in rows and the legacy bulk methods remain unadmitted.
 A used callable, context-sensitive, SQL or server default also refuses.

@@ -1,10 +1,24 @@
 # One transition engine
 
+[Documentation map](README.md) · [Current evidence](status.md)
+
+- [Bounded online initial protection](#bounded-online-initial-protection)
+- [Maintenance and ownership](#maintenance-and-ownership)
+- [Plan and phases](#plan-and-phases)
+- [Rollback](#rollback)
+- [Changes and rotation](#changes-and-rotation)
+- [Restore and authority loss](#restore-and-authority-loss)
+- [Revocation and destruction](#revocation-and-destruction)
+- [Deprotect and remove](#deprotect-and-remove)
+- [Recovery behavior](#recovery-behavior)
+- [Supported deployment candidate](#supported-deployment-candidate)
+
+
 **SPECIFIED:** lifecycle contract. **IMPLEMENTED:** bounded product protection transition with plan/apply/verify and pre-switch abort,
 plus an in-place decrypt-back and additive-removal path.
 Root rewrap, payload-key rotation, and search-key rotation have bounded cutover and shared publication paths.
 Generation preparation stages and verifies encrypted chunks, inspects progress, and supports cancellation before switch.
-P1 single-tenant online protection has source and installed evidence in the [status record](status.md#bounded-online-initial-protection-2026-10-24). The tenant-scoped P2 extension has local source and installed evidence in the [status record](status.md#tenant-scoped-online-lifecycle-2026-10-24).
+P1 single-tenant online protection has source and installed evidence in the [status record](history/implementation-2026-10.md#bounded-online-initial-protection-2026-10-24). The tenant-scoped P2 extension has local source and installed evidence in the [status record](history/implementation-2026-10.md#tenant-scoped-online-lifecycle-2026-10-24).
 The protection engine verifies and switches in one transaction; saved verification checkpoints require a fresh pass on resume.
 Plain reads continue during verification. Writes and locking reads wait; schema DDL can pause all access.
 VERIFIED paragraphs below describe recorded receipts, not current product qualification. All other requirements remain SPECIFIED.
@@ -13,17 +27,24 @@ Rollback, deprotect, search changes, and key transformations reuse this path.
 
 ## Bounded online initial protection
 
-The [authenticated tenant HTTP journey](status.md#verified-continuation-checkpoint-2026-10-28)
+[ApplicationConfig](application.md#protect-while-native-writers-continue) binds the
+online planner, capture/status, sealing/switching and cancellation to the same
+manifest and evidence used by attachment. It delegates to the existing executor
+and retains the explicit role, tenant and publication boundaries below.
+
+The [authenticated tenant HTTP journey](history/implementation-2026-10.md#verified-continuation-checkpoint-2026-10-28)
 extends local P2 evidence to an unchanged original application's approved owner
 cohort. Source and actual-wheel runs stop the source cluster before initializing
 a distinct restore target, require explicit adoption, exercise all rotations,
 reverse the latest values and restart original HTTP with Cryptalis imports
 refused. Each restarted child reads the specific latest Items under original
-owner authentication. Dynamic tenant-policy provisioning is not implemented.
+owner authentication. Dynamic tenant-policy provisioning during online capture is not implemented.
 These are local, public-fixture-custody observations, not production recovery or
 external fencing qualification.
 
-`cryptalis.online` captures native writes while it prepares an initial text protection plan. P1 requires each protected table to declare itself single-tenant. P2 accepts tenant-column tables with a host-approved tenant set. Tables without a tenant column retain their fixed table UUID scope. P1 behavior and format v1 remain unchanged. Every protected field must use `TEXT` or `VARCHAR`. The online path does not change the existing maintenance path.
+`cryptalis.online` captures native writes while it prepares an initial protection plan. P1 requires each protected table to declare itself single-tenant. P2 accepts tenant-column tables with a host-approved tenant set. Tables without a tenant column retain their fixed table UUID scope. P1 behavior and format v1 remain unchanged. Protected fields use admitted `TEXT`/`VARCHAR` or storage-only Boolean, signed
+integers, finite Date or UUID. The [native scalar journey](../tests/test_online_scalars.py)
+covers capture, resume, cancellation and latest-value exit for those scalar types. The online path does not change the existing maintenance path.
 
 Select P2 by supplying `native_tenants` as a tuple of at most 1,024 unique UUID objects. The artifact stores the approved UUID strings in sorted order. The nil UUID is valid. An omitted tuple selects P1. P2's policy map contains exactly one policy for each approved tenant, including empty scopes, plus one fixed table UUID policy for each single-tenant table. UUIDs outside the approved native and fixed scope union fail before the host key resolver. A native row whose UUID matches a fixed scope can resolve that already approved policy before its native-scope refusal. It still cannot pass planning or locked admission. Lock tables and recheck all existing tenant values before journal creation or other DDL.
 
@@ -38,7 +59,7 @@ Before switch, `abort` removes only this operation's capture objects and shadows
 The terminal proof scans current data in O(N) and verifies all rows. Tenant-scoped unique indexes include the tenant key before the protected equality term. The activation artifact remains `cryptalis.transition/v8`, and its access-contract successor chain remains unchanged. Empty tenant policies stay in the artifact through restore and all rotations. Index DDL and public-slot conversion can also take time under locks. Chunk limits do not bound this work, lock drain, or host publication delay. Plan and approve measured pause costs. This API gives no global near-zero-downtime guarantee. No live KMS or production pause qualification follows. All seven production gates remain UNKNOWN.
 
 Boolean storage uses this same lifecycle with typed value authentication.
-The [Boolean checkpoint](status.md#boolean-storage-checkpoint-2026-10-23) records mixed
+The [Boolean checkpoint](history/implementation-2026-10.md#boolean-storage-checkpoint-2026-10-23) records mixed
 text/search/Boolean rotations and fresh-cluster backup recovery after payload rotation.
 Decrypt-back restores native Boolean columns and the latest values.
 These local checks leave production custody, publication authority and all seven gates UNKNOWN.
@@ -48,35 +69,6 @@ a process exit after a committed chunk, inspected idempotent resume, full verifi
 payload/search rotation, and current-data decrypt-back. An isolated ordinary application then reads and updates the recovered data with Cryptalis/lab-reader imports blocked.
 This is not the original application's complete retrofit/removal test. Post-commit process exit is not a transport-level lost COMMIT-reply test.
 Live provider custody, authenticated deployment publication, retained-backup readers and full writer ownership remain unqualified.
-
-## Integrated lifecycle checkpoint: 2026-10-07
-
-The preceding 27-check lab is historical. The new [23-check receipt](../spikes/revamp/results/gate-lifecycle.json)
-uses the original three-model application's actual CF1 data and one transition executor for protect, rotate and deprotect.
-Chunk members and transformed rows commit together. Resume inspects the original digest/membership and preserves committed ciphertext.
-**VERIFIED, recorded spike:** streaming verification checks membership, native values/types/NULLs, and generations before the transactional switch.
-It compares inspected source index names/definitions and their validity/readiness flags. Target unique-index construction exercises the fixture's scoped uniqueness.
-Generic CHECK/FK/default/collation and dependency preservation remain UNKNOWN. Source-index observations do not prove them.
-A competing executor is denied; an actual concurrent writer is observably blocked while the maintenance lock is held.
-That observation does not prove deployment-wide writer exclusion between chunks.
-
-The lost-reply test shuts down the receive side of the original connected socket before COMMIT completes.
-It observes EOF and an initially absent marker, then independently observes the original transaction terminal and a matching committed marker.
-It never consumes the COMMIT reply through libpq. Resume preserves the committed bytes.
-The separate [fault receipt](../spikes/revamp/results/gate-faults.json) proves that real SQL errors and injected local-provider failures
-roll back both staged chunk data and its marker. Actual disk/WAL exhaustion remains pending.
-
-Payload rotation, search rotation and local rewrap are separate tested actions. Current post-cutover application edits survive rollback,
-reprotection and deprotect with all original columns and types compared. Eligible shadows, indexes, trigger and journal are removed.
-A fresh process blocks Cryptalis/crypto readers, verifies all current data, commits an ordinary edit, then runs the untouched 29-assertion original oracle.
-Only its owned synthetic rows are cleared between the current-data proof and the oracle's empty-database fixture.
-
-The database phase remains `SWITCHED_DATABASE_POLICY_PENDING`. Authenticated host publication/startup, restored-old-policy denial,
-stale-worker termination, durable independent-process readers/keys, format/codec upgrade and native provider deletion remain UNKNOWN.
-The local backup decode and fork-inherited interruption test do not qualify retained-backup custody or a fresh independent provider restart.
-The [million-row protection receipt](../spikes/revamp/results/gate-performance.json) measures initial protection; it does not qualify
-million-row rotation/deprotect, a production pause ceiling or a storage-exhaustion response.
-These pending requirements keep the complete lifecycle gate UNKNOWN.
 
 ## Maintenance and ownership
 
@@ -143,7 +135,7 @@ Payload/search staging and paired-frame verification also share one retry
 budget per row across pure crypto steps. They check both pinned policies and
 the retained-root relationship before fresh admission. Source-only and
 activation-target observations and outer return checks still stop on expiry.
-The [rotation lease checkpoint](status.md#rotation-row-lease-recovery-checkpoint-2026-10-23) owns the executed boundary.
+The [rotation lease checkpoint](history/implementation-2026-10.md#rotation-row-lease-recovery-checkpoint-2026-10-23) owns the executed boundary.
 The executor resumes committed chunks without regenerating their ciphertext.
 Counters/cursors alone do not prove membership coverage. Full terminal verification is mandatory.
 Verification mutants must include wrong payload, missing row, stale companion, duplicate normalization, and invalid index.
@@ -179,7 +171,69 @@ The integrated checkpoint records the original application's narrow rollback/rem
 
 ## Changes and rotation
 
+The [shared application configuration](application.md#rotate-keys-and-change-custody)
+binds all three rotation workflows to the same manifest and host evidence used
+for protection and attachment. It delegates to the executors below and retains
+their separate staging, external publication and cancellation authority.
+
+### Change exact search on active encrypted text
+
+<a id="enable-exact-search-on-active-encrypted-text"></a>
+
+The active-field modification route admits both `queries: []` to
+`queries: ["equality"]` and the reverse on existing TEXT/VARCHAR fields. Enabling
+search requires explicit equality leakage acceptance and a non-small-domain host
+review. Disabling requires empty `queries` and `accept_leakage`, and removal of
+that field’s search review. Reviews for unchanged searchable fields remain exact.
+A field with uniqueness cannot become storage-only through this route. The transition
+uses the existing CF1 representations and cryptographic primitives. All other field, record,
+tenant, native-schema, layout and writer-inventory declarations remain identical.
+Uniqueness changes and general type/codec/package upgrades remain open work.
+
+The source must be ACTIVE with its exact host pin. Source custody must already
+include an approved search root for every target searchable scope, including
+empty scopes. Modification neither generates nor changes key policies. Mapping
+drift,
+generated identities/defaults, unsupported intent, index-name collisions and
+missing search custody refuse explicitly. Planning is read-only and authenticates
+the complete current source. Optional SELECT samples use Doctor's existing
+structural admission against the target lock before database access or keys.
+Unsupported or UNKNOWN inspection refuses planning without executing samples.
+This first route accepts explicit-schema mappings and refuses already-adopted
+source lineage.
+
+`ApplicationConfig.plan_modification` returns an inactive
+`cryptalis.modification/v1` proposal. Preparation, status, sealing, cutover and
+cancellation reuse the existing encrypted rotation engine, journal, maintenance
+authority and row/byte bounds. Changed fields are authenticated and resealed with
+fresh nonces; equality targets include keyed search terms, while storage-only
+targets omit them. Unchanged protected fields retain exact ciphertext. NULL
+remains NULL. Bounds include both source and target representations
+and final verification, and inspect staged lengths before fetching frame bodies.
+
+The host retains the sealed successor before cutover and publishes it separately.
+Successors use transition v17, or v18 with the existing access contract. One
+transaction copies verified ciphertext, replaces only the owned frame checks,
+creates or removes the corresponding owned equality indexes and advances the
+predecessor chain. Failure rolls back those changes together. Publication requires the successor's ACTIVATING pin
+and verified current target; a source or journal pin cannot authorize attachment.
+Cancellation before cutover requires explicitly republished source authority.
+After cutover, current-value removal uses the successor and original native-schema
+obligations. Disabling search removes current tokens and their index; it does not
+erase
+historical equality leakage, copies, WAL or backups and does not retire keys.
+Index changes and terminal verification can take locks and time;
+there is no online-modification or bounded-pause claim.
+
+The [application route](application.md#modify-active-fields) gives the public
+sequence. [Status](status.md) owns executed evidence; this contract does not
+promote a production gate.
+
 ### Add an empty tenant policy under maintenance
+
+The shared [tenant API](application.md#add-an-approved-empty-tenant) binds planning,
+preparation and source-only cancellation to one manifest. Successor activation
+uses the existing shared `apply` method and the matching external pin.
 
 `cryptalis.tenancy.plan` accepts an ACTIVE source and actual source pin, an exact
 new UUID and host-held Keyring, declared source keys and a verification rate.
@@ -196,7 +250,7 @@ retry inspects the same operation. Cancellation requires the republished source
 ACTIVE authority and retains an ABORTED successor. Keep the full lineage for
 rotation, restore and current-data removal.
 
-The [verified boundary](status.md#maintenance-tenant-policy-provisioning-2026-10-28)
+The [verified boundary](history/implementation-2026-10.md#maintenance-tenant-policy-provisioning-2026-10-28)
 covers this Python API with O(N) verification and a global writer pause. It is
 not scalable online tenant signup or a new policy service. Host authentication,
 external custody/publication and production fencing remain separate obligations.
@@ -218,9 +272,9 @@ pending addition, republish source ACTIVE authority and use `tenants provision
 abort tenant-proposal.json --host-context host:tenant_abort --json` with a
 `TenantAbortContext` containing source-only keys. Each factory returns a fresh
 owned synchronous psycopg Engine with parameter hiding and SQL echo disabled.
-The [CLI checkpoint](status.md#tenant-policy-maintenance-cli-2026-10-28)
+The [CLI checkpoint](history/implementation-2026-10.md#tenant-policy-maintenance-cli-2026-10-28)
 records the source/installed v15 boundary. The later
-[fresh application checkpoint](status.md#restored-tenant-cli-application-journey-2026-10-29)
+[fresh application checkpoint](history/implementation-2026-10.md#restored-tenant-cli-application-journey-2026-10-29)
 exercises restored v16 through the installed public CLI entrypoint in-process,
 with independently retained fixture host pins and latest-value native exit.
 
@@ -326,7 +380,7 @@ include other cluster transactions. These values supply neither total pause,
 isolated WAL, a capacity bound, nor host authority. Keyless status still reports
 `NOT_PERFORMED` and supplies no fresh cryptographic proof.
 
-The [two-artifact decision](decisions.md#payload-rotation-preparation-and-activation-2026-10-23)
+The [two-artifact decision](history/decisions-2026-10.md#payload-rotation-preparation-and-activation-2026-10-23)
 defines the preparation and activation boundary. The
 [adopted-lineage extension](#payload-rotation-after-adopted-lineage-2026-10-24)
 defines the v5/v6 route below. Direct payload planning from an explicit restore
@@ -360,9 +414,9 @@ remains v3. [Search rotation with lineage](#search-rotation-after-adopted-lineag
 uses its separate successor format. Direct restore-binding generation planning follows its
 [separate route](#generation-planning-from-a-restore-binding-2026-10-24). This adds no key-retirement permission,
 host authority service or cryptographic format. All seven production gates remain UNKNOWN.
-See the [format decision](decisions.md#adopted-target-payload-rotation-2026-10-24).
+See the [format decision](history/decisions-2026-10.md#adopted-target-payload-rotation-2026-10-24).
 Native TEXT/VARCHAR and installed TEXT controls, plus the unchanged installed
-Smolink journey, verify this boundary. [Status](status.md#payload-rotation-after-adopted-lineage-2026-10-24)
+Smolink journey, verify this boundary. [Status](history/implementation-2026-10.md#payload-rotation-after-adopted-lineage-2026-10-24)
 owns the exact receipts, full regression and remaining limits.
 
 ### Search-key rotation
@@ -444,9 +498,9 @@ fractional-rate identities. Direct restore-binding planning follows the
 Compatible readers must precede publication. Crypto, journal and authority
 contracts stay unchanged. No key-retirement permission follows.
 All seven production gates remain UNKNOWN. See the
-[format decision](decisions.md#adopted-target-search-rotation-2026-10-24).
+[format decision](history/decisions-2026-10.md#adopted-target-search-rotation-2026-10-24).
 Source TEXT/VARCHAR and installed TEXT controls verify this boundary.
-[Status](status.md#search-rotation-after-adopted-lineage-2026-10-24) records exact
+[Status](history/implementation-2026-10.md#search-rotation-after-adopted-lineage-2026-10-24) records exact
 receipts and the separate ordinary application regressions.
 
 ### Generation planning from a restore binding: 2026-10-24
@@ -469,8 +523,8 @@ Publish under the successor's own pin. Deploy v2 proposal readers before use.
 Compatible existing readers can read unchanged v6/v7 activation formats.
 No crypto, provider, authority or key-retirement permission changes. All seven
 production gates remain UNKNOWN. See the
-[format decision](decisions.md#direct-restore-binding-generation-planning-2026-10-24).
-[Status](status.md#direct-restore-binding-generation-planning-2026-10-24) records
+[format decision](history/decisions-2026-10.md#direct-restore-binding-generation-planning-2026-10-24).
+[Status](history/implementation-2026-10.md#direct-restore-binding-generation-planning-2026-10-24) records
 19 controls each for source TEXT/VARCHAR and installed TEXT, refusal/recovery scope,
 and the unchanged SQLModel direct source/installed and legacy installed journeys.
 
@@ -503,7 +557,7 @@ Old deployment pins fail. Exact predecessor links remain necessary for runtime,
 restore and reverse/removal admission. Repeated rewraps use a flat trusted chain.
 
 The transition/v2 reader requirement and retained artifacts are defined in
-[decisions](decisions.md#root-rewrap-successor-artifacts-2026-10-23).
+[decisions](history/decisions-2026-10.md#root-rewrap-successor-artifacts-2026-10-23).
 The native controls include repeated custody changes, latest-value decrypt-back,
 removal, a lost terminal COMMIT reply and independent process restart from disk.
 Rewrapped text and VARCHAR backups also complete fresh-cluster recovery, approved
@@ -525,7 +579,7 @@ The [adopted-target extension](#adopted-target-root-rewrap-2026-10-24) defines
 the separate rewrap and cancellation path for an adopted copy.
 After activation, a new rewrap can change custody again without rewriting data.
 The full lifecycle gate remains UNKNOWN.
-See [status](status.md#active-root-rewrap-checkpoint-2026-10-23).
+See [status](history/implementation-2026-10.md#active-root-rewrap-checkpoint-2026-10-23).
 
 ### Adopted-target root rewrap: 2026-10-24
 
@@ -560,7 +614,7 @@ custody policies, fenced-source evidence and restore approval.
 The [earlier expanded failures](_reset/fresh-cluster-restore-20261024-3.json)
 remain recorded. Full-suite and installed-application results retain their
 separate verification boundaries. See the
-[adopted-target format decision](decisions.md#adopted-target-root-rewrap-2026-10-24).
+[adopted-target format decision](history/decisions-2026-10.md#adopted-target-root-rewrap-2026-10-24).
 
 ## Restore and authority loss
 
@@ -697,8 +751,8 @@ generation planning without rewriting source artifacts or journal authority.
 Without the public-slot layout, sources without owned sequences retain restore/v1.
 Deploy v5/v2 readers first.
 CF1, provider authority and retained-key duties remain unchanged. See the
-[format decision](decisions.md#owned-sequence-metadata-and-restored-identity-2026-10-24)
-and [current evidence](status.md#owned-sequence-preservation-and-restore-2026-10-24).
+[format decision](history/decisions-2026-10.md#owned-sequence-metadata-and-restored-identity-2026-10-24)
+and [current evidence](history/implementation-2026-10.md#owned-sequence-preservation-and-restore-2026-10-24).
 The four source and installed fresh-target controls pass mapped identities through inherited
 root/payload lineage, direct generation planning, a second adoption and native
 exit. Actual older readers refuse both new formats before database access.
@@ -742,13 +796,13 @@ The operation rewrites heap and index storage under native maintenance locks.
 Host row-rate, WAL and staging estimates exclude these DDL costs. This contract
 changes no CF1 format, key custody, generated-ID admission or retained-backup duty.
 Current source TEXT fresh-target profiles pass six each, with and without an
-owned sequence. See [status](status.md#public-column-slot-preservation-2026-10-24)
+owned sequence. See [status](history/implementation-2026-10.md#public-column-slot-preservation-2026-10-24)
 for the focused and VARCHAR scope. The actual installed wheel passes 294
 affected/application controls, six sequence-bearing fresh-target cases and the
 original three-field SQLModel lifecycle. Installed VARCHAR and legacy compatibility
 profiles also pass. The full source regression passes 2,503 tests and 116 subtests.
 The original three-field application still needs fresh-v6/direct-binding qualification.
-The [format decision](decisions.md#original-slot-layout-and-restore-authority-2026-10-24)
+The [format decision](history/decisions-2026-10.md#original-slot-layout-and-restore-authority-2026-10-24)
 owns version admission. All seven gates remain UNKNOWN.
 
 ### Late expression-statistics admission: 2026-10-24
@@ -764,8 +818,8 @@ focused source controls, including both paths before providers or DDL and exact
 repair through native exit. Affected-source and revised installed controls pass,
 including the original three-field fresh-v6 journey and legacy sequence/adoption.
 Formats and cryptographic contracts remain unchanged.
-See the [decision](decisions.md#expression-statistics-admission-across-layouts-2026-10-24)
-and [current evidence](status.md#legacy-expression-statistics-admission-2026-10-24).
+See the [decision](history/decisions-2026-10.md#expression-statistics-admission-across-layouts-2026-10-24)
+and [current evidence](history/implementation-2026-10.md#legacy-expression-statistics-admission-2026-10-24).
 
 ### Reverse privilege admission: 2026-10-23
 
@@ -821,7 +875,7 @@ Restored-frame authentication retries one unfinished row after actual lease expi
 with an exact retained-policy check and fresh key preparation. A second expiry,
 provider fault or changed policy stops adoption with `KeyUnavailable`. Schema
 inspection precedes authentication. Effectful savepoint probes follow it.
-The [restore lease checkpoint](status.md#restored-frame-lease-recovery-checkpoint-2026-10-23) records native and fresh-cluster controls.
+The [restore lease checkpoint](history/implementation-2026-10.md#restored-frame-lease-recovery-checkpoint-2026-10-23) records native and fresh-cluster controls.
 
 A logical dump and restore can restate a frame `CHECK` with different boolean grouping.
 Adoption accepts only the known PostgreSQL 16 nested and flattened forms of the declared

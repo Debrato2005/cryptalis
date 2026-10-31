@@ -37,8 +37,9 @@ def returning_rows():
     ]
 
 
-def statement(app, ordered):
-    return insert(app.Customer).returning(app.Customer.name, sort_by_parameter_order=ordered)
+def statement(app, ordered, *, labelled=False):
+    output = app.Customer.name.label('display_name') if labelled else app.Customer.name
+    return insert(app.Customer).returning(output, sort_by_parameter_order=ordered)
 
 
 @contextmanager

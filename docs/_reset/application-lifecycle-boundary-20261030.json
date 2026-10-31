@@ -1,0 +1,174 @@
+{
+  "format": "cryptalis.application-lifecycle-boundary/v1",
+  "base_revision": "344e792ee0de54d7c9e3d0fa2969d745a2eb9837",
+  "source_identity": "worktree-f0fcb8760fb94d5b",
+  "source_files": 282,
+  "source_checks": {
+    "test_calls": {
+      "passed": 146
+    },
+    "subtest_calls": {},
+    "setup": {
+      "passed": 146,
+      "skipped": 1
+    },
+    "teardown": {
+      "passed": 147
+    },
+    "collection": {},
+    "selected_items": 147
+  },
+  "source_and_runtime_unchanged": true,
+  "release_steps": [
+    {
+      "name": "reproducible wheel sdist SBOM inspection",
+      "outcome": "PASS",
+      "exit_code": 0,
+      "elapsed_seconds": 1.207207946004928
+    },
+    {
+      "name": "export locked hashed wheel-test dependencies",
+      "outcome": "PASS",
+      "exit_code": 0,
+      "elapsed_seconds": 0.020530314002826344
+    },
+    {
+      "name": "create isolated wheel interpreter",
+      "outcome": "PASS",
+      "exit_code": 0,
+      "elapsed_seconds": 0.01855824000085704
+    },
+    {
+      "name": "install hashed dependencies",
+      "outcome": "PASS",
+      "exit_code": 0,
+      "elapsed_seconds": 0.9260475260016392
+    },
+    {
+      "name": "install exact inspected wheel",
+      "outcome": "PASS",
+      "exit_code": 0,
+      "elapsed_seconds": 0.05142186800367199
+    },
+    {
+      "name": "installed dependency consistency",
+      "outcome": "PASS",
+      "exit_code": 0,
+      "elapsed_seconds": 0.022182421998877544
+    },
+    {
+      "name": "installed file and CLI inspection",
+      "outcome": "PASS"
+    },
+    {
+      "name": "installed ORM and shared initialization/Doctor context",
+      "outcome": "PASS",
+      "exit_code": 0,
+      "elapsed_seconds": 48.035639419998915
+    },
+    {
+      "name": "installed OpenBao TLS outage and PostgreSQL lifecycle",
+      "outcome": "PASS",
+      "exit_code": 0,
+      "elapsed_seconds": 56.19881548799458
+    },
+    {
+      "name": "installed keyword public-slot genuine fresh recovery",
+      "outcome": "PASS",
+      "exit_code": 0,
+      "elapsed_seconds": 15.879718830998172
+    }
+  ],
+  "artifacts": {
+    "cryptalis-0.1.0-py3-none-any.whl": "5ad8302ffed64bf8df6f4af5deb7c1c19c15d12d0e6a00bf42b0b048207e4281",
+    "cryptalis-0.1.0.tar.gz": "4e7c81beddef208229a204e4648bf9cb25fee06efe6f36a549e924600b91ad9f"
+  },
+  "reproducible": true,
+  "archive": {
+    "path": "docs/_reset/application-lifecycle-receipts-20261030.tar.gz",
+    "sha256": "60a584c5180143361f55b6583f4e9ae178e81a347881fff8486215c084fa2281",
+    "members": [
+      "application-lifecycle-first.json",
+      "application-lifecycle-regression.json",
+      "install-receipt.json",
+      "installed-export-receipt.json",
+      "installed-journey-receipt.json",
+      "installed-openbao-qualification.json",
+      "installed-openbao-tests.json",
+      "installed-restore-receipt.json",
+      "installed-sqlmodel-receipt.json",
+      "release-receipt.json",
+      "sbom.cdx.json",
+      "status.json"
+    ]
+  },
+  "behavior": [
+    "Shared ApplicationConfig applies/resumes protection, observes progress, plans and executes decrypt-back and removes eligible objects through existing executors.",
+    "Canonical intent and host evidence must match the trusted original or reverse source plan before database or key access.",
+    "Original and restored current-value exits, native sync/async SQLAlchemy/SQLModel work, committed-chunk interruption/resume and missing-authority refusals pass."
+  ],
+  "limits": [
+    "Focused source checks, not a complete default CI run at this revision.",
+    "Online capture, rotation, tenant provisioning, abort and upgrades retain dedicated procedures.",
+    "No inferred publication, writer exclusion, plaintext consent, package uninstallation, key destruction or backup disposition.",
+    "Performance targets remain unmet; independent human review and all seven production gates remain UNKNOWN."
+  ],
+  "installed_checks": {
+    "installed-sqlmodel-receipt.json": {
+      "test_calls": {
+        "passed": 96
+      },
+      "subtest_calls": {},
+      "setup": {
+        "passed": 96
+      },
+      "teardown": {
+        "passed": 96
+      },
+      "collection": {},
+      "selected_items": 96
+    },
+    "installed-openbao-tests.json": {
+      "test_calls": {
+        "passed": 69
+      },
+      "subtest_calls": {},
+      "setup": {
+        "passed": 69
+      },
+      "teardown": {
+        "passed": 69
+      },
+      "collection": {},
+      "selected_items": 69
+    },
+    "installed-export-receipt.json": {
+      "test_calls": {
+        "passed": 1
+      },
+      "subtest_calls": {},
+      "setup": {
+        "passed": 1
+      },
+      "teardown": {
+        "passed": 1
+      },
+      "collection": {},
+      "selected_items": 1
+    },
+    "installed-restore-receipt.json": {
+      "test_calls": {
+        "passed": 1
+      },
+      "subtest_calls": {},
+      "setup": {
+        "passed": 1
+      },
+      "teardown": {
+        "passed": 1
+      },
+      "collection": {},
+      "selected_items": 1
+    }
+  }
+}

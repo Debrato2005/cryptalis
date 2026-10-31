@@ -27,18 +27,27 @@ def load_runner(path):
 
 
 @pytest.mark.parametrize('source_role', [False, True])
+@pytest.mark.parametrize('configuration', ['explicit', 'home'])
 def test_wrapper_loads_only_selected_private_urls_and_clears_inherited_values(
-        tmp_path, monkeypatch, capsys, source_role):
+        tmp_path, monkeypatch, capsys, source_role, configuration):
     root = __import__('pathlib').Path(__file__).resolve().parents[1]
     runner = load_runner(root / 'scripts/test_postgres.py')
-    monkeypatch.setattr(runner.Path, 'home', classmethod(lambda cls: tmp_path))
+    if configuration == 'explicit':
+        monkeypatch.setenv(runner.CONFIG_DIRECTORY, str(tmp_path))
+        monkeypatch.setattr(runner.Path, 'home', classmethod(
+            lambda cls: pytest.fail('explicit configuration must not consult HOME')))
+    else:
+        monkeypatch.delenv(runner.CONFIG_DIRECTORY, raising=False)
+        monkeypatch.setattr(runner.Path, 'home', classmethod(lambda cls: tmp_path))
     files = (*runner.FILES, runner.SOURCE_FILE)
     values = ('postgresql://owner@localhost/db', 'postgresql://runtime@localhost/db',
               'postgresql://source@localhost/plain')
     for filename, value in zip(files[:2], values[:2]):
         (tmp_path / filename).write_text(value + '\n')
+        (tmp_path / filename).chmod(0o600)
     if source_role:
         (tmp_path / files[2]).write_text(values[2] + '\n')
+        (tmp_path / files[2]).chmod(0o600)
     for name in (*runner.VARIABLES, runner.SOURCE_VARIABLE):
         monkeypatch.setenv(name, 'inherited-value')
     monkeypatch.setattr(runner, 'psycopg', SimpleNamespace())
@@ -64,9 +73,10 @@ def test_wrapper_loads_only_selected_private_urls_and_clears_inherited_values(
 def test_source_role_probe_failure_stops_before_pytest(tmp_path, monkeypatch):
     root = __import__('pathlib').Path(__file__).resolve().parents[1]
     runner = load_runner(root / 'scripts/test_postgres.py')
-    monkeypatch.setattr(runner.Path, 'home', classmethod(lambda cls: tmp_path))
+    monkeypatch.setenv(runner.CONFIG_DIRECTORY, str(tmp_path))
     for filename in (*runner.FILES, runner.SOURCE_FILE):
         (tmp_path / filename).write_text('postgresql://role@localhost/db\n')
+        (tmp_path / filename).chmod(0o600)
     monkeypatch.setattr(runner, 'psycopg', SimpleNamespace())
     probes = []
     monkeypatch.setattr(runner, 'preflight', lambda urls: probes.append(urls) or False)

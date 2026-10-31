@@ -5,6 +5,7 @@ import base64
 import gc
 import traceback
 import warnings
+from contextlib import contextmanager
 from dataclasses import replace
 from uuid import UUID
 
@@ -33,7 +34,18 @@ class TransitDouble:
             "exportable": False, "allow_plaintext_backup": False,
             "deletion_allowed": False, "keys": {"1": 1, "2": 2},
             "supports_encryption": True, "supports_decryption": True,
+            "imported_key": False, "latest_version": 2,
+            "min_decryption_version": 1, "min_encryption_version": 0,
         }
+
+    def read(self, path):
+        mount, _, name = path.rsplit("/", 2)
+        return self.read_key(name=name, mount_point=mount)
+
+    def write(self, path, **request):
+        mount, operation, name = path.rsplit("/", 2)
+        method = self.encrypt_data if operation == "encrypt" else self.decrypt_data
+        return method(name=name, mount_point=mount, **request)
 
     def read_key(self, **request):
         self.calls.append(("read", request))
@@ -45,7 +57,7 @@ class TransitDouble:
         handle = f"vault:v{request['key_version']}:" + base64.b64encode(
             str(len(self.values)).encode()).decode()
         self.values[handle] = dict(request)
-        return {"data": {"ciphertext": handle}}
+        return {"data": {"ciphertext": handle, "key_version": request["key_version"]}}
 
     def decrypt_data(self, **request):
         self.calls.append(("decrypt", request))
@@ -57,10 +69,18 @@ class TransitDouble:
 
 
 def provider(client=None, **kwargs):
-    return OpenBaoTransitKeyProvider(
-        client or TransitDouble(), provider_id=PROVIDER, mount_point="transit",
-        key_name="roots", key_version=1, **kwargs,
+    # Exercise the canonical provider's protocol using an opaque service double.
+    # Real endpoint/authentication behavior belongs to the native SDK profiles.
+    client = client or TransitDouble()
+    bao = OpenBaoTransitKeyProvider(
+        endpoint="https://bao.example.invalid", token=lambda: "synthetic-token",
+        provider_id=PROVIDER, mount="transit", key_name="roots", key_version=1, **kwargs,
     )
+    @contextmanager
+    def supplied():
+        yield client
+    bao._client = supplied
+    return bao
 
 
 def test_exact_context_randomized_service_contract_and_cf1_round_trip():
@@ -99,16 +119,17 @@ def test_relabelled_context_is_authenticated_by_service(changes):
 
 @pytest.mark.parametrize("field,value", [
     ("key_name", "../roots"), ("key_name", "roots/other"),
-    ("mount_point", "https://host/transit"), ("mount_point", "transit/../auth"),
+    ("mount", "https://host/transit"), ("mount", "transit/../auth"),
     ("key_version", 0), ("key_version", True), ("key_version", 2**31),
     ("provider_id", UUID(int=0)),
 ])
 def test_invalid_authority_never_dispatches(field, value):
     client = TransitDouble()
-    arguments = dict(provider_id=PROVIDER, mount_point="transit", key_name="roots", key_version=1)
+    arguments = dict(endpoint="https://bao.example.invalid", token=lambda: "synthetic-token",
+        provider_id=PROVIDER, mount="transit", key_name="roots", key_version=1)
     arguments[field] = value
     with pytest.raises(InvalidContext):
-        OpenBaoTransitKeyProvider(client, **arguments)
+        OpenBaoTransitKeyProvider(**arguments)
     assert client.calls == []
 
 
@@ -213,15 +234,12 @@ def test_inherited_provider_refuses_before_dispatch(monkeypatch):
     assert client.calls == []
 
 
-@pytest.mark.parametrize("operation", ["read_key", "encrypt_data", "decrypt_data"])
-def test_async_sdk_methods_refuse_before_use(operation):
-    client = TransitDouble()
+def test_async_authentication_callback_refuses_before_use():
     async def asynchronous(**kwargs):
-        pytest.fail("constructor called asynchronous SDK method")
-    setattr(client, operation, asynchronous)
+        pytest.fail("constructor called asynchronous authentication")
     with pytest.raises(InvalidContext):
-        provider(client)
-    assert client.calls == []
+        OpenBaoTransitKeyProvider(endpoint="https://bao.example.invalid", token=asynchronous,
+            provider_id=PROVIDER, key_name="roots", key_version=1)
 
 
 @pytest.mark.parametrize("operation", ["read_key", "encrypt_data", "decrypt_data"])

@@ -1,200 +1,69 @@
 # Cryptalis
 
-For a classroom presentation, start with the [illustrated project guide](docs/professor-guide.md).
-It explains the architecture, searchable-encryption trade-offs, lifecycle and recorded performance.
+Manifest-first application-layer encryption for PostgreSQL, integrated with
+SQLAlchemy and optional SQLModel. Declare protected fields, attach Cryptalis,
+and use ordinary ORM operations within the [admitted compatibility matrix](docs/compatibility.md#full-capability-matrix).
 
-**IMPLEMENTED: research prototype with a manifest compiler, CF1 primitives, a local development provider, bounded SQLAlchemy storage/search, and a maintenance protection transition.**
-The sync/async attachment has scoped PostgreSQL tests under separate restricted runtime credentials.
-Tested runtime DDL and ownership changes are refused. Separate writers can still change data; deployment writer exclusion remains unverified.
-All seven full gates remain **UNKNOWN**. Read [status](docs/status.md) for evidence and revision limits.
-No runtime compatibility cell, production key provider, or independent review is qualified.
-The [slice 3 walkthrough](docs/walkthrough-sqlalchemy.md) gives the implemented API and its limits.
-The [search walkthrough](docs/walkthrough-search.md) covers slice 4 and its native-index mechanism.
-The [migration walkthrough](docs/walkthrough-migration.md) covers slice 5: plan, atomic backfill, full verification, and publication-gated switch.
-The [bounded online API](docs/walkthrough-migration.md#online-initial-protection) permits native writes during initial text and admitted scalar backfill, under declared tenancy.
-It retains a final write pause and strict source-to-target role transfer. Production qualification remains UNKNOWN.
-Native `String(n)`/VARCHAR mappings now retain their character limits through protection and decrypt-back.
-The [VARCHAR walkthrough](docs/walkthrough-migration.md#native-varchar-mappings) states the tested rules and remaining limits.
+**Research prototype; not production-security-qualified.** The full SRS and all
+34 objectives remain required. [Current status](docs/status.md) identifies the
+verified revision and limits; the [objective ledger](docs/BUILD_CHECKLIST.md)
+records unfinished work. Safe refusal does not make an unsupported feature complete.
 
-**SPECIFIED:** Cryptalis adds application-side protection to a Python 3.12+, SQLAlchemy 2.x, psycopg 3, PostgreSQL 16 backend.
-One manifest selects protected fields. One attachment handles admitted writes, reads, and expressions.
-One transition executor handles protection, verification, decrypt-back, removal, and three separate rotation operations.
-SUPPORTED below selects design scope. It does not mean implemented, verified, or released support.
+## Start here
 
-Cryptalis targets one comprehensive, production-grade first public release across
-the full SRS and all 34 objectives. Internal development checkpoints do not reduce
-that scope or qualify a public release. Current admission stays limited and
-fail-closed. The [release direction](docs/decisions.md#comprehensive-first-public-release-2026-10-23)
-and [competitive capability matrix](docs/research/capability-matrix.md) guide the remaining work.
-
-## Compatibility promise
-
-**SPECIFIED:** Cryptalis never silently changes what your backend returns.
-For every supported operation, results match the unprotected database, including native values, types, NULL behavior, and ORM state.
-Every unsupported operation raises a typed error, such as `UnsupportedEncryptedQuery` or its equivalent.
-It must not return different results, partial results, or plaintext-fallback data.
-[Security](docs/security.md) states the full-HMAC collision assumption and hostile-database limits of this promise.
-
-**SUPPORTED:** text storage/read/write, equality, `IN`, and tenant-scoped uniqueness.
-Every protected table declares a tenant column or declares itself single-tenant.
-Primary keys must be application-generated, such as UUID, Snowflake-style, or another app-assigned ID.
-`plan` rejects serial, identity, and database-default-generated keys with a plain explanation.
-
-**IMPLEMENTED, bounded local verification:** direct protected-column `COUNT`,
-public-field count filters and non-distinct windows, plus equality-backed
-`COUNT(DISTINCT column)` within one provable tenant per group. Public-column
-`DISTINCT` can also use admitted encrypted WHERE filters. The
-[reporting examples and measured costs](docs/professor-guide.md#count-reports-over-encrypted-values)
-explain these additions and their limits.
-
-**CURRENTLY UNADMITTED:** comparisons and ranges, `ORDER BY`, `LIKE`/prefix/contains, regex,
-`SUM`/`AVG`/`MIN`/`MAX`, general protected `DISTINCT`, protected joins, structured JSON and
-additional protected types beyond documented text, Boolean, Date, UUID and signed-integer storage.
-These remain full-SRS engineering objectives. Their runtime refusal does not complete the feature.
-Other unadmitted operators also fail. Do not protect a field whose required queries use these operations.
-Internal storage-only integer and [DATE candidates](docs/compatibility.md#internal-date-storage-candidate)
-have separate bounded evidence. They do not admit numeric/date search or qualify
-full type or production support.
-Queries on unprotected fields retain their native semantics.
-The seven baseline slices retain their dependency and PostgreSQL evidence requirements.
-Each new capability needs all [six technical gates](docs/compatibility.md#capability-admission) and explicit leakage opt-in before admission.
+- [Documentation map](docs/README.md): routes and one owner for each topic.
+- [Architecture](docs/architecture/README.md): components and data flow.
+- [Local development](docs/local-development.md): install, test and reproduce CI.
+- [Manifest reference](docs/manifest.md): declaration and compiler contract.
+- [Application attachment](docs/walkthrough-sqlalchemy.md): sync/async SQLAlchemy and SQLModel.
+- [Operator walkthrough](docs/walkthrough-migration.md): protect, diagnose, rotate, recover and remove.
+- [OpenBao](docs/openbao.md): optional external key custody and real local qualification.
 
 ## Intended adoption
 
-**SPECIFIED:** use this recommended path. It is not a guarantee of zero application changes.
+1. Declare fields, tenancy, supported search and leakage acceptance in a manifest.
+2. Supply authenticated tenant scope, key-provider configuration, writer inventory
+   and deployment/maintenance authority through the host integration.
+3. Run Doctor and inspect the protection plan; resolve unsupported application routes.
+4. Apply and verify protection, then publish the matching deployment pin.
+5. Attach the session factory and use the admitted native ORM operations.
 
-1. Write the manifest with text fields, capabilities, tenant declarations, and leakage acceptance.
-2. Run `plan`. It reports schema incompatibilities and refuses to proceed on any of them.
-3. Apply to a staging database copy. Run the application's own test suite with Cryptalis attached.
-4. Resolve or exclude incompatible workflows before applying to production under the qualified deployment procedure.
-5. Use rollback or removal through verified decrypt-back until you explicitly finalize and retire the required recovery dependencies.
+This describes the intended workflow, not universal zero-change adoption.
+The current [host context reference](docs/host-contexts.md) makes the necessary
+inputs explicit. Cryptalis never infers tenant authorization or lets a restored
+PostgreSQL database authorize its own deployment.
 
-Schema incompatibilities include server-generated keys, unsupported types, small-domain searchable fields, missing tenant scope, and unsupported writers.
-Attachment rejects unsupported queries. The staging suite therefore exposes query incompatibilities before production.
-Planning cannot infer every query the application will execute.
-The production step remains blocked by the [release gate](ENGINEERING_PLAYBOOK.md#release-gate).
-Finalization is an explicit retirement decision through the existing lifecycle, not a new command or timer.
+## Core behavior
 
-The real adoption cost is a manifest, one attach call, typed statements replacing opaque raw-SQL protected writers, and application-generated primary keys.
-The host supplies its authenticated tenant scope, writer inventory, external provider configuration, and current deployment policy.
-Cryptalis does not replace authentication or authorization.
+Sensitive values are authenticated and encrypted before PostgreSQL receives them.
+CF1 uses AES-256-GCM-SIV, random nonces, HKDF-derived keys and authenticated tenant,
+field and record context. Independent HMAC-SHA-256 terms implement declared exact
+search. PostgreSQL never receives plaintext key material.
 
-A [pinned Smolink workload](docs/status.md#pinned-smolink-adoption-2026-10-22)
-protects `Url.destination` through the original FastAPI app without source or query edits.
-It also checks decrypt-back and a fresh process that denies Cryptalis imports.
-This bounded storage-only result does not qualify the complete app or a production cell.
+The implementation includes bounded sync/async storage and query support,
+resumable protection, three distinct key-rotation workflows, current-data
+plaintext reversal/removal, fresh-cluster adoption and scoped Doctor checks.
+The [compatibility matrix](docs/compatibility.md) is the authoritative support list.
+Range, ordered, prefix/fuzzy and other unadmitted operations fail explicitly;
+they require separate research, leakage guarantees and admission.
 
-```python
-# SPECIFIED API example. It is not importable from the current package.
-sessions = attach(Base.registry, engine, manifest="cryptalis.json", keys=provider)
-with sessions() as session:
-    session.add(User(id=app_assigned_id, email="alice@example.com"))
-    found = session.scalar(select(User).where(User.email == "alice@example.com"))
+Provider custody is abstracted through `KeyProvider`. Development custody is
+for synthetic local data. Optional AWS and OpenBao adapters have different
+verification boundaries; [status](docs/status.md) records them. Passing local
+service checks does not qualify production identity, backup custody or destruction.
+
+## Develop from this checkout
+
+Use Python 3.12+ and uv. From the repository root:
+
+```console
+uv sync --frozen --all-extras
 ```
 
-## Query intent
+Follow [local development](docs/local-development.md) for an authorized disposable
+PostgreSQL 16 target, mandatory role probes and reproducible source/installed
+checks. Do not run tests against production data.
 
-**SPECIFIED:** an empty query list means storage-only. Equality permits `IN`. Uniqueness implies equality within the declared tenant scope.
-No field receives an undeclared search representation. The compiler must reject a search capability without its leakage acknowledgment.
-The [implemented compiler syntax](docs/architecture/README.md#implemented-compiler-syntax) defines field intent.
-Existing structural inspectors do not validate this declaration.
-
-**IMPLEMENTED:** inspect intent and a native schema through the compiler API:
-
-```python
-from cryptalis.manifest.compiler import compile_protection
-
-plan = compile_protection(
-    manifest_bytes, Base.registry, engine,
-    writers=writer_inventory, search_reviews=domain_reviews,
-)
-```
-
-The result contains canonical lock bytes, a digest, and semantic changes. Compilation creates no database effects.
-The host supplies complete writer coverage and value-domain reviews. These records remain host assertions.
-[Status](docs/status.md#slice-1-checkpoint-2026-10-08) gives the tested compiler cell and its limits.
-
-## Protection and cost
-
-**SPECIFIED:** admitted protected writes transform plaintext before PostgreSQL receives it.
-PostgreSQL receives randomized authenticated payloads and only declared keyed equality representations.
-The public source, manifest, schema, and backups contain no secret key material.
-
-Accepted leakage is capability-specific:
-
-- Storage-only: row linkage, ciphertext length, presence/NULL, write timing, access patterns, and result volumes.
-- Equality and `IN`: also equal-value classes, frequencies, repeated queries, and queried membership sets.
-- Tenant-scoped uniqueness: also membership revealed by uniqueness conflicts within that tenant.
-
-Auxiliary knowledge and chosen inputs can reveal values from searchable fields. These fields are not opaque.
-**UNSUPPORTED BY DESIGN:** protection against application compromise, key compromise, broken authorization, and plaintext the host logs, caches, or exports.
-Same-context replay, malicious result omission, nullable-field substitution with SQL NULL, and privileged schema modification also remain outside the claim.
-Plaintext migrations and removal can leave historical WAL, backup, and snapshot exposure.
-[Security](docs/security.md) owns accepted leakage and these limits.
-
-**SPECIFIED targets:** added p95 at most 3 ms for point/equality reads, at most 8 ms for `IN` with 20 values.
-Storage targets at most 2× for a protected column with an equality index.
-Local measurements and remaining limits belong to [compatibility](docs/compatibility.md#slice-4-local-million-row-profile-2026-10-08).
-The recorded slice 4 warm synchronous point/equality and IN-20 workloads meet their latency targets; the column-plus-index ratio is 1.4928×.
-Earlier profiles missed targets. These revision-bound observations do not qualify deployment performance; the historical page slowdown remains unexplained.
-Write-throughput and pause budgets remain undecided (D).
-
-No production provider is designated. The local provider supplies functional evidence only.
-Production requires external root custody and a current deployment policy outside database restore.
-The operator stops and drains known writers for maintenance. Immediate arbitrary-process revocation is outside the claim.
-
-## Database prerequisites
-
-**SPECIFIED:** PostgreSQL 16 is the selected first-release environment. Other majors remain outside that runtime contract until separate admission.
-Managed services on PostgreSQL 16 remain unqualified until their exact service cell passes the required suite.
-Research observations on 16.2 single-user and 16.15 service-mode PostgreSQL do not qualify a deployment.
-
-The selected storage/equality representations use built-in `bytea`, B-tree `bytea_ops`, and expression indexes. Required extensions: none.
-The migration role needs ownership of affected tables, CREATE on the application schema, and ordinary DDL/index privileges.
-An administrator provisions roles and grants once. The migration role needs no superuser, CREATEROLE, replication, or untrusted languages.
-The runtime role needs admitted table privileges. It must not own tables or schema.
-Server-generated keys are rejected. Sequence preallocation is not part of the selected contract.
-Protected COPY, opaque raw SQL writes, and unknown external writers block adoption unless those routes are excluded.
-Maintenance needs operator-controlled writer exclusion and evidence that existing transactions finished.
-
-## Current commands
-
-**IMPLEMENTED:** structural artifact inspection, synthetic crypto utilities,
-bounded read-only protection, rotation-preparation and reverse status, and
-active-deployment Doctor.
-The status command observes an existing plan and host-supplied pin.
-Doctor checks current runtime identity, effective privileges, target, lineage,
-and schema against an immutable migration plan and supplied ACTIVE pin.
-Use the declared runtime connection, rather than maintenance credentials.
-Neither command applies protection or authenticates stored frames.
-Doctor reports unobserved checks as UNKNOWN, even when its scoped check passes.
-Before migration, `doctor --pre-adoption` inspects the manifest, native schema and optional supplied
-SELECT structures through an explicit trusted host factory. Host-code effects
-and complete route coverage remain UNKNOWN. Initialization, planning, protection,
-three rotations, reversal and removal also have bounded operational CLI implementations.
-Their exact evidence and limits appear in the [status record](docs/status.md).
-See [pre-adoption diagnosis](docs/walkthrough-migration.md#diagnose-before-adoption).
-See the migration walkthrough for inputs and exit codes.
-The full operational status contract also remains incomplete.
-
-```bash
-.venv/bin/python -m cryptalis manifest inspect examples/manifests/genesis.json --json
-.venv/bin/python examples/demo_smolink_crypto.py --json
-.venv/bin/python -m cryptalis status plan.json --pin current-pin.json --database-url-file /private/connection.txt --json
-.venv/bin/python -m cryptalis doctor plan.json --pin current-pin.json --database-url-file /private/runtime-connection.txt --json
-```
-
-[Migration walkthrough](docs/walkthrough-migration.md#inspect-committed-progress) defines status inputs and limits.
-[Preparation status](docs/walkthrough-migration.md#inspect-rotation-preparation) uses the same command with the immutable payload or search proposal P.
-[Doctor diagnosis](docs/walkthrough-migration.md#diagnose-an-active-deployment) defines its separate scope and UNKNOWN results.
-
-## Read next
-
-1. [Architecture](docs/architecture/README.md): selected scope, components, manifest, and attachment.
-2. [Security](docs/security.md), then [lifecycle](docs/lifecycle.md): leakage, keys, transitions, and exit.
-3. [Compatibility](docs/compatibility.md), then [status](docs/status.md): grammar, targets, and evidence.
-4. [Decisions](docs/decisions.md), then [build guide](docs/build-guide.md): approved choices and seven ordered slices.
-5. [Engineering playbook](ENGINEERING_PLAYBOOK.md): manual implementation, tests, and release.
-
-The [competitive capability matrix](docs/research/capability-matrix.md) tracks living parity, limitations and E2E acceptance gaps.
-[Prior art](docs/prior-art.md) contains dated primary-source comparisons.
+Before implementation, read [AGENTS.md](AGENTS.md) and the
+[engineering playbook](ENGINEERING_PLAYBOOK.md). Historical evidence is routed
+through [history](docs/history/README.md); it is not current setup guidance.

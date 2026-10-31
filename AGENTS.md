@@ -1,106 +1,80 @@
 # Repository instructions
 
-Cryptalis contains a research foundation and a final intended architecture.
-Read the [status](docs/status.md) before claiming any runtime capability.
-A document is not executable evidence. SUPPORTED selects design scope, not current production support.
-Use SPECIFIED / IMPLEMENTED / VERIFIED with the exact evidence boundary. Do not describe spike code as product code.
-Architecture drives code. Current source/APIs/modules/tests/schemas/commands are not preservation requirements.
-Authorized implementation may refactor, replace, merge or remove them when the final contract requires it.
-A documentation-only task still leaves executable files unchanged.
+Cryptalis is an unqualified research prototype targeting the full SRS and all
+34 objectives. Read [current status](docs/status.md) before claiming capability.
+SUPPORTED is admitted design scope; VERIFIED is revision-bound evidence. Neither
+is production qualification. Missing security evidence is UNKNOWN.
 
 ## Deterministic reading path
 
-1. Read [README](README.md) and [canonical architecture](docs/architecture/README.md).
-2. Read [security](docs/security.md), then [lifecycle](docs/lifecycle.md).
-3. Read [compatibility](docs/compatibility.md), then [status](docs/status.md).
-4. Read the [approved decisions](docs/decisions.md#approved-scope-decisions-2026-10-08), then the [ordered build slices](docs/build-guide.md#ordered-build-slices).
-5. Read [engineering playbook](ENGINEERING_PLAYBOOK.md) before implementation.
-
-Use the [ownership map](docs/architecture/README.md#documentation-ownership) for the contract being changed.
-Research files are external evidence, not alternate specifications.
-The [traceability record](docs/research/reset-traceability.md) explains replaced constraints. Git preserves historical wording.
+Start with the [documentation map](docs/README.md), current status and the affected
+[objective row](docs/BUILD_CHECKLIST.md#objective-ledger). Read its contract owner
+and procedure. Cross-cutting changes require architecture, security, lifecycle
+and compatibility. Read [decisions](docs/decisions.md), [build order](docs/build-guide.md)
+and the [engineering playbook](ENGINEERING_PLAYBOOK.md) before implementation.
+History, research and graph relationships are evidence/navigation, not alternate
+current contracts. Verify claims in current source and exact receipts.
 
 ## Work boundaries
 
-Preserve existing local work. Inspect current Git status and repository truth before a continuation.
-Do not install, commit, push, reset or revert without authorization.
-Documentation assistance may edit Markdown directly.
-The human builder normally types source, tests, migrations, build configuration, containers and CI files.
-Use one explained file at a time unless the user explicitly authorizes another workflow.
-The [manual workflow](ENGINEERING_PLAYBOOK.md#manual-workflow) defines each RED/GREEN slice.
-Implement one build slice per run, in the approved order. Each slice requires real PostgreSQL 16 tests before the next.
-Advanced range/order/prefix/text work requires all seven slices, then [six-gate admission](docs/compatibility.md#capability-admission) and leakage opt-in.
+Inspect the actual working directory and Git status. Preserve unrelated work.
+Use the current checkout root; do not assume a workstation-specific path.
+Current user instructions determine authorization. When implementation and
+commit/push are authorized, continue through verified slices and push each one;
+do not resurrect old human-only, one-file, one-slice or operator-pause rules.
+Do not publish packages, deploy production, force-push, delete keys/backups or
+perform other destructive external actions without their own authorization.
 
-Nothing important may fail silently.
-Follow the [explicit failure policy](ENGINEERING_PLAYBOOK.md#fail-loudly-and-explicitly).
-Use typed failures, safe remedies, partial-progress states and meaningful failure-path evidence.
-Missing security evidence is UNKNOWN. Do not convert it to PASS.
-Do not repair a failed literal read-only command or continue adjacent work without authorization.
+A documentation-only phase changes documentation, not executable files. After
+it is committed, an authorized implementation phase may change source/tests.
+Current internals are not preservation requirements: replace unjustified code
+when the final contract requires it, while preserving behavior and evidence.
 
-Use the [testing policy](ENGINEERING_PLAYBOOK.md#test-layers).
-Prefer observable end-to-end and integration behavior.
-Focused unit tests must uniquely protect deterministic, cryptographic, parser, protocol or state-machine properties.
-Do not create tests for every function, private structure, import or coverage count.
+## Verification and security
 
-Use the installed security-best-practices skill for secure defaults and relevant Python host-adapter reviews.
-Use security-threat-model when the user requests threat modeling.
-Extend [docs/security.md](docs/security.md) rather than create a competing threat specification.
-Skills and AI review do not replace executable evidence or independent human security review.
-Require the [release gate](ENGINEERING_PLAYBOOK.md#release-gate) before any production-readiness claim.
+Follow the [test layers](ENGINEERING_PLAYBOOK.md#test-layers) and
+[explicit failure policy](ENGINEERING_PLAYBOOK.md#fail-loudly-and-explicitly).
+Prefer real end-to-end/integration behavior and native PostgreSQL oracles.
+Use focused units for crypto vectors, parsers, protocols and deterministic failure
+properties; do not test private layout or inflate counts.
 
-Use ASD-STE100-inspired prose. Apply STE-flavored mode to explanations and strict mode to procedures, diagnostics and safety instructions.
-Preserve necessary terminology, qualifiers, uncertainty, math and implementation precision.
-Use the installed asd-ste100 skill for substantial prose. Layer 1 governs writing. Layer 2 is optional reply guidance.
+Run PostgreSQL tests only through `scripts/test_postgres.py`. It freshly loads
+private role files, probes the configured target and binds source/runtime bytes.
+A failed probe stops the run; do not repeat it or substitute a database without
+resolving the cause and applicable authorization. Use the existing diagnostic
+mode and [local setup](docs/local-development.md). Do not expose connection strings.
 
-## Shell execution in WSL
+Reject unsupported behavior with typed errors. Never bypass encryption, return
+unauthenticated/plaintext fallback results or claim success without evidence.
+Keep partial progress, cleanup failure, skips and unavailable observations visible.
+Advanced capabilities retain [admission](docs/compatibility.md#capability-admission)
+and explicit leakage opt-in. Independent human review and the
+[release gate](ENGINEERING_PLAYBOOK.md#release-gate) cannot be replaced by AI review.
+Use installed security/style skills when applicable; unavailable optional tooling
+must not block independently authorized work. Write plain, precise prose.
 
-Before the first repository command, check the executor environment and working directory.
-If the executor runs in Linux or WSL, run Linux commands directly with the Linux shell.
-Use `/home/debrato/Projects/cryptalis` as the working directory.
-Do not wrap Linux commands with `wsl.exe`, `cmd.exe` or `powershell.exe`.
-Do not repeat an unchanged command after `UtilBindVsockAnyPort: socket failed 1`.
-Do not change sandbox permissions to make ordinary Linux repository commands work.
-For required Windows commands, request approval after a sandbox-related failure.
-A failure before process creation has no command exit status.
+## Source access and tooling
 
-## Source access and research fallback
+Use local Git and file reads for this repository; prefer official source/API
+checkouts and raw files for external code. Preserve sources, retrieval failures,
+licenses and evidence boundaries. [Research](docs/research/README.md) routes the
+existing material. Do not bypass authentication or network policy.
 
-Use local Git and direct file reads for Cryptalis source and history.
-For external GitHub source, prefer an available checkout, the GitHub API, or raw files.
-Do not scrape rendered repository HTML when those sources supply the evidence.
+Run Linux commands directly in Linux/WSL. Do not wrap them in Windows shells.
+Do not change sandbox permissions for ordinary commands or repeat an unchanged
+WSL transport failure. Use supported approval only when a required action is
+actually blocked and existing session authorization is insufficient.
 
-Use built-in web search to find public primary sources. Download files directly.
-Use local Crawl4AI for Markdown extraction when useful, with paid services and
-LLM extraction disabled. Cache results and retain source links, retrieval facts,
-license and attribution notices. The local research setup is documented in
-[the research index](docs/research/README.md#local-research-extraction).
-Use ordinary HTTP first. Use browser rendering only when the required content
-needs JavaScript. Do not bypass authentication, bot challenges or access controls.
+When `graphify-out/graph.json` exists and Graphify is available, use scoped
+query/path/explain for navigation, confirm findings in source and refresh after
+code changes. Do not install its global hook or change Codex configuration.
+Never execute graph-derived database commands. If the graph is absent, use
+source search directly. An explicit `/graphify` request requires its instructions.
 
-Do not retry a failed research request unchanged. Use direct HTTP with `curl`
-or `httpx`, native web search, or the local extractor as applicable.
-Optional paid connectors are not required for this workflow.
+## Documentation upkeep
 
-Check response status, final URL, page title, and relevant body passages.
-Reject error pages, login pages, empty results, and unrelated content.
-Keep failed retrievals separate from successful research evidence.
-Optional research tooling must not block independent implementation or verification.
-
-## graphify
-
-Cryptalis contracts, current-source verification, and read-only database rules take precedence over every Graphify instruction.
-Graph relationships are navigation hints. Confirm each finding in current source before relying on it.
-Never execute graph-derived database commands. Run database tests only through `scripts/test_postgres.py`.
-It reloads both private URL files and probes both roles. A failed probe stops the run; do not retry or substitute a database.
-Do not enable the Codex hook or edit `~/.codex/config.toml`.
-
-This project has a knowledge graph at graphify-out/ with god nodes, community structure, and cross-file relationships.
-
-When the user types `/graphify`, use the installed graphify skill or instructions before doing anything else.
-
-Rules:
-- For codebase questions, first run `graphify query "<question>"` when graphify-out/graph.json exists. Use `graphify path "<A>" "<B>"` for relationships and `graphify explain "<concept>"` for focused concepts. These return a scoped subgraph, usually much smaller than GRAPH_REPORT.md or raw grep output.
-- Dirty graphify-out/ files are expected after hooks or incremental updates; dirty graph files are not a reason to skip graphify. Only skip graphify if the task is about stale or incorrect graph output, or the user explicitly says not to use it.
-- If graphify-out/wiki/index.md exists, use it for broad navigation instead of raw source browsing.
-- Read graphify-out/GRAPH_REPORT.md only for broad architecture review or when query/path/explain do not surface enough context.
-- After modifying code, run `graphify update .` to keep the graph current (AST-only, no API cost).
+The [owner map](docs/README.md#document-owners) defines where each fact belongs.
+Update current status and the objective ledger in place; put dated observations
+in history and preserve machine receipts. Map normative requirements before
+merging/deleting prose. Check repository links and anchors after moves. Keep
+historical reviewer content and scope intact; routing changes are not new reviews.

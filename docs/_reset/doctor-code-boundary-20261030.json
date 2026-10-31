@@ -1,0 +1,333 @@
+{
+  "format": "cryptalis.doctor-code-boundary/v1",
+  "base_revision": "e55733d474601cf738e2ef7708c125669a3bbaf7",
+  "source_identity": "worktree-6a6a2badb4659976",
+  "source_files": 293,
+  "source_checks": {
+    "test_calls": {
+      "passed": 66
+    },
+    "subtest_calls": {},
+    "setup": {
+      "passed": 66
+    },
+    "teardown": {
+      "passed": 66
+    },
+    "collection": {},
+    "selected_items": 66
+  },
+  "source_and_runtime_unchanged": true,
+  "artifacts": {
+    "cryptalis-0.1.0-py3-none-any.whl": "6c42847a902b5a18b80ae1d80b3de52e027f939e7032de2b80b6b8749ef610ad",
+    "cryptalis-0.1.0.tar.gz": "490b5ee4b98e89915db2fcf4519d116726ad8f174c61ea67269810a9a5643c6c"
+  },
+  "reproducible": true,
+  "release_steps": [
+    {
+      "name": "reproducible wheel sdist SBOM inspection",
+      "outcome": "PASS",
+      "exit_code": 0,
+      "elapsed_seconds": 1.0773141869940446
+    },
+    {
+      "name": "export locked hashed wheel-test dependencies",
+      "outcome": "PASS",
+      "exit_code": 0,
+      "elapsed_seconds": 0.025636316000600345
+    },
+    {
+      "name": "create isolated wheel interpreter",
+      "outcome": "PASS",
+      "exit_code": 0,
+      "elapsed_seconds": 0.03232632000435842
+    },
+    {
+      "name": "install hashed dependencies",
+      "outcome": "PASS",
+      "exit_code": 0,
+      "elapsed_seconds": 1.7031224829988787
+    },
+    {
+      "name": "install exact inspected wheel",
+      "outcome": "PASS",
+      "exit_code": 0,
+      "elapsed_seconds": 0.051894752999942284
+    },
+    {
+      "name": "installed dependency consistency",
+      "outcome": "PASS",
+      "exit_code": 0,
+      "elapsed_seconds": 0.020923750998917967
+    },
+    {
+      "name": "installed file and CLI inspection",
+      "outcome": "PASS"
+    },
+    {
+      "name": "export isolated locked scanner dependencies",
+      "outcome": "PASS",
+      "exit_code": 0,
+      "elapsed_seconds": 0.11959352399571799
+    },
+    {
+      "name": "create isolated scanner interpreter",
+      "outcome": "PASS",
+      "exit_code": 0,
+      "elapsed_seconds": 0.02633505999983754
+    },
+    {
+      "name": "install hashed scanner dependencies",
+      "outcome": "PASS",
+      "exit_code": 0,
+      "elapsed_seconds": 0.44366389799688477
+    },
+    {
+      "name": "export scanner SBOM",
+      "outcome": "PASS",
+      "exit_code": 0,
+      "elapsed_seconds": 0.031629835997591726
+    },
+    {
+      "name": "audit frozen scanner toolchain",
+      "outcome": "PASS",
+      "exit_code": 0,
+      "elapsed_seconds": 0.9066307390021393
+    },
+    {
+      "name": "installed Doctor native code inventory",
+      "outcome": "PASS",
+      "exit_code": 0,
+      "elapsed_seconds": 5.917537280001852
+    },
+    {
+      "name": "installed ORM and shared initialization/Doctor context",
+      "outcome": "PASS",
+      "exit_code": 0,
+      "elapsed_seconds": 88.3563493440015
+    },
+    {
+      "name": "installed Google SDK protocol and PostgreSQL lifecycle",
+      "outcome": "PASS",
+      "exit_code": 0,
+      "elapsed_seconds": 11.35545810599433
+    },
+    {
+      "name": "installed OpenBao TLS outage and PostgreSQL lifecycle",
+      "outcome": "PASS",
+      "exit_code": 0,
+      "elapsed_seconds": 124.39436386199668
+    },
+    {
+      "name": "installed shared configuration on genuine fresh recovery",
+      "outcome": "PASS",
+      "exit_code": 0,
+      "elapsed_seconds": 10.988048829000036
+    },
+    {
+      "name": "installed keyword public-slot genuine fresh recovery",
+      "outcome": "PASS",
+      "exit_code": 0,
+      "elapsed_seconds": 13.298732255003415
+    }
+  ],
+  "rules_sha256": "18577fb92043bfa16c9c9cf1ffce3269a69b618198d588a5ef92e4eb24da05b0",
+  "rules_match_installed_wheel": true,
+  "application_provider_lock_unchanged": true,
+  "scanner": {
+    "format": "cryptalis.scanner-toolchain/v1",
+    "version": "0.51.0",
+    "isolated": true,
+    "lock_sha256": "c9ba07604032b851007490236c88f34a3a8df258259d9d64b25be323676a9581",
+    "requirements_sha256": "4018805c4a37e6f7c1605957463de84ab2a17b717f7a1f03999c9c1debde2748",
+    "production_gate": "UNKNOWN"
+  },
+  "scanner_audit": {
+    "schema": {
+      "version": "preview"
+    },
+    "summary": {
+      "audited_packages": 1,
+      "vulnerabilities": 0,
+      "adverse_statuses": 0
+    },
+    "vulnerabilities": [],
+    "adverse_statuses": []
+  },
+  "boundary": "Read-only candidate call/import inventory through trusted native ast-grep 0.51.0, fixed packaged rules, isolated toolchain, no project configuration/custom parser loading or source rewrite. Paths/lines/kinds are safe review pointers; snippets, literal values and diagnostics are omitted. Output/time/observation limits, child timeout, version/format/input/output failures and explicit inline suppression/parser limits are exercised. Overall coverage and runtime properties remain UNKNOWN.",
+  "production_gates": "UNKNOWN",
+  "failures_retained": [
+    "Semgrep candidate source run 1: 65 passes and two erroneous expectations about native snippet visibility and syntax-error reporting. Corrected candidate run 2 passed 67 checks, but its isolated audit found five known vulnerabilities in pinned MCP/OpenTelemetry dependencies; that engine and lock are not used by the final implementation.",
+    "A proposed shared tool dependency group would downgrade provider dependencies; the application lock was restored unchanged and the final tool has an independent lock.",
+    "Source run 3 failed collection because the executable test fixture had invalid quoting; corrected ast-grep runs 4 through 7 each pass 66 checks.",
+    "First installed-release attempt correctly rejected the new subprocess import. The exact Doctor-module import is now the sole process exception; 17 offline artifact controls retain transport/other-module refusal. Packaged rule bytes are included in release source provenance."
+  ],
+  "limits": [
+    "Candidate matching is syntactic, can produce false positives and does not resolve arbitrary aliases, bind values, protected model impact, generated code or external writers.",
+    "Native inline suppressions can hide matches; every text/JSON/Python report states this. Native parser recovery can omit invalid syntax without an error. Scanned/skipped path counts and overall code validity remain UNKNOWN.",
+    "Process/output bounds are not a parser memory bound, complete route inventory, hostile-executable sandbox or performance qualification. The selected executable is trusted host code.",
+    "Default source CI skips three native scanner cases without an explicit executable; installed release qualification selects the isolated locked tool and permits no skips.",
+    "The one-package advisory audit does not independently audit bundled native dependencies. Independent review and every production gate remain UNKNOWN."
+  ],
+  "research_sources": [
+    "https://ast-grep.github.io/guide/rule-config.html",
+    "https://pypi.org/project/ast-grep-cli/0.51.0/"
+  ],
+  "installed_checks": {
+    "installed-code-receipt.json": {
+      "test_calls": {
+        "passed": 15
+      },
+      "subtest_calls": {},
+      "setup": {
+        "passed": 15
+      },
+      "teardown": {
+        "passed": 15
+      },
+      "collection": {},
+      "selected_items": 15
+    },
+    "installed-sqlmodel-receipt.json": {
+      "test_calls": {
+        "passed": 114
+      },
+      "subtest_calls": {},
+      "setup": {
+        "passed": 114
+      },
+      "teardown": {
+        "passed": 114
+      },
+      "collection": {},
+      "selected_items": 114
+    },
+    "installed-google-kms-receipt.json": {
+      "test_calls": {
+        "passed": 50
+      },
+      "subtest_calls": {},
+      "setup": {
+        "passed": 50
+      },
+      "teardown": {
+        "passed": 50
+      },
+      "collection": {},
+      "selected_items": 50
+    },
+    "installed-openbao-tests.json": {
+      "test_calls": {
+        "passed": 146
+      },
+      "subtest_calls": {},
+      "setup": {
+        "passed": 146
+      },
+      "teardown": {
+        "passed": 146
+      },
+      "collection": {},
+      "selected_items": 146
+    },
+    "installed-application-export-receipt.json": {
+      "test_calls": {
+        "passed": 1
+      },
+      "subtest_calls": {},
+      "setup": {
+        "passed": 1
+      },
+      "teardown": {
+        "passed": 1
+      },
+      "collection": {},
+      "selected_items": 1
+    },
+    "installed-application-restore-receipt.json": {
+      "test_calls": {
+        "passed": 2
+      },
+      "subtest_calls": {},
+      "setup": {
+        "passed": 2
+      },
+      "teardown": {
+        "passed": 2
+      },
+      "collection": {},
+      "selected_items": 2
+    },
+    "installed-export-receipt.json": {
+      "test_calls": {
+        "passed": 1
+      },
+      "subtest_calls": {},
+      "setup": {
+        "passed": 1
+      },
+      "teardown": {
+        "passed": 1
+      },
+      "collection": {},
+      "selected_items": 1
+    },
+    "installed-restore-receipt.json": {
+      "test_calls": {
+        "passed": 1
+      },
+      "subtest_calls": {},
+      "setup": {
+        "passed": 1
+      },
+      "teardown": {
+        "passed": 1
+      },
+      "collection": {},
+      "selected_items": 1
+    }
+  },
+  "repository_observation": {
+    "matched_paths": 28,
+    "candidate_calls": 340,
+    "parser_recoveries": 0,
+    "scanned_paths": "UNKNOWN",
+    "skipped_paths": "UNKNOWN"
+  },
+  "archive": {
+    "path": "docs/_reset/doctor-code-receipts-20261030.tar.gz",
+    "sha256": "88cc1c907a3d411172ebfdefa7d5927135465aac07de006c6741acbc6e907f4d",
+    "members": [
+      "source/final.json",
+      "prior-source/1.json",
+      "prior-source/2.json",
+      "prior-source/3.json",
+      "prior-source/4.json",
+      "prior-source/5.json",
+      "prior-source/6.json",
+      "rejected-scanner/audit.json",
+      "rejected-scanner/uv.lock",
+      "failed-release/status.json",
+      "failed-release/guard.log",
+      "source/artifact-controls.log",
+      "source/repository-candidates.json",
+      "installed/install-receipt.json",
+      "installed/installed-application-export-receipt.json",
+      "installed/installed-application-restore-receipt.json",
+      "installed/installed-code-receipt.json",
+      "installed/installed-export-receipt.json",
+      "installed/installed-google-kms-receipt.json",
+      "installed/installed-journey-receipt.json",
+      "installed/installed-openbao-qualification.json",
+      "installed/installed-openbao-tests.json",
+      "installed/installed-restore-receipt.json",
+      "installed/installed-sqlmodel-receipt.json",
+      "installed/release-receipt.json",
+      "installed/sbom.cdx.json",
+      "installed/scanner-audit.json",
+      "installed/scanner-sbom.cdx.json",
+      "installed/scanner-toolchain.json",
+      "installed/status.json"
+    ]
+  }
+}

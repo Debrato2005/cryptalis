@@ -5,7 +5,7 @@ import pytest
 from sqlalchemy import Column, MetaData, Table, Uuid, bindparam, select
 
 from cryptalis.crypto import AuthenticationFailed, seal_value
-from cryptalis.sqlalchemy import _points, _ReadText, UnsupportedProtectedOperation
+from cryptalis.sqlalchemy import _Operation, _points, _ReadText, UnsupportedProtectedOperation
 from test_cf1 import descriptor, setup_keys, TENANT, RECORD
 
 
@@ -23,7 +23,7 @@ def test_invalid_uuid_point_refuses_real_frame_and_outer_join_null(bad, expandin
     prepared = ring.prepare()
     frame = seal_value('PUBLIC native UUID point', field, TENANT, RECORD, prepared)
     binding = SimpleNamespace(descriptor=field, max_characters=None)
-    operation = SimpleNamespace(keys=prepared, tenant=TENANT, points=points, bulk_returning=None)
+    operation = _Operation(None, prepared, TENANT, None, points=points)
     processor = _ReadText(binding, operation, table.c.id)
     for transport in ([frame.hex(), str(RECORD), str(TENANT)], [None, None, None]):
         with pytest.raises(AuthenticationFailed):
@@ -75,7 +75,7 @@ def test_boolean_identity_stays_unadmitted_and_null_cannot_authorize_a_real_row(
     _, ring = setup_keys()
     prepared, field = ring.prepare(), descriptor()
     frame = seal_value('PUBLIC NULL point refusal', field, TENANT, RECORD, prepared)
-    operation = SimpleNamespace(keys=prepared, tenant=TENANT, points=_points(statement, {}), bulk_returning=None)
+    operation = _Operation(None, prepared, TENANT, None, points=_points(statement, {}))
     processor = _ReadText(SimpleNamespace(descriptor=field, max_characters=None), operation, table.c.id)
     with pytest.raises(AuthenticationFailed):
         processor.process_result_value([frame.hex(), str(RECORD), str(TENANT)], None)

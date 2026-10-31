@@ -9,7 +9,7 @@ from sqlalchemy import select,bindparam,Text,and_,or_,not_,null,event
 from sqlalchemy.orm import aliased
 from test_sqlalchemy_search import search_application,_row,_async_factory,OTHER
 
-KINDS=['is_not_null','ne','ne_reverse','not_in_empty','not_in_null','not_in_values','not_in_mixed','not_in_late','not_of_in','not_of_eq']
+KINDS=['is_not_null','ne','ne_reverse','not_in_empty','not_in_null','not_in_values','not_in_mixed','not_in_late','not_of_in','not_of_eq','not_and','not_or','not_nested']
 KINDS += ['distinct','not_distinct','distinct_reverse','not_distinct_reverse',
           'distinct_late','not_distinct_late','distinct_null','not_distinct_null',
           'distinct_late_null','not_distinct_late_null','distinct_reverse_null','not_distinct_reverse_null']
@@ -54,6 +54,9 @@ def predicate(column,kind,value,choices):
     if kind in ('distinct_reverse_null','not_distinct_reverse_null'):
         method=null().is_distinct_from if kind=='distinct_reverse_null' else null().is_not_distinct_from
         return method(column),{}
+    if kind=='not_and':return not_(and_(column==value,column.in_(choices))),{}
+    if kind=='not_or':return not_(or_(column.not_in(choices),column.is_(None))),{}
+    if kind=='not_nested':return not_(and_(or_(column==value,column.is_(None)),not_(or_(column.in_(choices),column.is_not(None))))),{}
     raise AssertionError(kind)
 
 @pytest.mark.parametrize('kind',KINDS)
@@ -98,8 +101,7 @@ def test_fixed_seed_negative_query_truth_and_rows_match_native(kind,mode,single)
             outcomes.append(actual)
     assert outcomes[1]==outcomes[0]
 
-@pytest.mark.parametrize('kind',['is_not_null','ne','not_in_empty','not_in_null','not_in_values','not_in_mixed',
-    'distinct','not_distinct','distinct_null','not_distinct_null','distinct_late_null','not_distinct_late_null'])
+@pytest.mark.parametrize('kind',['is_not_null','ne','not_in_empty','not_in_null','not_in_values','not_in_mixed','not_and','not_or','not_nested'])
 @pytest.mark.parametrize('single',[False,True])
 def test_outer_join_absent_and_present_null_negative_truth_matches_native(kind,single):
     outcomes=[]
@@ -122,16 +124,17 @@ from uuid import uuid4
 
 @pytest.mark.parametrize('protected',[False,True])
 @pytest.mark.parametrize('negated',[False,True])
-@pytest.mark.parametrize('form',['presence','distinct'])
-def test_storage_only_null_predicates_need_no_equality_representation(app,protected,negated,form):
+@pytest.mark.parametrize('composed',[False,True])
+def test_storage_only_null_predicates_need_no_equality_representation(app,protected,negated,composed):
     sessions=factory(app,protected)
     with sessions(tenant_id=TENANT) as s:
         for i,value in enumerate([None,'','雪']):
             s.add(app.Customer(id=uuid4(),tenant_id=TENANT,name=f'name-{i}',note=value,secret='',rank=i))
         s.commit()
         expr=app.Customer.note.is_not(None) if negated else app.Customer.note.is_(None)
-        if form=='distinct':
-            expr=app.Customer.note.is_distinct_from(None) if negated else app.Customer.note.is_not_distinct_from(None)
+        if composed:
+            inverse=app.Customer.note.is_(None) if negated else app.Customer.note.is_not(None)
+            expr=not_(and_(inverse,app.Customer.rank>=0))
         values=[tuple(r) for r in s.execute(select(app.Customer.rank,expr).order_by(app.Customer.rank))]
         assert values==[(0,not negated),(1,negated),(2,negated)]
 

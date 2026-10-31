@@ -1,9 +1,8 @@
 # Engineering playbook
 
 This document owns implementation workflow, evidence discipline and release policy.
-The [architecture map](docs/architecture/README.md#documentation-ownership) names technical contract owners.
+The [documentation map](docs/README.md#document-owners) names technical contract owners.
 The [build guide](docs/build-guide.md) orders implementation. The [status](docs/status.md) owns current capability claims.
-Read README/architecture, security/lifecycle, compatibility/status, approved decisions/build guide, then this playbook.
 Use the [repository reading path](AGENTS.md#deterministic-reading-path) before implementation.
 Use SPECIFIED / IMPLEMENTED / VERIFIED with exact evidence scope. Do not describe spike code as product code.
 
@@ -23,6 +22,14 @@ database DDL or credential, service, ownership, or policy change.
 The operator must still authorize the configured target as disposable.
 `target_authorization` therefore remains UNKNOWN even when prerequisites pass.
 
+Set `CRYPTALIS_TEST_CONFIG_DIR` to an absolute private directory when credentials
+must remain outside the home directory. The default remains the home directory.
+Both modes read the same named private URL files and clear inherited URL values.
+Every test invocation rejects symlinks, nonregular files, other-owner files,
+group/world permissions, empty files and files larger than 64 KiB before probing.
+The CI and fresh-cluster harnesses select their private directory explicitly;
+they do not change `HOME`.
+
 Results identify automatically repairable tool discovery, an authorized
 alternative, an external prerequisite, or an implementation defect.
 A read-only Git mount or denied socket creation can
@@ -41,27 +48,27 @@ commits or concurrent operations will succeed. The runtime role must lack
 database CREATE and cannot assume the migration owner or own application schemas
 or relations.
 
-## Manual workflow
+## Implementation workflow
 
-The human builder normally types each executable file.
-AI may review code, explain contracts, propose a bounded slice and edit documentation.
-The user can explicitly authorize direct implementation. Do not infer this from a documentation task.
-Implement one [ordered build slice](docs/build-guide.md#ordered-build-slices) per run.
-Each slice needs real PostgreSQL 16 tests before the next slice starts.
-Advanced range/order/prefix/text work requires all seven slices, then six-gate admission with leakage opt-in.
-Slice test success does not promote a full gate.
+Current user authorization selects documentation-only, guided or autonomous
+implementation work. A documentation task alone does not authorize executable
+changes; an explicit instruction to continue building does. Authorization for
+ordinary verified commits/pushes persists across slices. Historical one-file or
+one-slice instructions do not override the active request.
 
-1. Select one observable behavior and its canonical contract.
-2. Explain its purpose, exact file path, code and failure conditions.
-3. Supply one meaningful RED test file and one command.
-4. Wait for the actual output.
-5. Supply one implementation file and explain each important line.
-6. Wait for GREEN evidence before the next slice.
+1. Select an unresolved objective and its current contract owner.
+2. Inspect the source and relevant existing evidence; choose an observable result.
+3. Add a meaningful failure/native-oracle check when the behavior requires one.
+4. Implement the complete bounded behavior, including safe failures and recovery.
+5. Run affected checks through the required wrapper; broaden for changed risks.
+6. Review the diff and update the owner, ledger and exact evidence boundary.
+7. Commit and push a verified slice when authorized, then continue dependent work.
 
-Do not supply several executable files at once.
-Keep the slice small enough to understand, but complete enough to protect its stated behavior.
-An isolated learning experiment can compare alternatives without entering production code or claiming capability.
-Record its exact limitations. Never connect unsafe lab authority to production data.
+Respect the [baseline dependency order](docs/build-guide.md#ordered-build-slices).
+Real PostgreSQL evidence is required before dependent integration. Advanced
+capabilities retain six-gate admission and leakage opt-in. Local success never
+promotes a production gate. Do not publish or perform destructive external work
+without the applicable separate authorization.
 
 ## Fail loudly and explicitly
 
@@ -123,7 +130,7 @@ Broaden checks when failures, new changes or unresolved risks justify them.
 Record commands, versions, environment, outcomes, scope and limits.
 Do not label an unrun or unavailable check successful.
 Keep test calls, subtests, phase errors, and collection skips separate in evidence.
-Use the PostgreSQL wrapper's [receipt fields](docs/build-guide.md#receipt-outcome-fields)
+Use the PostgreSQL wrapper's [receipt fields](docs/qualification.md#receipt-outcome-fields)
 for report counts. Raw outcomes and pytest terminal categories have different meanings.
 
 ## Review and evidence

@@ -1,0 +1,267 @@
+{
+  "format": "cryptalis.github-ci-boundary/v1",
+  "run_id": 41078706097,
+  "url": "https://github.com/Debrato2005/cryptalis/actions/runs/41078706097",
+  "head_sha": "c9011093468bd6b8bd60b43b98fdcebc56a813e5",
+  "conclusion": "success",
+  "source_job": 124141755697,
+  "release_job": 124141756670,
+  "source_checks": {
+    "test_calls": {
+      "passed": 3616,
+      "skipped": 12
+    },
+    "subtest_calls": {
+      "passed": 18
+    },
+    "setup": {
+      "passed": 3628,
+      "skipped": 86
+    },
+    "teardown": {
+      "passed": 3714
+    },
+    "collection": {
+      "skipped": 18
+    },
+    "selected_items": 3714
+  },
+  "source_files": 311,
+  "source_and_runtime_unchanged": true,
+  "source_hashes_match_recorded_git_revision": true,
+  "artifacts": {
+    "cryptalis-0.1.0-py3-none-any.whl": "f2f858734c5a228bac5e0e7d53371cf59aa01f28494328e810e56d94c4beacc5",
+    "cryptalis-0.1.0.tar.gz": "7c6c91c485a41ad93bfcb2223f7163e970050d5c646aea17acd8489afed4ccdd"
+  },
+  "local_and_github_artifacts_identical": true,
+  "frozen_audit": {
+    "schema": {
+      "version": "preview"
+    },
+    "summary": {
+      "audited_packages": 39,
+      "vulnerabilities": 0,
+      "adverse_statuses": 0
+    },
+    "vulnerabilities": [],
+    "adverse_statuses": []
+  },
+  "github_archives": [
+    {
+      "id": 12988759072,
+      "sha256": "3be10444e67893ee945ff72b535874447e7f33db972c5bf634ff0ffe941952ab"
+    },
+    {
+      "id": 12987889184,
+      "sha256": "deb53df5b870e0d0f9b1ce12655b3f1081d9fe36bcfd08e5ab57c031bb93e633"
+    }
+  ],
+  "production_gates": "UNKNOWN",
+  "limits": [
+    "Explicit skipped cells and failed separate performance observations remain unqualified.",
+    "Named INSERT RETURNING is bounded. Point UPDATE without returned columns is outside this pushed revision."
+  ],
+  "installed_checks": {
+    "installed-code-receipt.json": {
+      "test_calls": {
+        "passed": 15
+      },
+      "subtest_calls": {},
+      "setup": {
+        "passed": 15
+      },
+      "teardown": {
+        "passed": 15
+      },
+      "collection": {},
+      "selected_items": 15
+    },
+    "installed-sqlmodel-receipt.json": {
+      "test_calls": {
+        "passed": 491
+      },
+      "subtest_calls": {},
+      "setup": {
+        "passed": 491
+      },
+      "teardown": {
+        "passed": 491
+      },
+      "collection": {},
+      "selected_items": 491
+    },
+    "installed-google-kms-receipt.json": {
+      "test_calls": {
+        "passed": 50
+      },
+      "subtest_calls": {},
+      "setup": {
+        "passed": 50
+      },
+      "teardown": {
+        "passed": 50
+      },
+      "collection": {},
+      "selected_items": 50
+    },
+    "installed-openbao-tests.json": {
+      "test_calls": {
+        "passed": 149
+      },
+      "subtest_calls": {},
+      "setup": {
+        "passed": 149
+      },
+      "teardown": {
+        "passed": 149
+      },
+      "collection": {},
+      "selected_items": 149
+    },
+    "installed-export-receipt.json": {
+      "test_calls": {
+        "passed": 1
+      },
+      "subtest_calls": {},
+      "setup": {
+        "passed": 1
+      },
+      "teardown": {
+        "passed": 1
+      },
+      "collection": {},
+      "selected_items": 1
+    },
+    "installed-restore-receipt.json": {
+      "test_calls": {
+        "passed": 1
+      },
+      "subtest_calls": {},
+      "setup": {
+        "passed": 1
+      },
+      "teardown": {
+        "passed": 1
+      },
+      "collection": {},
+      "selected_items": 1
+    },
+    "installed-application-export-receipt.json": {
+      "test_calls": {
+        "passed": 1
+      },
+      "subtest_calls": {},
+      "setup": {
+        "passed": 1
+      },
+      "teardown": {
+        "passed": 1
+      },
+      "collection": {},
+      "selected_items": 1
+    },
+    "installed-application-restore-receipt.json": {
+      "test_calls": {
+        "passed": 2
+      },
+      "subtest_calls": {},
+      "setup": {
+        "passed": 2
+      },
+      "teardown": {
+        "passed": 2
+      },
+      "collection": {},
+      "selected_items": 2
+    },
+    "installed-modification-export-receipt.json": {
+      "test_calls": {
+        "passed": 1
+      },
+      "subtest_calls": {},
+      "setup": {
+        "passed": 1
+      },
+      "teardown": {
+        "passed": 1
+      },
+      "collection": {},
+      "selected_items": 1
+    },
+    "installed-modification-restore-receipt.json": {
+      "test_calls": {
+        "passed": 1
+      },
+      "subtest_calls": {},
+      "setup": {
+        "passed": 1
+      },
+      "teardown": {
+        "passed": 1
+      },
+      "collection": {},
+      "selected_items": 1
+    },
+    "installed-storage-modification-export-receipt.json": {
+      "test_calls": {
+        "passed": 1
+      },
+      "subtest_calls": {},
+      "setup": {
+        "passed": 1
+      },
+      "teardown": {
+        "passed": 1
+      },
+      "collection": {},
+      "selected_items": 1
+    },
+    "installed-storage-modification-restore-receipt.json": {
+      "test_calls": {
+        "passed": 1
+      },
+      "subtest_calls": {},
+      "setup": {
+        "passed": 1
+      },
+      "teardown": {
+        "passed": 1
+      },
+      "collection": {},
+      "selected_items": 1
+    }
+  },
+  "archive": {
+    "path": "docs/_reset/github-insert-labels-receipts-20261030.tar.gz",
+    "sha256": "77c19bbeee7ec92a638ac33c6a6c4c61a725073fe0c3202fb481c841b10bea5f",
+    "members": [
+      "source/admission.json",
+      "source/dependency-audit.json",
+      "source/job-status.json",
+      "source/qualification/source-receipt.json",
+      "source/qualification/status.json",
+      "release/install-receipt.json",
+      "release/installed-application-export-receipt.json",
+      "release/installed-application-restore-receipt.json",
+      "release/installed-code-receipt.json",
+      "release/installed-export-receipt.json",
+      "release/installed-google-kms-receipt.json",
+      "release/installed-journey-receipt.json",
+      "release/installed-modification-export-receipt.json",
+      "release/installed-modification-restore-receipt.json",
+      "release/installed-openbao-qualification.json",
+      "release/installed-openbao-tests.json",
+      "release/installed-restore-receipt.json",
+      "release/installed-sqlmodel-receipt.json",
+      "release/installed-storage-modification-export-receipt.json",
+      "release/installed-storage-modification-restore-receipt.json",
+      "release/job-status.json",
+      "release/release-receipt.json",
+      "release/sbom.cdx.json",
+      "release/scanner-audit.json",
+      "release/scanner-sbom.cdx.json",
+      "release/scanner-toolchain.json",
+      "release/status.json"
+    ]
+  }
+}

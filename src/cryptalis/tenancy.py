@@ -149,7 +149,8 @@ class TenantProvisionPlan:
             document['target'] = d['restore']['target']
         for name in ('online_preparation', 'online_verification', 'rewrap_plan_digest', 'rewrap_observations',
                 'payload_rotation_plan_digest', 'payload_rotation_observations', 'payload_batch_limits',
-                'search_rotation_plan_digest', 'search_rotation_observations', 'search_batch_limits'):
+                'search_rotation_plan_digest', 'search_rotation_observations', 'search_batch_limits',
+                'profile_rotation_plan_digest', 'profile_rotation_observations', 'profile_batch_limits', 'profile_source_lock'):
             document.pop(name, None)
         if lineage:
             document['restore_lineage'] = lineage

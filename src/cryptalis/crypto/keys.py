@@ -79,6 +79,15 @@ class KeyUnavailable(CryptoFailure):
         super().__init__()
 
 
+class ProviderAuthenticationUnavailable(KeyUnavailable):
+    """A rejected or ambiguous login may already have issued a native token."""
+
+    stage = "provider authentication"
+    remedy = "Inspect workload credentials, role policy and native token issuance before retry."
+    retryable = False
+    effects = "UNKNOWN"
+
+
 def tuple_bytes(*parts: bytes) -> bytes:
     """CF1 length-prefixed tuple, with no implicit conversion."""
     if len(parts) > 0xFFFFFFFF or any(type(p) is not bytes or len(p) > 0xFFFFFFFF for p in parts):
@@ -157,6 +166,8 @@ def create_root(provider: KeyProvider, context: KeyContext) -> WrappedRoot:
         if not isinstance(result, WrappedRoot) or result.context != context or result.provider_id != provider.provider_id:
             raise KeyUnavailable()
         return result
+    except ProviderAuthenticationUnavailable:
+        raise ProviderAuthenticationUnavailable() from None
     except Exception:
         raise KeyUnavailable() from None
 
@@ -218,6 +229,8 @@ class DevelopmentKeyProvider:
                     or new_provider.provider_id != identity):
                 raise KeyUnavailable()
             return result
+        except ProviderAuthenticationUnavailable:
+            raise ProviderAuthenticationUnavailable() from None
         except Exception:
             raise KeyUnavailable() from None
 
@@ -354,8 +367,19 @@ class Keyring:
                     root = self._provider(wrapper).unwrap(wrapper, wrapper.context)
                     staged[wrapper] = self._material(wrapper, root, started)
             return self._publish(staged)
+        except ProviderAuthenticationUnavailable:
+            raise ProviderAuthenticationUnavailable() from None
         except Exception:
             raise KeyUnavailable() from None
+
+    def check_access(self) -> None:
+        """Cold-check every admitted root without warming or extending this cache.
+
+        Provider access can generate remote audit records. This does not verify
+        application ciphertext, deployment authority or backup recoverability.
+        """
+        self._check()
+        Keyring(self.policy, self._providers, max_age=self._max_age).prepare()
 
     async def prepare_async(self) -> PreparedKeys:
         started, staged = self._snapshot()
@@ -367,5 +391,7 @@ class Keyring:
                 if asyncio.current_task().cancelling():
                     raise asyncio.CancelledError()
             return self._publish(staged)
+        except ProviderAuthenticationUnavailable:
+            raise ProviderAuthenticationUnavailable() from None
         except Exception:
             raise KeyUnavailable() from None

@@ -20,7 +20,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.dialects import postgresql
 
 from cryptalis.crypto.cf1 import FieldDescriptor, seal_value, open_value
-from cryptalis.crypto.keys import CryptoFailure, Keyring, KeyUnavailable
+from cryptalis.crypto.keys import CryptoFailure, Keyring, KeyUnavailable, ProviderAuthenticationUnavailable
 from cryptalis.crypto._payload_rotation import MAX_BATCH_BYTES, MAX_BATCH_ROWS
 from cryptalis.manifest.compiler import (compile_protection, _schema_facts, _canonical, _previous_lock,
                                           unrecorded_column_metadata, protected_extended_statistics,
@@ -68,10 +68,16 @@ class TransitionFailure(RuntimeError):
     def __init__(self, code, operation_id=None, sqlstate=None, *, cleanup_errors=()):
         self.code, self.operation_id, self.sqlstate = code, operation_id, sqlstate
         self.cleanup_errors = tuple(cleanup_errors)
+        provider_detail = ''
+        if code == 'ProviderAuthenticationUnavailable':
+            self.provider_effects, self.retryable = 'UNKNOWN', False
+            provider_detail = (' Provider effects=UNKNOWN. ' + ProviderAuthenticationUnavailable.remedy
+                               + ' A token may already have been issued.')
         cleanup = ''.join(f' cleanup={stage}:{cause}:{state or "UNKNOWN"};'
                           for stage,cause,state in self.cleanup_errors)
         super().__init__(f'{code}; operation={operation_id or "unstarted"}; SQLSTATE={sqlstate or "UNKNOWN"}. '
-                         'Keep writers stopped. Inspect this operation and the external current policy before resume.' + cleanup)
+                         'Keep writers stopped. Inspect this operation and the external current policy before resume.'
+                         + provider_detail + cleanup)
 
 
 @dataclass(frozen=True)
@@ -147,7 +153,7 @@ def _search_activation_estimates(rows,backfill,verify,copy,copy_wal):
     return costs
 
 
-_GENERATION_ROTATIONS=('payload_rotation','search_rotation')
+_FRAME_ROTATIONS=('payload_rotation','search_rotation','profile_rotation')
 
 
 @dataclass(frozen=True)
@@ -156,6 +162,10 @@ class MigrationPlan:
     def __post_init__(self):
         try:
             doc = _decode_transition_json(self.artifact)
+            if doc.get('format') in ('cryptalis.transition/v17', 'cryptalis.transition/v18'):
+                from cryptalis.modification import validate_activation
+                validate_activation(doc, self.artifact)
+                return
             if doc.get('format') in ('cryptalis.transition/v15', 'cryptalis.transition/v16'):
                 from cryptalis.tenancy import _validate_activation
                 _validate_activation(doc, self.artifact)
@@ -295,7 +305,7 @@ class MigrationPlan:
         if self.document['kind'] == 'rewrap':
             return (f'Estimated root-rewrap verification pause: {costs["writer_pause_seconds_estimate"]} s '
                     f'for {costs["rows"]} rows. Payload and search bytes stay unchanged. ' + costs['limits'])
-        if self.document['kind'] in _GENERATION_ROTATIONS:
+        if self.document['kind'] in _FRAME_ROTATIONS:
             return (f'Estimated {self.document["kind"].removesuffix("_rotation")}-rotation copy and verification pause: {costs["writer_pause_seconds_estimate"]} s '
                     f'for {costs["rows"]} rows. Atomic copy WAL estimate: {costs["copy_wal_bytes_estimate"]} bytes. '
                     + costs['limits'])
@@ -655,7 +665,7 @@ def _with_row_keys(keys, tenant, p, material, operation):
 
 def plan(manifest, mapping, engine, *, writers, search_reviews=(), keys, runtime_role,
          target_id, backfill_rows_per_second, verify_rows_per_second,
-         temporary_bytes_per_row=None, wal_bytes_per_row=None, layout=None):
+         temporary_bytes_per_row=None, wal_bytes_per_row=None, layout=None, queries=()):
     """Read-only compiler admission plus target, keys, scope, and cost estimates.
 
     Rates and per-row costs are explicit host observations/estimates, not
@@ -666,7 +676,16 @@ def plan(manifest, mapping, engine, *, writers, search_reviews=(), keys, runtime
     rates = (backfill_rows_per_second, verify_rows_per_second)
     if any(not _finite_number(r) or r <= 0 for r in rates):
         raise TransitionFailure('missing_measured_rates')
+    if type(queries) is not tuple or len(queries) > 128:
+        raise TransitionFailure('invalid_query_samples')
     proposal = compile_protection(manifest, mapping, engine, writers=writers, search_reviews=search_reviews, layout=layout)
+    if queries:
+        from cryptalis.doctor import _query_samples
+        report = {'status': 'UNKNOWN', 'checks': {'query_routes': 'UNKNOWN'}, 'issues': []}
+        _query_samples(report, proposal, mapping, engine, queries)
+        outcome = report['checks']['query_samples']
+        if outcome != 'PASS':
+            raise TransitionFailure('query_samples_incompatible' if outcome == 'FAIL' else 'query_inspection_unavailable')
     if any(type(cost) is not int or not 1<=cost<2**53 for cost in (temporary_bytes_per_row,wal_bytes_per_row)):
         raise TransitionFailure('missing_measured_storage_or_wal_costs')
     lock = json.loads(proposal.lock_bytes)
@@ -810,13 +829,13 @@ def _state(c,p,pin,*,allow_aborted=False):
     exists=c.exec_driver_sql('SELECT pg_catalog.to_regclass(%s)',(_journal(c,p),)).scalar_one()
     if exists is None:
         if online: raise TransitionFailure('missing_online_successor', p.operation_id)
-        if kind in _GENERATION_ROTATIONS:
+        if kind in _FRAME_ROTATIONS:
             raise TransitionFailure('missing_'+kind.removesuffix('_rotation')+'_successor', p.operation_id)
         if pin.phase != 'PREPARED': raise TransitionFailure('restored_or_missing_transition',p.operation_id)
         return None
     row=c.exec_driver_sql(f'SELECT plan_digest, state FROM {_journal(c,p)} WHERE operation_id=%s',(p.operation_id,)).one_or_none()
     if row is None and online: raise TransitionFailure('missing_online_successor', p.operation_id)
-    if row is None and kind in _GENERATION_ROTATIONS:
+    if row is None and kind in _FRAME_ROTATIONS:
         raise TransitionFailure('missing_'+kind.removesuffix('_rotation')+'_successor', p.operation_id)
     if row is None or row[0] != p.digest: raise TransitionFailure('journal_identity_mismatch',p.operation_id)
     state=row[1]
@@ -826,12 +845,12 @@ def _state(c,p,pin,*,allow_aborted=False):
         if state.get('phase') not in ('PENDING', 'ACTIVE'):
             raise TransitionFailure('online_successor_state_changed', p.operation_id)
         _check_predecessors(c, p)
-    if kind in ('rewrap', 'tenant_provision')+_GENERATION_ROTATIONS:
+    if kind in ('rewrap', 'tenant_provision')+_FRAME_ROTATIONS:
         proof_key = kind+'_plan_digest'
         if (state.get('phase') not in ('PENDING', 'ACTIVE')
                 or state.get(proof_key) != p.document[proof_key]):
             raise TransitionFailure(kind+'_state_changed', p.operation_id)
-        if kind in _GENERATION_ROTATIONS:
+        if kind in _FRAME_ROTATIONS:
             try:
                 if (set(state)!={'phase','models',proof_key,'cutover_measurements'}
                         or type(state['models']) is not dict
@@ -1296,7 +1315,7 @@ def _activate(c,p,state,pin,keys):
     elif p.document['kind'] == 'tenant_provision':
         from cryptalis.tenancy import verify_target
         verify_target(c, p, keys)
-    elif p.document['kind'] in _GENERATION_ROTATIONS:
+    elif p.document['kind'] in _FRAME_ROTATIONS:
         from cryptalis._rotation_activation import verify_target
         verify_target(c, p, keys)
     for model in p.document['lock']['models']:
@@ -1325,11 +1344,11 @@ def apply(p,engine,*,keys,pin,approval,chunk_size=1000,until='PENDING'):
         raise TransitionFailure('online_executor_required', p.operation_id)
     if p.document['kind'] in ('rewrap', 'tenant_provision') and (until != 'ACTIVE' or pin.phase not in ('ACTIVATING', 'ACTIVE')):
         raise TransitionFailure(p.document['kind']+'_executor_required', p.operation_id)
-    if p.document['kind'] in _GENERATION_ROTATIONS and (until != 'ACTIVE' or pin.phase not in ('ACTIVATING', 'ACTIVE')):
+    if p.document['kind'] in _FRAME_ROTATIONS and (until != 'ACTIVE' or pin.phase not in ('ACTIVATING', 'ACTIVE')):
         raise TransitionFailure(p.document['kind']+'_executor_required', p.operation_id)
     with _executor(p,engine,pin,approval) as c:
         state=_state(c,p,pin); c.commit()
-        if state is not None and state['phase'] == 'ACTIVE' and (online or p.document['kind'] in ('rewrap', 'tenant_provision')+_GENERATION_ROTATIONS) and pin.phase == 'ACTIVATING':
+        if state is not None and state['phase'] == 'ACTIVE' and (online or p.document['kind'] in ('rewrap', 'tenant_provision')+_FRAME_ROTATIONS) and pin.phase == 'ACTIVATING':
             # A journal phase cannot replace the host's publication evidence.
             with c.begin():
                 _lock_tables(c,p,verification=True)
@@ -1349,7 +1368,7 @@ def apply(p,engine,*,keys,pin,approval,chunk_size=1000,until='PENDING'):
             if online: raise TransitionFailure('missing_online_successor', p.operation_id)
             if p.document['kind'] == 'tenant_provision':
                 raise TransitionFailure('missing_tenant_provision_successor', p.operation_id)
-            if p.document['kind'] in _GENERATION_ROTATIONS:
+            if p.document['kind'] in _FRAME_ROTATIONS:
                 raise TransitionFailure('missing_'+p.document['kind'].removesuffix('_rotation')+'_successor', p.operation_id)
             with c.begin(): state=_expand(c,p)
         while PHASES.index(state['phase'])<PHASES.index(until):

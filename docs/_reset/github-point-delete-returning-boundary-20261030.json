@@ -1,0 +1,207 @@
+{
+  "format": "cryptalis.github-ci-boundary/v1",
+  "run_id": 41047596731,
+  "url": "https://github.com/Debrato2005/cryptalis/actions/runs/41047596731",
+  "head_sha": "a477fd643f81697ac4d0051a0523ee89043912b1",
+  "conclusion": "success",
+  "source_job": 124035407688,
+  "release_job": 124035407986,
+  "source_checks": {
+    "test_calls": {
+      "passed": 3426,
+      "skipped": 12
+    },
+    "subtest_calls": {
+      "passed": 18
+    },
+    "setup": {
+      "passed": 3438,
+      "skipped": 82
+    },
+    "teardown": {
+      "passed": 3520
+    },
+    "collection": {
+      "skipped": 17
+    },
+    "selected_items": 3520
+  },
+  "source_files": 300,
+  "source_and_runtime_unchanged": true,
+  "source_hashes_match_recorded_git_revision": true,
+  "artifacts": {
+    "cryptalis-0.1.0-py3-none-any.whl": "4f45e4d9e52fac5af6617d29f8d4c348341ccab25389ce01e334f94624e43215",
+    "cryptalis-0.1.0.tar.gz": "d062a52d53406c17142284bd4cf36e777b994f2b875bae144eb932b7b4e1d493"
+  },
+  "local_and_github_artifacts_identical": true,
+  "frozen_audit": {
+    "schema": {
+      "version": "preview"
+    },
+    "summary": {
+      "audited_packages": 39,
+      "vulnerabilities": 0,
+      "adverse_statuses": 0
+    },
+    "vulnerabilities": [],
+    "adverse_statuses": []
+  },
+  "github_archives": [
+    {
+      "id": 12973972140,
+      "sha256": "8edf71a338a46e343b7b6413bb396594ff3dd1a62b94331e518786fd3e02306e"
+    },
+    {
+      "id": 12972449428,
+      "sha256": "adc6c07716e29a14f7ba907d2641218d209bce143937180199c93e5b0ffbff3d"
+    }
+  ],
+  "archive": {
+    "path": "docs/_reset/github-point-delete-returning-receipts-20261030.tar.gz",
+    "sha256": "0dc319a224dc9ad6676d5d2b5dc232df24101a3d0c18ed61c9ced2c99a1b6272",
+    "members": [
+      "source/admission.json",
+      "source/dependency-audit.json",
+      "source/job-status.json",
+      "source/qualification/source-receipt.json",
+      "source/qualification/status.json",
+      "release/install-receipt.json",
+      "release/installed-application-export-receipt.json",
+      "release/installed-application-restore-receipt.json",
+      "release/installed-code-receipt.json",
+      "release/installed-export-receipt.json",
+      "release/installed-google-kms-receipt.json",
+      "release/installed-journey-receipt.json",
+      "release/installed-openbao-qualification.json",
+      "release/installed-openbao-tests.json",
+      "release/installed-restore-receipt.json",
+      "release/installed-sqlmodel-receipt.json",
+      "release/job-status.json",
+      "release/release-receipt.json",
+      "release/sbom.cdx.json",
+      "release/scanner-audit.json",
+      "release/scanner-sbom.cdx.json",
+      "release/scanner-toolchain.json",
+      "release/status.json"
+    ]
+  },
+  "production_gates": "UNKNOWN",
+  "limits": [
+    "Explicit skipped cells and failed separate performance observations remain unqualified.",
+    "Single-record DELETE RETURNING retains the bounded SELECT authenticity, NULL, replay and completeness limits. In-progress manifest modification is outside this pushed revision."
+  ],
+  "installed_checks": {
+    "installed-code-receipt.json": {
+      "test_calls": {
+        "passed": 15
+      },
+      "subtest_calls": {},
+      "setup": {
+        "passed": 15
+      },
+      "teardown": {
+        "passed": 15
+      },
+      "collection": {},
+      "selected_items": 15
+    },
+    "installed-sqlmodel-receipt.json": {
+      "test_calls": {
+        "passed": 264
+      },
+      "subtest_calls": {},
+      "setup": {
+        "passed": 264
+      },
+      "teardown": {
+        "passed": 264
+      },
+      "collection": {},
+      "selected_items": 264
+    },
+    "installed-google-kms-receipt.json": {
+      "test_calls": {
+        "passed": 50
+      },
+      "subtest_calls": {},
+      "setup": {
+        "passed": 50
+      },
+      "teardown": {
+        "passed": 50
+      },
+      "collection": {},
+      "selected_items": 50
+    },
+    "installed-openbao-tests.json": {
+      "test_calls": {
+        "passed": 146
+      },
+      "subtest_calls": {},
+      "setup": {
+        "passed": 146
+      },
+      "teardown": {
+        "passed": 146
+      },
+      "collection": {},
+      "selected_items": 146
+    },
+    "installed-export-receipt.json": {
+      "test_calls": {
+        "passed": 1
+      },
+      "subtest_calls": {},
+      "setup": {
+        "passed": 1
+      },
+      "teardown": {
+        "passed": 1
+      },
+      "collection": {},
+      "selected_items": 1
+    },
+    "installed-restore-receipt.json": {
+      "test_calls": {
+        "passed": 1
+      },
+      "subtest_calls": {},
+      "setup": {
+        "passed": 1
+      },
+      "teardown": {
+        "passed": 1
+      },
+      "collection": {},
+      "selected_items": 1
+    },
+    "installed-application-export-receipt.json": {
+      "test_calls": {
+        "passed": 1
+      },
+      "subtest_calls": {},
+      "setup": {
+        "passed": 1
+      },
+      "teardown": {
+        "passed": 1
+      },
+      "collection": {},
+      "selected_items": 1
+    },
+    "installed-application-restore-receipt.json": {
+      "test_calls": {
+        "passed": 2
+      },
+      "subtest_calls": {},
+      "setup": {
+        "passed": 2
+      },
+      "teardown": {
+        "passed": 2
+      },
+      "collection": {},
+      "selected_items": 2
+    }
+  }
+}

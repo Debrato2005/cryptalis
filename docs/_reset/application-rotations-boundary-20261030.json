@@ -1,0 +1,284 @@
+{
+  "format": "cryptalis.application-rotations-boundary/v1",
+  "base_revision": "743b5e9e70ef91a4353bbee8daf6329d313a20f7",
+  "source_identity": "worktree-8d74d1a733895af4",
+  "source_files": 287,
+  "source_checks": {
+    "test_calls": {
+      "passed": 48
+    },
+    "subtest_calls": {},
+    "setup": {
+      "passed": 48
+    },
+    "teardown": {
+      "passed": 48
+    },
+    "collection": {},
+    "selected_items": 48
+  },
+  "broader_regression": {
+    "test_calls": {
+      "passed": 203
+    },
+    "subtest_calls": {},
+    "setup": {
+      "passed": 203
+    },
+    "teardown": {
+      "passed": 203
+    },
+    "collection": {},
+    "selected_items": 203
+  },
+  "source_and_runtime_unchanged": true,
+  "artifacts": {
+    "cryptalis-0.1.0-py3-none-any.whl": "3e36ed3594b918bb0d3cdeee1488603e8da593328e16741c6405e534168f90d5",
+    "cryptalis-0.1.0.tar.gz": "84d24eb27588beb0535faacb545a745cb721a53bb213f50a86dae47cac7acdef"
+  },
+  "reproducible": true,
+  "release_steps": [
+    {
+      "name": "reproducible wheel sdist SBOM inspection",
+      "outcome": "PASS",
+      "exit_code": 0,
+      "elapsed_seconds": 1.007395685002848
+    },
+    {
+      "name": "export locked hashed wheel-test dependencies",
+      "outcome": "PASS",
+      "exit_code": 0,
+      "elapsed_seconds": 0.03495596499851672
+    },
+    {
+      "name": "create isolated wheel interpreter",
+      "outcome": "PASS",
+      "exit_code": 0,
+      "elapsed_seconds": 0.0167405050015077
+    },
+    {
+      "name": "install hashed dependencies",
+      "outcome": "PASS",
+      "exit_code": 0,
+      "elapsed_seconds": 0.17787622999458108
+    },
+    {
+      "name": "install exact inspected wheel",
+      "outcome": "PASS",
+      "exit_code": 0,
+      "elapsed_seconds": 0.058922078998875804
+    },
+    {
+      "name": "installed dependency consistency",
+      "outcome": "PASS",
+      "exit_code": 0,
+      "elapsed_seconds": 0.019442762997641694
+    },
+    {
+      "name": "installed file and CLI inspection",
+      "outcome": "PASS"
+    },
+    {
+      "name": "installed ORM and shared initialization/Doctor context",
+      "outcome": "PASS",
+      "exit_code": 0,
+      "elapsed_seconds": 167.68380672000058
+    },
+    {
+      "name": "installed Google SDK protocol and PostgreSQL lifecycle",
+      "outcome": "PASS",
+      "exit_code": 0,
+      "elapsed_seconds": 7.170248658003402
+    },
+    {
+      "name": "installed OpenBao TLS outage and PostgreSQL lifecycle",
+      "outcome": "PASS",
+      "exit_code": 0,
+      "elapsed_seconds": 125.3028205879964
+    },
+    {
+      "name": "installed shared configuration on genuine fresh recovery",
+      "outcome": "PASS",
+      "exit_code": 0,
+      "elapsed_seconds": 32.384322170000814
+    },
+    {
+      "name": "installed keyword public-slot genuine fresh recovery",
+      "outcome": "PASS",
+      "exit_code": 0,
+      "elapsed_seconds": 91.35701420300029
+    }
+  ],
+  "archive": {
+    "path": "docs/_reset/application-rotations-receipts-20261030.tar.gz",
+    "sha256": "787d3f2c89ce064701c0514e24d7ecd486ad307d03ddbccff0dfc572eab77b06",
+    "members": [
+      "source/application-rotation-first.json",
+      "source/application-rotation-second.json",
+      "source/application-rotation-final.json",
+      "source/application-rotation-boundary-final.json",
+      "source/application-rotation-source-verified.json",
+      "source/application-rotation-source-final.json",
+      "source/application-rotation-source-isolated.json",
+      "installed-1/install-receipt.json",
+      "installed-1/installed-export-receipt.json",
+      "installed-1/installed-google-kms-receipt.json",
+      "installed-1/installed-journey-receipt.json",
+      "installed-1/installed-openbao-qualification.json",
+      "installed-1/installed-openbao-tests.json",
+      "installed-1/installed-restore-receipt.json",
+      "installed-1/installed-sqlmodel-receipt.json",
+      "installed-1/release-receipt.json",
+      "installed-1/sbom.cdx.json",
+      "installed-1/status.json",
+      "installed-2/install-receipt.json",
+      "installed-2/installed-google-kms-receipt.json",
+      "installed-2/installed-openbao-qualification.json",
+      "installed-2/installed-openbao-tests.json",
+      "installed-2/installed-sqlmodel-receipt.json",
+      "installed-2/release-receipt.json",
+      "installed-2/sbom.cdx.json",
+      "installed-2/status.json",
+      "installed-3/install-receipt.json",
+      "installed-3/installed-application-export-receipt.json",
+      "installed-3/installed-application-restore-receipt.json",
+      "installed-3/installed-google-kms-receipt.json",
+      "installed-3/installed-openbao-qualification.json",
+      "installed-3/installed-openbao-tests.json",
+      "installed-3/installed-sqlmodel-receipt.json",
+      "installed-3/release-receipt.json",
+      "installed-3/sbom.cdx.json",
+      "installed-3/status.json",
+      "installed-4/install-receipt.json",
+      "installed-4/installed-application-export-receipt.json",
+      "installed-4/installed-application-restore-receipt.json",
+      "installed-4/installed-export-receipt.json",
+      "installed-4/installed-google-kms-receipt.json",
+      "installed-4/installed-journey-receipt.json",
+      "installed-4/installed-openbao-qualification.json",
+      "installed-4/installed-openbao-tests.json",
+      "installed-4/installed-restore-receipt.json",
+      "installed-4/installed-sqlmodel-receipt.json",
+      "installed-4/release-receipt.json",
+      "installed-4/sbom.cdx.json",
+      "installed-4/status.json",
+      "fresh-profile-debug/export-receipt.json",
+      "fresh-profile-debug/restore-receipt.json"
+    ]
+  },
+  "boundary": "Shared manifest across separate rewrap, payload and search rotations; source-only cancellation, exact PostgreSQL frames/terms/uniqueness and latest-value removal. Actual AppRole-authenticated native OpenBao version 1 to 2 rewrap. Independent retained PostgreSQL backup recovery with explicit restored-target rotation planning.",
+  "failures_retained": [
+    "Two initial refusal assertions expected a generic pin code; the existing executors correctly returned purpose-specific rotation pin mismatch codes. Expectations corrected.",
+    "The second installed OpenBao run failed a 15s Doctor subprocess watchdog and a 5s warm lease after a container stop with a 10s grace period. No fallback or unauthenticated value was returned.",
+    "The process watchdog now accommodates two bounded 10s RPCs plus startup. The outage test uses an explicit 30s lease, waits for actual expiry, and still requires held and fresh access to refuse.",
+    "The first explicit shared-configuration restore selection omitted the prerequisite backup-restore test and failed on the absent schema. The profile now selects both restore/authentication and the configuration journey, and requires two passing restore calls.",
+    "One later source-only invalid-context Doctor subprocess timed out after 45s despite requiring no provider I/O. Its cause remains UNKNOWN; the subsequent isolated source run is retained separately, without a product retry or timeout change.",
+    "The first installed run predates the separate shared-configuration restore profile and native key-version change; its narrower boundary is retained."
+  ],
+  "limits": [
+    "Root preparation still uses explicit host-owned source and target policies; publication and writer exclusion remain host duties.",
+    "No production authority, HA, combined provider/database disaster recovery or controlled destruction qualification.",
+    "No live AWS/Google or independent security review; no keys or retained backups destroyed.",
+    "Performance optimization remains deferred; known latency failures and all seven UNKNOWN production gates remain."
+  ],
+  "installed_checks": {
+    "installed-sqlmodel-receipt.json": {
+      "test_calls": {
+        "passed": 105
+      },
+      "subtest_calls": {},
+      "setup": {
+        "passed": 105
+      },
+      "teardown": {
+        "passed": 105
+      },
+      "collection": {},
+      "selected_items": 105
+    },
+    "installed-google-kms-receipt.json": {
+      "test_calls": {
+        "passed": 50
+      },
+      "subtest_calls": {},
+      "setup": {
+        "passed": 50
+      },
+      "teardown": {
+        "passed": 50
+      },
+      "collection": {},
+      "selected_items": 50
+    },
+    "installed-openbao-tests.json": {
+      "test_calls": {
+        "passed": 115
+      },
+      "subtest_calls": {},
+      "setup": {
+        "passed": 115
+      },
+      "teardown": {
+        "passed": 115
+      },
+      "collection": {},
+      "selected_items": 115
+    },
+    "installed-application-export-receipt.json": {
+      "test_calls": {
+        "passed": 1
+      },
+      "subtest_calls": {},
+      "setup": {
+        "passed": 1
+      },
+      "teardown": {
+        "passed": 1
+      },
+      "collection": {},
+      "selected_items": 1
+    },
+    "installed-application-restore-receipt.json": {
+      "test_calls": {
+        "passed": 2
+      },
+      "subtest_calls": {},
+      "setup": {
+        "passed": 2
+      },
+      "teardown": {
+        "passed": 2
+      },
+      "collection": {},
+      "selected_items": 2
+    },
+    "installed-export-receipt.json": {
+      "test_calls": {
+        "passed": 1
+      },
+      "subtest_calls": {},
+      "setup": {
+        "passed": 1
+      },
+      "teardown": {
+        "passed": 1
+      },
+      "collection": {},
+      "selected_items": 1
+    },
+    "installed-restore-receipt.json": {
+      "test_calls": {
+        "passed": 1
+      },
+      "subtest_calls": {},
+      "setup": {
+        "passed": 1
+      },
+      "teardown": {
+        "passed": 1
+      },
+      "collection": {},
+      "selected_items": 1
+    }
+  }
+}

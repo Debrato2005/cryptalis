@@ -25,9 +25,9 @@ from test_migration import (FIELD_ID, PROVIDER, TABLE_ID, TENANT, PublicFixtureP
 
 
 @contextmanager
-def single_application(dtype=None, values=(None, '', 'seed')):
+def single_application(dtype=None, values=(None, '', 'seed'), *, queries=None):
     dtype = Text(collation='C') if dtype is None else dtype
-    queries = ['equality'] if isinstance(dtype, (Text, String)) else []
+    queries = (['equality'] if isinstance(dtype, (Text, String)) else []) if queries is None else queries
     with application(rows=3, unique=False, queries=queries, value_type=dtype, protected_values=values) as app:
         with app.owner.begin() as connection:
             connection.exec_driver_sql(f'ALTER TABLE "{app.schema}".customer DROP COLUMN tenant_id')

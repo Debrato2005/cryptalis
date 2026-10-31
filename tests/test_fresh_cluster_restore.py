@@ -648,7 +648,18 @@ def test_restored_cluster_completes_adopted_lifecycle(tmp_path, monkeypatch, cap
     observed = _run_cli(*doctor_arguments(paths), '--restore-binding', str(binding_path))
     assert observed.returncode == 0 and observed.stderr == ''
     checks(json.loads(observed.stdout), 'PASS')
-    sessions = attach(mapping, runtime, lock=source.lock_bytes, keys=keys, deployment=(source, pin, binding))
+    # Original host facts come from the retained, host-pinned source artifact.
+    # Shared configuration must preserve the existing independent restore authority.
+    from cryptalis.application import ApplicationConfig
+    from cryptalis.manifest.compiler import SearchReview, Writer, WriterInventory
+    locked = source.document['lock']
+    configuration = ApplicationConfig(manifest=_canonical(locked['declaration']), mapping=mapping,
+        writers=WriterInventory(locked['writer_inventory']['complete'], tuple(
+            Writer(uuid.UUID(w['table_id']), w['name'], w['route'], w['excluded'], w['evidence'])
+            for w in locked['writer_inventory']['writers'])),
+        search_reviews=tuple(SearchReview(uuid.UUID(review['field_id']), review['small_domain'], review['evidence'])
+                             for review in locked['search_reviews']))
+    sessions = configuration.attach(runtime, keys=keys, deployment=(source, pin, binding))
     with sessions(tenant_id=TENANT) as session:
         observed = {str(row.id): [str(row.tenant_id), row.name] for row in session.scalars(select(Customer))}
         found = [row.id for row in session.scalars(
@@ -664,31 +675,60 @@ def test_restored_cluster_completes_adopted_lifecycle(tmp_path, monkeypatch, cap
         session.delete(session.get(Customer, uuid.UUID(int=999)))
         session.commit()
     runtime.dispose()
-    proposal = d.plan(source, owner, source_pin=pin, keys=keys,
+    assert configuration.status(owner, deployment=(source, pin, binding)).runtime_metadata_matches
+    # Rotation planning must carry the explicit restored target, preserve current
+    # edits and retain old readers without changing database or publication state.
+    from cryptalis.crypto import DevelopmentKeyProvider, KeyContext, Keyring, create_root
+    from cryptalis.crypto._rewrap import prepare_rewrap
+    original_ring = keys(TENANT)
+    provider = DevelopmentKeyProvider()
+    target = Keyring(prepare_rewrap(original_ring, provider), {provider.provider_id: provider})
+    before = configuration.status(owner, deployment=(source, pin, binding))
+    rewrap = configuration.plan_rewrap(owner, deployment=(source, pin, binding),
+        keys=keys, target_keys=target, verify_rows_per_second=1000)
+    assert rewrap.document['restore'] == binding.document
+    assert rewrap.activation_plan.document['restore_lineage'][-1] == binding.document
+    for purpose in ('payload', 'search'):
+        if purpose == 'search' and original_ring.policy.search_generation is None:
+            continue  # Storage-only profiles have no search generation to rotate.
+        generation = max(w.context.generation for w in original_ring.policy.wrappers
+                         if w.context.purpose == purpose) + 1
+        wrapper = create_root(provider, KeyContext(original_ring.policy.domain_id, TENANT,
+                              purpose, uuid.uuid4(), generation))
+        target = Keyring(replace(original_ring.policy, wrappers=original_ring.policy.wrappers + (wrapper,),
+                         **{purpose + '_generation': generation}),
+                         {**original_ring._providers, provider.provider_id: provider})
+        staged = configuration.plan_rotation(owner, purpose=purpose, deployment=(source, pin, binding),
+            keys=keys, target_keys=target, backfill_rows_per_second=1000, verify_rows_per_second=1000,
+            temporary_bytes_per_row=1024, wal_bytes_per_row=2048)
+        assert staged.document['restore'] == binding.document
+        assert staged.source.artifact == source.artifact
+    assert configuration.status(owner, deployment=(source, pin, binding)) == before
+    proposal = configuration.plan_deprotection(owner, deployment=(source, pin, binding), keys=keys,
                       plaintext_runtime_role=os.environ['CRYPTALIS_FRESH_PLAINTEXT_ROLE'],
                       backfill_rows_per_second=1000, verify_rows_per_second=1000,
-                      temporary_bytes_per_row=700, wal_bytes_per_row=700, restore=binding)
+                      temporary_bytes_per_row=700, wal_bytes_per_row=700)
     assert proposal.document['restore']['adoption_id'] == binding.document['adoption_id']
     reverse_pin = m.DeploymentPin(proposal.target_id, proposal.operation_id, proposal.digest, 'PREPARED')
     consent = d.PlaintextApproval(proposal.target_id, proposal.operation_id, proposal.digest, True,
                                   'fresh-cluster retained backup recovery')
     maintenance = m.MaintenanceApproval('fresh-cluster qualification stopped and excluded writers', 3600)
     try:
-        assert d.status(proposal, owner, pin=reverse_pin).phase == 'PREPARED'
-        assert d.apply(proposal, owner, keys=keys, pin=reverse_pin, approval=maintenance,
+        assert configuration.status(owner, deployment=(proposal, reverse_pin)).phase == 'PREPARED'
+        assert configuration.decrypt_back(owner, deployment=(proposal, reverse_pin), keys=keys, approval=maintenance,
                        consent=consent, chunk_size=2).phase == 'PLAINTEXT_PENDING'
-        assert d.status(proposal, owner, pin=reverse_pin).phase == 'PLAINTEXT_PENDING'
-        assert d.apply(proposal, owner, keys=keys, pin=replace(reverse_pin, phase='PLAINTEXT_ACTIVATING'),
+        assert configuration.status(owner, deployment=(proposal, reverse_pin)).phase == 'PLAINTEXT_PENDING'
+        assert configuration.decrypt_back(owner, deployment=(proposal, replace(reverse_pin, phase='PLAINTEXT_ACTIVATING')), keys=keys,
                        approval=maintenance, consent=consent, chunk_size=2,
                        until='PLAINTEXT_ACTIVE').phase == 'PLAINTEXT_ACTIVE'
         assert d.status(proposal, owner, pin=replace(reverse_pin, phase='PLAINTEXT_ACTIVE')).runtime_metadata_matches
         removal = d.RemovalApproval(proposal.target_id, proposal.operation_id, proposal.digest,
                                     'fresh-cluster package-free psycopg workload',
                                     'fresh-cluster retained backup recovery', True)
-        assert d.remove(proposal, owner, pin=replace(reverse_pin, phase='REMOVING'),
+        assert configuration.remove(owner, deployment=(proposal, replace(reverse_pin, phase='REMOVING')),
                         approval=maintenance, removal=removal, consent=consent).phase == 'REMOVED'
         assert d.check_removed(proposal, owner, pin=replace(reverse_pin, phase='REMOVED')) is None
-        removed_status = d.status(proposal, owner, pin=replace(reverse_pin, phase='REMOVED'))
+        removed_status = configuration.status(owner, deployment=(proposal, replace(reverse_pin, phase='REMOVED')))
         assert removed_status.phase == 'REMOVED' and removed_status.runtime_metadata_matches
         assert removed_status.committed_rows is removed_status.committed_chunks is None
         expected = dict(MANIFEST['expected'])
@@ -738,7 +778,7 @@ def retained_status_after_removal(source, reverse, pin, owner, tmp_path, monkeyp
     plan_path, pin_path = tmp_path / 'removed-plan.json', tmp_path / 'removed-pin.json'
     plan_path.write_bytes(reverse.artifact)
     pin_path.write_text(json.dumps(asdict(pin), default=str))
-    runtime_file = Path.home() / '.cryptalis-test-runtime-url'
+    runtime_file = Path(os.environ.get('CRYPTALIS_TEST_CONFIG_DIR', Path.home())) / '.cryptalis-test-runtime-url'
     assert runtime_file.is_file()
     table = f'"{SCHEMA}".customer'
     with owner.connect() as connection:

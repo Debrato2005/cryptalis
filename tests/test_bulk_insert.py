@@ -8,7 +8,7 @@ from uuid import UUID
 
 import psycopg
 import pytest
-from sqlalchemy import bindparam, event, insert, literal, select
+from sqlalchemy import bindparam, event, func, insert, literal, select
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.exc import DBAPIError, IntegrityError, ResourceClosedError
 from sqlalchemy.ext.asyncio import create_async_engine
