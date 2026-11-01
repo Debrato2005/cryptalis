@@ -169,3 +169,6 @@ change during validation, which came from searching one module. Doctor also adds
 so the cached set stayed empty there and `protected()` answered False: unsupported samples
 reached custody and the database. Five existing tests failed, nothing was published, and
 the counter returned. A cached security answer must not be able to fail open.
+
+The corrected code passes locally on one wheel, including the exact CI benchmark step, then
+both hosted jobs pass at `d0738dc` in run 41341107415.

@@ -13,8 +13,9 @@ route, not another product contract.
 [runnable lifecycle example](../examples/quickstart.py) and durable development custody,
 fixes [final admission](status.md#final-admission-no-longer-trusts-compilation), reduces
 repeated read work and admits [bounded upsert](compatibility.md#bounded-upsert). The
-separate Smolink branch `demo/cryptalis-email-search-20261102` holds the
-[real-application results](status.md#real-application-equality-search). The frozen tags
+separate Smolink branch `demo/cryptalis-email-search-20261102`, at `b1db225`, holds the
+[real-application results](status.md#real-application-equality-search). Both hosted jobs
+pass at `d0738dc`. The branch is not merged to `main`. The frozen tags
 and original Smolink checkout are unchanged. Its local services are stopped; synthetic
 data and its development key files stay under `~/.cache/cryptalis-production-20261101`.
 

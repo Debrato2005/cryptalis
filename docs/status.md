@@ -26,7 +26,7 @@ human review is qualified by this integration.
 ## Real-application equality search
 
 **VERIFIED, bounded development evidence.** [Protected `User.email` in the original
-Smolink API](https://github.com/Debrato2005/smolink/blob/43a6622b48c8460257358c118c86b24597cf5255/cryptalis_demo/evidence/email-search-20261102/README.md) closes the gap the frozen demonstration left open. With `backend/`
+Smolink API](https://github.com/Debrato2005/smolink/blob/b1db2252b1d5c7be3d8ef392ca1db7b0109c1eba/cryptalis_demo/evidence/email-search-20261102/README.md) closes the gap the frozen demonstration left open. With `backend/`
 unchanged, login, `/auth/me`, wrong-password, unknown-email and taken-email responses
 are identical before protection, while protected, after payload and search-key rotation
 and after removal. Eight concurrent inserts of one email give exactly one commit and
@@ -79,8 +79,13 @@ naming it. Omitted public database defaults now apply on the route without RETUR
 The final source regression of 109 test files passes 2,196 calls and 18 subtests, with 25
 call, 34 setup and five collection skips. The final wheel, `7cc2631c…`, passes 35 calls
 without skips on Python 3.12 and 3.13, and repeats the complete Smolink journey through a
-real uninstall. Repeat wheel and sdist builds match. This is focused local evidence; hosted
-results bind the pushed commit separately. [Boundary and retained failures](_reset/production-continuation-boundary-20261102.json).
+real uninstall. Repeat wheel and sdist builds match.
+
+**Both hosted jobs pass at `d0738dc`** in
+[run 41341107415](https://github.com/Debrato2005/cryptalis/actions/runs/41341107415). The
+source job reports 4,091 passed, 77 skipped and 18 subtests with no failures. This is the
+first complete hosted source run since `059f886`: the runs at `bd223c1` and `423f96f`
+stopped at a benchmark step before any source test ran, so they carry no evidence. [Boundary and retained failures](_reset/production-continuation-boundary-20261102.json).
 Tenant-column `DO UPDATE`, upsert RETURNING and other assignments stay refused. All seven
 production gates remain UNKNOWN.
 
