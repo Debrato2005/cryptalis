@@ -9,9 +9,11 @@ route, not another product contract.
 
 ## Current stop point
 
-The implementation/evidence base before this documentation update is
-`0e56438100eb7295f7e0f2601cebea74f2d02ed6` on Cryptalis `main` and
-`development/post-preview-20261101`. The packaging work and reusable strict-TLS
+The implementation/evidence base before this continuation is
+`8a5d5060b7aacf5cb3bae6937946fb752cf9ca29` on Cryptalis `main` and
+`development/post-preview-20261101`. Continuation uses
+`codex/post-preview-continuation-20261101` in the actual workstation checkout.
+The packaging work and reusable strict-TLS
 qualification fix are integrated through [PR 3](https://github.com/Debrato2005/cryptalis/pull/3)
 and [PR 4](https://github.com/Debrato2005/cryptalis/pull/4).
 The frozen library, demonstration and original receipts remain unchanged.
@@ -22,18 +24,21 @@ use an independent external provider, demonstrated with OpenBao. Continue librar
 provider and application work using the existing native PostgreSQL oracles;
 CipherStash access is not a prerequisite for that work.
 
-Two external deliverables remain incomplete:
+The [remote draft prerelease](https://github.com/Debrato2005/cryptalis/releases/tag/untagged-634d26fb97863057055a)
+has been created through authenticated GitHub CLI/API access, which works on this
+workstation. It targets the frozen tag and contains seven digest-verified assets
+recovered from frozen CI. Its draft/prerelease flags and absent publication
+timestamp are verified in the [creation boundary](_reset/draft-release-boundary-20261101.json)
+and [final draft/link verification](_reset/draft-release-links-boundary-20261101.json).
+The earlier cloud API-access failure remains historical.
 
-- Remote draft GitHub Release: local [payload](../release/draft-0.1.0a1.json) and
-  [review notes](../release/notes-0.1.0a1.md) are prepared. The available connector
-  has no release-create operation, and this environment denies direct GitHub API
-  access. Recheck supported access when that capability changes.
-- Equivalent CipherStash runtime comparison: the documented proxy setup needs its
-  workspace/client credentials. None of the four required CS bindings is configured.
-  [Primary-source comparison](https://github.com/Debrato2005/smolink/blob/269aed4bcfcbbf40ffea444f2e2a748013c862d4/cryptalis_demo/COMPETITIVE.md)
-  is retained; no equivalent competitor execution or performance ranking is claimed.
+Equivalent CipherStash runtime comparison remains incomplete: the documented
+proxy setup needs its workspace/client credentials. No `CS_` or `CIPHERSTASH`
+environment bindings are configured in this session.
+[Primary-source comparison](https://github.com/Debrato2005/smolink/blob/269aed4bcfcbbf40ffea444f2e2a748013c862d4/cryptalis_demo/COMPETITIVE.md)
+is retained; no equivalent competitor execution or performance ranking is claimed.
 
-These blockers are scoped to those deliverables. Broader native types, queries,
+This blocker is scoped to competitor execution. Broader native types, queries,
 search, lifecycle, performance and deployment work remains active in the ledger.
 Public package-index publication has no approval. The single-public-release policy
 and independent human review requirements remain in force.
@@ -88,8 +93,9 @@ The Git branches/tags above are pushed. [Package receipts](_reset/preview-packag
 are retained in Cryptalis; application automation, screenshots and reports stay
 in the separate Smolink repository and outside the library distribution.
 
-The built distributions and preview kit are local prepared artifacts, not GitHub
-Release assets or package-index uploads. [The kit manifest](../release/preview-kit-0.1.0a1.json)
+The inspected distributions are now attached to the remote draft; no public
+release or package-index upload occurred. The preview kit remains a local
+prepared artifact. [The kit manifest](../release/preview-kit-0.1.0a1.json)
 binds the unchanged wheel/sdist to 27 guides and their documentation revision.
 Verify hashes before installation or transfer.
 

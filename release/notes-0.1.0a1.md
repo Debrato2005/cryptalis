@@ -8,7 +8,7 @@ The MIT-licensed Python library installs independently of Smolink or a proxy.
 CPython 3.12/3.13, PostgreSQL 16, SQLAlchemy 2.1.3 and psycopg 3.3.6 define the
 selected cell. The public Project API and CLI orchestrate the existing bounded
 protection, attachment, rotations, recovery and latest-value removal workflows.
-[Compatibility](../docs/compatibility.md) defines exact operation/type limits.
+[Compatibility](https://github.com/Debrato2005/cryptalis/blob/655d52271d90effb4df918a9547f61c89055fbc7/docs/compatibility.md) defines exact operation/type limits.
 
 Frozen library: `v0.1.0a1`, commit `655d52271d90effb4df918a9547f61c89055fbc7`.
 Both jobs in [run 41280665577](https://github.com/Debrato2005/cryptalis/actions/runs/41280665577)
@@ -36,7 +36,7 @@ warm ASGI measurements with raw samples, explicit resource/ordering limits and
 separate real-network Swagger evidence. No matched competitor benchmark ran.
 
 Installation, operator procedures, API reference, security limits and
-troubleshooting start at [the installation guide](../docs/installation.md).
+troubleshooting start at [the installation guide](https://github.com/Debrato2005/cryptalis/blob/655d52271d90effb4df918a9547f61c89055fbc7/docs/installation.md).
 Independent human review, real production provider/deployment evidence, broader
 queries/types, performance and all remaining objectives stay open.
 
