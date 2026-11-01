@@ -227,6 +227,24 @@ remain available.
 ## Native JSONB storage
 
 **Development `0.1.0a2.dev1`: whole-document equality/IN and scoped uniqueness.**
+
+**Hosted verification of `4d1daa5`:** both jobs pass in the
+[push run](https://github.com/Debrato2005/cryptalis/actions/runs/41301376349) and
+[PR run](https://github.com/Debrato2005/cryptalis/actions/runs/41301594776).
+Each source run passes 4,012 calls and 18 subtests, with 27 call, 41 setup and
+nine collection skips. Each installed job passes 1,232 calls; its JSONB set
+passes 97 and explicitly skips three unavailable earlier-reader controls.
+All 24 release steps pass. All 327 Python inputs across 18 inventories and
+52 build inputs match that source head; runtime bytes and both distributions
+match the retained final local artifacts. The PR checkout is merge `ffc6402`,
+with identical inventoried inputs; the push checkout is exactly `4d1daa5`.
+Both JSONB recovery layouts enable equality and literal defaults and pass
+current-value removal with an import-denied native restart. This is not an
+observation of an uninstalled environment or production fencing.
+[Hosted boundary](_reset/jsonb-equality-hosted-boundary-20261101.json) and
+[81 retained receipt files](_reset/jsonb-equality-hosted-receipts-20261101.tar.gz).
+Local reader evidence below remains separate. All production gates remain UNKNOWN.
+
 The new profile uses lock/v17 and `pg-jsonb-equality/v1`, preserving lossless
 payload text while ignoring nested numeric scale only in the full HMAC term.
 Native typed binds retain their own NULL mode; mutable query inputs are checked
@@ -556,46 +574,45 @@ All 34 objectives remain in scope and all seven production gates remain UNKNOWN.
 <a id="named-returning-results"></a>
 ## Current ORM boundary
 
-**VERIFIED locally, source and installed wheel:** the
-[point UPDATE values boundary](_reset/point-update-values-boundary-20261030.json)
-admits ordinary scalar `.values(...)` assignments for one exact typed record,
-with explicit tenant equality or declared fixed scope. Mapped keywords and
-mapped/physical column dictionaries use the existing prepared encryption and
-final driver checks. External parameters must be omitted for this form.
+**Development `0.1.0a2.dev2`, locally verified source and installed wheel:**
+[parameterized single-record UPDATE](compatibility.md#parameterized-single-record-update)
+accepts ordinary context and SET binds, native defaults/overrides and mixed
+literal/named assignments. It reuses the existing sealed point executor;
+no ciphertext or lock format changes. Original statements and RETURNING label
+objects remain reusable, including native anonymous labels. Ambiguous names,
+unsupported type hooks and changed inputs refuse before UPDATE dispatch.
+Opaque public Python values retain reference observations without a deep-mutation
+guarantee. The exact admitted types and refusal timing belong to compatibility.
 
-Assignments are captured before key preparation and rechecked afterward,
-including async preparation. An owned statement copy receives encrypted values;
-the caller's original statement remains reusable. Native SQLAlchemy/SQLModel
-sync/async journeys preserve affected-row counts, NULL, supported types, stale
-identity/refresh behavior, savepoints, SQLSTATE failures and current-value
-removal. The real OpenBao journey exercises returned and non-returned updates.
+The complete local source run passes **4,031 calls plus 18 subtests**, retaining
+26 call, 41 setup and nine collection skips. All 23 new native controls pass;
+the affected label/bind corpus passes 76. Both fresh, non-editable installed
+interpreters, Python 3.12.16 and 3.13.12, pass **364 calls each without skips**.
+They cover native results/types, record/tenant authority, bind defaults and
+reuse, NULL modes, stale identity/refresh, savepoints, current-value removal,
+callback privacy and final driver mutations. All 328 Python inputs and 52 build
+inputs match the final package; source and 45-module runtime bytes remain stable.
+Repeat wheel/sdist builds, SBOM, installed-file/CLI and dependency checks pass.
 
-The owned compiler selects authenticated RETURNING readers while preserving
-original ORM projection objects. INSERT and point UPDATE/DELETE results retain
-lookup by the caller's original label objects and native string keys. Existing
-record/tenant and exact prepared-frame authentication remain enforced.
+The [boundary](_reset/point-update-parameters-boundary-20261101.json) and
+[33 receipt/source files](_reset/point-update-parameters-receipts-20261101.tar.gz)
+retain earlier selector/assertion failures, the anonymous-label regression,
+their corrections and superseded package hashes. [November observations](history/implementation-2026-11.md)
+explain the native duplicate-name, type-hook and timezone controls. Local builds
+use hashed worktree inputs; they are not independent clean-commit provenance.
+Hosted verification for this new slice remains pending. The earlier JSONB head's
+hosted success is recorded in its own section and does not qualify changed bytes.
 
-The final focused source run passes 55 new workflow and boundary checks. The
-broader run passes 444 controls and retains four INSERT fixture failures from
-an UPDATE-only synchronization option; that fixture is corrected in the final
-run. Product and script hashes are identical between those two runs. Earlier
-receipts retain the missing capability, native column-key normalization, ordered
-assignment guard and original-label lookup failures and their subsequent fixes.
-
-Installed qualification passes 783 application controls, 15 Doctor checks,
-50 Google checks, 149 real OpenBao/provider checks, four exports and five genuine
-fresh PostgreSQL recovery checks. All final inventories bind the same 315 Python
-files, with stable source and imported runtime bytes. Reproducible artifacts,
-SBOM, installed-file inspection and dependency consistency pass.
-
-[Boolean NOT and predicate-result keys](_reset/boolean-negation-boundary-20261030.json),
+Earlier [scalar UPDATE values](_reset/point-update-values-boundary-20261030.json),
+[Boolean NOT/result keys](_reset/boolean-negation-boundary-20261030.json),
 [point UPDATE row counts](_reset/point-update-rows-boundary-20261030.json),
 [named INSERT results](_reset/insert-labels-boundary-20261030.json) and
 [named point UPDATE/DELETE results](_reset/returning-labels-boundary-20261030.json)
-retain their bounded contracts. Mixed embedded/external assignments, explicit
-SQL/bind expressions, ordered assignments, upserts, broader DML, protected
-joins/grouping and unsupported search leaves remain open. All seven production
-gates remain UNKNOWN; performance and independent review are unqualified.
+retain their revision-specific evidence. No new package-uninstalled restart,
+fresh-backup recovery or real-provider qualification ran for this UPDATE slice.
+Broader DML, upserts/SQL expressions, protected joins/grouping and unsupported
+search remain open. Performance, independent human review and all seven
+production gates remain UNKNOWN.
 
 ## Bounded capability evidence
 

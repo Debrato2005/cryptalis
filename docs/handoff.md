@@ -9,13 +9,49 @@ route, not another product contract.
 
 ## Current stop point
 
-The latest implementation slice is on `codex/jsonb-equality-20261101`, based on
-`caddefe`, with development version `0.1.0a2.dev1`. Whole-document JSONB
-equality/IN/scoped uniqueness and lock/v17 have source, installed, online and
-fresh-recovery evidence in the [search boundary](_reset/jsonb-search-boundary-20261101.json).
-The frozen preview is unchanged. The earlier same-head VARCHAR CI failure is
+The current slice is on `codex/parameterized-update-20261101`, based on
+`4d1daa530cba768cc2e19e708b410f2ed9010bbc`, with development version
+`0.1.0a2.dev2`. Reusable single-record UPDATE context/SET binds, defaults,
+overrides and native result behavior are implemented. No ciphertext/lock format
+changes. The [exact bind contract](compatibility.md#parameterized-single-record-update),
+[verification boundary](_reset/point-update-parameters-boundary-20261101.json)
+and [33 retained receipt/source files](_reset/point-update-parameters-receipts-20261101.tar.gz)
+define the scope. Complete source passes 4,031 calls plus 18 subtests with
+26 call, 41 setup and nine collection skips; fresh installed Python 3.12/3.13
+each pass 364 calls without skips. Original statements and anonymous/named
+RETURNING labels retain native behavior. Repeated bind names and incompatible
+coercions remain unadmitted; opaque public objects have reference observations.
+
+Final wheel/sdist are in private task scratch
+`/home/debrato/.cache/cryptalis-parameterized-update-20261101/package-final/artifacts`.
+Wheel SHA-256 is `d779522b9fa89ed8642f07b2181e0ad8df64c486a11e9c6f5550c70fb3cc80b3`;
+sdist is `a7b86eec49a650c480d1fc2526b70c62fef7bf3b7ba39ec78912516d4a0a4cd3`.
+The boundary pins all 328 Python inputs, 52 build inputs and stable runtime
+`5d0faa378063fd4a680e1e5ba3dc734975d1c24bafe45a22e617a9676d6f0b38`.
+Earlier failures and superseded distributions remain retained; do not relabel
+them as final passes. The final code graph is refreshed. All local test handles
+are terminal and generated clusters stopped. No local operation awaits input.
+
+This branch stacks on [draft PR 6](https://github.com/Debrato2005/cryptalis/pull/6),
+which stacks on PR 5 below. Hosted verification for the current UPDATE slice is
+pending at this handoff. Inspect the branch's original push/PR runs and actual
+checkout identities before making a hosted claim; do not rerun an unchanged
+failed run or substitute prior-head evidence. Keep any new failures and compare
+source/build/runtime hashes to the immutable tested head. A successful local
+worktree build is not independent clean-commit provenance.
+
+The preceding JSONB equality slice is `4d1daa5` on
+`codex/jsonb-equality-20261101`. Both jobs in
+[push run 41301376349](https://github.com/Debrato2005/cryptalis/actions/runs/41301376349)
+and [PR run 41301594776](https://github.com/Debrato2005/cryptalis/actions/runs/41301594776)
+pass with exact inventoried inputs and matching local/hosted packages. The PR
+checkout is merge `ffc6402`; the push checks the source head directly.
+[Hosted boundary](_reset/jsonb-equality-hosted-boundary-20261101.json) and
+[81 retained files](_reset/jsonb-equality-hosted-receipts-20261101.tar.gz)
+preserve both. Earlier reader skips remain explicit and local reader proof stays
+separate. The frozen preview is unchanged. The earlier VARCHAR CI failure is
 [retained](_reset/varchar-ci-failure-boundary-20261101.json) with cause UNKNOWN;
-safe SQLSTATE/location reporting improves future observations without a fix claim.
+safe SQLSTATE/location reporting adds observations without a fix claim.
 
 The earlier verified implementation is `e75d049b0afe6d3c7f4d9e7bc8e01136b3529f06`
 on `codex/post-preview-continuation-20261101`, in
@@ -35,7 +71,7 @@ qualification fix are integrated through [PR 3](https://github.com/Debrato2005/c
 and [PR 4](https://github.com/Debrato2005/cryptalis/pull/4).
 The frozen library, demonstration and original receipts remain unchanged.
 
-Post-preview implementation now uses development version `0.1.0a2.dev0`.
+The earlier literal-default slice uses development version `0.1.0a2.dev0`.
 Literal JSONB client defaults retain native NULL behavior and MutableDict
 coercion, with explicit lock/v16 reader admission. The
 [current source/installed boundary](_reset/jsonb-defaults-boundary-20261101.json)
@@ -79,6 +115,7 @@ and independent human review requirements remain in force.
 | Separate demo continuation | `demo/cryptalis-preview-followup-20261101`; [demo handoff](https://github.com/Debrato2005/smolink/blob/52b3d611cb7d7fca83e01f0b663e52c7515444c9/cryptalis_demo/HANDOFF.md) |
 | Frozen package CI | [Run 41280665577](https://github.com/Debrato2005/cryptalis/actions/runs/41280665577), PR merge `ac6b86b`; [head-byte boundary](_reset/preview-hosted-boundary-20261101.json) |
 | Frozen exact-tag CI | [Run 41293818065](https://github.com/Debrato2005/cryptalis/actions/runs/41293818065), `workflow_dispatch` at `655d522`; [exact-tag boundary](_reset/exact-tag-hosted-boundary-20261101.json) |
+| JSONB equality development CI | [Push 41301376349](https://github.com/Debrato2005/cryptalis/actions/runs/41301376349) and [PR 41301594776](https://github.com/Debrato2005/cryptalis/actions/runs/41301594776); [hosted boundary](_reset/jsonb-equality-hosted-boundary-20261101.json) |
 | JSONB default development CI | [Run 41295516545](https://github.com/Debrato2005/cryptalis/actions/runs/41295516545), exact `e75d049`; [hosted boundary](_reset/jsonb-defaults-hosted-boundary-20261101.json) |
 | Strict-TLS tooling CI | [Run 41282107646](https://github.com/Debrato2005/cryptalis/actions/runs/41282107646), head `fb53e9f`, PR merge `e7ce82d`; [head-byte boundary](_reset/openbao-strict-tls-hosted-boundary-20261101.json) |
 
@@ -144,6 +181,11 @@ Preserve required keys, wrappers, readers, state and backups. Current-data remov
 did not authorize key retirement or backup destruction. Keep credentials, tokens,
 raw dumps and private service/audit logs out of Git and public artifact archives.
 
+The current UPDATE task additionally retains private scratch under
+`/home/debrato/.cache/cryptalis-parameterized-update-20261101`, including final and
+superseded packages, installed environments and stopped cluster custody. Keep
+private role files, service logs and all recovery material out of Git.
+
 The workstation continuation uses `/home/debrato/Projects/cryptalis` and private
 task scratch `/home/debrato/.cache/cryptalis-continuation-20261101`, including
 installed development/old-reader environments, local artifacts and disposable
@@ -171,7 +213,7 @@ checks use the existing authorized isolated harness and fresh private role files
    contract/procedure, [build order](build-guide.md), [decisions](decisions.md) and
    the [engineering playbook](../ENGINEERING_PLAYBOOK.md). Cross-cutting changes
    also require architecture, security, lifecycle and compatibility.
-3. Follow the ledger's production critical path with bounded complete behaviors.
+3. After inspecting this slice's hosted outcome, follow the ledger's production critical path with bounded complete behaviors.
    Preserve all broader type/text/JSON/SQL, upgrade, migration, performance and
    deployment objectives plus the retained policy/audit/erasure research. Further
    unfinished features are not prerequisites for the delivered preview.
