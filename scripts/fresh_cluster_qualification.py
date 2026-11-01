@@ -326,7 +326,9 @@ def main():
         raise SystemExit('FreshCluster.ProfileMismatch: native client default export differs from the requested literal.')
     if args.jsonb:
         defaults = os.environ.get('CRYPTALIS_FRESH_JSONB_DEFAULTS') == '1'
-        jsonb_lock_schema = 'cryptalis.lock/v16' if defaults else 'cryptalis.lock/v15'
+        equality = os.environ.get('CRYPTALIS_FRESH_JSONB_EQUALITY') == '1'
+        jsonb_lock_schema = ('cryptalis.lock/v17' if equality else
+                             'cryptalis.lock/v16' if defaults else 'cryptalis.lock/v15')
         default_pin = None
         if defaults:
             from cryptalis._jsonb import jsonb_default
@@ -339,7 +341,10 @@ def main():
                 or not manifest.get('source_wire') or not manifest.get('expected_wire')
                 or plan.get('kind') != 'search_rotation'
                 or plan.get('lock', {}).get('schema') != jsonb_lock_schema
-                or len(fields) != 1 or fields[0].get('queries') != []
+                or len(fields) != 1 or fields[0].get('queries') != (['equality'] if equality else [])
+                or manifest.get('equality_queries', False) is not equality
+                or ('pg-jsonb-equality/v1' in plan.get('lock', {}).get('required_readers', ())) is not equality
+                or fields[0].get('descriptor', {}).get('normalizer') != ('pg-jsonb-equality/v1' if equality else 'identity/v1')
                 or ('application_default' in fields[0]) is not defaults
                 or (manifest.get('application_default') is not None) is not defaults
                 or fields[0].get('application_default') != default_pin

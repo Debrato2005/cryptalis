@@ -32,7 +32,7 @@ from cryptalis.crypto.keys import InvalidValue
 
 
 _PUBLIC_SLOTS_LAYOUT = "preserve-public-slots/v1"
-_LOCK_SCHEMAS = tuple(f'cryptalis.lock/v{version}' for version in range(1, 17))
+_LOCK_SCHEMAS = tuple(f'cryptalis.lock/v{version}' for version in range(1, 18))
 _INTEGER_TYPES = {'int2': (SmallInteger, postgresql.SMALLINT),
                   'int4': (Integer, postgresql.INTEGER), 'int8': (BigInteger, postgresql.BIGINT)}
 _JSONB_CODEC = 'pg-jsonb-text/v1'
@@ -411,8 +411,8 @@ def _representation(queries):
 
 
 def _index_ops(source):
-    if source['type'] == 'numeric':
-        return 'pg_catalog.numeric_ops'
+    if source['type'] in ('numeric', 'jsonb'):
+        return f"pg_catalog.{source['type']}_ops"
     return f"pg_catalog.{source['type']}_ops" if _orderable(source) else 'pg_catalog.text_ops'
 
 
@@ -480,6 +480,8 @@ def _required_readers(models):
                      'order' in f['queries'] for m in models for f in m['fields']) else set())
                   | ({'pg-numeric-equality/v1'} if any(f['source']['type'] == 'numeric' and
                      f['queries'] for m in models for f in m['fields']) else set())
+                  | ({'pg-jsonb-equality/v1'} if any(f['source']['type'] == 'jsonb' and
+                     f['queries'] for m in models for f in m['fields']) else set())
                   | ({'pg-text-prefix/v1'} if any('prefix' in f['queries']
                      for m in models for f in m['fields']) else set())
                   | ({'pg-text-pattern-index/v1'} if _has_pattern_indexes(models) else set())
@@ -498,6 +500,9 @@ def _required_readers(models):
 def _lock_schema(models, layout, *, legacy=False):
     kinds = {field['source']['type'] for model in models for field in model['fields']}
     if 'jsonb' in kinds:
+        if any(field['source']['type'] == 'jsonb' and field['queries']
+               for model in models for field in model['fields']):
+            return 'cryptalis.lock/v17'
         return ('cryptalis.lock/v16' if any(field['source']['type'] == 'jsonb' and
                 'application_default' in field for model in models for field in model['fields'])
                 else 'cryptalis.lock/v15')
@@ -1126,8 +1131,8 @@ def _compile_model(model, mapper, facts, issues, schema):
                 continue
         if column.nullable != actual["nullable"]:
             refuse("mapping_mismatch", field.name, "Match mapped and database nullability before planning.")
-        if jsonb and field.queries:
-            refuse("unsupported_query", field.name, "Use storage-only protection for native JSONB values.")
+        if jsonb and set(field.queries) - {'equality', 'unique'}:
+            refuse("unsupported_query", field.name, "Declare whole-document equality or scoped uniqueness for native JSONB values.")
             continue
         application_default = None
         try:
@@ -1157,9 +1162,8 @@ def _compile_model(model, mapper, facts, issues, schema):
         for constraint in facts["constraints"]:
             affected = ((constraint["outgoing"] and column.name in constraint["columns"])
                         or (constraint["incoming"] and column.name in constraint["referenced_columns"]))
-            if affected and (jsonb or constraint["kind"] != "u"):
+            if affected and constraint["kind"] != "u":
                 refuse("unsupported_constraint", field.name,
-                       "Exclude JSONB storage from native constraints." if jsonb else
                        "Exclude this field from CHECK, foreign-key, and exclusion constraints.")
         for dep in facts["dependencies"]:
             if dep["column"] in (None, column.name):
@@ -1167,7 +1171,7 @@ def _compile_model(model, mapper, facts, issues, schema):
         for index in facts["indexes"]:
             if column.name not in index["columns"] + index["dependency_columns"]:
                 continue
-            if jsonb:
+            if jsonb and not field.queries:
                 refuse("unsupported_index", field.name, "Exclude storage-only JSONB from native indexes before protection.")
                 continue
             base_ok = (index["method"] == "btree" and index["valid"] and index["ready"]
@@ -1256,9 +1260,12 @@ def _descriptor(domain_id, table_id, field_id, record_codec, tenant_codec, repre
     elif value_codec != 'utf8-exact/v1':
         raise ValueError
     if value_codec == _JSONB_CODEC:
-        if type(json_none_as_null) is not bool or representation != 'cf1-storage/v1':
+        if (type(json_none_as_null) is not bool or
+                representation not in ('cf1-storage/v1', 'cf1-packed-equality/v1')):
             raise ValueError
         descriptor['null_policy'] = _JSONB_NULL_POLICIES[json_none_as_null]
+        if representation == 'cf1-packed-equality/v1':
+            descriptor['normalizer'] = 'pg-jsonb-equality/v1'
     elif json_none_as_null is not None:
         raise ValueError
     if value_codec == 'pg-numeric-decimal/v1' and representation == 'cf1-packed-equality/v1':
@@ -1303,6 +1310,7 @@ def _previous_lock(raw, current, engine):
         prefix_lock = old.get('schema') in _LOCK_SCHEMAS[13:]
         jsonb_lock = old.get('schema') in _LOCK_SCHEMAS[14:]
         jsonb_default_lock = old.get('schema') in _LOCK_SCHEMAS[15:]
+        jsonb_search_lock = old.get('schema') in _LOCK_SCHEMAS[16:]
         date_lock = old.get('schema') in _LOCK_SCHEMAS[7:]
         integer_lock = old.get('schema') in _LOCK_SCHEMAS[6:]
         public_slots = old.get('schema') == 'cryptalis.lock/v6' or integer_lock and old.get('layout') is not None
@@ -1392,7 +1400,8 @@ def _previous_lock(raw, current, engine):
                 if field['source']['type'] == 'numeric' and (not numeric_lock or
                         intent.queries and (not numeric_search_lock or set(intent.queries) - {'equality', 'unique'})):
                     raise ValueError
-                if field['source']['type'] == 'jsonb' and (not jsonb_lock or intent.queries):
+                if field['source']['type'] == 'jsonb' and (not jsonb_lock or
+                        intent.queries and (not jsonb_search_lock or set(intent.queries) - {'equality', 'unique'})):
                     raise ValueError
                 if field['source']['type'] in _INTEGER_TYPES and (not integer_lock or intent.queries and 'order' not in intent.queries):
                     raise ValueError
@@ -1444,7 +1453,7 @@ def _previous_lock(raw, current, engine):
             if any(not isinstance(model["source_schema"][key], list) for key in ("columns", "constraints", "indexes", "dependencies")):
                 raise ValueError
             _validate_prior_source(model, varchar=old['schema'] in _LOCK_SCHEMAS[2:],
-                                   boolean=old['schema'] in _LOCK_SCHEMAS[3:], integer=integer_lock, date_values=date_lock, uuid_values=uuid_lock, timestamp_values=timestamp_lock, numeric_values=numeric_lock, timestamptz_values=timestamptz_lock, numeric_search=numeric_search_lock, prefix_search=prefix_lock, jsonb_values=jsonb_lock)
+                                   boolean=old['schema'] in _LOCK_SCHEMAS[3:], integer=integer_lock, date_values=date_lock, uuid_values=uuid_lock, timestamp_values=timestamp_lock, numeric_values=numeric_lock, timestamptz_values=timestamptz_lock, numeric_search=numeric_search_lock, prefix_search=prefix_lock, jsonb_values=jsonb_lock, jsonb_search=jsonb_search_lock)
             if public_slots:
                 slots = [column['attnum'] for column in model['source_schema']['columns']]
                 if (any(type(slot) is not int or not 0 < slot < 32768 for slot in slots)
@@ -1516,7 +1525,7 @@ def _validate_catalog_facts(facts):
     return columns
 
 
-def _validate_prior_source(model, *, varchar=False, boolean=False, integer=False, date_values=False, uuid_values=False, timestamp_values=False, numeric_values=False, timestamptz_values=False, numeric_search=False, prefix_search=False, jsonb_values=False):
+def _validate_prior_source(model, *, varchar=False, boolean=False, integer=False, date_values=False, uuid_values=False, timestamp_values=False, numeric_values=False, timestamptz_values=False, numeric_search=False, prefix_search=False, jsonb_values=False, jsonb_search=False):
     """Check a prior snapshot's shape and admitted facts without trusting its hash."""
     def require(condition):
         if not condition:
@@ -1564,7 +1573,7 @@ def _validate_prior_source(model, *, varchar=False, boolean=False, integer=False
             require(not field['queries'] or numeric_search and not set(field['queries']) - {'equality', 'unique'})
         elif jsonb_values and source['type'] == 'jsonb':
             require(_jsonb_mapping_matches(Column('value', postgresql.JSONB()), source))
-            require(not field['queries'])
+            require(not field['queries'] or jsonb_search and not set(field['queries']) - {'equality', 'unique'})
         else:
             require(source['type'] == 'text' or varchar and source['type'] == 'varchar')
             _native_text_length(source)
@@ -1578,7 +1587,7 @@ def _validate_prior_source(model, *, varchar=False, boolean=False, integer=False
         if field["queries"] and source['type'] in ('text', 'varchar'):
             require(_exact_search_collation(source))
         affected = [i for i in facts["indexes"] if field["column"] in i["columns"] + i["dependency_columns"]]
-        if source['type'] == 'jsonb':
+        if source['type'] == 'jsonb' and not field['queries']:
             require(not affected)
         require(field["unique_indexes"] == [i["name"] for i in affected if i["unique"]])
         require(bool(field["unique_indexes"]) == ("unique" in field["queries"]))
@@ -1586,7 +1595,6 @@ def _validate_prior_source(model, *, varchar=False, boolean=False, integer=False
         for constraint in facts["constraints"]:
             if ((constraint["outgoing"] and field["column"] in constraint["columns"])
                     or (constraint["incoming"] and field["column"] in constraint["referenced_columns"])):
-                require(source['type'] != 'jsonb')
                 require(constraint["kind"] == "u" and constraint["outgoing"] and constraint["columns"] == scope)
                 require(not constraint["deferrable"] and constraint["validated"])
         require(not any(d["column"] in (None, field["column"]) for d in facts["dependencies"]))

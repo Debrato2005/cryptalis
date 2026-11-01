@@ -174,7 +174,7 @@ parent/child transaction evidence and remaining qualification work.
 | Timestamp storage/read/write and SQL NULL | SUPPORTED, bounded | Standard timestamp without time zone at default precision or explicit precision 6; exact naive Python datetime values in years 1–9999, literal client defaults, lock/v10 and [the timestamp boundary](#timestamp-storage). Explicit opt-in order admits comparisons and sorting; timezone-aware values and precision rounding remain unadmitted |
 | Aware timestamp storage/read/write and SQL NULL | SUPPORTED, bounded | Standard DateTime/TIMESTAMP with timezone=True at default precision or precision 6; exact aware datetime with standard timezone/ZoneInfo, lock/v12 and [aware timestamp boundary](#aware-timestamp-storage). Preserve native connection timezone, offset and fold; opt-in order, ranges and direct MIN/MAX use UTC instants |
 | Numeric storage/read/write and SQL NULL | SUPPORTED, bounded | Standard Numeric/NUMERIC with asdecimal=True; finite Decimal or exact Python int inputs, unconstrained or declared precision/scale, native rounding, literal defaults and lock/v11. [Numeric boundary](#numeric-storage); explicit equality/IN and scoped uniqueness use lock/v13. Numeric order, arithmetic and nonfinite values remain unadmitted |
-| Native JSONB storage/read/write | SUPPORTED, bounded | Standard JSONB with default JSON hooks, both native NULL modes, lossless lifecycle bytes and lock/v15; literal client defaults require lock/v16. [JSONB boundary](#jsonb-storage). Search, generated defaults, indexes, CHECK, foreign-key and uniqueness constraints involving this field remain unadmitted; native nullability remains enforced |
+| Native JSONB storage/read/write | SUPPORTED, bounded | Standard JSONB with default JSON hooks, both native NULL modes, lossless lifecycle bytes and lock/v15; literal client defaults require lock/v16. [JSONB boundary](#jsonb-storage). Explicit whole-document equality/IN and scoped uniqueness require lock/v17. Generated defaults, path/containment search, GIN, CHECK and foreign-key constraints remain unadmitted |
 | Signed integer storage/read/write and SQL NULL | SUPPORTED | Exact int2/int4/int8 mappings and width-bound Python ints, literal client defaults, native failure/transaction behavior and typed fixed-width CF1. Storage-only unless the field declares [`order`](#order-search); the fixed authentication overhead is published in the local cost profile |
 | Mapped dictionary INSERT without RETURNING | SUPPORTED | Attached sync/async `Session.execute(insert(Model), list[dict])`, explicit typed IDs and tenant scope, copied attribute dictionaries, native NULL/grouping, autoflush, uniqueness and transaction behavior. Other bulk routes remain unadmitted |
 | Mapped dictionary INSERT with RETURNING | SUPPORTED | Native direct or explicitly named column tuples/scalars and inserted mapped entities, including public-only columns. Preserve result keys/types, grouping, paging and optional input ordering. Entity results retain identity-map loading and refresh. Authenticate each protected output against its own exact prepared input. Computed expression/alias, loader-option and caller return_defaults forms remain unadmitted |
@@ -384,7 +384,7 @@ operational artifact use remain blocked by `PrefixCapabilityUnadmitted`.
 Some preparation-artifact constructors wrap that refusal in their existing
 typed invalid-plan error; neither outcome authorizes effects.
 [Manifest](manifest.md#internal-prefix-engineering-syntax) owns context/v3,
-lock/v14 (v15 with JSONB, v16 with JSONB client defaults), reader dependencies and explicit Unicode prefix-length bounds.
+lock/v14 (v15 with JSONB, v16 with JSONB client defaults, v17 with JSONB equality), reader dependencies and explicit Unicode prefix-length bounds.
 
 The private grammar covers literal LIKE patterns and literal characters followed
 only by terminal `%` wildcards, plus startswith and their negations. It preserves
@@ -486,10 +486,11 @@ Standard `sqlalchemy.dialects.postgresql.JSONB` with an exact Boolean
 `none_as_null` flag maps built-in PostgreSQL JSONB, OID 3802, without typmod or
 collation. Storage uses `pg-jsonb-text/v1` under lock/v15 and context/v2. Native
 nullability is retained. Generated defaults, on-update generation, variants,
-custom type processors, nondefault `astext_type`, indexes and constraints other
-than nullability remain unadmitted. JSON search remains required implementation
-work; JSON operators, equality and path/containment queries are not admitted by
-storage support.
+custom type processors and nondefault `astext_type` remain unadmitted.
+Storage-only fields admit nullability; declared equality/uniqueness has the
+additional bounded B-tree contract below. Path/containment operators, GIN,
+CHECK and foreign-key constraints remain implementation work. Storage admission
+alone does not enable search.
 
 Literal client defaults admit exact built-in dictionaries, lists, tuples,
 strings, integers, floats, Booleans and top-level `JSON.NULL`, under the same
@@ -554,9 +555,44 @@ cannot silently replace the requested document.
 
 Initial native reads use `convert_to(column::text,'UTF8')`. Native removal binds
 the authenticated retained text with an explicit JSONB cast. Both physical
-layouts use the same value contract. No JSON search term, ordering representation
-or new primitive follows. [Status](status.md) owns executed evidence; broader JSON
+layouts use the same value contract. Storage-only admission adds no search term;
+the equality profile below reuses full HMAC. Neither adds an ordering
+representation or new primitive. [Status](status.md) owns executed evidence; broader JSON
 behavior, independent review and performance qualification remain open.
+
+### Whole-document JSONB equality
+
+Declare `queries: ["equality"]`, or tenant-scoped `unique`, with matching leakage
+acceptance and a non-small-domain host review. Lock/v17 requires
+`pg-jsonb-equality/v1`; older operational readers refuse it before effects.
+Full-document equality, `!=`, IN/NOT IN, admitted Boolean composition, aliases,
+predicate projections, direct DISTINCT and COUNT DISTINCT use the existing full
+HMAC term. Native B-tree `jsonb_ops` indexes and immediate scoped unique
+constraints retain the existing strict index/nullability rules. Other index
+shapes and uniqueness-profile changes remain unadmitted.
+
+Search ignores fractional numeric scale and signed zero at every nesting level,
+while retaining array order, object keys, scalar types and scalar-versus-array
+distinctions. Stored canonical JSONB text stays lossless. DISTINCT returns an
+authenticated original representative; numeric spelling among equal documents
+is unspecified, as with native PostgreSQL. SQL NULL remains distinct from the
+authenticated JSON-null document even when both load as Python None.
+
+Use ordinary dictionary/list pivots and exact native JSONB-typed binds. Explicit
+JSONB bind types retain their own `none_as_null` choice, independently of the
+column mapping: typed None is JSON null with False and SQL NULL with True.
+Bare scalar strings/integers/Booleans retain native non-JSON SQL typing and
+refuse before keys/SQL; use an explicit JSONB type for those documents.
+Mutable statement, `.params(...)`, execute-parameter and expanding-IN inputs
+are captured before synchronous/awaited preparation and checked before dispatch.
+Default stdlib/driver JSON hooks remain required.
+
+Rotations, online capture, active equality enable/disable, fresh restore and
+current-value removal reuse the existing executors and reader obligations.
+Disabling search removes current terms, not historical equality leakage.
+This profile reveals complete-document equality, frequency and access patterns.
+It adds no JSON-path terms, ordering, containment, stronger inference protection,
+performance acceptance or production qualification.
 
 ## Internal DATE storage candidate
 

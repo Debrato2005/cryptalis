@@ -9,7 +9,15 @@ route, not another product contract.
 
 ## Current stop point
 
-The current verified implementation is `e75d049b0afe6d3c7f4d9e7bc8e01136b3529f06`
+The latest implementation slice is on `codex/jsonb-equality-20261101`, based on
+`caddefe`, with development version `0.1.0a2.dev1`. Whole-document JSONB
+equality/IN/scoped uniqueness and lock/v17 have source, installed, online and
+fresh-recovery evidence in the [search boundary](_reset/jsonb-search-boundary-20261101.json).
+The frozen preview is unchanged. The earlier same-head VARCHAR CI failure is
+[retained](_reset/varchar-ci-failure-boundary-20261101.json) with cause UNKNOWN;
+safe SQLSTATE/location reporting improves future observations without a fix claim.
+
+The earlier verified implementation is `e75d049b0afe6d3c7f4d9e7bc8e01136b3529f06`
 on `codex/post-preview-continuation-20261101`, in
 [draft PR 5](https://github.com/Debrato2005/cryptalis/pull/5). Both jobs in
 [run 41295516545](https://github.com/Debrato2005/cryptalis/actions/runs/41295516545)
@@ -144,6 +152,15 @@ the earlier cloud paths above are historical. `/tmp` is a full tmpfs here, so
 new checks use that scratch directory's `tmp` through `TMPDIR`. Test harnesses
 stop their clusters on exit. Retain private role files and dumps separately
 from the sanitized receipts committed to Git.
+
+The equality slice uses private scratch
+`/home/debrato/.cache/cryptalis-jsonb-equality-20261101`. The legacy home role
+files point to a stopped local postmaster with stale socket/PID files; its
+initial probe failed and was not repeated. An ad-hoc diagnostic parser error
+printed that legacy local connection string in chat. Its value is omitted from
+Git/evidence and was not reused; replace the legacy credential before using
+that old target again. The target and retained data were left untouched. New
+checks use the existing authorized isolated harness and fresh private role files.
 
 ## Resume implementation
 

@@ -226,6 +226,36 @@ remain available.
 
 ## Native JSONB storage
 
+**Development `0.1.0a2.dev1`: whole-document equality/IN and scoped uniqueness.**
+The new profile uses lock/v17 and `pg-jsonb-equality/v1`, preserving lossless
+payload text while ignoring nested numeric scale only in the full HMAC term.
+Native typed binds retain their own NULL mode; mutable query inputs are checked
+around synchronous/awaited preparation. No path/containment or ordering profile
+is admitted. [Exact contract](compatibility.md#whole-document-jsonb-equality).
+
+The complete local source run passes **4,013 calls and 18 subtests**, with
+26 call, 41 setup and nine collection skips. All 28 new controls pass, including
+independent expected search bytes/HMAC verification, native query and uniqueness
+oracles, provider-time mutation refusal, three rotations, profile changes,
+online capture and current-value exit. Installed Python 3.12.16 and 3.13.12 each
+pass 99 JSONB controls, retaining one unavailable v14-reader skip. Genuine v15
+and v16 controls execute locally and refuse their respective newer formats.
+
+Installed fresh recovery passes in both layouts with equality and literal
+defaults enabled: native equality/IN/distinct parity, authenticated adoption,
+tamper refusal, new writes, current-value removal and import-denied native
+restart. Source, installed and fresh checks bind identical 45-module runtime
+bytes and 327 final Python inputs; earlier focused/fresh receipts differ only
+in the later redacted diagnostic hook. Repeat builds, 52 inputs, SBOM, installed
+files and CLI inspection pass. The [boundary](_reset/jsonb-search-boundary-20261101.json)
+and [19 receipts/source snapshots](_reset/jsonb-search-receipts-20261101.tar.gz)
+retain both initial test-API failures and their correction. Local evidence does
+not qualify performance, production custody/deployment or independent review.
+After correcting the package README description, repeat builds and all installed
+JSONB/fresh checks pass against the rebuilt wheel, with unchanged runtime/test
+bytes. [Ten final package receipts](_reset/jsonb-search-final-package-receipts-20261101.tar.gz)
+bind that metadata change and the final artifact hashes.
+
 **VERIFIED, bounded source and installed wheel:** standard PostgreSQL JSONB
 preserves both native NULL modes, ordinary and MutableDict tracking, sync/async
 CRUD/RETURNING and exact canonical native bytes through lifecycle operations.
@@ -246,7 +276,7 @@ pinned mapping default; broader native default evolution remains open, as the
 
 Both jobs in [run 41295516545](https://github.com/Debrato2005/cryptalis/actions/runs/41295516545)
 pass at exact **`e75d049`**. All 324 Python inputs across 18 inventories and 52
-build inputs match that revision and the current development runtime. Source
+build inputs match that revision's v16 development runtime. Source
 passes **3,985 calls and 18 subtests**, with 26 call, 41 setup and nine collection
 skips. Seventeen installed receipts pass **1,205 calls**; JSONB passes 70 with
 two unavailable previous-reader skips. All 24 release steps pass, and hosted
@@ -278,10 +308,27 @@ difference after the earlier local complete run. Earlier storage/reader evidence
 its [boundary](_reset/jsonb-boundary-20261101.json) and
 [type history](history/types-2026-11.md#native-jsonb-storage-2026-11-01).
 
-JSON search, generated defaults/indexes/constraints beyond nullability, broader
+JSON path/containment search, generated defaults, broader indexes/constraints, broader
 native behavior, performance and independent review remain open. No objective or
 production gate is completed by this storage prerequisite. All seven gates stay
 UNKNOWN. The [handoff](handoff.md) routes the next authorized work.
+
+## Unresolved source-CI observation
+
+At documentation head `caddefe`, [push run 41296961917](https://github.com/Debrato2005/cryptalis/actions/runs/41296961917)
+passes 3,984 calls and 18 subtests but fails the storage-only VARCHAR workflow
+with `InternalError`. The [same-head PR run](https://github.com/Debrato2005/cryptalis/actions/runs/41296965716)
+passes all 3,985 calls. All 324 Python hashes and runtime bytes match. The
+redaction hook discarded SQLSTATE and location, so the exact cause is UNKNOWN;
+a catalog-deparser race is an unproved lead. No unchanged rerun was requested.
+[Failure boundary](_reset/varchar-ci-failure-boundary-20261101.json) and
+[retained failed/passing receipts](_reset/varchar-ci-failure-receipts-20261101.tar.gz).
+
+SQLAlchemy DBAPI/connection failure reports now retain validated SQLSTATE, phase and repository
+location while suppressing driver messages, SQL, parameters and locals. A
+synthetic injected-exposure control verifies those fields; it does not reproduce
+the native failure. Current local complete-source success does not close this
+earlier unexplained observation or qualify a production gate.
 
 ## Published dense-domain order inference
 

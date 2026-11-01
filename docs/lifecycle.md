@@ -191,7 +191,8 @@ their separate staging, external publication and cancellation authority.
 <a id="enable-exact-search-on-active-encrypted-text"></a>
 
 The active-field modification route admits both `queries: []` to
-`queries: ["equality"]` and the reverse on existing TEXT/VARCHAR or finite NUMERIC fields. Enabling
+`queries: ["equality"]` and the reverse on existing TEXT/VARCHAR, finite NUMERIC
+or JSONB fields. Enabling
 search requires explicit equality leakage acceptance and a non-small-domain host
 review. Disabling requires empty `queries` and `accept_leakage`, and removal of
 that field’s search review. Reviews for unchanged searchable fields remain exact.
@@ -202,6 +203,10 @@ Uniqueness changes and general type/codec/package upgrades remain open work.
 Numeric enablement selects lock/v13 and the numeric equality normalizer;
 disabling the last numeric search selects the lock version required by remaining
 fields, retaining the unchanged numeric payload codec and source typmod.
+JSONB enablement selects lock/v17 and its whole-document equality normalizer.
+Disabling selects the remaining required lock, retaining JSONB null/default
+policies and lossless payload bytes. No path/containment profile or uniqueness
+change is admitted by this route.
 
 The source must be ACTIVE with its exact host pin. Source custody must already
 include an approved search root for every target searchable scope, including
@@ -246,7 +251,7 @@ promote a production gate.
 
 **INTERNAL ONLY:** the prefix prototype requires a private synthetic qualification
 scope for planning, attachment and retained preparation, activation and restore
-artifacts under v14 or mixed JSONB v15/v16 locks. This includes artifacts retaining native pattern-index metadata after
+artifacts under v14 or mixed JSONB v15/v16/v17 locks. This includes artifacts retaining native pattern-index metadata after
 prefix removal. Ordinary use refuses; the scope supplies no real-data authorization.
 Promotion still requires all [six capability-admission gates](compatibility.md#capability-admission),
 including the required attacks, cost assessment and independent review. Synthetic
@@ -266,7 +271,7 @@ requires separate successor publication. Uniqueness stays unchanged: disabling
 prefix retains a required equality/unique index; storage-only conversion cannot
 remove uniqueness. Original `text_pattern_ops`/`varchar_pattern_ops` index metadata
 remains a restoration obligation. Its retention requires lock/v14, v15 with
-JSONB, or v16 with JSONB client defaults, even after the last prefix capability is removed.
+JSONB, or v16 with JSONB client defaults or v17 with JSONB equality, even after the last prefix capability is removed.
 
 Root rewrap preserves frame bytes. Payload rotation reseals authenticated frames;
 search rotation recomputes equality and prefix terms and reseals their headers.

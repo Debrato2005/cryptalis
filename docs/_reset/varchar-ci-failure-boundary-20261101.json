@@ -1,0 +1,146 @@
+{
+  "format": "cryptalis.varchar-ci-failure-boundary/v1",
+  "tested_revision": "caddefef5b25cd79364521423b1e54f67f8b35f1",
+  "failed_run": {
+    "id": 41296961917,
+    "url": "https://github.com/Debrato2005/cryptalis/actions/runs/41296961917",
+    "event": "push",
+    "conclusion": "failure",
+    "source_job_id": 124819718689,
+    "failed_step": "Run complete default suite on an isolated cluster",
+    "failed_step_number": 7,
+    "release_job_id": 124819718841,
+    "release_conclusion": "success"
+  },
+  "failure": {
+    "nodeid": "tests/test_varchar.py::test_storage_only_varchar_keeps_default_collation_and_undeclared_search_refusal",
+    "reported_type": "InternalError",
+    "reported_message": "database failure details suppressed.",
+    "sqlstate": "UNKNOWN; redaction hook does not retain it",
+    "statement_or_stage": "UNKNOWN; traceback and SQL details are removed",
+    "root_cause": "UNKNOWN",
+    "classification": "Unresolved database-operation failure; product defect versus PostgreSQL/catalog/environment observation cannot be established from retained data."
+  },
+  "failed_counts": {
+    "test_calls": {
+      "passed": 3984,
+      "skipped": 26,
+      "failed": 1
+    },
+    "subtest_calls": {
+      "passed": 18
+    },
+    "setup": {
+      "passed": 4011,
+      "skipped": 41
+    },
+    "teardown": {
+      "passed": 4052
+    },
+    "collection": {
+      "skipped": 9
+    },
+    "selected_items": 4052
+  },
+  "failed_varchar_module": {
+    "passed": 39,
+    "failed": 1
+  },
+  "failed_preflight": {
+    "select_1_each": "passed",
+    "sha256_prefixes": [
+      "78b2cbaa",
+      "157911fd",
+      "99d87a8b"
+    ]
+  },
+  "same_head_passing_run": {
+    "id": 41296965716,
+    "url": "https://github.com/Debrato2005/cryptalis/actions/runs/41296965716",
+    "event": "pull_request",
+    "source_job_id": 124819730133,
+    "source_conclusion": "success",
+    "release_job_id": 124819730433,
+    "release_conclusion": "success",
+    "counts": {
+      "test_calls": {
+        "passed": 3985,
+        "skipped": 26
+      },
+      "subtest_calls": {
+        "passed": 18
+      },
+      "setup": {
+        "passed": 4011,
+        "skipped": 41
+      },
+      "teardown": {
+        "passed": 4052
+      },
+      "collection": {
+        "skipped": 9
+      },
+      "selected_items": 4052
+    },
+    "varchar_module": {
+      "passed": 40
+    }
+  },
+  "matching_tested_python_files": 324,
+  "all_python_hashes_match_same_head_pass_and_git": true,
+  "runtime_modules_sha256": "c2132cb5c7b9536f81bcd5be871ebe279a6924c95cbad2dbb24a4cd561652dd2",
+  "runtime_matches_same_head_pass": true,
+  "source_stability": {
+    "failed": {
+      "unchanged": true,
+      "changed_paths": []
+    },
+    "passing": {
+      "unchanged": true,
+      "changed_paths": []
+    }
+  },
+  "observed_environment": {
+    "python": "3.12.14",
+    "postgresql_server_package_both_job_logs": "16.15-1.pgdg24.04+2",
+    "runner_image_both_job_logs": "ubuntu-24.04 / 20261025.353.1",
+    "runner_version_both_job_logs": "2.338.2",
+    "passing_package_inventory": "passing/postgres-packages/installed-versions.txt",
+    "failed_package_inventory": "UNAVAILABLE: step is skipped after suite failure; do not infer all packages from the passing run"
+  },
+  "artifacts": [
+    {
+      "id": 13079319298,
+      "name": "source-evidence-41296961917-1",
+      "bytes": 22945,
+      "sha256": "044e7288ddb0447265fc599e352b7bf0f25e81dd03e0705c0df3f971fc4f0082",
+      "github_digest_matches_download": true
+    },
+    {
+      "id": 13079956673,
+      "name": "source-evidence-41296965716-1",
+      "bytes": 17043000,
+      "sha256": "df6e43a274b517974e8ede5d1fb6cfb72afaf9ff83af7ae58b37d6203f28588e",
+      "github_digest_matches_download": true
+    }
+  ],
+  "source_backed_lead": {
+    "status": "INFERENCE ONLY; no retained exception proves this is the failing statement",
+    "site": "tests/test_varchar.py:336",
+    "description": "The final assertion scans pg_catalog.pg_indexes with an indexdef LIKE filter while other parallel workers create/drop schemas. pg_indexes calls pg_get_indexdef; deparsing catalog objects concurrently dropped by other workers is a candidate race. Direct pg_index predicates scoped to the exact indrelid avoid this unnecessary global deparser surface."
+  },
+  "recommended_next_evidence": [
+    "Preserve this failed run; same-head passing CI does not erase it.",
+    "Keep exception redaction, but retain a validated five-character SQLSTATE and safe test stage or statement family without SQL text, binds, credential strings or raw provider errors.",
+    "Use the mandatory wrapper for a focused native/catalog concurrency investigation, coordinated by the parent. Do not label an unchanged rerun or query hardening alone as proof of the original cause."
+  ],
+  "local_actions": {
+    "repository_modified": false,
+    "local_database_probes_or_tests_run": false,
+    "workflow_reruns": false,
+    "publication_changes": false
+  },
+  "receipts_archive": "varchar-ci-failure-receipts-20261101.tar.gz",
+  "receipts_archive_sha256": "cc60bc73786823cbbbe619b8fb5011f5495f51579d339c7564e83aae672c167f",
+  "production_gates": "UNKNOWN"
+}

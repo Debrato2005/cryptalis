@@ -91,11 +91,11 @@ def refused_without_effects(app, code, *, declaration=None, database=None):
     assert database_state(app) == before
 
 
-def test_jsonb_planning_refuses_search_generated_defaults_indexes_and_nonstandard_mapping_without_effects():
+def test_jsonb_planning_refuses_unadmitted_search_generated_defaults_indexes_and_nonstandard_mapping_without_effects():
     with application() as app:
         original = wire(app)
         searchable = deepcopy(app.declaration)
-        searchable['models'][0]['fields'][0].update(queries=['equality'], accept_leakage=['equality'])
+        searchable['models'][0]['fields'][0].update(queries=['order'], accept_leakage=['equality', 'order'])
         refused_without_effects(app, 'unsupported_query', declaration=searchable)
 
         column = app.table.c.name
