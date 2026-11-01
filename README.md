@@ -67,7 +67,8 @@ resumable protection, three distinct key-rotation workflows, current-data
 plaintext reversal/removal, fresh-cluster adoption and scoped Doctor checks.
 Integer and date fields can opt in to [range and sorting](docs/compatibility.md#order-search),
 which reveals their order in a database dump. The [compatibility matrix](docs/compatibility.md)
-is the authoritative support list. Prefix/fuzzy, JSON and other unadmitted operations fail
+is the authoritative support list. Native JSONB has a bounded storage contract;
+JSON search, prefix/fuzzy and other unadmitted operations fail
 explicitly.
 
 Provider custody is abstracted through `KeyProvider`. Development custody is

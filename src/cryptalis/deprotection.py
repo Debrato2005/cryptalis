@@ -402,8 +402,9 @@ def _stream(c, model, *, after=None, limit=1000):
     if scoped:
         names.append(model['tenancy']['column'])
     names += [field['column'] for field in model['fields']]
-    names += [_staging(field) for field in model['fields']]
-    statement = 'SELECT ' + ','.join(m._quote(c, name) for name in names) + f' FROM {m._table(c, model)}'
+    columns = [m._quote(c, name) for name in names]
+    columns += [m._native_column(c, field, _staging(field)) for field in model['fields']]
+    statement = 'SELECT ' + ','.join(columns) + f' FROM {m._table(c, model)}'
     params = ()
     if after is not None:
         value = UUID(after) if model['record']['codec'] == 'uuid16/v1' else int(after)
@@ -464,6 +465,8 @@ def _expand(c, p):
             if native['type'] == 'numeric':
                 from ._numeric import numeric_sql_type
                 native_type = numeric_sql_type(native['typmod'])
+            elif native['type'] == 'jsonb':
+                native_type = 'pg_catalog.jsonb'
             elif m._fixed_value_width(native) is not None:
                 native_type = 'pg_catalog.' + native['type']
                 if native['type'] in ('timestamp', 'timestamptz') and native['typmod'] == '6':
@@ -504,9 +507,13 @@ def _backfill_chunk(c, p, state, keys, chunk_size):
                 if field['source']['type'] == 'numeric':
                     from ._numeric import validate_numeric
                     validate_numeric(value, field['source']['typmod'])
-            updates.append(tuple(values) + (row[0],))
+            updates.append(tuple(value.data.decode('utf8')
+                                 if value is not None and field['source']['type'] == 'jsonb' else value
+                                 for value, field in zip(values, model['fields'])) + (row[0],))
         statement = (f'UPDATE {m._table(c, model)} SET '
-                     + ','.join(m._quote(c, _staging(field)) + '=%s' for field in model['fields'])
+                     + ','.join(m._quote(c, _staging(field)) + '=%s'
+                                + ('::pg_catalog.jsonb' if field['source']['type'] == 'jsonb' else '')
+                                for field in model['fields'])
                      + f' WHERE {m._quote(c, model["record"]["column"])}=%s')
         c.exec_driver_sql(statement, updates)
         progress['cursor'] = str(rows[-1][0])
@@ -545,7 +552,7 @@ def _verify(c, p, state, keys):
                         raw = row[offset + index]
                         frame = bytes(raw) if raw is not None else None
                         value = open_value(frame, descriptor, tenant, row[0], prepared)
-                        staged = row[offset + len(descriptors) + index]
+                        staged = m._native_value(row[offset + len(descriptors) + index], model['fields'][index])
                         if not m._same_value(value, staged, model['fields'][index]):
                             raise m.TransitionFailure('value_verification_failed', p.operation_id)
                         frames.append(frame)

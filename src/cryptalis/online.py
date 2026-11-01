@@ -63,7 +63,7 @@ class OnlineProtectionPlan:
                 raise ValueError
             models = d['lock']['models']
             if any((not tenant_scoped and 'column' in model['tenancy']) or any(
-                    field['source']['type'] not in ('text', 'varchar', 'bool', 'int2', 'int4', 'int8', 'date', 'uuid', 'timestamp', 'timestamptz', 'numeric')
+                    field['source']['type'] not in ('text', 'varchar', 'bool', 'int2', 'int4', 'int8', 'date', 'uuid', 'timestamp', 'timestamptz', 'numeric', 'jsonb')
                     for field in model['fields']) for model in models):
                 raise ValueError
             if tenant_scoped:
@@ -337,7 +337,7 @@ def _chunk(c, p, state, keys, *, pool=None, row_limit=None):
         widths = {'bool': 1, 'int2': 2, 'int4': 4, 'int8': 8, 'date': 4, 'uuid': 16, 'timestamp': 8, 'timestamptz': 8}
         sizes = '+'.join((str(widths[f['source']['type']]) if f['source']['type'] in widths else
                          'COALESCE(pg_catalog.octet_length('+m._quote(c,f['column'])+
-                         ('::pg_catalog.text' if f['source']['type'] == 'numeric' else '')+'),0)') + f'+{frame_overhead(f)}'
+                         ('::pg_catalog.text' if f['source']['type'] in ('numeric', 'jsonb') else '')+'),0)') + f'+{frame_overhead(f)}'
                          for f in model['fields'])
         candidates = c.exec_driver_sql('SELECT ' + m._quote(c,names[0]) + ', ' + sizes
             + f' FROM {m._table(c,model)} WHERE {m._quote(c,dirty)} IS DISTINCT FROM FALSE'
@@ -370,7 +370,9 @@ def _chunk(c, p, state, keys, *, pool=None, row_limit=None):
                         f'({m._temporal_domain(column, kind)}))',
                         (selected,)).scalar_one():
                     raise m.TransitionFailure(kind + '_outside_python_range', p.operation_id)
-        rows = c.exec_driver_sql('SELECT ' + ','.join(m._quote(c,name) for name in names)
+        columns = ([m._quote(c,name) for name in names[:2 if scoped else 1]]
+                   + [m._native_column(c,field) for field in model['fields']])
+        rows = c.exec_driver_sql('SELECT ' + ','.join(columns)
             + f' FROM {m._table(c,model)} WHERE {m._quote(c,names[0])}=ANY(%s)'
             + f' ORDER BY {m._quote(c,names[0])}',(selected,)).all()
         descriptors = [FieldDescriptor.from_compiled(f['descriptor'],f['descriptor_digest']) for f in model['fields']]
@@ -383,7 +385,8 @@ def _chunk(c, p, state, keys, *, pool=None, row_limit=None):
             if scoped and str(tenant) not in approved:
                 raise m.TransitionFailure('online_tenant_not_approved', p.operation_id)
             frames = m._with_row_keys(keys,tenant,p,material.keys,lambda prepared:
-                [seal_value(value,descriptor,tenant,row[0],prepared) for value,descriptor in zip(row[offset:],descriptors)])
+                [seal_value(m._native_value(value,field),descriptor,tenant,row[0],prepared)
+                 for value,field,descriptor in zip(row[offset:],model['fields'],descriptors)])
             return tuple(frames)+(row[0],)
         params = list(pool.map(lambda item: item[0].run(seal_row, item[1]),
                                ((copy_context(), row) for row in rows))

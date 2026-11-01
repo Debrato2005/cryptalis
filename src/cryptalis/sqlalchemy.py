@@ -27,7 +27,7 @@ from sqlalchemy.orm.attributes import NO_VALUE
 from sqlalchemy.sql import operators, visitors
 from sqlalchemy.sql.annotation import Annotated, annotated_classes
 from sqlalchemy.sql import sqltypes as _native_types
-from sqlalchemy.sql.elements import BinaryExpression, BindParameter, BooleanClauseList, Cast, ClauseElement, ColumnClause, Grouping, Label, SavepointClause, RollbackToSavepointClause, ReleaseSavepointClause, TextClause, TypeCoerce, UnaryExpression, quoted_name, _anonymous_label, _truncated_label
+from sqlalchemy.sql.elements import BinaryExpression, BindParameter, BooleanClauseList, Cast, ClauseElement, ColumnClause, Grouping, Label, Null, SavepointClause, RollbackToSavepointClause, ReleaseSavepointClause, TextClause, TypeCoerce, UnaryExpression, quoted_name, _anonymous_label, _truncated_label
 from sqlalchemy.sql.functions import FunctionElement, count
 from sqlalchemy.sql.selectable import Alias, CTE, FromClause, Select, Join, Subquery
 from sqlalchemy.sql.dml import Insert, Update, Delete
@@ -43,7 +43,7 @@ from .crypto import CryptoFailure, AuthenticationFailed, FieldDescriptor, Keyrin
 from .crypto.cf1 import _encode
 from .crypto.keys import InvalidText, InvalidValue, RepresentationMismatch, ProviderAuthenticationUnavailable
 from ._timestamp import aware_default, aware_value, datetime_state
-from .manifest.compiler import _LOCK_SCHEMAS, _compiled_default, _default_matches, _value_default, _native_text_length, _previous_lock, _value_mapping_matches, _fixed_value_width
+from .manifest.compiler import _LOCK_SCHEMAS, _compiled_default, _default_matches, _value_default, _native_text_length, _previous_lock, _value_mapping_matches, _fixed_value_width, _jsonb_type_matches
 from .manifest.parser import decode_manifest_json
 
 
@@ -157,6 +157,7 @@ class _UpdateRequest:
     point: object = field(default=None, repr=False)
     returning: tuple | None = field(default=None, repr=False)
     literal_values: bool = False
+    json_inputs: tuple = field(default=(), repr=False)
 
 
 @dataclass(frozen=True)
@@ -182,6 +183,11 @@ class _Binding:
 
 
 def _assignment(value, binding):
+    if binding.descriptor.value_codec == 'pg-jsonb-text/v1':
+        from ._jsonb import jsonb_value
+        if type(value) is Null or value is None and binding.descriptor.json_none_as_null:
+            return None
+        return jsonb_value(None if value is JSON.NULL else value)
     if binding.descriptor.value_codec == 'pg-timestamptz-us-be/v1':
         aware_value(value)
         return value
@@ -219,6 +225,43 @@ def _assignment(value, binding):
         except (TypeError, ValueError) as failure:
             raise type(failure)('Invalid native Boolean assignment. Roll back before retry.') from None
     return _varchar_assignment(value, binding.max_characters)
+
+
+def _json_input_state(value):
+    """Freeze input spelling and every nested type without retaining containers."""
+    if value is NO_VALUE or value is JSON.NULL or type(value) is Null:
+        return (type(value), 'omitted' if value is NO_VALUE else 'json-null' if value is JSON.NULL else 'sql-null')
+    try:
+        spelling = json.dumps(value)
+    except (TypeError, ValueError, OverflowError, RecursionError):
+        raise InvalidValue() from None
+    types, pending = [], [value]
+    while pending:
+        part = pending.pop()
+        types.append(type(part))
+        if isinstance(part, dict):
+            for key, item in reversed(tuple(part.items())):
+                pending.extend((item, key))
+        elif isinstance(part, (list, tuple)):
+            pending.extend(reversed(part))
+    return spelling, tuple(types)
+
+
+def _json_rows_state(rows, bindings):
+    json_bindings = [binding for binding in bindings if binding.descriptor.value_codec == 'pg-jsonb-text/v1']
+    return tuple((tuple(row), tuple((binding.attribute, _json_input_state(row.get(binding.attribute, NO_VALUE)))
+                                    for binding in json_bindings)) for row in rows) if json_bindings else ()
+
+
+def _sql_null_assignment(value, column):
+    return (type(value) is Null and isinstance(column.type, _Payload)
+            and column.type.binding.descriptor.value_codec == 'pg-jsonb-text/v1')
+
+
+def _native_json_adapters(adapters):
+    from ._jsonb import native_json_adapters
+    if not native_json_adapters(adapters):
+        raise PolicyMismatch()
 
 
 @dataclass(frozen=True)
@@ -428,6 +471,7 @@ class _ReadText(TypeDecorator):
     def __init__(self, binding, operation, record_column):
         super().__init__()
         self.binding = binding
+        self.hashable = binding.column.type.hashable
         self.keys = operation.keys_for(binding)
         self.tenant = operation.scope(binding)
         self.result_timezone = [None] if binding.descriptor.value_codec == 'pg-timestamptz-us-be/v1' else None
@@ -501,6 +545,8 @@ class _ReadText(TypeDecorator):
         if plain is not None and self.binding.numeric_typmod is not None:
             from ._numeric import validate_numeric
             validate_numeric(plain, self.binding.numeric_typmod)
+        if plain is not None and descriptor.value_codec == 'pg-jsonb-text/v1':
+            plain = plain.to_python()
         return plain
 
 
@@ -510,10 +556,19 @@ class _Payload(TypeDecorator):
     # afresh. Native unprotected statements can still use the engine cache.
     cache_ok = False
 
+    class Comparator(TypeDecorator.Comparator):
+        def _json_search(self, *args, **kwargs):
+            raise UnsupportedProtectedOperation()
+        __getitem__ = has_key = has_all = has_any = contained_by = path_exists = path_match = delete_path = _json_search
+
+    comparator_factory = Comparator
+
     def __init__(self, binding, owner):
         super().__init__()
         self.binding, self.owner = binding, owner
         self.source_type = binding.column.type
+        self.should_evaluate_none = self.source_type.should_evaluate_none
+        self.hashable = self.source_type.hashable
 
     @property
     def operator_classes(self):
@@ -672,6 +727,41 @@ class _Attachment:
         self.models = {}
         self.fingerprint = ()
         self.search_pins = {}
+        self.has_jsonb = any(field['descriptor'].get('value_codec') == 'pg-jsonb-text/v1'
+                             for model in document['models'] for field in model['fields'])
+
+    def check_json_driver(self, context):
+        if not self.has_jsonb:
+            return
+        context = getattr(context, '_raw', context)
+        context = getattr(context, '_cursor', context)
+        try:
+            _native_json_adapters(context.adapters)
+        except CryptoFailure:
+            raise
+        except Exception:
+            raise PolicyMismatch() from None
+
+    def _check_json_configuration(self):
+        if not self.has_jsonb:
+            return
+        import psycopg
+        engine = self.engine.sync_engine if isinstance(self.engine, AsyncEngine) else self.engine
+        if engine.dialect._json_serializer is not None or engine.dialect._json_deserializer is not None:
+            raise PolicyMismatch()
+        _native_json_adapters(psycopg.adapters)
+        if engine.dialect._psycopg_adapters_map is not None:
+            _native_json_adapters(engine.dialect._psycopg_adapters_map)
+
+    def json_write_state(self, session):
+        if not self.has_jsonb:
+            return ()
+        return tuple((id(obj), tuple((binding.attribute,
+                    _json_input_state(inspect(obj).attrs[binding.attribute].loaded_value))
+                    for binding in self.models.get(type(obj), ())
+                    if binding.descriptor.value_codec == 'pg-jsonb-text/v1' and
+                    (inspect(obj).pending or inspect(obj).attrs[binding.attribute].history.has_changes())))
+                    for obj in tuple(session.new) + tuple(session.dirty))
 
     def protected(self, expression):
         # ORM annotations can retain a native type from mapping construction.
@@ -809,6 +899,8 @@ class _Attachment:
     def validate(self, connection):
         if tuple(connection.dispatch.before_cursor_execute):
             raise UnsafeDriverEvent()
+        self._check_json_configuration()
+        self.check_json_driver(connection.connection.dbapi_connection)
         from cryptalis.migration import check_attachment
         check_attachment(connection, json.dumps(self.document, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode(), self.deployment)
         if connection.dialect.name != "postgresql" or connection.dialect.driver != "psycopg":
@@ -877,6 +969,9 @@ class _Attachment:
                             field['payload_column'] + '_frame')
                     validate_search_storage(connection, model, field, admitted=admitted)
                 descriptor = FieldDescriptor.from_compiled(field["descriptor"], field["descriptor_digest"])
+                if (source['type'] == 'jsonb' and
+                        column.type.none_as_null is not descriptor.json_none_as_null):
+                    raise PolicyMismatch()
                 if (str(descriptor.domain_id), str(descriptor.table_id), str(descriptor.field_id)) != (
                         self.document["domain_id"], model["table_id"], field["field_id"]):
                     raise PolicyMismatch()
@@ -918,7 +1013,8 @@ class _Attachment:
             inspect(model).base_mapper._compiled_cache.clear()
         engine.clear_compiled_cache()
         install_guard(engine, UnsupportedProtectedOperation, self.before_execute, self.check_cursor,
-                      UnsafeDriverEvent, self.prepare_many, self.result_rows, self._check_process)
+                      UnsafeDriverEvent, self.prepare_many, self.result_rows, self._check_process,
+                      self.check_json_driver)
         native_compiler = engine.dialect.statement_compiler
         class StorageCompiler(native_compiler):
             def _label_select_column(compiler, statement, column, populate_result_map,
@@ -1043,6 +1139,13 @@ class _Attachment:
                 self.identity_type(binding.record.type)
                 if binding.tenant is not None:
                     self.identity_type(binding.tenant.type, uuid_only=True)
+                if binding.descriptor.value_codec == 'pg-jsonb-text/v1':
+                    native_type = binding.column.type.source_type
+                    if (not _jsonb_type_matches(native_type) or
+                            native_type.none_as_null is not binding.descriptor.json_none_as_null or
+                            binding.column.type.should_evaluate_none is not (not binding.descriptor.json_none_as_null) or
+                            binding.column.type.hashable is not False):
+                        raise PolicyMismatch()
                 actual_default = _value_default(binding.column, binding.descriptor.value_codec)
                 if binding.descriptor.value_codec == 'pg-timestamptz-us-be/v1':
                     if (actual_default is not binding.application_default or
@@ -1062,12 +1165,14 @@ class _Attachment:
     def _check_process(self):
         if os.getpid() != self._pid:
             raise ForkedRuntime()
-        if self.document['schema'] == 'cryptalis.lock/v14':
+        from ._search_layout import requires_prefix_scope
+        if requires_prefix_scope(self.document):
             from ._search_layout import require_prefix_qualification
             require_prefix_qualification()
 
     def _check_configuration(self):
         self._check_process()
+        self._check_json_configuration()
         engine = self.engine.sync_engine if isinstance(self.engine, AsyncEngine) else self.engine
         if (self._fingerprint() != self.fingerprint or engine.echo or not engine.hide_parameters or
                 engine.get_execution_options().get("schema_translate_map")):
@@ -1690,16 +1795,18 @@ class _Attachment:
                 if state.persistent and not attribute.history.has_changes():
                     continue
                 value = attribute.loaded_value
+                omitted_json = value is NO_VALUE and binding.descriptor.value_codec == 'pg-jsonb-text/v1'
                 if (state.pending and binding.application_default is not None
                         and (value is NO_VALUE or value is None)):
                     value = binding.application_default
                     setattr(obj, binding.attribute, value)
                 if value is NO_VALUE:
-                    value = None if state.pending and (binding.column.nullable or binding.boolean_processor is not None) else NO_VALUE
+                    value = None if state.pending and (binding.column.nullable or binding.boolean_processor is not None
+                                                       or omitted_json) else NO_VALUE
                 if value is NO_VALUE:
                     raise UnsupportedProtectedOperation()
                 try:
-                    stored = _assignment(value, binding)
+                    stored = None if omitted_json else _assignment(value, binding)
                 except (VarcharLengthExceeded, IntegerRangeExceeded, TypeError, ValueError) as failure:
                     if binding.boolean_processor is None and not isinstance(failure, (VarcharLengthExceeded, IntegerRangeExceeded)):
                         raise
@@ -1709,7 +1816,8 @@ class _Attachment:
                 else:
                     body = seal_value(stored, binding.descriptor, tenant, record, operation.keys_for(binding))
                     sealed = _Sealed(body, operation, binding, record=record, tenant=tenant)
-                operation.prepared[(binding.column.table.schema, binding.column.table.name, record, binding.column.key)] = (value, sealed)
+                expected = _json_input_state(value) if binding.descriptor.value_codec == 'pg-jsonb-text/v1' else value
+                operation.prepared[(binding.column.table.schema, binding.column.table.name, record, binding.column.key)] = (expected, sealed)
 
     def before_execute(self, connection, statement, multiparams, params, execution_options):
         if type(statement) in _SAVEPOINT_CONTROLS:
@@ -1795,7 +1903,9 @@ class _Attachment:
                         if binding.column.key not in output:
                             continue
                         prepared = operation.prepared.get((statement.table.schema, statement.table.name, record, binding.column.key))
-                        if prepared is None or output[binding.column.key] != prepared[0]:
+                        actual = (_json_input_state(output[binding.column.key])
+                                  if binding.descriptor.value_codec == 'pg-jsonb-text/v1' else output[binding.column.key])
+                        if prepared is None or actual != prepared[0]:
                             raise UnsupportedProtectedOperation()
                         output[binding.column.key] = prepared[1]
                 changed.append(output)
@@ -2156,6 +2266,9 @@ class _Session(Session):
 
     def _keys(self):
         self._owner._check_process()
+        if self._owner.has_jsonb:
+            self._owner._check_configuration()
+            self._owner.check_json_driver(self.connection().connection.dbapi_connection)
         if self._asynchronous:
             if self._prepared is None:
                 raise KeyUnavailable()
@@ -2175,7 +2288,11 @@ class _Session(Session):
     def flush(self, objects=None):
         if not (self.new or self.dirty or self.deleted):
             return super().flush(objects)
-        operation = _Operation(self._owner, self._keys(), self._tenant, self, flushing=True)
+        captured = self._owner.json_write_state(self)
+        material = self._keys()
+        if captured != self._owner.json_write_state(self):
+            raise UnsupportedProtectedOperation()
+        operation = _Operation(self._owner, material, self._tenant, self, flushing=True)
         token = _operation.set(operation)
         try:
             return super().flush(objects)
@@ -2380,8 +2497,9 @@ def _bulk_insert(state):
     rows = []
     for original in state.parameters:
         if (type(original) is not dict or set(original) - columns.keys() or
-                any(hasattr(value, '__clause_element__') or isinstance(value, ClauseElement)
-                    for value in original.values())):
+                any((hasattr(value, '__clause_element__') or isinstance(value, ClauseElement))
+                    and not _sql_null_assignment(value, columns[attribute])
+                    for attribute, value in original.items())):
             raise UnsupportedProtectedOperation()
         row = dict(original)
         record = row.get(first.record_attribute)
@@ -2396,7 +2514,11 @@ def _bulk_insert(state):
                             column.default is not None and not column.default.is_scalar):
                 raise UnsupportedProtectedOperation()
         rows.append(row)
-    operation = _Operation(owner, session._keys(), session._tenant, session,
+    captured = _json_rows_state(rows, bindings)
+    material = session._keys()
+    if captured and captured != _json_rows_state(state.parameters, bindings):
+        raise UnsupportedProtectedOperation()
+    operation = _Operation(owner, material, session._tenant, session,
                            bulk_insert=table, bulk_returning=returning)
     if owner.returning_binding(statement, table) != returning:
         raise UnsupportedProtectedOperation()
@@ -2406,7 +2528,8 @@ def _bulk_insert(state):
         tenant = row[first.tenant_attribute] if first.tenant is not None else first.descriptor.table_id
         operation.rows[(table.schema, table.name, record)] = tenant
         for binding in bindings:
-            if binding.attribute not in row or row[binding.attribute] is None and not render_nulls:
+            if binding.attribute not in row or (row[binding.attribute] is None and not render_nulls
+                                                and not binding.column.type.should_evaluate_none):
                 if binding.application_default is None:
                     continue  # Preserve native NULL omission and heterogeneous grouping.
                 row[binding.attribute] = binding.application_default
@@ -2486,6 +2609,11 @@ def _update_literals(owner, statement, columns):
             if physical.get(column.key) is not column:
                 raise UnsupportedProtectedOperation()
             owner.select_types(select(target))
+        if column.key in values:
+            raise UnsupportedProtectedOperation()
+        if _sql_null_assignment(bind, column):
+            values[_delete_name_state(column.key)[0]] = bind
+            continue
         _delete_node(bind, BindParameter)
         if (column.key in values or type(bind.type) is not NullType or
                 bind._is_crud is not True or bind.unique is not True or
@@ -2542,8 +2670,9 @@ def _capture_update(owner, mapper, statement, parameters, tenant):
         if (type(original) is not dict or any(type(key) is not str for key in original) or
                 set(original) - columns.keys() or
                 first.tenant_attribute in original or point and first.record_attribute in original or
-                any(hasattr(value, '__clause_element__') or isinstance(value, ClauseElement)
-                    for value in original.values())):
+                any((hasattr(value, '__clause_element__') or isinstance(value, ClauseElement))
+                    and not _sql_null_assignment(value, columns[attribute])
+                    for attribute, value in original.items())):
             raise UnsupportedProtectedOperation()
         row = dict(original)
         if point:
@@ -2560,12 +2689,14 @@ def _capture_update(owner, mapper, statement, parameters, tenant):
                for attribute, column in columns.items() if attribute not in row):
             raise UnsupportedProtectedOperation()
         rows.append(tuple(row.items()))
-    return _UpdateRequest(mapper, table, tenant, tuple(columns.items()), tuple(rows), permit, returning, literal_values)
+    json_inputs = _json_rows_state([dict(row) for row in rows], bindings)
+    return _UpdateRequest(mapper, table, tenant, tuple(columns.items()), tuple(rows), permit, returning, literal_values, json_inputs)
 
 
 def _same_update_request(original, current):
     if (original.mapper is not current.mapper or original.table is not current.table or
             original.literal_values != current.literal_values or
+            original.json_inputs != current.json_inputs or
             original.returning != current.returning or (original.point is None) != (current.point is None) or
             original.point is not None and original.point.identity != current.point.identity or
             original.point is not None and original.point.returning_shape != current.point.returning_shape or
@@ -2674,13 +2805,20 @@ def _bulk_update(state):
 
 class _AsyncTransaction(AsyncSessionTransaction):
     async def start(self, is_ctxmanager=False):
-        await self.session._prepare()
+        # A native root begin performs no SQL. Acquiring its JSON connection
+        # first would autobegin a competing root; prepare at its first operation.
+        if self.nested or not self.session.sync_session._owner.has_jsonb:
+            await self.session._prepare()
         return await super().start(is_ctxmanager)
 
     async def __aexit__(self, *args):
         self.session.sync_session._owner._check_process()
         if args[0] is None:
-            await self.session._prepare()
+            try:
+                await self.session._prepare()
+            except BaseException as failure:
+                await super().__aexit__(type(failure), failure, failure.__traceback__)
+                raise
         return await super().__aexit__(*args)
 
     async def commit(self):
@@ -2700,7 +2838,15 @@ class _AsyncSession(AsyncSession):
 
     async def _prepare(self):
         session = self.sync_session
+        captured = session._owner.json_write_state(session)
+        if session._owner.has_jsonb:
+            session._owner._check_configuration()
+            connection = await super().connection()
+            await connection.run_sync(lambda current: session._owner.check_json_driver(
+                current.connection.dbapi_connection))
         session._prepared = await session._owner.prepare_async(session._tenant)
+        if captured != session._owner.json_write_state(session):
+            raise UnsupportedProtectedOperation()
 
     def begin(self):
         self.sync_session._owner._check_process()
@@ -2718,6 +2864,7 @@ def _async_method(name, *, native=None):
         self.sync_session._owner._check_process()
         statement = args[0] if args else kwargs.get('statement')
         permit = request = delete_tenant = None
+        insert_inputs, insert_bindings = (), ()
         if isinstance(statement, Select):
             session = self.sync_session
             session._owner._check_configuration()
@@ -2741,6 +2888,15 @@ def _async_method(name, *, native=None):
             parameters = args[1] if len(args) > 1 else kwargs.get('params')
             request = _capture_update(session._owner, statement._propagate_attrs.get('plugin_subject'),
                                       statement, parameters, session._tenant)
+        if isinstance(statement, Insert):
+            session = self.sync_session
+            mapper = statement._propagate_attrs.get('plugin_subject')
+            insert_bindings = session._owner.models.get(getattr(mapper, 'class_', None), ())
+            if any(binding.descriptor.value_codec == 'pg-jsonb-text/v1' for binding in insert_bindings):
+                parameters = args[1] if len(args) > 1 else kwargs.get('params')
+                if type(parameters) is not list or any(type(row) is not dict for row in parameters):
+                    raise UnsupportedProtectedOperation()
+                insert_inputs = _json_rows_state(parameters, insert_bindings)
         try:
             await self._prepare()
             if permit is not None:
@@ -2756,9 +2912,12 @@ def _async_method(name, *, native=None):
                 current = _capture_update(session._owner, request.mapper, statement, parameters, session._tenant)
                 if not _same_update_request(request, current):
                     raise UnsupportedProtectedOperation()
+            if insert_inputs and insert_inputs != _json_rows_state(parameters, insert_bindings):
+                raise UnsupportedProtectedOperation()
             return await native(self, *args, **kwargs)
         finally:
             permit = request = delete_tenant = None
+            insert_inputs = insert_bindings = ()
     return method
 
 

@@ -506,6 +506,8 @@ def _convert_public_columns(c, p, model, *, plaintext=False):
             if native['type'] == 'numeric':
                 from ._numeric import numeric_sql_type
                 target = numeric_sql_type(native['typmod'])
+            elif native['type'] == 'jsonb':
+                target = 'pg_catalog.jsonb'
             elif _fixed_value_width(native) is not None:
                 target = 'pg_catalog.' + native['type']
                 if native['type'] in ('timestamp', 'timestamptz') and native['typmod'] == '6':
@@ -717,7 +719,7 @@ def plan(manifest, mapping, engine, *, writers, search_reviews=(), keys, runtime
             sizes = [(f'CASE WHEN {_quote(c, f["column"])} IS NULL THEN 0 ELSE {_fixed_value_width(f["source"])} END'
                       if _fixed_value_width(f['source']) is not None else
                       f'coalesce(octet_length({_quote(c, f["column"])}' +
-                      ('::pg_catalog.text' if f['source']['type'] == 'numeric' else '') + '),0)') for f in model['fields']]
+                      ('::pg_catalog.text' if f['source']['type'] in ('numeric', 'jsonb') else '') + '),0)') for f in model['fields']]
             size=c.exec_driver_sql(f'SELECT coalesce(sum('+ '+'.join(sizes)+f'),0) FROM {_table(c,model)}').scalar_one()
             scopes.append({'table_id':model['table_id'],'estimated_rows':count})
             rows+=count; plaintext_bytes+=size
@@ -997,21 +999,47 @@ def _lock_tables(c,p,*,verification=False):
     raise TransitionFailure('table_lock_busy_retry',p.operation_id,'55P03')
 
 
-def _stream(c,model,*,payloads=False,identity_only=False,after=None,limit=1000):
+def _native_column(c, field, column=None):
+    """Read native JSONB losslessly without invoking the driver's JSON loader."""
+    column = _quote(c, field['column'] if column is None else column)
+    return (f"pg_catalog.convert_to({column}::pg_catalog.text,'UTF8')"
+            if field['source']['type'] == 'jsonb' else column)
+
+
+def _native_value(value, field):
+    """Keep SQL NULL separate from an authenticated JSON null document."""
+    if value is not None and field['source']['type'] == 'jsonb':
+        from ._jsonb import JsonbValue
+        return JsonbValue(bytes(value))
+    return value
+
+
+def _stream(c,model,*,payloads=False,identity_only=False,native=False,after=None,limit=1000):
     names=[model['record']['column']]
     scoped='column' in model['tenancy']
     if scoped: names.append(model['tenancy']['column'])
+    columns=[_quote(c,name) for name in names]
+    jsonb_columns={}
     if not identity_only:
         for f in model['fields']:
+            if native and f['source']['type'] == 'jsonb':
+                jsonb_columns[len(names)]=f
             names.append(f['column'])
-            if payloads: names.append(f['payload_column'])
-    sql='SELECT '+','.join(_quote(c,n) for n in names)+f' FROM {_table(c,model)}'
+            columns.append(_native_column(c,f) if native else _quote(c,f['column']))
+            if payloads:
+                names.append(f['payload_column'])
+                columns.append(_quote(c,f['payload_column']))
+    sql='SELECT '+','.join(columns)+f' FROM {_table(c,model)}'
     params=()
     if after is not None:
         value=UUID(after) if model['record']['codec']=='uuid16/v1' else int(after)
         sql+=f' WHERE {_quote(c,names[0])} > %s'; params=(value,)
     sql+=f' ORDER BY {_quote(c,names[0])} LIMIT %s'
-    return c.exec_driver_sql(sql,params+(limit,)).all()
+    rows=c.exec_driver_sql(sql,params+(limit,)).all()
+    if jsonb_columns:
+        return [tuple(_native_value(value,jsonb_columns[index]) if index in jsonb_columns else value
+                      for index,value in enumerate(row)) for row in rows]
+    return rows
 
 
 def _scope(c,model):
@@ -1143,7 +1171,7 @@ def _backfill_chunk(c,p,state,keys,chunk_size):
     _inspect_paused(c,p,state)
     for model in p.document['lock']['models']:
         progress=state['models'][model['table_id']]
-        rows=_stream(c,model,after=progress['cursor'],limit=chunk_size)
+        rows=_stream(c,model,native=True,after=progress['cursor'],limit=chunk_size)
         if not rows: continue
         # Immutable field-only context. Never retain keys or tenant/row context
         # across chunks; those are still resolved and checked below per value.
@@ -1189,6 +1217,8 @@ def _same_value(value, source, field):
         return aware_value(value) == aware_value(source)
     if value is not None and field['source']['type'] == 'numeric':
         return value.as_tuple() == source.as_tuple()
+    if value is not None and field['source']['type'] == 'jsonb':
+        return value.data == source.data
     return value == source
 
 
@@ -1198,7 +1228,7 @@ def _verify_values(c,p,keys,*,active=False):
     for model in p.document['lock']['models']:
         descriptors=tuple(FieldDescriptor.from_compiled(f['descriptor'],f['descriptor_digest']) for f in model['fields'])
         cursor=None; digest=hashlib.sha256()
-        while rows:=_stream(c,model,payloads=not active,after=cursor):
+        while rows:=_stream(c,model,payloads=not active,native=not active,after=cursor):
             material={}
             for row in rows:
                 tenant=row[1] if 'column' in model['tenancy'] else UUID(model['table_id']); offset=2 if 'column' in model['tenancy'] else 1

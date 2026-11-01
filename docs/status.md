@@ -71,6 +71,36 @@ source-role failure and later UUID fixture failures remain repaired.
 and [repair evidence](_reset/point-delete-returning-ci-fix-boundary-20261030.json)
 remain available.
 
+## Native JSONB storage
+
+**VERIFIED, bounded source and installed wheel:** standard PostgreSQL JSONB
+preserves both native NULL modes, ordinary and MutableDict tracking, sync/async
+CRUD/RETURNING and exact canonical native bytes through lifecycle operations.
+Lock/v15 and `pg-jsonb-text/v1` reuse existing authenticated encryption. Default
+JSON hooks and immutable input checks refuse changed behavior before dispatch;
+failed/cancelled async preparation cleans up transactions for healthy reuse.
+[Compatibility](compatibility.md#jsonb-storage) owns the exact scope.
+
+The complete source suite passes 3,953 calls and 18 subtests across 4,019 selected
+items. Twenty-five call, 41 setup and nine collection skips remain explicit.
+Focused source and Python 3.12 installed runs each pass all 39 JSONB cases without
+skips, including a genuine retained v14 reader control. Both installed fresh
+layouts pass export and authenticated adoption, tamper refusal, current edits,
+removal and an import-denied native restart. Their outer source cluster remains
+running until cleanup; no production fencing or disaster qualification follows.
+
+All seven final test receipts bind identical 323-file Python inventories and
+45-module runtime bytes. Repeat artifacts, 52 build inputs, SBOM, 50 installed
+files and CLI inspection pass. The [exact local boundary](_reset/jsonb-boundary-20261101.json)
+retains receipts, earlier failures and source snapshots; [type history](history/types-2026-11.md#native-jsonb-storage-2026-11-01)
+records the corrections and limits. Hosted JSONB verification is pending the
+slice's push; the latest retained complete hosted pass above predates JSONB.
+
+JSON search, protected defaults/indexes/constraints beyond nullability, broader
+native behavior, performance and independent review remain open. No objective or
+production gate is completed by this storage prerequisite. All seven gates stay
+UNKNOWN. The [handoff](handoff.md) routes the next authorized work.
+
 ## Published dense-domain order inference
 
 **VERIFIED, bounded synthetic source and installed experiment:** the published Sorting-Atk

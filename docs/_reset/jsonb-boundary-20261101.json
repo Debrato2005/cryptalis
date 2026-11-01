@@ -1,0 +1,734 @@
+{
+  "accepted": [
+    {
+      "bytes": 37354,
+      "outcomes": {
+        "collection": {},
+        "selected_items": 39,
+        "setup": {
+          "passed": 39
+        },
+        "subtest_calls": {},
+        "teardown": {
+          "passed": 39
+        },
+        "test_calls": {
+          "passed": 39
+        }
+      },
+      "path": "jsonb-complete-source-focused-20261101/receipt.json",
+      "runtime_binding": {
+        "mode": "source",
+        "module_count": 45,
+        "modules_sha256": "0214cf6c47a1e6511bea8e522da29f582c5db023c2652cdedd1a0ff9c6092dc9",
+        "runtime_root": "/home/debrato/Projects/cryptalis/src/cryptalis",
+        "wheel": null,
+        "wheel_sha256": null
+      },
+      "sha256": "250e2d655e46dd72a75edb540ba8a00b2d69ea4afbb6a576847c90333a4212a1",
+      "unchanged_source_and_runtime": true,
+      "verified_python_files": 323
+    },
+    {
+      "bytes": 37795,
+      "outcomes": {
+        "collection": {},
+        "selected_items": 39,
+        "setup": {
+          "passed": 39
+        },
+        "subtest_calls": {},
+        "teardown": {
+          "passed": 39
+        },
+        "test_calls": {
+          "passed": 39
+        }
+      },
+      "path": "jsonb-complete-installed-focused-20261101/receipt.json",
+      "runtime_binding": {
+        "mode": "installed-wheel",
+        "module_count": 45,
+        "modules_sha256": "0214cf6c47a1e6511bea8e522da29f582c5db023c2652cdedd1a0ff9c6092dc9",
+        "runtime_root": "/home/debrato/.cache/cryptalis-qa/jsonb-installed-20261101/lib/python3.12/site-packages/cryptalis",
+        "wheel": "/home/debrato/.cache/cryptalis-qa/jsonb-complete-artifacts-20261101/cryptalis-0.1.0-py3-none-any.whl",
+        "wheel_sha256": "c5fc05125df1e56111eb02ae9e9090eaca90c463941d3a3d267d9addfe946476"
+      },
+      "sha256": "c5e18de935fe72ee38de8f78a539a036db43d510445664d4edacff3ce1790cc3",
+      "unchanged_source_and_runtime": true,
+      "verified_python_files": 323
+    },
+    {
+      "bytes": 37439,
+      "outcomes": {
+        "collection": {},
+        "selected_items": 1,
+        "setup": {
+          "passed": 1
+        },
+        "subtest_calls": {},
+        "teardown": {
+          "passed": 1
+        },
+        "test_calls": {
+          "passed": 1
+        }
+      },
+      "path": "jsonb-complete-fresh-default-20261101/recovery/export-receipt.json",
+      "runtime_binding": {
+        "mode": "installed-wheel",
+        "module_count": 45,
+        "modules_sha256": "0214cf6c47a1e6511bea8e522da29f582c5db023c2652cdedd1a0ff9c6092dc9",
+        "runtime_root": "/home/debrato/.cache/cryptalis-qa/jsonb-installed-20261101/lib/python3.12/site-packages/cryptalis",
+        "wheel": "/home/debrato/.cache/cryptalis-qa/jsonb-complete-artifacts-20261101/cryptalis-0.1.0-py3-none-any.whl",
+        "wheel_sha256": "c5fc05125df1e56111eb02ae9e9090eaca90c463941d3a3d267d9addfe946476"
+      },
+      "sha256": "ff860ada5db6f9b831997fda36f69d5a1f78529ba31ddee1940943cc1be0bd98",
+      "unchanged_source_and_runtime": true,
+      "verified_python_files": 323
+    },
+    {
+      "bytes": 37481,
+      "outcomes": {
+        "collection": {},
+        "selected_items": 1,
+        "setup": {
+          "passed": 1
+        },
+        "subtest_calls": {},
+        "teardown": {
+          "passed": 1
+        },
+        "test_calls": {
+          "passed": 1
+        }
+      },
+      "path": "jsonb-complete-fresh-default-20261101/recovery/restore-receipt.json",
+      "runtime_binding": {
+        "mode": "installed-wheel",
+        "module_count": 45,
+        "modules_sha256": "0214cf6c47a1e6511bea8e522da29f582c5db023c2652cdedd1a0ff9c6092dc9",
+        "runtime_root": "/home/debrato/.cache/cryptalis-qa/jsonb-installed-20261101/lib/python3.12/site-packages/cryptalis",
+        "wheel": "/home/debrato/.cache/cryptalis-qa/jsonb-complete-artifacts-20261101/cryptalis-0.1.0-py3-none-any.whl",
+        "wheel_sha256": "c5fc05125df1e56111eb02ae9e9090eaca90c463941d3a3d267d9addfe946476"
+      },
+      "sha256": "134b15f9d6748e5f5ffe9053984ff9c0bfd32dc499b6f0869b18e8d3ed92693d",
+      "unchanged_source_and_runtime": true,
+      "verified_python_files": 323
+    },
+    {
+      "bytes": 37438,
+      "outcomes": {
+        "collection": {},
+        "selected_items": 1,
+        "setup": {
+          "passed": 1
+        },
+        "subtest_calls": {},
+        "teardown": {
+          "passed": 1
+        },
+        "test_calls": {
+          "passed": 1
+        }
+      },
+      "path": "jsonb-complete-fresh-slots-20261101/recovery/export-receipt.json",
+      "runtime_binding": {
+        "mode": "installed-wheel",
+        "module_count": 45,
+        "modules_sha256": "0214cf6c47a1e6511bea8e522da29f582c5db023c2652cdedd1a0ff9c6092dc9",
+        "runtime_root": "/home/debrato/.cache/cryptalis-qa/jsonb-installed-20261101/lib/python3.12/site-packages/cryptalis",
+        "wheel": "/home/debrato/.cache/cryptalis-qa/jsonb-complete-artifacts-20261101/cryptalis-0.1.0-py3-none-any.whl",
+        "wheel_sha256": "c5fc05125df1e56111eb02ae9e9090eaca90c463941d3a3d267d9addfe946476"
+      },
+      "sha256": "b957dfe84de1ce13e9fb36758d455af5d01be1aae3006626fb0bc59bb0648c79",
+      "unchanged_source_and_runtime": true,
+      "verified_python_files": 323
+    },
+    {
+      "bytes": 37482,
+      "outcomes": {
+        "collection": {},
+        "selected_items": 1,
+        "setup": {
+          "passed": 1
+        },
+        "subtest_calls": {},
+        "teardown": {
+          "passed": 1
+        },
+        "test_calls": {
+          "passed": 1
+        }
+      },
+      "path": "jsonb-complete-fresh-slots-20261101/recovery/restore-receipt.json",
+      "runtime_binding": {
+        "mode": "installed-wheel",
+        "module_count": 45,
+        "modules_sha256": "0214cf6c47a1e6511bea8e522da29f582c5db023c2652cdedd1a0ff9c6092dc9",
+        "runtime_root": "/home/debrato/.cache/cryptalis-qa/jsonb-installed-20261101/lib/python3.12/site-packages/cryptalis",
+        "wheel": "/home/debrato/.cache/cryptalis-qa/jsonb-complete-artifacts-20261101/cryptalis-0.1.0-py3-none-any.whl",
+        "wheel_sha256": "c5fc05125df1e56111eb02ae9e9090eaca90c463941d3a3d267d9addfe946476"
+      },
+      "sha256": "7845488d786237a1a344a19e0e2feb8608c99f70263ab56de36953751a4c9b5b",
+      "unchanged_source_and_runtime": true,
+      "verified_python_files": 323
+    },
+    {
+      "bytes": 50594,
+      "outcomes": {
+        "collection": {
+          "skipped": 9
+        },
+        "selected_items": 4019,
+        "setup": {
+          "passed": 3978,
+          "skipped": 41
+        },
+        "subtest_calls": {
+          "passed": 18
+        },
+        "teardown": {
+          "passed": 4019
+        },
+        "test_calls": {
+          "passed": 3953,
+          "skipped": 25
+        }
+      },
+      "path": "jsonb-complete-source-full-20261101/receipt.json",
+      "runtime_binding": {
+        "mode": "source",
+        "module_count": 45,
+        "modules_sha256": "0214cf6c47a1e6511bea8e522da29f582c5db023c2652cdedd1a0ff9c6092dc9",
+        "runtime_root": "/home/debrato/Projects/cryptalis/src/cryptalis",
+        "wheel": null,
+        "wheel_sha256": null
+      },
+      "sha256": "bfdb4fd60a526f97697592a3f49ddfc9a932a0384693af4de227e26fef71197b",
+      "unchanged_source_and_runtime": true,
+      "verified_python_files": 323
+    }
+  ],
+  "archive": {
+    "bytes": 4168410,
+    "members": 29,
+    "path": "jsonb-receipts-20261101.tar.gz",
+    "sha256": "cd8a0e88e297a58f882b6fb2e06d9620827ddbc081bf2109eb2c2e24444a8673"
+  },
+  "archive_inventory": [
+    {
+      "bytes": 1070,
+      "path": "LICENSE",
+      "sha256": "7f5a6a6ca9e6e2d6e75ec8530612396f3eebd2659c79a6ca123bf30a933f23df"
+    },
+    {
+      "bytes": 36312,
+      "path": "jsonb-baseline-20261101/receipt.json",
+      "sha256": "8289790b9c43adcd1aa710b8c2859ab47896f813c5375709824c271d1002c6a4"
+    },
+    {
+      "bytes": 17791,
+      "path": "jsonb-baseline-source-20261101/test_jsonb_storage.py",
+      "sha256": "9f0aa874dc5f378310ea2ec919564d2bd37ef4507aafe425689ac8879df1d84d"
+    },
+    {
+      "bytes": 942043,
+      "path": "jsonb-before-review-fixes-20261101.tar.gz",
+      "sha256": "6b0f0fd95a666bb5ecba1f43833bbf8b391e321276e1d2050ea65364944415a6"
+    },
+    {
+      "bytes": 282554,
+      "path": "jsonb-complete-artifacts-20261101/sbom.cdx.json",
+      "sha256": "28ee3f9681c1e3cab54eef4e16df610f495d23d95105b049bbb3229f945528b2"
+    },
+    {
+      "bytes": 8051,
+      "path": "jsonb-complete-build-20261101.json",
+      "sha256": "cac7ad48249c9780039b1110e2ead7110eda34c64dc9e841cd2841c4659f2a77"
+    },
+    {
+      "bytes": 37439,
+      "path": "jsonb-complete-fresh-default-20261101/recovery/export-receipt.json",
+      "sha256": "ff860ada5db6f9b831997fda36f69d5a1f78529ba31ddee1940943cc1be0bd98"
+    },
+    {
+      "bytes": 487,
+      "path": "jsonb-complete-fresh-default-20261101/recovery/jsonb-journey-receipt.json",
+      "sha256": "632cb3915d30b1dfda3d9286c705a9aad6d1fcfdc25203426c6d862696f169cb"
+    },
+    {
+      "bytes": 37481,
+      "path": "jsonb-complete-fresh-default-20261101/recovery/restore-receipt.json",
+      "sha256": "134b15f9d6748e5f5ffe9053984ff9c0bfd32dc499b6f0869b18e8d3ed92693d"
+    },
+    {
+      "bytes": 37438,
+      "path": "jsonb-complete-fresh-slots-20261101/recovery/export-receipt.json",
+      "sha256": "b957dfe84de1ce13e9fb36758d455af5d01be1aae3006626fb0bc59bb0648c79"
+    },
+    {
+      "bytes": 486,
+      "path": "jsonb-complete-fresh-slots-20261101/recovery/jsonb-journey-receipt.json",
+      "sha256": "ffcdcd347e425ac09e3302fa51f1096666952de833e8ae894cc2fa5793a8aaf9"
+    },
+    {
+      "bytes": 37482,
+      "path": "jsonb-complete-fresh-slots-20261101/recovery/restore-receipt.json",
+      "sha256": "7845488d786237a1a344a19e0e2feb8608c99f70263ab56de36953751a4c9b5b"
+    },
+    {
+      "bytes": 8304,
+      "path": "jsonb-complete-inspected-20261101.json",
+      "sha256": "26ebeaa4e827bae78d46422103dc9c8f0fea452583842dc7e300caf2bab3105f"
+    },
+    {
+      "bytes": 282554,
+      "path": "jsonb-complete-inspected-artifacts-20261101/sbom.cdx.json",
+      "sha256": "ba8687c92fdf7ff8aa7b659af98c7dbcec5968ac73244f891e62d0319e3e3f12"
+    },
+    {
+      "bytes": 37795,
+      "path": "jsonb-complete-installed-focused-20261101/receipt.json",
+      "sha256": "c5e18de935fe72ee38de8f78a539a036db43d510445664d4edacff3ce1790cc3"
+    },
+    {
+      "bytes": 20379,
+      "path": "jsonb-complete-local-audit-20261101.json",
+      "sha256": "25d4bb74d684a75478f31b7df41d14bf1d38f322f8363ced9c6d3235692ad599"
+    },
+    {
+      "bytes": 37354,
+      "path": "jsonb-complete-source-focused-20261101/receipt.json",
+      "sha256": "250e2d655e46dd72a75edb540ba8a00b2d69ea4afbb6a576847c90333a4212a1"
+    },
+    {
+      "bytes": 50594,
+      "path": "jsonb-complete-source-full-20261101/receipt.json",
+      "sha256": "bfdb4fd60a526f97697592a3f49ddfc9a932a0384693af4de227e26fef71197b"
+    },
+    {
+      "bytes": 36411,
+      "path": "jsonb-first-20261101/receipt.json",
+      "sha256": "d43bd4b0270b2af9d29884afecc62bd73bf17998b877793943624f8c61b8e288"
+    },
+    {
+      "bytes": 927336,
+      "path": "jsonb-first-source-20261101.tar.gz",
+      "sha256": "94ec04afa74ebdd52d9d316be60f7bdb96ead0a70ad292236dbf809224ba3cc2"
+    },
+    {
+      "bytes": 50414,
+      "path": "jsonb-full-source-20261101/receipt.json",
+      "sha256": "3291c538887361e9d0226247a30caaaf31c589e16a853bc54c9f079db828eb5c"
+    },
+    {
+      "bytes": 37566,
+      "path": "jsonb-installed-focused-20261101/receipt.json",
+      "sha256": "fc4eb4fd70977f9dbc75b055b05b3e046c79c9198ffb0e8d86e63b329c1f2661"
+    },
+    {
+      "bytes": 36994,
+      "path": "jsonb-review-fixed-20261101/receipt.json",
+      "sha256": "c618769c2ede2d28a18a45c4642ca9eee13add14af6296f9dfaba4ad3d7d1ef6"
+    },
+    {
+      "bytes": 36994,
+      "path": "jsonb-review-red-20261101/receipt.json",
+      "sha256": "b70697b4651d4d477f2dda119279151469d1c14c058eea0c3fc2e83d982292f4"
+    },
+    {
+      "bytes": 945091,
+      "path": "jsonb-review-red-source-20261101.tar.gz",
+      "sha256": "cd04464a1745a766c49c3b200e73d1d9cba06bfa003d0a439f0b396cbb09449b"
+    },
+    {
+      "bytes": 36355,
+      "path": "jsonb-second-20261101/receipt.json",
+      "sha256": "a28888740e26a2812f652e702fef4ba682e877f0d37f2602269ccf3fff8a4aae"
+    },
+    {
+      "bytes": 37069,
+      "path": "jsonb-source-focused-20261101/receipt.json",
+      "sha256": "51332fa42be5ed340116e99bc0fe0a689c624cf67601d29ad4a981e7fbb1651f"
+    },
+    {
+      "bytes": 941973,
+      "path": "jsonb-source-focused-failed-20261101.tar.gz",
+      "sha256": "1ec50bc0d5780431095566a2d13246adfca65e8655b7ff3f365748c9c033ccde"
+    },
+    {
+      "bytes": 37132,
+      "path": "jsonb-source-focused-fixed-20261101/receipt.json",
+      "sha256": "992f42cde28da57759f734e06914e472cf3c352142da7c90c6acd5487bbbf779"
+    }
+  ],
+  "artifacts": {
+    "cryptalis-0.1.0-py3-none-any.whl": {
+      "bytes": 249269,
+      "sha256": "c5fc05125df1e56111eb02ae9e9090eaca90c463941d3a3d267d9addfe946476"
+    },
+    "cryptalis-0.1.0.tar.gz": {
+      "bytes": 224042,
+      "sha256": "b3522aa3f1cdc1bafd6c72ecd3061116d3ba79557e1d5223e0a8dae9344e5e94"
+    }
+  },
+  "base_revision": "c4a55fe3db0556f4e9cc4418858c282a5e55501b",
+  "build_receipts": [
+    {
+      "artifacts": {
+        "cryptalis-0.1.0-py3-none-any.whl": "c5fc05125df1e56111eb02ae9e9090eaca90c463941d3a3d267d9addfe946476",
+        "cryptalis-0.1.0.tar.gz": "b3522aa3f1cdc1bafd6c72ecd3061116d3ba79557e1d5223e0a8dae9344e5e94"
+      },
+      "base_revision": "c4a55fe3db0556f4e9cc4418858c282a5e55501b",
+      "build_inputs": {
+        "backend_requirements": [
+          "uv_build==0.12.23"
+        ],
+        "constraints_sha256": "92b4ea5dbc312ccc4b86686f772e5deae8aecf9eb1c7ab1df2aec023da199d25",
+        "enforcement": "isolated PEP 517 with required build dependency hashes",
+        "python": "3.13.12 (main, Mar 20 2026, 00:34:08) [Clang 22.1.1 ]",
+        "uv": "uv 0.13.6 (329bf9448 2026-10-26 x86_64-unknown-linux-gnu)"
+      },
+      "bytes": 8051,
+      "clean_install": "NOT MEASURED",
+      "dirty": true,
+      "fixing_revision": "worktree-f3f93951e9ca0923",
+      "gate": "UNKNOWN",
+      "path": "jsonb-complete-build-20261101.json",
+      "reproducible_recorded": true,
+      "sbom_extras": [
+        "gcp",
+        "openbao",
+        "sqlmodel"
+      ],
+      "sbom_sha256": "28ee3f9681c1e3cab54eef4e16df610f495d23d95105b049bbb3229f945528b2",
+      "sha256": "cac7ad48249c9780039b1110e2ead7110eda34c64dc9e841cd2841c4659f2a77",
+      "verified_current_inputs": 52
+    },
+    {
+      "artifacts": {
+        "cryptalis-0.1.0-py3-none-any.whl": "c5fc05125df1e56111eb02ae9e9090eaca90c463941d3a3d267d9addfe946476",
+        "cryptalis-0.1.0.tar.gz": "b3522aa3f1cdc1bafd6c72ecd3061116d3ba79557e1d5223e0a8dae9344e5e94"
+      },
+      "base_revision": "c4a55fe3db0556f4e9cc4418858c282a5e55501b",
+      "build_inputs": {
+        "backend_requirements": [
+          "uv_build==0.12.23"
+        ],
+        "constraints_sha256": "92b4ea5dbc312ccc4b86686f772e5deae8aecf9eb1c7ab1df2aec023da199d25",
+        "enforcement": "isolated PEP 517 with required build dependency hashes",
+        "python": "3.13.12 (main, Mar 20 2026, 00:34:08) [Clang 22.1.1 ]",
+        "uv": "uv 0.13.6 (329bf9448 2026-10-26 x86_64-unknown-linux-gnu)"
+      },
+      "bytes": 8304,
+      "clean_install": {
+        "cli": "passed",
+        "verified_files": 50,
+        "wheel_sha256": "c5fc05125df1e56111eb02ae9e9090eaca90c463941d3a3d267d9addfe946476"
+      },
+      "dirty": true,
+      "fixing_revision": "worktree-f3f93951e9ca0923",
+      "gate": "UNKNOWN",
+      "path": "jsonb-complete-inspected-20261101.json",
+      "reproducible_recorded": true,
+      "sbom_extras": [
+        "gcp",
+        "openbao",
+        "sqlmodel"
+      ],
+      "sbom_sha256": "ba8687c92fdf7ff8aa7b659af98c7dbcec5968ac73244f891e62d0319e3e3f12",
+      "sha256": "26ebeaa4e827bae78d46422103dc9c8f0fea452583842dc7e300caf2bab3105f",
+      "verified_current_inputs": 52
+    }
+  ],
+  "date": "2026-11-01",
+  "failure_history": [
+    "Native baseline passes two cases; protected JSONB initially refuses unsupported_type.",
+    "First implementation run: shared E2E helper fixture lacks m module attribute; fixture corrected.",
+    "Focused native adapter-option positive control incorrectly used a custom creator; standard connect_args corrects native dialect hook installation.",
+    "Five review E2Es fail for explicit async begin in both NULL modes, active modification NULL-mode drift, prospective cursor hook admission and custom comparison/factory admission. Current source and installed runs execute all five repairs.",
+    "Preparation failure/cancellation transaction-exit cleanup and async same-object bulk-input mutation receive three further passing real E2Es.",
+    "Historical receipts and exact source snapshots are preserved. Complete terminal failure traces were not retained for every intermediate run; no reconstruction is claimed."
+  ],
+  "format": "cryptalis.jsonb-storage-boundary/v1",
+  "fresh_journeys": [
+    {
+      "bytes": 487,
+      "gates": "all seven UNKNOWN",
+      "native_wire": "exact jsonb_send bytes preserved",
+      "none_as_null": false,
+      "package_free_restart": "passed",
+      "path": "jsonb-complete-fresh-default-20261101/recovery/jsonb-journey-receipt.json",
+      "profile": "JSONB exact native wire, three rotations, fresh PostgreSQL16 adoption, current-value removal",
+      "public_slots": false,
+      "sha256": "632cb3915d30b1dfda3d9286c705a9aad6d1fcfdc25203426c6d862696f169cb",
+      "source_plan_digest": "6ef00fd3629ca950123c5b312f4d319bf3f1012b0c95e9522933d95f63bdf0f1",
+      "tampered_frame": "refused before adoption"
+    },
+    {
+      "bytes": 486,
+      "gates": "all seven UNKNOWN",
+      "native_wire": "exact jsonb_send bytes preserved",
+      "none_as_null": false,
+      "package_free_restart": "passed",
+      "path": "jsonb-complete-fresh-slots-20261101/recovery/jsonb-journey-receipt.json",
+      "profile": "JSONB exact native wire, three rotations, fresh PostgreSQL16 adoption, current-value removal",
+      "public_slots": true,
+      "sha256": "ffcdcd347e425ac09e3302fa51f1096666952de833e8ae894cc2fa5793a8aaf9",
+      "source_plan_digest": "058203c365cc996d54e1c1ffa3fe10ca8e3a002287eb70c49e9857b86799685c",
+      "tampered_frame": "refused before adoption"
+    }
+  ],
+  "historical_receipts": [
+    {
+      "bytes": 36312,
+      "counts": {
+        "collection": {},
+        "selected_items": 6,
+        "setup": {
+          "passed": 3
+        },
+        "subtest_calls": {},
+        "teardown": {
+          "passed": 3
+        },
+        "test_calls": {
+          "failed": 1,
+          "passed": 2
+        }
+      },
+      "exit_code": 1,
+      "historical_not_current_final_evidence": true,
+      "path": "jsonb-baseline-20261101/receipt.json",
+      "sha256": "8289790b9c43adcd1aa710b8c2859ab47896f813c5375709824c271d1002c6a4"
+    },
+    {
+      "bytes": 36411,
+      "counts": {
+        "collection": {},
+        "selected_items": 6,
+        "setup": {
+          "passed": 3
+        },
+        "subtest_calls": {},
+        "teardown": {
+          "passed": 3
+        },
+        "test_calls": {
+          "failed": 1,
+          "passed": 2
+        }
+      },
+      "exit_code": 1,
+      "historical_not_current_final_evidence": true,
+      "path": "jsonb-first-20261101/receipt.json",
+      "sha256": "d43bd4b0270b2af9d29884afecc62bd73bf17998b877793943624f8c61b8e288"
+    },
+    {
+      "bytes": 50414,
+      "counts": {
+        "collection": {
+          "skipped": 9
+        },
+        "selected_items": 4011,
+        "setup": {
+          "passed": 3970,
+          "skipped": 41
+        },
+        "subtest_calls": {
+          "passed": 18
+        },
+        "teardown": {
+          "passed": 4011
+        },
+        "test_calls": {
+          "passed": 3945,
+          "skipped": 25
+        }
+      },
+      "exit_code": 0,
+      "historical_not_current_final_evidence": true,
+      "path": "jsonb-full-source-20261101/receipt.json",
+      "sha256": "3291c538887361e9d0226247a30caaaf31c589e16a853bc54c9f079db828eb5c"
+    },
+    {
+      "bytes": 37566,
+      "counts": {
+        "collection": {},
+        "selected_items": 31,
+        "setup": {
+          "passed": 31
+        },
+        "subtest_calls": {},
+        "teardown": {
+          "passed": 31
+        },
+        "test_calls": {
+          "passed": 31
+        }
+      },
+      "exit_code": 0,
+      "historical_not_current_final_evidence": true,
+      "path": "jsonb-installed-focused-20261101/receipt.json",
+      "sha256": "fc4eb4fd70977f9dbc75b055b05b3e046c79c9198ffb0e8d86e63b329c1f2661"
+    },
+    {
+      "bytes": 36994,
+      "counts": {
+        "collection": {},
+        "selected_items": 5,
+        "setup": {
+          "passed": 5
+        },
+        "subtest_calls": {},
+        "teardown": {
+          "passed": 5
+        },
+        "test_calls": {
+          "passed": 5
+        }
+      },
+      "exit_code": 0,
+      "historical_not_current_final_evidence": true,
+      "path": "jsonb-review-fixed-20261101/receipt.json",
+      "sha256": "c618769c2ede2d28a18a45c4642ca9eee13add14af6296f9dfaba4ad3d7d1ef6"
+    },
+    {
+      "bytes": 36994,
+      "counts": {
+        "collection": {},
+        "selected_items": 5,
+        "setup": {
+          "passed": 5
+        },
+        "subtest_calls": {},
+        "teardown": {
+          "passed": 5
+        },
+        "test_calls": {
+          "failed": 5
+        }
+      },
+      "exit_code": 1,
+      "historical_not_current_final_evidence": true,
+      "path": "jsonb-review-red-20261101/receipt.json",
+      "sha256": "b70697b4651d4d477f2dda119279151469d1c14c058eea0c3fc2e83d982292f4"
+    },
+    {
+      "bytes": 36355,
+      "counts": {
+        "collection": {},
+        "selected_items": 6,
+        "setup": {
+          "passed": 6
+        },
+        "subtest_calls": {},
+        "teardown": {
+          "passed": 6
+        },
+        "test_calls": {
+          "passed": 6
+        }
+      },
+      "exit_code": 0,
+      "historical_not_current_final_evidence": true,
+      "path": "jsonb-second-20261101/receipt.json",
+      "sha256": "a28888740e26a2812f652e702fef4ba682e877f0d37f2602269ccf3fff8a4aae"
+    },
+    {
+      "bytes": 37069,
+      "counts": {
+        "collection": {},
+        "selected_items": 15,
+        "setup": {
+          "passed": 15
+        },
+        "subtest_calls": {},
+        "teardown": {
+          "passed": 15
+        },
+        "test_calls": {
+          "failed": 1,
+          "passed": 14
+        }
+      },
+      "exit_code": 2,
+      "historical_not_current_final_evidence": true,
+      "path": "jsonb-source-focused-20261101/receipt.json",
+      "sha256": "51332fa42be5ed340116e99bc0fe0a689c624cf67601d29ad4a981e7fbb1651f"
+    },
+    {
+      "bytes": 37132,
+      "counts": {
+        "collection": {},
+        "selected_items": 31,
+        "setup": {
+          "passed": 31
+        },
+        "subtest_calls": {},
+        "teardown": {
+          "passed": 31
+        },
+        "test_calls": {
+          "passed": 31
+        }
+      },
+      "exit_code": 0,
+      "historical_not_current_final_evidence": true,
+      "path": "jsonb-source-focused-fixed-20261101/receipt.json",
+      "sha256": "992f42cde28da57759f734e06914e472cf3c352142da7c90c6acd5487bbbf779"
+    }
+  ],
+  "historical_source_snapshots": [
+    {
+      "bytes": 942043,
+      "path": "jsonb-before-review-fixes-20261101.tar.gz",
+      "sha256": "6b0f0fd95a666bb5ecba1f43833bbf8b391e321276e1d2050ea65364944415a6"
+    },
+    {
+      "bytes": 927336,
+      "path": "jsonb-first-source-20261101.tar.gz",
+      "sha256": "94ec04afa74ebdd52d9d316be60f7bdb96ead0a70ad292236dbf809224ba3cc2"
+    },
+    {
+      "bytes": 945091,
+      "path": "jsonb-review-red-source-20261101.tar.gz",
+      "sha256": "cd04464a1745a766c49c3b200e73d1d9cba06bfa003d0a439f0b396cbb09449b"
+    },
+    {
+      "bytes": 941973,
+      "path": "jsonb-source-focused-failed-20261101.tar.gz",
+      "sha256": "1ec50bc0d5780431095566a2d13246adfca65e8655b7ff3f365748c9c033ccde"
+    },
+    {
+      "bytes": 17791,
+      "path": "jsonb-baseline-source-20261101/test_jsonb_storage.py",
+      "sha256": "9f0aa874dc5f378310ea2ec919564d2bd37ef4507aafe425689ac8879df1d84d"
+    }
+  ],
+  "limitations": [
+    "Read-only audit of receipts/artifacts, not an independent database rerun or security review.",
+    "Focused tests/fresh profiles are exact local source/installed evidence; no hosted JSONB execution claim.",
+    "Fresh profiles cover none_as_null=False; lifecycle/core focused tests cover both null policies.",
+    "Nested scalar harness drops source schema and exits export pytest before adoption; outer source cluster is stopped after nested recovery, not before target startup.",
+    "Optional retained-v14 reader may explicitly skip on CI when unavailable; a skip does not qualify its boundary.",
+    "Earlier logs, clusters, credential files and raw dumps remain private; only receipt/source-snapshot filenames, sizes, hashes and safe aggregate counts are inventoried here.",
+    "JSON search/defaults remain unadmitted; all production gates remain UNKNOWN.",
+    "The archived read-only audit predates terminal full-source completion and explicitly records it pending; accepted final full-source receipt above supersedes that pending observation.",
+    "Local default-collation module has one explicit skip; earlier-reader JSONB control executes locally. Per-module and per-phase outcomes remain authoritative.",
+    "Source snapshots contain Python files only; private role homes, keys, logs, database dumps, local attachments and private handoff bundle are excluded.",
+    "AI review and receipt checking do not replace independent human review."
+  ],
+  "production_gates": "all seven UNKNOWN",
+  "revision_binding": "Local precommit worktree receipts; all recorded Python and build input bytes checked against final tree. Hosted exact-commit evidence is separate.",
+  "runtime": {
+    "installed_wheel_files_verified_from_disk": 50,
+    "modules": 45,
+    "modules_sha256": "0214cf6c47a1e6511bea8e522da29f582c5db023c2652cdedd1a0ff9c6092dc9",
+    "no_unrecorded_installed_package_files": true,
+    "wheel_RECORD_verified": true,
+    "wheel_and_sdist_modules_match_current_tree": true
+  },
+  "scope": "Native PostgreSQL16 JSONB storage prerequisite; not JSON search or production qualification."
+}

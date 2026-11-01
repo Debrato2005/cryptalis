@@ -162,6 +162,9 @@ def _mapping(lock, mapping):
                         not compiler._default_matches(compiler._value_default(column,
                             compiler._value_codec(field['source'])), field)):
                     raise ValueError
+                if (field['source']['type'] == 'jsonb' and column.type.none_as_null is not
+                        FieldDescriptor.from_compiled(field['descriptor'], field['descriptor_digest']).json_none_as_null):
+                    raise ValueError
     except (KeyError, TypeError, ValueError, AttributeError):
         raise m.TransitionFailure('modification_mapping_mismatch') from None
 

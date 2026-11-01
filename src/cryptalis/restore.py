@@ -35,6 +35,7 @@ from uuid import UUID
 
 from sqlalchemy.dialects import postgresql
 
+from cryptalis._jsonb import JsonbValue
 from cryptalis._sqlalchemy_search import _frame_expressions
 from cryptalis._search_layout import prefix_lengths
 from cryptalis import migration as m
@@ -640,7 +641,8 @@ def _scan(c, source, keys):
                         except CryptoFailure:
                             raise m.TransitionFailure('restored_frame_verification_failed',
                                                       source.operation_id) from None
-                        expected_type = (Decimal if descriptors[i].value_codec == 'pg-numeric-decimal/v1' else
+                        expected_type = (JsonbValue if descriptors[i].value_codec == 'pg-jsonb-text/v1' else
+                            Decimal if descriptors[i].value_codec == 'pg-numeric-decimal/v1' else
                             bool if descriptors[i].value_codec == 'boolean-u8/v1' else
                             datetime.datetime if descriptors[i].value_codec in ('pg-timestamp-us-be/v1', 'pg-timestamptz-us-be/v1') else
                             UUID if descriptors[i].value_codec == 'uuid-bytes16/v1' else

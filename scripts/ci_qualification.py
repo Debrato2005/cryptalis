@@ -181,6 +181,36 @@ class Qualification:
                     or receipt['runtime_binding']['mode'] != 'installed-wheel'
                     or receipt['runtime_binding']['wheel_sha256'] != digest):
                 raise CheckFailed(1)
+            self.run('installed native JSONB storage and failure workflows', [str(python),
+                'scripts/test_postgres.py', '--installed-wheel', str(wheel), '--source-role',
+                '--scope', 'Installed JSONB native values, NULL modes, mutations, transactions and lifecycle',
+                '--receipt', str(self.workdir / 'installed-jsonb-receipt.json'), '--',
+                'tests/test_jsonb_storage.py', 'tests/test_jsonb_admission.py',
+                'tests/test_jsonb_boundaries.py', 'tests/test_jsonb_async_failures.py',
+                'tests/test_jsonb_lifecycle.py', '-q'], environment=environment)
+            receipt = json.loads((self.workdir / 'installed-jsonb-receipt.json').read_text())
+            # The immutable earlier-reader interpreter is optional on a runner.
+            # Its explicit call skip cannot qualify that compatibility boundary.
+            skipped = receipt['counts'].get('skipped', 0)
+            if (receipt['exit_code'] != 0 or receipt['counts'].get('passed', 0) == 0
+                    or set(receipt['counts']) - {'passed', 'skipped'} or skipped > 1
+                    or receipt['modules'].get('tests/test_jsonb_admission.py', {}).get('skipped', 0) != skipped
+                    or receipt['pytest_report_counts']['setup'].get('skipped', 0)
+                    or receipt['pytest_report_counts']['collection']
+                    or receipt['runtime_binding']['mode'] != 'installed-wheel'
+                    or receipt['runtime_binding']['wheel_sha256'] != digest):
+                raise CheckFailed(1)
+            for layout, suffix in (([], 'jsonb-fresh'), (['--public-slots'], 'jsonb-slots-fresh')):
+                self.run('installed JSONB genuine fresh recovery ' + suffix, [str(python),
+                    'scripts/fresh_cluster_qualification.py', '--workdir', str(self.workdir / suffix),
+                    '--jsonb', *layout, '--installed-wheel', str(wheel)], environment=environment)
+                for phase in ('export', 'restore'):
+                    receipt = json.loads((self.workdir / suffix / f'{phase}-receipt.json').read_text())
+                    if (receipt['exit_code'] != 0 or receipt['counts'] != {'passed': 1}
+                            or receipt['pytest_report_counts']['collection']
+                            or receipt['runtime_binding']['mode'] != 'installed-wheel'
+                            or receipt['runtime_binding']['wheel_sha256'] != digest):
+                        raise CheckFailed(1)
             self.run('installed Google SDK protocol and PostgreSQL lifecycle', [str(python),
                 'scripts/test_postgres.py', '--installed-wheel', str(wheel), '--source-role',
                 '--scope', 'Google SDK local protocol transport and real PostgreSQL; no live cloud custody',
@@ -255,6 +285,13 @@ class Qualification:
                 ('source/receipt.json', 'source-receipt.json'),
                 ('release.json', 'release-receipt.json'), ('install.json', 'install-receipt.json'),
                 ('installed-sqlmodel-receipt.json', 'installed-sqlmodel-receipt.json'),
+                ('installed-jsonb-receipt.json', 'installed-jsonb-receipt.json'),
+                ('jsonb-fresh/export-receipt.json', 'installed-jsonb-export-receipt.json'),
+                ('jsonb-fresh/restore-receipt.json', 'installed-jsonb-restore-receipt.json'),
+                ('jsonb-fresh/jsonb-journey-receipt.json', 'installed-jsonb-journey-receipt.json'),
+                ('jsonb-slots-fresh/export-receipt.json', 'installed-jsonb-slots-export-receipt.json'),
+                ('jsonb-slots-fresh/restore-receipt.json', 'installed-jsonb-slots-restore-receipt.json'),
+                ('jsonb-slots-fresh/jsonb-journey-receipt.json', 'installed-jsonb-slots-journey-receipt.json'),
                 ('installed-code-receipt.json', 'installed-code-receipt.json'),
                 ('scanner-toolchain.json', 'scanner-toolchain.json'),
                 ('scanner-sbom.cdx.json', 'scanner-sbom.cdx.json'),

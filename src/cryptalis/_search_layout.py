@@ -24,14 +24,62 @@ def require_prefix_qualification():
         raise PrefixCapabilityUnadmitted()
 
 
+def requires_prefix_scope(lock):
+    """Recognize internal prefix facts, including mixed newer lock versions."""
+    if type(lock) is not dict:
+        return False
+    if lock.get('schema') == 'cryptalis.lock/v14':
+        return True
+    readers = lock.get('required_readers')
+    if type(readers) in (list, tuple) and any(
+            reader in ('pg-text-prefix/v1', 'pg-text-pattern-index/v1') for reader in readers):
+        return True
+    for document in (lock, lock.get('declaration')):
+        if type(document) is not dict or type(document.get('models')) is not list:
+            continue
+        for model in document['models']:
+            if type(model) is not dict or type(model.get('fields')) is not list:
+                continue
+            protected = set()
+            for field in model['fields']:
+                if type(field) is not dict:
+                    continue
+                if type(field.get('column')) is str:
+                    protected.add(field['column'])
+                descriptor = field.get('descriptor')
+                queries = field.get('queries')
+                if ('prefix_lengths' in field or field.get('representation') == 'cf1-packed-prefix/v1'
+                        or type(queries) in (list, tuple) and 'prefix' in queries
+                        or type(descriptor) is dict and (
+                            'prefix_lengths' in descriptor or descriptor.get('schema') == 'cryptalis.context/v3'
+                            or descriptor.get('representation') == 'cf1-packed-prefix/v1')):
+                    return True
+            facts = model.get('source_schema')
+            if type(facts) is not dict or type(facts.get('indexes')) is not list:
+                continue
+            for index in facts['indexes']:
+                if type(index) is not dict:
+                    continue
+                columns, dependencies, opclasses = (index.get(name) for name in
+                                                     ('columns', 'dependency_columns', 'opclasses'))
+                if (type(columns) is list and type(dependencies) is list and type(opclasses) is list
+                        and any(type(name) is str and name in protected for name in columns + dependencies)
+                        and any(op in ('pg_catalog.text_pattern_ops', 'pg_catalog.varchar_pattern_ops')
+                                for op in opclasses)):
+                    return True
+    return False
+
+
 def prefix_plan_scope(document):
     """Keep saved preparation/activation artifacts within synthetic scope."""
     if not _PREFIX_QUALIFICATION.get():
         current = document
         while type(current) is dict:
+            if requires_prefix_scope(current):
+                require_prefix_qualification()
             for name in ('lock', 'target_lock', 'profile_source_lock'):
                 lock = current.get(name)
-                if type(lock) is dict and lock.get('schema') == 'cryptalis.lock/v14':
+                if requires_prefix_scope(lock):
                     require_prefix_qualification()
             current = current.get('source_plan')
     return document
