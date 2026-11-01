@@ -157,7 +157,7 @@ class Qualification:
                 'tests/test_single_tenant_update.py', 'tests/test_single_tenant_delete.py',
                 'tests/test_unprotected_delete.py', 'tests/test_unprotected_delete_returning.py',
                 'tests/test_initialization_cli.py', 'tests/test_application_config.py', 'tests/test_project.py',
-                'tests/test_quickstart_example.py',
+                'tests/test_quickstart_example.py', 'tests/test_admission_reuse.py', 'tests/test_upsert.py',
                 'tests/test_application_rotation.py', 'tests/test_application_online.py',
                 'tests/test_application_modification.py', 'tests/test_modification_boundaries.py',
                 'tests/test_modification_contexts.py', 'tests/test_modification_recovery.py',

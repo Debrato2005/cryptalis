@@ -2,6 +2,14 @@
 
 ## 0.1.0a2.dev2 — development
 
+- Security: final SELECT admission no longer accepts a statement replaced after
+  admission, including one that would send a plaintext comparison value. This also
+  affects `0.1.0a1`; exploiting it needs code inside the host process.
+- `insert().values(...)` is admitted with its native result, and PostgreSQL
+  `ON CONFLICT DO NOTHING` and primary-key `DO UPDATE` are admitted within the
+  [bounded upsert](docs/compatibility.md#bounded-upsert) contract.
+- Protected reads repeat less work, with every check retained: warm p50 is about
+  20–27% lower in a local diagnostic.
 - `examples/quickstart.py` runs the complete lifecycle from the installed package,
   in separate processes, ending with a restart that cannot import Cryptalis.
 - `DevelopmentKeyProvider(path)` keeps synthetic-data custody in an owner-only key

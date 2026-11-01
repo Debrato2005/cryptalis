@@ -7,6 +7,24 @@ production gates remain UNKNOWN. [Status](status.md) owns verification;
 [compatibility](compatibility.md) owns admitted behavior. This file is the resume
 route, not another product contract.
 
+## Latest continuation
+
+`claude/production-continuation-20261101` continues from `main` at `09be1f6`. It adds a
+[runnable lifecycle example](../examples/quickstart.py) and durable development custody,
+fixes [final admission](status.md#final-admission-no-longer-trusts-compilation), reduces
+repeated read work and admits [bounded upsert](compatibility.md#bounded-upsert). The
+separate Smolink branch `demo/cryptalis-email-search-20261102` holds the
+[real-application results](status.md#real-application-equality-search). The frozen tags
+and original Smolink checkout are unchanged. Its local services are stopped; synthetic
+data and its development key files stay under `~/.cache/cryptalis-production-20261101`.
+
+Three decisions remain the owner's. Whether to accept shared admission or compiled
+state to chase higher-concurrency targets, which [decisions](decisions.md#current-extensions)
+currently rejects. Whether tenant-column `DO UPDATE` should refuse, as it does now, or
+add a tenant predicate that turns a cross-tenant conflict into a silent no-op. Whether
+the final-admission fix needs anything beyond this changelog for the unpublished
+`0.1.0a1` draft, which it also affects.
+
 ## Current integration
 
 `main` is the production-development branch. PRs 5–8 combine JSONB literal
