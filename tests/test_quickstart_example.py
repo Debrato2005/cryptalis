@@ -57,7 +57,9 @@ def test_development_key_file_keeps_custody_across_instances(tmp_path):
     first = DevelopmentKeyProvider(path)
     assert path.stat().st_mode & 0o777 == 0o600
     wrapped = create_root(first, CONTEXT)
+    written = path.stat().st_mtime_ns, path.stat().st_ino
     second = DevelopmentKeyProvider(path)
+    assert (path.stat().st_mtime_ns, path.stat().st_ino) == written
     assert second.provider_id == first.provider_id
     assert second.unwrap(wrapped, CONTEXT) == first.unwrap(wrapped, CONTEXT)
     assert list(tmp_path.iterdir()) == [path]

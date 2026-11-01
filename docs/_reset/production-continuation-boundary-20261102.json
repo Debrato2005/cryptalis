@@ -16,8 +16,8 @@
  "measured_wheel_sha256": "ccebae5628e991eb4e8faf5e44e049a3c97aca3a41ff67f3cbb73ada72a1c3ec",
  "measured_wheel_clean_rebuild_equal": true,
  "final_artifacts": {
-  "wheel_sha256": "4f2938c9ce9c2e06f036cfcfe5f28206faa7cb1f00aef5c743bb3b7e354c2a61",
-  "sdist_sha256": "9e537482d041658581090269242174e609f6392526aa07c054647c06c26b4bc9",
+  "wheel_sha256": "7cc2631cb62e58ec215af6c62c2b7fda36f1f4990ee9c675452ca0f051cd0642",
+  "sdist_sha256": "50274a74d64b8805f4655513970b123fb66378bd30f90e7647e518f3ff6f7b2f",
   "repeat_build_equal": true
  },
  "build_provenance": "Recorded worktree bytes for final artifacts; not an independent rebuild",
@@ -49,32 +49,32 @@
   },
   "final_source": {
    "test_calls": {
-    "passed": 2195,
+    "passed": 2196,
     "skipped": 25
    },
    "subtest_calls": {
     "passed": 18
    },
    "setup": {
-    "passed": 2220,
+    "passed": 2221,
     "skipped": 34
    },
    "teardown": {
-    "passed": 2254
+    "passed": 2255
    },
    "collection": {
     "skipped": 5
    },
-   "selected_items": 2254
+   "selected_items": 2255
   },
   "final_source_stable": true,
-  "final_runtime_sha256": "e297507f69d54ee7302bf7df8a0be73b42b4e366abd7bf14d1c3075bbddf00b6",
+  "final_runtime_sha256": "09f06e2caba2395c92af3b1f867587d5614860ae7b57ca7d3c0ca672c844cad7",
   "installed_wheel": {
    "python_3_12": {
-    "passed": 34
+    "passed": 35
    },
    "python_3_13": {
-    "passed": 34
+    "passed": 35
    }
   },
   "upsert_mutants": {
@@ -82,13 +82,16 @@
    "caught": 7,
    "calls_per_run": 20
   },
-  "hosted_059f886": "run 41336500207, both jobs pass"
+  "hosted_059f886": "run 41336500207, both jobs pass",
+  "final_wheel_application_journey": "Complete Smolink journey passes, ending after a real uninstall; latency was not remeasured on this wheel"
  },
  "retained_failures": [
   "Local regression at 059f886 reported Verification.SourceChanged because scripts/ci_qualification.py changed during the run; its 172 passes are not a valid binding.",
   "First mutation attempt printed SURVIVED for all seven mutants, but the wrapper crashed before any test ran; that output is not evidence.",
   "Broad run retained as retained-failure-before-contract-update.json: one refusal test failed because insert().values was deliberately admitted; it was replaced with a stronger independent ciphertext check.",
-  "Equality at four worker processes misses 3 ms at 3.06 ms; every higher-concurrency single-process target misses; indexed storage misses 2x at 2.017x compacted and 4.24x after rotations."
+  "Equality at four worker processes misses 3 ms at 3.06 ms; every higher-concurrency single-process target misses; indexed storage misses 2x at 2.017x compacted and 4.24x after rotations.",
+  "Hosted source jobs at bd223c1 and 423f96f stopped at the lineage benchmark, which a cached attribute had broken; those jobs ran no source tests.",
+  "An audit attempt to remove the lineage rebuild counter made protected() answer False on Doctor paths; five tests failed, nothing was published and the change was reverted. That receipt was overwritten by the corrected rerun; history records it."
  ],
  "limits": [
   "Single shared workstation with uncontrolled load and warm development-key custody.",
@@ -99,7 +102,7 @@
  ],
  "receipt_archive": {
   "path": "production-continuation-receipts-20261102.tar.gz",
-  "sha256": "f724603fa51d628dba4b6e1614b86f6139be50f4b4ea2b70832ec8a26c94b0be",
+  "sha256": "24028623c5c06856e3532211335161b37078dd3d3f9f6916d0616a3808c63a4d",
   "members": 5
  },
  "gates": {
@@ -110,5 +113,6 @@
   "G-PROVIDER": "UNKNOWN",
   "G-POLICY": "UNKNOWN",
   "G-RELEASE": "UNKNOWN"
- }
+ },
+ "measurement_binding": "Latency and storage figures belong to the measured wheel at bd223c1, not the final wheel"
 }

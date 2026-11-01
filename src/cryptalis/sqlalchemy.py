@@ -912,6 +912,7 @@ class _Attachment:
     def protected(self, expression):
         # ORM annotations can retain a native type from mapping construction.
         # Stable column lineage is authoritative, not a mutable type hint.
+        # Doctor also adds bindings, so follow the list: a stale empty set would admit everything.
         if self._lineage_bindings != len(self.bindings):
             self._lineage = frozenset(column for binding in self.bindings for column in binding.column.proxy_set)
             self._lineage_bindings = len(self.bindings)
@@ -2690,7 +2691,7 @@ def _values_rows(statement, mapper):
                 raise UnsupportedProtectedOperation()
             return [{attribute(key): bind.value for key, bind in statement._values.items()}]
         return [{attribute(key): value for key, value in row.items()} for row in statement._multi_values[0]]
-    except (KeyError, AttributeError, UnmappedColumnError):
+    except (KeyError, UnmappedColumnError):
         raise UnsupportedProtectedOperation() from None
 
 
