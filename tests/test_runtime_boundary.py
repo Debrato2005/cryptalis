@@ -1,11 +1,13 @@
 """Native least-privilege refusal before provider work and active admission."""
 import json
+from contextlib import contextmanager
 
 import pytest
+from sqlalchemy import event
 
 from cryptalis import migration as m
 from cryptalis.manifest.compiler import SearchReview, Writer, WriterInventory
-from test_migration import application, keys, publish, run, TABLE_ID, FIELD_ID, frames
+from test_migration import application, engine, keys, publish, run, TABLE_ID, FIELD_ID, frames
 
 
 def privilege_change(app,fault):
@@ -24,16 +26,59 @@ def privilege_change(app,fault):
     }[fault]
 
 
+@contextmanager
+def unsafe_rights(app, fault):
+    grant, revoke = privilege_change(app, fault)
+    if fault != 'database_create':
+        try:
+            with app.owner.begin() as connection:
+                connection.exec_driver_sql(grant)
+            yield
+        finally:
+            with app.owner.begin() as connection:
+                connection.exec_driver_sql(revoke)
+        return
+
+    # Database ACLs affect every worker's runtime role. Inject this real grant
+    # only in the planner's observation transaction, which refusal rolls back.
+    # The compiler owns a preceding read-only transaction and must stay read-only.
+    observed = []
+    observer = engine('CRYPTALIS_TEST_DATABASE_URL')
+    def inject(connection):
+        if observed or connection.get_execution_options().get('postgresql_readonly'):
+            return
+        connection.exec_driver_sql(grant)
+        observed.append(connection.exec_driver_sql(
+            "SELECT pg_catalog.has_database_privilege(%s,current_database(),'CREATE')",
+            (app.role,)).scalar_one())
+        with observer.connect() as independent:
+            assert independent.exec_driver_sql(
+                "SELECT pg_catalog.has_database_privilege(%s,current_database(),'CREATE')",
+                (app.role,)).scalar_one() is False
+
+    event.listen(app.owner, 'begin', inject)
+    try:
+        yield
+    finally:
+        event.remove(app.owner, 'begin', inject)
+        try:
+            with observer.connect() as independent:
+                assert independent.exec_driver_sql(
+                    "SELECT pg_catalog.has_database_privilege(%s,current_database(),'CREATE')",
+                    (app.role,)).scalar_one() is False
+        finally:
+            observer.dispose()
+    assert observed == [True]
+
+
 @pytest.mark.parametrize('fault',['database_create','schema_create','table_trigger','table_truncate'])
 def test_initial_admission_refuses_effective_unsafe_rights_before_keys(fault):
     with application() as app:
-        grant,revoke=privilege_change(app,fault)
         called=[]
         def forbidden(tenant):
             called.append(tenant)
             raise AssertionError('unsafe roles cannot reach key work')
-        try:
-            with app.owner.begin() as c:c.exec_driver_sql(grant)
+        with unsafe_rights(app, fault):
             with pytest.raises(m.TransitionFailure,match='unsafe_runtime_role'):
                 m.plan(json.dumps(app.plan.document['lock']['declaration']).encode(),app.mapping,app.owner,
                     writers=WriterInventory(True,(Writer(TABLE_ID,'app','sqlalchemy',evidence='native role refusal'),)),
@@ -43,8 +88,6 @@ def test_initial_admission_refuses_effective_unsafe_rights_before_keys(fault):
             assert called==[]
             with app.owner.connect() as c:
                 assert c.exec_driver_sql('SELECT pg_catalog.to_regclass(%s)',(f'{app.schema}.{m.JOURNAL}',)).scalar_one() is None
-        finally:
-            with app.owner.begin() as c:c.exec_driver_sql(revoke)
 
 
 @pytest.mark.parametrize('fault',['journal_update','journal_column_update','schema_create'])

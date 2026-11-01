@@ -73,3 +73,39 @@ hosted failure, exact runtime hash and scoped local repair. Full hosted
 requalification is pending; no production gate changes.
 
 The subsequent complete [hosted run at `1aee8b9`](https://github.com/Debrato2005/cryptalis/actions/runs/41236215265) passes both source and installed/artifact jobs; [retained job metadata](../_reset/github-doctor-timeout-green-20261101.json) closes that pending hosted observation.
+
+## Parallel runtime-role observation
+
+The hosted [run at `4d425b5`](https://github.com/Debrato2005/cryptalis/actions/runs/41272275402)
+passes installed artifacts/recovery, but the full source suite passes 3,914 calls
+and 18 subtests and fails the UUID search-rotation case with
+`unsafe_runtime_role`. Twenty-four call, 41 setup and nine collection skips stay
+explicit. All 316 recorded Python files match that commit and imported runtime
+bytes remain stable. The [boundary](../_reset/runtime-role-isolation-boundary-20261101.json)
+and [archive](../_reset/runtime-role-isolation-receipts-20261101.tar.gz) retain
+the failed receipt, trace, GitHub metadata and installed/artifact evidence.
+
+`test_runtime_boundary.py` commits a database-wide CREATE grant to the same role
+used by every parallel fixture. Unique schema names cannot isolate this ACL.
+Any other fixture's runtime safety check must refuse during that interval. The
+hosted trace does not record which test overlapped or the exact ACL timing; the
+interference path is established by source, not reconstructed as a scheduling
+observation.
+
+The repair injects the real native grant through SQLAlchemy's public `begin`
+event only in the planner's read-write observation transaction. It skips the
+compiler's preceding read-only transaction. The checking connection observes
+CREATE, an independent connection observes its absence, and the public planner
+refuses before provider work or journal creation. Connection cleanup rolls back
+the grant; a fresh independent observation confirms its absence. The committed
+schema, table and journal privilege-drift cases remain. Runtime privilege checks
+and all package/build inputs are unchanged.
+
+The repaired source privilege and mixed scalar rotation files pass 16 calls
+together with two workers on a fresh PostgreSQL 16 cluster. The exact inspected
+prefix wheel passes 36 calls including reverse privilege boundaries in another
+fresh cluster. Neither run skips. Both bind the same 317 Python files and
+44-module runtime hash; their inventories include an unexecuted frozen JSONB
+test from separate ongoing work, retained in the archive without a capability
+claim. Full hosted requalification is pending. All seven production gates remain
+UNKNOWN.
