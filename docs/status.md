@@ -4,6 +4,28 @@ Cryptalis implements a bounded research prototype. **No production release or co
 This page owns current verification and release gates; the [34-objective ledger](BUILD_CHECKLIST.md) owns remaining work.
 Use the [documentation map](README.md) to find contracts and procedures.
 
+## Post-preview OpenBao qualification TLS
+
+**VERIFIED, local tooling boundary:** `scripts/openbao_qualification.py` now
+issues local CA and server certificates with standard key identifiers, critical
+constraints and key usage, and server authentication usage. Python 3.13 strict
+TLS rejects the earlier certificates with `Missing Authority Key Identifier`;
+verification remains enabled.
+
+A fresh pinned OpenBao 2.7.2 service passes a Python 3.13.5 / OpenSSL 3.5.7
+strict TLSv1.3 handshake and public `create_root`/unwrap through the inspected
+installed preview wheel. Native wrong-AAD decryption and runtime key
+administration refuse. The first runner attempt reached the listener before
+readiness and failed with `ConnectionResetError`; its receipt is retained.
+The corrected run waits for read-only readiness. Both temporary service
+containers were stopped and removed after private-log retention; keys and
+Raft files remain private. [Exact boundary and receipts](_reset/openbao-strict-tls-boundary-20261101.json).
+
+This changes qualification infrastructure only. Runtime source, package/build
+inputs and frozen preview artifacts are unchanged. No PostgreSQL test or full
+provider/deployment qualification ran for this boundary. All seven production
+gates and independent human review remain UNKNOWN.
+
 ## Installed-library preview preparation
 
 **Frozen library: `v0.1.0a1` at `655d522`.** Both jobs in
