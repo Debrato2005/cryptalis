@@ -80,6 +80,9 @@ stay outside this library and its distribution. Primary-source competitor
 comparison is retained there; equivalent competitor execution remains incomplete.
 The documented CipherStash proxy setup requires workspace/client credentials;
 none of its four required `CS_*` bindings is configured in this environment.
+Those credentials are for running CipherStash itself. Cryptalis and the Smolink
+integration use an independent external provider; their development and local
+verification can continue without a CipherStash account.
 The [draft release payload](../release/draft-0.1.0a1.json) and
 [review notes](../release/notes-0.1.0a1.md) are prepared locally. A remote draft
 Release was not created: the GitHub connector has no release-creation operation,
@@ -108,7 +111,10 @@ unchanged distributions, SBOM and build/install receipts. Its
 post-verification documentation revisions. Omitted historical/source references
 use pinned public URLs. It includes no application demonstration material.
 
-The [preview milestone](preview.md) takes priority before further feature work.
+The [preview milestone](preview.md) records the delivered bounded checkpoint.
+Continue production work independently of the live competitor-comparison and
+publication blockers. The [handoff](handoff.md) identifies repository branches,
+local artifacts, retained private state and the next implementation procedure.
 Version `0.1.0a1` uses the existing uv_build backend and declares Python 3.12 and
 3.13. Repeat builds produce identical wheels and source archives. Eight fresh,
 non-editable installs pass: pip and uv, wheel and sdist, CPython 3.12.14 and
