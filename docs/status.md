@@ -574,7 +574,7 @@ All 34 objectives remain in scope and all seven production gates remain UNKNOWN.
 <a id="named-returning-results"></a>
 ## Current ORM boundary
 
-**Development `0.1.0a2.dev2`, locally verified source and installed wheel:**
+**Development `0.1.0a2.dev2`, verified locally and in hosted CI at `1d4124b`:**
 [parameterized single-record UPDATE](compatibility.md#parameterized-single-record-update)
 accepts ordinary context and SET binds, native defaults/overrides and mixed
 literal/named assignments. It reuses the existing sealed point executor;
@@ -600,17 +600,35 @@ retain earlier selector/assertion failures, the anonymous-label regression,
 their corrections and superseded package hashes. [November observations](history/implementation-2026-11.md)
 explain the native duplicate-name, type-hook and timezone controls. Local builds
 use hashed worktree inputs; they are not independent clean-commit provenance.
-Hosted verification for this new slice remains pending. The earlier JSONB head's
-hosted success is recorded in its own section and does not qualify changed bytes.
+Both jobs pass in the original
+[push run](https://github.com/Debrato2005/cryptalis/actions/runs/41305071412) and
+[PR run](https://github.com/Debrato2005/cryptalis/actions/runs/41305131672).
+Each hosted source run passes 4,030 calls plus 18 subtests, with 27 call, 41
+setup and nine collection skips. Seventeen installed receipts pass 1,251 calls
+per run and retain three unavailable earlier-reader skips. The 23 new bind and
+53 RETURNING-label controls pass in source and installed suites. All 24 release
+steps pass. All 328 Python inputs across 18 inventories and 52 build inputs
+match `1d4124b`; runtime and distributions equal the final local artifacts.
+The push checkout is exactly that commit; the PR checks merge `af38ba7`, whose
+inventoried inputs match. Clean repeat builds, artifact digests and scope are in
+the [hosted boundary](_reset/point-update-parameters-hosted-boundary-20261101.json)
+and [95 retained files](_reset/point-update-parameters-hosted-receipts-20261101.tar.gz).
+No workflow was rerun. The earlier JSONB head's evidence remains separate.
 
 Earlier [scalar UPDATE values](_reset/point-update-values-boundary-20261030.json),
 [Boolean NOT/result keys](_reset/boolean-negation-boundary-20261030.json),
 [point UPDATE row counts](_reset/point-update-rows-boundary-20261030.json),
 [named INSERT results](_reset/insert-labels-boundary-20261030.json) and
 [named point UPDATE/DELETE results](_reset/returning-labels-boundary-20261030.json)
-retain their revision-specific evidence. No new package-uninstalled restart,
-fresh-backup recovery or real-provider qualification ran for this UPDATE slice.
-Broader DML, upserts/SQL expressions, protected joins/grouping and unsupported
+retain their revision-specific evidence. The hosted wheel repeats existing
+JSONB/application/public-slot/search-modification fresh recovery and provider
+profiles. The Project recovery command passes, but its dedicated phase receipts
+are absent from the uploaded artifacts. Google checks cover local SDK protocol
+transport and native PostgreSQL, without a live cloud account. OpenBao checks
+cover the pinned single-node TLS/Raft/audit/outage/restart/snapshot fixture.
+Recovery restart controls deny imports in interpreters that still contain the
+wheel; no package-uninstalled experiment or separate parameterized UPDATE after
+restore is claimed. Broader DML, upserts/SQL expressions, protected joins/grouping and unsupported
 search remain open. Performance, independent human review and all seven
 production gates remain UNKNOWN.
 

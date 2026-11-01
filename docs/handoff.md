@@ -9,14 +9,15 @@ route, not another product contract.
 
 ## Current stop point
 
-The current slice is on `codex/parameterized-update-20261101`, based on
+The implementation slice is `1d4124b549bb8b36f9c5022c94c3f489d9da901f` on
+`codex/parameterized-update-20261101`, based on
 `4d1daa530cba768cc2e19e708b410f2ed9010bbc`, with development version
 `0.1.0a2.dev2`. Reusable single-record UPDATE context/SET binds, defaults,
 overrides and native result behavior are implemented. No ciphertext/lock format
 changes. The [exact bind contract](compatibility.md#parameterized-single-record-update),
 [verification boundary](_reset/point-update-parameters-boundary-20261101.json)
 and [33 retained receipt/source files](_reset/point-update-parameters-receipts-20261101.tar.gz)
-define the scope. Complete source passes 4,031 calls plus 18 subtests with
+define the scope. Complete local source passes 4,031 calls plus 18 subtests with
 26 call, 41 setup and nine collection skips; fresh installed Python 3.12/3.13
 each pass 364 calls without skips. Original statements and anonymous/named
 RETURNING labels retain native behavior. Repeated bind names and incompatible
@@ -32,13 +33,31 @@ Earlier failures and superseded distributions remain retained; do not relabel
 them as final passes. The final code graph is refreshed. All local test handles
 are terminal and generated clusters stopped. No local operation awaits input.
 
-This branch stacks on [draft PR 6](https://github.com/Debrato2005/cryptalis/pull/6),
-which stacks on PR 5 below. Hosted verification for the current UPDATE slice is
-pending at this handoff. Inspect the branch's original push/PR runs and actual
-checkout identities before making a hosted claim; do not rerun an unchanged
-failed run or substitute prior-head evidence. Keep any new failures and compare
-source/build/runtime hashes to the immutable tested head. A successful local
-worktree build is not independent clean-commit provenance.
+[Draft PR 7](https://github.com/Debrato2005/cryptalis/pull/7) stacks on
+[draft PR 6](https://github.com/Debrato2005/cryptalis/pull/6), which stacks on
+PR 5 below. Both jobs pass in the original
+[push run 41305071412](https://github.com/Debrato2005/cryptalis/actions/runs/41305071412)
+and [PR run 41305131672](https://github.com/Debrato2005/cryptalis/actions/runs/41305131672).
+Each source run passes 4,030 calls plus 18 subtests, with 27 call, 41 setup and
+nine collection skips. Each installed set passes 1,251 calls and retains three
+earlier-reader skips. All 24 release steps pass; new bind and RETURNING-label
+controls pass in source and installed sets. The push checks `1d4124b` directly;
+the PR checks merge `af38ba735979a6669c543a7fd379537c70d2c397`, with identical
+inventoried inputs. The [hosted boundary](_reset/point-update-parameters-hosted-boundary-20261101.json)
+and [95 retained files](_reset/point-update-parameters-hosted-receipts-20261101.tar.gz)
+retain exact counts, digests, checkout identities and scope limits. Both original
+workflow handles are terminal; no workflow was retried.
+
+The hosted wheel repeats existing recovery/provider profiles. Project recovery
+has a passing command result without uploaded dedicated phase receipts. Google
+uses local SDK transport and native PostgreSQL; OpenBao uses the recorded pinned
+single-node service. Native restart controls deny Cryptalis imports while the
+wheel remains installed; parameterized UPDATE after fresh restore is not a
+separate tested journey. These results do not qualify production custody,
+deployment, performance or independent human review. This handoff follow-up
+changes documentation and retained evidence; Python/runtime/build inputs remain
+identical to tested implementation `1d4124b`. Continue to verify actual branch
+state, preserve new failures and inspect evidence for the exact head.
 
 The preceding JSONB equality slice is `4d1daa5` on
 `codex/jsonb-equality-20261101`. Both jobs in
@@ -115,6 +134,7 @@ and independent human review requirements remain in force.
 | Separate demo continuation | `demo/cryptalis-preview-followup-20261101`; [demo handoff](https://github.com/Debrato2005/smolink/blob/52b3d611cb7d7fca83e01f0b663e52c7515444c9/cryptalis_demo/HANDOFF.md) |
 | Frozen package CI | [Run 41280665577](https://github.com/Debrato2005/cryptalis/actions/runs/41280665577), PR merge `ac6b86b`; [head-byte boundary](_reset/preview-hosted-boundary-20261101.json) |
 | Frozen exact-tag CI | [Run 41293818065](https://github.com/Debrato2005/cryptalis/actions/runs/41293818065), `workflow_dispatch` at `655d522`; [exact-tag boundary](_reset/exact-tag-hosted-boundary-20261101.json) |
+| Parameterized UPDATE development CI | [Push 41305071412](https://github.com/Debrato2005/cryptalis/actions/runs/41305071412) and [PR 41305131672](https://github.com/Debrato2005/cryptalis/actions/runs/41305131672), implementation `1d4124b`; [hosted boundary](_reset/point-update-parameters-hosted-boundary-20261101.json) |
 | JSONB equality development CI | [Push 41301376349](https://github.com/Debrato2005/cryptalis/actions/runs/41301376349) and [PR 41301594776](https://github.com/Debrato2005/cryptalis/actions/runs/41301594776); [hosted boundary](_reset/jsonb-equality-hosted-boundary-20261101.json) |
 | JSONB default development CI | [Run 41295516545](https://github.com/Debrato2005/cryptalis/actions/runs/41295516545), exact `e75d049`; [hosted boundary](_reset/jsonb-defaults-hosted-boundary-20261101.json) |
 | Strict-TLS tooling CI | [Run 41282107646](https://github.com/Debrato2005/cryptalis/actions/runs/41282107646), head `fb53e9f`, PR merge `e7ce82d`; [head-byte boundary](_reset/openbao-strict-tls-hosted-boundary-20261101.json) |
@@ -213,7 +233,7 @@ checks use the existing authorized isolated harness and fresh private role files
    contract/procedure, [build order](build-guide.md), [decisions](decisions.md) and
    the [engineering playbook](../ENGINEERING_PLAYBOOK.md). Cross-cutting changes
    also require architecture, security, lifecycle and compatibility.
-3. After inspecting this slice's hosted outcome, follow the ledger's production critical path with bounded complete behaviors.
+3. Follow the ledger's production critical path with bounded complete behaviors.
    Preserve all broader type/text/JSON/SQL, upgrade, migration, performance and
    deployment objectives plus the retained policy/audit/erasure research. Further
    unfinished features are not prerequisites for the delivered preview.

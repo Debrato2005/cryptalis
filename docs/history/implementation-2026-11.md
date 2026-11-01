@@ -80,3 +80,35 @@ qualify production providers, deployment fencing, performance, arbitrary SQL or
 independent human review. Broader DML/upserts/expressions and all seven production
 gates remain open. The earlier VARCHAR InternalError and mutation survivor are
 separate unresolved observations.
+
+
+## Hosted parameterized UPDATE verification: 2026-11-01
+
+The original push `41305071412` and PR `41305131672` workflows both pass for
+implementation `1d4124b549bb8b36f9c5022c94c3f489d9da901f`. Each source run passes
+4,030 calls plus 18 subtests; 27 call, 41 setup and nine collection skips remain.
+Each installed set passes 1,251 calls with three earlier-reader skips. New bind
+controls pass 23/23 and RETURNING-label controls 53/53 in both source and
+installed receipts. All 24 release steps pass. All 328 Python inputs across 18
+inventories, 52 build inputs, stable 45-module runtime and wheel/sdist match the
+immutable implementation head and final local artifacts.
+
+The push checkout is exactly `1d4124b`; PR checkout is merge
+`af38ba735979a6669c543a7fd379537c70d2c397`, with the recorded source head and
+`4d1daa5` as parents. Uploaded artifact ZIP digests match GitHub metadata. Clean
+repeat builds pass. The [boundary](../_reset/point-update-parameters-hosted-boundary-20261101.json)
+and [95-file archive](../_reset/point-update-parameters-hosted-receipts-20261101.tar.gz)
+retain those bindings. Archive SHA-256 is
+`066028fadd4a0a39591987b620c60e74229930a02572a0dbedeb5540f20a7649`.
+Both original handles ended successfully; neither was rerun.
+
+Existing fresh profiles cover JSONB defaults/equality in both layouts,
+application recovery, integer public slots and search enable/disable. Project
+recovery has a passing command result, but its dedicated phase receipts were
+not uploaded. Google SDK/native-PostgreSQL checks pass 50 calls without a real
+cloud account. Pinned OpenBao 2.7.2 checks pass 140 calls under the recorded
+single-node TLS/Raft/audit/outage/restart/snapshot/PostgreSQL fixture limits.
+Recovery children deny Cryptalis imports with the wheel still installed; no
+package-uninstalled environment or distinct parameterized UPDATE-after-restore
+journey follows. The separate old VARCHAR cause and all seven production gates
+remain UNKNOWN. The follow-up changes only documentation and retained evidence.

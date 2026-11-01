@@ -214,8 +214,8 @@ native `StaleDataError`; roll back before retry. Tenant-column tables use the
 separate explicit tenant-equality form in the [UPDATE contract](compatibility.md#full-capability-matrix).
 Async sessions use the same statements with awaited execution and commit.
 Loaded objects retain native stale state until refresh or expiration. Use
-rollback or the enclosing savepoint to recover from errors. UPDATE expressions,
-Core statements and RETURNING remain unadmitted. The
+rollback or the enclosing savepoint to recover from errors. For this list of
+dictionaries, embedded assignments, Core statements and RETURNING remain unadmitted. The
 [online scalar checkpoint](history/implementation-2026-10.md#single-tenant-mapped-update-2026-10-29)
 adds current-value removal evidence across the admitted storage types.
 
