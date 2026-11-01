@@ -229,22 +229,38 @@ JSON hooks and immutable input checks refuse changed behavior before dispatch;
 failed/cancelled async preparation cleans up transactions for healthy reuse.
 [Compatibility](compatibility.md#jsonb-storage) owns the exact scope.
 
-The complete source suite passes 3,953 calls and 18 subtests across 4,019 selected
-items. Twenty-five call, 41 setup and nine collection skips remain explicit.
-Focused source and Python 3.12 installed runs each pass all 39 JSONB cases without
-skips, including a genuine retained v14 reader control. Both installed fresh
-layouts pass export and authenticated adoption, tamper refusal, current edits,
-removal and an import-denied native restart. Their outer source cluster remains
-running until cleanup; no production fencing or disaster qualification follows.
+**Development `0.1.0a2.dev0` also admits literal client defaults**, using lock/v16
+and `pg-jsonb-default/v1`; no-default JSONB keeps v15. Native oracles cover both
+NULL modes, exact pending Python literals, MutableDict coercion/tracking,
+sync/async ORM and dictionary INSERT/RETURNING, savepoints and default drift
+before keys/dispatch. The genuine frozen v15 reader accepts no-default JSONB and
+refuses v16 before SQL. The frozen `0.1.0a1` preview is unchanged.
 
-All seven final test receipts bind identical 323-file Python inventories and
-45-module runtime bytes. Repeat artifacts, 52 build inputs, SBOM, 50 installed
-files and CLI inspection pass. The [exact local boundary](_reset/jsonb-boundary-20261101.json)
-retains receipts, earlier failures and source snapshots; [type history](history/types-2026-11.md#native-jsonb-storage-2026-11-01)
-records the corrections and limits. The exact hosted pass is recorded above;
-its earlier-reader skip does not replace the executed local reader controls.
+The complete source run passes **3,985 calls and 18 subtests**, with 26 call,
+41 setup and nine collection skips. Source and installed Python 3.12.16/3.13.12
+JSONB workflows each pass **71 calls**, including 33 default controls, and retain
+one unavailable v14-reader skip. All bind the same 45-module runtime and
+unchanged source/runtime bytes during execution. A later qualification-only
+guard correction admits the matching v16/default fresh profile; product/test
+bytes are unchanged and the final fresh receipts bind the corrected harness.
 
-JSON search, protected defaults/indexes/constraints beyond nullability, broader
+Installed fresh recovery passes for default-bearing v16 in both layouts, plus
+a no-default v15 public-slot control. These cover three source rotations,
+authenticated adoption/tamper refusal, new omitted-value writes, current edits,
+removal and an import-denied native default restart. Fresh profiles use
+`none_as_null=False`; core workflows cover both modes. The outer source cluster
+remains running until cleanup, so no production fencing claim follows.
+
+Repeat wheel/sdist builds, 52 input hashes, SBOM, 50 installed files and CLI
+inspection pass. The [default boundary](_reset/jsonb-defaults-boundary-20261101.json)
+and [22 retained receipts](_reset/jsonb-defaults-receipts-20261101.tar.gz) preserve
+the three deliberate regression failures and three stopped harness profiles,
+their corrections, exact runtime/artifact hashes and the harness-only input
+difference after the complete run. Earlier storage/reader evidence remains in
+its [boundary](_reset/jsonb-boundary-20261101.json) and
+[type history](history/types-2026-11.md#native-jsonb-storage-2026-11-01).
+
+JSON search, generated defaults/indexes/constraints beyond nullability, broader
 native behavior, performance and independent review remain open. No objective or
 production gate is completed by this storage prerequisite. All seven gates stay
 UNKNOWN. The [handoff](handoff.md) routes the next authorized work.

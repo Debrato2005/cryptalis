@@ -25,9 +25,9 @@ VALUES = (BASE, [None, True, {'雪': '😀'}], 'json scalar', None, False, 17, 1
 
 
 @contextmanager
-def jsonb_application(*, public_slots=False, none_as_null=False):
+def jsonb_application(*, public_slots=False, none_as_null=False, value_default=None):
     with date_application(public_slots=public_slots, value_type=JSONB(none_as_null=none_as_null),
-                          values=deepcopy(VALUES), value_default=None) as current:
+                          values=deepcopy(VALUES), value_default=value_default) as current:
         seed_native(current)
         yield current
 

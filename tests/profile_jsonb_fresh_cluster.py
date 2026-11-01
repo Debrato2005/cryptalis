@@ -9,7 +9,7 @@ from uuid import UUID
 
 import psycopg
 import pytest
-from sqlalchemy import JSON, select
+from sqlalchemy import ColumnDefault, JSON, select
 from sqlalchemy.orm import Session
 
 from cryptalis import migration as m, restore as recovery
@@ -18,6 +18,7 @@ from test_date_lifecycle import date_keys, remove_date, rotate_all
 from test_jsonb_lifecycle import (document_wire, encoded_wire, jsonb_application, native_restart,
                                  native_wire, protected_wire)
 from test_jsonb_storage import LATEST, current_edits, mapping_for, values
+from test_jsonb_defaults import DEFAULT, native_default_restart
 from test_migration import engine, keys, publish, run, TENANT
 
 if 'CRYPTALIS_FRESH_CLUSTER_DIR' not in os.environ:
@@ -30,7 +31,8 @@ from test_fresh_boolean_restore import restore_dump
 def test_export_jsonb_backup_after_three_rotations_and_current_edits():
     directory = Path(os.environ['CRYPTALIS_FRESH_CLUSTER_DIR'])
     public_slots = os.environ.get('CRYPTALIS_FRESH_PUBLIC_SLOTS') == '1'
-    with jsonb_application(public_slots=public_slots) as app:
+    default = deepcopy(DEFAULT) if os.environ.get('CRYPTALIS_FRESH_JSONB_DEFAULTS') == '1' else None
+    with jsonb_application(public_slots=public_slots, value_default=default) as app:
         from test_public_slots import slots
         original_slots = [list(row) for row in slots(app)[1]] if public_slots else None
         source_wire = native_wire(app)
@@ -57,7 +59,7 @@ def test_export_jsonb_backup_after_three_rotations_and_current_edits():
         dump(directory / 'protected.sql', app.schema, environment('CRYPTALIS_TEST_DATABASE_URL'))
         owner = psycopg.conninfo.conninfo_to_dict(os.environ['CRYPTALIS_TEST_DATABASE_URL'])
         runtime = psycopg.conninfo.conninfo_to_dict(os.environ['CRYPTALIS_TEST_RUNTIME_DATABASE_URL'])
-        manifest = {'application_profile': 'jsonb-storage', 'application_default': None,
+        manifest = {'application_profile': 'jsonb-storage', 'application_default': default,
             'none_as_null': False, 'public_slots': public_slots, 'source_public_slots': original_slots,
             'database': owner['dbname'], 'owner_role': owner['user'], 'runtime_role': runtime['user'],
             'schema': app.schema, 'source_wire': encoded_wire(source_wire),
@@ -85,7 +87,9 @@ def test_restore_jsonb_authentication_current_edits_native_wire_and_package_free
     raw = manifest['pin']
     pin = m.DeploymentPin(UUID(raw['target_id']), UUID(raw['operation_id']), raw['plan_digest'], raw['phase'])
     owner, runtime = engine('CRYPTALIS_TEST_DATABASE_URL'), engine('CRYPTALIS_TEST_RUNTIME_DATABASE_URL')
-    mapping, _, Customer = mapping_for(schema, False)
+    mapping, table, Customer = mapping_for(schema, False)
+    if manifest['application_default'] is not None:
+        table.c.name.default = ColumnDefault(manifest['application_default'])
     approval = m.MaintenanceApproval('Source schema dropped; isolated restored target excludes all writers.', 3600)
     intent = recovery.RestoreApproval('qualification host', 'adopt lossless JSONB protected backup',
                                      'source export is terminal and restored target is quarantined', True)
@@ -115,6 +119,8 @@ def test_restore_jsonb_authentication_current_edits_native_wire_and_package_free
             session.get(Customer, UUID(int=910)).name = edited
             session.delete(session.get(Customer, UUID(int=101)))
             session.add(Customer(id=UUID(int=999), tenant_id=TENANT, name=JSON.NULL, label='restored current'))
+            if manifest['application_default'] is not None:
+                session.add(Customer(id=UUID(int=998), tenant_id=TENANT, label='restored omitted default'))
             session.commit()
             session.refresh(session.get(Customer, UUID(int=910)))
         expected = {UUID(identity): (sql_null, None if body is None else bytes.fromhex(body))
@@ -122,6 +128,8 @@ def test_restore_jsonb_authentication_current_edits_native_wire_and_package_free
         with owner.connect() as connection:
             expected[UUID(int=910)] = document_wire(connection, edited)
             expected[UUID(int=999)] = document_wire(connection, None)
+            if manifest['application_default'] is not None:
+                expected[UUID(int=998)] = document_wire(connection, manifest['application_default'])
         del expected[UUID(int=101)]
         assert protected_wire(app, date_keys) == expected
         remove_date(app, restore=binding, plaintext_role=os.environ['CRYPTALIS_FRESH_PLAINTEXT_ROLE'])
@@ -130,10 +138,13 @@ def test_restore_jsonb_authentication_current_edits_native_wire_and_package_free
             from test_public_slots import slots
             assert [list(row) for row in slots(app)[1]] == manifest['source_public_slots']
         native_restart(schema, expected, directory=directory)
+        if manifest['application_default'] is not None:
+            native_default_restart(app, expected, none_as_null=False)
         (directory / 'jsonb-journey-receipt.json').write_text(json.dumps({
             'source_plan_digest': source.digest, 'restore_adoption_id': binding.document['adoption_id'],
             'profile': 'JSONB exact native wire, three rotations, fresh PostgreSQL16 adoption, current-value removal',
             'none_as_null': False, 'public_slots': manifest['public_slots'],
+            'literal_client_default': manifest['application_default'] is not None,
             'tampered_frame': 'refused before adoption', 'native_wire': 'exact jsonb_send bytes preserved',
             'package_free_restart': 'passed', 'gates': 'all seven UNKNOWN'}, indent=2) + '\n')
     finally:

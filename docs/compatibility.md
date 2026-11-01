@@ -174,7 +174,7 @@ parent/child transaction evidence and remaining qualification work.
 | Timestamp storage/read/write and SQL NULL | SUPPORTED, bounded | Standard timestamp without time zone at default precision or explicit precision 6; exact naive Python datetime values in years 1–9999, literal client defaults, lock/v10 and [the timestamp boundary](#timestamp-storage). Explicit opt-in order admits comparisons and sorting; timezone-aware values and precision rounding remain unadmitted |
 | Aware timestamp storage/read/write and SQL NULL | SUPPORTED, bounded | Standard DateTime/TIMESTAMP with timezone=True at default precision or precision 6; exact aware datetime with standard timezone/ZoneInfo, lock/v12 and [aware timestamp boundary](#aware-timestamp-storage). Preserve native connection timezone, offset and fold; opt-in order, ranges and direct MIN/MAX use UTC instants |
 | Numeric storage/read/write and SQL NULL | SUPPORTED, bounded | Standard Numeric/NUMERIC with asdecimal=True; finite Decimal or exact Python int inputs, unconstrained or declared precision/scale, native rounding, literal defaults and lock/v11. [Numeric boundary](#numeric-storage); explicit equality/IN and scoped uniqueness use lock/v13. Numeric order, arithmetic and nonfinite values remain unadmitted |
-| Native JSONB storage/read/write | SUPPORTED, bounded | Standard JSONB with default JSON hooks, both native NULL modes, lossless lifecycle bytes and lock/v15. [JSONB boundary](#jsonb-storage). Search, protected defaults, indexes, CHECK, foreign-key and uniqueness constraints involving this field remain unadmitted; native nullability remains enforced |
+| Native JSONB storage/read/write | SUPPORTED, bounded | Standard JSONB with default JSON hooks, both native NULL modes, lossless lifecycle bytes and lock/v15; literal client defaults require lock/v16. [JSONB boundary](#jsonb-storage). Search, generated defaults, indexes, CHECK, foreign-key and uniqueness constraints involving this field remain unadmitted; native nullability remains enforced |
 | Signed integer storage/read/write and SQL NULL | SUPPORTED | Exact int2/int4/int8 mappings and width-bound Python ints, literal client defaults, native failure/transaction behavior and typed fixed-width CF1. Storage-only unless the field declares [`order`](#order-search); the fixed authentication overhead is published in the local cost profile |
 | Mapped dictionary INSERT without RETURNING | SUPPORTED | Attached sync/async `Session.execute(insert(Model), list[dict])`, explicit typed IDs and tenant scope, copied attribute dictionaries, native NULL/grouping, autoflush, uniqueness and transaction behavior. Other bulk routes remain unadmitted |
 | Mapped dictionary INSERT with RETURNING | SUPPORTED | Native direct or explicitly named column tuples/scalars and inserted mapped entities, including public-only columns. Preserve result keys/types, grouping, paging and optional input ordering. Entity results retain identity-map loading and refresh. Authenticate each protected output against its own exact prepared input. Computed expression/alias, loader-option and caller return_defaults forms remain unadmitted |
@@ -384,7 +384,7 @@ operational artifact use remain blocked by `PrefixCapabilityUnadmitted`.
 Some preparation-artifact constructors wrap that refusal in their existing
 typed invalid-plan error; neither outcome authorizes effects.
 [Manifest](manifest.md#internal-prefix-engineering-syntax) owns context/v3,
-lock/v14 (v15 with JSONB), reader dependencies and explicit Unicode prefix-length bounds.
+lock/v14 (v15 with JSONB, v16 with JSONB client defaults), reader dependencies and explicit Unicode prefix-length bounds.
 
 The private grammar covers literal LIKE patterns and literal characters followed
 only by terminal `%` wildcards, plus startswith and their negations. It preserves
@@ -485,11 +485,29 @@ remain unadmitted.
 Standard `sqlalchemy.dialects.postgresql.JSONB` with an exact Boolean
 `none_as_null` flag maps built-in PostgreSQL JSONB, OID 3802, without typmod or
 collation. Storage uses `pg-jsonb-text/v1` under lock/v15 and context/v2. Native
-nullability is retained. Protected defaults, on-update generation, variants,
+nullability is retained. Generated defaults, on-update generation, variants,
 custom type processors, nondefault `astext_type`, indexes and constraints other
 than nullability remain unadmitted. JSON search remains required implementation
 work; JSON operators, equality and path/containment queries are not admitted by
 storage support.
+
+Literal client defaults admit exact built-in dictionaries, lists, tuples,
+strings, integers, floats, Booleans and top-level `JSON.NULL`, under the same
+native JSON input bounds. Omission applies the default. Explicit Python None
+applies it only with `none_as_null=True`; with False it remains JSON null.
+`JSON.NULL` always means JSON null and `null()` means SQL NULL. ORM pending
+values retain the native literal's Python shape until refresh. Dictionary INSERT
+retains native `render_nulls`, RETURNING and savepoint behavior. `default=None`
+means no default; callable/server/SQL-expression defaults, custom literal
+subclasses and on-update generation remain unadmitted.
+`MutableDict.as_mutable(JSONB(...))` retains native default coercion and shallow
+change tracking; ordinary nested edits retain native untracked behavior.
+
+Lock/v16 and reader `pg-jsonb-default/v1` pin the exact client literal separately
+from the encrypted payload codec. Mutable defaults must still match that pin
+at attachment and before dispatch, including after provider preparation.
+No-default JSONB locks retain v15. Older operational readers refuse v16 before
+database effects. This adds no JSON search or production qualification.
 
 Ordinary Python JSON inputs follow the native stdlib serializer, including tuple
 arrays, string coercion of supported dictionary keys, last duplicate-key wins,

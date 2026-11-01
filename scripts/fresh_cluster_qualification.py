@@ -322,17 +322,28 @@ def main():
     expected_default = ('2026-11-01T12:34:56.123456+05:45' if args.timestamptz else
                         '1.23' if args.numeric or args.numeric_equality else '0001-01-01T00:00:00' if args.timestamp else
                         '0001-01-01' if args.date else None if args.integer_default is None else str(args.integer_default))
-    if manifest.get('application_default') != expected_default:
-        raise SystemExit('FreshCluster.ProfileMismatch: integer default export differs from the requested literal.')
+    if not args.jsonb and manifest.get('application_default') != expected_default:
+        raise SystemExit('FreshCluster.ProfileMismatch: native client default export differs from the requested literal.')
     if args.jsonb:
+        defaults = os.environ.get('CRYPTALIS_FRESH_JSONB_DEFAULTS') == '1'
+        jsonb_lock_schema = 'cryptalis.lock/v16' if defaults else 'cryptalis.lock/v15'
+        default_pin = None
+        if defaults:
+            from cryptalis._jsonb import jsonb_default
+            default_pin = jsonb_default(manifest.get('application_default'))
         plan = json.loads(base64.b64decode(manifest['plan'], validate=True))
         fields = [field for model in plan.get('lock', {}).get('models', ())
                   for field in model.get('fields', ())
                   if field.get('field_id') == '00000000-0000-0000-0000-0000000001f7']
         if (manifest.get('application_profile') != 'jsonb-storage' or manifest.get('none_as_null') is not False
                 or not manifest.get('source_wire') or not manifest.get('expected_wire')
-                or plan.get('kind') != 'search_rotation' or plan.get('lock', {}).get('schema') != 'cryptalis.lock/v15'
+                or plan.get('kind') != 'search_rotation'
+                or plan.get('lock', {}).get('schema') != jsonb_lock_schema
                 or len(fields) != 1 or fields[0].get('queries') != []
+                or ('application_default' in fields[0]) is not defaults
+                or (manifest.get('application_default') is not None) is not defaults
+                or fields[0].get('application_default') != default_pin
+                or ('pg-jsonb-default/v1' in plan.get('lock', {}).get('required_readers', ())) is not defaults
                 or fields[0].get('source', {}).get('type') != 'jsonb'
                 or fields[0].get('descriptor', {}).get('value_codec') != 'pg-jsonb-text/v1'
                 or fields[0].get('descriptor', {}).get('null_policy') != 'jsonb-none-as-json-null/v1'):
@@ -357,7 +368,7 @@ def main():
             raise SystemExit('FreshCluster.ProfileMismatch: integer payload successor is missing.')
     if args.public_slots:
         plan = json.loads(base64.b64decode(manifest['plan'], validate=True))
-        if (plan.get('lock', {}).get('schema') != ('cryptalis.lock/v15' if args.jsonb else 'cryptalis.lock/v14' if args.prefix else 'cryptalis.lock/v13' if args.numeric_equality else 'cryptalis.lock/v12' if args.timestamptz else 'cryptalis.lock/v11' if args.numeric else 'cryptalis.lock/v10' if args.timestamp else 'cryptalis.lock/v9' if args.uuid else 'cryptalis.lock/v8' if args.date else 'cryptalis.lock/v7' if args.integer else 'cryptalis.lock/v6')
+        if (plan.get('lock', {}).get('schema') != (jsonb_lock_schema if args.jsonb else 'cryptalis.lock/v14' if args.prefix else 'cryptalis.lock/v13' if args.numeric_equality else 'cryptalis.lock/v12' if args.timestamptz else 'cryptalis.lock/v11' if args.numeric else 'cryptalis.lock/v10' if args.timestamp else 'cryptalis.lock/v9' if args.uuid else 'cryptalis.lock/v8' if args.date else 'cryptalis.lock/v7' if args.integer else 'cryptalis.lock/v6')
                 or plan['lock'].get('layout') != 'preserve-public-slots/v1'
                 or not manifest.get('source_public_slots')):
             raise SystemExit('FreshCluster.ProfileMismatch: original-slot source lock is missing.')

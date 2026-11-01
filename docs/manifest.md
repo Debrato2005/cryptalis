@@ -91,7 +91,11 @@ The isolated prefix engineering reader also recognizes `cryptalis.lock/v14`.
 This does not admit v14 through ordinary application APIs; its reader and retained
 native-index obligations are described [below](#internal-prefix-engineering-syntax).
 Native JSONB plans select `cryptalis.lock/v15` and require `pg-jsonb-text/v1`.
-Mixed v15 plans retain every earlier reader and the internal prefix restriction,
+JSONB literal client defaults select `cryptalis.lock/v16` and additionally require
+`pg-jsonb-default/v1`. Their `application_default` string pins built-in literal
+types, container structure, dictionary order and keys, and exact float/string
+spelling. No-default JSONB plans retain v15 and their existing bytes.
+Mixed v15/v16 plans retain every earlier reader and the internal prefix restriction,
 including retained native pattern-index obligations after prefix is disabled.
 Ordinary JSONB storage alone does not require the synthetic prefix scope.
 Older operational readers refuse the embedded v5 lock before effects.
@@ -174,6 +178,9 @@ authenticates this mapping choice; attachment refuses a changed flag. SQL NULL
 has no frame. JSON null is a non-NULL authenticated canonical UTF-8 document.
 The catalog cannot infer the Python flag, so a saved lock retains its exact
 descriptor policy. Earlier codecs retain `sql-null/v1` and their original bytes.
+Client defaults are public lock metadata, distinct from authenticated stored
+documents. Their v16 reader preserves the native Python literal until refresh;
+generated defaults remain unadmitted.
 [JSONB admission](compatibility.md#jsonb-storage) defines inputs, hooks and limits.
 Signed integer storage also uses context/v2. Its pinned codecs encode int2/int4/int8
 as 2/4/8 signed big-endian bytes. Current Date plans use `pg-date-days-be/v1`
@@ -236,11 +243,11 @@ Prefix and order cannot share a field representation.
 The prototype pins `cf1-packed-prefix/v1`, `cryptalis.context/v3` and the
 `prefix_lengths` object. Its text codec, normalizer and NULL policy remain
 `utf8-exact/v1`, `identity/v1` and `sql-null/v1`. Active prefix plans select
-lock/v14, or v15 when JSONB is also present, and require `pg-text-prefix/v1`;
+lock/v14, v15 with JSONB, or v16 with JSONB client defaults, and require `pg-text-prefix/v1`;
 earlier descriptors and lock meanings stay unchanged.
 Original native `text_pattern_ops` or `varchar_pattern_ops` indexes on protected
 fields additionally require `pg-text-pattern-index/v1`. Their source facts and
-restoration obligations retain v14 (v15 with JSONB) and that reader after prefix is disabled.
+restoration obligations retain v14 (v15 with JSONB, v16 with JSONB client defaults) and that reader after prefix is disabled.
 Unrelated indexes on unprotected fields do not select this version.
 
 Ordinary planning, operational artifact use, attachment and cryptographic use
