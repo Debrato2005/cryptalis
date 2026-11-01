@@ -1,0 +1,446 @@
+{
+  "accepted": {
+    "installed": {
+      "outcomes": {
+        "collection": {},
+        "selected_items": 1,
+        "setup": {
+          "passed": 1
+        },
+        "subtest_calls": {},
+        "teardown": {
+          "passed": 1
+        },
+        "test_calls": {
+          "passed": 1
+        }
+      },
+      "runtime_binding": {
+        "mode": "installed-wheel",
+        "module_count": 44,
+        "modules_sha256": "45aaf1e5754d4ff6572b62db592df22b24290cbaf4bad1efbe9e0d791c220099",
+        "runtime_root": "/tmp/cryptalis-prefix-installed-20261101/lib/python3.12/site-packages/cryptalis",
+        "wheel": "/home/debrato/.cache/cryptalis-qa/prefix-final-artifacts-20261101/cryptalis-0.1.0-py3-none-any.whl",
+        "wheel_sha256": "d6ec8a1423c16dca5a66059f916b2b5bbdf12228e7a029ad6a6063a21e32e657"
+      },
+      "source_and_runtime_stable": true
+    },
+    "source": {
+      "outcomes": {
+        "collection": {},
+        "selected_items": 1,
+        "setup": {
+          "passed": 1
+        },
+        "subtest_calls": {},
+        "teardown": {
+          "passed": 1
+        },
+        "test_calls": {
+          "passed": 1
+        }
+      },
+      "runtime_binding": {
+        "mode": "source",
+        "module_count": 44,
+        "modules_sha256": "45aaf1e5754d4ff6572b62db592df22b24290cbaf4bad1efbe9e0d791c220099",
+        "runtime_root": "/home/debrato/Projects/cryptalis/src/cryptalis",
+        "wheel": null,
+        "wheel_sha256": null
+      },
+      "source_and_runtime_stable": true
+    }
+  },
+  "archive": {
+    "entries": [
+      {
+        "bytes": 3087,
+        "name": "earlier/before-tenant-source/order_sorting_attacker.py",
+        "sha256": "ee557dc3923d6562fc89ca8706accd200174b8c943f4bdfdef67daee302af72a"
+      },
+      {
+        "bytes": 20849,
+        "name": "earlier/before-tenant-source/profile_order_sorting_attack.py",
+        "sha256": "380f1eeccf5e78c6a6515a01e6e6f7d6bcf506b1c1214a5d3b958f939dc99895"
+      },
+      {
+        "bytes": 7735,
+        "name": "earlier/first-failure-trace.txt",
+        "sha256": "1c9e48e5d0ce531e4a1794cfcea35e5b0b6250d7c7da492af8ce3b0b21e7f051"
+      },
+      {
+        "bytes": 3998,
+        "name": "earlier/order-sort-inspected-source/observation.json",
+        "sha256": "9e91d0f0cb2c6801af42722a307a18d011204c07123978173eb3e6a661734609"
+      },
+      {
+        "bytes": 36173,
+        "name": "earlier/order-sort-inspected-source/receipt.json",
+        "sha256": "2dc363f0d65e114b7421d2b3db0b679b4a934a176b275a430e5c8ebca283d3b8"
+      },
+      {
+        "bytes": 3998,
+        "name": "earlier/order-sort-installed/observation.json",
+        "sha256": "1bf09fddafef8ae3a5fe65d93339117db5811fafffe0b2f9301785f518c19447"
+      },
+      {
+        "bytes": 36572,
+        "name": "earlier/order-sort-installed/receipt.json",
+        "sha256": "2f1eee106c64e31baf9be5eb68c4e4dfac4697ce025f70e8ffc9244bff5caa57"
+      },
+      {
+        "bytes": 36173,
+        "name": "earlier/order-sort-source/receipt.json",
+        "sha256": "0a11f18bd0c007cb959715557ba83e76dc11ce3a0232781b896b53b079d3c788"
+      },
+      {
+        "bytes": 3999,
+        "name": "installed/observation.json",
+        "sha256": "663d848cc850054f30a98fd5de8fab943c4c7da51b2c80547419451bcc6a46d2"
+      },
+      {
+        "bytes": 36574,
+        "name": "installed/receipt.json",
+        "sha256": "a7ccef58957d47a089c7d8b40cc18efe7dbe4052562e1ec1e07729ffdc7e2037"
+      },
+      {
+        "bytes": 7615,
+        "name": "package/release-check.json",
+        "sha256": "de6aaf698efc8003d088071cd951a6c1dd1fe55c8d8deccd61f8972c6c110369"
+      },
+      {
+        "bytes": 3999,
+        "name": "source/observation.json",
+        "sha256": "713b89f04dedb23ba91d2711917ae53ea0b399a818f685fd5f70795c6aa5ae63"
+      },
+      {
+        "bytes": 36174,
+        "name": "source/receipt.json",
+        "sha256": "51624dad7ae2f58b2b989b6d23b5b792455b0a9ed5c4eadc82a15f9b53d17bef"
+      },
+      {
+        "bytes": 1070,
+        "name": "sources/LICENSE",
+        "sha256": "7f5a6a6ca9e6e2d6e75ec8530612396f3eebd2659c79a6ca123bf30a933f23df"
+      },
+      {
+        "bytes": 3087,
+        "name": "sources/order_sorting_attacker.py",
+        "sha256": "ee557dc3923d6562fc89ca8706accd200174b8c943f4bdfdef67daee302af72a"
+      },
+      {
+        "bytes": 20907,
+        "name": "sources/profile_order_sorting_attack.py",
+        "sha256": "c423d66d53fe2313f571db90dcf6e20454ee6bceaf7d1346ef2bc6628594952b"
+      }
+    ],
+    "path": "order-sorting-receipts-20261101.tar.gz",
+    "sha256": "40acd91bdf741a87392088f897030444f44b907b17508240aae503bd8d2a6e42"
+  },
+  "base_revision": "aabbb59c8e06231f2695ffbd944b6d282752fea5",
+  "earlier_attempts": {
+    "initial": {
+      "original_private_trace_sha256": "ae65235e3825f3ad0a9d5a407ba0e288551d1468e1a4f613db1392a02f483aab",
+      "outcomes": {
+        "collection": {},
+        "selected_items": 1,
+        "setup": {
+          "passed": 1
+        },
+        "subtest_calls": {},
+        "teardown": {
+          "passed": 1
+        },
+        "test_calls": {
+          "failed": 1
+        }
+      },
+      "result": "KeyUnavailable during search-rotation switch after dense inference; no final observation artifact. Full initial profile source was not snapshotted before metrics/recovery edit. Wrapper source/runtime hashes and sanitized trace remain retained.",
+      "trace_redaction": "Only the already redacted Engine URL placeholder was replaced; no credential, root, term or row-value artifact is published."
+    },
+    "pre_tenant_check_source_and_installed": {
+      "correction": "Final snapshot reads actual tenant_id, asserts the single declared partition and hashes actual tenant/ID/NULL/both full frames.",
+      "result": "Both pass, but raw pre-resume snapshot hashes expected tenant constant rather than stored tenant. Narrower evidence only. Matching pre-edit test source snapshots retained."
+    }
+  },
+  "fixing_revision": "worktree-6f470fd6b658c867",
+  "format": "cryptalis.order-sorting-boundary/v1",
+  "graph_refresh": {
+    "command": "graphify update . --no-cluster",
+    "edges": 26955,
+    "exit_code": 0,
+    "limits": "Code AST navigation only; unclassified/no-symbol files remain reported; no new semantic document extraction.",
+    "nodes": 6037
+  },
+  "limits": [
+    "Known complete int2 domain with 1024 duplicate cells and 16 visible NULLs; no auxiliary frequency sample, query observations or target placement seed.",
+    "Honest enumerable-domain planning refuses before SQL/Project state creation. Attack deployment intentionally misclassifies the host review; not healthy capability admission.",
+    "Fresh isolated stdlib interpreter input is audited key-free data, not a hostile-code operating-system sandbox.",
+    "All 66,560 non-NULL cells / 65,536 classes recovered before/after changed search terms; these are synthetic findings, not hospital/customer recovery rates.",
+    "Sparse and storage-only cases abstain as outside assumptions; no negative cryptographic security proof. Shared row/value storage control is not independent confidentiality evidence.",
+    "An escaping exact lease expiry is attributed through diagnostic exception context. Only unchanged full public bytes plus same BACKFILLED proposal/NOT_PERFORMED inspection permit one fresh Project resume. No lease extension/generic retry/production expiry API is added.",
+    "Current-value native removal is verified in this process; no new package-free fresh-process or disaster qualification is asserted.",
+    "Other codecs/domains, low-density cumulative and prefix-specific attacks, approved costs and independent human review remain open. All 18 requirements / all 34 objectives remain in scope."
+  ],
+  "observations": {
+    "installed": {
+      "admission": {
+        "experiment": "deliberately false small-domain host attestation for public synthetic leakage experiment",
+        "healthy_admission": false,
+        "honest_small_domain_review": "REFUSED small_search_domain",
+        "recorded_small_domain": false
+      },
+      "attacker_isolation": {
+        "bytecode_disabled": true,
+        "isolated": true,
+        "site_disabled": true,
+        "stdlib_only": true
+      },
+      "experimental_inputs": {
+        "codec": "pg-int2-be/v1",
+        "domain_distinct": 65536,
+        "duplicate_cells": 1024,
+        "null_cells": 16,
+        "placement": "OS-random shuffle and independent random UUIDs; no public data seed",
+        "provider": "Random ephemeral DevelopmentKeyProvider; no production custody claim",
+        "public_domain": [
+          -32768,
+          32767
+        ]
+      },
+      "initial": {
+        "attacker_elapsed_seconds": 0.15784052899834933,
+        "native_term_order_matches_plaintext": true,
+        "preconditions": {
+          "duplicate_cells": 1024,
+          "known_domain_distinct": 65536,
+          "nonnull_cells": 66560,
+          "null_cells": 16,
+          "observed_distinct_terms": 65536
+        },
+        "score": {
+          "distinct_values": 65536,
+          "nonnull_scored_cells": 66560,
+          "null_cells_excluded": 16,
+          "recovered_cells": 66560,
+          "recovered_distinct_values": 65536,
+          "recovery_fraction": 1.0
+        },
+        "snapshot_sha256": "817d0afa316d2328d4cfa6c602f20261f35ec7aaa96c240312022007ef83f497",
+        "status": "APPLICABLE"
+      },
+      "limits": "Dense full-domain experiment only; no auxiliary-frequency or low-density attack. The storage control shares rows and values with the order field, so it is not an independent confidentiality control. Interpreter isolation is not an OS sandbox claim. All production gates UNKNOWN.",
+      "native_correctness": {
+        "current_value_native_removal": true,
+        "full_authenticated_reads": true
+      },
+      "schema": "cryptalis.order-sorting-experiment/v1",
+      "scope": "One synthetic PostgreSQL16 signed-int2 order field; no customer or other-codec estimate.",
+      "search_rotation": {
+        "attacker_elapsed_seconds": 0.15091972400114173,
+        "changed_nonnull_terms": 66560,
+        "native_term_order_matches_plaintext": true,
+        "preconditions": {
+          "duplicate_cells": 1024,
+          "known_domain_distinct": 65536,
+          "nonnull_cells": 66560,
+          "null_cells": 16,
+          "observed_distinct_terms": 65536
+        },
+        "recovery": {
+          "code": "KeyUnavailable",
+          "phase": "BACKFILLED",
+          "public_frames_unchanged": true,
+          "same_proposal": true,
+          "status": "INSPECTED_AND_RESUMED_ONCE",
+          "verification": "NOT_PERFORMED"
+        },
+        "score": {
+          "distinct_values": 65536,
+          "nonnull_scored_cells": 66560,
+          "null_cells_excluded": 16,
+          "recovered_cells": 66560,
+          "recovered_distinct_values": 65536,
+          "recovery_fraction": 1.0
+        },
+        "search_generation": 2,
+        "snapshot_sha256": "c1bc8678983ba99d747551365947fd0cb668a645ac071244076e3e3b5616aaa4",
+        "status": "APPLICABLE"
+      },
+      "source": {
+        "algorithm": "Sorting-Atk",
+        "paper": "https://www.microsoft.com/en-us/research/wp-content/uploads/2017/02/edb.pdf",
+        "section": "6.1"
+      },
+      "sparse": {
+        "attack_attempted": false,
+        "deleted_minimum_cells": 1,
+        "preconditions": {
+          "duplicate_cells": 1024,
+          "known_domain_distinct": 65536,
+          "nonnull_cells": 66559,
+          "null_cells": 16,
+          "observed_distinct_terms": 65535
+        },
+        "reason": "density/cardinality mismatch",
+        "snapshot_sha256": "5b20d894275c59d97e4853783243fb0df48c4780e20a57d0c3fec403ef88051d",
+        "status": "OUT_OF_SCOPE"
+      },
+      "storage_only_control": {
+        "attack_attempted": false,
+        "known_domain_distinct": 65536,
+        "nonnull_cells": 66560,
+        "observed_distinct_frames": 66560,
+        "reason": "Storage-only frames have no order representation and exceed known-domain class cardinality.",
+        "status": "INAPPLICABLE"
+      },
+      "versions": {
+        "postgresql": "16.2",
+        "psycopg": "3.3.6",
+        "python": "3.12.16",
+        "sqlalchemy": "2.1.3"
+      }
+    },
+    "source": {
+      "admission": {
+        "experiment": "deliberately false small-domain host attestation for public synthetic leakage experiment",
+        "healthy_admission": false,
+        "honest_small_domain_review": "REFUSED small_search_domain",
+        "recorded_small_domain": false
+      },
+      "attacker_isolation": {
+        "bytecode_disabled": true,
+        "isolated": true,
+        "site_disabled": true,
+        "stdlib_only": true
+      },
+      "experimental_inputs": {
+        "codec": "pg-int2-be/v1",
+        "domain_distinct": 65536,
+        "duplicate_cells": 1024,
+        "null_cells": 16,
+        "placement": "OS-random shuffle and independent random UUIDs; no public data seed",
+        "provider": "Random ephemeral DevelopmentKeyProvider; no production custody claim",
+        "public_domain": [
+          -32768,
+          32767
+        ]
+      },
+      "initial": {
+        "attacker_elapsed_seconds": 0.14283142700151075,
+        "native_term_order_matches_plaintext": true,
+        "preconditions": {
+          "duplicate_cells": 1024,
+          "known_domain_distinct": 65536,
+          "nonnull_cells": 66560,
+          "null_cells": 16,
+          "observed_distinct_terms": 65536
+        },
+        "score": {
+          "distinct_values": 65536,
+          "nonnull_scored_cells": 66560,
+          "null_cells_excluded": 16,
+          "recovered_cells": 66560,
+          "recovered_distinct_values": 65536,
+          "recovery_fraction": 1.0
+        },
+        "snapshot_sha256": "92a7aa118cd1b3cae6be29faf474e680e5e9ec837cf2e9a066da6d430b8f0f40",
+        "status": "APPLICABLE"
+      },
+      "limits": "Dense full-domain experiment only; no auxiliary-frequency or low-density attack. The storage control shares rows and values with the order field, so it is not an independent confidentiality control. Interpreter isolation is not an OS sandbox claim. All production gates UNKNOWN.",
+      "native_correctness": {
+        "current_value_native_removal": true,
+        "full_authenticated_reads": true
+      },
+      "schema": "cryptalis.order-sorting-experiment/v1",
+      "scope": "One synthetic PostgreSQL16 signed-int2 order field; no customer or other-codec estimate.",
+      "search_rotation": {
+        "attacker_elapsed_seconds": 0.15293011700123316,
+        "changed_nonnull_terms": 66560,
+        "native_term_order_matches_plaintext": true,
+        "preconditions": {
+          "duplicate_cells": 1024,
+          "known_domain_distinct": 65536,
+          "nonnull_cells": 66560,
+          "null_cells": 16,
+          "observed_distinct_terms": 65536
+        },
+        "recovery": {
+          "code": "KeyUnavailable",
+          "phase": "BACKFILLED",
+          "public_frames_unchanged": true,
+          "same_proposal": true,
+          "status": "INSPECTED_AND_RESUMED_ONCE",
+          "verification": "NOT_PERFORMED"
+        },
+        "score": {
+          "distinct_values": 65536,
+          "nonnull_scored_cells": 66560,
+          "null_cells_excluded": 16,
+          "recovered_cells": 66560,
+          "recovered_distinct_values": 65536,
+          "recovery_fraction": 1.0
+        },
+        "search_generation": 2,
+        "snapshot_sha256": "52a3345fc41dbe9829388e3ac6dfe1bca2a8b2f9ac8478a495b6693b76b9dc84",
+        "status": "APPLICABLE"
+      },
+      "source": {
+        "algorithm": "Sorting-Atk",
+        "paper": "https://www.microsoft.com/en-us/research/wp-content/uploads/2017/02/edb.pdf",
+        "section": "6.1"
+      },
+      "sparse": {
+        "attack_attempted": false,
+        "deleted_minimum_cells": 1,
+        "preconditions": {
+          "duplicate_cells": 1024,
+          "known_domain_distinct": 65536,
+          "nonnull_cells": 66559,
+          "null_cells": 16,
+          "observed_distinct_terms": 65535
+        },
+        "reason": "density/cardinality mismatch",
+        "snapshot_sha256": "2d1b33abb97e356eb7640e8c68b58c8e60bbabb45c45abce8d64aa8187965d11",
+        "status": "OUT_OF_SCOPE"
+      },
+      "storage_only_control": {
+        "attack_attempted": false,
+        "known_domain_distinct": 65536,
+        "nonnull_cells": 66560,
+        "observed_distinct_frames": 66560,
+        "reason": "Storage-only frames have no order representation and exceed known-domain class cardinality.",
+        "status": "INAPPLICABLE"
+      },
+      "versions": {
+        "postgresql": "16.2",
+        "psycopg": "3.3.6",
+        "python": "3.13.12",
+        "sqlalchemy": "2.1.3"
+      }
+    }
+  },
+  "package": "Runtime/package/build inputs unchanged from aabbb59. Reuses the exact inspected prefix wheel; no new package source, dependencies or representation.",
+  "primary_source": {
+    "bytes": 644238,
+    "redistribution": "No PDF vendored; citation/retrieval/license boundary in docs/research/order-sorting-attack-2026-11-01.md.",
+    "section": "6.1",
+    "sha256": "06cb2cae43f5edee9f5e80bdfcad9c87c80eee76cd6720b1d893f51e4b34e775",
+    "url": "https://www.microsoft.com/en-us/research/wp-content/uploads/2017/02/edb.pdf"
+  },
+  "production_gates": {
+    "G-ADAPTER": "UNKNOWN",
+    "G-CRYPTO": "UNKNOWN",
+    "G-LIFECYCLE": "UNKNOWN",
+    "G-POLICY": "UNKNOWN",
+    "G-PROVIDER": "UNKNOWN",
+    "G-QUERY": "UNKNOWN",
+    "G-RELEASE": "UNKNOWN"
+  },
+  "runtime_modules": 44,
+  "runtime_modules_sha256": "45aaf1e5754d4ff6572b62db592df22b24290cbaf4bad1efbe9e0d791c220099",
+  "scope": "Published dense-domain Sorting-Atk, one synthetic signed-int2 field/tenant; deliberately false host domain classification. No healthy admission, real-data estimate or gate qualification.",
+  "source_binding": "Final source/installed receipt inventories are identical and match current 316 Python files. Match every recorded file to the commit before push.",
+  "source_inventory_files": 316,
+  "wheel_sha256": "d6ec8a1423c16dca5a66059f916b2b5bbdf12228e7a029ad6a6063a21e32e657"
+}

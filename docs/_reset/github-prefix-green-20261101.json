@@ -1,0 +1,75 @@
+{
+  "artifacts": {
+    "cryptalis-0.1.0-py3-none-any.whl": "d6ec8a1423c16dca5a66059f916b2b5bbdf12228e7a029ad6a6063a21e32e657",
+    "cryptalis-0.1.0.tar.gz": "43a0d8c9359ceddd9bfc5a77cd532c62bdcabe87e455a045b02115680188b13e"
+  },
+  "format": "cryptalis.prefix-green-ci/v1",
+  "github_archive_sha256": {
+    "release": "46362f09ab3e19add81f202b2bfe382814406f571d2d5877df0df75a3de6ae49",
+    "source": "c9d7d8cdd44f0fe1ad2287456b76bfd03ad55521638db190aa38a2fd47e4407c"
+  },
+  "jobs": {
+    "release": "success",
+    "source": "success"
+  },
+  "limits": [
+    "Prefix remains INTERNAL ONLY; all capability-admission requirements and production gates stay unchanged.",
+    "The full default source suite skips24 calls,41 setups and9 modules at collection; none qualifies.",
+    "Installed CI covers existing ORM/configuration/provider/recovery selections; separate local144-call prefix installed receipts cover the new prototype.",
+    "Sorting and other published attacks are not supplied by a green CI result."
+  ],
+  "prefix_hosted_calls": {
+    "tests/test_prefix_admission.py": {
+      "passed": 3
+    },
+    "tests/test_prefix_compiler.py": {
+      "passed": 19
+    },
+    "tests/test_prefix_integrity.py": {
+      "passed": 4
+    },
+    "tests/test_prefix_lifecycle.py": {
+      "passed": 14,
+      "skipped": 2
+    },
+    "tests/test_prefix_search.py": {
+      "passed": 10
+    }
+  },
+  "production_gates": "UNKNOWN",
+  "receipt_archive": "prefix-ci-receipts-20261101.tar.gz",
+  "receipt_archive_sha256": "0b1507cc7e14683207ffba5bddfb036fbcad363da25fbcf7f1e306e63a4e6b5a",
+  "revision": "aabbb59c8e06231f2695ffbd944b6d282752fea5",
+  "runtime_binding": {
+    "mode": "source",
+    "module_count": 44,
+    "modules_sha256": "45aaf1e5754d4ff6572b62db592df22b24290cbaf4bad1efbe9e0d791c220099",
+    "runtime_root": "/home/runner/work/cryptalis/cryptalis/src/cryptalis",
+    "wheel": null,
+    "wheel_sha256": null
+  },
+  "source_and_runtime_stable": true,
+  "source_outcomes": {
+    "collection": {
+      "skipped": 9
+    },
+    "selected_items": 3980,
+    "setup": {
+      "passed": 3939,
+      "skipped": 41
+    },
+    "subtest_calls": {
+      "passed": 18
+    },
+    "teardown": {
+      "passed": 3980
+    },
+    "test_calls": {
+      "passed": 3915,
+      "skipped": 24
+    }
+  },
+  "source_python_files_verified": 314,
+  "url": "https://github.com/Debrato2005/cryptalis/actions/runs/41254913979",
+  "workflow_run": 41254913979
+}

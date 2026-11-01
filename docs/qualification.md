@@ -41,6 +41,30 @@ rotation, decrypt and remove. CI runs it against the built wheel. Use the defaul
 directory or a short path: PostgreSQL's socket path is limited to 107 characters.
 Use [local development](local-development.md#automated-checks) for the complete command.
 
+### Published order-leakage experiment
+
+The optional sorting profile protects a full signed-int2 population on a fresh
+PostgreSQL 16 cluster, then gives a separate process dump-visible terms and the
+known public domain. An honest enumerable-domain review must refuse first.
+The subsequent leak experiment deliberately misclassifies that review and does
+not establish healthy admission. [Research and assumptions](research/order-sorting-attack-2026-11-01.md)
+define the source and evidence boundary.
+
+```bash
+CRYPTALIS_ORDER_SORTING_REPORT=/absolute/private/order-sorting.json \
+  .venv/bin/python scripts/online_qualification.py \
+  --workdir /absolute/private/order-sorting-run -- \
+  tests/profile_order_sorting_attack.py -q
+```
+
+Choose new, short absolute paths on a filesystem with enough free space. The
+report contains aggregate recovery counts and snapshot hashes. Ground truth,
+keys and connection inputs stay out of the attacker input. A sparse population
+or randomized storage-only frames make this sorting protocol inapplicable;
+abstention is not a security pass. Search rotation must be evaluated separately
+from term replacement. This profile supplies no real-data recovery estimate or
+production-gate qualification.
+
 ### Receipt outcome fields
 
 Receipts also record `pytest_report_counts`. It separates ordinary `test_calls`,

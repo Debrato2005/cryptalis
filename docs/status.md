@@ -4,18 +4,19 @@ Cryptalis implements a bounded research prototype. **No production release or co
 This page owns current verification and release gates; the [34-objective ledger](BUILD_CHECKLIST.md) owns remaining work.
 Use the [documentation map](README.md) to find contracts and procedures.
 
-**Latest complete hosted pass: `18e3ab2`.** Both jobs in
-[run 41248719540](https://github.com/Debrato2005/cryptalis/actions/runs/41248719540)
-pass for NUMERIC equality/IN and scoped uniqueness. The full source run passes
-3,865 calls and 18 subtests. Twenty-two call skips, 41 setup skips and eight
-collection skips remain explicit. All 306 recorded Python files match that
-revision, with stable source/runtime bytes. The installed recovery job passes;
-wheel and sdist match the retained local numeric-search artifacts.
-[Exact hosted boundary](_reset/github-numeric-search-green-20261101.json).
-The preceding aware timestamp run is retained in its
-[hosted boundary](_reset/github-timestamptz-green-20261101.json), and the
+**Latest complete hosted pass: `aabbb59`.** Both jobs in
+[run 41254913979](https://github.com/Debrato2005/cryptalis/actions/runs/41254913979)
+pass after the internal prefix prototype. The full source run passes 3,915 calls
+and 18 subtests. Twenty-four call skips, 41 setup skips and nine collection skips
+remain explicit. All 314 recorded Python files match that revision, with stable
+source/runtime bytes. Installed recovery passes; wheel and sdist exactly match
+the retained local prefix artifacts. This does not admit prefix search.
+[Exact hosted boundary](_reset/github-prefix-green-20261101.json).
+The preceding numeric run remains in its
+[hosted boundary](_reset/github-numeric-search-green-20261101.json), with the
+[aware timestamp result](_reset/github-timestamptz-green-20261101.json) and
 [numeric compiler failure/repair](_reset/numeric-compiler-ci-boundary-20261101.json)
-remains retained. All seven production gates stay UNKNOWN.
+retained. All seven production gates stay UNKNOWN.
 
 **Earlier complete hosted pass: `54218cf`.** Both jobs in
 [run 41239335699](https://github.com/Debrato2005/cryptalis/actions/runs/41239335699)
@@ -51,6 +52,35 @@ source-role failure and later UUID fixture failures remain repaired.
 [Retained failure](_reset/github-point-update-returning-failed-boundary-20261030.json)
 and [repair evidence](_reset/point-delete-returning-ci-fix-boundary-20261030.json)
 remain available.
+
+## Published dense-domain order inference
+
+**VERIFIED, bounded synthetic source and installed experiment:** the published Sorting-Atk
+mechanism recovers all 66,560 non-NULL cells and 65,536 distinct values from an
+actual protected signed-int2 field. Sixteen visible SQL NULLs are excluded from
+the recovery denominator. The child receives only opaque IDs, dump-visible
+terms and the public full int2 domain. Native PostgreSQL supplies the scorer's
+truth and checks byte-term ordering against plaintext ordering.
+
+The fixture deliberately supplies a false host small-domain classification;
+an honest enumerable-domain review refuses before SQL or Project state creation.
+This is adversarial evidence, not healthy domain admission or a customer
+recovery estimate. Search rotation changes every non-NULL term, but the same
+rank attack again recovers all values. Sparse-domain and randomized storage-only
+controls report inapplicability, without a security-pass claim. The storage
+column shares values and row IDs with the order field, so it is not an
+independent confidentiality control.
+
+The source and Python 3.12 installed-wheel E2Es each pass, including authenticated
+reads, explicitly inspected lease-expiry resume and current-value native removal.
+Both final receipts bind the same 316 Python files and unchanged 44-module
+runtime bytes from the exact inspected prefix wheel; package source is unchanged.
+[Exact boundary](_reset/order-sorting-boundary-20261101.json) retains earlier
+failure and narrower tenant-check evidence. [Source/design](research/order-sorting-attack-2026-11-01.md)
+and [observations](history/search-2026-11.md#published-dense-domain-sorting-2026-11-01)
+record provenance and limits. Low-density cumulative attacks, other codec/domain cells,
+prefix-specific published attacks, approved costs and independent human review
+remain open. All seven production gates remain UNKNOWN.
 
 ## Internal exact text prefix prototype
 

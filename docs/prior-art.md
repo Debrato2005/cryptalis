@@ -54,7 +54,11 @@ The installed AESGCMSIV implementation and existing local experience support ret
 shows frequency/sorting inference against property-preserving databases. Our experiments apply frequency ranking to our full-term/array equivalence classes.
 The measured synthetic rates do not generalize to customer distributions.
 [Range structure and volume attacks](https://eprint.iacr.org/2022/090) explain why hiding node labels does not make range arrays opaque.
-That paper's structural attack and a sorting attack against an implemented order representation remain unexecuted here.
+That paper's structural attack remains unexecuted. The
+[2026-11-01 dense-int2 experiment](status.md#published-dense-domain-order-inference)
+executes the published sorting mechanism against current order terms under an
+explicitly false synthetic host-domain classification. Its bounded result is
+not a real-data or low-density recovery estimate.
 No ORAM/PIR, forward/backward privacy or query-obliviousness claim is made.
 
 ## Deployment portability
