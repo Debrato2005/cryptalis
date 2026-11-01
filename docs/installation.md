@@ -101,7 +101,8 @@ application through Doctor, protection, search, uniqueness, all three rotations,
 current-value decryption, removal and a restart that cannot import Cryptalis.
 Each step is a separate process. It needs three roles and an empty PostgreSQL 16
 database; its header gives the exact commands. It uses `DevelopmentKeyProvider`
-with a key file, so it needs no external service. Synthetic data only.
+with a key file, so it needs no external service. Synthetic data only. The key file
+argument arrived after `0.1.0a1`, so use a `0.1.0a2` development build or later.
 
 ## Integrate and complete the lifecycle
 

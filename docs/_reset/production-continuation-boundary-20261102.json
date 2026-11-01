@@ -1,0 +1,114 @@
+{
+ "format": "cryptalis.production-continuation/v1",
+ "base_revision": "09be1f639d90f8416d518ea05afca61a83669095",
+ "scope": "First-contact lifecycle, final-admission repair, read-path work, bounded upsert and real-application email search; bounded development evidence, no production qualification",
+ "objectives": [
+  "OBJ-DX-03",
+  "OBJ-DX-05",
+  "OBJ-QUERY-04",
+  "OBJ-SEC-04",
+  "OBJ-PERF-01",
+  "OBJ-PERF-02",
+  "OBJ-PERF-03",
+  "OBJ-PERF-04"
+ ],
+ "measured_revision": "bd223c1",
+ "measured_wheel_sha256": "ccebae5628e991eb4e8faf5e44e049a3c97aca3a41ff67f3cbb73ada72a1c3ec",
+ "measured_wheel_clean_rebuild_equal": true,
+ "final_artifacts": {
+  "wheel_sha256": "4f2938c9ce9c2e06f036cfcfe5f28206faa7cb1f00aef5c743bb3b7e354c2a61",
+  "sdist_sha256": "9e537482d041658581090269242174e609f6392526aa07c054647c06c26b4bc9",
+  "repeat_build_equal": true
+ },
+ "build_provenance": "Recorded worktree bytes for final artifacts; not an independent rebuild",
+ "application_evidence": {
+  "repository": "Debrato2005/smolink",
+  "branch": "demo/cryptalis-email-search-20261102",
+  "revision": "43a6622b48c8460257358c118c86b24597cf5255",
+  "backend_files_changed": 0
+ },
+ "checks": {
+  "measured_source": {
+   "test_calls": {
+    "passed": 1516,
+    "skipped": 17
+   },
+   "subtest_calls": {
+    "passed": 18
+   },
+   "setup": {
+    "passed": 1533
+   },
+   "teardown": {
+    "passed": 1533
+   },
+   "collection": {
+    "skipped": 2
+   },
+   "selected_items": 1533
+  },
+  "final_source": {
+   "test_calls": {
+    "passed": 2195,
+    "skipped": 25
+   },
+   "subtest_calls": {
+    "passed": 18
+   },
+   "setup": {
+    "passed": 2220,
+    "skipped": 34
+   },
+   "teardown": {
+    "passed": 2254
+   },
+   "collection": {
+    "skipped": 5
+   },
+   "selected_items": 2254
+  },
+  "final_source_stable": true,
+  "final_runtime_sha256": "e297507f69d54ee7302bf7df8a0be73b42b4e366abd7bf14d1c3075bbddf00b6",
+  "installed_wheel": {
+   "python_3_12": {
+    "passed": 34
+   },
+   "python_3_13": {
+    "passed": 34
+   }
+  },
+  "upsert_mutants": {
+   "total": 7,
+   "caught": 7,
+   "calls_per_run": 20
+  },
+  "hosted_059f886": "run 41336500207, both jobs pass"
+ },
+ "retained_failures": [
+  "Local regression at 059f886 reported Verification.SourceChanged because scripts/ci_qualification.py changed during the run; its 172 passes are not a valid binding.",
+  "First mutation attempt printed SURVIVED for all seven mutants, but the wrapper crashed before any test ran; that output is not evidence.",
+  "Broad run retained as retained-failure-before-contract-update.json: one refusal test failed because insert().values was deliberately admitted; it was replaced with a stronger independent ciphertext check.",
+  "Equality at four worker processes misses 3 ms at 3.06 ms; every higher-concurrency single-process target misses; indexed storage misses 2x at 2.017x compacted and 4.24x after rotations."
+ ],
+ "limits": [
+  "Single shared workstation with uncontrolled load and warm development-key custody.",
+  "Not a provider, cold-path, remote-network, saturation or production pause measurement.",
+  "New-account registration needs mail delivery and was not exercised.",
+  "Tenant-column DO UPDATE, upsert RETURNING and non-excluded protected assignments remain unadmitted.",
+  "The final-admission defect also affects frozen v0.1.0a1, which is unchanged."
+ ],
+ "receipt_archive": {
+  "path": "production-continuation-receipts-20261102.tar.gz",
+  "sha256": "f724603fa51d628dba4b6e1614b86f6139be50f4b4ea2b70832ec8a26c94b0be",
+  "members": 5
+ },
+ "gates": {
+  "G-ADAPTER": "UNKNOWN",
+  "G-CRYPTO": "UNKNOWN",
+  "G-QUERY": "UNKNOWN",
+  "G-LIFECYCLE": "UNKNOWN",
+  "G-PROVIDER": "UNKNOWN",
+  "G-POLICY": "UNKNOWN",
+  "G-RELEASE": "UNKNOWN"
+ }
+}

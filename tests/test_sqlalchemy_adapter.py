@@ -460,7 +460,7 @@ def test_unprepared_opaque_computed_nested_ddl_and_raw_driver_paths_reject(app):
     sessions, Customer = factory(app, True), app.Customer
     observed = []
     event.listen(app.engine, "before_cursor_execute", lambda *args: observed.append(True))
-    denied = [text("SELECT 1"), insert(Customer).values(id=uuid4(), tenant_id=TENANT, name="unsafe", note="private", rank=1),
+    denied = [text("SELECT 1"), insert(Customer).values(id=uuid4(), tenant_id=TENANT, name=func.lower("unsafe")),
               update(Customer).values(note=func.lower("private")), select(func.lower(Customer.note)),
               select(Customer).where(Customer.note == "private"), select(Customer).order_by(Customer.note),
               select(Customer).where(Customer.rank.in_(select(func.length(Customer.note)))),

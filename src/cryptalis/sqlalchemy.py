@@ -10,6 +10,7 @@ from datetime import date, datetime
 from decimal import Decimal
 from functools import wraps
 from hashlib import sha256
+import copy
 import json
 import os
 import re
@@ -19,9 +20,11 @@ from uuid import UUID
 from sqlalchemy import BigInteger, Boolean, Column, Enum, LargeBinary, String, Table, Text, Uuid, UUID as SQLUUID, bindparam, case, cast, event, func, inspect, literal, null, select, type_coerce
 from sqlalchemy.engine import Engine
 from sqlalchemy.dialects import postgresql as _postgresql_types
+from sqlalchemy.dialects.postgresql.dml import Insert as _PostgresInsert, OnConflictDoNothing, OnConflictDoUpdate
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, AsyncSessionTransaction
 from sqlalchemy.exc import DBAPIError, DontWrapMixin, StatementError
 from sqlalchemy.orm import Session, registry
+from sqlalchemy.orm.exc import UnmappedColumnError
 from sqlalchemy.orm.attributes import InstrumentedAttribute, QueryableAttribute
 from sqlalchemy.orm.attributes import NO_VALUE
 from sqlalchemy.sql import operators, visitors
@@ -842,6 +845,59 @@ class _Attachment:
                     (inspect(obj).pending or inspect(obj).attrs[binding.attribute].history.has_changes())))
                     for obj in tuple(session.new) + tuple(session.dirty))
 
+    def conflict_columns(self, clause, table):
+        columns = []
+        for element in clause.inferred_target_elements or ():
+            column = table.c.get(element if type(element) is str else getattr(element, 'key', None))
+            if column is None or type(element) is not str and not (
+                    isinstance(element, Column) and element.shares_lineage(column)):
+                raise UnsupportedProtectedOperation()
+            columns.append(column)
+        return columns
+
+    def check_conflict(self, clause, table):
+        """Admit ON CONFLICT only while every stored frame stays bound to its record.
+
+        DO NOTHING stores no frame on conflict, so any inferred target is exact. DO
+        UPDATE stores the proposed frame on the row it conflicts with, so that row
+        must be the same record in the same scope. Only the primary key of a
+        fixed-scope table guarantees that: a tenant column table could conflict
+        with another tenant's row, and a unique value with another record.
+        """
+        if (type(clause) not in (OnConflictDoNothing, OnConflictDoUpdate) or clause.constraint_target is not None or
+                clause.inferred_target_whereclause is not None):
+            raise UnsupportedProtectedOperation()
+        bindings = {binding.column: binding for binding in self.bindings if binding.column.table is table}
+        targets = self.conflict_columns(clause, table)
+        if any(column in bindings and not bindings[column].descriptor.equality for column in targets):
+            raise UnsupportedProtectedOperation()
+        if type(clause) is OnConflictDoNothing:
+            return
+        first = next(iter(bindings.values()))
+        if (first.tenant is not None or len(targets) != 1 or targets[0] is not first.record or
+                clause.update_whereclause is not None):
+            raise UnsupportedProtectedOperation()
+        for key, value in clause.update_values_to_set.items():
+            column = table.c.get(key if type(key) is str else getattr(key, 'key', None))
+            if column is None or column is first.record:
+                raise UnsupportedProtectedOperation()
+            if column in bindings:
+                excluded = (isinstance(value, ColumnClause) and isinstance(value.table, Alias) and
+                            value.table.name == 'excluded' and value.key == column.key and value.shares_lineage(column))
+                if not excluded:
+                    raise UnsupportedProtectedOperation()
+            elif self.protected(value) or any(isinstance(node, (BindParameter, TextClause))
+                                              for node in visitors.iterate(value)):
+                raise UnsupportedProtectedOperation()
+
+    def conflict_target(self, clause, table):
+        """A protected unique index is on its search term, not the frame."""
+        bindings = {binding.column: binding for binding in self.bindings if binding.column.table is table}
+        rendered = copy.copy(clause)
+        rendered.inferred_target_elements = [equality_expression(column) if column in bindings else column
+                                             for column in self.conflict_columns(clause, table)]
+        return rendered
+
     def named_fields(self, statement):
         """Describe declared fields a refused statement names, for its error only."""
         try:
@@ -1150,6 +1206,11 @@ class _Attachment:
                             column_clause_args.get('result_map_targets', ()) + (original,))
                 return super()._label_select_column(statement, column, populate_result_map,
                     asfrom, column_clause_args, *args, **kw)
+
+            def _on_conflict_target(compiler, clause, **kw):
+                if clause.inferred_target_elements is not None:
+                    clause = self.conflict_target(clause, self._check().bulk_insert)
+                return super()._on_conflict_target(clause, **kw)
 
             def _label_returning_column(compiler, statement, column, populate_result_map,
                                         column_clause_args=None, **kw):
@@ -1729,14 +1790,15 @@ class _Attachment:
             self.update_context(statement, bulk, operation.tenant, generated=True)
             return
         if bulk is not None and isinstance(statement, Insert):
-            _delete_node(statement, Insert)
+            _delete_node(statement, _PostgresInsert if isinstance(statement, _PostgresInsert) else Insert)
             if _delete_node(statement.table, Table) is not bulk:
                 raise UnsupportedProtectedOperation()
+            if statement._post_values_clause is not None:
+                self.check_conflict(statement._post_values_clause, bulk)
             if (statement.table.name != bulk.name or statement.table.schema != bulk.schema or
                     not all(column.key in statement.table.c and
                             statement.table.c[column.key].shares_lineage(column) for column in bulk.c) or
                     statement._values or statement._multi_values or
-                    statement._post_values_clause is not None or
                     statement.select is not None or statement._prefixes or statement._hints or
                     statement._independent_ctes or statement.dialect_kwargs):
                 raise UnsupportedProtectedOperation()
@@ -2611,12 +2673,41 @@ def _scoped_delete(state):
         _operation.reset(token)
 
 
+def _values_rows(statement, mapper):
+    """Plain rows from INSERT .values(...), keyed like ordinary bulk dictionaries.
+
+    A bind needing execute-time input has no value here, so refuse it rather than
+    read its None as NULL.
+    """
+    attribute = lambda key: mapper.get_property_by_column(
+        mapper.local_table.c[key if type(key) is str else key.key]).key
+    if statement._values and statement._multi_values or len(statement._multi_values) > 1:
+        raise UnsupportedProtectedOperation()
+    try:
+        if statement._values:
+            if any(type(bind) is not BindParameter or bind.callable is not None or bind.required or
+                   bind.expanding or bind.literal_execute for bind in statement._values.values()):
+                raise UnsupportedProtectedOperation()
+            return [{attribute(key): bind.value for key, bind in statement._values.items()}]
+        return [{attribute(key): value for key, value in row.items()} for row in statement._multi_values[0]]
+    except (KeyError, AttributeError, UnmappedColumnError):
+        raise UnsupportedProtectedOperation() from None
+
+
 def _bulk_insert(state):
     session, statement = state.session, state.statement
+    submitted, parameters = statement, state.parameters
     owner, mapper = session._owner, state.bind_mapper
-    if (not state.is_orm_statement or mapper is None or mapper.class_ not in owner.models or
-            type(state.parameters) is not list or not state.parameters or
-            set(state.bind_arguments) - {'clause', 'mapper'}):
+    if not state.is_orm_statement or mapper is None or mapper.class_ not in owner.models:
+        raise UnsupportedProtectedOperation()
+    # .values(...) keeps its native "orm" execution, and so its native CursorResult,
+    # but seals and checks its rows exactly as dictionaries are.
+    values_form = parameters is None and bool(statement._values or statement._multi_values)
+    if values_form:
+        parameters = _values_rows(statement, mapper)
+        statement = statement._clone()
+        statement._values, statement._multi_values = None, ()
+    if type(parameters) is not list or not parameters or set(state.bind_arguments) - {'clause', 'mapper'}:
         raise UnsupportedProtectedOperation()
     bindings = owner.models[mapper.class_]
     first = bindings[0]
@@ -2625,20 +2716,24 @@ def _bulk_insert(state):
         raise UnsupportedProtectedOperation()
     owner.admit(statement, bulk=table)
     returning = owner.returning_binding(statement, table)
+    if returning is not None and statement._post_values_clause is not None:
+        raise UnsupportedProtectedOperation()
     options = state.execution_options
     if (set(options) - {'render_nulls', 'autoflush', 'dml_strategy', 'prebuffer_rows', 'populate_existing',
-                       '_sa_orm_insert_options', '_result_disable_adapt_to_context'} or
+                       'preserve_rowcount', '_sa_orm_insert_options', '_result_disable_adapt_to_context'} or
             any(type(options[name]) is not bool for name in
-                ('render_nulls', 'autoflush', 'prebuffer_rows', 'populate_existing') if name in options) or
-            options.get('dml_strategy', 'bulk') not in ('auto', 'bulk')):
+                ('render_nulls', 'autoflush', 'prebuffer_rows', 'populate_existing', 'preserve_rowcount')
+                if name in options) or
+            options.get('dml_strategy', 'auto') not in ('auto', 'orm' if values_form else 'bulk')):
         raise UnsupportedProtectedOperation()
     native = options.get('_sa_orm_insert_options')
-    if (native is None or native._subject_mapper is not mapper or native._dml_strategy != 'bulk'):
+    if (native is None or native._subject_mapper is not mapper or
+            native._dml_strategy != ('orm' if values_form else 'bulk')):
         raise UnsupportedProtectedOperation()
-    render_nulls = options.get('render_nulls', False)
+    render_nulls = values_form or options.get('render_nulls', False)  # .values(name=None) names the column.
     columns = {prop.key: prop.columns[0] for prop in mapper.column_attrs if len(prop.columns) == 1}
     rows = []
-    for original in state.parameters:
+    for original in parameters:
         if (type(original) is not dict or set(original) - columns.keys() or
                 any((hasattr(value, '__clause_element__') or isinstance(value, ClauseElement))
                     and not _sql_null_assignment(value, columns[attribute])
@@ -2653,13 +2748,15 @@ def _bulk_insert(state):
         for attribute, column in columns.items():
             omitted = attribute not in row or (row[attribute] is None and not render_nulls
                                                and not column.type.should_evaluate_none)
-            if omitted and (column.server_default is not None or
+            # A callable default adds binds this route does not admit. Without RETURNING,
+            # a database default adds none and PostgreSQL fills in an omitted public column.
+            if omitted and (returning is not None and column.server_default is not None or
                             column.default is not None and not column.default.is_scalar):
                 raise UnsupportedProtectedOperation()
         rows.append(row)
     captured = _json_rows_state(rows, bindings)
     material = session._keys()
-    if captured and captured != _json_rows_state(state.parameters, bindings):
+    if captured and captured != _json_rows_state(parameters, bindings):
         raise UnsupportedProtectedOperation()
     operation = _Operation(owner, material, session._tenant, session,
                            bulk_insert=table, bulk_returning=returning)
@@ -2690,12 +2787,13 @@ def _bulk_insert(state):
                                  operation, binding, record=record, tenant=tenant)
             operation.bulk_seals[id(sealed)] = sealed
             row[binding.attribute] = sealed
+    if values_form:
+        rows = [{columns[attribute].key: value for attribute, value in row.items()} for row in rows]
     original_parameters = state.parameters
     state.update_execution_options(compiled_cache=None)
     token = _operation.set(operation)
     try:
-        if returning is not None:
-            state.statement = statement._generate()
+        state.statement = statement._generate() if returning is not None else statement
         if failed_index is not None:
             # Preserve native constraint precedence before this known length
             # error. An empty list would instead insert DEFAULT VALUES.
@@ -2728,7 +2826,7 @@ def _bulk_insert(state):
         state.parameters = rows
         return state.invoke_statement()
     finally:
-        state.statement = statement
+        state.statement = submitted
         state.parameters = original_parameters
         operation.bulk_seals.clear()
         operation.bulk_batch = ()

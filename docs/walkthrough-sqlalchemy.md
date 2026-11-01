@@ -83,6 +83,21 @@ with sessions(tenant_id=authenticated_tenant) as session:
     session.commit()
 ```
 
+`insert(Customer).values(...)` uses the same sealed route and returns a native result.
+PostgreSQL upserts work within the [bounded contract](compatibility.md#bounded-upsert):
+
+```python
+from sqlalchemy.dialects.postgresql import insert
+
+statement = insert(Account).values(id=account_id, email=email, note=note)
+session.execute(statement.on_conflict_do_update(
+    index_elements=[Account.id],  # The primary key of a single-tenant table.
+    set_={"email": statement.excluded.email, "note": statement.excluded.note},
+))
+# Or skip duplicates on a protected unique field, in any table:
+session.execute(statement.on_conflict_do_nothing(index_elements=["email"]))
+```
+
 Supply a nonempty list of ordinary dictionaries with mapped attribute names.
 Assign every ID and declared tenant explicitly. Caller dictionaries stay unchanged.
 The native bulk Result returns no rows and adds no objects to the identity map.

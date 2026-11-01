@@ -23,6 +23,65 @@ tracked on [PR 8](https://github.com/Debrato2005/cryptalis/pull/8) for the combi
 tree and on the resulting `main` revision. No production gate or independent
 human review is qualified by this integration.
 
+## Real-application equality search
+
+**VERIFIED, bounded development evidence.** [Protected `User.email` in the original
+Smolink API](https://github.com/Debrato2005/smolink/blob/43a6622b48c8460257358c118c86b24597cf5255/cryptalis_demo/evidence/email-search-20261102/README.md) closes the gap the frozen demonstration left open. With `backend/`
+unchanged, login, `/auth/me`, wrong-password, unknown-email and taken-email responses
+are identical before protection, while protected, after payload and search-key rotation
+and after removal. Eight concurrent inserts of one email give exactly one commit and
+seven SQLSTATE 23505 results, before and after search rotation. Removal restores
+`VARCHAR(320)` and `ix_users_email`, and the final API run follows a real uninstall.
+
+The library is wheel `ccebae56…c3ec`, rebuilt byte-identically from a clean checkout of
+`bd223c1`. Native and protected alternate between two identical clusters for three
+rounds of 512 samples, so host drift cancels. This removes the frozen report's
+sequential-order limit, on a shared workstation with warm keys and no HTTP layer.
+
+| Added p95, target | 1 process, concurrency 1 | 1 process, concurrency 4 | 4 worker processes | 1 process, concurrency 16 |
+|---|---:|---:|---:|---:|
+| Email equality, 3 ms | 1.91 MEET | 7.65 MISS | 3.06 MISS | 49.62 MISS |
+| Point read, 3 ms | 1.88 MEET | 6.71 MISS | 2.69 MEET | 45.79 MISS |
+| IN-20 (ORM), 8 ms | 2.64 MEET | 10.52 MISS | 3.78 MEET | 57.73 MISS |
+
+A MEET holds in every round. Protected work is CPU-bound Python, so one event loop queues
+it. Four processes reach 1,110 equality reads/s against 4,964 native. Column plus index
+measures **2.017×** native after compaction and 4.24× straight after rotations, both
+missing 2×. Protection, each rotation and removal take about 2, 8 and 2 seconds for
+10,002 accounts. These are local observations, not production budgets. The provider
+is a development key file; cold or remote provider latency is unmeasured.
+
+## Final admission no longer trusts compilation
+
+**Defect found and fixed; it affects frozen `v0.1.0a1`.** Compiling a protected predicate
+registers its nodes as library-generated, and final SELECT admission ran after
+compilation. A statement replaced by a host `before_execute` listener registered after
+attachment therefore passed final admission and reached the driver. A PostgreSQL type
+error stopped the observed case, but a replaced comparison would have sent its plaintext
+value to the server. Ordinary statements were never affected, because they are admitted
+before compilation. It needs code in the host process, which is outside the threat model,
+so it does not change the attacker's position against a database dump.
+
+Final admission now reuses the earlier result only for the exact admitted object. Anything
+else is judged without compile-generated exemptions and refuses before the driver.
+`tests/test_admission_reuse.py` covers both a refused predicate and a plaintext comparison.
+
+## Bounded upsert and INSERT values
+
+**VERIFIED, bounded source and installed wheel.** ,  and primary-key  on single-tenant tables now work within the
+[bounded contract](compatibility.md#bounded-upsert), through the existing sealed route.
+A native PostgreSQL oracle compares final rows, real row counts and SQLSTATE values, and an
+independent connection confirms only CF1 frames are stored. Sync and async paths pass. All
+seven safety checks are mutation-tested in an isolated copy; each mutant fails the test
+naming it. Omitted public database defaults now apply on the route without RETURNING.
+
+The final source regression of 109 test files passes 2,195 calls and 18 subtests, with 25
+call, 34 setup and five collection skips. The final wheel passes 34 calls without skips on
+Python 3.12 and 3.13. Repeat wheel and sdist builds match. This is focused local evidence;
+hosted results bind the pushed commit separately. [Boundary and retained failures](_reset/production-continuation-boundary-20261102.json).
+Tenant-column , upsert RETURNING and other assignments stay refused. All seven
+production gates remain UNKNOWN.
+
 ## New-developer lifecycle
 
 **VERIFIED, bounded:** [`examples/quickstart.py`](../examples/quickstart.py) completes
@@ -769,8 +828,15 @@ they do not qualify a production release.
 
 ## Current performance boundary
 
-Further optimization is deferred until functional objectives are implemented,
-following the current user priority. Existing failures and targets remain recorded.
+The [real-application results](#real-application-equality-search) above are current.
+A local sync diagnostic shows warm protected p50 about 20–27% lower than before this
+work, with no check removed. That is one before/after comparison, not a controlled
+measurement. The savings come from repeated work: `requires_prefix_scope` ran 37 times per read,
+`MigrationPlan.document` reparsed the whole lock and admission repeated subtree walks.
+Remaining cost is mostly admission, about 46% of the profiled async execute path, and
+uncached compilation. Meeting 3 ms at concurrency 4 in one process would need an estimated
+65% less CPU. Only sharing verdicts or compiled forms across statements looks able to
+reach that, which is a security decision, not a tuning step. The sections below retain earlier revision-bound results.
 
 At `09c635a`, the matched warm 10k native/protected profile fails all six added-p95
 read targets. Scalar/tuple point, equality and IN-20 add 4.898, 7.206 and 20.788 ms;
