@@ -1,0 +1,306 @@
+{
+  "format": "cryptalis.development-hosted-boundary/v1",
+  "observed_at_utc": "2026-11-01T10:16:48.782105+00:00",
+  "tested_revision": "e75d049b0afe6d3c7f4d9e7bc8e01136b3529f06",
+  "branch": "codex/post-preview-continuation-20261101",
+  "run": {
+    "id": 41295516545,
+    "html_url": "https://github.com/Debrato2005/cryptalis/actions/runs/41295516545",
+    "head_sha": "e75d049b0afe6d3c7f4d9e7bc8e01136b3529f06",
+    "head_branch": "codex/post-preview-continuation-20261101",
+    "event": "push",
+    "path": ".github/workflows/local-checks.yml",
+    "run_attempt": 1,
+    "status": "completed",
+    "conclusion": "success"
+  },
+  "jobs": [
+    {
+      "id": 124815441618,
+      "name": "Source / PostgreSQL 16",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 124815442146,
+      "name": "Reproducible artifacts / installed recovery",
+      "status": "completed",
+      "conclusion": "success"
+    }
+  ],
+  "github_artifacts": [
+    {
+      "id": 13079069995,
+      "name": "source-evidence-41295516545-1",
+      "size_in_bytes": 17043018,
+      "digest": "sha256:1adef07ea5175d99adb64a635badd6baefbeb9a2c256aeefe3012d113ed29635",
+      "expired": false,
+      "download_sha256": "1adef07ea5175d99adb64a635badd6baefbeb9a2c256aeefe3012d113ed29635"
+    },
+    {
+      "id": 13079760271,
+      "name": "release-evidence-41295516545-1",
+      "size_in_bytes": 780697,
+      "digest": "sha256:3be0a1cd734c141d5fb5e497213d93e93d271075089846beeb5f0e498f9cc7a8",
+      "expired": false,
+      "download_sha256": "3be0a1cd734c141d5fb5e497213d93e93d271075089846beeb5f0e498f9cc7a8"
+    }
+  ],
+  "inventories": [
+    "release/installed-application-export-receipt.json",
+    "release/installed-application-restore-receipt.json",
+    "release/installed-code-receipt.json",
+    "release/installed-export-receipt.json",
+    "release/installed-google-kms-receipt.json",
+    "release/installed-jsonb-export-receipt.json",
+    "release/installed-jsonb-receipt.json",
+    "release/installed-jsonb-restore-receipt.json",
+    "release/installed-jsonb-slots-export-receipt.json",
+    "release/installed-jsonb-slots-restore-receipt.json",
+    "release/installed-modification-export-receipt.json",
+    "release/installed-modification-restore-receipt.json",
+    "release/installed-openbao-tests.json",
+    "release/installed-restore-receipt.json",
+    "release/installed-sqlmodel-receipt.json",
+    "release/installed-storage-modification-export-receipt.json",
+    "release/installed-storage-modification-restore-receipt.json",
+    "source/qualification/source-receipt.json"
+  ],
+  "source_counts": {
+    "test_calls": {
+      "passed": 3985,
+      "skipped": 26
+    },
+    "subtest_calls": {
+      "passed": 18
+    },
+    "setup": {
+      "passed": 4011,
+      "skipped": 41
+    },
+    "teardown": {
+      "passed": 4052
+    },
+    "collection": {
+      "skipped": 9
+    },
+    "selected_items": 4052
+  },
+  "installed_test_calls_passed": 1205,
+  "installed_subtests_passed": 0,
+  "installed_skips": {
+    "release/installed-jsonb-receipt.json": {
+      "test_calls": {
+        "passed": 70,
+        "skipped": 2
+      },
+      "subtest_calls": {},
+      "setup": {
+        "passed": 72
+      },
+      "teardown": {
+        "passed": 72
+      },
+      "collection": {},
+      "selected_items": 72
+    }
+  },
+  "release_steps": [
+    {
+      "name": "reproducible wheel sdist SBOM inspection",
+      "outcome": "PASS",
+      "exit_code": 0,
+      "elapsed_seconds": 0.6489513020000004
+    },
+    {
+      "name": "export locked hashed wheel-test dependencies",
+      "outcome": "PASS",
+      "exit_code": 0,
+      "elapsed_seconds": 0.010008887999997995
+    },
+    {
+      "name": "create isolated wheel interpreter",
+      "outcome": "PASS",
+      "exit_code": 0,
+      "elapsed_seconds": 0.007139163000001503
+    },
+    {
+      "name": "install hashed dependencies",
+      "outcome": "PASS",
+      "exit_code": 0,
+      "elapsed_seconds": 0.514348824999999
+    },
+    {
+      "name": "install exact inspected wheel",
+      "outcome": "PASS",
+      "exit_code": 0,
+      "elapsed_seconds": 0.01756270599999965
+    },
+    {
+      "name": "installed dependency consistency",
+      "outcome": "PASS",
+      "exit_code": 0,
+      "elapsed_seconds": 0.00867639399999831
+    },
+    {
+      "name": "installed file and CLI inspection",
+      "outcome": "PASS"
+    },
+    {
+      "name": "export isolated locked scanner dependencies",
+      "outcome": "PASS",
+      "exit_code": 0,
+      "elapsed_seconds": 0.009669473000002426
+    },
+    {
+      "name": "create isolated scanner interpreter",
+      "outcome": "PASS",
+      "exit_code": 0,
+      "elapsed_seconds": 0.006869522000002348
+    },
+    {
+      "name": "install hashed scanner dependencies",
+      "outcome": "PASS",
+      "exit_code": 0,
+      "elapsed_seconds": 0.29488089500000214
+    },
+    {
+      "name": "export scanner SBOM",
+      "outcome": "PASS",
+      "exit_code": 0,
+      "elapsed_seconds": 0.010035392000002474
+    },
+    {
+      "name": "audit frozen scanner toolchain",
+      "outcome": "PASS",
+      "exit_code": 0,
+      "elapsed_seconds": 0.2509614890000016
+    },
+    {
+      "name": "installed Doctor native code inventory",
+      "outcome": "PASS",
+      "exit_code": 0,
+      "elapsed_seconds": 3.6115965150000022
+    },
+    {
+      "name": "installed ORM and shared initialization/Doctor context",
+      "outcome": "PASS",
+      "exit_code": 0,
+      "elapsed_seconds": 431.592556746
+    },
+    {
+      "name": "installed native JSONB storage and failure workflows",
+      "outcome": "PASS",
+      "exit_code": 0,
+      "elapsed_seconds": 61.419002127000056
+    },
+    {
+      "name": "installed JSONB genuine fresh recovery jsonb-fresh",
+      "outcome": "PASS",
+      "exit_code": 0,
+      "elapsed_seconds": 10.709689173000015
+    },
+    {
+      "name": "installed JSONB genuine fresh recovery jsonb-slots-fresh",
+      "outcome": "PASS",
+      "exit_code": 0,
+      "elapsed_seconds": 11.695986815999959
+    },
+    {
+      "name": "installed Google SDK protocol and PostgreSQL lifecycle",
+      "outcome": "PASS",
+      "exit_code": 0,
+      "elapsed_seconds": 4.033317187999955
+    },
+    {
+      "name": "installed OpenBao TLS outage and PostgreSQL lifecycle",
+      "outcome": "PASS",
+      "exit_code": 0,
+      "elapsed_seconds": 98.09509704200002
+    },
+    {
+      "name": "installed shared configuration on genuine fresh recovery",
+      "outcome": "PASS",
+      "exit_code": 0,
+      "elapsed_seconds": 7.941093126000055
+    },
+    {
+      "name": "installed Project on genuine fresh recovery",
+      "outcome": "PASS",
+      "exit_code": 0,
+      "elapsed_seconds": 7.7207701959999895
+    },
+    {
+      "name": "installed keyword public-slot genuine fresh recovery",
+      "outcome": "PASS",
+      "exit_code": 0,
+      "elapsed_seconds": 8.305814145999989
+    },
+    {
+      "name": "installed modified-field enable genuine fresh recovery",
+      "outcome": "PASS",
+      "exit_code": 0,
+      "elapsed_seconds": 8.269403409999995
+    },
+    {
+      "name": "installed modified-field disable genuine fresh recovery",
+      "outcome": "PASS",
+      "exit_code": 0,
+      "elapsed_seconds": 8.220187022999994
+    }
+  ],
+  "runtime_module_digests": [
+    "c2132cb5c7b9536f81bcd5be871ebe279a6924c95cbad2dbb24a4cd561652dd2"
+  ],
+  "distribution_sha256": {
+    "cryptalis-0.1.0a2.dev0-py3-none-any.whl": "2ff69f4809dd1b4d9739f07eee95da68e2b55388a0297eecb6435d694b8a3bd2",
+    "cryptalis-0.1.0a2.dev0.tar.gz": "35edba9a7d2b0f9a155c5cd330e69fd2cef68cb268d20385271c20683c9ad0c3"
+  },
+  "receipts_archive": "jsonb-defaults-hosted-receipts-20261101.tar.gz",
+  "receipts_archive_sha256": "97a2803fea1ace259a66e38ecb6b93d3283e3959ad32cf0bcee225fb1121b90f",
+  "development_ci_verification_pass": true,
+  "verification_errors": [],
+  "local_release_receipt": {
+    "sha256": "cd7097af4a9b7d370646c907bf5619b70ce659edb666199d5a63e125e426c631",
+    "recorded_base_revision": "5e8893df7d8821175478a3c8a9b04fa9470a6b27",
+    "dirty": true,
+    "build_inputs_equal_tested_commit": true,
+    "distribution_bytes_equal_hosted": true
+  },
+  "jsonb_default_fresh_journeys": {
+    "release/installed-jsonb-journey-receipt.json": {
+      "source_plan_digest": "594a60de78bb26cfe437269d0ad66230c64980f3968b4fefc39ab2fa2f826f4a",
+      "restore_adoption_id": "fde8d4de-ae81-4aba-a1bf-b4c26e3cab62",
+      "profile": "JSONB exact native wire, three rotations, fresh PostgreSQL16 adoption, current-value removal",
+      "none_as_null": false,
+      "public_slots": false,
+      "literal_client_default": true,
+      "tampered_frame": "refused before adoption",
+      "native_wire": "exact jsonb_send bytes preserved",
+      "package_free_restart": "passed",
+      "gates": "all seven UNKNOWN"
+    },
+    "release/installed-jsonb-slots-journey-receipt.json": {
+      "source_plan_digest": "f26931a1260e26f1a861913db830f6796b267ea60c6f7081f756207f21b21d5d",
+      "restore_adoption_id": "4598495d-c6a5-49f1-a239-0f274e6e14c0",
+      "profile": "JSONB exact native wire, three rotations, fresh PostgreSQL16 adoption, current-value removal",
+      "none_as_null": false,
+      "public_slots": true,
+      "literal_client_default": true,
+      "tampered_frame": "refused before adoption",
+      "native_wire": "exact jsonb_send bytes preserved",
+      "package_free_restart": "passed",
+      "gates": "all seven UNKNOWN"
+    }
+  },
+  "limits": [
+    "Development source/installed verification does not change the frozen preview.",
+    "Unavailable previous-v14 and frozen-v15 reader controls remain explicit skips in hosted evidence.",
+    "Fresh journeys exercise literal client defaults and the compiler v16 selection; their receipt contains the literal-default flag, not serialized private plans.",
+    "Shared native default evolution and related alias semantics remain unfinished; this run does not qualify them.",
+    "No draft assets, release body, publication template, frozen tag, or package-index state were changed.",
+    "All seven production gates and independent human review remain UNKNOWN."
+  ],
+  "python_files_matching_tested_tree": 324,
+  "build_inputs_matching_tested_tree": 52
+}
