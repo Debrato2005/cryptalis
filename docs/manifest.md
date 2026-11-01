@@ -236,10 +236,11 @@ Prefix and order cannot share a field representation.
 The prototype pins `cf1-packed-prefix/v1`, `cryptalis.context/v3` and the
 `prefix_lengths` object. Its text codec, normalizer and NULL policy remain
 `utf8-exact/v1`, `identity/v1` and `sql-null/v1`. Active prefix plans select
-lock/v14 and require `pg-text-prefix/v1`; earlier descriptors and lock meanings stay unchanged.
+lock/v14, or v15 when JSONB is also present, and require `pg-text-prefix/v1`;
+earlier descriptors and lock meanings stay unchanged.
 Original native `text_pattern_ops` or `varchar_pattern_ops` indexes on protected
 fields additionally require `pg-text-pattern-index/v1`. Their source facts and
-restoration obligations retain v14 and that reader after prefix is disabled.
+restoration obligations retain v14 (v15 with JSONB) and that reader after prefix is disabled.
 Unrelated indexes on unprotected fields do not select this version.
 
 Ordinary planning, operational artifact use, attachment and cryptographic use

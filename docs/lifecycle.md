@@ -241,8 +241,8 @@ promote a production gate.
 ### Internal exact text prefix lifecycle
 
 **INTERNAL ONLY:** the prefix prototype requires a private synthetic qualification
-scope for planning, attachment and retained v14 preparation, activation and restore
-artifacts. This includes artifacts retaining native pattern-index metadata after
+scope for planning, attachment and retained preparation, activation and restore
+artifacts under v14 or mixed JSONB v15 locks. This includes artifacts retaining native pattern-index metadata after
 prefix removal. Ordinary use refuses; the scope supplies no real-data authorization.
 Promotion still requires all [six capability-admission gates](compatibility.md#capability-admission),
 including the required attacks, cost assessment and independent review. Synthetic
@@ -261,8 +261,8 @@ verifies and reseals current values, replaces owned checks/indexes atomically an
 requires separate successor publication. Uniqueness stays unchanged: disabling
 prefix retains a required equality/unique index; storage-only conversion cannot
 remove uniqueness. Original `text_pattern_ops`/`varchar_pattern_ops` index metadata
-remains a restoration obligation. Its retention requires lock/v14 even after the
-last prefix capability is removed.
+remains a restoration obligation. Its retention requires lock/v14, or v15 when
+JSONB is also present, even after the last prefix capability is removed.
 
 Root rewrap preserves frame bytes. Payload rotation reseals authenticated frames;
 search rotation recomputes equality and prefix terms and reseals their headers.

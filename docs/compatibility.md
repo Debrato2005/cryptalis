@@ -384,7 +384,7 @@ operational artifact use remain blocked by `PrefixCapabilityUnadmitted`.
 Some preparation-artifact constructors wrap that refusal in their existing
 typed invalid-plan error; neither outcome authorizes effects.
 [Manifest](manifest.md#internal-prefix-engineering-syntax) owns context/v3,
-lock/v14, reader dependencies and explicit Unicode prefix-length bounds.
+lock/v14 (v15 with JSONB), reader dependencies and explicit Unicode prefix-length bounds.
 
 The private grammar covers literal LIKE patterns and literal characters followed
 only by terminal `%` wildcards, plus startswith and their negations. It preserves

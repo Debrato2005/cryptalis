@@ -1036,7 +1036,7 @@ Independent review must settle those bounds before real-data admission. The form
 ### Internal packed exact prefix prototype
 
 **INTERNAL ONLY.** The `cf1-packed-prefix/v1` prototype uses context/v3,
-lock/v14 and `pg-text-prefix/v1`. Ordinary planning, saved-plan execution,
+lock/v14 (v15 with JSONB) and `pg-text-prefix/v1`. Ordinary planning, saved-plan execution,
 attachment and retained runtime/crypto use refuse with
 `PrefixCapabilityUnadmitted` outside a private synthetic qualification scope.
 Doctor reports `Capability.Unadmitted` before database inspection. The scope
