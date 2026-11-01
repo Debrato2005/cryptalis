@@ -83,11 +83,17 @@ none of its four required `CS_*` bindings is configured in this environment.
 Those credentials are for running CipherStash itself. Cryptalis and the Smolink
 integration use an independent external provider; their development and local
 verification can continue without a CipherStash account.
-The [draft release payload](../release/draft-0.1.0a1.json) and
-[review notes](../release/notes-0.1.0a1.md) are prepared locally. A remote draft
-Release was not created: the GitHub connector has no release-creation operation,
-and direct `api.github.com` access is denied by this environment's network policy.
-No package index upload or public release occurred. All production gates remain UNKNOWN.
+The [draft prerelease](https://github.com/Debrato2005/cryptalis/releases/tag/untagged-634d26fb97863057055a)
+now exists for the frozen tag. Authenticated GitHub CLI/API access works in this
+workstation session. Seven attached assets match the reviewed sizes and SHA-256
+digests; the recovered CI archive matches GitHub's digest and all 52 build inputs
+match the frozen revision. The remote object is a draft, marked prerelease, with
+no publication timestamp. [Creation boundary](_reset/draft-release-boundary-20261101.json) and
+[final draft/link verification](_reset/draft-release-links-boundary-20261101.json).
+This reuses retained build/install evidence; no new runtime qualification follows.
+The [payload](../release/draft-0.1.0a1.json) and
+[review notes](../release/notes-0.1.0a1.md) retain the publication limits.
+No package-index upload or public release occurred. All production gates remain UNKNOWN.
 
 **Supplemental writer-interruption observations** use the same frozen wheel,
 with measured demo code `e2c1be8` and separate static evidence at

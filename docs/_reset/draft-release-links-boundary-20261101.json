@@ -1,0 +1,101 @@
+{
+  "format": "cryptalis.draft-release-link-followup/v1",
+  "observed_at_utc": "2026-11-01T09:26:59.217230+00:00",
+  "repository": "Debrato2005/cryptalis",
+  "release_id": 430476025,
+  "release_url": "https://github.com/Debrato2005/cryptalis/releases/tag/untagged-634d26fb97863057055a",
+  "prior_receipt_sha256": "63e83df5ee9b650aa3ce5ecebe7cf03213389b7306b43364fa178c6285eaf56e",
+  "prior_body_sha256": "22c1adade27f3c130ac0c1dcb5e6acba535a6949f0204cac45572b98aed75dab",
+  "release_notes_sha256": "ad5c1dba12fc4dadad9c19b14e1ce044bf78c1fbc844248000e04d06b2fc74b5",
+  "prepared_payload_sha256": "6002bfcab95e22248c48df392ccf2dd35ce45af57fde52a9ed055acd455fa96d",
+  "remote_body_equals_release_notes_and_prepared_payload": true,
+  "link_targets": [
+    {
+      "url": "https://github.com/Debrato2005/cryptalis/blob/655d52271d90effb4df918a9547f61c89055fbc7/docs/compatibility.md",
+      "git_blob": "726c2d601826f621b887017293fb752ee3742050",
+      "sha256": "3cc80019e29f07b6a6974733ea3df3b9498898e76aad49314d7ea7ab78a0575f",
+      "git_cat_file_exists": true,
+      "github_contents_bytes_match_git": true
+    },
+    {
+      "url": "https://github.com/Debrato2005/cryptalis/blob/655d52271d90effb4df918a9547f61c89055fbc7/docs/installation.md",
+      "git_blob": "b986d53a18d94bf12f2cf4b9e6bfcabd110f6741",
+      "sha256": "49cfe731c2d96da2450d4bea840149fd1d57beef60660df7fbb0e0727387d6a9",
+      "git_cat_file_exists": true,
+      "github_contents_bytes_match_git": true
+    }
+  ],
+  "tag_name": "v0.1.0a1",
+  "target_commitish": "655d52271d90effb4df918a9547f61c89055fbc7",
+  "draft": true,
+  "prerelease": true,
+  "published_at": null,
+  "asset_identities_states_sizes_and_digests_unchanged_from_initial_verified_receipt": true,
+  "assets": [
+    {
+      "id": 697866297,
+      "name": "cryptalis-0.1.0a1-py3-none-any.whl",
+      "state": "uploaded",
+      "size": 249563,
+      "digest": "sha256:eedecae8fd72a06bdf8ed95bd0aae377cabdfd51df325c50463f4f4f4b65060a"
+    },
+    {
+      "id": 697866299,
+      "name": "cryptalis-0.1.0a1.tar.gz",
+      "state": "uploaded",
+      "size": 224382,
+      "digest": "sha256:7e64f4a36a6ddc6ab4a5693d326f41f8b7aadf97bcee670ead437bd99e4eb077"
+    },
+    {
+      "id": 697866324,
+      "name": "install-receipt.json",
+      "state": "uploaded",
+      "size": 259,
+      "digest": "sha256:9eb74f7f7b7c72bdfb176bb007316bdfbd7e4995ed9bccbfdcaec2296e76a50a"
+    },
+    {
+      "id": 697866327,
+      "name": "installations.json",
+      "state": "uploaded",
+      "size": 21212,
+      "digest": "sha256:7fbe000c2193acb40737b2092057774615ab2cb4a630626ddbceb33ec27da683"
+    },
+    {
+      "id": 697866300,
+      "name": "release-receipt.json",
+      "state": "uploaded",
+      "size": 8045,
+      "digest": "sha256:734ef97745588603aae73194fb55518cbdff66db221f9a20bb50cef1f07921f3"
+    },
+    {
+      "id": 697866293,
+      "name": "sbom.cdx.json",
+      "state": "uploaded",
+      "size": 143583,
+      "digest": "sha256:318517a856aa4287e81f0fe54987ba3f4b2a7ddc91049529d50c18b701473350"
+    },
+    {
+      "id": 697866298,
+      "name": "SHA256SUMS",
+      "state": "uploaded",
+      "size": 192,
+      "digest": "sha256:5f1c5930f4fb35694efffaa7ddcf0a49dc6cdeae0b63ff83b167d923385cb121"
+    }
+  ],
+  "retained_intermediate_observation": {
+    "operation": "PATCH body only",
+    "observed_tag_name": "untagged-8c0cd39bc9c13134ddb8",
+    "expected_tag_name": "v0.1.0a1",
+    "draft_remained_true": true,
+    "recovery": "PATCH explicit tag_name and complete prepared draft metadata, then fresh GET verified all six fields and asset identities/states/sizes/digests"
+  },
+  "draft_browser_asset_urls_changed_during_metadata_update": true,
+  "public_release_published": false,
+  "package_indexes_uploaded": false,
+  "limits": [
+    "Only the draft description links and prepared documentation payload changed.",
+    "Frozen library tag, distributions, SBOM and original evidence remain unchanged.",
+    "No runtime verification or production qualification is claimed.",
+    "Draft browser URLs use GitHub-generated untagged placeholders and changed during metadata update; use numeric release API identity for exact verification."
+  ]
+}

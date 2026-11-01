@@ -1,0 +1,96 @@
+{
+  "format": "cryptalis.draft-release-boundary/v1",
+  "observed_at_utc": "2026-11-01T09:23:29.658721+00:00",
+  "repository": "Debrato2005/cryptalis",
+  "source_revision": "8a5d5060b7aacf5cb3bae6937946fb752cf9ca29",
+  "frozen_revision": "655d52271d90effb4df918a9547f61c89055fbc7",
+  "remote_tag_commit_verified": true,
+  "release": {
+    "id": 430476025,
+    "html_url": "https://github.com/Debrato2005/cryptalis/releases/tag/untagged-8c0cd39bc9c13134ddb8",
+    "name": "Cryptalis 0.1.0a1 \u2014 internal installed-library checkpoint",
+    "tag_name": "v0.1.0a1",
+    "target_commitish": "655d52271d90effb4df918a9547f61c89055fbc7",
+    "draft": true,
+    "prerelease": true,
+    "created_at": "2026-11-01T06:39:07Z",
+    "published_at": null
+  },
+  "payload_sha256": "bf09a6240b2c193b9c13b063ffe3317a241b6f556f0872621e5322d6ce0c2203",
+  "release_notes_sha256": "22c1adade27f3c130ac0c1dcb5e6acba535a6949f0204cac45572b98aed75dab",
+  "release_body_matches_prepared_notes": true,
+  "retrieved_ci_artifact": {
+    "run_id": 41280665577,
+    "artifact_id": 13073451863,
+    "name": "release-evidence-41280665577-1",
+    "sha256": "b8e03927d0291acd3d5118f275f99634b3477fd8b52b9fd0e254075fee8117af",
+    "download_matches_github_digest": true
+  },
+  "source_build_inputs_verified_against_frozen_git_revision": 52,
+  "isolated_installation_cells_in_preserved_receipt": 8,
+  "assets": [
+    {
+      "id": 697866297,
+      "name": "cryptalis-0.1.0a1-py3-none-any.whl",
+      "state": "uploaded",
+      "size": 249563,
+      "digest": "sha256:eedecae8fd72a06bdf8ed95bd0aae377cabdfd51df325c50463f4f4f4b65060a"
+    },
+    {
+      "id": 697866299,
+      "name": "cryptalis-0.1.0a1.tar.gz",
+      "state": "uploaded",
+      "size": 224382,
+      "digest": "sha256:7e64f4a36a6ddc6ab4a5693d326f41f8b7aadf97bcee670ead437bd99e4eb077"
+    },
+    {
+      "id": 697866324,
+      "name": "install-receipt.json",
+      "state": "uploaded",
+      "size": 259,
+      "digest": "sha256:9eb74f7f7b7c72bdfb176bb007316bdfbd7e4995ed9bccbfdcaec2296e76a50a"
+    },
+    {
+      "id": 697866327,
+      "name": "installations.json",
+      "state": "uploaded",
+      "size": 21212,
+      "digest": "sha256:7fbe000c2193acb40737b2092057774615ab2cb4a630626ddbceb33ec27da683"
+    },
+    {
+      "id": 697866300,
+      "name": "release-receipt.json",
+      "state": "uploaded",
+      "size": 8045,
+      "digest": "sha256:734ef97745588603aae73194fb55518cbdff66db221f9a20bb50cef1f07921f3"
+    },
+    {
+      "id": 697866293,
+      "name": "sbom.cdx.json",
+      "state": "uploaded",
+      "size": 143583,
+      "digest": "sha256:318517a856aa4287e81f0fe54987ba3f4b2a7ddc91049529d50c18b701473350"
+    },
+    {
+      "id": 697866298,
+      "name": "SHA256SUMS",
+      "state": "uploaded",
+      "size": 192,
+      "digest": "sha256:5f1c5930f4fb35694efffaa7ddcf0a49dc6cdeae0b63ff83b167d923385cb121"
+    }
+  ],
+  "all_remote_asset_digests_match_reviewed_local_files": true,
+  "public_release_published": false,
+  "package_indexes_uploaded": false,
+  "cipherstash": {
+    "configured_cs_or_cipherstash_environment_binding_names": [],
+    "runtime_comparison": "UNAVAILABLE; no configured workspace/client bindings observed"
+  },
+  "production_gates": "UNKNOWN",
+  "limits": [
+    "Draft creation/upload is preparation, not release publication or production qualification.",
+    "Preserved build/installation evidence retains its historical execution boundaries; no new runtime qualification ran.",
+    "Package assets recovered from frozen successful CI; no new build or package-content changes.",
+    "Direct GitHub CLI/API works in this workstation session; prior cloud access failure is historical."
+  ]
+}

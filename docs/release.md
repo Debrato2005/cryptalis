@@ -48,6 +48,15 @@ external prerequisites and all production gates UNKNOWN. Link the demonstration
 evidence without copying it into the library distribution. A draft is reviewable
 preparation, not permission to publish it.
 
+The frozen `v0.1.0a1` candidate has a
+[remote draft](https://github.com/Debrato2005/cryptalis/releases/tag/untagged-634d26fb97863057055a)
+with seven inspected assets. The
+[creation receipt](_reset/draft-release-boundary-20261101.json) binds the frozen
+tag, CI archive, build inputs, asset digests and unpublished draft state.
+[Final verification](_reset/draft-release-links-boundary-20261101.json) also binds
+the corrected absolute documentation links and unchanged assets. This
+preparation does not satisfy production gates or authorize public publication.
+
 ## Package-index workflow template
 
 The reviewed workflow template is
