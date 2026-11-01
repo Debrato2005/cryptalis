@@ -33,12 +33,17 @@ container only after private-log retention, preserving its Raft storage.
 
 Continue production work on a separate development branch against all 34
 objectives. Integrate reusable verified fixes through normal Git workflow;
-do not create permanent library forks. A discovered tooling follow-up is that
-`scripts/openbao_qualification.py` generates certificates without the standard
-extensions required by Python 3.13 strict TLS. The demo provisioner has the
-verified fix; reuse it in the development branch and run a real strict-TLS
-provider check. Do not weaken verification. All seven production gates and
-independent human review remain UNKNOWN. [Status](status.md) owns current results.
+do not create permanent library forks. The first post-preview tooling fix reuses
+the demo's standard X.509 extensions in `scripts/openbao_qualification.py`.
+A fresh OpenBao service passes strict Python 3.13.5 TLS and public installed-wheel
+root creation/unwrap; wrong-AAD and key-administration controls refuse. The
+earlier certificate failure and a runner readiness failure remain recorded in
+the [exact boundary](_reset/openbao-strict-tls-boundary-20261101.json).
+Both new temporary containers were retired after private-log retention; private
+custody files remain available. Runtime/build inputs and the frozen preview
+are unchanged. No PostgreSQL tests or full provider qualification ran for this
+tooling boundary. Continue the production objective ledger. All seven gates
+and independent human review remain UNKNOWN. [Status](status.md) owns current results.
 
 ## Previous native JSONB checkpoint
 
