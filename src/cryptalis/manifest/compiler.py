@@ -25,13 +25,14 @@ from cryptalis.manifest.declaration import parse_protection_declaration
 from cryptalis.manifest.parser import MAX_DOCUMENT_BYTES, ManifestInvalid, decode_manifest_json
 from cryptalis._sqlmodel_types import autostring_impl
 from cryptalis._numeric import numeric_parameters, numeric_typmod, numeric_value
+from cryptalis._jsonb import jsonb_default, read_jsonb_default
 from cryptalis._timestamp import aware_default, read_aware_default
 from cryptalis._search_layout import search_index_statements
 from cryptalis.crypto.keys import InvalidValue
 
 
 _PUBLIC_SLOTS_LAYOUT = "preserve-public-slots/v1"
-_LOCK_SCHEMAS = tuple(f'cryptalis.lock/v{version}' for version in range(1, 16))
+_LOCK_SCHEMAS = tuple(f'cryptalis.lock/v{version}' for version in range(1, 17))
 _INTEGER_TYPES = {'int2': (SmallInteger, postgresql.SMALLINT),
                   'int4': (Integer, postgresql.INTEGER), 'int8': (BigInteger, postgresql.BIGINT)}
 _JSONB_CODEC = 'pg-jsonb-text/v1'
@@ -182,6 +183,14 @@ def _value_default(column, codec):
     if column.default is None:
         return None
     from sqlalchemy.sql.schema import ScalarElementColumnDefault
+    if codec == _JSONB_CODEC and type(column.default) is ScalarElementColumnDefault:
+        if column.default.arg is None:
+            raise ValueError
+        try:
+            jsonb_default(column.default.arg)
+        except InvalidValue:
+            raise ValueError from None
+        return column.default.arg
     if codec == 'pg-numeric-decimal/v1' and type(column.default) is ScalarElementColumnDefault:
         try:
             numeric_value(column.default.arg)
@@ -212,6 +221,11 @@ def _value_default(column, codec):
 
 def _compiled_default(field):
     raw = field.get('application_default')
+    if field['source']['type'] == 'jsonb' and 'application_default' in field:
+        try:
+            return read_jsonb_default(raw)
+        except InvalidValue:
+            raise ValueError from None
     if field['source']['type'] == 'timestamptz' and raw is not None:
         return read_aware_default(raw)
     if field['source']['type'] == 'numeric' and raw is not None:
@@ -260,6 +274,13 @@ def _compiled_default(field):
 
 
 def _default_matches(actual, field):
+    if field['source']['type'] == 'jsonb':
+        if 'application_default' not in field:
+            return actual is None
+        try:
+            return jsonb_default(actual) == field['application_default']
+        except InvalidValue:
+            return False
     expected = _compiled_default(field)
     if type(actual) is not type(expected):
         return False
@@ -469,13 +490,17 @@ def _required_readers(models):
                   | ({'pg-date-default/v1'} if any(f['source']['type'] == 'date' and
                      'application_default' in f for m in models for f in m['fields']) else set())
                   | ({'pg-timestamp-default/v1'} if any(f['source']['type'] == 'timestamp' and
+                     'application_default' in f for m in models for f in m['fields']) else set())
+                  | ({'pg-jsonb-default/v1'} if any(f['source']['type'] == 'jsonb' and
                      'application_default' in f for m in models for f in m['fields']) else set()))
 
 
 def _lock_schema(models, layout, *, legacy=False):
     kinds = {field['source']['type'] for model in models for field in model['fields']}
     if 'jsonb' in kinds:
-        return 'cryptalis.lock/v15'
+        return ('cryptalis.lock/v16' if any(field['source']['type'] == 'jsonb' and
+                'application_default' in field for model in models for field in model['fields'])
+                else 'cryptalis.lock/v15')
     if (any('prefix' in field['queries'] for model in models for field in model['fields'])
             or _has_pattern_indexes(models)):
         return 'cryptalis.lock/v14'
@@ -1108,7 +1133,7 @@ def _compile_model(model, mapper, facts, issues, schema):
         try:
             application_default = _value_default(column, _value_codec(actual))
         except ValueError:
-            refuse("protected_default", field.name, "Use a literal native Boolean, in-range integer or date client default, or assign an admitted value.")
+            refuse("protected_default", field.name, "Use an admitted literal client default, or assign an admitted value.")
         if (_server_generation(column, actual)
                 or column.onupdate is not None):
             refuse("protected_default", field.name, "Remove protected defaults and generated values. Assign values through admitted writes.")
@@ -1200,7 +1225,9 @@ def _compile_model(model, mapper, facts, issues, schema):
                        "descriptor": descriptor})
         if actual['type'] == 'numeric':
             fields[-1]['source']['typmod'] = actual['typmod']
-        if boolean or (_fixed_value_width(actual) is not None or actual['type'] == 'numeric') and application_default is not None:
+        if jsonb and application_default is not None:
+            fields[-1]['application_default'] = jsonb_default(application_default)
+        elif boolean or (_fixed_value_width(actual) is not None or actual['type'] == 'numeric') and application_default is not None:
             fields[-1]['application_default'] = (application_default if boolean else
                 aware_default(application_default) if actual['type'] == 'timestamptz' else
                 application_default.isoformat(timespec='microseconds') if actual['type'] == 'timestamp' else
@@ -1275,6 +1302,7 @@ def _previous_lock(raw, current, engine):
         numeric_search_lock = old.get('schema') in _LOCK_SCHEMAS[12:]
         prefix_lock = old.get('schema') in _LOCK_SCHEMAS[13:]
         jsonb_lock = old.get('schema') in _LOCK_SCHEMAS[14:]
+        jsonb_default_lock = old.get('schema') in _LOCK_SCHEMAS[15:]
         date_lock = old.get('schema') in _LOCK_SCHEMAS[7:]
         integer_lock = old.get('schema') in _LOCK_SCHEMAS[6:]
         public_slots = old.get('schema') == 'cryptalis.lock/v6' or integer_lock and old.get('layout') is not None
@@ -1378,6 +1406,10 @@ def _previous_lock(raw, current, engine):
                         raise ValueError
                 if (field['source']['type'] in _INTEGER_TYPES or field['source']['type'] in ('date', 'timestamp', 'timestamptz', 'numeric')) and 'application_default' in field:
                     if _compiled_default(field) is None:
+                        raise ValueError
+                    members.add('application_default')
+                if field['source']['type'] == 'jsonb' and 'application_default' in field:
+                    if not jsonb_default_lock or _compiled_default(field) is None:
                         raise ValueError
                     members.add('application_default')
                 if field.keys() != members or field["field_id"] != str(intent.field_id) or field["name"] != intent.name:

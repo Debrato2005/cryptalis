@@ -41,15 +41,20 @@ gates and independent human review remain UNKNOWN.
 ## Installed-library preview preparation
 
 **Frozen library: `v0.1.0a1` at `655d522`.** Both jobs in
-[run 41280665577](https://github.com/Debrato2005/cryptalis/actions/runs/41280665577)
-pass at PR merge `ac6b86b` (parents `0b4933f` and `655d522`). All 323 Python
-files across 18 test inventories and all 52 build inputs independently match
-the real preview head. Source passes 3,953 calls plus 18 subtests; 25 call, 41
+[exact-tag run 41293818065](https://github.com/Debrato2005/cryptalis/actions/runs/41293818065)
+pass at the frozen commit, dispatched with `workflow_dispatch` on the tag.
+All 323 Python files across 18 test inventories and all 52 build inputs match
+that head. Source passes 3,953 calls plus 18 subtests; 25 call, 41
 setup and nine collection skips remain explicit. Seventeen installed receipts
 pass 1,173 calls, with one unavailable previous-v14 JSONB reader control skipped.
 All 24 release steps pass. Hosted wheel/sdist exactly match local artifacts.
-[Exact hosted boundary](_reset/preview-hosted-boundary-20261101.json) and
-[retained receipts](_reset/preview-hosted-receipts-20261101.tar.gz).
+[Exact-tag boundary](_reset/exact-tag-hosted-boundary-20261101.json) and
+[retained receipts](_reset/exact-tag-hosted-receipts-20261101.tar.gz).
+The clean, reproducible exact-tag receipt satisfies the prepared publication
+workflow's build-side head/event checks. Publication approval, protected
+environment, publisher identity and independent review remain separate.
+The [original PR-merge boundary](_reset/preview-hosted-boundary-20261101.json)
+and its [receipts](_reset/preview-hosted-receipts-20261101.tar.gz) remain retained.
 
 The separate Smolink clone is frozen at
 [`269aed4`](https://github.com/Debrato2005/smolink/tree/269aed4bcfcbbf40ffea444f2e2a748013c862d4),
@@ -83,11 +88,17 @@ none of its four required `CS_*` bindings is configured in this environment.
 Those credentials are for running CipherStash itself. Cryptalis and the Smolink
 integration use an independent external provider; their development and local
 verification can continue without a CipherStash account.
-The [draft release payload](../release/draft-0.1.0a1.json) and
-[review notes](../release/notes-0.1.0a1.md) are prepared locally. A remote draft
-Release was not created: the GitHub connector has no release-creation operation,
-and direct `api.github.com` access is denied by this environment's network policy.
-No package index upload or public release occurred. All production gates remain UNKNOWN.
+The [draft prerelease](https://github.com/Debrato2005/cryptalis/releases/tag/untagged-634d26fb97863057055a)
+now exists for the frozen tag. Authenticated GitHub CLI/API access works in this
+workstation session. Seven attached assets match the reviewed sizes and SHA-256
+digests; the recovered CI archive matches GitHub's digest and all 52 build inputs
+match the frozen revision. The remote object is a draft, marked prerelease, with
+no publication timestamp. [Creation boundary](_reset/draft-release-boundary-20261101.json) and
+[final draft/link verification](_reset/draft-release-links-boundary-20261101.json).
+This reuses retained build/install evidence; no new runtime qualification follows.
+The [payload](../release/draft-0.1.0a1.json) and
+[review notes](../release/notes-0.1.0a1.md) retain the publication limits.
+No package-index upload or public release occurred. All production gates remain UNKNOWN.
 
 **Supplemental writer-interruption observations** use the same frozen wheel,
 with measured demo code `e2c1be8` and separate static evidence at
@@ -223,22 +234,51 @@ JSON hooks and immutable input checks refuse changed behavior before dispatch;
 failed/cancelled async preparation cleans up transactions for healthy reuse.
 [Compatibility](compatibility.md#jsonb-storage) owns the exact scope.
 
-The complete source suite passes 3,953 calls and 18 subtests across 4,019 selected
-items. Twenty-five call, 41 setup and nine collection skips remain explicit.
-Focused source and Python 3.12 installed runs each pass all 39 JSONB cases without
-skips, including a genuine retained v14 reader control. Both installed fresh
-layouts pass export and authenticated adoption, tamper refusal, current edits,
-removal and an import-denied native restart. Their outer source cluster remains
-running until cleanup; no production fencing or disaster qualification follows.
+**Development `0.1.0a2.dev0` also admits literal client defaults**, using lock/v16
+and `pg-jsonb-default/v1`; no-default JSONB keeps v15. Native oracles cover both
+NULL modes, exact pending Python literals, MutableDict coercion/tracking,
+sync/async ORM and dictionary INSERT/RETURNING, savepoints and default drift
+before keys/dispatch. The genuine frozen v15 reader accepts no-default JSONB and
+refuses v16 before SQL. The frozen `0.1.0a1` preview is unchanged.
+Shared literal aliases must remain unchanged while they still reference the
+pinned mapping default; broader native default evolution remains open, as the
+[contract](compatibility.md#jsonb-storage) explains.
 
-All seven final test receipts bind identical 323-file Python inventories and
-45-module runtime bytes. Repeat artifacts, 52 build inputs, SBOM, 50 installed
-files and CLI inspection pass. The [exact local boundary](_reset/jsonb-boundary-20261101.json)
-retains receipts, earlier failures and source snapshots; [type history](history/types-2026-11.md#native-jsonb-storage-2026-11-01)
-records the corrections and limits. The exact hosted pass is recorded above;
-its earlier-reader skip does not replace the executed local reader controls.
+Both jobs in [run 41295516545](https://github.com/Debrato2005/cryptalis/actions/runs/41295516545)
+pass at exact **`e75d049`**. All 324 Python inputs across 18 inventories and 52
+build inputs match that revision and the current development runtime. Source
+passes **3,985 calls and 18 subtests**, with 26 call, 41 setup and nine collection
+skips. Seventeen installed receipts pass **1,205 calls**; JSONB passes 70 with
+two unavailable previous-reader skips. All 24 release steps pass, and hosted
+wheel/sdist exactly match local inspected artifacts.
+[Hosted boundary](_reset/jsonb-defaults-hosted-boundary-20261101.json) and
+[receipts](_reset/jsonb-defaults-hosted-receipts-20261101.tar.gz).
 
-JSON search, protected defaults/indexes/constraints beyond nullability, broader
+Separately, source and installed Python 3.12.16/3.13.12
+JSONB workflows each pass **71 calls**, including 33 default controls, and retain
+one unavailable v14-reader skip. All bind the same 45-module runtime and
+unchanged source/runtime bytes during execution. A later qualification-only
+guard correction admits the matching v16/default fresh profile; product/test
+bytes are unchanged, final local fresh receipts bind the corrected harness,
+and the complete hosted run above verifies all final inputs together.
+
+Installed fresh recovery passes for default-bearing v16 in both layouts, plus
+a no-default v15 public-slot control. These cover three source rotations,
+authenticated adoption/tamper refusal, new omitted-value writes, current edits,
+removal and an import-denied native default restart. Fresh profiles use
+`none_as_null=False`; core workflows cover both modes. The outer source cluster
+remains running until cleanup, so no production fencing claim follows.
+
+Repeat wheel/sdist builds, 52 input hashes, SBOM, 50 installed files and CLI
+inspection pass. The [default boundary](_reset/jsonb-defaults-boundary-20261101.json)
+and [22 retained receipts](_reset/jsonb-defaults-receipts-20261101.tar.gz) preserve
+the three deliberate regression failures and three stopped harness profiles,
+their corrections, exact runtime/artifact hashes and the harness-only input
+difference after the earlier local complete run. Earlier storage/reader evidence remains in
+its [boundary](_reset/jsonb-boundary-20261101.json) and
+[type history](history/types-2026-11.md#native-jsonb-storage-2026-11-01).
+
+JSON search, generated defaults/indexes/constraints beyond nullability, broader
 native behavior, performance and independent review remain open. No objective or
 production gate is completed by this storage prerequisite. All seven gates stay
 UNKNOWN. The [handoff](handoff.md) routes the next authorized work.
