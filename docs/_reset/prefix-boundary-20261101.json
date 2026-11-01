@@ -1,0 +1,1233 @@
+{
+  "accepted": {
+    "cost/receipt.json": {
+      "outcomes": {
+        "collection": {},
+        "selected_items": 1,
+        "setup": {
+          "passed": 1
+        },
+        "subtest_calls": {},
+        "teardown": {
+          "passed": 1
+        },
+        "test_calls": {
+          "passed": 1
+        }
+      },
+      "runtime_binding": {
+        "mode": "installed-wheel",
+        "module_count": 44,
+        "modules_sha256": "45aaf1e5754d4ff6572b62db592df22b24290cbaf4bad1efbe9e0d791c220099",
+        "runtime_root": "/tmp/cryptalis-prefix-installed-20261101/lib/python3.12/site-packages/cryptalis",
+        "wheel": "/home/debrato/.cache/cryptalis-qa/prefix-final-artifacts-20261101/cryptalis-0.1.0-py3-none-any.whl",
+        "wheel_sha256": "d6ec8a1423c16dca5a66059f916b2b5bbdf12228e7a029ad6a6063a21e32e657"
+      }
+    },
+    "fresh-public-slots/export-receipt.json": {
+      "outcomes": {
+        "collection": {},
+        "selected_items": 1,
+        "setup": {
+          "passed": 1
+        },
+        "subtest_calls": {},
+        "teardown": {
+          "passed": 1
+        },
+        "test_calls": {
+          "passed": 1
+        }
+      },
+      "runtime_binding": {
+        "mode": "installed-wheel",
+        "module_count": 44,
+        "modules_sha256": "45aaf1e5754d4ff6572b62db592df22b24290cbaf4bad1efbe9e0d791c220099",
+        "runtime_root": "/tmp/cryptalis-prefix-installed-20261101/lib/python3.12/site-packages/cryptalis",
+        "wheel": "/home/debrato/.cache/cryptalis-qa/prefix-final-artifacts-20261101/cryptalis-0.1.0-py3-none-any.whl",
+        "wheel_sha256": "d6ec8a1423c16dca5a66059f916b2b5bbdf12228e7a029ad6a6063a21e32e657"
+      }
+    },
+    "fresh-public-slots/restore-receipt.json": {
+      "outcomes": {
+        "collection": {},
+        "selected_items": 1,
+        "setup": {
+          "passed": 1
+        },
+        "subtest_calls": {},
+        "teardown": {
+          "passed": 1
+        },
+        "test_calls": {
+          "passed": 1
+        }
+      },
+      "runtime_binding": {
+        "mode": "installed-wheel",
+        "module_count": 44,
+        "modules_sha256": "45aaf1e5754d4ff6572b62db592df22b24290cbaf4bad1efbe9e0d791c220099",
+        "runtime_root": "/tmp/cryptalis-prefix-installed-20261101/lib/python3.12/site-packages/cryptalis",
+        "wheel": "/home/debrato/.cache/cryptalis-qa/prefix-final-artifacts-20261101/cryptalis-0.1.0-py3-none-any.whl",
+        "wheel_sha256": "d6ec8a1423c16dca5a66059f916b2b5bbdf12228e7a029ad6a6063a21e32e657"
+      }
+    },
+    "fresh/export-receipt.json": {
+      "outcomes": {
+        "collection": {},
+        "selected_items": 1,
+        "setup": {
+          "passed": 1
+        },
+        "subtest_calls": {},
+        "teardown": {
+          "passed": 1
+        },
+        "test_calls": {
+          "passed": 1
+        }
+      },
+      "runtime_binding": {
+        "mode": "installed-wheel",
+        "module_count": 44,
+        "modules_sha256": "45aaf1e5754d4ff6572b62db592df22b24290cbaf4bad1efbe9e0d791c220099",
+        "runtime_root": "/tmp/cryptalis-prefix-installed-20261101/lib/python3.12/site-packages/cryptalis",
+        "wheel": "/home/debrato/.cache/cryptalis-qa/prefix-final-artifacts-20261101/cryptalis-0.1.0-py3-none-any.whl",
+        "wheel_sha256": "d6ec8a1423c16dca5a66059f916b2b5bbdf12228e7a029ad6a6063a21e32e657"
+      }
+    },
+    "fresh/restore-receipt.json": {
+      "outcomes": {
+        "collection": {},
+        "selected_items": 1,
+        "setup": {
+          "passed": 1
+        },
+        "subtest_calls": {},
+        "teardown": {
+          "passed": 1
+        },
+        "test_calls": {
+          "passed": 1
+        }
+      },
+      "runtime_binding": {
+        "mode": "installed-wheel",
+        "module_count": 44,
+        "modules_sha256": "45aaf1e5754d4ff6572b62db592df22b24290cbaf4bad1efbe9e0d791c220099",
+        "runtime_root": "/tmp/cryptalis-prefix-installed-20261101/lib/python3.12/site-packages/cryptalis",
+        "wheel": "/home/debrato/.cache/cryptalis-qa/prefix-final-artifacts-20261101/cryptalis-0.1.0-py3-none-any.whl",
+        "wheel_sha256": "d6ec8a1423c16dca5a66059f916b2b5bbdf12228e7a029ad6a6063a21e32e657"
+      }
+    },
+    "installed/receipt.json": {
+      "outcomes": {
+        "collection": {},
+        "selected_items": 144,
+        "setup": {
+          "passed": 144
+        },
+        "subtest_calls": {},
+        "teardown": {
+          "passed": 144
+        },
+        "test_calls": {
+          "passed": 144
+        }
+      },
+      "runtime_binding": {
+        "mode": "installed-wheel",
+        "module_count": 44,
+        "modules_sha256": "45aaf1e5754d4ff6572b62db592df22b24290cbaf4bad1efbe9e0d791c220099",
+        "runtime_root": "/tmp/cryptalis-prefix-installed-20261101/lib/python3.12/site-packages/cryptalis",
+        "wheel": "/home/debrato/.cache/cryptalis-qa/prefix-final-artifacts-20261101/cryptalis-0.1.0-py3-none-any.whl",
+        "wheel_sha256": "d6ec8a1423c16dca5a66059f916b2b5bbdf12228e7a029ad6a6063a21e32e657"
+      }
+    },
+    "source/receipt.json": {
+      "outcomes": {
+        "collection": {},
+        "selected_items": 715,
+        "setup": {
+          "passed": 715
+        },
+        "subtest_calls": {},
+        "teardown": {
+          "passed": 715
+        },
+        "test_calls": {
+          "passed": 704,
+          "skipped": 11
+        }
+      },
+      "runtime_binding": {
+        "mode": "source",
+        "module_count": 44,
+        "modules_sha256": "45aaf1e5754d4ff6572b62db592df22b24290cbaf4bad1efbe9e0d791c220099",
+        "runtime_root": "/home/debrato/Projects/cryptalis/src/cryptalis",
+        "wheel": null,
+        "wheel_sha256": null
+      }
+    }
+  },
+  "admission": {
+    "doctor": "Ordinary prefix reports Capability.Unadmitted; synthetic schema/query structure checks can PASS while overall diagnosis remains UNKNOWN.",
+    "ordinary_paths": "Typed refusal before SQL/keys; retained runtimes and historical prefix source locks remain gated. Some preparation constructors wrap admission refusal in existing typed invalid-plan failures.",
+    "qualification_scope": "Private synthetic ContextVar only, propagated separately into owned online worker contexts. No public opt-in or real-data authorization.",
+    "status": "UNADMITTED"
+  },
+  "archive": {
+    "entries": [
+      {
+        "bytes": 2688,
+        "name": "cost/observation.json",
+        "sha256": "b108ab260bdfe454a6ec3aa4f7582b47b1ae5e1614615a2eace4575b8fb01e24"
+      },
+      {
+        "bytes": 36328,
+        "name": "cost/receipt.json",
+        "sha256": "560f5d5b84c48ff36fa068383c94e8eebce24b27f39b1ba5659f526158afb974"
+      },
+      {
+        "bytes": 2688,
+        "name": "earlier/cost-observation.json",
+        "sha256": "b108ab260bdfe454a6ec3aa4f7582b47b1ae5e1614615a2eace4575b8fb01e24"
+      },
+      {
+        "bytes": 7380,
+        "name": "earlier/cryptalis-prefix-build-20261101.json",
+        "sha256": "e9eb406ff3842fa9ea54c00c3b40ac6341cd2b51d464577a3ae07dd56c22decb"
+      },
+      {
+        "bytes": 7380,
+        "name": "earlier/cryptalis-prefix-final-build-20261101.json",
+        "sha256": "8415a1ade547b32c42c1bb7df58db3db68177be30a199a7e646d8da97bb5b096"
+      },
+      {
+        "bytes": 7615,
+        "name": "earlier/cryptalis-prefix-final-inspected-20261101.json",
+        "sha256": "52d10dd2e5b1812cc35e77a0ed4304d6ccc07e568ead0b7b0ad41af135509a34"
+      },
+      {
+        "bytes": 7615,
+        "name": "earlier/cryptalis-prefix-inspected-20261101.json",
+        "sha256": "9ff6341b0d059d13055725b0a8b507dfa91f1b97c96c3362d48be7ac0a8940a6"
+      },
+      {
+        "bytes": 36031,
+        "name": "earlier/disk/prefix-admission-scope-20261101/receipt.json",
+        "sha256": "16f19e72dde5c10a0b0b70e866ede29493aa9b4afdb7afef37fb26d676b2d72a"
+      },
+      {
+        "bytes": 424,
+        "name": "earlier/disk/prefix-final-fresh-20261101/recovery/prefix-journey-receipt.json",
+        "sha256": "b80d2f407a46419f88f4d2633ab1931b86dfac18787674209302d2172af17101"
+      },
+      {
+        "bytes": 424,
+        "name": "earlier/disk/prefix-final-slots-20261101/recovery/prefix-journey-receipt.json",
+        "sha256": "305280518520f6f7e3b997200fc37686b64de71e4f60d9cb56a3d36bb21a550b"
+      },
+      {
+        "bytes": 36204,
+        "name": "earlier/disk/prefix-reviewed-20261101/receipt.json",
+        "sha256": "f4704992db007763f499e72a4e1de4d99e82c4f241680e5131aaa6464e0d81d3"
+      },
+      {
+        "bytes": 36042,
+        "name": "earlier/disk/prefix-scope-green-20261101/receipt.json",
+        "sha256": "fae4b47fb06598c5175c262a990b2977d4f19c9cfb24c913b8c8dc85887c0501"
+      },
+      {
+        "bytes": 39623,
+        "name": "earlier/disk/prefix-source-20261101/receipt.json",
+        "sha256": "c559f98be6f0b06a656c3f0fac3bdcf83b65757bab8b520e04a935764ded5810"
+      },
+      {
+        "bytes": 886,
+        "name": "earlier/index-maintained-observation.json",
+        "sha256": "4f34c92e73d51e046c0de2b59bf59ce93699ace42a5cae8d58bfae95f3b9d6eb"
+      },
+      {
+        "bytes": 7380,
+        "name": "earlier/prefix-build-20261101.json",
+        "sha256": "0b15f93ccdd0d80f2e06a7acfa962daa9acc3808edeea3e9844d1581834b0e0a"
+      },
+      {
+        "bytes": 35976,
+        "name": "earlier/tmp/cryptalis-prefix-admission-20261101/receipt.json",
+        "sha256": "6d9b59dc4b9e29363b666d9978f523134f51220e66b24846fafac4c3b3435594"
+      },
+      {
+        "bytes": 35975,
+        "name": "earlier/tmp/cryptalis-prefix-admission-final-20261101/receipt.json",
+        "sha256": "a67f19de5ab9b5d444421333351ed4884a283c6b550eda8aad49f729a286382a"
+      },
+      {
+        "bytes": 36042,
+        "name": "earlier/tmp/cryptalis-prefix-admission-green-20261101/receipt.json",
+        "sha256": "f2a1541d01ca738217a45e2866d5b7ecc70f04c87be2706a178734320cb8a0b7"
+      },
+      {
+        "bytes": 36042,
+        "name": "earlier/tmp/cryptalis-prefix-admission-second-20261101/receipt.json",
+        "sha256": "50f1bff9b0c34f6e9a73d43a0443a6f769afdf4422df4e202b7e60b221561a36"
+      },
+      {
+        "bytes": 35301,
+        "name": "earlier/tmp/cryptalis-prefix-core-20261101/receipt.json",
+        "sha256": "85222fe4a567f0fdef3e777c5aab17a1af8afcc615a7b4efbd261916577cda65"
+      },
+      {
+        "bytes": 36172,
+        "name": "earlier/tmp/cryptalis-prefix-cost-20261101/receipt.json",
+        "sha256": "ede2fe6e007a8ecb4af99b08d87799932ac089e77935affa3cd1af07043dbdaf"
+      },
+      {
+        "bytes": 39835,
+        "name": "earlier/tmp/cryptalis-prefix-final-source-20261101/receipt.json",
+        "sha256": "9c80cba074dfed1603fb8d2ef7f5d5cc269a3eb9598b02fadc3767e18aa85254"
+      },
+      {
+        "bytes": 35297,
+        "name": "earlier/tmp/cryptalis-prefix-first-20261101/receipt.json",
+        "sha256": "70f0bcf9d5d54c9db4f93669dd39c707c78db9341042191f2d1925bb5787a99d"
+      },
+      {
+        "bytes": 36275,
+        "name": "earlier/tmp/cryptalis-prefix-fresh-20261101/recovery/export-receipt.json",
+        "sha256": "26bb660619ee871f6cdd0ec9518318a23f78eaf3084984114ab25fb2db090b70"
+      },
+      {
+        "bytes": 36274,
+        "name": "earlier/tmp/cryptalis-prefix-fresh-slots-20261101/recovery/export-receipt.json",
+        "sha256": "0b636e3bc6258ba8151455e9026d5f5197a47d45b4f86994c6e3618143d42973"
+      },
+      {
+        "bytes": 35793,
+        "name": "earlier/tmp/cryptalis-prefix-index-diagnosis-20261101/receipt.json",
+        "sha256": "7715847c3ab9aa616fc5de2682e2864ff0b7f36df964ac0ef1d2b7c371624a05"
+      },
+      {
+        "bytes": 35792,
+        "name": "earlier/tmp/cryptalis-prefix-index-maintained-20261101/receipt.json",
+        "sha256": "b9c3d5b0d9d4244ac93795df8cc74aa395acafcfb661854a4acfa23f4bb00673"
+      },
+      {
+        "bytes": 37077,
+        "name": "earlier/tmp/cryptalis-prefix-installed-20261101-tests/receipt.json",
+        "sha256": "efe3f63ca7392f21e988813b7e12b5882e44e3b08e924b0800ae40f94a5dcd05"
+      },
+      {
+        "bytes": 36152,
+        "name": "earlier/tmp/cryptalis-prefix-lifecycle-first-20261101/receipt.json",
+        "sha256": "05e356223f96fb58e619a44c4f9821b8c547edc78817c7c17dc5276f1bdbb968"
+      },
+      {
+        "bytes": 36131,
+        "name": "earlier/tmp/cryptalis-prefix-lifecycle-second-20261101/receipt.json",
+        "sha256": "8f3db1f76cde9f5265b78611deef14f21672266025a9099c725a9a49f07c5718"
+      },
+      {
+        "bytes": 35203,
+        "name": "earlier/tmp/cryptalis-prefix-red-20261101/receipt.json",
+        "sha256": "c1e2bae048ace0fb596499572fac3d5796258fb5c3d9b25478f89e3455e2467f"
+      },
+      {
+        "bytes": 35297,
+        "name": "earlier/tmp/cryptalis-prefix-second-20261101/receipt.json",
+        "sha256": "05246982cf89e75bee9dd2b05ad1700c9a47c2c912bdf25c68b11e0ff1d1a6a8"
+      },
+      {
+        "bytes": 39412,
+        "name": "earlier/tmp/cryptalis-prefix-source-20261101/receipt.json",
+        "sha256": "1abeb7337db2f14c202d3834d692422c0a00221928463fcfbda8ce485d86e2ae"
+      },
+      {
+        "bytes": 35352,
+        "name": "earlier/tmp/cryptalis-prefix-third-20261101/receipt.json",
+        "sha256": "bbf39337053e1cc2af71f2dd15395762a8fd4e903e4e6b57ced00b882626bde9"
+      },
+      {
+        "bytes": 36430,
+        "name": "fresh-public-slots/export-receipt.json",
+        "sha256": "13052d9b0e4043cbb331b4932bfd3886a5f02524604b3d8ef2007a5b026cdffa"
+      },
+      {
+        "bytes": 424,
+        "name": "fresh-public-slots/journey.json",
+        "sha256": "305280518520f6f7e3b997200fc37686b64de71e4f60d9cb56a3d36bb21a550b"
+      },
+      {
+        "bytes": 36483,
+        "name": "fresh-public-slots/restore-receipt.json",
+        "sha256": "bc17b5bc1c496714ad722ab09c8c905b9c11b7f37c9546c8b54d223b3d30d457"
+      },
+      {
+        "bytes": 36431,
+        "name": "fresh/export-receipt.json",
+        "sha256": "c113858a604ae12bbd6e0e8de49fa515b692b2322c77d0deeadf7b31113e18a6"
+      },
+      {
+        "bytes": 424,
+        "name": "fresh/journey.json",
+        "sha256": "b80d2f407a46419f88f4d2633ab1931b86dfac18787674209302d2172af17101"
+      },
+      {
+        "bytes": 36484,
+        "name": "fresh/restore-receipt.json",
+        "sha256": "768f6be49688703b868eca6b2b5c2754633e5c518ab8de59472edc0f9f5bbcd3"
+      },
+      {
+        "bytes": 37336,
+        "name": "installed/receipt.json",
+        "sha256": "6932bb7bc7da9a8b68df205616d23c9f55d88574450afe804d8832434120e4b7"
+      },
+      {
+        "bytes": 7380,
+        "name": "release/build.json",
+        "sha256": "b3e8753612fd64e5e0904b45153d8a3194789090098c01c4df9e846d3a2eef80"
+      },
+      {
+        "bytes": 7615,
+        "name": "release/inspected.json",
+        "sha256": "de6aaf698efc8003d088071cd951a6c1dd1fe55c8d8deccd61f8972c6c110369"
+      },
+      {
+        "bytes": 132947,
+        "name": "release/sbom.cdx.json",
+        "sha256": "d988a74539e5d4efb29efbd13d0170391cc1e2bb51aec8ec3c73e8419e9e07e5"
+      },
+      {
+        "bytes": 40080,
+        "name": "source/receipt.json",
+        "sha256": "c2d5fc34394fac0bfa3e75143ce775ddfb961f1948a90ceff2ddce7e1605d834"
+      }
+    ],
+    "path": "prefix-receipts-20261101.tar.gz",
+    "sha256": "164c265a1f69f40955ce2dab6aec60f6593acde07887f040e10c1df0d2518e2b"
+  },
+  "artifacts": {
+    "cryptalis-0.1.0-py3-none-any.whl": "d6ec8a1423c16dca5a66059f916b2b5bbdf12228e7a029ad6a6063a21e32e657",
+    "cryptalis-0.1.0.tar.gz": "43a0d8c9359ceddd9bfc5a77cd532c62bdcabe87e455a045b02115680188b13e"
+  },
+  "base_revision": "18e3ab222e514fcd48ad64446d2f46d3905b6a88",
+  "clean_install": {
+    "cli": "passed",
+    "package": "/tmp/cryptalis-prefix-installed-20261101/lib/python3.12/site-packages/cryptalis/__init__.py",
+    "verified_files": 49,
+    "wheel_sha256": "d6ec8a1423c16dca5a66059f916b2b5bbdf12228e7a029ad6a6063a21e32e657"
+  },
+  "earlier_receipts_not_current_qualification": {
+    "disk/prefix-admission-scope-20261101/receipt.json": {
+      "counts": {
+        "failed": 1,
+        "passed": 1
+      },
+      "exit_code": 1,
+      "outcomes": {
+        "collection": {},
+        "selected_items": 12,
+        "setup": {
+          "passed": 2
+        },
+        "subtest_calls": {},
+        "teardown": {
+          "passed": 2
+        },
+        "test_calls": {
+          "failed": 1,
+          "passed": 1
+        }
+      },
+      "runtime_binding": {
+        "mode": "source",
+        "module_count": 44,
+        "modules_sha256": "9ff0b8b4fba4542b4aba37fe6018c5e8d7c0ad3da09254688a5593d93232493e",
+        "runtime_root": "/home/debrato/Projects/cryptalis/src/cryptalis",
+        "wheel": null,
+        "wheel_sha256": null
+      }
+    },
+    "disk/prefix-final-fresh-20261101/recovery/prefix-journey-receipt.json": {
+      "counts": null,
+      "exit_code": null,
+      "outcomes": null,
+      "runtime_binding": null
+    },
+    "disk/prefix-final-slots-20261101/recovery/prefix-journey-receipt.json": {
+      "counts": null,
+      "exit_code": null,
+      "outcomes": null,
+      "runtime_binding": null
+    },
+    "disk/prefix-reviewed-20261101/receipt.json": {
+      "counts": {
+        "passed": 27,
+        "skipped": 2
+      },
+      "exit_code": 0,
+      "outcomes": {
+        "collection": {},
+        "selected_items": 29,
+        "setup": {
+          "passed": 29
+        },
+        "subtest_calls": {},
+        "teardown": {
+          "passed": 29
+        },
+        "test_calls": {
+          "passed": 27,
+          "skipped": 2
+        }
+      },
+      "runtime_binding": {
+        "mode": "source",
+        "module_count": 44,
+        "modules_sha256": "45aaf1e5754d4ff6572b62db592df22b24290cbaf4bad1efbe9e0d791c220099",
+        "runtime_root": "/home/debrato/Projects/cryptalis/src/cryptalis",
+        "wheel": null,
+        "wheel_sha256": null
+      }
+    },
+    "disk/prefix-scope-green-20261101/receipt.json": {
+      "counts": {
+        "passed": 13
+      },
+      "exit_code": 0,
+      "outcomes": {
+        "collection": {},
+        "selected_items": 13,
+        "setup": {
+          "passed": 13
+        },
+        "subtest_calls": {},
+        "teardown": {
+          "passed": 13
+        },
+        "test_calls": {
+          "passed": 13
+        }
+      },
+      "runtime_binding": {
+        "mode": "source",
+        "module_count": 44,
+        "modules_sha256": "f01fcd9d34c80ef7819d3a7f9785049e3ae78f74f8edb488e7273828b4fbc845",
+        "runtime_root": "/home/debrato/Projects/cryptalis/src/cryptalis",
+        "wheel": null,
+        "wheel_sha256": null
+      }
+    },
+    "disk/prefix-source-20261101/receipt.json": {
+      "counts": {
+        "passed": 637,
+        "skipped": 10
+      },
+      "exit_code": 0,
+      "outcomes": {
+        "collection": {},
+        "selected_items": 647,
+        "setup": {
+          "passed": 647
+        },
+        "subtest_calls": {},
+        "teardown": {
+          "passed": 647
+        },
+        "test_calls": {
+          "passed": 637,
+          "skipped": 10
+        }
+      },
+      "runtime_binding": {
+        "mode": "source",
+        "module_count": 44,
+        "modules_sha256": "f01fcd9d34c80ef7819d3a7f9785049e3ae78f74f8edb488e7273828b4fbc845",
+        "runtime_root": "/home/debrato/Projects/cryptalis/src/cryptalis",
+        "wheel": null,
+        "wheel_sha256": null
+      }
+    },
+    "tmp/cryptalis-prefix-admission-20261101/receipt.json": {
+      "counts": {
+        "failed": 1
+      },
+      "exit_code": 1,
+      "outcomes": {
+        "collection": {},
+        "selected_items": 11,
+        "setup": {
+          "passed": 1
+        },
+        "subtest_calls": {},
+        "teardown": {
+          "passed": 1
+        },
+        "test_calls": {
+          "failed": 1
+        }
+      },
+      "runtime_binding": {
+        "mode": "source",
+        "module_count": 44,
+        "modules_sha256": "86924332eb48d540e830c1e910b4c5f2e636800dc8499cd024a58418be51d93f",
+        "runtime_root": "/home/debrato/Projects/cryptalis/src/cryptalis",
+        "wheel": null,
+        "wheel_sha256": null
+      }
+    },
+    "tmp/cryptalis-prefix-admission-final-20261101/receipt.json": {
+      "counts": {
+        "failed": 1
+      },
+      "exit_code": 1,
+      "outcomes": {
+        "collection": {},
+        "selected_items": 11,
+        "setup": {
+          "passed": 1
+        },
+        "subtest_calls": {},
+        "teardown": {
+          "passed": 1
+        },
+        "test_calls": {
+          "failed": 1
+        }
+      },
+      "runtime_binding": {
+        "mode": "source",
+        "module_count": 44,
+        "modules_sha256": "a22e778611037f695f236fe98c3147c028ab9277df76bdbaf4bcbbda038629fe",
+        "runtime_root": "/home/debrato/Projects/cryptalis/src/cryptalis",
+        "wheel": null,
+        "wheel_sha256": null
+      }
+    },
+    "tmp/cryptalis-prefix-admission-green-20261101/receipt.json": {
+      "counts": {
+        "passed": 11
+      },
+      "exit_code": 0,
+      "outcomes": {
+        "collection": {},
+        "selected_items": 11,
+        "setup": {
+          "passed": 11
+        },
+        "subtest_calls": {},
+        "teardown": {
+          "passed": 11
+        },
+        "test_calls": {
+          "passed": 11
+        }
+      },
+      "runtime_binding": {
+        "mode": "source",
+        "module_count": 44,
+        "modules_sha256": "a22e778611037f695f236fe98c3147c028ab9277df76bdbaf4bcbbda038629fe",
+        "runtime_root": "/home/debrato/Projects/cryptalis/src/cryptalis",
+        "wheel": null,
+        "wheel_sha256": null
+      }
+    },
+    "tmp/cryptalis-prefix-admission-second-20261101/receipt.json": {
+      "counts": {
+        "passed": 11
+      },
+      "exit_code": 0,
+      "outcomes": {
+        "collection": {},
+        "selected_items": 11,
+        "setup": {
+          "passed": 11
+        },
+        "subtest_calls": {},
+        "teardown": {
+          "passed": 11
+        },
+        "test_calls": {
+          "passed": 11
+        }
+      },
+      "runtime_binding": {
+        "mode": "source",
+        "module_count": 44,
+        "modules_sha256": "bc3e8ce7ccb6ae616743a935e358689fac8550cc59c11f57335e50b500d92553",
+        "runtime_root": "/home/debrato/Projects/cryptalis/src/cryptalis",
+        "wheel": null,
+        "wheel_sha256": null
+      }
+    },
+    "tmp/cryptalis-prefix-core-20261101/receipt.json": {
+      "counts": {
+        "passed": 10
+      },
+      "exit_code": 0,
+      "outcomes": {
+        "collection": {},
+        "selected_items": 10,
+        "setup": {
+          "passed": 10
+        },
+        "subtest_calls": {},
+        "teardown": {
+          "passed": 10
+        },
+        "test_calls": {
+          "passed": 10
+        }
+      },
+      "runtime_binding": {
+        "mode": "source",
+        "module_count": 44,
+        "modules_sha256": "f4374a1be53437b68b5f744e7734304c9f7b465003ac78c46a2627013a79d06b",
+        "runtime_root": "/home/debrato/Projects/cryptalis/src/cryptalis",
+        "wheel": null,
+        "wheel_sha256": null
+      }
+    },
+    "tmp/cryptalis-prefix-cost-20261101/receipt.json": {
+      "counts": {
+        "passed": 1
+      },
+      "exit_code": 0,
+      "outcomes": {
+        "collection": {},
+        "selected_items": 1,
+        "setup": {
+          "passed": 1
+        },
+        "subtest_calls": {},
+        "teardown": {
+          "passed": 1
+        },
+        "test_calls": {
+          "passed": 1
+        }
+      },
+      "runtime_binding": {
+        "mode": "installed-wheel",
+        "module_count": 44,
+        "modules_sha256": "055b7263327b3271ea31989125e59c8aefc787051b6e78f175c7b1d045f01b99",
+        "runtime_root": "/tmp/cryptalis-prefix-installed-20261101/lib/python3.12/site-packages/cryptalis",
+        "wheel": "/tmp/cryptalis-prefix-artifacts-20261101/cryptalis-0.1.0-py3-none-any.whl",
+        "wheel_sha256": "ee470c44ec31952e64a18875499ac5e50fb10a572c2168c2842b18289fc68ca9"
+      }
+    },
+    "tmp/cryptalis-prefix-final-source-20261101/receipt.json": {
+      "counts": {
+        "errors": 62,
+        "failed": 473,
+        "passed": 100,
+        "skipped": 10
+      },
+      "exit_code": 1,
+      "outcomes": {
+        "collection": {},
+        "selected_items": 645,
+        "setup": {
+          "failed": 62,
+          "passed": 583
+        },
+        "subtest_calls": {},
+        "teardown": {
+          "passed": 645
+        },
+        "test_calls": {
+          "failed": 473,
+          "passed": 100,
+          "skipped": 10
+        }
+      },
+      "runtime_binding": {
+        "mode": "source",
+        "module_count": 44,
+        "modules_sha256": "a22e778611037f695f236fe98c3147c028ab9277df76bdbaf4bcbbda038629fe",
+        "runtime_root": "/home/debrato/Projects/cryptalis/src/cryptalis",
+        "wheel": null,
+        "wheel_sha256": null
+      }
+    },
+    "tmp/cryptalis-prefix-first-20261101/receipt.json": {
+      "counts": {
+        "failed": 1
+      },
+      "exit_code": 1,
+      "outcomes": {
+        "collection": {},
+        "selected_items": 10,
+        "setup": {
+          "passed": 1
+        },
+        "subtest_calls": {},
+        "teardown": {
+          "passed": 1
+        },
+        "test_calls": {
+          "failed": 1
+        }
+      },
+      "runtime_binding": {
+        "mode": "source",
+        "module_count": 44,
+        "modules_sha256": "67d43010155a68f35b1310e5a6812ed0e3f4f08332e28c69387fb6b3cb309a33",
+        "runtime_root": "/home/debrato/Projects/cryptalis/src/cryptalis",
+        "wheel": null,
+        "wheel_sha256": null
+      }
+    },
+    "tmp/cryptalis-prefix-fresh-20261101/recovery/export-receipt.json": {
+      "counts": {
+        "passed": 1
+      },
+      "exit_code": 0,
+      "outcomes": {
+        "collection": {},
+        "selected_items": 1,
+        "setup": {
+          "passed": 1
+        },
+        "subtest_calls": {},
+        "teardown": {
+          "passed": 1
+        },
+        "test_calls": {
+          "passed": 1
+        }
+      },
+      "runtime_binding": {
+        "mode": "installed-wheel",
+        "module_count": 44,
+        "modules_sha256": "055b7263327b3271ea31989125e59c8aefc787051b6e78f175c7b1d045f01b99",
+        "runtime_root": "/tmp/cryptalis-prefix-installed-20261101/lib/python3.12/site-packages/cryptalis",
+        "wheel": "/tmp/cryptalis-prefix-artifacts-20261101/cryptalis-0.1.0-py3-none-any.whl",
+        "wheel_sha256": "ee470c44ec31952e64a18875499ac5e50fb10a572c2168c2842b18289fc68ca9"
+      }
+    },
+    "tmp/cryptalis-prefix-fresh-slots-20261101/recovery/export-receipt.json": {
+      "counts": {
+        "passed": 1
+      },
+      "exit_code": 0,
+      "outcomes": {
+        "collection": {},
+        "selected_items": 1,
+        "setup": {
+          "passed": 1
+        },
+        "subtest_calls": {},
+        "teardown": {
+          "passed": 1
+        },
+        "test_calls": {
+          "passed": 1
+        }
+      },
+      "runtime_binding": {
+        "mode": "installed-wheel",
+        "module_count": 44,
+        "modules_sha256": "055b7263327b3271ea31989125e59c8aefc787051b6e78f175c7b1d045f01b99",
+        "runtime_root": "/tmp/cryptalis-prefix-installed-20261101/lib/python3.12/site-packages/cryptalis",
+        "wheel": "/tmp/cryptalis-prefix-artifacts-20261101/cryptalis-0.1.0-py3-none-any.whl",
+        "wheel_sha256": "ee470c44ec31952e64a18875499ac5e50fb10a572c2168c2842b18289fc68ca9"
+      }
+    },
+    "tmp/cryptalis-prefix-index-diagnosis-20261101/receipt.json": {
+      "counts": {
+        "failed": 1
+      },
+      "exit_code": 1,
+      "outcomes": {
+        "collection": {},
+        "selected_items": 1,
+        "setup": {
+          "passed": 1
+        },
+        "subtest_calls": {},
+        "teardown": {
+          "passed": 1
+        },
+        "test_calls": {
+          "failed": 1
+        }
+      },
+      "runtime_binding": {
+        "mode": "source",
+        "module_count": 44,
+        "modules_sha256": "055b7263327b3271ea31989125e59c8aefc787051b6e78f175c7b1d045f01b99",
+        "runtime_root": "/home/debrato/Projects/cryptalis/src/cryptalis",
+        "wheel": null,
+        "wheel_sha256": null
+      }
+    },
+    "tmp/cryptalis-prefix-index-maintained-20261101/receipt.json": {
+      "counts": {
+        "passed": 1
+      },
+      "exit_code": 0,
+      "outcomes": {
+        "collection": {},
+        "selected_items": 1,
+        "setup": {
+          "passed": 1
+        },
+        "subtest_calls": {},
+        "teardown": {
+          "passed": 1
+        },
+        "test_calls": {
+          "passed": 1
+        }
+      },
+      "runtime_binding": {
+        "mode": "source",
+        "module_count": 44,
+        "modules_sha256": "055b7263327b3271ea31989125e59c8aefc787051b6e78f175c7b1d045f01b99",
+        "runtime_root": "/home/debrato/Projects/cryptalis/src/cryptalis",
+        "wheel": null,
+        "wheel_sha256": null
+      }
+    },
+    "tmp/cryptalis-prefix-installed-20261101-tests/receipt.json": {
+      "counts": {
+        "passed": 140
+      },
+      "exit_code": 0,
+      "outcomes": {
+        "collection": {},
+        "selected_items": 140,
+        "setup": {
+          "passed": 140
+        },
+        "subtest_calls": {},
+        "teardown": {
+          "passed": 140
+        },
+        "test_calls": {
+          "passed": 140
+        }
+      },
+      "runtime_binding": {
+        "mode": "installed-wheel",
+        "module_count": 44,
+        "modules_sha256": "055b7263327b3271ea31989125e59c8aefc787051b6e78f175c7b1d045f01b99",
+        "runtime_root": "/tmp/cryptalis-prefix-installed-20261101/lib/python3.12/site-packages/cryptalis",
+        "wheel": "/tmp/cryptalis-prefix-artifacts-20261101/cryptalis-0.1.0-py3-none-any.whl",
+        "wheel_sha256": "ee470c44ec31952e64a18875499ac5e50fb10a572c2168c2842b18289fc68ca9"
+      }
+    },
+    "tmp/cryptalis-prefix-lifecycle-first-20261101/receipt.json": {
+      "counts": {
+        "failed": 10,
+        "passed": 38
+      },
+      "exit_code": 1,
+      "outcomes": {
+        "collection": {},
+        "selected_items": 48,
+        "setup": {
+          "passed": 48
+        },
+        "subtest_calls": {},
+        "teardown": {
+          "passed": 48
+        },
+        "test_calls": {
+          "failed": 10,
+          "passed": 38
+        }
+      },
+      "runtime_binding": {
+        "mode": "source",
+        "module_count": 44,
+        "modules_sha256": "055b7263327b3271ea31989125e59c8aefc787051b6e78f175c7b1d045f01b99",
+        "runtime_root": "/home/debrato/Projects/cryptalis/src/cryptalis",
+        "wheel": null,
+        "wheel_sha256": null
+      }
+    },
+    "tmp/cryptalis-prefix-lifecycle-second-20261101/receipt.json": {
+      "counts": {
+        "failed": 1,
+        "passed": 47
+      },
+      "exit_code": 1,
+      "outcomes": {
+        "collection": {},
+        "selected_items": 48,
+        "setup": {
+          "passed": 48
+        },
+        "subtest_calls": {},
+        "teardown": {
+          "passed": 48
+        },
+        "test_calls": {
+          "failed": 1,
+          "passed": 47
+        }
+      },
+      "runtime_binding": {
+        "mode": "source",
+        "module_count": 44,
+        "modules_sha256": "055b7263327b3271ea31989125e59c8aefc787051b6e78f175c7b1d045f01b99",
+        "runtime_root": "/home/debrato/Projects/cryptalis/src/cryptalis",
+        "wheel": null,
+        "wheel_sha256": null
+      }
+    },
+    "tmp/cryptalis-prefix-red-20261101/receipt.json": {
+      "counts": {
+        "failed": 1
+      },
+      "exit_code": 1,
+      "outcomes": {
+        "collection": {},
+        "selected_items": 10,
+        "setup": {
+          "passed": 1
+        },
+        "subtest_calls": {},
+        "teardown": {
+          "passed": 1
+        },
+        "test_calls": {
+          "failed": 1
+        }
+      },
+      "runtime_binding": {
+        "mode": "source",
+        "module_count": 43,
+        "modules_sha256": "c7c0b9ae7edf8af17671c0477eda72c24a37132b11abacec9afdc619368a8de6",
+        "runtime_root": "/tmp/cryptalis-prefix-baseline-20261101/src/cryptalis",
+        "wheel": null,
+        "wheel_sha256": null
+      }
+    },
+    "tmp/cryptalis-prefix-second-20261101/receipt.json": {
+      "counts": {
+        "failed": 1
+      },
+      "exit_code": 1,
+      "outcomes": {
+        "collection": {},
+        "selected_items": 10,
+        "setup": {
+          "passed": 1
+        },
+        "subtest_calls": {},
+        "teardown": {
+          "passed": 1
+        },
+        "test_calls": {
+          "failed": 1
+        }
+      },
+      "runtime_binding": {
+        "mode": "source",
+        "module_count": 44,
+        "modules_sha256": "99758deb568e5d329a8e62a43cb19ff28e1e626274d1fa8514a12c111bf8cbe7",
+        "runtime_root": "/home/debrato/Projects/cryptalis/src/cryptalis",
+        "wheel": null,
+        "wheel_sha256": null
+      }
+    },
+    "tmp/cryptalis-prefix-source-20261101/receipt.json": {
+      "counts": {
+        "passed": 634,
+        "skipped": 10
+      },
+      "exit_code": 0,
+      "outcomes": {
+        "collection": {},
+        "selected_items": 644,
+        "setup": {
+          "passed": 644
+        },
+        "subtest_calls": {},
+        "teardown": {
+          "passed": 644
+        },
+        "test_calls": {
+          "passed": 634,
+          "skipped": 10
+        }
+      },
+      "runtime_binding": {
+        "mode": "source",
+        "module_count": 44,
+        "modules_sha256": "055b7263327b3271ea31989125e59c8aefc787051b6e78f175c7b1d045f01b99",
+        "runtime_root": "/home/debrato/Projects/cryptalis/src/cryptalis",
+        "wheel": null,
+        "wheel_sha256": null
+      }
+    },
+    "tmp/cryptalis-prefix-third-20261101/receipt.json": {
+      "counts": {
+        "failed": 1,
+        "passed": 8
+      },
+      "exit_code": 1,
+      "outcomes": {
+        "collection": {},
+        "selected_items": 10,
+        "setup": {
+          "passed": 9
+        },
+        "subtest_calls": {},
+        "teardown": {
+          "passed": 9
+        },
+        "test_calls": {
+          "failed": 1,
+          "passed": 8
+        }
+      },
+      "runtime_binding": {
+        "mode": "source",
+        "module_count": 44,
+        "modules_sha256": "8610cb9718e0fc8713e8da94eb68431ab49f04fea3c62e399dd68abe48fe4cdc",
+        "runtime_root": "/home/debrato/Projects/cryptalis/src/cryptalis",
+        "wheel": null,
+        "wheel_sha256": null
+      }
+    }
+  },
+  "failed_attempts": [
+    "Baseline native application refuses prefix_lengths before implementation.",
+    "Retained AST, Boolean wrapper, typed error, fixture field-selection, catch-up, GIN pending-list and admission assertion failures precede repairs.",
+    "Initial fresh exports pass but parent profile validation selects the wrong field and refuses before restore; fixed stable-field lookup.",
+    "The tmpfs source run passes probes, then PostgreSQL fails a WAL write with ENOSPC and shuts down. Its 473 failed calls and 62 setup errors, plus wrapper cleanup failure, remain failures.",
+    "Two contemporaneous tmpfs initdb subprocesses exit1 before any role probes; no wrapper receipt exists. Their exact native stderr was suppressed by the existing harness, so no stronger cause is asserted.",
+    "Disk-backed scope fixture initially omits required external deployment authority and refuses; corrected fixture supplies the existing pin."
+  ],
+  "fixing_revision": "worktree-7de3035ec9c0c8ee",
+  "format": "cryptalis.prefix-engineering-boundary/v1",
+  "graph_refresh": {
+    "command": "graphify update . --no-cluster",
+    "edges": 26872,
+    "exit_code": 0,
+    "limitations": "AST navigation only; unclassified files and no-symbol files remain reported. No new semantic document extraction.",
+    "nodes": 6014
+  },
+  "limits": [
+    "Affected source regression only, not a new complete local default-suite pass;11 call skips remain unqualified.",
+    "Separate framing/HKDF/HMAC oracle shares the AEAD backend and is not independent primitive or human review.",
+    "Actual retained v13 interpreter accepts numeric and refuses prefix; it is not a simulated version declaration.",
+    "1024-row custom/generic GIN eligibility follows native pending-list cleanup; no selective million-row, latency, throughput or full GIN maintenance acceptance.",
+    "1200 synthetic names with min2/max12 miss the2x isolated column/index target at13.1526964844469x after cleanup. No approved cost, published prefix-specific attack or independent review.",
+    "Read-only AI review informed admission and worker-context fixes; it cannot satisfy independent human review.",
+    "Accidental tmpfs ENOSPC does not qualify controlled disk/WAL exhaustion, atomicity and recovery gates.",
+    "All18 requirements and34 objectives remain in scope. Broader text/JSON and other unfinished work remain obligations."
+  ],
+  "production_gates": {
+    "G-ADAPTER": "UNKNOWN",
+    "G-CRYPTO": "UNKNOWN",
+    "G-LIFECYCLE": "UNKNOWN",
+    "G-POLICY": "UNKNOWN",
+    "G-PROVIDER": "UNKNOWN",
+    "G-QUERY": "UNKNOWN",
+    "G-RELEASE": "UNKNOWN"
+  },
+  "reproducible": true,
+  "runtime_modules": 44,
+  "runtime_modules_sha256": "45aaf1e5754d4ff6572b62db592df22b24290cbaf4bad1efbe9e0d791c220099",
+  "scope": "INTERNAL ONLY exact prefix prototype; no admitted support, production gate, complete first release or full objective completion.",
+  "source_binding": "All final receipts bind identical source_test_sha256 inventories and stable runtime bytes. All inventory and build-input hashes match the worktree; match them to the committed revision before push.",
+  "source_inventory_files": 314,
+  "storage_observation": {
+    "dataset": {
+      "distinct_values": 1200,
+      "max_characters": 33,
+      "min_characters": 27,
+      "recipe": "Deterministic first/family names, account label and distinct five-digit suffix.",
+      "rows": 1200
+    },
+    "gin_maintenance": {
+      "empty_followup_pages_cleaned": 0,
+      "pages_cleaned": 150
+    },
+    "limits": [
+      "Column bytes sum pg_column_size; table tuple, TOAST relation and free-space-map overhead are excluded.",
+      "Index observations use the main fork and include GIN pending-list allocation.",
+      "GIN cleanup may leave reusable allocated pages without shrinking the index file.",
+      "Public fixture roots and one local host do not qualify security, provider custody or performance."
+    ],
+    "native": {
+      "block_size": 8192,
+      "column_bytes": 37096,
+      "column_plus_index_bytes": 217320,
+      "index_bytes": 180224,
+      "indexes": [
+        {
+          "bytes": 90112,
+          "method": "btree",
+          "pages": 11
+        },
+        {
+          "bytes": 90112,
+          "method": "btree",
+          "pages": 11
+        }
+      ],
+      "nonnull_rows": 1200,
+      "rows": 1200
+    },
+    "prefix_lengths": {
+      "max": 12,
+      "min": 2
+    },
+    "protected_after_gin_maintenance": {
+      "block_size": 8192,
+      "column_bytes": 1064296,
+      "column_plus_index_bytes": 2858344,
+      "index_bytes": 1794048,
+      "indexes": [
+        {
+          "bytes": 155648,
+          "method": "btree",
+          "pages": 19
+        },
+        {
+          "bytes": 1638400,
+          "method": "gin",
+          "pages": 200
+        }
+      ],
+      "nonnull_rows": 1200,
+      "rows": 1200
+    },
+    "protected_before_gin_maintenance": {
+      "block_size": 8192,
+      "column_bytes": 1064296,
+      "column_plus_index_bytes": 2465128,
+      "index_bytes": 1400832,
+      "indexes": [
+        {
+          "bytes": 155648,
+          "method": "btree",
+          "pages": 19
+        },
+        {
+          "bytes": 1245184,
+          "method": "gin",
+          "pages": 152
+        }
+      ],
+      "nonnull_rows": 1200,
+      "rows": 1200
+    },
+    "ratios_to_native": {
+      "after_gin_maintenance": 13.1526964844469,
+      "before_gin_maintenance": 11.343309405485
+    },
+    "storage_target": {
+      "maximum_ratio": 2,
+      "observed_after_gin_maintenance": 13.1526964844469,
+      "outcome": "MISS"
+    }
+  }
+}

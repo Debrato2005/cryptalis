@@ -12,6 +12,7 @@ class ProtectedField:
     name: str
     field_id: UUID
     queries: tuple[str, ...]
+    prefix_lengths: tuple[int, int] | None = None
 
 
 @dataclass(frozen=True)
@@ -49,6 +50,9 @@ class ProtectionDeclaration:
                             "protect": True,
                             "queries": list(field.queries),
                             "accept_leakage": list(field.queries),
+                            **({"prefix_lengths": {"min": field.prefix_lengths[0],
+                                                   "max": field.prefix_lengths[1]}}
+                               if field.prefix_lengths is not None else {}),
                         }
                         for field in model.fields
                     ],
@@ -96,10 +100,10 @@ def _items(value: object) -> list:
 
 def _capabilities(value: object) -> set[str]:
     if not isinstance(value, list) or any(
-        not isinstance(item, str) or item not in ("equality", "order", "unique")
+        not isinstance(item, str) or item not in ("equality", "order", "prefix", "unique")
         for item in value
     ):
-        raise ManifestInvalid("Queries and leakage acceptance permit only equality, order and unique")
+        raise ManifestInvalid("Queries and leakage acceptance permit only equality, order, prefix and unique")
     if len(value) != len(set(value)):
         raise ManifestInvalid("Capability lists must not contain duplicates")
     return set(value)
@@ -142,9 +146,12 @@ def parse_protection_declaration(raw: bytes) -> ProtectionDeclaration:
         fields = []
         field_names: set[str] = set()
         for field_item in _items(model["fields"]):
+            members = {"name", "field_id", "protect", "queries", "accept_leakage"}
+            if isinstance(field_item, dict) and "prefix_lengths" in field_item:
+                members.add("prefix_lengths")
             field = _object(
                 field_item,
-                {"name", "field_id", "protect", "queries", "accept_leakage"},
+                members,
             )
             field_name = _name(field["name"])
             if field_name in field_names:
@@ -156,11 +163,22 @@ def parse_protection_declaration(raw: bytes) -> ProtectionDeclaration:
             if field["protect"] is not True:
                 raise ManifestInvalid("Use protect true. Removal requires a verified transition")
             queries = _capabilities(field["queries"])
-            if "unique" in queries or "order" in queries:
+            if queries & {"unique", "order", "prefix"}:
                 queries.add("equality")
             if _capabilities(field["accept_leakage"]) != queries:
-                raise ManifestInvalid("Accept exactly the declared search leakage. Unique and order require equality")
-            fields.append(ProtectedField(field_name, field_id, tuple(sorted(queries))))
+                raise ManifestInvalid("Accept exactly the declared search leakage. Unique, order and prefix require equality")
+            prefix_lengths = None
+            if "prefix" in queries:
+                bounds = _object(field.get("prefix_lengths"), {"min", "max"})
+                if (type(bounds["min"]) is not int or type(bounds["max"]) is not int
+                        or not 1 <= bounds["min"] <= bounds["max"] <= 256):
+                    raise ManifestInvalid("Prefix lengths require integer bounds 1 <= min <= max <= 256")
+                if "order" in queries:
+                    raise ManifestInvalid("Prefix and order require separate representations")
+                prefix_lengths = bounds["min"], bounds["max"]
+            elif "prefix_lengths" in field:
+                raise ManifestInvalid("Declare prefix lengths only with prefix search")
+            fields.append(ProtectedField(field_name, field_id, tuple(sorted(queries)), prefix_lengths))
         models.append(
             ProtectedModel(name, table_id, tenant_column, tuple(sorted(fields, key=lambda f: f.name)))
         )

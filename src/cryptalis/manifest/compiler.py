@@ -26,11 +26,12 @@ from cryptalis.manifest.parser import MAX_DOCUMENT_BYTES, ManifestInvalid, decod
 from cryptalis._sqlmodel_types import autostring_impl
 from cryptalis._numeric import numeric_parameters, numeric_typmod, numeric_value
 from cryptalis._timestamp import aware_default, read_aware_default
+from cryptalis._search_layout import search_index_statements
 from cryptalis.crypto.keys import InvalidValue
 
 
 _PUBLIC_SLOTS_LAYOUT = "preserve-public-slots/v1"
-_LOCK_SCHEMAS = tuple(f'cryptalis.lock/v{version}' for version in range(1, 14))
+_LOCK_SCHEMAS = tuple(f'cryptalis.lock/v{version}' for version in range(1, 15))
 _INTEGER_TYPES = {'int2': (SmallInteger, postgresql.SMALLINT),
                   'int4': (Integer, postgresql.INTEGER), 'int8': (BigInteger, postgresql.BIGINT)}
 
@@ -339,7 +340,8 @@ def _orderable(source):
 
 
 def _representation(queries):
-    return ('cf1-packed-order/v1' if 'order' in queries else
+    return ('cf1-packed-prefix/v1' if 'prefix' in queries else
+            'cf1-packed-order/v1' if 'order' in queries else
             'cf1-packed-equality/v1' if queries else 'cf1-storage/v1')
 
 
@@ -347,6 +349,27 @@ def _index_ops(source):
     if source['type'] == 'numeric':
         return 'pg_catalog.numeric_ops'
     return f"pg_catalog.{source['type']}_ops" if _orderable(source) else 'pg_catalog.text_ops'
+
+
+def _index_opclasses(source, queries, *, retained_pattern=False):
+    default = (_index_ops(source),)
+    if ('prefix' in queries or retained_pattern) and source['type'] in ('text', 'varchar'):
+        return default + (f"pg_catalog.{source['type']}_pattern_ops",)
+    return default
+
+
+def _has_pattern_indexes(models):
+    """Retained native pattern indexes on protected fields require their reader."""
+    for model in models:
+        indexes = model.get('source_schema', {}).get('indexes', ())
+        if not indexes:
+            continue
+        protected = {field['column'] for field in model['fields']}
+        for index in indexes:
+            if (protected.intersection(index['columns'] + index['dependency_columns'])
+                    and {'pg_catalog.text_pattern_ops', 'pg_catalog.varchar_pattern_ops'}.intersection(index['opclasses'])):
+                return True
+    return False
 
 
 def _fixed_value_width(source):
@@ -390,6 +413,9 @@ def _required_readers(models):
                      'order' in f['queries'] for m in models for f in m['fields']) else set())
                   | ({'pg-numeric-equality/v1'} if any(f['source']['type'] == 'numeric' and
                      f['queries'] for m in models for f in m['fields']) else set())
+                  | ({'pg-text-prefix/v1'} if any('prefix' in f['queries']
+                     for m in models for f in m['fields']) else set())
+                  | ({'pg-text-pattern-index/v1'} if _has_pattern_indexes(models) else set())
                   | ({'pg-varchar/v1'} if any(f['source']['type'] == 'varchar'
                      for m in models for f in m['fields']) else set())
                   | ({'pg-integer-default/v1'} if any(f['source']['type'] in _INTEGER_TYPES and
@@ -402,6 +428,9 @@ def _required_readers(models):
 
 def _lock_schema(models, layout, *, legacy=False):
     kinds = {field['source']['type'] for model in models for field in model['fields']}
+    if (any('prefix' in field['queries'] for model in models for field in model['fields'])
+            or _has_pattern_indexes(models)):
+        return 'cryptalis.lock/v14'
     if any(field['source']['type'] == 'numeric' and field['queries']
            for model in models for field in model['fields']):
         return 'cryptalis.lock/v13'
@@ -1034,6 +1063,9 @@ def _compile_model(model, mapper, facts, issues, schema):
                    "They admit no other search; use storage-only protection otherwise.")
         elif _fixed_value_width(actual) is not None and field.queries and not _orderable(actual):
             refuse("unsupported_query", field.name, "Use storage-only protection for this native value domain.")
+        if 'prefix' in field.queries and actual['type'] not in ('text', 'varchar'):
+            refuse("unsupported_query", field.name, "Declare prefix search on native TEXT or VARCHAR only.")
+            continue
         # Native deterministic default equality is byte-exact, like native C.
         # Names outside pg_catalog do not inherit either qualified identity.
         mapped_collation = getattr(column.type, "collation", None)
@@ -1058,11 +1090,12 @@ def _compile_model(model, mapper, facts, issues, schema):
                        and index["live"] and not index["partial"] and not index["expression"]
                        and index["total_columns"] == index["key_columns"]
                        and not index["exclusion"] and not index["replica_identity"])
-            expected_ops = [_index_ops(actual)] if model.tenant_column is None else ["pg_catalog.uuid_ops", _index_ops(actual)]
+            scope_ops = [] if model.tenant_column is None else ["pg_catalog.uuid_ops"]
+            expected_ops = [scope_ops + [op] for op in _index_opclasses(actual, field.queries)]
             expected_collations = [actual["collation"]] if model.tenant_column is None else [None, actual["collation"]]
             if index["unique"]:
                 if (not base_ok or index["columns"] != expected_scope or index["nulls_not_distinct"]
-                        or not index["immediate"] or index["opclasses"] != expected_ops
+                        or not index["immediate"] or index["opclasses"] not in expected_ops
                         or index["collations"] != expected_collations):
                     refuse("unsupported_uniqueness", field.name, "Use immediate tenant-scoped uniqueness with default distinct-NULL behavior.")
                 else:
@@ -1070,7 +1103,8 @@ def _compile_model(model, mapper, facts, issues, schema):
                 if "unique" not in field.queries:
                     refuse("undeclared_uniqueness", field.name, "Declare unique and accept its leakage. Existing uniqueness cannot disappear.")
             elif (not base_ok or index["columns"] != [column.name]
-                  or index["opclasses"] != [_index_ops(actual)] or index["collations"] != [actual["collation"]]
+                  or index["opclasses"] not in [[op] for op in _index_opclasses(actual, field.queries)]
+                  or index["collations"] != [actual["collation"]]
                   or "equality" not in field.queries):
                 refuse("unsupported_index", field.name, "Use an ordinary equality index, or exclude the field from this index.")
         for constraint in table.constraints:
@@ -1083,12 +1117,14 @@ def _compile_model(model, mapper, facts, issues, schema):
         representation = _representation(field.queries)
         descriptor = _descriptor(None, str(model.table_id), str(field.field_id), record_codec,
                                  "uuid16/v1" if model.tenant_column is not None else "single-tenant-uuid/v1", representation,
-                                 _value_codec(actual))
+                                 _value_codec(actual), field.prefix_lengths)
         payload = "_cryptalis_" + field.field_id.hex
         if payload in columns:
             refuse("generated_name_collision", field.name, "Resolve the generated payload-column name collision before planning.")
         if field.queries and payload + "_eq" in relation_names:
             refuse("generated_name_collision", field.name, "Resolve the generated equality-index name collision before planning.")
+        if 'prefix' in field.queries and payload + "_prefix" in relation_names:
+            refuse("generated_name_collision", field.name, "Resolve the generated prefix-index name collision before planning.")
         fields.append({"name": field.name, "column": column.name, "field_id": str(field.field_id),
                        "queries": list(field.queries), "representation": representation,
                        "payload_column": payload, "unique_indexes": unique_indexes,
@@ -1121,7 +1157,7 @@ def _compile_model(model, mapper, facts, issues, schema):
 
 
 def _descriptor(domain_id, table_id, field_id, record_codec, tenant_codec, representation,
-                value_codec='utf8-exact/v1'):
+                value_codec='utf8-exact/v1', prefix_lengths=None):
     descriptor = {"schema": "cryptalis.context/v1", "domain_id": domain_id,
             "table_id": table_id, "field_id": field_id, "text_codec": "utf8-exact/v1",
             "normalizer": "identity/v1", "null_policy": "sql-null/v1",
@@ -1134,6 +1170,15 @@ def _descriptor(domain_id, table_id, field_id, record_codec, tenant_codec, repre
         raise ValueError
     if value_codec == 'pg-numeric-decimal/v1' and representation == 'cf1-packed-equality/v1':
         descriptor['normalizer'] = 'pg-numeric-equality/v1'
+    if representation == 'cf1-packed-prefix/v1':
+        if (value_codec != 'utf8-exact/v1' or type(prefix_lengths) is not tuple or len(prefix_lengths) != 2
+                or any(type(bound) is not int for bound in prefix_lengths)
+                or not 1 <= prefix_lengths[0] <= prefix_lengths[1] <= 256):
+            raise ValueError
+        descriptor['schema'] = 'cryptalis.context/v3'
+        descriptor['prefix_lengths'] = dict(zip(('min', 'max'), prefix_lengths))
+    elif prefix_lengths is not None:
+        raise ValueError
     return descriptor
 
 
@@ -1145,13 +1190,7 @@ def _ddl(document, engine):
         for field in model["fields"]:
             payload = quote(field["payload_column"])
             statements.append(f"ALTER TABLE {table} ADD COLUMN {payload} pg_catalog.bytea")
-            if field["queries"]:
-                name = quote("_cryptalis_" + UUID(field["field_id"]).hex + "_eq")
-                tenant = (quote(model["tenancy"]["column"]) + ", "
-                          if "column" in model["tenancy"] else "")
-                unique = "UNIQUE " if "unique" in field["queries"] else ""
-                statements.append(f"CREATE {unique}INDEX {name} ON {table} USING btree "
-                                  f"({tenant}(pg_catalog.substring({payload}, 15, 32)) pg_catalog.bytea_ops)")
+            statements.extend(search_index_statements(model, field, quote, table))
     return {"expand": statements,
             "requires_before_switch": ["qualified_cf1_framing", "writer_exclusion", "full_value_verification", "matching_deployment_policy"]}
 
@@ -1159,12 +1198,16 @@ def _ddl(document, engine):
 def _previous_lock(raw, current, engine):
     """Reject inconsistent compiler artifacts before computing a semantic diff."""
     old = decode_manifest_json(raw)
+    if old.get('schema') == 'cryptalis.lock/v14':
+        from cryptalis._search_layout import require_prefix_qualification
+        require_prefix_qualification()
     try:
         uuid_lock = old.get('schema') in _LOCK_SCHEMAS[8:]
         timestamp_lock = old.get('schema') in _LOCK_SCHEMAS[9:]
         numeric_lock = old.get('schema') in _LOCK_SCHEMAS[10:]
         timestamptz_lock = old.get('schema') in _LOCK_SCHEMAS[11:]
         numeric_search_lock = old.get('schema') in _LOCK_SCHEMAS[12:]
+        prefix_lock = old.get('schema') in _LOCK_SCHEMAS[13:]
         date_lock = old.get('schema') in _LOCK_SCHEMAS[7:]
         integer_lock = old.get('schema') in _LOCK_SCHEMAS[6:]
         public_slots = old.get('schema') == 'cryptalis.lock/v6' or integer_lock and old.get('layout') is not None
@@ -1243,6 +1286,8 @@ def _previous_lock(raw, current, engine):
                 raise ValueError
             for field, intent in zip(model["fields"], declared.fields, strict=True):
                 boolean = field['source']['type'] == 'bool'
+                if 'prefix' in intent.queries and (not prefix_lock or field['source']['type'] not in ('text', 'varchar')):
+                    raise ValueError
                 if field['source']['type'] == 'uuid' and (not uuid_lock or intent.queries):
                     raise ValueError
                 if field['source']['type'] == 'timestamp' and (not timestamp_lock or intent.queries and 'order' not in intent.queries):
@@ -1279,7 +1324,7 @@ def _previous_lock(raw, current, engine):
                     if codec == 'date-ordinal-u32/v1' and 'application_default' in field:
                         raise ValueError
                 expected = _descriptor(old["domain_id"], model["table_id"], field["field_id"], model["record"]["codec"], tenant_codec, representation,
-                                       codec)
+                                       codec, intent.prefix_lengths)
                 if (field["descriptor"] != expected or field["descriptor_digest"] != _digest(expected)
                         or field["representation"] != representation
                         or field["payload_column"] != "_cryptalis_" + intent.field_id.hex):
@@ -1292,7 +1337,7 @@ def _previous_lock(raw, current, engine):
             if any(not isinstance(model["source_schema"][key], list) for key in ("columns", "constraints", "indexes", "dependencies")):
                 raise ValueError
             _validate_prior_source(model, varchar=old['schema'] in _LOCK_SCHEMAS[2:],
-                                   boolean=old['schema'] in _LOCK_SCHEMAS[3:], integer=integer_lock, date_values=date_lock, uuid_values=uuid_lock, timestamp_values=timestamp_lock, numeric_values=numeric_lock, timestamptz_values=timestamptz_lock, numeric_search=numeric_search_lock)
+                                   boolean=old['schema'] in _LOCK_SCHEMAS[3:], integer=integer_lock, date_values=date_lock, uuid_values=uuid_lock, timestamp_values=timestamp_lock, numeric_values=numeric_lock, timestamptz_values=timestamptz_lock, numeric_search=numeric_search_lock, prefix_search=prefix_lock)
             if public_slots:
                 slots = [column['attnum'] for column in model['source_schema']['columns']]
                 if (any(type(slot) is not int or not 0 < slot < 32768 for slot in slots)
@@ -1364,7 +1409,7 @@ def _validate_catalog_facts(facts):
     return columns
 
 
-def _validate_prior_source(model, *, varchar=False, boolean=False, integer=False, date_values=False, uuid_values=False, timestamp_values=False, numeric_values=False, timestamptz_values=False, numeric_search=False):
+def _validate_prior_source(model, *, varchar=False, boolean=False, integer=False, date_values=False, uuid_values=False, timestamp_values=False, numeric_values=False, timestamptz_values=False, numeric_search=False, prefix_search=False):
     """Check a prior snapshot's shape and admitted facts without trusting its hash."""
     def require(condition):
         if not condition:
@@ -1413,6 +1458,7 @@ def _validate_prior_source(model, *, varchar=False, boolean=False, integer=False
         else:
             require(source['type'] == 'text' or varchar and source['type'] == 'varchar')
             _native_text_length(source)
+            require('prefix' not in field['queries'] or prefix_search)
         require(field["column"] not in (pk["name"], tenant_name))
         require(not any(source[k] for k in ("identity", "generated", "default_digest")))
         expected_source = {"type": source['type'], "nullable": source["nullable"], "collation": source["collation"]}
@@ -1436,9 +1482,11 @@ def _validate_prior_source(model, *, varchar=False, boolean=False, integer=False
             require(not any(index[k] for k in ("primary", "exclusion", "nulls_not_distinct", "replica_identity", "partial", "expression")))
             require(index["total_columns"] == index["key_columns"])
             require(index["columns"] == (scope if index["unique"] else [field["column"]]))
-            ops = (["pg_catalog.uuid_ops"] if tenant_name is not None else []) + [_index_ops(source)]
+            scope_ops = ["pg_catalog.uuid_ops"] if tenant_name is not None else []
+            admitted_ops = _index_opclasses(source, field['queries'], retained_pattern=prefix_search)
+            ops = [scope_ops + [op] for op in admitted_ops]
             collations = ([None] if tenant_name is not None else []) + [source["collation"]]
-            require(index["opclasses"] == (ops if index["unique"] else [_index_ops(source)]))
+            require(index["opclasses"] in (ops if index["unique"] else [[op] for op in admitted_ops]))
             require(index["collations"] == (collations if index["unique"] else [source["collation"]]))
         for key, items in (("constraints", facts["constraints"]), ("indexes", facts["indexes"])):
             originals = field["original"][key]
@@ -1507,6 +1555,12 @@ def compile_protection(raw: bytes, mapping: Registry, engine: Engine, *,
         raise PlanningRejected([Issue('unsupported_layout', 'layout',
             'Use layout=None or the exact preserve-public-slots/v1 policy.')])
     declaration = parse_protection_declaration(raw)
+    if previous_lock is not None:
+        from cryptalis._search_layout import prefix_plan_scope
+        prefix_plan_scope({'lock': decode_manifest_json(previous_lock)})
+    if any('prefix' in field.queries for model in declaration.models for field in model.fields):
+        from cryptalis._search_layout import require_prefix_qualification
+        require_prefix_qualification()
     issues = []
     host, reviews = _host_evidence(declaration, writers, search_reviews, issues)
     if not isinstance(mapping, Registry) or not isinstance(engine, Engine):

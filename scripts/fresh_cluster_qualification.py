@@ -161,6 +161,8 @@ def main():
                           help='Qualify NUMERIC(8,2) storage and defaults after all rotations on a fresh cluster.')
     profiles.add_argument('--numeric-equality', action='store_true',
                           help='Qualify NUMERIC(8,2) equality queries and defaults after all rotations on a fresh cluster.')
+    profiles.add_argument('--prefix', action='store_true',
+                          help='Qualify exact text prefixes, native pattern indexes and all rotations on a fresh cluster.')
     profiles.add_argument('--uuid', action='store_true',
                           help='Qualify UUID value storage, rotations and fresh-cluster recovery.')
     profiles.add_argument('--sqlmodel-http', action='store_true',
@@ -187,6 +189,8 @@ def main():
     profiles.add_argument('--search-rotation', action='store_true',
                           help='Qualify backup recovery after search rotation and a later protected edit.')
     args = parser.parse_args()
+    if args.prefix and (args.varchar or args.restore_lease):
+        parser.error('--prefix uses the native TEXT pattern-index fixture and its restore lifecycle.')
     if args.modification and (args.varchar or args.restore_lease or args.public_slots):
         parser.error('--modification uses the original TEXT profile and current-value exit.')
     if args.application_config and (args.varchar or args.restore_lease or args.public_slots):
@@ -245,6 +249,7 @@ def main():
                '; aware timestamps, native timezone results and three-rotation recovery' if args.timestamptz else
                '; NUMERIC(8,2) storage, literal default and three-rotation recovery' if args.numeric else
                '; NUMERIC(8,2) equality, literal default and three-rotation recovery' if args.numeric_equality else
+               '; exact text prefixes, native pattern indexes and three-rotation recovery' if args.prefix else
                '; DATE storage, literal default and three-rotation recovery' if args.date else
                '; original public slots and explicit restored-slot authority' if args.public_slots else
                '; owned-sequence identity mapping and native counter profile' if args.owned_sequences else
@@ -271,7 +276,8 @@ def main():
     if args.column_name != 'name':
         profile += '; keyword column ' + args.column_name
     export = run_pytest(export_receipt, 'Fresh-cluster source export; primary cluster' + profile,
-                        ('tests/test_project_fresh_cluster.py::test_export_project_source' if args.project else
+                        ('tests/test_prefix_fresh_cluster.py::test_export_prefix_backup_after_rotations_and_current_edits' if args.prefix else
+                         'tests/test_project_fresh_cluster.py::test_export_project_source' if args.project else
                          'tests/test_modification_fresh_cluster.py::test_export_modified_backup' if args.modification else
                          'tests/test_date_fresh_cluster.py::test_export_date_backup_after_rotations' if args.date or args.timestamp or args.timestamptz or args.numeric or args.numeric_equality else
                          'tests/test_sqlmodel_searchable_export.py' if (args.sqlmodel_searchable or args.sqlmodel_direct_search or args.sqlmodel_public_slots or args.sqlmodel_http) else
@@ -312,6 +318,15 @@ def main():
                         '0001-01-01' if args.date else None if args.integer_default is None else str(args.integer_default))
     if manifest.get('application_default') != expected_default:
         raise SystemExit('FreshCluster.ProfileMismatch: integer default export differs from the requested literal.')
+    if args.prefix:
+        plan = json.loads(base64.b64decode(manifest['plan'], validate=True))
+        fields = [field for model in plan.get('lock', {}).get('models', ())
+                  for field in model.get('fields', ())
+                  if field.get('field_id') == '00000000-0000-0000-0000-0000000001f7']
+        if (manifest.get('application_profile') != 'text-prefix' or not manifest.get('native_pattern_indexes')
+                or plan.get('kind') != 'search_rotation' or plan.get('lock', {}).get('schema') != 'cryptalis.lock/v14'
+                or len(fields) != 1 or fields[0].get('queries') != ['equality', 'prefix']):
+            raise SystemExit('FreshCluster.ProfileMismatch: exact-prefix three-rotation successor is missing.')
     if args.integer:
         plan = json.loads(base64.b64decode(manifest['plan'], validate=True))
         if (manifest.get('application_profile') != 'integer-' + str(args.integer)
@@ -323,7 +338,7 @@ def main():
             raise SystemExit('FreshCluster.ProfileMismatch: integer payload successor is missing.')
     if args.public_slots:
         plan = json.loads(base64.b64decode(manifest['plan'], validate=True))
-        if (plan.get('lock', {}).get('schema') != ('cryptalis.lock/v13' if args.numeric_equality else 'cryptalis.lock/v12' if args.timestamptz else 'cryptalis.lock/v11' if args.numeric else 'cryptalis.lock/v10' if args.timestamp else 'cryptalis.lock/v9' if args.uuid else 'cryptalis.lock/v8' if args.date else 'cryptalis.lock/v7' if args.integer else 'cryptalis.lock/v6')
+        if (plan.get('lock', {}).get('schema') != ('cryptalis.lock/v14' if args.prefix else 'cryptalis.lock/v13' if args.numeric_equality else 'cryptalis.lock/v12' if args.timestamptz else 'cryptalis.lock/v11' if args.numeric else 'cryptalis.lock/v10' if args.timestamp else 'cryptalis.lock/v9' if args.uuid else 'cryptalis.lock/v8' if args.date else 'cryptalis.lock/v7' if args.integer else 'cryptalis.lock/v6')
                 or plan['lock'].get('layout') != 'preserve-public-slots/v1'
                 or not manifest.get('source_public_slots')):
             raise SystemExit('FreshCluster.ProfileMismatch: original-slot source lock is missing.')
@@ -331,6 +346,8 @@ def main():
         plan = json.loads(base64.b64decode(manifest['plan'], validate=True))
         if plan.get('lock', {}).get('schema') != 'cryptalis.lock/v5' or not manifest.get('sequence_facts'):
             raise SystemExit('FreshCluster.ProfileMismatch: sequence-bearing source lock is missing.')
+    elif args.prefix:
+        pass
     elif args.uuid:
         plan = json.loads(base64.b64decode(manifest['plan'], validate=True))
         if (manifest.get('application_profile') != 'native-uuid-storage'
@@ -403,7 +420,8 @@ def main():
         credentials = provision(port, password, manifest, plain_database)
         home = write_home(workdir, port, manifest, credentials)
         restore = run_pytest(restore_receipt, 'Fresh-cluster protected-backup recovery and adoption; isolated cluster' + profile,
-                             ('tests/test_project_fresh_cluster.py::test_recover_project_on_fresh_cluster' if args.project else
+                             ('tests/test_prefix_fresh_cluster.py::test_restore_prefix_authentication_pattern_indexes_latest_native_and_package_free_exit' if args.prefix else
+                              'tests/test_project_fresh_cluster.py::test_recover_project_on_fresh_cluster' if args.project else
                               'tests/test_modification_fresh_cluster.py::test_restore_modified_backup_authenticate_and_remove_current_values' if args.modification else
                               ('tests/test_fresh_cluster_restore.py::test_protected_backup_recovers_values_with_retained_keys',
                                'tests/test_fresh_cluster_restore.py::test_restored_cluster_completes_adopted_lifecycle') if args.application_config else

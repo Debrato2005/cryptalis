@@ -4,16 +4,18 @@ Cryptalis implements a bounded research prototype. **No production release or co
 This page owns current verification and release gates; the [34-objective ledger](BUILD_CHECKLIST.md) owns remaining work.
 Use the [documentation map](README.md) to find contracts and procedures.
 
-**Latest complete hosted pass: `be836b0`.** Both jobs in
-[run 41245812702](https://github.com/Debrato2005/cryptalis/actions/runs/41245812702)
-pass for aware timestamps and UTC order. The full source run passes 3,800 test
-calls and 18 subtests. Twenty call skips, 41 setup skips and eight collection
-skips remain explicit. All 303 recorded Python files match that revision and
-source/runtime stability passes. The installed recovery job passes; wheel and
-sdist match the retained local timestamp artifacts.
-[Exact hosted boundary](_reset/github-timestamptz-green-20261101.json).
-The preceding [numeric source failure and repair](_reset/numeric-compiler-ci-boundary-20261101.json)
-remain retained.
+**Latest complete hosted pass: `18e3ab2`.** Both jobs in
+[run 41248719540](https://github.com/Debrato2005/cryptalis/actions/runs/41248719540)
+pass for NUMERIC equality/IN and scoped uniqueness. The full source run passes
+3,865 calls and 18 subtests. Twenty-two call skips, 41 setup skips and eight
+collection skips remain explicit. All 306 recorded Python files match that
+revision, with stable source/runtime bytes. The installed recovery job passes;
+wheel and sdist match the retained local numeric-search artifacts.
+[Exact hosted boundary](_reset/github-numeric-search-green-20261101.json).
+The preceding aware timestamp run is retained in its
+[hosted boundary](_reset/github-timestamptz-green-20261101.json), and the
+[numeric compiler failure/repair](_reset/numeric-compiler-ci-boundary-20261101.json)
+remains retained. All seven production gates stay UNKNOWN.
 
 **Earlier complete hosted pass: `54218cf`.** Both jobs in
 [run 41239335699](https://github.com/Debrato2005/cryptalis/actions/runs/41239335699)
@@ -50,6 +52,36 @@ source-role failure and later UUID fixture failures remain repaired.
 and [repair evidence](_reset/point-delete-returning-ci-fix-boundary-20261030.json)
 remain available.
 
+## Internal exact text prefix prototype
+
+**INTERNAL ONLY, with bounded engineering verification:** exact terminal-prefix
+LIKE/startswith uses authenticated full HMAC slots and a native GIN expression,
+with unchanged equality and tenant isolation. Ordinary planning, previous locks,
+saved artifacts, attachment and retained runtime/crypto use refuse before
+effects outside the private synthetic scope. Doctor reports capability
+unadmitted. Parsing and leakage acknowledgment do not establish admission.
+
+The affected source regression passes 704 calls with 11 explicit call skips;
+the installed Python 3.12 wheel passes 144 calls without skips, including current
+CRUD, query/escape/Unicode/NULL oracles, both layouts, all rotations, profile
+changes, one/two-worker online capture and actual v13 reader controls. Both
+fresh-cluster layouts pass export and authenticated adoption, current edits,
+removal and an import-denied native restart. Repeat artifacts, SBOM, 49 installed
+files and CLI inspection pass. Final receipts bind the same 314 Python files
+and 44-module runtime. The
+[exact boundary](_reset/prefix-boundary-20261101.json) records final source
+verification, inventories, failures and limits; [observations](history/search-2026-11.md)
+retain the design/source and failure context.
+
+Storage fails the 2× target: 1,200 synthetic names with prefix bounds 2..12 use
+13.1527× native column-plus-index bytes after GIN maintenance (11.3433× before).
+The measured native baseline is 217,320 bytes; the protected result is 2,858,344
+bytes. This excludes table tuple, TOAST relation and free-space-map costs.
+GIN eligibility after pending-list cleanup is not latency acceptance.
+Published prefix-specific attacks, approved costs, independent review and all
+six admission gates remain unfinished. Prefix support remains unadmitted;
+broader text/JSON search remains open. All seven production gates stay UNKNOWN.
+
 ## Finite NUMERIC equality, IN and scoped uniqueness
 
 **VERIFIED, bounded source and installed wheel:** finite NUMERIC search uses
@@ -73,7 +105,7 @@ files and 43-module runtime. Repeat artifacts, SBOM, 48 installed files and CLI
 inspection pass. [Exact boundary](_reset/numeric-search-boundary-20261101.json)
 retains failures, test repairs, scopes and skips.
 
-The complete hosted run for this slice is pending. Numeric order/ranges,
+The complete hosted run is recorded above. Numeric order/ranges,
 arithmetic, nonfinite values, broader coercions, performance acceptance and
 independent human review remain open. All seven production gates stay UNKNOWN.
 
@@ -119,7 +151,7 @@ bind identical runtime bytes; reproducible artifacts and installation inspection
 pass. [Exact boundary](_reset/numeric-storage-boundary-20261101.json) and
 [observations](history/types-2026-11.md#finite-native-numeric-storage-2026-11-01)
 retain failures, limits and hashes. No complete local full-suite rerun follows
-this slice. Numeric search/arithmetic, nonfinite support and broader mappings
+this slice. Numeric order/arithmetic, nonfinite support and broader mappings
 remain open; performance and all seven production gates remain UNKNOWN.
 
 ## Native naive timestamp storage

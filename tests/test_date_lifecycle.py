@@ -26,7 +26,7 @@ def date_keys(tenant):
 
 @contextmanager
 def date_application(*, public_slots=False, value_type=None, values=VALUES, value_default=date.min,
-                     owned_sequences=False, value_queries=()):
+                     owned_sequences=False, value_queries=(), value_prefix_bounds=None):
     """Retain a native scalar alongside independently declared searchable text."""
     from cryptalis.manifest.compiler import SearchReview, Writer, WriterInventory, _canonical
     label_id = UUID(int=1211)
@@ -37,7 +37,7 @@ def date_application(*, public_slots=False, value_type=None, values=VALUES, valu
             install_sequence(connection, schema, role)
     with application(value_type=Date() if value_type is None else value_type,
                      queries=list(value_queries), unique='unique' in value_queries, protected_values=values,
-                     value_default=value_default, setup=setup) as app:
+                     value_default=value_default, setup=setup, value_prefix_bounds=value_prefix_bounds) as app:
         # ORM INSERT applies the native client default to None; create SQL NULL
         # through a subsequent native UPDATE so both values enter migration.
         with app.runtime.begin() as connection:
@@ -45,6 +45,8 @@ def date_application(*, public_slots=False, value_type=None, values=VALUES, valu
                 if value is None:
                     connection.execute(app.table.update().where(app.table.c.id == identity).values(name=None))
         declaration = app.plan.document['lock']['declaration']
+        if value_prefix_bounds is not None:
+            declaration['models'][0]['fields'][0]['prefix_lengths'] = dict(value_prefix_bounds)
         declaration['models'][0]['fields'].append({'name': 'label', 'field_id': str(label_id),
             'protect': True, 'queries': ['equality'], 'accept_leakage': ['equality']})
         app.plan = m.plan(_canonical(declaration), app.mapping, app.owner,

@@ -6,6 +6,7 @@ This module does not supply external deployment publication or a pause bound.
 """
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import contextmanager, nullcontext
+from contextvars import copy_context
 from copy import deepcopy
 from dataclasses import dataclass
 import hashlib
@@ -22,6 +23,7 @@ from cryptalis.crypto.cf1 import FieldDescriptor, seal_value
 from cryptalis.crypto.keys import Keyring, KeyUnavailable, ProviderAuthenticationUnavailable
 from cryptalis.crypto._payload_rotation import MAX_BATCH_BYTES, MAX_BATCH_ROWS
 from cryptalis.manifest.declaration import parse_protection_declaration
+from cryptalis._search_layout import frame_overhead, search_index_statements
 
 
 FORMAT = 'cryptalis.online-protection/v1'
@@ -80,7 +82,9 @@ class OnlineProtectionPlan:
             raise m.TransitionFailure('invalid_online_plan') from None
 
     @property
-    def document(self): return json.loads(self.artifact)
+    def document(self):
+        from cryptalis._search_layout import prefix_plan_scope
+        return prefix_plan_scope(json.loads(self.artifact))
     @property
     def digest(self): return hashlib.sha256(self.artifact).hexdigest()
     @property
@@ -333,7 +337,7 @@ def _chunk(c, p, state, keys, *, pool=None, row_limit=None):
         widths = {'bool': 1, 'int2': 2, 'int4': 4, 'int8': 8, 'date': 4, 'uuid': 16, 'timestamp': 8, 'timestamptz': 8}
         sizes = '+'.join((str(widths[f['source']['type']]) if f['source']['type'] in widths else
                          'COALESCE(pg_catalog.octet_length('+m._quote(c,f['column'])+
-                         ('::pg_catalog.text' if f['source']['type'] == 'numeric' else '')+'),0)') + '+74'
+                         ('::pg_catalog.text' if f['source']['type'] == 'numeric' else '')+'),0)') + f'+{frame_overhead(f)}'
                          for f in model['fields'])
         candidates = c.exec_driver_sql('SELECT ' + m._quote(c,names[0]) + ', ' + sizes
             + f' FROM {m._table(c,model)} WHERE {m._quote(c,dirty)} IS DISTINCT FROM FALSE'
@@ -381,7 +385,9 @@ def _chunk(c, p, state, keys, *, pool=None, row_limit=None):
             frames = m._with_row_keys(keys,tenant,p,material.keys,lambda prepared:
                 [seal_value(value,descriptor,tenant,row[0],prepared) for value,descriptor in zip(row[offset:],descriptors)])
             return tuple(frames)+(row[0],)
-        params = list(pool.map(seal_row, rows) if pool is not None else map(seal_row, rows))
+        params = list(pool.map(lambda item: item[0].run(seal_row, item[1]),
+                               ((copy_context(), row) for row in rows))
+                      if pool is not None else map(seal_row, rows))
         statement = f'UPDATE {m._table(c,model)} SET ' + ','.join(m._quote(c,f['payload_column'])+'=%s' for f in model['fields'])
         statement += f', {m._quote(c,dirty)}=FALSE WHERE {m._quote(c,names[0])}=%s'
         c.exec_driver_sql(statement,params)
@@ -540,10 +546,8 @@ def switch(p, engine, *, successor, keys, pin, approval):
             for model in d['lock']['models']:
                 table = m._table(c,model)
                 for field in model['fields']:
-                    if field['queries']:
-                        unique = 'UNIQUE ' if 'unique' in field['queries'] else ''
-                        tenant = m._quote(c,model['tenancy']['column']) + ', ' if 'column' in model['tenancy'] else ''
-                        c.exec_driver_sql(f'CREATE {unique}INDEX {m._quote(c,field["payload_column"]+"_eq")} ON {table} USING btree ({tenant}(pg_catalog.substring({m._quote(c,field["payload_column"])},15,32)) pg_catalog.bytea_ops)')
+                    for statement in search_index_statements(model, field, lambda name: m._quote(c, name), table):
+                        c.exec_driver_sql(statement)
                     c.exec_driver_sql(f'ALTER TABLE {table} ADD CONSTRAINT {m._quote(c,field["payload_column"]+"_frame")} CHECK ({m._frame_check(c,field)})')
                 models[model['table_id']] = {'scope':scopes[model['table_id']],'cursor':None,
                     'rows':scopes[model['table_id']]['count'],'chunks':0,

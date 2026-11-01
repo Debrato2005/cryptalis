@@ -980,7 +980,7 @@ CF1 payload framing:
 |---|---|
 | Magic | Four bytes `43 46 31 00` |
 | Suite | One byte, value 1 for the selected AEAD/KDF profile |
-| Flags | One byte. Bit 0 means packed equality term. Bit 1 adds a companion commitment. Bits 2–7 reject |
+| Flags | One byte. Bit 0 means a packed search term. Bit 1 is reserved for the unadmitted companion candidate. Bit 2 selects the internal packed prefix format below; bits 3–7 reject |
 | Payload generation | Four-byte unsigned big-endian integer, nonzero |
 | Search generation | Four-byte unsigned big-endian integer. Zero without search |
 | Packed equality term | Exactly 32 bytes when flag 0 is set. Otherwise absent |
@@ -992,8 +992,9 @@ Reject unknown suite/flags/generations, short/trailing malformed data, and value
 NULL is SQL NULL, not a zero-byte encrypted value. Empty text remains an authenticated non-null payload.
 Storage-only overhead is 42 bytes. Packed equality overhead is 74 bytes, before SQL tuple/index costs.
 A companion commitment adds 32 bytes. Derived arrays add their own SQL storage.
-The product implements storage-only and packed equality frames. It rejects the companion flag and all advanced representations.
-Independent product vectors cover both formats and both admitted record and tenant codecs. Companion vectors remain unqualified.
+The runtime implements storage-only, packed equality and the separately specified opt-in order representation.
+It rejects the companion flag. Packed prefix is restricted to the internal synthetic qualification scope below.
+Independent product vectors cover storage-only and packed-equality formats and both admitted record and tenant codecs. Companion vectors remain unqualified.
 The first adapter spike uses a different small lab frame. Its success does not verify CF1.
 The offline CF1 text fixture passes 30 framing/context/rotation mutation checks. Same-library roundtrips do not qualify independent AEAD vectors or the generic composition.
 
@@ -1018,7 +1019,7 @@ term = HMAC-SHA256(search_key, T(capability, canonical_value_or_node))
 
 The descriptor pins type, codec, null policy, representation identity, and context encoding.
 It excludes mutable table/column names and unrelated manifest edits.
-Define the companion commitment as SHA-256 of `T("CF1/companions", entries...)`.
+For the unadmitted companion-array research candidate, define the commitment as SHA-256 of `T("CF1/companions", entries...)`.
 Each entry is `T(capability_id, representation_id, T(sorted_unique_full_terms))`.
 Sort entries by capability ID as bytes. Reject duplicates and terms that are not 32 bytes.
 The complete header ends after the optional commitment. AAD includes every header byte, including generations and packed term.
@@ -1031,6 +1032,55 @@ Expected context comes from the host/mapping and generated row projection, not c
 Per-record key derivation limits repeated use of one payload key. It does not establish a reviewed aggregate lifetime bound by itself.
 No quantified security bound or approved key-retirement threshold exists yet.
 Independent review must settle those bounds before real-data admission. The former distributed quota service is not retained by assumption.
+
+### Internal packed exact prefix prototype
+
+**INTERNAL ONLY.** The `cf1-packed-prefix/v1` prototype uses context/v3,
+lock/v14 and `pg-text-prefix/v1`. Ordinary planning, saved-plan execution,
+attachment and retained runtime/crypto use refuse with
+`PrefixCapabilityUnadmitted` outside a private synthetic qualification scope.
+Doctor reports `Capability.Unadmitted` before database inspection. The scope
+provides no real-data authorization or capability admission. Prefix remains
+subject to all [admission requirements](compatibility.md#capability-admission),
+including published attacks, approved measured costs and independent review.
+
+Non-NULL frames use flag 5. The ordinary 32-byte equality term stays at byte
+offset 14. After byte 45 comes a sorted ASCII block containing one equality
+term and one full HMAC term for each available prefix whose Unicode code-point
+length is within the pinned inclusive bounds. Every term is 64 lowercase hex
+characters; commas separate slots. Unused slots contain 64 `~` characters.
+For bounds `min..max`, the block has `max-min+2` slots and
+`65*(max-min+2)-1` bytes. Total overhead is 74 bytes plus this block. Source
+values retain their full bytes and the ordinary TEXT/VARCHAR limit.
+
+Prefix keys derive from the independent tenant/search-generation root with
+HKDF info `T("CF1/search-key", field_id, "utf8-exact/v1", "utf8-prefix/v1", "prefix")`.
+The term is full HMAC-SHA-256 over `T("prefix", exact_utf8_prefix)`.
+Equality keeps its existing separate derivation. No case folding or Unicode
+normalization occurs. The descriptor binds bounds and representation; AEAD
+authenticates the complete header. After decryption the reader recomputes and
+compares the entire canonical block before releasing the value. This composition
+has no independent human cryptographic approval or published prefix-specific
+attack evidence. Separate framing/HKDF/HMAC checks share the AEAD backend.
+
+The block feeds a built-in GIN `array_ops` expression using immutable bytea
+substring, `encode(...,'escape')`, `string_to_array` and explicit C collation.
+The existing equality B-tree remains. Tokens are tenant/field/generation-bound;
+positive tenant admission remains mandatory. Array containment performs exact
+term matching, without candidate decryption or filtering. Full HMAC collision
+resistance is an assumption; this supplies no hostile-database completeness,
+freshness or predicate-result integrity guarantee when a field is not read.
+
+Fixed block width bounds growth, but visible padding reveals the number of
+represented prefixes: zero below `min`, exact length from `min` through
+`max-1`, and the same full count for lengths at least `max`. Repeated
+tokens reveal shared prefix/equality classes, frequency, prefix relationships,
+query repetition, access and result volume. Equality tokens also appear in the
+block. Chosen inputs and auxiliary distributions can label these relationships.
+Bounds and explicit leakage acknowledgment do not make this leakage safe or
+satisfy admission. GIN pending-list maintenance and storage remain material costs;
+the [current observation](status.md#internal-exact-text-prefix-prototype) is not
+performance acceptance.
 
 ### Optional AWS KMS SDK adapter
 

@@ -50,7 +50,7 @@ def keys(tenant):
 
 
 def independent_open(body, descriptor, tenant, record, payload_context=None, *, field_id=FIELD_ID,
-                     payload_root=None, search_root=None, return_bytes=False, search_bytes=None):
+                     payload_root=None, search_root=None, return_bytes=False, search_bytes=None, prefix_bytes=None):
     """Separate HKDF/HMAC/framing path; same qualified AEAD primitive only."""
     if body is None:
         return None
@@ -67,11 +67,15 @@ def independent_open(body, descriptor, tenant, record, payload_context=None, *, 
         salt = hashlib.sha256(pack(b'CF1/root', DOMAIN.bytes, tenant.bytes, context.root_id.bytes, context.generation.to_bytes(4, 'big'))).digest()
         prk = hmac.digest(salt, root, 'sha256')
         return hmac.digest(prk, info + b'\x01', 'sha256')
-    equality = descriptor['representation'] == 'cf1-packed-equality/v1'
-    assert body[:6] == bytes.fromhex('434631000101' if equality else '434631000100')
+    prefix = descriptor['representation'] == 'cf1-packed-prefix/v1'
+    equality = prefix or descriptor['representation'] == 'cf1-packed-equality/v1'
+    assert body[:6] == bytes.fromhex('434631000105' if prefix else '434631000101' if equality else '434631000100')
     assert int.from_bytes(body[6:10],'big')==(payload_context.generation if payload_context else 1)
     assert int.from_bytes(body[10:14],'big') == ((2 if search_root is not None else 1) if equality else 0)
     size = 46 if equality else 14
+    if prefix:
+        bounds = descriptor['prefix_lengths']
+        size += 65 * (bounds['max'] - bounds['min'] + 2) - 1
     header = body[:size]
     key = derive('payload', pack(b'CF1/payload-key', field_id.bytes, record.bytes))
     digest = hashlib.sha256(json.dumps(descriptor, sort_keys=True, separators=(',', ':')).encode()).digest()
@@ -83,6 +87,14 @@ def independent_open(body, descriptor, tenant, record, payload_context=None, *, 
                                          descriptor['normalizer'].encode('ascii'), b'equality'))
         assert hmac.compare_digest(header[14:46], hmac.digest(search_key,
             pack(b'equality', value if search_bytes is None else search_bytes), 'sha256'))
+    if prefix:
+        assert prefix_bytes is not None
+        prefix_key = derive('search', pack(b'CF1/search-key', field_id.bytes,
+            b'utf8-exact/v1', b'utf8-prefix/v1', b'prefix'))
+        terms = [hmac.digest(search_key, pack(b'equality', value), 'sha256').hex()]
+        terms.extend(hmac.digest(prefix_key, pack(b'prefix', part), 'sha256').hex() for part in prefix_bytes)
+        terms.extend(['~' * 64] * (bounds['max'] - bounds['min'] + 2 - len(terms)))
+        assert hmac.compare_digest(header[46:], ','.join(sorted(terms)).encode('ascii'))
     return value if return_bytes else value.decode('utf8')
 
 
@@ -93,7 +105,8 @@ def engine(variable):
 
 @contextmanager
 def application(rows=7, unique=True, setup=None, value_type=None, queries=None,
-                value_default=None, protected_values=None, value_nullable=True, value_column='name'):
+                value_default=None, protected_values=None, value_nullable=True, value_column='name',
+                value_prefix_bounds=None):
     owner, runtime = engine('CRYPTALIS_TEST_DATABASE_URL'), engine('CRYPTALIS_TEST_RUNTIME_DATABASE_URL')
     schema = 'cryptalis_migration_' + uuid4().hex
     mapping = registry(metadata=MetaData(schema=schema))
@@ -111,6 +124,8 @@ def application(rows=7, unique=True, setup=None, value_type=None, queries=None,
         'models':[{'model':'Customer','table_id':str(TABLE_ID),'tenancy':{'column':'tenant_id'},
             'fields':[{'name':'name','field_id':str(FIELD_ID),'protect':True,
                 'queries':queries, 'accept_leakage':queries}]}]}
+    if value_prefix_bounds is not None:
+        declaration['models'][0]['fields'][0]['prefix_lengths'] = dict(value_prefix_bounds)
     with psycopg.connect(os.environ['CRYPTALIS_TEST_RUNTIME_DATABASE_URL']) as c:
         role = c.execute('select current_user').fetchone()[0]
     try:

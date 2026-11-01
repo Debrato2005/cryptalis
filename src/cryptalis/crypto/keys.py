@@ -39,6 +39,12 @@ class InvalidContext(CryptoFailure):
     stage = "context validation"
 
 
+class PrefixCapabilityUnadmitted(CryptoFailure):
+    stage = 'capability admission'
+    remedy = ('Exact prefix search is INTERNAL ONLY. Complete the documented admission gates before ordinary use. '
+              'The isolated synthetic qualification scope is not real-data authorization.')
+
+
 class InvalidText(CryptoFailure):
     stage = "text encoding"
     remedy = "Supply strict UTF-8 text without NUL, at most 16 MiB encoded, or SQL NULL."

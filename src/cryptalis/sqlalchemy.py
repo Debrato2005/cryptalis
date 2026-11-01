@@ -20,7 +20,7 @@ from sqlalchemy import BigInteger, Boolean, Column, Enum, LargeBinary, String, T
 from sqlalchemy.engine import Engine
 from sqlalchemy.dialects import postgresql as _postgresql_types
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, AsyncSessionTransaction
-from sqlalchemy.exc import DBAPIError, DontWrapMixin
+from sqlalchemy.exc import DBAPIError, DontWrapMixin, StatementError
 from sqlalchemy.orm import Session, registry
 from sqlalchemy.orm.attributes import InstrumentedAttribute, QueryableAttribute
 from sqlalchemy.orm.attributes import NO_VALUE
@@ -478,7 +478,7 @@ class _ReadText(TypeDecorator):
                     for expected in self.points):
                 raise AuthenticationFailed()
             if payload is not None:
-                if type(payload) is not str or len(payload) > 2 * (MAX_TEXT_BYTES + 74):
+                if type(payload) is not str or len(payload) > 2 * (MAX_TEXT_BYTES + self.binding.descriptor.overhead):
                     raise AuthenticationFailed()
                 payload = bytes.fromhex(payload)
             if self.returning_frames is not None and (
@@ -514,6 +514,10 @@ class _Payload(TypeDecorator):
         super().__init__()
         self.binding, self.owner = binding, owner
         self.source_type = binding.column.type
+
+    @property
+    def operator_classes(self):
+        return self.source_type.operator_classes
 
     def coerce_compared_value(self, op, value):
         if self.binding.descriptor.value_codec == 'pg-numeric-decimal/v1':
@@ -862,7 +866,7 @@ class _Attachment:
                     raise PolicyMismatch()
                 if field["queries"]:
                     if (not isinstance(field["queries"], list) or not field["queries"] or
-                            not set(field["queries"]) <= {"equality", "order", "unique"}):
+                            not set(field["queries"]) <= {"equality", "order", "prefix", "unique"}):
                         raise PolicyMismatch()
                     admitted = None
                     if self.deployment is not None:
@@ -1058,6 +1062,9 @@ class _Attachment:
     def _check_process(self):
         if os.getpid() != self._pid:
             raise ForkedRuntime()
+        if self.document['schema'] == 'cryptalis.lock/v14':
+            from ._search_layout import require_prefix_qualification
+            require_prefix_qualification()
 
     def _check_configuration(self):
         self._check_process()
@@ -2239,6 +2246,10 @@ def _execute(state):
     try:
         state.statement = rewrite_search(session._owner, state.statement, operation)
         return state.invoke_statement()
+    except StatementError as failure:
+        if isinstance(failure.orig, CryptoFailure):
+            raise failure.orig from None
+        raise
     finally:
         _operation.reset(token)
 

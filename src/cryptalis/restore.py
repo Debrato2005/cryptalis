@@ -36,6 +36,7 @@ from uuid import UUID
 from sqlalchemy.dialects import postgresql
 
 from cryptalis._sqlalchemy_search import _frame_expressions
+from cryptalis._search_layout import prefix_lengths
 from cryptalis import migration as m
 from cryptalis.crypto import CryptoFailure, KeyUnavailable
 from cryptalis.crypto.cf1 import FieldDescriptor, open_value
@@ -138,7 +139,9 @@ class RestoreBinding:
             raise m.TransitionFailure('invalid_restore_binding') from None
 
     @property
-    def document(self): return json.loads(self.artifact)
+    def document(self):
+        from cryptalis._search_layout import prefix_plan_scope
+        return prefix_plan_scope(json.loads(self.artifact))
     @property
     def digest(self): return hashlib.sha256(self.artifact).hexdigest()
     @property
@@ -563,6 +566,8 @@ def _probe_frame_checks(c, source, restatements):
                     f"overlay({column} placing '\\x00000000'::bytea from 7 for 4)"]
         if field['queries']:
             attempts.append(f"overlay({column} placing '\\x00000000'::bytea from 11 for 4)")
+        if prefix_lengths(field) is not None:
+            attempts.append(f'pg_catalog.set_byte({column},5,1)')
         for expression in attempts:
             if not _attempt_rejection(c, source, table, column, record_column, row, expression):
                 raise m.TransitionFailure('restored_constraint_probe_failed', source.operation_id)

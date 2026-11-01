@@ -3,6 +3,7 @@
 from .manifest.compiler import InspectionUnavailable, PlanningRejected, compile_protection
 from .manifest.parser import ManifestInvalid
 from ._doctor_code import scan_routes
+from .crypto.keys import PrefixCapabilityUnadmitted
 
 
 def check_keys(keyrings=()):
@@ -143,6 +144,10 @@ def preflight(manifest, mapping, engine, *, writers, search_reviews=(), queries=
     try:
         plan = compile_protection(manifest, mapping, engine, writers=writers,
                                   search_reviews=search_reviews)
+    except PrefixCapabilityUnadmitted as failure:
+        report['status'] = report['checks']['manifest_schema'] = 'FAIL'
+        report['issues'] = [{'code': 'Capability.Unadmitted', 'location': 'manifest',
+                             'remedy': failure.remedy}]
     except ManifestInvalid:
         report['status'] = report['checks']['manifest_schema'] = 'FAIL'
         report['issues'] = [{'code': 'Manifest.Invalid', 'location': 'manifest',

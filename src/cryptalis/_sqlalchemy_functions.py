@@ -15,7 +15,7 @@ _CALLS = frozenset({
     'lead', 'length', 'lower', 'ltrim', 'max', 'md5', 'min', 'mode',
     'now', 'octet_length', 'pg_backend_pid', 'pg_sleep', 'rank', 'replace',
     'reverse', 'round', 'row_number', 'rtrim', 'split_part', 'stddev',
-    'string_agg', 'substr', 'substring', 'sum', 'upper', 'varchar',
+    'string_agg', 'string_to_array', 'substr', 'substring', 'sum', 'upper', 'varchar',
 })
 _SYNTAX = frozenset({'coalesce', 'nullif', 'greatest', 'least',
                      'current_date', 'current_time', 'current_timestamp',

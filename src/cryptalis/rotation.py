@@ -14,6 +14,7 @@ from cryptalis import migration as m
 from cryptalis.crypto.cf1 import FieldDescriptor, open_value
 from cryptalis.crypto.keys import KeyContext, Keyring, KeyUnavailable, ProviderAuthenticationUnavailable
 from cryptalis.crypto._payload_rotation import MAX_BATCH_BYTES, MAX_BATCH_ROWS
+from cryptalis._search_layout import frame_overhead
 
 
 FORMAT = 'cryptalis.rewrap/v1'
@@ -149,7 +150,9 @@ class RewrapPlan:
             raise m.TransitionFailure('invalid_rewrap_plan') from None
 
     @property
-    def document(self): return json.loads(self.artifact)
+    def document(self):
+        from cryptalis._search_layout import prefix_plan_scope
+        return prefix_plan_scope(json.loads(self.artifact))
     @property
     def digest(self): return hashlib.sha256(self.artifact).hexdigest()
     @property
@@ -337,7 +340,9 @@ class _GenerationRotationPlan:
             raise m.TransitionFailure('invalid_'+self.purpose+'_rotation_plan') from None
 
     @property
-    def document(self): return json.loads(self.artifact)
+    def document(self):
+        from cryptalis._search_layout import prefix_plan_scope
+        return prefix_plan_scope(json.loads(self.artifact))
     @property
     def digest(self): return hashlib.sha256(self.artifact).hexdigest()
     @property
@@ -462,7 +467,7 @@ def _prepare_generation(source, keys, target_keys, purpose):
 
 
 def _frame_growth(field, target):
-    return (74 if target['queries'] else 42) - (74 if field['queries'] else 42)
+    return frame_overhead(target) - frame_overhead(field)
 
 
 def _payload_stream(c, model, after, limits, *, payloads=False, target_model=None):
@@ -475,7 +480,7 @@ def _payload_stream(c, model, after, limits, *, payloads=False, target_model=Non
         # The target-only verification must fit the same admitted row budget.
         growth = 2 * max(0, _frame_growth(field, target))
         terms.append(f'CASE WHEN {column} IS NULL THEN 0 ELSE '
-                     f'3*pg_catalog.octet_length({column})::bigint-{74 if field["queries"] else 42}+{growth} END')
+                     f'3*pg_catalog.octet_length({column})::bigint-{frame_overhead(field)}+{growth} END')
     record = m._quote(c,model['record']['column'])
     params = ()
     where = ''
@@ -733,7 +738,7 @@ def _observe_active(c, source, keys, *, prepared=None, peers=None, batch_limits=
                             growth = _frame_growth(field, target_model['fields'][index])
                             frame_bytes += len(frame)
                             target_frame_bytes += len(frame) + growth
-                            row_bytes += 3*len(frame) - (74 if field['queries'] else 42) + 2 * max(0, growth)
+                            row_bytes += 3*len(frame) - frame_overhead(field) + 2 * max(0, growth)
                 frames.update(m._canonical(identity + [frame_digests]))
                 logical_bytes += row_bytes
                 largest = max(largest,row_bytes)
