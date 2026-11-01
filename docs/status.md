@@ -4,6 +4,46 @@ Cryptalis implements a bounded research prototype. **No production release or co
 This page owns current verification and release gates; the [34-objective ledger](BUILD_CHECKLIST.md) owns remaining work.
 Use the [documentation map](README.md) to find contracts and procedures.
 
+## Push-run CI follow-up
+
+Two branch-push source jobs failed despite passing PR jobs at the same heads.
+[Run 41310116248](https://github.com/Debrato2005/cryptalis/actions/runs/41310116248)
+at `75d095b` times out in the native async cancellation test.
+[Run 41311486585](https://github.com/Debrato2005/cryptalis/actions/runs/41311486585)
+at `6aafac4` reports an InternalError in the storage-only VARCHAR test. Each
+source failure retains 3,978 passing calls, 18 passing subtests, one failing call,
+25 call skips, 41 setup skips and nine collection skips. Installed/recovery jobs
+pass in both runs. The corresponding PR passes remain valid for their own runs;
+they do not erase these push failures.
+
+A controlled native PostgreSQL 16.15 lock/drop schedule reproduces an unsafe
+dependency in the VARCHAR test's `pg_indexes.indexdef` filter. The original query
+waits while deparsing an unrelated table; dropping that table produces XX000.
+The replacement inspects `pg_index` for the exact target OID and completes while
+the unrelated lock is held. It asserts absence of all expression indexes in this
+storage-only fixture. The historical log suppressed SQLSTATE and phase, so its
+exact cause remains unproven. Reports now retain a validated five-character
+SQLSTATE or UNKNOWN and pytest phase, preserving raw message/SQL/bind redaction.
+
+The cancellation test's outer five-second `wait_for` could interrupt psycopg's
+sequential five-second cancellation and response-drain phases. Its modern-libpq
+fixture now waits without issuing another cancellation, with a 15-second test
+guard, requires CancelledError and independently observes the backend leaving
+PgSleep before checking rollback and fresh-tenant recovery. The historical
+delay's precise cause remains UNKNOWN; this is no production latency guarantee.
+
+Focused final source verification passes **102 calls without skips**. An installed
+Python 3.13 run passes 100 VARCHAR/public DELETE calls before the cancellation
+test change; a separate installed two-case run verifies the final native/attached
+cancellation tests. The native catalog control passes; paired diagnostic
+controls intentionally fail a native query and prove the marker is observable
+without redaction and hidden with SQLSTATE/phase retained. The
+[exact boundary and retained failures/controls](_reset/ci-push-followup-boundary-20261101.json)
+record each source snapshot. Hosted repair results are tracked in
+[PR 8](https://github.com/Debrato2005/cryptalis/pull/8), including both push and PR
+events. Product/runtime/build bytes and frozen preview tags are unchanged.
+All production gates and independent human review remain UNKNOWN.
+
 ## Public-table DELETE RETURNING
 
 **VERIFIED, bounded development:** the finite mapped DELETE route for an
