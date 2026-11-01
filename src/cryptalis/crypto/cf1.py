@@ -10,6 +10,7 @@ import os
 from dataclasses import dataclass
 from datetime import date, datetime, timedelta, timezone
 from decimal import Decimal, InvalidOperation
+from functools import lru_cache
 from hmac import compare_digest, digest as hmac_digest
 from uuid import UUID
 
@@ -219,11 +220,25 @@ def _encode_value(value, field):
     return _encode(value)
 
 
+@lru_cache(maxsize=1024)
+def _root_salt(c):
+    """Derived from public context alone, so this cache holds nothing secret."""
+    return hashlib.sha256(tuple_bytes(b"CF1/root", c.domain_id.bytes, c.tenant_id.bytes,
+                                      c.root_id.bytes, c.generation.to_bytes(4, "big"))).digest()
+
+
 def _derive(material, info):
-    c = material.context
-    salt = hashlib.sha256(tuple_bytes(b"CF1/root", c.domain_id.bytes, c.tenant_id.bytes,
-                                     c.root_id.bytes, c.generation.to_bytes(4, "big"))).digest()
-    return HKDF(algorithm=hashes.SHA256(), length=32, salt=salt, info=info).derive(material.root)
+    return HKDF(algorithm=hashes.SHA256(), length=32, salt=_root_salt(material.context), info=info).derive(material.root)
+
+
+def _search_key(material, field, codec, normalizer, kind):
+    """One HKDF per field and root. Held on the material, so it expires with that root."""
+    identity = field.field_id, codec, normalizer, kind
+    key = material.search_keys.get(identity)
+    if key is None:
+        key = material.search_keys[identity] = _derive(material, tuple_bytes(
+            b"CF1/search-key", field.field_id.bytes, codec, normalizer, kind))
+    return key
 
 
 def _order_term(encoded, field, material):
@@ -235,8 +250,7 @@ def _order_term(encoded, field, material):
     order. A fixed 32 bytes keeps the frame layout and index of an equality term.
     int8 uses 2-bit digits to fit; narrower types use single bits.
     """
-    key = _derive(material, tuple_bytes(b"CF1/search-key", field.field_id.bytes, field.value_codec.encode("ascii"),
-                                        b"identity/v1", b"order"))
+    key = _search_key(material, field, field.value_codec.encode("ascii"), b"identity/v1", b"order")
     width = 8 * len(encoded)
     # Flipping the sign bit makes two's complement compare as unsigned.
     number = int.from_bytes(encoded, "big") ^ (1 << (width - 1))
@@ -269,8 +283,7 @@ def _term(encoded, field, material):
         from .._jsonb import jsonb_search_bytes
         encoded = jsonb_search_bytes(encoded)
         codec, normalizer = _JSONB_CODEC.encode('ascii'), b'pg-jsonb-equality/v1'
-    key = _derive(material, tuple_bytes(b"CF1/search-key", field.field_id.bytes,
-                                       codec, normalizer, b"equality"))
+    key = _search_key(material, field, codec, normalizer, b"equality")
     mac = hmac.HMAC(key, hashes.SHA256())
     mac.update(tuple_bytes(b"equality", encoded))
     return mac.finalize()

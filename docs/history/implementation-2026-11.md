@@ -172,3 +172,12 @@ the counter returned. A cached security answer must not be able to fail open.
 
 The corrected code passes locally on one wheel, including the exact CI benchmark step, then
 both hosted jobs pass at `d0738dc` in run 41341107415.
+
+Rotation took about four times as long as protection. A profile showed `open_value` running
+300,000 times for 20,000 frames, about 15 passes. Reading the code showed each resumable step
+re-verifies in its own transaction, so those passes stayed. Measured one change at a time
+against a pinned wheel on fresh data: a generator-free `tuple_bytes` saves about 5%, the
+public salt memo about 3–5% more and the search-key memo reaches 13–14%. Reading the batch
+limits once, outside a per-frame loop that reparsed the whole plan, reaches about 33%.
+Counting JSON parses per operation then found no similar loop elsewhere. Two mutants of the
+search-key memo are caught: one by a new test, the other by the frozen independent vectors.

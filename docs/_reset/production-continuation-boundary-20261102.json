@@ -16,8 +16,8 @@
  "measured_wheel_sha256": "ccebae5628e991eb4e8faf5e44e049a3c97aca3a41ff67f3cbb73ada72a1c3ec",
  "measured_wheel_clean_rebuild_equal": true,
  "final_artifacts": {
-  "wheel_sha256": "7cc2631cb62e58ec215af6c62c2b7fda36f1f4990ee9c675452ca0f051cd0642",
-  "sdist_sha256": "50274a74d64b8805f4655513970b123fb66378bd30f90e7647e518f3ff6f7b2f",
+  "wheel_sha256": "0a79faf767a03fc9c2301f4a8d4594df448ab5e0a85e6889f3a417497ab7a3b0",
+  "sdist_sha256": "435a5da06cef96afc4e3aface99b827e4f233fc3360ceab9a86d1f5e21f6dee7",
   "repeat_build_equal": true
  },
  "build_provenance": "Recorded worktree bytes for final artifacts; not an independent rebuild",
@@ -50,26 +50,26 @@
   },
   "final_source": {
    "test_calls": {
-    "passed": 2196,
+    "passed": 3091,
     "skipped": 25
    },
    "subtest_calls": {
     "passed": 18
    },
    "setup": {
-    "passed": 2221,
-    "skipped": 34
+    "passed": 3116,
+    "skipped": 38
    },
    "teardown": {
-    "passed": 2255
+    "passed": 3154
    },
    "collection": {
-    "skipped": 5
+    "skipped": 7
    },
-   "selected_items": 2255
+   "selected_items": 3154
   },
   "final_source_stable": true,
-  "final_runtime_sha256": "09f06e2caba2395c92af3b1f867587d5614860ae7b57ca7d3c0ca672c844cad7",
+  "final_runtime_sha256": "1c7ddfbe2946a064f98af7efc668221a74b5a7233570fcde57e16849c2673e6b",
   "installed_wheel": {
    "python_3_12": {
     "passed": 35
@@ -85,7 +85,35 @@
   },
   "hosted_059f886": "run 41336500207, both jobs pass",
   "final_wheel_application_journey": "Complete Smolink journey passes, ending after a real uninstall; latency was not remeasured on this wheel",
-  "hosted_d0738dc": "run 41341107415, both jobs pass; source reports 4091 passed, 77 skipped, 18 subtests"
+  "hosted_d0738dc": "run 41341107415, both jobs pass; source reports 4091 passed, 77 skipped, 18 subtests",
+  "search_key_memo_mutants": {
+   "total": 2,
+   "caught": 2
+  },
+  "rotation": {
+   "diagnostic_seconds": {
+    "payload": [
+     8.4,
+     5.7
+    ],
+    "search": [
+     8.9,
+     6.1
+    ]
+   },
+   "diagnostic_rounds": 3,
+   "application_journey_ms": {
+    "payload": [
+     8197,
+     5486
+    ],
+    "search": [
+     8434,
+     5712
+    ]
+   },
+   "application_observations": "single run on each wheel"
+  }
  },
  "retained_failures": [
   "Local regression at 059f886 reported Verification.SourceChanged because scripts/ci_qualification.py changed during the run; its 172 passes are not a valid binding.",
@@ -104,7 +132,7 @@
  ],
  "receipt_archive": {
   "path": "production-continuation-receipts-20261102.tar.gz",
-  "sha256": "24028623c5c06856e3532211335161b37078dd3d3f9f6916d0616a3808c63a4d",
+  "sha256": "216284324c30eac0495298dc2e126f7363e9e4426f385ab60df91d926bba9dac",
   "members": 5
  },
  "gates": {
