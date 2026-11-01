@@ -12,16 +12,16 @@ route, not another product contract.
 `claude/production-continuation-20261101` continues from `main` at `09be1f6`. It adds a
 [runnable lifecycle example](../examples/quickstart.py) and durable development custody,
 fixes [final admission](status.md#final-admission-no-longer-trusts-compilation), reduces
-repeated read work and admits [bounded upsert](compatibility.md#bounded-upsert). The
-separate Smolink branch `demo/cryptalis-email-search-20261102`, at `b1db225`, holds the
+repeated read and rotation work and admits [bounded upsert](compatibility.md#bounded-upsert). The
+separate Smolink branch `demo/cryptalis-email-search-20261102`, at `f0cae5c`, holds the
 [real-application results](status.md#real-application-equality-search). Both hosted jobs
-pass at `d0738dc`. The branch is not merged to `main`. The frozen tags
+pass at `254d334`. The branch is not merged to `main`. The frozen tags
 and original Smolink checkout are unchanged. Its local services are stopped; synthetic
 data and its development key files stay under `~/.cache/cryptalis-production-20261101`.
 
-Three decisions remain the owner's. Whether to accept shared admission or compiled
-state to chase higher-concurrency targets, which [decisions](decisions.md#current-extensions)
-currently rejects. Whether tenant-column `DO UPDATE` should refuse, as it does now, or
+Three decisions remain the owner's. Whether to redesign read processors so compiled
+protected reads can be reused, the largest remaining cost on wide tables. Whether to accept
+shared admission results, which [decisions](decisions.md#current-extensions) currently rejects. Whether tenant-column `DO UPDATE` should refuse, as it does now, or
 add a tenant predicate that turns a cross-tenant conflict into a silent no-op. Whether
 the final-admission fix needs anything beyond this changelog for the unpublished
 `0.1.0a1` draft, which it also affects.

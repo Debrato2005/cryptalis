@@ -26,7 +26,7 @@ human review is qualified by this integration.
 ## Real-application equality search
 
 **VERIFIED, bounded development evidence.** [Protected `User.email` in the original
-Smolink API](https://github.com/Debrato2005/smolink/blob/b1db2252b1d5c7be3d8ef392ca1db7b0109c1eba/cryptalis_demo/evidence/email-search-20261102/README.md) closes the gap the frozen demonstration left open. With `backend/`
+Smolink API](https://github.com/Debrato2005/smolink/blob/f0cae5c62464ec7942c66189a7a5df60860f0e36/cryptalis_demo/evidence/email-search-20261102/README.md) closes the gap the frozen demonstration left open. With `backend/`
 unchanged, login, `/auth/me`, wrong-password, unknown-email and taken-email responses
 are identical before protection, while protected, after payload and search-key rotation
 and after removal. Eight concurrent inserts of one email give exactly one commit and
@@ -44,8 +44,12 @@ sequential-order limit, on a shared workstation with warm keys and no HTTP layer
 | Point read, 3 ms | 1.88 MEET | 6.71 MISS | 2.69 MEET | 45.79 MISS |
 | IN-20 (ORM), 8 ms | 2.64 MEET | 10.52 MISS | 3.78 MEET | 57.73 MISS |
 
-A MEET holds in every round. Protected work is CPU-bound Python, so one event loop queues
-it. Four processes reach 1,110 equality reads/s against 4,964 native. Column plus index
+A MEET holds in every round, and **only for tables like this one, with one protected field
+read**. A separate warm diagnostic shows added cost growing about 0.15 ms per protected field
+read: added p95 is 2.0 ms at 2 fields, 3.0 at 10, 4.6 at 20 and 7.6 at 40. Point and equality
+reads therefore miss 3 ms from about 10 protected fields, even at concurrency 1.
+
+Protected work is CPU-bound Python, so one event loop queues it. Four processes reach 1,110 equality reads/s against 4,964 native. Column plus index
 measures **2.017×** native after compaction and 4.24× straight after rotations, both
 missing 2×. Protection and removal take about 2 seconds each for 10,002 accounts. Each rotation took
 about 8.3 seconds on that wheel and about 5.6 seconds on the later final wheel, in single runs. These are local observations, not production budgets. The provider
@@ -81,11 +85,12 @@ call, 38 setup and seven collection skips. The final wheel, `0a79faf7…`, passe
 without skips on Python 3.12 and 3.13, and repeats the complete Smolink journey through a
 real uninstall. Repeat wheel and sdist builds match.
 
-**Both hosted jobs pass at `d0738dc`** in
-[run 41341107415](https://github.com/Debrato2005/cryptalis/actions/runs/41341107415). The
-source job reports 4,091 passed, 77 skipped and 18 subtests with no failures. This is the
-first complete hosted source run since `059f886`: the runs at `bd223c1` and `423f96f`
-stopped at a benchmark step before any source test ran, so they carry no evidence. [Boundary and retained failures](_reset/production-continuation-boundary-20261102.json).
+**Both hosted jobs pass at `254d334`** in
+[run 41353786983](https://github.com/Debrato2005/cryptalis/actions/runs/41353786983). The
+source job reports 4,093 passed, 77 skipped and 18 subtests with no failures. The earlier
+pass at `d0738dc` is [run 41341107415](https://github.com/Debrato2005/cryptalis/actions/runs/41341107415).
+The runs at `bd223c1` and `423f96f` stopped at a benchmark step before any source test ran,
+so they carry no evidence. [Boundary and retained failures](_reset/production-continuation-boundary-20261102.json).
 Tenant-column `DO UPDATE`, upsert RETURNING and other assignments stay refused. All seven
 production gates remain UNKNOWN.
 
@@ -849,6 +854,12 @@ about 15 times, because each resumable step re-verifies the database in its own
 transaction. Fewer passes would cut downtime further but weaken that recovery design, so
 that remains a design decision. A count of plan parses finds no other per-row loop in
 protection, rotation, decryption or removal.
+
+On a 40-field read, decryption is about 6% of the profile, compiling each field's authenticated
+projection about 40%, admission 24% and configuration fingerprints 7%. Each field reads as
+`jsonb_build_array(encode(frame), record, tenant)`, which binds it to its row, and the compiled
+result processors hold the current operation, so protected reads cannot use SQLAlchemy's
+compile cache. Reusing compiled reads would change that boundary and needs a design decision.
 
 Remaining read cost is mostly admission, about 46% of the profiled async execute path, and
 uncached compilation. Meeting 3 ms at concurrency 4 in one process would need an estimated
