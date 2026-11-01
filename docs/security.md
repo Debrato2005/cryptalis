@@ -285,6 +285,11 @@ It consumes one capture per dispatch, including each native RETURNING page.
 An after-cursor check also requires completion by the guarded raw dispatch
 before SQLAlchemy constructs results or reports unit-of-work success. A dialect
 callback cannot return `True` to skip the guard and silently drop an INSERT.
+Final SELECT admission reuses the check made before compilation only for that
+exact statement object. Any other statement, such as one replaced by a host
+`before_execute` listener, is judged without the generated-node exemptions that
+compiling it registered, so a statement cannot vouch for itself. It refuses before
+the driver, which keeps a plaintext comparison value away from the server.
 SQL and named-key comparison cannot invoke a supplied string subclass's
 equality override. Bulk INSERT also retains its independent sealed-batch checks.
 For psycopg Binary objects, accept only exact `bytes`, `bytearray` or
