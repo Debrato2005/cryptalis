@@ -108,6 +108,97 @@ def jsonb_value(value):
         raise InvalidValue() from None
 
 
+def jsonb_default(value):
+    """Pin a native literal without losing Python types or dictionary key order."""
+    from sqlalchemy import JSON
+    try:
+        jsonb_value(None if value is JSON.NULL else value)
+        tokens, pending = [], [value]
+        while pending:
+            part = pending.pop()
+            kind = type(part)
+            if part is JSON.NULL:
+                if tokens:
+                    raise InvalidValue()
+                tokens.append(['json-null'])
+            elif part is None:
+                tokens.append(['none'])
+            elif kind is bool:
+                tokens.append(['bool', part])
+            elif kind is str:
+                tokens.append(['str', part.encode('utf8', 'surrogatepass').hex()])
+            elif kind is int:
+                tokens.append(['int', str(part)])
+            elif kind is float:
+                tokens.append(['float', part.hex()])
+            elif kind in (list, tuple):
+                tokens.append(['list' if kind is list else 'tuple', len(part)])
+                pending.extend(reversed(part))
+            elif kind is dict:
+                tokens.append(['dict', len(part)])
+                for key, item in reversed(tuple(part.items())):
+                    if type(key) not in (str, int, float, bool, type(None)):
+                        raise InvalidValue()
+                    pending.extend((item, key))
+            else:
+                raise InvalidValue()
+        raw = json.dumps(tokens, ensure_ascii=False, separators=(',', ':'), allow_nan=False)
+        if len(raw.encode('utf8')) > _MAX_BYTES:
+            raise InvalidValue()
+        return raw
+    except (TypeError, ValueError, OverflowError, RecursionError):
+        raise InvalidValue() from None
+
+
+def read_jsonb_default(raw):
+    """Read only the canonical bounded literal encoding emitted above."""
+    from sqlalchemy import JSON
+    try:
+        if type(raw) is not str or not 0 < len(raw.encode('utf8')) <= _MAX_BYTES:
+            raise InvalidValue()
+        tokens = json.loads(raw)
+        if type(tokens) is not list:
+            raise InvalidValue()
+        values = []
+        for token in reversed(tokens):
+            if type(token) is not list or not token or type(token[0]) is not str:
+                raise InvalidValue()
+            kind = token[0]
+            if len(token) == 1 and kind in ('none', 'json-null'):
+                value = JSON.NULL if kind == 'json-null' else None
+            elif len(token) == 2:
+                part = token[1]
+                if kind == 'bool' and type(part) is bool:
+                    value = part
+                elif kind == 'str' and type(part) is str:
+                    value = bytes.fromhex(part).decode('utf8', 'surrogatepass')
+                elif kind == 'int' and type(part) is str:
+                    value = int(part)
+                elif kind == 'float' and type(part) is str:
+                    value = float.fromhex(part)
+                elif kind in ('list', 'tuple', 'dict') and type(part) is int and part >= 0:
+                    count = part * (2 if kind == 'dict' else 1)
+                    if count > len(values):
+                        raise InvalidValue()
+                    items = [values.pop() for _ in range(count)]
+                    if kind == 'dict':
+                        value = dict(zip(items[::2], items[1::2]))
+                        if len(value) != part:
+                            raise InvalidValue()
+                    else:
+                        value = tuple(items) if kind == 'tuple' else items
+                else:
+                    raise InvalidValue()
+            else:
+                raise InvalidValue()
+            values.append(value)
+        if len(values) != 1 or jsonb_default(values[0]) != raw:
+            raise InvalidValue()
+        return values[0]
+    except (TypeError, ValueError, OverflowError, RecursionError):
+        raise InvalidValue() from None
+
+
 def native_json_adapters(adapters):
     """Recognize the pinned driver's effective JSON hooks, including globals."""
     from psycopg.adapt import PyFormat

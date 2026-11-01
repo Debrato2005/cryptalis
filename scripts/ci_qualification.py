@@ -187,14 +187,16 @@ class Qualification:
                 '--receipt', str(self.workdir / 'installed-jsonb-receipt.json'), '--',
                 'tests/test_jsonb_storage.py', 'tests/test_jsonb_admission.py',
                 'tests/test_jsonb_boundaries.py', 'tests/test_jsonb_async_failures.py',
-                'tests/test_jsonb_lifecycle.py', '-q'], environment=environment)
+                'tests/test_jsonb_lifecycle.py', 'tests/test_jsonb_defaults.py', '-q'], environment=environment)
             receipt = json.loads((self.workdir / 'installed-jsonb-receipt.json').read_text())
-            # The immutable earlier-reader interpreter is optional on a runner.
-            # Its explicit call skip cannot qualify that compatibility boundary.
+            # Immutable earlier readers are optional on a runner. Their explicit
+            # call skips cannot qualify either compatibility boundary.
             skipped = receipt['counts'].get('skipped', 0)
+            reader_skips = [receipt['modules'].get(module, {}).get('skipped', 0)
+                            for module in ('tests/test_jsonb_admission.py', 'tests/test_jsonb_defaults.py')]
             if (receipt['exit_code'] != 0 or receipt['counts'].get('passed', 0) == 0
-                    or set(receipt['counts']) - {'passed', 'skipped'} or skipped > 1
-                    or receipt['modules'].get('tests/test_jsonb_admission.py', {}).get('skipped', 0) != skipped
+                    or set(receipt['counts']) - {'passed', 'skipped'} or any(count > 1 for count in reader_skips)
+                    or sum(reader_skips) != skipped
                     or receipt['pytest_report_counts']['setup'].get('skipped', 0)
                     or receipt['pytest_report_counts']['collection']
                     or receipt['runtime_binding']['mode'] != 'installed-wheel'
@@ -203,7 +205,8 @@ class Qualification:
             for layout, suffix in (([], 'jsonb-fresh'), (['--public-slots'], 'jsonb-slots-fresh')):
                 self.run('installed JSONB genuine fresh recovery ' + suffix, [str(python),
                     'scripts/fresh_cluster_qualification.py', '--workdir', str(self.workdir / suffix),
-                    '--jsonb', *layout, '--installed-wheel', str(wheel)], environment=environment)
+                    '--jsonb', *layout, '--installed-wheel', str(wheel)],
+                    environment=dict(environment, CRYPTALIS_FRESH_JSONB_DEFAULTS='1'))
                 for phase in ('export', 'restore'):
                     receipt = json.loads((self.workdir / suffix / f'{phase}-receipt.json').read_text())
                     if (receipt['exit_code'] != 0 or receipt['counts'] != {'passed': 1}

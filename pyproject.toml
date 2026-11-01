@@ -1,6 +1,6 @@
 [project]
 name = "cryptalis"
-version = "0.1.0a1"
+version = "0.1.0a2.dev0"
 description = "Manifest-first searchable encryption for PostgreSQL applications"
 readme = "README.md"
 license = "MIT"

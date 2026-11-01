@@ -51,6 +51,10 @@ JSONB has a separate [native value contract](compatibility.md#jsonb-storage):
 capture reads canonical UTF-8 bytes, not driver-decoded floats, and verified
 removal restores current bytes through an explicit JSONB cast. SQL NULL and JSON
 null remain distinct internally through both layouts and every rotation.
+Literal client defaults retain their lock/v16 pin through rotations and restore;
+removal restores current JSONB bytes while the original native mapping supplies
+its client default after package-free restart. The default is not a database
+server expression and requires no plaintext default in PostgreSQL.
 
 Select P2 by supplying `native_tenants` as a tuple of at most 1,024 unique UUID objects. The artifact stores the approved UUID strings in sorted order. The nil UUID is valid. An omitted tuple selects P1. P2's policy map contains exactly one policy for each approved tenant, including empty scopes, plus one fixed table UUID policy for each single-tenant table. UUIDs outside the approved native and fixed scope union fail before the host key resolver. A native row whose UUID matches a fixed scope can resolve that already approved policy before its native-scope refusal. It still cannot pass planning or locked admission. Lock tables and recheck all existing tenant values before journal creation or other DDL.
 
@@ -242,7 +246,7 @@ promote a production gate.
 
 **INTERNAL ONLY:** the prefix prototype requires a private synthetic qualification
 scope for planning, attachment and retained preparation, activation and restore
-artifacts under v14 or mixed JSONB v15 locks. This includes artifacts retaining native pattern-index metadata after
+artifacts under v14 or mixed JSONB v15/v16 locks. This includes artifacts retaining native pattern-index metadata after
 prefix removal. Ordinary use refuses; the scope supplies no real-data authorization.
 Promotion still requires all [six capability-admission gates](compatibility.md#capability-admission),
 including the required attacks, cost assessment and independent review. Synthetic
@@ -261,8 +265,8 @@ verifies and reseals current values, replaces owned checks/indexes atomically an
 requires separate successor publication. Uniqueness stays unchanged: disabling
 prefix retains a required equality/unique index; storage-only conversion cannot
 remove uniqueness. Original `text_pattern_ops`/`varchar_pattern_ops` index metadata
-remains a restoration obligation. Its retention requires lock/v14, or v15 when
-JSONB is also present, even after the last prefix capability is removed.
+remains a restoration obligation. Its retention requires lock/v14, v15 with
+JSONB, or v16 with JSONB client defaults, even after the last prefix capability is removed.
 
 Root rewrap preserves frame bytes. Payload rotation reseals authenticated frames;
 search rotation recomputes equality and prefix terms and reseals their headers.

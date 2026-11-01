@@ -24,6 +24,7 @@ retains its original choices and evidence limits. It is not the current support 
 | Context factories, operational CLI and Doctor | [Host contexts](host-contexts.md), [operator procedures](walkthrough-migration.md) | Explicit authority and safe diagnostics; no hidden publication or tenant inference |
 | Provider choice | [OpenBao](openbao.md), [provider comparison](research/key-provider-selection.md) | Optional real OpenBao for self-hosted custody; retain optional AWS; no cloud purchase or vendor dependence required |
 | Test and artifact binding | [Engineering playbook](../ENGINEERING_PLAYBOOK.md), [local checks](local-development.md) | Private role probes, exact runtime/source hashes, frozen builds and explicit skips |
+| Literal JSONB defaults | [JSONB compatibility](compatibility.md#jsonb-storage), [manifest lock](manifest.md) | Reuse native client-default behavior and CF1 storage; pin exact Python literals in lock/v16 with an explicit new reader, preserving no-default v15 bytes |
 
 ## Consolidated requirements and KISS: 2026-10-31
 

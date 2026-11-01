@@ -9,12 +9,31 @@ route, not another product contract.
 
 ## Current stop point
 
-The implementation/evidence base before this documentation update is
-`0e56438100eb7295f7e0f2601cebea74f2d02ed6` on Cryptalis `main` and
-`development/post-preview-20261101`. The packaging work and reusable strict-TLS
+The current verified implementation is `e75d049b0afe6d3c7f4d9e7bc8e01136b3529f06`
+on `codex/post-preview-continuation-20261101`, in
+[draft PR 5](https://github.com/Debrato2005/cryptalis/pull/5). Both jobs in
+[run 41295516545](https://github.com/Debrato2005/cryptalis/actions/runs/41295516545)
+pass; [retained hosted evidence](_reset/jsonb-defaults-hosted-boundary-20261101.json)
+binds all 324 Python inputs, 52 build inputs and unchanged local/hosted
+development artifacts. Subsequent documentation clarifies native default-alias
+and encoded-pin limits without changing runtime or test bytes.
+
+The implementation/evidence base before this continuation is
+`8a5d5060b7aacf5cb3bae6937946fb752cf9ca29` on Cryptalis `main` and
+`development/post-preview-20261101`. Continuation uses
+`codex/post-preview-continuation-20261101` in the actual workstation checkout.
+The packaging work and reusable strict-TLS
 qualification fix are integrated through [PR 3](https://github.com/Debrato2005/cryptalis/pull/3)
 and [PR 4](https://github.com/Debrato2005/cryptalis/pull/4).
 The frozen library, demonstration and original receipts remain unchanged.
+
+Post-preview implementation now uses development version `0.1.0a2.dev0`.
+Literal JSONB client defaults retain native NULL behavior and MutableDict
+coercion, with explicit lock/v16 reader admission. The
+[current source/installed boundary](_reset/jsonb-defaults-boundary-20261101.json)
+binds complete-source, Python 3.12/3.13 workflow and fresh-recovery evidence,
+retained regressions and harness corrections. [Status](status.md#native-jsonb-storage)
+owns counts and limits; this feature does not change the frozen preview.
 
 CipherStash credentials are needed only to run CipherStash itself for the live
 competitor comparison requested in point 25. Cryptalis and the Smolink integration
@@ -22,18 +41,21 @@ use an independent external provider, demonstrated with OpenBao. Continue librar
 provider and application work using the existing native PostgreSQL oracles;
 CipherStash access is not a prerequisite for that work.
 
-Two external deliverables remain incomplete:
+The [remote draft prerelease](https://github.com/Debrato2005/cryptalis/releases/tag/untagged-634d26fb97863057055a)
+has been created through authenticated GitHub CLI/API access, which works on this
+workstation. It targets the frozen tag and contains seven digest-verified assets
+recovered from frozen CI. Its draft/prerelease flags and absent publication
+timestamp are verified in the [creation boundary](_reset/draft-release-boundary-20261101.json)
+and [final draft/link verification](_reset/draft-release-links-boundary-20261101.json).
+The earlier cloud API-access failure remains historical.
 
-- Remote draft GitHub Release: local [payload](../release/draft-0.1.0a1.json) and
-  [review notes](../release/notes-0.1.0a1.md) are prepared. The available connector
-  has no release-create operation, and this environment denies direct GitHub API
-  access. Recheck supported access when that capability changes.
-- Equivalent CipherStash runtime comparison: the documented proxy setup needs its
-  workspace/client credentials. None of the four required CS bindings is configured.
-  [Primary-source comparison](https://github.com/Debrato2005/smolink/blob/269aed4bcfcbbf40ffea444f2e2a748013c862d4/cryptalis_demo/COMPETITIVE.md)
-  is retained; no equivalent competitor execution or performance ranking is claimed.
+Equivalent CipherStash runtime comparison remains incomplete: the documented
+proxy setup needs its workspace/client credentials. No `CS_` or `CIPHERSTASH`
+environment bindings are configured in this session.
+[Primary-source comparison](https://github.com/Debrato2005/smolink/blob/269aed4bcfcbbf40ffea444f2e2a748013c862d4/cryptalis_demo/COMPETITIVE.md)
+is retained; no equivalent competitor execution or performance ranking is claimed.
 
-These blockers are scoped to those deliverables. Broader native types, queries,
+This blocker is scoped to competitor execution. Broader native types, queries,
 search, lifecycle, performance and deployment work remains active in the ledger.
 Public package-index publication has no approval. The single-public-release policy
 and independent human review requirements remain in force.
@@ -48,6 +70,8 @@ and independent human review requirements remain in force.
 | Maintenance measurement code / evidence | Smolink `e2c1be8f2001884d9e0bed14f3c24097590ff8b4` / `b84f54d2fde83105c3e208be1ef16af68dd54801` |
 | Separate demo continuation | `demo/cryptalis-preview-followup-20261101`; [demo handoff](https://github.com/Debrato2005/smolink/blob/52b3d611cb7d7fca83e01f0b663e52c7515444c9/cryptalis_demo/HANDOFF.md) |
 | Frozen package CI | [Run 41280665577](https://github.com/Debrato2005/cryptalis/actions/runs/41280665577), PR merge `ac6b86b`; [head-byte boundary](_reset/preview-hosted-boundary-20261101.json) |
+| Frozen exact-tag CI | [Run 41293818065](https://github.com/Debrato2005/cryptalis/actions/runs/41293818065), `workflow_dispatch` at `655d522`; [exact-tag boundary](_reset/exact-tag-hosted-boundary-20261101.json) |
+| JSONB default development CI | [Run 41295516545](https://github.com/Debrato2005/cryptalis/actions/runs/41295516545), exact `e75d049`; [hosted boundary](_reset/jsonb-defaults-hosted-boundary-20261101.json) |
 | Strict-TLS tooling CI | [Run 41282107646](https://github.com/Debrato2005/cryptalis/actions/runs/41282107646), head `fb53e9f`, PR merge `e7ce82d`; [head-byte boundary](_reset/openbao-strict-tls-hosted-boundary-20261101.json) |
 
 Both hosted jobs pass for each named run. Byte-bound receipts, explicit skips,
@@ -88,8 +112,9 @@ The Git branches/tags above are pushed. [Package receipts](_reset/preview-packag
 are retained in Cryptalis; application automation, screenshots and reports stay
 in the separate Smolink repository and outside the library distribution.
 
-The built distributions and preview kit are local prepared artifacts, not GitHub
-Release assets or package-index uploads. [The kit manifest](../release/preview-kit-0.1.0a1.json)
+The inspected distributions are now attached to the remote draft; no public
+release or package-index upload occurred. The preview kit remains a local
+prepared artifact. [The kit manifest](../release/preview-kit-0.1.0a1.json)
 binds the unchanged wheel/sdist to 27 guides and their documentation revision.
 Verify hashes before installation or transfer.
 
@@ -104,12 +129,21 @@ Verify hashes before installation or transfer.
 | `/workspace/scratch/smolink-writer-interruption-private-20261101` and its `-r2` sibling | Separate retained interruption-run custody; private |
 | `/workspace/scratch/openbao-strict-tls-20261101` and its `-ready` sibling | Retained tooling-proof custody and private logs |
 
-These paths describe this session, not prerequisites on another machine. Every
+These paths describe the earlier cloud session, not prerequisites on another machine. Every
 recorded local app/PostgreSQL/Redis/OpenBao run ended stopped; container shells
 were retired after private-log retention. No run remains waiting for input.
 Preserve required keys, wrappers, readers, state and backups. Current-data removal
 did not authorize key retirement or backup destruction. Keep credentials, tokens,
 raw dumps and private service/audit logs out of Git and public artifact archives.
+
+The workstation continuation uses `/home/debrato/Projects/cryptalis` and private
+task scratch `/home/debrato/.cache/cryptalis-continuation-20261101`, including
+installed development/old-reader environments, local artifacts and disposable
+cluster work directories. These are additional machine-local observations;
+the earlier cloud paths above are historical. `/tmp` is a full tmpfs here, so
+new checks use that scratch directory's `tmp` through `TMPDIR`. Test harnesses
+stop their clusters on exit. Retain private role files and dumps separately
+from the sanitized receipts committed to Git.
 
 ## Resume implementation
 
@@ -135,5 +169,7 @@ raw dumps and private service/audit logs out of Git and public artifact archives
    through normal Git workflow. Bind CI claims to the exact tested revision and
    inspect its receipts. Reuse verified fixes in main without permanent forks.
 
-This handoff update changes documentation only. Runtime source, tests, dependency
-locks, CI, distributions, frozen tags and original evidence remain unchanged.
+The earlier handoff-only commit changed documentation. This continuation changes
+development source/tests, qualification scripts and version metadata, with
+verified evidence; frozen tags, preview distributions and original evidence
+remain unchanged.

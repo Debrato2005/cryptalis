@@ -48,6 +48,25 @@ external prerequisites and all production gates UNKNOWN. Link the demonstration
 evidence without copying it into the library distribution. A draft is reviewable
 preparation, not permission to publish it.
 
+The frozen `v0.1.0a1` candidate has a
+[remote draft](https://github.com/Debrato2005/cryptalis/releases/tag/untagged-634d26fb97863057055a)
+with seven inspected assets. The
+[creation receipt](_reset/draft-release-boundary-20261101.json) binds the frozen
+tag, CI archive, build inputs, asset digests and unpublished draft state.
+[Final verification](_reset/draft-release-links-boundary-20261101.json) also binds
+the corrected absolute documentation links and unchanged assets. This
+preparation does not satisfy production gates or authorize public publication.
+
+The existing verification workflow also passes on the exact frozen tag in
+[run 41293818065](https://github.com/Debrato2005/cryptalis/actions/runs/41293818065).
+Its `workflow_dispatch` event, head SHA, clean/reproducible build receipt and
+passing installed steps satisfy the template's build-side checks; the earlier
+PR-merge run has a different head/event and cannot substitute for that identity.
+[Exact-tag evidence](_reset/exact-tag-hosted-boundary-20261101.json) retains the
+source and installed receipts with unchanged distribution hashes. Environment
+protection, publisher identity, independent review and explicit approval remain
+required before any public upload.
+
 ## Package-index workflow template
 
 The reviewed workflow template is

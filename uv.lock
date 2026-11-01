@@ -130,7 +130,7 @@ wheels = [
 
 [[package]]
 name = "cryptalis"
-version = "0.1.0a1"
+version = "0.1.0a2.dev0"
 source = { editable = "." }
 dependencies = [
     { name = "cryptography" },

@@ -1036,7 +1036,7 @@ Independent review must settle those bounds before real-data admission. The form
 ### Internal packed exact prefix prototype
 
 **INTERNAL ONLY.** The `cf1-packed-prefix/v1` prototype uses context/v3,
-lock/v14 (v15 with JSONB) and `pg-text-prefix/v1`. Ordinary planning, saved-plan execution,
+lock/v14 (v15 with JSONB, v16 with JSONB client defaults) and `pg-text-prefix/v1`. Ordinary planning, saved-plan execution,
 attachment and retained runtime/crypto use refuse with
 `PrefixCapabilityUnadmitted` outside a private synthetic qualification scope.
 Doctor reports `Capability.Unadmitted` before database inspection. The scope
@@ -1736,6 +1736,18 @@ lifecycle operations. Application results alone use the admitted native default
 Python JSON loader; its numeric rounding is not used as recovery truth. Default
 JSON hook admission and immutable input capture protect this value boundary;
 they do not defend a compromised application with authorized key access.
+
+Literal JSONB client defaults use public lock/v16 metadata and the
+`pg-jsonb-default/v1` reader. A bounded literal pin preserves exact built-in
+Python types and spelling; it changes neither CF1 nor the stored-value codec.
+Attachment compares the literal to its pin. Runtime configuration captures the
+mutable default independently and rejects drift before dispatch, including
+changes during provider preparation. The literal is not secret metadata.
+Native shared literal aliases retain this same rule: a row edit that also changes
+the mapping default is configuration drift and refuses; native automatic default
+evolution through that alias is not admitted.
+Generated defaults remain unadmitted; native JSON NULL and SQL NULL retain their
+separate assignment and authentication boundaries.
 
 Storage discloses existing row linkage, SQL NULL presence, canonical document
 length and access/write patterns. JSON null has an authenticated non-NULL frame,
