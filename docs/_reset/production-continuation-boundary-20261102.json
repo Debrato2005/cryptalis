@@ -24,8 +24,9 @@
  "application_evidence": {
   "repository": "Debrato2005/smolink",
   "branch": "demo/cryptalis-email-search-20261102",
-  "revision": "43a6622b48c8460257358c118c86b24597cf5255",
-  "backend_files_changed": 0
+  "revision": "b1db2252b1d5c7be3d8ef392ca1db7b0109c1eba",
+  "backend_files_changed": 0,
+  "measured_evidence_revision": "43a6622b48c8460257358c118c86b24597cf5255"
  },
  "checks": {
   "measured_source": {
@@ -83,7 +84,8 @@
    "calls_per_run": 20
   },
   "hosted_059f886": "run 41336500207, both jobs pass",
-  "final_wheel_application_journey": "Complete Smolink journey passes, ending after a real uninstall; latency was not remeasured on this wheel"
+  "final_wheel_application_journey": "Complete Smolink journey passes, ending after a real uninstall; latency was not remeasured on this wheel",
+  "hosted_d0738dc": "run 41341107415, both jobs pass; source reports 4091 passed, 77 skipped, 18 subtests"
  },
  "retained_failures": [
   "Local regression at 059f886 reported Verification.SourceChanged because scripts/ci_qualification.py changed during the run; its 172 passes are not a valid binding.",
