@@ -38,7 +38,7 @@ identifies the tested base.
 ## Ordered build slices
 
 These slices retain the original text-first dependency order. Current admitted
-storage includes TEXT/VARCHAR, Boolean, signed integers, finite Date, naive/aware timestamp, finite NUMERIC and UUID.
+storage includes TEXT/VARCHAR, Boolean, signed integers, finite Date, naive/aware timestamp, finite NUMERIC, UUID and native JSONB.
 Exact codecs, query support and evidence limits belong to the
 [type contract](compatibility.md#supported-stack). Remaining types and query
 capabilities stay in the full first-release objective ledger.

@@ -43,6 +43,7 @@ from .crypto import CryptoFailure, AuthenticationFailed, FieldDescriptor, Keyrin
 from .crypto.cf1 import _encode
 from .crypto.keys import InvalidText, InvalidValue, RepresentationMismatch, ProviderAuthenticationUnavailable
 from ._timestamp import aware_default, aware_value, datetime_state
+from ._jsonb import jsonb_default
 from .manifest.compiler import _LOCK_SCHEMAS, _compiled_default, _default_matches, _value_default, _native_text_length, _previous_lock, _value_mapping_matches, _fixed_value_width, _jsonb_type_matches
 from .manifest.parser import decode_manifest_json
 
@@ -178,7 +179,7 @@ class _Binding:
     model: type
     max_characters: int | None = None
     boolean_processor: object = field(default=None, repr=False)
-    application_default: bool | int | date | None = None
+    application_default: object = None
     numeric_typmod: str | None = None
 
 
@@ -984,7 +985,7 @@ class _Attachment:
                                    mapper.get_property_by_column(tenant).key if tenant is not None else None,
                                    mapper.class_, _native_text_length(source) if source['type'] in ('text', 'varchar') else None,
                                    column.type.bind_processor(connection.dialect) if boolean else None,
-                                   actual_default if source['type'] == 'timestamptz' else _compiled_default(field),
+                                   actual_default if source['type'] in ('timestamptz', 'jsonb') else _compiled_default(field),
                                    source['typmod'] if source['type'] == 'numeric' else None)
                 self.bindings.append(binding)
             self.models[mapper.class_] = tuple(b for b in self.bindings if b.model is mapper.class_)
@@ -1135,6 +1136,7 @@ class _Attachment:
                     c.onupdate, c.server_onupdate, c.identity, c.computed,
                     c.type.as_uuid if isinstance(c.type, Uuid) else None)
         try:
+            json_defaults = []
             for binding in self.bindings:
                 self.identity_type(binding.record.type)
                 if binding.tenant is not None:
@@ -1147,6 +1149,9 @@ class _Attachment:
                             binding.column.type.hashable is not False):
                         raise PolicyMismatch()
                 actual_default = _value_default(binding.column, binding.descriptor.value_codec)
+                if binding.descriptor.value_codec == 'pg-jsonb-text/v1':
+                    # Freeze the literal separately from its mutable native object.
+                    json_defaults.append(jsonb_default(actual_default))
                 if binding.descriptor.value_codec == 'pg-timestamptz-us-be/v1':
                     if (actual_default is not binding.application_default or
                             actual_default is not None and
@@ -1156,7 +1161,7 @@ class _Attachment:
                     raise PolicyMismatch()
                 if type(actual_default) is Decimal and actual_default.as_tuple() != binding.application_default.as_tuple():
                     raise PolicyMismatch()
-            return tuple((b.column.table.schema, b.column.table.name, column(b.column), column(b.record), column(b.tenant),
+            return tuple(json_defaults), tuple((b.column.table.schema, b.column.table.name, column(b.column), column(b.record), column(b.tenant),
                           inspect(b.model).primary_key, inspect(b.model).get_property_by_column(b.column).key,
                           b.column.type.binding, b.column.type.owner) for b in self.bindings)
         except Exception:
@@ -1795,11 +1800,12 @@ class _Attachment:
                 if state.persistent and not attribute.history.has_changes():
                     continue
                 value = attribute.loaded_value
-                omitted_json = value is NO_VALUE and binding.descriptor.value_codec == 'pg-jsonb-text/v1'
                 if (state.pending and binding.application_default is not None
-                        and (value is NO_VALUE or value is None)):
+                        and (value is NO_VALUE or value is None and not binding.column.type.should_evaluate_none)):
                     value = binding.application_default
                     setattr(obj, binding.attribute, value)
+                    value = attribute.loaded_value
+                omitted_json = value is NO_VALUE and binding.descriptor.value_codec == 'pg-jsonb-text/v1'
                 if value is NO_VALUE:
                     value = None if state.pending and (binding.column.nullable or binding.boolean_processor is not None
                                                        or omitted_json) else NO_VALUE

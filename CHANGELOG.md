@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.1.0a2.dev0 — development
+
+- Native JSONB literal client defaults retain omission/NULL behavior, Python
+  values until refresh, and the existing encrypted lifecycle. New default-bearing
+  locks require v16 and `pg-jsonb-default/v1`; no-default JSONB keeps v15.
+- Mutable default configuration is checked against its pinned literal. Generated
+  defaults and JSON search remain unadmitted. Production gates remain UNKNOWN.
+- The frozen 0.1.0a1 preview and its separate Smolink evidence remain unchanged.
+
 ## 0.1.0a1 — unreleased research preview candidate
 
 - Package metadata labels the candidate Alpha and limits Python to the selected

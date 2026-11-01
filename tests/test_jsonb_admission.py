@@ -91,7 +91,7 @@ def refused_without_effects(app, code, *, declaration=None, database=None):
     assert database_state(app) == before
 
 
-def test_jsonb_planning_refuses_search_defaults_indexes_and_nonstandard_mapping_without_effects():
+def test_jsonb_planning_refuses_search_generated_defaults_indexes_and_nonstandard_mapping_without_effects():
     with application() as app:
         original = wire(app)
         searchable = deepcopy(app.declaration)
@@ -99,7 +99,7 @@ def test_jsonb_planning_refuses_search_defaults_indexes_and_nonstandard_mapping_
         refused_without_effects(app, 'unsupported_query', declaration=searchable)
 
         column = app.table.c.name
-        column.default = ColumnDefault({'client': 'default'})
+        column.default = ColumnDefault(lambda: {'client': 'default'})
         try:
             refused_without_effects(app, 'protected_default')
         finally:

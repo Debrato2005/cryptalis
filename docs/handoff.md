@@ -18,6 +18,14 @@ qualification fix are integrated through [PR 3](https://github.com/Debrato2005/c
 and [PR 4](https://github.com/Debrato2005/cryptalis/pull/4).
 The frozen library, demonstration and original receipts remain unchanged.
 
+Post-preview implementation now uses development version `0.1.0a2.dev0`.
+Literal JSONB client defaults retain native NULL behavior and MutableDict
+coercion, with explicit lock/v16 reader admission. The
+[current source/installed boundary](_reset/jsonb-defaults-boundary-20261101.json)
+binds complete-source, Python 3.12/3.13 workflow and fresh-recovery evidence,
+retained regressions and harness corrections. [Status](status.md#native-jsonb-storage)
+owns counts and limits; this feature does not change the frozen preview.
+
 CipherStash credentials are needed only to run CipherStash itself for the live
 competitor comparison requested in point 25. Cryptalis and the Smolink integration
 use an independent external provider, demonstrated with OpenBao. Continue library,
@@ -110,12 +118,21 @@ Verify hashes before installation or transfer.
 | `/workspace/scratch/smolink-writer-interruption-private-20261101` and its `-r2` sibling | Separate retained interruption-run custody; private |
 | `/workspace/scratch/openbao-strict-tls-20261101` and its `-ready` sibling | Retained tooling-proof custody and private logs |
 
-These paths describe this session, not prerequisites on another machine. Every
+These paths describe the earlier cloud session, not prerequisites on another machine. Every
 recorded local app/PostgreSQL/Redis/OpenBao run ended stopped; container shells
 were retired after private-log retention. No run remains waiting for input.
 Preserve required keys, wrappers, readers, state and backups. Current-data removal
 did not authorize key retirement or backup destruction. Keep credentials, tokens,
 raw dumps and private service/audit logs out of Git and public artifact archives.
+
+The workstation continuation uses `/home/debrato/Projects/cryptalis` and private
+task scratch `/home/debrato/.cache/cryptalis-continuation-20261101`, including
+installed development/old-reader environments, local artifacts and disposable
+cluster work directories. These are additional machine-local observations;
+the earlier cloud paths above are historical. `/tmp` is a full tmpfs here, so
+new checks use that scratch directory's `tmp` through `TMPDIR`. Test harnesses
+stop their clusters on exit. Retain private role files and dumps separately
+from the sanitized receipts committed to Git.
 
 ## Resume implementation
 
@@ -141,5 +158,7 @@ raw dumps and private service/audit logs out of Git and public artifact archives
    through normal Git workflow. Bind CI claims to the exact tested revision and
    inspect its receipts. Reuse verified fixes in main without permanent forks.
 
-This handoff update changes documentation only. Runtime source, tests, dependency
-locks, CI, distributions, frozen tags and original evidence remain unchanged.
+The earlier handoff-only commit changed documentation. This continuation changes
+development source/tests, qualification scripts and version metadata, with
+verified evidence; frozen tags, preview distributions and original evidence
+remain unchanged.
