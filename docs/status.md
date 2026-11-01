@@ -78,11 +78,35 @@ warm ASGI with sequential mode order and uncontrolled shared-host contention.
 [Demo report, screenshots, raw measurements and limits](https://github.com/Debrato2005/smolink/blob/269aed4bcfcbbf40ffea444f2e2a748013c862d4/cryptalis_demo/REPORT.md)
 stay outside this library and its distribution. Primary-source competitor
 comparison is retained there; equivalent competitor execution remains incomplete.
+The documented CipherStash proxy setup requires workspace/client credentials;
+none of its four required `CS_*` bindings is configured in this environment.
 The [draft release payload](../release/draft-0.1.0a1.json) and
 [review notes](../release/notes-0.1.0a1.md) are prepared locally. A remote draft
 Release was not created: the GitHub connector has no release-creation operation,
 and direct `api.github.com` access is denied by this environment's network policy.
 No package index upload or public release occurred. All production gates remain UNKNOWN.
+
+**Supplemental writer-interruption observations** use the same frozen wheel,
+with measured demo code `e2c1be8` and separate static evidence at
+[`b84f54d`](https://github.com/Debrato2005/smolink/blob/b84f54d2fde83105c3e208be1ef16af68dd54801/cryptalis_demo/evidence/writer-interruption-20261101/README.md).
+Stopping a real Uvicorn host through the first committed original HTTP POST201
+after restart measures **4.071 s** for protection of 10,001 rows, **4.501 s** for
+wrapping rewrap of 10,002 rows, and **12.169 s** for payload rotation of 10,003 rows.
+Readiness proofs add committed rows. Each transition runs with one idle local
+writer host; health alone is not treated as database readiness. Raw monotonic
+samples distinguish process/import/provider costs from public Project-call time.
+Application/operator/PostgreSQL/Redis/OpenBao CPU and summed RSS are observed
+through `/proc`; CPU is a lower bound and sparse summed RSS is not a true peak.
+The controller's initial Uvicorn signal-exit assumption failed before transition;
+that receipt is retained, and the corrected source-bound run passes. All new
+services stop with private custody retained. These single observations do not
+qualify production outage budgets, concurrency or search-key rotation downtime.
+
+The self-contained preview kit includes 27 library guides/references plus the
+unchanged distributions, SBOM and build/install receipts. Its
+[manifest](../release/preview-kit-0.1.0a1.json) binds the frozen library and
+post-verification documentation revisions. Omitted historical/source references
+use pinned public URLs. It includes no application demonstration material.
 
 The [preview milestone](preview.md) takes priority before further feature work.
 Version `0.1.0a1` uses the existing uv_build backend and declares Python 3.12 and

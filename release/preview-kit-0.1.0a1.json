@@ -1,0 +1,25 @@
+{
+  "format": "cryptalis.preview-kit/v1",
+  "artifact_name": "cryptalis-preview-0.1.0a1-kit-c81e45a.tar.gz",
+  "artifact_sha256": "80b83e927f31da043184913ddbabc4e0a41e2e91582a0067d17c17f6a73e881f",
+  "library_revision": "655d52271d90effb4df918a9547f61c89055fbc7",
+  "documentation_revision": "c81e45a91273c0b27be6ffcb75c656ab1569628f",
+  "wheel_sha256": "eedecae8fd72a06bdf8ed95bd0aae377cabdfd51df325c50463f4f4f4b65060a",
+  "sdist_sha256": "7e64f4a36a6ddc6ab4a5693d326f41f8b7aadf97bcee670ead437bd99e4eb077",
+  "documentation_files": 27,
+  "verified_payload_files": 34,
+  "contents": [
+    "unchanged inspected wheel and source distribution",
+    "CycloneDX SBOM and build/installation receipts",
+    "installation, API, compatibility, security, manifest and lifecycle guides",
+    "host/provider and operator walkthroughs, troubleshooting and changelog",
+    "SHA256SUMS and kit-provenance.json with per-document source hashes and link rewrites"
+  ],
+  "limits": [
+    "Local prepared artifact; no remote Release or package-index upload occurred",
+    "Documentation copies rewrite omitted historical/source references to pinned web URLs",
+    "Application demonstrations, configuration, data, screenshots and reports remain outside the kit",
+    "Kit tar container is not claimed reproducible; only unchanged wheel/sdist equality was demonstrated",
+    "All seven production gates remain UNKNOWN"
+  ]
+}
