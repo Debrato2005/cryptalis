@@ -1,5 +1,13 @@
 # Changelog
 
+## Development after the frozen preview
+
+- Attached SQLAlchemy and SQLModel applications can return direct public columns
+  and explicitly named column outputs from the admitted unprotected-table DELETE
+  route. Native results, synchronization and transactions are preserved within
+  the [compatibility contract](docs/compatibility.md#full-capability-matrix).
+  The frozen `v0.1.0a1` tag is unchanged.
+
 ## 0.1.0a1 — unreleased research preview candidate
 
 - Package metadata labels the candidate Alpha and limits Python to the selected
