@@ -1,5 +1,47 @@
 # Cryptalis engineering handoff
 
+## Resume the frozen installed-library checkpoint
+
+The 2026-11-01 pasted brief authorized preview preparation, independent parallel
+work and verified commits/pushes. It supersedes the earlier pause and JSON/text
+priority below. The [preview contract](preview.md) preserves every production
+objective and the single-public-release policy.
+
+- Library `v0.1.0a1`: `655d52271d90effb4df918a9547f61c89055fbc7`, normal wheel/sdist,
+  eight clean installer/interpreter cells, exact hosted/local artifact equality.
+  Both jobs in run 41280665577 pass at PR merge `ac6b86b`; every inventoried
+  source/build byte matches the actual frozen head. [Boundary](_reset/preview-hosted-boundary-20261101.json).
+- Separate Smolink tag `cryptalis-demo-0.1.0a1-20261101-final`:
+  `269aed4bcfcbbf40ffea444f2e2a748013c862d4`, measured code `2a66223`.
+  Original backend files are unchanged. Real OpenBao/PG/Redis, original Swagger,
+  source-stopped restore, latest edits/removal and an actual package-absent
+  restart pass. Supplemental installed original applications cover crash/resume,
+  native search oracles and all three rotations. [Report and evidence](https://github.com/Debrato2005/smolink/blob/269aed4bcfcbbf40ffea444f2e2a748013c862d4/cryptalis_demo/REPORT.md).
+- Final point-read added p95 is 4.849 ms at concurrency 1: MISS against 3 ms;
+  concurrency 4/16 also miss. Destination bytes are 1.5114×, observed total
+  relation/index allocation 2.5987×. Smolink destination equality/IN and its
+  search-key rotation remain unsupported by its storage-only profile.
+- Draft release payload/review notes and disabled Trusted Publishing template
+  are prepared. No remote Release exists: the connector has no release-create
+  operation and direct GitHub API access is denied. No public index upload or
+  public preview release is authorized or performed.
+
+Private role files, OpenBao initialization/token/TLS keys, Project state and raw
+backups remain outside both repositories. All database/Redis/app services were
+stopped after their checks. Retain recovery keys/readers; retire the local OpenBao
+container only after private-log retention, preserving its Raft storage.
+
+Continue production work on a separate development branch against all 34
+objectives. Integrate reusable verified fixes through normal Git workflow;
+do not create permanent library forks. A discovered tooling follow-up is that
+`scripts/openbao_qualification.py` generates certificates without the standard
+extensions required by Python 3.13 strict TLS. The demo provisioner has the
+verified fix; reuse it in the development branch and run a real strict-TLS
+provider check. Do not weaken verification. All seven production gates and
+independent human review remain UNKNOWN. [Status](status.md) owns current results.
+
+## Previous native JSONB checkpoint
+
 This handoff accompanies the native JSONB storage slice. Use
 [current status](status.md) for exact verification and hosted revisions, and the
 [34-objective ledger](BUILD_CHECKLIST.md) for remaining work. This file is a
@@ -14,14 +56,14 @@ The [retained hosted boundary](_reset/github-jsonb-green-20261101.json) verifies
 all recorded Python/build inputs against that exact commit and binds the CI
 receipt archive. Subsequent handoff/contract wording changes are documentation only.
 
-## Scope and next instruction
+### Historical scope and next instruction
 
 The target remains all [18 product requirements](requirements.md) and all 34
 objectives in one comprehensive first release. Functionality precedes further
 optimization. Apply KISS and use meaningful end-to-end/native PostgreSQL oracles.
-Current user authorization covers completing, verifying and pushing this pending
-slice and its handoff. After that, wait for the user's next instruction before
-starting another implementation slice.
+The earlier instruction covered completing, verifying and pushing that JSONB
+slice and then waiting. The newer preview instruction above has superseded that
+pause; it remains historical context only.
 
 Inspect the actual checkout root, branch, working tree and remote before making
 claims. Read `AGENTS.md`, the [documentation map](README.md), current status,

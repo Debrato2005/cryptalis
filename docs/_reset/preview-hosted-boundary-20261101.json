@@ -1,0 +1,547 @@
+{
+  "schema": "cryptalis.preview.hosted-boundary/v1",
+  "head_revision": "655d52271d90effb4df918a9547f61c89055fbc7",
+  "tested_pr_merge_revision": "ac6b86b3711dbec26a8a91eb746e225dacba146a",
+  "merge_parents": [
+    "0b4933fc8acc2dc9dd745c17bdcb190d343c98ea",
+    "655d52271d90effb4df918a9547f61c89055fbc7"
+  ],
+  "pull_request": "https://github.com/Debrato2005/cryptalis/pull/3",
+  "run": "https://github.com/Debrato2005/cryptalis/actions/runs/41280665577",
+  "both_jobs": "success",
+  "build_inputs_matching_head": 52,
+  "python_files_matching_head": 323,
+  "inventories": [
+    {
+      "receipt": "installed-jsonb-restore-receipt.json",
+      "files": 323,
+      "runtime": {
+        "mode": "installed-wheel",
+        "runtime_root": "/home/runner/work/_temp/cryptalis-release-private/installed/lib/python3.12/site-packages/cryptalis",
+        "module_count": 45,
+        "modules_sha256": "0214cf6c47a1e6511bea8e522da29f582c5db023c2652cdedd1a0ff9c6092dc9",
+        "wheel": "/home/runner/work/_temp/cryptalis-release-private/artifacts/cryptalis-0.1.0a1-py3-none-any.whl",
+        "wheel_sha256": "eedecae8fd72a06bdf8ed95bd0aae377cabdfd51df325c50463f4f4f4b65060a"
+      },
+      "pytest": {
+        "test_calls": {
+          "passed": 1
+        },
+        "subtest_calls": {},
+        "setup": {
+          "passed": 1
+        },
+        "teardown": {
+          "passed": 1
+        },
+        "collection": {},
+        "selected_items": 1
+      }
+    },
+    {
+      "receipt": "installed-google-kms-receipt.json",
+      "files": 323,
+      "runtime": {
+        "mode": "installed-wheel",
+        "runtime_root": "/home/runner/work/_temp/cryptalis-release-private/installed/lib/python3.12/site-packages/cryptalis",
+        "module_count": 45,
+        "modules_sha256": "0214cf6c47a1e6511bea8e522da29f582c5db023c2652cdedd1a0ff9c6092dc9",
+        "wheel": "/home/runner/work/_temp/cryptalis-release-private/artifacts/cryptalis-0.1.0a1-py3-none-any.whl",
+        "wheel_sha256": "eedecae8fd72a06bdf8ed95bd0aae377cabdfd51df325c50463f4f4f4b65060a"
+      },
+      "pytest": {
+        "test_calls": {
+          "passed": 50
+        },
+        "subtest_calls": {},
+        "setup": {
+          "passed": 50
+        },
+        "teardown": {
+          "passed": 50
+        },
+        "collection": {},
+        "selected_items": 50
+      }
+    },
+    {
+      "receipt": "installed-application-export-receipt.json",
+      "files": 323,
+      "runtime": {
+        "mode": "installed-wheel",
+        "runtime_root": "/home/runner/work/_temp/cryptalis-release-private/installed/lib/python3.12/site-packages/cryptalis",
+        "module_count": 45,
+        "modules_sha256": "0214cf6c47a1e6511bea8e522da29f582c5db023c2652cdedd1a0ff9c6092dc9",
+        "wheel": "/home/runner/work/_temp/cryptalis-release-private/artifacts/cryptalis-0.1.0a1-py3-none-any.whl",
+        "wheel_sha256": "eedecae8fd72a06bdf8ed95bd0aae377cabdfd51df325c50463f4f4f4b65060a"
+      },
+      "pytest": {
+        "test_calls": {
+          "passed": 1
+        },
+        "subtest_calls": {},
+        "setup": {
+          "passed": 1
+        },
+        "teardown": {
+          "passed": 1
+        },
+        "collection": {},
+        "selected_items": 1
+      }
+    },
+    {
+      "receipt": "installed-code-receipt.json",
+      "files": 323,
+      "runtime": {
+        "mode": "installed-wheel",
+        "runtime_root": "/home/runner/work/_temp/cryptalis-release-private/installed/lib/python3.12/site-packages/cryptalis",
+        "module_count": 45,
+        "modules_sha256": "0214cf6c47a1e6511bea8e522da29f582c5db023c2652cdedd1a0ff9c6092dc9",
+        "wheel": "/home/runner/work/_temp/cryptalis-release-private/artifacts/cryptalis-0.1.0a1-py3-none-any.whl",
+        "wheel_sha256": "eedecae8fd72a06bdf8ed95bd0aae377cabdfd51df325c50463f4f4f4b65060a"
+      },
+      "pytest": {
+        "test_calls": {
+          "passed": 15
+        },
+        "subtest_calls": {},
+        "setup": {
+          "passed": 15
+        },
+        "teardown": {
+          "passed": 15
+        },
+        "collection": {},
+        "selected_items": 15
+      }
+    },
+    {
+      "receipt": "installed-modification-export-receipt.json",
+      "files": 323,
+      "runtime": {
+        "mode": "installed-wheel",
+        "runtime_root": "/home/runner/work/_temp/cryptalis-release-private/installed/lib/python3.12/site-packages/cryptalis",
+        "module_count": 45,
+        "modules_sha256": "0214cf6c47a1e6511bea8e522da29f582c5db023c2652cdedd1a0ff9c6092dc9",
+        "wheel": "/home/runner/work/_temp/cryptalis-release-private/artifacts/cryptalis-0.1.0a1-py3-none-any.whl",
+        "wheel_sha256": "eedecae8fd72a06bdf8ed95bd0aae377cabdfd51df325c50463f4f4f4b65060a"
+      },
+      "pytest": {
+        "test_calls": {
+          "passed": 1
+        },
+        "subtest_calls": {},
+        "setup": {
+          "passed": 1
+        },
+        "teardown": {
+          "passed": 1
+        },
+        "collection": {},
+        "selected_items": 1
+      }
+    },
+    {
+      "receipt": "installed-openbao-tests.json",
+      "files": 323,
+      "runtime": {
+        "mode": "installed-wheel",
+        "runtime_root": "/home/runner/work/_temp/cryptalis-release-private/installed/lib/python3.12/site-packages/cryptalis",
+        "module_count": 45,
+        "modules_sha256": "0214cf6c47a1e6511bea8e522da29f582c5db023c2652cdedd1a0ff9c6092dc9",
+        "wheel": "/home/runner/work/_temp/cryptalis-release-private/artifacts/cryptalis-0.1.0a1-py3-none-any.whl",
+        "wheel_sha256": "eedecae8fd72a06bdf8ed95bd0aae377cabdfd51df325c50463f4f4f4b65060a"
+      },
+      "pytest": {
+        "test_calls": {
+          "passed": 140
+        },
+        "subtest_calls": {},
+        "setup": {
+          "passed": 140
+        },
+        "teardown": {
+          "passed": 140
+        },
+        "collection": {},
+        "selected_items": 140
+      }
+    },
+    {
+      "receipt": "installed-restore-receipt.json",
+      "files": 323,
+      "runtime": {
+        "mode": "installed-wheel",
+        "runtime_root": "/home/runner/work/_temp/cryptalis-release-private/installed/lib/python3.12/site-packages/cryptalis",
+        "module_count": 45,
+        "modules_sha256": "0214cf6c47a1e6511bea8e522da29f582c5db023c2652cdedd1a0ff9c6092dc9",
+        "wheel": "/home/runner/work/_temp/cryptalis-release-private/artifacts/cryptalis-0.1.0a1-py3-none-any.whl",
+        "wheel_sha256": "eedecae8fd72a06bdf8ed95bd0aae377cabdfd51df325c50463f4f4f4b65060a"
+      },
+      "pytest": {
+        "test_calls": {
+          "passed": 1
+        },
+        "subtest_calls": {},
+        "setup": {
+          "passed": 1
+        },
+        "teardown": {
+          "passed": 1
+        },
+        "collection": {},
+        "selected_items": 1
+      }
+    },
+    {
+      "receipt": "installed-sqlmodel-receipt.json",
+      "files": 323,
+      "runtime": {
+        "mode": "installed-wheel",
+        "runtime_root": "/home/runner/work/_temp/cryptalis-release-private/installed/lib/python3.12/site-packages/cryptalis",
+        "module_count": 45,
+        "modules_sha256": "0214cf6c47a1e6511bea8e522da29f582c5db023c2652cdedd1a0ff9c6092dc9",
+        "wheel": "/home/runner/work/_temp/cryptalis-release-private/artifacts/cryptalis-0.1.0a1-py3-none-any.whl",
+        "wheel_sha256": "eedecae8fd72a06bdf8ed95bd0aae377cabdfd51df325c50463f4f4f4b65060a"
+      },
+      "pytest": {
+        "test_calls": {
+          "passed": 917
+        },
+        "subtest_calls": {},
+        "setup": {
+          "passed": 917
+        },
+        "teardown": {
+          "passed": 917
+        },
+        "collection": {},
+        "selected_items": 917
+      }
+    },
+    {
+      "receipt": "installed-jsonb-slots-export-receipt.json",
+      "files": 323,
+      "runtime": {
+        "mode": "installed-wheel",
+        "runtime_root": "/home/runner/work/_temp/cryptalis-release-private/installed/lib/python3.12/site-packages/cryptalis",
+        "module_count": 45,
+        "modules_sha256": "0214cf6c47a1e6511bea8e522da29f582c5db023c2652cdedd1a0ff9c6092dc9",
+        "wheel": "/home/runner/work/_temp/cryptalis-release-private/artifacts/cryptalis-0.1.0a1-py3-none-any.whl",
+        "wheel_sha256": "eedecae8fd72a06bdf8ed95bd0aae377cabdfd51df325c50463f4f4f4b65060a"
+      },
+      "pytest": {
+        "test_calls": {
+          "passed": 1
+        },
+        "subtest_calls": {},
+        "setup": {
+          "passed": 1
+        },
+        "teardown": {
+          "passed": 1
+        },
+        "collection": {},
+        "selected_items": 1
+      }
+    },
+    {
+      "receipt": "installed-jsonb-slots-restore-receipt.json",
+      "files": 323,
+      "runtime": {
+        "mode": "installed-wheel",
+        "runtime_root": "/home/runner/work/_temp/cryptalis-release-private/installed/lib/python3.12/site-packages/cryptalis",
+        "module_count": 45,
+        "modules_sha256": "0214cf6c47a1e6511bea8e522da29f582c5db023c2652cdedd1a0ff9c6092dc9",
+        "wheel": "/home/runner/work/_temp/cryptalis-release-private/artifacts/cryptalis-0.1.0a1-py3-none-any.whl",
+        "wheel_sha256": "eedecae8fd72a06bdf8ed95bd0aae377cabdfd51df325c50463f4f4f4b65060a"
+      },
+      "pytest": {
+        "test_calls": {
+          "passed": 1
+        },
+        "subtest_calls": {},
+        "setup": {
+          "passed": 1
+        },
+        "teardown": {
+          "passed": 1
+        },
+        "collection": {},
+        "selected_items": 1
+      }
+    },
+    {
+      "receipt": "installed-jsonb-receipt.json",
+      "files": 323,
+      "runtime": {
+        "mode": "installed-wheel",
+        "runtime_root": "/home/runner/work/_temp/cryptalis-release-private/installed/lib/python3.12/site-packages/cryptalis",
+        "module_count": 45,
+        "modules_sha256": "0214cf6c47a1e6511bea8e522da29f582c5db023c2652cdedd1a0ff9c6092dc9",
+        "wheel": "/home/runner/work/_temp/cryptalis-release-private/artifacts/cryptalis-0.1.0a1-py3-none-any.whl",
+        "wheel_sha256": "eedecae8fd72a06bdf8ed95bd0aae377cabdfd51df325c50463f4f4f4b65060a"
+      },
+      "pytest": {
+        "test_calls": {
+          "passed": 38,
+          "skipped": 1
+        },
+        "subtest_calls": {},
+        "setup": {
+          "passed": 39
+        },
+        "teardown": {
+          "passed": 39
+        },
+        "collection": {},
+        "selected_items": 39
+      }
+    },
+    {
+      "receipt": "installed-storage-modification-restore-receipt.json",
+      "files": 323,
+      "runtime": {
+        "mode": "installed-wheel",
+        "runtime_root": "/home/runner/work/_temp/cryptalis-release-private/installed/lib/python3.12/site-packages/cryptalis",
+        "module_count": 45,
+        "modules_sha256": "0214cf6c47a1e6511bea8e522da29f582c5db023c2652cdedd1a0ff9c6092dc9",
+        "wheel": "/home/runner/work/_temp/cryptalis-release-private/artifacts/cryptalis-0.1.0a1-py3-none-any.whl",
+        "wheel_sha256": "eedecae8fd72a06bdf8ed95bd0aae377cabdfd51df325c50463f4f4f4b65060a"
+      },
+      "pytest": {
+        "test_calls": {
+          "passed": 1
+        },
+        "subtest_calls": {},
+        "setup": {
+          "passed": 1
+        },
+        "teardown": {
+          "passed": 1
+        },
+        "collection": {},
+        "selected_items": 1
+      }
+    },
+    {
+      "receipt": "installed-modification-restore-receipt.json",
+      "files": 323,
+      "runtime": {
+        "mode": "installed-wheel",
+        "runtime_root": "/home/runner/work/_temp/cryptalis-release-private/installed/lib/python3.12/site-packages/cryptalis",
+        "module_count": 45,
+        "modules_sha256": "0214cf6c47a1e6511bea8e522da29f582c5db023c2652cdedd1a0ff9c6092dc9",
+        "wheel": "/home/runner/work/_temp/cryptalis-release-private/artifacts/cryptalis-0.1.0a1-py3-none-any.whl",
+        "wheel_sha256": "eedecae8fd72a06bdf8ed95bd0aae377cabdfd51df325c50463f4f4f4b65060a"
+      },
+      "pytest": {
+        "test_calls": {
+          "passed": 1
+        },
+        "subtest_calls": {},
+        "setup": {
+          "passed": 1
+        },
+        "teardown": {
+          "passed": 1
+        },
+        "collection": {},
+        "selected_items": 1
+      }
+    },
+    {
+      "receipt": "installed-jsonb-export-receipt.json",
+      "files": 323,
+      "runtime": {
+        "mode": "installed-wheel",
+        "runtime_root": "/home/runner/work/_temp/cryptalis-release-private/installed/lib/python3.12/site-packages/cryptalis",
+        "module_count": 45,
+        "modules_sha256": "0214cf6c47a1e6511bea8e522da29f582c5db023c2652cdedd1a0ff9c6092dc9",
+        "wheel": "/home/runner/work/_temp/cryptalis-release-private/artifacts/cryptalis-0.1.0a1-py3-none-any.whl",
+        "wheel_sha256": "eedecae8fd72a06bdf8ed95bd0aae377cabdfd51df325c50463f4f4f4b65060a"
+      },
+      "pytest": {
+        "test_calls": {
+          "passed": 1
+        },
+        "subtest_calls": {},
+        "setup": {
+          "passed": 1
+        },
+        "teardown": {
+          "passed": 1
+        },
+        "collection": {},
+        "selected_items": 1
+      }
+    },
+    {
+      "receipt": "installed-storage-modification-export-receipt.json",
+      "files": 323,
+      "runtime": {
+        "mode": "installed-wheel",
+        "runtime_root": "/home/runner/work/_temp/cryptalis-release-private/installed/lib/python3.12/site-packages/cryptalis",
+        "module_count": 45,
+        "modules_sha256": "0214cf6c47a1e6511bea8e522da29f582c5db023c2652cdedd1a0ff9c6092dc9",
+        "wheel": "/home/runner/work/_temp/cryptalis-release-private/artifacts/cryptalis-0.1.0a1-py3-none-any.whl",
+        "wheel_sha256": "eedecae8fd72a06bdf8ed95bd0aae377cabdfd51df325c50463f4f4f4b65060a"
+      },
+      "pytest": {
+        "test_calls": {
+          "passed": 1
+        },
+        "subtest_calls": {},
+        "setup": {
+          "passed": 1
+        },
+        "teardown": {
+          "passed": 1
+        },
+        "collection": {},
+        "selected_items": 1
+      }
+    },
+    {
+      "receipt": "installed-export-receipt.json",
+      "files": 323,
+      "runtime": {
+        "mode": "installed-wheel",
+        "runtime_root": "/home/runner/work/_temp/cryptalis-release-private/installed/lib/python3.12/site-packages/cryptalis",
+        "module_count": 45,
+        "modules_sha256": "0214cf6c47a1e6511bea8e522da29f582c5db023c2652cdedd1a0ff9c6092dc9",
+        "wheel": "/home/runner/work/_temp/cryptalis-release-private/artifacts/cryptalis-0.1.0a1-py3-none-any.whl",
+        "wheel_sha256": "eedecae8fd72a06bdf8ed95bd0aae377cabdfd51df325c50463f4f4f4b65060a"
+      },
+      "pytest": {
+        "test_calls": {
+          "passed": 1
+        },
+        "subtest_calls": {},
+        "setup": {
+          "passed": 1
+        },
+        "teardown": {
+          "passed": 1
+        },
+        "collection": {},
+        "selected_items": 1
+      }
+    },
+    {
+      "receipt": "installed-application-restore-receipt.json",
+      "files": 323,
+      "runtime": {
+        "mode": "installed-wheel",
+        "runtime_root": "/home/runner/work/_temp/cryptalis-release-private/installed/lib/python3.12/site-packages/cryptalis",
+        "module_count": 45,
+        "modules_sha256": "0214cf6c47a1e6511bea8e522da29f582c5db023c2652cdedd1a0ff9c6092dc9",
+        "wheel": "/home/runner/work/_temp/cryptalis-release-private/artifacts/cryptalis-0.1.0a1-py3-none-any.whl",
+        "wheel_sha256": "eedecae8fd72a06bdf8ed95bd0aae377cabdfd51df325c50463f4f4f4b65060a"
+      },
+      "pytest": {
+        "test_calls": {
+          "passed": 2
+        },
+        "subtest_calls": {},
+        "setup": {
+          "passed": 2
+        },
+        "teardown": {
+          "passed": 2
+        },
+        "collection": {},
+        "selected_items": 2
+      }
+    },
+    {
+      "receipt": "source-receipt.json",
+      "files": 323,
+      "runtime": {
+        "mode": "source",
+        "runtime_root": "/home/runner/work/cryptalis/cryptalis/src/cryptalis",
+        "module_count": 45,
+        "modules_sha256": "0214cf6c47a1e6511bea8e522da29f582c5db023c2652cdedd1a0ff9c6092dc9",
+        "wheel": null,
+        "wheel_sha256": null
+      },
+      "pytest": {
+        "test_calls": {
+          "passed": 3953,
+          "skipped": 25
+        },
+        "subtest_calls": {
+          "passed": 18
+        },
+        "setup": {
+          "passed": 3978,
+          "skipped": 41
+        },
+        "teardown": {
+          "passed": 4019
+        },
+        "collection": {
+          "skipped": 9
+        },
+        "selected_items": 4019
+      }
+    }
+  ],
+  "source_counts": {
+    "test_calls": {
+      "passed": 3953,
+      "skipped": 25
+    },
+    "subtest_calls": {
+      "passed": 18
+    },
+    "setup": {
+      "passed": 3978,
+      "skipped": 41
+    },
+    "teardown": {
+      "passed": 4019
+    },
+    "collection": {
+      "skipped": 9
+    },
+    "selected_items": 4019
+  },
+  "installed_test_calls_passed": 1173,
+  "installed_subtests_passed": 0,
+  "installed_skips": {
+    "installed-jsonb-restore-receipt.json": {},
+    "installed-google-kms-receipt.json": {},
+    "installed-application-export-receipt.json": {},
+    "installed-code-receipt.json": {},
+    "installed-modification-export-receipt.json": {},
+    "installed-openbao-tests.json": {},
+    "installed-restore-receipt.json": {},
+    "installed-sqlmodel-receipt.json": {},
+    "installed-jsonb-slots-export-receipt.json": {},
+    "installed-jsonb-slots-restore-receipt.json": {},
+    "installed-jsonb-receipt.json": {
+      "test_calls": 1
+    },
+    "installed-storage-modification-restore-receipt.json": {},
+    "installed-modification-restore-receipt.json": {},
+    "installed-jsonb-export-receipt.json": {},
+    "installed-storage-modification-export-receipt.json": {},
+    "installed-export-receipt.json": {},
+    "installed-application-restore-receipt.json": {}
+  },
+  "release_steps": 24,
+  "hosted_artifacts_equal_local": {
+    "cryptalis-0.1.0a1-py3-none-any.whl": "eedecae8fd72a06bdf8ed95bd0aae377cabdfd51df325c50463f4f4f4b65060a",
+    "cryptalis-0.1.0a1.tar.gz": "7e64f4a36a6ddc6ab4a5693d326f41f8b7aadf97bcee670ead437bd99e4eb077"
+  },
+  "receipts_archive": "preview-hosted-receipts-20261101.tar.gz",
+  "receipts_archive_sha256": "326fc57e275a49176883e4de77699bb8c04d13742bc234887935a91c6db14d06",
+  "limits": [
+    "PR jobs checkout synthetic merge commit; all inventoried bytes separately matched real preview head",
+    "No public publication or production security qualification",
+    "JSONB previous-v14 interpreter control explicitly skipped in hosted installed cell",
+    "Application demonstrations live in separate Smolink branch, not distributions"
+  ]
+}
