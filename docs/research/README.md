@@ -19,6 +19,11 @@ behavior.
 [Performance checkpoint](performance-checkpoint.md) records the approved identity-only membership correction, measured limits and future proposals.
 Its byte-budget and online designs require separate review; they are not lifecycle contracts or implemented features.
 
+[Order sorting attack](order-sorting-attack-2026-11-01.md) records the primary
+published algorithm, source provenance and native int2 experiment design.
+Its deliberately false host-domain assertion is an adversarial fixture;
+the honest enumerable-domain refusal and all admission gates remain required.
+
 All reset, hardening, cryptographer-packet and council-review-1/2 files are **historical evidence of replaced contracts**.
 Their old AWS authority, mirror, mapper, query-scope, gate counts and production assumptions do not define the current architecture.
 Historical links and stored source hashes describe their original review context. They do not certify the rewritten owners.

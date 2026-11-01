@@ -1527,13 +1527,20 @@ with probability about 1 in 255 per position. One term is stored per field. Ciph
 that holding both an ORE and an OPE term under one keystream reveals values; that cannot arise
 here.
 
-This is not semantic security against the dump in the threat model. A sorting attack with a
-similar auxiliary distribution can recover values, and dense domains fare worst. Opt in only
+This is not semantic security against the dump in the threat model. Known dense
+domains can disclose values from rank alone; distribution-assisted sparse-domain
+attacks are a separate research obligation. Opt in only
 where sorting justifies that. Reading a value authenticates its term, so a tampered term
 fails on read, but a hostile database can still return rows in a wrong order or omit them
-when the column is not read; the existing completeness limit applies. No published sorting
-attack has been run against this representation and no independent cryptographer has reviewed
-it. G-CRYPTO and G-QUERY remain UNKNOWN.
+when the column is not read; the existing completeness limit applies.
+The [published dense-domain sorting experiment](status.md#published-dense-domain-order-inference)
+now exercises this representation on one synthetic signed-int2 field. It
+deliberately misclassifies an enumerable host domain; honest planning refuses
+that domain. Complete known-domain coverage lets rank order disclose value
+labels, and search rotation preserves this inference despite replacing terms.
+The result does not establish a recovery rate for other domains, sparse data or
+other codecs. Independent cryptographic review remains absent; G-CRYPTO and
+G-QUERY remain UNKNOWN.
 
 Direct MIN/MAX on these fields selects one opaque packet in PostgreSQL by its
 fixed-width hex order-term prefix under explicit `pg_catalog."C"` collation.
