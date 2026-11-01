@@ -24,6 +24,7 @@ retains its original choices and evidence limits. It is not the current support 
 | Context factories, operational CLI and Doctor | [Host contexts](host-contexts.md), [operator procedures](walkthrough-migration.md) | Explicit authority and safe diagnostics; no hidden publication or tenant inference |
 | Provider choice | [OpenBao](openbao.md), [provider comparison](research/key-provider-selection.md) | Optional real OpenBao for self-hosted custody; retain optional AWS; no cloud purchase or vendor dependence required |
 | Test and artifact binding | [Engineering playbook](../ENGINEERING_PLAYBOOK.md), [local checks](local-development.md) | Private role probes, exact runtime/source hashes, frozen builds and explicit skips |
+| Public-table DELETE outputs: 2026-11-01 | [Compatibility](compatibility.md#full-capability-matrix) | Reuse the finite public DELETE permit and native result processing for direct-column and explicitly named outputs. Capture output identity and label metadata across preparation and final driver checks; keep entity/computed/alias output admission separate. No new search representation or cryptographic format |
 
 ## Consolidated requirements and KISS: 2026-10-31
 

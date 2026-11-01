@@ -9,9 +9,11 @@ route, not another product contract.
 
 ## Current stop point
 
-The implementation/evidence base before this documentation update is
+The preview implementation/evidence base is
 `0e56438100eb7295f7e0f2601cebea74f2d02ed6` on Cryptalis `main` and
-`development/post-preview-20261101`. The packaging work and reusable strict-TLS
+`development/post-preview-20261101`. Subsequent bounded production slices are
+recorded at the top of [current status](status.md), beginning with public-table
+DELETE RETURNING on `development/native-dml-20261101` from `8a5d506`. The packaging work and reusable strict-TLS
 qualification fix are integrated through [PR 3](https://github.com/Debrato2005/cryptalis/pull/3)
 and [PR 4](https://github.com/Debrato2005/cryptalis/pull/4).
 The frozen library, demonstration and original receipts remain unchanged.
@@ -135,5 +137,6 @@ raw dumps and private service/audit logs out of Git and public artifact archives
    through normal Git workflow. Bind CI claims to the exact tested revision and
    inspect its receipts. Reuse verified fixes in main without permanent forks.
 
-This handoff update changes documentation only. Runtime source, tests, dependency
-locks, CI, distributions, frozen tags and original evidence remain unchanged.
+The original preview handoff update was documentation only. Subsequent
+development changes have their own source-bound receipts in status. Frozen tags
+and original preview evidence remain unchanged.

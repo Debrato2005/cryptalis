@@ -4,6 +4,34 @@ Cryptalis implements a bounded research prototype. **No production release or co
 This page owns current verification and release gates; the [34-objective ledger](BUILD_CHECKLIST.md) owns remaining work.
 Use the [documentation map](README.md) to find contracts and procedures.
 
+## Public-table DELETE RETURNING
+
+**VERIFIED, bounded local development:** the finite mapped DELETE route for an
+unprotected table now accepts direct-column scalar/tuple and explicitly named
+column RETURNING. Sync/async SQLAlchemy and SQLModel retain native values, types,
+NULLs, result keys, synchronization, protected-parent autoflush, savepoint rollback
+and commit. Output identity, physical column configuration and label metadata are
+captured before preparation and checked again through final driver dispatch.
+Provider callbacks, a genuinely suspended async unwrap and late compiled-output
+replacement cannot change the admitted projection. Unadmitted outputs refuse.
+
+The final focused source run passes **162 calls without skips**. Normal installed
+development-wheel runs each pass the same **162 calls without skips** on Python
+3.12.14 and 3.13.5 with PostgreSQL 16.15. All bind the same 45 runtime modules and
+unchanged source inventories. Repeat wheel/sdist builds match; isolated installed
+imports, exact module bytes, CLI help and dependency checks pass on both
+interpreters. The existing installed CI selection now includes these public
+DELETE journeys. These are local results; hosted verification is not yet claimed.
+
+The first focused run retains two native-oracle failures and 151 passes: newly
+created equivalent labels reused native cached lookup identities. The corrected
+oracle reuses its caller projection objects; the 26-case new module and final
+runs pass. [Exact boundary and retained receipts](_reset/public-delete-returning-boundary-20261101.json).
+This development artifact does not change the frozen preview tags. Entity,
+computed/alias output, fetch synchronization and broader public DML remain
+unadmitted. No new Smolink or performance measurement, production provider cell
+or independent human review ran. All seven production gates remain UNKNOWN.
+
 ## Post-preview OpenBao qualification TLS
 
 **Both hosted jobs pass at `fb53e9f`** through PR merge `e7ce82d` in
