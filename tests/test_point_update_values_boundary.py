@@ -5,7 +5,7 @@ from uuid import UUID
 
 import psycopg
 import pytest
-from sqlalchemy import bindparam, event, literal, null, Text
+from sqlalchemy import event, null, Text
 from sqlalchemy.ext.asyncio import create_async_engine
 from sqlalchemy.orm import Session
 from sqlalchemy.util import immutabledict
@@ -20,10 +20,10 @@ from test_point_update_rows import query
 from test_rewrap_plan import _snapshot
 
 
-@pytest.mark.parametrize('fault', ['literal', 'null_node', 'bind', 'sql_expression', 'ordered',
+@pytest.mark.parametrize('fault', ['null_node', 'sql_expression', 'ordered',
     'identity', 'tenant', 'unknown', 'duplicate', 'column_dispatch', 'column_name',
     'bind_dispatch', 'bind_type', 'bind_processor', 'callable', 'required',
-    'expanding', 'literal_execute', 'empty', 'external'])
+    'expanding', 'literal_execute', 'empty'])
 def test_unsupported_embedded_inputs_refuse_before_keys_and_driver(fault, monkeypatch):
     with application(rows=3) as app:
         calls = []
@@ -35,9 +35,7 @@ def test_unsupported_embedded_inputs_refuse_before_keys_and_driver(fault, monkey
         statement = base.values(name='PUBLIC captured')
         target, bind = next(iter(statement._values.items()))
         parameters = None
-        if fault == 'literal': statement = base.values(name=literal('PUBLIC value'))
-        elif fault == 'null_node': statement = base.values(name=null())
-        elif fault == 'bind': statement = base.values(name=bindparam('value', 'PUBLIC value'))
+        if fault == 'null_node': statement = base.values(name=null())
         elif fault == 'sql_expression': statement = base.values(name=app.Customer.label)
         elif fault == 'ordered': statement = base.ordered_values((app.Customer.name, 'PUBLIC value'))
         elif fault == 'identity': statement = statement.values(id=UUID(int=102))
@@ -58,7 +56,6 @@ def test_unsupported_embedded_inputs_refuse_before_keys_and_driver(fault, monkey
         elif fault == 'expanding': bind.expanding = True
         elif fault == 'literal_execute': bind.literal_execute = True
         elif fault == 'empty': statement = base.values()
-        elif fault == 'external': parameters = {'name': 'PUBLIC external'}
         before = _snapshot(app)
         with factory(tenant_id=TENANT) as session, raw_calls(monkeypatch, app.schema, 'UPDATE') as sent:
             calls.clear()

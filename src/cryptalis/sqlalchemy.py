@@ -16,7 +16,7 @@ import re
 from types import MappingProxyType, MethodType
 from uuid import UUID
 
-from sqlalchemy import BigInteger, Boolean, Column, Enum, LargeBinary, String, Table, Text, Uuid, UUID as SQLUUID, bindparam, case, cast, event, func, inspect, literal, select, type_coerce
+from sqlalchemy import BigInteger, Boolean, Column, Enum, LargeBinary, String, Table, Text, Uuid, UUID as SQLUUID, bindparam, case, cast, event, func, inspect, literal, null, select, type_coerce
 from sqlalchemy.engine import Engine
 from sqlalchemy.dialects import postgresql as _postgresql_types
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, AsyncSessionTransaction
@@ -55,6 +55,8 @@ _NATIVE_TYPE_DISPATCH = frozenset(
     if isinstance(dtype, type) and issubclass(dtype, TypeEngine)
     and hasattr(dtype, '_original_compiler_dispatch')
 )
+_TYPE_SQL_HOOKS = (TypeEngine.bind_expression, TypeEngine.column_expression)
+_DECORATOR_SQL_HOOKS = (TypeDecorator.bind_expression, TypeDecorator.column_expression)
 
 
 class UnsupportedProtectedOperation(CryptoFailure):
@@ -159,6 +161,8 @@ class _UpdateRequest:
     returning: tuple | None = field(default=None, repr=False)
     literal_values: bool = False
     json_inputs: tuple = field(default=(), repr=False)
+    statement: object = field(default=None, repr=False)
+    input_state: tuple = field(default=(), repr=False)
 
 
 @dataclass(frozen=True)
@@ -657,6 +661,9 @@ class _Payload(TypeDecorator):
         packed = func.pg_catalog.jsonb_build_array(
             func.pg_catalog.encode(type_coerce(column, LargeBinary()), "hex"), record, tenant)
         return type_coerce(packed, _ReadText(self.binding, operation, record))
+
+
+_PAYLOAD_COLUMN_EXPRESSION = _Payload.column_expression
 
 
 def _protected(expression):
@@ -2638,32 +2645,106 @@ def _bulk_insert(state):
         _operation.reset(token)
 
 
-def _update_literals(owner, statement, columns):
-    """Capture native CRUD literals; their SQL nodes never reach the driver."""
-    if type(statement._values) is not immutabledict or not statement._values:
-        raise UnsupportedProtectedOperation()
-    physical = {column.key: column for column in columns.values()}
-    values = {}
-    for target, bind in statement._values.items():
-        if type(target) is str:
-            column = physical.get(target)
-            if column is None:
-                raise UnsupportedProtectedOperation()
-        else:
-            column = _delete_node(target, Column, allow_type_annotation=True)
-            if physical.get(column.key) is not column:
-                raise UnsupportedProtectedOperation()
-            owner.select_types(select(target))
-        if column.key in values:
+def _update_value_state(value, seen=frozenset()):
+    if value is JSON.NULL or type(value) is Null:
+        return type(value), 'json-null' if value is JSON.NULL else 'sql-null'
+    if type(value) is datetime:
+        return (datetime, value.year, value.month, value.day, value.hour, value.minute,
+                value.second, value.microsecond, value.fold, type(value.tzinfo), id(value.tzinfo))
+    if type(value) is Decimal:
+        return Decimal, value.as_tuple()
+    if type(value) is UUID:
+        return UUID, value.bytes
+    if type(value) is float:
+        return float, value.hex()
+    if value is None or type(value) in (bool, int, str, bytes, date):
+        return type(value), value
+    if type(value) in (dict, list, tuple):
+        if id(value) in seen:
+            return type(value), 'cycle', id(value)
+        nested = seen | {id(value)}
+        return (type(value), tuple((_update_value_state(key, nested), _update_value_state(part, nested))
+                                  for key, part in value.items()) if type(value) is dict else
+                tuple(_update_value_state(part, nested) for part in value))
+    # Public Python-only codecs retain their original input objects. Their
+    # opaque internals are host behavior, not a deep mutation-freezing claim.
+    return type(value), id(value)
+
+
+def _update_type_state(dtype):
+    """Keep constructor and hook changes visible without a memoized type key."""
+    attributes = tuple((name, type(getattr(dtype, name, None)), getattr(dtype, name, None))
+        for name in ('length', 'collation', 'precision', 'scale', 'asdecimal', 'decimal_return_scale',
+                     'timezone', 'none_as_null', 'as_uuid', 'native_uuid', 'should_evaluate_none'))
+    methods = tuple((name, getattr(getattr(dtype, name, None), '__func__', getattr(dtype, name, None)))
+        for name in ('bind_processor', 'process_bind_param', 'result_processor', 'literal_processor',
+                     'bind_expression', 'column_expression', 'dialect_impl', 'adapt',
+                     'load_dialect_impl', '_compiler_dispatch'))
+    implementation = (_update_type_state(dtype.impl_instance)
+                      if isinstance(dtype, TypeDecorator) and type(dtype) is not _Payload else ())
+    return id(dtype), type(dtype), attributes, methods, tuple(dtype._variant_mapping.items()), implementation
+
+
+def _update_node_names(node):
+    if isinstance(node, Label):
+        _column_label(node)
+        return type(node.name), _update_bind_name(node.name), getattr(node.name, 'quote', None)
+    if isinstance(node, ColumnClause):
+        return _delete_name_state(node.name), _delete_name_state(node.key)
+    return ()
+
+
+def _update_parameter_state(statement, parameters):
+    nodes = tuple(visitors.iterate(statement))
+    structure = tuple((id(node), type(node), getattr(node, 'operator', None),
+        getattr(node, 'modifier', None), tuple(getattr(node, 'modifiers', {}).items()),
+        tuple(id(child) for child in node.get_children()),
+        _update_node_names(node),
+        _update_type_state(node.type) if hasattr(node, 'type') else (),
+        getattr(getattr(node, '_compiler_dispatch', None), '__func__', None),
+        (node.key, node.required, node.unique, node.expanding, node.literal_execute, node.callable,
+         node._is_crud, _update_value_state(node.value)) if isinstance(node, BindParameter) else ())
+        for node in nodes)
+    values = tuple((('name', key) if type(key) is str else ('column', id(key)), id(value))
+                   for key, value in (statement._values or {}).items())
+    supplied = () if parameters is None else tuple((key, _update_value_state(value))
+                                                   for key, value in parameters.items())
+    return id(statement), id(parameters), values, structure, supplied
+
+
+def _update_sql_hooks(dtype):
+    seen = set()
+    while True:
+        if id(dtype) in seen:
             raise UnsupportedProtectedOperation()
-        if _sql_null_assignment(bind, column):
-            values[_delete_name_state(column.key)[0]] = bind
-            continue
-        _delete_node(bind, BindParameter)
-        if (column.key in values or type(bind.type) is not NullType or
-                bind._is_crud is not True or bind.unique is not True or
-                bind.required is not False or bind.callable is not None or
-                bind.expanding is not False or bind.literal_execute is not False):
+        seen.add(id(dtype))
+        hooks = _DECORATOR_SQL_HOOKS if isinstance(dtype, TypeDecorator) else _TYPE_SQL_HOOKS
+        if type(dtype) is _Payload:
+            hooks = hooks[0], _PAYLOAD_COLUMN_EXPRESSION
+        for name, expected in zip(('bind_expression', 'column_expression'), hooks):
+            method = getattr(dtype, name)
+            if (type(method) is not MethodType or method.__self__ is not dtype
+                    or method.__func__ is not expected):
+                raise UnsupportedProtectedOperation()
+        if not isinstance(dtype, TypeDecorator):
+            return
+        dtype = dtype.impl_instance
+
+
+def _update_parameter_key(bind, column=None):
+    if column is not None and bind.unique and isinstance(bind.key, _truncated_label):
+        return column.key
+    return _update_bind_name(bind.key)
+
+
+def _update_parameter(owner, bind, supplied, used, *, crud_column=None):
+    _delete_node(bind, BindParameter)
+    if (bind.callable is not None or bind.expanding is not False or bind.literal_execute is not False or
+            type(bind.required) is not bool or type(bind.unique) is not bool):
+        raise UnsupportedProtectedOperation()
+    if bind._is_crud:
+        if (crud_column is None or type(bind.type) is not NullType or bind.unique is not True
+                or not isinstance(bind.key, _truncated_label) or bind.required is not False):
             raise UnsupportedProtectedOperation()
         owner.bind_type(bind.type, selecting=True)
         for name in ('bind_processor', 'result_processor', 'literal_processor', 'dialect_impl', 'adapt'):
@@ -2671,8 +2752,145 @@ def _update_literals(owner, statement, columns):
             if (type(method) is not MethodType or method.__self__ is not bind.type or
                     method.__func__ is not getattr(NullType, name)):
                 raise UnsupportedProtectedOperation()
-        values[_delete_name_state(column.key)[0]] = bind.value
-    return values
+    _update_sql_hooks(bind.type)
+    key = _update_parameter_key(bind, crud_column)
+    if key in supplied:
+        used.add(key)
+        return supplied[key]
+    if bind.required:
+        raise UnsupportedProtectedOperation()
+    return bind.value
+
+
+def _update_assignment_type(owner, dtype, column, binding):
+    """Admit overrides only when the owned column preserves their SQL semantics."""
+    source = column.type.source_type if binding is not None else column.type
+    _update_sql_hooks(dtype)
+    _update_sql_hooks(source)
+    if dtype is column.type:
+        owner.bind_type(dtype)
+        return source
+    try:
+        source = autostring_impl(source) or source
+    except (TypeError, ValueError):
+        raise UnsupportedProtectedOperation() from None
+    owner.bind_type(dtype, selecting=True)
+    if isinstance(dtype, TypeDecorator) or type(dtype) is _Payload:
+        raise UnsupportedProtectedOperation()
+    native = (NullType, String, Text, _native_types.Unicode, _native_types.UnicodeText,
+              _native_types.VARCHAR, _native_types.TEXT, Boolean, _native_types.BOOLEAN,
+              _native_types.SmallInteger, _native_types.SMALLINT, _native_types.Integer, _native_types.INTEGER,
+              BigInteger, _native_types.BIGINT, _native_types.Numeric, _native_types.NUMERIC,
+              _native_types.Float, _native_types.FLOAT, _native_types.Double, _native_types.DOUBLE,
+              _native_types.REAL, LargeBinary, _native_types.BINARY, _native_types.VARBINARY,
+              _postgresql_types.BYTEA, _native_types.Date, _native_types.DATE,
+              _native_types.DateTime, _native_types.DATETIME, _native_types.TIMESTAMP,
+              _postgresql_types.TIMESTAMP, _native_types.Time, _native_types.TIME,
+              _postgresql_types.TIME, Uuid, SQLUUID, JSON, _postgresql_types.JSONB)
+    if type(dtype) not in native:
+        raise UnsupportedProtectedOperation()
+    for name in ('bind_processor', 'result_processor', 'literal_processor', 'dialect_impl', 'adapt'):
+        method = getattr(dtype, name)
+        if (type(method) is not MethodType or method.__self__ is not dtype or
+                method.__func__ is not getattr(type(dtype), name)):
+            raise UnsupportedProtectedOperation()
+    if type(dtype) is NullType:
+        return source
+    strings = (String, Text, _native_types.Unicode, _native_types.UnicodeText,
+               _native_types.VARCHAR, _native_types.TEXT)
+    if type(source) in strings and type(dtype) in strings:
+        return dtype
+    if binding is not None and binding.descriptor.value_codec == 'pg-jsonb-text/v1':
+        if _jsonb_type_matches(dtype):
+            return dtype
+        raise UnsupportedProtectedOperation()
+    if type(dtype) is not type(source):
+        raise UnsupportedProtectedOperation()
+    attributes = ('length', 'collation', 'precision', 'scale', 'asdecimal', 'decimal_return_scale',
+                  'timezone', 'as_uuid', 'native_uuid', 'none_as_null')
+    if any(getattr(dtype, name, None) != getattr(source, name, None) for name in attributes):
+        raise UnsupportedProtectedOperation()
+    return dtype
+
+
+def _point_update(owner, statement, parameters, columns, bindings, tenant):
+    _delete_node(statement, Update)
+    if parameters is not None and (type(parameters) is not dict or
+                                  any(type(key) is not str for key in parameters)):
+        raise UnsupportedProtectedOperation()
+    if (statement._values is not None and type(statement._values) is not immutabledict or
+            getattr(statement, '_ordered_values', None) or getattr(statement, '_maintain_values_ordering', False)
+            or statement._params):
+        raise UnsupportedProtectedOperation()
+    supplied, used = dict(parameters or {}), set()
+    physical = {column.key: attribute for attribute, column in columns.items()}
+    if len(physical) != len(columns):
+        raise UnsupportedProtectedOperation()
+    assignments = {}
+    bind_names, bind_objects = set(), set()
+    def claim(bind, column=None):
+        names = {_update_bind_name(bind.key), _update_parameter_key(bind, column)}
+        if names & bind_names or id(bind) in bind_objects:
+            raise UnsupportedProtectedOperation()
+        bind_names.update(names)
+        bind_objects.add(id(bind))
+    by_column = {binding.column: binding for binding in bindings}
+    for target, bind in (statement._values or {}).items():
+        if type(target) is str:
+            attribute = physical.get(target)
+            column = columns.get(attribute)
+        else:
+            column = _delete_node(target, Column, allow_type_annotation=True)
+            attribute = physical.get(column.key)
+            if attribute is None or columns[attribute] is not column:
+                raise UnsupportedProtectedOperation()
+            owner.select_types(select(target))
+        if column is None or attribute in assignments:
+            raise UnsupportedProtectedOperation()
+        if _sql_null_assignment(bind, column):
+            assignments[attribute] = bind
+            continue
+        value = _update_parameter(owner, bind, supplied, used, crud_column=column)
+        claim(bind, column)
+        native = _update_assignment_type(owner, bind.type, column, by_column.get(column))
+        if column in by_column and by_column[column].descriptor.value_codec == 'pg-jsonb-text/v1':
+            if value is None:
+                value = null() if native.none_as_null else JSON.NULL
+        assignments[attribute] = value
+
+    def resolved(node):
+        if not isinstance(node, BindParameter):
+            return None
+        if _update_bind_name(node.key) in physical:
+            raise UnsupportedProtectedOperation()
+        value = _update_parameter(owner, node, supplied, used)
+        claim(node)
+        owner.identity_type(node.type)
+        for name in ('bind_processor', 'result_processor', 'literal_processor'):
+            method = getattr(node.type, name)
+            if (type(method) is not MethodType or method.__self__ is not node.type or
+                    method.__func__ is not getattr(type(node.type), name)):
+                raise UnsupportedProtectedOperation()
+        return bindparam(None, value, type_=node.type, unique=True)
+
+    normalized = statement._generate()
+    normalized._values = None
+    normalized._where_criteria = tuple(visitors.replacement_traverse(clause, {}, resolved)
+                                        for clause in statement._where_criteria)
+    normalized._reset_memoizations()
+    permit, _, _ = owner.record_context(normalized, tenant, update=True)
+    for key, value in supplied.items():
+        attribute = physical.get(key)
+        if attribute is not None and attribute not in assignments:
+            if key in bind_names:
+                raise UnsupportedProtectedOperation()
+            bind_names.add(key)
+            assignments[attribute] = value
+        elif key not in used:
+            raise UnsupportedProtectedOperation()
+    if not assignments:
+        raise UnsupportedProtectedOperation()
+    return normalized, permit, assignments
 
 
 def _capture_update(owner, mapper, statement, parameters, tenant):
@@ -2680,7 +2898,7 @@ def _capture_update(owner, mapper, statement, parameters, tenant):
     point = literal_values or type(parameters) is dict
     if (mapper is None or getattr(mapper, 'class_', None) not in owner.models or
             mapper is not inspect(mapper.class_) or mapper.version_id_col is not None or
-            not literal_values and (type(parameters) not in (list, dict) or not parameters)):
+            not point and (type(parameters) is not list or not parameters)):
         raise UnsupportedProtectedOperation()
     bindings = owner.models[mapper.class_]
     first = bindings[0]
@@ -2689,27 +2907,18 @@ def _capture_update(owner, mapper, statement, parameters, tenant):
     if type(tenant) is not UUID:
         raise UnsupportedProtectedOperation()
     tenant = UUID(bytes=tenant.bytes)
-    permit = returning = None
-    if point:
-        permit, _, _ = owner.record_context(statement, tenant, update=True, literal_values=literal_values)
-        returning = owner.returning_binding(statement, table)
-    else:
-        owner.update_context(statement, table, tenant, generated=False)
+    permit = returning = normalized = None
     columns = {prop.key: prop.columns[0] for prop in mapper.column_attrs
                if len(prop.columns) == 1 and isinstance(prop.columns[0], ColumnClause) and
                prop.columns[0].table is table and table.c.get(prop.columns[0].key) is prop.columns[0] and
                mapper.get_property_by_column(prop.columns[0]) is prop}
-    if literal_values:
-        parameters = _update_literals(owner, statement, columns)
     originals = parameters
     if point:
-        # Native single-statement external parameters use physical column keys;
-        # ORM executemany dictionaries use mapped attribute names instead.
-        physical = {column.key: attribute for attribute, column in columns.items()}
-        if (len(physical) != len(columns) or any(type(key) is not str for key in parameters)
-                or set(parameters) - physical.keys()):
-            raise UnsupportedProtectedOperation()
-        originals = [{physical[key]: value for key, value in parameters.items()}]
+        normalized, permit, values = _point_update(owner, statement, parameters, columns, bindings, tenant)
+        returning = owner.returning_binding(statement, table)
+        originals = [values]
+    else:
+        owner.update_context(statement, table, tenant, generated=False)
     rows = []
     for original in originals:
         if (type(original) is not dict or any(type(key) is not str for key in original) or
@@ -2724,6 +2933,10 @@ def _capture_update(owner, mapper, statement, parameters, tenant):
             row[first.record_attribute] = permit.identity
         for attribute in row:
             owner.bind_type(columns[attribute].type)
+            if point:
+                _update_sql_hooks(columns[attribute].type)
+                if type(columns[attribute].type) is _Payload:
+                    _update_sql_hooks(columns[attribute].type.source_type)
         record = row.get(first.record_attribute)
         if first.descriptor.record_codec == 'uuid16/v1':
             if type(record) is not UUID:
@@ -2735,12 +2948,14 @@ def _capture_update(owner, mapper, statement, parameters, tenant):
             raise UnsupportedProtectedOperation()
         rows.append(tuple(row.items()))
     json_inputs = _json_rows_state([dict(row) for row in rows], bindings)
-    return _UpdateRequest(mapper, table, tenant, tuple(columns.items()), tuple(rows), permit, returning, literal_values, json_inputs)
+    return _UpdateRequest(mapper, table, tenant, tuple(columns.items()), tuple(rows), permit, returning,
+        literal_values, json_inputs, normalized, _update_parameter_state(statement, parameters) if point else ())
 
 
 def _same_update_request(original, current):
     if (original.mapper is not current.mapper or original.table is not current.table or
             original.literal_values != current.literal_values or
+            original.input_state != current.input_state or
             original.json_inputs != current.json_inputs or
             original.returning != current.returning or (original.point is None) != (current.point is None) or
             original.point is not None and original.point.identity != current.point.identity or
@@ -2754,7 +2969,8 @@ def _same_update_request(original, current):
         if len(left) != len(right) or any(
                 lkey != rkey or lvalue is not rvalue and
                 (type(lvalue) is not type(rvalue) or
-                 (datetime_state(lvalue) != datetime_state(rvalue) if type(lvalue) is datetime else
+                 (_update_value_state(lvalue) != _update_value_state(rvalue) if original.point is not None else
+                  datetime_state(lvalue) != datetime_state(rvalue) if type(lvalue) is datetime else
                   lvalue.as_tuple() != rvalue.as_tuple() if type(lvalue) is Decimal else lvalue != rvalue))
                 for (lkey, lvalue), (rkey, rvalue) in zip(left, right)):
             return False
@@ -2820,12 +3036,7 @@ def _bulk_update(state):
         state.parameters = ({columns[key].key: value for key, value in rows[0].items() if key != first.record_attribute}
                             if request.point is not None else rows)
         if request.point is not None:
-            state.statement = statement._generate()
-            if request.literal_values:
-                if state.statement is statement:
-                    raise UnsupportedProtectedOperation()
-                state.statement._values = None
-                state.statement._reset_memoizations()
+            state.statement = request.statement
         result = state.invoke_statement()
         if operation.bulk_position != len(operation.bulk_inputs):
             raise UnsupportedProtectedOperation()

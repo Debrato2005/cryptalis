@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.1.0a2.dev2 — development
+
+- Single-record mapped UPDATE accepts reusable native binds for the record,
+  tenant and assigned values, including bind defaults and execute-time overrides.
+- Ordinary literal and named SET values can share a statement. Existing
+  encryption, row authority, native results and transaction handling are reused;
+  incompatible bind behavior refuses before key preparation.
+- JSONB SET binds retain their own NULL mode. Input changes during synchronous
+  or awaited preparation refuse before UPDATE dispatch.
+- No ciphertext or lock format changes. Production qualification remains open.
+
 ## 0.1.0a2.dev1 — development
 
 - Whole-document JSONB equality, IN and scoped uniqueness reuse full blind-index

@@ -131,6 +131,36 @@ For a declared single-tenant table, omit the tenant predicate. Existing loaded o
 row. Native assignment errors can still occur for a missing record during SQL
 evaluation; roll back the failed transaction or savepoint before retrying.
 
+Use named binds when reusing one statement for different records:
+
+```python
+from sqlalchemy import bindparam
+
+statement = (
+    update(Customer)
+    .where(Customer.id == bindparam("record_id"),
+           Customer.tenant_id == bindparam("tenant_id_parameter"))
+    .values(note=bindparam("replacement"))
+    .returning(Customer.note.label("display_note"))
+)
+result = session.execute(
+    statement,
+    {"record_id": app_assigned_uuid,
+     "tenant_id_parameter": authenticated_tenant,
+     "replacement": "updated"},
+    execution_options={"synchronize_session": False},
+)
+returned = result.one_or_none()
+session.commit()
+```
+
+Ordinary bind defaults can be overridden per call. Literal SET values can share
+the statement with named binds; execute-time dictionaries still use physical
+column keys for direct assignments. Keep context bind names distinct from SET
+column keys. The original statement stays reusable. The
+[bind contract](compatibility.md#parameterized-single-record-update) defines
+admitted native types and refused behavior.
+
 You can instead put ordinary scalar assignments on the statement and omit
 the external dictionary:
 
@@ -184,8 +214,8 @@ native `StaleDataError`; roll back before retry. Tenant-column tables use the
 separate explicit tenant-equality form in the [UPDATE contract](compatibility.md#full-capability-matrix).
 Async sessions use the same statements with awaited execution and commit.
 Loaded objects retain native stale state until refresh or expiration. Use
-rollback or the enclosing savepoint to recover from errors. UPDATE expressions,
-Core statements and RETURNING remain unadmitted. The
+rollback or the enclosing savepoint to recover from errors. For this list of
+dictionaries, embedded assignments, Core statements and RETURNING remain unadmitted. The
 [online scalar checkpoint](history/implementation-2026-10.md#single-tenant-mapped-update-2026-10-29)
 adds current-value removal evidence across the admitted storage types.
 
