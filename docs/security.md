@@ -1721,6 +1721,30 @@ full-HMAC collision assumption and native PostgreSQL concurrency enforcement.
 No numeric ordering representation, new primitive or independent review is
 supplied. Removing current terms cannot retract leakage from earlier copies.
 
+## JSONB storage boundary
+
+`pg-jsonb-text/v1` uses the existing context/v2, CF1 authenticated encryption,
+random nonces and row/tenant/field key separation. It authenticates canonical
+native UTF-8 JSONB text. It adds no search term or cryptographic primitive. The
+descriptor null policy also binds the mapping's `none_as_null` choice. Earlier
+codec bytes and their NULL policies retain their original interpretation.
+
+Native source reads bypass JSON loaders by selecting UTF-8 bytea. An immutable
+internal value validates canonical key ordering, finite native numeric bounds,
+Unicode and the payload limit. Full source precision and scale stay intact during
+lifecycle operations. Application results alone use the admitted native default
+Python JSON loader; its numeric rounding is not used as recovery truth. Default
+JSON hook admission and immutable input capture protect this value boundary;
+they do not defend a compromised application with authorized key access.
+
+Storage discloses existing row linkage, SQL NULL presence, canonical document
+length and access/write patterns. JSON null has an authenticated non-NULL frame,
+but replacing any nullable frame with SQL NULL retains the documented
+unauthenticated-presence limit. Randomized encryption does not hide lengths or
+prove completeness/freshness. No stronger JSON confidentiality or search
+guarantee follows. [Compatibility](compatibility.md#jsonb-storage) owns exact
+mapping and input limits; independent review and production gates remain UNKNOWN.
+
 ## Internal storage-only integer boundary
 
 **IMPLEMENTED, bounded source and installed checks:** signed integer codecs use

@@ -31,9 +31,11 @@ from cryptalis.crypto.keys import InvalidValue
 
 
 _PUBLIC_SLOTS_LAYOUT = "preserve-public-slots/v1"
-_LOCK_SCHEMAS = tuple(f'cryptalis.lock/v{version}' for version in range(1, 15))
+_LOCK_SCHEMAS = tuple(f'cryptalis.lock/v{version}' for version in range(1, 16))
 _INTEGER_TYPES = {'int2': (SmallInteger, postgresql.SMALLINT),
                   'int4': (Integer, postgresql.INTEGER), 'int8': (BigInteger, postgresql.BIGINT)}
+_JSONB_CODEC = 'pg-jsonb-text/v1'
+_JSONB_NULL_POLICIES = {False: 'jsonb-none-as-json-null/v1', True: 'jsonb-none-as-sql-null/v1'}
 
 
 @dataclass(frozen=True)
@@ -272,7 +274,49 @@ def _value_mapping_matches(column, native):
     return (_text_mapping_matches(column, native) or _boolean_mapping_matches(column, native)
             or _integer_mapping_matches(column, native) or _date_mapping_matches(column, native)
             or _uuid_mapping_matches(column, native) or _timestamp_mapping_matches(column, native)
-            or _numeric_mapping_matches(column, native))
+            or _numeric_mapping_matches(column, native) or _jsonb_mapping_matches(column, native))
+
+
+def _jsonb_type_matches(dtype):
+    return (type(dtype) is postgresql.JSONB and type(dtype.none_as_null) is bool
+            and dtype.hashable is False and dtype.comparator_factory is postgresql.JSONB.comparator_factory
+            and not getattr(dtype, '_variant_mapping', None)
+            and all(getattr(getattr(dtype, name), '__func__', None) is getattr(postgresql.JSONB, name)
+                    for name in ('bind_processor', 'result_processor', 'literal_processor',
+                                 'bind_expression', 'column_expression', 'dialect_impl', '_make_bind_processor',
+                                 'compare_values', 'coerce_compared_value'))
+            and type(dtype.astext_type) is Text and dtype.astext_type.length is None
+            and dtype.astext_type.collation is None
+            and getattr(dtype.astext_type, 'collation_schema', None) is None
+            and not getattr(dtype.astext_type, '_variant_mapping', None))
+
+
+def _jsonb_mapping_matches(column, native):
+    return (_jsonb_type_matches(column.type)
+            and native['type_schema'] == 'pg_catalog' and native['type'] == 'jsonb'
+            and native['typmod'] == '-1'
+            and all(native[key] is None for key in
+                    ('collation', 'collation_name', 'collation_schema', 'deterministic', 'provider')))
+
+
+def _jsonb_hooks_match(engine, connection=None):
+    try:
+        import psycopg
+        from cryptalis._jsonb import native_json_adapters
+        if engine.dialect._json_serializer is not None or engine.dialect._json_deserializer is not None:
+            return False
+        adapters = [psycopg.adapters]
+        if engine.dialect._psycopg_adapters_map is not None:
+            adapters.append(engine.dialect._psycopg_adapters_map)
+        if connection is not None:
+            driver = connection.connection.driver_connection
+            adapters.append(driver.adapters)
+            with driver.cursor() as cursor:
+                if not native_json_adapters(cursor.adapters):
+                    return False
+        return all(native_json_adapters(adapter) for adapter in adapters)
+    except Exception:
+        return False
 
 
 def _numeric_mapping_matches(column, native):
@@ -389,6 +433,8 @@ def _integer_mapping_matches(column, native):
 
 
 def _value_codec(source):
+    if source['type'] == 'jsonb':
+        return _JSONB_CODEC
     if source['type'] == 'timestamptz':
         return 'pg-timestamptz-us-be/v1'
     if source['type'] == 'numeric':
@@ -428,6 +474,8 @@ def _required_readers(models):
 
 def _lock_schema(models, layout, *, legacy=False):
     kinds = {field['source']['type'] for model in models for field in model['fields']}
+    if 'jsonb' in kinds:
+        return 'cryptalis.lock/v15'
     if (any('prefix' in field['queries'] for model in models for field in model['fields'])
             or _has_pattern_indexes(models)):
         return 'cryptalis.lock/v14'
@@ -1046,10 +1094,16 @@ def _compile_model(model, mapper, facts, issues, schema):
         if column is pk_column or column.name == tenant_name:
             refuse("context_field", field.name, "Keep primary-key and tenant context columns unprotected.")
         boolean = actual['type'] == 'bool'
+        jsonb = actual['type'] == 'jsonb'
         if not _value_mapping_matches(column, actual):
             refuse("unsupported_type", field.name, "Match an admitted native type with its standard mapping and the same length.")
+            if jsonb:
+                continue
         if column.nullable != actual["nullable"]:
             refuse("mapping_mismatch", field.name, "Match mapped and database nullability before planning.")
+        if jsonb and field.queries:
+            refuse("unsupported_query", field.name, "Use storage-only protection for native JSONB values.")
+            continue
         application_default = None
         try:
             application_default = _value_default(column, _value_codec(actual))
@@ -1078,13 +1132,18 @@ def _compile_model(model, mapper, facts, issues, schema):
         for constraint in facts["constraints"]:
             affected = ((constraint["outgoing"] and column.name in constraint["columns"])
                         or (constraint["incoming"] and column.name in constraint["referenced_columns"]))
-            if affected and constraint["kind"] != "u":
-                refuse("unsupported_constraint", field.name, "Exclude this field from CHECK, foreign-key, and exclusion constraints.")
+            if affected and (jsonb or constraint["kind"] != "u"):
+                refuse("unsupported_constraint", field.name,
+                       "Exclude JSONB storage from native constraints." if jsonb else
+                       "Exclude this field from CHECK, foreign-key, and exclusion constraints.")
         for dep in facts["dependencies"]:
             if dep["column"] in (None, column.name):
                 refuse("unsupported_dependency", field.name, "Remove dependent views, generated columns, or stored routines before protection.")
         for index in facts["indexes"]:
             if column.name not in index["columns"] + index["dependency_columns"]:
+                continue
+            if jsonb:
+                refuse("unsupported_index", field.name, "Exclude storage-only JSONB from native indexes before protection.")
                 continue
             base_ok = (index["method"] == "btree" and index["valid"] and index["ready"]
                        and index["live"] and not index["partial"] and not index["expression"]
@@ -1117,7 +1176,8 @@ def _compile_model(model, mapper, facts, issues, schema):
         representation = _representation(field.queries)
         descriptor = _descriptor(None, str(model.table_id), str(field.field_id), record_codec,
                                  "uuid16/v1" if model.tenant_column is not None else "single-tenant-uuid/v1", representation,
-                                 _value_codec(actual), field.prefix_lengths)
+                                 _value_codec(actual), field.prefix_lengths,
+                                 column.type.none_as_null if jsonb else None)
         payload = "_cryptalis_" + field.field_id.hex
         if payload in columns:
             refuse("generated_name_collision", field.name, "Resolve the generated payload-column name collision before planning.")
@@ -1157,16 +1217,22 @@ def _compile_model(model, mapper, facts, issues, schema):
 
 
 def _descriptor(domain_id, table_id, field_id, record_codec, tenant_codec, representation,
-                value_codec='utf8-exact/v1', prefix_lengths=None):
+                value_codec='utf8-exact/v1', prefix_lengths=None, json_none_as_null=None):
     descriptor = {"schema": "cryptalis.context/v1", "domain_id": domain_id,
             "table_id": table_id, "field_id": field_id, "text_codec": "utf8-exact/v1",
             "normalizer": "identity/v1", "null_policy": "sql-null/v1",
             "record_codec": record_codec, "tenant_codec": tenant_codec, "representation": representation}
-    if value_codec in ('boolean-u8/v1', 'pg-int2-be/v1', 'pg-int4-be/v1', 'pg-int8-be/v1', 'pg-date-days-be/v1', 'date-ordinal-u32/v1', 'uuid-bytes16/v1', 'pg-timestamp-us-be/v1', 'pg-timestamptz-us-be/v1', 'pg-numeric-decimal/v1'):
+    if value_codec in ('boolean-u8/v1', 'pg-int2-be/v1', 'pg-int4-be/v1', 'pg-int8-be/v1', 'pg-date-days-be/v1', 'date-ordinal-u32/v1', 'uuid-bytes16/v1', 'pg-timestamp-us-be/v1', 'pg-timestamptz-us-be/v1', 'pg-numeric-decimal/v1', _JSONB_CODEC):
         descriptor['schema'] = 'cryptalis.context/v2'
         del descriptor['text_codec']
         descriptor['value_codec'] = value_codec
     elif value_codec != 'utf8-exact/v1':
+        raise ValueError
+    if value_codec == _JSONB_CODEC:
+        if type(json_none_as_null) is not bool or representation != 'cf1-storage/v1':
+            raise ValueError
+        descriptor['null_policy'] = _JSONB_NULL_POLICIES[json_none_as_null]
+    elif json_none_as_null is not None:
         raise ValueError
     if value_codec == 'pg-numeric-decimal/v1' and representation == 'cf1-packed-equality/v1':
         descriptor['normalizer'] = 'pg-numeric-equality/v1'
@@ -1198,8 +1264,8 @@ def _ddl(document, engine):
 def _previous_lock(raw, current, engine):
     """Reject inconsistent compiler artifacts before computing a semantic diff."""
     old = decode_manifest_json(raw)
-    if old.get('schema') == 'cryptalis.lock/v14':
-        from cryptalis._search_layout import require_prefix_qualification
+    from cryptalis._search_layout import require_prefix_qualification, requires_prefix_scope
+    if requires_prefix_scope(old):
         require_prefix_qualification()
     try:
         uuid_lock = old.get('schema') in _LOCK_SCHEMAS[8:]
@@ -1208,6 +1274,7 @@ def _previous_lock(raw, current, engine):
         timestamptz_lock = old.get('schema') in _LOCK_SCHEMAS[11:]
         numeric_search_lock = old.get('schema') in _LOCK_SCHEMAS[12:]
         prefix_lock = old.get('schema') in _LOCK_SCHEMAS[13:]
+        jsonb_lock = old.get('schema') in _LOCK_SCHEMAS[14:]
         date_lock = old.get('schema') in _LOCK_SCHEMAS[7:]
         integer_lock = old.get('schema') in _LOCK_SCHEMAS[6:]
         public_slots = old.get('schema') == 'cryptalis.lock/v6' or integer_lock and old.get('layout') is not None
@@ -1297,6 +1364,8 @@ def _previous_lock(raw, current, engine):
                 if field['source']['type'] == 'numeric' and (not numeric_lock or
                         intent.queries and (not numeric_search_lock or set(intent.queries) - {'equality', 'unique'})):
                     raise ValueError
+                if field['source']['type'] == 'jsonb' and (not jsonb_lock or intent.queries):
+                    raise ValueError
                 if field['source']['type'] in _INTEGER_TYPES and (not integer_lock or intent.queries and 'order' not in intent.queries):
                     raise ValueError
                 if field['source']['type'] == 'date' and (not date_lock or intent.queries and 'order' not in intent.queries):
@@ -1317,6 +1386,12 @@ def _previous_lock(raw, current, engine):
                     raise ValueError
                 representation = _representation(intent.queries)
                 codec = _value_codec(field['source'])
+                json_none_as_null = None
+                if codec == _JSONB_CODEC:
+                    null_policy = field['descriptor'].get('null_policy')
+                    if null_policy not in _JSONB_NULL_POLICIES.values():
+                        raise ValueError
+                    json_none_as_null = null_policy == _JSONB_NULL_POLICIES[True]
                 if field['source']['type'] == 'date':
                     codec = field['descriptor'].get('value_codec')
                     if codec not in ('pg-date-days-be/v1', 'date-ordinal-u32/v1'):
@@ -1324,7 +1399,7 @@ def _previous_lock(raw, current, engine):
                     if codec == 'date-ordinal-u32/v1' and 'application_default' in field:
                         raise ValueError
                 expected = _descriptor(old["domain_id"], model["table_id"], field["field_id"], model["record"]["codec"], tenant_codec, representation,
-                                       codec, intent.prefix_lengths)
+                                       codec, intent.prefix_lengths, json_none_as_null)
                 if (field["descriptor"] != expected or field["descriptor_digest"] != _digest(expected)
                         or field["representation"] != representation
                         or field["payload_column"] != "_cryptalis_" + intent.field_id.hex):
@@ -1337,7 +1412,7 @@ def _previous_lock(raw, current, engine):
             if any(not isinstance(model["source_schema"][key], list) for key in ("columns", "constraints", "indexes", "dependencies")):
                 raise ValueError
             _validate_prior_source(model, varchar=old['schema'] in _LOCK_SCHEMAS[2:],
-                                   boolean=old['schema'] in _LOCK_SCHEMAS[3:], integer=integer_lock, date_values=date_lock, uuid_values=uuid_lock, timestamp_values=timestamp_lock, numeric_values=numeric_lock, timestamptz_values=timestamptz_lock, numeric_search=numeric_search_lock, prefix_search=prefix_lock)
+                                   boolean=old['schema'] in _LOCK_SCHEMAS[3:], integer=integer_lock, date_values=date_lock, uuid_values=uuid_lock, timestamp_values=timestamp_lock, numeric_values=numeric_lock, timestamptz_values=timestamptz_lock, numeric_search=numeric_search_lock, prefix_search=prefix_lock, jsonb_values=jsonb_lock)
             if public_slots:
                 slots = [column['attnum'] for column in model['source_schema']['columns']]
                 if (any(type(slot) is not int or not 0 < slot < 32768 for slot in slots)
@@ -1409,7 +1484,7 @@ def _validate_catalog_facts(facts):
     return columns
 
 
-def _validate_prior_source(model, *, varchar=False, boolean=False, integer=False, date_values=False, uuid_values=False, timestamp_values=False, numeric_values=False, timestamptz_values=False, numeric_search=False, prefix_search=False):
+def _validate_prior_source(model, *, varchar=False, boolean=False, integer=False, date_values=False, uuid_values=False, timestamp_values=False, numeric_values=False, timestamptz_values=False, numeric_search=False, prefix_search=False, jsonb_values=False):
     """Check a prior snapshot's shape and admitted facts without trusting its hash."""
     def require(condition):
         if not condition:
@@ -1455,6 +1530,9 @@ def _validate_prior_source(model, *, varchar=False, boolean=False, integer=False
             parameters = numeric_parameters(source['typmod'])
             require(_numeric_mapping_matches(Column('value', Numeric(*parameters) if parameters else Numeric()), source))
             require(not field['queries'] or numeric_search and not set(field['queries']) - {'equality', 'unique'})
+        elif jsonb_values and source['type'] == 'jsonb':
+            require(_jsonb_mapping_matches(Column('value', postgresql.JSONB()), source))
+            require(not field['queries'])
         else:
             require(source['type'] == 'text' or varchar and source['type'] == 'varchar')
             _native_text_length(source)
@@ -1468,12 +1546,15 @@ def _validate_prior_source(model, *, varchar=False, boolean=False, integer=False
         if field["queries"] and source['type'] in ('text', 'varchar'):
             require(_exact_search_collation(source))
         affected = [i for i in facts["indexes"] if field["column"] in i["columns"] + i["dependency_columns"]]
+        if source['type'] == 'jsonb':
+            require(not affected)
         require(field["unique_indexes"] == [i["name"] for i in affected if i["unique"]])
         require(bool(field["unique_indexes"]) == ("unique" in field["queries"]))
         scope = [tenant_name, field["column"]] if tenant_name is not None else [field["column"]]
         for constraint in facts["constraints"]:
             if ((constraint["outgoing"] and field["column"] in constraint["columns"])
                     or (constraint["incoming"] and field["column"] in constraint["referenced_columns"])):
+                require(source['type'] != 'jsonb')
                 require(constraint["kind"] == "u" and constraint["outgoing"] and constraint["columns"] == scope)
                 require(not constraint["deferrable"] and constraint["validated"])
         require(not any(d["column"] in (None, field["column"]) for d in facts["dependencies"]))
@@ -1520,6 +1601,8 @@ def _changes(current, previous):
             prior = old_fields.get(field["field_id"])
             if not prior:
                 changes.append(Change("protect_field", model["table_id"], field["field_id"],
+                                      "Stage a bytea payload. Preserve native JSONB and SQL NULL. Verify before switch."
+                                      if field['source']['type'] == 'jsonb' else
                                       "Stage a bytea payload. Preserve exact text and SQL NULL. Verify before switch."))
                 if "unique" in field["queries"]:
                     changes.append(Change("preserve_unique", model["table_id"], field["field_id"],
@@ -1574,10 +1657,20 @@ def compile_protection(raw: bytes, mapping: Registry, engine: Engine, *,
     mappers = {}
     for mapper in mapping.mappers:
         mappers.setdefault(mapper.class_.__name__, []).append(mapper)
+    jsonb_mapping = any(isinstance(column.type, postgresql.JSONB)
+        for model in declaration.models for mapper in mappers.get(model.model, ())
+        for prop in mapper.column_attrs if prop.key in {field.name for field in model.fields}
+        for column in prop.columns)
+    if jsonb_mapping and not _jsonb_hooks_match(engine):
+        raise PlanningRejected([Issue('unsupported_mapping', 'engine',
+            'Use default JSON serialization, deserialization and native driver adapters for protected JSONB.')])
     models = []
     used_tables = set()
     try:
         with engine.connect().execution_options(isolation_level="REPEATABLE READ", postgresql_readonly=True) as connection, connection.begin():
+            if jsonb_mapping and not _jsonb_hooks_match(engine, connection):
+                raise PlanningRejected([Issue('unsupported_mapping', 'engine',
+                    'Use default JSON serialization, deserialization and native driver adapters for protected JSONB.')])
             if connection.exec_driver_sql("SHOW transaction_read_only").scalar_one() != "on":
                 raise InspectionUnavailable(None)
             resolved = {}
@@ -1623,6 +1716,23 @@ def compile_protection(raw: bytes, mapping: Registry, engine: Engine, *,
                     continue
                 compiled = _compile_model(model, mapper, facts, issues, schema)
                 if compiled:
+                    jsonb_fields = [field for field in compiled['fields'] if field['source']['type'] == 'jsonb']
+                    if jsonb_fields:
+                        if not _jsonb_hooks_match(engine, connection):
+                            issues.append(Issue('unsupported_mapping', 'engine',
+                                'Use default JSON serialization, deserialization and native driver adapters for protected JSONB.'))
+                        native_oids = {row['name']: row['type_oid'] for row in _rows(connection, """
+                            SELECT a.attname AS name, a.atttypid::pg_catalog.text AS type_oid
+                            FROM pg_catalog.pg_attribute a
+                            JOIN pg_catalog.pg_class t ON t.oid=a.attrelid
+                            JOIN pg_catalog.pg_namespace n ON n.oid=t.relnamespace
+                            WHERE n.nspname=:schema AND t.relname=:table
+                              AND a.attnum>0 AND NOT a.attisdropped
+                        """, schema=schema, table=table.name)}
+                        for field in jsonb_fields:
+                            if native_oids.get(field['column']) != '3802':
+                                issues.append(Issue('unsupported_type', model.model + '.' + field['name'],
+                                    'Use the built-in PostgreSQL JSONB type with OID 3802.'))
                     compiled["source_metadata"] = source_metadata(
                         connection, schema, table.name, compiled["fields"], sequences=True)
                     _metadata_issues(connection, schema, table.name, compiled, issues)

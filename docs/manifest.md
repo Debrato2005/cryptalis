@@ -25,7 +25,8 @@ lists each protected field with the search leakage you accepted.
 The [exact-prefix prototype](#internal-prefix-engineering-syntax) is INTERNAL ONLY;
 ordinary APIs refuse its intent and saved artifacts with a typed capability error.
 Shared-join domains and arbitrary normalizers remain unadmitted.
-Boolean, signed integer, finite Date, UUID, naive/aware timestamp and finite numeric storage use pinned value codecs.
+Boolean, signed integer, finite Date, UUID, naive/aware timestamp, finite numeric
+and native JSONB storage use pinned value codecs.
 Integer, date and admitted timestamp fields admit [`order`](compatibility.md#order-search) search only;
 Numeric fields admit equality, IN and scoped uniqueness with explicit equality
 leakage acceptance and a search-domain review. Boolean and UUID fields admit no search.
@@ -89,6 +90,10 @@ unknown formats before effects.
 The isolated prefix engineering reader also recognizes `cryptalis.lock/v14`.
 This does not admit v14 through ordinary application APIs; its reader and retained
 native-index obligations are described [below](#internal-prefix-engineering-syntax).
+Native JSONB plans select `cryptalis.lock/v15` and require `pg-jsonb-text/v1`.
+Mixed v15 plans retain every earlier reader and the internal prefix restriction,
+including retained native pattern-index obligations after prefix is disabled.
+Ordinary JSONB storage alone does not require the synthetic prefix scope.
 Older operational readers refuse the embedded v5 lock before effects.
 The [VARCHAR decision](history/decisions-2026-10.md#native-varchar-text-admission-2026-10-22) defines assignment and reader boundaries.
 Its exact top-level members are
@@ -162,6 +167,14 @@ It ignores scale and signed zero only in the search term; authenticated payloads
 retain native fractional scale. Storage-only descriptors retain `identity/v1`
 and their original bytes. [Numeric admission](compatibility.md#numeric-storage)
 defines exact input bounds and failures.
+Native JSONB uses `pg-jsonb-text/v1`, context/v2, `identity/v1` and storage-only
+CF1. Its null policy is `jsonb-none-as-json-null/v1` for standard
+`JSONB(none_as_null=False)`, or `jsonb-none-as-sql-null/v1` for True. The digest
+authenticates this mapping choice; attachment refuses a changed flag. SQL NULL
+has no frame. JSON null is a non-NULL authenticated canonical UTF-8 document.
+The catalog cannot infer the Python flag, so a saved lock retains its exact
+descriptor policy. Earlier codecs retain `sql-null/v1` and their original bytes.
+[JSONB admission](compatibility.md#jsonb-storage) defines inputs, hooks and limits.
 Signed integer storage also uses context/v2. Its pinned codecs encode int2/int4/int8
 as 2/4/8 signed big-endian bytes. Current Date plans use `pg-date-days-be/v1`
 and lock/v8: signed four-byte days from the PostgreSQL epoch. Literal client Date

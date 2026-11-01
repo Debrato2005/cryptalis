@@ -187,7 +187,8 @@ class _Connection:
         raise self._error()
 
 
-def install_guard(engine, error, before_execute, check_cursor, listener_error, prepare_many, result_rows, check_process):
+def install_guard(engine, error, before_execute, check_cursor, listener_error, prepare_many, result_rows, check_process,
+                  check_driver=lambda context: None):
     """Install only after target validation and draining idle native handles."""
     # Refuse the attached engine's public entrypoints before pool mutexes. A
     # fresh engine plus a fresh mapping/attachment is required in a child.
@@ -272,6 +273,7 @@ def install_guard(engine, error, before_execute, check_cursor, listener_error, p
     engine.dialect._deliver_insertmanyvalues_batches = many
 
     def final(cursor, statement, parameters, context):
+        check_driver(cursor._raw)
         expected, cursor._pending = cursor._pending, None
         page, cursor._native_page = cursor._native_page, None
         sent = values(parameters)
@@ -284,6 +286,7 @@ def install_guard(engine, error, before_execute, check_cursor, listener_error, p
 
     def wrap(raw, entry):
         check_process()
+        check_driver(raw)
         entry.dbapi_connection = _Connection(raw, error, check_process)
 
     event.listen(engine.pool, "connect", wrap)

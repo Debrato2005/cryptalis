@@ -150,3 +150,39 @@ The earlier original HTTP CLI journey owns initialization and five actual
 SIGKILL/resume checkpoints. The new HTTP fresh row owns genuine restore and
 post-adoption authentication. Neither row proves every step or an external KMS.
 Retain these separate boundaries when reporting the full developer journey.
+
+## Native JSONB storage
+
+Run the native/protected value, admission, mutation, rotation and online-capture
+workflows on a newly initialized disposable cluster:
+
+```bash
+CRYPTALIS_JSONB_PREVIOUS_READER_PYTHON=/absolute/retained-v14/bin/python \
+  .venv/bin/python scripts/online_qualification.py \
+  --workdir /absolute/new-jsonb-source -- \
+  tests/test_jsonb_storage.py tests/test_jsonb_admission.py \
+  tests/test_jsonb_boundaries.py tests/test_jsonb_async_failures.py \
+  tests/test_jsonb_lifecycle.py -q
+```
+
+The old interpreter must contain the actual immutable earlier wheel. Without
+that optional environment variable its reader control skips explicitly; no
+reader-compatibility claim follows. All database runs still use the mandatory
+private-file probes and byte-binding wrapper inside the harness.
+
+For actual installed-wheel export and adoption on a distinct fresh cluster:
+
+```bash
+/absolute/installed/bin/python scripts/online_qualification.py \
+  --installed-wheel /absolute/inspected.whl \
+  --workdir /absolute/new-jsonb-recovery --fresh-scalar jsonb
+```
+
+Repeat with a new work directory and `--public-slots` for the other layout.
+The fixed profile checks exact `jsonb_send` bytes, SQL NULL versus JSON null,
+all three source rotations, restored-target authentication/tamper refusal,
+current edits, native removal and an import-denied SQLAlchemy restart. The
+export process exits and drops its application schema before the restore
+process starts; the outer scalar harness's source cluster remains running
+until its cleanup. This supplies no production deployment-fencing, provider
+custody, RPO/RTO or JSON-search qualification. Retain every receipt separately.

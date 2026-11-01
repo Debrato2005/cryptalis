@@ -1,0 +1,113 @@
+# Cryptalis engineering handoff
+
+This handoff accompanies the native JSONB storage slice. Use
+[current status](status.md) for exact verification and hosted revisions, and the
+[34-objective ledger](BUILD_CHECKLIST.md) for remaining work. This file is a
+resume guide, not a second product contract. The full product goal is unfinished;
+all seven production gates remain UNKNOWN.
+
+## Scope and next instruction
+
+The target remains all [18 product requirements](requirements.md) and all 34
+objectives in one comprehensive first release. Functionality precedes further
+optimization. Apply KISS and use meaningful end-to-end/native PostgreSQL oracles.
+Current user authorization covers completing, verifying and pushing this pending
+slice and its handoff. After that, wait for the user's next instruction before
+starting another implementation slice.
+
+Inspect the actual checkout root, branch, working tree and remote before making
+claims. Read `AGENTS.md`, the [documentation map](README.md), current status,
+affected objective and contract owner, then the procedure. Cross-cutting changes
+also require architecture, security, lifecycle, compatibility, decisions, build
+guide and engineering playbook. Historical pauses and workstation paths do not
+define current authorization or product scope.
+
+## What is implemented
+
+The repository contains the manifest/Project/Doctor front door, authenticated
+pre-PostgreSQL encryption, bounded sync/async SQLAlchemy and SQLModel integration,
+resumable and online lifecycle, three rotation workflows, fresh adoption and
+current-data removal followed by a package-free native restart. The
+[compatibility matrix](compatibility.md#full-capability-matrix) defines exact
+admitted storage, query and ORM behavior.
+
+The latest slice adds bounded [native JSONB storage](compatibility.md#jsonb-storage):
+
+- Existing CF1 encryption, `pg-jsonb-text/v1`, lock/v15 and context/v2; no new
+  dependency or cryptographic primitive. Earlier descriptor bytes remain valid.
+- Both native `none_as_null` policies, omitted values, JSON.NULL and SQL null(),
+  ordinary and MutableDict tracking, sync/async CRUD and RETURNING.
+- Exact canonical PostgreSQL UTF-8 bytes through migration, online capture,
+  rotations, restore and removal. Application JSON decoding occurs only after
+  authentication; its float rounding is never lifecycle truth.
+- Default JSON adapter admission, immutable caller-input checks across provider
+  callbacks/awaits, typed unsupported-operation refusal, transaction cleanup on
+  failure/cancellation, and source/installed/fresh-recovery E2Es in CI.
+
+The [local JSONB boundary](_reset/jsonb-boundary-20261101.json) retains exact
+receipts, distributions, failures and source snapshots. [Type history](history/types-2026-11.md)
+records the fixes and evidence limits. Runtime-role isolation repair and earlier
+hosted results remain retained in current status and their original boundaries.
+
+The exact-prefix prototype remains INTERNAL ONLY, including mixed v15 plans and
+retained pattern-index obligations. Its retained storage cost is 13.1527× native
+versus the 2× target. The published dense-int2 sorting experiment recovers all
+non-NULL values in a deliberately misclassified fixture; honest small-domain
+admission refuses it. Neither observation supplies production/security admission.
+
+## What remains
+
+The ledger owns all remaining objectives. The next large functionality gap is
+JSON and broader text search. JSONB storage does not implement JSON equality,
+path/containment operators, protected defaults, indexes, CHECK, foreign-key or
+uniqueness constraints. JSON null and SQL NULL remain distinct internally, while
+both return native Python None. Native nullability is supported.
+
+Choose each search representation from published constructions and primary
+sources, documenting dump leakage and exact native semantics before coding.
+A flat bag of leaf HMACs is not an established general JSON containment solution:
+array/object structure and correlation require an exact argument and oracle.
+No JSON search design is admitted by this handoff.
+
+Other open work includes wider native ORM/type/query behavior, prefix admission
+and attack/cost acceptance, numeric ordering/arithmetic/nonfinite values,
+performance targets, upgrades, deployment fencing, provider identity/custody,
+audit/HA, retained-copy inventory and controlled key retirement, combined disaster
+drills, independent human review and release provenance. Passing tests or AI
+review do not close these gates. Do not infer a completion percentage.
+
+## Verification and safe resumption
+
+Use [local setup](local-development.md), [test layers](../ENGINEERING_PLAYBOOK.md#test-layers)
+and the [JSONB qualification procedure](qualification.md#native-jsonb-storage).
+All PostgreSQL tests go through `scripts/test_postgres.py`, directly or through
+the existing disposable-cluster harness. A failed role probe stops the run;
+resolve its cause and applicable authorization before retrying. Never print
+connection strings or substitute a target silently.
+
+Create a new absolute work directory for each run. Ensure the temporary/build
+filesystem has space; this session exhausted the small `/tmp` tmpfs and used a
+disk-backed private cache instead. Never delete keys, backups or retained earlier
+reader environments to make room. Freeze `src`, `tests` and `scripts` Python
+bytes during a wrapper run. Source changes invalidate its byte-bound receipt.
+Use worker counts appropriate to available RAM; two workers were used locally.
+
+The optional `CRYPTALIS_JSONB_PREVIOUS_READER_PYTHON` must identify a genuine,
+immutable v14 installation, distinct from the candidate installed environment.
+Local JSONB runs execute that control. Hosted runners may explicitly skip it;
+that skip does not qualify old-reader compatibility. Both fresh layouts verify
+exact native wire bytes, tamper refusal, current edits/removal and an
+import-denied restart. Their outer source cluster remains alive until cleanup;
+no source-cluster-shutdown-before-adoption or production fencing claim follows.
+
+Keep receipt archives immutable. Private role files, keys, raw backups/dumps,
+local attachments and the earlier private handoff bundle are not repository
+artifacts. Scoped Graphify navigation may help when available; confirm in source
+and refresh after code edits without installing hooks or changing configuration.
+
+For the next authorized slice, implement a bounded complete behavior, verify its
+real native and installed lifecycle, update the owning contracts/status/ledger,
+retain failures and receipts, then commit and push. Wait for the exact hosted
+revision and inspect its evidence before claiming CI verification. Publishing
+packages, production deployment and destructive external actions need their
+own authorization.

@@ -56,6 +56,8 @@ Native [aware timestamp storage](#aware-timestamp-storage) admits standard aware
 datetime values and preserves the execution connection's native result timezone.
 Native [numeric storage](#numeric-storage) admits finite Decimal values through
 standard Numeric/NUMERIC mappings with `asdecimal=True`.
+Native [JSONB storage](#jsonb-storage) admits standard PostgreSQL JSONB mappings
+with either native `none_as_null` setting and default JSON hooks.
 Literal Boolean client defaults retain native INSERT omission/None behavior.
 UPDATE with None retains native nullability errors and rollback. Custom converters refuse admission.
 An explicit [SQLModel bridge](#optional-sqlmodel-bridge) admits one exact pinned
@@ -172,6 +174,7 @@ parent/child transaction evidence and remaining qualification work.
 | Timestamp storage/read/write and SQL NULL | SUPPORTED, bounded | Standard timestamp without time zone at default precision or explicit precision 6; exact naive Python datetime values in years 1–9999, literal client defaults, lock/v10 and [the timestamp boundary](#timestamp-storage). Explicit opt-in order admits comparisons and sorting; timezone-aware values and precision rounding remain unadmitted |
 | Aware timestamp storage/read/write and SQL NULL | SUPPORTED, bounded | Standard DateTime/TIMESTAMP with timezone=True at default precision or precision 6; exact aware datetime with standard timezone/ZoneInfo, lock/v12 and [aware timestamp boundary](#aware-timestamp-storage). Preserve native connection timezone, offset and fold; opt-in order, ranges and direct MIN/MAX use UTC instants |
 | Numeric storage/read/write and SQL NULL | SUPPORTED, bounded | Standard Numeric/NUMERIC with asdecimal=True; finite Decimal or exact Python int inputs, unconstrained or declared precision/scale, native rounding, literal defaults and lock/v11. [Numeric boundary](#numeric-storage); explicit equality/IN and scoped uniqueness use lock/v13. Numeric order, arithmetic and nonfinite values remain unadmitted |
+| Native JSONB storage/read/write | SUPPORTED, bounded | Standard JSONB with default JSON hooks, both native NULL modes, lossless lifecycle bytes and lock/v15. [JSONB boundary](#jsonb-storage). Search, protected defaults, indexes, CHECK, foreign-key and uniqueness constraints involving this field remain unadmitted; native nullability remains enforced |
 | Signed integer storage/read/write and SQL NULL | SUPPORTED | Exact int2/int4/int8 mappings and width-bound Python ints, literal client defaults, native failure/transaction behavior and typed fixed-width CF1. Storage-only unless the field declares [`order`](#order-search); the fixed authentication overhead is published in the local cost profile |
 | Mapped dictionary INSERT without RETURNING | SUPPORTED | Attached sync/async `Session.execute(insert(Model), list[dict])`, explicit typed IDs and tenant scope, copied attribute dictionaries, native NULL/grouping, autoflush, uniqueness and transaction behavior. Other bulk routes remain unadmitted |
 | Mapped dictionary INSERT with RETURNING | SUPPORTED | Native direct or explicitly named column tuples/scalars and inserted mapped entities, including public-only columns. Preserve result keys/types, grouping, paging and optional input ordering. Entity results retain identity-map loading and refresh. Authenticate each protected output against its own exact prepared input. Computed expression/alias, loader-option and caller return_defaults forms remain unadmitted |
@@ -476,6 +479,59 @@ numeric payload codec. Existing rotations, profile changes, recovery and native
 exit preserve that distinction. Disabling equality removes current terms and
 their index; historical equality leakage remains. Uniqueness profile changes
 remain unadmitted.
+
+## JSONB storage
+
+Standard `sqlalchemy.dialects.postgresql.JSONB` with an exact Boolean
+`none_as_null` flag maps built-in PostgreSQL JSONB, OID 3802, without typmod or
+collation. Storage uses `pg-jsonb-text/v1` under lock/v15 and context/v2. Native
+nullability is retained. Protected defaults, on-update generation, variants,
+custom type processors, nondefault `astext_type`, indexes and constraints other
+than nullability remain unadmitted. JSON search remains required implementation
+work; JSON operators, equality and path/containment queries are not admitted by
+storage support.
+
+Ordinary Python JSON inputs follow the native stdlib serializer, including tuple
+arrays, string coercion of supported dictionary keys, last duplicate-key wins,
+Unicode and float spelling. PostgreSQL canonicalization retains fractional
+numeric scale, expands numeric exponents, normalizes negative zero and orders
+object keys by UTF-8 byte length, then bytewise value. Numbers must fit the finite
+PostgreSQL NUMERIC domain; NUL, nonfinite numbers and unpaired surrogates refuse.
+An escaped valid surrogate pair normalizes to its Unicode scalar. The canonical
+UTF-8 document must fit the existing 16 MiB payload bound. Native stdlib parser
+and input-serialization limits remain; no custom Decimal application loader is
+installed.
+
+With `none_as_null=False`, explicit Python None means JSON null; with True, it
+means SQL NULL. An omitted nullable value without a default means SQL NULL.
+Top-level `JSON.NULL` always means JSON null, and exact `sqlalchemy.null()` means
+SQL NULL in admitted assignment forms. Both read as Python None, as with native
+JSONB. The internal authenticated JSON null document remains distinct from the
+absence of a frame. SQL NULL presence remains unauthenticated under the existing
+threat boundary. NULL predicates and non-NULL counts retain their ordinary
+admitted grammar.
+
+Reads use native default Python JSON values. This includes the native loader's
+float precision loss and overflow, and its integer parsing limits. Migration,
+rotation, restore and removal instead retain canonical PostgreSQL text bytes;
+they never round-trip through those application values. Assigning a new Python
+value uses native input semantics. Public-only edits and native untracked nested
+mutations do not rewrite an untouched precise document. Ordinary JSONB retains
+native mutation tracking; `MutableDict.as_mutable(JSONB(...))` retains shallow
+top-level tracking.
+
+Default stdlib/psycopg JSON hooks are required. Explicit engine JSON hook options
+and custom global, connection or cursor adapters refuse, including reconnects.
+Actual connection hooks are checked before key preparation; cursor-local changes
+are checked before dispatch. Caller containers are captured immutably and checked
+after synchronous or awaited preparation. Custom hooks and mutable input changes
+cannot silently replace the requested document.
+
+Initial native reads use `convert_to(column::text,'UTF8')`. Native removal binds
+the authenticated retained text with an explicit JSONB cast. Both physical
+layouts use the same value contract. No JSON search term, ordering representation
+or new primitive follows. [Status](status.md) owns executed evidence; broader JSON
+behavior, independent review and performance qualification remain open.
 
 ## Internal DATE storage candidate
 

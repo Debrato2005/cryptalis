@@ -33,6 +33,8 @@ _TIMESTAMP_CODEC = 'pg-timestamp-us-be/v1'
 _TIMESTAMP_EPOCH = datetime(2000, 1, 1)
 _TIMESTAMPTZ_CODEC = 'pg-timestamptz-us-be/v1'
 _NUMERIC_CODEC = 'pg-numeric-decimal/v1'
+_JSONB_CODEC = 'pg-jsonb-text/v1'
+_JSONB_NULL_POLICIES = {False: 'jsonb-none-as-json-null/v1', True: 'jsonb-none-as-sql-null/v1'}
 _ORDER_REPRESENTATION = "cf1-packed-order/v1"
 _PREFIX_REPRESENTATION = 'cf1-packed-prefix/v1'
 _ORDER_CODECS = (*_INTEGER_WIDTHS, _DATE_CODEC, _TIMESTAMP_CODEC, _TIMESTAMPTZ_CODEC)
@@ -51,6 +53,7 @@ class FieldDescriptor:
     digest: bytes
     value_codec: str = "utf8-exact/v1"
     prefix_lengths: tuple[int, int] | None = None
+    json_none_as_null: bool | None = None
 
     def __post_init__(self):
         for identity in (self.domain_id, self.table_id, self.field_id):
@@ -58,7 +61,10 @@ class FieldDescriptor:
         if (self.record_codec not in ("uuid16/v1", "int64-be/v1") or
                 self.tenant_codec not in ("uuid16/v1", "single-tenant-uuid/v1") or
                 self.representation not in ("cf1-storage/v1", "cf1-packed-equality/v1", _ORDER_REPRESENTATION, _PREFIX_REPRESENTATION) or
-                self.value_codec not in ("utf8-exact/v1", "boolean-u8/v1", _DATE_CODEC, _TIMESTAMP_CODEC, _TIMESTAMPTZ_CODEC, _NUMERIC_CODEC, "date-ordinal-u32/v1", "uuid-bytes16/v1", *_INTEGER_WIDTHS) or
+                self.value_codec not in ("utf8-exact/v1", "boolean-u8/v1", _DATE_CODEC, _TIMESTAMP_CODEC, _TIMESTAMPTZ_CODEC, _NUMERIC_CODEC, _JSONB_CODEC, "date-ordinal-u32/v1", "uuid-bytes16/v1", *_INTEGER_WIDTHS) or
+                self.value_codec == _JSONB_CODEC and (type(self.json_none_as_null) is not bool or
+                    self.representation != 'cf1-storage/v1') or
+                self.value_codec != _JSONB_CODEC and self.json_none_as_null is not None or
                 self.representation == "cf1-packed-equality/v1" and self.value_codec not in ("utf8-exact/v1", _NUMERIC_CODEC) or
                 self.representation == _ORDER_REPRESENTATION and self.value_codec not in _ORDER_CODECS or
                 self.prefixed and (self.value_codec != 'utf8-exact/v1' or
@@ -95,11 +101,18 @@ class FieldDescriptor:
             elif document['representation'] == _PREFIX_REPRESENTATION:
                 raise InvalidContext()
             codec = document["value_codec" if typed else "text_codec"]
-            allowed_codecs = ("boolean-u8/v1", _DATE_CODEC, _TIMESTAMP_CODEC, _TIMESTAMPTZ_CODEC, _NUMERIC_CODEC, "date-ordinal-u32/v1", "uuid-bytes16/v1", *_INTEGER_WIDTHS) if typed else ("utf8-exact/v1",)
+            allowed_codecs = ("boolean-u8/v1", _DATE_CODEC, _TIMESTAMP_CODEC, _TIMESTAMPTZ_CODEC, _NUMERIC_CODEC, _JSONB_CODEC, "date-ordinal-u32/v1", "uuid-bytes16/v1", *_INTEGER_WIDTHS) if typed else ("utf8-exact/v1",)
             normalizer = ('pg-numeric-equality/v1' if codec == _NUMERIC_CODEC and
                           document['representation'] == 'cf1-packed-equality/v1' else 'identity/v1')
+            json_none_as_null = None
+            null_policy = 'sql-null/v1'
+            if codec == _JSONB_CODEC:
+                if document['null_policy'] not in _JSONB_NULL_POLICIES.values():
+                    raise InvalidContext()
+                json_none_as_null = document['null_policy'] == _JSONB_NULL_POLICIES[True]
+                null_policy = _JSONB_NULL_POLICIES[json_none_as_null]
             if ((document["schema"], document["normalizer"], document["null_policy"]) != (
-                    "cryptalis.context/v3" if prefix else "cryptalis.context/v2" if typed else "cryptalis.context/v1", normalizer, "sql-null/v1")
+                    "cryptalis.context/v3" if prefix else "cryptalis.context/v2" if typed else "cryptalis.context/v1", normalizer, null_policy)
                     or codec not in allowed_codecs):
                 raise InvalidContext()
             canonical = json.dumps(document, ensure_ascii=False, sort_keys=True, separators=(",", ":"), allow_nan=False).encode("utf8")
@@ -109,7 +122,7 @@ class FieldDescriptor:
             ids = tuple(UUID(document[name]) for name in ("domain_id", "table_id", "field_id"))
             if any(str(identity) != document[name] for identity, name in zip(ids, ("domain_id", "table_id", "field_id"))):
                 raise InvalidContext()
-            return cls(*ids, document["record_codec"], document["tenant_codec"], document["representation"], actual, codec, bounds)
+            return cls(*ids, document["record_codec"], document["tenant_codec"], document["representation"], actual, codec, bounds, json_none_as_null)
         except Exception:
             raise InvalidContext() from None
 
@@ -163,6 +176,11 @@ def _encode(value):
 
 
 def _encode_value(value, field):
+    if field.value_codec == _JSONB_CODEC:
+        from .._jsonb import JsonbValue
+        if type(value) is not JsonbValue or type(value.data) is not bytes or not 1 <= len(value.data) <= MAX_TEXT_BYTES:
+            raise InvalidValue()
+        return JsonbValue(value.data).data
     if field.value_codec == _NUMERIC_CODEC:
         from .._numeric import numeric_value
         return format(numeric_value(value), 'f').encode('ascii')
@@ -404,7 +422,10 @@ def open_value(frame: bytes | None, field: FieldDescriptor, tenant: UUID,
         raise RepresentationMismatch()
     if field.prefixed and not compare_digest(header[46:], _prefix_block(encoded, field, search)):
         raise RepresentationMismatch()
-    if field.value_codec == "boolean-u8/v1":
+    if field.value_codec == _JSONB_CODEC:
+        from .._jsonb import JsonbValue
+        value = JsonbValue(encoded)
+    elif field.value_codec == "boolean-u8/v1":
         if encoded not in (b"\x00", b"\x01"):
             raise InvalidValue()
         value = encoded == b"\x01"
