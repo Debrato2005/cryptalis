@@ -1,5 +1,7 @@
 """Require the fresh-credential wrapper and redact real connection failures."""
 import os
+from pathlib import Path
+import re
 import sys
 
 import psycopg
@@ -34,7 +36,21 @@ def pytest_runtest_makereport(item, call):
         seen.add(id(error))
         if isinstance(error, (psycopg.OperationalError, psycopg.InterfaceError, DBAPIError)):
             # Do not format tracebacks, chained driver messages, SQL, or locals.
-            report.longrepr = f"{item.nodeid}: {type(error).__name__}; database failure details suppressed."
+            state = getattr(getattr(error, 'orig', error), 'sqlstate', None)
+            state = state if type(state) is str and re.fullmatch('[0-9A-Z]{5}', state) else 'UNKNOWN'
+            location, frame = 'UNKNOWN', error.__traceback__
+            root = Path(__file__).resolve().parents[1]
+            while frame is not None:
+                try:
+                    path = Path(frame.tb_frame.f_code.co_filename).resolve().relative_to(root)
+                except ValueError:
+                    pass
+                else:
+                    if path.parts and path.parts[0] in ('src', 'tests', 'scripts') and path.suffix == '.py':
+                        location = f'{path.as_posix()}:{frame.tb_lineno}'
+                frame = frame.tb_next
+            report.longrepr = (f'{item.nodeid}: {type(error).__name__}; SQLSTATE={state}; '
+                               f'phase={report.when}; location={location}; database failure details suppressed.')
             report.sections = []
             return
         error = error.__cause__ or error.__context__

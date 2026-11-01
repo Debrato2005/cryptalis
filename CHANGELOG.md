@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.1.0a2.dev1 — development
+
+- Whole-document JSONB equality, IN and scoped uniqueness reuse full blind-index
+  terms, with lock/v17 reader admission and explicit leakage/domain review.
+- Nested numeric scale is ignored for search while payload bytes stay lossless.
+  Native JSONB bind typing, both NULL modes and provider-time input mutation
+  checks are retained through lifecycle operations.
+- SQLAlchemy DBAPI/connection failure reports retain validated SQLSTATE and repository location while
+  suppressing SQL, parameters, driver messages and credential diagnostics.
+- JSON path/containment search and production qualification remain open.
+
 ## 0.1.0a2.dev0 — development
 
 - Native JSONB literal client defaults retain omission/NULL behavior, Python

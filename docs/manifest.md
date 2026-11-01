@@ -28,7 +28,7 @@ Shared-join domains and arbitrary normalizers remain unadmitted.
 Boolean, signed integer, finite Date, UUID, naive/aware timestamp, finite numeric
 and native JSONB storage use pinned value codecs.
 Integer, date and admitted timestamp fields admit [`order`](compatibility.md#order-search) search only;
-Numeric fields admit equality, IN and scoped uniqueness with explicit equality
+Numeric and JSONB fields admit equality, IN and scoped uniqueness with explicit equality
 leakage acceptance and a search-domain review. Boolean and UUID fields admit no search.
 The compiler rejects unsupported types, server-generated keys, small-domain searchable fields, missing tenant scope, and unsupported writers at plan time.
 Searchable small domains remain unsafe because enumeration can label their equality classes. No invented cardinality threshold supplies evidence.
@@ -95,9 +95,13 @@ JSONB literal client defaults select `cryptalis.lock/v16` and additionally requi
 `pg-jsonb-default/v1`. Their `application_default` string pins built-in literal
 types, container structure, dictionary order and keys, and exact float/string
 spelling. No-default JSONB plans retain v15 and their existing bytes.
-Mixed v15/v16 plans retain every earlier reader and the internal prefix restriction,
+Mixed v15/v16/v17 plans retain every earlier reader and the internal prefix restriction,
 including retained native pattern-index obligations after prefix is disabled.
 Ordinary JSONB storage alone does not require the synthetic prefix scope.
+Whole-document JSONB equality selects `cryptalis.lock/v17` and additionally
+requires `pg-jsonb-equality/v1`. Default-bearing fields retain their v16 default
+reader; mixed prefix fields retain their internal restriction. Storage-only
+v15/v16 plans keep their earlier format and bytes.
 Older operational readers refuse the embedded v5 lock before effects.
 The [VARCHAR decision](history/decisions-2026-10.md#native-varchar-text-admission-2026-10-22) defines assignment and reader boundaries.
 Its exact top-level members are
@@ -171,8 +175,9 @@ It ignores scale and signed zero only in the search term; authenticated payloads
 retain native fractional scale. Storage-only descriptors retain `identity/v1`
 and their original bytes. [Numeric admission](compatibility.md#numeric-storage)
 defines exact input bounds and failures.
-Native JSONB uses `pg-jsonb-text/v1`, context/v2, `identity/v1` and storage-only
-CF1. Its null policy is `jsonb-none-as-json-null/v1` for standard
+Native JSONB uses `pg-jsonb-text/v1` and context/v2. Storage-only CF1 keeps
+`identity/v1`; packed whole-document equality uses `pg-jsonb-equality/v1`.
+Its null policy is `jsonb-none-as-json-null/v1` for standard
 `JSONB(none_as_null=False)`, or `jsonb-none-as-sql-null/v1` for True. The digest
 authenticates this mapping choice; attachment refuses a changed flag. SQL NULL
 has no frame. JSON null is a non-NULL authenticated canonical UTF-8 document.
@@ -181,6 +186,8 @@ descriptor policy. Earlier codecs retain `sql-null/v1` and their original bytes.
 Client defaults are public lock metadata, distinct from authenticated stored
 documents. Their v16 reader preserves the native Python literal until refresh;
 generated defaults remain unadmitted.
+Equality removes fractional numeric scale only from search bytes at every
+nesting level. Authenticated payloads retain the original canonical document.
 [JSONB admission](compatibility.md#jsonb-storage) defines inputs, hooks and limits.
 Signed integer storage also uses context/v2. Its pinned codecs encode int2/int4/int8
 as 2/4/8 signed big-endian bytes. Current Date plans use `pg-date-days-be/v1`
@@ -243,11 +250,11 @@ Prefix and order cannot share a field representation.
 The prototype pins `cf1-packed-prefix/v1`, `cryptalis.context/v3` and the
 `prefix_lengths` object. Its text codec, normalizer and NULL policy remain
 `utf8-exact/v1`, `identity/v1` and `sql-null/v1`. Active prefix plans select
-lock/v14, v15 with JSONB, or v16 with JSONB client defaults, and require `pg-text-prefix/v1`;
+lock/v14, v15 with JSONB, or v16 with JSONB client defaults or v17 with JSONB equality, and require `pg-text-prefix/v1`;
 earlier descriptors and lock meanings stay unchanged.
 Original native `text_pattern_ops` or `varchar_pattern_ops` indexes on protected
 fields additionally require `pg-text-pattern-index/v1`. Their source facts and
-restoration obligations retain v14 (v15 with JSONB, v16 with JSONB client defaults) and that reader after prefix is disabled.
+restoration obligations retain v14 (v15 with JSONB, v16 with JSONB client defaults, v17 with JSONB equality) and that reader after prefix is disabled.
 Unrelated indexes on unprotected fields do not select this version.
 
 Ordinary planning, operational artifact use, attachment and cryptographic use

@@ -30,7 +30,7 @@ def _string(value):
         raise InvalidValue() from None
 
 
-def _canonical(value):
+def _canonical(value, *, equality=False):
     # Iteration adds no recursion limit below the native stdlib JSON parser.
     output, size, pending = [], 0, [(False, value)]
     while pending:
@@ -44,7 +44,10 @@ def _canonical(value):
         elif type(part) is str:
             encoded = _string(part)
         elif type(part) is Decimal:
-            encoded = format(numeric_value(part), 'f').encode('ascii')
+            number = format(numeric_value(part), 'f')
+            if equality and '.' in number:
+                number = number.rstrip('0').rstrip('.')
+            encoded = number.encode('ascii')
         elif type(part) is list:
             encoded = b'['
             pending.append((True, b']'))
@@ -92,6 +95,12 @@ class JsonbValue:
     def to_python(self):
         # Match the admitted native JSON loader only at the application edge.
         return json.loads(self.data)
+
+
+def jsonb_search_bytes(encoded: bytes) -> bytes:
+    """Preserve native structure while ignoring only fractional numeric scale."""
+    value = JsonbValue(encoded)
+    return _canonical(_parse(value.data.decode('utf8')), equality=True)
 
 
 def jsonb_value(value):

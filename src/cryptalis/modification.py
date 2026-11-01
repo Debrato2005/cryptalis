@@ -57,7 +57,7 @@ def _target_lock(source_lock, manifest, *, writers, search_reviews):
                     permitted = (set(old['queries']) in profiles and set(new['queries']) in profiles
                                  and ('unique' in old['queries']) == ('unique' in new['queries']))
                 else:
-                    permitted = (orderable or field['source']['type'] == 'numeric') and (
+                    permitted = (orderable or field['source']['type'] in ('numeric', 'jsonb')) and (
                         old['queries'], new['queries']) in (([], search), (search, []))
                 if not permitted or new['accept_leakage'] != new['queries']:
                     raise ValueError
@@ -78,7 +78,9 @@ def _target_lock(source_lock, manifest, *, writers, search_reviews):
                     descriptor['field_id'], descriptor['record_codec'], descriptor['tenant_codec'],
                     field['representation'], descriptor.get('value_codec', descriptor.get('text_codec')),
                     prefix_lengths=(new['prefix_lengths']['min'], new['prefix_lengths']['max'])
-                                   if 'prefix_lengths' in new else None)
+                                   if 'prefix_lengths' in new else None,
+                    json_none_as_null=(descriptor['null_policy'] == compiler._JSONB_NULL_POLICIES[True])
+                                      if descriptor.get('value_codec') == compiler._JSONB_CODEC else None)
                 field['descriptor_digest'] = compiler._digest(field['descriptor'])
                 changed += 1
         if not changed or expected != desired:
