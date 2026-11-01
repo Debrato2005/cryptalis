@@ -112,3 +112,76 @@ Recovery children deny Cryptalis imports with the wheel still installed; no
 package-uninstalled environment or distinct parameterized UPDATE-after-restore
 journey follows. The separate old VARCHAR cause and all seven production gates
 remain UNKNOWN. The follow-up changes only documentation and retained evidence.
+
+## First-contact, admission and real-application continuation: 2026-11-02
+
+A run from a fresh wheel using only public documentation found that a new developer
+could not restart: the only built-in provider lost custody on exit. `Project` tests had
+hidden this by sharing one provider object through a simulated restart. The same run
+found the README omitted `hide_parameters=True`, refusals named no field, and nothing
+said the plaintext role needs its own grants. `examples/quickstart.py` now exercises
+this route in separate operating-system processes.
+
+The first local regression at that point retains `Verification.SourceChanged`, because
+`scripts/ci_qualification.py` was edited while the wrapper ran. Its 172 passes are not a
+valid binding. The complete hosted run at `059f886` is the evidence for that commit.
+
+A test written for a performance shortcut exposed an older defect. A statement replaced
+by a host `before_execute` listener passed final SELECT admission and reached PostgreSQL,
+which refused it with SQLSTATE 42883. A clean build of `09be1f6` behaves the same way, so
+the shortcut did not cause it. Direct admission refused the statement while admission
+inside the operation accepted it: compiling a protected predicate had registered its nodes
+as generated, and final admission ran after compilation. [Status](../status.md#final-admission-no-longer-trusts-compilation)
+owns the current result.
+
+Review of the first shortcut draft also found two flaws before any test run. Its memo keyed
+on `id(node)` without keeping the node alive, so a freed temporary could alias a live node,
+and `None is None` could have skipped admission for a statement with no admitted SELECT.
+Both were corrected, and the remaining hazard is documented where the memo lives.
+
+The first Smolink pair, taken before the last admission memo, is retained only as the
+post-rotation storage observation in `superseded/`. Its `native.json` predecessor ran
+beside a test regression and is not used. The final pair alternates modes on two clusters.
+
+Upsert first lost native results: re-entering the bulk route returned a null result
+instead of a `CursorResult`. A native oracle exposed this, so `.values(...)` now stays in
+SQLAlchemy's `orm` strategy. The same oracle corrected a wrong test assumption: native
+INSERT reports `rowcount` -1 unless `preserve_rowcount=True`, which is now admitted.
+
+Mutation evidence for the seven upsert safety checks ran in an isolated copy. The first
+attempt printed SURVIVED for all seven, but the wrapper had crashed because the copy was
+not a Git repository, and no test ran. That output is not evidence. The corrected script
+reads outcomes from each receipt and reports NOT RUN when no call executed. All seven
+mutants are then caught, each by the test naming it, with 20 calls per run. Earlier
+mutation lessons held: the working tree was never modified.
+
+Hosted CI then caught what the local selection could not. `scripts/benchmark_admission.py`
+builds a stand-in attachment, and caching the protected lineage broke it with
+`AttributeError`. That step runs before the complete suite, so the source job at `bd223c1`
+and its successor stopped there and ran no source tests. Those runs are not evidence
+about the code either way. The local verification chain now runs the exact CI invocation
+first. Publishing the status text through an unquoted shell heredoc also deleted its
+backticked terms at `423f96f`, which a later commit restored.
+
+The final audit removed a fresh key-file write on every start and an impossible exception
+case. It also tried to remove the lineage rebuild counter, on the claim that bindings only
+change during validation, which came from searching one module. Doctor also adds bindings,
+so the cached set stayed empty there and `protected()` answered False: unsupported samples
+reached custody and the database. Five existing tests failed, nothing was published, and
+the counter returned. A cached security answer must not be able to fail open.
+
+The corrected code passes locally on one wheel, including the exact CI benchmark step, then
+both hosted jobs pass at `d0738dc` in run 41341107415.
+
+Rotation took about four times as long as protection. A profile showed `open_value` running
+300,000 times for 20,000 frames, about 15 passes. Reading the code showed each resumable step
+re-verifies in its own transaction, so those passes stayed. Measured one change at a time
+against a pinned wheel on fresh data: a generator-free `tuple_bytes` saves about 5%, the
+public salt memo about 3–5% more and the search-key memo reaches 13–14%. Reading the batch
+limits once, outside a per-frame loop that reparsed the whole plan, reaches about 33%.
+Counting JSON parses per operation then found no similar loop elsewhere.
+Every earlier latency figure came from narrow tables, so a diagnostic then varied the field
+count and found cost growing about 0.15 ms per protected field read, which qualifies the
+concurrency 1 result. Protected field counts of 2, 5, 10, 20 and 40 give added p95 of 2.03,
+2.44, 3.02, 4.60 and 7.64 ms, with one equality read of 800 samples per cell on one host. Two mutants of the
+search-key memo are caught: one by a new test, the other by the frozen independent vectors.

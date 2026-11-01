@@ -293,7 +293,7 @@ def test_bulk_unadmitted_shapes_and_contexts_refuse_before_driver():
             with factory(tenant_id=TENANT) as session:
                 statements = [insert(app.Customer).returning(literal('computed').label('renamed')), insert(app.table),
                     insert(app.Customer).values(name='statement value'),
-                    pg_insert(app.Customer).on_conflict_do_nothing(),
+                    pg_insert(app.Customer).on_conflict_do_update(constraint='customer_pkey', set_={'label': 'x'}),
                     insert(app.Customer).from_select(['id', 'tenant_id', 'name', 'label'],
                         select(literal(UUID(int=1000)), literal(TENANT), literal('expression'), literal('label'))),
                     insert(app.Customer).values(name=bindparam('value', callable_=lambda: 'callable value'))]

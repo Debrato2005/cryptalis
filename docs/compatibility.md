@@ -178,6 +178,8 @@ parent/child transaction evidence and remaining qualification work.
 | Signed integer storage/read/write and SQL NULL | SUPPORTED | Exact int2/int4/int8 mappings and width-bound Python ints, literal client defaults, native failure/transaction behavior and typed fixed-width CF1. Storage-only unless the field declares [`order`](#order-search); the fixed authentication overhead is published in the local cost profile |
 | Mapped dictionary INSERT without RETURNING | SUPPORTED | Attached sync/async `Session.execute(insert(Model), list[dict])`, explicit typed IDs and tenant scope, copied attribute dictionaries, native NULL/grouping, autoflush, uniqueness and transaction behavior. Other bulk routes remain unadmitted |
 | Mapped dictionary INSERT with RETURNING | SUPPORTED | Native direct or explicitly named column tuples/scalars and inserted mapped entities, including public-only columns. Preserve result keys/types, grouping, paging and optional input ordering. Entity results retain identity-map loading and refresh. Authenticate each protected output against its own exact prepared input. Computed expression/alias, loader-option and caller return_defaults forms remain unadmitted |
+| Mapped INSERT `.values(...)` | SUPPORTED, bounded | One dictionary or a list of plain values through the sealed dictionary route, with its explicit ID and tenant requirements, returning a native `CursorResult`. An explicit None stays SQL NULL. Execute-time parameters, SQL expressions and binds without a value refuse |
+| `ON CONFLICT DO NOTHING` and PK `DO UPDATE` | SUPPORTED, [bounded](#bounded-upsert) | PostgreSQL `insert()` with `.values(...)` or dictionaries, without RETURNING. `DO UPDATE` needs a fixed-scope table. Protected unique targets use their search index |
 | Scoped mapped dictionary UPDATE | SUPPORTED | Attached sync/async admitted storage types, typed IDs, nonempty list of dictionaries and synchronize_session=False. Tenant-column tables require explicit tenant equality. Declared single-tenant tables use the fixed table UUID and no caller WHERE. Preserve native omission/NULL, grouping, repeated IDs, row-count checks and transactions. Core and RETURNING routes remain unadmitted |
 | Single-record mapped UPDATE | SUPPORTED | Attached sync/async `Session.execute`, exact record and tenant equality (or declared fixed scope), and `synchronize_session=False`. Assign using one nonempty external dictionary with native physical column keys, or ordinary scalar/named-bind `.values(...)` assignments with optional execute-time parameters. Exact record/tenant predicates also accept ordinary native binds; the [parameterized contract](#parameterized-single-record-update) defines names and types. Native mapped keyword and direct-column dictionary forms are admitted. Without RETURNING, retain native affected-row counts and a result without rows. Optional direct or explicitly named returned columns/scalars/tuples and mapped entities retain native result keys, types, identity behavior and transactions. Authenticate protected outputs; changed protected values must match the exact newly prepared frame. SQL expressions, ambiguous bind names, incompatible bind coercions, ordered assignments, Core, computed outputs/aliases, identity/tenant assignment, automatic/fetch synchronization and executemany RETURNING remain unadmitted |
 | Scoped mapped single-record DELETE | SUPPORTED | Attached sync/async execute, exact typed record equality and either tenant equality or explicit fixed table-UUID scope. No external parameters; require synchronize_session=False. Without RETURNING, preserve native row counts. Direct or natively labeled column scalar/tuple and mapped-entity RETURNING preserves native keys, types, identity state and transactions; protected values authenticate against the requested row, field and tenant. Unsupported custom AST classes refuse before execution |
@@ -217,6 +219,33 @@ The ordered input ledger checks each emitted group and complete consumption.
 The [bulk UPDATE checkpoint](history/implementation-2026-10.md#scoped-mapped-bulk-update-checkpoint-2026-10-23) owns the earlier TEXT evidence.
 The [VARCHAR checkpoint](history/implementation-2026-10.md#native-varchar-mapped-update-checkpoint-2026-10-23)
 adds finite VARCHAR targets and records native plan behavior.
+
+### Bounded upsert
+
+A CF1 frame authenticates one record, so `ON CONFLICT` is admitted only where every
+stored frame stays bound to its own record.
+
+`DO NOTHING` stores no frame on conflict, so it accepts no target, or `index_elements`
+naming public columns, the primary key or a protected field declared `unique`. PostgreSQL
+infers that field's search-term index, so uniqueness is by exact value within scope.
+
+`DO UPDATE` stores the proposed frame on the conflicting row, so that row must be the
+same record. `index_elements` must be exactly the primary key of an explicitly
+single-tenant table. Each protected assignment must take its own `excluded` column.
+Public columns can take `excluded` values or expressions without binds, such as `func.now()`.
+
+| Refused before the driver | Why |
+|---|---|
+| `DO UPDATE` on a unique value | The conflicting row is another record, which would then fail authentication |
+| `DO UPDATE` on a tenant-column table | A shared primary key can conflict with another tenant's row |
+| A literal or another column's value for a protected column | Its frame is not sealed for that record and field |
+| A storage-only field as target | It has no search term and no unique index |
+| Bind values, `where`, `constraint`, `index_where`, RETURNING | Outside the checked shape. Each needs separate admission |
+
+Native `IntegrityError` and SQLSTATE values are preserved, and an upsert updates no
+identity-map object, as in native SQLAlchemy. INSERT reports a real `rowcount` only with
+`execution_options={"preserve_rowcount": True}`, natively too, which is how a caller
+learns whether `DO NOTHING` inserted. Omitted public columns take their database defaults.
 
 ### Parameterized single-record UPDATE
 
@@ -387,7 +416,8 @@ The compiler rejects a constraint or mapping it cannot preserve exactly. Generic
 A searchable small domain fails planning because enumeration can label equality classes. No arbitrary size threshold substitutes for leakage evidence.
 
 The attached driver boundary requires its capture callback first and unique.
-Register unchanged engine-instance cursor observers after attachment.
+Register unchanged engine-instance cursor observers after attachment. A host
+`before_execute` listener that replaces an admitted SELECT refuses before the driver.
 Preexisting, class-level and connection-local cursor hooks refuse. Changes to
 captured SQL, binary bytes or typed primitive/identity binds also refuse before
 the driver. Native ORM RETURNING pages for unprotected server defaults retain
@@ -780,7 +810,11 @@ The six-gate grouping and conservative unadmitted grammar assumptions are record
 
 ## Performance targets and recorded costs
 
-The [current `09c635a` observation](status.md#current-performance-boundary) fails
+[Real-application results](status.md#real-application-equality-search) meet the point,
+equality and IN-20 targets at concurrency 1 on a table reading one protected field, and miss
+them at higher concurrency in one process. Cost grows about 0.15 ms per protected field read,
+so point and equality reads miss 3 ms from about 10 protected fields. Indexed-column storage measures 2.017× after compaction. The earlier
+[`09c635a` observation](status.md#current-performance-boundary) fails
 all six scalar/tuple and full-entity read-latency targets in the warm 10k profile.
 Indexed-column storage meets 2× at 1.52483×. Diagnostic traversal measurements and
 a discarded candidate are retained; they do not qualify performance or explain

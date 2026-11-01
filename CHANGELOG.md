@@ -2,6 +2,24 @@
 
 ## 0.1.0a2.dev2 — development
 
+- Security: final SELECT admission no longer accepts a statement replaced after
+  admission, including one that would send a plaintext comparison value. This also
+  affects `0.1.0a1`; exploiting it needs code inside the host process.
+- `insert().values(...)` is admitted with its native result, and PostgreSQL
+  `ON CONFLICT DO NOTHING` and primary-key `DO UPDATE` are admitted within the
+  [bounded upsert](docs/compatibility.md#bounded-upsert) contract.
+- Protected reads repeat less work, with every check retained: warm p50 is about
+  20–27% lower in a local diagnostic.
+- Key rotation is about 33% faster in a local diagnostic, with every verification
+  pass retained. No ciphertext or lock format changes.
+- `examples/quickstart.py` runs the complete lifecycle from the installed package,
+  in separate processes, ending with a restart that cannot import Cryptalis.
+- `DevelopmentKeyProvider(path)` keeps synthetic-data custody in an owner-only key
+  file, so a new developer can restart without running an external provider.
+- `UnsupportedProtectedOperation` names the protected fields in the refused
+  statement and what each declares, without values. `Project.decrypt` explains a
+  reused runtime role before planning; `PolicyMismatch` mentions the restart rule.
+
 - Single-record mapped UPDATE accepts reusable native binds for the record,
   tenant and assigned values, including bind defaults and execute-time overrides.
 - Ordinary literal and named SET values can share a statement. Existing

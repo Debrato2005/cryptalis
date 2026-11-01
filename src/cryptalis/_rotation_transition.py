@@ -336,6 +336,7 @@ def _verify_prefix(c,p,state,prepared,*,keys,target_keys):
 
 
 def _chunk(c,p,op,state,prepared,*,keys,target_keys):
+    limits=p.document['batch_limits']  # Reading this per frame reparsed the whole plan.
     for model in p.source.document['lock']['models']:
         target_model = _target_model(p, model)
         progress=state['models'][model['table_id']]
@@ -368,8 +369,7 @@ def _chunk(c,p,op,state,prepared,*,keys,target_keys):
                     output[row[0]].append(transformed)
                 else:
                     transformed=crypto(lambda source,target: transform(((row[0],frame),),descriptor,tenant,
-                        source=source,target=target,max_rows=p.document['batch_limits']['max_rows'],
-                        max_bytes=p.document['batch_limits']['max_bytes']))
+                        source=source,target=target,max_rows=limits['max_rows'],max_bytes=limits['max_bytes']))
                     output[row[0]].append(transformed[0][1])
         statement=f'UPDATE {m._table(c,model)} SET '+','.join(
             m._quote(c,_shadow(f))+'=%s' for f in model['fields'])+f' WHERE {record}=%s'

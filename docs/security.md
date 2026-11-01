@@ -285,6 +285,11 @@ It consumes one capture per dispatch, including each native RETURNING page.
 An after-cursor check also requires completion by the guarded raw dispatch
 before SQLAlchemy constructs results or reports unit-of-work success. A dialect
 callback cannot return `True` to skip the guard and silently drop an INSERT.
+Final SELECT admission reuses the check made before compilation only for that
+exact statement object. Any other statement, such as one replaced by a host
+`before_execute` listener, is judged without the generated-node exemptions that
+compiling it registered, so a statement cannot vouch for itself. It refuses before
+the driver, which keeps a plaintext comparison value away from the server.
 SQL and named-key comparison cannot invoke a supplied string subclass's
 equality override. Bulk INSERT also retains its independent sealed-batch checks.
 For psycopg Binary objects, accept only exact `bytes`, `bytearray` or
@@ -1255,6 +1260,13 @@ credential distribution, backup custody and independent review remain UNKNOWN.
 
 `cryptalis.crypto` exports `FieldDescriptor`, `seal_text`, `open_text`, `KeyProvider`,
 `DevelopmentKeyProvider`, `create_root`, `KeyContext`, `KeyPolicy`, and `Keyring`.
+Per-record payload keys are derived for every frame. A per-field search key is derived once
+per root and held on that root's in-memory material, so it cannot outlive it, and each use
+still checks the root's expiry. The HKDF salt comes from public context alone.
+`DevelopmentKeyProvider()` holds an ephemeral KEK. `DevelopmentKeyProvider(path)` keeps
+its provider identity and KEK in one atomically created, owner-only file and refuses
+a symlink, a wrong owner, group or other access, or a wrong length. That file can
+unwrap every root it wrapped, so it is synthetic-data convenience, not custody.
 `FieldDescriptor.from_compiled(document, digest)` consumes one trusted compiler descriptor.
 A matching digest checks structure. It does not authenticate the deployment policy.
 Seal and open take the descriptor, expected tenant and record, and prepared keys.

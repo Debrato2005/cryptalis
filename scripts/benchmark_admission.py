@@ -40,7 +40,10 @@ def main():
     for count in (1, 8, 32):
         table = Table("customer", MetaData(),
                       *(Column(f"field_{index}", Text) for index in range(count + 1)))
-        owner = SimpleNamespace(bindings=[SimpleNamespace(column=column) for column in list(table.c)[1:]])
+        columns = list(table.c)[1:]
+        owner = SimpleNamespace(bindings=[SimpleNamespace(column=column) for column in columns],
+                                _lineage=frozenset(part for column in columns for part in column.proxy_set),
+                                _lineage_bindings=len(columns))
         alias = table.alias()
         other = Table("unrelated", MetaData(), Column("field_1", Text))
         checks = ((table.c.field_0, False), (other.c.field_1, False),

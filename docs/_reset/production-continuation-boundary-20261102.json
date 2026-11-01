@@ -1,0 +1,166 @@
+{
+ "format": "cryptalis.production-continuation/v1",
+ "base_revision": "09be1f639d90f8416d518ea05afca61a83669095",
+ "scope": "First-contact lifecycle, final-admission repair, read-path work, bounded upsert and real-application email search; bounded development evidence, no production qualification",
+ "objectives": [
+  "OBJ-DX-03",
+  "OBJ-DX-05",
+  "OBJ-QUERY-04",
+  "OBJ-SEC-04",
+  "OBJ-PERF-01",
+  "OBJ-PERF-02",
+  "OBJ-PERF-03",
+  "OBJ-PERF-04"
+ ],
+ "measured_revision": "bd223c1",
+ "measured_wheel_sha256": "ccebae5628e991eb4e8faf5e44e049a3c97aca3a41ff67f3cbb73ada72a1c3ec",
+ "measured_wheel_clean_rebuild_equal": true,
+ "final_artifacts": {
+  "wheel_sha256": "0a79faf767a03fc9c2301f4a8d4594df448ab5e0a85e6889f3a417497ab7a3b0",
+  "sdist_sha256": "435a5da06cef96afc4e3aface99b827e4f233fc3360ceab9a86d1f5e21f6dee7",
+  "repeat_build_equal": true
+ },
+ "build_provenance": "Recorded worktree bytes for final artifacts; not an independent rebuild",
+ "application_evidence": {
+  "repository": "Debrato2005/smolink",
+  "branch": "demo/cryptalis-email-search-20261102",
+  "revision": "f0cae5c62464ec7942c66189a7a5df60860f0e36",
+  "backend_files_changed": 0,
+  "measured_evidence_revision": "43a6622b48c8460257358c118c86b24597cf5255"
+ },
+ "checks": {
+  "measured_source": {
+   "test_calls": {
+    "passed": 1516,
+    "skipped": 17
+   },
+   "subtest_calls": {
+    "passed": 18
+   },
+   "setup": {
+    "passed": 1533
+   },
+   "teardown": {
+    "passed": 1533
+   },
+   "collection": {
+    "skipped": 2
+   },
+   "selected_items": 1533
+  },
+  "final_source": {
+   "test_calls": {
+    "passed": 3091,
+    "skipped": 25
+   },
+   "subtest_calls": {
+    "passed": 18
+   },
+   "setup": {
+    "passed": 3116,
+    "skipped": 38
+   },
+   "teardown": {
+    "passed": 3154
+   },
+   "collection": {
+    "skipped": 7
+   },
+   "selected_items": 3154
+  },
+  "final_source_stable": true,
+  "final_runtime_sha256": "1c7ddfbe2946a064f98af7efc668221a74b5a7233570fcde57e16849c2673e6b",
+  "installed_wheel": {
+   "python_3_12": {
+    "passed": 35
+   },
+   "python_3_13": {
+    "passed": 35
+   }
+  },
+  "upsert_mutants": {
+   "total": 7,
+   "caught": 7,
+   "calls_per_run": 20
+  },
+  "hosted_059f886": "run 41336500207, both jobs pass",
+  "final_wheel_application_journey": "Complete Smolink journey passes, ending after a real uninstall; latency was not remeasured on this wheel",
+  "hosted_d0738dc": "run 41341107415, both jobs pass; source reports 4091 passed, 77 skipped, 18 subtests",
+  "search_key_memo_mutants": {
+   "total": 2,
+   "caught": 2
+  },
+  "rotation": {
+   "diagnostic_seconds": {
+    "payload": [
+     8.4,
+     5.7
+    ],
+    "search": [
+     8.9,
+     6.1
+    ]
+   },
+   "diagnostic_rounds": 3,
+   "application_journey_ms": {
+    "payload": [
+     8197,
+     5486
+    ],
+    "search": [
+     8434,
+     5712
+    ]
+   },
+   "application_observations": "single run on each wheel"
+  },
+  "field_count_scaling": {
+   "workload": "warm sync equality read of a full entity, 2000 rows, 800 samples, one run per cell, final wheel source",
+   "added_p95_ms_by_protected_fields": {
+    "2": 2.03,
+    "5": 2.44,
+    "10": 3.02,
+    "20": 4.6,
+    "40": 7.64
+   },
+   "profile_shares_at_40_fields": {
+    "compile_projection": "about 40%",
+    "admission": "about 24%",
+    "fingerprint": "about 7%",
+    "open_value": "about 6%"
+   }
+  },
+  "hosted_254d334": "run 41353786983, both jobs pass; source reports 4093 passed, 77 skipped, 18 subtests"
+ },
+ "retained_failures": [
+  "Local regression at 059f886 reported Verification.SourceChanged because scripts/ci_qualification.py changed during the run; its 172 passes are not a valid binding.",
+  "First mutation attempt printed SURVIVED for all seven mutants, but the wrapper crashed before any test ran; that output is not evidence.",
+  "Broad run retained as retained-failure-before-contract-update.json: one refusal test failed because insert().values was deliberately admitted; it was replaced with a stronger independent ciphertext check.",
+  "Equality at four worker processes misses 3 ms at 3.06 ms; every higher-concurrency single-process target misses; indexed storage misses 2x at 2.017x compacted and 4.24x after rotations.",
+  "Hosted source jobs at bd223c1 and 423f96f stopped at the lineage benchmark, which a cached attribute had broken; those jobs ran no source tests.",
+  "An audit attempt to remove the lineage rebuild counter made protected() answer False on Doctor paths; five tests failed, nothing was published and the change was reverted. That receipt was overwritten by the corrected rerun; history records it."
+ ],
+ "limits": [
+  "Single shared workstation with uncontrolled load and warm development-key custody.",
+  "Not a provider, cold-path, remote-network, saturation or production pause measurement.",
+  "New-account registration needs mail delivery and was not exercised.",
+  "Tenant-column DO UPDATE, upsert RETURNING and non-excluded protected assignments remain unadmitted.",
+  "The final-admission defect also affects frozen v0.1.0a1, which is unchanged.",
+  "Latency targets met at concurrency 1 apply to reads of one protected field; cost grows with protected fields read."
+ ],
+ "receipt_archive": {
+  "path": "production-continuation-receipts-20261102.tar.gz",
+  "sha256": "216284324c30eac0495298dc2e126f7363e9e4426f385ab60df91d926bba9dac",
+  "members": 5
+ },
+ "gates": {
+  "G-ADAPTER": "UNKNOWN",
+  "G-CRYPTO": "UNKNOWN",
+  "G-QUERY": "UNKNOWN",
+  "G-LIFECYCLE": "UNKNOWN",
+  "G-PROVIDER": "UNKNOWN",
+  "G-POLICY": "UNKNOWN",
+  "G-RELEASE": "UNKNOWN"
+ },
+ "measurement_binding": "Latency and storage figures belong to the measured wheel at bd223c1, not the final wheel"
+}

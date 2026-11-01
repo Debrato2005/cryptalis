@@ -70,18 +70,20 @@ def requires_prefix_scope(lock):
     return False
 
 
+def plan_requires_prefix(document):
+    current = document
+    while type(current) is dict:
+        if requires_prefix_scope(current) or any(
+                requires_prefix_scope(current.get(name)) for name in ('lock', 'target_lock', 'profile_source_lock')):
+            return True
+        current = current.get('source_plan')
+    return False
+
+
 def prefix_plan_scope(document):
     """Keep saved preparation/activation artifacts within synthetic scope."""
-    if not _PREFIX_QUALIFICATION.get():
-        current = document
-        while type(current) is dict:
-            if requires_prefix_scope(current):
-                require_prefix_qualification()
-            for name in ('lock', 'target_lock', 'profile_source_lock'):
-                lock = current.get(name)
-                if requires_prefix_scope(lock):
-                    require_prefix_qualification()
-            current = current.get('source_plan')
+    if not _PREFIX_QUALIFICATION.get() and plan_requires_prefix(document):
+        require_prefix_qualification()
     return document
 
 
