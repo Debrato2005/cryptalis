@@ -12,6 +12,8 @@ records unfinished work. Safe refusal does not make an unsupported feature compl
 
 ## Start here
 
+- [Install the preview](docs/installation.md): normal wheel installation, integration and removal.
+- [Changelog](CHANGELOG.md): unreleased candidate version and limits.
 - [Documentation map](docs/README.md): routes and one owner for each topic.
 - [Architecture](docs/architecture/README.md): components and data flow.
 - [Local development](docs/local-development.md): install, test and reproduce CI.
@@ -78,7 +80,7 @@ service checks does not qualify production identity, backup custody or destructi
 
 ## Develop from this checkout
 
-Use Python 3.12+ and uv. From the repository root:
+Use Python 3.12 or 3.13 and uv. From the repository root:
 
 ```console
 uv sync --frozen --all-extras

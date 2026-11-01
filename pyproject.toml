@@ -1,17 +1,32 @@
 [project]
 name = "cryptalis"
-version = "0.1.0"
+version = "0.1.0a1"
 description = "Manifest-first searchable encryption for PostgreSQL applications"
 readme = "README.md"
 license = "MIT"
 license-files = ["LICENSE"]
-requires-python = ">=3.12"
+requires-python = ">=3.12,<3.14"
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Database",
+    "Topic :: Security :: Cryptography",
+]
 dependencies = [
     "cryptography==50.0.2",
     "greenlet==3.5.6",
     "SQLAlchemy==2.1.3",
     "psycopg[binary]==3.3.6",
 ]
+
+[project.urls]
+Homepage = "https://github.com/Debrato2005/cryptalis"
+Documentation = "https://github.com/Debrato2005/cryptalis/blob/main/docs/README.md"
+Repository = "https://github.com/Debrato2005/cryptalis"
+Issues = "https://github.com/Debrato2005/cryptalis/issues"
 
 [project.scripts]
 cryptalis = "cryptalis.cli:main"

@@ -65,6 +65,12 @@ gates and independent review evidence remain [UNKNOWN](status.md#missing-evidenc
 
 ## Comprehensive first public release: 2026-10-23
 
+The [2026-11-01 preview instruction](preview.md) adds an internal installed-library
+and fresh-clone application checkpoint before further production work. Prepare
+artifacts and a draft release, freeze the demonstrated revisions, then continue
+the full objective ledger separately. It does not authorize a public preview
+release or a package-index upload and does not change the policy below.
+
 Target one comprehensive, production-grade first public release covering the full
 SRS and all 34 product objectives. Internal checkpoints and release candidates
 support engineering progress. A restricted beta, MVP or partial public product

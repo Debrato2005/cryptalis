@@ -20,6 +20,11 @@ Reuse PostgreSQL, SQLAlchemy, library crypto, providers, and the existing deploy
 
 ## Current implementation priority
 
+The [installed-library preview](preview.md) is frozen with a fresh Smolink clone
+and matched costs. [Status](status.md) records the source-bound results and missed
+targets. Continue the full production critical path on a separate development
+branch; broader JSON/text work was not a prerequisite for the checkpoint.
+
 The baseline slices below are dependency and acceptance contracts, not a claim
 that implementation starts at slice 1 again. The current code already has bounded
 implementations of all seven. Continue from the [objective ledger](BUILD_CHECKLIST.md#next-critical-path)

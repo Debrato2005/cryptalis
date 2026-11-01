@@ -4,7 +4,72 @@ Cryptalis implements a bounded research prototype. **No production release or co
 This page owns current verification and release gates; the [34-objective ledger](BUILD_CHECKLIST.md) owns remaining work.
 Use the [documentation map](README.md) to find contracts and procedures.
 
-**Latest complete hosted pass: `4ae1b76`.** Both jobs in
+## Installed-library preview preparation
+
+**Frozen library: `v0.1.0a1` at `655d522`.** Both jobs in
+[run 41280665577](https://github.com/Debrato2005/cryptalis/actions/runs/41280665577)
+pass at PR merge `ac6b86b` (parents `0b4933f` and `655d522`). All 323 Python
+files across 18 test inventories and all 52 build inputs independently match
+the real preview head. Source passes 3,953 calls plus 18 subtests; 25 call, 41
+setup and nine collection skips remain explicit. Seventeen installed receipts
+pass 1,173 calls, with one unavailable previous-v14 JSONB reader control skipped.
+All 24 release steps pass. Hosted wheel/sdist exactly match local artifacts.
+[Exact hosted boundary](_reset/preview-hosted-boundary-20261101.json) and
+[retained receipts](_reset/preview-hosted-receipts-20261101.tar.gz).
+
+The separate Smolink clone is frozen at
+[`269aed4`](https://github.com/Debrato2005/smolink/tree/269aed4bcfcbbf40ffea444f2e2a748013c862d4),
+tag `cryptalis-demo-0.1.0a1-20261101-final`, with measured code at `2a66223`.
+Original backend files, models, queries and route handlers are unchanged.
+The installed wheel and real PostgreSQL/Redis/TLS OpenBao support actual Swagger
+POST/201, independent CF1 storage observation, current edits, wrapping/payload
+rotation, source-stopped fresh restore, latest-value decrypt-back/removal and
+another environment without Cryptalis serving the original API. Storage-only
+destination search rotation correctly refuses. Supplemental installed original
+application and independent searchable backend journeys pass without skips,
+including crash/resume, equality/IN/uniqueness, three distinct rotations and
+package-free native restarts within their recorded fixture limits.
+
+The final clean-source 10k/256-sample pair records point-read added p95 of
+**4.849 ms** at concurrency 1, **18.968 ms** at 4 and **109.426 ms** at 16:
+all miss 3 ms. Destination bytes measure **1.5114×** native; observed total
+table/index allocation is **2.5987×** before compacting maintenance. No destination
+search index exists, so indexed-storage and encrypted equality/IN-20 targets
+remain unqualified. Backup, restore and recovery measure 0.127/0.242/0.606 s;
+source-stop to first committed restored HTTP create measures 3.650 s. Latest-value
+decrypt/removal measure 2.045/0.191 s. These are local observations, not production
+RPO/RTO or outage budgets. CPU/RSS are application-process observations, timing is
+warm ASGI with sequential mode order and uncontrolled shared-host contention.
+
+[Demo report, screenshots, raw measurements and limits](https://github.com/Debrato2005/smolink/blob/269aed4bcfcbbf40ffea444f2e2a748013c862d4/cryptalis_demo/REPORT.md)
+stay outside this library and its distribution. Primary-source competitor
+comparison is retained there; equivalent competitor execution remains incomplete.
+The [draft release payload](../release/draft-0.1.0a1.json) and
+[review notes](../release/notes-0.1.0a1.md) are prepared locally. A remote draft
+Release was not created: the GitHub connector has no release-creation operation,
+and direct `api.github.com` access is denied by this environment's network policy.
+No package index upload or public release occurred. All production gates remain UNKNOWN.
+
+The [preview milestone](preview.md) takes priority before further feature work.
+Version `0.1.0a1` uses the existing uv_build backend and declares Python 3.12 and
+3.13. Repeat builds produce identical wheels and source archives. Eight fresh,
+non-editable installs pass: pip and uv, wheel and sdist, CPython 3.12.14 and
+3.13.5, including optional extras, dependency checks, isolated public imports,
+CLI help and installed-module equality. No PYTHONPATH or source-checkout import
+is used. The wheel SHA-256 is
+`eedecae8fd72a06bdf8ed95bd0aae377cabdfd51df325c50463f4f4f4b65060a`;
+the sdist is `7e64f4a36a6ddc6ab4a5693d326f41f8b7aadf97bcee670ead437bd99e4eb077`.
+The [retained package receipts](_reset/preview-package-20261101.tar.gz) include
+the SBOM and installation results. The build receipt identifies its exact worktree inputs; it is not a clean-commit
+or independent-builder provenance claim.
+
+The [installation guide](installation.md), changelog and [release procedure](release.md)
+are prepared. The publishing template is deliberately outside executable Actions
+workflows and has not run. No package index upload or public release occurred.
+Fresh-clone application evidence and frozen measurement identities are recorded
+above. Broader production requirements remain in the objective ledger.
+
+**Earlier complete hosted pass: `4ae1b76`.** Both jobs in
 [run 41279005913](https://github.com/Debrato2005/cryptalis/actions/runs/41279005913)
 pass for native JSONB storage and recovery. Source passes 3,953 calls and 18
 subtests across 4,019 selected items, with 25 call, 41 setup and nine collection

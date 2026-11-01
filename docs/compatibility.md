@@ -40,7 +40,7 @@ All normative sections here are SPECIFIED. Recorded-cost sections are VERIFIED o
 
 ## Supported stack
 
-Python 3.12+, SQLAlchemy 2.1.3, psycopg 3.3.6 sync and async, PostgreSQL 16.
+Python 3.12 or 3.13, SQLAlchemy 2.1.3, psycopg 3.3.6 sync and async, PostgreSQL 16.
 The package pins these exact driver and ORM versions because the adapter's admission
 checks depend on SQLAlchemy internals. Other versions are unverified.
 The text family includes native PostgreSQL text and VARCHAR, with matching standard mappings.
