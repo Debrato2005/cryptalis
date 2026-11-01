@@ -387,7 +387,8 @@ The compiler rejects a constraint or mapping it cannot preserve exactly. Generic
 A searchable small domain fails planning because enumeration can label equality classes. No arbitrary size threshold substitutes for leakage evidence.
 
 The attached driver boundary requires its capture callback first and unique.
-Register unchanged engine-instance cursor observers after attachment.
+Register unchanged engine-instance cursor observers after attachment. A host
+`before_execute` listener that replaces an admitted SELECT refuses before the driver.
 Preexisting, class-level and connection-local cursor hooks refuse. Changes to
 captured SQL, binary bytes or typed primitive/identity binds also refuse before
 the driver. Native ORM RETURNING pages for unprotected server defaults retain

@@ -42,6 +42,7 @@ from ._sqlalchemy_search import _json_bind_type, between_predicate, boolean_chil
 from .crypto import CryptoFailure, AuthenticationFailed, FieldDescriptor, Keyring, KeyUnavailable, MAX_TEXT_BYTES, open_value, seal_value
 from .crypto.cf1 import _encode
 from .crypto.keys import InvalidText, InvalidValue, RepresentationMismatch, ProviderAuthenticationUnavailable
+from ._search_layout import plan_requires_prefix, require_prefix_qualification, requires_prefix_scope
 from ._timestamp import aware_default, aware_value, datetime_state
 from ._jsonb import jsonb_default
 from .manifest.compiler import _LOCK_SCHEMAS, _compiled_default, _default_matches, _value_default, _native_text_length, _previous_lock, _value_mapping_matches, _fixed_value_width, _jsonb_type_matches
@@ -363,6 +364,7 @@ class _Operation:
     search_nodes: list = field(default_factory=list, repr=False)
     search_identities: dict = field(default_factory=dict, repr=False)
     parameters: dict = field(default_factory=dict, repr=False)
+    admitted_select: object = field(default=None, repr=False)
 
     @property
     def bulk_table(self):
@@ -788,6 +790,12 @@ class _Attachment:
         self.search_pins = {}
         self.has_jsonb = any(field['descriptor'].get('value_codec') == 'pg-jsonb-text/v1'
                              for model in document['models'] for field in model['fields'])
+        # Hot paths run these per statement, so derive immutable facts once. The
+        # lock and plan bytes cannot change; each scope check below stays per call.
+        self._prefix_scope = requires_prefix_scope(document)
+        self._plan = None
+        self._admitted_policies = {}
+        self._lineage, self._lineage_bindings = frozenset(), 0
 
     def check_json_driver(self, context):
         if not self.has_jsonb:
@@ -836,8 +844,11 @@ class _Attachment:
     def protected(self, expression):
         # ORM annotations can retain a native type from mapping construction.
         # Stable column lineage is authoritative, not a mutable type hint.
-        lineage = {column for binding in self.bindings for column in binding.column.proxy_set}
-        return any(isinstance(node, ColumnClause) and lineage.intersection(node.proxy_set)
+        if self._lineage_bindings != len(self.bindings):
+            self._lineage = frozenset(column for binding in self.bindings for column in binding.column.proxy_set)
+            self._lineage_bindings = len(self.bindings)
+        lineage = self._lineage
+        return any(isinstance(node, ColumnClause) and not lineage.isdisjoint(node.proxy_set)
                    for node in visitors.iterate(expression))
 
     def _admit_textual_references(self, statement, admitted_orders=()):
@@ -914,11 +925,19 @@ class _Attachment:
                 if not candidates or any(self.protected(c) for c in candidates):
                     raise UnsupportedProtectedOperation()
 
+    def _plan_document(self):
+        if self._plan is None:
+            document = self.deployment[0].document
+            self._plan = document, plan_requires_prefix(document)
+        if self._plan[1]:
+            require_prefix_qualification()
+        return self._plan[0]
+
     def _ring(self, tenant):
         self._check_configuration()
         if type(tenant) is not UUID:
             raise PolicyMismatch()
-        if self.deployment is not None and str(tenant) not in self.deployment[0].document['key_policies']:
+        if self.deployment is not None and str(tenant) not in self._plan_document()['key_policies']:
             raise PolicyMismatch()
         try:
             ring = self.keys if isinstance(self.keys, Keyring) else self.keys(tenant)
@@ -929,10 +948,13 @@ class _Attachment:
         if (not isinstance(ring, Keyring) or ring.policy.tenant_id != tenant or
                 str(ring.policy.domain_id) != self.document["domain_id"]):
             raise PolicyMismatch()
+        # KeyPolicy is frozen, so an identical object cannot have changed since it
+        # passed. A resolver returning any other policy takes the full check again.
+        if self._admitted_policies.get(tenant) is ring.policy:
+            return ring
         if self.deployment is not None:
             from cryptalis.migration import _policy
-            plan = self.deployment[0]
-            if _policy(ring) != plan.document["key_policies"].get(str(tenant)):
+            if _policy(ring) != self._plan_document()["key_policies"].get(str(tenant)):
                 raise PolicyMismatch()
         if any(binding.descriptor.equality for binding in self.bindings):
             roots = [wrapper for wrapper in ring.policy.wrappers if wrapper.context.purpose == "search"]
@@ -943,6 +965,7 @@ class _Attachment:
             pin = (root.provider_id, root.context, sha256(root.sealed).digest())
             if self.search_pins.setdefault(tenant, pin) != pin:
                 raise PolicyMismatch()
+        self._admitted_policies[tenant] = ring.policy
         return ring
 
     def _scopes(self, tenant):
@@ -1239,9 +1262,7 @@ class _Attachment:
     def _check_process(self):
         if os.getpid() != self._pid:
             raise ForkedRuntime()
-        from ._search_layout import requires_prefix_scope
-        if requires_prefix_scope(self.document):
-            from ._search_layout import require_prefix_qualification
+        if self._prefix_scope:
             require_prefix_qualification()
 
     def _check_configuration(self):
@@ -1734,10 +1755,18 @@ class _Attachment:
         if not isinstance(statement, Select):
             raise UnsupportedProtectedOperation()
         nodes = self.select_types(statement)
+        # Each subtree has one answer for this walk. The memo also keeps its node
+        # alive: temporary objects are asked about, and a freed id could alias.
+        memo = {}
+        def protected(node):
+            known = memo.get(id(node))
+            if known is None:
+                known = memo[id(node)] = node, self.protected(node)
+            return known[1]
         count_nodes, count_roots = set(), set()
         for selection in (node for node in nodes if isinstance(node, Select)):
-            protected_outputs = any(self.protected(output) for output in selection.selected_columns)
-            if protected_outputs or self.protected(selection):
+            protected_outputs = any(protected(output) for output in selection.selected_columns)
+            if protected_outputs or protected(selection):
                 _select_node(selection)
             if selection._distinct and protected_outputs:
                 if identity_distinct(self, selection) is None and distinct_projection(self, selection) is None:
@@ -1750,7 +1779,7 @@ class _Attachment:
         order_nodes = set()
         current = _operation.get()
         for clause in statement._order_by_clauses:
-            if self.protected(clause) and (
+            if protected(clause) and (
                     current is not None and current.owner is self and current.generated(clause)
                     or order_shape(self, clause, statement) is not None):
                 order_nodes.update(id(part) for part in visitors.iterate(clause))
@@ -1769,7 +1798,7 @@ class _Attachment:
         for node in nodes:
             if isinstance(node, TextClause):
                 raise UnsupportedProtectedOperation()
-            if isinstance(node, Join) and self.protected(node.onclause):
+            if isinstance(node, Join) and protected(node.onclause):
                 raise UnsupportedProtectedOperation()
             operation = _operation.get()
             if operation is not None and operation.owner is self and operation.generated(node):
@@ -1781,7 +1810,7 @@ class _Attachment:
                 source = table
                 while isinstance(source, Alias):
                     source = source.element
-                if isinstance(source, (Subquery, CTE)) and self.protected(node):
+                if isinstance(source, (Subquery, CTE)) and protected(node):
                     raise UnsupportedProtectedOperation()
                 if table is None:
                     raise UnsupportedProtectedOperation()
@@ -1794,14 +1823,14 @@ class _Attachment:
                             raise UnsupportedProtectedOperation()
             # Validate native Boolean dispatch as well as every protected leaf.
             # Replacing a custom container would change native SQL semantics.
-            if isinstance(node, Label) and self.protected(node):
+            if isinstance(node, Label) and protected(node):
                 native = _delete_node(node, Label)
                 if any(getattr(node, name) is not getattr(native, name)
                        for name in ('name', 'key', 'type', '_element')):
                     raise UnsupportedProtectedOperation()
             shaped = id(node) in count_nodes or id(node) in order_nodes
-            boolean = boolean_children(node) if not shaped and self.protected(node) else None
-            if (not shaped and self.protected(node)
+            boolean = boolean_children(node) if not shaped and protected(node) else None
+            if (not shaped and protected(node)
                     and not isinstance(node, (Select, FromClause, ColumnClause, Label, Grouping))):
                 if boolean is None and search_shape(self, node) is None and between_predicate(self, node) is None:
                     raise UnsupportedProtectedOperation()
@@ -1834,7 +1863,7 @@ class _Attachment:
                         eligible.append(root)
                     elif isinstance(root, BooleanClauseList) and root.operator is operators.and_:
                         eligible.extend(ungroup(clause) for clause in root.clauses)
-                    elif self.protected(root):
+                    elif protected(root):
                         raise UnsupportedProtectedOperation()
                     predicates = [where]
                     while predicates:
@@ -1842,14 +1871,14 @@ class _Attachment:
                         predicate = ungroup(predicate)
                         if operation is not None and operation.owner is self and operation.generated(predicate):
                             continue
-                        boolean = boolean_children(predicate) if self.protected(predicate) else None
+                        boolean = boolean_children(predicate) if protected(predicate) else None
                         if boolean is not None:
                             predicates.extend(boolean)
-                        elif (self.protected(predicate) and search_shape(self, predicate) is None
+                        elif (protected(predicate) and search_shape(self, predicate) is None
                               and between_predicate(self, predicate) is None):
                             raise UnsupportedProtectedOperation()
                 for child in children:
-                    if self.protected(child) and not isinstance(child, FromClause):
+                    if protected(child) and not isinstance(child, FromClause):
                         match = next((i for i, allowed in enumerate(eligible) if ungroup(child) is ungroup(allowed)), None)
                         if match is None:
                             raise UnsupportedProtectedOperation()
@@ -1922,6 +1951,7 @@ class _Attachment:
         if execution_options.get("schema_translate_map"):
             raise PolicyMismatch()
         self.admit(statement, operation.flushing, operation.bulk_table)
+        operation.admitted_select = statement if isinstance(statement, Select) else None
         if operation.unprotected_delete is not None and isinstance(statement, Delete):
             if multiparams or params:
                 raise UnsupportedProtectedOperation()
@@ -2167,6 +2197,14 @@ class _Attachment:
                 raise UnsupportedProtectedOperation()
             return
         operation = self._check()
+        if isinstance(context.compiled.statement, Select):
+            # Only compilation separates the admitted object from this check.
+            if context.compiled.statement is operation.admitted_select:
+                return
+            # Anything else was never admitted. Compiling it registered its own
+            # nodes as generated, so they cannot vouch for it here.
+            operation.search_nodes.clear()
+            operation.search_identities.clear()
         self.admit(context.compiled.statement, operation.flushing, operation.bulk_table)
         if operation.unprotected_delete is not None and isinstance(context.compiled.statement, Delete):
             permit, binds = self.unprotected_delete_context(context.compiled.statement, operation.unprotected_delete)
