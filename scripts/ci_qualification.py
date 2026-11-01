@@ -187,13 +187,16 @@ class Qualification:
                 '--receipt', str(self.workdir / 'installed-jsonb-receipt.json'), '--',
                 'tests/test_jsonb_storage.py', 'tests/test_jsonb_admission.py',
                 'tests/test_jsonb_boundaries.py', 'tests/test_jsonb_async_failures.py',
-                'tests/test_jsonb_lifecycle.py', 'tests/test_jsonb_defaults.py', '-q'], environment=environment)
+                'tests/test_jsonb_lifecycle.py', 'tests/test_jsonb_defaults.py',
+                'tests/test_jsonb_search.py', 'tests/test_jsonb_search_frames.py',
+                'tests/test_jsonb_search_lifecycle.py', '-q'], environment=environment)
             receipt = json.loads((self.workdir / 'installed-jsonb-receipt.json').read_text())
             # Immutable earlier readers are optional on a runner. Their explicit
             # call skips cannot qualify either compatibility boundary.
             skipped = receipt['counts'].get('skipped', 0)
             reader_skips = [receipt['modules'].get(module, {}).get('skipped', 0)
-                            for module in ('tests/test_jsonb_admission.py', 'tests/test_jsonb_defaults.py')]
+                            for module in ('tests/test_jsonb_admission.py', 'tests/test_jsonb_defaults.py',
+                                           'tests/test_jsonb_search_lifecycle.py')]
             if (receipt['exit_code'] != 0 or receipt['counts'].get('passed', 0) == 0
                     or set(receipt['counts']) - {'passed', 'skipped'} or any(count > 1 for count in reader_skips)
                     or sum(reader_skips) != skipped
@@ -206,7 +209,8 @@ class Qualification:
                 self.run('installed JSONB genuine fresh recovery ' + suffix, [str(python),
                     'scripts/fresh_cluster_qualification.py', '--workdir', str(self.workdir / suffix),
                     '--jsonb', *layout, '--installed-wheel', str(wheel)],
-                    environment=dict(environment, CRYPTALIS_FRESH_JSONB_DEFAULTS='1'))
+                    environment=dict(environment, CRYPTALIS_FRESH_JSONB_DEFAULTS='1',
+                                     CRYPTALIS_FRESH_JSONB_EQUALITY='1'))
                 for phase in ('export', 'restore'):
                     receipt = json.loads((self.workdir / suffix / f'{phase}-receipt.json').read_text())
                     if (receipt['exit_code'] != 0 or receipt['counts'] != {'passed': 1}

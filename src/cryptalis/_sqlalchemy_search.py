@@ -11,7 +11,7 @@ from sqlalchemy.types import NullType, TypeDecorator
 from .crypto.cf1 import equality_term, prefix_query_terms, _encode
 from .crypto.keys import InvalidValue
 from ._search_layout import frame_flags, frame_overhead, prefix_block_size, prefix_lengths
-from .manifest.compiler import _catalog_path, _fixed_value_width
+from .manifest.compiler import _catalog_path, _fixed_value_width, _jsonb_type_matches
 from ._sqlmodel_types import autostring_impl
 from ._sqlalchemy_aggregate import _one_tenant, count_shape, distinct_projection, identity_distinct, extrema_shape
 
@@ -74,8 +74,17 @@ class _SearchValue(TypeDecorator):
         super().__init__()
         self.binding, self.keys, self.tenant = binding, operation.keys_for(binding), operation.scope(binding)
         self.integer_width = _INTEGER_BIND_WIDTHS.get(type(original_type))
+        native_json = _json_bind_type(original_type)
+        self.json_none_as_null = native_json.none_as_null if native_json is not None else None
 
     def process_bind_param(self, value, dialect):
+        if self.binding.descriptor.value_codec == 'pg-jsonb-text/v1':
+            from sqlalchemy import JSON
+            from ._jsonb import jsonb_value
+            if self.json_none_as_null is None:
+                raise InvalidValue()
+            value = (None if value is None and self.json_none_as_null else
+                     jsonb_value(None if value is JSON.NULL else value))
         if (value is not None and self.integer_width is not None and
                 self.binding.descriptor.value_codec == 'pg-numeric-decimal/v1'):
             from ._numeric import numeric_typmod, numeric_value
@@ -87,9 +96,21 @@ class _SearchValue(TypeDecorator):
         return equality_term(value, self.binding.descriptor, self.tenant, self.keys)
 
 
+def _json_bind_type(dtype):
+    from .sqlalchemy import _Payload
+    if type(dtype) is _Payload:
+        dtype = dtype.source_type
+    return dtype if _jsonb_type_matches(dtype) else None
+
+
 def ordinary_bind(owner, value, binding=None):
     if getattr(value.type, '_variant_mapping', None):
         return False
+    jsonb = lambda b: b.descriptor.value_codec == 'pg-jsonb-text/v1' and b.descriptor.equality
+    if binding is not None and jsonb(binding):
+        return _json_bind_type(value.type) is not None
+    if binding is None and _json_bind_type(value.type) is not None:
+        return any(jsonb(b) for b in owner.bindings)
     numeric = lambda b: b.descriptor.value_codec == 'pg-numeric-decimal/v1' and b.descriptor.equality
     if binding is not None and numeric(binding):
         return type(value.type) in (Numeric, NUMERIC, NullType, *_INTEGER_BIND_WIDTHS)

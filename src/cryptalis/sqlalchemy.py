@@ -38,7 +38,7 @@ from ._sqlalchemy_guard import install_guard
 from ._sqlalchemy_functions import admit_function
 from ._sqlalchemy_aggregate import count_shape, distinct_projection, identity_distinct, extrema_shape, extrema_projection
 from ._sqlmodel_types import autostring_impl
-from ._sqlalchemy_search import between_predicate, boolean_children, equality_expression, order_shape, rewrite_predicate, rewrite_search, search_shape, validate_search_storage
+from ._sqlalchemy_search import _json_bind_type, between_predicate, boolean_children, equality_expression, order_shape, rewrite_predicate, rewrite_search, search_shape, validate_search_storage
 from .crypto import CryptoFailure, AuthenticationFailed, FieldDescriptor, Keyring, KeyUnavailable, MAX_TEXT_BYTES, open_value, seal_value
 from .crypto.cf1 import _encode
 from .crypto.keys import InvalidText, InvalidValue, RepresentationMismatch, ProviderAuthenticationUnavailable
@@ -252,6 +252,42 @@ def _json_rows_state(rows, bindings):
     json_bindings = [binding for binding in bindings if binding.descriptor.value_codec == 'pg-jsonb-text/v1']
     return tuple((tuple(row), tuple((binding.attribute, _json_input_state(row.get(binding.attribute, NO_VALUE)))
                                     for binding in json_bindings)) for row in rows) if json_bindings else ()
+
+
+def _json_query_state(owner, statement, parameters):
+    """Capture native JSON pivots and their statement before provider calls."""
+    if not any(binding.descriptor.value_codec == 'pg-jsonb-text/v1' and binding.descriptor.equality
+               for binding in owner.bindings):
+        return ()
+    from ._jsonb import jsonb_value
+    nodes = tuple(visitors.iterate(statement))
+    supplied = {**statement._params, **(parameters if type(parameters) is dict else {})}
+    pivots = []
+    for node in nodes:
+        if not isinstance(node, BindParameter):
+            continue
+        native = _json_bind_type(node.type)
+        if native is None:
+            continue
+        if node.callable is not None or parameters is not None and type(parameters) is not dict:
+            raise UnsupportedProtectedOperation()
+        value = supplied.get(node.key, node.value)
+        values = value if node.expanding else (value,)
+        if node.expanding and type(values) not in (list, tuple):
+            raise InvalidValue()
+        try:
+            for item in values:
+                if item is not None or not native.none_as_null:
+                    jsonb_value(None if item is JSON.NULL else item)
+        except TypeError:
+            raise InvalidValue() from None
+        pivots.append((id(node), node.key, node.expanding, native.none_as_null, _json_input_state(value)))
+    if not pivots:
+        return ()
+    structure = tuple((id(node), type(node), getattr(node, 'operator', None),
+                       getattr(node, 'modifier', None), tuple(id(child) for child in node.get_children()))
+                      for node in nodes)
+    return structure, tuple(pivots)
 
 
 def _sql_null_assignment(value, column):
@@ -576,9 +612,8 @@ class _Payload(TypeDecorator):
         return self.source_type.operator_classes
 
     def coerce_compared_value(self, op, value):
-        if self.binding.descriptor.value_codec == 'pg-numeric-decimal/v1':
-            # Native Numeric infers integer casts from literal/IN values. Keep
-            # that typing when the mapped storage changes to encrypted bytea.
+        if self.binding.descriptor.value_codec in ('pg-numeric-decimal/v1', 'pg-jsonb-text/v1'):
+            # Preserve native literal/IN typing after storage becomes bytea.
             return self.source_type.coerce_compared_value(op, value)
         return super().coerce_compared_value(op, value)
 
@@ -2357,8 +2392,12 @@ def _execute(state):
     session._owner.admit(state.statement)
     # SQLAlchemy 2.1 keeps statement.params(...) values on the statement, not its binds.
     parameters = {**state.statement._params, **(state.parameters if isinstance(state.parameters, dict) else {})}
+    json_inputs = _json_query_state(session._owner, state.statement, state.parameters)
+    material = session._keys()
+    if json_inputs != _json_query_state(session._owner, state.statement, state.parameters):
+        raise UnsupportedProtectedOperation()
     protected_read = any(session._owner.protected(c) for c in state.statement.selected_columns)
-    operation = _Operation(session._owner, session._keys(), session._tenant, session,
+    operation = _Operation(session._owner, material, session._tenant, session,
                            points=_points(state.statement, parameters) if protected_read else (), parameters=parameters)
     if protected_read or session._owner.protected(state.statement):
         # Entity SELECT cache keys can name the Table without its column types.
@@ -2870,11 +2909,14 @@ def _async_method(name, *, native=None):
         self.sync_session._owner._check_process()
         statement = args[0] if args else kwargs.get('statement')
         permit = request = delete_tenant = None
+        query_inputs = ()
         insert_inputs, insert_bindings = (), ()
         if isinstance(statement, Select):
             session = self.sync_session
             session._owner._check_configuration()
             session._owner.admit(statement)
+            parameters = args[1] if len(args) > 1 else kwargs.get('params')
+            query_inputs = _json_query_state(session._owner, statement, parameters)
         if isinstance(statement, Delete):
             if name not in ('execute', 'exec'):
                 raise UnsupportedProtectedOperation()
@@ -2905,6 +2947,8 @@ def _async_method(name, *, native=None):
                 insert_inputs = _json_rows_state(parameters, insert_bindings)
         try:
             await self._prepare()
+            if isinstance(statement, Select) and query_inputs != _json_query_state(session._owner, statement, parameters):
+                raise UnsupportedProtectedOperation()
             if permit is not None:
                 if session._tenant != delete_tenant:
                     raise UnsupportedProtectedOperation()

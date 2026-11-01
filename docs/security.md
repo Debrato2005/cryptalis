@@ -1036,7 +1036,7 @@ Independent review must settle those bounds before real-data admission. The form
 ### Internal packed exact prefix prototype
 
 **INTERNAL ONLY.** The `cf1-packed-prefix/v1` prototype uses context/v3,
-lock/v14 (v15 with JSONB, v16 with JSONB client defaults) and `pg-text-prefix/v1`. Ordinary planning, saved-plan execution,
+lock/v14 (v15 with JSONB, v16 with JSONB client defaults, v17 with JSONB equality) and `pg-text-prefix/v1`. Ordinary planning, saved-plan execution,
 attachment and retained runtime/crypto use refuse with
 `PrefixCapabilityUnadmitted` outside a private synthetic qualification scope.
 Doctor reports `Capability.Unadmitted` before database inspection. The scope
@@ -1725,7 +1725,7 @@ supplied. Removing current terms cannot retract leakage from earlier copies.
 
 `pg-jsonb-text/v1` uses the existing context/v2, CF1 authenticated encryption,
 random nonces and row/tenant/field key separation. It authenticates canonical
-native UTF-8 JSONB text. It adds no search term or cryptographic primitive. The
+native UTF-8 JSONB text. The storage codec adds no search term or cryptographic primitive. The
 descriptor null policy also binds the mapping's `none_as_null` choice. Earlier
 codec bytes and their NULL policies retain their original interpretation.
 
@@ -1756,6 +1756,24 @@ unauthenticated-presence limit. Randomized encryption does not hide lengths or
 prove completeness/freshness. No stronger JSON confidentiality or search
 guarantee follows. [Compatibility](compatibility.md#jsonb-storage) owns exact
 mapping and input limits; independent review and production gates remain UNKNOWN.
+
+Whole-document JSONB equality uses the existing packed full-HMAC frame and a
+separate `pg-jsonb-text/v1`/`pg-jsonb-equality/v1` search-key domain. Lock/v17 pins
+that normalizer and reader. Search bytes trim fractional numeric zeroes without
+changing structural/type distinctions or growing the canonical document; stored
+payload bytes remain lossless. Returned values authenticate both payload and
+recomputed term. Full-term exactness retains the existing HMAC collision
+assumption, not hostile-database completeness or global-uniqueness guarantees.
+
+Explicit equality/unique leakage acceptance and host domain review remain
+required: JSONB can represent tiny, enumerable domains. The profile exposes
+whole-document equality, frequency, SQL NULL presence and access patterns; it
+does not add per-path terms or reduce inference risk. Native NULL typing and
+mutable query-input capture are enforced before dispatch, including awaited
+provider preparation. JSON null remains a distinct authenticated document.
+Disabling the profile cannot retract terms from historical copies. No new
+primitive, production provider/deployment qualification or independent review
+follows from these bounded checks.
 
 ## Internal storage-only integer boundary
 
