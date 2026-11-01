@@ -182,6 +182,18 @@ class _Returning:
     projection: tuple
 
 
+def _per_walk(answer):
+    """Reuse one walk's answers. Each entry holds its node, so a freed id cannot alias."""
+    memo = {}
+
+    def known(node):
+        entry = memo.get(id(node))
+        if entry is None:
+            entry = memo[id(node)] = node, answer(node)
+        return entry[1]
+    return known
+
+
 def _search_label(descriptor):
     return ('equality, IN, range, ORDER BY' if descriptor.ordered else
             'equality, IN' if descriptor.equality else 'storage-only')
@@ -1755,14 +1767,9 @@ class _Attachment:
         if not isinstance(statement, Select):
             raise UnsupportedProtectedOperation()
         nodes = self.select_types(statement)
-        # Each subtree has one answer for this walk. The memo also keeps its node
-        # alive: temporary objects are asked about, and a freed id could alias.
-        memo = {}
-        def protected(node):
-            known = memo.get(id(node))
-            if known is None:
-                known = memo[id(node)] = node, self.protected(node)
-            return known[1]
+        protected = _per_walk(self.protected)
+        current = _operation.get()
+        generated = _per_walk(lambda node: current is not None and current.owner is self and current.generated(node))
         count_nodes, count_roots = set(), set()
         for selection in (node for node in nodes if isinstance(node, Select)):
             protected_outputs = any(protected(output) for output in selection.selected_columns)
@@ -1777,17 +1784,12 @@ class _Attachment:
                     count_roots.add(id(shape[0]))
                     count_nodes.update(id(part) for part in visitors.iterate(shape[0]))
         order_nodes = set()
-        current = _operation.get()
         for clause in statement._order_by_clauses:
-            if protected(clause) and (
-                    current is not None and current.owner is self and current.generated(clause)
-                    or order_shape(self, clause, statement) is not None):
+            if protected(clause) and (generated(clause) or order_shape(self, clause, statement) is not None):
                 order_nodes.update(id(part) for part in visitors.iterate(clause))
         safe_count_stars = set()
         for node in nodes:
-            operation = _operation.get()
-            generated = operation is not None and operation.owner is self and operation.generated(node)
-            if generated:
+            if generated(node):
                 continue
             if isinstance(node, FunctionElement):
                 admit_function(node, _delete_node, UnsupportedProtectedOperation)
@@ -1800,8 +1802,7 @@ class _Attachment:
                 raise UnsupportedProtectedOperation()
             if isinstance(node, Join) and protected(node.onclause):
                 raise UnsupportedProtectedOperation()
-            operation = _operation.get()
-            if operation is not None and operation.owner is self and operation.generated(node):
+            if generated(node):
                 continue
             if isinstance(node, ColumnClause) and node.is_literal and id(node) not in safe_count_stars:
                 raise UnsupportedProtectedOperation()
@@ -1869,7 +1870,7 @@ class _Attachment:
                     while predicates:
                         predicate = predicates.pop()
                         predicate = ungroup(predicate)
-                        if operation is not None and operation.owner is self and operation.generated(predicate):
+                        if generated(predicate):
                             continue
                         boolean = boolean_children(predicate) if protected(predicate) else None
                         if boolean is not None:
