@@ -6,6 +6,14 @@ This handoff accompanies the native JSONB storage slice. Use
 resume guide, not a second product contract. The full product goal is unfinished;
 all seven production gates remain UNKNOWN.
 
+Implementation and local evidence are committed at
+[`4ae1b76`](https://github.com/Debrato2005/cryptalis/commit/4ae1b76df0e177a8cc54a2f37fbf013ca4b0fd72).
+Both hosted jobs pass in
+[run 41279005913](https://github.com/Debrato2005/cryptalis/actions/runs/41279005913).
+The [retained hosted boundary](_reset/github-jsonb-green-20261101.json) verifies
+all recorded Python/build inputs against that exact commit and binds the CI
+receipt archive. Subsequent handoff/contract wording changes are documentation only.
+
 ## Scope and next instruction
 
 The target remains all [18 product requirements](requirements.md) and all 34

@@ -4,7 +4,20 @@ Cryptalis implements a bounded research prototype. **No production release or co
 This page owns current verification and release gates; the [34-objective ledger](BUILD_CHECKLIST.md) owns remaining work.
 Use the [documentation map](README.md) to find contracts and procedures.
 
-**Latest complete hosted pass: `e1b5a5b`.** Both jobs in
+**Latest complete hosted pass: `4ae1b76`.** Both jobs in
+[run 41279005913](https://github.com/Debrato2005/cryptalis/actions/runs/41279005913)
+pass for native JSONB storage and recovery. Source passes 3,953 calls and 18
+subtests across 4,019 selected items, with 25 call, 41 setup and nine collection
+skips. Seventeen installed test receipts pass 1,173 calls; the JSONB set passes
+38 and explicitly skips its unavailable earlier-v14 interpreter. That control
+executes in both local 39-case runs. All 18 inventories match the exact commit's
+323 Python files; 52 build inputs and the stable 45-module runtime also match.
+All 24 release steps pass, including both JSONB fresh recovery layouts. Wheel
+and sdist exactly match the retained local JSONB artifacts. This does not admit
+JSON search or prefix search, execute the separate sorting-attack profile, or
+qualify any production gate. [Exact hosted boundary](_reset/github-jsonb-green-20261101.json).
+
+**Earlier complete hosted pass: `e1b5a5b`.** Both jobs in
 [run 41273942364](https://github.com/Debrato2005/cryptalis/actions/runs/41273942364)
 pass after the runtime-role test isolation repair. The full source run passes 3,915 calls
 and 18 subtests. Twenty-four call skips, 41 setup skips and nine collection skips
@@ -12,7 +25,7 @@ remain explicit. All 316 recorded Python files and 51 build inputs match that
 revision, with stable 44-module runtime bytes. Installed recovery passes; 12
 installed test receipts pass 1,131 calls. Wheel and sdist exactly match the retained
 local prefix artifacts. This does not admit prefix search or execute the separate
-sorting-attack profile; ongoing JSONB work is excluded.
+sorting-attack profile; that run predates JSONB.
 [Exact hosted boundary](_reset/github-runtime-role-green-20261101.json).
 The earlier prefix pass remains in its
 [hosted boundary](_reset/github-prefix-green-20261101.json).
@@ -93,8 +106,8 @@ All seven final test receipts bind identical 323-file Python inventories and
 45-module runtime bytes. Repeat artifacts, 52 build inputs, SBOM, 50 installed
 files and CLI inspection pass. The [exact local boundary](_reset/jsonb-boundary-20261101.json)
 retains receipts, earlier failures and source snapshots; [type history](history/types-2026-11.md#native-jsonb-storage-2026-11-01)
-records the corrections and limits. Hosted JSONB verification is pending the
-slice's push; the latest retained complete hosted pass above predates JSONB.
+records the corrections and limits. The exact hosted pass is recorded above;
+its earlier-reader skip does not replace the executed local reader controls.
 
 JSON search, protected defaults/indexes/constraints beyond nullability, broader
 native behavior, performance and independent review remain open. No objective or
