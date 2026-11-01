@@ -109,3 +109,12 @@ fresh cluster. Neither run skips. Both bind the same 317 Python files and
 test from separate ongoing work, retained in the archive without a capability
 claim. Full hosted requalification is pending. All seven production gates remain
 UNKNOWN.
+
+The subsequent complete [hosted run at `e1b5a5b`](https://github.com/Debrato2005/cryptalis/actions/runs/41273942364)
+passes both jobs. Source passes 3,915 calls and 18 subtests with the same explicit
+skips; 12 installed receipts pass 1,131 calls. All 316-file Python inventories,
+51 build inputs, stable 44-module runtime bytes and unchanged prefix distribution
+hashes match that exact revision. The [hosted audit](../_reset/github-runtime-role-green-20261101.json)
+and [receipts](../_reset/runtime-role-ci-receipts-20261101.tar.gz) close the pending
+rerun. They exclude ongoing JSONB work and do not execute the optional sorting
+profile. Production gates remain UNKNOWN.

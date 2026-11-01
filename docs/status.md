@@ -4,21 +4,25 @@ Cryptalis implements a bounded research prototype. **No production release or co
 This page owns current verification and release gates; the [34-objective ledger](BUILD_CHECKLIST.md) owns remaining work.
 Use the [documentation map](README.md) to find contracts and procedures.
 
-**Latest complete hosted pass: `aabbb59`.** Both jobs in
-[run 41254913979](https://github.com/Debrato2005/cryptalis/actions/runs/41254913979)
-pass after the internal prefix prototype. The full source run passes 3,915 calls
+**Latest complete hosted pass: `e1b5a5b`.** Both jobs in
+[run 41273942364](https://github.com/Debrato2005/cryptalis/actions/runs/41273942364)
+pass after the runtime-role test isolation repair. The full source run passes 3,915 calls
 and 18 subtests. Twenty-four call skips, 41 setup skips and nine collection skips
-remain explicit. All 314 recorded Python files match that revision, with stable
-source/runtime bytes. Installed recovery passes; wheel and sdist exactly match
-the retained local prefix artifacts. This does not admit prefix search.
-[Exact hosted boundary](_reset/github-prefix-green-20261101.json).
+remain explicit. All 316 recorded Python files and 51 build inputs match that
+revision, with stable 44-module runtime bytes. Installed recovery passes; 12
+installed test receipts pass 1,131 calls. Wheel and sdist exactly match the retained
+local prefix artifacts. This does not admit prefix search or execute the separate
+sorting-attack profile; ongoing JSONB work is excluded.
+[Exact hosted boundary](_reset/github-runtime-role-green-20261101.json).
+The earlier prefix pass remains in its
+[hosted boundary](_reset/github-prefix-green-20261101.json).
 The preceding numeric run remains in its
 [hosted boundary](_reset/github-numeric-search-green-20261101.json), with the
 [aware timestamp result](_reset/github-timestamptz-green-20261101.json) and
 [numeric compiler failure/repair](_reset/numeric-compiler-ci-boundary-20261101.json)
 retained. All seven production gates stay UNKNOWN.
 
-**Newer hosted observation: `4d425b5` is not a complete pass.** In
+**Retained hosted failure: `4d425b5` is not a complete pass.** In
 [run 41272275402](https://github.com/Debrato2005/cryptalis/actions/runs/41272275402),
 the installed/artifact job passes, while source passes 3,914 calls and 18 subtests
 and fails one UUID search-rotation workflow with `unsafe_runtime_role`. Skips
@@ -29,7 +33,7 @@ The repaired fixture keeps its native grant private to the checking transaction,
 proves independent-connection isolation and rollback, and retains pre-key refusal.
 Fresh-cluster source checks pass 16 calls; the unchanged installed wheel passes
 36 calls including reverse privilege boundaries, without skips. Product/runtime
-bytes are unchanged. Full hosted requalification is pending.
+bytes are unchanged. The complete hosted repair pass is recorded above.
 [Exact failure and repair boundary](_reset/runtime-role-isolation-boundary-20261101.json).
 
 **Earlier complete hosted pass: `54218cf`.** Both jobs in

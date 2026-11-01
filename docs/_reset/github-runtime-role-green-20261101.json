@@ -1,0 +1,230 @@
+{
+  "format": "cryptalis.hosted-artifact-audit/v1",
+  "audited_at": "2026-11-01T05:00:13.093484+00:00",
+  "run": {
+    "id": 41273942364,
+    "head_sha": "e1b5a5be466983a3c7f60f077df95bd6853589a5",
+    "status": "completed",
+    "conclusion": "success",
+    "html_url": "https://github.com/Debrato2005/cryptalis/actions/runs/41273942364",
+    "run_attempt": 1,
+    "created_at": "2026-11-01T04:39:33Z",
+    "updated_at": "2026-11-01T04:52:27Z"
+  },
+  "jobs": [
+    {
+      "id": 124752187310,
+      "name": "Reproducible artifacts / installed recovery",
+      "status": "completed",
+      "conclusion": "success",
+      "html_url": "https://github.com/Debrato2005/cryptalis/actions/runs/41273942364/job/124752187310"
+    },
+    {
+      "id": 124752187441,
+      "name": "Source / PostgreSQL 16",
+      "status": "completed",
+      "conclusion": "success",
+      "html_url": "https://github.com/Debrato2005/cryptalis/actions/runs/41273942364/job/124752187441"
+    }
+  ],
+  "archives": {
+    "source": {
+      "sha256": "d73d52bc97c2f209de071282f22610671cd35591061e08f2f1f491f6034bf4e0",
+      "bytes": 17042503,
+      "members": 10,
+      "github_digest_verified": true,
+      "extracted_files_verified": true
+    },
+    "release": {
+      "sha256": "f74add056770d6b9cd2a72e676928ae4ab5d9b47e1b86cf401ca89eadda2c861",
+      "bytes": 707468,
+      "members": 25,
+      "github_digest_verified": true,
+      "extracted_files_verified": true
+    }
+  },
+  "git_revision": "e1b5a5be466983a3c7f60f077df95bd6853589a5",
+  "integrity_errors": [],
+  "python_inventory": {
+    "tracked_files": 316,
+    "receipt_inventories": 13,
+    "verified_entries": 4108,
+    "all_exact_git_bytes": true
+  },
+  "build_inputs": {
+    "verified_files": 51,
+    "all_exact_git_bytes": true,
+    "recorded_toolchain": {
+      "uv": "uv 0.13.6 (x86_64-unknown-linux-gnu)",
+      "python": "3.12.14 (main, Sep 29 2026, 15:01:18) [Clang 22.1.3 ]",
+      "backend_requirements": [
+        "uv_build==0.12.23"
+      ],
+      "constraints_sha256": "92b4ea5dbc312ccc4b86686f772e5deae8aecf9eb1c7ab1df2aec023da199d25",
+      "enforcement": "isolated PEP 517 with required build dependency hashes"
+    }
+  },
+  "runtime": {
+    "module_count": 44,
+    "modules_sha256": "45aaf1e5754d4ff6572b62db592df22b24290cbaf4bad1efbe9e0d791c220099",
+    "stable_receipts": 13,
+    "wheel_and_sdist_match_git": true
+  },
+  "distributions": {
+    "sha256": {
+      "cryptalis-0.1.0-py3-none-any.whl": "d6ec8a1423c16dca5a66059f916b2b5bbdf12228e7a029ad6a6063a21e32e657",
+      "cryptalis-0.1.0.tar.gz": "43a0d8c9359ceddd9bfc5a77cd532c62bdcabe87e455a045b02115680188b13e"
+    },
+    "wheel_RECORD_verified_entries": 49,
+    "sdist_pyproject_parsed_equal": true,
+    "reproducible_recorded": true,
+    "build_receipt_clean_install": "NOT MEASURED",
+    "separate_install_receipt": {
+      "verified_files": 49,
+      "cli": "passed"
+    }
+  },
+  "source": {
+    "exit_code": 0,
+    "report_counts": {
+      "test_calls": {
+        "passed": 3915,
+        "skipped": 24
+      },
+      "subtest_calls": {
+        "passed": 18
+      },
+      "setup": {
+        "passed": 3939,
+        "skipped": 41
+      },
+      "teardown": {
+        "passed": 3980
+      },
+      "collection": {
+        "skipped": 9
+      },
+      "selected_items": 3980
+    },
+    "pytest_args": [
+      "tests",
+      "-q",
+      "-n",
+      "auto",
+      "--dist",
+      "loadfile"
+    ]
+  },
+  "installed": {
+    "receipt_count": 12,
+    "passed_test_calls": 1131,
+    "receipts": [
+      {
+        "receipt": "installed-application-export-receipt.json",
+        "test_calls": {
+          "passed": 1
+        }
+      },
+      {
+        "receipt": "installed-application-restore-receipt.json",
+        "test_calls": {
+          "passed": 2
+        }
+      },
+      {
+        "receipt": "installed-code-receipt.json",
+        "test_calls": {
+          "passed": 15
+        }
+      },
+      {
+        "receipt": "installed-export-receipt.json",
+        "test_calls": {
+          "passed": 1
+        }
+      },
+      {
+        "receipt": "installed-google-kms-receipt.json",
+        "test_calls": {
+          "passed": 50
+        }
+      },
+      {
+        "receipt": "installed-modification-export-receipt.json",
+        "test_calls": {
+          "passed": 1
+        }
+      },
+      {
+        "receipt": "installed-modification-restore-receipt.json",
+        "test_calls": {
+          "passed": 1
+        }
+      },
+      {
+        "receipt": "installed-openbao-tests.json",
+        "test_calls": {
+          "passed": 140
+        }
+      },
+      {
+        "receipt": "installed-restore-receipt.json",
+        "test_calls": {
+          "passed": 1
+        }
+      },
+      {
+        "receipt": "installed-sqlmodel-receipt.json",
+        "test_calls": {
+          "passed": 917
+        }
+      },
+      {
+        "receipt": "installed-storage-modification-export-receipt.json",
+        "test_calls": {
+          "passed": 1
+        }
+      },
+      {
+        "receipt": "installed-storage-modification-restore-receipt.json",
+        "test_calls": {
+          "passed": 1
+        }
+      }
+    ]
+  },
+  "statuses": {
+    "source/qualification/status.json": {
+      "outcome": "PASS",
+      "steps": 1
+    },
+    "release/status.json": {
+      "outcome": "PASS",
+      "steps": 21
+    }
+  },
+  "dependency_audits": {
+    "source/dependency-audit.json": {
+      "audited_packages": 41,
+      "vulnerabilities": 0,
+      "adverse_statuses": 0
+    },
+    "release/scanner-audit.json": {
+      "audited_packages": 1,
+      "vulnerabilities": 0,
+      "adverse_statuses": 0
+    }
+  },
+  "limitations": [
+    "Audit checks retained evidence, not an independent rerun or production qualification.",
+    "JSONB in-progress worktree is excluded; all comparisons use the exact Git revision.",
+    "Default hosted selection does not execute profile_order_sorting_attack.py.",
+    "Build receipt clean_install is NOT MEASURED; separate installed-file and test receipts establish their bounded installation observations.",
+    "All production gates remain UNKNOWN."
+  ],
+  "repo_edits": false,
+  "database_tests_run": false,
+  "receipt_archive": "runtime-role-ci-receipts-20261101.tar.gz",
+  "receipt_archive_sha256": "74b758c1cecc1a93e142a0b2f9f921a1357e60764905733eb67980dcda9f9d05",
+  "receipt_archive_entries": 29
+}
