@@ -20,6 +20,7 @@ Use this page to find the owner of a question; use [status](status.md) for curre
 | See what is verified or missing | [Current status](status.md) → [34-objective ledger](BUILD_CHECKLIST.md) |
 | Continue implementation | [Build sequence](build-guide.md) → [engineering playbook](../ENGINEERING_PLAYBOOK.md) |
 | Resume from the latest handoff | [Engineering handoff](handoff.md), then current status and the affected contract |
+| Prepare the installed-library demonstration | [Preview milestone](preview.md); production objectives and publication limits remain active |
 | Review security or a design choice | [Security](security.md), [lifecycle](lifecycle.md), [decisions](decisions.md) |
 | Find a past result or source | [History](history/README.md), [research index](research/README.md), [prior art](prior-art.md) |
 | Present the system | [Illustrated guide](professor-guide.md); measurements retain their recorded revision |

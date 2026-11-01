@@ -1,0 +1,156 @@
+# Preparation only: enable under .github/workflows after explicit public-release
+# approval, independent review, protected pypi environment and Trusted Publisher setup.
+name: Publish reviewed Cryptalis artifacts
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Approved immutable version tag, for example v0.1.0a1
+        type: string
+        required: true
+      build_run_id:
+        description: Successful Local PostgreSQL checks run for exactly that tag commit
+        type: string
+        required: true
+      wheel_sha256:
+        description: Independently reviewed wheel SHA-256
+        type: string
+        required: true
+      sdist_sha256:
+        description: Independently reviewed sdist SHA-256
+        type: string
+        required: true
+      approval:
+        description: Explicit approved release only; enter APPROVED_PUBLIC_INDEX_UPLOAD
+        type: string
+        default: NOT_APPROVED
+        required: true
+
+permissions: {}
+
+concurrency:
+  group: cryptalis-publication
+  cancel-in-progress: false
+
+jobs:
+  inspect:
+    if: inputs.approval == 'APPROVED_PUBLIC_INDEX_UPLOAD'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      actions: read
+      contents: read
+    outputs:
+      artifact_id: ${{ steps.stage.outputs.artifact-id }}
+    steps:
+      - name: Bind a successful trusted build to the approved tag
+        id: source
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SELECTED_TAG: ${{ inputs.tag }}
+          BUILD_RUN_ID: ${{ inputs.build_run_id }}
+          REPOSITORY: ${{ github.repository }}
+          EXPECTED_WHEEL: ${{ inputs.wheel_sha256 }}
+          EXPECTED_SDIST: ${{ inputs.sdist_sha256 }}
+        run: |
+          python3 - <<'PY'
+          import json, os, re, subprocess
+          from pathlib import Path
+          def api(path):
+              return json.loads(subprocess.check_output(['gh', 'api', path], text=True))
+          tag, run_id, repo = (os.environ[k] for k in ('SELECTED_TAG', 'BUILD_RUN_ID', 'REPOSITORY'))
+          if not re.fullmatch(r'v[0-9][0-9A-Za-z.]*', tag) or not run_id.isdecimal():
+              raise SystemExit('Invalid immutable tag or build run ID')
+          if any(not re.fullmatch(r'[0-9a-f]{64}', os.environ[k]) for k in ('EXPECTED_WHEEL', 'EXPECTED_SDIST')):
+              raise SystemExit('Both approved distribution hashes are required')
+          commit = api(f'repos/{repo}/commits/{tag}')['sha']
+          run = api(f'repos/{repo}/actions/runs/{run_id}')
+          if (run['head_sha'] != commit or run['conclusion'] != 'success'
+                  or run['path'] != '.github/workflows/local-checks.yml'
+                  or run['event'] not in ('push', 'workflow_dispatch')
+                  or run['head_repository']['full_name'] != repo):
+              raise SystemExit('Build is not a successful trusted run of the approved commit')
+          protection = api(f'repos/{repo}/environments/pypi')
+          reviewers = [r for r in protection['protection_rules'] if r['type'] == 'required_reviewers']
+          if (not reviewers or not reviewers[0].get('reviewers')
+                  or not reviewers[0].get('prevent_self_review')
+                  or protection.get('deployment_branch_policy') is None):
+              raise SystemExit('Protected pypi environment needs independent reviewers and ref restrictions')
+          listing = api(f'repos/{repo}/actions/runs/{run_id}/artifacts?per_page=100')
+          if listing['total_count'] > 100:
+              raise SystemExit('Artifact inventory requires review; no truncated selection allowed')
+          name = f'release-evidence-{run_id}-{run["run_attempt"]}'
+          matches = [a for a in listing['artifacts'] if a['name'] == name and not a['expired']]
+          if len(matches) != 1:
+              raise SystemExit('Exactly one retained release-evidence artifact is required')
+          with Path(os.environ['GITHUB_OUTPUT']).open('a') as out:
+              out.write(f'artifact_id={matches[0]["id"]}\ncommit={commit}\n')
+          PY
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          artifact-ids: ${{ steps.source.outputs.artifact_id }}
+          run-id: ${{ inputs.build_run_id }}
+          github-token: ${{ github.token }}
+          path: reviewed
+          merge-multiple: true
+      - name: Verify approved bytes without executing package code
+        env:
+          APPROVED_COMMIT: ${{ steps.source.outputs.commit }}
+          EXPECTED_WHEEL: ${{ inputs.wheel_sha256 }}
+          EXPECTED_SDIST: ${{ inputs.sdist_sha256 }}
+        run: |
+          python3 - <<'PY'
+          import hashlib, json, os, shutil
+          from pathlib import Path
+          source = Path('reviewed')
+          receipt = json.loads((source / 'release-receipt.json').read_text())
+          status = json.loads((source / 'status.json').read_text())
+          if (receipt['base_revision'] != os.environ['APPROVED_COMMIT']
+                  or receipt['dirty'] or receipt['reproducible'] is not True
+                  or status['outcome'] != 'PASS'
+                  or any(s['outcome'] != 'PASS' for s in status['steps'])):
+              raise SystemExit('Release receipt or required installed checks failed')
+          names = receipt['artifacts']
+          if (len(names) != 2 or sum(n.endswith('.whl') for n in names) != 1
+                  or sum(n.endswith('.tar.gz') for n in names) != 1):
+              raise SystemExit('Exactly one wheel and sdist are required')
+          destination = Path('packages')
+          destination.mkdir()
+          for name, digest in names.items():
+              path = source / name
+              expected = os.environ['EXPECTED_WHEEL' if name.endswith('.whl') else 'EXPECTED_SDIST']
+              if (Path(name).name != name or not path.is_file() or path.is_symlink()
+                      or hashlib.sha256(path.read_bytes()).hexdigest() != expected or digest != expected):
+                  raise SystemExit('Distribution differs from independently approved bytes')
+              shutil.copyfile(path, destination / name)
+          PY
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        id: stage
+        with:
+          name: approved-distributions
+          path: packages/
+          if-no-files-found: error
+          retention-days: 1
+
+  publish:
+    needs: inspect
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    environment:
+      name: pypi
+      url: https://pypi.org/p/cryptalis
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          artifact-ids: ${{ needs.inspect.outputs.artifact_id }}
+          path: packages
+          merge-multiple: true
+      - name: Publish the already-reviewed distributions with Trusted Publishing
+        uses: pypa/gh-action-pypi-publish@ba38be9e461d3875417946c167d0b5f3d385a247 # v1.14.1
+        with:
+          packages-dir: packages/
+          attestations: true
+          skip-existing: false
