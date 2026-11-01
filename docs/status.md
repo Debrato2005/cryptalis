@@ -23,6 +23,19 @@ tracked on [PR 8](https://github.com/Debrato2005/cryptalis/pull/8) for the combi
 tree and on the resulting `main` revision. No production gate or independent
 human review is qualified by this integration.
 
+## New-developer lifecycle
+
+**VERIFIED, bounded:** [`examples/quickstart.py`](../examples/quickstart.py) completes
+Doctor, protection, equality/IN/uniqueness, all three rotations, latest-value decrypt,
+removal and a restart that cannot import Cryptalis, using only public calls. Each
+step is a separate OS process. No earlier check covered this: `Project` tests share
+a provider object through a simulated restart, and the only built-in provider lost
+custody on exit, so a new developer could not restart without an external service.
+`DevelopmentKeyProvider(path)` closes that gap for synthetic data only. Refusals now
+name the protected fields involved, and `Project.decrypt` explains a reused runtime
+role. The example runs in the source and installed-wheel selections; it does not
+qualify a provider, a concurrent workload or a production gate.
+
 ## Push-run CI follow-up
 
 Two branch-push source jobs failed despite passing PR jobs at the same heads.

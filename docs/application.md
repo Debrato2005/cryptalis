@@ -29,7 +29,7 @@ project = Project("cryptalis.json", Base.registry,
 | `modify(owner, writers_stopped=, search_reviewed=)` | Apply a changed manifest's search settings |
 | `add_tenant(owner, tenant_id, writers_stopped=)` | Add one empty tenant with its own keys. Restart workers afterwards |
 | `recover(owner, host=, quarantine=, source_fenced=True)` | Adopt a database restored from backup |
-| `decrypt(owner, plaintext_role=, writers_stopped=, accept_plaintext=True, retained_backups=)` | Restore current values to plaintext columns |
+| `decrypt(owner, plaintext_role=, writers_stopped=, accept_plaintext=True, retained_backups=)` | Restore current values to plaintext columns. `plaintext_role` must differ from `runtime_role`, already hold your application's table privileges, and is the role native workers then use |
 | `remove(owner, writers_stopped=, application_verified=, old_workers_stopped=True)` | Drop generated objects after `decrypt`. Uninstall the package last |
 | `abort(owner, writers_stopped=)` | Cancel an unfinished operation. A completed switch refuses; resume it instead |
 
@@ -56,6 +56,9 @@ loses access to the wrapped roots, so back it up.
 `protect` refuses if the estimate exceeds `max_pause_seconds` (default one hour). Pass
 measured values through `Project(..., estimates={...})`. They are estimates, not
 guarantees.
+
+**Restart after every lifecycle change.** A mapping attaches once per process, so
+a worker picks up a rotation or modification by restarting, not by attaching again.
 
 **Limits.** `writers_stopped` covers one attached application. For several writer
 routes, pass `Project(..., writers=WriterInventory(...))`. `add_tenant` pauses writers

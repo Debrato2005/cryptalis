@@ -6,6 +6,8 @@ bytes cannot provide a verified zeroization guarantee.
 
 import asyncio
 import os
+import stat
+import tempfile
 import threading
 import time
 from itertools import count
@@ -178,14 +180,46 @@ def create_root(provider: KeyProvider, context: KeyContext) -> WrappedRoot:
         raise KeyUnavailable() from None
 
 
-class DevelopmentKeyProvider:
-    """An ephemeral local KEK. Restart loses custody; no production mode exists."""
+def _development_identity(path):
+    """Create once, then read, one owner-only 16-byte ID plus 32-byte KEK."""
+    path = os.fspath(path)
+    fd, partial = tempfile.mkstemp(dir=os.path.dirname(path) or '.')
+    try:
+        with os.fdopen(fd, 'wb') as file:
+            file.write(uuid4().bytes + os.urandom(32))
+            file.flush()
+            os.fsync(file.fileno())
+        try:
+            os.link(partial, path)  # Atomic: concurrent first uses keep one identity.
+        except FileExistsError:
+            pass
+    finally:
+        os.unlink(partial)
+    with open(os.open(path, os.O_RDONLY | os.O_NOFOLLOW), 'rb') as file:
+        status = os.fstat(file.fileno())
+        identity = file.read(49)
+    if (not stat.S_ISREG(status.st_mode) or status.st_uid != os.getuid() or
+            stat.S_IMODE(status.st_mode) & 0o077 or len(identity) != 48):
+        raise KeyUnavailable()
+    return UUID(bytes=identity[:16]), identity[16:]
 
-    def __init__(self):
+
+class DevelopmentKeyProvider:
+    """A local KEK for synthetic data; no production mode exists.
+
+    Without ``path`` the KEK is ephemeral and restart loses custody. With ``path``
+    an owner-only file holds it, so separate processes share custody. Keep that
+    file outside database backups: it can unwrap every root it wrapped.
+    """
+
+    def __init__(self, path=None):
         self._pid = os.getpid()
         try:
-            self.provider_id = uuid4()
-            self._key = os.urandom(32)
+            if path is None:
+                self.provider_id = uuid4()
+                self._key = os.urandom(32)
+            else:
+                self.provider_id, self._key = _development_identity(path)
         except Exception:
             raise KeyUnavailable() from None
 

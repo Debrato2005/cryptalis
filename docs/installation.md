@@ -94,6 +94,15 @@ syntax only. Your real model, schema, writer inventory, provider and authority
 still need Doctor and staging lifecycle checks. Allocate distinct stable IDs
 for the actual deployment and keep them through compatible changes.
 
+## Run the complete example
+
+[`examples/quickstart.py`](../examples/quickstart.py) takes an ordinary SQLAlchemy
+application through Doctor, protection, search, uniqueness, all three rotations,
+current-value decryption, removal and a restart that cannot import Cryptalis.
+Each step is a separate process. It needs three roles and an empty PostgreSQL 16
+database; its header gives the exact commands. It uses `DevelopmentKeyProvider`
+with a key file, so it needs no external service. Synthetic data only.
+
 ## Integrate and complete the lifecycle
 
 1. Inventory every writer and query touching the chosen fields. Check native
@@ -106,16 +115,17 @@ for the actual deployment and keep them through compatible changes.
 3. Configure an external [`KeyProvider`](security.md#key-hierarchy-and-providers),
    separate owner/runtime database roles, protected logging and a private state
    directory outside database backups. [OpenBao](openbao.md) supplies a documented
-   self-hosted option. The ephemeral development provider loses custody on process
-   exit and is suitable only for disposable synthetic data.
+   self-hosted option. `DevelopmentKeyProvider` suits only disposable synthetic
+   data: it loses custody on process exit unless given a key file, and that file
+   is not production custody.
 4. Construct `Project` and run Doctor and protection through the
    [small API](application.md#project-the-small-api). The state directory needs
    its own protected backup. The host supplies real writer exclusion and search
    review; acceptance strings do not establish those facts.
 5. Replace the application's session factory with `project.attach(engine)`
-   before creating instances, sessions or statements. Await attachment for an
-   async engine; pass `adapter="sqlmodel"` for SQLModel. Authenticate tenant scope
-   in the application. Run its actual complete workflows on a disposable target.
+   before creating instances, sessions or statements. Create that engine with
+   `hide_parameters=True`. Await attachment for an async engine; pass
+   `adapter="sqlmodel"` for SQLModel. Authenticate tenant scope in the application. Run its actual complete workflows on a disposable target.
 6. Exercise updates and the declared search operations. Compare native results
    and independent database inspection. Unsupported behavior must raise a typed
    error; plaintext fallback is never an integration option.
@@ -125,8 +135,10 @@ for the actual deployment and keep them through compatible changes.
 8. Restore a backup into a genuinely separate, quarantined target and use
    `Project.recover` with retained state, keys and explicit source fencing. Keep
    required old readers and backup keys until their retirement is approved.
-9. Stop writers, call `Project.decrypt` to recover the **latest committed values**,
-   verify native schema and behavior, then `Project.remove`. Restart with the
+9. Create a plaintext role distinct from the protected runtime role and grant it
+   the application's table privileges; `decrypt` grants nothing. Stop writers, call
+   `Project.decrypt` to recover the **latest committed values**, verify native
+   schema and behavior, then `Project.remove`. Restart with the
    native session factory and verify the application with Cryptalis imports
    denied. Uninstall only after that check; uninstalling first cannot decrypt data.
 
@@ -144,6 +156,8 @@ authorization, deployment pins or maintenance permission.
 | `ProjectError` reports a pending operation | Inspect `project.status(owner)`. Repeat the same lifecycle call to resume after resolving the cause; follow the documented abort rules before a switch. |
 | `KeyUnavailable` / provider authentication failure | Check the exact external provider identity, admitted wrappers, credentials and lease policy. Preserve ambiguous effects; do not create replacement keys to bypass the failure. |
 | Authentication/context error | Stop affected use and inspect keys, pins, tenant/record context, possible tampering and trusted backups. Never decode unauthenticated bytes. |
+| `PolicyMismatch` on a second attach | A mapping attaches once per process. Restart the worker after a lifecycle change; never re-attach in place. |
+| `UnsupportedProtectedOperation` | Its message names the protected fields in the statement and what each declares. Change the query, or declare the search and review its leakage. |
 | Runtime role is refused | Remove owner/schema/database creation powers through the host's approved administration procedure; do not weaken the library guard. |
 | Native restart fails after removal | Preserve the reverse plan, backups and readers. Reconcile the native application/schema before uninstalling or retiring recovery material. |
 
