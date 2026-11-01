@@ -1,0 +1,355 @@
+{
+  "format": "cryptalis.ci-push-followup/v1",
+  "base_revision": "6aafac43d0c33447ea426c31f51f2765d559c625",
+  "failed_pushes": [
+    {
+      "run": "https://github.com/Debrato2005/cryptalis/actions/runs/41310116248",
+      "head": "75d095bd46dd89dae2dc97b9a168908091d6c22f",
+      "nodeid": "tests/test_sqlalchemy_adapter.py::test_async_database_cancellation_preserves_rollback_and_recovery[native]",
+      "pytest": {
+        "test_calls": {
+          "passed": 3978,
+          "failed": 1,
+          "skipped": 25
+        },
+        "subtest_calls": {
+          "passed": 18
+        },
+        "setup": {
+          "passed": 4004,
+          "skipped": 41
+        },
+        "teardown": {
+          "passed": 4045
+        },
+        "collection": {
+          "skipped": 9
+        },
+        "selected_items": 4045
+      },
+      "download_sha256": "f4dc219449242c95ff91032cf735a21f88569c570a9dd9c940b60a0ecb912a81"
+    },
+    {
+      "run": "https://github.com/Debrato2005/cryptalis/actions/runs/41311486585",
+      "head": "6aafac43d0c33447ea426c31f51f2765d559c625",
+      "nodeid": "tests/test_varchar.py::test_storage_only_varchar_keeps_default_collation_and_undeclared_search_refusal",
+      "pytest": {
+        "test_calls": {
+          "passed": 3978,
+          "skipped": 25,
+          "failed": 1
+        },
+        "subtest_calls": {
+          "passed": 18
+        },
+        "setup": {
+          "passed": 4004,
+          "skipped": 41
+        },
+        "teardown": {
+          "passed": 4045
+        },
+        "collection": {
+          "skipped": 9
+        },
+        "selected_items": 4045
+      },
+      "download_sha256": "94a2e231e5f4e53e594dd68c513c7c4acfb90fd37692fb6a6cd43998b4a8c9e2"
+    }
+  ],
+  "same_head_pr_passes": [
+    {
+      "head": "75d095bd46dd89dae2dc97b9a168908091d6c22f",
+      "run": 41310161240
+    },
+    {
+      "head": "6aafac43d0c33447ea426c31f51f2765d559c625",
+      "run": 41311490439
+    }
+  ],
+  "cause_boundaries": {
+    "varchar": "Controlled default native PostgreSQL plan reproduces unrelated-relation deparse and XX000 under a positively observed lock/drop schedule. Historical phase and SQLSTATE were suppressed; exact historical cause remains unproven.",
+    "cancellation": "Historical native test times out at outer wait_for(task,5) after PgSleep was observed. Pinned modern-libpq driver has sequential 5s cancellation and 5s response-drain phases. Outer second-cancel and undersized budget are demonstrated source semantics; exact historical delay cause remains UNKNOWN."
+  },
+  "repair": "Use target-OID structural index inspection; wait for cancellation without cancelling again, independently observe backend leaving PgSleep, retain rollback/recovery; expose validated SQLSTATE and phase with raw SQL/message redaction.",
+  "final_test_source_sha256": {
+    "tests/conftest.py": "ff7fc3abb5400c1e05f6b6de599c32691762f60e8e24f79b5408751bb0284d77",
+    "tests/test_varchar.py": "7c630e06914b095d10ac3b09a992e896eb63c75e67b9e9fb99811b1d2840e201",
+    "tests/test_sqlalchemy_adapter.py": "15fbfa142821e4a4c6475ae5014e805ed3beca224f7d03c9f0a27c7b0b2dd8ad"
+  },
+  "native_catalog_control": {
+    "plan_sha256": "67603ad2706874f8add12fc47511088abc6ec9fd6a119798c56e996f7dc9427c",
+    "plan_has_deparser": true,
+    "old_query_waits_on_unrelated_table": true,
+    "bounded_query_count_while_unrelated_locked": 0,
+    "old_query_after_unrelated_drop": {
+      "sqlstate": "XX000",
+      "class": "InternalError_"
+    }
+  },
+  "diagnostics_control": {
+    "native": {
+      "exit_code": 1,
+      "exposure_marker_observed": true,
+      "safe_sqlstate_observed": false,
+      "safe_phase_observed": false
+    },
+    "redacted": {
+      "exit_code": 1,
+      "exposure_marker_observed": false,
+      "safe_sqlstate_observed": true,
+      "safe_phase_observed": true
+    }
+  },
+  "checks": {
+    "native-catalog/wrapper.json": {
+      "pytest_report_counts": {
+        "test_calls": {
+          "passed": 1
+        },
+        "subtest_calls": {},
+        "setup": {
+          "passed": 1
+        },
+        "teardown": {
+          "passed": 1
+        },
+        "collection": {},
+        "selected_items": 1
+      },
+      "exit_code": 0,
+      "source_stability": {
+        "unchanged": true,
+        "changed_paths": []
+      },
+      "runtime_binding": {
+        "mode": "source",
+        "runtime_root": "/workspace/cryptalis/src/cryptalis",
+        "module_count": 45,
+        "modules_sha256": "256833e14b85650b51217abb868eedb60af43b727dd8d2efb58394e2d4f12c3f",
+        "wheel": null,
+        "wheel_sha256": null
+      }
+    },
+    "focused-before-cancel.json": {
+      "pytest_report_counts": {
+        "test_calls": {
+          "passed": 100
+        },
+        "subtest_calls": {},
+        "setup": {
+          "passed": 100
+        },
+        "teardown": {
+          "passed": 100
+        },
+        "collection": {},
+        "selected_items": 100
+      },
+      "exit_code": 0,
+      "source_stability": {
+        "unchanged": true,
+        "changed_paths": []
+      },
+      "runtime_binding": {
+        "mode": "source",
+        "runtime_root": "/workspace/cryptalis/src/cryptalis",
+        "module_count": 45,
+        "modules_sha256": "256833e14b85650b51217abb868eedb60af43b727dd8d2efb58394e2d4f12c3f",
+        "wheel": null,
+        "wheel_sha256": null
+      }
+    },
+    "wheel313-before-cancel.json": {
+      "pytest_report_counts": {
+        "test_calls": {
+          "passed": 100
+        },
+        "subtest_calls": {},
+        "setup": {
+          "passed": 100
+        },
+        "teardown": {
+          "passed": 100
+        },
+        "collection": {},
+        "selected_items": 100
+      },
+      "exit_code": 0,
+      "source_stability": {
+        "unchanged": true,
+        "changed_paths": []
+      },
+      "runtime_binding": {
+        "mode": "installed-wheel",
+        "runtime_root": "/workspace/scratch/public-delete-returning-installed-py313-20261101/lib/python3.13/site-packages/cryptalis",
+        "module_count": 45,
+        "modules_sha256": "256833e14b85650b51217abb868eedb60af43b727dd8d2efb58394e2d4f12c3f",
+        "wheel": "/workspace/scratch/public-delete-returning-artifacts-20261101/cryptalis-0.1.0a1-py3-none-any.whl",
+        "wheel_sha256": "36fd1b0913cc7dc9578e4fe44dc7351c6fc4db6f2085e14be289abaf3ec45316"
+      }
+    },
+    "final-source.json": {
+      "pytest_report_counts": {
+        "test_calls": {
+          "passed": 102
+        },
+        "subtest_calls": {},
+        "setup": {
+          "passed": 102
+        },
+        "teardown": {
+          "passed": 102
+        },
+        "collection": {},
+        "selected_items": 102
+      },
+      "exit_code": 0,
+      "source_stability": {
+        "unchanged": true,
+        "changed_paths": []
+      },
+      "runtime_binding": {
+        "mode": "source",
+        "runtime_root": "/workspace/cryptalis/src/cryptalis",
+        "module_count": 45,
+        "modules_sha256": "256833e14b85650b51217abb868eedb60af43b727dd8d2efb58394e2d4f12c3f",
+        "wheel": null,
+        "wheel_sha256": null
+      }
+    },
+    "final-wheel313-cancel.json": {
+      "pytest_report_counts": {
+        "test_calls": {
+          "passed": 2
+        },
+        "subtest_calls": {},
+        "setup": {
+          "passed": 2
+        },
+        "teardown": {
+          "passed": 2
+        },
+        "collection": {},
+        "selected_items": 2
+      },
+      "exit_code": 0,
+      "source_stability": {
+        "unchanged": true,
+        "changed_paths": []
+      },
+      "runtime_binding": {
+        "mode": "installed-wheel",
+        "runtime_root": "/workspace/scratch/public-delete-returning-installed-py313-20261101/lib/python3.13/site-packages/cryptalis",
+        "module_count": 45,
+        "modules_sha256": "256833e14b85650b51217abb868eedb60af43b727dd8d2efb58394e2d4f12c3f",
+        "wheel": "/workspace/scratch/public-delete-returning-artifacts-20261101/cryptalis-0.1.0a1-py3-none-any.whl",
+        "wheel_sha256": "36fd1b0913cc7dc9578e4fe44dc7351c6fc4db6f2085e14be289abaf3ec45316"
+      }
+    },
+    "diagnostics/native-wrapper.json": {
+      "pytest_report_counts": {
+        "test_calls": {
+          "failed": 1
+        },
+        "subtest_calls": {},
+        "setup": {
+          "passed": 1
+        },
+        "teardown": {
+          "passed": 1
+        },
+        "collection": {},
+        "selected_items": 1
+      },
+      "exit_code": 1,
+      "source_stability": {
+        "unchanged": true,
+        "changed_paths": []
+      },
+      "runtime_binding": {
+        "mode": "source",
+        "runtime_root": "/workspace/cryptalis/src/cryptalis",
+        "module_count": 45,
+        "modules_sha256": "256833e14b85650b51217abb868eedb60af43b727dd8d2efb58394e2d4f12c3f",
+        "wheel": null,
+        "wheel_sha256": null
+      }
+    },
+    "diagnostics/redacted-wrapper.json": {
+      "pytest_report_counts": {
+        "test_calls": {
+          "failed": 1
+        },
+        "subtest_calls": {},
+        "setup": {
+          "passed": 1
+        },
+        "teardown": {
+          "passed": 1
+        },
+        "collection": {},
+        "selected_items": 1
+      },
+      "exit_code": 1,
+      "source_stability": {
+        "unchanged": true,
+        "changed_paths": []
+      },
+      "runtime_binding": {
+        "mode": "source",
+        "runtime_root": "/workspace/cryptalis/src/cryptalis",
+        "module_count": 45,
+        "modules_sha256": "256833e14b85650b51217abb868eedb60af43b727dd8d2efb58394e2d4f12c3f",
+        "wheel": null,
+        "wheel_sha256": null
+      }
+    }
+  },
+  "runtime_modules_sha256": "256833e14b85650b51217abb868eedb60af43b727dd8d2efb58394e2d4f12c3f",
+  "psycopg": {
+    "version": "3.3.6",
+    "libpq": 180006,
+    "implementation": "binary",
+    "cancellation_source_sha256": "5f1607a193cb63e60a0c5687209d2bd0e3029760b9559e9968f31d6b5d82c778"
+  },
+  "postgres_source_sha256": {
+    "catalog/system_views.sql": "1c47b3f1172e7ff8a0736d6747cd4487a3e970cc8f437705b1484baf2aae29e0",
+    "utils/adt/ruleutils.c": "0898f93834a25de4fda9d72ee450077713353fed464fe7ca556912ca278ad455",
+    "access/common/relation.c": "b3262dee4b016dd108b0947bf916aa8af201affc35c3080ca87d59f5771f2ac0"
+  },
+  "archive": "ci-push-followup-receipts-20261101.tar.gz",
+  "archive_sha256": "5556682616071b596ca148ac7a6c3f76d084e124bc168412805468d0a9cced24",
+  "members": {
+    "push-75d095b/admission.json": "3c697d16813b3f71d521dc220ef13bc4fe7993c37b17f93ecf40c3d5ef031220",
+    "push-75d095b/dependency-audit.json": "7d505e1e7de9f56f99d4c6383f59b164e2e429f383f45e73cfa741c5fda239cc",
+    "push-75d095b/job-status.json": "8555999977e6d599ddf0fda49baed92a268233c67220592aee986190d2b73014",
+    "push-75d095b/qualification/source-receipt.json": "3e1e6c1c66c6927897c11018f6d6ddcd0f2f4108202026c5bbb06af3c76ebde7",
+    "push-75d095b/qualification/status.json": "4e0c6cbbfbf1c67952923f2d6ca8229bcce92e89f781ca7d70f793731a8c7c16",
+    "push-6aafac4/admission.json": "4f90daec7f6a6afac30bf2cd356bcf8a777f181ac8dda79e1cf451fbeabe164e",
+    "push-6aafac4/dependency-audit.json": "7d505e1e7de9f56f99d4c6383f59b164e2e429f383f45e73cfa741c5fda239cc",
+    "push-6aafac4/job-status.json": "8555999977e6d599ddf0fda49baed92a268233c67220592aee986190d2b73014",
+    "push-6aafac4/qualification/source-receipt.json": "7761b36152e8a4e20efd4bd393481baafa7d6a240bbaed31fea75fd9d10eea16",
+    "push-6aafac4/qualification/status.json": "7785ae8060e8dbdb120e8bba8df9e3d03056671528710426a567c30751a8c953",
+    "native-catalog/profile.py": "88aa0606edde5c35bb84ad944af7debfb6d20c30f4b291629221ee87f05413da",
+    "native-catalog/report.json": "ea5f9e2039ae990f69284f5b4c58e43b34ad4c263435d2bc06903538dc112f86",
+    "native-catalog/wrapper.json": "dfbdb8ad74421755149cf5c1b2a6fb429ecd6e868f6a746833920e1bad2fe235",
+    "focused-before-cancel.json": "36c8dc463dcc880e245c7ec9bcd1c64202f8571035e30014ba91684e24eca9e8",
+    "wheel313-before-cancel.json": "860c0735b5f0b821d9a3f44c3804ee47236cdbf92e352fc4037eb543c1316d5c",
+    "final-source.json": "c312b16c14e72b77513b7c1a51a1436ed327f17d71e0bea87e95dc7a36fa5285",
+    "final-wheel313-cancel.json": "a9f5ca6daa9c37df7b585e261338adf8706bcf2d14045882adc57949fb30cd63",
+    "diagnostics/profile.py": "4e820ed000e947a6f9426befd5ab5d6d67301be84f3072e8d8c8eac4e5926a06",
+    "diagnostics/conftest.py": "f6bb14ac056550e61a19999cc879fe5435de0a2bfc8fa3c4d74a5653f493eee4",
+    "diagnostics/report.json": "7855490ce2edd94bf2739bc5839dbff1b4283afae7c98b4e8ee5d76ece84c72b",
+    "diagnostics/native-wrapper.json": "c7e570656253cdf3be3b8ddde4542578005ea5ba847d7a2d3814feb92c19f0cc",
+    "diagnostics/redacted-wrapper.json": "8473beafd340e3817c45b98d1eed3ab9a008b937c10f4a993ba234e4ef6e49f0"
+  },
+  "limits": [
+    "Product/runtime/build inputs unchanged; test and diagnostic repair only",
+    "External controlled profiles are retained and hashed separately from wrapper source inventories",
+    "Diagnostic controls intentionally fail one native database query per run; expected exit1 is not an unexpected suite failure",
+    "Earlier100-case source and wheel313 receipts precede cancellation-test change; final102-case source and 2-case installed cancellation checks bind the final tests",
+    "No production cancellation-latency or provider guarantee",
+    "All seven production gates and independent human review remain UNKNOWN"
+  ]
+}

@@ -20,6 +20,8 @@ current contracts. Verify claims in current source and exact receipts.
 
 Inspect the actual working directory and Git status. Preserve unrelated work.
 Use the current checkout root; do not assume a workstation-specific path.
+`main` is the production-development line. Merge verified feature PRs into it;
+keep the frozen library preview and separate Smolink demo branch/tag unchanged.
 Current user instructions determine authorization. When implementation and
 commit/push are authorized, continue through verified slices and push each one;
 do not resurrect old human-only, one-file, one-slice or operator-pause rules.

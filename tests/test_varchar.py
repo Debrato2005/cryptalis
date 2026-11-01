@@ -333,8 +333,11 @@ def test_storage_only_varchar_keeps_default_collation_and_undeclared_search_refu
             with pytest.raises(UnsupportedProtectedOperation):
                 s.scalar(select(app.Customer.id).where(app.Customer.name == 'PRIVATEVALUE'))
         with app.owner.connect() as c:
-            assert c.exec_driver_sql('SELECT count(*) FROM pg_catalog.pg_indexes WHERE schemaname=%s '
-                "AND tablename='customer' AND indexdef LIKE '%%substring%%'", (app.schema,)).scalar_one() == 0
+            # Inspect this table structurally: pg_indexes.indexdef can deparse
+            # another worker's index while that worker drops its schema.
+            assert c.exec_driver_sql('SELECT count(*) FROM pg_catalog.pg_index '
+                'WHERE indrelid=%s::pg_catalog.regclass AND indexprs IS NOT NULL',
+                (f'"{app.schema}".customer',)).scalar_one() == 0
 
 
 def test_native_varchar_query_binds_keep_query_values_uncoerced():

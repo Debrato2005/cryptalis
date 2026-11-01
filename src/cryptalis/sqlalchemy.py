@@ -391,6 +391,7 @@ class _UnprotectedDeletePermit:
     table: object
     predicates: tuple
     configuration: tuple
+    returning_shape: tuple
 
 
 def _delete_name_state(value):
@@ -1406,7 +1407,7 @@ class _Attachment:
                 any(table.name == model['table'] and table.schema in (None, model['schema'])
                     for model in self.document['models']) or
                 _delete_node(statement.table, Table) is not table or
-                statement._returning or statement._return_defaults or statement._with_options or
+                statement._return_defaults or statement._with_options or
                 statement._prefixes or statement._hints or statement._independent_ctes or statement.dialect_kwargs):
             raise UnsupportedProtectedOperation()
         _delete_node(table, Table)
@@ -1415,10 +1416,25 @@ class _Attachment:
                 raise UnsupportedProtectedOperation()
             _delete_node(column, Column)
             self.bind_type(column.type, selecting=True)
+        returning_shape = []
+        for expression in statement._returning:
+            name = None
+            column = expression
+            if isinstance(expression, Label):
+                column = _column_label(expression)
+                name = _delete_name_state(expression.name)
+                engine = self.engine.sync_engine if isinstance(self.engine, AsyncEngine) else self.engine
+                if (not name[0] or '\x00' in name[0] or
+                        name[1] is False and engine.dialect.identifier_preparer._requires_quotes(name[0])):
+                    raise UnsupportedProtectedOperation()
+            column = _delete_node(column, Column)
+            if column.table is not table or table.c.get(column.key) is not column or column.is_literal:
+                raise UnsupportedProtectedOperation()
+            returning_shape.append((column, expression, name))
         # Keep the ordinary DELETE compiler and ORM evaluator inside one finite
         # single-table grammar. Every AST node must use native dispatch.
         for node in visitors.iterate(statement):
-            for native in (Delete, Table, Column, BooleanClauseList, BinaryExpression, BindParameter):
+            for native in (Delete, Table, Column, Label, BooleanClauseList, BinaryExpression, BindParameter):
                 if isinstance(node, native):
                     _delete_node(node, native)
                     break
@@ -1460,9 +1476,12 @@ class _Attachment:
             raise UnsupportedProtectedOperation()
         configuration = (_delete_name_state(table.schema), _delete_name_state(table.name), _delete_name_state(table.key),
                          tuple(_unprotected_column_state(column) for column in table.c))
-        permit = _UnprotectedDeletePermit(mapper, table, tuple(predicates), configuration)
+        permit = _UnprotectedDeletePermit(mapper, table, tuple(predicates), configuration, tuple(returning_shape))
         if expected is not None:
             if (permit.mapper is not expected.mapper or permit.table is not expected.table or
+                    len(permit.returning_shape) != len(expected.returning_shape) or
+                    any(current[0] is not old[0] or current[1] is not old[1] or current[2] != old[2]
+                        for current, old in zip(permit.returning_shape, expected.returning_shape)) or
                     configuration[:3] != expected.configuration[:3] or
                     len(configuration[3]) != len(expected.configuration[3]) or
                     any(current[0] is not old[0] or current[3] is not old[3] or current[6] is not old[6] or
