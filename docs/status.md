@@ -4,6 +4,27 @@ Cryptalis implements a bounded research prototype. **No production release or co
 This page owns current verification and release gates; the [34-objective ledger](BUILD_CHECKLIST.md) owns remaining work.
 Use the [documentation map](README.md) to find contracts and procedures.
 
+## Installed-library preview preparation
+
+The [preview milestone](preview.md) takes priority before further feature work.
+Version `0.1.0a1` uses the existing uv_build backend and declares Python 3.12 and
+3.13. Repeat builds produce identical wheels and source archives. Eight fresh,
+non-editable installs pass: pip and uv, wheel and sdist, CPython 3.12.14 and
+3.13.5, including optional extras, dependency checks, isolated public imports,
+CLI help and installed-module equality. No PYTHONPATH or source-checkout import
+is used. The wheel SHA-256 is
+`eedecae8fd72a06bdf8ed95bd0aae377cabdfd51df325c50463f4f4f4b65060a`;
+the sdist is `7e64f4a36a6ddc6ab4a5693d326f41f8b7aadf97bcee670ead437bd99e4eb077`.
+The [retained package receipts](_reset/preview-package-20261101.tar.gz) include
+the SBOM and installation results. The build receipt identifies its exact worktree inputs; it is not a clean-commit
+or independent-builder provenance claim.
+
+The [installation guide](installation.md), changelog and [release procedure](release.md)
+are prepared. The publishing template is deliberately outside executable Actions
+workflows and has not run. No package index upload or public release occurred.
+Fresh-clone application demonstration, measurement and revision freeze remain
+in progress. All seven production gates remain UNKNOWN.
+
 **Latest complete hosted pass: `4ae1b76`.** Both jobs in
 [run 41279005913](https://github.com/Debrato2005/cryptalis/actions/runs/41279005913)
 pass for native JSONB storage and recovery. Source passes 3,953 calls and 18

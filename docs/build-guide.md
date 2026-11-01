@@ -20,6 +20,12 @@ Reuse PostgreSQL, SQLAlchemy, library crypto, providers, and the existing deploy
 
 ## Current implementation priority
 
+The current instruction first requires the [installed-library preview](preview.md):
+reuse bounded verified behavior, prepare clean artifacts, demonstrate a fresh
+Smolink clone and report matched costs. Broader JSON/text work is not a
+prerequisite for that checkpoint. Resume the full production critical path
+after freezing the demonstrated revisions.
+
 The baseline slices below are dependency and acceptance contracts, not a claim
 that implementation starts at slice 1 again. The current code already has bounded
 implementations of all seven. Continue from the [objective ledger](BUILD_CHECKLIST.md#next-critical-path)
