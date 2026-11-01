@@ -1,0 +1,74 @@
+{
+  "format": "cryptalis.openbao-strict-tls-evidence/v1",
+  "base_revision": "7ed50f79c66db5ac286c27b3ccf8327c8e8caa55",
+  "helper": {
+    "path": "scripts/openbao_qualification.py",
+    "sha256": "3818b4e94994951eb93113ffa8323ce5dc28b66b37571eea1fba9ce338f0c6ba"
+  },
+  "successful": {
+    "format": "cryptalis.openbao-strict-tls-boundary/v1",
+    "status": "PASS",
+    "source_base": "7ed50f79c66db5ac286c27b3ccf8327c8e8caa55",
+    "helper_path": "scripts/openbao_qualification.py",
+    "helper_sha256": "3818b4e94994951eb93113ffa8323ce5dc28b66b37571eea1fba9ce338f0c6ba",
+    "python": "3.13.5",
+    "openssl": "OpenSSL 3.5.7 9 Jun 2026",
+    "image": "openbao/openbao@sha256:5046911075e137e154ce49ab051502f4ec7cf367d484ae4a4dce665d9b90561f",
+    "wheel_sha256": "eedecae8fd72a06bdf8ed95bd0aae377cabdfd51df325c50463f4f4f4b65060a",
+    "red_evidence": {
+      "failure": "Python 3.13 strict TLS: Missing Authority Key Identifier",
+      "receipt_sha256": "fba26e258573b908f6028ca3e8501424c268909096f39125380b5e22f4ce58cb",
+      "retained": "private original demo receipt and failed protect output; not replayed here"
+    },
+    "controls": {
+      "strict_tls_handshake": "PASS",
+      "installed_public_create_root_unwrap": "PASS",
+      "native_wrong_aad": "REFUSED",
+      "native_key_administration": "DENIED",
+      "helper_unchanged": "PASS"
+    },
+    "cleanup": "PASS; stopped container removed after private log retention; custody files retained",
+    "gate": "UNKNOWN",
+    "scope": "Fresh local TLS/Raft OpenBao provider boundary only; no PostgreSQL tests or runtime modifications",
+    "runtime_binding": {
+      "mode": "installed-wheel",
+      "module_count": 45,
+      "modules_sha256": "0214cf6c47a1e6511bea8e522da29f582c5db023c2652cdedd1a0ff9c6092dc9",
+      "runtime_root": "/workspace/smolink-preview/.venv/lib/python3.13/site-packages/cryptalis",
+      "wheel": "/workspace/scratch/cryptalis-package-20261101/artifacts/cryptalis-0.1.0a1-py3-none-any.whl",
+      "wheel_sha256": "eedecae8fd72a06bdf8ed95bd0aae377cabdfd51df325c50463f4f4f4b65060a"
+    },
+    "tls_verify_flags": 557088,
+    "tls_protocol": "TLSv1.3",
+    "service_version": "2.7.2",
+    "helper_final_sha256": "3818b4e94994951eb93113ffa8323ce5dc28b66b37571eea1fba9ce338f0c6ba"
+  },
+  "retained_startup_failure": {
+    "receipt_sha256": "0adf302329dc41236c870ff1e0607be46f6e412377f442032e9a1669ace27da5",
+    "failure_type": "ConnectionResetError",
+    "cause": "Runner attempted TLS before listener readiness; corrected runner waits for existing read-only readiness.",
+    "cleanup": "PASS; new private files retained, stopped container shell removed"
+  },
+  "original_python313_failure": {
+    "failure": "Python 3.13 strict TLS: Missing Authority Key Identifier",
+    "receipt_sha256": "fba26e258573b908f6028ca3e8501424c268909096f39125380b5e22f4ce58cb",
+    "retained": "private original demo receipt and failed protect output; not replayed here"
+  },
+  "receipt_archive": {
+    "path": "openbao-strict-tls-receipts-20261101.tar.gz",
+    "sha256": "d5b138cbdc7288722b518de42790ef11769ba0f7eda80cb87b1d36424d1983f6",
+    "contents": {
+      "successful/check.py": "6462a6524817ca75a8ff993df548417e3f16f42bd9d05230b616a546f768f2cd",
+      "successful/receipt.json": "dfcd3398c84e1ebf3af4b45010a07ffe93df4f4eac96f4b635bfa91650813e00",
+      "startup-failure/check.py": "1906a4bd7dd7688b838f20ba125946f60064c0c19fb9081d15c063634585a744",
+      "startup-failure/receipt.json": "0adf302329dc41236c870ff1e0607be46f6e412377f442032e9a1669ace27da5"
+    },
+    "excludes": "private keys, tokens, initialization material, Raft state and service/audit logs"
+  },
+  "limits": [
+    "Local provider/TLS tooling boundary only",
+    "No PostgreSQL tests or full production qualification run",
+    "Frozen preview wheel, runtime source, metadata and dependency/build inputs unchanged",
+    "All seven production gates remain UNKNOWN"
+  ]
+}
