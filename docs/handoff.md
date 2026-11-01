@@ -21,6 +21,10 @@ objective and the single-public-release policy.
   concurrency 4/16 also miss. Destination bytes are 1.5114×, observed total
   relation/index allocation 2.5987×. Smolink destination equality/IN and its
   search-key rotation remain unsupported by its storage-only profile.
+- Separate source-bound local maintenance evidence at demo `b84f54d` measures
+  real-host stop to committed POST201 of 4.071 s protect, 4.501 s wrapping rewrap
+  and 12.169 s payload rotation. [Definitions, raw service counters and retained failure](https://github.com/Debrato2005/smolink/blob/b84f54d2fde83105c3e208be1ef16af68dd54801/cryptalis_demo/evidence/writer-interruption-20261101/README.md).
+  It preserves the original freeze and makes no production outage guarantee.
 - Draft release payload/review notes and disabled Trusted Publishing template
   are prepared. No remote Release exists: the connector has no release-create
   operation and direct GitHub API access is denied. No public index upload or
@@ -46,6 +50,15 @@ revision, with matching frozen preview artifacts; the independent local strict
 TLS boundary used no PostgreSQL. [Hosted evidence](_reset/openbao-strict-tls-hosted-boundary-20261101.json).
 No full provider qualification follows. Continue the production objective ledger. All seven gates
 and independent human review remain UNKNOWN. [Status](status.md) owns current results.
+
+The independently installable package, separate fresh application demonstration,
+current-data removal, source-bound measurements and freeze are delivered within
+their stated limits. The requested remote draft Release remains blocked by
+connector/network capabilities; equivalent CipherStash execution requires its
+unconfigured workspace/client credentials. Local release payloads/notes and the
+complete preview kit are ready. Public package-index upload has no approval.
+Preserve all remaining product objectives; do not convert these blockers or
+missed targets into completed production requirements.
 
 ## Previous native JSONB checkpoint
 
