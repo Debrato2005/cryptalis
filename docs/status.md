@@ -6,7 +6,7 @@ Use the [documentation map](README.md) to find contracts and procedures.
 
 ## Public-table DELETE RETURNING
 
-**VERIFIED, bounded local development:** the finite mapped DELETE route for an
+**VERIFIED, bounded development:** the finite mapped DELETE route for an
 unprotected table now accepts direct-column scalar/tuple and explicitly named
 column RETURNING. Sync/async SQLAlchemy and SQLModel retain native values, types,
 NULLs, result keys, synchronization, protected-parent autoflush, savepoint rollback
@@ -21,7 +21,17 @@ development-wheel runs each pass the same **162 calls without skips** on Python
 unchanged source inventories. Repeat wheel/sdist builds match; isolated installed
 imports, exact module bytes, CLI help and dependency checks pass on both
 interpreters. The existing installed CI selection now includes these public
-DELETE journeys. These are local results; hosted verification is not yet claimed.
+DELETE journeys.
+
+**Both hosted jobs pass at `75d095b`**, through PR merge `fb65959`, in
+[run 41310161240](https://github.com/Debrato2005/cryptalis/actions/runs/41310161240).
+Source passes 3,979 calls and 18 subtests, with 25 call, 41 setup and nine
+collection skips. Seventeen installed receipts pass 1,233 calls; the unavailable
+previous-v14 JSONB reader remains explicitly skipped. All 24 release steps pass.
+All 324 Python files across 18 inventories and 52 build inputs match the actual
+development head. Hosted wheel/sdist exactly match the local development
+artifacts. The hosted default is Python 3.12; Python 3.13 remains the separate
+local installed check above. [Exact hosted boundary and retained receipts](_reset/public-delete-returning-hosted-boundary-20261101.json).
 
 The first focused run retains two native-oracle failures and 151 passes: newly
 created equivalent labels reused native cached lookup identities. The corrected
