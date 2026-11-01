@@ -811,8 +811,9 @@ The six-gate grouping and conservative unadmitted grammar assumptions are record
 ## Performance targets and recorded costs
 
 [Real-application results](status.md#real-application-equality-search) meet the point,
-equality and IN-20 targets at concurrency 1 and miss them at higher concurrency in one
-process. Indexed-column storage measures 2.017× after compaction. The earlier
+equality and IN-20 targets at concurrency 1 on a table reading one protected field, and miss
+them at higher concurrency in one process. Cost grows about 0.15 ms per protected field read,
+so point and equality reads miss 3 ms from about 10 protected fields. Indexed-column storage measures 2.017× after compaction. The earlier
 [`09c635a` observation](status.md#current-performance-boundary) fails
 all six scalar/tuple and full-entity read-latency targets in the warm 10k profile.
 Indexed-column storage meets 2× at 1.52483×. Diagnostic traversal measurements and

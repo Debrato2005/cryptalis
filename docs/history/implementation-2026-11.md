@@ -179,5 +179,9 @@ re-verifies in its own transaction, so those passes stayed. Measured one change 
 against a pinned wheel on fresh data: a generator-free `tuple_bytes` saves about 5%, the
 public salt memo about 3–5% more and the search-key memo reaches 13–14%. Reading the batch
 limits once, outside a per-frame loop that reparsed the whole plan, reaches about 33%.
-Counting JSON parses per operation then found no similar loop elsewhere. Two mutants of the
+Counting JSON parses per operation then found no similar loop elsewhere.
+Every earlier latency figure came from narrow tables, so a diagnostic then varied the field
+count and found cost growing about 0.15 ms per protected field read, which qualifies the
+concurrency 1 result. Protected field counts of 2, 5, 10, 20 and 40 give added p95 of 2.03,
+2.44, 3.02, 4.60 and 7.64 ms, with one equality read of 800 samples per cell on one host. Two mutants of the
 search-key memo are caught: one by a new test, the other by the frozen independent vectors.

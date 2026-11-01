@@ -24,7 +24,7 @@
  "application_evidence": {
   "repository": "Debrato2005/smolink",
   "branch": "demo/cryptalis-email-search-20261102",
-  "revision": "b1db2252b1d5c7be3d8ef392ca1db7b0109c1eba",
+  "revision": "f0cae5c62464ec7942c66189a7a5df60860f0e36",
   "backend_files_changed": 0,
   "measured_evidence_revision": "43a6622b48c8460257358c118c86b24597cf5255"
  },
@@ -113,7 +113,24 @@
     ]
    },
    "application_observations": "single run on each wheel"
-  }
+  },
+  "field_count_scaling": {
+   "workload": "warm sync equality read of a full entity, 2000 rows, 800 samples, one run per cell, final wheel source",
+   "added_p95_ms_by_protected_fields": {
+    "2": 2.03,
+    "5": 2.44,
+    "10": 3.02,
+    "20": 4.6,
+    "40": 7.64
+   },
+   "profile_shares_at_40_fields": {
+    "compile_projection": "about 40%",
+    "admission": "about 24%",
+    "fingerprint": "about 7%",
+    "open_value": "about 6%"
+   }
+  },
+  "hosted_254d334": "run 41353786983, both jobs pass; source reports 4093 passed, 77 skipped, 18 subtests"
  },
  "retained_failures": [
   "Local regression at 059f886 reported Verification.SourceChanged because scripts/ci_qualification.py changed during the run; its 172 passes are not a valid binding.",
@@ -128,7 +145,8 @@
   "Not a provider, cold-path, remote-network, saturation or production pause measurement.",
   "New-account registration needs mail delivery and was not exercised.",
   "Tenant-column DO UPDATE, upsert RETURNING and non-excluded protected assignments remain unadmitted.",
-  "The final-admission defect also affects frozen v0.1.0a1, which is unchanged."
+  "The final-admission defect also affects frozen v0.1.0a1, which is unchanged.",
+  "Latency targets met at concurrency 1 apply to reads of one protected field; cost grows with protected fields read."
  ],
  "receipt_archive": {
   "path": "production-continuation-receipts-20261102.tar.gz",
