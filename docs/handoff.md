@@ -53,7 +53,16 @@ and independent human review requirements remain in force.
 | Strict-TLS tooling CI | [Run 41282107646](https://github.com/Debrato2005/cryptalis/actions/runs/41282107646), head `fb53e9f`, PR merge `e7ce82d`; [head-byte boundary](_reset/openbao-strict-tls-hosted-boundary-20261101.json) |
 | Subsequent public-table DELETE RETURNING | Development head `75d095b`, PR 8; [run 41310161240](https://github.com/Debrato2005/cryptalis/actions/runs/41310161240), PR merge `fb65959`; [head-byte boundary](_reset/public-delete-returning-hosted-boundary-20261101.json) |
 
-Both hosted jobs pass for each named run. Byte-bound receipts, explicit skips,
+The subsequent [push-run follow-up](status.md#push-run-ci-follow-up) preserves two
+failed push jobs that the corresponding PR passes did not expose. Its
+[boundary](_reset/ci-push-followup-boundary-20261101.json) retains the native
+catalog lock/drop reproduction, bounded assertion repair, cancellation guard
+repair and sanitized-diagnostic controls. Check both push and PR runs when
+resuming; the commit-specific PR helper filters out push events. The generic
+GitHub workflow-runs collection exposes both.
+
+Both hosted jobs pass for each run in the revision table. The separate push
+failures above remain failures. Byte-bound receipts, explicit skips,
 local Python 3.13 controls and artifact equality are in status and the
 boundaries above. A documentation commit after those inputs is not a new runtime
 verification. Earlier JSONB scope and evidence remain in [type history](history/types-2026-11.md)
