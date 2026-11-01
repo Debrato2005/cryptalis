@@ -1,0 +1,1899 @@
+{
+  "all_selected_files_stable_before_archive_copy": true,
+  "all_source_build_inputs_compared_to_git_head_not_working_tree": true,
+  "artifact_downloads": [
+    {
+      "artifact_id": 13083462597,
+      "bytes": 17043269,
+      "download_exit": 0,
+      "expected_bytes": 17043269,
+      "expected_digest": "sha256:7c3759c8552118da45140c0a184d0c4afdc6c01b339657bdb461e9f5602a7932",
+      "kind": "source",
+      "name": "source-evidence-41305071412-1",
+      "run": "push",
+      "sha256": "7c3759c8552118da45140c0a184d0c4afdc6c01b339657bdb461e9f5602a7932"
+    },
+    {
+      "artifact_id": 13083363381,
+      "bytes": 791283,
+      "download_exit": 0,
+      "expected_bytes": 791283,
+      "expected_digest": "sha256:acf112257c6539be05eadf6989a50096b69bad26ad0ee55b776d92eda6bc5b21",
+      "kind": "release",
+      "name": "release-evidence-41305071412-1",
+      "run": "push",
+      "sha256": "acf112257c6539be05eadf6989a50096b69bad26ad0ee55b776d92eda6bc5b21"
+    },
+    {
+      "artifact_id": 13083348344,
+      "bytes": 791242,
+      "download_exit": 0,
+      "expected_bytes": 791242,
+      "expected_digest": "sha256:ca6c5f75f7143d3dd694230c9b18b3c3b7af262c5fbe8e128405466929062154",
+      "kind": "release",
+      "name": "release-evidence-41305131672-1",
+      "run": "pr",
+      "sha256": "ca6c5f75f7143d3dd694230c9b18b3c3b7af262c5fbe8e128405466929062154"
+    },
+    {
+      "artifact_id": 13082638307,
+      "bytes": 17043153,
+      "download_exit": 0,
+      "expected_bytes": 17043153,
+      "expected_digest": "sha256:aa9788e24fc0c82454bcc433b0d5360f38e7b1d4bde1338196c609cbe8aa0baa",
+      "kind": "source",
+      "name": "source-evidence-41305131672-1",
+      "run": "pr",
+      "sha256": "aa9788e24fc0c82454bcc433b0d5360f38e7b1d4bde1338196c609cbe8aa0baa"
+    }
+  ],
+  "branch": "codex/parameterized-update-20261101",
+  "counts_not_summed_across_runs": true,
+  "earlier_reader_skips": {
+    "admission_v14": 1,
+    "compatibility_qualified": false,
+    "equality_search_v16": 1,
+    "literal_default_v15": 1,
+    "local_frozen_reader_controls_are_separate_evidence": true,
+    "per_run": 3
+  },
+  "format": "cryptalis.parameterized-update-hosted-boundary/v1",
+  "issues": [],
+  "limits": [
+    "Research prototype, not production qualification or independent human review.",
+    "Hosted default cell is the recorded Python 3.12 build interpreter; Python 3.13 is separate local evidence.",
+    "Three frozen earlier-reader controls may be explicitly unavailable in hosted JSONB receipts; skips do not qualify compatibility.",
+    "Google SDK checks use local protocol transport and real PostgreSQL; they do not prove live cloud custody.",
+    "OpenBao is a single-node pinned local qualification service with its recorded TLS/audit/storage boundary.",
+    "Fresh recovery restart controls deny Cryptalis imports; they do not prove a separately package-uninstalled interpreter.",
+    "Fresh recovery retains existing JSONB, application, Project, integer public-slot and search modification profile scope; it does not separately exercise parameterized UPDATE after restore.",
+    "Project recovery command is a retained release step; its dedicated phase receipts are not selected into the uploaded artifact.",
+    "No workflow rerun, cancellation, repository edit, local database probe/test, commit, push or publication was performed by this hosted audit.",
+    "The separate earlier VARCHAR InternalError cause remains UNKNOWN and is not cleared by these successful runs."
+  ],
+  "local_final_artifacts": {
+    "cryptalis-0.1.0a2.dev2-py3-none-any.whl": "d779522b9fa89ed8642f07b2181e0ad8df64c486a11e9c6f5550c70fb3cc80b3",
+    "cryptalis-0.1.0a2.dev2.tar.gz": "a7b86eec49a650c480d1fc2526b70c62fef7bf3b7ba39ec78912516d4a0a4cd3"
+  },
+  "outcome": "PASS",
+  "pr_merge_checkout": {
+    "all_source_and_build_inputs_match_requested_head": true,
+    "api_head": "1d4124b549bb8b36f9c5022c94c3f489d9da901f",
+    "parents": [
+      "4d1daa530cba768cc2e19e708b410f2ed9010bbc",
+      "1d4124b549bb8b36f9c5022c94c3f489d9da901f"
+    ],
+    "sha": "af38ba735979a6669c543a7fd379537c70d2c397"
+  },
+  "prior_separate_failure": {
+    "cause": "UNKNOWN; original database cause suppressed by the historical sanitizer",
+    "current_green_runs_do_not_resolve_historical_cause": true,
+    "head": "caddefef5b25cd79364521423b1e54f67f8b35f1",
+    "observed": "SQLAlchemy InternalError",
+    "receipt_retained_separately": "/home/debrato/.cache/cryptalis-jsonb-equality-20261101/prior-ci-failure/varchar-ci-failure-boundary-20261101.json",
+    "run_id": 41296961917,
+    "test": "tests/test_varchar.py::test_storage_only_varchar_keeps_default_collation_and_undeclared_search_refusal"
+  },
+  "production_gates": {
+    "G-ADAPTER": "UNKNOWN",
+    "G-CRYPTO": "UNKNOWN",
+    "G-LIFECYCLE": "UNKNOWN",
+    "G-POLICY": "UNKNOWN",
+    "G-PROVIDER": "UNKNOWN",
+    "G-QUERY": "UNKNOWN",
+    "G-RELEASE": "UNKNOWN"
+  },
+  "provider_boundary": "Both workflows repeated current-wheel Google SDK local protocol transport with real PostgreSQL (50 calls) and pinned OpenBao 2.7.2 TLS/Raft/audit/outage/restart/snapshot/PostgreSQL qualification (140 calls). No real Google account/KMS custody or production provider qualification follows.",
+  "receipts_archive": "point-update-parameters-hosted-receipts-20261101.tar.gz",
+  "receipts_archive_bytes": 743492,
+  "receipts_archive_member_count": 95,
+  "receipts_archive_sha256": "066028fadd4a0a39591987b620c60e74229930a02572a0dbedeb5540f20a7649",
+  "restart_boundary": "Restart controls used fresh subprocesses that deny Cryptalis imports; the installed wheel still exists in those interpreters. This is not evidence of a package-uninstalled environment.",
+  "retained_files": [
+    "artifact-download-receipts.json",
+    "immutable-head-inputs.json",
+    "immutable-head/.github/workflows/local-checks.yml",
+    "immutable-head/scripts/ci_qualification.py",
+    "immutable-head/scripts/release_check.py",
+    "immutable-head/scripts/test_postgres.py",
+    "immutable-runtime.json",
+    "pr-release-download-receipt.json",
+    "pr-source-download-receipt.json",
+    "pr/artifacts.json",
+    "pr/audit-summary.json",
+    "pr/checkout-merge.json",
+    "pr/jobs.json",
+    "pr/release/SHA256SUMS",
+    "pr/release/install-receipt.json",
+    "pr/release/installed-application-export-receipt.json",
+    "pr/release/installed-application-restore-receipt.json",
+    "pr/release/installed-code-receipt.json",
+    "pr/release/installed-export-receipt.json",
+    "pr/release/installed-google-kms-receipt.json",
+    "pr/release/installed-journey-receipt.json",
+    "pr/release/installed-jsonb-export-receipt.json",
+    "pr/release/installed-jsonb-journey-receipt.json",
+    "pr/release/installed-jsonb-receipt.json",
+    "pr/release/installed-jsonb-restore-receipt.json",
+    "pr/release/installed-jsonb-slots-export-receipt.json",
+    "pr/release/installed-jsonb-slots-journey-receipt.json",
+    "pr/release/installed-jsonb-slots-restore-receipt.json",
+    "pr/release/installed-modification-export-receipt.json",
+    "pr/release/installed-modification-restore-receipt.json",
+    "pr/release/installed-openbao-qualification.json",
+    "pr/release/installed-openbao-tests.json",
+    "pr/release/installed-restore-receipt.json",
+    "pr/release/installed-sqlmodel-receipt.json",
+    "pr/release/installed-storage-modification-export-receipt.json",
+    "pr/release/installed-storage-modification-restore-receipt.json",
+    "pr/release/job-status.json",
+    "pr/release/release-receipt.json",
+    "pr/release/sbom.cdx.json",
+    "pr/release/scanner-audit.json",
+    "pr/release/scanner-sbom.cdx.json",
+    "pr/release/scanner-toolchain.json",
+    "pr/release/status.json",
+    "pr/run.json",
+    "pr/source/admission.json",
+    "pr/source/dependency-audit.json",
+    "pr/source/job-status.json",
+    "pr/source/postgres-packages/SHA256SUMS",
+    "pr/source/postgres-packages/installed-versions.txt",
+    "pr/source/qualification/source-receipt.json",
+    "pr/source/qualification/status.json",
+    "push-release-download-receipt.json",
+    "push-source-download-receipt.json",
+    "push/artifacts.json",
+    "push/audit-summary.json",
+    "push/jobs.json",
+    "push/release/SHA256SUMS",
+    "push/release/install-receipt.json",
+    "push/release/installed-application-export-receipt.json",
+    "push/release/installed-application-restore-receipt.json",
+    "push/release/installed-code-receipt.json",
+    "push/release/installed-export-receipt.json",
+    "push/release/installed-google-kms-receipt.json",
+    "push/release/installed-journey-receipt.json",
+    "push/release/installed-jsonb-export-receipt.json",
+    "push/release/installed-jsonb-journey-receipt.json",
+    "push/release/installed-jsonb-receipt.json",
+    "push/release/installed-jsonb-restore-receipt.json",
+    "push/release/installed-jsonb-slots-export-receipt.json",
+    "push/release/installed-jsonb-slots-journey-receipt.json",
+    "push/release/installed-jsonb-slots-restore-receipt.json",
+    "push/release/installed-modification-export-receipt.json",
+    "push/release/installed-modification-restore-receipt.json",
+    "push/release/installed-openbao-qualification.json",
+    "push/release/installed-openbao-tests.json",
+    "push/release/installed-restore-receipt.json",
+    "push/release/installed-sqlmodel-receipt.json",
+    "push/release/installed-storage-modification-export-receipt.json",
+    "push/release/installed-storage-modification-restore-receipt.json",
+    "push/release/job-status.json",
+    "push/release/release-receipt.json",
+    "push/release/sbom.cdx.json",
+    "push/release/scanner-audit.json",
+    "push/release/scanner-sbom.cdx.json",
+    "push/release/scanner-toolchain.json",
+    "push/release/status.json",
+    "push/run.json",
+    "push/source/admission.json",
+    "push/source/dependency-audit.json",
+    "push/source/job-status.json",
+    "push/source/postgres-packages/SHA256SUMS",
+    "push/source/postgres-packages/installed-versions.txt",
+    "push/source/qualification/source-receipt.json",
+    "push/source/qualification/status.json",
+    "selected-files-sha256.json"
+  ],
+  "retained_files_sha256": {
+    "artifact-download-receipts.json": "6bcfe5df2556917ef55fb10fb3cb5d8f7c6e9d953401e8f1e1c1edc74cce5e37",
+    "immutable-head-inputs.json": "b91219d4f9151da353f2365bae568108203abee25acc2ce1dceb04ee84797f2d",
+    "immutable-head/.github/workflows/local-checks.yml": "6a1b950e932ea86b0061ca541a2cb430eff076aa3799f4b6cac0cc5c8bb7504c",
+    "immutable-head/scripts/ci_qualification.py": "611e2fb7f0d2bb7b193ef6c135fd8d741b32969a749d84561c6d0d829f9d4017",
+    "immutable-head/scripts/release_check.py": "452dbd5b573dec6020a0ec5b1d44cb9710efb2c6e6f70bd6234c44c83026c86e",
+    "immutable-head/scripts/test_postgres.py": "13c723f64d61719a3d85aa3f464eac3e3d6575c22b7b81622805c338e087e6c8",
+    "immutable-runtime.json": "4cf6aa40271f2605f823f4be2f1d4c9d646350499480b658c64901515cacbc98",
+    "pr-release-download-receipt.json": "2017fe674173e0be2e778a5a2733a497fca17a3533c4a992bae083ae57eb7e00",
+    "pr-source-download-receipt.json": "a671268f51645e2f36c491b7494433e0159bbd0799e77939cff7a87c29dd7c2e",
+    "pr/artifacts.json": "be4265c9b212f90e3a15cd102b94939e722ac55335b1b53bccffcba008efaa68",
+    "pr/audit-summary.json": "e89d8289b16266dd4bd9f29943b57578548bd2b2b6fd32d562cfaa80995a9c7d",
+    "pr/checkout-merge.json": "7c0f53a8e2b589a32217f50299b7cfdeaf3431a644d591437a2ea7b4e7e570bc",
+    "pr/jobs.json": "ee6d767fa2a48b197f745064223bfcf8c9939a2283b8615734ed4f436d1714b9",
+    "pr/release/SHA256SUMS": "6469b4d851409b2a9080c6178c1cacc2448a2577373625a580cdbd73b1021026",
+    "pr/release/install-receipt.json": "ab2dc9a7c44fc7eea6ae060f63adb378c7e959c4ed3ece884cdcc169513574d3",
+    "pr/release/installed-application-export-receipt.json": "f2b5acc20be74488732c285455bb7e758214a14054fdd5b3687051d19a6d98f5",
+    "pr/release/installed-application-restore-receipt.json": "080b90eded7e1c96b798b04a57affec67cab820d51cbe3048277e5c25814fddf",
+    "pr/release/installed-code-receipt.json": "43012c054bbc7765c76140e8824bc42105d0f54ac0a31099a90bbdf5c497f11f",
+    "pr/release/installed-export-receipt.json": "1d451b4614914f743550e100c65568aa1c80a525371c40eb7a9538930a538f41",
+    "pr/release/installed-google-kms-receipt.json": "5c6329a0a639a9de152f79eed5fc406248349c21f739c9ddf33ca2f2d4e97906",
+    "pr/release/installed-journey-receipt.json": "f0bdeda71a0003db278c119645eb3b11b2d3e2d07f811e1e58a1633e45d3a49e",
+    "pr/release/installed-jsonb-export-receipt.json": "7bcac99147bb14b51d609c47bf4929ecdfec23960616f66e88c29fae6fbb02d1",
+    "pr/release/installed-jsonb-journey-receipt.json": "a41ec08299b51c904cfeb59e2c1a67c39d539696e063b86f1cec186ae3e26562",
+    "pr/release/installed-jsonb-receipt.json": "655ba1fabb4746ee52b0c07943c7d82a2d0f471753196cfa0fa2e60bfa0aa405",
+    "pr/release/installed-jsonb-restore-receipt.json": "9ccba4d3d34f2bb3c9ee57036f57ab0f4df6d8db82dbafec47962340dd1a502a",
+    "pr/release/installed-jsonb-slots-export-receipt.json": "b18f8f821e45a304fc9ecb43a874226c6379cfa1d68375f03d24a72c29f0b811",
+    "pr/release/installed-jsonb-slots-journey-receipt.json": "7191d64ac0a192ef20d9944ae107ad7500d13affbfd49134467de4a5db01624b",
+    "pr/release/installed-jsonb-slots-restore-receipt.json": "bdd6074217b3643468aac3dfd85dd6f56df14347652833802d797800ef33ba21",
+    "pr/release/installed-modification-export-receipt.json": "ead69b07029801e31962fa50b727ddf4c73e4d1ddcf685ce643a3a9ae7918c1b",
+    "pr/release/installed-modification-restore-receipt.json": "bea7988ccdfea41a3b7ed618ce000b7881469acbb8d30472a0b85004086741fe",
+    "pr/release/installed-openbao-qualification.json": "3f68be32e8842f4e0cbb9d671ec2032215643838dc39a6a12dc4a17d80b3bc6f",
+    "pr/release/installed-openbao-tests.json": "5f653c340efd09e7347105a48d82931a27c85363d493afe903c9a0e9dda0060c",
+    "pr/release/installed-restore-receipt.json": "86185b48dbef55d89a5e8a591318bce16764d584fcf248f8f3f7e18f3ec4b395",
+    "pr/release/installed-sqlmodel-receipt.json": "5d7067dacfe44a358728d9184acfdfdcf861fdf29e18edcd8e7a7fd1ccd5d7f1",
+    "pr/release/installed-storage-modification-export-receipt.json": "8fcb879a20598c5cf2e3f5fdb35ac030df174c204aed8e0de029b03752d868b0",
+    "pr/release/installed-storage-modification-restore-receipt.json": "379810faf9038fe00d53dc2b7c1d67262d6ff68ef069f1e7dfe5cc56969f8492",
+    "pr/release/job-status.json": "577c3c86cd56e33b4f427f76f1f33d5a12883e41c9c0f710520731d24598dd4f",
+    "pr/release/release-receipt.json": "8cd61cee4065b55465c11d2f4e9928b2daec7fe4016aa6a125cc63368dd3e24f",
+    "pr/release/sbom.cdx.json": "12d6f11f8b142085a1c3484970e1403f6a714b451cc3629491d7a44439acedc0",
+    "pr/release/scanner-audit.json": "fffc59b1e5574ddfe75304f0e92479dc2d1fe096799299ed33ee6bbd0ca61803",
+    "pr/release/scanner-sbom.cdx.json": "feb89797dff35cb86bbbcaf7860c82b8701360d157ef29b02d2027d063522d8b",
+    "pr/release/scanner-toolchain.json": "5495369128cbbedeef00405c7bcd03df6959bd5ba05e0b4115eade767db2a6ed",
+    "pr/release/status.json": "8a253642511b7465607e686caa96a5e96403ed8373eec9d0bf642fdded9d58eb",
+    "pr/run.json": "f411eee178e79b7ff37c5a245195501e3bd951306168f802fc932d148f9f419d",
+    "pr/source/admission.json": "af1d028124b07d7d292371e54537a399efd58c3f82ad58c43dd0b8f40671f278",
+    "pr/source/dependency-audit.json": "7d505e1e7de9f56f99d4c6383f59b164e2e429f383f45e73cfa741c5fda239cc",
+    "pr/source/job-status.json": "577c3c86cd56e33b4f427f76f1f33d5a12883e41c9c0f710520731d24598dd4f",
+    "pr/source/postgres-packages/SHA256SUMS": "34c9047d78a9253dd59a5d63ab4687bfaf5a745dde4173c47192d273bf47afca",
+    "pr/source/postgres-packages/installed-versions.txt": "2cd49df6f7fc69f1b770fab9e87af4851e75f6c5667dc19985a669c30378dd18",
+    "pr/source/qualification/source-receipt.json": "36c8818ce7410c439ae70d47bd4cbef2909e6674d3497203f672f8bc3b1095cb",
+    "pr/source/qualification/status.json": "90ccd3ec01df36448992364b9bec9e95018ff8c48896cf555461174a89de788e",
+    "push-release-download-receipt.json": "8dd1a6b659efb6cfecf86f3fad0cc519e59da90bec76dc88a98293f20b5131f4",
+    "push-source-download-receipt.json": "b4e9741ca09e66548661ba4da53f76085ad3d4ecbd2ee29d1602e09c28580b9c",
+    "push/artifacts.json": "c587b7ef011828dba01b3b9f1ed9b2829ee23762ddeadc2cfea23d1e7fcea22c",
+    "push/audit-summary.json": "c21445beb554f30ef67f801dee04e6e0024f344ee0c370885d0291dfcd7998cd",
+    "push/jobs.json": "3200b8574a041601aef1dc4da172ef7ef0f491066f5ac2c1e67291086f3cf7fd",
+    "push/release/SHA256SUMS": "6469b4d851409b2a9080c6178c1cacc2448a2577373625a580cdbd73b1021026",
+    "push/release/install-receipt.json": "ab2dc9a7c44fc7eea6ae060f63adb378c7e959c4ed3ece884cdcc169513574d3",
+    "push/release/installed-application-export-receipt.json": "fc665f245c0629f9d95c5f277099a5fb018450dcd8927dbfa7fb0277c65b64e4",
+    "push/release/installed-application-restore-receipt.json": "a531a655dbb8753a9abdd7493c3c85e42286c06c160e6fee8a5217006970ca4a",
+    "push/release/installed-code-receipt.json": "3e9ae9772abf5d58c43765de248ee056b5acf8973154004944b45aad92fc5cc2",
+    "push/release/installed-export-receipt.json": "3ed14d4d361ef6d9b04e60db32e85a10ebaffaf2adcbf0f0ea3fc3ba7952af98",
+    "push/release/installed-google-kms-receipt.json": "5dc3ca557e47be26105b7ce672d39f897de4bb10308238019886ffc446fdecd9",
+    "push/release/installed-journey-receipt.json": "38e4669832561c5f1e2e605c694c787e38af5ca7e8fff195ceff851035cf94a5",
+    "push/release/installed-jsonb-export-receipt.json": "0267bfaf3bbbb92d1e2bfaf802200d5d0549dd8a1a78ccfcd54b2a030401e332",
+    "push/release/installed-jsonb-journey-receipt.json": "e6e897ae85021bfab196ad63f484c1e0b55ddb4c29c80bd7007ea377e8c6f58a",
+    "push/release/installed-jsonb-receipt.json": "d0b23d0ae19c16d5408caa3750ec16e16e0cb2192e52c42a017f33aff160cfff",
+    "push/release/installed-jsonb-restore-receipt.json": "5a865f1c963142753f3cc3ee5646a03fed3b46a29500fb66f6e15d96b7c2937e",
+    "push/release/installed-jsonb-slots-export-receipt.json": "059be719491dc2f648d22327fe6c7a27429025ee9c4a862c9dac462361a6bd53",
+    "push/release/installed-jsonb-slots-journey-receipt.json": "2cdad8d40267d90c6a2295726b9124fdd50cc37d1682c6ae5ac9942ce09b70ee",
+    "push/release/installed-jsonb-slots-restore-receipt.json": "4609d18e7c1587246282941a5719c36b4470c233ebb3b03af3d511aa2f2bae5f",
+    "push/release/installed-modification-export-receipt.json": "b4a2fdddc0b4f7248bc2d55baed3e7076f259717de2c5097d861d3e9db2344f0",
+    "push/release/installed-modification-restore-receipt.json": "cac122444a0ed933cb965b58106092f3f956b52cfc1f6763166f87e59d9d6616",
+    "push/release/installed-openbao-qualification.json": "3f68be32e8842f4e0cbb9d671ec2032215643838dc39a6a12dc4a17d80b3bc6f",
+    "push/release/installed-openbao-tests.json": "dc37d2bd26a2fce3649b19867e57713d24aa2df1b511eb8473e605c616858943",
+    "push/release/installed-restore-receipt.json": "eb703a7d9243c27a40176cc20ddae4010dc37a38cc46de9f85ac1ba543165ead",
+    "push/release/installed-sqlmodel-receipt.json": "536e8abf88f6b38edaf03b138a876b2910bc7d03fc794c99438afe3f532ef214",
+    "push/release/installed-storage-modification-export-receipt.json": "fd576f1240957cd82cd8941a53f0a380730ef443d44dcd64b2e6d522754be873",
+    "push/release/installed-storage-modification-restore-receipt.json": "4681f11ff2f654648cad26982f4393d31de4c90b409c2840aca18dd56ea9ac51",
+    "push/release/job-status.json": "577c3c86cd56e33b4f427f76f1f33d5a12883e41c9c0f710520731d24598dd4f",
+    "push/release/release-receipt.json": "7f34cd57c7ccb3730ee2e864dcba139427a85ae9cf742fcc6d04f1b20bed7b6b",
+    "push/release/sbom.cdx.json": "6823ca6260be0254bfa545e73aa2c66df274799879e6052629af58425404310e",
+    "push/release/scanner-audit.json": "fffc59b1e5574ddfe75304f0e92479dc2d1fe096799299ed33ee6bbd0ca61803",
+    "push/release/scanner-sbom.cdx.json": "a0a18a4bcc090dfdcd4ad60048571fe7310cf79a4575f288c6f751a3898ba9e8",
+    "push/release/scanner-toolchain.json": "5495369128cbbedeef00405c7bcd03df6959bd5ba05e0b4115eade767db2a6ed",
+    "push/release/status.json": "3fec7b59de103b7fca617dce95dd9e4197c5e4817b5bfbca10ebd6816150f62e",
+    "push/run.json": "b3092cdef3d9c1f7377ca85a682a25e0fe87114d8b8cd8550ff7d3ffabe73115",
+    "push/source/admission.json": "bbc9d15425101135fefb5ad7cbe701a1d7d531b244548461fb62877b500a70e8",
+    "push/source/dependency-audit.json": "7d505e1e7de9f56f99d4c6383f59b164e2e429f383f45e73cfa741c5fda239cc",
+    "push/source/job-status.json": "577c3c86cd56e33b4f427f76f1f33d5a12883e41c9c0f710520731d24598dd4f",
+    "push/source/postgres-packages/SHA256SUMS": "34c9047d78a9253dd59a5d63ab4687bfaf5a745dde4173c47192d273bf47afca",
+    "push/source/postgres-packages/installed-versions.txt": "2cd49df6f7fc69f1b770fab9e87af4851e75f6c5667dc19985a669c30378dd18",
+    "push/source/qualification/source-receipt.json": "f0831020a6994212fc9090835f5380dbbcaaeeb78275fd979c4888ae33bbc664",
+    "push/source/qualification/status.json": "bd8af498bd72c5f76a3442938a90c493b25b9039ea663728c99df6d1645c5f6e",
+    "selected-files-sha256.json": "0edbee4f92247994d4fbc8e5cd0693339be09090803c044761f6d2473290e17c"
+  },
+  "runs": [
+    {
+      "actual_checkout": "1d4124b549bb8b36f9c5022c94c3f489d9da901f",
+      "api_head": "1d4124b549bb8b36f9c5022c94c3f489d9da901f",
+      "artifacts": {
+        "cryptalis-0.1.0a2.dev2-py3-none-any.whl": "d779522b9fa89ed8642f07b2181e0ad8df64c486a11e9c6f5550c70fb3cc80b3",
+        "cryptalis-0.1.0a2.dev2.tar.gz": "a7b86eec49a650c480d1fc2526b70c62fef7bf3b7ba39ec78912516d4a0a4cd3"
+      },
+      "build_input_count": 52,
+      "build_python": "3.12.14 (main, Sep 29 2026, 15:01:18) [Clang 22.1.3 ]",
+      "collected_fresh_phase_receipts": [
+        "release/installed-application-export-receipt.json",
+        "release/installed-application-restore-receipt.json",
+        "release/installed-export-receipt.json",
+        "release/installed-jsonb-export-receipt.json",
+        "release/installed-jsonb-restore-receipt.json",
+        "release/installed-jsonb-slots-export-receipt.json",
+        "release/installed-jsonb-slots-restore-receipt.json",
+        "release/installed-modification-export-receipt.json",
+        "release/installed-modification-restore-receipt.json",
+        "release/installed-restore-receipt.json",
+        "release/installed-storage-modification-export-receipt.json",
+        "release/installed-storage-modification-restore-receipt.json"
+      ],
+      "collected_fresh_phases": [
+        {
+          "counts": {
+            "passed": 1
+          },
+          "pytest_args": [
+            "tests/test_fresh_cluster_export.py",
+            "-q"
+          ],
+          "receipt": "release/installed-application-export-receipt.json",
+          "scope": "Fresh-cluster source export; primary cluster; shared configuration, rotation planning and current-value removal on an adopted target"
+        },
+        {
+          "counts": {
+            "passed": 2
+          },
+          "pytest_args": [
+            "tests/test_fresh_cluster_restore.py::test_protected_backup_recovers_values_with_retained_keys",
+            "tests/test_fresh_cluster_restore.py::test_restored_cluster_completes_adopted_lifecycle",
+            "-q"
+          ],
+          "receipt": "release/installed-application-restore-receipt.json",
+          "scope": "Fresh-cluster protected-backup recovery and adoption; isolated cluster; shared configuration, rotation planning and current-value removal on an adopted target"
+        },
+        {
+          "counts": {
+            "passed": 1
+          },
+          "pytest_args": [
+            "tests/test_fresh_boolean_export.py",
+            "-q"
+          ],
+          "receipt": "release/installed-export-receipt.json",
+          "scope": "Fresh-cluster source export; primary cluster; original public slots and explicit restored-slot authority; keyword column integer"
+        },
+        {
+          "counts": {
+            "passed": 1
+          },
+          "pytest_args": [
+            "tests/profile_jsonb_fresh_cluster.py::test_export_jsonb_backup_after_three_rotations_and_current_edits",
+            "-q"
+          ],
+          "receipt": "release/installed-jsonb-export-receipt.json",
+          "scope": "Fresh-cluster source export; primary cluster; JSONB exact native wire, three-rotation recovery and package-free exit"
+        },
+        {
+          "counts": {
+            "passed": 1
+          },
+          "pytest_args": [
+            "tests/profile_jsonb_fresh_cluster.py::test_restore_jsonb_authentication_current_edits_native_wire_and_package_free_exit",
+            "-q"
+          ],
+          "receipt": "release/installed-jsonb-restore-receipt.json",
+          "scope": "Fresh-cluster protected-backup recovery and adoption; isolated cluster; JSONB exact native wire, three-rotation recovery and package-free exit"
+        },
+        {
+          "counts": {
+            "passed": 1
+          },
+          "pytest_args": [
+            "tests/profile_jsonb_fresh_cluster.py::test_export_jsonb_backup_after_three_rotations_and_current_edits",
+            "-q"
+          ],
+          "receipt": "release/installed-jsonb-slots-export-receipt.json",
+          "scope": "Fresh-cluster source export; primary cluster; JSONB exact native wire, three-rotation recovery and package-free exit"
+        },
+        {
+          "counts": {
+            "passed": 1
+          },
+          "pytest_args": [
+            "tests/profile_jsonb_fresh_cluster.py::test_restore_jsonb_authentication_current_edits_native_wire_and_package_free_exit",
+            "-q"
+          ],
+          "receipt": "release/installed-jsonb-slots-restore-receipt.json",
+          "scope": "Fresh-cluster protected-backup recovery and adoption; isolated cluster; JSONB exact native wire, three-rotation recovery and package-free exit"
+        },
+        {
+          "counts": {
+            "passed": 1
+          },
+          "pytest_args": [
+            "tests/test_modification_fresh_cluster.py::test_export_modified_backup",
+            "-q"
+          ],
+          "receipt": "release/installed-modification-export-receipt.json",
+          "scope": "Fresh-cluster source export; primary cluster; active-field search enable and package-free restored exit"
+        },
+        {
+          "counts": {
+            "passed": 1
+          },
+          "pytest_args": [
+            "tests/test_modification_fresh_cluster.py::test_restore_modified_backup_authenticate_and_remove_current_values",
+            "-q"
+          ],
+          "receipt": "release/installed-modification-restore-receipt.json",
+          "scope": "Fresh-cluster protected-backup recovery and adoption; isolated cluster; active-field search enable and package-free restored exit"
+        },
+        {
+          "counts": {
+            "passed": 1
+          },
+          "pytest_args": [
+            "tests/test_fresh_boolean_restore.py",
+            "-q"
+          ],
+          "receipt": "release/installed-restore-receipt.json",
+          "scope": "Fresh-cluster protected-backup recovery and adoption; isolated cluster; original public slots and explicit restored-slot authority; keyword column integer"
+        },
+        {
+          "counts": {
+            "passed": 1
+          },
+          "pytest_args": [
+            "tests/test_modification_fresh_cluster.py::test_export_modified_backup",
+            "-q"
+          ],
+          "receipt": "release/installed-storage-modification-export-receipt.json",
+          "scope": "Fresh-cluster source export; primary cluster; active-field search disable and package-free restored exit"
+        },
+        {
+          "counts": {
+            "passed": 1
+          },
+          "pytest_args": [
+            "tests/test_modification_fresh_cluster.py::test_restore_modified_backup_authenticate_and_remove_current_values",
+            "-q"
+          ],
+          "receipt": "release/installed-storage-modification-restore-receipt.json",
+          "scope": "Fresh-cluster protected-backup recovery and adoption; isolated cluster; active-field search disable and package-free restored exit"
+        }
+      ],
+      "dirty": false,
+      "event": "push",
+      "fresh_journeys": [
+        {
+          "gates": "all seven UNKNOWN",
+          "literal_client_default": true,
+          "native_wire": "exact jsonb_send bytes preserved",
+          "none_as_null": false,
+          "package_free_restart": "passed",
+          "profile": "JSONB exact native wire, three rotations, fresh PostgreSQL16 adoption, current-value removal",
+          "public_slots": false,
+          "receipt": "installed-jsonb-journey-receipt.json",
+          "tampered_frame": "refused before adoption",
+          "whole_document_equality": true
+        },
+        {
+          "gates": "all seven UNKNOWN",
+          "literal_client_default": true,
+          "native_wire": "exact jsonb_send bytes preserved",
+          "none_as_null": false,
+          "package_free_restart": "passed",
+          "profile": "JSONB exact native wire, three rotations, fresh PostgreSQL16 adoption, current-value removal",
+          "public_slots": true,
+          "receipt": "installed-jsonb-slots-journey-receipt.json",
+          "tampered_frame": "refused before adoption",
+          "whole_document_equality": true
+        },
+        {
+          "gates": "all seven UNKNOWN",
+          "package_free_restart": "passed",
+          "profile": "integer-32 storage, payload rotation, fresh PostgreSQL16 adoption, latest-value removal",
+          "public_slots": true,
+          "receipt": "installed-journey-receipt.json",
+          "tampered_frame": "refused before adoption"
+        }
+      ],
+      "fresh_recovery_profile_summary": [
+        "JSONB default and public-slot layouts: exact jsonb_send bytes, literal defaults, whole-document equality, three rotations, fresh adoption, tamper refusal and current-value removal.",
+        "Shared configuration: source export plus retained-key recovery, adopted rotation planning and current-value removal.",
+        "Project: genuine fresh recovery command passed with script-validated one-call export/restore phases; dedicated phase receipts are absent from uploaded selection.",
+        "INT32 with physical keyword column integer and original public slots: payload rotation, fresh adoption, latest-value removal and tamper refusal.",
+        "Active-field search enable and disable: separately exported/restored modified backup, authentication and current-value removal."
+      ],
+      "input_inventory_count": 18,
+      "input_inventory_names": [
+        "release/installed-application-export-receipt.json",
+        "release/installed-application-restore-receipt.json",
+        "release/installed-code-receipt.json",
+        "release/installed-export-receipt.json",
+        "release/installed-google-kms-receipt.json",
+        "release/installed-jsonb-export-receipt.json",
+        "release/installed-jsonb-receipt.json",
+        "release/installed-jsonb-restore-receipt.json",
+        "release/installed-jsonb-slots-export-receipt.json",
+        "release/installed-jsonb-slots-restore-receipt.json",
+        "release/installed-modification-export-receipt.json",
+        "release/installed-modification-restore-receipt.json",
+        "release/installed-openbao-tests.json",
+        "release/installed-restore-receipt.json",
+        "release/installed-sqlmodel-receipt.json",
+        "release/installed-storage-modification-export-receipt.json",
+        "release/installed-storage-modification-restore-receipt.json",
+        "source/qualification/source-receipt.json"
+      ],
+      "installed_counts": {
+        "collection": {},
+        "setup": {
+          "passed": 1254
+        },
+        "subtest_calls": {},
+        "teardown": {
+          "passed": 1254
+        },
+        "test_calls": {
+          "passed": 1251,
+          "skipped": 3
+        }
+      },
+      "installed_receipt_count": 17,
+      "installed_receipts": [
+        {
+          "counts": {
+            "collection": {},
+            "selected_items": 1,
+            "setup": {
+              "passed": 1
+            },
+            "subtest_calls": {},
+            "teardown": {
+              "passed": 1
+            },
+            "test_calls": {
+              "passed": 1
+            }
+          },
+          "receipt": "release/installed-application-export-receipt.json"
+        },
+        {
+          "counts": {
+            "collection": {},
+            "selected_items": 2,
+            "setup": {
+              "passed": 2
+            },
+            "subtest_calls": {},
+            "teardown": {
+              "passed": 2
+            },
+            "test_calls": {
+              "passed": 2
+            }
+          },
+          "receipt": "release/installed-application-restore-receipt.json"
+        },
+        {
+          "counts": {
+            "collection": {},
+            "selected_items": 15,
+            "setup": {
+              "passed": 15
+            },
+            "subtest_calls": {},
+            "teardown": {
+              "passed": 15
+            },
+            "test_calls": {
+              "passed": 15
+            }
+          },
+          "receipt": "release/installed-code-receipt.json"
+        },
+        {
+          "counts": {
+            "collection": {},
+            "selected_items": 1,
+            "setup": {
+              "passed": 1
+            },
+            "subtest_calls": {},
+            "teardown": {
+              "passed": 1
+            },
+            "test_calls": {
+              "passed": 1
+            }
+          },
+          "receipt": "release/installed-export-receipt.json"
+        },
+        {
+          "counts": {
+            "collection": {},
+            "selected_items": 50,
+            "setup": {
+              "passed": 50
+            },
+            "subtest_calls": {},
+            "teardown": {
+              "passed": 50
+            },
+            "test_calls": {
+              "passed": 50
+            }
+          },
+          "receipt": "release/installed-google-kms-receipt.json"
+        },
+        {
+          "counts": {
+            "collection": {},
+            "selected_items": 1,
+            "setup": {
+              "passed": 1
+            },
+            "subtest_calls": {},
+            "teardown": {
+              "passed": 1
+            },
+            "test_calls": {
+              "passed": 1
+            }
+          },
+          "receipt": "release/installed-jsonb-export-receipt.json"
+        },
+        {
+          "counts": {
+            "collection": {},
+            "selected_items": 100,
+            "setup": {
+              "passed": 100
+            },
+            "subtest_calls": {},
+            "teardown": {
+              "passed": 100
+            },
+            "test_calls": {
+              "passed": 97,
+              "skipped": 3
+            }
+          },
+          "receipt": "release/installed-jsonb-receipt.json"
+        },
+        {
+          "counts": {
+            "collection": {},
+            "selected_items": 1,
+            "setup": {
+              "passed": 1
+            },
+            "subtest_calls": {},
+            "teardown": {
+              "passed": 1
+            },
+            "test_calls": {
+              "passed": 1
+            }
+          },
+          "receipt": "release/installed-jsonb-restore-receipt.json"
+        },
+        {
+          "counts": {
+            "collection": {},
+            "selected_items": 1,
+            "setup": {
+              "passed": 1
+            },
+            "subtest_calls": {},
+            "teardown": {
+              "passed": 1
+            },
+            "test_calls": {
+              "passed": 1
+            }
+          },
+          "receipt": "release/installed-jsonb-slots-export-receipt.json"
+        },
+        {
+          "counts": {
+            "collection": {},
+            "selected_items": 1,
+            "setup": {
+              "passed": 1
+            },
+            "subtest_calls": {},
+            "teardown": {
+              "passed": 1
+            },
+            "test_calls": {
+              "passed": 1
+            }
+          },
+          "receipt": "release/installed-jsonb-slots-restore-receipt.json"
+        },
+        {
+          "counts": {
+            "collection": {},
+            "selected_items": 1,
+            "setup": {
+              "passed": 1
+            },
+            "subtest_calls": {},
+            "teardown": {
+              "passed": 1
+            },
+            "test_calls": {
+              "passed": 1
+            }
+          },
+          "receipt": "release/installed-modification-export-receipt.json"
+        },
+        {
+          "counts": {
+            "collection": {},
+            "selected_items": 1,
+            "setup": {
+              "passed": 1
+            },
+            "subtest_calls": {},
+            "teardown": {
+              "passed": 1
+            },
+            "test_calls": {
+              "passed": 1
+            }
+          },
+          "receipt": "release/installed-modification-restore-receipt.json"
+        },
+        {
+          "counts": {
+            "collection": {},
+            "selected_items": 140,
+            "setup": {
+              "passed": 140
+            },
+            "subtest_calls": {},
+            "teardown": {
+              "passed": 140
+            },
+            "test_calls": {
+              "passed": 140
+            }
+          },
+          "receipt": "release/installed-openbao-tests.json"
+        },
+        {
+          "counts": {
+            "collection": {},
+            "selected_items": 1,
+            "setup": {
+              "passed": 1
+            },
+            "subtest_calls": {},
+            "teardown": {
+              "passed": 1
+            },
+            "test_calls": {
+              "passed": 1
+            }
+          },
+          "receipt": "release/installed-restore-receipt.json"
+        },
+        {
+          "counts": {
+            "collection": {},
+            "selected_items": 936,
+            "setup": {
+              "passed": 936
+            },
+            "subtest_calls": {},
+            "teardown": {
+              "passed": 936
+            },
+            "test_calls": {
+              "passed": 936
+            }
+          },
+          "receipt": "release/installed-sqlmodel-receipt.json"
+        },
+        {
+          "counts": {
+            "collection": {},
+            "selected_items": 1,
+            "setup": {
+              "passed": 1
+            },
+            "subtest_calls": {},
+            "teardown": {
+              "passed": 1
+            },
+            "test_calls": {
+              "passed": 1
+            }
+          },
+          "receipt": "release/installed-storage-modification-export-receipt.json"
+        },
+        {
+          "counts": {
+            "collection": {},
+            "selected_items": 1,
+            "setup": {
+              "passed": 1
+            },
+            "subtest_calls": {},
+            "teardown": {
+              "passed": 1
+            },
+            "test_calls": {
+              "passed": 1
+            }
+          },
+          "receipt": "release/installed-storage-modification-restore-receipt.json"
+        }
+      ],
+      "installed_regression_modules": {
+        "tests/test_point_returning_labels.py": {
+          "passed": 53
+        },
+        "tests/test_point_update_parameters.py": {
+          "passed": 23
+        }
+      },
+      "jobs": [
+        {
+          "conclusion": "success",
+          "id": 124843695326,
+          "name": "Reproducible artifacts / installed recovery",
+          "status": "completed"
+        },
+        {
+          "conclusion": "success",
+          "id": 124843695408,
+          "name": "Source / PostgreSQL 16",
+          "status": "completed"
+        }
+      ],
+      "jsonb_reader_modules": {
+        "tests/test_jsonb_admission.py": {
+          "passed": 8,
+          "skipped": 1
+        },
+        "tests/test_jsonb_defaults.py": {
+          "passed": 32,
+          "skipped": 1
+        },
+        "tests/test_jsonb_search_lifecycle.py": {
+          "passed": 8,
+          "skipped": 1
+        }
+      },
+      "label": "push",
+      "providers": {
+        "google": {
+          "counts": {
+            "collection": {},
+            "selected_items": 50,
+            "setup": {
+              "passed": 50
+            },
+            "subtest_calls": {},
+            "teardown": {
+              "passed": 50
+            },
+            "test_calls": {
+              "passed": 50
+            }
+          },
+          "scope": "Google SDK local protocol transport and real PostgreSQL; no live cloud custody"
+        },
+        "openbao": {
+          "audit": "declarative private JSON file; native HMAC and reopen controls; raw records retained privately",
+          "cleanup": "PASS",
+          "counts": {
+            "collection": {},
+            "selected_items": 140,
+            "setup": {
+              "passed": 140
+            },
+            "subtest_calls": {},
+            "teardown": {
+              "passed": 140
+            },
+            "test_calls": {
+              "passed": 140
+            }
+          },
+          "failure": null,
+          "gate": "UNKNOWN",
+          "image": "openbao/openbao@sha256:5046911075e137e154ce49ab051502f4ec7cf367d484ae4a4dce665d9b90561f",
+          "scope": "OpenBao 2.7.2 isolated TLS/Raft, native private audit, outage/restart, independent snapshot recovery and PostgreSQL lifecycle",
+          "status": "PASS",
+          "storage": "single-node Raft with independent snapshot target; private keys and files retained",
+          "tls": "private test CA; certificate and hostname verification enabled"
+        }
+      },
+      "python_input_count": 328,
+      "release_step_count": 24,
+      "release_steps": [
+        {
+          "elapsed_seconds": 0.714729320999993,
+          "exit_code": 0,
+          "name": "reproducible wheel sdist SBOM inspection",
+          "outcome": "PASS"
+        },
+        {
+          "elapsed_seconds": 0.011512323999994578,
+          "exit_code": 0,
+          "name": "export locked hashed wheel-test dependencies",
+          "outcome": "PASS"
+        },
+        {
+          "elapsed_seconds": 0.008794451999989406,
+          "exit_code": 0,
+          "name": "create isolated wheel interpreter",
+          "outcome": "PASS"
+        },
+        {
+          "elapsed_seconds": 0.4219188140000085,
+          "exit_code": 0,
+          "name": "install hashed dependencies",
+          "outcome": "PASS"
+        },
+        {
+          "elapsed_seconds": 0.020925174999973706,
+          "exit_code": 0,
+          "name": "install exact inspected wheel",
+          "outcome": "PASS"
+        },
+        {
+          "elapsed_seconds": 0.010059913000020515,
+          "exit_code": 0,
+          "name": "installed dependency consistency",
+          "outcome": "PASS"
+        },
+        {
+          "name": "installed file and CLI inspection",
+          "outcome": "PASS"
+        },
+        {
+          "elapsed_seconds": 0.011084885000002487,
+          "exit_code": 0,
+          "name": "export isolated locked scanner dependencies",
+          "outcome": "PASS"
+        },
+        {
+          "elapsed_seconds": 0.008401327000001402,
+          "exit_code": 0,
+          "name": "create isolated scanner interpreter",
+          "outcome": "PASS"
+        },
+        {
+          "elapsed_seconds": 0.4146389369999781,
+          "exit_code": 0,
+          "name": "install hashed scanner dependencies",
+          "outcome": "PASS"
+        },
+        {
+          "elapsed_seconds": 0.011254832000020087,
+          "exit_code": 0,
+          "name": "export scanner SBOM",
+          "outcome": "PASS"
+        },
+        {
+          "elapsed_seconds": 0.2539480349999792,
+          "exit_code": 0,
+          "name": "audit frozen scanner toolchain",
+          "outcome": "PASS"
+        },
+        {
+          "elapsed_seconds": 3.9872554029999776,
+          "exit_code": 0,
+          "name": "installed Doctor native code inventory",
+          "outcome": "PASS"
+        },
+        {
+          "elapsed_seconds": 480.36208601600003,
+          "exit_code": 0,
+          "name": "installed ORM and shared initialization/Doctor context",
+          "outcome": "PASS"
+        },
+        {
+          "elapsed_seconds": 138.6819219150001,
+          "exit_code": 0,
+          "name": "installed native JSONB storage and failure workflows",
+          "outcome": "PASS"
+        },
+        {
+          "elapsed_seconds": 10.890665123000076,
+          "exit_code": 0,
+          "name": "installed JSONB genuine fresh recovery jsonb-fresh",
+          "outcome": "PASS"
+        },
+        {
+          "elapsed_seconds": 12.105625880999924,
+          "exit_code": 0,
+          "name": "installed JSONB genuine fresh recovery jsonb-slots-fresh",
+          "outcome": "PASS"
+        },
+        {
+          "elapsed_seconds": 4.120479290999924,
+          "exit_code": 0,
+          "name": "installed Google SDK protocol and PostgreSQL lifecycle",
+          "outcome": "PASS"
+        },
+        {
+          "elapsed_seconds": 96.91182966999997,
+          "exit_code": 0,
+          "name": "installed OpenBao TLS outage and PostgreSQL lifecycle",
+          "outcome": "PASS"
+        },
+        {
+          "elapsed_seconds": 7.792957706000038,
+          "exit_code": 0,
+          "name": "installed shared configuration on genuine fresh recovery",
+          "outcome": "PASS"
+        },
+        {
+          "elapsed_seconds": 7.516280314999904,
+          "exit_code": 0,
+          "name": "installed Project on genuine fresh recovery",
+          "outcome": "PASS"
+        },
+        {
+          "elapsed_seconds": 8.250979091999966,
+          "exit_code": 0,
+          "name": "installed keyword public-slot genuine fresh recovery",
+          "outcome": "PASS"
+        },
+        {
+          "elapsed_seconds": 8.18295754999997,
+          "exit_code": 0,
+          "name": "installed modified-field enable genuine fresh recovery",
+          "outcome": "PASS"
+        },
+        {
+          "elapsed_seconds": 8.157536341999958,
+          "exit_code": 0,
+          "name": "installed modified-field disable genuine fresh recovery",
+          "outcome": "PASS"
+        }
+      ],
+      "reproducible": true,
+      "run_id": 41305071412,
+      "run_started_at": "2026-11-01T12:08:52Z",
+      "source_and_runtime_unchanged": true,
+      "source_counts": {
+        "collection": {
+          "skipped": 9
+        },
+        "selected_items": 4098,
+        "setup": {
+          "passed": 4057,
+          "skipped": 41
+        },
+        "subtest_calls": {
+          "passed": 18
+        },
+        "teardown": {
+          "passed": 4098
+        },
+        "test_calls": {
+          "passed": 4030,
+          "skipped": 27
+        }
+      },
+      "source_modules": {
+        "tests/test_point_returning_labels.py": {
+          "passed": 53
+        },
+        "tests/test_point_update_parameters.py": {
+          "passed": 23
+        }
+      },
+      "stable_runtime": {
+        "module_count": 45,
+        "modules_sha256": "5d0faa378063fd4a680e1e5ba3dc734975d1c24bafe45a22e617a9676d6f0b38"
+      },
+      "updated_at": "2026-11-01T12:22:31Z",
+      "workflow_conclusion": "success"
+    },
+    {
+      "actual_checkout": "af38ba735979a6669c543a7fd379537c70d2c397",
+      "api_head": "1d4124b549bb8b36f9c5022c94c3f489d9da901f",
+      "artifacts": {
+        "cryptalis-0.1.0a2.dev2-py3-none-any.whl": "d779522b9fa89ed8642f07b2181e0ad8df64c486a11e9c6f5550c70fb3cc80b3",
+        "cryptalis-0.1.0a2.dev2.tar.gz": "a7b86eec49a650c480d1fc2526b70c62fef7bf3b7ba39ec78912516d4a0a4cd3"
+      },
+      "build_input_count": 52,
+      "build_python": "3.12.14 (main, Sep 29 2026, 15:01:18) [Clang 22.1.3 ]",
+      "collected_fresh_phase_receipts": [
+        "release/installed-application-export-receipt.json",
+        "release/installed-application-restore-receipt.json",
+        "release/installed-export-receipt.json",
+        "release/installed-jsonb-export-receipt.json",
+        "release/installed-jsonb-restore-receipt.json",
+        "release/installed-jsonb-slots-export-receipt.json",
+        "release/installed-jsonb-slots-restore-receipt.json",
+        "release/installed-modification-export-receipt.json",
+        "release/installed-modification-restore-receipt.json",
+        "release/installed-restore-receipt.json",
+        "release/installed-storage-modification-export-receipt.json",
+        "release/installed-storage-modification-restore-receipt.json"
+      ],
+      "collected_fresh_phases": [
+        {
+          "counts": {
+            "passed": 1
+          },
+          "pytest_args": [
+            "tests/test_fresh_cluster_export.py",
+            "-q"
+          ],
+          "receipt": "release/installed-application-export-receipt.json",
+          "scope": "Fresh-cluster source export; primary cluster; shared configuration, rotation planning and current-value removal on an adopted target"
+        },
+        {
+          "counts": {
+            "passed": 2
+          },
+          "pytest_args": [
+            "tests/test_fresh_cluster_restore.py::test_protected_backup_recovers_values_with_retained_keys",
+            "tests/test_fresh_cluster_restore.py::test_restored_cluster_completes_adopted_lifecycle",
+            "-q"
+          ],
+          "receipt": "release/installed-application-restore-receipt.json",
+          "scope": "Fresh-cluster protected-backup recovery and adoption; isolated cluster; shared configuration, rotation planning and current-value removal on an adopted target"
+        },
+        {
+          "counts": {
+            "passed": 1
+          },
+          "pytest_args": [
+            "tests/test_fresh_boolean_export.py",
+            "-q"
+          ],
+          "receipt": "release/installed-export-receipt.json",
+          "scope": "Fresh-cluster source export; primary cluster; original public slots and explicit restored-slot authority; keyword column integer"
+        },
+        {
+          "counts": {
+            "passed": 1
+          },
+          "pytest_args": [
+            "tests/profile_jsonb_fresh_cluster.py::test_export_jsonb_backup_after_three_rotations_and_current_edits",
+            "-q"
+          ],
+          "receipt": "release/installed-jsonb-export-receipt.json",
+          "scope": "Fresh-cluster source export; primary cluster; JSONB exact native wire, three-rotation recovery and package-free exit"
+        },
+        {
+          "counts": {
+            "passed": 1
+          },
+          "pytest_args": [
+            "tests/profile_jsonb_fresh_cluster.py::test_restore_jsonb_authentication_current_edits_native_wire_and_package_free_exit",
+            "-q"
+          ],
+          "receipt": "release/installed-jsonb-restore-receipt.json",
+          "scope": "Fresh-cluster protected-backup recovery and adoption; isolated cluster; JSONB exact native wire, three-rotation recovery and package-free exit"
+        },
+        {
+          "counts": {
+            "passed": 1
+          },
+          "pytest_args": [
+            "tests/profile_jsonb_fresh_cluster.py::test_export_jsonb_backup_after_three_rotations_and_current_edits",
+            "-q"
+          ],
+          "receipt": "release/installed-jsonb-slots-export-receipt.json",
+          "scope": "Fresh-cluster source export; primary cluster; JSONB exact native wire, three-rotation recovery and package-free exit"
+        },
+        {
+          "counts": {
+            "passed": 1
+          },
+          "pytest_args": [
+            "tests/profile_jsonb_fresh_cluster.py::test_restore_jsonb_authentication_current_edits_native_wire_and_package_free_exit",
+            "-q"
+          ],
+          "receipt": "release/installed-jsonb-slots-restore-receipt.json",
+          "scope": "Fresh-cluster protected-backup recovery and adoption; isolated cluster; JSONB exact native wire, three-rotation recovery and package-free exit"
+        },
+        {
+          "counts": {
+            "passed": 1
+          },
+          "pytest_args": [
+            "tests/test_modification_fresh_cluster.py::test_export_modified_backup",
+            "-q"
+          ],
+          "receipt": "release/installed-modification-export-receipt.json",
+          "scope": "Fresh-cluster source export; primary cluster; active-field search enable and package-free restored exit"
+        },
+        {
+          "counts": {
+            "passed": 1
+          },
+          "pytest_args": [
+            "tests/test_modification_fresh_cluster.py::test_restore_modified_backup_authenticate_and_remove_current_values",
+            "-q"
+          ],
+          "receipt": "release/installed-modification-restore-receipt.json",
+          "scope": "Fresh-cluster protected-backup recovery and adoption; isolated cluster; active-field search enable and package-free restored exit"
+        },
+        {
+          "counts": {
+            "passed": 1
+          },
+          "pytest_args": [
+            "tests/test_fresh_boolean_restore.py",
+            "-q"
+          ],
+          "receipt": "release/installed-restore-receipt.json",
+          "scope": "Fresh-cluster protected-backup recovery and adoption; isolated cluster; original public slots and explicit restored-slot authority; keyword column integer"
+        },
+        {
+          "counts": {
+            "passed": 1
+          },
+          "pytest_args": [
+            "tests/test_modification_fresh_cluster.py::test_export_modified_backup",
+            "-q"
+          ],
+          "receipt": "release/installed-storage-modification-export-receipt.json",
+          "scope": "Fresh-cluster source export; primary cluster; active-field search disable and package-free restored exit"
+        },
+        {
+          "counts": {
+            "passed": 1
+          },
+          "pytest_args": [
+            "tests/test_modification_fresh_cluster.py::test_restore_modified_backup_authenticate_and_remove_current_values",
+            "-q"
+          ],
+          "receipt": "release/installed-storage-modification-restore-receipt.json",
+          "scope": "Fresh-cluster protected-backup recovery and adoption; isolated cluster; active-field search disable and package-free restored exit"
+        }
+      ],
+      "dirty": false,
+      "event": "pull_request",
+      "fresh_journeys": [
+        {
+          "gates": "all seven UNKNOWN",
+          "literal_client_default": true,
+          "native_wire": "exact jsonb_send bytes preserved",
+          "none_as_null": false,
+          "package_free_restart": "passed",
+          "profile": "JSONB exact native wire, three rotations, fresh PostgreSQL16 adoption, current-value removal",
+          "public_slots": false,
+          "receipt": "installed-jsonb-journey-receipt.json",
+          "tampered_frame": "refused before adoption",
+          "whole_document_equality": true
+        },
+        {
+          "gates": "all seven UNKNOWN",
+          "literal_client_default": true,
+          "native_wire": "exact jsonb_send bytes preserved",
+          "none_as_null": false,
+          "package_free_restart": "passed",
+          "profile": "JSONB exact native wire, three rotations, fresh PostgreSQL16 adoption, current-value removal",
+          "public_slots": true,
+          "receipt": "installed-jsonb-slots-journey-receipt.json",
+          "tampered_frame": "refused before adoption",
+          "whole_document_equality": true
+        },
+        {
+          "gates": "all seven UNKNOWN",
+          "package_free_restart": "passed",
+          "profile": "integer-32 storage, payload rotation, fresh PostgreSQL16 adoption, latest-value removal",
+          "public_slots": true,
+          "receipt": "installed-journey-receipt.json",
+          "tampered_frame": "refused before adoption"
+        }
+      ],
+      "fresh_recovery_profile_summary": [
+        "JSONB default and public-slot layouts: exact jsonb_send bytes, literal defaults, whole-document equality, three rotations, fresh adoption, tamper refusal and current-value removal.",
+        "Shared configuration: source export plus retained-key recovery, adopted rotation planning and current-value removal.",
+        "Project: genuine fresh recovery command passed with script-validated one-call export/restore phases; dedicated phase receipts are absent from uploaded selection.",
+        "INT32 with physical keyword column integer and original public slots: payload rotation, fresh adoption, latest-value removal and tamper refusal.",
+        "Active-field search enable and disable: separately exported/restored modified backup, authentication and current-value removal."
+      ],
+      "input_inventory_count": 18,
+      "input_inventory_names": [
+        "release/installed-application-export-receipt.json",
+        "release/installed-application-restore-receipt.json",
+        "release/installed-code-receipt.json",
+        "release/installed-export-receipt.json",
+        "release/installed-google-kms-receipt.json",
+        "release/installed-jsonb-export-receipt.json",
+        "release/installed-jsonb-receipt.json",
+        "release/installed-jsonb-restore-receipt.json",
+        "release/installed-jsonb-slots-export-receipt.json",
+        "release/installed-jsonb-slots-restore-receipt.json",
+        "release/installed-modification-export-receipt.json",
+        "release/installed-modification-restore-receipt.json",
+        "release/installed-openbao-tests.json",
+        "release/installed-restore-receipt.json",
+        "release/installed-sqlmodel-receipt.json",
+        "release/installed-storage-modification-export-receipt.json",
+        "release/installed-storage-modification-restore-receipt.json",
+        "source/qualification/source-receipt.json"
+      ],
+      "installed_counts": {
+        "collection": {},
+        "setup": {
+          "passed": 1254
+        },
+        "subtest_calls": {},
+        "teardown": {
+          "passed": 1254
+        },
+        "test_calls": {
+          "passed": 1251,
+          "skipped": 3
+        }
+      },
+      "installed_receipt_count": 17,
+      "installed_receipts": [
+        {
+          "counts": {
+            "collection": {},
+            "selected_items": 1,
+            "setup": {
+              "passed": 1
+            },
+            "subtest_calls": {},
+            "teardown": {
+              "passed": 1
+            },
+            "test_calls": {
+              "passed": 1
+            }
+          },
+          "receipt": "release/installed-application-export-receipt.json"
+        },
+        {
+          "counts": {
+            "collection": {},
+            "selected_items": 2,
+            "setup": {
+              "passed": 2
+            },
+            "subtest_calls": {},
+            "teardown": {
+              "passed": 2
+            },
+            "test_calls": {
+              "passed": 2
+            }
+          },
+          "receipt": "release/installed-application-restore-receipt.json"
+        },
+        {
+          "counts": {
+            "collection": {},
+            "selected_items": 15,
+            "setup": {
+              "passed": 15
+            },
+            "subtest_calls": {},
+            "teardown": {
+              "passed": 15
+            },
+            "test_calls": {
+              "passed": 15
+            }
+          },
+          "receipt": "release/installed-code-receipt.json"
+        },
+        {
+          "counts": {
+            "collection": {},
+            "selected_items": 1,
+            "setup": {
+              "passed": 1
+            },
+            "subtest_calls": {},
+            "teardown": {
+              "passed": 1
+            },
+            "test_calls": {
+              "passed": 1
+            }
+          },
+          "receipt": "release/installed-export-receipt.json"
+        },
+        {
+          "counts": {
+            "collection": {},
+            "selected_items": 50,
+            "setup": {
+              "passed": 50
+            },
+            "subtest_calls": {},
+            "teardown": {
+              "passed": 50
+            },
+            "test_calls": {
+              "passed": 50
+            }
+          },
+          "receipt": "release/installed-google-kms-receipt.json"
+        },
+        {
+          "counts": {
+            "collection": {},
+            "selected_items": 1,
+            "setup": {
+              "passed": 1
+            },
+            "subtest_calls": {},
+            "teardown": {
+              "passed": 1
+            },
+            "test_calls": {
+              "passed": 1
+            }
+          },
+          "receipt": "release/installed-jsonb-export-receipt.json"
+        },
+        {
+          "counts": {
+            "collection": {},
+            "selected_items": 100,
+            "setup": {
+              "passed": 100
+            },
+            "subtest_calls": {},
+            "teardown": {
+              "passed": 100
+            },
+            "test_calls": {
+              "passed": 97,
+              "skipped": 3
+            }
+          },
+          "receipt": "release/installed-jsonb-receipt.json"
+        },
+        {
+          "counts": {
+            "collection": {},
+            "selected_items": 1,
+            "setup": {
+              "passed": 1
+            },
+            "subtest_calls": {},
+            "teardown": {
+              "passed": 1
+            },
+            "test_calls": {
+              "passed": 1
+            }
+          },
+          "receipt": "release/installed-jsonb-restore-receipt.json"
+        },
+        {
+          "counts": {
+            "collection": {},
+            "selected_items": 1,
+            "setup": {
+              "passed": 1
+            },
+            "subtest_calls": {},
+            "teardown": {
+              "passed": 1
+            },
+            "test_calls": {
+              "passed": 1
+            }
+          },
+          "receipt": "release/installed-jsonb-slots-export-receipt.json"
+        },
+        {
+          "counts": {
+            "collection": {},
+            "selected_items": 1,
+            "setup": {
+              "passed": 1
+            },
+            "subtest_calls": {},
+            "teardown": {
+              "passed": 1
+            },
+            "test_calls": {
+              "passed": 1
+            }
+          },
+          "receipt": "release/installed-jsonb-slots-restore-receipt.json"
+        },
+        {
+          "counts": {
+            "collection": {},
+            "selected_items": 1,
+            "setup": {
+              "passed": 1
+            },
+            "subtest_calls": {},
+            "teardown": {
+              "passed": 1
+            },
+            "test_calls": {
+              "passed": 1
+            }
+          },
+          "receipt": "release/installed-modification-export-receipt.json"
+        },
+        {
+          "counts": {
+            "collection": {},
+            "selected_items": 1,
+            "setup": {
+              "passed": 1
+            },
+            "subtest_calls": {},
+            "teardown": {
+              "passed": 1
+            },
+            "test_calls": {
+              "passed": 1
+            }
+          },
+          "receipt": "release/installed-modification-restore-receipt.json"
+        },
+        {
+          "counts": {
+            "collection": {},
+            "selected_items": 140,
+            "setup": {
+              "passed": 140
+            },
+            "subtest_calls": {},
+            "teardown": {
+              "passed": 140
+            },
+            "test_calls": {
+              "passed": 140
+            }
+          },
+          "receipt": "release/installed-openbao-tests.json"
+        },
+        {
+          "counts": {
+            "collection": {},
+            "selected_items": 1,
+            "setup": {
+              "passed": 1
+            },
+            "subtest_calls": {},
+            "teardown": {
+              "passed": 1
+            },
+            "test_calls": {
+              "passed": 1
+            }
+          },
+          "receipt": "release/installed-restore-receipt.json"
+        },
+        {
+          "counts": {
+            "collection": {},
+            "selected_items": 936,
+            "setup": {
+              "passed": 936
+            },
+            "subtest_calls": {},
+            "teardown": {
+              "passed": 936
+            },
+            "test_calls": {
+              "passed": 936
+            }
+          },
+          "receipt": "release/installed-sqlmodel-receipt.json"
+        },
+        {
+          "counts": {
+            "collection": {},
+            "selected_items": 1,
+            "setup": {
+              "passed": 1
+            },
+            "subtest_calls": {},
+            "teardown": {
+              "passed": 1
+            },
+            "test_calls": {
+              "passed": 1
+            }
+          },
+          "receipt": "release/installed-storage-modification-export-receipt.json"
+        },
+        {
+          "counts": {
+            "collection": {},
+            "selected_items": 1,
+            "setup": {
+              "passed": 1
+            },
+            "subtest_calls": {},
+            "teardown": {
+              "passed": 1
+            },
+            "test_calls": {
+              "passed": 1
+            }
+          },
+          "receipt": "release/installed-storage-modification-restore-receipt.json"
+        }
+      ],
+      "installed_regression_modules": {
+        "tests/test_point_returning_labels.py": {
+          "passed": 53
+        },
+        "tests/test_point_update_parameters.py": {
+          "passed": 23
+        }
+      },
+      "jobs": [
+        {
+          "conclusion": "success",
+          "id": 124843872271,
+          "name": "Source / PostgreSQL 16",
+          "status": "completed"
+        },
+        {
+          "conclusion": "success",
+          "id": 124843872479,
+          "name": "Reproducible artifacts / installed recovery",
+          "status": "completed"
+        }
+      ],
+      "jsonb_reader_modules": {
+        "tests/test_jsonb_admission.py": {
+          "passed": 8,
+          "skipped": 1
+        },
+        "tests/test_jsonb_defaults.py": {
+          "passed": 32,
+          "skipped": 1
+        },
+        "tests/test_jsonb_search_lifecycle.py": {
+          "passed": 8,
+          "skipped": 1
+        }
+      },
+      "label": "pr",
+      "providers": {
+        "google": {
+          "counts": {
+            "collection": {},
+            "selected_items": 50,
+            "setup": {
+              "passed": 50
+            },
+            "subtest_calls": {},
+            "teardown": {
+              "passed": 50
+            },
+            "test_calls": {
+              "passed": 50
+            }
+          },
+          "scope": "Google SDK local protocol transport and real PostgreSQL; no live cloud custody"
+        },
+        "openbao": {
+          "audit": "declarative private JSON file; native HMAC and reopen controls; raw records retained privately",
+          "cleanup": "PASS",
+          "counts": {
+            "collection": {},
+            "selected_items": 140,
+            "setup": {
+              "passed": 140
+            },
+            "subtest_calls": {},
+            "teardown": {
+              "passed": 140
+            },
+            "test_calls": {
+              "passed": 140
+            }
+          },
+          "failure": null,
+          "gate": "UNKNOWN",
+          "image": "openbao/openbao@sha256:5046911075e137e154ce49ab051502f4ec7cf367d484ae4a4dce665d9b90561f",
+          "scope": "OpenBao 2.7.2 isolated TLS/Raft, native private audit, outage/restart, independent snapshot recovery and PostgreSQL lifecycle",
+          "status": "PASS",
+          "storage": "single-node Raft with independent snapshot target; private keys and files retained",
+          "tls": "private test CA; certificate and hostname verification enabled"
+        }
+      },
+      "python_input_count": 328,
+      "release_step_count": 24,
+      "release_steps": [
+        {
+          "elapsed_seconds": 0.6765854050000044,
+          "exit_code": 0,
+          "name": "reproducible wheel sdist SBOM inspection",
+          "outcome": "PASS"
+        },
+        {
+          "elapsed_seconds": 0.010876508999999146,
+          "exit_code": 0,
+          "name": "export locked hashed wheel-test dependencies",
+          "outcome": "PASS"
+        },
+        {
+          "elapsed_seconds": 0.00840726500000244,
+          "exit_code": 0,
+          "name": "create isolated wheel interpreter",
+          "outcome": "PASS"
+        },
+        {
+          "elapsed_seconds": 0.3882406159999974,
+          "exit_code": 0,
+          "name": "install hashed dependencies",
+          "outcome": "PASS"
+        },
+        {
+          "elapsed_seconds": 0.0192355970000051,
+          "exit_code": 0,
+          "name": "install exact inspected wheel",
+          "outcome": "PASS"
+        },
+        {
+          "elapsed_seconds": 0.009219086999998183,
+          "exit_code": 0,
+          "name": "installed dependency consistency",
+          "outcome": "PASS"
+        },
+        {
+          "name": "installed file and CLI inspection",
+          "outcome": "PASS"
+        },
+        {
+          "elapsed_seconds": 0.011376740000002883,
+          "exit_code": 0,
+          "name": "export isolated locked scanner dependencies",
+          "outcome": "PASS"
+        },
+        {
+          "elapsed_seconds": 0.007997585000005358,
+          "exit_code": 0,
+          "name": "create isolated scanner interpreter",
+          "outcome": "PASS"
+        },
+        {
+          "elapsed_seconds": 0.22404959100000355,
+          "exit_code": 0,
+          "name": "install hashed scanner dependencies",
+          "outcome": "PASS"
+        },
+        {
+          "elapsed_seconds": 0.010888241000003518,
+          "exit_code": 0,
+          "name": "export scanner SBOM",
+          "outcome": "PASS"
+        },
+        {
+          "elapsed_seconds": 0.3133165340000019,
+          "exit_code": 0,
+          "name": "audit frozen scanner toolchain",
+          "outcome": "PASS"
+        },
+        {
+          "elapsed_seconds": 3.5614849090000007,
+          "exit_code": 0,
+          "name": "installed Doctor native code inventory",
+          "outcome": "PASS"
+        },
+        {
+          "elapsed_seconds": 442.862262068,
+          "exit_code": 0,
+          "name": "installed ORM and shared initialization/Doctor context",
+          "outcome": "PASS"
+        },
+        {
+          "elapsed_seconds": 140.113066628,
+          "exit_code": 0,
+          "name": "installed native JSONB storage and failure workflows",
+          "outcome": "PASS"
+        },
+        {
+          "elapsed_seconds": 10.663642608000032,
+          "exit_code": 0,
+          "name": "installed JSONB genuine fresh recovery jsonb-fresh",
+          "outcome": "PASS"
+        },
+        {
+          "elapsed_seconds": 11.840772214000026,
+          "exit_code": 0,
+          "name": "installed JSONB genuine fresh recovery jsonb-slots-fresh",
+          "outcome": "PASS"
+        },
+        {
+          "elapsed_seconds": 3.9772135419999586,
+          "exit_code": 0,
+          "name": "installed Google SDK protocol and PostgreSQL lifecycle",
+          "outcome": "PASS"
+        },
+        {
+          "elapsed_seconds": 93.07317027099998,
+          "exit_code": 0,
+          "name": "installed OpenBao TLS outage and PostgreSQL lifecycle",
+          "outcome": "PASS"
+        },
+        {
+          "elapsed_seconds": 7.680617788000063,
+          "exit_code": 0,
+          "name": "installed shared configuration on genuine fresh recovery",
+          "outcome": "PASS"
+        },
+        {
+          "elapsed_seconds": 7.385049104000018,
+          "exit_code": 0,
+          "name": "installed Project on genuine fresh recovery",
+          "outcome": "PASS"
+        },
+        {
+          "elapsed_seconds": 7.940581244999976,
+          "exit_code": 0,
+          "name": "installed keyword public-slot genuine fresh recovery",
+          "outcome": "PASS"
+        },
+        {
+          "elapsed_seconds": 7.907310659000018,
+          "exit_code": 0,
+          "name": "installed modified-field enable genuine fresh recovery",
+          "outcome": "PASS"
+        },
+        {
+          "elapsed_seconds": 8.024122239999997,
+          "exit_code": 0,
+          "name": "installed modified-field disable genuine fresh recovery",
+          "outcome": "PASS"
+        }
+      ],
+      "reproducible": true,
+      "run_id": 41305131672,
+      "run_started_at": "2026-11-01T12:09:39Z",
+      "source_and_runtime_unchanged": true,
+      "source_counts": {
+        "collection": {
+          "skipped": 9
+        },
+        "selected_items": 4098,
+        "setup": {
+          "passed": 4057,
+          "skipped": 41
+        },
+        "subtest_calls": {
+          "passed": 18
+        },
+        "teardown": {
+          "passed": 4098
+        },
+        "test_calls": {
+          "passed": 4030,
+          "skipped": 27
+        }
+      },
+      "source_modules": {
+        "tests/test_point_returning_labels.py": {
+          "passed": 53
+        },
+        "tests/test_point_update_parameters.py": {
+          "passed": 23
+        }
+      },
+      "stable_runtime": {
+        "module_count": 45,
+        "modules_sha256": "5d0faa378063fd4a680e1e5ba3dc734975d1c24bafe45a22e617a9676d6f0b38"
+      },
+      "updated_at": "2026-11-01T12:22:32Z",
+      "workflow_conclusion": "success"
+    }
+  ],
+  "tested_head_revision": "1d4124b549bb8b36f9c5022c94c3f489d9da901f"
+}
