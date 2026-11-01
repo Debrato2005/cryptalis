@@ -232,6 +232,41 @@ The [application route](application.md#modify-active-fields) gives the public
 sequence. [Status](status.md) owns executed evidence; this contract does not
 promote a production gate.
 
+### Internal exact text prefix lifecycle
+
+**INTERNAL ONLY:** the prefix prototype requires a private synthetic qualification
+scope for planning, attachment and retained v14 preparation, activation and restore
+artifacts. This includes artifacts retaining native pattern-index metadata after
+prefix removal. Ordinary use refuses; the scope supplies no real-data authorization.
+Promotion still requires all [six capability-admission gates](compatibility.md#capability-admission),
+including the required attacks, cost assessment and independent review. Synthetic
+journeys do not satisfy those gates or change production qualification.
+
+The prototype keeps equality and bounded Unicode-prefix terms in one authenticated
+CF1 frame. A B-tree serves equality and declared tenant-scoped uniqueness; a built-in
+GIN expression indexes the prefix slots. Fixed header growth depends on the declared
+prefix bounds, not source-text length. Values are not truncated. Existing migration,
+online-capture, rotation and verification byte budgets must include the complete
+header and payload, including both representations during staging.
+
+Under maintenance, the shared modification engine can enable prefix search on
+encrypted storage/equality fields, change prefix bounds, or disable it. Each change
+verifies and reseals current values, replaces owned checks/indexes atomically and
+requires separate successor publication. Uniqueness stays unchanged: disabling
+prefix retains a required equality/unique index; storage-only conversion cannot
+remove uniqueness. Original `text_pattern_ops`/`varchar_pattern_ops` index metadata
+remains a restoration obligation. Its retention requires lock/v14 even after the
+last prefix capability is removed.
+
+Root rewrap preserves frame bytes. Payload rotation reseals authenticated frames;
+search rotation recomputes equality and prefix terms and reseals their headers.
+Both physical layouts must preserve current membership and edits through these
+operations. Fresh-copy recovery must authenticate frames, inspect native index
+restatements and bind explicit target adoption before access. Decrypt-back/removal
+must restore current text values, original native indexes and eligible column slots,
+then pass native reads, prefix queries and writes in a process that denies Cryptalis
+imports. Retained backups and historical search leakage remain separate obligations.
+
 ### Add an empty tenant policy under maintenance
 
 The shared [tenant API](application.md#add-an-approved-empty-tenant) binds planning,

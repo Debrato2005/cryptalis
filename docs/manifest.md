@@ -22,7 +22,9 @@ The public manifest uses bounded JSON. Its field-intent declaration is independe
 `cryptalis manifest inspect cryptalis.json` validates a manifest without a database and
 lists each protected field with the search leakage you accepted.
 
-Prefix limits, shared-join domains and arbitrary normalizers remain unadmitted.
+The [exact-prefix prototype](#internal-prefix-engineering-syntax) is INTERNAL ONLY;
+ordinary APIs refuse its intent and saved artifacts with a typed capability error.
+Shared-join domains and arbitrary normalizers remain unadmitted.
 Boolean, signed integer, finite Date, UUID, naive/aware timestamp and finite numeric storage use pinned value codecs.
 Integer, date and admitted timestamp fields admit [`order`](compatibility.md#order-search) search only;
 Numeric fields admit equality, IN and scoped uniqueness with explicit equality
@@ -84,6 +86,9 @@ Naive timestamp plans emit `cryptalis.lock/v10`. Numeric plans emit
 Numeric equality plans emit `cryptalis.lock/v13` and require
 `pg-numeric-equality/v1`. Current readers accept v1 through v13; older readers refuse
 unknown formats before effects.
+The isolated prefix engineering reader also recognizes `cryptalis.lock/v14`.
+This does not admit v14 through ordinary application APIs; its reader and retained
+native-index obligations are described [below](#internal-prefix-engineering-syntax).
 Older operational readers refuse the embedded v5 lock before effects.
 The [VARCHAR decision](history/decisions-2026-10.md#native-varchar-text-admission-2026-10-22) defines assignment and reader boundaries.
 Its exact top-level members are
@@ -203,3 +208,31 @@ schema obligations and stages a verified successor. It enables or disables
 equality search on storage-only TEXT/VARCHAR and finite NUMERIC, and admits the
 existing order-profile changes. Other changes require their own lifecycle
 implementation and evidence.
+
+## Internal prefix engineering syntax
+
+**INTERNAL ONLY:** private synthetic engineering fixtures can declare `prefix`
+with `prefix_lengths: {"min": 2, "max": 12}`. The object requires exactly `min`
+and `max`, both integers, with `1 <= min <= max <= 256`. They count Unicode code
+points in a query prefix. Stored text retains its existing input bound and is
+never truncated to these lengths. Nonempty prefix queries outside the declared
+interval refuse. Prefix implies equality and requires matching `accept_leakage`
+and a field `SearchReview`; those declarations supply no capability admission.
+Prefix and order cannot share a field representation.
+
+The prototype pins `cf1-packed-prefix/v1`, `cryptalis.context/v3` and the
+`prefix_lengths` object. Its text codec, normalizer and NULL policy remain
+`utf8-exact/v1`, `identity/v1` and `sql-null/v1`. Active prefix plans select
+lock/v14 and require `pg-text-prefix/v1`; earlier descriptors and lock meanings stay unchanged.
+Original native `text_pattern_ops` or `varchar_pattern_ops` indexes on protected
+fields additionally require `pg-text-pattern-index/v1`. Their source facts and
+restoration obligations retain v14 and that reader after prefix is disabled.
+Unrelated indexes on unprotected fields do not select this version.
+
+Ordinary planning, operational artifact use, attachment and cryptographic use
+refuse with `PrefixCapabilityUnadmitted`. Structural parsing or manifest
+inspection does not authorize execution. The private scope supplies engineering
+evidence only. Preparation-artifact constructors can wrap the refusal in their
+existing typed invalid-plan error. [Compatibility](compatibility.md#internal-exact-prefix-prototype)
+owns its exact LIKE/startswith grammar; the unchanged
+[admission gates](compatibility.md#capability-admission) still govern support.

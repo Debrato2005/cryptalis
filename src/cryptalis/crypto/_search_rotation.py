@@ -10,6 +10,9 @@ def _binding(field,tenant,source,target):
     if (not isinstance(field,FieldDescriptor) or not isinstance(source,PreparedKeys)
             or not isinstance(target,PreparedKeys)):
         raise InvalidContext()
+    if field.prefixed:
+        from .._search_layout import require_prefix_qualification
+        require_prefix_qualification()
     if ((source.policy.domain_id,source.policy.tenant_id)!=(field.domain_id,tenant) or
             (target.policy.domain_id,target.policy.tenant_id)!=(field.domain_id,tenant)):
         raise KeyUnavailable()

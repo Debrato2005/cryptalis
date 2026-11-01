@@ -1,14 +1,16 @@
 """Bounded equality and order admission, deferred terms, and native index validation."""
 
 from sqlalchemy import BigInteger, Boolean, Date, DateTime, Integer, LargeBinary, Numeric, SmallInteger, String, Table, Text, TEXT, Unicode, UnicodeText, Uuid, VARCHAR, and_, or_, bindparam, func, literal, literal_column, type_coerce
-from sqlalchemy.dialects.postgresql import BIGINT, INTEGER, SMALLINT, NUMERIC, TIMESTAMP
+from sqlalchemy.dialects.postgresql import ARRAY, BIGINT, INTEGER, SMALLINT, NUMERIC, TIMESTAMP
 from sqlalchemy.sql import operators, visitors
-from sqlalchemy.sql.elements import BinaryExpression, BindParameter, BooleanClauseList, ColumnClause, Grouping, Label, Null, UnaryExpression
+from sqlalchemy.sql.elements import BinaryExpression, BindParameter, BooleanClauseList, ColumnClause, False_, Grouping, Label, Null, True_, UnaryExpression, quoted_name
 from sqlalchemy.sql.functions import count
 from sqlalchemy.sql.selectable import Alias, Select
 from sqlalchemy.types import NullType, TypeDecorator
 
-from .crypto.cf1 import equality_term
+from .crypto.cf1 import equality_term, prefix_query_terms, _encode
+from .crypto.keys import InvalidValue
+from ._search_layout import frame_flags, frame_overhead, prefix_block_size, prefix_lengths
 from .manifest.compiler import _catalog_path, _fixed_value_width
 from ._sqlmodel_types import autostring_impl
 from ._sqlalchemy_aggregate import _one_tenant, count_shape, distinct_projection, identity_distinct, extrema_shape
@@ -19,6 +21,49 @@ _ORDER_OPERATORS = (operators.lt, operators.le, operators.gt, operators.ge)
 _SORT_MODIFIERS = (operators.asc_op, operators.desc_op, operators.nulls_first_op, operators.nulls_last_op)
 _INTEGER_BIND_WIDTHS = {SmallInteger: 16, SMALLINT: 16, Integer: 32, INTEGER: 32,
                         BigInteger: 64, BIGINT: 64}
+_PREFIX_OPERATORS = (operators.like_op, operators.not_like_op, operators.startswith_op, operators.not_startswith_op)
+
+
+def _like_prefix(value, escape, startswith):
+    """Classify a literal or terminal-percent LIKE pattern, without SQL parsing."""
+    if value is None:
+        return 'prefix', None
+    _encode(value)
+    pattern = value + '%' if startswith else value
+    literal, wildcard, position = [], False, 0
+    while position < len(pattern):
+        character = pattern[position]
+        if escape and character == escape:
+            position += 1
+            if position == len(pattern) or wildcard:
+                raise InvalidValue()
+            literal.append(pattern[position])
+        elif character == '%':
+            wildcard = True
+        elif character == '_' or wildcard:
+            raise InvalidValue()
+        else:
+            literal.append(character)
+        position += 1
+    text = ''.join(literal)
+    return ('all' if not text else 'prefix') if wildcard else 'exact', text
+
+
+class _PrefixValue(TypeDecorator):
+    impl = ARRAY(Text())
+    cache_ok = False
+
+    def __init__(self, binding, operation, expression):
+        super().__init__()
+        self.binding, self.keys, self.tenant = binding, operation.keys_for(binding), operation.scope(binding)
+        self.escape = expression.modifiers.get('escape')
+        if self.escape is None:
+            self.escape = '\\'
+        self.startswith = expression.operator in (operators.startswith_op, operators.not_startswith_op)
+
+    def process_bind_param(self, value, dialect):
+        kind, text = _like_prefix(value, self.escape, self.startswith)
+        return prefix_query_terms(text, kind, self.binding.descriptor, self.tenant, self.keys)
 
 
 class _SearchValue(TypeDecorator):
@@ -94,7 +139,16 @@ def search_shape(owner, expression, *, _nullsafe_candidate=False):
     if not null and not bindings[0].descriptor.equality:
         return None
     ordered = expression.operator in _ORDER_OPERATORS and bindings[0].descriptor.ordered
-    if not null and not ((ordered or expression.operator in (operators.eq, operators.ne, operators.in_op, operators.not_in_op, *null_safe))
+    prefix = expression.operator in _PREFIX_OPERATORS and bindings[0].descriptor.prefixed
+    if prefix and (set(expression.modifiers) - {'escape', 'autoescape'} or
+                   'autoescape' in expression.modifiers and expression.modifiers['autoescape'] is not False or
+                   expression.modifiers.get('escape') is not None and
+                   (type(expression.modifiers['escape']) is not str or len(expression.modifiers['escape']) > 1 or
+                    expression.modifiers['escape'] == '\x00' or
+                    any(0xD800 <= ord(character) <= 0xDFFF for character in expression.modifiers['escape'])) or
+                   not isinstance(right, BindParameter) or right.expanding):
+        return None
+    if not null and not ((ordered or prefix or expression.operator in (operators.eq, operators.ne, operators.in_op, operators.not_in_op, *null_safe))
                          and isinstance(right, BindParameter)):
         return None
     if not null and not ordinary_bind(owner, right, bindings[0]):
@@ -146,9 +200,38 @@ def equality_expression(column):
                                      literal_column("15"), literal_column("32"), type_=LargeBinary())
 
 
+def prefix_expression(column, descriptor):
+    block = func.pg_catalog.substring(type_coerce(column, LargeBinary()), literal_column('47'),
+        literal_column(str(prefix_block_size(descriptor.prefix_lengths))), type_=LargeBinary())
+    encoded = func.pg_catalog.encode(block, literal_column("'escape'"), type_=Text())
+    bag = func.pg_catalog.string_to_array(encoded, literal_column("','"), type_=ARRAY(Text()))
+    return type_coerce(type_coerce(bag, Text()).collate(quoted_name('pg_catalog."C"', False)), ARRAY(Text()))
+
+
+def _boolean_comparison(expression):
+    if (not isinstance(expression, BinaryExpression) or expression.operator not in (operators.eq, operators.ne)
+            or expression.modifiers or type(expression.type) is not Boolean):
+        return None
+    from .sqlalchemy import _delete_node
+    for inner, constant in ((expression.left, expression.right), (expression.right, expression.left)):
+        if (not isinstance(inner, (BinaryExpression, BooleanClauseList, Grouping, UnaryExpression))
+                or type(inner.type) is not Boolean):
+            continue
+        native = type(constant)
+        if native in (True_, False_) or (isinstance(constant, BindParameter) and
+                type(constant.type) is Boolean and not constant.expanding and constant.callable is None):
+            _delete_node(expression, BinaryExpression)
+            _delete_node(constant, BindParameter if isinstance(constant, BindParameter) else native)
+            return inner, constant
+    return None
+
+
 def boolean_children(expression):
     """Inspect native Boolean containers before rewriting any protected child."""
     from .sqlalchemy import _delete_node, UnsupportedProtectedOperation
+    comparison = _boolean_comparison(expression)
+    if comparison is not None:
+        return (comparison[0],)
     if isinstance(expression, BooleanClauseList):
         native = _delete_node(expression, BooleanClauseList)
         if (expression.operator not in (operators.and_, operators.or_)
@@ -173,7 +256,7 @@ def boolean_children(expression):
     return None
 
 
-def _normalize_negation(owner, expression):
+def _normalize_negation(owner, expression, operation):
     """Push NOT through admitted predicates before adding positive tenant guards.
 
     Use SQL's three-valued De Morgan identities and explicit native operator
@@ -184,12 +267,24 @@ def _normalize_negation(owner, expression):
                operators.in_op: operators.not_in_op, operators.not_in_op: operators.in_op,
                operators.is_: operators.is_not, operators.is_not: operators.is_,
                operators.lt: operators.ge, operators.ge: operators.lt,
-               operators.gt: operators.le, operators.le: operators.gt}
+               operators.gt: operators.le, operators.le: operators.gt,
+               operators.like_op: operators.not_like_op, operators.not_like_op: operators.like_op,
+               operators.startswith_op: operators.not_startswith_op, operators.not_startswith_op: operators.startswith_op}
 
     def normalize(node, negate=False):
         if not owner.protected(node):
             return UnaryExpression(node.self_group(), operator=operators.inv) if negate else node
         children = boolean_children(node)
+        comparison = _boolean_comparison(node)
+        if comparison is not None:
+            inner, constant = comparison
+            if isinstance(constant, BindParameter):
+                value = operation.parameters.get(constant.key, constant.value)
+                if type(value) is not bool:
+                    raise InvalidValue()
+            else:
+                value = type(constant) is True_
+            return normalize(inner, negate ^ (not value) ^ (node.operator is operators.ne))
         if isinstance(node, Grouping):
             return normalize(children[0], negate)
         if isinstance(node, UnaryExpression):
@@ -203,7 +298,8 @@ def _normalize_negation(owner, expression):
         if search_shape(owner, node) is None:
             from .sqlalchemy import UnsupportedProtectedOperation
             raise UnsupportedProtectedOperation()
-        return BinaryExpression(node.left, node.right, inverse[node.operator], type_=node.type) if negate else node
+        return BinaryExpression(node.left, node.right, inverse[node.operator], type_=node.type,
+                                modifiers=dict(node.modifiers)) if negate else node
 
     return normalize(expression)
 
@@ -226,16 +322,23 @@ def rewrite_search(owner, statement, operation):
     # bounded grammar. A shared bind object and supplied values are unambiguous.
     inputs = {}
     search_keys = set()
+    boolean_keys = set()
     for node in visitors.iterate(statement):
         if isinstance(node, BindParameter):
             inputs.setdefault(node.key, {})[id(node)] = node
+        comparison = _boolean_comparison(node) if owner.protected(node) else None
+        if comparison is not None and isinstance(comparison[1], BindParameter):
+            boolean_keys.add(comparison[1].key)
+            search_keys.add(comparison[1].key)
         between = between_predicate(owner, node)
         for candidate in (node,) if between is None else between.clauses:
             shape = search_shape(owner, candidate)
             if shape is not None and not shape[3]:
                 search_keys.add(shape[2].key)
     ambiguous = any(len(inputs[key]) > 1 and key not in operation.parameters for key in search_keys)
-    codec_collision = any(not ordinary_bind(owner, value) or value.callable is not None
+    codec_collision = any((type(value.type) is not Boolean or value.expanding or
+                           bool(getattr(value.type, '_variant_mapping', None))
+                           if key in boolean_keys else not ordinary_bind(owner, value)) or value.callable is not None
                           for key in search_keys for value in inputs[key].values())
     generated_names = search_keys and any(key not in inputs for key in operation.parameters)
     if ambiguous or codec_collision or generated_names:
@@ -296,10 +399,11 @@ def _predicate_replacer(owner, statement, operation, projections):
         if (id(node) in projections or isinstance(node, count) or count_shape(owner, node, statement) is not None
                 or extrema_shape(owner, node, statement) is not None):
             return node
-        if isinstance(node, UnaryExpression) and node.operator is operators.inv and owner.protected(node):
+        if owner.protected(node) and (_boolean_comparison(node) is not None or
+                isinstance(node, UnaryExpression) and node.operator is operators.inv):
             # Rewrite only the normalized subtree. A separate whole-statement
             # clone would discard aggregate/projection expression result keys.
-            return visitors.replacement_traverse(_normalize_negation(owner, node), {}, replace)
+            return visitors.replacement_traverse(_normalize_negation(owner, node, operation), {}, replace)
         between = between_predicate(owner, node)
         if between is not None:
             return visitors.replacement_traverse(between, {}, replace)
@@ -313,14 +417,17 @@ def _predicate_replacer(owner, statement, operation, projections):
         else:
             # Fixed offsets must be SQL constants, so PostgreSQL generic plans
             # match the expression index as well as custom plans.
-            term = equality_expression(column)
+            prefix = node.operator in _PREFIX_OPERATORS
+            term = prefix_expression(column, binding.descriptor) if prefix else equality_expression(column)
             # A separate placeholder per occurrence preserves shared named binds
             # across fields and native expressions, which use different codecs.
             supplied = value.key in operation.parameters
             prepared = bindparam(None, value=operation.parameters[value.key] if supplied else value.value,
-                                 type_=_SearchValue(binding, operation, value.type), required=False if supplied else value.required,
+                                 type_=_PrefixValue(binding, operation, node) if prefix else _SearchValue(binding, operation, value.type), required=False if supplied else value.required,
                                  expanding=value.expanding, callable_=None if supplied else value.callable)
-            predicate = BinaryExpression(term, prepared, node.operator)
+            predicate = term.bool_op('@>')(prepared) if prefix else BinaryExpression(term, prepared, node.operator)
+            if prefix and node.operator in (operators.not_like_op, operators.not_startswith_op):
+                predicate = ~predicate
         if binding.tenant is not None:
             tenant_column = column.table.c[binding.tenant.key]
             scope = tenant_column == literal(operation.scope(binding), Uuid())
@@ -368,7 +475,7 @@ def validate_search_storage(connection, model, field, *, admitted=None):
 def _validate_search_storage(connection, model, field):
     target = connection.dialect.identifier_preparer.quote_identifier(model["schema"]) + "." + connection.dialect.identifier_preparer.quote_identifier(model["table"])
     suffix = field["field_id"].replace("-", "")
-    index = connection.exec_driver_sql("""
+    query = """
         SELECT pg_catalog.quote_ident(%s),
                i.indisunique, i.indisvalid, i.indisready, i.indislive,
                i.indimmediate, i.indnullsnotdistinct, i.indpred IS NULL,
@@ -378,12 +485,15 @@ def _validate_search_storage(connection, model, field):
                      LEFT JOIN pg_catalog.pg_attribute a ON a.attrelid=i.indrelid AND a.attnum=k.attnum ORDER BY n),
                ARRAY(SELECT n.nspname || '.' || o.opcname FROM unnest(i.indclass) WITH ORDINALITY k(op,n)
                      JOIN pg_catalog.pg_opclass o ON o.oid=k.op JOIN pg_catalog.pg_namespace n ON n.oid=o.opcnamespace ORDER BY k.n),
-               ARRAY(SELECT c FROM unnest(i.indcollation) c),
+               ARRAY(SELECT n.nspname || '.' || c.collname FROM unnest(i.indcollation) WITH ORDINALITY k(col,n)
+                     LEFT JOIN pg_catalog.pg_collation c ON c.oid=k.col
+                     LEFT JOIN pg_catalog.pg_namespace n ON n.oid=c.collnamespace ORDER BY k.n),
                ARRAY(SELECT o FROM unnest(i.indoption) o)
         FROM pg_catalog.pg_index i JOIN pg_catalog.pg_class ix ON ix.oid=i.indexrelid
         JOIN pg_catalog.pg_am am ON am.oid=ix.relam
         WHERE i.indrelid=pg_catalog.to_regclass(%s) AND ix.relname=%s
-        """, (field["column"], target, "_cryptalis_" + suffix + "_eq")).one_or_none()
+        """
+    index = connection.exec_driver_sql(query, (field["column"], target, "_cryptalis_" + suffix + "_eq")).one_or_none()
     if index is None:
         raise ValueError("Unqualified search index")
     # Match PostgreSQL deparser spelling without an extra catalog round trip.
@@ -393,9 +503,22 @@ def _validate_search_storage(connection, model, field):
     columns = [model["tenancy"]["column"], None] if scoped else [None]
     opclasses = ["pg_catalog.uuid_ops", "pg_catalog.bytea_ops"] if scoped else ["pg_catalog.bytea_ops"]
     expected = ("unique" in field["queries"], True, True, True, True, False, True, "btree", count, count,
-                f'"substring"({column}, 15, 32)', columns, opclasses, [0] * count, [0] * count)
+                f'"substring"({column}, 15, 32)', columns, opclasses, [None] * count, [0] * count)
     if tuple(index) != expected:
         raise ValueError("Unqualified search index")
+    bounds = prefix_lengths(field)
+    if bounds is not None:
+        index = connection.exec_driver_sql(query,
+            (field['column'], target, '_cryptalis_' + suffix + '_prefix')).one_or_none()
+        if index is None:
+            raise ValueError('Unqualified prefix index')
+        column, *facts = index
+        expression = (f'string_to_array(encode("substring"({column}, 47, {prefix_block_size(bounds)}), '
+                      f"'escape'::text), ','::text)")
+        expected = (False, True, True, True, True, False, True, 'gin', 1, 1,
+                    expression, [None], ['pg_catalog.array_ops'], ['pg_catalog.C'], [0])
+        if tuple(facts) != expected:
+            raise ValueError('Unqualified prefix index')
 
 
 def validate_frame_storage(connection, model, field, *, admitted=None):
@@ -410,10 +533,10 @@ def _frame_expressions(field, quote):
     # the same identifier through the supplied native PostgreSQL preparer.
     columns = dict.fromkeys((quote(field['column']),
                              quote.__self__.quote_identifier(field['column'])))
-    overhead = 74 if field['queries'] else 42
+    overhead = frame_overhead(field)
     width = _fixed_value_width(field['source'])
     minimum, maximum = (overhead + width, overhead + width) if width is not None else (overhead, 16777216 + overhead)
-    magic = '434631000101' if field['queries'] else '434631000100'
+    magic = '4346310001' + format(frame_flags(field), '02x')
     comparison = '<>' if field['queries'] else '='
     forms = []
     for column in columns:

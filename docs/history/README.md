@@ -11,6 +11,7 @@ do not define the current product or authorize an operation.
 | [Completion-branch observations](completion-2026-10-31.md) | Preserved local checkpoints before final Git consolidation |
 | [Pruning verification](verification-2026-11-01.md) | Follow-up mutation evidence, regression repairs and the remaining survivor |
 | [Native type observations](types-2026-11.md) | Timestamp admission, native oracles, installed recovery and retained failures |
+| [Search observations](search-2026-11.md) | Internal prefix engineering, admission refusals, costs and retained failures |
 | [Decision history](decisions-2026-10.md) | Original rationale, rejected options and superseded decisions |
 | [Technical observations](technical-observations-2026-10.md) | Historical security/lifecycle spike results and measured performance profiles |
 | [Import provenance](imports-2026-10.md) | Source/evidence boundaries for earlier implementation imports |

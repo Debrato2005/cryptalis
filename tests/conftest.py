@@ -13,6 +13,16 @@ def pytest_sessionstart(session):
         raise pytest.UsageError("Run tests through .venv/bin/python scripts/test_postgres.py -- [pytest arguments].")
 
 
+@pytest.fixture(autouse=True)
+def synthetic_prefix_qualification(request):
+    if request.node.get_closest_marker('prefix_qualification') is None:
+        yield
+        return
+    from cryptalis._search_layout import _prefix_qualification
+    with _prefix_qualification():
+        yield
+
+
 @pytest.hookimpl(hookwrapper=True, tryfirst=True)
 def pytest_runtest_makereport(item, call):
     outcome = yield

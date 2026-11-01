@@ -20,13 +20,14 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.dialects import postgresql
 
 from cryptalis.crypto.cf1 import FieldDescriptor, seal_value, open_value
-from cryptalis.crypto.keys import CryptoFailure, Keyring, KeyUnavailable, ProviderAuthenticationUnavailable
+from cryptalis.crypto.keys import CryptoFailure, Keyring, KeyUnavailable, ProviderAuthenticationUnavailable, PrefixCapabilityUnadmitted
 from cryptalis.crypto._payload_rotation import MAX_BATCH_BYTES, MAX_BATCH_ROWS
 from cryptalis.manifest.compiler import (compile_protection, _schema_facts, _canonical, _previous_lock,
                                           unrecorded_column_metadata, protected_extended_statistics,
                                           sequence_metadata, source_metadata, _metadata_diff, _catalog_path,
                                           _native_text_length, _fixed_value_width, _LOCK_SCHEMAS)
 from cryptalis.manifest.parser import ManifestInvalid, _decode_json
+from cryptalis._search_layout import frame_flags, frame_overhead, search_index_names, search_index_statements
 
 JOURNAL = '_cryptalis_journal'
 PHASES = ('PREPARED', 'EXPANDED', 'BACKFILLED', 'VERIFIED', 'PENDING', 'ACTIVE')
@@ -298,6 +299,8 @@ class MigrationPlan:
                 if costs != estimate(costs['rows'], costs['backfill_rows_per_second'],
                         costs['verify_rows_per_second'], costs['copy_rows_per_second'], costs['copy_wal_bytes_per_row']):
                     raise ValueError
+        except PrefixCapabilityUnadmitted:
+            raise
         except (ManifestInvalid, ValueError, TypeError, KeyError, AttributeError, TransitionFailure):
             raise TransitionFailure('invalid_plan') from None
     def __str__(self):
@@ -318,7 +321,9 @@ class MigrationPlan:
                 'Uninterrupted backfill and one final verification; a verification checkpoint or retry adds another pass. '
                 + costs['limits'])
     @property
-    def document(self): return json.loads(self.artifact)
+    def document(self):
+        from cryptalis._search_layout import prefix_plan_scope
+        return prefix_plan_scope(json.loads(self.artifact))
     @property
     def digest(self): return hashlib.sha256(self.artifact).hexdigest()
     @property
@@ -488,8 +493,8 @@ def _convert_public_columns(c, p, model, *, plaintext=False):
             c.exec_driver_sql(f'DROP STATISTICS {_quote(c, model["schema"])}.{_quote(c, entry["name"])}')
     for field in model['fields']:
         c.exec_driver_sql(f'ALTER TABLE {table} DROP CONSTRAINT {_quote(c, field["payload_column"] + "_frame")}')
-        if field['queries']:
-            c.exec_driver_sql(f'DROP INDEX {_quote(c, model["schema"])}.{_quote(c, field["payload_column"] + "_eq")}')
+        for name in search_index_names(field):
+            c.exec_driver_sql(f'DROP INDEX {_quote(c, model["schema"])}.{_quote(c, name)}')
     alterations, shadows = [], []
     for field in model['fields']:
         target = 'pg_catalog.bytea'
@@ -518,11 +523,9 @@ def _convert_public_columns(c, p, model, *, plaintext=False):
             public = {**field, 'payload_column': field['column']}
             c.exec_driver_sql(f'ALTER TABLE {table} ADD CONSTRAINT {_quote(c, field["payload_column"] + "_frame")} '
                               f'CHECK ({_frame_check(c, public)})')
-            if field['queries']:
-                tenant = _quote(c, model['tenancy']['column']) + ', ' if 'column' in model['tenancy'] else ''
-                unique = 'UNIQUE ' if 'unique' in field['queries'] else ''
-                c.exec_driver_sql(f'CREATE {unique}INDEX {_quote(c, field["payload_column"] + "_eq")} ON {table} '
-                                  f'USING btree ({tenant}(pg_catalog.substring({_quote(c, field["column"])},15,32)) pg_catalog.bytea_ops)')
+            for statement in search_index_statements(model, field, lambda name: _quote(c, name), table,
+                                                     column=field['column']):
+                c.exec_driver_sql(statement)
     for shadow in shadows:
         c.exec_driver_sql(f'ALTER TABLE {table} DROP COLUMN {_quote(c, shadow)}')
     _check_owned_sequences(c, p, model)
@@ -814,6 +817,8 @@ def _maintenance_executor(p,engine,approval):
     _approve_maintenance(p,approval)
     try:
         _previous_lock(p.lock_bytes,p.document['lock'],engine)
+    except PrefixCapabilityUnadmitted:
+        raise
     except ValueError:
         raise TransitionFailure('invalid_compiler_lock',p.operation_id) from None
     lock=int.from_bytes(hashlib.sha256(_canonical([(m['schema'],m['table']) for m in p.document['lock']['models']])).digest()[:8],'big',signed=True)
@@ -1022,8 +1027,8 @@ def _scope(c,model):
 
 
 def _frame_check(c,f):
-    col=_quote(c,f['payload_column']); eq=bool(f['queries']); overhead=74 if eq else 42
-    magic='434631000101' if eq else '434631000100'
+    col=_quote(c,f['payload_column']); eq=bool(f['queries']); overhead=frame_overhead(f)
+    magic=f'4346310001{frame_flags(f):02x}'
     op='<>' if eq else '='
     width = _fixed_value_width(f['source'])
     minimum, maximum = (overhead + width, overhead + width) if width is not None else (overhead, 16777216+overhead)
@@ -1096,10 +1101,8 @@ def _expand(c,p):
         table = _table(c, model)
         for f in model['fields']:
             c.exec_driver_sql(f'ALTER TABLE {table} ADD COLUMN {_quote(c,f["payload_column"])} bytea')
-            if f['queries']:
-                tenant=_quote(c,model['tenancy']['column'])+', ' if 'column' in model['tenancy'] else ''
-                unique='UNIQUE ' if 'unique' in f['queries'] else ''
-                c.exec_driver_sql(f'CREATE {unique}INDEX {_quote(c,f["payload_column"]+"_eq")} ON {table} USING btree ({tenant}(pg_catalog.substring({_quote(c,f["payload_column"])},15,32)) pg_catalog.bytea_ops)')
+            for statement in search_index_statements(model, f, lambda name: _quote(c, name), table):
+                c.exec_driver_sql(statement)
             c.exec_driver_sql(f'ALTER TABLE {table} ADD CONSTRAINT {_quote(c,f["payload_column"]+"_frame")} CHECK ({_frame_check(c,f)})')
         models[model['table_id']]={'scope':_scope(c,model),'cursor':None,'rows':0,'chunks':0,
             'schema':_facts(c,model),'guard':_guard_facts(c,p,model)}
@@ -1299,7 +1302,7 @@ def _protected_contract(c, p, model, facts, *, paused=False, admitted=None, stag
         try:
             expression = (admitted or {}).get(name)
             if field['queries']:
-                index_name = field['payload_column'] + '_eq'
+                index_name, *prefix_names = search_index_names(field)
                 index = next((item for item in observed['indexes'] if item['name'] == index_name), None)
                 scoped = 'column' in model['tenancy']
                 tenant = [model['tenancy']['column']] if scoped else []
@@ -1313,6 +1316,17 @@ def _protected_contract(c, p, model, facts, *, paused=False, admitted=None, stag
                 if index is None or {k: v for k, v in index.items() if k != 'definition_digest'} != expected_index:
                     raise ValueError
                 observed['indexes'].remove(index)
+                for prefix_name in prefix_names:
+                    index = next((item for item in observed['indexes'] if item['name'] == prefix_name), None)
+                    expected_index = dict(name=prefix_name, primary=False, unique=False,
+                        exclusion=False, nulls_not_distinct=False, immediate=True, valid=True, ready=True,
+                        live=True, replica_identity=False, total_columns=1, key_columns=1,
+                        method='gin', partial=False, expression=True, columns=[None],
+                        dependency_columns=[field['column']], opclasses=['pg_catalog.array_ops'],
+                        collations=['pg_catalog.C'], constraint_name=None)
+                    if index is None or {k: v for k, v in index.items() if k != 'definition_digest'} != expected_index:
+                        raise ValueError
+                    observed['indexes'].remove(index)
                 validate_search_storage(c, model, field, admitted=expression)
             else:
                 validate_frame_storage(c, model, field, admitted=expression)
@@ -1570,7 +1584,8 @@ def check_attachment(c,lock,deployment):
     third element is an adopted ``cryptalis.restore/v1`` binding for a restored
     protected copy; ``None`` keeps the source-target check.
     """
-    models=json.loads(lock)['models']
+    from cryptalis._search_layout import prefix_plan_scope
+    models=prefix_plan_scope({'lock': json.loads(lock)})['lock']['models']
     found=any(c.exec_driver_sql('SELECT pg_catalog.to_regclass(%s)',(_quote(c,m['schema'])+'.'+_quote(c,JOURNAL),)).scalar_one() is not None for m in models)
     if not found:
         if deployment is not None: raise TransitionFailure('missing_transition')

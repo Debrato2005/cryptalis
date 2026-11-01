@@ -22,6 +22,7 @@ from .keys import (
     AuthenticationFailed, CryptoBackendUnavailable, InvalidContext, InvalidFrame, InvalidText, InvalidValue,
     KeyUnavailable, PreparedKeys, RepresentationMismatch, _identity, _native_uuid, tuple_bytes,
 )
+from .._search_layout import prefix_block_size
 
 MAX_TEXT_BYTES = 16 * 1024 * 1024
 _MAGIC = b"CF1\x00\x01"
@@ -33,6 +34,7 @@ _TIMESTAMP_EPOCH = datetime(2000, 1, 1)
 _TIMESTAMPTZ_CODEC = 'pg-timestamptz-us-be/v1'
 _NUMERIC_CODEC = 'pg-numeric-decimal/v1'
 _ORDER_REPRESENTATION = "cf1-packed-order/v1"
+_PREFIX_REPRESENTATION = 'cf1-packed-prefix/v1'
 _ORDER_CODECS = (*_INTEGER_WIDTHS, _DATE_CODEC, _TIMESTAMP_CODEC, _TIMESTAMPTZ_CODEC)
 _DESCRIPTOR_MEMBERS = frozenset(("schema", "domain_id", "table_id", "field_id", "text_codec",
                                "normalizer", "null_policy", "record_codec", "tenant_codec", "representation"))
@@ -48,16 +50,22 @@ class FieldDescriptor:
     representation: str
     digest: bytes
     value_codec: str = "utf8-exact/v1"
+    prefix_lengths: tuple[int, int] | None = None
 
     def __post_init__(self):
         for identity in (self.domain_id, self.table_id, self.field_id):
             _identity(identity)
         if (self.record_codec not in ("uuid16/v1", "int64-be/v1") or
                 self.tenant_codec not in ("uuid16/v1", "single-tenant-uuid/v1") or
-                self.representation not in ("cf1-storage/v1", "cf1-packed-equality/v1", _ORDER_REPRESENTATION) or
+                self.representation not in ("cf1-storage/v1", "cf1-packed-equality/v1", _ORDER_REPRESENTATION, _PREFIX_REPRESENTATION) or
                 self.value_codec not in ("utf8-exact/v1", "boolean-u8/v1", _DATE_CODEC, _TIMESTAMP_CODEC, _TIMESTAMPTZ_CODEC, _NUMERIC_CODEC, "date-ordinal-u32/v1", "uuid-bytes16/v1", *_INTEGER_WIDTHS) or
                 self.representation == "cf1-packed-equality/v1" and self.value_codec not in ("utf8-exact/v1", _NUMERIC_CODEC) or
                 self.representation == _ORDER_REPRESENTATION and self.value_codec not in _ORDER_CODECS or
+                self.prefixed and (self.value_codec != 'utf8-exact/v1' or
+                    type(self.prefix_lengths) is not tuple or len(self.prefix_lengths) != 2 or
+                    any(type(bound) is not int for bound in self.prefix_lengths) or
+                    not 1 <= self.prefix_lengths[0] <= self.prefix_lengths[1] <= 256) or
+                not self.prefixed and self.prefix_lengths is not None or
                 type(self.digest) is not bytes or len(self.digest) != 32):
             raise InvalidContext()
 
@@ -68,17 +76,30 @@ class FieldDescriptor:
             if type(document) is not dict:
                 raise InvalidContext()
             typed = document.get("schema") == "cryptalis.context/v2"
+            prefix = document.get('schema') == 'cryptalis.context/v3'
             members = (_DESCRIPTOR_MEMBERS - {"text_codec"}) | {"value_codec"} if typed else _DESCRIPTOR_MEMBERS
+            if prefix:
+                members = members | {'prefix_lengths'}
             if set(document) != members:
                 raise InvalidContext()
-            if any(type(v) is not str or len(v) > 128 for v in document.values()):
+            if any(type(v) is not str or len(v) > 128 for k, v in document.items() if k != 'prefix_lengths'):
+                raise InvalidContext()
+            bounds = None
+            if prefix:
+                raw = document['prefix_lengths']
+                if type(raw) is not dict or set(raw) != {'min', 'max'}:
+                    raise InvalidContext()
+                bounds = raw['min'], raw['max']
+                if document['representation'] != _PREFIX_REPRESENTATION:
+                    raise InvalidContext()
+            elif document['representation'] == _PREFIX_REPRESENTATION:
                 raise InvalidContext()
             codec = document["value_codec" if typed else "text_codec"]
             allowed_codecs = ("boolean-u8/v1", _DATE_CODEC, _TIMESTAMP_CODEC, _TIMESTAMPTZ_CODEC, _NUMERIC_CODEC, "date-ordinal-u32/v1", "uuid-bytes16/v1", *_INTEGER_WIDTHS) if typed else ("utf8-exact/v1",)
             normalizer = ('pg-numeric-equality/v1' if codec == _NUMERIC_CODEC and
                           document['representation'] == 'cf1-packed-equality/v1' else 'identity/v1')
             if ((document["schema"], document["normalizer"], document["null_policy"]) != (
-                    "cryptalis.context/v2" if typed else "cryptalis.context/v1", normalizer, "sql-null/v1")
+                    "cryptalis.context/v3" if prefix else "cryptalis.context/v2" if typed else "cryptalis.context/v1", normalizer, "sql-null/v1")
                     or codec not in allowed_codecs):
                 raise InvalidContext()
             canonical = json.dumps(document, ensure_ascii=False, sort_keys=True, separators=(",", ":"), allow_nan=False).encode("utf8")
@@ -88,7 +109,7 @@ class FieldDescriptor:
             ids = tuple(UUID(document[name]) for name in ("domain_id", "table_id", "field_id"))
             if any(str(identity) != document[name] for identity, name in zip(ids, ("domain_id", "table_id", "field_id"))):
                 raise InvalidContext()
-            return cls(*ids, document["record_codec"], document["tenant_codec"], document["representation"], actual, codec)
+            return cls(*ids, document["record_codec"], document["tenant_codec"], document["representation"], actual, codec, bounds)
         except Exception:
             raise InvalidContext() from None
 
@@ -100,6 +121,22 @@ class FieldDescriptor:
     @property
     def ordered(self):
         return self.representation == _ORDER_REPRESENTATION
+
+    @property
+    def prefixed(self):
+        return self.representation == _PREFIX_REPRESENTATION
+
+    @property
+    def header_size(self):
+        return (46 if self.equality else 14) + (prefix_block_size(self.prefix_lengths) if self.prefixed else 0)
+
+    @property
+    def overhead(self):
+        return self.header_size + 28
+
+    @property
+    def flags(self):
+        return 5 if self.prefixed else int(self.equality)
 
     def _record(self, tenant, record):
         _native_uuid(tenant)
@@ -216,11 +253,12 @@ def _term(encoded, field, material):
     return mac.finalize()
 
 
-def equality_term(value: str | None, field: FieldDescriptor, tenant: UUID,
-                  keys: PreparedKeys) -> bytes | None:
-    """Prepare a query term with the same frozen composition as a CF1 header."""
+def _search_material(field, tenant, keys):
     if not isinstance(field, FieldDescriptor) or not field.equality or not isinstance(keys, PreparedKeys):
         raise InvalidContext()
+    if field.prefixed:
+        from .._search_layout import require_prefix_qualification
+        require_prefix_qualification()
     _native_uuid(tenant)
     if (field.domain_id, tenant) != (keys.policy.domain_id, keys.policy.tenant_id):
         raise KeyUnavailable()
@@ -228,14 +266,68 @@ def equality_term(value: str | None, field: FieldDescriptor, tenant: UUID,
         raise InvalidContext()
     generation = keys.policy.search_generation
     material = keys._resolve(field.domain_id, tenant, "search", generation)
+    return generation, material
+
+
+def equality_term(value: str | None, field: FieldDescriptor, tenant: UUID,
+                  keys: PreparedKeys) -> bytes | None:
+    """Prepare a query term with the same frozen composition as a CF1 header."""
+    generation, material = _search_material(field, tenant, keys)
     result = None if value is None else _term(_encode_value(value, field), field, material)
     keys._resolve(field.domain_id, tenant, "search", generation)
+    return result
+
+
+def _prefix_key(field, material):
+    return _derive(material, tuple_bytes(b'CF1/search-key', field.field_id.bytes,
+        b'utf8-exact/v1', b'utf8-prefix/v1', b'prefix'))
+
+
+def _prefix_mac(encoded, key):
+    return hmac_digest(key, tuple_bytes(b'prefix', encoded), 'sha256').hex()
+
+
+def _prefix_block(encoded, field, material):
+    try:
+        value = encoded.decode('utf8', errors='strict')
+    except UnicodeError:
+        raise InvalidText() from None
+    lower, upper = field.prefix_lengths
+    key = _prefix_key(field, material)
+    terms = [_term(encoded, field, material).hex()]
+    terms.extend(_prefix_mac(value[:length].encode('utf8'), key)
+                 for length in range(lower, min(len(value), upper) + 1))
+    terms.extend(['~' * 64] * (upper - lower + 2 - len(terms)))
+    return ','.join(sorted(terms)).encode('ascii')
+
+
+def prefix_query_terms(value, kind, field, tenant, keys):
+    """Exact, prefix and universal LIKE terms; NULL remains SQL NULL."""
+    if not isinstance(field, FieldDescriptor) or not field.prefixed:
+        raise InvalidContext()
+    generation, material = _search_material(field, tenant, keys)
+    if value is None:
+        result = None
+    else:
+        encoded = _encode(value)
+        if kind == 'exact':
+            result = [_term(encoded, field, material).hex()]
+        elif kind == 'all' and value == '':
+            result = []
+        elif kind == 'prefix' and field.prefix_lengths[0] <= len(value) <= field.prefix_lengths[1]:
+            result = [_prefix_mac(encoded, _prefix_key(field, material))]
+        else:
+            raise InvalidValue()
+    keys._resolve(field.domain_id, tenant, 'search', generation)
     return result
 
 
 def _context(field, tenant, record, keys):
     if not isinstance(field, FieldDescriptor) or not isinstance(keys, PreparedKeys):
         raise InvalidContext()
+    if field.prefixed:
+        from .._search_layout import require_prefix_qualification
+        require_prefix_qualification()
     typed = field._record(tenant, record)
     if (field.domain_id, tenant) != (keys.policy.domain_id, keys.policy.tenant_id):
         raise KeyUnavailable()
@@ -262,8 +354,10 @@ def seal_value(value: str | bool | int | date | datetime | Decimal | UUID | None
         search_generation = keys.policy.search_generation
         search = keys._resolve(field.domain_id, tenant, "search", search_generation)
         term = _term(encoded, field, search)
-    header = (_MAGIC + bytes([int(field.equality)]) + payload_generation.to_bytes(4, "big") +
+    header = (_MAGIC + bytes([field.flags]) + payload_generation.to_bytes(4, "big") +
               search_generation.to_bytes(4, "big") + term)
+    if field.prefixed:
+        header += _prefix_block(encoded, field, search)
     key = _derive(payload, tuple_bytes(b"CF1/payload-key", field.field_id.bytes, typed))
     try:
         nonce = os.urandom(12)
@@ -284,13 +378,12 @@ def open_value(frame: bytes | None, field: FieldDescriptor, tenant: UUID,
     if frame is None:
         keys._resolve(field.domain_id, tenant, "payload", keys.policy.payload_generation)
         return None
-    header_size = 46 if field.equality else 14
-    overhead = header_size + 28
+    header_size, overhead = field.header_size, field.overhead
     if type(frame) is not bytes or not overhead <= len(frame) <= MAX_TEXT_BYTES + overhead:
         raise InvalidFrame()
-    if frame[:5] != _MAGIC or frame[5] not in (0, 1):
+    if frame[:5] != _MAGIC or frame[5] not in (0, 1, 5):
         raise InvalidFrame()
-    if frame[5] != int(field.equality):
+    if frame[5] != field.flags:
         raise RepresentationMismatch()
     payload_generation = int.from_bytes(frame[6:10], "big")
     search_generation = int.from_bytes(frame[10:14], "big")
@@ -308,6 +401,8 @@ def open_value(frame: bytes | None, field: FieldDescriptor, tenant: UUID,
     except Exception:
         raise CryptoBackendUnavailable() from None
     if search is not None and not compare_digest(header[14:46], _term(encoded, field, search)):
+        raise RepresentationMismatch()
+    if field.prefixed and not compare_digest(header[46:], _prefix_block(encoded, field, search)):
         raise RepresentationMismatch()
     if field.value_codec == "boolean-u8/v1":
         if encoded not in (b"\x00", b"\x01"):

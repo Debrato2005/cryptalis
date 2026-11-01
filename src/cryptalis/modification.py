@@ -20,6 +20,7 @@ from cryptalis import migration as m, rotation as r
 from cryptalis.crypto.cf1 import FieldDescriptor, open_value, seal_value
 from cryptalis.manifest import compiler as compiler
 from cryptalis.manifest.declaration import parse_protection_declaration
+from cryptalis._search_layout import search_index_names, search_index_statements
 
 
 FORMAT = 'cryptalis.modification/v1'
@@ -49,11 +50,21 @@ def _target_lock(source_lock, manifest, *, writers, search_reviews):
                     continue
                 orderable = compiler._orderable(field['source'])
                 search = ['equality', 'order'] if orderable else ['equality']
-                if ((old['queries'], new['queries']) not in (([], search), (search, [])) or
-                        new['accept_leakage'] != new['queries'] or
-                        not orderable and field['source']['type'] not in ('text', 'varchar', 'numeric')):
+                text = field['source']['type'] in ('text', 'varchar')
+                if text:
+                    profiles = (set(), {'equality'}, {'equality', 'prefix'},
+                                {'equality', 'unique'}, {'equality', 'prefix', 'unique'})
+                    permitted = (set(old['queries']) in profiles and set(new['queries']) in profiles
+                                 and ('unique' in old['queries']) == ('unique' in new['queries']))
+                else:
+                    permitted = (orderable or field['source']['type'] == 'numeric') and (
+                        old['queries'], new['queries']) in (([], search), (search, []))
+                if not permitted or new['accept_leakage'] != new['queries']:
                     raise ValueError
                 old.update(queries=new['queries'], accept_leakage=new['accept_leakage'])
+                old.pop('prefix_lengths', None)
+                if 'prefix_lengths' in new:
+                    old['prefix_lengths'] = deepcopy(new['prefix_lengths'])
                 if old != new:
                     raise ValueError
                 native = next(c for c in compiled['source_schema']['columns'] if c['name'] == field['column'])
@@ -65,7 +76,9 @@ def _target_lock(source_lock, manifest, *, writers, search_reviews):
                 descriptor = field['descriptor']
                 field['descriptor'] = compiler._descriptor(descriptor['domain_id'], descriptor['table_id'],
                     descriptor['field_id'], descriptor['record_codec'], descriptor['tenant_codec'],
-                    field['representation'], descriptor.get('value_codec', descriptor.get('text_codec')))
+                    field['representation'], descriptor.get('value_codec', descriptor.get('text_codec')),
+                    prefix_lengths=(new['prefix_lengths']['min'], new['prefix_lengths']['max'])
+                                   if 'prefix_lengths' in new else None)
                 field['descriptor_digest'] = compiler._digest(field['descriptor'])
                 changed += 1
         if not changed or expected != desired:
@@ -77,6 +90,15 @@ def _target_lock(source_lock, manifest, *, writers, search_reviews):
         target.update(declaration=desired, writer_inventory=host, search_reviews=reviews)
         target['schema'] = compiler._lock_schema(target['models'], target.get('layout'),
                                                 legacy=source_lock['schema'] == 'cryptalis.lock/v1')
+        if target['schema'] in compiler._LOCK_SCHEMAS[6:]:
+            target.setdefault('layout', None)
+            for model in target['models']:
+                model['source_metadata'].setdefault('owned_sequences', [])
+        elif target.get('layout') is None:
+            target.pop('layout', None)
+        if target['schema'] in ('cryptalis.lock/v2', 'cryptalis.lock/v3', 'cryptalis.lock/v4'):
+            for model in target['models']:
+                model['source_metadata'].pop('owned_sequences', None)
         target['ddl'] = compiler._ddl(target, _DIALECT)
         target['required_readers'] = compiler._required_readers(target['models'])
         compiler._previous_lock(m._canonical(target), target, _DIALECT)
@@ -245,7 +267,9 @@ class ModificationPlan:
             raise m.TransitionFailure('invalid_modification_plan') from None
 
     @property
-    def document(self): return json.loads(self.artifact)
+    def document(self):
+        from cryptalis._search_layout import prefix_plan_scope
+        return prefix_plan_scope(json.loads(self.artifact))
     @property
     def digest(self): return hashlib.sha256(self.artifact).hexdigest()
     @property
@@ -294,12 +318,13 @@ def plan(source, engine, *, source_pin, manifest, mapping, writers, search_revie
                 for old, new in zip(old_model['fields'], new_model['fields'], strict=True):
                     if old['descriptor'] == new['descriptor'] or not new['queries']:
                         continue
-                    collision = connection.exec_driver_sql('SELECT EXISTS(SELECT 1 FROM pg_catalog.pg_class c '
-                        'JOIN pg_catalog.pg_namespace n ON n.oid=c.relnamespace '
-                        'WHERE n.nspname=%s AND c.relname=%s)',
-                        (new_model['schema'], new['payload_column'] + '_eq')).scalar_one()
-                    if collision:
-                        raise m.TransitionFailure('generated_name_collision', source.operation_id)
+                    for name in set(search_index_names(new)) - set(search_index_names(old)):
+                        collision = connection.exec_driver_sql('SELECT EXISTS(SELECT 1 FROM pg_catalog.pg_class c '
+                            'JOIN pg_catalog.pg_namespace n ON n.oid=c.relnamespace '
+                            'WHERE n.nspname=%s AND c.relname=%s)',
+                            (new_model['schema'], name)).scalar_one()
+                        if collision:
+                            raise m.TransitionFailure('generated_name_collision', source.operation_id)
             policies, prepared = prepare_keys(source, target, keys, keys)
             models = r._observe_active(connection, source, keys,
                 prepared={tenant: pair[0] for tenant, pair in prepared.items()},
@@ -375,17 +400,13 @@ def replace_storage_contract(connection, proposal, successor, *, before_copy):
             constraint = m._quote(connection, field['payload_column'] + '_frame')
             if before_copy:
                 connection.exec_driver_sql(f'ALTER TABLE {table} DROP CONSTRAINT {constraint}')
-                if old['queries']:
-                    index = m._quote(connection, model['schema']) + '.' + m._quote(connection, old['payload_column'] + '_eq')
+                for name in search_index_names(old):
+                    index = m._quote(connection, model['schema']) + '.' + m._quote(connection, name)
                     connection.exec_driver_sql(f'DROP INDEX {index}')
                 continue
             public = {**field, 'payload_column': field['column']}
             connection.exec_driver_sql(f'ALTER TABLE {table} ADD CONSTRAINT {constraint} '
                                       f'CHECK ({m._frame_check(connection, public)})')
-            if not field['queries']:
-                continue
-            tenant = m._quote(connection, model['tenancy']['column']) + ', ' if 'column' in model['tenancy'] else ''
-            index = m._quote(connection, field['payload_column'] + '_eq')
-            column = m._quote(connection, field['column'])
-            connection.exec_driver_sql(f'CREATE INDEX {index} ON {table} USING btree '
-                                      f'({tenant}(pg_catalog.substring({column},15,32)) pg_catalog.bytea_ops)')
+            for statement in search_index_statements(model, field, lambda name: m._quote(connection, name), table,
+                                                     column=field['column']):
+                connection.exec_driver_sql(statement)

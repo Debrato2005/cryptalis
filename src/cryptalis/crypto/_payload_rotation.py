@@ -18,6 +18,9 @@ def _binding(field, tenant, source, target):
     if (not isinstance(field, FieldDescriptor) or
             not isinstance(source, PreparedKeys) or not isinstance(target, PreparedKeys)):
         raise InvalidContext()
+    if field.prefixed:
+        from .._search_layout import require_prefix_qualification
+        require_prefix_qualification()
     if ((source.policy.domain_id, source.policy.tenant_id) != (field.domain_id, tenant) or
             (target.policy.domain_id, target.policy.tenant_id) != (field.domain_id, tenant)):
         raise KeyUnavailable()
@@ -42,7 +45,7 @@ def _binding(field, tenant, source, target):
 
 
 def _validate_rows(rows,field,tenant,max_bytes):
-    overhead = 74 if field.equality else 42
+    overhead = field.overhead
     identity_bytes = 16 + (8 if field.record_codec == 'int64-be/v1' else 16)
     budget = 0
     seen = set()
@@ -81,7 +84,7 @@ budget. Object/allocator/provider/driver overhead is outside that budget.
     _validate_rows(rows,field,tenant,max_bytes)
 
     result = []
-    header_size = 46 if field.equality else 14
+    header_size = field.header_size
     for record, frame in rows:
         if frame is not None and (
                 int.from_bytes(frame[6:10], 'big') != source.policy.payload_generation or

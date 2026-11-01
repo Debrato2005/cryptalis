@@ -119,7 +119,9 @@ class DeprotectionPlan:
             raise m.TransitionFailure('invalid_reverse_plan') from None
 
     @property
-    def document(self): return json.loads(self.artifact)
+    def document(self):
+        from cryptalis._search_layout import prefix_plan_scope
+        return prefix_plan_scope(json.loads(self.artifact))
     @property
     def digest(self): return hashlib.sha256(self.artifact).hexdigest()
     @property

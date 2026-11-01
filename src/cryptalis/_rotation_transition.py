@@ -310,7 +310,8 @@ def _verify_prefix(c,p,state,prepared,*,keys,target_keys):
                     source,target=prepared[tenant]
                     target_field = target_model['fields'][index]
                     _generation(old,field,source,p);_generation(new,target_field,target,p)
-                    header=None if old is None else (old[:6]+old[10:46 if field['queries'] else 14]
+                    header_size = descriptors[index].header_size
+                    header=None if old is None else (old[:6]+old[10:header_size]
                         if p.purpose=='payload' else old[:10])
                     retain = (p.purpose == 'profile' and field['descriptor'] == target_field['descriptor']
                               or p.purpose == 'search' and not field['queries'])
@@ -319,7 +320,7 @@ def _verify_prefix(c,p,state,prepared,*,keys,target_keys):
                     old=None
                     actual=crypto(lambda source,target: open_value(new,targets[index],tenant,record,target))
                     if (type(value)!=type(actual) or value!=actual or
-                            (p.purpose != 'profile' and new is not None and header!=(new[:6]+new[10:46 if field['queries'] else 14]
+                            (p.purpose != 'profile' and new is not None and header!=(new[:6]+new[10:header_size]
                                 if p.purpose=='payload' else new[:10]))
                             or (storage is not None and storage!=hashlib.sha256(new).digest())):
                         raise m.TransitionFailure(f'{p.purpose}_value_verification_failed',p.operation_id)

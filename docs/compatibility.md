@@ -184,7 +184,8 @@ parent/child transaction evidence and remaining qualification work.
 | Tenant-scoped uniqueness | SUPPORTED | Full term plus tenant scope in a race-safe native unique index. Explicit single-tenant declaration supplies its one scope |
 | Comparisons `<`, `<=`, `>`, `>=`, BETWEEN/ranges | SUPPORTED, `order` fields | Signed integer, date and admitted timestamp fields that declare and accept [`order`](#order-search). Native three-valued truth with AND/OR/NOT. Other fields refuse |
 | ORDER BY and sorted pagination on protected values | SUPPORTED, `order` fields | Direct column with ascending, descending and NULLS modifiers in the outermost SELECT, within one provable tenant. LIMIT/OFFSET and keyset pagination work. Other fields refuse |
-| LIKE, ILIKE, prefix/startswith, contains, suffix | CURRENTLY UNADMITTED | No admitted pattern/text grammar or representation |
+| Literal/terminal-prefix LIKE and startswith | INTERNAL ONLY | Implemented packed-prefix prototype in private synthetic engineering scope; ordinary APIs refuse its intent and artifacts with a typed capability error. [Exact private grammar](#internal-exact-prefix-prototype) |
+| ILIKE, contains, suffix and other pattern shapes | CURRENTLY UNADMITTED | No admitted pattern/text grammar or representation |
 | Regex, fuzzy/similarity, full text | CURRENTLY UNADMITTED | No admitted exact query or text-search contract |
 | MIN/MAX of one directly protected column | SUPPORTED, `order` fields | One provable tenant, direct projection with the column's default result type, optional label and native aliases. SQL NULL is ignored; empty/all-NULL inputs yield NULL. Authenticate the selected opaque row packet. No grouping, FILTER, window or expression arguments |
 | SUM, AVG, arithmetic | CURRENTLY UNADMITTED | Selected formats do not implement these operations |
@@ -370,6 +371,39 @@ The tested transaction abort and savepoint recovery remain native.
 Protected plaintext does not reach PostgreSQL for this check.
 Other custom type decorators and dialect variants remain unadmitted for protected mappings and query binds.
 See [native VARCHAR mappings](walkthrough-migration.md#native-varchar-mappings).
+
+## Internal exact-prefix prototype
+
+**INTERNAL ONLY:** a private synthetic corpus exercises exact TEXT/VARCHAR prefix
+queries using full HMAC terms in an authenticated fixed-size header and a
+built-in GIN expression index. Ordinary planning, attachment, cryptographic and
+operational artifact use remain blocked by `PrefixCapabilityUnadmitted`.
+Some preparation-artifact constructors wrap that refusal in their existing
+typed invalid-plan error; neither outcome authorizes effects.
+[Manifest](manifest.md#internal-prefix-engineering-syntax) owns context/v3,
+lock/v14, reader dependencies and explicit Unicode prefix-length bounds.
+
+The private grammar covers literal LIKE patterns and literal characters followed
+only by terminal `%` wildcards, plus startswith and their negations. It preserves
+SQL NULL, empty/all-match patterns, aliases, Boolean composition and predicate
+results. Predicate `==`/`!=` comparisons accept exact True/False literals and
+unambiguous Boolean binds, including reversed comparisons; NULL Boolean
+comparison binds refuse. Native three-valued negation is normalized before
+positive tenant guards. Text remains byte-exact without case folding or Unicode normalization.
+The effective startswith pattern appends `%` before interpreting escapes;
+SQLAlchemy's literal autoescaping has already transformed its bind. Default
+backslash, an empty escape and a valid single text-character escape are handled.
+For example, default `startswith('abc\\')` denotes exact `abc%`, because the
+backslash quotes the appended wildcard. Interior unescaped `%`, unescaped `_`,
+dangling escapes, other operators, coercions and prefixes outside the configured
+bounds refuse explicitly. Exact literal patterns use equality and do not impose
+the prefix-length interval.
+
+This implementation does not admit prefix search or complete text-search
+requirements. Leakage acceptance and host reviews remain necessary inputs,
+without satisfying the six gates. Published prefix-attack evidence, independent
+review and approved measured costs remain required; fixed padding and GIN
+storage do not imply compliance with the storage or latency targets.
 
 ## Signed integer storage
 
@@ -579,6 +613,9 @@ The [slice 3 runtime checkpoint](history/implementation-2026-10.md#restricted-ru
 
 The seven baseline build slices must pass their real PostgreSQL tests before dependent product admission.
 Independent research and internal implementations do not establish admitted support.
+The private prefix engineering scope leaves this rule intact: native-oracle,
+lifecycle, integrity and cost observations cannot enable ordinary application use
+or stand in for any gate's missing evidence.
 Every added type, operator, mapping, or platform must then pass all six technical gates:
 G-ADAPTER, G-CRYPTO, G-QUERY, G-LIFECYCLE, G-PROVIDER, and G-POLICY.
 [Status](status.md#missing-evidence-and-promotion-criteria) owns each gate's unchanged evidence requirements.
