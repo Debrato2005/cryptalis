@@ -33,8 +33,8 @@ and after removal. Eight concurrent inserts of one email give exactly one commit
 seven SQLSTATE 23505 results, before and after search rotation. Removal restores
 `VARCHAR(320)` and `ix_users_email`, and the final API run follows a real uninstall.
 
-The library is wheel `ccebae56…c3ec`, rebuilt byte-identically from a clean checkout of
-`bd223c1`. Native and protected alternate between two identical clusters for three
+Latency and storage belong to wheel `ccebae56…c3ec`, rebuilt byte-identically from a clean
+checkout of `bd223c1`, and were not remeasured on the later final wheel. Native and protected alternate between two identical clusters for three
 rounds of 512 samples, so host drift cancels. This removes the frozen report's
 sequential-order limit, on a shared workstation with warm keys and no HTTP layer.
 
@@ -68,18 +68,20 @@ else is judged without compile-generated exemptions and refuses before the drive
 
 ## Bounded upsert and INSERT values
 
-**VERIFIED, bounded source and installed wheel.** ,  and primary-key  on single-tenant tables now work within the
+**VERIFIED, bounded source and installed wheel.** `insert().values(...)`, `ON CONFLICT DO
+NOTHING` and primary-key `DO UPDATE` on single-tenant tables now work within the
 [bounded contract](compatibility.md#bounded-upsert), through the existing sealed route.
 A native PostgreSQL oracle compares final rows, real row counts and SQLSTATE values, and an
 independent connection confirms only CF1 frames are stored. Sync and async paths pass. All
 seven safety checks are mutation-tested in an isolated copy; each mutant fails the test
 naming it. Omitted public database defaults now apply on the route without RETURNING.
 
-The final source regression of 109 test files passes 2,195 calls and 18 subtests, with 25
-call, 34 setup and five collection skips. The final wheel passes 34 calls without skips on
-Python 3.12 and 3.13. Repeat wheel and sdist builds match. This is focused local evidence;
-hosted results bind the pushed commit separately. [Boundary and retained failures](_reset/production-continuation-boundary-20261102.json).
-Tenant-column , upsert RETURNING and other assignments stay refused. All seven
+The final source regression of 109 test files passes 2,196 calls and 18 subtests, with 25
+call, 34 setup and five collection skips. The final wheel, `7cc2631c…`, passes 35 calls
+without skips on Python 3.12 and 3.13, and repeats the complete Smolink journey through a
+real uninstall. Repeat wheel and sdist builds match. This is focused local evidence; hosted
+results bind the pushed commit separately. [Boundary and retained failures](_reset/production-continuation-boundary-20261102.json).
+Tenant-column `DO UPDATE`, upsert RETURNING and other assignments stay refused. All seven
 production gates remain UNKNOWN.
 
 ## New-developer lifecycle

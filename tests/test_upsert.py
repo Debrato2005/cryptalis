@@ -247,6 +247,12 @@ def test_a_public_server_default_still_applies(tmp_path):
             assert None not in session.scalars(select(Account.created)).all()
 
 
+def test_a_values_key_outside_the_table_is_a_typed_refusal(tmp_path):
+    with twins(tmp_path) as (sessions, Account, *_):
+        with sessions(tenant_id=TENANT) as session, pytest.raises(UnsupportedProtectedOperation):
+            session.execute(insert(Account).values(id=TWO, email='two@example.com', unknown='x'))
+
+
 def test_a_values_bind_without_a_value_is_not_stored_as_null(tmp_path):
     with twins(tmp_path) as (sessions, Account, Note, oracle, NativeAccount, *_):
         unset = lambda model: insert(model).values(id=TWO, email='two@example.com', note=bindparam('later'))

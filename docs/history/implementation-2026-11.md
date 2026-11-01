@@ -154,3 +154,18 @@ not a Git repository, and no test ran. That output is not evidence. The correcte
 reads outcomes from each receipt and reports NOT RUN when no call executed. All seven
 mutants are then caught, each by the test naming it, with 20 calls per run. Earlier
 mutation lessons held: the working tree was never modified.
+
+Hosted CI then caught what the local selection could not. `scripts/benchmark_admission.py`
+builds a stand-in attachment, and caching the protected lineage broke it with
+`AttributeError`. That step runs before the complete suite, so the source job at `bd223c1`
+and its successor stopped there and ran no source tests. Those runs are not evidence
+about the code either way. The local verification chain now runs the exact CI invocation
+first. Publishing the status text through an unquoted shell heredoc also deleted its
+backticked terms at `423f96f`, which a later commit restored.
+
+The final audit removed a fresh key-file write on every start and an impossible exception
+case. It also tried to remove the lineage rebuild counter, on the claim that bindings only
+change during validation, which came from searching one module. Doctor also adds bindings,
+so the cached set stayed empty there and `protected()` answered False: unsupported samples
+reached custody and the database. Five existing tests failed, nothing was published, and
+the counter returned. A cached security answer must not be able to fail open.

@@ -183,18 +183,19 @@ def create_root(provider: KeyProvider, context: KeyContext) -> WrappedRoot:
 def _development_identity(path):
     """Create once, then read, one owner-only 16-byte ID plus 32-byte KEK."""
     path = os.fspath(path)
-    fd, partial = tempfile.mkstemp(dir=os.path.dirname(path) or '.')
-    try:
-        with os.fdopen(fd, 'wb') as file:
-            file.write(uuid4().bytes + os.urandom(32))
-            file.flush()
-            os.fsync(file.fileno())
+    if not os.path.lexists(path):
+        fd, partial = tempfile.mkstemp(dir=os.path.dirname(path) or '.')
         try:
-            os.link(partial, path)  # Atomic: concurrent first uses keep one identity.
-        except FileExistsError:
-            pass
-    finally:
-        os.unlink(partial)
+            with os.fdopen(fd, 'wb') as file:
+                file.write(uuid4().bytes + os.urandom(32))
+                file.flush()
+                os.fsync(file.fileno())
+            try:
+                os.link(partial, path)  # Atomic: concurrent first uses keep one identity.
+            except FileExistsError:
+                pass
+        finally:
+            os.unlink(partial)
     with open(os.open(path, os.O_RDONLY | os.O_NOFOLLOW), 'rb') as file:
         status = os.fstat(file.fileno())
         identity = file.read(49)
