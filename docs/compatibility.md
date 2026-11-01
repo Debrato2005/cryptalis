@@ -181,7 +181,7 @@ parent/child transaction evidence and remaining qualification work.
 | Scoped mapped dictionary UPDATE | SUPPORTED | Attached sync/async admitted storage types, typed IDs, nonempty list of dictionaries and synchronize_session=False. Tenant-column tables require explicit tenant equality. Declared single-tenant tables use the fixed table UUID and no caller WHERE. Preserve native omission/NULL, grouping, repeated IDs, row-count checks and transactions. Core and RETURNING routes remain unadmitted |
 | Single-record mapped UPDATE | SUPPORTED | Attached sync/async `Session.execute`, exact record and tenant equality (or declared fixed scope), and `synchronize_session=False`. Assign using one nonempty external dictionary with native physical column keys, or ordinary scalar/named-bind `.values(...)` assignments with optional execute-time parameters. Exact record/tenant predicates also accept ordinary native binds; the [parameterized contract](#parameterized-single-record-update) defines names and types. Native mapped keyword and direct-column dictionary forms are admitted. Without RETURNING, retain native affected-row counts and a result without rows. Optional direct or explicitly named returned columns/scalars/tuples and mapped entities retain native result keys, types, identity behavior and transactions. Authenticate protected outputs; changed protected values must match the exact newly prepared frame. SQL expressions, ambiguous bind names, incompatible bind coercions, ordered assignments, Core, computed outputs/aliases, identity/tenant assignment, automatic/fetch synchronization and executemany RETURNING remain unadmitted |
 | Scoped mapped single-record DELETE | SUPPORTED | Attached sync/async execute, exact typed record equality and either tenant equality or explicit fixed table-UUID scope. No external parameters; require synchronize_session=False. Without RETURNING, preserve native row counts. Direct or natively labeled column scalar/tuple and mapped-entity RETURNING preserves native keys, types, identity state and transactions; protected values authenticate against the requested row, field and tenant. Unsupported custom AST classes refuse before execution |
-| Unprotected-table mapped DELETE | SUPPORTED | One physical table mapped in the attached registry, with no protected fields. Native equality/AND predicates with fixed typed literals only. Default/auto/evaluate/False synchronization. No Core, RETURNING, fetch synchronization or custom AST |
+| Unprotected-table mapped DELETE | SUPPORTED | One physical table mapped in the attached registry, with no protected fields. Native equality/AND predicates with fixed typed literals only. Direct-column scalar/tuple and explicitly named direct-column RETURNING retain native keys, types, NULLs and transactions. Default/auto/evaluate/False synchronization. No Core, entity/computed/alias outputs, fetch synchronization or custom AST |
 | Equality `==` and `IN` | SUPPORTED | Declared full tenant/domain-bound HMAC term. Preserve typed binds and native NULL/empty-list truth tables |
 | Negative equality `!=`, `NOT IN`, NULL presence and Boolean NOT | SUPPORTED | Native AND/OR/NOT compositions of admitted comparisons reuse existing full terms and SQL NULL checks. Normalize negation before adding positive tenant guards. Preserve three-valued truth, NULL elements, empty lists and outer-join NULL extension. Storage-only fields admit NULL predicates only; unsupported leaves and custom Boolean renderers refuse |
 | Tenant-scoped uniqueness | SUPPORTED | Full term plus tenant scope in a race-safe native unique index. Explicit single-tenant declaration supplies its one scope |
@@ -315,11 +315,19 @@ A separate mapped DELETE route admits only unprotected tables in the same
 attached registry and metadata. Use direct column equality to fixed UUID, int,
 str or bytes values with matching admitted native types. AND can combine these
 predicates. Default, auto, evaluate and False synchronization retain native ORM
-behavior. Core DELETE, external parameter dictionaries, RETURNING, fetch,
-inheritance, version counters and other grammar refuse. The route captures
-physical table/mapper identities and ordered predicates before key resolution.
-It repeats admission afterward and checks native compiled SQL and exact driver
-binds. The protected scoped DELETE contract stays separate. These routes do
+behavior. Optional RETURNING admits only direct columns of that same physical
+table, with optional explicit native labels. It preserves ordinary scalar/tuple
+results, lookup by the caller's column or label object, native NULL values and
+missing or multiple matches. Anonymous labels, entity/computed/alias outputs,
+loader options, Core DELETE, external parameter dictionaries, fetch,
+inheritance, version counters and other grammar refuse. Named outputs follow
+native quoting; empty names, NUL and forced-unquoted names that require quotes
+refuse before execution. The route captures physical table/mapper identities,
+ordered predicates and the exact output objects and label metadata before key
+resolution, then checks them again after preparation and at driver dispatch.
+It also checks native compiled SQL and exact driver binds. These public values
+have no additional payload-authentication claim. The protected scoped DELETE
+contract stays separate. These routes do
 not admit general public DML.
 
 Protection planning and attachment require native row-context codecs without

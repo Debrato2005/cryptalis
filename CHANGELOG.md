@@ -11,6 +11,10 @@
   or awaited preparation refuse before UPDATE dispatch.
 - No ciphertext or lock format changes. Production qualification remains open.
 
+- Public-table mapped DELETE accepts direct and explicitly named column RETURNING
+  through sync/async SQLAlchemy and SQLModel, preserving native transactions and
+  result keys. Test isolation and cancellation diagnostics retain safe failures.
+
 ## 0.1.0a2.dev1 — development
 
 - Whole-document JSONB equality, IN and scoped uniqueness reuse full blind-index

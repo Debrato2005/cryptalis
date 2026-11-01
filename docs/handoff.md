@@ -7,7 +7,24 @@ production gates remain UNKNOWN. [Status](status.md) owns verification;
 [compatibility](compatibility.md) owns admitted behavior. This file is the resume
 route, not another product contract.
 
-## Current stop point
+## Current integration
+
+`main` is the production-development branch. PRs 5–8 combine JSONB literal
+client defaults, whole-document equality/IN/scoped uniqueness, reusable point
+UPDATE binds, public-table DELETE RETURNING and their test-isolation fixes.
+The integration preserves development version `0.1.0a2.dev2` and all original
+source-bound receipts. The [integration boundary](_reset/production-main-integration-boundary-20261101.json)
+records the combined source/installed and fresh-recovery checks.
+[Status](status.md) records verification; green CI does
+not qualify a production release or independent human review.
+
+The presentation remains on the separate Smolink demo branch and frozen tags,
+using library `v0.1.0a1` at `655d522` and demo `269aed4`. Use its existing report
+and runbook. Fresh synthetic service/provider setup is required for live replay;
+previous processes are stopped and provider tokens/certificates expire. Do not
+silently substitute the production-development wheel in that measured demo.
+
+## Verified slices before integration
 
 The implementation slice is `1d4124b549bb8b36f9c5022c94c3f489d9da901f` on
 `codex/parameterized-update-20261101`, based on
@@ -33,8 +50,8 @@ Earlier failures and superseded distributions remain retained; do not relabel
 them as final passes. The final code graph is refreshed. All local test handles
 are terminal and generated clusters stopped. No local operation awaits input.
 
-[Draft PR 7](https://github.com/Debrato2005/cryptalis/pull/7) stacks on
-[draft PR 6](https://github.com/Debrato2005/cryptalis/pull/6), which stacks on
+[PR 7](https://github.com/Debrato2005/cryptalis/pull/7) stacks on
+[PR 6](https://github.com/Debrato2005/cryptalis/pull/6), which stacks on
 PR 5 below. Both jobs pass in the original
 [push run 41305071412](https://github.com/Debrato2005/cryptalis/actions/runs/41305071412)
 and [PR run 41305131672](https://github.com/Debrato2005/cryptalis/actions/runs/41305131672).
@@ -74,7 +91,7 @@ safe SQLSTATE/location reporting adds observations without a fix claim.
 
 The earlier verified implementation is `e75d049b0afe6d3c7f4d9e7bc8e01136b3529f06`
 on `codex/post-preview-continuation-20261101`, in
-[draft PR 5](https://github.com/Debrato2005/cryptalis/pull/5). Both jobs in
+[PR 5](https://github.com/Debrato2005/cryptalis/pull/5). Both jobs in
 [run 41295516545](https://github.com/Debrato2005/cryptalis/actions/runs/41295516545)
 pass; [retained hosted evidence](_reset/jsonb-defaults-hosted-boundary-20261101.json)
 binds all 324 Python inputs, 52 build inputs and unchanged local/hosted
@@ -138,9 +155,19 @@ and independent human review requirements remain in force.
 | JSONB equality development CI | [Push 41301376349](https://github.com/Debrato2005/cryptalis/actions/runs/41301376349) and [PR 41301594776](https://github.com/Debrato2005/cryptalis/actions/runs/41301594776); [hosted boundary](_reset/jsonb-equality-hosted-boundary-20261101.json) |
 | JSONB default development CI | [Run 41295516545](https://github.com/Debrato2005/cryptalis/actions/runs/41295516545), exact `e75d049`; [hosted boundary](_reset/jsonb-defaults-hosted-boundary-20261101.json) |
 | Strict-TLS tooling CI | [Run 41282107646](https://github.com/Debrato2005/cryptalis/actions/runs/41282107646), head `fb53e9f`, PR merge `e7ce82d`; [head-byte boundary](_reset/openbao-strict-tls-hosted-boundary-20261101.json) |
+| Subsequent public-table DELETE RETURNING | Development head `75d095b`, PR 8; [run 41310161240](https://github.com/Debrato2005/cryptalis/actions/runs/41310161240), PR merge `fb65959`; [head-byte boundary](_reset/public-delete-returning-hosted-boundary-20261101.json) |
 
-Both hosted jobs pass for each named run. Byte-bound receipts, explicit skips,
-local Python 3.13 strict-TLS controls and artifact equality are in status and the
+The subsequent [push-run follow-up](status.md#push-run-ci-follow-up) preserves two
+failed push jobs that the corresponding PR passes did not expose. Its
+[boundary](_reset/ci-push-followup-boundary-20261101.json) retains the native
+catalog lock/drop reproduction, bounded assertion repair, cancellation guard
+repair and sanitized-diagnostic controls. Check both push and PR runs when
+resuming; the commit-specific PR helper filters out push events. The generic
+GitHub workflow-runs collection exposes both.
+
+Both hosted jobs pass for each run in the revision table. The separate push
+failures above remain failures. Byte-bound receipts, explicit skips,
+local Python 3.13 controls and artifact equality are in status and the
 boundaries above. A documentation commit after those inputs is not a new runtime
 verification. Earlier JSONB scope and evidence remain in [type history](history/types-2026-11.md)
 and [compatibility](compatibility.md#jsonb-storage). The previous mixed handoff is

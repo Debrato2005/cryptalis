@@ -1,0 +1,202 @@
+{
+  "format": "cryptalis.production-main-integration/v1",
+  "parents": {
+    "parameterized_update": "836953b3e6c739b6d9b70181c39039e01b1abd6d",
+    "public_delete_and_ci": "b4aea0dd08cd8cfa03d0b8fc65f37c5d44a18919"
+  },
+  "prs": [
+    5,
+    6,
+    7,
+    8
+  ],
+  "target": "main",
+  "branch_policy": "main is production development; frozen library/demo remain separate",
+  "version": "0.1.0a2.dev2",
+  "checks": {
+    "focused-source.json": {
+      "runtime_binding": {
+        "mode": "source",
+        "runtime_root": "/workspace/cryptalis/src/cryptalis",
+        "module_count": 45,
+        "modules_sha256": "41eb74738d3e3aae8314b4f3177bb40846a8a0b400fd175413277b9fdd3047b2",
+        "wheel": null,
+        "wheel_sha256": null
+      },
+      "pytest_report_counts": {
+        "test_calls": {
+          "passed": 289,
+          "skipped": 2
+        },
+        "subtest_calls": {},
+        "setup": {
+          "passed": 291
+        },
+        "teardown": {
+          "passed": 291
+        },
+        "collection": {},
+        "selected_items": 291
+      },
+      "exit_code": 0
+    },
+    "focused-installed.json": {
+      "runtime_binding": {
+        "mode": "installed-wheel",
+        "runtime_root": "/workspace/scratch/production-integration-installed-20261101/lib/python3.12/site-packages/cryptalis",
+        "module_count": 45,
+        "modules_sha256": "41eb74738d3e3aae8314b4f3177bb40846a8a0b400fd175413277b9fdd3047b2",
+        "wheel": "/workspace/scratch/production-integration-artifacts-20261101/cryptalis-0.1.0a2.dev2-py3-none-any.whl",
+        "wheel_sha256": "eab099f0683ab587e934488af5af4651faa5f5b5aa6dcefa5367d997e28e29f2"
+      },
+      "pytest_report_counts": {
+        "test_calls": {
+          "passed": 289,
+          "skipped": 2
+        },
+        "subtest_calls": {},
+        "setup": {
+          "passed": 291
+        },
+        "teardown": {
+          "passed": 291
+        },
+        "collection": {},
+        "selected_items": 291
+      },
+      "exit_code": 0
+    },
+    "jsonb-export.json": {
+      "runtime_binding": {
+        "mode": "installed-wheel",
+        "runtime_root": "/workspace/scratch/production-integration-installed-20261101/lib/python3.12/site-packages/cryptalis",
+        "module_count": 45,
+        "modules_sha256": "41eb74738d3e3aae8314b4f3177bb40846a8a0b400fd175413277b9fdd3047b2",
+        "wheel": "/workspace/scratch/production-integration-artifacts-20261101/cryptalis-0.1.0a2.dev2-py3-none-any.whl",
+        "wheel_sha256": "eab099f0683ab587e934488af5af4651faa5f5b5aa6dcefa5367d997e28e29f2"
+      },
+      "pytest_report_counts": {
+        "test_calls": {
+          "passed": 1
+        },
+        "subtest_calls": {},
+        "setup": {
+          "passed": 1
+        },
+        "teardown": {
+          "passed": 1
+        },
+        "collection": {},
+        "selected_items": 1
+      },
+      "exit_code": 0
+    },
+    "jsonb-restore.json": {
+      "runtime_binding": {
+        "mode": "installed-wheel",
+        "runtime_root": "/workspace/scratch/production-integration-installed-20261101/lib/python3.12/site-packages/cryptalis",
+        "module_count": 45,
+        "modules_sha256": "41eb74738d3e3aae8314b4f3177bb40846a8a0b400fd175413277b9fdd3047b2",
+        "wheel": "/workspace/scratch/production-integration-artifacts-20261101/cryptalis-0.1.0a2.dev2-py3-none-any.whl",
+        "wheel_sha256": "eab099f0683ab587e934488af5af4651faa5f5b5aa6dcefa5367d997e28e29f2"
+      },
+      "pytest_report_counts": {
+        "test_calls": {
+          "passed": 1
+        },
+        "subtest_calls": {},
+        "setup": {
+          "passed": 1
+        },
+        "teardown": {
+          "passed": 1
+        },
+        "collection": {},
+        "selected_items": 1
+      },
+      "exit_code": 0
+    },
+    "jsonb-slots-export.json": {
+      "runtime_binding": {
+        "mode": "installed-wheel",
+        "runtime_root": "/workspace/scratch/production-integration-installed-20261101/lib/python3.12/site-packages/cryptalis",
+        "module_count": 45,
+        "modules_sha256": "41eb74738d3e3aae8314b4f3177bb40846a8a0b400fd175413277b9fdd3047b2",
+        "wheel": "/workspace/scratch/production-integration-artifacts-20261101/cryptalis-0.1.0a2.dev2-py3-none-any.whl",
+        "wheel_sha256": "eab099f0683ab587e934488af5af4651faa5f5b5aa6dcefa5367d997e28e29f2"
+      },
+      "pytest_report_counts": {
+        "test_calls": {
+          "passed": 1
+        },
+        "subtest_calls": {},
+        "setup": {
+          "passed": 1
+        },
+        "teardown": {
+          "passed": 1
+        },
+        "collection": {},
+        "selected_items": 1
+      },
+      "exit_code": 0
+    },
+    "jsonb-slots-restore.json": {
+      "runtime_binding": {
+        "mode": "installed-wheel",
+        "runtime_root": "/workspace/scratch/production-integration-installed-20261101/lib/python3.12/site-packages/cryptalis",
+        "module_count": 45,
+        "modules_sha256": "41eb74738d3e3aae8314b4f3177bb40846a8a0b400fd175413277b9fdd3047b2",
+        "wheel": "/workspace/scratch/production-integration-artifacts-20261101/cryptalis-0.1.0a2.dev2-py3-none-any.whl",
+        "wheel_sha256": "eab099f0683ab587e934488af5af4651faa5f5b5aa6dcefa5367d997e28e29f2"
+      },
+      "pytest_report_counts": {
+        "test_calls": {
+          "passed": 1
+        },
+        "subtest_calls": {},
+        "setup": {
+          "passed": 1
+        },
+        "teardown": {
+          "passed": 1
+        },
+        "collection": {},
+        "selected_items": 1
+      },
+      "exit_code": 0
+    }
+  },
+  "build_inputs": 52,
+  "reproducible": true,
+  "artifacts": {
+    "cryptalis-0.1.0a2.dev2-py3-none-any.whl": "eab099f0683ab587e934488af5af4651faa5f5b5aa6dcefa5367d997e28e29f2",
+    "cryptalis-0.1.0a2.dev2.tar.gz": "5612d44930e5fcee67895dbd624e5774e6fbd5c0e2c6f32c526752c3ac6b1ac0"
+  },
+  "archive": "production-main-integration-receipts-20261101.tar.gz",
+  "archive_sha256": "4d262049e8ba25651826d7d5f19cfb836d4cda074c02bd43139ae5c82162e4ed",
+  "members": {
+    "focused-source.json": "e6a621a04a3536ecd912fefeaa1abc30a8ae127ceafe67a869921bb0e6b240fd",
+    "focused-installed.json": "3d527bfe6e9dbabf2ecada3e39d6d9ffd5f9b3f8013be0fe84941de5454c8dc1",
+    "release.json": "090aa5ef3587a5a088e684205b740c74c37eca7231397218cc256aa00ad269fa",
+    "sbom.cdx.json": "f0d7d7ea0868b1c511906a368b32f5be8eac4d703689445c43a1c9bc9556cc16",
+    "jsonb-export.json": "58dc6ec6df9bc8cd5cd0d8bdcaa23097bb309d13da4821789fed78044380616d",
+    "jsonb-restore.json": "4005abce916c95f6d5a4a2b7c18790b91f38e351477bda3c32993d17ec9b7619",
+    "jsonb-journey.json": "f42cfe400b5e1a15b93e09dd6be3fe6b0f2fee341e590524d542c0c410530d46",
+    "jsonb-slots-export.json": "42ee6bb92fc61408ce80f5aae756cc791671a1fe3b2f24400e43b882605b33fc",
+    "jsonb-slots-restore.json": "36c716cd7bb1697cea78b3816f3837c7e473f2a5e060ee0c4c3e3d0576b20f04",
+    "jsonb-slots-journey.json": "d0477d5c9c69073227766a7c33fc92c5e9e705ad14b8dae1b575e140a9c2a520"
+  },
+  "frozen_preview": {
+    "library": "655d52271d90effb4df918a9547f61c89055fbc7",
+    "demo": "269aed4bcfcbbf40ffea444f2e2a748013c862d4",
+    "wheel_sha256": "eedecae8fd72a06bdf8ed95bd0aae377cabdfd51df325c50463f4f4f4b65060a"
+  },
+  "limits": [
+    "Two optional earlier-reader controls skipped in each focused run; no unavailable reader qualified",
+    "Fresh JSONB checks enable literal defaults and whole-document equality in both layouts",
+    "No parameterized UPDATE after fresh restore as a distinct journey",
+    "Recorded demo complete; services remain stopped pending fresh setup/startup",
+    "All seven production gates and independent human review remain UNKNOWN"
+  ]
+}

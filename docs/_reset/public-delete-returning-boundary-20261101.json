@@ -1,0 +1,273 @@
+{
+  "format": "cryptalis.public-delete-returning/v1",
+  "base_revision": "8a5d5060b7aacf5cb3bae6937946fb752cf9ca29",
+  "scope": "Direct-column and explicitly named public-table mapped DELETE RETURNING; bounded native SQLAlchemy/SQLModel sync/async verification, no production qualification",
+  "objectives": [
+    "OBJ-QUERY-04",
+    "OBJ-DX-04"
+  ],
+  "source_test_files": 324,
+  "final_source_sha256": {
+    "src/cryptalis/sqlalchemy.py": "887ebea7739f0f80cc9bac77127e7df4c3ae4608a7937b77d242494890c8d63e",
+    "tests/test_unprotected_delete_returning.py": "7501e460bf512a50b38b17ddff96caacc117df29c709d6a45565b5a4c2f29ee9",
+    "scripts/ci_qualification.py": "9e723a2c40eeffd82280514cd3878c2e1fca5cf29051c6d1357e96bc4dd8b494"
+  },
+  "build_input_files": 52,
+  "runtime_modules": 45,
+  "runtime_modules_sha256": "256833e14b85650b51217abb868eedb60af43b727dd8d2efb58394e2d4f12c3f",
+  "artifacts": {
+    "cryptalis-0.1.0a1-py3-none-any.whl": "36fd1b0913cc7dc9578e4fe44dc7351c6fc4db6f2085e14be289abaf3ec45316",
+    "cryptalis-0.1.0a1.tar.gz": "b0c6ef51bb3b3661c6a92d4e9e28fa67e8ade9b5108c06272ce7d24e0406cf49"
+  },
+  "repeat_build_equal": true,
+  "build_provenance": "Recorded worktree bytes; not an independent or clean-commit rebuild",
+  "receipt_archive": {
+    "path": "docs/_reset/public-delete-returning-receipts-20261101.tar.gz",
+    "sha256": "94d87ab3cdfcfb8b5196801a0612d53af78b31a5eba476263c4ea0e3271840e6",
+    "members": {
+      "baseline.json": "d893cbac70c388dbafd25eaa8e952114d6555c93852843e84ce863ab8143025c",
+      "first-focused-failed.json": "f2f80bb85c88910d1fd5a71b897744b985c74dd79099123a38943448d864d782",
+      "corrected-new-module.json": "97a326be14c45fbecdac77c2875042891adb3cc5080ed5af810221dca90c17f7",
+      "source-final.json": "081f709fbe4283564c52993f0739f85724f2e9b07862ff70f377eefc3506787a",
+      "wheel312-final.json": "d68e01affd93a1d6045550a92d4c8f75cd7870a5b9b86303d60859bb0404403d",
+      "wheel313-final.json": "b7fbe8f262a5d66df917f3e32d1514150ecab2e6c87fb4259d9bc4f036a12ba8",
+      "release.json": "f0e2f94a7478324dd7ed2c32ca09bb8af4f7b5650a8eb535a453db13d4d78c61",
+      "install312.json": "e1c29c2a44afe947437fd52915cc441d88618d0871dd273b16d6591011bb63ba",
+      "install313.json": "3ca0e812dcc0970e9ed8365685a7d07bc28df67e230293fc7e5286cf40db26c5",
+      "sbom.cdx.json": "eea2512c1a75bf515f8397dd574e3c206c91361c4e560d02a26c352841e6bff3"
+    }
+  },
+  "checks": {
+    "baseline.json": {
+      "counts": {
+        "passed": 34
+      },
+      "exit_code": 0,
+      "source_stability": {
+        "unchanged": true,
+        "changed_paths": []
+      },
+      "runtime_binding": {
+        "mode": "source",
+        "runtime_root": "/workspace/cryptalis/src/cryptalis",
+        "module_count": 45,
+        "modules_sha256": "87a530681668178c31b2216ede1b1d0b5bd2db9641f8dc7a72568f82f7efaffc",
+        "wheel": null,
+        "wheel_sha256": null
+      },
+      "pytest_report_counts": {
+        "test_calls": {
+          "passed": 34
+        },
+        "subtest_calls": {},
+        "setup": {
+          "passed": 34
+        },
+        "teardown": {
+          "passed": 34
+        },
+        "collection": {},
+        "selected_items": 34
+      }
+    },
+    "first-focused-failed.json": {
+      "counts": {
+        "passed": 151,
+        "failed": 2
+      },
+      "exit_code": 1,
+      "source_stability": {
+        "unchanged": true,
+        "changed_paths": []
+      },
+      "runtime_binding": {
+        "mode": "source",
+        "runtime_root": "/workspace/cryptalis/src/cryptalis",
+        "module_count": 45,
+        "modules_sha256": "256833e14b85650b51217abb868eedb60af43b727dd8d2efb58394e2d4f12c3f",
+        "wheel": null,
+        "wheel_sha256": null
+      },
+      "pytest_report_counts": {
+        "test_calls": {
+          "passed": 151,
+          "failed": 2
+        },
+        "subtest_calls": {},
+        "setup": {
+          "passed": 153
+        },
+        "teardown": {
+          "passed": 153
+        },
+        "collection": {},
+        "selected_items": 153
+      }
+    },
+    "corrected-new-module.json": {
+      "counts": {
+        "passed": 26
+      },
+      "exit_code": 0,
+      "source_stability": {
+        "unchanged": true,
+        "changed_paths": []
+      },
+      "runtime_binding": {
+        "mode": "source",
+        "runtime_root": "/workspace/cryptalis/src/cryptalis",
+        "module_count": 45,
+        "modules_sha256": "256833e14b85650b51217abb868eedb60af43b727dd8d2efb58394e2d4f12c3f",
+        "wheel": null,
+        "wheel_sha256": null
+      },
+      "pytest_report_counts": {
+        "test_calls": {
+          "passed": 26
+        },
+        "subtest_calls": {},
+        "setup": {
+          "passed": 26
+        },
+        "teardown": {
+          "passed": 26
+        },
+        "collection": {},
+        "selected_items": 26
+      }
+    },
+    "source-final.json": {
+      "counts": {
+        "passed": 162
+      },
+      "exit_code": 0,
+      "source_stability": {
+        "unchanged": true,
+        "changed_paths": []
+      },
+      "runtime_binding": {
+        "mode": "source",
+        "runtime_root": "/workspace/cryptalis/src/cryptalis",
+        "module_count": 45,
+        "modules_sha256": "256833e14b85650b51217abb868eedb60af43b727dd8d2efb58394e2d4f12c3f",
+        "wheel": null,
+        "wheel_sha256": null
+      },
+      "pytest_report_counts": {
+        "test_calls": {
+          "passed": 162
+        },
+        "subtest_calls": {},
+        "setup": {
+          "passed": 162
+        },
+        "teardown": {
+          "passed": 162
+        },
+        "collection": {},
+        "selected_items": 162
+      }
+    },
+    "wheel312-final.json": {
+      "counts": {
+        "passed": 162
+      },
+      "exit_code": 0,
+      "source_stability": {
+        "unchanged": true,
+        "changed_paths": []
+      },
+      "runtime_binding": {
+        "mode": "installed-wheel",
+        "runtime_root": "/workspace/scratch/public-delete-returning-installed-20261101/lib/python3.12/site-packages/cryptalis",
+        "module_count": 45,
+        "modules_sha256": "256833e14b85650b51217abb868eedb60af43b727dd8d2efb58394e2d4f12c3f",
+        "wheel": "/workspace/scratch/public-delete-returning-artifacts-20261101/cryptalis-0.1.0a1-py3-none-any.whl",
+        "wheel_sha256": "36fd1b0913cc7dc9578e4fe44dc7351c6fc4db6f2085e14be289abaf3ec45316"
+      },
+      "pytest_report_counts": {
+        "test_calls": {
+          "passed": 162
+        },
+        "subtest_calls": {},
+        "setup": {
+          "passed": 162
+        },
+        "teardown": {
+          "passed": 162
+        },
+        "collection": {},
+        "selected_items": 162
+      }
+    },
+    "wheel313-final.json": {
+      "counts": {
+        "passed": 162
+      },
+      "exit_code": 0,
+      "source_stability": {
+        "unchanged": true,
+        "changed_paths": []
+      },
+      "runtime_binding": {
+        "mode": "installed-wheel",
+        "runtime_root": "/workspace/scratch/public-delete-returning-installed-py313-20261101/lib/python3.13/site-packages/cryptalis",
+        "module_count": 45,
+        "modules_sha256": "256833e14b85650b51217abb868eedb60af43b727dd8d2efb58394e2d4f12c3f",
+        "wheel": "/workspace/scratch/public-delete-returning-artifacts-20261101/cryptalis-0.1.0a1-py3-none-any.whl",
+        "wheel_sha256": "36fd1b0913cc7dc9578e4fe44dc7351c6fc4db6f2085e14be289abaf3ec45316"
+      },
+      "pytest_report_counts": {
+        "test_calls": {
+          "passed": 162
+        },
+        "subtest_calls": {},
+        "setup": {
+          "passed": 162
+        },
+        "teardown": {
+          "passed": 162
+        },
+        "collection": {},
+        "selected_items": 162
+      }
+    }
+  },
+  "initial_failure": {
+    "nodeids": [
+      "test_public_returning_native_outputs_synchronization_autoflush_and_transactions[native]",
+      "test_async_public_returning_native_results_savepoint_and_commit[native]"
+    ],
+    "cause": "The native compilation cache reused the first structurally equivalent label object; the oracle incorrectly required lookup by later newly created label objects. Attached journeys passed. Reuse the same caller projection objects across cache-equivalent statements.",
+    "runtime_changed_for_correction": false
+  },
+  "covered": [
+    "scalar/tuple/named result keys and values/types",
+    "SQL NULL, multiple and missing matches",
+    "default/auto/evaluate/False synchronization",
+    "protected-parent autoflush, savepoint rollback, commit and retry",
+    "SQLAlchemy execute and SQLModel exec, sync and async",
+    "provider-time output/physical-name/type/label mutation refusal",
+    "genuinely suspended provider unwrap_async output mutation refusal",
+    "final compiled projection replacement refusal",
+    "unadmitted entity/computed/alias/Core/external/fetch/loader/anonymous/custom/unsafe-unquoted output refusal"
+  ],
+  "limits": [
+    "Finite existing equality/AND public DELETE predicate grammar only",
+    "Public outputs have no extra payload-authentication guarantee",
+    "Fixture provider and local PostgreSQL 16.15, no production provider/deployment evidence",
+    "No latency/storage acceptance measurement",
+    "No new Smolink execution or change to frozen library/demo tags",
+    "No package upload or release publication",
+    "Ponytail unavailable; read-only AI review does not replace independent human review"
+  ],
+  "gates": {
+    "G-ADAPTER": "UNKNOWN",
+    "G-CRYPTO": "UNKNOWN",
+    "G-QUERY": "UNKNOWN",
+    "G-LIFECYCLE": "UNKNOWN",
+    "G-PROVIDER": "UNKNOWN",
+    "G-POLICY": "UNKNOWN",
+    "G-RELEASE": "UNKNOWN"
+  }
+}
