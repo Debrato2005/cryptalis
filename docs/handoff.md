@@ -51,9 +51,10 @@ and independent human review requirements remain in force.
 | Separate demo continuation | `demo/cryptalis-preview-followup-20261101`; [demo handoff](https://github.com/Debrato2005/smolink/blob/52b3d611cb7d7fca83e01f0b663e52c7515444c9/cryptalis_demo/HANDOFF.md) |
 | Frozen package CI | [Run 41280665577](https://github.com/Debrato2005/cryptalis/actions/runs/41280665577), PR merge `ac6b86b`; [head-byte boundary](_reset/preview-hosted-boundary-20261101.json) |
 | Strict-TLS tooling CI | [Run 41282107646](https://github.com/Debrato2005/cryptalis/actions/runs/41282107646), head `fb53e9f`, PR merge `e7ce82d`; [head-byte boundary](_reset/openbao-strict-tls-hosted-boundary-20261101.json) |
+| Subsequent public-table DELETE RETURNING | Development head `75d095b`, PR 8; [run 41310161240](https://github.com/Debrato2005/cryptalis/actions/runs/41310161240), PR merge `fb65959`; [head-byte boundary](_reset/public-delete-returning-hosted-boundary-20261101.json) |
 
 Both hosted jobs pass for each named run. Byte-bound receipts, explicit skips,
-local Python 3.13 strict-TLS controls and artifact equality are in status and the
+local Python 3.13 controls and artifact equality are in status and the
 boundaries above. A documentation commit after those inputs is not a new runtime
 verification. Earlier JSONB scope and evidence remain in [type history](history/types-2026-11.md)
 and [compatibility](compatibility.md#jsonb-storage). The previous mixed handoff is
