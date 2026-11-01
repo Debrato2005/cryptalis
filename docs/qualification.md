@@ -28,6 +28,14 @@ Real OpenBao and independent PostgreSQL recovery follow in separate stages.
 The [provider runner](openbao.md#repeatable-local-qualification) retains private
 service logs and recovery files before removing stopped container shells; cleanup
 failure prevents a passing qualification result.
+The installed ORM set includes `tests/test_point_update_parameters.py` and
+`tests/test_point_returning_labels.py`. Their native-versus-protected oracles
+cover reusable context/SET binds, defaults and overrides, scalar typing, JSONB
+NULL modes, anonymous/named result labels, savepoints and current-value removal.
+Duplicate names, changed type hooks, unsupported timezone callbacks and final
+driver mutations have explicit controls. These checks do not qualify broader
+DML, production deployment or independent human review.
+
 The installed shared configuration runs all three rotation workflows, native
 write capture, empty-tenant publication/cancellation and current-value removal.
 The actual OpenBao journey also covers capture/onboarding through AppRole;

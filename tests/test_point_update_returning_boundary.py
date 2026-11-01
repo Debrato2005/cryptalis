@@ -22,7 +22,7 @@ def protect(app, resolver=keys):
 
 
 @pytest.mark.parametrize('fault', ['missing_scope', 'missing_id', 'wrong_scope', 'or_scope',
-    'id_type', 'core', 'entity_alias', 'label', 'expression', 'embedded', 'value_expression',
+    'id_type', 'core', 'entity_alias', 'label', 'expression', 'value_expression',
     'tenant_assignment', 'id_assignment', 'unknown_column', 'sync_auto', 'sync_zero'])
 def test_invalid_point_returning_refuses_before_resolver_or_native_update(fault, monkeypatch):
     with application(rows=3) as app:
@@ -42,7 +42,6 @@ def test_invalid_point_returning_refuses_before_resolver_or_native_update(fault,
         elif fault in ('entity_alias', 'label', 'expression'):
             output = app.table.alias().c.name if fault == 'entity_alias' else func.lower(app.Customer.name).label('renamed') if fault == 'label' else func.lower(app.Customer.name)
             query = update(app.Customer).where(app.Customer.id == UUID(int=101), app.Customer.tenant_id == TENANT).returning(output)
-        elif fault == 'embedded': query = query.values(name='PUBLIC embedded')
         elif fault == 'value_expression': values['name'] = literal('PUBLIC expression')
         elif fault == 'tenant_assignment': values['tenant_id'] = TENANT
         elif fault == 'id_assignment': values['id'] = UUID(int=101)

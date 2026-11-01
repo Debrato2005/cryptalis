@@ -179,7 +179,7 @@ parent/child transaction evidence and remaining qualification work.
 | Mapped dictionary INSERT without RETURNING | SUPPORTED | Attached sync/async `Session.execute(insert(Model), list[dict])`, explicit typed IDs and tenant scope, copied attribute dictionaries, native NULL/grouping, autoflush, uniqueness and transaction behavior. Other bulk routes remain unadmitted |
 | Mapped dictionary INSERT with RETURNING | SUPPORTED | Native direct or explicitly named column tuples/scalars and inserted mapped entities, including public-only columns. Preserve result keys/types, grouping, paging and optional input ordering. Entity results retain identity-map loading and refresh. Authenticate each protected output against its own exact prepared input. Computed expression/alias, loader-option and caller return_defaults forms remain unadmitted |
 | Scoped mapped dictionary UPDATE | SUPPORTED | Attached sync/async admitted storage types, typed IDs, nonempty list of dictionaries and synchronize_session=False. Tenant-column tables require explicit tenant equality. Declared single-tenant tables use the fixed table UUID and no caller WHERE. Preserve native omission/NULL, grouping, repeated IDs, row-count checks and transactions. Core and RETURNING routes remain unadmitted |
-| Single-record mapped UPDATE | SUPPORTED | Attached sync/async `Session.execute`, exact record and tenant equality (or declared fixed scope), and `synchronize_session=False`. Assign using one nonempty external dictionary with native physical column keys, or ordinary scalar `.values(...)` assignments without external parameters. Native mapped keyword and direct-column dictionary forms are admitted. Without RETURNING, retain native affected-row counts and a result without rows. Optional direct or explicitly named returned columns/scalars/tuples and mapped entities retain native result keys, types, identity behavior and transactions. Authenticate protected outputs; changed protected values must match the exact newly prepared frame. Mixed embedded/external assignments, explicit SQL/bind expressions, ordered assignments, Core, computed outputs/aliases, identity/tenant assignment, automatic/fetch synchronization and executemany RETURNING remain unadmitted |
+| Single-record mapped UPDATE | SUPPORTED | Attached sync/async `Session.execute`, exact record and tenant equality (or declared fixed scope), and `synchronize_session=False`. Assign using one nonempty external dictionary with native physical column keys, or ordinary scalar/named-bind `.values(...)` assignments with optional execute-time parameters. Exact record/tenant predicates also accept ordinary native binds; the [parameterized contract](#parameterized-single-record-update) defines names and types. Native mapped keyword and direct-column dictionary forms are admitted. Without RETURNING, retain native affected-row counts and a result without rows. Optional direct or explicitly named returned columns/scalars/tuples and mapped entities retain native result keys, types, identity behavior and transactions. Authenticate protected outputs; changed protected values must match the exact newly prepared frame. SQL expressions, ambiguous bind names, incompatible bind coercions, ordered assignments, Core, computed outputs/aliases, identity/tenant assignment, automatic/fetch synchronization and executemany RETURNING remain unadmitted |
 | Scoped mapped single-record DELETE | SUPPORTED | Attached sync/async execute, exact typed record equality and either tenant equality or explicit fixed table-UUID scope. No external parameters; require synchronize_session=False. Without RETURNING, preserve native row counts. Direct or natively labeled column scalar/tuple and mapped-entity RETURNING preserves native keys, types, identity state and transactions; protected values authenticate against the requested row, field and tenant. Unsupported custom AST classes refuse before execution |
 | Unprotected-table mapped DELETE | SUPPORTED | One physical table mapped in the attached registry, with no protected fields. Native equality/AND predicates with fixed typed literals only. Default/auto/evaluate/False synchronization. No Core, RETURNING, fetch synchronization or custom AST |
 | Equality `==` and `IN` | SUPPORTED | Declared full tenant/domain-bound HMAC term. Preserve typed binds and native NULL/empty-list truth tables |
@@ -217,6 +217,36 @@ The ordered input ledger checks each emitted group and complete consumption.
 The [bulk UPDATE checkpoint](history/implementation-2026-10.md#scoped-mapped-bulk-update-checkpoint-2026-10-23) owns the earlier TEXT evidence.
 The [VARCHAR checkpoint](history/implementation-2026-10.md#native-varchar-mapped-update-checkpoint-2026-10-23)
 adds finite VARCHAR targets and records native plan behavior.
+
+### Parameterized single-record UPDATE
+
+The single-record route accepts ordinary native binds in its exact record and
+tenant equality predicates and in scalar `.values(...)` assignments. A bind can
+use its ordinary default or an execute-time override. Literal and named SET
+values can share a statement; direct assignment dictionaries use physical column
+keys, including on renamed mappings. The original statement and returned label
+objects stay reusable. Existing row-count, stale identity, explicit refresh,
+savepoint and authenticated RETURNING behavior applies.
+
+Each effective bind name must be unique within the request. Context names must
+also differ from physical column keys. Missing required inputs, unused keys,
+ambiguous names, identity/tenant assignments, callable or expanding binds,
+literal-execution binds and SQL expressions refuse before key preparation.
+Executemany keeps its separate mapped-dictionary contract above.
+
+Untyped SET binds use the target's existing native processing. Standard native
+String/Text/Unicode/VARCHAR binds are equivalent for admitted text targets.
+Other explicit scalar binds must use the target's native class and matching
+constructor settings, including integer width and timestamp precision. Custom
+SQL-producing hooks and incompatible coercions refuse. A public Python codec
+retains its existing column processor for an untyped bind or the exact target
+type instance; another custom bind processor is not silently discarded.
+
+A standard JSONB SET bind retains its own `none_as_null` mode, independently of
+the column's mode. Explicit SQL NULL and JSON null remain distinct. Input values,
+types, statement structure and the parameter root are rechecked around key
+preparation, including awaited preparation. Opaque public Python objects retain
+reference observations, without a deep-mutation guarantee.
 
 Admitted plaintext fields retain native query semantics, including ranges, order,
 aggregates, and joins through unprotected keys. Public-column DISTINCT and

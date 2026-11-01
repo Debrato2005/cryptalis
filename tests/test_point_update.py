@@ -6,7 +6,7 @@ from uuid import UUID
 
 import psycopg
 import pytest
-from sqlalchemy import String, bindparam, event, func, or_, select, update
+from sqlalchemy import LargeBinary, String, bindparam, event, func, or_, select, update
 from sqlalchemy.exc import DBAPIError, IntegrityError, ResourceClosedError
 from sqlalchemy.ext.asyncio import create_async_engine
 from sqlalchemy.orm import Session
@@ -170,10 +170,12 @@ def test_point_update_late_mutation_refuses_before_driver_and_healthy_retry(faul
                 if fault == "payload":
                     parameters["name"].obj = b"PRIVATE_PLAINTEXT"
                 elif fault == "identity":
-                    key = next(k for k in parameters if k.startswith("id"))
+                    key = next(k for k, value in parameters.items()
+                               if type(value) is UUID and value == UUID(int=101))
                     parameters[key] = UUID(int=102)
                 elif fault == "tenant":
-                    key = next(k for k in parameters if k.startswith("tenant_id"))
+                    key = next(k for k, value in parameters.items()
+                               if type(value) is UUID and value == TENANT)
                     parameters[key] = UUID(int=333)
                 else:
                     sql += " /* changed */"
@@ -196,7 +198,7 @@ def test_point_update_late_mutation_refuses_before_driver_and_healthy_retry(faul
 
 @pytest.mark.parametrize("fault", ["missing_id", "missing_scope", "wrong_scope", "or",
     "expression", "tenant_assignment", "id_assignment", "callable",
-    "typed_assignment", "ordered", "labeled_target", "core", "parameters"])
+    "incompatible_assignment", "ordered", "labeled_target", "core"])
 def test_unadmitted_point_shapes_refuse_before_keys_and_sql(fault):
     with application(rows=3) as app:
         calls, sql = [], []
@@ -223,8 +225,8 @@ def test_unadmitted_point_shapes_refuse_before_keys_and_sql(fault):
             clause = clause.values(id=UUID(int=102))
         elif fault == "callable":
             clause = clause.values(name=bindparam("value", callable_=lambda: "x"))
-        elif fault == "typed_assignment":
-            clause = clause.values(name=bindparam("value", value="x", type_=String()))
+        elif fault == "incompatible_assignment":
+            clause = clause.values(name=bindparam("value", value=b"x", type_=LargeBinary()))
         elif fault == "ordered":
             clause = update(app.Customer).where(app.Customer.tenant_id == TENANT,
                 app.Customer.id == UUID(int=101)).ordered_values((app.Customer.name, "x"))
@@ -234,8 +236,6 @@ def test_unadmitted_point_shapes_refuse_before_keys_and_sql(fault):
         elif fault == "core":
             clause = update(app.table).where(app.table.c.tenant_id == TENANT,
                 app.table.c.id == UUID(int=101)).values(name="x")
-        else:
-            parameters = {"name": "x"}
         calls.clear()
         def capture(*args):
             sql.append(True)
