@@ -7,7 +7,8 @@ do not define the current product or authorize an operation.
 
 | Record | Use |
 |---|---|
-| [Implementation history](implementation-2026-10.md) | Revision-specific observations and links to immutable receipts |
+| [Implementation history](implementation-2026-10.md) | October revision-specific observations and links to immutable receipts |
+| [November implementation](implementation-2026-11.md) | Parameterized UPDATE, native compatibility controls and retained verification failures |
 | [Completion-branch observations](completion-2026-10-31.md) | Preserved local checkpoints before final Git consolidation |
 | [Pruning verification](verification-2026-11-01.md) | Follow-up mutation evidence, regression repairs and the remaining survivor |
 | [Native type observations](types-2026-11.md) | JSONB, numeric and timestamp admission, native oracles, installed recovery and retained failures |
