@@ -1,0 +1,104 @@
+{
+  "format": "cryptalis.runtime-role-isolation-boundary/v1",
+  "base_revision": "4d425b5799f0a9f66641453829296a3de4cdf877",
+  "failed_run": {
+    "url": "https://github.com/Debrato2005/cryptalis/actions/runs/41272275402",
+    "source_job": 124747319599,
+    "release_job": 124747319435,
+    "source": "FAIL",
+    "installed_artifacts_recovery": "PASS",
+    "source_outcomes": {
+      "test_calls": {
+        "passed": 3914,
+        "skipped": 24,
+        "failed": 1
+      },
+      "subtest_calls": {
+        "passed": 18
+      },
+      "setup": {
+        "passed": 3939,
+        "skipped": 41
+      },
+      "teardown": {
+        "passed": 3980
+      },
+      "collection": {
+        "skipped": 9
+      },
+      "selected_items": 3980
+    },
+    "source_and_runtime_unchanged": true,
+    "runtime_binding": {
+      "mode": "source",
+      "runtime_root": "/home/runner/work/cryptalis/cryptalis/src/cryptalis",
+      "module_count": 44,
+      "modules_sha256": "45aaf1e5754d4ff6572b62db592df22b24290cbaf4bad1efbe9e0d791c220099",
+      "wheel": null,
+      "wheel_sha256": null
+    },
+    "failure": "Uuid-search mixed scalar rotation refuses unsafe_runtime_role before first chunk"
+  },
+  "cause": {
+    "observed": "Database CREATE test commits a grant to the runtime role shared by all workers; every concurrent runtime safety check must refuse while that grant is visible.",
+    "limit": "Hosted logs do not establish the precise overlapping test or ACL timing; this is a concrete interference path, not a recorded scheduling trace."
+  },
+  "repair": "Inject a native GRANT in the planner observation transaction via SQLAlchemy begin event, skip read-only compiler transaction, prove checking connection sees CREATE and independent connection sees no CREATE, require refusal before provider work, and check rollback leaves CREATE absent.",
+  "product_runtime_changed": false,
+  "build_inputs_changed": false,
+  "local": {
+    "source": {
+      "outcomes": {
+        "test_calls": {
+          "passed": 16
+        },
+        "subtest_calls": {},
+        "setup": {
+          "passed": 16
+        },
+        "teardown": {
+          "passed": 16
+        },
+        "collection": {},
+        "selected_items": 16
+      },
+      "elapsed_seconds": 18.874968652999087
+    },
+    "installed": {
+      "outcomes": {
+        "test_calls": {
+          "passed": 36
+        },
+        "subtest_calls": {},
+        "setup": {
+          "passed": 36
+        },
+        "teardown": {
+          "passed": 36
+        },
+        "collection": {},
+        "selected_items": 36
+      },
+      "elapsed_seconds": 18.381843023998954,
+      "wheel_sha256": "d6ec8a1423c16dca5a66059f916b2b5bbdf12228e7a029ad6a6063a21e32e657"
+    },
+    "source_and_runtime_unchanged": true,
+    "runtime_modules_sha256": "45aaf1e5754d4ff6572b62db592df22b24290cbaf4bad1efbe9e0d791c220099",
+    "python_files": 317,
+    "inventory_limit": "Both local inventories include the same uncommitted frozen JSONB test. That file is retained in the archive but is not executed and does not claim JSONB support."
+  },
+  "github_zip_sha256": {
+    "source": "b29ff2de8cf1eaccc62f9969e38b0c5576c9a9ce88eecf45fa9b219c48711a60",
+    "release": "528ba0e4130913b991fc3e402f22a1e5e989dbff4a7db1f782677cdf56ec24ba"
+  },
+  "archive": "runtime-role-isolation-receipts-20261101.tar.gz",
+  "archive_sha256": "6782f852f52d513027a97978397d42c0a0eccc0d2d047e711400ba0bff65dba7",
+  "archive_entries": 34,
+  "limits": [
+    "Full hosted rerun of the repaired test is pending.",
+    "Transaction-local grant tests the observing transaction; committed schema/table/journal grant scenarios remain exercised.",
+    "Fresh-restore database grant test runs in its separate sequential restore profile; no parallel default test mutates a shared database ACL.",
+    "No production gate is promoted."
+  ],
+  "production_gates": "UNKNOWN"
+}

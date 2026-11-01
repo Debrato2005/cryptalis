@@ -18,6 +18,20 @@ The preceding numeric run remains in its
 [numeric compiler failure/repair](_reset/numeric-compiler-ci-boundary-20261101.json)
 retained. All seven production gates stay UNKNOWN.
 
+**Newer hosted observation: `4d425b5` is not a complete pass.** In
+[run 41272275402](https://github.com/Debrato2005/cryptalis/actions/runs/41272275402),
+the installed/artifact job passes, while source passes 3,914 calls and 18 subtests
+and fails one UUID search-rotation workflow with `unsafe_runtime_role`. Skips
+remain 24 calls, 41 setups and nine collections. A test commits database CREATE
+to the runtime role shared by parallel workers; healthy operations must refuse
+while that grant is visible. The logs do not establish the exact overlap.
+The repaired fixture keeps its native grant private to the checking transaction,
+proves independent-connection isolation and rollback, and retains pre-key refusal.
+Fresh-cluster source checks pass 16 calls; the unchanged installed wheel passes
+36 calls including reverse privilege boundaries, without skips. Product/runtime
+bytes are unchanged. Full hosted requalification is pending.
+[Exact failure and repair boundary](_reset/runtime-role-isolation-boundary-20261101.json).
+
 **Earlier complete hosted pass: `54218cf`.** Both jobs in
 [run 41239335699](https://github.com/Debrato2005/cryptalis/actions/runs/41239335699)
 pass for naive timestamp storage and ordering, before the subsequent MIN/MAX slice.
