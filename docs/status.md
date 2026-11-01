@@ -6,6 +6,17 @@ Use the [documentation map](README.md) to find contracts and procedures.
 
 ## Post-preview OpenBao qualification TLS
 
+**Both hosted jobs pass at `fb53e9f`** through PR merge `e7ce82d` in
+[run 41282107646](https://github.com/Debrato2005/cryptalis/actions/runs/41282107646).
+All 323 Python files across 18 inventories and 52 build inputs match the exact
+development head. Source passes 3,953 calls and 18 subtests with 25 call, 41 setup
+and nine collection skips. Seventeen installed receipts pass 1,173 calls; the
+previous-v14 JSONB interpreter remains explicitly unavailable in that hosted
+cell. All 24 release steps pass. Wheel and sdist still exactly match the frozen
+preview. The hosted default cell is Python 3.12; strict Python 3.13 TLS is the
+separate local provider check below.
+[Hosted boundary and retained receipts](_reset/openbao-strict-tls-hosted-boundary-20261101.json).
+
 **VERIFIED, local tooling boundary:** `scripts/openbao_qualification.py` now
 issues local CA and server certificates with standard key identifiers, critical
 constraints and key usage, and server authentication usage. Python 3.13 strict
@@ -22,8 +33,9 @@ containers were stopped and removed after private-log retention; keys and
 Raft files remain private. [Exact boundary and receipts](_reset/openbao-strict-tls-boundary-20261101.json).
 
 This changes qualification infrastructure only. Runtime source, package/build
-inputs and frozen preview artifacts are unchanged. No PostgreSQL test or full
-provider/deployment qualification ran for this boundary. All seven production
+inputs and frozen preview artifacts are unchanged. The local TLS check used no
+PostgreSQL; the full hosted suite is recorded separately above. No full
+provider/deployment qualification ran. All seven production
 gates and independent human review remain UNKNOWN.
 
 ## Installed-library preview preparation
