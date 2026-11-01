@@ -1260,6 +1260,9 @@ credential distribution, backup custody and independent review remain UNKNOWN.
 
 `cryptalis.crypto` exports `FieldDescriptor`, `seal_text`, `open_text`, `KeyProvider`,
 `DevelopmentKeyProvider`, `create_root`, `KeyContext`, `KeyPolicy`, and `Keyring`.
+Per-record payload keys are derived for every frame. A per-field search key is derived once
+per root and held on that root's in-memory material, so it cannot outlive it, and each use
+still checks the root's expiry. The HKDF salt comes from public context alone.
 `DevelopmentKeyProvider()` holds an ephemeral KEK. `DevelopmentKeyProvider(path)` keeps
 its provider identity and KEK in one atomically created, owner-only file and refuses
 a symlink, a wrong owner, group or other access, or a wrong length. That file can

@@ -10,6 +10,8 @@
   [bounded upsert](docs/compatibility.md#bounded-upsert) contract.
 - Protected reads repeat less work, with every check retained: warm p50 is about
   20–27% lower in a local diagnostic.
+- Key rotation is about 33% faster in a local diagnostic, with every verification
+  pass retained. No ciphertext or lock format changes.
 - `examples/quickstart.py` runs the complete lifecycle from the installed package,
   in separate processes, ending with a restart that cannot import Cryptalis.
 - `DevelopmentKeyProvider(path)` keeps synthetic-data custody in an owner-only key

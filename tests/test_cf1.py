@@ -12,7 +12,7 @@ import pytest
 from sqlalchemy import BigInteger, Column, MetaData, Table, Text, Uuid, create_engine, text
 from sqlalchemy.orm import registry
 
-from cryptalis.crypto.cf1 import FieldDescriptor, open_text, seal_text, MAX_TEXT_BYTES
+from cryptalis.crypto.cf1 import FieldDescriptor, equality_term, open_text, seal_text, MAX_TEXT_BYTES
 from cryptalis.crypto.keys import (
     AuthenticationFailed, CryptoFailure, DevelopmentKeyProvider, InvalidContext,
     InvalidFrame, InvalidText, KeyContext, KeyPolicy, Keyring, KeyUnavailable,
@@ -24,10 +24,10 @@ from cryptalis.manifest.compiler import SearchReview, Writer, WriterInventory, c
 DOMAIN, TABLE, FIELD, TENANT, RECORD = (UUID(int=i) for i in range(1, 6))
 
 
-def descriptor(*, equality=False, bigint=False):
+def descriptor(*, equality=False, bigint=False, field=FIELD):
     document = {
         "schema": "cryptalis.context/v1", "domain_id": str(DOMAIN),
-        "table_id": str(TABLE), "field_id": str(FIELD),
+        "table_id": str(TABLE), "field_id": str(field),
         "text_codec": "utf8-exact/v1", "normalizer": "identity/v1",
         "null_policy": "sql-null/v1",
         "record_codec": "int64-be/v1" if bigint else "uuid16/v1",
@@ -446,3 +446,24 @@ def test_native_postgresql_text_nulls_and_compiled_descriptor_frames(equality, b
         with engine.begin() as connection:
             connection.execute(text(f'DROP SCHEMA IF EXISTS "{schema}" CASCADE'))
         engine.dispose()
+
+
+def prepared_search_keys(**options):
+    return setup_keys(equality=True, **options)[1].prepare()
+
+
+def test_a_reused_search_key_matches_fresh_derivation_and_stays_per_field():
+    field, keys = descriptor(equality=True), prepared_search_keys()
+    first = equality_term('value', field, TENANT, keys)
+    assert equality_term('value', field, TENANT, keys) == first
+    assert equality_term('value', field, TENANT, prepared_search_keys()) == first
+    other = descriptor(equality=True, field=UUID(int=40))
+    assert equality_term('value', other, TENANT, keys) != first
+
+
+def test_a_cached_search_key_does_not_outlive_its_root():
+    field, keys = descriptor(equality=True), prepared_search_keys(max_age=0.05)
+    equality_term('value', field, TENANT, keys)
+    time.sleep(0.06)
+    with pytest.raises(KeyUnavailable):
+        equality_term('value', field, TENANT, keys)

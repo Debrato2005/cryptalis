@@ -47,8 +47,8 @@ sequential-order limit, on a shared workstation with warm keys and no HTTP layer
 A MEET holds in every round. Protected work is CPU-bound Python, so one event loop queues
 it. Four processes reach 1,110 equality reads/s against 4,964 native. Column plus index
 measures **2.017×** native after compaction and 4.24× straight after rotations, both
-missing 2×. Protection, each rotation and removal take about 2, 8 and 2 seconds for
-10,002 accounts. These are local observations, not production budgets. The provider
+missing 2×. Protection and removal take about 2 seconds each for 10,002 accounts. Each rotation took
+about 8.3 seconds on that wheel and about 5.6 seconds on the later final wheel, in single runs. These are local observations, not production budgets. The provider
 is a development key file; cold or remote provider latency is unmeasured.
 
 ## Final admission no longer trusts compilation
@@ -76,8 +76,8 @@ independent connection confirms only CF1 frames are stored. Sync and async paths
 seven safety checks are mutation-tested in an isolated copy; each mutant fails the test
 naming it. Omitted public database defaults now apply on the route without RETURNING.
 
-The final source regression of 109 test files passes 2,196 calls and 18 subtests, with 25
-call, 34 setup and five collection skips. The final wheel, `7cc2631c…`, passes 35 calls
+The final source regression of 167 test files passes 3,091 calls and 18 subtests, with 25
+call, 38 setup and seven collection skips. The final wheel, `0a79faf7…`, passes 35 calls
 without skips on Python 3.12 and 3.13, and repeats the complete Smolink journey through a
 real uninstall. Repeat wheel and sdist builds match.
 
@@ -840,7 +840,17 @@ A local sync diagnostic shows warm protected p50 about 20–27% lower than befor
 work, with no check removed. That is one before/after comparison, not a controlled
 measurement. The savings come from repeated work: `requires_prefix_scope` ran 37 times per read,
 `MigrationPlan.document` reparsed the whole lock and admission repeated subtree walks.
-Remaining cost is mostly admission, about 46% of the profiled async execute path, and
+Rotation is about 33% faster on a 10,000-row, two-field diagnostic table: payload 8.4 to
+5.7 s and search 8.9 to 6.1 s, across three alternating rounds on fresh data. The Smolink
+journey agrees in single runs, at 8.2 to 5.5 s and 8.4 to 5.7 s. A per-frame
+loop was reparsing the whole plan, and public salts and per-field search keys were derived
+for every frame. Every verification pass still runs. Rotation authenticates each frame
+about 15 times, because each resumable step re-verifies the database in its own
+transaction. Fewer passes would cut downtime further but weaken that recovery design, so
+that remains a design decision. A count of plan parses finds no other per-row loop in
+protection, rotation, decryption or removal.
+
+Remaining read cost is mostly admission, about 46% of the profiled async execute path, and
 uncached compilation. Meeting 3 ms at concurrency 4 in one process would need an estimated
 65% less CPU. Only sharing verdicts or compiled forms across statements looks able to
 reach that, which is a security decision, not a tuning step. The sections below retain earlier revision-bound results.
