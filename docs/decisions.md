@@ -27,6 +27,7 @@ retains its original choices and evidence limits. It is not the current support 
 | Literal JSONB defaults | [JSONB compatibility](compatibility.md#jsonb-storage), [manifest lock](manifest.md) | Reuse native client-default behavior and CF1 storage; pin exact Python literals in lock/v16 with an explicit new reader, preserving no-default v15 bytes |
 | Whole-document JSONB equality | [JSONB search](compatibility.md#whole-document-jsonb-equality), [security](security.md#jsonb-storage-boundary) | Reuse full HMAC and lossless JSONB; normalize nested numeric scale only, retain native bind NULL typing and require lock/v17 reader/leakage admission |
 | Parameterized single-record UPDATE | [ORM bind contract](compatibility.md#parameterized-single-record-update) | Resolve native context and SET binds before key preparation, then reuse the existing sealed point executor; preserve original statements, native bind semantics and final driver authority without a new format |
+| Public-table DELETE outputs: 2026-11-01 | [Compatibility](compatibility.md#full-capability-matrix) | Reuse the finite public DELETE permit and native result processing for direct-column and explicitly named outputs. Capture output identity and label metadata across preparation and final driver checks; keep entity/computed/alias output admission separate. No new search representation or cryptographic format |
 
 ## Consolidated requirements and KISS: 2026-10-31
 

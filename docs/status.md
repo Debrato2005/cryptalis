@@ -4,6 +4,103 @@ Cryptalis implements a bounded research prototype. **No production release or co
 This page owns current verification and release gates; the [34-objective ledger](BUILD_CHECKLIST.md) owns remaining work.
 Use the [documentation map](README.md) to find contracts and procedures.
 
+## Production-development line
+
+`main` is the continuing production implementation. The `0.1.0a2.dev2`
+integration combines PRs 5–8: literal JSONB client defaults, whole-document JSONB
+equality/IN/scoped uniqueness, reusable single-record UPDATE binds, public-table
+DELETE RETURNING and their test-isolation repairs. The frozen `v0.1.0a1` library
+and separate Smolink presentation branch/tag remain unchanged.
+
+The combined local source and normally installed wheel each pass **289 focused
+calls**, with two explicit unavailable earlier-reader skips. Both installed
+fresh JSONB recovery layouts pass export and restore with defaults and equality
+enabled, authenticated adoption, current edits and native restart. These controls
+retain their import-denial and local-provider limits. Repeat wheel/sdist builds,
+SBOM and dependency checks pass. The [integration boundary and receipts](_reset/production-main-integration-boundary-20261101.json)
+bind all inputs and preserve each original PR's evidence. Full hosted checks are
+tracked on [PR 8](https://github.com/Debrato2005/cryptalis/pull/8) for the combined
+tree and on the resulting `main` revision. No production gate or independent
+human review is qualified by this integration.
+
+## Push-run CI follow-up
+
+Two branch-push source jobs failed despite passing PR jobs at the same heads.
+[Run 41310116248](https://github.com/Debrato2005/cryptalis/actions/runs/41310116248)
+at `75d095b` times out in the native async cancellation test.
+[Run 41311486585](https://github.com/Debrato2005/cryptalis/actions/runs/41311486585)
+at `6aafac4` reports an InternalError in the storage-only VARCHAR test. Each
+source failure retains 3,978 passing calls, 18 passing subtests, one failing call,
+25 call skips, 41 setup skips and nine collection skips. Installed/recovery jobs
+pass in both runs. The corresponding PR passes remain valid for their own runs;
+they do not erase these push failures.
+
+A controlled native PostgreSQL 16.15 lock/drop schedule reproduces an unsafe
+dependency in the VARCHAR test's `pg_indexes.indexdef` filter. The original query
+waits while deparsing an unrelated table; dropping that table produces XX000.
+The replacement inspects `pg_index` for the exact target OID and completes while
+the unrelated lock is held. It asserts absence of all expression indexes in this
+storage-only fixture. The historical log suppressed SQLSTATE and phase, so its
+exact cause remains unproven. Reports now retain a validated five-character
+SQLSTATE or UNKNOWN and pytest phase, preserving raw message/SQL/bind redaction.
+
+The cancellation test's outer five-second `wait_for` could interrupt psycopg's
+sequential five-second cancellation and response-drain phases. Its modern-libpq
+fixture now waits without issuing another cancellation, with a 15-second test
+guard, requires CancelledError and independently observes the backend leaving
+PgSleep before checking rollback and fresh-tenant recovery. The historical
+delay's precise cause remains UNKNOWN; this is no production latency guarantee.
+
+Focused final source verification passes **102 calls without skips**. An installed
+Python 3.13 run passes 100 VARCHAR/public DELETE calls before the cancellation
+test change; a separate installed two-case run verifies the final native/attached
+cancellation tests. The native catalog control passes; paired diagnostic
+controls intentionally fail a native query and prove the marker is observable
+without redaction and hidden with SQLSTATE/phase retained. The
+[exact boundary and retained failures/controls](_reset/ci-push-followup-boundary-20261101.json)
+record each source snapshot. Hosted repair results are tracked in
+[PR 8](https://github.com/Debrato2005/cryptalis/pull/8), including both push and PR
+events. Product/runtime/build bytes and frozen preview tags are unchanged.
+All production gates and independent human review remain UNKNOWN.
+
+## Public-table DELETE RETURNING
+
+**VERIFIED, bounded development:** the finite mapped DELETE route for an
+unprotected table now accepts direct-column scalar/tuple and explicitly named
+column RETURNING. Sync/async SQLAlchemy and SQLModel retain native values, types,
+NULLs, result keys, synchronization, protected-parent autoflush, savepoint rollback
+and commit. Output identity, physical column configuration and label metadata are
+captured before preparation and checked again through final driver dispatch.
+Provider callbacks, a genuinely suspended async unwrap and late compiled-output
+replacement cannot change the admitted projection. Unadmitted outputs refuse.
+
+The final focused source run passes **162 calls without skips**. Normal installed
+development-wheel runs each pass the same **162 calls without skips** on Python
+3.12.14 and 3.13.5 with PostgreSQL 16.15. All bind the same 45 runtime modules and
+unchanged source inventories. Repeat wheel/sdist builds match; isolated installed
+imports, exact module bytes, CLI help and dependency checks pass on both
+interpreters. The existing installed CI selection now includes these public
+DELETE journeys.
+
+**Both hosted jobs pass at `75d095b`**, through PR merge `fb65959`, in
+[run 41310161240](https://github.com/Debrato2005/cryptalis/actions/runs/41310161240).
+Source passes 3,979 calls and 18 subtests, with 25 call, 41 setup and nine
+collection skips. Seventeen installed receipts pass 1,233 calls; the unavailable
+previous-v14 JSONB reader remains explicitly skipped. All 24 release steps pass.
+All 324 Python files across 18 inventories and 52 build inputs match the actual
+development head. Hosted wheel/sdist exactly match the local development
+artifacts. The hosted default is Python 3.12; Python 3.13 remains the separate
+local installed check above. [Exact hosted boundary and retained receipts](_reset/public-delete-returning-hosted-boundary-20261101.json).
+
+The first focused run retains two native-oracle failures and 151 passes: newly
+created equivalent labels reused native cached lookup identities. The corrected
+oracle reuses its caller projection objects; the 26-case new module and final
+runs pass. [Exact boundary and retained receipts](_reset/public-delete-returning-boundary-20261101.json).
+This development artifact does not change the frozen preview tags. Entity,
+computed/alias output, fetch synchronization and broader public DML remain
+unadmitted. No new Smolink or performance measurement, production provider cell
+or independent human review ran. All seven production gates remain UNKNOWN.
+
 ## Post-preview OpenBao qualification TLS
 
 **Both hosted jobs pass at `fb53e9f`** through PR merge `e7ce82d` in
@@ -332,6 +429,10 @@ production gate is completed by this storage prerequisite. All seven gates stay
 UNKNOWN. The [handoff](handoff.md) routes the next authorized work.
 
 ## Unresolved source-CI observation
+
+The later [push-run follow-up](#push-run-ci-follow-up) retains a controlled native
+catalog-race reproduction and the target-OID assertion repair used by this
+integration. That control does not establish the exact historical failure below.
 
 At documentation head `caddefe`, [push run 41296961917](https://github.com/Debrato2005/cryptalis/actions/runs/41296961917)
 passes 3,984 calls and 18 subtests but fails the storage-only VARCHAR workflow

@@ -769,9 +769,16 @@ def test_async_database_cancellation_preserves_rollback_and_recovery(app, protec
                             if await cursor.fetchone() == ("PgSleep",):
                                 break
                             await asyncio.sleep(0.01)
-                task.cancel()
-                with pytest.raises(asyncio.CancelledError):
-                    await asyncio.wait_for(task, timeout=5)
+                    assert task.cancel()
+                    # Psycopg's modern-libpq path permits 5s to request
+                    # cancellation and another 5s to drain the response. Leave
+                    # scheduling margin without injecting a second cancel.
+                    done, _ = await asyncio.wait({task}, timeout=15)
+                    assert task in done, 'Native query cancellation did not finish within the fixture budget'
+                    with pytest.raises(asyncio.CancelledError):
+                        await task
+                    cursor = await observer.execute('select wait_event from pg_stat_activity where pid=%s', (pid,))
+                    assert await cursor.fetchone() != ('PgSleep',)
                 await session.rollback()
                 assert await session.get(app.Customer, identity) is None
             async with sessions(tenant_id=OTHER) as session:
