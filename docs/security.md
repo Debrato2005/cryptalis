@@ -1743,6 +1743,9 @@ Python types and spelling; it changes neither CF1 nor the stored-value codec.
 Attachment compares the literal to its pin. Runtime configuration captures the
 mutable default independently and rejects drift before dispatch, including
 changes during provider preparation. The literal is not secret metadata.
+Native shared literal aliases retain this same rule: a row edit that also changes
+the mapping default is configuration drift and refuses; native automatic default
+evolution through that alias is not admitted.
 Generated defaults remain unadmitted; native JSON NULL and SQL NULL retain their
 separate assignment and authentication boundaries.
 

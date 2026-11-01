@@ -493,7 +493,8 @@ storage support.
 
 Literal client defaults admit exact built-in dictionaries, lists, tuples,
 strings, integers, floats, Booleans and top-level `JSON.NULL`, under the same
-native JSON input bounds. Omission applies the default. Explicit Python None
+native JSON input bounds. The encoded literal pin and generated lock must also
+fit the existing 16 MiB manifest bound. Omission applies the default. Explicit Python None
 applies it only with `none_as_null=True`; with False it remains JSON null.
 `JSON.NULL` always means JSON null and `null()` means SQL NULL. ORM pending
 values retain the native literal's Python shape until refresh. Dictionary INSERT
@@ -501,7 +502,13 @@ retains native `render_nulls`, RETURNING and savepoint behavior. `default=None`
 means no default; callable/server/SQL-expression defaults, custom literal
 subclasses and on-update generation remain unadmitted.
 `MutableDict.as_mutable(JSONB(...))` retains native default coercion and shallow
-change tracking; ordinary nested edits retain native untracked behavior.
+change tracking. Native literal aliases are preserved: before the first refresh,
+a new row can share nested containers with `Column.default.arg`. Editing those
+shared containers changes the pinned mapping default and causes `PolicyMismatch`,
+including on refresh. Refresh first or assign an independent copy before editing
+that value. Untracked nested edits on an independent loaded value retain native
+behavior. Native evolution of a shared literal default and per-row callable
+factories remain unfinished default support.
 
 Lock/v16 and reader `pg-jsonb-default/v1` pin the exact client literal separately
 from the encrypted payload codec. Mutable defaults must still match that pin

@@ -9,6 +9,15 @@ route, not another product contract.
 
 ## Current stop point
 
+The current verified implementation is `e75d049b0afe6d3c7f4d9e7bc8e01136b3529f06`
+on `codex/post-preview-continuation-20261101`, in
+[draft PR 5](https://github.com/Debrato2005/cryptalis/pull/5). Both jobs in
+[run 41295516545](https://github.com/Debrato2005/cryptalis/actions/runs/41295516545)
+pass; [retained hosted evidence](_reset/jsonb-defaults-hosted-boundary-20261101.json)
+binds all 324 Python inputs, 52 build inputs and unchanged local/hosted
+development artifacts. Subsequent documentation clarifies native default-alias
+and encoded-pin limits without changing runtime or test bytes.
+
 The implementation/evidence base before this continuation is
 `8a5d5060b7aacf5cb3bae6937946fb752cf9ca29` on Cryptalis `main` and
 `development/post-preview-20261101`. Continuation uses
@@ -61,6 +70,8 @@ and independent human review requirements remain in force.
 | Maintenance measurement code / evidence | Smolink `e2c1be8f2001884d9e0bed14f3c24097590ff8b4` / `b84f54d2fde83105c3e208be1ef16af68dd54801` |
 | Separate demo continuation | `demo/cryptalis-preview-followup-20261101`; [demo handoff](https://github.com/Debrato2005/smolink/blob/52b3d611cb7d7fca83e01f0b663e52c7515444c9/cryptalis_demo/HANDOFF.md) |
 | Frozen package CI | [Run 41280665577](https://github.com/Debrato2005/cryptalis/actions/runs/41280665577), PR merge `ac6b86b`; [head-byte boundary](_reset/preview-hosted-boundary-20261101.json) |
+| Frozen exact-tag CI | [Run 41293818065](https://github.com/Debrato2005/cryptalis/actions/runs/41293818065), `workflow_dispatch` at `655d522`; [exact-tag boundary](_reset/exact-tag-hosted-boundary-20261101.json) |
+| JSONB default development CI | [Run 41295516545](https://github.com/Debrato2005/cryptalis/actions/runs/41295516545), exact `e75d049`; [hosted boundary](_reset/jsonb-defaults-hosted-boundary-20261101.json) |
 | Strict-TLS tooling CI | [Run 41282107646](https://github.com/Debrato2005/cryptalis/actions/runs/41282107646), head `fb53e9f`, PR merge `e7ce82d`; [head-byte boundary](_reset/openbao-strict-tls-hosted-boundary-20261101.json) |
 
 Both hosted jobs pass for each named run. Byte-bound receipts, explicit skips,

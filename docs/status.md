@@ -41,15 +41,20 @@ gates and independent human review remain UNKNOWN.
 ## Installed-library preview preparation
 
 **Frozen library: `v0.1.0a1` at `655d522`.** Both jobs in
-[run 41280665577](https://github.com/Debrato2005/cryptalis/actions/runs/41280665577)
-pass at PR merge `ac6b86b` (parents `0b4933f` and `655d522`). All 323 Python
-files across 18 test inventories and all 52 build inputs independently match
-the real preview head. Source passes 3,953 calls plus 18 subtests; 25 call, 41
+[exact-tag run 41293818065](https://github.com/Debrato2005/cryptalis/actions/runs/41293818065)
+pass at the frozen commit, dispatched with `workflow_dispatch` on the tag.
+All 323 Python files across 18 test inventories and all 52 build inputs match
+that head. Source passes 3,953 calls plus 18 subtests; 25 call, 41
 setup and nine collection skips remain explicit. Seventeen installed receipts
 pass 1,173 calls, with one unavailable previous-v14 JSONB reader control skipped.
 All 24 release steps pass. Hosted wheel/sdist exactly match local artifacts.
-[Exact hosted boundary](_reset/preview-hosted-boundary-20261101.json) and
-[retained receipts](_reset/preview-hosted-receipts-20261101.tar.gz).
+[Exact-tag boundary](_reset/exact-tag-hosted-boundary-20261101.json) and
+[retained receipts](_reset/exact-tag-hosted-receipts-20261101.tar.gz).
+The clean, reproducible exact-tag receipt satisfies the prepared publication
+workflow's build-side head/event checks. Publication approval, protected
+environment, publisher identity and independent review remain separate.
+The [original PR-merge boundary](_reset/preview-hosted-boundary-20261101.json)
+and its [receipts](_reset/preview-hosted-receipts-20261101.tar.gz) remain retained.
 
 The separate Smolink clone is frozen at
 [`269aed4`](https://github.com/Debrato2005/smolink/tree/269aed4bcfcbbf40ffea444f2e2a748013c862d4),
@@ -235,14 +240,27 @@ NULL modes, exact pending Python literals, MutableDict coercion/tracking,
 sync/async ORM and dictionary INSERT/RETURNING, savepoints and default drift
 before keys/dispatch. The genuine frozen v15 reader accepts no-default JSONB and
 refuses v16 before SQL. The frozen `0.1.0a1` preview is unchanged.
+Shared literal aliases must remain unchanged while they still reference the
+pinned mapping default; broader native default evolution remains open, as the
+[contract](compatibility.md#jsonb-storage) explains.
 
-The complete source run passes **3,985 calls and 18 subtests**, with 26 call,
-41 setup and nine collection skips. Source and installed Python 3.12.16/3.13.12
+Both jobs in [run 41295516545](https://github.com/Debrato2005/cryptalis/actions/runs/41295516545)
+pass at exact **`e75d049`**. All 324 Python inputs across 18 inventories and 52
+build inputs match that revision and the current development runtime. Source
+passes **3,985 calls and 18 subtests**, with 26 call, 41 setup and nine collection
+skips. Seventeen installed receipts pass **1,205 calls**; JSONB passes 70 with
+two unavailable previous-reader skips. All 24 release steps pass, and hosted
+wheel/sdist exactly match local inspected artifacts.
+[Hosted boundary](_reset/jsonb-defaults-hosted-boundary-20261101.json) and
+[receipts](_reset/jsonb-defaults-hosted-receipts-20261101.tar.gz).
+
+Separately, source and installed Python 3.12.16/3.13.12
 JSONB workflows each pass **71 calls**, including 33 default controls, and retain
 one unavailable v14-reader skip. All bind the same 45-module runtime and
 unchanged source/runtime bytes during execution. A later qualification-only
 guard correction admits the matching v16/default fresh profile; product/test
-bytes are unchanged and the final fresh receipts bind the corrected harness.
+bytes are unchanged, final local fresh receipts bind the corrected harness,
+and the complete hosted run above verifies all final inputs together.
 
 Installed fresh recovery passes for default-bearing v16 in both layouts, plus
 a no-default v15 public-slot control. These cover three source rotations,
@@ -256,7 +274,7 @@ inspection pass. The [default boundary](_reset/jsonb-defaults-boundary-20261101.
 and [22 retained receipts](_reset/jsonb-defaults-receipts-20261101.tar.gz) preserve
 the three deliberate regression failures and three stopped harness profiles,
 their corrections, exact runtime/artifact hashes and the harness-only input
-difference after the complete run. Earlier storage/reader evidence remains in
+difference after the earlier local complete run. Earlier storage/reader evidence remains in
 its [boundary](_reset/jsonb-boundary-20261101.json) and
 [type history](history/types-2026-11.md#native-jsonb-storage-2026-11-01).
 
