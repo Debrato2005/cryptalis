@@ -159,11 +159,14 @@ workflows on a newly initialized disposable cluster:
 ```bash
 CRYPTALIS_JSONB_PREVIOUS_READER_PYTHON=/absolute/retained-v14/bin/python \
 CRYPTALIS_JSONB_DEFAULT_PREVIOUS_READER_PYTHON=/absolute/frozen-v15/bin/python \
+CRYPTALIS_JSONB_SEARCH_PREVIOUS_READER_PYTHON=/absolute/retained-v16/bin/python \
   .venv/bin/python scripts/online_qualification.py \
   --workdir /absolute/new-jsonb-source -- \
   tests/test_jsonb_storage.py tests/test_jsonb_admission.py \
   tests/test_jsonb_boundaries.py tests/test_jsonb_async_failures.py \
-  tests/test_jsonb_lifecycle.py tests/test_jsonb_defaults.py -q
+  tests/test_jsonb_lifecycle.py tests/test_jsonb_defaults.py \
+  tests/test_jsonb_search.py tests/test_jsonb_search_frames.py \
+  tests/test_jsonb_search_lifecycle.py -q
 ```
 
 Each old interpreter must contain the actual immutable earlier wheel: v14 checks
@@ -171,6 +174,9 @@ the storage-reader boundary and v15 checks the literal-default reader boundary.
 Without either optional variable its own control skips explicitly; no
 reader-compatibility claim follows for that cell. All database runs still use the mandatory
 private-file probes and byte-binding wrapper inside the harness.
+The whole-document search control uses
+`CRYPTALIS_JSONB_SEARCH_PREVIOUS_READER_PYTHON` for a genuine immutable v16
+installation. Without it, that separate v17-refusal control skips explicitly.
 
 For actual installed-wheel export and adoption on a distinct fresh cluster:
 
@@ -185,6 +191,9 @@ Set `CRYPTALIS_FRESH_JSONB_DEFAULTS=1` to include a literal client default throu
 backup, fresh attachment, new omitted-value INSERT and package-free default use.
 The release CI uses this default-bearing profile in both layouts; the unset
 profile retains the earlier no-default behavior.
+Set `CRYPTALIS_FRESH_JSONB_EQUALITY=1` to compare native equality/IN/distinct
+queries through source rotations and authenticated fresh-target adoption.
+Release CI enables both literal defaults and equality in the two layouts.
 The fixed profile checks exact `jsonb_send` bytes, SQL NULL versus JSON null,
 all three source rotations, restored-target authentication/tamper refusal,
 current edits, native removal and an import-denied SQLAlchemy restart. The

@@ -9,7 +9,8 @@ from uuid import UUID
 
 import psycopg
 import pytest
-from sqlalchemy import ColumnDefault, JSON, select
+from sqlalchemy import ColumnDefault, JSON, bindparam, func, literal, select
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Session
 
 from cryptalis import migration as m, restore as recovery
@@ -17,7 +18,7 @@ from cryptalis.sqlalchemy import attach
 from test_date_lifecycle import date_keys, remove_date, rotate_all
 from test_jsonb_lifecycle import (document_wire, encoded_wire, jsonb_application, native_restart,
                                  native_wire, protected_wire)
-from test_jsonb_storage import LATEST, current_edits, mapping_for, values
+from test_jsonb_storage import BASE, LATEST, current_edits, mapping_for, values
 from test_jsonb_defaults import DEFAULT, native_default_restart
 from test_migration import engine, keys, publish, run, TENANT
 
@@ -28,11 +29,29 @@ from test_fresh_cluster_export import dump, environment
 from test_fresh_boolean_restore import restore_dump
 
 
+def search_results(session, model):
+    result = {}
+    scope = model.tenant_id == TENANT
+    for sql_none in (False, True):
+        dtype = JSONB(none_as_null=sql_none)
+        for index, value in enumerate((BASE, LATEST, DEFAULT, JSON.NULL, None)):
+            statement = select(model.id).where(scope, model.name == literal(value, dtype)).order_by(model.id)
+            result[f'{sql_none}/equality/{index}'] = [str(identity) for identity in session.scalars(statement)]
+        statement = select(model.id).where(scope,
+            model.name.in_(bindparam('documents', type_=dtype, expanding=True))).order_by(model.id)
+        result[f'{sql_none}/in'] = [str(identity) for identity in
+            session.scalars(statement, {'documents': [LATEST, None, JSON.NULL]})]
+    result['distinct_count'] = session.scalar(select(func.count(model.name.distinct())).where(scope))
+    return result
+
+
 def test_export_jsonb_backup_after_three_rotations_and_current_edits():
     directory = Path(os.environ['CRYPTALIS_FRESH_CLUSTER_DIR'])
     public_slots = os.environ.get('CRYPTALIS_FRESH_PUBLIC_SLOTS') == '1'
     default = deepcopy(DEFAULT) if os.environ.get('CRYPTALIS_FRESH_JSONB_DEFAULTS') == '1' else None
-    with jsonb_application(public_slots=public_slots, value_default=default) as app:
+    equality = os.environ.get('CRYPTALIS_FRESH_JSONB_EQUALITY') == '1'
+    with jsonb_application(public_slots=public_slots, value_default=default,
+                          value_queries=('equality',) if equality else ()) as app:
         from test_public_slots import slots
         original_slots = [list(row) for row in slots(app)[1]] if public_slots else None
         source_wire = native_wire(app)
@@ -42,6 +61,7 @@ def test_export_jsonb_backup_after_three_rotations_and_current_edits():
             session.flush()
             expected_wire = native_wire(app, connection=session.connection())
             expected_values = json.loads(json.dumps(values(session, app.Customer), default=str))
+            expected_queries = search_results(session, app.Customer) if equality else None
             session.rollback()
         dump(directory / 'plain.sql', app.schema, environment('CRYPTALIS_TEST_DATABASE_URL'))
         run(app); publish(app)
@@ -55,11 +75,14 @@ def test_export_jsonb_backup_after_three_rotations_and_current_edits():
             session.delete(session.get(app.Customer, UUID(int=106)))
             session.commit()
             assert json.loads(json.dumps(values(session, app.Customer), default=str)) == expected_values
+            if equality:
+                assert search_results(session, app.Customer) == expected_queries
         assert protected_wire(app, date_keys) == expected_wire
         dump(directory / 'protected.sql', app.schema, environment('CRYPTALIS_TEST_DATABASE_URL'))
         owner = psycopg.conninfo.conninfo_to_dict(os.environ['CRYPTALIS_TEST_DATABASE_URL'])
         runtime = psycopg.conninfo.conninfo_to_dict(os.environ['CRYPTALIS_TEST_RUNTIME_DATABASE_URL'])
         manifest = {'application_profile': 'jsonb-storage', 'application_default': default,
+            'equality_queries': equality, 'expected_queries': expected_queries,
             'none_as_null': False, 'public_slots': public_slots, 'source_public_slots': original_slots,
             'database': owner['dbname'], 'owner_role': owner['user'], 'runtime_role': runtime['user'],
             'schema': app.schema, 'source_wire': encoded_wire(source_wire),
@@ -115,6 +138,8 @@ def test_restore_jsonb_authentication_current_edits_native_wire_and_package_free
         edited = {'restored': [deepcopy(LATEST), '雪', None, 1e20]}
         with factory(tenant_id=TENANT) as session:
             assert json.loads(json.dumps(values(session, Customer), default=str)) == manifest['expected_values']
+            if manifest.get('equality_queries'):
+                assert search_results(session, Customer) == manifest['expected_queries']
             assert session.scalar(select(Customer.id).where(Customer.label == 'label-100')) == UUID(int=100)
             session.get(Customer, UUID(int=910)).name = edited
             session.delete(session.get(Customer, UUID(int=101)))
@@ -123,6 +148,9 @@ def test_restore_jsonb_authentication_current_edits_native_wire_and_package_free
                 session.add(Customer(id=UUID(int=998), tenant_id=TENANT, label='restored omitted default'))
             session.commit()
             session.refresh(session.get(Customer, UUID(int=910)))
+            if manifest.get('equality_queries'):
+                assert list(session.scalars(select(Customer.id).where(Customer.tenant_id == TENANT,
+                    Customer.name == edited))) == [UUID(int=910)]
         expected = {UUID(identity): (sql_null, None if body is None else bytes.fromhex(body))
                     for identity, (sql_null, body) in manifest['expected_wire'].items()}
         with owner.connect() as connection:
@@ -145,6 +173,7 @@ def test_restore_jsonb_authentication_current_edits_native_wire_and_package_free
             'profile': 'JSONB exact native wire, three rotations, fresh PostgreSQL16 adoption, current-value removal',
             'none_as_null': False, 'public_slots': manifest['public_slots'],
             'literal_client_default': manifest['application_default'] is not None,
+            'whole_document_equality': manifest.get('equality_queries', False),
             'tampered_frame': 'refused before adoption', 'native_wire': 'exact jsonb_send bytes preserved',
             'package_free_restart': 'passed', 'gates': 'all seven UNKNOWN'}, indent=2) + '\n')
     finally:

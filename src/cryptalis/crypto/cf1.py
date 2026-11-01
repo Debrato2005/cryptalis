@@ -1,6 +1,6 @@
 """Bounded CF1 typed values with expected context and pre-admitted roots.
 
-No provider call, algorithm fallback, normalization or plaintext fallback is
+No provider call, algorithm fallback, implicit normalization or plaintext fallback is
 allowed here. SQL NULL presence and same-context replay are outside AEAD.
 """
 
@@ -63,9 +63,9 @@ class FieldDescriptor:
                 self.representation not in ("cf1-storage/v1", "cf1-packed-equality/v1", _ORDER_REPRESENTATION, _PREFIX_REPRESENTATION) or
                 self.value_codec not in ("utf8-exact/v1", "boolean-u8/v1", _DATE_CODEC, _TIMESTAMP_CODEC, _TIMESTAMPTZ_CODEC, _NUMERIC_CODEC, _JSONB_CODEC, "date-ordinal-u32/v1", "uuid-bytes16/v1", *_INTEGER_WIDTHS) or
                 self.value_codec == _JSONB_CODEC and (type(self.json_none_as_null) is not bool or
-                    self.representation != 'cf1-storage/v1') or
+                    self.representation not in ('cf1-storage/v1', 'cf1-packed-equality/v1')) or
                 self.value_codec != _JSONB_CODEC and self.json_none_as_null is not None or
-                self.representation == "cf1-packed-equality/v1" and self.value_codec not in ("utf8-exact/v1", _NUMERIC_CODEC) or
+                self.representation == "cf1-packed-equality/v1" and self.value_codec not in ("utf8-exact/v1", _NUMERIC_CODEC, _JSONB_CODEC) or
                 self.representation == _ORDER_REPRESENTATION and self.value_codec not in _ORDER_CODECS or
                 self.prefixed and (self.value_codec != 'utf8-exact/v1' or
                     type(self.prefix_lengths) is not tuple or len(self.prefix_lengths) != 2 or
@@ -102,8 +102,9 @@ class FieldDescriptor:
                 raise InvalidContext()
             codec = document["value_codec" if typed else "text_codec"]
             allowed_codecs = ("boolean-u8/v1", _DATE_CODEC, _TIMESTAMP_CODEC, _TIMESTAMPTZ_CODEC, _NUMERIC_CODEC, _JSONB_CODEC, "date-ordinal-u32/v1", "uuid-bytes16/v1", *_INTEGER_WIDTHS) if typed else ("utf8-exact/v1",)
-            normalizer = ('pg-numeric-equality/v1' if codec == _NUMERIC_CODEC and
-                          document['representation'] == 'cf1-packed-equality/v1' else 'identity/v1')
+            normalizer = ({_NUMERIC_CODEC: 'pg-numeric-equality/v1',
+                           _JSONB_CODEC: 'pg-jsonb-equality/v1'}.get(codec, 'identity/v1')
+                          if document['representation'] == 'cf1-packed-equality/v1' else 'identity/v1')
             json_none_as_null = None
             null_policy = 'sql-null/v1'
             if codec == _JSONB_CODEC:
@@ -264,6 +265,10 @@ def _term(encoded, field, material):
         except (UnicodeError, ValueError, InvalidOperation):
             raise InvalidValue() from None
         codec, normalizer = _NUMERIC_CODEC.encode('ascii'), b'pg-numeric-equality/v1'
+    elif field.value_codec == _JSONB_CODEC:
+        from .._jsonb import jsonb_search_bytes
+        encoded = jsonb_search_bytes(encoded)
+        codec, normalizer = _JSONB_CODEC.encode('ascii'), b'pg-jsonb-equality/v1'
     key = _derive(material, tuple_bytes(b"CF1/search-key", field.field_id.bytes,
                                        codec, normalizer, b"equality"))
     mac = hmac.HMAC(key, hashes.SHA256())
