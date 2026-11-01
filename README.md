@@ -24,7 +24,9 @@ records unfinished work. Safe refusal does not make an unsupported feature compl
 
 ## Quick start
 
-You supply a manifest, a key provider and a private state directory:
+[`examples/quickstart.py`](examples/quickstart.py) runs the whole lifecycle on a
+disposable database, from native data through three rotations to a restart without
+Cryptalis. You supply a manifest, a key provider and a private state directory:
 
 ```python
 from cryptalis import Project
@@ -37,6 +39,8 @@ project.protect(owner_engine, runtime_role="app",
                 writers_stopped="Deploy job stopped the API and workers.",
                 search_reviewed="Emails are not enumerable.")
 
+# Attachment refuses an engine that could log protected values.
+engine = create_engine(app_url, hide_parameters=True)
 SessionLocal = project.attach(engine)           # Replaces your sessionmaker.
 with SessionLocal(tenant_id=tenant) as session:
     session.get(Customer, customer_id).email = "new@example.com"
@@ -73,8 +77,8 @@ is the authoritative support list. Native JSONB admits bounded storage and
 opt-in [whole-document equality/IN/scoped uniqueness](docs/compatibility.md#whole-document-jsonb-equality).
 JSON path/containment, prefix/fuzzy and other unadmitted operations fail explicitly.
 
-Provider custody is abstracted through `KeyProvider`. Development custody is
-for synthetic local data. Optional AWS, Google Cloud KMS and OpenBao adapters have
+Provider custody is abstracted through `KeyProvider`. `DevelopmentKeyProvider` is
+for synthetic local data: pass it a key file to survive restarts. Optional AWS, Google Cloud KMS and OpenBao adapters have
 different verification boundaries; [status](docs/status.md) records them. Passing local
 service checks does not qualify production identity, backup custody or destruction.
 

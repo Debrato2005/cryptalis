@@ -10,6 +10,7 @@ Use this page to find the owner of a question; use [status](status.md) for curre
 |---|---|
 | Trace the primary requirements | [18 product requirements and objective mapping](requirements.md) → [34-objective ledger](BUILD_CHECKLIST.md) |
 | Understand the project | [Repository overview](../README.md) → [architecture](architecture/README.md) |
+| Try the whole lifecycle | [`examples/quickstart.py`](../examples/quickstart.py) → [install guide](installation.md#run-the-complete-example) |
 | Declare protected data | [Manifest reference](manifest.md) → [supported operations](compatibility.md#full-capability-matrix) |
 | Integrate an application | [`Project`: the small API](application.md#project-the-small-api) → [SQLAlchemy/SQLModel attachment](walkthrough-sqlalchemy.md) → [search examples](walkthrough-search.md) |
 | Modify protected fields | [Search-profile changes](application.md#modify-active-fields) → [read-only progress](walkthrough-migration.md#inspect-rotation-preparation) |

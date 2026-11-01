@@ -1255,6 +1255,10 @@ credential distribution, backup custody and independent review remain UNKNOWN.
 
 `cryptalis.crypto` exports `FieldDescriptor`, `seal_text`, `open_text`, `KeyProvider`,
 `DevelopmentKeyProvider`, `create_root`, `KeyContext`, `KeyPolicy`, and `Keyring`.
+`DevelopmentKeyProvider()` holds an ephemeral KEK. `DevelopmentKeyProvider(path)` keeps
+its provider identity and KEK in one atomically created, owner-only file and refuses
+a symlink, a wrong owner, group or other access, or a wrong length. That file can
+unwrap every root it wrapped, so it is synthetic-data convenience, not custody.
 `FieldDescriptor.from_compiled(document, digest)` consumes one trusted compiler descriptor.
 A matching digest checks structure. It does not authenticate the deployment policy.
 Seal and open take the descriptor, expected tenant and record, and prepared keys.

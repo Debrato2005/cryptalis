@@ -551,9 +551,15 @@ class Project:
         if document['decrypted']:
             return self.status(owner)
         approval = self._approval(writers_stopped, max_pause_seconds)
+        _statement('retained_backups', retained_backups)
         keys = self._keys(document['keys'])
         if pending is None:
             deployment = self._source(document)
+            if plaintext_role == deployment[0].document['runtime_role']:
+                raise ProjectError('DistinctPlaintextRoleRequired', (
+                    'Name a role other than the protected runtime role, so an old attached worker cannot write '
+                    'to plaintext columns. Create it and grant it your application\'s table privileges first; '
+                    'decrypt grants nothing. Native workers connect as that role afterwards.'))
             proposal = self._recorded_config(deployment[0]).plan_deprotection(
                 owner, deployment=deployment, keys=keys, plaintext_runtime_role=plaintext_role, **self._estimates)
             pending = self._begin(document, 'decrypt', proposal)

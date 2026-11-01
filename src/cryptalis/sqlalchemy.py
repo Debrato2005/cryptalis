@@ -62,11 +62,21 @@ _DECORATOR_SQL_HOOKS = (TypeDecorator.bind_expression, TypeDecorator.column_expr
 class UnsupportedProtectedOperation(CryptoFailure):
     stage = "SQLAlchemy admission"
     remedy = "Use the attached factory, ordinary ORM writes, direct projections, and declared search with ordinary binds. Remove unsupported SQL or bind codecs."
+    fields = ()
+
+    def naming(self, fields):
+        # Field names and declared search are manifest facts, not secrets.
+        self.fields = fields
+        if fields:
+            self.args = (f"{self.args[0]} Protected fields in this statement: {', '.join(fields)}. "
+                         "docs/compatibility.md lists what each profile admits.",)
+        return self
 
 
 class PolicyMismatch(CryptoFailure):
     stage = "attachment validation"
-    remedy = "Check the trusted lock, bytea target, search index/check, tenant key policy, mapping, and guarded engine configuration. Attach before application use."
+    remedy = ("Check the trusted lock, bytea target, search index/check, tenant key policy, mapping, and guarded engine "
+              "configuration. Attach before application use, once per process: restart workers after a lifecycle change.")
 
 
 class ForkedRuntime(PolicyMismatch):
@@ -169,6 +179,11 @@ class _UpdateRequest:
 class _Returning:
     columns: tuple
     projection: tuple
+
+
+def _search_label(descriptor):
+    return ('equality, IN, range, ORDER BY' if descriptor.ordered else
+            'equality, IN' if descriptor.equality else 'storage-only')
 
 
 @dataclass(frozen=True)
@@ -806,6 +821,17 @@ class _Attachment:
                     if binding.descriptor.value_codec == 'pg-jsonb-text/v1' and
                     (inspect(obj).pending or inspect(obj).attrs[binding.attribute].history.has_changes())))
                     for obj in tuple(session.new) + tuple(session.dirty))
+
+    def named_fields(self, statement):
+        """Describe declared fields a refused statement names, for its error only."""
+        try:
+            nodes = [node for node in visitors.iterate(statement) if isinstance(node, ColumnClause)]
+            return tuple(
+                f"{binding.model.__name__}.{binding.attribute} ({_search_label(binding.descriptor)})"
+                for binding in self.bindings
+                if any(binding.column.proxy_set.intersection(node.proxy_set) for node in nodes))
+        except Exception:
+            return ()
 
     def protected(self, expression):
         # ORM annotations can retain a native type from mapping construction.
@@ -2404,6 +2430,13 @@ def _before_flush(session, context, instances):
 
 @event.listens_for(_Session, "do_orm_execute", retval=True)
 def _execute(state):
+    try:
+        return _admitted_execute(state)
+    except UnsupportedProtectedOperation as failure:
+        raise failure.naming(state.session._owner.named_fields(state.statement))
+
+
+def _admitted_execute(state):
     session = state.session
     session._owner._check_process()
     if isinstance(state.statement, Insert):

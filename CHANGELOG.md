@@ -2,6 +2,14 @@
 
 ## 0.1.0a2.dev2 — development
 
+- `examples/quickstart.py` runs the complete lifecycle from the installed package,
+  in separate processes, ending with a restart that cannot import Cryptalis.
+- `DevelopmentKeyProvider(path)` keeps synthetic-data custody in an owner-only key
+  file, so a new developer can restart without running an external provider.
+- `UnsupportedProtectedOperation` names the protected fields in the refused
+  statement and what each declares, without values. `Project.decrypt` explains a
+  reused runtime role before planning; `PolicyMismatch` mentions the restart rule.
+
 - Single-record mapped UPDATE accepts reusable native binds for the record,
   tenant and assigned values, including bind defaults and execute-time overrides.
 - Ordinary literal and named SET values can share a statement. Existing
