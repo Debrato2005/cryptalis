@@ -12,6 +12,12 @@ configuration, dependencies and demonstration evidence belong to that checkout,
 outside the Cryptalis distribution. Reusable library fixes return to main after
 verification; the branches are checkpoints, not separate products.
 
+`main` is the continuing production-development line. Normal feature branches
+merge into it after verification. Keep the presentation on its separate Smolink
+demo branch and frozen `v0.1.0a1` library artifact; do not substitute development
+builds into the recorded measurements. Branch naming does not qualify production
+security or authorize public publication.
+
 ## Acceptance
 
 | Result | Required evidence |
