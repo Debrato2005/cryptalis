@@ -1,183 +1,139 @@
 # Cryptalis engineering handoff
 
-## Resume the frozen installed-library checkpoint
+The installed-library preview and separate Smolink demonstration are delivered
+within their recorded scope. The full product remains unfinished: all 34
+objectives remain in the [objective ledger](BUILD_CHECKLIST.md), and all seven
+production gates remain UNKNOWN. [Status](status.md) owns verification;
+[compatibility](compatibility.md) owns admitted behavior. This file is the resume
+route, not another product contract.
 
-The 2026-11-01 pasted brief authorized preview preparation, independent parallel
-work and verified commits/pushes. It supersedes the earlier pause and JSON/text
-priority below. The [preview contract](preview.md) preserves every production
-objective and the single-public-release policy.
+## Current stop point
 
-- Library `v0.1.0a1`: `655d52271d90effb4df918a9547f61c89055fbc7`, normal wheel/sdist,
-  eight clean installer/interpreter cells, exact hosted/local artifact equality.
-  Both jobs in run 41280665577 pass at PR merge `ac6b86b`; every inventoried
-  source/build byte matches the actual frozen head. [Boundary](_reset/preview-hosted-boundary-20261101.json).
-- Separate Smolink tag `cryptalis-demo-0.1.0a1-20261101-final`:
-  `269aed4bcfcbbf40ffea444f2e2a748013c862d4`, measured code `2a66223`.
-  Original backend files are unchanged. Real OpenBao/PG/Redis, original Swagger,
-  source-stopped restore, latest edits/removal and an actual package-absent
-  restart pass. Supplemental installed original applications cover crash/resume,
-  native search oracles and all three rotations. [Report and evidence](https://github.com/Debrato2005/smolink/blob/269aed4bcfcbbf40ffea444f2e2a748013c862d4/cryptalis_demo/REPORT.md).
-- Final point-read added p95 is 4.849 ms at concurrency 1: MISS against 3 ms;
-  concurrency 4/16 also miss. Destination bytes are 1.5114×, observed total
-  relation/index allocation 2.5987×. Smolink destination equality/IN and its
-  search-key rotation remain unsupported by its storage-only profile.
-- Separate source-bound local maintenance evidence at demo `b84f54d` measures
-  real-host stop to committed POST201 of 4.071 s protect, 4.501 s wrapping rewrap
-  and 12.169 s payload rotation. [Definitions, raw service counters and retained failure](https://github.com/Debrato2005/smolink/blob/b84f54d2fde83105c3e208be1ef16af68dd54801/cryptalis_demo/evidence/writer-interruption-20261101/README.md).
-  It preserves the original freeze and makes no production outage guarantee.
-- Draft release payload/review notes and disabled Trusted Publishing template
-  are prepared. No remote Release exists: the connector has no release-create
-  operation and direct GitHub API access is denied. No public index upload or
-  public preview release is authorized or performed.
+The implementation/evidence base before this documentation update is
+`0e56438100eb7295f7e0f2601cebea74f2d02ed6` on Cryptalis `main` and
+`development/post-preview-20261101`. The packaging work and reusable strict-TLS
+qualification fix are integrated through [PR 3](https://github.com/Debrato2005/cryptalis/pull/3)
+and [PR 4](https://github.com/Debrato2005/cryptalis/pull/4).
+The frozen library, demonstration and original receipts remain unchanged.
 
-Private role files, OpenBao initialization/token/TLS keys, Project state and raw
-backups remain outside both repositories. All database/Redis/app services were
-stopped after their checks. Retain recovery keys/readers; retire the local OpenBao
-container only after private-log retention, preserving its Raft storage.
+CipherStash credentials are needed only to run CipherStash itself for the live
+competitor comparison requested in point 25. Cryptalis and the Smolink integration
+use an independent external provider, demonstrated with OpenBao. Continue library,
+provider and application work using the existing native PostgreSQL oracles;
+CipherStash access is not a prerequisite for that work.
 
-Continue production work on a separate development branch against all 34
-objectives. Integrate reusable verified fixes through normal Git workflow;
-do not create permanent library forks. The first post-preview tooling fix reuses
-the demo's standard X.509 extensions in `scripts/openbao_qualification.py`.
-A fresh OpenBao service passes strict Python 3.13.5 TLS and public installed-wheel
-root creation/unwrap; wrong-AAD and key-administration controls refuse. The
-earlier certificate failure and a runner readiness failure remain recorded in
-the [exact boundary](_reset/openbao-strict-tls-boundary-20261101.json).
-Both new temporary containers were retired after private-log retention; private
-custody files remain available. Runtime/build inputs and the frozen preview
-are unchanged. The full hosted source/installed jobs pass for this exact tooling
-revision, with matching frozen preview artifacts; the independent local strict
-TLS boundary used no PostgreSQL. [Hosted evidence](_reset/openbao-strict-tls-hosted-boundary-20261101.json).
-No full provider qualification follows. Continue the production objective ledger. All seven gates
-and independent human review remain UNKNOWN. [Status](status.md) owns current results.
+Two external deliverables remain incomplete:
 
-The independently installable package, separate fresh application demonstration,
-current-data removal, source-bound measurements and freeze are delivered within
-their stated limits. The requested remote draft Release remains blocked by
-connector/network capabilities; equivalent CipherStash execution requires its
-unconfigured workspace/client credentials. Local release payloads/notes and the
-complete preview kit are ready. Public package-index upload has no approval.
-Preserve all remaining product objectives; do not convert these blockers or
-missed targets into completed production requirements.
+- Remote draft GitHub Release: local [payload](../release/draft-0.1.0a1.json) and
+  [review notes](../release/notes-0.1.0a1.md) are prepared. The available connector
+  has no release-create operation, and this environment denies direct GitHub API
+  access. Recheck supported access when that capability changes.
+- Equivalent CipherStash runtime comparison: the documented proxy setup needs its
+  workspace/client credentials. None of the four required CS bindings is configured.
+  [Primary-source comparison](https://github.com/Debrato2005/smolink/blob/269aed4bcfcbbf40ffea444f2e2a748013c862d4/cryptalis_demo/COMPETITIVE.md)
+  is retained; no equivalent competitor execution or performance ranking is claimed.
 
-## Previous native JSONB checkpoint
+These blockers are scoped to those deliverables. Broader native types, queries,
+search, lifecycle, performance and deployment work remains active in the ledger.
+Public package-index publication has no approval. The single-public-release policy
+and independent human review requirements remain in force.
 
-This handoff accompanies the native JSONB storage slice. Use
-[current status](status.md) for exact verification and hosted revisions, and the
-[34-objective ledger](BUILD_CHECKLIST.md) for remaining work. This file is a
-resume guide, not a second product contract. The full product goal is unfinished;
-all seven production gates remain UNKNOWN.
+## Revisions and evidence
 
-Implementation and local evidence are committed at
-[`4ae1b76`](https://github.com/Debrato2005/cryptalis/commit/4ae1b76df0e177a8cc54a2f37fbf013ca4b0fd72).
-Both hosted jobs pass in
-[run 41279005913](https://github.com/Debrato2005/cryptalis/actions/runs/41279005913).
-The [retained hosted boundary](_reset/github-jsonb-green-20261101.json) verifies
-all recorded Python/build inputs against that exact commit and binds the CI
-receipt archive. Subsequent handoff/contract wording changes are documentation only.
+| Item | Exact saved identity / evidence |
+|---|---|
+| Frozen library | `v0.1.0a1`, `655d52271d90effb4df918a9547f61c89055fbc7`; preview branch `preview/smolink-20261101` |
+| Frozen original-app demonstration | Smolink tag `cryptalis-demo-0.1.0a1-20261101-final`, `269aed4bcfcbbf40ffea444f2e2a748013c862d4` |
+| Matched measurement code | Smolink `2a6622311359f470412c22c53907b5fe3623a370` |
+| Maintenance measurement code / evidence | Smolink `e2c1be8f2001884d9e0bed14f3c24097590ff8b4` / `b84f54d2fde83105c3e208be1ef16af68dd54801` |
+| Separate demo continuation | `demo/cryptalis-preview-followup-20261101`; [demo handoff](https://github.com/Debrato2005/smolink/blob/52b3d611cb7d7fca83e01f0b663e52c7515444c9/cryptalis_demo/HANDOFF.md) |
+| Frozen package CI | [Run 41280665577](https://github.com/Debrato2005/cryptalis/actions/runs/41280665577), PR merge `ac6b86b`; [head-byte boundary](_reset/preview-hosted-boundary-20261101.json) |
+| Strict-TLS tooling CI | [Run 41282107646](https://github.com/Debrato2005/cryptalis/actions/runs/41282107646), head `fb53e9f`, PR merge `e7ce82d`; [head-byte boundary](_reset/openbao-strict-tls-hosted-boundary-20261101.json) |
 
-### Historical scope and next instruction
+Both hosted jobs pass for each named run. Byte-bound receipts, explicit skips,
+local Python 3.13 strict-TLS controls and artifact equality are in status and the
+boundaries above. A documentation commit after those inputs is not a new runtime
+verification. Earlier JSONB scope and evidence remain in [type history](history/types-2026-11.md)
+and [compatibility](compatibility.md#jsonb-storage). The previous mixed handoff is
+retained in [Git history](https://github.com/Debrato2005/cryptalis/blob/0e56438100eb7295f7e0f2601cebea74f2d02ed6/docs/handoff.md).
 
-The target remains all [18 product requirements](requirements.md) and all 34
-objectives in one comprehensive first release. Functionality precedes further
-optimization. Apply KISS and use meaningful end-to-end/native PostgreSQL oracles.
-The earlier instruction covered completing, verifying and pushing that JSONB
-slice and then waiting. The newer preview instruction above has superseded that
-pause; it remains historical context only.
+The separate [demo report](https://github.com/Debrato2005/smolink/blob/269aed4bcfcbbf40ffea444f2e2a748013c862d4/cryptalis_demo/REPORT.md)
+retains original Swagger POST201, independent CF1 storage observation, current
+edits, wrapping/payload rotations, source-stopped fresh restore, current-value
+removal and an actual package-absent restart. Supplemental independent installed
+application journeys cover search oracles, all three rotations and crash/resume
+within their own public-provider fixture limits. Original Smolink application,
+models, business queries and route handlers have zero changed files.
 
-Inspect the actual checkout root, branch, working tree and remote before making
-claims. Read `AGENTS.md`, the [documentation map](README.md), current status,
-affected objective and contract owner, then the procedure. Cross-cutting changes
-also require architecture, security, lifecycle, compatibility, decisions, build
-guide and engineering playbook. Historical pauses and workstation paths do not
-define current authorization or product scope.
+Keep the measured misses and limits visible:
 
-## What is implemented
+- Point-read added p95 is 4.849 ms at concurrency 1, a MISS against 3 ms;
+  concurrency 4 and 16 also miss. Destination equality/IN and search-key rotation
+  remain outside this storage-only Smolink field profile.
+- Destination bytes are 1.5114× native; observed total relation/index allocation
+  is 2.5987×, including allocation history. No protected destination search index
+  exists, so this does not qualify the indexed-storage target.
+- [Actual local writer interruption](https://github.com/Debrato2005/smolink/blob/b84f54d2fde83105c3e208be1ef16af68dd54801/cryptalis_demo/evidence/writer-interruption-20261101/README.md)
+  measures 4.071 s protect, 4.501 s wrapping rewrap and 12.169 s payload rotation
+  from real-host stop through committed POST201. These are individual local
+  observations, with lower-bound CPU and observed summed RSS, not production
+  outage guarantees or repeated-tail evidence.
 
-The repository contains the manifest/Project/Doctor front door, authenticated
-pre-PostgreSQL encryption, bounded sync/async SQLAlchemy and SQLModel integration,
-resumable and online lifecycle, three rotation workflows, fresh adoption and
-current-data removal followed by a package-free native restart. The
-[compatibility matrix](compatibility.md#full-capability-matrix) defines exact
-admitted storage, query and ORM behavior.
+## What is pushed and what remains local
 
-The latest slice adds bounded [native JSONB storage](compatibility.md#jsonb-storage):
+Both repositories contain the code, documentation and selected sanitized evidence.
+The Git branches/tags above are pushed. [Package receipts](_reset/preview-package-20261101.tar.gz),
+[hosted receipts](_reset/preview-hosted-receipts-20261101.tar.gz) and
+[latest tooling receipts](_reset/openbao-strict-tls-hosted-receipts-20261101.tar.gz)
+are retained in Cryptalis; application automation, screenshots and reports stay
+in the separate Smolink repository and outside the library distribution.
 
-- Existing CF1 encryption, `pg-jsonb-text/v1`, lock/v15 and context/v2; no new
-  dependency or cryptographic primitive. Earlier descriptor bytes remain valid.
-- Both native `none_as_null` policies, omitted values, JSON.NULL and SQL null(),
-  ordinary and MutableDict tracking, sync/async CRUD and RETURNING.
-- Exact canonical PostgreSQL UTF-8 bytes through migration, online capture,
-  rotations, restore and removal. Application JSON decoding occurs only after
-  authentication; its float rounding is never lifecycle truth.
-- Default JSON adapter admission, immutable caller-input checks across provider
-  callbacks/awaits, typed unsupported-operation refusal, transaction cleanup on
-  failure/cancellation, and source/installed/fresh-recovery E2Es in CI.
+The built distributions and preview kit are local prepared artifacts, not GitHub
+Release assets or package-index uploads. [The kit manifest](../release/preview-kit-0.1.0a1.json)
+binds the unchanged wheel/sdist to 27 guides and their documentation revision.
+Verify hashes before installation or transfer.
 
-The [local JSONB boundary](_reset/jsonb-boundary-20261101.json) retains exact
-receipts, distributions, failures and source snapshots. [Type history](history/types-2026-11.md)
-records the fixes and evidence limits. Runtime-role isolation repair and earlier
-hosted results remain retained in current status and their original boundaries.
+| Machine-local location | Contents / handling |
+|---|---|
+| `/workspace/cryptalis` | Primary library checkout, `main` |
+| `/workspace/cryptalis-production` | Separate development worktree, `development/post-preview-20261101` |
+| `/workspace/smolink-preview` | Separate demo checkout and follow-up branch |
+| `/workspace/scratch/cryptalis-preview-0.1.0a1-kit-c81e45a.tar.gz` | Complete prepared kit; SHA-256 `80b83e927f31da043184913ddbabc4e0a41e2e91582a0067d17c17f6a73e881f` |
+| `/workspace/scratch/cryptalis-package-20261101/artifacts` | Inspected wheel/sdist, checksums and SBOM |
+| `/workspace/scratch/smolink-preview-private` | Retained provider custody, role files, Project state and backups; private |
+| `/workspace/scratch/smolink-writer-interruption-private-20261101` and its `-r2` sibling | Separate retained interruption-run custody; private |
+| `/workspace/scratch/openbao-strict-tls-20261101` and its `-ready` sibling | Retained tooling-proof custody and private logs |
 
-The exact-prefix prototype remains INTERNAL ONLY, including mixed v15 plans and
-retained pattern-index obligations. Its retained storage cost is 13.1527× native
-versus the 2× target. The published dense-int2 sorting experiment recovers all
-non-NULL values in a deliberately misclassified fixture; honest small-domain
-admission refuses it. Neither observation supplies production/security admission.
+These paths describe this session, not prerequisites on another machine. Every
+recorded local app/PostgreSQL/Redis/OpenBao run ended stopped; container shells
+were retired after private-log retention. No run remains waiting for input.
+Preserve required keys, wrappers, readers, state and backups. Current-data removal
+did not authorize key retirement or backup destruction. Keep credentials, tokens,
+raw dumps and private service/audit logs out of Git and public artifact archives.
 
-## What remains
+## Resume implementation
 
-The ledger owns all remaining objectives. The next large functionality gap is
-JSON and broader text search. JSONB storage does not implement JSON equality,
-path/containment operators, protected defaults, indexes, CHECK, foreign-key or
-uniqueness constraints. JSON null and SQL NULL remain distinct internally, while
-both return native Python None. Native nullability is supported.
+1. Inspect the actual root, branch, status and remote; preserve unrelated work.
+   Pull the selected branch normally. Continue on a development branch, preserving
+   the frozen tags and existing receipt bytes.
+2. Read [status](status.md), the affected [objective row](BUILD_CHECKLIST.md), its
+   contract/procedure, [build order](build-guide.md), [decisions](decisions.md) and
+   the [engineering playbook](../ENGINEERING_PLAYBOOK.md). Cross-cutting changes
+   also require architecture, security, lifecycle and compatibility.
+3. Follow the ledger's production critical path with bounded complete behaviors.
+   Preserve all broader type/text/JSON/SQL, upgrade, migration, performance and
+   deployment objectives plus the retained policy/audit/erasure research. Further
+   unfinished features are not prerequisites for the delivered preview.
+4. Reuse native PostgreSQL and installed-library application oracles. All
+   PostgreSQL tests use `scripts/test_postgres.py`; a failed role probe stops the
+   run until its cause and authorization are resolved. Never silently substitute
+   a target or expose connection strings.
+5. Use new absolute work directories; keep Python source stable during each
+   wrapper run. Retain failures and skips. A previous-v14 JSONB reader control
+   needs a genuine immutable older installation; a hosted skip is not a pass.
+6. Verify, update the owning contract/status/ledger, commit and push each slice
+   through normal Git workflow. Bind CI claims to the exact tested revision and
+   inspect its receipts. Reuse verified fixes in main without permanent forks.
 
-Choose each search representation from published constructions and primary
-sources, documenting dump leakage and exact native semantics before coding.
-A flat bag of leaf HMACs is not an established general JSON containment solution:
-array/object structure and correlation require an exact argument and oracle.
-No JSON search design is admitted by this handoff.
-
-Other open work includes wider native ORM/type/query behavior, prefix admission
-and attack/cost acceptance, numeric ordering/arithmetic/nonfinite values,
-performance targets, upgrades, deployment fencing, provider identity/custody,
-audit/HA, retained-copy inventory and controlled key retirement, combined disaster
-drills, independent human review and release provenance. Passing tests or AI
-review do not close these gates. Do not infer a completion percentage.
-
-## Verification and safe resumption
-
-Use [local setup](local-development.md), [test layers](../ENGINEERING_PLAYBOOK.md#test-layers)
-and the [JSONB qualification procedure](qualification.md#native-jsonb-storage).
-All PostgreSQL tests go through `scripts/test_postgres.py`, directly or through
-the existing disposable-cluster harness. A failed role probe stops the run;
-resolve its cause and applicable authorization before retrying. Never print
-connection strings or substitute a target silently.
-
-Create a new absolute work directory for each run. Ensure the temporary/build
-filesystem has space; this session exhausted the small `/tmp` tmpfs and used a
-disk-backed private cache instead. Never delete keys, backups or retained earlier
-reader environments to make room. Freeze `src`, `tests` and `scripts` Python
-bytes during a wrapper run. Source changes invalidate its byte-bound receipt.
-Use worker counts appropriate to available RAM; two workers were used locally.
-
-The optional `CRYPTALIS_JSONB_PREVIOUS_READER_PYTHON` must identify a genuine,
-immutable v14 installation, distinct from the candidate installed environment.
-Local JSONB runs execute that control. Hosted runners may explicitly skip it;
-that skip does not qualify old-reader compatibility. Both fresh layouts verify
-exact native wire bytes, tamper refusal, current edits/removal and an
-import-denied restart. Their outer source cluster remains alive until cleanup;
-no source-cluster-shutdown-before-adoption or production fencing claim follows.
-
-Keep receipt archives immutable. Private role files, keys, raw backups/dumps,
-local attachments and the earlier private handoff bundle are not repository
-artifacts. Scoped Graphify navigation may help when available; confirm in source
-and refresh after code edits without installing hooks or changing configuration.
-
-For the next authorized slice, implement a bounded complete behavior, verify its
-real native and installed lifecycle, update the owning contracts/status/ledger,
-retain failures and receipts, then commit and push. Wait for the exact hosted
-revision and inspect its evidence before claiming CI verification. Publishing
-packages, production deployment and destructive external actions need their
-own authorization.
+This handoff update changes documentation only. Runtime source, tests, dependency
+locks, CI, distributions, frozen tags and original evidence remain unchanged.
