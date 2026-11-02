@@ -9,15 +9,26 @@ route, not another product contract.
 
 ## Latest continuation
 
-`claude/production-continuation-20261101` continues from `main` at `09be1f6`. It adds a
+`main` includes the production continuation merged in
+[PR 9](https://github.com/Debrato2005/cryptalis/pull/9). It adds a
 [runnable lifecycle example](../examples/quickstart.py) and durable development custody,
 fixes [final admission](status.md#final-admission-no-longer-trusts-compilation), reduces
 repeated read and rotation work and admits [bounded upsert](compatibility.md#bounded-upsert). The
 separate Smolink branch `demo/cryptalis-email-search-20261102`, at `f0cae5c`, holds the
 [real-application results](status.md#real-application-equality-search). Both hosted jobs
-pass at `254d334`. The branch is not merged to `main`. The frozen tags
+pass at the original `254d334` revision. The research README and its Mermaid
+diagrams are published on `main` through
+[PR 10](https://github.com/Debrato2005/cryptalis/pull/10). The frozen tags
 and original Smolink checkout are unchanged. Its local services are stopped; synthetic
 data and its development key files stay under `~/.cache/cryptalis-production-20261101`.
+
+The 2026-11-02 author-attribution correction changes 47 author/committer email
+records and 89 commit IDs on `main`, preserving every file tree, commit message,
+name, timestamp and parent order. Historical receipts keep their original
+revision IDs. A verified local Git bundle and old-to-new map retain the original
+history, including signatures on the eight affected signed commits. Unaffected
+signatures and the frozen preview tag remain unchanged. This metadata correction
+does not establish new runtime verification.
 
 Three decisions remain the owner's. Whether to redesign read processors so compiled
 protected reads can be reused, the largest remaining cost on wide tables. Whether to accept
