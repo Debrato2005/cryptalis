@@ -30,28 +30,19 @@ PostgreSQL comparisons and real application journeys. Its central design choices
 ## How it fits together
 
 ```mermaid
-flowchart TB
-    APP["Existing Python application"]
-    INPUT["Manifest, mapped models and host authority"]
-    API["Project / ApplicationConfig / CLI"]
-    CHECK["Compile policy and check compatibility"]
-    ORM["SQLAlchemy / SQLModel integration"]
-    ADMIT{"Operation admitted?"}
-    CRYPTO["CF1 encryption and declared search representations"]
-    GUARD["Final statement and driver guards"]
-    PG[("PostgreSQL: encrypted fields, native indexes and transactions")]
-    OPEN["Authenticate returned values and their context"]
+flowchart LR
+    APP["Python backend<br/>SQLAlchemy / SQLModel"]
+    RUNTIME["Cryptalis runtime<br/>Admit, seal and authenticate"]
+    PG[("PostgreSQL<br/>Encrypted fields + indexes")]
+    POLICY["Manifest +<br/>host authority"]
+    KEYS["Key provider +<br/>trusted state"]
     FAIL["Typed refusal"]
-    KEYS["Key provider and trusted deployment state"]
 
-    INPUT --> API --> CHECK --> ORM
-    APP --> ORM --> ADMIT
-    ADMIT -->|Yes| CRYPTO --> GUARD --> PG
-    ADMIT -->|No| FAIL
-    KEYS --> CRYPTO
-    KEYS --> OPEN
-    PG --> OPEN --> APP
-    OPEN -->|Invalid frame or context| FAIL
+    APP <-->|ORM operations| RUNTIME
+    POLICY --> RUNTIME
+    KEYS --> RUNTIME
+    RUNTIME <-->|Protected storage| PG
+    RUNTIME -->|Unsafe or unsupported| FAIL
 ```
 
 The host authenticates users, supplies tenant scope and controls deployment
@@ -105,20 +96,19 @@ plaintext fallback or hidden full-table decryption path for an unsupported query
 ## From adoption to recovery and exit
 
 ```mermaid
-flowchart TB
-    PLAN["Doctor, inspect and approve a bound plan"]
-    CAPTURE["Backfill or bounded online capture"]
-    VERIFY["Verify, fence writers, switch and publish"]
-    ACTIVE["Active protected application"]
-    CHANGE["Field changes, tenants or key rotation"]
-    BACKUP["Retained database and recovery artifacts"]
-    RESTORE["Quarantine and authorized restore adoption"]
-    DECRYPT["Decrypt latest values and verify removal"]
-    NATIVE["Application running without Cryptalis"]
+flowchart LR
+    PLAN["Plan + capture"]
+    VERIFY["Verify + publish"]
+    ACTIVE["Protected app"]
+    CHANGE["Field, tenant<br/>or key changes"]
+    BACKUP["Backups + readers"]
+    RESTORE["Quarantine +<br/>authorized restore"]
+    DECRYPT["Decrypt +<br/>verify removal"]
+    NATIVE["Run without<br/>Cryptalis"]
 
-    PLAN --> CAPTURE --> VERIFY --> ACTIVE
+    PLAN --> VERIFY --> ACTIVE
     ACTIVE --> CHANGE --> VERIFY
-    ACTIVE -.->|Retain recoverable copies| BACKUP
+    ACTIVE -.-> BACKUP
     BACKUP --> RESTORE --> VERIFY
     ACTIVE --> DECRYPT --> NATIVE
 ```
@@ -166,16 +156,15 @@ Safe refusal keeps the current boundary explicit; it does not complete a missing
 product objective.
 
 ```mermaid
-flowchart TB
-    SCOPE["Complete the requirements and remaining query / operational scope"]
-    CANDIDATE["Pin a candidate and retain reproducible evidence"]
-    EVIDENCE["Native oracles, independent application journeys and recovery tests"]
-    REVIEW["Performance budgets and independent expert review"]
-    GATES{"All seven production gates pass?"}
-    CONTINUE["Resolve gaps and repeat verification"]
-    RELEASE["One comprehensive first public release"]
+flowchart LR
+    SCOPE["Complete scope<br/>Pin a candidate"]
+    EVIDENCE["Application, recovery<br/>and performance tests"]
+    REVIEW["Independent<br/>expert review"]
+    GATES{"Seven gates<br/>pass?"}
+    CONTINUE["Resolve gaps"]
+    RELEASE["Comprehensive<br/>first public release"]
 
-    SCOPE --> CANDIDATE --> EVIDENCE --> REVIEW --> GATES
+    SCOPE --> EVIDENCE --> REVIEW --> GATES
     GATES -->|No| CONTINUE --> SCOPE
     GATES -->|Yes| RELEASE
 ```
